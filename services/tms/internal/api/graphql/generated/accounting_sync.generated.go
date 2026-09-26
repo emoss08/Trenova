@@ -37,6 +37,21 @@ type AccountingConnectionResolver interface {
 
 	PausedBy(ctx context.Context, obj *accountingsync.AccountingConnection) (*tenant.User, error)
 }
+type AccountingInboundChangeResolver interface {
+	Reason(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*accountingsync.InboundChangeReason, error)
+
+	PartyObjectID(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*string, error)
+	ReferenceNumber(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error)
+	MethodName(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error)
+	UnappliedMinor(ctx context.Context, obj *accountingsync.AccountingInboundChange) (int, error)
+	Lines(ctx context.Context, obj *accountingsync.AccountingInboundChange) ([]*accountingsync.InboundLine, error)
+
+	DecidedBy(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*tenant.User, error)
+}
+type AccountingInboundLineResolver interface {
+	ObjectType(ctx context.Context, obj *accountingsync.InboundLine) (*accountingsync.SyncObjectType, error)
+	ObjectID(ctx context.Context, obj *accountingsync.InboundLine) (*string, error)
+}
 type AccountingMappingResolver interface {
 	TrenovaObjectID(ctx context.Context, obj *accountingsync.AccountingMapping) (*string, error)
 
@@ -381,6 +396,52 @@ func (ec *executionContext) fieldContext_AccountingAppSettings_tenantApp(_ conte
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _AccountingAppliedObject_type(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AppliedObject) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppliedObject_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.AppliedObjectType) graphql.Marshaler {
+			return ec.marshalNAccountingAppliedObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppliedObjectType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppliedObject_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppliedObject", field, false, false, errors.New("field of type AccountingAppliedObjectType does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppliedObject_id(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AppliedObject) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppliedObject_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppliedObject_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppliedObject", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
 func (ec *executionContext) _AccountingAuthorizationStart_authorizeUrl(ctx context.Context, field graphql.CollectedField, obj *services.AccountingAuthorizationStart) (ret graphql.Marshaler) {
@@ -1349,6 +1410,75 @@ func (ec *executionContext) fieldContext_AccountingConnection_syncsDriverSettlem
 	return graphql.NewScalarFieldContext("AccountingConnection", field, true, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _AccountingConnection_inboundPaymentPolicy(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_inboundPaymentPolicy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InboundPaymentPolicy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.InboundPaymentPolicy) graphql.Marshaler {
+			return ec.marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_inboundPaymentPolicy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type AccountingInboundPaymentPolicy does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingConnection_changesReadAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_changesReadAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChangesReadAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_changesReadAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingConnection_changesErrorMessage(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_changesErrorMessage(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChangesErrorMessage, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_changesErrorMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _AccountingConnection_pausedAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1540,6 +1670,1444 @@ func (ec *executionContext) _AccountingConnection_updatedAt(ctx context.Context,
 }
 func (ec *executionContext) fieldContext_AccountingConnection_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundApplyPreview_change(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundApplyPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundApplyPreview_change(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Change, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.AccountingInboundChange) graphql.Marshaler {
+			return ec.marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAccountingInboundChange(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundApplyPreview_change(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingInboundApplyPreview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingInboundChange(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccountingInboundApplyPreview_canApply(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundApplyPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundApplyPreview_canApply(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CanApply, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundApplyPreview_canApply(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundApplyPreview", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundApplyPreview_blocker(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundApplyPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundApplyPreview_blocker(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Blocker, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundApplyPreview_blocker(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundApplyPreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundApplyPreview_paidAt(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundApplyPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundApplyPreview_paidAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PaidAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundApplyPreview_paidAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundApplyPreview", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundApplyPreview_cashMinor(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundApplyPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundApplyPreview_cashMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CashMinor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundApplyPreview_cashMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundApplyPreview", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundApplyPreview_unappliedMinor(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundApplyPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundApplyPreview_unappliedMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UnappliedMinor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundApplyPreview_unappliedMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundApplyPreview", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundApplyPreview_lines(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundApplyPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundApplyPreview_lines(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Lines, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []services.AccountingInboundPostingLine) graphql.Marshaler {
+			return ec.marshalNAccountingInboundPostingLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingInboundPostingLineᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundApplyPreview_lines(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingInboundApplyPreview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingInboundPostingLine(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccountingInboundChange_id(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_kind(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.InboundChangeKind) graphql.Marshaler {
+			return ec.marshalNAccountingInboundChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundChangeKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type AccountingInboundChangeKind does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_status(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.InboundChangeStatus) graphql.Marshaler {
+			return ec.marshalNAccountingInboundChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundChangeStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type AccountingInboundChangeStatus does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_reason(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_reason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingInboundChange().Reason(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.InboundChangeReason) graphql.Marshaler {
+			return ec.marshalOAccountingInboundChangeReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundChangeReason(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, true, true, errors.New("field of type AccountingInboundChangeReason does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_resolution(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_resolution(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Resolution, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_resolution(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_externalId(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_externalId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_externalId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_externalNumber(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_externalNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_externalNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_externalUrl(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_externalUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_externalUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_providerModifiedAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_providerModifiedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderModifiedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_providerModifiedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_providerModifiedBy(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_providerModifiedBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderModifiedBy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_providerModifiedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_txnDate(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_txnDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TxnDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_txnDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_amountMinor(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_amountMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AmountMinor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_amountMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_currencyCode(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_currencyCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrencyCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_currencyCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_partyName(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_partyName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartyName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_partyName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_partyObjectId(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_partyObjectId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingInboundChange().PartyObjectID(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_partyObjectId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, true, true, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_referenceNumber(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_referenceNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingInboundChange().ReferenceNumber(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_referenceNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_methodName(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_methodName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingInboundChange().MethodName(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_methodName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_unappliedMinor(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_unappliedMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingInboundChange().UnappliedMinor(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_unappliedMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, true, true, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_lines(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_lines(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingInboundChange().Lines(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*accountingsync.InboundLine) graphql.Marshaler {
+			return ec.marshalNAccountingInboundLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundLineᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_lines(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingInboundChange",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingInboundLine(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccountingInboundChange_appliedObjects(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_appliedObjects(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AppliedObjects, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []accountingsync.AppliedObject) graphql.Marshaler {
+			return ec.marshalNAccountingAppliedObject2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppliedObjectᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_appliedObjects(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingInboundChange",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingAppliedObject(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccountingInboundChange_decidedBy(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_decidedBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingInboundChange().DecidedBy(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+			return ec.marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_decidedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingInboundChange",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_User(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccountingInboundChange_decidedAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_decidedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DecidedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_decidedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_note(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_note(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Note, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_note(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_detectedAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_detectedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DetectedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_detectedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_version(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChange_updatedAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingInboundChange) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChange_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChange_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChange", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChangeConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AccountingInboundChangeConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChangeConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.AccountingInboundChangeEdge) graphql.Marshaler {
+			return ec.marshalNAccountingInboundChangeEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountingInboundChangeEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChangeConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingInboundChangeConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingInboundChangeEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccountingInboundChangeConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AccountingInboundChangeConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChangeConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChangeConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingInboundChangeConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccountingInboundChangeConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AccountingInboundChangeConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChangeConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChangeConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChangeConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundChangeEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AccountingInboundChangeEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChangeEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.AccountingInboundChange) graphql.Marshaler {
+			return ec.marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAccountingInboundChange(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChangeEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingInboundChangeEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingInboundChange(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccountingInboundChangeEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AccountingInboundChangeEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundChangeEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundChangeEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundChangeEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundLine_documentKind(ctx context.Context, field graphql.CollectedField, obj *accountingsync.InboundLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundLine_documentKind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentKind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.InboundDocumentKind) graphql.Marshaler {
+			return ec.marshalNAccountingInboundDocumentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundDocumentKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundLine_documentKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundLine", field, false, false, errors.New("field of type AccountingInboundDocumentKind does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundLine_documentExternalId(ctx context.Context, field graphql.CollectedField, obj *accountingsync.InboundLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundLine_documentExternalId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentExternalID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundLine_documentExternalId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundLine", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundLine_amountMinor(ctx context.Context, field graphql.CollectedField, obj *accountingsync.InboundLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundLine_amountMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AmountMinor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundLine_amountMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundLine", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundLine_objectType(ctx context.Context, field graphql.CollectedField, obj *accountingsync.InboundLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundLine_objectType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingInboundLine().ObjectType(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.SyncObjectType) graphql.Marshaler {
+			return ec.marshalOAccountingSyncObjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐSyncObjectType(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundLine_objectType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundLine", field, true, true, errors.New("field of type AccountingSyncObjectType does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundLine_objectId(ctx context.Context, field graphql.CollectedField, obj *accountingsync.InboundLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundLine_objectId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingInboundLine().ObjectID(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundLine_objectId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundLine", field, true, true, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundLine_objectNumber(ctx context.Context, field graphql.CollectedField, obj *accountingsync.InboundLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundLine_objectNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ObjectNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundLine_objectNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundLine", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundLine_openMinor(ctx context.Context, field graphql.CollectedField, obj *accountingsync.InboundLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundLine_openMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OpenMinor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundLine_openMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundLine", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundOverview_connectionId(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundOverview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundOverview_connectionId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ConnectionID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundOverview_connectionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundOverview", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundOverview_policy(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundOverview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundOverview_policy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Policy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.InboundPaymentPolicy) graphql.Marshaler {
+			return ec.marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundOverview_policy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundOverview", field, false, false, errors.New("field of type AccountingInboundPaymentPolicy does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundOverview_changesReadAt(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundOverview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundOverview_changesReadAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChangesReadAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundOverview_changesReadAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundOverview", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundOverview_changesError(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundOverview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundOverview_changesError(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChangesError, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundOverview_changesError(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundOverview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundOverview_summary(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundOverview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundOverview_summary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Summary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *repositories.AccountingInboundSummary) graphql.Marshaler {
+			return ec.marshalNAccountingInboundSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAccountingInboundSummary(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundOverview_summary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingInboundOverview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingInboundSummary(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AccountingInboundPostingLine_objectType(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundPostingLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundPostingLine_objectType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ObjectType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.SyncObjectType) graphql.Marshaler {
+			return ec.marshalNAccountingSyncObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐSyncObjectType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundPostingLine_objectType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundPostingLine", field, false, false, errors.New("field of type AccountingSyncObjectType does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundPostingLine_objectId(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundPostingLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundPostingLine_objectId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ObjectID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundPostingLine_objectId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundPostingLine", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundPostingLine_objectNumber(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundPostingLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundPostingLine_objectNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ObjectNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundPostingLine_objectNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundPostingLine", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundPostingLine_amountMinor(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundPostingLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundPostingLine_amountMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AmountMinor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundPostingLine_amountMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundPostingLine", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundPostingLine_openMinor(ctx context.Context, field graphql.CollectedField, obj *services.AccountingInboundPostingLine) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundPostingLine_openMinor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OpenMinor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundPostingLine_openMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundPostingLine", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundSummary_detected(ctx context.Context, field graphql.CollectedField, obj *repositories.AccountingInboundSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundSummary_detected(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Detected, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundSummary_detected(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundSummary_proposed(ctx context.Context, field graphql.CollectedField, obj *repositories.AccountingInboundSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundSummary_proposed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Proposed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundSummary_proposed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundSummary_appliedSince(ctx context.Context, field graphql.CollectedField, obj *repositories.AccountingInboundSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundSummary_appliedSince(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AppliedSince, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundSummary_appliedSince(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingInboundSummary_ignoredSince(ctx context.Context, field graphql.CollectedField, obj *repositories.AccountingInboundSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingInboundSummary_ignoredSince(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IgnoredSince, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingInboundSummary_ignoredSince(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingInboundSummary", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _AccountingMapping_id(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingMapping) (ret graphql.Marshaler) {
@@ -4994,6 +6562,43 @@ func (ec *executionContext) unmarshalInputEnableAccountingSyncInput(ctx context.
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputIgnoreAccountingInboundChangeInput(ctx context.Context, obj any) (gqlmodel.IgnoreAccountingInboundChangeInput, error) {
+	var it gqlmodel.IgnoreAccountingInboundChangeInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "note"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPauseAccountingSyncInput(ctx context.Context, obj any) (gqlmodel.PauseAccountingSyncInput, error) {
 	var it gqlmodel.PauseAccountingSyncInput
 	if obj == nil {
@@ -5320,7 +6925,7 @@ func (ec *executionContext) unmarshalInputUpdateAccountingSyncSettingsInput(ctx 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"integrationType", "autoSync", "driverSettlements"}
+	fieldsInOrder := [...]string{"integrationType", "autoSync", "driverSettlements", "inboundPayments"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5348,6 +6953,13 @@ func (ec *executionContext) unmarshalInputUpdateAccountingSyncSettingsInput(ctx 
 				return it, err
 			}
 			it.DriverSettlements = data
+		case "inboundPayments":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inboundPayments"))
+			data, err := ec.unmarshalOAccountingInboundPaymentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.InboundPayments = data
 		}
 	}
 	return it, nil
@@ -5569,6 +7181,49 @@ func (ec *executionContext) _AccountingAppSettings(ctx context.Context, sel ast.
 			out.Values[i] = ec._AccountingAppSettings_tenantApp(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingAppliedObjectImplementors = []string{"AccountingAppliedObject"}
+
+func (ec *executionContext) _AccountingAppliedObject(ctx context.Context, sel ast.SelectionSet, obj *accountingsync.AppliedObject) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingAppliedObjectImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingAppliedObject")
+		case "type":
+			out.Values[i] = ec._AccountingAppliedObject_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._AccountingAppliedObject_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -5945,6 +7600,21 @@ func (ec *executionContext) _AccountingConnection(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "inboundPaymentPolicy":
+			out.Values[i] = ec._AccountingConnection_inboundPaymentPolicy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "changesReadAt":
+			out.Values[i] = ec._AccountingConnection_changesReadAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "changesErrorMessage":
+			out.Values[i] = ec._AccountingConnection_changesErrorMessage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "pausedAt":
 			out.Values[i] = ec._AccountingConnection_pausedAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -6017,6 +7687,862 @@ func (ec *executionContext) _AccountingConnection(ctx context.Context, sel ast.S
 			out.Values[i] = ec._AccountingConnection_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingInboundApplyPreviewImplementors = []string{"AccountingInboundApplyPreview"}
+
+func (ec *executionContext) _AccountingInboundApplyPreview(ctx context.Context, sel ast.SelectionSet, obj *services.AccountingInboundApplyPreview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingInboundApplyPreviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingInboundApplyPreview")
+		case "change":
+			out.Values[i] = ec._AccountingInboundApplyPreview_change(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canApply":
+			out.Values[i] = ec._AccountingInboundApplyPreview_canApply(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "blocker":
+			out.Values[i] = ec._AccountingInboundApplyPreview_blocker(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "paidAt":
+			out.Values[i] = ec._AccountingInboundApplyPreview_paidAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cashMinor":
+			out.Values[i] = ec._AccountingInboundApplyPreview_cashMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unappliedMinor":
+			out.Values[i] = ec._AccountingInboundApplyPreview_unappliedMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lines":
+			out.Values[i] = ec._AccountingInboundApplyPreview_lines(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingInboundChangeImplementors = []string{"AccountingInboundChange"}
+
+func (ec *executionContext) _AccountingInboundChange(ctx context.Context, sel ast.SelectionSet, obj *accountingsync.AccountingInboundChange) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingInboundChangeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingInboundChange")
+		case "id":
+			out.Values[i] = ec._AccountingInboundChange_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "kind":
+			out.Values[i] = ec._AccountingInboundChange_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._AccountingInboundChange_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "reason":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingInboundChange_reason(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "resolution":
+			out.Values[i] = ec._AccountingInboundChange_resolution(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "externalId":
+			out.Values[i] = ec._AccountingInboundChange_externalId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "externalNumber":
+			out.Values[i] = ec._AccountingInboundChange_externalNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "externalUrl":
+			out.Values[i] = ec._AccountingInboundChange_externalUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "providerModifiedAt":
+			out.Values[i] = ec._AccountingInboundChange_providerModifiedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "providerModifiedBy":
+			out.Values[i] = ec._AccountingInboundChange_providerModifiedBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "txnDate":
+			out.Values[i] = ec._AccountingInboundChange_txnDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "amountMinor":
+			out.Values[i] = ec._AccountingInboundChange_amountMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "currencyCode":
+			out.Values[i] = ec._AccountingInboundChange_currencyCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "partyName":
+			out.Values[i] = ec._AccountingInboundChange_partyName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "partyObjectId":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingInboundChange_partyObjectId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "referenceNumber":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingInboundChange_referenceNumber(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "methodName":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingInboundChange_methodName(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "unappliedMinor":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingInboundChange_unappliedMinor(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "lines":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingInboundChange_lines(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "appliedObjects":
+			out.Values[i] = ec._AccountingInboundChange_appliedObjects(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "decidedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingInboundChange_decidedBy(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "decidedAt":
+			out.Values[i] = ec._AccountingInboundChange_decidedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "note":
+			out.Values[i] = ec._AccountingInboundChange_note(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "detectedAt":
+			out.Values[i] = ec._AccountingInboundChange_detectedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._AccountingInboundChange_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._AccountingInboundChange_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingInboundChangeConnectionImplementors = []string{"AccountingInboundChangeConnection"}
+
+func (ec *executionContext) _AccountingInboundChangeConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.AccountingInboundChangeConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingInboundChangeConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingInboundChangeConnection")
+		case "edges":
+			out.Values[i] = ec._AccountingInboundChangeConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._AccountingInboundChangeConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._AccountingInboundChangeConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingInboundChangeEdgeImplementors = []string{"AccountingInboundChangeEdge"}
+
+func (ec *executionContext) _AccountingInboundChangeEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.AccountingInboundChangeEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingInboundChangeEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingInboundChangeEdge")
+		case "node":
+			out.Values[i] = ec._AccountingInboundChangeEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._AccountingInboundChangeEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingInboundLineImplementors = []string{"AccountingInboundLine"}
+
+func (ec *executionContext) _AccountingInboundLine(ctx context.Context, sel ast.SelectionSet, obj *accountingsync.InboundLine) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingInboundLineImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingInboundLine")
+		case "documentKind":
+			out.Values[i] = ec._AccountingInboundLine_documentKind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "documentExternalId":
+			out.Values[i] = ec._AccountingInboundLine_documentExternalId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "amountMinor":
+			out.Values[i] = ec._AccountingInboundLine_amountMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "objectType":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingInboundLine_objectType(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "objectId":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingInboundLine_objectId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "objectNumber":
+			out.Values[i] = ec._AccountingInboundLine_objectNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "openMinor":
+			out.Values[i] = ec._AccountingInboundLine_openMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingInboundOverviewImplementors = []string{"AccountingInboundOverview"}
+
+func (ec *executionContext) _AccountingInboundOverview(ctx context.Context, sel ast.SelectionSet, obj *services.AccountingInboundOverview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingInboundOverviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingInboundOverview")
+		case "connectionId":
+			out.Values[i] = ec._AccountingInboundOverview_connectionId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "policy":
+			out.Values[i] = ec._AccountingInboundOverview_policy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "changesReadAt":
+			out.Values[i] = ec._AccountingInboundOverview_changesReadAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "changesError":
+			out.Values[i] = ec._AccountingInboundOverview_changesError(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "summary":
+			out.Values[i] = ec._AccountingInboundOverview_summary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingInboundPostingLineImplementors = []string{"AccountingInboundPostingLine"}
+
+func (ec *executionContext) _AccountingInboundPostingLine(ctx context.Context, sel ast.SelectionSet, obj *services.AccountingInboundPostingLine) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingInboundPostingLineImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingInboundPostingLine")
+		case "objectType":
+			out.Values[i] = ec._AccountingInboundPostingLine_objectType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "objectId":
+			out.Values[i] = ec._AccountingInboundPostingLine_objectId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "objectNumber":
+			out.Values[i] = ec._AccountingInboundPostingLine_objectNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "amountMinor":
+			out.Values[i] = ec._AccountingInboundPostingLine_amountMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "openMinor":
+			out.Values[i] = ec._AccountingInboundPostingLine_openMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingInboundSummaryImplementors = []string{"AccountingInboundSummary"}
+
+func (ec *executionContext) _AccountingInboundSummary(ctx context.Context, sel ast.SelectionSet, obj *repositories.AccountingInboundSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingInboundSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingInboundSummary")
+		case "detected":
+			out.Values[i] = ec._AccountingInboundSummary_detected(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "proposed":
+			out.Values[i] = ec._AccountingInboundSummary_proposed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "appliedSince":
+			out.Values[i] = ec._AccountingInboundSummary_appliedSince(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ignoredSince":
+			out.Values[i] = ec._AccountingInboundSummary_ignoredSince(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -7783,6 +10309,43 @@ func (ec *executionContext) marshalNAccountingAppSource2githubᚗcomᚋemoss08�
 	return res
 }
 
+func (ec *executionContext) marshalNAccountingAppliedObject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppliedObject(ctx context.Context, sel ast.SelectionSet, v accountingsync.AppliedObject) graphql.Marshaler {
+	return ec._AccountingAppliedObject(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccountingAppliedObject2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppliedObjectᚄ(ctx context.Context, sel ast.SelectionSet, v []accountingsync.AppliedObject) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAccountingAppliedObject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppliedObject(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNAccountingAppliedObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppliedObjectType(ctx context.Context, v any) (accountingsync.AppliedObjectType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.AppliedObjectType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccountingAppliedObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppliedObjectType(ctx context.Context, sel ast.SelectionSet, v accountingsync.AppliedObjectType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNAccountingAuthorizationStart2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingAuthorizationStart(ctx context.Context, sel ast.SelectionSet, v *services.AccountingAuthorizationStart) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7878,6 +10441,196 @@ func (ec *executionContext) marshalNAccountingConnectionStatus2githubᚗcomᚋem
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNAccountingInboundApplyPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingInboundApplyPreview(ctx context.Context, sel ast.SelectionSet, v *services.AccountingInboundApplyPreview) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccountingInboundApplyPreview(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAccountingInboundChange(ctx context.Context, sel ast.SelectionSet, v *accountingsync.AccountingInboundChange) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccountingInboundChange(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAccountingInboundChangeConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountingInboundChangeConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.AccountingInboundChangeConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccountingInboundChangeConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAccountingInboundChangeEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountingInboundChangeEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.AccountingInboundChangeEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAccountingInboundChangeEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountingInboundChangeEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAccountingInboundChangeEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountingInboundChangeEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.AccountingInboundChangeEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccountingInboundChangeEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAccountingInboundChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundChangeKind(ctx context.Context, v any) (accountingsync.InboundChangeKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.InboundChangeKind(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccountingInboundChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundChangeKind(ctx context.Context, sel ast.SelectionSet, v accountingsync.InboundChangeKind) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNAccountingInboundChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundChangeStatus(ctx context.Context, v any) (accountingsync.InboundChangeStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.InboundChangeStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccountingInboundChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundChangeStatus(ctx context.Context, sel ast.SelectionSet, v accountingsync.InboundChangeStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNAccountingInboundDocumentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundDocumentKind(ctx context.Context, v any) (accountingsync.InboundDocumentKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.InboundDocumentKind(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccountingInboundDocumentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundDocumentKind(ctx context.Context, sel ast.SelectionSet, v accountingsync.InboundDocumentKind) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNAccountingInboundLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundLineᚄ(ctx context.Context, sel ast.SelectionSet, v []*accountingsync.InboundLine) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAccountingInboundLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundLine(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAccountingInboundLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundLine(ctx context.Context, sel ast.SelectionSet, v *accountingsync.InboundLine) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccountingInboundLine(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAccountingInboundOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingInboundOverview(ctx context.Context, sel ast.SelectionSet, v *services.AccountingInboundOverview) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccountingInboundOverview(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx context.Context, v any) (accountingsync.InboundPaymentPolicy, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.InboundPaymentPolicy(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx context.Context, sel ast.SelectionSet, v accountingsync.InboundPaymentPolicy) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNAccountingInboundPostingLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingInboundPostingLine(ctx context.Context, sel ast.SelectionSet, v services.AccountingInboundPostingLine) graphql.Marshaler {
+	return ec._AccountingInboundPostingLine(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAccountingInboundPostingLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingInboundPostingLineᚄ(ctx context.Context, sel ast.SelectionSet, v []services.AccountingInboundPostingLine) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAccountingInboundPostingLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingInboundPostingLine(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAccountingInboundSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAccountingInboundSummary(ctx context.Context, sel ast.SelectionSet, v *repositories.AccountingInboundSummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccountingInboundSummary(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNAccountingMapping2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAccountingMappingᚄ(ctx context.Context, sel ast.SelectionSet, v []*accountingsync.AccountingMapping) graphql.Marshaler {
@@ -8474,6 +11227,11 @@ func (ec *executionContext) unmarshalNEnableAccountingSyncInput2githubᚗcomᚋe
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNIgnoreAccountingInboundChangeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐIgnoreAccountingInboundChangeInput(ctx context.Context, v any) (gqlmodel.IgnoreAccountingInboundChangeInput, error) {
+	res, err := ec.unmarshalInputIgnoreAccountingInboundChangeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNPauseAccountingSyncInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPauseAccountingSyncInput(ctx context.Context, v any) (gqlmodel.PauseAccountingSyncInput, error) {
 	res, err := ec.unmarshalInputPauseAccountingSyncInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8583,6 +11341,44 @@ func (ec *executionContext) unmarshalOAccountingErrorCategory2ᚖgithubᚗcomᚋ
 }
 
 func (ec *executionContext) marshalOAccountingErrorCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐErrorCategory(ctx context.Context, sel ast.SelectionSet, v *accountingsync.ErrorCategory) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalOAccountingInboundChangeReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundChangeReason(ctx context.Context, v any) (*accountingsync.InboundChangeReason, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.InboundChangeReason(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccountingInboundChangeReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundChangeReason(ctx context.Context, sel ast.SelectionSet, v *accountingsync.InboundChangeReason) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalOAccountingInboundPaymentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx context.Context, v any) (*accountingsync.InboundPaymentPolicy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.InboundPaymentPolicy(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccountingInboundPaymentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx context.Context, sel ast.SelectionSet, v *accountingsync.InboundPaymentPolicy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -8780,6 +11576,25 @@ func (ec *executionContext) marshalOAccountingSyncObjectType2ᚕgithubᚗcomᚋe
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalOAccountingSyncObjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐSyncObjectType(ctx context.Context, v any) (*accountingsync.SyncObjectType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.SyncObjectType(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccountingSyncObjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐSyncObjectType(ctx context.Context, sel ast.SelectionSet, v *accountingsync.SyncObjectType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) unmarshalOAccountingSyncRecordFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountingSyncRecordFilterInput(ctx context.Context, v any) (*gqlmodel.AccountingSyncRecordFilterInput, error) {

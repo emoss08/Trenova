@@ -59,16 +59,37 @@ describe("accountingStartDateSchema driver settlements", () => {
 });
 
 describe("accountingSyncSettingsSchema", () => {
-  it("takes both switches", () => {
-    expect(
-      accountingSyncSettingsSchema.safeParse({ autoSync: false, driverSettlements: true }).success,
-    ).toBe(true);
+  it("takes both switches and a payment policy", () => {
+    for (const inboundPayments of ["Propose", "Apply", "Off"]) {
+      expect(
+        accountingSyncSettingsSchema.safeParse({
+          autoSync: false,
+          driverSettlements: true,
+          inboundPayments,
+        }).success,
+      ).toBe(true);
+    }
   });
 
   it("refuses a missing switch", () => {
-    const result = accountingSyncSettingsSchema.safeParse({ autoSync: true });
+    const result = accountingSyncSettingsSchema.safeParse({
+      autoSync: true,
+      inboundPayments: "Propose",
+    });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["driverSettlements"]);
+  });
+
+  it("refuses a payment policy the server does not know", () => {
+    for (const inboundPayments of [undefined, "", "Automatic"]) {
+      const result = accountingSyncSettingsSchema.safeParse({
+        autoSync: true,
+        driverSettlements: false,
+        inboundPayments,
+      });
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.path).toEqual(["inboundPayments"]);
+    }
   });
 });
 

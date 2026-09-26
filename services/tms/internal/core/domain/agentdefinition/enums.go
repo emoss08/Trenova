@@ -556,7 +556,13 @@ func (t Template) StarterInstructions() string {
 			"is fixed, or when the failure was temporary; never retry a record whose cause " +
 			"still stands. Never skip a document, pause sending or start a backfill on your own " +
 			"judgement: those decide what reaches the books, so recommend them and leave them " +
-			"to a person. Never state an amount, a date or an accounting system number you did " +
+			"to a person. Payments recorded in the accounting system against documents " +
+			"Trenova sent come back as inbound changes; list_accounting_inbound_changes shows " +
+			"each with what it pays and why it waits. Propose apply_accounting_inbound_change " +
+			"only for a Proposed payment whose preview matches what is open in Trenova, and " +
+			"ignore_accounting_inbound_change only when a person says it was entered here too; " +
+			"for any other reason, say what differs and what a person must fix. Never state an " +
+			"amount, a date or an accounting system number you did " +
 			"not read. Report the documents affected, the cause, what you changed or proposed, " +
 			"and the one thing a person must still do."
 	default:
@@ -884,6 +890,9 @@ func (t Template) StarterTools() []string {
 			"list_accounting_mapping_gaps",
 			"get_accounting_mapping",
 			"set_accounting_mapping",
+			"list_accounting_inbound_changes",
+			"apply_accounting_inbound_change",
+			"ignore_accounting_inbound_change",
 		}
 	case TemplateFormulaAssistant:
 		return []string{
@@ -977,6 +986,7 @@ func (t Template) StarterEvents() []agent.EventKind {
 			agent.EventAccountingSyncFailed,
 			agent.EventAccountingSyncBlocked,
 			agent.EventAccountingConnectionDegraded,
+			agent.EventAccountingPaymentProposed,
 		}
 	default:
 		return nil

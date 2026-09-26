@@ -28,6 +28,8 @@ writes:
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
 
   # accountingsync
+  "mutation applyAccountingInboundChange":
+    tools: [apply_accounting_inbound_change]
   "mutation changeAccountingBackfill":
     pending: "Change the range or scope of an accounting backfill that has not finished."
   "mutation checkAccountingConnection":
@@ -50,6 +52,8 @@ writes:
   "mutation enableAccountingSync":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation ignoreAccountingInboundChange":
+    tools: [ignore_accounting_inbound_change]
   "mutation pauseAccountingSync":
     tools: [pause_accounting_sync]
   "mutation refreshAccountingReferenceData":

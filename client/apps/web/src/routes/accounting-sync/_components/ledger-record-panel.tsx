@@ -6,7 +6,7 @@ import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state
 import { useAccountingSyncActions } from "@/hooks/use-accounting-sync-actions";
 import { useAccountingSyncLabels } from "@/hooks/use-accounting-sync-labels";
 import { usePermission } from "@/hooks/use-permission";
-import { accountingSyncRecordPhase } from "@/lib/accounting-sync";
+import { accountingSyncObjectPath, accountingSyncRecordPhase } from "@/lib/accounting-sync";
 import type { AccountingSyncRecord } from "@/lib/graphql/accounting-sync-ledger";
 import type { AccountingSyncLedgerRow } from "@/lib/graphql/accounting-sync-ledger-table";
 import { queries } from "@/lib/queries";
@@ -111,7 +111,7 @@ function LedgerRecordDetail({
   const actions = useAccountingSyncActions(system, providerName);
   const [skipping, setSkipping] = useState(false);
   const attempts = useQuery({ ...queries.accountingSync.syncAttempts(record.id), enabled: open });
-  const documentLink = trenovaDocumentPath(record);
+  const documentLink = accountingSyncObjectPath(record.objectType, record.objectId);
   const failed = record.status === "Blocked" || record.status === "DeadLettered";
 
   return (
@@ -327,28 +327,4 @@ function SkipForm({
       </div>
     </Form>
   );
-}
-
-function trenovaDocumentPath(record: AccountingSyncRecord): string | null {
-  switch (record.objectType) {
-    case "Invoice":
-    case "CreditMemo":
-    case "DebitMemo":
-      return recordPath("invoice", record.objectId);
-    case "Customer":
-      return recordPath("customer", record.objectId);
-    case "CarrierBill":
-    case "CarrierBillPayment":
-      return recordPath("carrier_settlement", record.objectId);
-    case "DriverBill":
-    case "DriverBillPayment":
-      return recordPath("driver_settlement", record.objectId);
-    case "CarrierVendor":
-      return recordPath("carrier", record.objectId);
-    case "DriverVendor":
-      return recordPath("worker", record.objectId);
-    case "CustomerPayment":
-    case "CreditApplication":
-      return null;
-  }
 }

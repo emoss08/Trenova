@@ -61,13 +61,13 @@ To confirm against Intuit's current reference in M1 before coding against them (
 5. **Inbound is pull, triggered by push.** A webhook only says "this realm changed". It enqueues a CDC poll for that connection. CDC is the source of truth, so ordering, duplication and missed webhooks do not matter. A scheduled poll every 5 minutes covers silence.
 6. **Drift is computed, not guessed.** A nightly job compares each synced document's total and status with QuickBooks, and AR by customer for the period, and raises specific findings with both values, the time and (where QuickBooks supplies it) the editor.
 7. **Tokens live in their own row.** `accounting_connections` stores the encrypted access and refresh tokens, their expiries, and the connection's health. Refresh takes a row lock so two workers never refresh at once.
-8. **Connectors are adapters.** A capability-split `AccountingConnector` port; QuickBooks Online is the first adapter. Xero, Business Central and NetSuite follow as their own milestones.
+8. **Connectors are adapters, and nothing above them knows the provider.** A capability-split `AccountingConnector` port; QuickBooks Online is the first adapter. Xero, Business Central and NetSuite follow as their own milestones. This is a standing rule for every milestone: services, tables, GraphQL, tools, events and UI speak in provider-neutral terms (a sales document, a purchase document, a change feed, a cursor), and every provider difference is either hidden in the adapter or declared by it as data (`DocumentLimits`, `ChangeFeedLimits`). A new provider is an adapter, a connect flow and a catalog card; it never needs a change to the sync, inbound or drift services. Each new port states what the other planned providers need from it.
 
 ---
 
 ## 3. Data model
 
-All tables: composite PK `(id, organization_id, business_unit_id)`, tenant FKs, `version` where rows are edited, Unix-second `BIGINT` timestamps, money as `NUMERIC(19,4)` plus `*_minor BIGINT` where Trenova's own tables do. New enums use varchar with named `CHECK` constraints (`ck_<table>_<col>`), registered in `enum_constraints_test.go`, so later values never need a non-transactional `ALTER TYPE`. SQLite mirrors regenerate with `task sqlite-convert`.
+All tables: composite PK `(id, organization_id, business_unit_id)`, tenant FKs, `version` where rows are edited, Unix-second `BIGINT` timestamps, money as `NUMERIC(19,4)` plus `*_minor BIGINT` where Trenova's own tables do. New enums use varchar with named `CHECK` constraints (`ck_<table>_<col>`), registered in `enum_constraints_test.go`, so later values never need a non-transactional `ALTER TYPE`. Migrations are PostgreSQL only; the SQLite set is being retired and G01 does not extend it.
 
 ### 3.1 `accounting_connections`
 
@@ -665,6 +665,75 @@ This keeps the M2 wizard's role mappings working for the common case, and never 
 
 **Deferred.** Inbound bill payments made in the provider, and drift on payables, are part of M5, as §9 lists.
 
+### 9.5 M5a design, pinned to the code
+
+M5 ships as two PRs. **M5a, changes in**, reads what changed in the provider and brings payments recorded there into Trenova. **M5b, drift**, compares both sides nightly and offers a fix in each direction; it reads the same change feed. This section is M5a.
+
+**Provider-neutral, first.** Everything below sits above ports that every planned provider can implement. QuickBooks Online reads changes with change data capture; Xero with `If-Modified-Since` queries; Business Central with delta links; NetSuite with saved-search polling. So the port speaks of a **change feed** and an **opaque cursor** the adapter owns, never of CDC or a timestamp, and each adapter declares its limits as data. Inbound documents arrive as neutral types. The webhook endpoint is already per provider (`/webhooks/accounting/:provider/`); each provider parses its own envelope and verifies its own signature, and every one ends in the same signal.
+
+**What the survey found.**
+- **The webhook triggers nothing.** `ReceiveWebhook` parses realm ids, verifies the signature per app and stamps `last_webhook_at`. There is no inbound cursor on the connection and no port that reads provider transactions; `AccountingDocumentWriter` has only `FindSalesDocument`.
+- **Sync records cannot be found by external id.** The repository lists by Trenova object only. Recognising a document Trenova itself sent needs a lookup by `(connection, external_id)`.
+- **Posting a payment in Trenova enqueues it outbound.** `PostAndApply`, `ApplyCreditMemo`, and both settlements' `MarkPaid` enqueue a sync record inside their transaction. Applying a provider payment through them would send it straight back as a second payment.
+- **The payment services need a real user.** `PostAndApply`, `ApplyCreditMemo` and `MarkPaid` refuse an actor without `UserID`, and write it to `created_by`/`posted_by`. Background work that posts uses the seeded system user (`userRepo.GetSystemUser`, as EDI and trailers do), never the literal `"system"`.
+- **Nothing checks a period's status for payments.** `customerpaymentservice` only requires that some period covers the date (F7). `fiscalperiod.AcceptsPostings()` is true for `Open` and `Locked`, while the enum's own contract says `Locked` blocks subledger postings.
+- **Proposals belong to agent runs.** `proposalrecorder.Record` needs an agent definition and a run; there is no service-level "a person confirms this" API. Bank receipts solve the same problem with their own work items, resolved by a person or by a tool at `ActWithApproval`.
+- **`MarkPaid` takes no date.** Both settlement services stamp `PaidAt = now`, and the carrier payment journal resolves its period from that. A payment made in the provider on the 28th and read on the 2nd must be paid on the 28th.
+- **Payment method mappings already exist** (`TargetPaymentMethod`, Trenova method to provider method), so a provider method maps back by reverse lookup.
+
+**Change feed port.** A new capability, `AccountingChangeReader`, beside the writer:
+- `ChangeFeedLimits()` returns `MaxLookback` (how old a cursor may be before the feed cannot answer from it; 30 days for QuickBooks, unbounded for Xero), and whether deletes are reported.
+- `ReadChanges(ctx, {Auth, Cursor, Kinds})` returns one page: `Changes`, `NextCursor`, `More`, and `CursorExpired`.
+- A change is `{Kind, ExternalID, Operation (Upsert, Delete, Void), ModifiedAt, ModifiedBy (optional), Payment | BillPayment | Reference}`.
+  - Kinds: `CustomerPayment`, `BillPayment`, the M2 reference kinds, and for M5b the sales and purchase documents.
+  - `AccountingInboundPayment`: customer external id, amount, currency, date, reference number, method external id, deposit account external id, and lines, each `{DocumentKind (Invoice, CreditMemo, DebitMemo…), DocumentExternalID, Amount}`.
+  - `AccountingInboundBillPayment`: vendor external id, amount, currency, date, reference number, pay-from account external id, and lines against bills and vendor credits.
+- The QuickBooks adapter reads CDC for up to 30 days back. Past that, or when an entity returns the 1,000-object cap, it pages the same entities with a query on `MetaData.LastUpdatedTime` instead, so the service never sees either limit. The cursor it returns is the time the read started, encoded as the adapter chooses. When the cursor was too old for deletes to be reported, `CursorExpired` is set and the service queues a full reference refresh, the only place a missed delete matters in M5a.
+
+**Connection columns.**
+- `change_cursor` (text, adapter-owned), `changes_read_at`, `changes_error_category`, `changes_error_message`. The cursor starts at the time sync is enabled, so a new connection never pulls history as changes.
+- `inbound_payment_policy` (`Off`, `Propose`, `Apply`), default **`Propose`** per D3, changed in the Sync settings panel beside automatic sync. `Off` still reads the feed for reference changes; it only records nothing for payments.
+
+**Polling.**
+- `PollAccountingChangesWorkflow`, one per connection (`accounting-changes:<connectionID>`), is signal-with-started by the webhook and by a schedule every five minutes (a kick activity over active connections, like the drain kick). A signal that arrives while a poll runs sets a flag, and the workflow reads again once it finishes, so a burst of webhooks costs one extra read, not one per event.
+- Each page is one activity: read the page, apply reference changes, record inbound payments, and advance the cursor, in one transaction. A crash re-reads the last page; recording is idempotent, so that is harmless.
+- Connections that are paused, revoked or disconnected are not polled. Errors set the `changes_error_*` columns and the connection's health the same way the drain does.
+
+**Inbound changes table.** `accounting_inbound_changes` holds one row per provider payment: `connection_id`, `kind` (`CustomerPayment`, `BillPayment`), `external_id`, `external_number`, `provider_modified_at`, `provider_modified_by`, `txn_date`, `amount_minor`, `currency_code`, `party_external_id`, `document` (the neutral document, JSONB), `status` (`Detected`, `Proposed`, `Applied`, `Ignored`, `Superseded`), `reason` (why it is not applied automatically: `PolicyPropose`, `PeriodNotOpen`, `UnknownDocument`, `PartyMismatch`, `Overpayment`, `PartialBillPayment`, `AlreadyPaid`, `CurrencyMismatch`, `Voided`), `resolution` (plain language), `applied_object_type`, `applied_object_id`, `decided_by_id`, `decided_at`, `note`, `detected_at`, `version`. Unique `(connection_id, kind, external_id)`. A later read of the same payment updates the row while it is `Detected` or `Proposed`; after it is `Applied`, a changed or voided provider payment is drift, raised in M5b.
+
+**Echo suppression.** A provider payment is Trenova's own when any sync record of the connection carries its external id (a customer payment, a credit application, or a bill payment). Such payments are never recorded. To close the race where the feed sees a payment before the push that created it commits `Synced`, rows are recorded as `Detected` and only evaluated once they are two minutes old and no record of the connection is `InFlight` for the matching object types. The push lease bounds that wait.
+
+**Evaluation.** An evaluation activity runs after each poll over `Detected` rows. It matches, then applies, proposes or ignores:
+- **Customer payments.** Each line's invoice, debit memo or credit memo is found through its sync record's external id. A payment none of whose lines names a Trenova document is not Trenova's and is marked `Ignored` with that reason. The party must be the documents' customer (through the customer mapping). Each line must fit the document's open balance, and the currency must match. The payment method maps back through `TargetPaymentMethod`, else `Other`.
+- **Bill payments.** Each bill line is found through the `CarrierBill`/`DriverBill` record. The payment must pay the settlement's net in full, because Trenova settlements have no partial payment; anything else is `PartialBillPayment`. A settlement already `Paid` is `AlreadyPaid`.
+- **Periods.** The payment's date must fall in an `Open` period. `Locked` and closed periods make the row `Proposed` with `PeriodNotOpen`, naming the period, whatever the policy. This follows the fiscal period contract (`Locked` blocks subledger postings) rather than `AcceptsPostings`.
+- **Policy.** Every row that passes goes to `Applied` under `Apply` and to `Proposed` with `PolicyPropose` under `Propose`.
+
+**Applying.** One transaction, holding the change row with `FOR UPDATE` so it can never apply twice:
+1. Customer payments call `PostAndApply` with the cash lines against invoices and debit memos, and any amount not on a line as unapplied cash. Credit memo lines call `ApplyCreditMemo` against the invoices the provider paid with them.
+2. Bill payments call the settlement's `MarkPaid` with the provider's date. Both `MarkPaid` methods move to a request struct (`MarkSettlementPaidRequest{TenantInfo, SettlementID, PaymentMethod, PaymentReference, PaidAt}`), where a zero `PaidAt` means now; every existing caller passes zero.
+3. The sync records those calls enqueued are **linked**, not sent: each is marked `Synced` with the provider's external id and the resolution "Recorded in QuickBooks Online and applied in Trenova". A later reversal or void in Trenova then acts on the right provider document through the normal outbox.
+4. The row becomes `Applied` with the Trenova object it created.
+
+The actor is the person who confirmed, or the seeded system user under `Apply`. A validation error from the payment service (for example an invoice paid in Trenova meanwhile) puts the row back to `Proposed` with the service's message as its resolution.
+
+**Agent surface.**
+- Tools: `list_accounting_inbound_changes` (read, `listSpec`), `apply_accounting_inbound_change` (`accounting_sync` update, `ActWithApproval`, money egress like `post_customer_payment`, Simulate shows the payment and applications it would post), and `ignore_accounting_inbound_change` (`ActWithApproval`, note required).
+- Event `accounting.inbound_payment_proposed`, raised once per poll that proposed any, with the count. Books Keeper wakes on it.
+- Watchtower: proposed changes older than one day, grouped by reason, so twenty payments waiting on a locked period are one item that names the period.
+- Subject type `AccountingInboundChange`.
+
+**Reporting.** A catalog entity `accounting_inbound_change`, with an edge to the connection.
+
+**UI.**
+- **Changes from the provider**: `/accounting/sync/inbound`, a `PageLayout` with a `KpiStrip` (proposed, applied this week, ignored), then the table (provider number, customer or vendor, date, amount, what it pays, status, reason). A row opens a side panel with the matched Trenova documents, the reason in plain language, and Apply and Ignore.
+- **Sync settings** gains the inbound payment policy, with a line for each choice.
+- **Sync ledger header** links to the page with the proposed count.
+- **Record status lines** say "Paid in QuickBooks Online on {date}" for a document settled by an applied change.
+- Product guide page `accounting/inbound-changes.md`; the integrations page covers the policy.
+
+**Deferred to M5b.** Drift findings, the nightly reconcile, fixes in either direction, the drift page, **Open drift by customer**, and the Books Keeper weekly note. Provider payments changed or voided after being applied surface there.
+
 
 ---
 
@@ -681,7 +750,7 @@ This keeps the M2 wizard's role mappings working for the common case, and never 
 
 ## 11. Gates per PR
 
-`task lint`, `task test`, `task test-integration`, `task gqlgen`, `task gqlschema-diff`, `task generate-columns`, `task generate-reportcatalog`, `task sqlite-convert`, `go generate ./internal/api/graphql/projection/...`, `go generate ./internal/core/services/agenttoolpolicy/safetydoc/...`, `task i18n-check` (repo root); from `client/`: `pnpm --filter @trenova/graphql codegen`, `pnpm lint`, `pnpm typecheck`, `pnpm lint:design`, `pnpm test`, `pnpm --filter @trenova/web guide:generate`. `docs/engineering/generated-artifacts.md` read before each schema change.
+`task lint`, `task test`, `task test-integration`, `task gqlgen`, `task gqlschema-diff`, `task generate-columns`, `task generate-reportcatalog`, `go generate ./internal/api/graphql/projection/...`, `go generate ./internal/core/services/agenttoolpolicy/safetydoc/...`, `task i18n-check` (repo root); from `client/`: `pnpm --filter @trenova/graphql codegen`, `pnpm lint`, `pnpm typecheck`, `pnpm lint:design`, `pnpm test`, `pnpm --filter @trenova/web guide:generate`. `docs/engineering/generated-artifacts.md` read before each schema change.
 
 ---
 

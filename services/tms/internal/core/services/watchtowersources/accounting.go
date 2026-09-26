@@ -2,6 +2,7 @@ package watchtowersources
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -18,13 +19,15 @@ const accountingReconnectSuffix = ":reconnect"
 type AccountingSyncSource struct {
 	repo    repositories.AccountingConnectionRepository
 	records repositories.AccountingSyncRecordRepository
+	inbound repositories.AccountingInboundChangeRepository
 }
 
 func NewAccountingSyncSource(
 	repo repositories.AccountingConnectionRepository,
 	records repositories.AccountingSyncRecordRepository,
+	inbound repositories.AccountingInboundChangeRepository,
 ) services.WatchtowerSource {
-	return &AccountingSyncSource{repo: repo, records: records}
+	return &AccountingSyncSource{repo: repo, records: records, inbound: inbound}
 }
 
 func (s *AccountingSyncSource) Kind() watchtower.SourceKind {
@@ -67,6 +70,22 @@ func (s *AccountingSyncSource) Snapshot(
 		}
 		for key, keyed := range GroupAccountingSyncAttention(groups) {
 			if item, open := DescribeAccountingSyncAttention(conn, key, keyed); open {
+				items = append(items, item)
+			}
+		}
+		inbound, inboundErr := s.inbound.ListAttention(
+			ctx,
+			&repositories.ListAccountingInboundAttentionRequest{
+				TenantInfo:     tenant,
+				ConnectionID:   conn.ID,
+				DetectedBefore: now - int64(AccountingInboundAfter/time.Second),
+			},
+		)
+		if inboundErr != nil {
+			return nil, inboundErr
+		}
+		for idx := range inbound {
+			if item, open := DescribeAccountingInboundAttention(conn, &inbound[idx]); open {
 				items = append(items, item)
 			}
 		}

@@ -1394,3 +1394,31 @@ entities:
       startedAt: { label: "Started At" }
       syncedAt: { label: "Synced At" }
       skippedReason: { label: "Skip Reason" }
+  accounting_inbound_change:
+    struct: accountingsync.AccountingInboundChange
+    resource: accounting_sync
+    label: Payment From the Books
+    pluralLabel: Payments From the Books
+    description: Payments recorded in the accounting system against documents Trenova sent, and whether each was applied in Trenova
+    category: Accounting
+    excludeFields:
+      - document
+      - appliedObjects
+      - partyExternalId
+    fields:
+      kind: { label: "Payment Kind" }
+      reason: { label: "Held Back Because" }
+      resolution: { label: "What to Do" }
+      externalId: { label: "ID in the Books" }
+      externalNumber: { label: "Number in the Books" }
+      externalUrl: { label: "Link in the Books" }
+      providerModifiedAt: { label: "Changed in the Books At" }
+      providerModifiedBy: { label: "Changed in the Books By" }
+      txnDate: { label: "Payment Date" }
+      amountMinor: { label: "Amount (Minor)" }
+      currencyCode: { label: "Currency" }
+      partyName: { label: "Customer or Vendor" }
+      partyObjectId: { label: "Trenova Party ID" }
+      decidedAt: { label: "Decided At" }
+      note: { label: "Note" }
+      detectedAt: { label: "Read At" }

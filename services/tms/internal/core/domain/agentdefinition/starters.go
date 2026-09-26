@@ -434,6 +434,11 @@ var templateStarters = map[Template][]starterQuestion{
 			"Is the accounting system connected and answering, and how many documents are queued?",
 			"get_accounting_sync_status",
 		),
+		ask(
+			"Which payments from the books wait?",
+			"Which payments recorded in the accounting system wait to be applied in Trenova, and why?",
+			"list_accounting_inbound_changes",
+		),
 	},
 	TemplateFormulaAssistant: {
 		ask(

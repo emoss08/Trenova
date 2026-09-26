@@ -1,6 +1,11 @@
 aliases:
   AccountingConnection:
     syncsDriverSettlements: driverSettlementsEnabledAt
+  AccountingInboundChange:
+    referenceNumber: document
+    methodName: document
+    unappliedMinor: document
+    lines: document
   AgentDefinition:
     delegates: delegateIds
   MyAgent:

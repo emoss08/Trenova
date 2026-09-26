@@ -323,6 +323,48 @@ func (f *fakeRecords) ListConnection(
 	return &pagination.CursorListResult[*accountingsync.AccountingSyncRecord]{Items: items}, nil
 }
 
+func (f *fakeRecords) ListByExternalIDs(
+	_ context.Context,
+	req *repositories.ListAccountingSyncRecordsByExternalIDsRequest,
+) ([]*accountingsync.AccountingSyncRecord, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := []*accountingsync.AccountingSyncRecord{}
+	for _, row := range f.rows {
+		if !sameTenant(row.OrganizationID, row.BusinessUnitID, req.TenantInfo) ||
+			row.ConnectionID != req.ConnectionID || row.ExternalID == "" ||
+			!slices.Contains(req.ExternalIDs, row.ExternalID) {
+			continue
+		}
+		if len(req.ObjectTypes) > 0 && !slices.Contains(req.ObjectTypes, row.ObjectType) {
+			continue
+		}
+		out = append(out, cloneRecord(row))
+	}
+	return out, nil
+}
+
+func (f *fakeRecords) CountInFlight(
+	_ context.Context,
+	req *repositories.CountAccountingSyncInFlightRequest,
+) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	count := 0
+	for _, row := range f.rows {
+		if !sameTenant(row.OrganizationID, row.BusinessUnitID, req.TenantInfo) ||
+			row.ConnectionID != req.ConnectionID ||
+			row.Status != accountingsync.SyncStatusInFlight {
+			continue
+		}
+		if len(req.ObjectTypes) > 0 && !slices.Contains(req.ObjectTypes, row.ObjectType) {
+			continue
+		}
+		count++
+	}
+	return count, nil
+}
+
 func (f *fakeRecords) ListByObjects(
 	_ context.Context,
 	req *repositories.ListAccountingSyncRecordsByObjectsRequest,

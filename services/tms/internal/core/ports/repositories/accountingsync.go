@@ -55,6 +55,16 @@ type MarkAccountingReferenceRefreshRequest struct {
 	Error       string
 }
 
+type SaveAccountingChangeFeedRequest struct {
+	TenantInfo    pagination.TenantInfo
+	ID            pulid.ID
+	Cursor        string
+	OnlyIfEmpty   bool
+	ReadAt        *int64
+	ErrorCategory accountingsync.SyncErrorCategory
+	ErrorMessage  string
+}
+
 type ListActiveAccountingConnectionsRequest struct {
 	AfterID pulid.ID
 	Limit   int
@@ -100,6 +110,7 @@ type AccountingConnectionRepository interface {
 	StoreTokens(ctx context.Context, req StoreAccountingTokensRequest) error
 	MarkWebhookReceived(ctx context.Context, req MarkAccountingWebhookRequest) (int64, error)
 	MarkReferenceRefresh(ctx context.Context, req MarkAccountingReferenceRefreshRequest) error
+	SaveChangeFeed(ctx context.Context, req *SaveAccountingChangeFeedRequest) (bool, error)
 	ListActive(
 		ctx context.Context,
 		req ListActiveAccountingConnectionsRequest,

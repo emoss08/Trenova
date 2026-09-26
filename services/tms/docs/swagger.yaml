@@ -152,6 +152,7 @@ definitions:
             - AccountingConnection
             - FormulaTemplate
             - AccountingSyncRecord
+            - AccountingInboundChange
         type: string
         x-enum-varnames:
             - SubjectBillingQueueItem
@@ -172,6 +173,7 @@ definitions:
             - SubjectAccountingConnection
             - SubjectFormulaTemplate
             - SubjectAccountingSyncRecord
+            - SubjectAccountingInbound
     agent.TaintMark:
         properties:
             at:

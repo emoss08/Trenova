@@ -4084,6 +4084,15 @@
       "domain/driverpay"
     ]
   },
+  "A payment was recorded in the accounting system against documents Trenova sent, and waits for someone to apply it in Trenova or ignore it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A pending model needs a model key": {
     "sites": 1,
     "scope": [
@@ -14585,6 +14594,24 @@
       "service/timesheetservice"
     ]
   },
+  "Already paid in Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Already recorded in Trenova by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Also amounts and pay, such as invoice totals and net pay": {
     "sites": 1,
     "scope": [
@@ -14832,7 +14859,7 @@
     ]
   },
   "Amount": {
-    "sites": 40,
+    "sites": 43,
     "scope": [
       "go",
       "ts"
@@ -14841,6 +14868,7 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/accessorial-charge",
+      "routes/accounting-inbound",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
       "routes/bank-receipt-queue",
@@ -17496,11 +17524,13 @@
     ]
   },
   "Applied": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
+      "routes/accounting-inbound",
       "routes/admin",
       "routes/ar-open-items",
       "routes/customer-payments",
@@ -17587,6 +17617,15 @@
     ],
     "areas": [
       "routes/recurring-deduction"
+    ]
+  },
+  "Applied by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Applied cap is invalid": {
@@ -17848,6 +17887,15 @@
       "routes/invoice"
     ]
   },
+  "Apply in Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Apply late charges": {
     "sites": 1,
     "scope": [
@@ -17882,6 +17930,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Apply them automatically": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Apply these rates": {
@@ -18019,6 +18076,24 @@
       "service/customerpaymentservice"
     ]
   },
+  "Applying a payment from the accounting system requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountinginboundservice"
+    ]
+  },
+  "Applying it posts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Applying replaces your {0} existing {1}.": {
     "sites": 1,
     "scope": [
@@ -18028,12 +18103,22 @@
       "routes/fuel-management"
     ]
   },
+  "Applying this payment posts to {0}, which you do not have permission to change": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountinginboundservice"
+    ]
+  },
   "Applying...": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-inbound",
       "routes/rate-agreement"
     ]
   },
@@ -25180,6 +25265,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Bill payment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Bill this charge to": {
     "sites": 1,
     "scope": [
@@ -28252,7 +28346,7 @@
     ]
   },
   "Cancel": {
-    "sites": 263,
+    "sites": 264,
     "scope": [
       "ts"
     ],
@@ -28260,6 +28354,7 @@
       "apps/dash/_components",
       "apps/web/components",
       "apps/web/lib",
+      "routes/accounting-inbound",
       "routes/accounting-sync",
       "routes/admin",
       "routes/agent-control",
@@ -30346,7 +30441,7 @@
     ]
   },
   "Carrier settlement": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -31774,6 +31869,15 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "Changed in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Changed since it was proposed": {
@@ -33836,6 +33940,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Choose whether payments recorded in {0} are ignored, proposed or applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "Choose which accounting-system record matches a Trenova record when the name rules are unsure.": {
@@ -39170,11 +39283,12 @@
     ]
   },
   "Connect {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-inbound",
       "routes/accounting-sync",
       "routes/admin"
     ]
@@ -41693,6 +41807,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Could not be applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Could not be asked": {
@@ -44339,7 +44462,7 @@
     ]
   },
   "Credit application": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -44403,7 +44526,7 @@
     ]
   },
   "Credit memo": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -45845,8 +45968,17 @@
       "routes/detention-policy"
     ]
   },
+  "Customer or vendor": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Customer payment": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -48001,7 +48133,7 @@
     ]
   },
   "Debit memo": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -52636,6 +52768,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Different currency": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Digest cadence is required": {
@@ -58832,6 +58973,15 @@
     ],
     "areas": [
       "routes/worker-checklist-template"
+    ]
+  },
+  "Each payment waits on the payments from the books page until someone applies or ignores it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Each permission must include a resource": {
@@ -71449,11 +71599,12 @@
     ]
   },
   "Finish setup": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-inbound",
       "routes/accounting-mapping",
       "routes/accounting-sync",
       "routes/admin"
@@ -80348,22 +80499,43 @@
     ]
   },
   "Ignore": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/accounting-inbound",
       "routes/inbox"
     ]
   },
-  "Ignored": {
-    "sites": 3,
+  "Ignore payment": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
+  "Ignored": {
+    "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/accounting-inbound",
       "routes/inbox"
+    ]
+  },
+  "Ignored by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Ignored instructions": {
@@ -80373,6 +80545,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Ignoring a payment from the accounting system requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountinginboundservice"
     ]
   },
   "Illinois (IL)": {
@@ -81030,12 +81211,13 @@
     ]
   },
   "In {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/accounting-inbound",
       "routes/accounting-sync",
       "routes/formula-template"
     ]
@@ -82648,6 +82830,15 @@
       "apps/web/lib"
     ]
   },
+  "Integration settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Integration type is required": {
     "sites": 2,
     "scope": [
@@ -84171,7 +84362,7 @@
     ]
   },
   "Invoice": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -85657,6 +85848,15 @@
       "routes/worker"
     ]
   },
+  "It cannot be applied yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "It carries the mailbox's token, which is stored only as a hash and cannot be shown again. Lose it and you rotate for a new one.": {
     "sites": 1,
     "scope": [
@@ -85682,6 +85882,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "It does not name any document.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "It has {0, plural, one {# stop} other {# stops}}.": {
@@ -86578,6 +86787,16 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Just read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/accounting-inbound"
     ]
   },
   "KPI": {
@@ -89336,6 +89555,15 @@
       "routes/worker"
     ]
   },
+  "Leave them out of Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Leave type": {
     "sites": 1,
     "scope": [
@@ -89424,6 +89652,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Left unapplied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Leg removed": {
@@ -91799,11 +92036,12 @@
     ]
   },
   "Loading payment...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-inbound",
       "routes/customer-payments"
     ]
   },
@@ -96943,12 +97181,13 @@
     ]
   },
   "Method": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/accessorial-charge",
+      "routes/accounting-inbound",
       "routes/admin",
       "routes/billing-queue",
       "routes/customer-payments",
@@ -99143,6 +99382,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "More than one party": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Most billed": {
@@ -107948,6 +108196,24 @@
       "apps/web/lib"
     ]
   },
+  "Not a Trenova document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Not a document Trenova sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Not answered": {
     "sites": 1,
     "scope": [
@@ -108747,7 +109013,7 @@
     ]
   },
   "Note": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -108755,6 +109021,7 @@
     "areas": [
       "apps/web/components",
       "packages/shared/lib",
+      "routes/accounting-inbound",
       "routes/detention-desk",
       "routes/edi",
       "routes/fuel-purchase",
@@ -110368,11 +110635,12 @@
     ]
   },
   "Number in the books": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-inbound",
       "routes/accounting-sync"
     ]
   },
@@ -117522,13 +117790,14 @@
     ]
   },
   "Other": {
-    "sites": 28,
+    "sites": 29,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "domain/fuelpurchase",
       "domain/worker",
@@ -118694,7 +118963,7 @@
     ]
   },
   "Owner-operator settlement": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -119564,6 +119833,15 @@
       "apps/dash/_components"
     ]
   },
+  "Paid by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Paid invoice adjustment policy": {
     "sites": 1,
     "scope": [
@@ -119589,6 +119867,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Paid on": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Paid out on a settlement — see the Pay tab.": {
@@ -119944,6 +120231,15 @@
       "packages/shared/components",
       "routes/agent-control",
       "routes/invoice-adjustment-batch"
+    ]
+  },
+  "Partial settlement payment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Partial: {0} of {1} calls unpriced": {
@@ -121592,12 +121888,14 @@
     ]
   },
   "Payment": {
-    "sites": 2,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib",
+      "routes/accounting-inbound",
       "routes/invoice"
     ]
   },
@@ -121665,6 +121963,15 @@
       "apps/web/hooks"
     ]
   },
+  "Payment applied in Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Payment date": {
     "sites": 3,
     "scope": [
@@ -121672,6 +121979,25 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "Payment from the books": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/accounting-inbound"
+    ]
+  },
+  "Payment ignored": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Payment method": {
@@ -121735,6 +122061,16 @@
     "areas": [
       "apps/web/hooks",
       "routes/customer-payments"
+    ]
+  },
+  "Payment recorded in the books": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent",
+      "service/agentsubjectservice"
     ]
   },
   "Payment reference": {
@@ -121847,6 +122183,90 @@
       "routes/invoice"
     ]
   },
+  "Payments from the books": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/config",
+      "routes/accounting-inbound",
+      "routes/admin"
+    ]
+  },
+  "Payments from the books could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
+  "Payments recorded in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Payments recorded in {0} against invoices and settlements Trenova sent, and whether each was brought into Trenova.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
+  "Payments recorded in {0} are left out of Trenova. Turn them on in the integration settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
+  "Payments recorded in {0} are not read. Record them in Trenova by hand so invoices and settlements show as paid.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Payments recorded in {0}: {1}. Last read {2}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
+  "Payments that match open invoices and settlements are applied without anyone looking at them. The rest still wait for a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Payments to apply ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Payments to this carrier should be included in 1099 reporting.": {
     "sites": 1,
     "scope": [
@@ -121902,6 +122322,24 @@
       "routes/time-attendance"
     ]
   },
+  "Pays": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
+  "Pays documents Trenova did not send": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Pays for each extra stop beyond pickup and delivery.": {
     "sites": 1,
     "scope": [
@@ -121909,6 +122347,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Pays more than is open": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Pays on {0}": {
@@ -122947,6 +123394,15 @@
     ],
     "areas": [
       "routes/carrier-settlement-workspace"
+    ]
+  },
+  "Period not open": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Period number is required": {
@@ -126194,6 +126650,15 @@
       "routes/accounting-sync"
     ]
   },
+  "Posted in Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Posted invoices are sent to {0} as an EDI 210.": {
     "sites": 1,
     "scope": [
@@ -126219,6 +126684,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Posted on {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
+  "Posted on {0}. {1} stays on the account as unapplied cash.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Posted to invoice history": {
@@ -132998,6 +133481,15 @@
       "routes/inbox"
     ]
   },
+  "Read by Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Read each row as: when fuel costs at least “from” and less than “up to”, {0}.": {
     "sites": 1,
     "scope": [
@@ -133105,6 +133597,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Read what changed in every syncing accounting system and bring payments in": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Read what changed in one connection's accounting system and bring payments in": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Read {0}": {
@@ -136601,12 +137111,13 @@
     ]
   },
   "Reference": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/components",
+      "routes/accounting-inbound",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
       "routes/bank-receipt-queue",
@@ -142598,12 +143109,13 @@
     ]
   },
   "Retry": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/accounting-inbound",
       "routes/accounting-mapping",
       "routes/accounting-sync",
       "routes/admin",
@@ -144029,6 +144541,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Review them on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Review this expense": {
@@ -148608,6 +149129,15 @@
     ],
     "areas": [
       "service/workerchecklistservice"
+    ]
+  },
+  "Say why this payment stays out of Trenova": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Say why this record is skipped": {
@@ -154124,6 +154654,15 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/billing-queue"
+    ]
+  },
+  "Sent from Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Sent to a customer while a driver is detained, and again once the charge is final. Branch on Kind to vary the wording per stage.": {
@@ -162539,7 +163078,7 @@
     ]
   },
   "Status": {
-    "sites": 248,
+    "sites": 250,
     "scope": [
       "go",
       "ts"
@@ -162550,6 +163089,7 @@
       "packages/shared/components",
       "routes/accessorial-charge",
       "routes/account-type",
+      "routes/accounting-inbound",
       "routes/accounting-sync",
       "routes/admin",
       "routes/agent-control",
@@ -165128,12 +165668,13 @@
     ]
   },
   "Sync ledger": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/accounting-inbound",
       "routes/accounting-sync"
     ]
   },
@@ -180287,6 +180828,15 @@
       "service/invoiceadjustmentservice"
     ]
   },
+  "This payment could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "This period has closed — bill it": {
     "sites": 1,
     "scope": [
@@ -185505,13 +186055,14 @@
     ]
   },
   "Trenova": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/components",
+      "routes/accounting-inbound",
       "routes/auth"
     ]
   },
@@ -185540,6 +186091,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Trenova could not read the latest changes from {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Trenova creates the {0} in {1} and maps {2} to it.": {
@@ -185594,6 +186154,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Trenova reads payments from {0} once setup is finished and syncing is on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Trenova revokes its access to {0} and stops reading from and writing to it. Nothing already in {1} is changed or deleted. You can connect again later.": {
@@ -187884,6 +188453,15 @@
     ],
     "areas": [
       "domain/report"
+    ]
+  },
+  "Unknown party": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Unknown profile field": {
@@ -191151,6 +191729,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Vendor bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Vendor bill posted": {
     "sites": 1,
     "scope": [
@@ -191176,6 +191763,15 @@
     ],
     "areas": [
       "domain/fuelpurchase"
+    ]
+  },
+  "Vendor credit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Vendor payment posted": {
@@ -193459,6 +194055,15 @@
       "routes/time-attendance"
     ]
   },
+  "Voided in the books": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Voided invoices cannot be posted": {
     "sites": 1,
     "scope": [
@@ -193604,6 +194209,15 @@
       "routes/shipment"
     ]
   },
+  "Wait for someone to apply them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Wait for this transfer to finish before retrying it": {
     "sites": 1,
     "scope": [
@@ -193705,6 +194319,16 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Waiting for you": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/accounting-inbound"
     ]
   },
   "Waiting for your approval": {
@@ -193825,6 +194449,15 @@
     ],
     "areas": [
       "domain/driverpay"
+    ]
+  },
+  "Waiting to be applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Waiting to be released to {0}": {
@@ -194028,6 +194661,15 @@
     "areas": [
       "routes/shipment",
       "routes/worker"
+    ]
+  },
+  "Wake the change reader for every accounting connection that is syncing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Wake the sender for every accounting connection with documents due": {
@@ -195509,6 +196151,15 @@
       "routes/agent-control"
     ]
   },
+  "What it pays": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "What it was about changed since, so it cannot continue. Start a new one to go on.": {
     "sites": 1,
     "scope": [
@@ -195543,6 +196194,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "What it would post could not be worked out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "What made up the rate": {
@@ -198311,6 +198971,15 @@
       "packages/shared/components"
     ]
   },
+  "Why does this payment stay out of Trenova?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "Why is this adjustment being rejected?": {
     "sites": 1,
     "scope": [
@@ -198399,6 +199068,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Why it waits": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Why it would not read": {
@@ -199619,6 +200297,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Working out what it posts...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "Working them out...": {
@@ -202588,6 +203275,15 @@
       "routes/billing-queue"
     ]
   },
+  "checked in a few minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "chosen on {0}": {
     "sites": 1,
     "scope": [
@@ -205299,6 +205995,15 @@
       "routes/shipment"
     ]
   },
+  "last 7 days": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "last rated {0}": {
     "sites": 1,
     "scope": [
@@ -205558,6 +206263,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "not yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "not yet due": {
@@ -207762,6 +208476,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# document} other {# documents}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "{0, plural, one {# doc} other {# docs}}": {
     "sites": 1,
     "scope": [
@@ -209325,6 +210048,15 @@
       "routes/shipment"
     ]
   },
+  "{0} and {1} more": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "{0} answered": {
     "sites": 1,
     "scope": [
@@ -209533,12 +210265,13 @@
     ]
   },
   "{0} by {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/accounting-inbound"
     ]
   },
   "{0} calls in a row have failed": {
@@ -209575,6 +210308,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "{0} cannot be applied: {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} cannot be cleared": {
@@ -210421,12 +211163,13 @@
     ]
   },
   "{0} has not been connected yet": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
       "api/graphql",
+      "service/accountinginboundservice",
       "service/accountingmappingservice",
       "service/accountingsyncservice"
     ]
@@ -210831,12 +211574,13 @@
     ]
   },
   "{0} is not an accounting system Trenova can sync with": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
       "service/accountingconnectionservice",
+      "service/accountinginboundservice",
       "service/accountingmappingservice",
       "service/accountingsyncservice"
     ]
@@ -210905,11 +211649,12 @@
     ]
   },
   "{0} is not connected yet.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-inbound",
       "routes/accounting-sync"
     ]
   },
@@ -211142,6 +211887,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "{0} is {1} and cannot be ignored": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} is {1} and cannot be skipped": {
@@ -212111,6 +212865,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} open in Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "{0} open review{1} still use this template. Close those first": {
@@ -213660,6 +214423,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "{0} · {1} · recorded in {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
+    ]
+  },
   "{0} · {1} · {2} employee, {3} employer per period": {
     "sites": 1,
     "scope": [
@@ -213896,6 +214668,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0}, open {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-inbound"
     ]
   },
   "{0}, through #{1}": {

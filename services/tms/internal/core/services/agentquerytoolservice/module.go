@@ -52,6 +52,7 @@ func coreToolProviders() []any {
 		provideListAccountingSyncRecordsTool,
 		provideGetAccountingSyncRecordTool,
 		provideGetRecordAccountingSyncStateTool,
+		provideListAccountingInboundChangesTool,
 		provideListAccountingMappingGapsTool,
 		provideGetAccountingMappingTool,
 		newGetShipmentTool,

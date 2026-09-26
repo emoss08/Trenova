@@ -1,3 +1,4 @@
+import { ACCOUNTING_INBOUND_POLICIES } from "@/lib/accounting-sync";
 import { z } from "zod";
 
 export function accountingStartDateSchema(latestAllowed: number) {
@@ -16,6 +17,7 @@ export function accountingStartDateSchema(latestAllowed: number) {
 export const accountingSyncSettingsSchema = z.object({
   autoSync: z.boolean(),
   driverSettlements: z.boolean(),
+  inboundPayments: z.enum(ACCOUNTING_INBOUND_POLICIES),
 });
 
 export type AccountingSyncSettingsValues = z.infer<typeof accountingSyncSettingsSchema>;

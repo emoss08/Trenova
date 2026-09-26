@@ -11,6 +11,11 @@ import {
   fetchAccountingSyncRecord,
   fetchAccountingSyncSummary,
 } from "@/lib/graphql/accounting-sync-ledger";
+import {
+  fetchAccountingInboundApplyPreview,
+  fetchAccountingInboundChange,
+  fetchAccountingInboundOverview,
+} from "@/lib/graphql/accounting-inbound";
 import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -45,6 +50,18 @@ export const accountingSync = createQueryKeys("accountingSync", {
   backfills: (integrationType: AccountingSystem) => ({
     queryKey: [integrationType],
     queryFn: ({ signal }) => fetchAccountingBackfills(integrationType, { signal }),
+  }),
+  inboundOverview: (integrationType: AccountingSystem) => ({
+    queryKey: [integrationType],
+    queryFn: ({ signal }) => fetchAccountingInboundOverview(integrationType, { signal }),
+  }),
+  inboundChange: (id: string) => ({
+    queryKey: [id],
+    queryFn: ({ signal }) => fetchAccountingInboundChange(id, { signal }),
+  }),
+  inboundPreview: (id: string) => ({
+    queryKey: [id],
+    queryFn: ({ signal }) => fetchAccountingInboundApplyPreview(id, { signal }),
   }),
   referenceSearch: (search: AccountingReferenceSearch) => ({
     queryKey: [search],
