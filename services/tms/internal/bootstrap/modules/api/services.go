@@ -134,6 +134,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
+	"github.com/emoss08/trenova/internal/core/services/journalreviewservice"
 	"github.com/emoss08/trenova/internal/core/services/jurisdictionruleservice"
 	"github.com/emoss08/trenova/internal/core/services/latechargeservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
@@ -547,6 +548,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *invoiceshareservice.Service) services.InvoiceShareService { return s },
 	journalentryservice.New,
 	journalreversalservice.New,
+	journalreviewservice.New,
+	func(s *journalreviewservice.Service) services.JournalReviewService { return s },
 	manualjournalservice.New,
 	billingcontrolservice.New,
 	costingservice.New,
