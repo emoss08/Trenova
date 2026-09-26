@@ -213694,7 +213694,7 @@
       "routes/billing-queue"
     ]
   },
-  "{0, plural, one {Unfiled pages are deleted in # day, on {1}.} other {Unfiled pages are deleted in # days, on {1}.}}": {
+  "{0, plural, one {Unfiled pages are deleted in # day} other {Unfiled pages are deleted in # days}}, on {1}.": {
     "sites": 1,
     "scope": [
       "ts"

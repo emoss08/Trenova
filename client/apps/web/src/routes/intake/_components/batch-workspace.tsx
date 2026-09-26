@@ -287,7 +287,7 @@ function OpenBatch({
             <Alert variant="warning" size="sm">
               <AlertDescription>
                 {t(
-                  "{0, plural, one {Unfiled pages are deleted in # day, on {1}.} other {Unfiled pages are deleted in # days, on {1}.}}",
+                  "{0, plural, one {Unfiled pages are deleted in # day} other {Unfiled pages are deleted in # days}}, on {1}.",
                   retention.daysLeft,
                   formatUnixDate(batch.retainUntil),
                 )}
