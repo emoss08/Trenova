@@ -16,11 +16,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
+	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -359,6 +363,30 @@ var lookups = map[permission.Resource]lookup{
 			}
 			return entity.Version
 		},
+	},
+	permission.ResourceManualJournal: {
+		model:   func() versioned { return new(manualjournal.Request) },
+		scope:   buncolgen.RequestScopeTenant,
+		idEq:    buncolgen.RequestColumns.ID.Eq(),
+		version: versionOf(func(entity *manualjournal.Request) int64 { return entity.Version }),
+	},
+	permission.ResourceJournalReversal: {
+		model:   func() versioned { return new(journalreversal.Reversal) },
+		scope:   buncolgen.ReversalScopeTenant,
+		idEq:    buncolgen.ReversalColumns.ID.Eq(),
+		version: versionOf(func(entity *journalreversal.Reversal) int64 { return entity.Version }),
+	},
+	permission.ResourceJournalEntry: {
+		model:   func() versioned { return new(journalentry.JournalEntry) },
+		scope:   buncolgen.JournalEntryScopeTenant,
+		idEq:    buncolgen.JournalEntryColumns.ID.Eq(),
+		version: versionOf(func(entity *journalentry.JournalEntry) int64 { return entity.Version }),
+	},
+	permission.ResourceFiscalPeriod: {
+		model:   func() versioned { return new(fiscalperiod.FiscalPeriod) },
+		scope:   buncolgen.FiscalPeriodScopeTenant,
+		idEq:    buncolgen.FiscalPeriodColumns.ID.Eq(),
+		version: versionOf(func(entity *fiscalperiod.FiscalPeriod) int64 { return entity.Version }),
 	},
 	permission.ResourceRecurringEarning: {
 		model: func() versioned { return new(driverpay.RecurringEarning) },

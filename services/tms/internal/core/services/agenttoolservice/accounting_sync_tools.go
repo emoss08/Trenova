@@ -118,9 +118,17 @@ func syncReasonFrom(params map[string]any, why string) (string, error) {
 	), nil
 }
 
+type accountingSyncSummarizer interface {
+	Summary(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		integrationType integration.Type,
+	) (*serviceports.AccountingSyncSummary, error)
+}
+
 func syncingConnectionFor(
 	ctx context.Context,
-	sync accountingSyncOperator,
+	sync accountingSyncSummarizer,
 	tenant pagination.TenantInfo,
 	system integration.Type,
 ) (*serviceports.AccountingSyncSummary, error) {

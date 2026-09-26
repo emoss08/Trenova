@@ -337,6 +337,25 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"update_recurring_deduction": {agent.EgressMoney},
 		"create_recurring_earning":   {agent.EgressMoney},
 		"update_recurring_earning":   {agent.EgressMoney},
+
+		"draft_manual_journal":                 {agent.EgressInternal},
+		"revise_manual_journal_draft":          {agent.EgressInternal},
+		"submit_manual_journal":                {agent.EgressInternal},
+		"cancel_manual_journal":                {agent.EgressInternal},
+		"post_manual_journal":                  {agent.EgressMoney},
+		"request_journal_reversal":             {agent.EgressMoney},
+		"cancel_journal_reversal":              {agent.EgressInternal},
+		"post_journal_reversal":                {agent.EgressMoney},
+		"close_fiscal_period":                  {agent.EgressMoney},
+		"lock_fiscal_period":                   {agent.EgressMoney},
+		"unlock_fiscal_period":                 {agent.EgressMoney},
+		"reopen_fiscal_period":                 {agent.EgressMoney},
+		"open_fiscal_period":                   {agent.EgressMoney},
+		"confirm_accounting_mapping_proposals": {agent.EgressInternal},
+		"reject_accounting_mapping_proposal":   {agent.EgressInternal},
+		"release_accounting_sync":              {agent.EgressMoney},
+		"change_accounting_backfill":           {agent.EgressInternal},
+		"triage_bank_receipt_work_item":        {agent.EgressInternal},
 	}
 
 	tools := buildRegistered(t)

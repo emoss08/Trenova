@@ -1370,6 +1370,10 @@ func newGetFiscalCloseBlockersTool(periods closeBlockerReader) serviceports.Agen
 
 func (t *getFiscalCloseBlockersTool) Name() string { return "get_fiscal_close_blockers" }
 
+func (t *getFiscalCloseBlockersTool) SearchTerms() []string {
+	return []string{"blocking", "blocked", "closing", "period", "ready"}
+}
+
 func (t *getFiscalCloseBlockersTool) Description() string {
 	return "Say whether a fiscal period can be closed and list every blocker in the way. " +
 		"Blockers include unposted entries, earlier periods still open, subledger " +

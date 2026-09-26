@@ -35,6 +35,7 @@ type receivableSpec struct {
 	rationale   string
 	properties  map[string]any
 	required    []string
+	searchTerms []string
 	target      func(params map[string]any) (serviceports.ToolTarget, bool)
 }
 
@@ -63,6 +64,7 @@ var (
 	_ serviceports.ToolPreviewer      = (*receivableTool[struct{}, struct{}])(nil)
 	_ serviceports.ToolValidator      = (*receivableTool[struct{}, struct{}])(nil)
 	_ serviceports.TargetedTool       = (*receivableTool[struct{}, struct{}])(nil)
+	_ serviceports.SearchableTool     = (*receivableTool[struct{}, struct{}])(nil)
 	_ serviceports.ToolResultReporter = reportingReceivableTool[struct{}, struct{}]{}
 )
 
@@ -83,6 +85,8 @@ func newReportingReceivableTool[R, P any](
 func (t *receivableTool[R, P]) Name() string { return t.spec.name }
 
 func (t *receivableTool[R, P]) Description() string { return t.spec.description }
+
+func (t *receivableTool[R, P]) SearchTerms() []string { return t.spec.searchTerms }
 
 func (t *receivableTool[R, P]) ParamSchema() map[string]any {
 	return map[string]any{
