@@ -28,42 +28,13 @@ func (s *Service) RecordResponse(
 	ctx context.Context,
 	req *portservices.TenderResponseRequest,
 ) error {
-	if req.OfferID.IsNil() {
-		return errortypes.NewValidationError(
-			"offerId", errortypes.ErrRequired, "Offer is required",
-		)
-	}
-	if !req.Action.IsValid() {
-		return errortypes.NewValidationError(
-			"action", errortypes.ErrInvalid, "Response action is invalid",
-		)
-	}
-	if !req.Source.IsValid() {
-		return errortypes.NewValidationError(
-			"source", errortypes.ErrInvalid, "Response source is invalid",
-		)
-	}
-	if len(req.DeclineReason) > maxDeclineReasonLength {
-		return errortypes.NewValidationError(
-			"declineReason",
-			errortypes.ErrInvalid,
-			"Decline reason must be at most 500 characters",
-		)
-	}
-
-	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
-		TenantInfo:    req.TenantInfo,
-		OfferID:       req.OfferID,
-		IncludeTender: true,
-	})
-	if err != nil {
+	offer, err := s.planResponse(ctx, req)
+	if isNoLongerAvailable(err) {
+		s.recordLateResponse(ctx, req, offer)
 		return err
 	}
-
-	if offer.Tender == nil || offer.Tender.Status != tender.StatusActive ||
-		offer.Status != tender.OfferStatusSent {
-		s.recordLateResponse(ctx, req, offer)
-		return ErrOfferNoLongerAvailable
+	if err != nil {
+		return err
 	}
 
 	err = s.workflows.SignalWorkflow(

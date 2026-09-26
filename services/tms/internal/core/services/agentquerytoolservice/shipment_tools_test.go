@@ -195,3 +195,26 @@ func TestSearchShipmentsSchema_OffersOnlyStatusesTheToolAccepts(t *testing.T) {
 		assert.NoError(t, err, "schema offers %q", value)
 	}
 }
+
+// "Not yet billed" is a shipment billing has never received: its transfer
+// stage is empty. The filter says so, and isnull reaches the repository as
+// the condition that finds them.
+func TestListShipments_FindsShipmentsNeverTransferredToBilling(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeShipmentRepo{}
+	tool := newListShipmentsTool(repo)
+
+	assert.Contains(t, tool.Description(), "isnull means never transferred")
+
+	_, err := tool.Query(t.Context(), testParams(map[string]any{
+		"filters": []any{map[string]any{
+			"field": "billingTransferStatus", "operator": "isnull",
+		}},
+	}))
+	require.NoError(t, err)
+	require.NotNil(t, repo.captured)
+	require.Len(t, repo.captured.Filter.FieldFilters, 1)
+	assert.Equal(t, "billingTransferStatus", repo.captured.Filter.FieldFilters[0].Field)
+	assert.Equal(t, "isnull", string(repo.captured.Filter.FieldFilters[0].Operator))
+}

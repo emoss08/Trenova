@@ -21,6 +21,7 @@ import (
 type fakeLocationCreator struct {
 	created *location.Location
 	actor   *serviceports.RequestActor
+	guard   writeGuard
 }
 
 func (f *fakeLocationCreator) Create(
@@ -28,6 +29,9 @@ func (f *fakeLocationCreator) Create(
 	entity *location.Location,
 	actor *serviceports.RequestActor,
 ) (*location.Location, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	entity.ID = pulid.MustNew("loc_")
 	f.created = entity
 	f.actor = actor
@@ -179,20 +183,6 @@ func TestCreateLocation_ValidatesBeforeTheProposalIsShown(t *testing.T) {
 		assert.Error(t, err, name)
 	}
 	assert.Nil(t, fixture.creator.created, "validation never creates")
-}
-
-func TestCreateLocation_SimulatesWithoutCreating(t *testing.T) {
-	t.Parallel()
-
-	fixture := newLocationFixture()
-	simulator := fixture.tool.(serviceports.ToolSimulator)
-
-	simulation, err := simulator.Simulate(t.Context(), fixture.params(nil))
-	require.NoError(t, err)
-	assert.True(t, simulation.Previewed)
-	assert.Contains(t, simulation.Summary, "Reno Cold Storage")
-	assert.Contains(t, simulation.Summary, "NV 89502")
-	assert.Nil(t, fixture.creator.created)
 }
 
 func TestCreateLocation_RefusesWithoutAnIdempotencyKeyOrActor(t *testing.T) {

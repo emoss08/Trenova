@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
@@ -408,14 +409,12 @@ func (r *mutationResolver) MarkDriverSettlementPaid(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
-	return r.driverSettlementService.MarkPaid(
-		ctx,
-		tenantInfo(authCtx),
-		settlementID,
-		input.PaymentMethod,
-		stringValue(input.PaymentReference),
-		actorutil.FromAuthContext(authCtx),
-	)
+	return r.driverSettlementService.MarkPaid(ctx, &services.MarkSettlementPaidRequest{
+		TenantInfo:       tenantInfo(authCtx),
+		SettlementID:     settlementID,
+		PaymentMethod:    input.PaymentMethod,
+		PaymentReference: stringValue(input.PaymentReference),
+	}, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *mutationResolver) VoidDriverSettlement(ctx context.Context, input gqlmodel.DriverSettlementActionInput) (*driversettlement.Settlement, error) {

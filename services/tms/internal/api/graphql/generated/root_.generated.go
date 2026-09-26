@@ -47,6 +47,10 @@ type ResolverRoot interface {
 	AccountingAppCredential() AccountingAppCredentialResolver
 	AccountingAppSettings() AccountingAppSettingsResolver
 	AccountingConnection() AccountingConnectionResolver
+	AccountingDriftFinding() AccountingDriftFindingResolver
+	AccountingDriftFixPreview() AccountingDriftFixPreviewResolver
+	AccountingInboundChange() AccountingInboundChangeResolver
+	AccountingInboundLine() AccountingInboundLineResolver
 	AccountingMapping() AccountingMappingResolver
 	AccountingReferenceObject() AccountingReferenceObjectResolver
 	AccountingSyncAttempt() AccountingSyncAttemptResolver
@@ -65,6 +69,7 @@ type ResolverRoot interface {
 	AgentPreviewRef() AgentPreviewRefResolver
 	AgentPreviewWarning() AgentPreviewWarningResolver
 	AgentProposal() AgentProposalResolver
+	AgentProposalField() AgentProposalFieldResolver
 	AgentQualityAgent() AgentQualityAgentResolver
 	AgentQualityControl() AgentQualityControlResolver
 	AgentRun() AgentRunResolver
@@ -1002,6 +1007,11 @@ type ComplexityRoot struct {
 		WebhookPath          func(childComplexity int) int
 	}
 
+	AccountingAppliedObject struct {
+		ID   func(childComplexity int) int
+		Type func(childComplexity int) int
+	}
+
 	AccountingAuthorizationStart struct {
 		AuthorizeURL func(childComplexity int) int
 		ExpiresAt    func(childComplexity int) int
@@ -1027,6 +1037,8 @@ type ComplexityRoot struct {
 		AppEnvironment                func(childComplexity int) int
 		AppSource                     func(childComplexity int) int
 		AutoSync                      func(childComplexity int) int
+		ChangesErrorMessage           func(childComplexity int) int
+		ChangesReadAt                 func(childComplexity int) int
 		ConnectedAt                   func(childComplexity int) int
 		ConsecutiveFailures           func(childComplexity int) int
 		DisconnectedAt                func(childComplexity int) int
@@ -1038,6 +1050,7 @@ type ComplexityRoot struct {
 		ExternalLegalName             func(childComplexity int) int
 		ExternalMultiCurrencyEnabled  func(childComplexity int) int
 		ID                            func(childComplexity int) int
+		InboundPaymentPolicy          func(childComplexity int) int
 		IntegrationType               func(childComplexity int) int
 		LastCheckedAt                 func(childComplexity int) int
 		LastErrorCategory             func(childComplexity int) int
@@ -1059,6 +1072,174 @@ type ComplexityRoot struct {
 		SyncsDriverSettlements        func(childComplexity int) int
 		UpdatedAt                     func(childComplexity int) int
 		Version                       func(childComplexity int) int
+	}
+
+	AccountingDriftFinding struct {
+		ConnectionID       func(childComplexity int) int
+		CurrencyCode       func(childComplexity int) int
+		Detail             func(childComplexity int) int
+		DetectedAt         func(childComplexity int) int
+		DifferenceMinor    func(childComplexity int) int
+		Directions         func(childComplexity int) int
+		ExternalID         func(childComplexity int) int
+		ExternalURL        func(childComplexity int) int
+		FixObjectID        func(childComplexity int) int
+		FixObjectType      func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		Kind               func(childComplexity int) int
+		LastSeenAt         func(childComplexity int) int
+		ObjectID           func(childComplexity int) int
+		ObjectNumber       func(childComplexity int) int
+		ObjectType         func(childComplexity int) int
+		PartyID            func(childComplexity int) int
+		PartyName          func(childComplexity int) int
+		ProviderMinor      func(childComplexity int) int
+		ProviderModifiedAt func(childComplexity int) int
+		ProviderModifiedBy func(childComplexity int) int
+		ProviderState      func(childComplexity int) int
+		Pushed             func(childComplexity int) int
+		Resolution         func(childComplexity int) int
+		ResolutionNote     func(childComplexity int) int
+		ResolvedAt         func(childComplexity int) int
+		ResolvedBy         func(childComplexity int) int
+		Status             func(childComplexity int) int
+		TrenovaMinor       func(childComplexity int) int
+		TrenovaState       func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+	}
+
+	AccountingDriftFindingConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AccountingDriftFindingEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AccountingDriftFixPreview struct {
+		AmountMinor     func(childComplexity int) int
+		CurrencyCode    func(childComplexity int) int
+		Direction       func(childComplexity int) int
+		Finding         func(childComplexity int) int
+		FixObject       func(childComplexity int) int
+		Operation       func(childComplexity int) int
+		Summary         func(childComplexity int) int
+		ToleranceMinor  func(childComplexity int) int
+		WithinTolerance func(childComplexity int) int
+	}
+
+	AccountingDriftLine struct {
+		ObjectID      func(childComplexity int) int
+		ObjectNumber  func(childComplexity int) int
+		ObjectType    func(childComplexity int) int
+		ProviderMinor func(childComplexity int) int
+		TrenovaMinor  func(childComplexity int) int
+	}
+
+	AccountingDriftOverview struct {
+		CheckError     func(childComplexity int) int
+		CheckedAt      func(childComplexity int) int
+		ConnectionID   func(childComplexity int) int
+		CurrencyCode   func(childComplexity int) int
+		ProviderName   func(childComplexity int) int
+		Summary        func(childComplexity int) int
+		ToleranceMinor func(childComplexity int) int
+	}
+
+	AccountingDriftSummary struct {
+		AmountOpen    func(childComplexity int) int
+		BalanceOpen   func(childComplexity int) int
+		GoneOpen      func(childComplexity int) int
+		Open          func(childComplexity int) int
+		ResolvedSince func(childComplexity int) int
+		StatusOpen    func(childComplexity int) int
+	}
+
+	AccountingInboundApplyPreview struct {
+		Blocker        func(childComplexity int) int
+		CanApply       func(childComplexity int) int
+		CashMinor      func(childComplexity int) int
+		Change         func(childComplexity int) int
+		Lines          func(childComplexity int) int
+		PaidAt         func(childComplexity int) int
+		UnappliedMinor func(childComplexity int) int
+	}
+
+	AccountingInboundChange struct {
+		AmountMinor        func(childComplexity int) int
+		AppliedObjects     func(childComplexity int) int
+		CurrencyCode       func(childComplexity int) int
+		DecidedAt          func(childComplexity int) int
+		DecidedBy          func(childComplexity int) int
+		DetectedAt         func(childComplexity int) int
+		ExternalID         func(childComplexity int) int
+		ExternalNumber     func(childComplexity int) int
+		ExternalURL        func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		Kind               func(childComplexity int) int
+		Lines              func(childComplexity int) int
+		MethodName         func(childComplexity int) int
+		Note               func(childComplexity int) int
+		PartyName          func(childComplexity int) int
+		PartyObjectID      func(childComplexity int) int
+		ProviderModifiedAt func(childComplexity int) int
+		ProviderModifiedBy func(childComplexity int) int
+		Reason             func(childComplexity int) int
+		ReferenceNumber    func(childComplexity int) int
+		Resolution         func(childComplexity int) int
+		Status             func(childComplexity int) int
+		TxnDate            func(childComplexity int) int
+		UnappliedMinor     func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+	}
+
+	AccountingInboundChangeConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AccountingInboundChangeEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AccountingInboundLine struct {
+		AmountMinor        func(childComplexity int) int
+		DocumentExternalID func(childComplexity int) int
+		DocumentKind       func(childComplexity int) int
+		ObjectID           func(childComplexity int) int
+		ObjectNumber       func(childComplexity int) int
+		ObjectType         func(childComplexity int) int
+		OpenMinor          func(childComplexity int) int
+	}
+
+	AccountingInboundOverview struct {
+		ChangesError  func(childComplexity int) int
+		ChangesReadAt func(childComplexity int) int
+		ConnectionID  func(childComplexity int) int
+		Policy        func(childComplexity int) int
+		Summary       func(childComplexity int) int
+	}
+
+	AccountingInboundPostingLine struct {
+		AmountMinor  func(childComplexity int) int
+		ObjectID     func(childComplexity int) int
+		ObjectNumber func(childComplexity int) int
+		ObjectType   func(childComplexity int) int
+		OpenMinor    func(childComplexity int) int
+	}
+
+	AccountingInboundSummary struct {
+		AppliedSince func(childComplexity int) int
+		Detected     func(childComplexity int) int
+		IgnoredSince func(childComplexity int) int
+		Proposed     func(childComplexity int) int
 	}
 
 	AccountingMapping struct {
@@ -1772,6 +1953,7 @@ type ComplexityRoot struct {
 	}
 
 	AgentProposalField struct {
+		Choices     func(childComplexity int) int
 		Description func(childComplexity int) int
 		Kind        func(childComplexity int) int
 		Label       func(childComplexity int) int
@@ -1782,6 +1964,12 @@ type ComplexityRoot struct {
 		Options     func(childComplexity int) int
 		ReadOnly    func(childComplexity int) int
 		Required    func(childComplexity int) int
+		Resource    func(childComplexity int) int
+	}
+
+	AgentProposalFieldChoice struct {
+		ID    func(childComplexity int) int
+		Label func(childComplexity int) int
 	}
 
 	AgentProposalPreview struct {
@@ -7763,6 +7951,7 @@ type ComplexityRoot struct {
 		AiAuditExportDownload                 func(childComplexity int, id string) int
 		AmendIFTAReturn                       func(childComplexity int, id string, reason string) int
 		AmendWorkerEmploymentEvent            func(childComplexity int, input gqlmodel.AmendWorkerEmploymentEventInput) int
+		ApplyAccountingInboundChange          func(childComplexity int, id string) int
 		ApplyCarrierIntelSuggestions          func(childComplexity int, input gqlmodel.ApplyCarrierIntelSuggestionsInput) int
 		ApplyCreditMemo                       func(childComplexity int, input gqlmodel.ApplyCreditMemoInput) int
 		ApplyUnappliedCustomerPayment         func(childComplexity int, input gqlmodel.ApplyCustomerPaymentInput) int
@@ -7823,6 +8012,7 @@ type ComplexityRoot struct {
 		CertifyOshaSummary                    func(childComplexity int, year int) int
 		ChangeAccountingBackfill              func(childComplexity int, input gqlmodel.ChangeAccountingBackfillInput) int
 		CheckAccountingConnection             func(childComplexity int, integrationType integration.Type) int
+		CheckAccountingDrift                  func(childComplexity int, integrationType integration.Type) int
 		CheckShipmentDuplicateBOL             func(childComplexity int, input gqlmodel.ShipmentDuplicateBOLInput) int
 		CheckShipmentHazmatSegregation        func(childComplexity int, input gqlmodel.ShipmentHazmatInput) int
 		ClearAccountingMapping                func(childComplexity int, id string) int
@@ -7935,6 +8125,7 @@ type ComplexityRoot struct {
 		DetentionBacktest                     func(childComplexity int, input gqlmodel.DetentionBacktestInput) int
 		DiscardFuelPurchaseImport             func(childComplexity int, id string, version int, reason *string) int
 		DisconnectAccountingSystem            func(childComplexity int, integrationType integration.Type) int
+		DismissAccountingDrift                func(childComplexity int, input gqlmodel.DismissAccountingDriftInput) int
 		DismissAgentMemorySuggestion          func(childComplexity int, id string, version int) int
 		DismissMyNotifications                func(childComplexity int, ids []string) int
 		DismissNotifications                  func(childComplexity int, ids []string) int
@@ -7964,6 +8155,7 @@ type ComplexityRoot struct {
 		GrantCarrierIntelOverride             func(childComplexity int, input gqlmodel.GrantCarrierIntelOverrideInput) int
 		HandOffWatchtowerItem                 func(childComplexity int, id string, input gqlmodel.HandOffWatchtowerItemInput) int
 		HoldDriverPayEvent                    func(childComplexity int, input gqlmodel.HoldPayEventInput) int
+		IgnoreAccountingInboundChange         func(childComplexity int, input gqlmodel.IgnoreAccountingInboundChangeInput) int
 		ImportSourcedCarrier                  func(childComplexity int, input gqlmodel.ImportSourcedCarrierInput) int
 		InviteWorkerToPortal                  func(childComplexity int, input gqlmodel.InviteWorkerToPortalInput) int
 		IssueDisciplinaryAction               func(childComplexity int, input gqlmodel.IssueDisciplinaryActionInput) int
@@ -8053,6 +8245,7 @@ type ComplexityRoot struct {
 		RescindDisciplinaryAction             func(childComplexity int, input gqlmodel.RescindDisciplinaryActionInput) int
 		ResetCannedFork                       func(childComplexity int, id string) int
 		ResetHomeLayout                       func(childComplexity int) int
+		ResolveAccountingDrift                func(childComplexity int, input gqlmodel.ResolveAccountingDriftInput) int
 		ResolveAgentException                 func(childComplexity int, id string, input gqlmodel.AgentExceptionResolveInput) int
 		ResolveCarrierIntelEvent              func(childComplexity int, input gqlmodel.ResolveCarrierIntelEventInput) int
 		ResolveFuelPurchaseImportRows         func(childComplexity int, id string, version int) int
@@ -9114,6 +9307,14 @@ type ComplexityRoot struct {
 		AccountType                         func(childComplexity int, id string) int
 		AccountTypes                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AccountingBackfills                 func(childComplexity int, integrationType integration.Type) int
+		AccountingDriftFinding              func(childComplexity int, id string) int
+		AccountingDriftFindingTable         func(childComplexity int, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) int
+		AccountingDriftFixPreview           func(childComplexity int, input gqlmodel.ResolveAccountingDriftInput) int
+		AccountingDriftOverview             func(childComplexity int, integrationType integration.Type) int
+		AccountingInboundApplyPreview       func(childComplexity int, id string) int
+		AccountingInboundChange             func(childComplexity int, id string) int
+		AccountingInboundChangeTable        func(childComplexity int, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) int
+		AccountingInboundOverview           func(childComplexity int, integrationType integration.Type) int
 		AccountingMappingSummary            func(childComplexity int, integrationType integration.Type) int
 		AccountingMappings                  func(childComplexity int, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) int
 		AccountingReferenceObjects          func(childComplexity int, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) int
@@ -16900,6 +17101,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AccountingAppSettings.WebhookPath(childComplexity), true
 
+	case "AccountingAppliedObject.id":
+		if e.ComplexityRoot.AccountingAppliedObject.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppliedObject.ID(childComplexity), true
+	case "AccountingAppliedObject.type":
+		if e.ComplexityRoot.AccountingAppliedObject.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppliedObject.Type(childComplexity), true
+
 	case "AccountingAuthorizationStart.authorizeUrl":
 		if e.ComplexityRoot.AccountingAuthorizationStart.AuthorizeURL == nil {
 			break
@@ -17010,6 +17224,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingConnection.AutoSync(childComplexity), true
+	case "AccountingConnection.changesErrorMessage":
+		if e.ComplexityRoot.AccountingConnection.ChangesErrorMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ChangesErrorMessage(childComplexity), true
+	case "AccountingConnection.changesReadAt":
+		if e.ComplexityRoot.AccountingConnection.ChangesReadAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ChangesReadAt(childComplexity), true
 	case "AccountingConnection.connectedAt":
 		if e.ComplexityRoot.AccountingConnection.ConnectedAt == nil {
 			break
@@ -17076,6 +17302,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingConnection.ID(childComplexity), true
+	case "AccountingConnection.inboundPaymentPolicy":
+		if e.ComplexityRoot.AccountingConnection.InboundPaymentPolicy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.InboundPaymentPolicy(childComplexity), true
 	case "AccountingConnection.integrationType":
 		if e.ComplexityRoot.AccountingConnection.IntegrationType == nil {
 			break
@@ -17202,6 +17434,759 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingConnection.Version(childComplexity), true
+
+	case "AccountingDriftFinding.connectionId":
+		if e.ComplexityRoot.AccountingDriftFinding.ConnectionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ConnectionID(childComplexity), true
+	case "AccountingDriftFinding.currencyCode":
+		if e.ComplexityRoot.AccountingDriftFinding.CurrencyCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.CurrencyCode(childComplexity), true
+	case "AccountingDriftFinding.detail":
+		if e.ComplexityRoot.AccountingDriftFinding.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.Detail(childComplexity), true
+	case "AccountingDriftFinding.detectedAt":
+		if e.ComplexityRoot.AccountingDriftFinding.DetectedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.DetectedAt(childComplexity), true
+	case "AccountingDriftFinding.differenceMinor":
+		if e.ComplexityRoot.AccountingDriftFinding.DifferenceMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.DifferenceMinor(childComplexity), true
+	case "AccountingDriftFinding.directions":
+		if e.ComplexityRoot.AccountingDriftFinding.Directions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.Directions(childComplexity), true
+	case "AccountingDriftFinding.externalId":
+		if e.ComplexityRoot.AccountingDriftFinding.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ExternalID(childComplexity), true
+	case "AccountingDriftFinding.externalUrl":
+		if e.ComplexityRoot.AccountingDriftFinding.ExternalURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ExternalURL(childComplexity), true
+	case "AccountingDriftFinding.fixObjectId":
+		if e.ComplexityRoot.AccountingDriftFinding.FixObjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.FixObjectID(childComplexity), true
+	case "AccountingDriftFinding.fixObjectType":
+		if e.ComplexityRoot.AccountingDriftFinding.FixObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.FixObjectType(childComplexity), true
+	case "AccountingDriftFinding.id":
+		if e.ComplexityRoot.AccountingDriftFinding.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ID(childComplexity), true
+	case "AccountingDriftFinding.kind":
+		if e.ComplexityRoot.AccountingDriftFinding.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.Kind(childComplexity), true
+	case "AccountingDriftFinding.lastSeenAt":
+		if e.ComplexityRoot.AccountingDriftFinding.LastSeenAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.LastSeenAt(childComplexity), true
+	case "AccountingDriftFinding.objectId":
+		if e.ComplexityRoot.AccountingDriftFinding.ObjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ObjectID(childComplexity), true
+	case "AccountingDriftFinding.objectNumber":
+		if e.ComplexityRoot.AccountingDriftFinding.ObjectNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ObjectNumber(childComplexity), true
+	case "AccountingDriftFinding.objectType":
+		if e.ComplexityRoot.AccountingDriftFinding.ObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ObjectType(childComplexity), true
+	case "AccountingDriftFinding.partyId":
+		if e.ComplexityRoot.AccountingDriftFinding.PartyID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.PartyID(childComplexity), true
+	case "AccountingDriftFinding.partyName":
+		if e.ComplexityRoot.AccountingDriftFinding.PartyName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.PartyName(childComplexity), true
+	case "AccountingDriftFinding.providerMinor":
+		if e.ComplexityRoot.AccountingDriftFinding.ProviderMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ProviderMinor(childComplexity), true
+	case "AccountingDriftFinding.providerModifiedAt":
+		if e.ComplexityRoot.AccountingDriftFinding.ProviderModifiedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ProviderModifiedAt(childComplexity), true
+	case "AccountingDriftFinding.providerModifiedBy":
+		if e.ComplexityRoot.AccountingDriftFinding.ProviderModifiedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ProviderModifiedBy(childComplexity), true
+	case "AccountingDriftFinding.providerState":
+		if e.ComplexityRoot.AccountingDriftFinding.ProviderState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ProviderState(childComplexity), true
+	case "AccountingDriftFinding.pushed":
+		if e.ComplexityRoot.AccountingDriftFinding.Pushed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.Pushed(childComplexity), true
+	case "AccountingDriftFinding.resolution":
+		if e.ComplexityRoot.AccountingDriftFinding.Resolution == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.Resolution(childComplexity), true
+	case "AccountingDriftFinding.resolutionNote":
+		if e.ComplexityRoot.AccountingDriftFinding.ResolutionNote == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ResolutionNote(childComplexity), true
+	case "AccountingDriftFinding.resolvedAt":
+		if e.ComplexityRoot.AccountingDriftFinding.ResolvedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ResolvedAt(childComplexity), true
+	case "AccountingDriftFinding.resolvedBy":
+		if e.ComplexityRoot.AccountingDriftFinding.ResolvedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.ResolvedBy(childComplexity), true
+	case "AccountingDriftFinding.status":
+		if e.ComplexityRoot.AccountingDriftFinding.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.Status(childComplexity), true
+	case "AccountingDriftFinding.trenovaMinor":
+		if e.ComplexityRoot.AccountingDriftFinding.TrenovaMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.TrenovaMinor(childComplexity), true
+	case "AccountingDriftFinding.trenovaState":
+		if e.ComplexityRoot.AccountingDriftFinding.TrenovaState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.TrenovaState(childComplexity), true
+	case "AccountingDriftFinding.updatedAt":
+		if e.ComplexityRoot.AccountingDriftFinding.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.UpdatedAt(childComplexity), true
+	case "AccountingDriftFinding.version":
+		if e.ComplexityRoot.AccountingDriftFinding.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFinding.Version(childComplexity), true
+
+	case "AccountingDriftFindingConnection.edges":
+		if e.ComplexityRoot.AccountingDriftFindingConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFindingConnection.Edges(childComplexity), true
+	case "AccountingDriftFindingConnection.pageInfo":
+		if e.ComplexityRoot.AccountingDriftFindingConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFindingConnection.PageInfo(childComplexity), true
+	case "AccountingDriftFindingConnection.totalCount":
+		if e.ComplexityRoot.AccountingDriftFindingConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFindingConnection.TotalCount(childComplexity), true
+
+	case "AccountingDriftFindingEdge.cursor":
+		if e.ComplexityRoot.AccountingDriftFindingEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFindingEdge.Cursor(childComplexity), true
+	case "AccountingDriftFindingEdge.node":
+		if e.ComplexityRoot.AccountingDriftFindingEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFindingEdge.Node(childComplexity), true
+
+	case "AccountingDriftFixPreview.amountMinor":
+		if e.ComplexityRoot.AccountingDriftFixPreview.AmountMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFixPreview.AmountMinor(childComplexity), true
+	case "AccountingDriftFixPreview.currencyCode":
+		if e.ComplexityRoot.AccountingDriftFixPreview.CurrencyCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFixPreview.CurrencyCode(childComplexity), true
+	case "AccountingDriftFixPreview.direction":
+		if e.ComplexityRoot.AccountingDriftFixPreview.Direction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFixPreview.Direction(childComplexity), true
+	case "AccountingDriftFixPreview.finding":
+		if e.ComplexityRoot.AccountingDriftFixPreview.Finding == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFixPreview.Finding(childComplexity), true
+	case "AccountingDriftFixPreview.fixObject":
+		if e.ComplexityRoot.AccountingDriftFixPreview.FixObject == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFixPreview.FixObject(childComplexity), true
+	case "AccountingDriftFixPreview.operation":
+		if e.ComplexityRoot.AccountingDriftFixPreview.Operation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFixPreview.Operation(childComplexity), true
+	case "AccountingDriftFixPreview.summary":
+		if e.ComplexityRoot.AccountingDriftFixPreview.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFixPreview.Summary(childComplexity), true
+	case "AccountingDriftFixPreview.toleranceMinor":
+		if e.ComplexityRoot.AccountingDriftFixPreview.ToleranceMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFixPreview.ToleranceMinor(childComplexity), true
+	case "AccountingDriftFixPreview.withinTolerance":
+		if e.ComplexityRoot.AccountingDriftFixPreview.WithinTolerance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftFixPreview.WithinTolerance(childComplexity), true
+
+	case "AccountingDriftLine.objectId":
+		if e.ComplexityRoot.AccountingDriftLine.ObjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftLine.ObjectID(childComplexity), true
+	case "AccountingDriftLine.objectNumber":
+		if e.ComplexityRoot.AccountingDriftLine.ObjectNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftLine.ObjectNumber(childComplexity), true
+	case "AccountingDriftLine.objectType":
+		if e.ComplexityRoot.AccountingDriftLine.ObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftLine.ObjectType(childComplexity), true
+	case "AccountingDriftLine.providerMinor":
+		if e.ComplexityRoot.AccountingDriftLine.ProviderMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftLine.ProviderMinor(childComplexity), true
+	case "AccountingDriftLine.trenovaMinor":
+		if e.ComplexityRoot.AccountingDriftLine.TrenovaMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftLine.TrenovaMinor(childComplexity), true
+
+	case "AccountingDriftOverview.checkError":
+		if e.ComplexityRoot.AccountingDriftOverview.CheckError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftOverview.CheckError(childComplexity), true
+	case "AccountingDriftOverview.checkedAt":
+		if e.ComplexityRoot.AccountingDriftOverview.CheckedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftOverview.CheckedAt(childComplexity), true
+	case "AccountingDriftOverview.connectionId":
+		if e.ComplexityRoot.AccountingDriftOverview.ConnectionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftOverview.ConnectionID(childComplexity), true
+	case "AccountingDriftOverview.currencyCode":
+		if e.ComplexityRoot.AccountingDriftOverview.CurrencyCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftOverview.CurrencyCode(childComplexity), true
+	case "AccountingDriftOverview.providerName":
+		if e.ComplexityRoot.AccountingDriftOverview.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftOverview.ProviderName(childComplexity), true
+	case "AccountingDriftOverview.summary":
+		if e.ComplexityRoot.AccountingDriftOverview.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftOverview.Summary(childComplexity), true
+	case "AccountingDriftOverview.toleranceMinor":
+		if e.ComplexityRoot.AccountingDriftOverview.ToleranceMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftOverview.ToleranceMinor(childComplexity), true
+
+	case "AccountingDriftSummary.amountOpen":
+		if e.ComplexityRoot.AccountingDriftSummary.AmountOpen == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftSummary.AmountOpen(childComplexity), true
+	case "AccountingDriftSummary.balanceOpen":
+		if e.ComplexityRoot.AccountingDriftSummary.BalanceOpen == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftSummary.BalanceOpen(childComplexity), true
+	case "AccountingDriftSummary.goneOpen":
+		if e.ComplexityRoot.AccountingDriftSummary.GoneOpen == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftSummary.GoneOpen(childComplexity), true
+	case "AccountingDriftSummary.open":
+		if e.ComplexityRoot.AccountingDriftSummary.Open == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftSummary.Open(childComplexity), true
+	case "AccountingDriftSummary.resolvedSince":
+		if e.ComplexityRoot.AccountingDriftSummary.ResolvedSince == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftSummary.ResolvedSince(childComplexity), true
+	case "AccountingDriftSummary.statusOpen":
+		if e.ComplexityRoot.AccountingDriftSummary.StatusOpen == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingDriftSummary.StatusOpen(childComplexity), true
+
+	case "AccountingInboundApplyPreview.blocker":
+		if e.ComplexityRoot.AccountingInboundApplyPreview.Blocker == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundApplyPreview.Blocker(childComplexity), true
+	case "AccountingInboundApplyPreview.canApply":
+		if e.ComplexityRoot.AccountingInboundApplyPreview.CanApply == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundApplyPreview.CanApply(childComplexity), true
+	case "AccountingInboundApplyPreview.cashMinor":
+		if e.ComplexityRoot.AccountingInboundApplyPreview.CashMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundApplyPreview.CashMinor(childComplexity), true
+	case "AccountingInboundApplyPreview.change":
+		if e.ComplexityRoot.AccountingInboundApplyPreview.Change == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundApplyPreview.Change(childComplexity), true
+	case "AccountingInboundApplyPreview.lines":
+		if e.ComplexityRoot.AccountingInboundApplyPreview.Lines == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundApplyPreview.Lines(childComplexity), true
+	case "AccountingInboundApplyPreview.paidAt":
+		if e.ComplexityRoot.AccountingInboundApplyPreview.PaidAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundApplyPreview.PaidAt(childComplexity), true
+	case "AccountingInboundApplyPreview.unappliedMinor":
+		if e.ComplexityRoot.AccountingInboundApplyPreview.UnappliedMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundApplyPreview.UnappliedMinor(childComplexity), true
+
+	case "AccountingInboundChange.amountMinor":
+		if e.ComplexityRoot.AccountingInboundChange.AmountMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.AmountMinor(childComplexity), true
+	case "AccountingInboundChange.appliedObjects":
+		if e.ComplexityRoot.AccountingInboundChange.AppliedObjects == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.AppliedObjects(childComplexity), true
+	case "AccountingInboundChange.currencyCode":
+		if e.ComplexityRoot.AccountingInboundChange.CurrencyCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.CurrencyCode(childComplexity), true
+	case "AccountingInboundChange.decidedAt":
+		if e.ComplexityRoot.AccountingInboundChange.DecidedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.DecidedAt(childComplexity), true
+	case "AccountingInboundChange.decidedBy":
+		if e.ComplexityRoot.AccountingInboundChange.DecidedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.DecidedBy(childComplexity), true
+	case "AccountingInboundChange.detectedAt":
+		if e.ComplexityRoot.AccountingInboundChange.DetectedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.DetectedAt(childComplexity), true
+	case "AccountingInboundChange.externalId":
+		if e.ComplexityRoot.AccountingInboundChange.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.ExternalID(childComplexity), true
+	case "AccountingInboundChange.externalNumber":
+		if e.ComplexityRoot.AccountingInboundChange.ExternalNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.ExternalNumber(childComplexity), true
+	case "AccountingInboundChange.externalUrl":
+		if e.ComplexityRoot.AccountingInboundChange.ExternalURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.ExternalURL(childComplexity), true
+	case "AccountingInboundChange.id":
+		if e.ComplexityRoot.AccountingInboundChange.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.ID(childComplexity), true
+	case "AccountingInboundChange.kind":
+		if e.ComplexityRoot.AccountingInboundChange.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.Kind(childComplexity), true
+	case "AccountingInboundChange.lines":
+		if e.ComplexityRoot.AccountingInboundChange.Lines == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.Lines(childComplexity), true
+	case "AccountingInboundChange.methodName":
+		if e.ComplexityRoot.AccountingInboundChange.MethodName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.MethodName(childComplexity), true
+	case "AccountingInboundChange.note":
+		if e.ComplexityRoot.AccountingInboundChange.Note == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.Note(childComplexity), true
+	case "AccountingInboundChange.partyName":
+		if e.ComplexityRoot.AccountingInboundChange.PartyName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.PartyName(childComplexity), true
+	case "AccountingInboundChange.partyObjectId":
+		if e.ComplexityRoot.AccountingInboundChange.PartyObjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.PartyObjectID(childComplexity), true
+	case "AccountingInboundChange.providerModifiedAt":
+		if e.ComplexityRoot.AccountingInboundChange.ProviderModifiedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.ProviderModifiedAt(childComplexity), true
+	case "AccountingInboundChange.providerModifiedBy":
+		if e.ComplexityRoot.AccountingInboundChange.ProviderModifiedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.ProviderModifiedBy(childComplexity), true
+	case "AccountingInboundChange.reason":
+		if e.ComplexityRoot.AccountingInboundChange.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.Reason(childComplexity), true
+	case "AccountingInboundChange.referenceNumber":
+		if e.ComplexityRoot.AccountingInboundChange.ReferenceNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.ReferenceNumber(childComplexity), true
+	case "AccountingInboundChange.resolution":
+		if e.ComplexityRoot.AccountingInboundChange.Resolution == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.Resolution(childComplexity), true
+	case "AccountingInboundChange.status":
+		if e.ComplexityRoot.AccountingInboundChange.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.Status(childComplexity), true
+	case "AccountingInboundChange.txnDate":
+		if e.ComplexityRoot.AccountingInboundChange.TxnDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.TxnDate(childComplexity), true
+	case "AccountingInboundChange.unappliedMinor":
+		if e.ComplexityRoot.AccountingInboundChange.UnappliedMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.UnappliedMinor(childComplexity), true
+	case "AccountingInboundChange.updatedAt":
+		if e.ComplexityRoot.AccountingInboundChange.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.UpdatedAt(childComplexity), true
+	case "AccountingInboundChange.version":
+		if e.ComplexityRoot.AccountingInboundChange.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChange.Version(childComplexity), true
+
+	case "AccountingInboundChangeConnection.edges":
+		if e.ComplexityRoot.AccountingInboundChangeConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChangeConnection.Edges(childComplexity), true
+	case "AccountingInboundChangeConnection.pageInfo":
+		if e.ComplexityRoot.AccountingInboundChangeConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChangeConnection.PageInfo(childComplexity), true
+	case "AccountingInboundChangeConnection.totalCount":
+		if e.ComplexityRoot.AccountingInboundChangeConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChangeConnection.TotalCount(childComplexity), true
+
+	case "AccountingInboundChangeEdge.cursor":
+		if e.ComplexityRoot.AccountingInboundChangeEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChangeEdge.Cursor(childComplexity), true
+	case "AccountingInboundChangeEdge.node":
+		if e.ComplexityRoot.AccountingInboundChangeEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundChangeEdge.Node(childComplexity), true
+
+	case "AccountingInboundLine.amountMinor":
+		if e.ComplexityRoot.AccountingInboundLine.AmountMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundLine.AmountMinor(childComplexity), true
+	case "AccountingInboundLine.documentExternalId":
+		if e.ComplexityRoot.AccountingInboundLine.DocumentExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundLine.DocumentExternalID(childComplexity), true
+	case "AccountingInboundLine.documentKind":
+		if e.ComplexityRoot.AccountingInboundLine.DocumentKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundLine.DocumentKind(childComplexity), true
+	case "AccountingInboundLine.objectId":
+		if e.ComplexityRoot.AccountingInboundLine.ObjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundLine.ObjectID(childComplexity), true
+	case "AccountingInboundLine.objectNumber":
+		if e.ComplexityRoot.AccountingInboundLine.ObjectNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundLine.ObjectNumber(childComplexity), true
+	case "AccountingInboundLine.objectType":
+		if e.ComplexityRoot.AccountingInboundLine.ObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundLine.ObjectType(childComplexity), true
+	case "AccountingInboundLine.openMinor":
+		if e.ComplexityRoot.AccountingInboundLine.OpenMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundLine.OpenMinor(childComplexity), true
+
+	case "AccountingInboundOverview.changesError":
+		if e.ComplexityRoot.AccountingInboundOverview.ChangesError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundOverview.ChangesError(childComplexity), true
+	case "AccountingInboundOverview.changesReadAt":
+		if e.ComplexityRoot.AccountingInboundOverview.ChangesReadAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundOverview.ChangesReadAt(childComplexity), true
+	case "AccountingInboundOverview.connectionId":
+		if e.ComplexityRoot.AccountingInboundOverview.ConnectionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundOverview.ConnectionID(childComplexity), true
+	case "AccountingInboundOverview.policy":
+		if e.ComplexityRoot.AccountingInboundOverview.Policy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundOverview.Policy(childComplexity), true
+	case "AccountingInboundOverview.summary":
+		if e.ComplexityRoot.AccountingInboundOverview.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundOverview.Summary(childComplexity), true
+
+	case "AccountingInboundPostingLine.amountMinor":
+		if e.ComplexityRoot.AccountingInboundPostingLine.AmountMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundPostingLine.AmountMinor(childComplexity), true
+	case "AccountingInboundPostingLine.objectId":
+		if e.ComplexityRoot.AccountingInboundPostingLine.ObjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundPostingLine.ObjectID(childComplexity), true
+	case "AccountingInboundPostingLine.objectNumber":
+		if e.ComplexityRoot.AccountingInboundPostingLine.ObjectNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundPostingLine.ObjectNumber(childComplexity), true
+	case "AccountingInboundPostingLine.objectType":
+		if e.ComplexityRoot.AccountingInboundPostingLine.ObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundPostingLine.ObjectType(childComplexity), true
+	case "AccountingInboundPostingLine.openMinor":
+		if e.ComplexityRoot.AccountingInboundPostingLine.OpenMinor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundPostingLine.OpenMinor(childComplexity), true
+
+	case "AccountingInboundSummary.appliedSince":
+		if e.ComplexityRoot.AccountingInboundSummary.AppliedSince == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundSummary.AppliedSince(childComplexity), true
+	case "AccountingInboundSummary.detected":
+		if e.ComplexityRoot.AccountingInboundSummary.Detected == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundSummary.Detected(childComplexity), true
+	case "AccountingInboundSummary.ignoredSince":
+		if e.ComplexityRoot.AccountingInboundSummary.IgnoredSince == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundSummary.IgnoredSince(childComplexity), true
+	case "AccountingInboundSummary.proposed":
+		if e.ComplexityRoot.AccountingInboundSummary.Proposed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingInboundSummary.Proposed(childComplexity), true
 
 	case "AccountingMapping.candidates":
 		if e.ComplexityRoot.AccountingMapping.Candidates == nil {
@@ -20375,6 +21360,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentProposalEdge.Node(childComplexity), true
 
+	case "AgentProposalField.choices":
+		if e.ComplexityRoot.AgentProposalField.Choices == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Choices(childComplexity), true
 	case "AgentProposalField.description":
 		if e.ComplexityRoot.AgentProposalField.Description == nil {
 			break
@@ -20435,6 +21426,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposalField.Required(childComplexity), true
+	case "AgentProposalField.resource":
+		if e.ComplexityRoot.AgentProposalField.Resource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Resource(childComplexity), true
+
+	case "AgentProposalFieldChoice.id":
+		if e.ComplexityRoot.AgentProposalFieldChoice.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalFieldChoice.ID(childComplexity), true
+	case "AgentProposalFieldChoice.label":
+		if e.ComplexityRoot.AgentProposalFieldChoice.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalFieldChoice.Label(childComplexity), true
 
 	case "AgentProposalPreview.changes":
 		if e.ComplexityRoot.AgentProposalPreview.Changes == nil {
@@ -48302,6 +49312,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AmendWorkerEmploymentEvent(childComplexity, args["input"].(gqlmodel.AmendWorkerEmploymentEventInput)), true
+	case "Mutation.applyAccountingInboundChange":
+		if e.ComplexityRoot.Mutation.ApplyAccountingInboundChange == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_applyAccountingInboundChange_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ApplyAccountingInboundChange(childComplexity, args["id"].(string)), true
 	case "Mutation.applyCarrierIntelSuggestions":
 		if e.ComplexityRoot.Mutation.ApplyCarrierIntelSuggestions == nil {
 			break
@@ -48962,6 +49983,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CheckAccountingConnection(childComplexity, args["integrationType"].(integration.Type)), true
+	case "Mutation.checkAccountingDrift":
+		if e.ComplexityRoot.Mutation.CheckAccountingDrift == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_checkAccountingDrift_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CheckAccountingDrift(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Mutation.checkShipmentDuplicateBol":
 		if e.ComplexityRoot.Mutation.CheckShipmentDuplicateBOL == nil {
 			break
@@ -50194,6 +51226,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DisconnectAccountingSystem(childComplexity, args["integrationType"].(integration.Type)), true
+	case "Mutation.dismissAccountingDrift":
+		if e.ComplexityRoot.Mutation.DismissAccountingDrift == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dismissAccountingDrift_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DismissAccountingDrift(childComplexity, args["input"].(gqlmodel.DismissAccountingDriftInput)), true
 	case "Mutation.dismissAgentMemorySuggestion":
 		if e.ComplexityRoot.Mutation.DismissAgentMemorySuggestion == nil {
 			break
@@ -50513,6 +51556,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.HoldDriverPayEvent(childComplexity, args["input"].(gqlmodel.HoldPayEventInput)), true
+	case "Mutation.ignoreAccountingInboundChange":
+		if e.ComplexityRoot.Mutation.IgnoreAccountingInboundChange == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_ignoreAccountingInboundChange_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.IgnoreAccountingInboundChange(childComplexity, args["input"].(gqlmodel.IgnoreAccountingInboundChangeInput)), true
 	case "Mutation.importSourcedCarrier":
 		if e.ComplexityRoot.Mutation.ImportSourcedCarrier == nil {
 			break
@@ -51477,6 +52531,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ResetHomeLayout(childComplexity), true
+	case "Mutation.resolveAccountingDrift":
+		if e.ComplexityRoot.Mutation.ResolveAccountingDrift == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_resolveAccountingDrift_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ResolveAccountingDrift(childComplexity, args["input"].(gqlmodel.ResolveAccountingDriftInput)), true
 	case "Mutation.resolveAgentException":
 		if e.ComplexityRoot.Mutation.ResolveAgentException == nil {
 			break
@@ -57323,6 +58388,94 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AccountingBackfills(childComplexity, args["integrationType"].(integration.Type)), true
+	case "Query.accountingDriftFinding":
+		if e.ComplexityRoot.Query.AccountingDriftFinding == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingDriftFinding_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingDriftFinding(childComplexity, args["id"].(string)), true
+	case "Query.accountingDriftFindingTable":
+		if e.ComplexityRoot.Query.AccountingDriftFindingTable == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingDriftFindingTable_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingDriftFindingTable(childComplexity, args["integrationType"].(integration.Type), args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.accountingDriftFixPreview":
+		if e.ComplexityRoot.Query.AccountingDriftFixPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingDriftFixPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingDriftFixPreview(childComplexity, args["input"].(gqlmodel.ResolveAccountingDriftInput)), true
+	case "Query.accountingDriftOverview":
+		if e.ComplexityRoot.Query.AccountingDriftOverview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingDriftOverview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingDriftOverview(childComplexity, args["integrationType"].(integration.Type)), true
+	case "Query.accountingInboundApplyPreview":
+		if e.ComplexityRoot.Query.AccountingInboundApplyPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingInboundApplyPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingInboundApplyPreview(childComplexity, args["id"].(string)), true
+	case "Query.accountingInboundChange":
+		if e.ComplexityRoot.Query.AccountingInboundChange == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingInboundChange_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingInboundChange(childComplexity, args["id"].(string)), true
+	case "Query.accountingInboundChangeTable":
+		if e.ComplexityRoot.Query.AccountingInboundChangeTable == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingInboundChangeTable_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingInboundChangeTable(childComplexity, args["integrationType"].(integration.Type), args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.accountingInboundOverview":
+		if e.ComplexityRoot.Query.AccountingInboundOverview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingInboundOverview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingInboundOverview(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Query.accountingMappingSummary":
 		if e.ComplexityRoot.Query.AccountingMappingSummary == nil {
 			break
@@ -80580,6 +81733,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDetentionStatsInput,
 		ec.unmarshalInputDetentionTierInput,
 		ec.unmarshalInputDetentionWaiveInput,
+		ec.unmarshalInputDismissAccountingDriftInput,
 		ec.unmarshalInputDispatchAssignMoveInput,
 		ec.unmarshalInputDispatchAssignMoveToCarrierInput,
 		ec.unmarshalInputDispatchAssignmentPreviewInput,
@@ -80634,6 +81788,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputIFTAReturnsInput,
 		ec.unmarshalInputIFTATaxRateInput,
 		ec.unmarshalInputIFTATaxRatesInput,
+		ec.unmarshalInputIgnoreAccountingInboundChangeInput,
 		ec.unmarshalInputImportSourcedCarrierInput,
 		ec.unmarshalInputInboundMailboxInput,
 		ec.unmarshalInputInboundMessagesInput,
@@ -80724,6 +81879,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRequestAccountingBackfillInput,
 		ec.unmarshalInputRequestMyPtoInput,
 		ec.unmarshalInputRescindDisciplinaryActionInput,
+		ec.unmarshalInputResolveAccountingDriftInput,
 		ec.unmarshalInputResolveCarrierIntelEventInput,
 		ec.unmarshalInputResolveInvoiceDisputeInput,
 		ec.unmarshalInputResolveSettlementDisputeInput,
@@ -81300,6 +82456,12 @@ type AccountingConnection {
   driverSettlementsEnabledAt: Timestamp
   "Whether owner-operator settlements are sent as bills."
   syncsDriverSettlements: Boolean!
+  "What happens to payments recorded in the accounting system against documents Trenova sent."
+  inboundPaymentPolicy: AccountingInboundPaymentPolicy!
+  "When Trenova last read what changed in the accounting system."
+  changesReadAt: Timestamp
+  "Why the last read of changes failed. Empty when it succeeded."
+  changesErrorMessage: String!
   "When sending was paused. Records keep queueing while it is. Absent when it is running."
   pausedAt: Timestamp
   pausedBy: User
@@ -81515,6 +82677,8 @@ input UpdateAccountingSyncSettingsInput {
   autoSync: Boolean!
   "Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones."
   driverSettlements: Boolean!
+  "What happens to payments recorded in the accounting system. Left out, it stays as it is."
+  inboundPayments: AccountingInboundPaymentPolicy
 }
 
 input PauseAccountingSyncInput {
@@ -81726,6 +82890,346 @@ input CompleteAccountingAuthorizationInput {
   realmId: String!
 }
 
+"What happens to a payment recorded in the accounting system against documents Trenova sent."
+enum AccountingInboundPaymentPolicy {
+  "Payments recorded there are not brought into Trenova."
+  Off
+  "Each payment waits for a person to apply it in Trenova."
+  Propose
+  "Payments that match Trenova are applied on their own; the rest wait for a person."
+  Apply
+}
+
+enum AccountingInboundChangeKind {
+  CustomerPayment
+  BillPayment
+}
+
+enum AccountingInboundChangeStatus {
+  "Just read. It is evaluated once it has settled."
+  Detected
+  "Waits for a person to apply or ignore it."
+  Proposed
+  Applied
+  Ignored
+  "Voided or deleted in the accounting system before it was applied."
+  Superseded
+}
+
+"Why a payment was not applied on its own."
+enum AccountingInboundChangeReason {
+  PolicyPropose
+  PeriodNotOpen
+  UnknownDocument
+  PartyMismatch
+  Overpayment
+  PartialBillPayment
+  AlreadyPaid
+  CurrencyMismatch
+  Voided
+  NotTrenovaDocument
+  SentFromTrenova
+  ApplyFailed
+}
+
+enum AccountingInboundDocumentKind {
+  Invoice
+  CreditMemo
+  DebitMemo
+  Bill
+  VendorCredit
+  Other
+}
+
+enum AccountingAppliedObjectType {
+  CustomerPayment
+  CreditMemoApplication
+  CarrierSettlement
+  DriverSettlement
+}
+
+"One document a payment in the accounting system pays."
+type AccountingInboundLine {
+  documentKind: AccountingInboundDocumentKind!
+  "The document's ID in the accounting system."
+  documentExternalId: String!
+  amountMinor: Int!
+  "The Trenova document the line pays. Absent when the line names a document Trenova did not send."
+  objectType: AccountingSyncObjectType
+  objectId: ID
+  objectNumber: String!
+  "What was open on the Trenova document when the payment was evaluated."
+  openMinor: Int!
+}
+
+"A Trenova record that applying a payment created or paid."
+type AccountingAppliedObject {
+  type: AccountingAppliedObjectType!
+  id: ID!
+}
+
+"A payment recorded in the accounting system against documents Trenova sent."
+type AccountingInboundChange {
+  id: ID!
+  kind: AccountingInboundChangeKind!
+  status: AccountingInboundChangeStatus!
+  "Why it was not applied on its own. Absent once applied."
+  reason: AccountingInboundChangeReason
+  "What to do about it, in plain language."
+  resolution: String!
+  "The payment's ID in the accounting system."
+  externalId: String!
+  externalNumber: String!
+  "A link to the payment in the accounting system."
+  externalUrl: String!
+  "When it was last changed in the accounting system."
+  providerModifiedAt: Timestamp
+  "Who last changed it there, when the accounting system says."
+  providerModifiedBy: String!
+  "The payment date."
+  txnDate: Timestamp!
+  amountMinor: Int!
+  currencyCode: String!
+  "The customer or vendor as the accounting system names it."
+  partyName: String!
+  "The Trenova customer, carrier or driver it pays for, once matched."
+  partyObjectId: ID
+  referenceNumber: String!
+  methodName: String!
+  "What the accounting system left unapplied on the payment."
+  unappliedMinor: Int!
+  lines: [AccountingInboundLine!]!
+  appliedObjects: [AccountingAppliedObject!]!
+  decidedBy: User
+  decidedAt: Timestamp
+  note: String!
+  detectedAt: Timestamp!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+type AccountingInboundChangeEdge {
+  node: AccountingInboundChange!
+  cursor: String!
+}
+
+type AccountingInboundChangeConnection {
+  edges: [AccountingInboundChangeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AccountingInboundSummary {
+  detected: Int!
+  proposed: Int!
+  "Applied in the last seven days."
+  appliedSince: Int!
+  "Ignored in the last seven days."
+  ignoredSince: Int!
+}
+
+type AccountingInboundOverview {
+  connectionId: ID!
+  policy: AccountingInboundPaymentPolicy!
+  changesReadAt: Timestamp
+  changesError: String!
+  summary: AccountingInboundSummary!
+}
+
+"One Trenova document applying a payment would pay."
+type AccountingInboundPostingLine {
+  objectType: AccountingSyncObjectType!
+  objectId: ID!
+  objectNumber: String!
+  amountMinor: Int!
+  openMinor: Int!
+}
+
+"What applying a payment would post, checked against Trenova as it is now."
+type AccountingInboundApplyPreview {
+  change: AccountingInboundChange!
+  canApply: Boolean!
+  "Why it cannot be applied now. Empty when it can."
+  blocker: String!
+  "The day it would be posted on."
+  paidAt: Timestamp!
+  "Cash applied to invoices."
+  cashMinor: Int!
+  "Cash left on the customer's account as unapplied."
+  unappliedMinor: Int!
+  lines: [AccountingInboundPostingLine!]!
+}
+
+input IgnoreAccountingInboundChangeInput {
+  id: ID!
+  "Why it is not applied, for example that it was entered in Trenova by hand."
+  note: String!
+}
+
+"How the accounting system and Trenova differ on a document Trenova sent."
+enum AccountingDriftKind {
+  "The total differs."
+  AmountMismatch
+  "Trenova voided or reversed it; the accounting system still has it."
+  StatusMismatch
+  "It was deleted in the accounting system."
+  DeletedInProvider
+  "It was voided in the accounting system."
+  VoidedInProvider
+  "A customer's open balance differs over the documents both sides hold."
+  CustomerBalanceMismatch
+}
+
+enum AccountingDriftStatus {
+  Open
+  Resolved
+  Dismissed
+}
+
+enum AccountingDriftResolution {
+  PushedTrenovaValue
+  AdjustedTrenova
+  NoLongerDiffers
+  Dismissed
+}
+
+"Which side a fix changes."
+enum AccountingDriftDirection {
+  "Send Trenova's document to the accounting system again."
+  PushTrenovaValue
+  "Change Trenova to match the accounting system."
+  AdjustTrenova
+}
+
+"What a fix made."
+enum AccountingDriftFixObject {
+  SyncRecord
+  CreditMemo
+  DebitMemo
+  InvoiceVoid
+  PaymentReversal
+}
+
+"One document inside a customer balance difference, with both sides."
+type AccountingDriftLine {
+  objectType: AccountingSyncObjectType!
+  objectId: ID!
+  objectNumber: String!
+  trenovaMinor: Int!
+  providerMinor: Int!
+}
+
+"A difference between a document Trenova sent and what the accounting system holds now."
+type AccountingDriftFinding {
+  id: ID!
+  connectionId: ID!
+  objectType: AccountingSyncObjectType!
+  objectId: ID!
+  objectNumber: String!
+  "The customer, carrier or driver on the document."
+  partyId: ID
+  partyName: String!
+  "The document's ID in the accounting system."
+  externalId: String!
+  "A link to the document in the accounting system."
+  externalUrl: String!
+  kind: AccountingDriftKind!
+  currencyCode: String!
+  "Trenova's value, in minor units. Absent when the difference has no amount."
+  trenovaMinor: Int
+  "The accounting system's value, in minor units. Absent when it no longer has the document."
+  providerMinor: Int
+  "The accounting system's value less Trenova's."
+  differenceMinor: Int
+  trenovaState: String!
+  providerState: String!
+  "For a customer balance, the documents that differ."
+  detail: [AccountingDriftLine!]!
+  "When it was last changed in the accounting system."
+  providerModifiedAt: Timestamp
+  "Who last changed it there, when the accounting system says."
+  providerModifiedBy: String!
+  status: AccountingDriftStatus!
+  resolution: AccountingDriftResolution
+  resolutionNote: String!
+  "What the fix made: the record sent, or the memo, void or reversal posted."
+  fixObjectType: AccountingDriftFixObject
+  fixObjectId: ID
+  "The fixes this finding offers while it is open."
+  directions: [AccountingDriftDirection!]!
+  "True while Trenova's value was sent and a later check has yet to confirm it."
+  pushed: Boolean!
+  resolvedBy: User
+  resolvedAt: Timestamp
+  detectedAt: Timestamp!
+  lastSeenAt: Timestamp!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+type AccountingDriftFindingEdge {
+  node: AccountingDriftFinding!
+  cursor: String!
+}
+
+type AccountingDriftFindingConnection {
+  edges: [AccountingDriftFindingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AccountingDriftSummary {
+  open: Int!
+  "Open differences in a total or a balance."
+  amountOpen: Int!
+  "Open documents deleted or voided in the accounting system."
+  goneOpen: Int!
+  statusOpen: Int!
+  balanceOpen: Int!
+  "Resolved or dismissed in the last seven days."
+  resolvedSince: Int!
+}
+
+type AccountingDriftOverview {
+  connectionId: ID!
+  providerName: String!
+  "When the last full check finished."
+  checkedAt: Timestamp
+  "Why the last check could not read the accounting system. Empty when it could."
+  checkError: String!
+  "The reconciliation tolerance, in minor units. Agents dismiss only amount differences within it."
+  toleranceMinor: Int!
+  "The accounting system's home currency, which the tolerance is in."
+  currencyCode: String!
+  summary: AccountingDriftSummary!
+}
+
+"What a fix or a dismissal would do, checked against both sides as they are now."
+type AccountingDriftFixPreview {
+  finding: AccountingDriftFinding!
+  direction: AccountingDriftDirection
+  fixObject: AccountingDriftFixObject
+  "The operation sent to the accounting system when pushing."
+  operation: AccountingSyncOperation
+  "The amount a memo or reversal posts, in minor units."
+  amountMinor: Int!
+  currencyCode: String!
+  toleranceMinor: Int!
+  withinTolerance: Boolean!
+  summary: String!
+}
+
+input ResolveAccountingDriftInput {
+  id: ID!
+  direction: AccountingDriftDirection!
+}
+
+input DismissAccountingDriftInput {
+  id: ID!
+  "Why both sides stay as they are."
+  note: String!
+}
+
 extend type Query {
   "The organization's link to an accounting system, and whether this instance can connect to it at all."
   accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
@@ -81757,6 +83261,26 @@ extend type Query {
   "Where each document stands in the accounting system. Documents never queued are left out. At most 200 at a time."
   accountingSyncObjectStates(objectIds: [ID!]!): [AccountingSyncObjectState!]!
   accountingBackfills(integrationType: AccountingSystem!): [AccountingBackfill!]!
+  "Counts of payments recorded in the accounting system, and when changes were last read."
+  accountingInboundOverview(integrationType: AccountingSystem!): AccountingInboundOverview!
+  "Payments recorded in the accounting system as a data table, newest first."
+  accountingInboundChangeTable(
+    integrationType: AccountingSystem!
+    input: DataTableConnectionInput!
+  ): AccountingInboundChangeConnection!
+  accountingInboundChange(id: ID!): AccountingInboundChange!
+  "What applying a payment would post, without posting it."
+  accountingInboundApplyPreview(id: ID!): AccountingInboundApplyPreview!
+  "Open and recent differences with the accounting system, and when it was last checked."
+  accountingDriftOverview(integrationType: AccountingSystem!): AccountingDriftOverview!
+  "Differences with the accounting system as a data table, newest first."
+  accountingDriftFindingTable(
+    integrationType: AccountingSystem!
+    input: DataTableConnectionInput!
+  ): AccountingDriftFindingConnection!
+  accountingDriftFinding(id: ID!): AccountingDriftFinding!
+  "What fixing a difference in one direction would do, without doing it."
+  accountingDriftFixPreview(input: ResolveAccountingDriftInput!): AccountingDriftFixPreview!
   "Searches the accounting system records Trenova has read."
   accountingReferenceObjects(
     integrationType: AccountingSystem!
@@ -81809,6 +83333,16 @@ extend type Mutation {
   "Queues documents posted before sync was turned on. One backfill runs at a time."
   requestAccountingBackfill(input: RequestAccountingBackfillInput!): AccountingBackfill!
   changeAccountingBackfill(input: ChangeAccountingBackfillInput!): AccountingBackfill!
+  "Posts a payment recorded in the accounting system in Trenova: the customer payment and credits, or the settlement payment."
+  applyAccountingInboundChange(id: ID!): AccountingInboundChange!
+  "Leaves a payment recorded in the accounting system out of Trenova, with a reason."
+  ignoreAccountingInboundChange(input: IgnoreAccountingInboundChangeInput!): AccountingInboundChange!
+  "Fixes a difference with the accounting system: sends Trenova's document again, or changes Trenova to match."
+  resolveAccountingDrift(input: ResolveAccountingDriftInput!): AccountingDriftFinding!
+  "Keeps both sides as they are, with a reason."
+  dismissAccountingDrift(input: DismissAccountingDriftInput!): AccountingDriftFinding!
+  "Compares the accounting system with Trenova now instead of waiting for the nightly check."
+  checkAccountingDrift(integrationType: AccountingSystem!): AccountingDriftOverview!
 }
 `, BuiltIn: false},
 	{Name: "../schema/accounts_receivable.graphqls", Input: `type ARAgingBucketTotals {
@@ -82064,6 +83598,8 @@ enum AgentSubjectType {
   Dashboard
   AccountingConnection
   AccountingSyncRecord
+  AccountingInboundChange
+  AccountingDriftFinding
   FormulaTemplate
 }
 
@@ -82271,6 +83807,17 @@ type AgentProposalField {
   maxLength: Int
   "The parameter names the record the change is for, which an approver may not change."
   readOnly: Boolean!
+  "For a RecordSubset field, the permission resource its ids belong to (such as shipment); absent for every other kind."
+  resource: String
+  "For a RecordSubset field, every record the agent proposed, in the order proposed, for a person to untick: bounded by the tool's own limit on the list (at most 5000). Absent for every other kind."
+  choices: [AgentProposalFieldChoice!]
+}
+
+"One record a RecordSubset field proposed."
+type AgentProposalFieldChoice {
+  id: ID!
+  "The words the record is known by, such as a shipment's PRO number; its id when the record is gone or the reader may not read its resource."
+  label: String!
 }
 
 "The control a parameter takes when edited: the schema's type, read for a form."
@@ -82283,6 +83830,8 @@ enum AgentProposalFieldKind {
   Choice
   List
   JSON
+  "A list of record ids the agent proposed to act on. An approver may remove ids, never add one, and must keep at least one; the field's choices list every record proposed."
+  RecordSubset
 }
 
 "Several proposals from one run, decided once and run in order."
@@ -107140,6 +108689,16 @@ func (ec *executionContext) childFields_AccountingAppSettings(ctx context.Contex
 	return nil, fmt.Errorf("no field named %q was found under type AccountingAppSettings", field.Name)
 }
 
+func (ec *executionContext) childFields_AccountingAppliedObject(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "type":
+		return ec.fieldContext_AccountingAppliedObject_type(ctx, field)
+	case "id":
+		return ec.fieldContext_AccountingAppliedObject_id(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingAppliedObject", field.Name)
+}
+
 func (ec *executionContext) childFields_AccountingAuthorizationStart(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "authorizeUrl":
@@ -107238,6 +108797,12 @@ func (ec *executionContext) childFields_AccountingConnection(ctx context.Context
 		return ec.fieldContext_AccountingConnection_driverSettlementsEnabledAt(ctx, field)
 	case "syncsDriverSettlements":
 		return ec.fieldContext_AccountingConnection_syncsDriverSettlements(ctx, field)
+	case "inboundPaymentPolicy":
+		return ec.fieldContext_AccountingConnection_inboundPaymentPolicy(ctx, field)
+	case "changesReadAt":
+		return ec.fieldContext_AccountingConnection_changesReadAt(ctx, field)
+	case "changesErrorMessage":
+		return ec.fieldContext_AccountingConnection_changesErrorMessage(ctx, field)
 	case "pausedAt":
 		return ec.fieldContext_AccountingConnection_pausedAt(ctx, field)
 	case "pausedBy":
@@ -107256,6 +108821,342 @@ func (ec *executionContext) childFields_AccountingConnection(ctx context.Context
 		return ec.fieldContext_AccountingConnection_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AccountingConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingDriftFinding(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingDriftFinding_id(ctx, field)
+	case "connectionId":
+		return ec.fieldContext_AccountingDriftFinding_connectionId(ctx, field)
+	case "objectType":
+		return ec.fieldContext_AccountingDriftFinding_objectType(ctx, field)
+	case "objectId":
+		return ec.fieldContext_AccountingDriftFinding_objectId(ctx, field)
+	case "objectNumber":
+		return ec.fieldContext_AccountingDriftFinding_objectNumber(ctx, field)
+	case "partyId":
+		return ec.fieldContext_AccountingDriftFinding_partyId(ctx, field)
+	case "partyName":
+		return ec.fieldContext_AccountingDriftFinding_partyName(ctx, field)
+	case "externalId":
+		return ec.fieldContext_AccountingDriftFinding_externalId(ctx, field)
+	case "externalUrl":
+		return ec.fieldContext_AccountingDriftFinding_externalUrl(ctx, field)
+	case "kind":
+		return ec.fieldContext_AccountingDriftFinding_kind(ctx, field)
+	case "currencyCode":
+		return ec.fieldContext_AccountingDriftFinding_currencyCode(ctx, field)
+	case "trenovaMinor":
+		return ec.fieldContext_AccountingDriftFinding_trenovaMinor(ctx, field)
+	case "providerMinor":
+		return ec.fieldContext_AccountingDriftFinding_providerMinor(ctx, field)
+	case "differenceMinor":
+		return ec.fieldContext_AccountingDriftFinding_differenceMinor(ctx, field)
+	case "trenovaState":
+		return ec.fieldContext_AccountingDriftFinding_trenovaState(ctx, field)
+	case "providerState":
+		return ec.fieldContext_AccountingDriftFinding_providerState(ctx, field)
+	case "detail":
+		return ec.fieldContext_AccountingDriftFinding_detail(ctx, field)
+	case "providerModifiedAt":
+		return ec.fieldContext_AccountingDriftFinding_providerModifiedAt(ctx, field)
+	case "providerModifiedBy":
+		return ec.fieldContext_AccountingDriftFinding_providerModifiedBy(ctx, field)
+	case "status":
+		return ec.fieldContext_AccountingDriftFinding_status(ctx, field)
+	case "resolution":
+		return ec.fieldContext_AccountingDriftFinding_resolution(ctx, field)
+	case "resolutionNote":
+		return ec.fieldContext_AccountingDriftFinding_resolutionNote(ctx, field)
+	case "fixObjectType":
+		return ec.fieldContext_AccountingDriftFinding_fixObjectType(ctx, field)
+	case "fixObjectId":
+		return ec.fieldContext_AccountingDriftFinding_fixObjectId(ctx, field)
+	case "directions":
+		return ec.fieldContext_AccountingDriftFinding_directions(ctx, field)
+	case "pushed":
+		return ec.fieldContext_AccountingDriftFinding_pushed(ctx, field)
+	case "resolvedBy":
+		return ec.fieldContext_AccountingDriftFinding_resolvedBy(ctx, field)
+	case "resolvedAt":
+		return ec.fieldContext_AccountingDriftFinding_resolvedAt(ctx, field)
+	case "detectedAt":
+		return ec.fieldContext_AccountingDriftFinding_detectedAt(ctx, field)
+	case "lastSeenAt":
+		return ec.fieldContext_AccountingDriftFinding_lastSeenAt(ctx, field)
+	case "version":
+		return ec.fieldContext_AccountingDriftFinding_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AccountingDriftFinding_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingDriftFinding", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingDriftFindingConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AccountingDriftFindingConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AccountingDriftFindingConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AccountingDriftFindingConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingDriftFindingConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingDriftFindingEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AccountingDriftFindingEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AccountingDriftFindingEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingDriftFindingEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingDriftFixPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "finding":
+		return ec.fieldContext_AccountingDriftFixPreview_finding(ctx, field)
+	case "direction":
+		return ec.fieldContext_AccountingDriftFixPreview_direction(ctx, field)
+	case "fixObject":
+		return ec.fieldContext_AccountingDriftFixPreview_fixObject(ctx, field)
+	case "operation":
+		return ec.fieldContext_AccountingDriftFixPreview_operation(ctx, field)
+	case "amountMinor":
+		return ec.fieldContext_AccountingDriftFixPreview_amountMinor(ctx, field)
+	case "currencyCode":
+		return ec.fieldContext_AccountingDriftFixPreview_currencyCode(ctx, field)
+	case "toleranceMinor":
+		return ec.fieldContext_AccountingDriftFixPreview_toleranceMinor(ctx, field)
+	case "withinTolerance":
+		return ec.fieldContext_AccountingDriftFixPreview_withinTolerance(ctx, field)
+	case "summary":
+		return ec.fieldContext_AccountingDriftFixPreview_summary(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingDriftFixPreview", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingDriftLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "objectType":
+		return ec.fieldContext_AccountingDriftLine_objectType(ctx, field)
+	case "objectId":
+		return ec.fieldContext_AccountingDriftLine_objectId(ctx, field)
+	case "objectNumber":
+		return ec.fieldContext_AccountingDriftLine_objectNumber(ctx, field)
+	case "trenovaMinor":
+		return ec.fieldContext_AccountingDriftLine_trenovaMinor(ctx, field)
+	case "providerMinor":
+		return ec.fieldContext_AccountingDriftLine_providerMinor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingDriftLine", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingDriftOverview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "connectionId":
+		return ec.fieldContext_AccountingDriftOverview_connectionId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_AccountingDriftOverview_providerName(ctx, field)
+	case "checkedAt":
+		return ec.fieldContext_AccountingDriftOverview_checkedAt(ctx, field)
+	case "checkError":
+		return ec.fieldContext_AccountingDriftOverview_checkError(ctx, field)
+	case "toleranceMinor":
+		return ec.fieldContext_AccountingDriftOverview_toleranceMinor(ctx, field)
+	case "currencyCode":
+		return ec.fieldContext_AccountingDriftOverview_currencyCode(ctx, field)
+	case "summary":
+		return ec.fieldContext_AccountingDriftOverview_summary(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingDriftOverview", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingDriftSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "open":
+		return ec.fieldContext_AccountingDriftSummary_open(ctx, field)
+	case "amountOpen":
+		return ec.fieldContext_AccountingDriftSummary_amountOpen(ctx, field)
+	case "goneOpen":
+		return ec.fieldContext_AccountingDriftSummary_goneOpen(ctx, field)
+	case "statusOpen":
+		return ec.fieldContext_AccountingDriftSummary_statusOpen(ctx, field)
+	case "balanceOpen":
+		return ec.fieldContext_AccountingDriftSummary_balanceOpen(ctx, field)
+	case "resolvedSince":
+		return ec.fieldContext_AccountingDriftSummary_resolvedSince(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingDriftSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingInboundApplyPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "change":
+		return ec.fieldContext_AccountingInboundApplyPreview_change(ctx, field)
+	case "canApply":
+		return ec.fieldContext_AccountingInboundApplyPreview_canApply(ctx, field)
+	case "blocker":
+		return ec.fieldContext_AccountingInboundApplyPreview_blocker(ctx, field)
+	case "paidAt":
+		return ec.fieldContext_AccountingInboundApplyPreview_paidAt(ctx, field)
+	case "cashMinor":
+		return ec.fieldContext_AccountingInboundApplyPreview_cashMinor(ctx, field)
+	case "unappliedMinor":
+		return ec.fieldContext_AccountingInboundApplyPreview_unappliedMinor(ctx, field)
+	case "lines":
+		return ec.fieldContext_AccountingInboundApplyPreview_lines(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingInboundApplyPreview", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingInboundChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingInboundChange_id(ctx, field)
+	case "kind":
+		return ec.fieldContext_AccountingInboundChange_kind(ctx, field)
+	case "status":
+		return ec.fieldContext_AccountingInboundChange_status(ctx, field)
+	case "reason":
+		return ec.fieldContext_AccountingInboundChange_reason(ctx, field)
+	case "resolution":
+		return ec.fieldContext_AccountingInboundChange_resolution(ctx, field)
+	case "externalId":
+		return ec.fieldContext_AccountingInboundChange_externalId(ctx, field)
+	case "externalNumber":
+		return ec.fieldContext_AccountingInboundChange_externalNumber(ctx, field)
+	case "externalUrl":
+		return ec.fieldContext_AccountingInboundChange_externalUrl(ctx, field)
+	case "providerModifiedAt":
+		return ec.fieldContext_AccountingInboundChange_providerModifiedAt(ctx, field)
+	case "providerModifiedBy":
+		return ec.fieldContext_AccountingInboundChange_providerModifiedBy(ctx, field)
+	case "txnDate":
+		return ec.fieldContext_AccountingInboundChange_txnDate(ctx, field)
+	case "amountMinor":
+		return ec.fieldContext_AccountingInboundChange_amountMinor(ctx, field)
+	case "currencyCode":
+		return ec.fieldContext_AccountingInboundChange_currencyCode(ctx, field)
+	case "partyName":
+		return ec.fieldContext_AccountingInboundChange_partyName(ctx, field)
+	case "partyObjectId":
+		return ec.fieldContext_AccountingInboundChange_partyObjectId(ctx, field)
+	case "referenceNumber":
+		return ec.fieldContext_AccountingInboundChange_referenceNumber(ctx, field)
+	case "methodName":
+		return ec.fieldContext_AccountingInboundChange_methodName(ctx, field)
+	case "unappliedMinor":
+		return ec.fieldContext_AccountingInboundChange_unappliedMinor(ctx, field)
+	case "lines":
+		return ec.fieldContext_AccountingInboundChange_lines(ctx, field)
+	case "appliedObjects":
+		return ec.fieldContext_AccountingInboundChange_appliedObjects(ctx, field)
+	case "decidedBy":
+		return ec.fieldContext_AccountingInboundChange_decidedBy(ctx, field)
+	case "decidedAt":
+		return ec.fieldContext_AccountingInboundChange_decidedAt(ctx, field)
+	case "note":
+		return ec.fieldContext_AccountingInboundChange_note(ctx, field)
+	case "detectedAt":
+		return ec.fieldContext_AccountingInboundChange_detectedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_AccountingInboundChange_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AccountingInboundChange_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingInboundChange", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingInboundChangeConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AccountingInboundChangeConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AccountingInboundChangeConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AccountingInboundChangeConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingInboundChangeConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingInboundChangeEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AccountingInboundChangeEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AccountingInboundChangeEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingInboundChangeEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingInboundLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "documentKind":
+		return ec.fieldContext_AccountingInboundLine_documentKind(ctx, field)
+	case "documentExternalId":
+		return ec.fieldContext_AccountingInboundLine_documentExternalId(ctx, field)
+	case "amountMinor":
+		return ec.fieldContext_AccountingInboundLine_amountMinor(ctx, field)
+	case "objectType":
+		return ec.fieldContext_AccountingInboundLine_objectType(ctx, field)
+	case "objectId":
+		return ec.fieldContext_AccountingInboundLine_objectId(ctx, field)
+	case "objectNumber":
+		return ec.fieldContext_AccountingInboundLine_objectNumber(ctx, field)
+	case "openMinor":
+		return ec.fieldContext_AccountingInboundLine_openMinor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingInboundLine", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingInboundOverview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "connectionId":
+		return ec.fieldContext_AccountingInboundOverview_connectionId(ctx, field)
+	case "policy":
+		return ec.fieldContext_AccountingInboundOverview_policy(ctx, field)
+	case "changesReadAt":
+		return ec.fieldContext_AccountingInboundOverview_changesReadAt(ctx, field)
+	case "changesError":
+		return ec.fieldContext_AccountingInboundOverview_changesError(ctx, field)
+	case "summary":
+		return ec.fieldContext_AccountingInboundOverview_summary(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingInboundOverview", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingInboundPostingLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "objectType":
+		return ec.fieldContext_AccountingInboundPostingLine_objectType(ctx, field)
+	case "objectId":
+		return ec.fieldContext_AccountingInboundPostingLine_objectId(ctx, field)
+	case "objectNumber":
+		return ec.fieldContext_AccountingInboundPostingLine_objectNumber(ctx, field)
+	case "amountMinor":
+		return ec.fieldContext_AccountingInboundPostingLine_amountMinor(ctx, field)
+	case "openMinor":
+		return ec.fieldContext_AccountingInboundPostingLine_openMinor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingInboundPostingLine", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingInboundSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "detected":
+		return ec.fieldContext_AccountingInboundSummary_detected(ctx, field)
+	case "proposed":
+		return ec.fieldContext_AccountingInboundSummary_proposed(ctx, field)
+	case "appliedSince":
+		return ec.fieldContext_AccountingInboundSummary_appliedSince(ctx, field)
+	case "ignoredSince":
+		return ec.fieldContext_AccountingInboundSummary_ignoredSince(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingInboundSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_AccountingMapping(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -108700,8 +110601,22 @@ func (ec *executionContext) childFields_AgentProposalField(ctx context.Context, 
 		return ec.fieldContext_AgentProposalField_maxLength(ctx, field)
 	case "readOnly":
 		return ec.fieldContext_AgentProposalField_readOnly(ctx, field)
+	case "resource":
+		return ec.fieldContext_AgentProposalField_resource(ctx, field)
+	case "choices":
+		return ec.fieldContext_AgentProposalField_choices(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposalField", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentProposalFieldChoice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentProposalFieldChoice_id(ctx, field)
+	case "label":
+		return ec.fieldContext_AgentProposalFieldChoice_label(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentProposalFieldChoice", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentProposalPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

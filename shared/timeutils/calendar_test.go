@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCalendarUTC(t *testing.T) {
@@ -43,4 +44,23 @@ func TestFormatCalendarDateUsesTheZone(t *testing.T) {
 	ts := time.Date(2026, 9, 25, 2, 30, 0, 0, time.UTC).Unix()
 	assert.Equal(t, "2026-09-25", FormatCalendarDate(ts, nil))
 	assert.Equal(t, "2026-09-24", FormatCalendarDate(ts, LoadLocation("America/Chicago")))
+}
+
+func TestParseCalendarDateIsMidnightInTheLocation(t *testing.T) {
+	t.Parallel()
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+
+	got, err := ParseCalendarDate("2026-09-24", chicago)
+	require.NoError(t, err)
+	assert.Equal(t, time.Date(2026, 9, 24, 0, 0, 0, 0, chicago).Unix(), got)
+	assert.Equal(t, "2026-09-24", FormatCalendarDate(got, chicago))
+
+	utc, err := ParseCalendarDate("2026-09-24", nil)
+	require.NoError(t, err)
+	assert.Equal(t, time.Date(2026, 9, 24, 0, 0, 0, 0, time.UTC).Unix(), utc)
+
+	_, err = ParseCalendarDate("2026-02-30", time.UTC)
+	require.Error(t, err)
 }

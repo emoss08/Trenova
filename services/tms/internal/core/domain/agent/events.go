@@ -23,6 +23,9 @@ const (
 	EventAccountingConnectionDegraded = EventKind("accounting.connection_degraded")
 	EventAccountingSyncFailed         = EventKind("accounting.sync_failed")
 	EventAccountingSyncBlocked        = EventKind("accounting.sync_blocked")
+	EventAccountingPaymentProposed    = EventKind("accounting.inbound_payment_proposed")
+	EventAccountingDriftDetected      = EventKind("accounting.drift_detected")
+	EventAccountingReconciliationDue  = EventKind("accounting.reconciliation_due")
 )
 
 type EventDescriptor struct {
@@ -152,7 +155,26 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectAccountingSyncRecord,
 		Label:       "Accounting sync blocked",
 		Description: "A document cannot reach the accounting system until something is fixed: a missing mapping, a closed period, a duplicate number, or a rejected value.",
-	}}
+	},
+	{
+		Kind:        EventAccountingPaymentProposed,
+		SubjectType: SubjectAccountingInbound,
+		Label:       "Payment recorded in the books",
+		Description: "A payment was recorded in the accounting system against documents Trenova sent, and waits for someone to apply it in Trenova or ignore it.",
+	},
+	{
+		Kind:        EventAccountingDriftDetected,
+		SubjectType: SubjectAccountingDrift,
+		Label:       "Books differ from Trenova",
+		Description: "A document Trenova sent now differs in the accounting system: its amount changed, it was voided or deleted there, or a customer's balance no longer matches.",
+	},
+	{
+		Kind:        EventAccountingReconciliationDue,
+		SubjectType: SubjectAccountingConnection,
+		Label:       "Weekly books reconciliation",
+		Description: "The weekly point to review how the accounting system and Trenova compare: open differences, what was fixed, and what still needs a person.",
+	},
+}
 
 func KnownEvents() []EventDescriptor {
 	out := make([]EventDescriptor, len(knownEvents))

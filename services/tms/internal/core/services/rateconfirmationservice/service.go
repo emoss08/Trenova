@@ -137,37 +137,12 @@ func (s *Service) generate(
 	actor *services.RequestActor,
 	opts *generateOptions,
 ) (*rateconfirmation.RateConfirmation, error) {
-	if s.templates == nil {
-		return nil, errortypes.NewBusinessError(
-			"Document templates are not configured; the rate confirmation cannot be rendered",
-		)
-	}
-
-	assignment, err := s.carrierAssignmentRepo.GetActiveByMoveID(ctx, tenantInfo, moveID)
+	plan, err := s.planGenerate(ctx, tenantInfo, moveID)
 	if err != nil {
 		return nil, err
 	}
-	if assignment == nil {
-		return nil, errortypes.NewBusinessError(
-			"Shipment move has no active carrier assignment to confirm",
-		).WithParam("shipmentMoveId", moveID.String())
-	}
-
-	carrierEntity, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
-		ID:         assignment.CarrierID,
-		TenantInfo: tenantInfo,
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
-			IncludeContacts: true,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	shipmentEntity, moveEntity, err := s.loadShipmentAndMove(ctx, tenantInfo, moveID)
-	if err != nil {
-		return nil, err
-	}
+	assignment := plan.assignment
+	shipmentEntity := plan.shipment
 
 	// The revision read, render, and create all run in one transaction so two
 	// concurrent generates cannot both claim the same revision; the loser hits
@@ -183,9 +158,9 @@ func (s *Service) generate(
 
 		templateContext := buildContext(payloadParams{
 			Shipment:    shipmentEntity,
-			Move:        moveEntity,
+			Move:        plan.move,
 			Assignment:  assignment,
-			Carrier:     carrierEntity,
+			Carrier:     plan.carrier,
 			Revision:    revision,
 			CompanyName: s.companyName(txCtx, tenantInfo),
 		})
@@ -212,30 +187,13 @@ func (s *Service) generate(
 		}
 
 		if txErr = s.voidActiveRevision(
-			txCtx, tenantInfo, assignment.ID, "Superseded by a new revision",
+			txCtx, tenantInfo, assignment.ID, supersededRevisionReason,
 		); txErr != nil {
 			return txErr
 		}
 
-		entity := &rateconfirmation.RateConfirmation{
-			OrganizationID:      tenantInfo.OrgID,
-			BusinessUnitID:      tenantInfo.BuID,
-			CarrierAssignmentID: assignment.ID,
-			CarrierID:           assignment.CarrierID,
-			ShipmentID:          shipmentEntity.ID,
-			ShipmentMoveID:      moveID,
-			Revision:            revision,
-			Status:              rateconfirmation.StatusGenerated,
-			PayloadSnapshot:     snapshot,
-		}
-		if actor != nil && !actor.UserID.IsNil() {
-			userID := actor.UserID
-			entity.GeneratedByID = &userID
-		}
-		if opts != nil {
-			entity.GeneratedVia = opts.Via
-			entity.SourceTenderOfferID = opts.SourceTenderOfferID
-		}
+		entity := newRevision(tenantInfo, plan, revision, actor, opts)
+		entity.PayloadSnapshot = snapshot
 
 		multiErr := errortypes.NewMultiError()
 		entity.Validate(multiErr)
@@ -270,47 +228,13 @@ func (s *Service) Send(
 	tenantInfo pagination.TenantInfo,
 	rateConfirmationID pulid.ID,
 ) (*rateconfirmation.RateConfirmation, error) {
-	if s.templates == nil {
-		return nil, errortypes.NewBusinessError(
-			"Document templates are not configured; the rate confirmation cannot be rendered",
-		)
-	}
-
-	entity, err := s.repo.GetByID(ctx, &repositories.GetRateConfirmationByIDRequest{
-		TenantInfo:         tenantInfo,
-		RateConfirmationID: rateConfirmationID,
-	})
+	plan, err := s.planSend(ctx, tenantInfo, rateConfirmationID)
 	if err != nil {
 		return nil, err
 	}
-	if !entity.CanSend() {
-		return nil, errortypes.NewBusinessError(
-			"A {0} rate confirmation cannot be sent", entity.Status,
-		)
-	}
-	if s.emailService == nil {
-		return nil, errortypes.NewBusinessError(
-			"No email service is configured. Download the rate confirmation and deliver it manually",
-		)
-	}
-	if len(entity.PayloadSnapshot) == 0 {
-		return nil, errortypes.NewBusinessError(
-			"The rate confirmation has no payload snapshot to render from. Regenerate it first",
-		)
-	}
-
-	// The frozen snapshot re-hydrates into the typed template context; feeding
-	// the raw JSON map to html/template rejects trusted values like the logo
-	// data URI (ZgotmplZ).
-	templateContext, err := contextFromSnapshot(entity.PayloadSnapshot)
-	if err != nil {
-		return nil, err
-	}
-
-	recipients, err := s.recipients(ctx, tenantInfo, entity)
-	if err != nil {
-		return nil, err
-	}
+	entity := plan.entity
+	templateContext := plan.templateContext
+	recipients := plan.recipients
 
 	// A not-yet-executed revision travels with a single-use sign link so the
 	// carrier can confirm without a login. An already-Confirmed copy is the
@@ -390,14 +314,7 @@ func (s *Service) Send(
 			return nil
 		}
 
-		now := timeutils.NowUnix()
-		// Emailing the executed copy must not demote a Confirmed agreement
-		// back to Sent; only the delivery bookkeeping refreshes.
-		if fresh.Status != rateconfirmation.StatusConfirmed {
-			fresh.Status = rateconfirmation.StatusSent
-		}
-		fresh.SentAt = &now
-		fresh.SentToEmails = strings.Join(recipients, ", ")
+		markSent(fresh, recipients, timeutils.NowUnix())
 		updated, txErr = s.repo.Update(txCtx, fresh)
 		return txErr
 	})
@@ -423,30 +340,18 @@ func (s *Service) MarkConfirmed(
 	rateConfirmationID pulid.ID,
 	confirmedByName string,
 ) (*rateconfirmation.RateConfirmation, error) {
-	entity, err := s.repo.GetByID(ctx, &repositories.GetRateConfirmationByIDRequest{
-		TenantInfo:         tenantInfo,
-		RateConfirmationID: rateConfirmationID,
-	})
+	entity, err := s.planConfirm(ctx, tenantInfo, rateConfirmationID, confirmedByName)
 	if err != nil {
 		return nil, err
 	}
-	if !entity.CanConfirm() {
-		return nil, errortypes.NewBusinessError(
-			"A {0} rate confirmation cannot be confirmed", entity.Status,
-		)
-	}
-	if confirmedByName == "" {
-		return nil, errortypes.NewValidationError(
-			"confirmedByName", errortypes.ErrRequired,
-			"The confirming party's name is required")
-	}
 
 	previous := *entity
-	confirmed, err := s.markConfirmed(ctx, tenantInfo, entity, confirmParams{
-		Name: confirmedByName,
-		Via:  rateconfirmation.ViaDispatcher,
-		At:   timeutils.NowUnix(),
-	})
+	confirmed, err := s.markConfirmed(
+		ctx,
+		tenantInfo,
+		entity,
+		dispatcherConfirmation(confirmedByName, timeutils.NowUnix()),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -463,14 +368,6 @@ func (s *Service) MarkConfirmed(
 	return confirmed, nil
 }
 
-// confirmParams is who executed the agreement, how, and when.
-type confirmParams struct {
-	Name  string
-	Title string
-	Via   rateconfirmation.Via
-	At    int64
-}
-
 // markConfirmed is the single execution path shared by the dispatcher's
 // MarkConfirmed, the public ConfirmByToken, and tender-acceptance issuance:
 // the confirmation and the assignment flip in one transaction so the
@@ -479,14 +376,10 @@ func (s *Service) markConfirmed(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	entity *rateconfirmation.RateConfirmation,
-	p confirmParams,
+	p rateconfirmation.Confirmation,
 ) (*rateconfirmation.RateConfirmation, error) {
 	at := p.At
-	entity.Status = rateconfirmation.StatusConfirmed
-	entity.ConfirmedAt = &at
-	entity.ConfirmedByName = p.Name
-	entity.ConfirmedByTitle = p.Title
-	entity.ConfirmedVia = p.Via
+	entity.Confirm(p)
 
 	var updated *rateconfirmation.RateConfirmation
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
@@ -513,15 +406,7 @@ func (s *Service) Void(
 	rateConfirmationID pulid.ID,
 	reason string,
 ) (*rateconfirmation.RateConfirmation, error) {
-	if reason == "" {
-		return nil, errortypes.NewValidationError(
-			"reason", errortypes.ErrRequired, "A void reason is required")
-	}
-
-	entity, err := s.repo.GetByID(ctx, &repositories.GetRateConfirmationByIDRequest{
-		TenantInfo:         tenantInfo,
-		RateConfirmationID: rateConfirmationID,
-	})
+	entity, err := s.planVoid(ctx, tenantInfo, rateConfirmationID, reason)
 	if err != nil {
 		return nil, err
 	}
@@ -531,10 +416,7 @@ func (s *Service) Void(
 	wasConfirmed := entity.Status == rateconfirmation.StatusConfirmed
 	previous := *entity
 
-	now := timeutils.NowUnix()
-	entity.Status = rateconfirmation.StatusVoided
-	entity.VoidedAt = &now
-	entity.VoidReason = reason
+	entity.Void(timeutils.NowUnix(), reason)
 
 	var updated *rateconfirmation.RateConfirmation
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
@@ -585,10 +467,7 @@ func (s *Service) voidActiveRevision(
 		return nil
 	}
 
-	now := timeutils.NowUnix()
-	active.Status = rateconfirmation.StatusVoided
-	active.VoidedAt = &now
-	active.VoidReason = reason
+	active.Void(timeutils.NowUnix(), reason)
 	if _, err = s.repo.Update(ctx, active); err != nil {
 		return err
 	}
@@ -633,12 +512,10 @@ func (s *Service) confirmAssignment(
 	if err != nil {
 		return err
 	}
-	if assignment.Status != shipment.CarrierAssignmentStatusPending {
+	if !assignment.Confirm(now) {
 		return nil
 	}
 
-	assignment.Status = shipment.CarrierAssignmentStatusConfirmed
-	assignment.ConfirmedAt = &now
 	_, err = s.carrierAssignmentRepo.Update(ctx, assignment)
 	return err
 }
@@ -660,12 +537,10 @@ func (s *Service) revertAssignmentConfirmation(
 	if err != nil {
 		return err
 	}
-	if assignment.Status != shipment.CarrierAssignmentStatusConfirmed {
+	if !assignment.RevertConfirmation() {
 		return nil
 	}
 
-	assignment.Status = shipment.CarrierAssignmentStatusPending
-	assignment.ConfirmedAt = nil
 	_, err = s.carrierAssignmentRepo.Update(ctx, assignment)
 	return err
 }

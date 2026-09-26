@@ -1,0 +1,149 @@
+fragment AccountingInboundChangeFields on AccountingInboundChange {
+  id
+  kind
+  status
+  reason
+  resolution
+  externalId
+  externalNumber
+  externalUrl
+  providerModifiedAt
+  providerModifiedBy
+  txnDate
+  amountMinor
+  currencyCode
+  partyName
+  partyObjectId
+  referenceNumber
+  methodName
+  unappliedMinor
+  lines {
+    documentKind
+    documentExternalId
+    amountMinor
+    objectType
+    objectId
+    objectNumber
+    openMinor
+  }
+  appliedObjects {
+    type
+    id
+  }
+  decidedBy {
+    id
+    name
+  }
+  decidedAt
+  note
+  detectedAt
+  version
+  updatedAt
+}
+
+query AccountingInboundOverview($integrationType: AccountingSystem!) {
+  accountingInboundOverview(integrationType: $integrationType) {
+    connectionId
+    policy
+    changesReadAt
+    changesError
+    summary {
+      detected
+      proposed
+      appliedSince
+      ignoredSince
+    }
+  }
+}
+
+query AccountingInboundChange($id: ID!) {
+  accountingInboundChange(id: $id) {
+    ...AccountingInboundChangeFields
+  }
+}
+
+query AccountingInboundApplyPreview($id: ID!) {
+  accountingInboundApplyPreview(id: $id) {
+    canApply
+    blocker
+    paidAt
+    cashMinor
+    unappliedMinor
+    lines {
+      objectType
+      objectId
+      objectNumber
+      amountMinor
+      openMinor
+    }
+  }
+}
+
+mutation ApplyAccountingInboundChange($id: ID!) {
+  applyAccountingInboundChange(id: $id) {
+    ...AccountingInboundChangeFields
+  }
+}
+
+mutation IgnoreAccountingInboundChange($input: IgnoreAccountingInboundChangeInput!) {
+  ignoreAccountingInboundChange(input: $input) {
+    ...AccountingInboundChangeFields
+  }
+}
+
+query AccountingInboundChangeTable(
+  $integrationType: AccountingSystem!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  accountingInboundChangeTable(integrationType: $integrationType, input: $input) {
+    edges {
+      node {
+        id
+        kind
+        status
+        reason
+        resolution
+        externalId
+        externalNumber
+        externalUrl
+        providerModifiedAt
+        providerModifiedBy
+        txnDate
+        amountMinor
+        currencyCode
+        partyName
+        partyObjectId
+        referenceNumber
+        methodName
+        unappliedMinor
+        lines {
+          documentKind
+          documentExternalId
+          amountMinor
+          objectType
+          objectId
+          objectNumber
+          openMinor
+        }
+        appliedObjects {
+          type
+          id
+        }
+        decidedBy {
+          id
+          name
+        }
+        decidedAt
+        note
+        detectedAt
+        version
+        updatedAt
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

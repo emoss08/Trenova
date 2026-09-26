@@ -6,13 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -189,69 +187,20 @@ func (s *Service) AssignToMove(
 	intelGate := s.refreshIntel(ctx, req.TenantInfo, req.CarrierID)
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		move, txErr := s.assignmentRepo.GetMoveByID(txCtx, req.TenantInfo, req.ShipmentMoveID)
+		plan, txErr := s.planAssignToMove(txCtx, req, intelGate)
 		if txErr != nil {
 			return txErr
 		}
-		if txErr = move.EnsureAssignable(); txErr != nil {
-			return txErr
-		}
-		if txErr = validatePerMileDistance(req.RateMethod, move.Distance); txErr != nil {
-			return txErr
-		}
-		if txErr = dispatchguard.EnsureNoDispatchHold(
-			txCtx, s.holdRepo, req.TenantInfo, move.ShipmentID,
-		); txErr != nil {
-			return txErr
-		}
+		carrierEntity = plan.carrier
+		original := plan.original
 
-		driverAssignment, txErr := s.assignmentRepo.GetByMoveID(
-			txCtx, req.TenantInfo, req.ShipmentMoveID,
-		)
-		if txErr != nil {
-			return txErr
-		}
-		if driverAssignment != nil {
-			return errortypes.NewBusinessError("Shipment move already has a driver assignment. Unassign the driver before assigning a carrier").
-				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
-		}
-
-		existing, txErr := s.repo.GetActiveByMoveID(txCtx, req.TenantInfo, req.ShipmentMoveID)
-		if txErr != nil {
-			return txErr
-		}
-		if existing != nil && !req.Replace {
-			return errortypes.NewBusinessError("Shipment move already has a carrier assignment").
-				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
-		}
-
-		carrierEntity, txErr = s.loadCarrier(txCtx, req.TenantInfo, req.CarrierID)
-		if txErr != nil {
-			return txErr
-		}
-		if txErr = enforceEligibility(
-			carrierEntity,
-			intelGate,
-			req.OverrideInsuranceWarning,
-		); txErr != nil {
-			return txErr
-		}
-
-		original, txErr := s.loadShipment(txCtx, req.TenantInfo, move.ShipmentID)
-		if txErr != nil {
-			return txErr
-		}
-
-		if existing != nil {
-			now := timeutils.NowUnix()
-			existing.Status = shipment.CarrierAssignmentStatusCanceled
-			existing.CanceledAt = &now
-			existing.CancellationReason = "Replaced by a new carrier assignment"
+		if existing := plan.existing; existing != nil {
+			existing.Cancel(timeutils.NowUnix(), replacedAssignmentReason)
 			if _, txErr = s.repo.Update(txCtx, existing); txErr != nil {
 				return txErr
 			}
 			if txErr = s.voidActiveRateConfirmation(
-				txCtx, req.TenantInfo, existing.ID, "Carrier assignment replaced",
+				txCtx, req.TenantInfo, existing.ID, replacedRateConReason,
 			); txErr != nil {
 				return txErr
 			}
@@ -262,7 +211,7 @@ func (s *Service) AssignToMove(
 			return txErr
 		}
 
-		entity := s.buildAssignment(req, move)
+		entity := s.buildAssignment(req, plan.move)
 		multiErr := errortypes.NewMultiError()
 		entity.Validate(multiErr)
 		if multiErr.HasErrors() {
@@ -403,50 +352,31 @@ func (s *Service) Cancel(
 	var canceled *shipment.CarrierAssignment
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		existing, txErr := s.repo.GetActiveByMoveID(txCtx, req.TenantInfo, req.ShipmentMoveID)
+		plan, txErr := s.planCancel(txCtx, req)
 		if txErr != nil {
 			return txErr
 		}
-		if existing == nil {
-			return errortypes.NewNotFoundError(
-				"Carrier assignment not found within your organization",
-			)
-		}
-
-		move, txErr := s.assignmentRepo.GetMoveByID(txCtx, req.TenantInfo, req.ShipmentMoveID)
-		if txErr != nil {
-			return txErr
-		}
-		if move.Status != shipment.MoveStatusAssigned {
-			return errortypes.NewBusinessError("Only fresh assigned shipment moves can have their carrier assignment canceled").
-				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
-		}
-		shipmentID = move.ShipmentID
-
-		original, txErr := s.loadShipment(txCtx, req.TenantInfo, move.ShipmentID)
-		if txErr != nil {
-			return txErr
-		}
+		existing := plan.existing
+		shipmentID = plan.move.ShipmentID
 
 		if existing.Carrier != nil {
 			carrierName = existing.Carrier.Name
 		}
 
-		now := timeutils.NowUnix()
-		existing.Status = shipment.CarrierAssignmentStatusCanceled
-		existing.CanceledAt = &now
-		existing.CancellationReason = req.Reason
+		existing.Cancel(timeutils.NowUnix(), req.Reason)
 		if _, txErr = s.repo.Update(txCtx, existing); txErr != nil {
 			return txErr
 		}
 		if txErr = s.voidActiveRateConfirmation(
-			txCtx, req.TenantInfo, existing.ID, "Carrier assignment canceled",
+			txCtx, req.TenantInfo, existing.ID, canceledRateConReason,
 		); txErr != nil {
 			return txErr
 		}
 		canceled = existing
 
-		return s.applyCoverageChange(txCtx, req.TenantInfo, original, req.ShipmentMoveID, nil)
+		return s.applyCoverageChange(
+			txCtx, req.TenantInfo, plan.original, req.ShipmentMoveID, nil,
+		)
 	})
 	if err != nil {
 		return dberror.MapRetryableTransactionError(
@@ -479,9 +409,9 @@ func (s *Service) Cancel(
 	return nil
 }
 
-// applyCoverageChange re-derives the move and shipment statuses through the
-// shared coordinator after carrier coverage is added (assignment non-nil) or
-// removed (assignment nil), then persists the shipment.
+// applyCoverageChange persists the shipment as projectCoverageChange derives
+// it after carrier coverage is added (assignment non-nil) or removed
+// (assignment nil).
 func (s *Service) applyCoverageChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -489,41 +419,9 @@ func (s *Service) applyCoverageChange(
 	moveID pulid.ID,
 	assignment *shipment.CarrierAssignment,
 ) error {
-	updated := shipment.CloneForUpdate(original)
-	targetMove := updated.FindMove(moveID)
-	if targetMove == nil {
-		return errortypes.NewBusinessError("Shipment does not contain the target move").
-			WithParam("shipmentMoveId", moveID.String())
-	}
-
-	targetMove.CarrierAssignment = assignment
-	if assignment != nil {
-		targetMove.CoverageType = shipment.MoveCoverageTypeCarrier
-	} else {
-		targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
-	}
-
-	control, err := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
-		TenantInfo: tenantInfo,
-	})
+	updated, err := s.projectCoverageChange(ctx, tenantInfo, original, moveID, assignment)
 	if err != nil {
 		return err
-	}
-
-	if multiErr := s.coordinator.PrepareForUpdateWithDelayThreshold(
-		original,
-		updated,
-		shipmentstate.ResolveControlDelayThreshold(control),
-	); multiErr != nil {
-		return multiErr
-	}
-
-	if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(
-		ctx,
-		original,
-		updated,
-	); multiErr != nil {
-		return multiErr
 	}
 
 	_, err = s.shipmentRepo.Update(ctx, updated)
@@ -623,9 +521,7 @@ func (s *Service) voidActiveRateConfirmation(
 	}
 
 	now := timeutils.NowUnix()
-	active.Status = rateconfirmation.StatusVoided
-	active.VoidedAt = &now
-	active.VoidReason = reason
+	active.Void(now, reason)
 	if _, err = s.rateConRepo.Update(ctx, active); err != nil {
 		return err
 	}
@@ -709,11 +605,13 @@ func (s *Service) publishInvalidation(
 	}
 }
 
+// enforceEligibility refuses a carrier that is blocked, or that carries
+// warnings nobody overrode, and returns the warnings an override let through.
 func enforceEligibility(
 	entity *carrier.Carrier,
 	intelGate *carrier.IntelGate,
 	overrideWarnings bool,
-) error {
+) ([]string, error) {
 	result := carrier.EvaluateEligibility(carrier.EligibilityInput{
 		Carrier: entity,
 		Now:     timeutils.NowUnix(),
@@ -721,20 +619,20 @@ func enforceEligibility(
 	})
 
 	if result.IsBlocked() {
-		return errortypes.NewBusinessError(
+		return nil, errortypes.NewBusinessError(
 			"Carrier is not eligible for assignment: {0}", strings.Join(result.Blockers, "; "),
 		).WithParam("carrierId", entity.ID.String())
 	}
 
 	if result.HasWarnings() && !overrideWarnings {
-		return errortypes.NewBusinessError(
+		return nil, errortypes.NewBusinessError(
 			"Carrier has insurance warnings: {0}. Confirm the override to proceed",
 			strings.Join(result.Warnings, "; "),
 		).WithParam("carrierId", entity.ID.String()).
 			WithParam("overridable", "true")
 	}
 
-	return nil
+	return result.Warnings, nil
 }
 
 func assignmentRef(assignment *shipment.CarrierAssignment) shipmenteventservice.AssignmentRef {

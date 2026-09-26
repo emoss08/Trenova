@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/cronutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -43,6 +44,10 @@ type scheduleWriter interface {
 		ctx context.Context,
 		req *reporting.GetDefinitionRequest,
 	) (*report.ReportDefinition, error)
+	PreviewSchedule(
+		ctx context.Context,
+		req *reporting.SaveScheduleRequest,
+	) (*reporting.SchedulePreview, error)
 }
 
 type scheduleReportTool struct {
@@ -92,9 +97,12 @@ func (t *scheduleReportTool) ParamSchema() map[string]any {
 				"description": "The email addresses it goes to.",
 			},
 			"formats": map[string]any{
-				"type":        "array",
-				"items":       map[string]any{"type": "string"},
-				"description": "Which formats to attach. Defaults to the report's own.",
+				"type": "array",
+				"items": map[string]any{
+					"type":             "string",
+					toolschema.KeyEnum: scheduleFormatNames(),
+				},
+				"description": "Which formats to attach. Defaults to xlsx, as the schedule form does.",
 			},
 			"attach": map[string]any{
 				"type": "boolean",
@@ -182,6 +190,13 @@ func (t *scheduleReportTool) validateArgs(params map[string]any) error {
 		multiErr.Add("emailRecipients", errortypes.ErrRequired, "Say who it goes to")
 	}
 
+	for i, format := range scheduleFormats(params) {
+		if !report.Format(format).IsValid() {
+			multiErr.Add(fmt.Sprintf("formats[%d]", i), errortypes.ErrInvalid,
+				fmt.Sprintf("%q is not a report format; use xlsx, csv, pdf or json", format))
+		}
+	}
+
 	if multiErr.HasErrors() {
 		return multiErr
 	}
@@ -193,13 +208,27 @@ func (t *scheduleReportTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	request, err := t.request(&params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.schedules.CreateSchedule(ctx, request)
+
+	return err
+}
+
+// request is the schedule the preview shows and the write creates.
+func (t *scheduleReportTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*reporting.SaveScheduleRequest, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, err
 	}
 
 	definitionID, err := requirePulid(params.Params, "definitionId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	attach := true
@@ -207,18 +236,41 @@ func (t *scheduleReportTool) Execute(
 		attach = raw
 	}
 
-	_, err = t.schedules.CreateSchedule(ctx, &reporting.SaveScheduleRequest{
-		Request:         reporting.Request{TenantInfo: tenantFrom(params)},
+	return &reporting.SaveScheduleRequest{
+		Request:         reporting.Request{TenantInfo: tenantFrom(*params)},
 		DefinitionID:    definitionID,
 		CronExpression:  optionalString(params.Params, "cronExpression"),
 		Timezone:        optionalString(params.Params, "timezone"),
-		Formats:         stringSliceParam(params.Params, "formats"),
+		Formats:         scheduleFormats(params.Params),
 		EmailRecipients: stringSliceParam(params.Params, "emailRecipients"),
 		EmailAttach:     attach,
 		Enabled:         true,
-	})
+	}, nil
+}
 
-	return err
+func scheduleFormats(params map[string]any) []string {
+	formats := stringSliceParam(params, "formats")
+	normalized := make([]string, 0, len(formats))
+	for _, format := range formats {
+		if trimmed := strings.ToLower(strings.TrimSpace(format)); trimmed != "" {
+			normalized = append(normalized, trimmed)
+		}
+	}
+	if len(normalized) > 0 {
+		return normalized
+	}
+
+	return []string{string(report.DefaultScheduleFormat)}
+}
+
+func scheduleFormatNames() []string {
+	formats := report.AllFormats()
+	names := make([]string, 0, len(formats))
+	for _, format := range formats {
+		names = append(names, string(format))
+	}
+
+	return names
 }
 
 func (t *scheduleReportTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -226,6 +278,7 @@ func (t *scheduleReportTool) Target(params map[string]any) (serviceports.ToolTar
 }
 
 type alertWriter interface {
+	CheckSubscription(ctx context.Context, entity *tablechangealert.TCASubscription) error
 	CreateSubscription(
 		ctx context.Context,
 		entity *tablechangealert.TCASubscription,
@@ -423,6 +476,12 @@ func (t *createTableChangeAlertTool) Execute(
 		return err
 	}
 
+	_, err := t.alerts.CreateSubscription(ctx, alertSubscription(&params))
+
+	return err
+}
+
+func alertSubscription(params *serviceports.ToolExecuteParams) *tablechangealert.TCASubscription {
 	match := optionalString(params.Params, "conditionMatch")
 	if match == "" {
 		match = "all"
@@ -433,7 +492,7 @@ func (t *createTableChangeAlertTool) Execute(
 		events[i] = strings.ToUpper(event)
 	}
 
-	_, err := t.alerts.CreateSubscription(ctx, &tablechangealert.TCASubscription{
+	return &tablechangealert.TCASubscription{
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		UserID:         params.Actor.UserID,
@@ -445,9 +504,7 @@ func (t *createTableChangeAlertTool) Execute(
 		ConditionMatch: match,
 		CustomMessage:  optionalString(params.Params, "customMessage"),
 		Status:         tablechangealert.SubscriptionStatusActive,
-	})
-
-	return err
+	}
 }
 
 // stringSliceParam reads an array of strings, dropping anything that is not

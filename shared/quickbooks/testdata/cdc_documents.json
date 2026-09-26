@@ -1,0 +1,33 @@
+{
+  "CDCResponse": [
+    {
+      "QueryResponse": [
+        {
+          "Invoice": [
+            {
+              "Id": "145",
+              "DocNumber": "INV-1001",
+              "TotalAmt": 1450.25,
+              "MetaData": {
+                "LastUpdatedTime": "2026-09-24T09:12:30-07:00",
+                "LastModifiedByRef": { "value": "9130348921", "name": "J Doe" }
+              }
+            },
+            { "Id": "146", "status": "Deleted", "MetaData": { "LastUpdatedTime": "2026-09-24T10:00:00-07:00" } }
+          ]
+        },
+        {
+          "Bill": [
+            {
+              "Id": "401",
+              "DocNumber": "CS-0042",
+              "TotalAmt": 1400,
+              "MetaData": { "LastUpdatedTime": "2026-09-24T11:00:00-07:00" }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

@@ -95,6 +95,12 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						services.AITrainingExportOperator,
 						services.AITrainingExportRunner,
 						services.AITrainingHistoryService,
+						// The change feed compares edited documents only when
+						// the drift check is there; without it an edit waits
+						// for the nightly run.
+						services.AccountingDriftRechecker,
+						services.AccountingDriftChecker,
+						services.AccountingSyncDispatcher,
 					) {
 					},
 				),

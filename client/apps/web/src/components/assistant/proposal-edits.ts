@@ -8,6 +8,12 @@ export type DraftErrors = Record<string, string>;
 type Parsed = { value: unknown } | { error: string };
 
 /**
+ * A record subset keeps at least one of its records: the server refuses an
+ * empty set whether the parameter is required or not.
+ */
+const SUBSET_EMPTY_ERROR = "Keep at least one, or reject the proposal instead.";
+
+/**
  * Starts the form from what the agent proposed. Every value becomes text in
  * the shape its control edits: a number as digits, a flag as yes or no, a
  * list as comma-separated items, an object as indented JSON.
@@ -32,6 +38,7 @@ function textFor(field: ProposalField, value: unknown): string {
     case "Boolean":
       return value === true ? "true" : value === false ? "false" : "";
     case "List":
+    case "RecordSubset":
       return Array.isArray(value) ? value.map(scalarText).join(", ") : scalarText(value);
     case "JSON":
       return typeof value === "string" ? value : JSON.stringify(value, null, 2);
@@ -54,6 +61,9 @@ function scalarText(value: unknown): string {
  */
 export function parseDraftValue(field: ProposalField, raw: string): Parsed {
   const text = raw.trim();
+  if (text === "" && field.kind === "RecordSubset") {
+    return { error: SUBSET_EMPTY_ERROR };
+  }
   if (text === "") {
     return field.required ? { error: "This value is required" } : { value: undefined };
   }
@@ -81,11 +91,15 @@ export function parseDraftValue(field: ProposalField, raw: string): Parsed {
         return { error: "Choose one of the listed values" };
       }
       return { value: text };
-    case "List": {
+    case "List":
+    case "RecordSubset": {
       const items = text
         .split(",")
         .map((item) => item.trim())
         .filter((item) => item !== "");
+      if (field.kind === "RecordSubset" && items.length === 0) {
+        return { error: SUBSET_EMPTY_ERROR };
+      }
       if (field.options.length > 0) {
         const stray = items.find((item) => !field.options.includes(item));
         if (stray !== undefined) {

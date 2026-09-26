@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -60,10 +61,12 @@ type ProposalBaselineRequest struct {
 
 // ProposalBaselineResult is what a baseline found. Target is nil when the
 // tool names no single record or its version could not be read; Preview is
-// nil when the tool has no preview or it failed.
+// nil when the tool has no preview or it failed, and PreviewErr then says
+// why it failed.
 type ProposalBaselineResult struct {
-	Target  *ProposalTarget
-	Preview *agent.ToolPreview
+	Target     *ProposalTarget
+	Preview    *agent.ToolPreview
+	PreviewErr error
 }
 
 // RecordLabels are the words each record is known by, per resource and id.
@@ -75,6 +78,40 @@ func (l RecordLabels) Label(resource permission.Resource, id pulid.ID) string {
 	return l[resource][id]
 }
 
+// Merge adds other's labels to l.
+func (l RecordLabels) Merge(other RecordLabels) {
+	for resource, labels := range other {
+		if len(labels) == 0 {
+			continue
+		}
+		into, ok := l[resource]
+		if !ok {
+			into = make(map[pulid.ID]string, len(labels))
+			l[resource] = into
+		}
+		for id, label := range labels {
+			into[id] = label
+		}
+	}
+}
+
+// For is the labels of the given records of one resource, those that have
+// one.
+func (l RecordLabels) For(resource permission.Resource, ids []pulid.ID) RecordLabels {
+	named := l[resource]
+	out := make(map[pulid.ID]string, min(len(ids), len(named)))
+	for _, id := range ids {
+		if label := named[id]; label != "" {
+			out[id] = label
+		}
+	}
+
+	labels := make(RecordLabels, 1)
+	labels[resource] = out
+
+	return labels
+}
+
 // RecordLabeler reads the labels of many records at once, one query per
 // resource, inside the tenant.
 type RecordLabeler interface {
@@ -83,6 +120,41 @@ type RecordLabeler interface {
 		tenant pagination.TenantInfo,
 		refs map[permission.Resource][]pulid.ID,
 	) (RecordLabels, error)
+}
+
+// MaxRecordLabelsPerResource is the most records of one resource a single
+// Labels read names: every record the longest record subset may offer.
+const MaxRecordLabelsPerResource = toolschema.MaxSubsetChoices
+
+// SubsetChoiceRefs adds the records a record-subset field offers to refs, by
+// its resource, for one Labels read. An id that names no record is left to
+// be shown as itself.
+func SubsetChoiceRefs(refs map[permission.Resource][]pulid.ID, field *toolschema.Field) {
+	if field.Kind != toolschema.KindRecordSubset || field.Resource == "" {
+		return
+	}
+
+	resource := permission.Resource(field.Resource)
+	for idx := range field.Choices {
+		if id, err := pulid.Parse(field.Choices[idx].ID); err == nil && id.IsNotNil() {
+			refs[resource] = append(refs[resource], id)
+		}
+	}
+}
+
+// LabelSubsetChoices names each record a record-subset field offers by its
+// label; a record with none, gone or never read, keeps its id.
+func LabelSubsetChoices(field *toolschema.Field, labels RecordLabels) {
+	if field.Kind != toolschema.KindRecordSubset || len(labels) == 0 {
+		return
+	}
+
+	named := labels[permission.Resource(field.Resource)]
+	for idx := range field.Choices {
+		if label := named[pulid.ID(field.Choices[idx].ID)]; label != "" {
+			field.Choices[idx].Label = label
+		}
+	}
 }
 
 // ProposalPreviewService says what a proposed write would do, for one

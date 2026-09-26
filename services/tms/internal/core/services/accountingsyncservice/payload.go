@@ -101,7 +101,7 @@ func (s *Service) salesRef(
 	if err != nil {
 		return "", err
 	}
-	if created := latestOf(existing, accountingsync.SyncOperationCreate); created != nil {
+	if created := documentRecord(existing); created != nil {
 		switch {
 		case isSynced(created):
 			return created.ExternalID, nil
@@ -174,6 +174,13 @@ func (s *Service) pushSales(
 		return nil, err
 	}
 
+	var target *accountingsync.AccountingSyncRecord
+	if record.Operation == accountingsync.SyncOperationUpdate {
+		if target, err = s.updateTarget(ctx, sess, record, label); err != nil {
+			return nil, err
+		}
+	}
+
 	res := newResolver(s, sess)
 	customerID, err := s.customerRef(ctx, sess, res, inv.CustomerID)
 	if err != nil {
@@ -186,7 +193,14 @@ func (s *Service) pushSales(
 	}
 	doc.CustomerExternalID = customerID
 
-	written, err := sess.writer.CreateSalesDocument(ctx, doc)
+	var written *services.AccountingDocumentResult
+	if target != nil {
+		doc.ExternalID = target.ExternalID
+		doc.Refs = target.ExternalRefs
+		written, err = sess.writer.UpdateSalesDocument(ctx, doc)
+	} else {
+		written, err = sess.writer.CreateSalesDocument(ctx, doc)
+	}
 	if err != nil {
 		return partial(written), err
 	}
@@ -365,9 +379,12 @@ func (s *Service) pushSalesVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate)
+	created := documentRecord(existing)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
+	}
+	if created.SharesProviderDocument() {
+		return nil, sharedDocumentError(sess, documentLabel(record.ObjectType, record.ObjectNumber))
 	}
 	ref := &services.AccountingDocumentRef{
 		Auth:       sess.auth,
@@ -422,6 +439,15 @@ func (s *Service) settleUnsent(
 
 const maxRevision = int64(1) << 62
 
+func sharedDocumentError(sess *pushSession, label string) *accountingsync.SyncError {
+	return blocked(
+		accountingsync.SyncErrorConflict,
+		label+" was recorded in "+sess.providerName+
+			" as part of one payment with other documents, so Trenova cannot change it alone",
+		"Edit that payment in "+sess.providerName+", then skip this record",
+	)
+}
+
 func paymentMethodLabel(method customerpayment.Method) string {
 	return "Payment method " + string(method)
 }
@@ -453,7 +479,7 @@ func (s *Service) pushPayment(
 	}
 	externalID := ""
 	if record.Operation == accountingsync.SyncOperationUpdate {
-		created := latestOf(existing, accountingsync.SyncOperationCreate)
+		created := documentRecord(existing)
 		if created == nil {
 			dependency, enqueueErr := s.enqueueDependency(
 				ctx,
@@ -477,6 +503,8 @@ func (s *Service) pushPayment(
 			return nil, &noopError{
 				reason: "The payment was never sent, so there is nothing to update",
 			}
+		case isSynced(created) && created.SharesProviderDocument():
+			return nil, sharedDocumentError(sess, label)
 		case isSynced(created):
 			externalID = created.ExternalID
 		case created.Status.IsFinal():
@@ -643,9 +671,12 @@ func (s *Service) pushPaymentVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate)
+	created := documentRecord(existing)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
+	}
+	if created.SharesProviderDocument() {
+		return nil, sharedDocumentError(sess, documentLabel(record.ObjectType, record.ObjectNumber))
 	}
 	for _, other := range existing {
 		if other.Operation == accountingsync.SyncOperationUpdate &&
@@ -763,7 +794,7 @@ func (s *Service) pushCreditApplicationVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate)
+	created := documentRecord(existing)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}

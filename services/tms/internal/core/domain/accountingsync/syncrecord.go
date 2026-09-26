@@ -38,6 +38,8 @@ const (
 	ExternalRefShortPayPrefix = "shortPay:"
 	ExternalRefDocumentType   = "documentType"
 	ExternalRefURL            = "url"
+	ExternalRefCombined       = "combined"
+	ExternalRefReflectedIn    = "reflectedIn"
 )
 
 var (
@@ -289,6 +291,35 @@ func (r *AccountingSyncRecord) MarkSynced(result *SyncResult, at int64) {
 	r.clearError()
 }
 
+type SyncLink struct {
+	ExternalID  string
+	ExternalURL string
+	Resolution  string
+	Combined    bool
+}
+
+func (r *AccountingSyncRecord) Link(link *SyncLink, at int64) bool {
+	if r.Status.IsFinal() || r.Status == SyncStatusInFlight || link.ExternalID == "" {
+		return false
+	}
+	r.Status = SyncStatusSynced
+	r.ExternalID = stringutils.TruncateRunes(link.ExternalID, 100)
+	r.ExternalURL = link.ExternalURL
+	if link.Combined {
+		r.SetExternalRef(ExternalRefCombined, link.ExternalID)
+	}
+	r.SyncedAt = &at
+	r.NextAttemptAt = nil
+	r.LeaseExpiresAt = nil
+	r.clearError()
+	r.Resolution = stringutils.TruncateRunes(link.Resolution, maxSyncResolution)
+	return true
+}
+
+func (r *AccountingSyncRecord) SharesProviderDocument() bool {
+	return r.ExternalRefs[ExternalRefCombined] != ""
+}
+
 func SyncRetryDelay(attempt int) time.Duration {
 	if attempt < 1 {
 		attempt = 1
@@ -376,6 +407,31 @@ func (r *AccountingSyncRecord) Skip(actorID pulid.ID, reason string) error {
 	r.NextAttemptAt = nil
 	r.LeaseExpiresAt = nil
 	return nil
+}
+
+func (r *AccountingSyncRecord) Reflect(actorID pulid.ID, externalID, reason string) bool {
+	if r.Status.IsFinal() || r.Status == SyncStatusInFlight || externalID == "" {
+		return false
+	}
+	r.Status = SyncStatusSkipped
+	r.SkippedByID = actorID
+	r.SkippedReason = stringutils.TruncateRunes(
+		stringutils.OneLine(reason, maxSyncSkipReason),
+		maxSyncSkipReason,
+	)
+	r.SetExternalRef(ExternalRefReflectedIn, externalID)
+	r.NextAttemptAt = nil
+	r.LeaseExpiresAt = nil
+	r.clearError()
+	r.Resolution = stringutils.TruncateRunes(reason, maxSyncResolution)
+	return true
+}
+
+func (r *AccountingSyncRecord) ReflectedIn() string {
+	if r.Status != SyncStatusSkipped {
+		return ""
+	}
+	return r.ExternalRefs[ExternalRefReflectedIn]
 }
 
 func (r *AccountingSyncRecord) Supersede() bool {

@@ -34,9 +34,16 @@ type tableConfigWriter interface {
 	) (*tableconfiguration.TableConfiguration, error)
 }
 
+type viewComposer interface {
+	Compose(
+		ctx context.Context,
+		req *tablequeryservice.ComposeRequest,
+	) (*tablequeryservice.ComposeResult, error)
+}
+
 type saveTableViewTool struct {
 	configs  tableConfigWriter
-	composer *tablequeryservice.Service
+	composer viewComposer
 	catalog  *filtercatalog.Catalog
 }
 
@@ -148,19 +155,16 @@ func (t *saveTableViewTool) Execute(
 		return err
 	}
 
-	entity := optionalString(params.Params, "entity")
-	resource, ok := t.catalog.ByEntity(entity)
-	if !ok {
-		return fmt.Errorf("%q is not a table a view can be saved for", entity)
+	draft, err := t.draft(&params)
+	if err != nil {
+		return err
 	}
 
-	tenant := tenantFrom(params)
-
 	composed, err := t.composer.Compose(ctx, &tablequeryservice.ComposeRequest{
-		TenantInfo: tenant,
+		TenantInfo: tenantFrom(params),
 		Actor:      params.Actor,
-		Resource:   resource.Resource,
-		Prompt:     optionalString(params.Params, "description"),
+		Resource:   draft.resource.Resource,
+		Prompt:     draft.prompt,
 	})
 	if err != nil {
 		return err
@@ -172,8 +176,27 @@ func (t *saveTableViewTool) Execute(
 		return fmt.Errorf(
 			"none of that could be turned into filters on %s, so the view would show "+
 				"everything under a name that says otherwise: %s",
-			resource.Entity, unresolvedSummary(composed),
+			draft.resource.Entity, unresolvedSummary(composed),
 		)
+	}
+
+	_, err = t.configs.Create(ctx, draft.configuration(&params, composed))
+
+	return err
+}
+
+type tableViewDraft struct {
+	resource   filtercatalog.Resource
+	name       string
+	prompt     string
+	visibility tableconfiguration.Visibility
+}
+
+func (t *saveTableViewTool) draft(params *serviceports.ToolExecuteParams) (*tableViewDraft, error) {
+	entity := optionalString(params.Params, "entity")
+	resource, ok := t.catalog.ByEntity(entity)
+	if !ok {
+		return nil, fmt.Errorf("%q is not a table a view can be saved for", entity)
 	}
 
 	visibility := tableconfiguration.VisibilityPrivate
@@ -181,22 +204,34 @@ func (t *saveTableViewTool) Execute(
 		visibility = tableconfiguration.VisibilityPublic
 	}
 
-	_, err = t.configs.Create(ctx, &tableconfiguration.TableConfiguration{
+	return &tableViewDraft{
+		resource:   resource,
+		name:       optionalString(params.Params, "name"),
+		prompt:     optionalString(params.Params, "description"),
+		visibility: visibility,
+	}, nil
+}
+
+func (d *tableViewDraft) configuration(
+	params *serviceports.ToolExecuteParams,
+	composed *tablequeryservice.ComposeResult,
+) *tableconfiguration.TableConfiguration {
+	configuration := &tableconfiguration.TableConfiguration{
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		UserID:         params.Actor.UserID,
-		Name:           optionalString(params.Params, "name"),
-		Description:    composed.Explanation,
-		Resource:       resource.Resource.String(),
-		Visibility:     visibility,
-		TableConfig: &tableconfiguration.TableConfig{
-			FieldFilters: composed.FieldFilters,
-			Sort:         composed.Sort,
-			JoinOperator: "and",
-		},
-	})
+		Name:           d.name,
+		Resource:       d.resource.Resource.String(),
+		Visibility:     d.visibility,
+		TableConfig:    &tableconfiguration.TableConfig{JoinOperator: "and"},
+	}
+	if composed != nil {
+		configuration.Description = composed.Explanation
+		configuration.TableConfig.FieldFilters = composed.FieldFilters
+		configuration.TableConfig.Sort = composed.Sort
+	}
 
-	return err
+	return configuration
 }
 
 // unresolvedSummary says what could not be expressed, so a refusal names the

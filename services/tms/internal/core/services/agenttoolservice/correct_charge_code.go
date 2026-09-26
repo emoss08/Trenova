@@ -71,30 +71,43 @@ func (t *correctChargeCodeTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	itemID, err := requirePulid(params.Params, "billingQueueItemId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
 
-	var charges []*shipment.AdditionalCharge
-	if err = decodeParam(params.Params, "additionalCharges", &charges); err != nil {
-		return err
+	_, err = t.billing.UpdateCharges(ctx, request, params.Actor)
+
+	return err
+}
+
+// request is the charge edit the preview and the write both make: the
+// item's additional charges replaced by the set the call sends.
+func (t *correctChargeCodeTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*serviceports.UpdateChargesRequest, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, err
 	}
 
-	_, err = t.billing.UpdateCharges(ctx, &serviceports.UpdateChargesRequest{
+	itemID, err := requirePulid(params.Params, "billingQueueItemId")
+	if err != nil {
+		return nil, err
+	}
+
+	var charges []*shipment.AdditionalCharge
+	if err = decodeParam(params.Params, "additionalCharges", &charges); err != nil {
+		return nil, err
+	}
+
+	return &serviceports.UpdateChargesRequest{
 		ItemID:            itemID,
 		AdditionalCharges: charges,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: params.OrganizationID,
 			BuID:  params.BusinessUnitID,
 		},
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 // Target names the record this call would change, so a proposal to change it

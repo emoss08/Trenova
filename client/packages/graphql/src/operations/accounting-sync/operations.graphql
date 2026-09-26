@@ -26,6 +26,9 @@ fragment AccountingConnectionFields on AccountingConnection {
   autoSync
   driverSettlementsEnabledAt
   syncsDriverSettlements
+  inboundPaymentPolicy
+  changesReadAt
+  changesErrorMessage
   pausedAt
   pausedBy {
     id

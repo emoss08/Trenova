@@ -3,6 +3,7 @@ package accountingsyncrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -347,6 +348,65 @@ func (r *connectionRepository) MarkReferenceRefresh(
 	}
 
 	return dberror.CheckRowsAffected(results, connectionEntity, req.ID.String())
+}
+
+func (r *connectionRepository) SaveChangeFeed(
+	ctx context.Context,
+	req *repositories.SaveAccountingChangeFeedRequest,
+) (bool, error) {
+	cols := buncolgen.AccountingConnectionColumns
+	query := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*accountingsync.AccountingConnection)(nil)).
+		WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		})
+	if req.OnlyIfEmpty {
+		query = query.Where(cols.ChangeCursor.IsNull())
+	}
+	if req.Cursor != "" {
+		query = query.Set(cols.ChangeCursor.Set(), req.Cursor)
+	}
+	if req.ReadAt != nil {
+		query = query.Set(cols.ChangesReadAt.Set(), *req.ReadAt)
+	}
+	query = setOrNull(query, cols.ChangesErrorCategory, string(req.ErrorCategory))
+	query = setOrNull(query, cols.ChangesErrorMessage, req.ErrorMessage)
+
+	results, err := query.Exec(ctx)
+	if err != nil {
+		return false, err
+	}
+	affected, err := results.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return affected > 0, nil
+}
+
+func (r *connectionRepository) SaveDriftCheck(
+	ctx context.Context,
+	req *repositories.SaveAccountingDriftCheckRequest,
+) error {
+	cols := buncolgen.AccountingConnectionColumns
+	query := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*accountingsync.AccountingConnection)(nil)).
+		WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		})
+	if req.CheckedAt != nil {
+		query = query.Set(cols.DriftCheckedAt.Set(), *req.CheckedAt)
+	}
+	query = setOrNull(query, cols.DriftErrorCategory, string(req.ErrorCategory))
+	query = setOrNull(query, cols.DriftErrorMessage, req.ErrorMessage)
+	if _, err := query.Exec(ctx); err != nil {
+		return fmt.Errorf("save the drift check: %w", err)
+	}
+	return nil
 }
 
 func (r *connectionRepository) ListActive(

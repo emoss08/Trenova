@@ -398,3 +398,151 @@ func (_c *MockShipmentHoldService_Update_Call) RunAndReturn(run func(ctx context
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewCreate provides a mock function for the type MockShipmentHoldService
+func (_mock *MockShipmentHoldService) PreviewCreate(ctx context.Context, req *repositories.CreateShipmentHoldRequest, actor *services.RequestActor) (*shipment.ShipmentHold, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewCreate")
+	}
+
+	var r0 *shipment.ShipmentHold
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CreateShipmentHoldRequest, *services.RequestActor) (*shipment.ShipmentHold, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CreateShipmentHoldRequest, *services.RequestActor) *shipment.ShipmentHold); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.ShipmentHold)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.CreateShipmentHoldRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentHoldService_PreviewCreate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewCreate'
+type MockShipmentHoldService_PreviewCreate_Call struct {
+	*mock.Call
+}
+
+// PreviewCreate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.CreateShipmentHoldRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentHoldService_Expecter) PreviewCreate(ctx any, req any, actor any) *MockShipmentHoldService_PreviewCreate_Call {
+	return &MockShipmentHoldService_PreviewCreate_Call{Call: _e.mock.On("PreviewCreate", ctx, req, actor)}
+}
+
+func (_c *MockShipmentHoldService_PreviewCreate_Call) Run(run func(ctx context.Context, req *repositories.CreateShipmentHoldRequest, actor *services.RequestActor)) *MockShipmentHoldService_PreviewCreate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.CreateShipmentHoldRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.CreateShipmentHoldRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentHoldService_PreviewCreate_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldService_PreviewCreate_Call {
+	_c.Call.Return(shipmentHold, err)
+	return _c
+}
+
+func (_c *MockShipmentHoldService_PreviewCreate_Call) RunAndReturn(run func(ctx context.Context, req *repositories.CreateShipmentHoldRequest, actor *services.RequestActor) (*shipment.ShipmentHold, error)) *MockShipmentHoldService_PreviewCreate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewRelease provides a mock function for the type MockShipmentHoldService
+func (_mock *MockShipmentHoldService) PreviewRelease(ctx context.Context, req *repositories.ReleaseShipmentHoldRequest, actor *services.RequestActor) (*shipment.ShipmentHold, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewRelease")
+	}
+
+	var r0 *shipment.ShipmentHold
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ReleaseShipmentHoldRequest, *services.RequestActor) (*shipment.ShipmentHold, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ReleaseShipmentHoldRequest, *services.RequestActor) *shipment.ShipmentHold); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.ShipmentHold)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ReleaseShipmentHoldRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentHoldService_PreviewRelease_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewRelease'
+type MockShipmentHoldService_PreviewRelease_Call struct {
+	*mock.Call
+}
+
+// PreviewRelease is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ReleaseShipmentHoldRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentHoldService_Expecter) PreviewRelease(ctx any, req any, actor any) *MockShipmentHoldService_PreviewRelease_Call {
+	return &MockShipmentHoldService_PreviewRelease_Call{Call: _e.mock.On("PreviewRelease", ctx, req, actor)}
+}
+
+func (_c *MockShipmentHoldService_PreviewRelease_Call) Run(run func(ctx context.Context, req *repositories.ReleaseShipmentHoldRequest, actor *services.RequestActor)) *MockShipmentHoldService_PreviewRelease_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ReleaseShipmentHoldRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ReleaseShipmentHoldRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentHoldService_PreviewRelease_Call) Return(shipmentHold *shipment.ShipmentHold, err error) *MockShipmentHoldService_PreviewRelease_Call {
+	_c.Call.Return(shipmentHold, err)
+	return _c
+}
+
+func (_c *MockShipmentHoldService_PreviewRelease_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ReleaseShipmentHoldRequest, actor *services.RequestActor) (*shipment.ShipmentHold, error)) *MockShipmentHoldService_PreviewRelease_Call {
+	_c.Call.Return(run)
+	return _c
+}

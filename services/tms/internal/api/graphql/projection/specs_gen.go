@@ -24,6 +24,10 @@ var AccountingBackfillSpec TypeSpec
 
 var AccountingConnectionSpec TypeSpec
 
+var AccountingDriftFindingSpec TypeSpec
+
+var AccountingInboundChangeSpec TypeSpec
+
 var AccountingMappingSpec TypeSpec
 
 var AccountingReferenceObjectSpec TypeSpec
@@ -1728,6 +1732,18 @@ func init() {
 				FieldMapKey: "driverSettlementsEnabledAt",
 			},
 			{
+				Name:        "inboundPaymentPolicy",
+				FieldMapKey: "inboundPaymentPolicy",
+			},
+			{
+				Name:        "changesReadAt",
+				FieldMapKey: "changesReadAt",
+			},
+			{
+				Name:        "changesErrorMessage",
+				FieldMapKey: "changesErrorMessage",
+			},
+			{
 				Name:        "pausedAt",
 				FieldMapKey: "pausedAt",
 			},
@@ -1753,6 +1769,270 @@ func init() {
 			{
 				Name:        "referenceRefreshError",
 				FieldMapKey: "referenceRefreshError",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AccountingDriftFindingSpec = TypeSpec{
+		TypeName: "AccountingDriftFinding",
+		FieldMap: buncolgen.AccountingDriftFindingFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+			"kind",
+			"object_type",
+			"status",
+			"fix_object_type",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "connectionId",
+				FieldMapKey: "connectionId",
+			},
+			{
+				Name:        "objectType",
+				FieldMapKey: "objectType",
+			},
+			{
+				Name:        "objectId",
+				FieldMapKey: "objectId",
+			},
+			{
+				Name:        "objectNumber",
+				FieldMapKey: "objectNumber",
+			},
+			{
+				Name:        "partyId",
+				FieldMapKey: "partyId",
+			},
+			{
+				Name:        "partyName",
+				FieldMapKey: "partyName",
+			},
+			{
+				Name:        "externalId",
+				FieldMapKey: "externalId",
+			},
+			{
+				Name:        "externalUrl",
+				FieldMapKey: "externalUrl",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "trenovaMinor",
+				FieldMapKey: "trenovaMinor",
+			},
+			{
+				Name:        "providerMinor",
+				FieldMapKey: "providerMinor",
+			},
+			{
+				Name:        "differenceMinor",
+				FieldMapKey: "differenceMinor",
+			},
+			{
+				Name:        "trenovaState",
+				FieldMapKey: "trenovaState",
+			},
+			{
+				Name:        "providerState",
+				FieldMapKey: "providerState",
+			},
+			{
+				Name:        "detail",
+				FieldMapKey: "detail",
+			},
+			{
+				Name:        "providerModifiedAt",
+				FieldMapKey: "providerModifiedAt",
+			},
+			{
+				Name:        "providerModifiedBy",
+				FieldMapKey: "providerModifiedBy",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "resolution",
+				FieldMapKey: "resolution",
+			},
+			{
+				Name:        "resolutionNote",
+				FieldMapKey: "resolutionNote",
+			},
+			{
+				Name:        "fixObjectType",
+				FieldMapKey: "fixObjectType",
+			},
+			{
+				Name:        "fixObjectId",
+				FieldMapKey: "fixObjectId",
+			},
+			{
+				Name:    "directions",
+				Special: "directions",
+			},
+			{
+				Name:    "pushed",
+				Special: "pushed",
+			},
+			{
+				Name:        "resolvedBy",
+				FieldMapKey: "resolvedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "resolvedAt",
+				FieldMapKey: "resolvedAt",
+			},
+			{
+				Name:        "detectedAt",
+				FieldMapKey: "detectedAt",
+			},
+			{
+				Name:        "lastSeenAt",
+				FieldMapKey: "lastSeenAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AccountingInboundChangeSpec = TypeSpec{
+		TypeName: "AccountingInboundChange",
+		FieldMap: buncolgen.AccountingInboundChangeFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "resolution",
+				FieldMapKey: "resolution",
+			},
+			{
+				Name:        "externalId",
+				FieldMapKey: "externalId",
+			},
+			{
+				Name:        "externalNumber",
+				FieldMapKey: "externalNumber",
+			},
+			{
+				Name:        "externalUrl",
+				FieldMapKey: "externalUrl",
+			},
+			{
+				Name:        "providerModifiedAt",
+				FieldMapKey: "providerModifiedAt",
+			},
+			{
+				Name:        "providerModifiedBy",
+				FieldMapKey: "providerModifiedBy",
+			},
+			{
+				Name:        "txnDate",
+				FieldMapKey: "txnDate",
+			},
+			{
+				Name:        "amountMinor",
+				FieldMapKey: "amountMinor",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "partyName",
+				FieldMapKey: "partyName",
+			},
+			{
+				Name:        "partyObjectId",
+				FieldMapKey: "partyObjectId",
+			},
+			{
+				Name:        "referenceNumber",
+				FieldMapKey: "document",
+			},
+			{
+				Name:        "methodName",
+				FieldMapKey: "document",
+			},
+			{
+				Name:        "unappliedMinor",
+				FieldMapKey: "document",
+			},
+			{
+				Name:        "lines",
+				FieldMapKey: "document",
+			},
+			{
+				Name:        "appliedObjects",
+				FieldMapKey: "appliedObjects",
+			},
+			{
+				Name:        "decidedBy",
+				FieldMapKey: "decidedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "decidedAt",
+				FieldMapKey: "decidedAt",
+			},
+			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
+				Name:        "detectedAt",
+				FieldMapKey: "detectedAt",
 			},
 			{
 				Name:        "version",

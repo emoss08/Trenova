@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/accountingconnlookup"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -104,28 +105,7 @@ func (s *Service) connectionFor(
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 ) (*accountingsync.AccountingConnection, error) {
-	if !accountingsync.SupportsAccountingSync(typ) {
-		return nil, errortypes.NewValidationError(
-			"integrationType",
-			errortypes.ErrInvalid,
-			"{0} is not an accounting system Trenova can sync with",
-			string(typ),
-		)
-	}
-	conn, err := s.connections.GetByType(ctx, repositories.GetAccountingConnectionRequest{
-		TenantInfo:      tenantInfo,
-		IntegrationType: typ,
-	})
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewNotFoundError(
-				"{0} has not been connected yet",
-				accountingsync.ProviderName(typ),
-			)
-		}
-		return nil, err
-	}
-	return conn, nil
+	return accountingconnlookup.ByType(ctx, s.connections, tenantInfo, typ)
 }
 
 func (s *Service) Summary(
@@ -507,7 +487,7 @@ func (s *Service) Set(
 
 	used := 0
 	if row.ExternalID != ref.ExternalID {
-		if used, err = s.guardHistory(
+		if used, err = s.GuardHistory(
 			ctx,
 			req.TenantInfo,
 			row,
@@ -516,20 +496,8 @@ func (s *Service) Set(
 			return nil, err
 		}
 	}
-
-	source := req.Source
-	if source != accountingsync.MappingSourceAgent {
-		source = accountingsync.MappingSourceManual
-	}
 	before := jsonutils.MustToJSON(row)
-	row.Confirm(&accountingsync.Choice{
-		ExternalID:   ref.ExternalID,
-		ExternalName: ref.Label(),
-		Source:       source,
-		Reason:       req.Reason,
-		ActorID:      req.UserID,
-		At:           timeutils.NowUnix(),
-	})
+	row.Confirm(MappingChoice(req, ref, timeutils.NowUnix()))
 
 	updated, err := s.mappings.Update(ctx, row)
 	if err != nil {
@@ -559,7 +527,7 @@ func (s *Service) Clear(
 	if err != nil {
 		return nil, err
 	}
-	used, err := s.guardHistory(ctx, req.TenantInfo, row, req.AcknowledgeHistory)
+	used, err := s.GuardHistory(ctx, req.TenantInfo, row, req.AcknowledgeHistory)
 	if err != nil {
 		return nil, err
 	}

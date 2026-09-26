@@ -30,6 +30,7 @@ func ToolProviders() []any {
 		oversightToolProviders(),
 		importDraftToolProviders(),
 		formulaToolProviders(),
+		tenderingToolProviders(),
 	}
 
 	size := 0
@@ -51,6 +52,8 @@ func coreToolProviders() []any {
 		provideListAccountingSyncRecordsTool,
 		provideGetAccountingSyncRecordTool,
 		provideGetRecordAccountingSyncStateTool,
+		provideListAccountingInboundChangesTool,
+		provideListAccountingDriftFindingsTool,
 		provideListAccountingMappingGapsTool,
 		provideGetAccountingMappingTool,
 		newGetShipmentTool,
@@ -85,6 +88,9 @@ func coreToolProviders() []any {
 		newGetTractorTool,
 		newGetTrailerTool,
 		newGetInvoiceTool,
+		newListBillingQueueItemsTool,
+		newGetBillingQueueItemTool,
+		newListBillingTransferCandidatesTool,
 		newGetDetentionOccurrenceTool,
 		newGetCarrierIntelEventTool,
 		newGetCustomerUpdatePreferencesTool,

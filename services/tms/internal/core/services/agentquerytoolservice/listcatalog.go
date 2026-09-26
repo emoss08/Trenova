@@ -177,7 +177,7 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 				Name:   "billingTransferStatus",
 				Kind:   filterEnum,
 				Values: billingTransferStates,
-				Note:   "the billing handoff stage",
+				Note:   "isnull means never transferred",
 			},
 			{Name: "freightTerms", Kind: filterEnum, Values: freightTerms},
 			{
@@ -471,6 +471,7 @@ func listCatalogSpecs() []listSpec {
 		specOf(newListCustomersTool(nil)),
 		specOf(newListLocationsTool(nil)),
 		specOf(newListInvoicesTool(nil, nil)),
+		specOf(newListBillingQueueItemsTool(nil, nil)),
 		specOf(newListCarriersTool(nil)),
 		specOf(newListEquipmentTypesTool(nil)),
 		specOf(newListFleetCodesTool(nil)),

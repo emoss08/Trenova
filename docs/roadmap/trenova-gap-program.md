@@ -61,7 +61,7 @@ Every claim in this document was re-read against the repository on 2026-09-24. T
 
 `AgentTool` and `AgentQueryTool` no longer have `PermissionResource`, `PermissionOperation`, `Reversible`, `RequiresIdempotencyKey` or `DefaultAutonomyTier` methods. Each tool has one `Policy() ToolPolicy` (`S/core/ports/services/toolpolicy.go`) whose fields carry all of it: `Kind`, `Resource`, `Operation`, `Scope`, `DefaultTier`, `MaxTier`, `Egress`, `Classify`, `Condition`, `TaintHold`, `Effect`, `Artifact`, `Reversible`, `Idempotent`, `ReadsExternal`, `Source`, `CarriesTaint`, `Rationale`.
 
-- `AgentTool`: `Name`, `Description`, `ParamSchema`, `Policy`, `Execute(ctx, ToolExecuteParams) error`. Optional: `ToolSimulator`, `ToolValidator`, `TargetedTool`, `ToolResultReporter` (`ExecuteWithResult`, for a write whose caller needs the id it made).
+- `AgentTool`: `Name`, `Description`, `ParamSchema`, `Policy`, `Execute(ctx, ToolExecuteParams) error`. Optional: `ToolPreviewer` (required of every write tool), `ToolValidator`, `TargetedTool`, `ToolResultReporter` (`ExecuteWithResult`, for a write whose caller needs the id it made).
 - `AgentQueryTool`: `Name`, `Description`, `ParamSchema`, `Policy`, `Query(ctx, *QueryToolParams) (any, error)` (a pointer). Query tools build their policy with `readPolicy(name, readSpec{resource: ...})` in `agentquerytoolservice/policy.go`.
 - Part 2 rows A3, A5, A6 and A8 therefore mean: set `DefaultTier`/`MaxTier`, `Idempotent`, `Reversible`, `Resource`/`Operation` in the policy. `guardExecute` enforces `Idempotent` by refusing a call with no key.
 - Recipes 3.1 and 3.2 below are rewritten to match.
@@ -195,7 +195,7 @@ A brief is not done until everything below that applies to it exists, is tested,
 | A1 | **Read tools** | Every new entity has `get_<entity>` and `list_<entity>s` (or a `listSpec` in `listcatalog.go`), plus `search_*` where users search. Summaries and health have `insight`-style tools. Field sensitivity is enforced (`fieldaccess.go`). |
 | A2 | **Action tools** | Every user-facing mutation that changes state has an `AgentTool`. One tool per intent (`approve_vendor_bill`, not `update_vendor_bill` with a status flag). |
 | A3 | **Tier defaults** | `Policy().DefaultTier` follows this table, and `MaxTier` caps it (Errata E2). Tenants may raise a tier through earned trust; the default never starts higher. |
-| A4 | **Simulate** | Every new action tool implements `ToolSimulator` and returns a `ToolSimulation` with a human summary and `FieldChange`s. The decision queue must render it. |
+| A4 | **Preview** | Every new action tool implements `ToolPreviewer`, sharing one plan function between `Execute` and `Preview` (see `docs/engineering/proposal-previews.md`). The decision queue renders it. |
 | A5 | **Target and idempotency** | Tools that act on one record implement `TargetedTool.Target` so stale proposals are rejected. Tools with external side effects set `Policy().Idempotent`. |
 | A6 | **Reversible** | `Policy().Reversible` is true only when a reverse tool exists and is registered. If true, name the reverse tool in the description. |
 | A7 | **Validation** | Tools that can fail business rules implement `ToolValidator` using the same validator the service uses. No second copy of rules. |
@@ -238,7 +238,7 @@ Paths below are relative to `services/tms/internal/` (backend, `S/`) and `client
 
 ### 3.2 Action tool (`AgentTool`)
 
-- Port: `S/core/ports/services/agenttool.go`: `Name`, `Description`, `ParamSchema`, `Policy() ToolPolicy`, `Execute(ctx, ToolExecuteParams) error`. Optional: `ToolSimulator`, `ToolValidator`, `TargetedTool`, `ToolResultReporter`.
+- Port: `S/core/ports/services/agenttool.go`: `Name`, `Description`, `ParamSchema`, `Policy() ToolPolicy`, `Execute(ctx, ToolExecuteParams) error`. Optional: `ToolPreviewer` (required of every write tool), `ToolValidator`, `TargetedTool`, `ToolResultReporter`.
 - The policy is a literal `serviceports.ToolPolicy{Name, Kind: agent.ToolKindAction, Resource, Operation, DefaultTier, MaxTier, Egress, Reversible, Idempotent, Rationale, ...}`. Choose `Egress` honestly (Errata E2); it sets the ceiling.
 - Pattern: `placeShipmentHoldTool` in `S/core/services/agenttoolservice/shipment_tools.go`. Start with `guardExecute(t, params)` (`base.go`); scope with `tenantFrom`.
 - Register in `agenttoolservice/module.go` `ToolProviders()` (grouped as `group:"agent_tools"`). Tiers are in `S/core/domain/agent/enums.go`; egress classes and kinds in `toolsafety.go`.

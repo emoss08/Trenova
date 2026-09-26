@@ -77,7 +77,7 @@ the report says `sampled`. These numbers inherit the upper-bound caveat above.
 
 Production accuracy tells you how the current setup did on last month's documents. The
 evaluation set answers a different question: how would *this* model do on the *same* documents?
-It is stored in three tables (migration `20261231006810_extraction_eval`).
+It is stored in three tables (migration `20261231006840_extraction_eval`).
 
 ### Cases (`extraction_eval_cases`)
 

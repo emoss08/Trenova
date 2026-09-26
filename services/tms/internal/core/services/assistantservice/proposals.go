@@ -10,9 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
+	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -319,7 +321,56 @@ func (s *Service) ListThreadProposals(
 		proposals = append(proposals, out)
 	}
 
+	reader := req.TenantInfo
+	if reader.UserID.IsNil() {
+		reader.UserID = req.UserID
+	}
+	s.labelChoices(ctx, reader, proposals)
+
 	return proposals, nil
+}
+
+// labelChoices names the records each pending proposal offers its reader to
+// untick, in one read across the thread, for the resources the reader may
+// read. The rest, and every record when the read fails, keep their ids, which
+// the proposal's parameters already show.
+func (s *Service) labelChoices(
+	ctx context.Context,
+	reader pagination.TenantInfo,
+	proposals []services.AssistantProposal,
+) {
+	if s.labeler == nil {
+		return
+	}
+
+	reads := fieldsensitivity.NewReadAccess(s.permissions, services.UserActor(reader))
+	refs := make(map[permission.Resource][]pulid.ID)
+	for i := range proposals {
+		for j := range proposals[i].Fields {
+			field := &proposals[i].Fields[j]
+			if field.Kind == toolschema.KindRecordSubset &&
+				reads.MayRead(ctx, permission.Resource(field.Resource)) {
+				services.SubsetChoiceRefs(refs, field)
+			}
+		}
+	}
+	if len(refs) == 0 {
+		return
+	}
+
+	labels, err := s.labeler.Labels(ctx, reader, refs)
+	if err != nil {
+		s.logger.Warn("could not read the labels of the records a proposal offers",
+			zap.Error(err))
+
+		return
+	}
+
+	for i := range proposals {
+		for j := range proposals[i].Fields {
+			services.LabelSubsetChoices(&proposals[i].Fields[j], labels)
+		}
+	}
 }
 
 // runsOf is the run behind each proposal.

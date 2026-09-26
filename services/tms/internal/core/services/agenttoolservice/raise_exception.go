@@ -113,17 +113,32 @@ func (t *raiseExceptionTool) Execute(
 	if err := guardExecute(t, params); err != nil {
 		return err
 	}
-	if params.RunID.IsNil() {
-		return ErrMissingRun
-	}
 
-	subjectType, subjectID, err := t.subject(ctx, params)
+	request, err := t.request(ctx, &params)
 	if err != nil {
 		return err
+	}
+
+	_, err = t.exceptions.Flag(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *raiseExceptionTool) request(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+) (*serviceports.FlagAgentExceptionRequest, error) {
+	if params.RunID.IsNil() {
+		return nil, ErrMissingRun
+	}
+
+	subjectType, subjectID, err := t.subject(ctx, *params)
+	if err != nil {
+		return nil, err
 	}
 	summary, err := requireString(params.Params, "attemptSummary")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	category := agent.ExceptionCategory(optionalString(params.Params, "category"))
@@ -135,7 +150,7 @@ func (t *raiseExceptionTool) Execute(
 		severity = agent.SeverityMedium
 	}
 
-	_, err = t.exceptions.Flag(ctx, &serviceports.FlagAgentExceptionRequest{
+	return &serviceports.FlagAgentExceptionRequest{
 		RunID:          params.RunID,
 		Category:       category,
 		Severity:       severity,
@@ -152,9 +167,7 @@ func (t *raiseExceptionTool) Execute(
 			OrgID: params.OrganizationID,
 			BuID:  params.BusinessUnitID,
 		},
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 func (t *raiseExceptionTool) Validate(

@@ -26,9 +26,13 @@ type fetchByIDsFunc[T entityWithID] func(context.Context, []pulid.ID) ([]T, erro
 type batchFetchFunc[T any] func(context.Context, []string) ([]T, []error)
 
 func loaderOptions() []dataloadgen.Option {
+	return loaderOptionsWithCapacity(batchCapacity)
+}
+
+func loaderOptionsWithCapacity(capacity int) []dataloadgen.Option {
 	return []dataloadgen.Option{
 		dataloadgen.WithWait(batchWait),
-		dataloadgen.WithBatchCapacity(batchCapacity),
+		dataloadgen.WithBatchCapacity(capacity),
 		dataloadgen.WithTracer(otel.Tracer(tracerName)),
 	}
 }

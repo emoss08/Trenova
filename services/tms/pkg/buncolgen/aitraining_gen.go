@@ -67,6 +67,7 @@ var TrainingExportColumns = struct {
 	ValidationExamples      Column // "validation_examples" → qualified: "aitx.validation_examples"
 	Dropped                 Column // "dropped" → qualified: "aitx.dropped"
 	Parts                   Column // "parts" → qualified: "aitx.parts"
+	Progress                Column // "progress" → qualified: "aitx.progress"
 	ManifestKey             Column // "manifest_key" → qualified: "aitx.manifest_key"
 	ManifestSHA256          Column // "manifest_sha256" → qualified: "aitx.manifest_sha256"
 	FailureMessage          Column // "failure_message" → qualified: "aitx.failure_message"
@@ -94,6 +95,7 @@ var TrainingExportColumns = struct {
 	ValidationExamples:      NewColumn("validation_examples", "aitx"),
 	Dropped:                 NewColumn("dropped", "aitx"),
 	Parts:                   NewColumn("parts", "aitx"),
+	Progress:                NewColumn("progress", "aitx"),
 	ManifestKey:             NewColumn("manifest_key", "aitx"),
 	ManifestSHA256:          NewColumn("manifest_sha256", "aitx"),
 	FailureMessage:          NewColumn("failure_message", "aitx"),
@@ -127,6 +129,7 @@ var TrainingExportFieldMap = map[string]string{
 	"validationExamples":      "validation_examples",
 	"dropped":                 "dropped",
 	"parts":                   "parts",
+	"progress":                "progress",
 	"manifestKey":             "manifest_key",
 	"manifestSha256":          "manifest_sha256",
 	"failureMessage":          "failure_message",
@@ -158,6 +161,7 @@ var TrainingExportInsertableColumns = []string{
 	"validation_examples",
 	"dropped",
 	"parts",
+	"progress",
 	"manifest_key",
 	"manifest_sha256",
 	"failure_message",
@@ -194,6 +198,7 @@ var TrainingExportFilter = struct {
 	ValidationExamples      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "validationExamples" → DB: "validation_examples"
 	Dropped                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dropped" → DB: "dropped"
 	Parts                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parts" → DB: "parts"
+	Progress                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "progress" → DB: "progress"
 	ManifestKey             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "manifestKey" → DB: "manifest_key"
 	ManifestSHA256          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "manifestSha256" → DB: "manifest_sha256"
 	FailureMessage          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureMessage" → DB: "failure_message"
@@ -256,6 +261,9 @@ var TrainingExportFilter = struct {
 	},
 	Parts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("parts", op, value)
+	},
+	Progress: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("progress", op, value)
 	},
 	ManifestKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("manifestKey", op, value)

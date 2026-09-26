@@ -31,6 +31,7 @@ type AccountingDocumentLine struct {
 type AccountingSalesDocument struct {
 	Auth               AccountingDocumentAuth
 	RequestID          string
+	ExternalID         string
 	Kind               accountingsync.SyncObjectType
 	CustomerExternalID string
 	DocNumber          string
@@ -106,6 +107,7 @@ type AccountingPurchaseLine struct {
 type AccountingPurchaseDocument struct {
 	Auth                AccountingDocumentAuth
 	RequestID           string
+	ExternalID          string
 	Kind                accountingsync.SyncObjectType
 	VendorCredit        bool
 	VendorExternalID    string
@@ -121,6 +123,7 @@ type AccountingPurchaseDocument struct {
 type AccountingBillPaymentDocument struct {
 	Auth                  AccountingDocumentAuth
 	RequestID             string
+	ExternalID            string
 	Kind                  accountingsync.SyncObjectType
 	VendorExternalID      string
 	BankAccountExternalID string
@@ -204,4 +207,51 @@ type AccountingDocumentWriter interface {
 		ctx context.Context,
 		req *AccountingFindDocumentRequest,
 	) (*AccountingDocumentResult, bool, error)
+	UpdateSalesDocument(
+		ctx context.Context,
+		doc *AccountingSalesDocument,
+	) (*AccountingDocumentResult, error)
+	UpdatePurchaseDocument(
+		ctx context.Context,
+		doc *AccountingPurchaseDocument,
+	) (*AccountingDocumentResult, error)
+	UpdateBillPayment(
+		ctx context.Context,
+		doc *AccountingBillPaymentDocument,
+	) (*AccountingDocumentResult, error)
+}
+
+type AccountingDocumentReadLimits struct {
+	MaxPerRead int
+}
+
+type AccountingDocumentTarget struct {
+	ExternalID string
+	Refs       map[string]string
+}
+
+type ReadAccountingDocumentsRequest struct {
+	Auth    AccountingDocumentAuth
+	Kind    accountingsync.SyncObjectType
+	Targets []AccountingDocumentTarget
+}
+
+type AccountingDocumentState struct {
+	ExternalID   string
+	Found        bool
+	Voided       bool
+	DocNumber    string
+	Total        decimal.Decimal
+	Balance      *decimal.Decimal
+	CurrencyCode string
+	ModifiedAt   int64
+	ModifiedBy   string
+}
+
+type AccountingDocumentReader interface {
+	DocumentReadLimits() AccountingDocumentReadLimits
+	ReadDocuments(
+		ctx context.Context,
+		req *ReadAccountingDocumentsRequest,
+	) ([]*AccountingDocumentState, error)
 }

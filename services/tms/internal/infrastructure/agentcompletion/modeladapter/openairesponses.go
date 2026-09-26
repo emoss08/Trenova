@@ -9,6 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -546,7 +547,7 @@ func toResponsesTools(tools []ToolSpec) []responsesTool {
 			Type:        "function",
 			Name:        tool.Name,
 			Description: tool.Description,
-			Parameters:  tool.Parameters,
+			Parameters:  toolschema.ForModel(tool.Parameters),
 		})
 	}
 

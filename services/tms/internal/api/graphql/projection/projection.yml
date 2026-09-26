@@ -1,6 +1,11 @@
 aliases:
   AccountingConnection:
     syncsDriverSettlements: driverSettlementsEnabledAt
+  AccountingInboundChange:
+    referenceNumber: document
+    methodName: document
+    unappliedMinor: document
+    lines: document
   AgentDefinition:
     delegates: delegateIds
   MyAgent:
@@ -78,6 +83,9 @@ aliases:
 virtuals:
   AICorrection:
     - accuracy
+  AccountingDriftFinding:
+    - directions
+    - pushed
   AccountingAppCredential:
     - hasWebhookVerifier
   AccountingMapping:
@@ -394,6 +402,11 @@ modelOverrides:
   ShipmentCommentEvent: github.com/emoss08/trenova/internal/core/domain/shipmentevent.Event
 
 always:
+  AccountingDriftFinding:
+    - kind
+    - objectType
+    - status
+    - fixObjectType
   AgentEvalCase:
     - source
   FuelPurchaseImportRow:

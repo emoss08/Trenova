@@ -40,9 +40,10 @@ import (
 	"go.uber.org/fx"
 )
 
-// MaxIDsPerResource bounds one resource's query. A preview names at most a
-// few dozen records; anything past this is left unlabelled.
-const MaxIDsPerResource = 500
+// MaxIDsPerResource bounds one resource's query: every record the longest
+// record subset may offer a person to untick. A preview names a few dozen;
+// anything past this is left unlabelled.
+const MaxIDsPerResource = services.MaxRecordLabelsPerResource
 
 const labelAlias = " AS label"
 

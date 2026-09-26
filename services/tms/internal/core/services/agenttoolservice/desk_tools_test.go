@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,13 +43,20 @@ func deskParams(params map[string]any) serviceports.ToolExecuteParams {
 type stubEscalator struct {
 	occurrence *detention.DetentionOccurrence
 	escalated  *detentionservice.EscalateParams
+	guard      writeGuard
 }
 
 func (s *stubEscalator) Escalate(
 	_ context.Context,
 	p detentionservice.EscalateParams,
 ) (*detention.DetentionOccurrence, error) {
+	if err := s.guard.write(); err != nil {
+		return nil, err
+	}
 	s.escalated = &p
+	if err := s.occurrence.Escalate(timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 
 	return s.occurrence, nil
 }
@@ -57,7 +65,9 @@ func (s *stubEscalator) GetOccurrenceDetail(
 	context.Context,
 	*repositories.GetDetentionOccurrenceByIDRequest,
 ) (*detentionservice.OccurrenceDetail, error) {
-	return &detentionservice.OccurrenceDetail{Occurrence: s.occurrence}, nil
+	copied := *s.occurrence
+
+	return &detentionservice.OccurrenceDetail{Occurrence: &copied}, nil
 }
 
 // Escalating leaves the money alone. Waiving, approving and disputing are a
@@ -84,12 +94,14 @@ func TestEscalateDetention_HandsOverWithoutTouchingTheCharge(t *testing.T) {
 		"reason":       "the notice window closed and the customer has no recipients",
 	})
 
-	simulated, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
+	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	require.Contains(t, simulated.Summary, "90 billable minutes")
-	for _, change := range simulated.Changes {
-		require.NotContains(t, []string{"status", "billableAmount", "billableMinutes"},
-			change.Field, "escalating must not touch the charge")
+	require.Contains(t, preview.Summary, "90 billable minutes")
+	for _, change := range preview.Changes {
+		for _, field := range change.Fields {
+			require.NotContains(t, []string{"status", "billableAmount", "billableMinutes"},
+				field.Path, "escalating must not touch the charge")
+		}
 	}
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -172,13 +184,20 @@ func TestRequestCredentialRenewal_RefusesAnEmptyAsk(t *testing.T) {
 type stubWorkerHolder struct {
 	held  *worker.Worker
 	given *workerservice.DispatchHoldRequest
+	guard writeGuard
 }
 
 func (s *stubWorkerHolder) SetDispatchHold(
 	_ context.Context,
 	req workerservice.DispatchHoldRequest,
 ) (*worker.Worker, error) {
+	if err := s.guard.write(); err != nil {
+		return nil, err
+	}
 	s.given = &req
+	if err := workerservice.ApplyDispatchHold(s.held, &req); err != nil {
+		return nil, err
+	}
 
 	return s.held, nil
 }
@@ -187,7 +206,9 @@ func (s *stubWorkerHolder) Get(
 	context.Context,
 	repositories.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
-	return s.held, nil
+	copied := *s.held
+
+	return &copied, nil
 }
 
 // The hold is its own permission, not an edit of the worker record: taking
@@ -237,14 +258,21 @@ type stubCarrierIntel struct {
 	event        *carrierintel.CarrierIntelEvent
 	acknowledged []pulid.ID
 	resolved     *carrierintelservice.ResolveEventRequest
+	guard        writeGuard
 }
 
 func (s *stubCarrierIntel) AcknowledgeEvents(
 	_ context.Context,
-	_ pagination.TenantInfo,
+	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) (int, error) {
+	if err := s.guard.write(); err != nil {
+		return 0, err
+	}
 	s.acknowledged = ids
+	if !s.event.Acknowledge(tenant.UserID, timeutils.NowUnix()) {
+		return 0, nil
+	}
 
 	return len(ids), nil
 }
@@ -253,7 +281,13 @@ func (s *stubCarrierIntel) ResolveEvent(
 	_ context.Context,
 	req *carrierintelservice.ResolveEventRequest,
 ) (*carrierintel.CarrierIntelEvent, error) {
+	if err := s.guard.write(); err != nil {
+		return nil, err
+	}
 	s.resolved = req
+	if err := carrierintelservice.PlanResolve(s.event, req, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 
 	return s.event, nil
 }
@@ -263,7 +297,9 @@ func (s *stubCarrierIntel) GetEvent(
 	pagination.TenantInfo,
 	pulid.ID,
 ) (*carrierintel.CarrierIntelEvent, error) {
-	return s.event, nil
+	copied := *s.event
+
+	return &copied, nil
 }
 
 func openFinding() *carrierintel.CarrierIntelEvent {

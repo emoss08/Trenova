@@ -258,10 +258,23 @@ func (s *Service) UpdateSettings(
 		)
 	}
 
+	if req.InboundPayments != "" && !req.InboundPayments.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"inboundPayments",
+			errortypes.ErrInvalid,
+			"Choose whether payments recorded in {0} are ignored, proposed or applied",
+			accountingsync.ProviderName(conn.IntegrationType),
+		)
+	}
+
 	before := jsonutils.MustToJSON(conn)
-	wasSendingDrivers := conn.SyncsDriverSettlements()
+	previous := settingsSnapshot{
+		sendingDrivers: conn.SyncsDriverSettlements(),
+		policy:         conn.PaymentPolicy(),
+	}
 	conn.AutoSync = req.AutoSync
 	conn.SetDriverSettlements(req.DriverSettlements, timeutils.NowUnix())
+	conn.SetInboundPayments(req.InboundPayments)
 	updated, err := s.connections.Update(ctx, conn)
 	if err != nil {
 		return nil, err
@@ -274,21 +287,41 @@ func (s *Service) UpdateSettings(
 		tenant:     req.TenantInfo,
 		current:    updated,
 		previous:   before,
-		comment:    settingsComment(wasSendingDrivers, updated),
+		comment:    settingsComment(previous, updated),
 	})
 	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
 	return updated, nil
 }
 
-func settingsComment(wasSendingDrivers bool, conn *accountingsync.AccountingConnection) string {
+type settingsSnapshot struct {
+	sendingDrivers bool
+	policy         accountingsync.InboundPaymentPolicy
+}
+
+func settingsComment(previous settingsSnapshot, conn *accountingsync.AccountingConnection) string {
 	provider := accountingsync.ProviderName(conn.IntegrationType)
 	switch {
-	case !wasSendingDrivers && conn.SyncsDriverSettlements():
+	case !previous.sendingDrivers && conn.SyncsDriverSettlements():
 		return "Started sending owner-operator settlements to " + provider
-	case wasSendingDrivers && !conn.SyncsDriverSettlements():
+	case previous.sendingDrivers && !conn.SyncsDriverSettlements():
 		return "Stopped sending owner-operator settlements to " + provider
+	case previous.policy != conn.PaymentPolicy():
+		return inboundPolicyComment(provider, conn.PaymentPolicy())
 	default:
 		return "Changed how documents are sent to " + provider
+	}
+}
+
+func inboundPolicyComment(provider string, policy accountingsync.InboundPaymentPolicy) string {
+	switch policy {
+	case accountingsync.InboundPaymentsApply:
+		return "Payments recorded in " + provider + " are now applied in Trenova automatically"
+	case accountingsync.InboundPaymentsOff:
+		return "Payments recorded in " + provider + " are no longer brought into Trenova"
+	case accountingsync.InboundPaymentsPropose:
+		return "Payments recorded in " + provider + " now wait for someone to apply them"
+	default:
+		return "Changed how payments recorded in " + provider + " are handled"
 	}
 }
 
@@ -646,7 +679,7 @@ func (s *Service) RequestBackfill(
 			"A backfill covers documents posted between the start date and when sync began",
 		)
 	}
-	types, err := backfillTypes(conn, req.ObjectTypes)
+	types, err := BackfillTypes(conn, req.ObjectTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -686,7 +719,7 @@ func (s *Service) RequestBackfill(
 	return backfill, nil
 }
 
-func backfillTypes(
+func BackfillTypes(
 	conn *accountingsync.AccountingConnection,
 	requested []accountingsync.SyncObjectType,
 ) ([]accountingsync.SyncObjectType, error) {

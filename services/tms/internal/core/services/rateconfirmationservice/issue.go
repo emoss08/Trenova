@@ -120,7 +120,7 @@ func (s *Service) completeTenderIssued(
 	}
 
 	previous := *entity
-	confirmed, err := s.markConfirmed(ctx, req.TenantInfo, entity, confirmParams{
+	confirmed, err := s.markConfirmed(ctx, req.TenantInfo, entity, rateconfirmation.Confirmation{
 		Name:  s.tenderConfirmingName(ctx, req, entity),
 		Title: tenderConfirmingTitle(req),
 		Via:   rateconfirmation.ViaTenderAcceptance,

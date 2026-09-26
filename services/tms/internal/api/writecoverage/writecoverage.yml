@@ -1,0 +1,2592 @@
+# Every write a person can make in Trenova, and the agent tool that performs it or the
+# reason none should. See docs/engineering/agent-write-coverage.md for the rule, the
+# categories and how writes are found; regenerate that page after editing this file:
+#   go generate ./internal/api/writecoverage/...
+#
+# Each entry takes exactly one of:
+#   tools: [tool_name]                  an agent tool performs it
+#   exempt: <category> + reason: <why>  no agent should (security, configuration,
+#                                       user-preference, infrastructure,
+#                                       agent-administration, counterparty, read-only,
+#                                       attestation, duplicate)
+#   pending: <what the tool would do>   no tool yet; counted, never failed
+writes:
+  # accessorialcharge
+  "PATCH /api/v1/accessorial-charges/:accessorialChargeID/":
+    exempt: configuration
+    reason: "The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it."
+  "POST /api/v1/accessorial-charges/":
+    exempt: configuration
+    reason: "The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it."
+  "PUT /api/v1/accessorial-charges/:accessorialChargeID/":
+    exempt: configuration
+    reason: "The accessorial charge catalog is a price list an administrator maintains; charges on a shipment use it."
+
+  # accountingcontrol
+  "PUT /api/v1/accounting-controls/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # accountingsync
+  "mutation applyAccountingInboundChange":
+    tools: [apply_accounting_inbound_change]
+  "mutation changeAccountingBackfill":
+    pending: "Change the range or scope of an accounting backfill that has not finished."
+  "mutation checkAccountingDrift":
+    tools: [check_accounting_drift]
+  "mutation checkAccountingConnection":
+    tools: [check_accounting_connection]
+  "mutation clearAccountingMapping":
+    tools: [clear_accounting_mapping]
+  "mutation completeAccountingAuthorization":
+    exempt: security
+    reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
+  "mutation completeAccountingSetup":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation confirmAccountingMappings":
+    pending: "Confirm the suggested accounting mappings so sync can use them."
+  "mutation createAccountingReferenceRecord":
+    tools: [create_accounting_reference_record]
+  "mutation disconnectAccountingSystem":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation dismissAccountingDrift":
+    tools: [dismiss_accounting_drift]
+  "mutation enableAccountingSync":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation ignoreAccountingInboundChange":
+    tools: [ignore_accounting_inbound_change]
+  "mutation pauseAccountingSync":
+    tools: [pause_accounting_sync]
+  "mutation refreshAccountingReferenceData":
+    tools: [refresh_accounting_reference_data]
+  "mutation rejectAccountingMapping":
+    pending: "Reject a suggested accounting mapping."
+  "mutation releaseAccountingSync":
+    pending: "Release accounting sync records held for review so they post."
+  "mutation removeAccountingApp":
+    exempt: security
+    reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
+  "mutation requestAccountingBackfill":
+    tools: [request_accounting_backfill]
+  "mutation resolveAccountingDrift":
+    tools: [resolve_accounting_drift]
+  "mutation resumeAccountingSync":
+    tools: [resume_accounting_sync]
+  "mutation retryAccountingSync":
+    tools: [retry_accounting_sync]
+  "mutation saveAccountingApp":
+    exempt: security
+    reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
+  "mutation setAccountingMapping":
+    tools: [set_accounting_mapping]
+  "mutation skipAccountingSync":
+    tools: [skip_accounting_sync]
+  "mutation startAccountingAuthorization":
+    exempt: security
+    reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
+  "mutation updateAccountingSyncSettings":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+
+  # accountingwebhook
+  "POST /api/v1/webhooks/accounting/:provider/":
+    exempt: infrastructure
+    reason: "An inbound webhook a provider calls with a signed token, not a person."
+
+  # accounttype
+  "PATCH /api/v1/account-types/:accountTypeID/":
+    pending: "Update some fields of an account type."
+  "POST /api/v1/account-types/":
+    pending: "Create an account type."
+  "POST /api/v1/account-types/bulk-update-status/":
+    pending: "Change the status of several account types at once."
+  "PUT /api/v1/account-types/:accountTypeID/":
+    pending: "Update an account type."
+
+  # agent
+  "mutation approveAgentMemorySuggestion":
+    exempt: agent-administration
+    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+  "mutation createAgentMemory":
+    tools: [remember]
+  "mutation decideAgentPlan":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+  "mutation decideAgentProposal":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+  "mutation decideMyPlan":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+  "mutation decideMyProposal":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+  "mutation dismissAgentMemorySuggestion":
+    exempt: agent-administration
+    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+  "mutation replayAgentRun":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "mutation resolveAgentException":
+    exempt: agent-administration
+    reason: "An agent exception is an agent handing a case to a person; the person resolves it."
+  "mutation setAgentMemoryStatus":
+    tools: [forget_memory]
+  "mutation updateAgentControl":
+    exempt: agent-administration
+    reason: "The organization-wide switches and ceilings every agent runs under."
+  "mutation updateAgentMemory":
+    exempt: agent-administration
+    reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."
+
+  # agentdefinition
+  "DELETE /api/v1/agent-definitions/:agentID/":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "POST /api/v1/agent-definitions/":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "POST /api/v1/agent-definitions/preview-prompt/":
+    exempt: read-only
+    reason: "Renders an agent prompt for review and saves nothing."
+  "PUT /api/v1/agent-definitions/:agentID/":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "mutation setAgentAccess":
+    exempt: security
+    reason: "Decides which people may use which agents."
+  "mutation setRoleAgentAccess":
+    exempt: security
+    reason: "Decides which roles may use which agents."
+
+  # agentextension
+  "POST /api/v1/agent-extensions/:type/test/":
+    exempt: read-only
+    reason: "Tests the vendor credentials and returns the result."
+  "PUT /api/v1/agent-extensions/:type/config/":
+    exempt: agent-administration
+    reason: "Configures a vendor account an organization turns on for its agents; it holds the vendor credentials."
+
+  # agentquality
+  "mutation createAgentEvalCase":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "mutation replayAgentEvalCase":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "mutation runAgentSuite":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "mutation setAgentEvalCaseStatus":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "mutation updateAgentEvalCase":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "mutation updateAgentQualityControl":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+
+  # agentrun
+  "POST /api/v1/agent-runs/":
+    exempt: agent-administration
+    reason: "Starts an agent on demand; agents hand work to one another through delegate_task instead."
+
+  # aiaudit
+  "mutation aiAuditExportDownload":
+    exempt: read-only
+    reason: "Returns a download link for an export already produced."
+  "mutation requestAIAuditExport":
+    exempt: agent-administration
+    reason: "The AI audit trail is how people check what agents did; an agent must not drive its own audit."
+  "mutation verifyAIAuditChain":
+    exempt: agent-administration
+    reason: "The AI audit trail is how people check what agents did; an agent must not drive its own audit."
+
+  # aifeedback
+  "mutation clearMyAIFeedback":
+    exempt: agent-administration
+    reason: "A person's rating of an agent's answer; an agent rating itself would be meaningless."
+  "mutation setMyAIFeedback":
+    exempt: agent-administration
+    reason: "A person's rating of an agent's answer; an agent rating itself would be meaningless."
+
+  # aiprovider
+  "DELETE /api/v1/ai-providers/:providerID/":
+    exempt: agent-administration
+    reason: "Configures the model providers agents run on, including their API keys."
+  "POST /api/v1/ai-providers/":
+    exempt: agent-administration
+    reason: "Configures the model providers agents run on, including their API keys."
+  "POST /api/v1/ai-providers/:providerID/test/":
+    exempt: read-only
+    reason: "Tests the provider credentials and returns the result."
+  "PUT /api/v1/ai-providers/:providerID/":
+    exempt: agent-administration
+    reason: "Configures the model providers agents run on, including their API keys."
+
+  # airetrieval
+  "mutation reindexAIRetrievalSource":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+  "mutation updateAIRetrievalSettings":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+
+  # apikey
+  "POST /api/v1/api-keys/":
+    exempt: security
+    reason: "API keys grant programmatic access to the organization; only a person issues, rotates or revokes one."
+  "POST /api/v1/api-keys/:apiKeyID/revoke/":
+    exempt: security
+    reason: "API keys grant programmatic access to the organization; only a person issues, rotates or revokes one."
+  "POST /api/v1/api-keys/:apiKeyID/rotate/":
+    exempt: security
+    reason: "API keys grant programmatic access to the organization; only a person issues, rotates or revokes one."
+  "PUT /api/v1/api-keys/:apiKeyID/":
+    exempt: security
+    reason: "API keys grant programmatic access to the organization; only a person issues, rotates or revokes one."
+
+  # assignment
+  "POST /api/v1/assignments/check-worker-compliance/":
+    exempt: read-only
+    reason: "Checks a worker against compliance rules before an assignment and saves nothing."
+
+  # assistant
+  "DELETE /api/v1/assistant/threads/:threadID/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "PATCH /api/v1/assistant/threads/:threadID/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/ask/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/pin/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/messages/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/turns/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/turns/:turnID/stop/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+
+  # auth
+  "POST /api/v1/auth/forgot-password":
+    exempt: security
+    reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
+  "POST /api/v1/auth/login":
+    exempt: security
+    reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
+  "POST /api/v1/auth/logout":
+    exempt: security
+    reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
+  "POST /api/v1/auth/reset-password":
+    exempt: security
+    reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
+  "POST /api/v1/auth/session/roles/activate":
+    exempt: security
+    reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
+  "POST /api/v1/auth/validate-session":
+    exempt: security
+    reason: "Signing in and out and resetting a password are a person proving who they are; an agent holds no credentials of its own."
+
+  # bankreceipt
+  "POST /api/v1/accounting/bank-receipts/":
+    pending: "Import a bank receipt line so it can be matched to open invoices."
+  "POST /api/v1/accounting/bank-receipts/:receiptID/match/":
+    tools: [match_bank_receipt]
+
+  # bankreceiptbatch
+  "POST /api/v1/accounting/bank-receipt-batches/":
+    pending: "Import a batch of bank receipts from a bank file."
+
+  # bankreceiptworkitem
+  "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/assign/":
+    pending: "Assign a bank receipt work item to a person."
+  "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/dismiss/":
+    tools: [resolve_bank_receipt_work_item]
+  "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/resolve/":
+    tools: [resolve_bank_receipt_work_item]
+  "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/":
+    pending: "Mark a bank receipt work item as under review."
+
+  # benefits
+  "mutation createBenefitPlan":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation endBenefitEnrollment":
+    pending: "End benefit enrollment."
+  "mutation enrollBenefit":
+    pending: "Enroll benefit."
+  "mutation updateBenefitPlan":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # billingcontrol
+  "PUT /api/v1/billing-controls/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # billingqueue
+  "DELETE /api/v1/billing-queue/filter-presets/:presetId/":
+    exempt: user-preference
+    reason: "A saved filter on the billing queue screen."
+  "POST /api/v1/billing-queue/:itemID/reassign-charge/":
+    pending: "Move a charge from one billing queue item to another."
+  "POST /api/v1/billing-queue/filter-presets/":
+    exempt: user-preference
+    reason: "A saved filter on the billing queue screen."
+  "POST /api/v1/billing-queue/transfer/":
+    tools: [transfer_to_billing]
+  "PUT /api/v1/billing-queue/:itemID/charges/":
+    tools: [correct_charge_code]
+  "PUT /api/v1/billing-queue/filter-presets/:presetId/":
+    exempt: user-preference
+    reason: "A saved filter on the billing queue screen."
+  "mutation assignBillingQueueBiller":
+    tools: [assign_billing_queue_biller]
+  "mutation updateBillingQueueStatus":
+    tools: [approve_billing_queue_item, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review]
+
+  # billingtransfer
+  "mutation cancelBillingTransferRun":
+    pending: "Cancel billing transfer run."
+  "mutation retryBillingTransferRun":
+    pending: "Retry billing transfer run."
+  "mutation startBillingTransferRun":
+    tools: [transfer_to_billing]
+
+  # briefing
+  "mutation markBriefingRead":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation regenerateBriefing":
+    exempt: agent-administration
+    reason: "Asks the briefing agent to write the briefing again."
+
+  # carrier
+  "PATCH /api/v1/carriers/:carrierID/":
+    pending: "Update some fields of a carrier."
+  "POST /api/v1/carriers/":
+    pending: "Create a carrier."
+  "POST /api/v1/carriers/bulk-update-status/":
+    pending: "Change the status of several carriers at once."
+  "PUT /api/v1/carriers/:carrierID/":
+    pending: "Update a carrier."
+
+  # carrierintelligence
+  "mutation acknowledgeCarrierIntelEvents":
+    tools: [acknowledge_carrier_intel_event]
+  "mutation applyCarrierIntelSuggestions":
+    pending: "Apply the carrier profile corrections carrier intelligence suggested."
+  "mutation grantCarrierIntelOverride":
+    exempt: attestation
+    reason: "A person accepts accountability for using a carrier or equipment that failed vetting."
+  "mutation importSourcedCarrier":
+    pending: "Import sourced carrier."
+  "mutation markCarrierIntelReviewed":
+    pending: "Mark carrier intel reviewed."
+  "mutation overrideCarrierEquipmentVerification":
+    exempt: attestation
+    reason: "A person accepts accountability for using a carrier or equipment that failed vetting."
+  "mutation resolveCarrierIntelEvent":
+    tools: [resolve_carrier_intel_event]
+  "mutation resumeCarrierIntelMonitoring":
+    pending: "Resume carrier intel monitoring."
+  "mutation revokeCarrierIntelOverride":
+    exempt: attestation
+    reason: "A person accepts accountability for using a carrier or equipment that failed vetting."
+  "mutation setCarrierMonitoring":
+    pending: "Set carrier monitoring."
+  "mutation switchCarrierIntelProvider":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation updateCarrierIntelControl":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation verifyCarrierEquipment":
+    pending: "Verify carrier equipment."
+  "mutation vetCarrier":
+    pending: "Vet carrier."
+  "mutation vetCustomerBroker":
+    pending: "Vet customer broker."
+
+  # carriersettlement
+  "mutation acceptCarrierInvoiceMatch":
+    pending: "Accept carrier invoice match."
+  "mutation acceptCarrierInvoiceMatchWithVariance":
+    pending: "Accept carrier invoice match with variance."
+  "mutation addCarrierSettlementAdjustment":
+    pending: "Add carrier settlement adjustment."
+  "mutation approveCarrierSettlement":
+    pending: "Approve carrier settlement."
+  "mutation createCarrierInvoiceMatch":
+    pending: "Create carrier invoice match."
+  "mutation generateCarrierSettlementBatch":
+    pending: "Generate carrier settlement batch."
+  "mutation linkEdiCarrierInvoiceToCarrier":
+    pending: "Link EDI carrier invoice to carrier."
+  "mutation markCarrierSettlementPaid":
+    pending: "Mark carrier settlement paid."
+  "mutation postCarrierSettlement":
+    pending: "Post carrier settlement."
+  "mutation recalculateCarrierSettlement":
+    pending: "Recalculate carrier settlement."
+  "mutation rejectCarrierInvoiceMatch":
+    pending: "Reject carrier invoice match."
+  "mutation rejectCarrierSettlement":
+    pending: "Reject carrier settlement."
+  "mutation removeCarrierSettlementAdjustment":
+    pending: "Remove carrier settlement adjustment."
+  "mutation submitCarrierSettlement":
+    pending: "Submit carrier settlement."
+  "mutation updateCarrierSettlementControl":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+  "mutation voidCarrierSettlement":
+    pending: "Void carrier settlement."
+
+  # commodity
+  "PATCH /api/v1/commodities/:commodityID/":
+    pending: "Update some fields of a commodity."
+  "POST /api/v1/commodities/":
+    pending: "Create a commodity."
+  "POST /api/v1/commodities/bulk-update-status/":
+    pending: "Change the status of several commodities at once."
+  "PUT /api/v1/commodities/:commodityID/":
+    pending: "Update a commodity."
+
+  # controlplaneprovisioning
+  "POST /api/v1/control-plane/tenants/provision":
+    exempt: infrastructure
+    reason: "Called by the platform control plane with a service credential to provision a tenant."
+
+  # costing
+  "mutation updateCostCategory":
+    exempt: configuration
+    reason: "Cost categories define the costing model every margin is computed with."
+  "mutation updateCostingControl":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # customer
+  "PATCH /api/v1/customers/:customerID/":
+    pending: "Update some fields of a customer."
+  "POST /api/v1/customers/":
+    pending: "Create a customer."
+  "POST /api/v1/customers/bulk-update-status/":
+    pending: "Change the status of several customers at once."
+  "PUT /api/v1/customers/:customerID/":
+    pending: "Update a customer."
+
+  # customerpayment
+  "mutation applyCreditMemo":
+    pending: "Apply credit memo."
+  "mutation applyUnappliedCustomerPayment":
+    pending: "Apply unapplied customer payment."
+  "mutation postAndApplyCustomerPayment":
+    tools: [post_customer_payment]
+  "mutation reverseCustomerPayment":
+    pending: "Reverse customer payment."
+  "mutation unapplyCreditMemoApplication":
+    pending: "Unapply credit memo application."
+
+  # customfield
+  "DELETE /api/v1/custom-fields/definitions/:definitionID/":
+    exempt: configuration
+    reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
+  "PATCH /api/v1/custom-fields/definitions/:definitionID/":
+    exempt: configuration
+    reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
+  "POST /api/v1/custom-fields/definitions/":
+    exempt: configuration
+    reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
+  "PUT /api/v1/custom-fields/definitions/:definitionID/":
+    exempt: configuration
+    reason: "Custom field definitions change the shape of records for everyone; an administrator owns them."
+
+  # databasesession
+  "POST /api/v1/admin/database-sessions/:pid/terminate/":
+    exempt: security
+    reason: "Terminating database sessions is a platform administrator's emergency control."
+
+  # dataentrycontrol
+  "PUT /api/v1/data-entry-controls/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # dataretention
+  "PUT /api/v1/data-retention/":
+    exempt: configuration
+    reason: "Retention periods decide what the organization deletes; an administrator sets them against its legal obligations."
+
+  # decisions
+  "mutation decideAgentProposals":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+
+  # detention
+  "mutation approveDetentionOccurrence":
+    tools: [approve_detention]
+  "mutation createDetentionPolicy":
+    exempt: configuration
+    reason: "Detention policies are the commercial terms each customer agreed to; an administrator maintains them."
+  "mutation deleteDetentionPolicy":
+    exempt: configuration
+    reason: "Detention policies are the commercial terms each customer agreed to; an administrator maintains them."
+  "mutation detentionBacktest":
+    exempt: read-only
+    reason: "Replays a detention policy against past stops and saves nothing."
+  "mutation disputeDetentionOccurrence":
+    pending: "Dispute detention occurrence."
+  "mutation sendDetentionNotice":
+    tools: [send_detention_notice]
+  "mutation updateDetentionPolicy":
+    exempt: configuration
+    reason: "Detention policies are the commercial terms each customer agreed to; an administrator maintains them."
+  "mutation waiveDetentionOccurrence":
+    tools: [waive_detention]
+
+  # detentionpolicy
+  "POST /api/v1/detention-policies/preview/":
+    exempt: read-only
+    reason: "Previews how a detention policy would apply and saves nothing."
+
+  # dispatchconsole
+  "mutation dispatchAssignMoveToCarrier":
+    tools: [assign_move_to_carrier]
+  "mutation dispatchAssignMoves":
+    tools: [assign_move]
+  "mutation dispatchCancelCarrierAssignment":
+    tools: [cancel_carrier_assignment]
+  "mutation dispatchPlanAutoAssign":
+    exempt: read-only
+    reason: "Plans automatic assignments for review and saves nothing."
+  "mutation dispatchUnassignMoves":
+    tools: [unassign_moves]
+
+  # dispatchcontrol
+  "PUT /api/v1/dispatch-controls/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # distancecontrol
+  "PATCH /api/v1/distance-controls/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+  "PUT /api/v1/distance-controls/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # distanceoverride
+  "DELETE /api/v1/distance-overrides/:distanceOverrideID/":
+    pending: "Delete a distance override."
+  "PATCH /api/v1/distance-overrides/:distanceOverrideID/":
+    pending: "Update some fields of a distance override."
+  "POST /api/v1/distance-overrides/":
+    pending: "Create a distance override."
+  "PUT /api/v1/distance-overrides/:distanceOverrideID/":
+    pending: "Update a distance override."
+
+  # distanceprofile
+  "DELETE /api/v1/distance-profiles/:distanceProfileID/":
+    exempt: configuration
+    reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
+  "PATCH /api/v1/distance-profiles/:distanceProfileID/":
+    exempt: configuration
+    reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
+  "POST /api/v1/distance-profiles/":
+    exempt: configuration
+    reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
+  "POST /api/v1/distance-profiles/:distanceProfileID/set-default/":
+    exempt: configuration
+    reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
+  "PUT /api/v1/distance-profiles/:distanceProfileID/":
+    exempt: configuration
+    reason: "Routing profiles decide how every distance is computed; an administrator maintains them."
+
+  # document
+  "DELETE /api/v1/documents/:documentID/":
+    pending: "Delete a document."
+  "POST /api/v1/documents/:documentID/attach-to-shipment/":
+    tools: [attach_document_to_shipment]
+  "POST /api/v1/documents/:documentID/import-assistant/thread/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/documents/:documentID/restore/":
+    pending: "Restore an earlier version of a document."
+  "POST /api/v1/documents/:documentID/shipment-draft/reextract/":
+    pending: "Run shipment extraction again on a document and replace the draft."
+  "POST /api/v1/documents/bulk-delete/":
+    pending: "Delete several documents at once."
+  "POST /api/v1/documents/upload-bulk/":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+  "POST /api/v1/documents/upload/":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+  "POST /api/v1/documents/uploads/":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+  "POST /api/v1/documents/uploads/:uploadSessionID/cancel/":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+  "POST /api/v1/documents/uploads/:uploadSessionID/complete/":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+  "POST /api/v1/documents/uploads/:uploadSessionID/parts/":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+  "PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+
+  # documentcontrol
+  "PUT /api/v1/document-controls/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # documentoperations
+  "POST /api/v1/admin/document-operations/:documentID/reextract/":
+    exempt: infrastructure
+    reason: "A repair operation for when processing failed; the platform retries on its own."
+  "POST /api/v1/admin/document-operations/:documentID/regenerate-preview/":
+    exempt: infrastructure
+    reason: "A repair operation for when processing failed; the platform retries on its own."
+  "POST /api/v1/admin/document-operations/:documentID/resync-search/":
+    exempt: infrastructure
+    reason: "A repair operation for when processing failed; the platform retries on its own."
+
+  # documentpacketrule
+  "DELETE /api/v1/document-packet-rules/:ruleID/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "POST /api/v1/document-packet-rules/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "PUT /api/v1/document-packet-rules/:ruleID/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # documentparsingrule
+  "DELETE /api/v1/document-parsing-rules/:ruleSetID/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "DELETE /api/v1/document-parsing-rules/fixtures/:fixtureID/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "POST /api/v1/document-parsing-rules/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "POST /api/v1/document-parsing-rules/:ruleSetID/fixtures/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "POST /api/v1/document-parsing-rules/:ruleSetID/versions/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "POST /api/v1/document-parsing-rules/versions/:versionID/publish/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "POST /api/v1/document-parsing-rules/versions/:versionID/simulate/":
+    exempt: read-only
+    reason: "Runs a parsing rule version against a sample and saves nothing."
+  "PUT /api/v1/document-parsing-rules/:ruleSetID/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "PUT /api/v1/document-parsing-rules/versions/:versionID/":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # documenttemplate
+  "mutation archiveDocumentTemplateVersion":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation assignDocumentTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation createDocumentTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation createDocumentTemplateVersion":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation deleteDocumentTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation deleteDocumentTemplateVersion":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation publishDocumentTemplateVersion":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation rollbackDocumentTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation sendTestMessageTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation unassignDocumentTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation updateDocumentTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation updateDocumentTemplateVersion":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # documenttype
+  "PATCH /api/v1/document-types/:docTypeID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/document-types/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "PUT /api/v1/document-types/:docTypeID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+
+  # driverportal
+  "POST /api/v1/portal/credentials/:credentialID/document/":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "POST /api/v1/portal/expenses/:expenseID/receipt/":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "POST /api/v1/portal/invitations/accept":
+    exempt: security
+    reason: "A driver accepting a portal invitation creates their own sign-in."
+  "POST /api/v1/portal/loads/:shipmentID/documents/":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "POST /api/v1/portal/profile/documents/":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation acknowledgeMyPolicy":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation cancelMyExpense":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation cancelMyPto":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation createMyLoadComment":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation createSettlementDispute":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation dismissMyNotifications":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation inviteWorkerToPortal":
+    exempt: security
+    reason: "Gives a driver a sign-in to the driver portal."
+  "mutation markAllMyNotificationsRead":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation markMyNotificationsRead":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation markMyNotificationsUnread":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation proposeMyShiftSwap":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation recordMyStopAction":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation requestMyPto":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation resolveSettlementDispute":
+    pending: "Resolve settlement dispute."
+  "mutation respondToMyAssignment":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation respondToMyShiftSwap":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation restoreMyNotifications":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation reviewDriverExpense":
+    pending: "Review driver expense."
+  "mutation revokeWorkerPortalAccess":
+    exempt: security
+    reason: "Removes a driver's sign-in to the driver portal."
+  "mutation setMyAvailability":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation startSettlementDisputeReview":
+    pending: "Start settlement dispute review."
+  "mutation submitMyExpense":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation updateDashControl":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+  "mutation updateMyContactInfo":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation withdrawMyProfileChange":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation withdrawSettlementDispute":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+
+  # driversettlement
+  "mutation addDriverSettlementAdjustment":
+    pending: "Add driver settlement adjustment."
+  "mutation adjustEscrowAccount":
+    pending: "Adjust escrow account."
+  "mutation approveDriverSettlement":
+    pending: "Approve driver settlement."
+  "mutation assignPayProfileToWorker":
+    pending: "Assign pay profile to worker."
+  "mutation attachPayEventsToSettlement":
+    pending: "Attach pay events to a driver settlement."
+  "mutation bulkDriverSettlementAction":
+    pending: "Approve, post or void several driver settlements at once."
+  "mutation closeEscrowAccount":
+    pending: "Close escrow account."
+  "mutation createPayCode":
+    pending: "Create pay code."
+  "mutation createPayProfile":
+    pending: "Create pay profile."
+  "mutation createRecurringDeduction":
+    pending: "Create recurring deduction."
+  "mutation createRecurringEarning":
+    pending: "Create recurring earning."
+  "mutation detachPayEventFromSettlement":
+    pending: "Detach a pay event from a driver settlement."
+  "mutation endWorkerPayAssignment":
+    pending: "End worker pay assignment."
+  "mutation generateDriverSettlement":
+    pending: "Generate driver settlement."
+  "mutation generateSettlementBatch":
+    pending: "Generate settlement batch."
+  "mutation holdDriverPayEvent":
+    pending: "Hold driver pay event."
+  "mutation issuePayAdvance":
+    pending: "Issue pay advance."
+  "mutation markDriverSettlementPaid":
+    pending: "Mark driver settlement paid."
+  "mutation openEscrowAccount":
+    pending: "Open escrow account."
+  "mutation payWorkerNow":
+    pending: "Pay a worker off cycle now."
+  "mutation postDriverSettlement":
+    pending: "Post driver settlement."
+  "mutation recalculateDriverSettlement":
+    pending: "Recalculate driver settlement."
+  "mutation rejectDriverSettlement":
+    pending: "Reject driver settlement."
+  "mutation releaseDriverPayEvent":
+    pending: "Release driver pay event."
+  "mutation removeDriverSettlementAdjustment":
+    pending: "Remove driver settlement adjustment."
+  "mutation submitDriverSettlement":
+    pending: "Submit driver settlement."
+  "mutation updateEscrowAccount":
+    pending: "Update escrow account."
+  "mutation updatePayCode":
+    pending: "Update pay code."
+  "mutation updatePayProfile":
+    pending: "Update pay profile."
+  "mutation updateRecurringDeduction":
+    pending: "Update recurring deduction."
+  "mutation updateRecurringEarning":
+    pending: "Update recurring earning."
+  "mutation updateSettlementControl":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+  "mutation voidDriverSettlement":
+    pending: "Void driver settlement."
+  "mutation writeOffPayAdvance":
+    pending: "Write off pay advance."
+
+  # edi
+  "DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "DELETE /api/v1/edi/test-cases/:testCaseID/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/as2/inbound/":
+    exempt: infrastructure
+    reason: "Receives AS2 messages a trading partner sends; no person makes this call."
+  "POST /api/v1/edi/catalog/partner-settings/validate/":
+    exempt: read-only
+    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
+  "POST /api/v1/edi/communication-profiles/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/communication-profiles/:profileID/poll/":
+    exempt: infrastructure
+    reason: "Polls a partner mailbox now; the scheduler polls on its own."
+  "POST /api/v1/edi/communication-profiles/:profileID/test-connection/":
+    exempt: read-only
+    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
+  "POST /api/v1/edi/communication-profiles/inspect-certificate/":
+    exempt: read-only
+    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
+  "POST /api/v1/edi/connections/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/connections/:connectionID/accept/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/connections/:connectionID/reject/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/connections/:connectionID/revoke/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/connections/:connectionID/suspend/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/control-numbers/reset/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/document-profiles/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/documents/generate/":
+    pending: "Generate an outbound EDI document (a 214, a 210) for a record."
+  "POST /api/v1/edi/documents/preview/":
+    exempt: read-only
+    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
+  "POST /api/v1/edi/inbound-files/:fileID/reprocess/":
+    pending: "Process a failed inbound EDI file again."
+  "POST /api/v1/edi/inbound-files/bulk-reprocess/":
+    pending: "Process several failed inbound EDI files again."
+  "POST /api/v1/edi/load-tenders/":
+    pending: "Send a load tender to a trading partner over EDI."
+  "POST /api/v1/edi/messages/:messageID/replay/":
+    pending: "Send an EDI message again to its partner."
+  "POST /api/v1/edi/messages/:messageID/retry-delivery/":
+    pending: "Retry delivery of an EDI message that failed to send."
+  "POST /api/v1/edi/messages/bulk-retry-delivery/":
+    pending: "Retry delivery of several EDI messages that failed to send."
+  "POST /api/v1/edi/partners/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/partners/internal-pairs/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/templates/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/templates/:templateID/draft/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/templates/:templateID/versions/:versionID/activate/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/templates/:templateID/versions/:versionID/archive/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/templates/:templateID/versions/:versionID/certify/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/templates/:templateID/versions/:versionID/rollback/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/templates/:templateID/versions/:versionID/validate/":
+    exempt: read-only
+    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
+  "POST /api/v1/edi/tender-changes/:changeID/apply/":
+    pending: "Apply a change a trading partner sent to a tendered load."
+  "POST /api/v1/edi/tender-changes/:changeID/reject/":
+    pending: "Reject a change a trading partner sent to a tendered load."
+  "POST /api/v1/edi/test-cases/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "POST /api/v1/edi/test-cases/:testCaseID/preview/":
+    exempt: read-only
+    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
+  "POST /api/v1/edi/transfer-changes/:changeID/apply/":
+    pending: "Apply a change to an inbound EDI transfer."
+  "POST /api/v1/edi/transfer-changes/:changeID/reject/":
+    pending: "Reject a change to an inbound EDI transfer."
+  "POST /api/v1/edi/transfers/:transferID/approve/":
+    pending: "Accept an inbound EDI load tender and create the shipment."
+  "POST /api/v1/edi/transfers/:transferID/cancel/":
+    pending: "Cancel an inbound EDI transfer."
+  "POST /api/v1/edi/transfers/:transferID/expire/":
+    pending: "Expire an inbound EDI transfer that was not answered in time."
+  "POST /api/v1/edi/transfers/:transferID/reject/":
+    pending: "Decline an inbound EDI load tender."
+  "POST /api/v1/edi/transfers/bulk-approve/":
+    pending: "Accept several inbound EDI load tenders at once."
+  "POST /api/v1/edi/transfers/bulk-reject/":
+    pending: "Decline several inbound EDI load tenders at once."
+  "POST /api/v1/edi/x12/inspect/":
+    exempt: read-only
+    reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
+  "PUT /api/v1/edi/communication-profiles/:profileID/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "PUT /api/v1/edi/document-profiles/:profileID/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "PUT /api/v1/edi/mapping-profiles/:profileID/items/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "PUT /api/v1/edi/partners/:partnerID/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "PUT /api/v1/edi/partners/:partnerID/mapping-profile/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "PUT /api/v1/edi/templates/:templateID/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "PUT /api/v1/edi/templates/:templateID/versions/:versionID/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "PUT /api/v1/edi/templates/:templateID/versions/:versionID/script-libraries/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "PUT /api/v1/edi/templates/:templateID/versions/:versionID/segments/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+  "PUT /api/v1/edi/test-cases/:testCaseID/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
+
+  # email
+  "DELETE /api/v1/email-profiles/:profileID/":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+  "DELETE /api/v1/email-suppressions/:suppressionID/":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+  "POST /api/v1/email-profiles/":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+  "POST /api/v1/email-profiles/:profileID/test-send/":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+  "POST /api/v1/email-suppressions/":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+  "POST /api/v1/webhooks/email/postmark/:webhookToken/":
+    exempt: infrastructure
+    reason: "An inbound webhook a provider calls with a signed token, not a person."
+  "POST /api/v1/webhooks/email/resend/:webhookToken/":
+    exempt: infrastructure
+    reason: "An inbound webhook a provider calls with a signed token, not a person."
+  "PUT /api/v1/email-profiles/:profileID/":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+  "PUT /api/v1/email-profiles/assignments/":
+    exempt: configuration
+    reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
+
+  # equipmentmanufacturer
+  "mutation bulkUpdateEquipmentManufacturerStatus":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "mutation createEquipmentManufacturer":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "mutation patchEquipmentManufacturer":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "mutation updateEquipmentManufacturer":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+
+  # equipmenttype
+  "mutation bulkUpdateEquipmentTypeStatus":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "mutation createEquipmentType":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "mutation patchEquipmentType":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "mutation updateEquipmentType":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+
+  # exchangerate
+  "POST /api/v1/exchange-rates/refresh":
+    exempt: infrastructure
+    reason: "Fetches exchange rates from the provider now; the scheduler refreshes them on its own."
+  "POST /api/v1/exchange-rates/settlement-quotes":
+    pending: "Lock an exchange rate quote for settling a foreign-currency payment."
+
+  # fiscalperiod
+  "DELETE /api/v1/fiscal-periods/:fiscalPeriodID/":
+    pending: "Delete a fiscal period."
+  "PATCH /api/v1/fiscal-periods/:fiscalPeriodID/":
+    pending: "Update some fields of a fiscal period."
+  "POST /api/v1/fiscal-periods/":
+    pending: "Create a fiscal period."
+  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/":
+    pending: "Update a fiscal period."
+  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/":
+    pending: "Activate a fiscal period."
+  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/":
+    pending: "Close a fiscal period."
+  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/":
+    pending: "Lock a fiscal period."
+  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/":
+    pending: "Reopen a fiscal period."
+  "PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/":
+    pending: "Unlock a fiscal period."
+
+  # fiscalyear
+  "DELETE /api/v1/fiscal-years/:fiscalYearID/":
+    pending: "Delete a fiscal year."
+  "PATCH /api/v1/fiscal-years/:fiscalYearID/":
+    pending: "Update some fields of a fiscal year."
+  "POST /api/v1/fiscal-years/":
+    pending: "Create a fiscal year."
+  "PUT /api/v1/fiscal-years/:fiscalYearID/":
+    pending: "Update a fiscal year."
+  "PUT /api/v1/fiscal-years/:fiscalYearID/activate/":
+    pending: "Activate a fiscal year."
+  "PUT /api/v1/fiscal-years/:fiscalYearID/close/":
+    pending: "Close a fiscal year."
+  "PUT /api/v1/fiscal-years/:fiscalYearID/reopen/":
+    pending: "Reopen a fiscal year."
+
+  # fleetcode
+  "PATCH /api/v1/fleet-codes/:fleetCodeID":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/fleet-codes/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "PUT /api/v1/fleet-codes/:fleetCodeID":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+
+  # fleetsafety
+  "mutation deleteSafetyViolation":
+    pending: "Delete safety violation."
+  "mutation recordSafetyViolation":
+    pending: "Record safety violation."
+  "mutation updateSafetyViolation":
+    pending: "Update safety violation."
+
+  # formulatemplate
+  "DELETE /api/v1/formula-templates/:templateID/test-cases/:testCaseID":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "PATCH /api/v1/formula-templates/:templateID/":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "PATCH /api/v1/formula-templates/:templateID/versions/:versionNumber/effective-date":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "PATCH /api/v1/formula-templates/:templateID/versions/:versionNumber/tags":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/approve":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/backtest":
+    exempt: read-only
+    reason: "Evaluates a pricing formula against samples or past shipments and saves nothing."
+  "POST /api/v1/formula-templates/:templateID/fork":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/impact":
+    exempt: read-only
+    reason: "Evaluates a pricing formula against samples or past shipments and saves nothing."
+  "POST /api/v1/formula-templates/:templateID/reject":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/request-changes":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/rollback":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/submit":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/test-cases":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/:templateID/test-cases/run":
+    exempt: read-only
+    reason: "Evaluates a pricing formula against samples or past shipments and saves nothing."
+  "POST /api/v1/formula-templates/:templateID/versions":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/ai/thread/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/formula-templates/bulk-update-status":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/duplicate":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/import":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/install-standards":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/test":
+    exempt: read-only
+    reason: "Evaluates a pricing formula against samples or past shipments and saves nothing."
+  "PUT /api/v1/formula-templates/:templateID/":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "PUT /api/v1/formula-templates/:templateID/test-cases/:testCaseID":
+    exempt: configuration
+    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+
+  # fuelpurchase
+  "mutation assignFuelCard":
+    pending: "Assign fuel card."
+  "mutation cancelFuelCard":
+    pending: "Cancel fuel card."
+  "mutation commitFuelPurchaseImport":
+    pending: "Commit fuel purchase import."
+  "mutation createFuelCard":
+    pending: "Create fuel card."
+  "mutation createFuelPurchase":
+    pending: "Create fuel purchase."
+  "mutation createFuelPurchaseImport":
+    pending: "Create fuel purchase import."
+  "mutation deleteFuelPurchase":
+    pending: "Delete fuel purchase."
+  "mutation discardFuelPurchaseImport":
+    pending: "Discard fuel purchase import."
+  "mutation resolveFuelPurchaseImportRows":
+    pending: "Resolve fuel purchase import rows."
+  "mutation stageFuelPurchaseImport":
+    pending: "Stage fuel purchase import."
+  "mutation syncFuelCardFeed":
+    pending: "Sync fuel card feed."
+  "mutation updateFuelCard":
+    pending: "Update fuel card."
+  "mutation updateFuelPurchase":
+    pending: "Update fuel purchase."
+
+  # fuelsurcharge
+  "mutation addFuelIndexPrice":
+    pending: "Add fuel index price."
+  "mutation createFuelIndex":
+    exempt: configuration
+    reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
+  "mutation createFuelSurchargeProgram":
+    exempt: configuration
+    reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
+  "mutation deleteFuelIndex":
+    exempt: configuration
+    reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
+  "mutation deleteFuelIndexPrice":
+    pending: "Delete fuel index price."
+  "mutation deleteFuelSurchargeProgram":
+    exempt: configuration
+    reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
+  "mutation updateFuelIndex":
+    exempt: configuration
+    reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
+  "mutation updateFuelIndexPrice":
+    pending: "Update fuel index price."
+  "mutation updateFuelSurchargeProgram":
+    exempt: configuration
+    reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
+
+  # glaccount
+  "DELETE /api/v1/gl-accounts/:glAccountID/":
+    pending: "Delete a gl account."
+  "PATCH /api/v1/gl-accounts/:glAccountID/":
+    pending: "Update some fields of a gl account."
+  "POST /api/v1/gl-accounts/":
+    pending: "Create a gl account."
+  "POST /api/v1/gl-accounts/bulk-update-status/":
+    pending: "Change the status of several gl accounts at once."
+  "PUT /api/v1/gl-accounts/:glAccountID/":
+    pending: "Update a gl account."
+
+  # googlemaps
+  "POST /api/v1/google-maps/autocomplete/":
+    exempt: read-only
+    reason: "Returns address suggestions from the maps provider."
+
+  # graphql
+  "POST /graphql":
+    exempt: infrastructure
+    reason: "The GraphQL transport; every mutation it carries is listed as its own write."
+
+  # hazardousmaterial
+  "PATCH /api/v1/hazardous-materials/:hazardousMaterialID/":
+    pending: "Update some fields of a hazardous material."
+  "POST /api/v1/hazardous-materials/":
+    pending: "Create a hazardous material."
+  "POST /api/v1/hazardous-materials/bulk-update-status/":
+    pending: "Change the status of several hazardous materials at once."
+  "PUT /api/v1/hazardous-materials/:hazardousMaterialID/":
+    pending: "Update a hazardous material."
+
+  # hazmatsegregationrule
+  "PATCH /api/v1/hazmat-segregation-rules/:hazmatSegregationRuleID/":
+    exempt: configuration
+    reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
+  "POST /api/v1/hazmat-segregation-rules/":
+    exempt: configuration
+    reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
+  "PUT /api/v1/hazmat-segregation-rules/:hazmatSegregationRuleID/":
+    exempt: configuration
+    reason: "Hazmat segregation rules encode the regulation every load is checked against; an administrator maintains them."
+
+  # holdreason
+  "PATCH /api/v1/hold-reasons/:holdReasonID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/hold-reasons/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "PUT /api/v1/hold-reasons/:holdReasonID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+
+  # homelayout
+  "mutation createHomeLayoutPreset":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation deleteHomeLayoutPreset":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation resetHomeLayout":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation updateHomeLayout":
+    tools: [add_home_widget, remove_home_widget, arrange_home_layout]
+  "mutation updateHomeLayoutPreset":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # iam
+  "DELETE /api/v1/organizations/:id/iam/access-policies/:policyId":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "DELETE /api/v1/organizations/:id/iam/identity-providers/:providerId":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "DELETE /api/v1/organizations/:id/iam/scim/directories/:directoryId":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "DELETE /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings/:mappingId":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "POST /api/v1/organizations/:id/iam/access-policies":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "POST /api/v1/organizations/:id/iam/identity-providers":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "POST /api/v1/organizations/:id/iam/scim/directories":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "POST /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "POST /api/v1/organizations/:id/iam/scim/directories/:directoryId/tokens":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "POST /api/v1/organizations/:id/iam/scim/tokens/:tokenId/revoke":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "PUT /api/v1/organizations/:id/iam/access-policies/:policyId":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "PUT /api/v1/organizations/:id/iam/identity-providers/:providerId":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+  "PUT /api/v1/organizations/:id/iam/scim/directories/:directoryId/group-role-mappings/:mappingId":
+    exempt: security
+    reason: "Identity providers, SCIM directories and access policies decide who can sign in and with what access."
+
+  # ifta
+  "mutation amendIftaReturn":
+    pending: "Amend IFTA return."
+  "mutation backfillJurisdictionMiles":
+    pending: "Backfill jurisdiction miles."
+  "mutation createIftaMileageEntry":
+    pending: "Create IFTA mileage entry."
+  "mutation deleteIftaMileageEntry":
+    pending: "Delete IFTA mileage entry."
+  "mutation deleteIftaReturn":
+    pending: "Delete IFTA return."
+  "mutation deleteIftaTaxRate":
+    pending: "Delete IFTA tax rate."
+  "mutation finalizeIftaReturn":
+    exempt: attestation
+    reason: "A fuel tax return is signed off by the person accountable for filing it."
+  "mutation generateIftaReturn":
+    pending: "Generate IFTA return."
+  "mutation markIftaReturnFiled":
+    exempt: attestation
+    reason: "Records that a person filed the return with the jurisdiction."
+  "mutation recalculateMoveJurisdictionMiles":
+    pending: "Recalculate move jurisdiction miles."
+  "mutation recomputeIftaReturn":
+    pending: "Recompute IFTA return."
+  "mutation reopenIftaReturn":
+    pending: "Reopen IFTA return."
+  "mutation updateIftaMileageEntry":
+    pending: "Update IFTA mileage entry."
+  "mutation upsertIftaTaxRates":
+    pending: "Upsert IFTA tax rates."
+
+  # inbound
+  "POST /api/v1/webhooks/inbound-mail/:mailboxToken/":
+    exempt: infrastructure
+    reason: "An inbound webhook a provider calls with a signed token, not a person."
+
+  # inboundmessage
+  "mutation createInboundMailbox":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation linkInboundMessage":
+    tools: [link_inbound_message]
+  "mutation reviewInboundMessage":
+    tools: [mark_inbound_message]
+  "mutation rotateInboundMailboxToken":
+    exempt: security
+    reason: "Replaces the secret that authenticates mail forwarded into the mailbox."
+  "mutation setInboundMailboxSigningSecret":
+    exempt: security
+    reason: "Sets the secret that authenticates mail forwarded into the mailbox."
+  "mutation updateInboundMailbox":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+
+  # insight
+  "POST /api/v1/insights/:insightID/dismiss/":
+    tools: [dismiss_insight]
+  "POST /api/v1/insights/:insightID/restore/":
+    pending: "Restore an insight that was dismissed."
+
+  # integration
+  "POST /api/v1/integrations/:type/test-connection/":
+    exempt: configuration
+    reason: "Tests an integration's credentials and records the connection status on its configuration."
+  "POST /api/v1/integrations/samsara/workers/sync/":
+    pending: "Sync workers from the telematics provider now."
+  "POST /api/v1/integrations/samsara/workers/sync/drift/detect/":
+    exempt: read-only
+    reason: "Compares workers with the telematics provider and reports the drift."
+  "POST /api/v1/integrations/samsara/workers/sync/drift/repair/":
+    pending: "Repair the drift found between workers and the telematics provider."
+  "PUT /api/v1/integrations/:type/config/":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+
+  # invoice
+  "PATCH /api/v1/billing/invoices/:invoiceID/":
+    pending: "Update draft (invoice)."
+  "POST /api/v1/billing/invoices/:invoiceID/generate-pdf/":
+    pending: "Generate pdf (invoice)."
+  "POST /api/v1/billing/invoices/:invoiceID/post/":
+    tools: [post_invoice]
+  "POST /api/v1/billing/invoices/:invoiceID/preview/":
+    exempt: read-only
+    reason: "Renders an invoice for review and saves nothing."
+  "POST /api/v1/billing/invoices/:invoiceID/send/":
+    tools: [send_invoice]
+  "mutation createInvoiceFromOrder":
+    pending: "Create invoice from order."
+  "mutation createInvoiceFromShipments":
+    pending: "Create invoice from shipments."
+  "mutation createInvoicesFromOrder":
+    pending: "Create invoices from order."
+  "mutation createInvoicesFromShipments":
+    pending: "Create invoices from shipments."
+  "mutation createMemo":
+    pending: "Create memo."
+  "mutation sendInvoiceEdi":
+    pending: "Send invoice EDI."
+  "mutation voidInvoice":
+    pending: "Void invoice."
+
+  # invoiceadjustment
+  "PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/":
+    pending: "Update draft (invoice adjustment)."
+  "POST /api/v1/billing/invoice-adjustments/bulk-preview/":
+    exempt: read-only
+    reason: "Previews an invoice adjustment and saves nothing."
+  "POST /api/v1/billing/invoice-adjustments/bulk-submit/":
+    pending: "Bulk submit (invoice adjustment)."
+  "POST /api/v1/billing/invoice-adjustments/drafts/":
+    pending: "Create draft (invoice adjustment)."
+  "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/":
+    exempt: read-only
+    reason: "Previews an invoice adjustment and saves nothing."
+  "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/":
+    pending: "Submit draft (invoice adjustment)."
+  "POST /api/v1/billing/invoice-adjustments/preview/":
+    exempt: read-only
+    reason: "Previews an invoice adjustment and saves nothing."
+  "POST /api/v1/billing/invoice-adjustments/submit/":
+    pending: "Submit an invoice adjustment."
+  "mutation approveInvoiceAdjustment":
+    pending: "Approve invoice adjustment."
+  "mutation rejectInvoiceAdjustment":
+    pending: "Reject invoice adjustment."
+
+  # invoiceadjustmentcontrol
+  "PUT /api/v1/invoice-adjustment-controls/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # invoicedispute
+  "mutation openInvoiceDispute":
+    pending: "Open invoice dispute."
+  "mutation resolveInvoiceDispute":
+    pending: "Resolve invoice dispute."
+  "mutation withdrawInvoiceDispute":
+    pending: "Withdraw invoice dispute."
+
+  # invoicerun
+  "PATCH /api/v1/billing/invoice-runs/:runID/membership/":
+    pending: "Adjust membership (invoice run)."
+  "POST /api/v1/billing/invoice-runs/:runID/cancel/":
+    pending: "Cancel an invoice run."
+  "POST /api/v1/billing/invoice-runs/:runID/commit/":
+    pending: "Commit an invoice run."
+  "POST /api/v1/billing/invoice-runs/preview/":
+    pending: "Create an invoice run in preview for review before committing it."
+  "POST /api/v1/billing/statements/:customerID/bill/":
+    pending: "Bill statement (statement)."
+
+  # invoiceshare
+  "POST /api/v1/billing/invoices/:invoiceID/shares/":
+    pending: "Share an invoice."
+
+  # journalreversal
+  "POST /api/v1/accounting/journal-reversals/":
+    pending: "Create a journal reversal."
+  "POST /api/v1/accounting/journal-reversals/:reversalID/approve/":
+    pending: "Approve a journal reversal."
+  "POST /api/v1/accounting/journal-reversals/:reversalID/cancel/":
+    pending: "Cancel a journal reversal."
+  "POST /api/v1/accounting/journal-reversals/:reversalID/post/":
+    pending: "Post a journal reversal."
+  "POST /api/v1/accounting/journal-reversals/:reversalID/reject/":
+    pending: "Reject a journal reversal."
+
+  # jurisdictionrule
+  "DELETE /api/v1/jurisdiction-rule-overrides/:overrideID/":
+    exempt: configuration
+    reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
+  "POST /api/v1/jurisdiction-rule-overrides/":
+    exempt: configuration
+    reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
+  "POST /api/v1/jurisdiction-rules/":
+    exempt: configuration
+    reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
+  "POST /api/v1/jurisdiction-rules/:ruleID/verify/":
+    exempt: configuration
+    reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
+  "PUT /api/v1/jurisdiction-rule-overrides/:overrideID/":
+    exempt: configuration
+    reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
+  "PUT /api/v1/jurisdiction-rules/:ruleID/":
+    exempt: configuration
+    reason: "Jurisdiction rules encode permit and tax regulation per state; an administrator maintains and verifies them."
+
+  # latecharge
+  "mutation assessLateCharges":
+    pending: "Assess late charges."
+
+  # location
+  "PATCH /api/v1/locations/:locationID/":
+    pending: "Update some fields of a location."
+  "POST /api/v1/locations/":
+    tools: [create_location]
+  "POST /api/v1/locations/bulk-update-status/":
+    pending: "Change the status of several locations at once."
+  "PUT /api/v1/locations/:locationID/":
+    pending: "Update a location."
+
+  # locationcategory
+  "PATCH /api/v1/location-categories/:locationCategoryID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/location-categories/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "PUT /api/v1/location-categories/:locationCategoryID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+
+  # manualjournal
+  "POST /api/v1/accounting/manual-journals/:requestID/approve/":
+    pending: "Approve a manual journal."
+  "POST /api/v1/accounting/manual-journals/:requestID/cancel/":
+    pending: "Cancel a manual journal."
+  "POST /api/v1/accounting/manual-journals/:requestID/post/":
+    pending: "Post a manual journal."
+  "POST /api/v1/accounting/manual-journals/:requestID/reject/":
+    pending: "Reject a manual journal."
+  "POST /api/v1/accounting/manual-journals/:requestID/submit/":
+    pending: "Submit a manual journal."
+  "POST /api/v1/accounting/manual-journals/drafts/":
+    pending: "Create draft (manual journal)."
+  "PUT /api/v1/accounting/manual-journals/drafts/:requestID/":
+    pending: "Update draft (manual journal)."
+
+  # notification
+  "mutation dismissNotifications":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation markAllNotificationsRead":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation markNotificationsRead":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation markNotificationsUnread":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation restoreNotifications":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # order
+  "mutation addOrderCharge":
+    pending: "Add order charge."
+  "mutation attachOrderShipments":
+    pending: "Attach order shipments."
+  "mutation cancelOrder":
+    pending: "Cancel order."
+  "mutation closeOrder":
+    pending: "Close order."
+  "mutation createOrder":
+    pending: "Create order."
+  "mutation detachOrderShipment":
+    pending: "Detach order shipment."
+  "mutation removeOrderCharge":
+    pending: "Remove order charge."
+  "mutation setOrderChargeAllocations":
+    pending: "Set order charge allocations."
+  "mutation updateOrder":
+    pending: "Update order."
+  "mutation updateOrderCharge":
+    pending: "Update order charge."
+
+  # organization
+  "DELETE /api/v1/organizations/:id/logo":
+    exempt: configuration
+    reason: "The organization's logo on every document it sends."
+  "POST /api/v1/organizations/:id/logo":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+  "PUT /api/v1/organizations/:id/microsoft-sso":
+    exempt: security
+    reason: "Single sign-on decides who can sign in to the organization."
+  "PUT /api/v1/organizations/:id/okta-sso":
+    exempt: security
+    reason: "Single sign-on decides who can sign in to the organization."
+
+  # orgholiday
+  "mutation createOrgHoliday":
+    exempt: configuration
+    reason: "The holiday calendar drives scheduling and pay rules for the whole organization."
+  "mutation deleteOrgHoliday":
+    exempt: configuration
+    reason: "The holiday calendar drives scheduling and pay rules for the whole organization."
+  "mutation updateOrgHoliday":
+    exempt: configuration
+    reason: "The holiday calendar drives scheduling and pay rules for the whole organization."
+
+  # orgstructure
+  "mutation assignUserPosition":
+    pending: "Assign user position."
+  "mutation assignWorkerPosition":
+    pending: "Assign worker position."
+  "mutation createJobPosition":
+    exempt: configuration
+    reason: "The organization chart that approvals and scoping follow."
+  "mutation delegateApproval":
+    exempt: security
+    reason: "Hands a person's approval authority to someone else."
+  "mutation revokeApprovalDelegation":
+    exempt: security
+    reason: "Withdraws approval authority handed to someone else."
+  "mutation updateJobPosition":
+    exempt: configuration
+    reason: "The organization chart that approvals and scoping follow."
+
+  # pagefavorite
+  "POST /api/v1/page-favorites/toggle":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # performancereview
+  "mutation acknowledgeMyReview":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation archivePerformanceReviewTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation closePerformanceReview":
+    pending: "Close performance review."
+  "mutation createPerformanceReview":
+    pending: "Create performance review."
+  "mutation createPerformanceReviewTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation deletePerformanceReview":
+    pending: "Delete performance review."
+  "mutation reopenPerformanceReview":
+    pending: "Reopen performance review."
+  "mutation restorePerformanceReviewTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation submitPerformanceReview":
+    pending: "Submit performance review."
+  "mutation updatePerformanceReview":
+    pending: "Update performance review."
+  "mutation updatePerformanceReviewTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # permission
+  "POST /api/v1/me/permissions/check":
+    exempt: read-only
+    reason: "Checks which permissions the caller holds."
+
+  # permit
+  "POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/":
+    pending: "Waive requirement (shipment)."
+  "POST /api/v1/shipments/:shipmentID/permits/":
+    pending: "Create permit (shipment)."
+  "PUT /api/v1/shipments/:shipmentID/permits/:permitID/":
+    pending: "Update permit (shipment)."
+
+  # ptopolicy
+  "mutation adjustWorkerPtoBalance":
+    pending: "Adjust worker PTO balance."
+  "mutation archivePtoPolicy":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation assignWorkerPtoPolicy":
+    pending: "Assign worker PTO policy."
+  "mutation createPtoPolicy":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation endWorkerPtoPolicyAssignment":
+    pending: "End worker PTO policy assignment."
+  "mutation restorePtoPolicy":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation runPtoAccrual":
+    pending: "Run PTO accrual."
+  "mutation updatePtoPolicy":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # push
+  "DELETE /api/v1/push/subscriptions/":
+    exempt: infrastructure
+    reason: "Registers or removes a browser push subscription for the device the person is using."
+  "POST /api/v1/push/subscriptions/":
+    exempt: infrastructure
+    reason: "Registers or removes a browser push subscription for the device the person is using."
+
+  # rateagreement
+  "POST /api/v1/rate-agreements/":
+    pending: "Create a rate agreement."
+  "POST /api/v1/rate-agreements/:rateAgreementID/approve/":
+    pending: "Approve a rate agreement."
+  "POST /api/v1/rate-agreements/:rateAgreementID/archive/":
+    pending: "Archive a rate agreement."
+  "POST /api/v1/rate-agreements/:rateAgreementID/duplicate/":
+    pending: "Duplicate a rate agreement."
+  "POST /api/v1/rate-agreements/:rateAgreementID/reject/":
+    pending: "Reject a rate agreement."
+  "POST /api/v1/rate-agreements/:rateAgreementID/resume/":
+    pending: "Resume a rate agreement."
+  "POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/":
+    pending: "Amend the rating rules of an active rate agreement."
+  "POST /api/v1/rate-agreements/:rateAgreementID/submit/":
+    pending: "Submit a rate agreement."
+  "POST /api/v1/rate-agreements/:rateAgreementID/suspend/":
+    pending: "Suspend a rate agreement."
+  "POST /api/v1/rate-agreements/rate-increase/apply/":
+    pending: "Apply rate increase (rate agreement)."
+  "POST /api/v1/rate-agreements/rate-increase/preview/":
+    exempt: read-only
+    reason: "Plans a general rate increase for review and saves nothing."
+  "PUT /api/v1/rate-agreements/:rateAgreementID/":
+    pending: "Update a rate agreement."
+
+  # rateconfirmation
+  "POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/":
+    tools: [record_rate_confirmation_confirmed]
+  "POST /api/v1/rate-confirmations/:rateConfirmationID/send/":
+    tools: [send_rate_confirmation]
+  "POST /api/v1/rate-confirmations/:rateConfirmationID/void/":
+    tools: [void_rate_confirmation]
+  "POST /api/v1/shipment-moves/:moveID/rate-confirmations/":
+    tools: [generate_rate_confirmation]
+
+  # rateconfirmationpublic
+  "POST /api/v1/rate-confirmation-links/:token/confirm/":
+    exempt: counterparty
+    reason: "The outside party answering through a public link; an agent acting for the organization must not answer for them."
+
+  # rateimport
+  "POST /api/v1/rate-imports/":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
+  "POST /api/v1/rate-imports/:rateImportID/commit/":
+    pending: "Commit a rate import."
+  "POST /api/v1/rate-imports/:rateImportID/discard/":
+    pending: "Discard a rate import."
+
+  # ratematrix
+  "DELETE /api/v1/rate-matrices/:rateMatrixID/":
+    pending: "Delete a rate matrice."
+  "POST /api/v1/rate-matrices/":
+    pending: "Create a rate matrice."
+  "PUT /api/v1/rate-matrices/:rateMatrixID/":
+    pending: "Update a rate matrice."
+  "PUT /api/v1/rate-matrices/:rateMatrixID/cells/":
+    pending: "Replace cells (rate matrice)."
+
+  # ratequote
+  "POST /api/v1/rate-quotes/quote/":
+    exempt: read-only
+    reason: "Quotes a rate from the rating engine and saves nothing."
+  "POST /api/v1/rate-quotes/shipment/:shipmentID/explain/":
+    exempt: read-only
+    reason: "Explains how a shipment was rated and saves nothing."
+  "POST /api/v1/rate-quotes/shipment/:shipmentID/shop/":
+    exempt: read-only
+    reason: "Compares the rates every agreement would give a shipment and saves nothing."
+
+  # ratesimulation
+  "POST /api/v1/rate-simulations/":
+    pending: "Run and save a rate simulation across past shipments."
+
+  # ratezone
+  "DELETE /api/v1/rate-zones/:rateZoneID/":
+    pending: "Delete a rate zone."
+  "POST /api/v1/rate-zones/":
+    pending: "Create a rate zone."
+  "PUT /api/v1/rate-zones/:rateZoneID/":
+    pending: "Update a rate zone."
+
+  # realtime
+  "DELETE /api/v1/shipments/:shipmentID/comments/presence/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "POST /api/v1/shipments/:shipmentID/comments/presence/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "POST /api/v1/shipments/:shipmentID/comments/typing/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+
+  # recurringshipment
+  "POST /api/v1/recurring-shipments/":
+    pending: "Create a recurring shipment."
+  "POST /api/v1/recurring-shipments/:recurringShipmentID/generate/":
+    pending: "Generate a recurring shipment."
+  "POST /api/v1/recurring-shipments/match/":
+    exempt: read-only
+    reason: "Finds the recurring shipment a new shipment matches and saves nothing."
+  "PUT /api/v1/recurring-shipments/:recurringShipmentID/":
+    pending: "Update a recurring shipment."
+  "PUT /api/v1/recurring-shipments/:recurringShipmentID/status/":
+    pending: "Update status (recurring shipment)."
+
+  # report
+  "POST /api/v1/reports/dashboards/:dashboardID/export/":
+    exempt: read-only
+    reason: "Renders a dashboard to a file for download."
+  "mutation cancelReportRun":
+    pending: "Cancel report run."
+  "mutation createReportDashboard":
+    tools: [create_dashboard]
+  "mutation createReportDefinition":
+    tools: [create_report]
+  "mutation createReportSchedule":
+    tools: [schedule_report]
+  "mutation createReportView":
+    pending: "Create report view."
+  "mutation deleteReportDashboard":
+    pending: "Delete report dashboard."
+  "mutation deleteReportDefinition":
+    pending: "Delete report definition."
+  "mutation deleteReportSchedule":
+    pending: "Delete report schedule."
+  "mutation deleteReportView":
+    pending: "Delete report view."
+  "mutation forkCannedReport":
+    tools: [fork_report]
+  "mutation resetCannedFork":
+    pending: "Reset canned fork."
+  "mutation runReport":
+    tools: [run_report]
+  "mutation updateReportDashboard":
+    tools: [add_dashboard_tile]
+  "mutation updateReportDefinition":
+    tools: [update_report]
+  "mutation updateReportSchedule":
+    pending: "Update report schedule."
+  "mutation updateReportView":
+    pending: "Update report view."
+
+  # role
+  "DELETE /api/v1/roles/:roleID/permissions/:permID":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "DELETE /api/v1/roles/assignments/:assignmentID":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "DELETE /api/v1/roles/constraints/:constraintID":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "DELETE /api/v1/roles/hierarchy/:edgeID":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "POST /api/v1/roles/":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "POST /api/v1/roles/:roleID/assignments":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "POST /api/v1/roles/:roleID/permissions":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "POST /api/v1/roles/constraints":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "POST /api/v1/roles/hierarchy":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "PUT /api/v1/roles/:roleID":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+  "PUT /api/v1/roles/:roleID/permissions/:permID":
+    exempt: security
+    reason: "Grants or removes access. An agent that could change access could widen its own."
+
+  # routingguide
+  "DELETE /api/v1/routing-guides/:guideID/":
+    pending: "Delete a routing guide."
+  "POST /api/v1/routing-guides/":
+    pending: "Create a routing guide."
+  "PUT /api/v1/routing-guides/:guideID/":
+    pending: "Update a routing guide."
+
+  # scheduling
+  "mutation assignWorkerShift":
+    pending: "Assign worker shift."
+  "mutation createShiftTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation endWorkerShiftAssignment":
+    pending: "End worker shift assignment."
+  "mutation proposeShiftSwap":
+    pending: "Propose shift swap."
+  "mutation setWorkerAvailabilityPreference":
+    pending: "Set worker availability preference."
+  "mutation transitionShiftSwap":
+    pending: "Transition shift swap."
+  "mutation updateShiftTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # selfservice
+  "mutation createWorkerPolicy":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation decideProfileChange":
+    pending: "Decide profile change."
+  "mutation updateWorkerPolicy":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # sequenceconfig
+  "PUT /api/v1/sequence-configs/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # servicefailure
+  "PATCH /api/v1/service-failures/:serviceFailureID/":
+    pending: "Update a service failure."
+  "POST /api/v1/service-failures/":
+    pending: "Create manual (service failure)."
+  "POST /api/v1/service-failures/:serviceFailureID/edi-214-payload/":
+    exempt: read-only
+    reason: "Builds the EDI 214 a service failure would send and returns it."
+  "POST /api/v1/service-failures/:serviceFailureID/resolve/":
+    tools: [resolve_service_failure]
+  "POST /api/v1/service-failures/:serviceFailureID/review/":
+    pending: "Review a service failure."
+  "POST /api/v1/service-failures/:serviceFailureID/void/":
+    pending: "Void a service failure."
+  "POST /api/v1/service-failures/bulk-evaluate/":
+    pending: "Evaluate several shipments for service failures at once."
+  "POST /api/v1/service-failures/evaluate-shipment/:shipmentID/":
+    tools: [evaluate_service_failures]
+  "POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/":
+    pending: "Evaluate one stop for a service failure."
+
+  # servicefailurereasoncode
+  "PATCH /api/v1/service-failure-reason-codes/:reasonCodeID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/service-failure-reason-codes/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/service-failure-reason-codes/:reasonCodeID/activate/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/service-failure-reason-codes/:reasonCodeID/archive/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/service-failure-reason-codes/reorder/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "PUT /api/v1/service-failure-reason-codes/:reasonCodeID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+
+  # servicetype
+  "PATCH /api/v1/service-types/:serviceTypeID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/service-types/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/service-types/bulk-update-status/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "PUT /api/v1/service-types/:serviceTypeID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+
+  # shipment
+  "POST /api/v1/shipments/:shipmentID/holds/":
+    tools: [place_shipment_hold]
+  "POST /api/v1/shipments/:shipmentID/holds/:holdID/release/":
+    tools: [release_shipment_hold]
+  "POST /api/v1/shipments/auto-cancel/":
+    pending: "Cancel shipments that passed the auto-cancel threshold."
+  "POST /api/v1/shipments/check-for-duplicate-bols/":
+    exempt: read-only
+    reason: "Computes a figure or a check for the shipment form and saves nothing."
+  "POST /api/v1/shipments/check-hazmat-segregation/":
+    exempt: read-only
+    reason: "Computes a figure or a check for the shipment form and saves nothing."
+  "POST /api/v1/shipments/delay/":
+    pending: "Mark shipments as delayed."
+  "POST /api/v1/shipments/previous-rates/":
+    exempt: read-only
+    reason: "Computes a figure or a check for the shipment form and saves nothing."
+  "PUT /api/v1/shipments/:shipmentID/holds/:holdID/":
+    pending: "Update hold (shipment)."
+  "mutation acknowledgeShipmentComment":
+    pending: "Acknowledge shipment comment."
+  "mutation autoRateShipment":
+    pending: "Auto rate shipment."
+  "mutation bulkTransferShipmentsToBilling":
+    tools: [transfer_to_billing]
+  "mutation calculateShipmentDistance":
+    exempt: read-only
+    reason: "Computes a figure or a check for the shipment form and saves nothing."
+  "mutation calculateShipmentLoadingOptimization":
+    exempt: read-only
+    reason: "Computes a figure or a check for the shipment form and saves nothing."
+  "mutation calculateShipmentTotals":
+    exempt: read-only
+    reason: "Computes a figure or a check for the shipment form and saves nothing."
+  "mutation cancelShipment":
+    tools: [cancel_shipment]
+  "mutation checkShipmentDuplicateBol":
+    exempt: read-only
+    reason: "Computes a figure or a check for the shipment form and saves nothing."
+  "mutation checkShipmentHazmatSegregation":
+    exempt: read-only
+    reason: "Computes a figure or a check for the shipment form and saves nothing."
+  "mutation createShipment":
+    tools: [create_shipment]
+  "mutation createShipmentComment":
+    tools: [add_shipment_comment]
+  "mutation deleteShipmentComment":
+    pending: "Delete shipment comment."
+  "mutation duplicateShipment":
+    pending: "Duplicate shipment."
+  "mutation pinShipmentComment":
+    pending: "Pin shipment comment."
+  "mutation previewShipmentContractRate":
+    exempt: read-only
+    reason: "Computes a figure or a check for the shipment form and saves nothing."
+  "mutation recalculateShipmentDistance":
+    pending: "Recalculate shipment distance."
+  "mutation resolveShipmentComment":
+    pending: "Resolve shipment comment."
+  "mutation transferShipmentOwnership":
+    pending: "Transfer shipment ownership."
+  "mutation transferShipmentToBilling":
+    tools: [transfer_to_billing]
+  "mutation transferShipmentToBillingItems":
+    pending: "Transfer chosen shipment charges to billing as separate items."
+  "mutation uncancelShipment":
+    pending: "Uncancel shipment."
+  "mutation unpinShipmentComment":
+    pending: "Unpin shipment comment."
+  "mutation unresolveShipmentComment":
+    pending: "Unresolve shipment comment."
+  "mutation updateShipment":
+    tools: [update_shipment]
+  "mutation updateShipmentComment":
+    pending: "Update shipment comment."
+
+  # shipmentcontrol
+  "PUT /api/v1/shipment-controls/":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # shipmentmove
+  "POST /api/v1/shipment-moves/:moveID/split/":
+    pending: "Split a two-stop move at a relay point into two moves. Left without a tool: the split needs a relay location and two new scheduled windows the system holds nowhere, so a model would have to invent the times, and the service checks only their order."
+  "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/":
+    tools: [record_stop_actual]
+  "POST /api/v1/shipment-moves/:moveID/update-status/":
+    tools: [update_move_status]
+  "POST /api/v1/shipment-moves/bulk-update-status/":
+    tools: [update_move_status]
+
+  # shipmenttype
+  "PATCH /api/v1/shipment-types/:shipmentTypeID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/shipment-types/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "POST /api/v1/shipment-types/bulk-update-status/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+  "PUT /api/v1/shipment-types/:shipmentTypeID/":
+    exempt: configuration
+    reason: "A lookup list every record points at, maintained by an administrator."
+
+  # sidebarpreference
+  "mutation updateSidebarPreferences":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # storedmileage
+  "DELETE /api/v1/stored-mileages/:storedMileageID/":
+    pending: "Delete a stored mileage."
+
+  # tablechangealert
+  "DELETE /api/v1/tca/subscriptions/:id":
+    pending: "Delete subscription (table change alert)."
+  "PATCH /api/v1/tca/subscriptions/:id/pause":
+    pending: "Pause subscription (table change alert)."
+  "PATCH /api/v1/tca/subscriptions/:id/resume":
+    pending: "Resume subscription (table change alert)."
+  "POST /api/v1/tca/subscriptions/":
+    tools: [create_table_change_alert]
+  "PUT /api/v1/tca/subscriptions/:id":
+    pending: "Update subscription (table change alert)."
+
+  # tableconfiguration
+  "mutation createTableConfiguration":
+    tools: [save_table_view]
+  "mutation deleteTableConfiguration":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation patchTableConfiguration":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation setDefaultTableConfiguration":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation setOrgDefaultTableConfiguration":
+    exempt: configuration
+    reason: "Sets the table view everyone in the organization starts from."
+  "mutation updateTableConfiguration":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # tablequery
+  "POST /api/v1/tables/:resource/compose/":
+    exempt: read-only
+    reason: "Composes a table view from a request and returns it; save_table_view saves one."
+
+  # telematics
+  "POST /api/v1/webhooks/samsara/:webhookToken/":
+    exempt: infrastructure
+    reason: "An inbound webhook a provider calls with a signed token, not a person."
+  "POST /api/v1/webhooks/telematics/:provider/:webhookToken/":
+    exempt: infrastructure
+    reason: "An inbound webhook a provider calls with a signed token, not a person."
+  "mutation deleteTelematicsFormMapping":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation saveTelematicsFormMapping":
+    exempt: configuration
+    reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+
+  # tenant
+  "mutation updateOrganization":
+    exempt: configuration
+    reason: "The organization's own profile and settings."
+
+  # tender
+  "POST /api/v1/tenders/:tenderID/cancel/":
+    tools: [cancel_tender]
+  "POST /api/v1/tenders/offers/:offerID/respond/":
+    tools: [record_tender_response]
+  "POST /api/v1/tenders/spot/":
+    tools: [tender_move_to_carriers]
+  "POST /api/v1/tenders/waterfall/":
+    tools: [tender_move_to_routing_guide]
+
+  # tenderpublic
+  "POST /api/v1/tender-offers/:token/accept/":
+    exempt: counterparty
+    reason: "The outside party answering through a public link; an agent acting for the organization must not answer for them."
+  "POST /api/v1/tender-offers/:token/decline/":
+    exempt: counterparty
+    reason: "The outside party answering through a public link; an agent acting for the organization must not answer for them."
+
+  # timesheet
+  "mutation clockIn":
+    exempt: counterparty
+    reason: "A worker clocking their own time; an agent must not record hours worked for a person."
+  "mutation clockOut":
+    exempt: counterparty
+    reason: "A worker clocking their own time; an agent must not record hours worked for a person."
+  "mutation deleteTimeEntry":
+    pending: "Delete time entry."
+  "mutation generatePayrollExport":
+    pending: "Generate payroll export."
+  "mutation recordTimeEntry":
+    pending: "Record time entry."
+  "mutation transitionTimesheet":
+    exempt: attestation
+    reason: "Submitting and approving hours for payroll is a sign-off by the worker and their manager."
+  "mutation voidPayrollExport":
+    pending: "Void payroll export."
+
+  # tractor
+  "mutation bulkUpdateTractorStatus":
+    tools: [update_tractor_status]
+  "mutation createTractor":
+    pending: "Create tractor."
+  "mutation locateTractor":
+    pending: "Locate tractor."
+  "mutation patchTractor":
+    pending: "Update some fields of a tractor."
+  "mutation updateTractor":
+    pending: "Update tractor."
+
+  # trailer
+  "mutation bulkUpdateTrailerStatus":
+    tools: [update_trailer_status]
+  "mutation createTrailer":
+    pending: "Create trailer."
+  "mutation locateTrailer":
+    pending: "Locate trailer."
+  "mutation patchTrailer":
+    pending: "Update some fields of a trailer."
+  "mutation updateTrailer":
+    pending: "Update trailer."
+
+  # user
+  "DELETE /api/v1/users/me/profile-picture/":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "PATCH /api/v1/users/:userID/":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "PATCH /api/v1/users/me/settings/":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "POST /api/v1/users/:userID/permissions/simulate/":
+    exempt: read-only
+    reason: "Shows what a user could do with a set of roles and saves nothing."
+  "POST /api/v1/users/:userID/reset-password/":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "POST /api/v1/users/bulk-update-status/":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "POST /api/v1/users/me/change-password/":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "POST /api/v1/users/me/profile-picture/":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "POST /api/v1/users/me/switch-organization/":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "PUT /api/v1/users/:userID/":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+  "PUT /api/v1/users/:userID/organization-memberships/":
+    exempt: security
+    reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
+
+  # version
+  "POST /api/v1/system/check-updates":
+    exempt: read-only
+    reason: "Asks the release server whether a newer version exists and changes nothing."
+
+  # watchtower
+  "mutation dismissWatchtowerItem":
+    pending: "Dismiss watchtower item."
+  "mutation handOffWatchtowerItem":
+    pending: "Hand off watchtower item."
+  "mutation markWatchtowerSeen":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # worker
+  "POST /api/v1/workers/":
+    pending: "Create a worker."
+  "mutation approveWorkerPTO":
+    tools: [approve_worker_pto]
+  "mutation bulkWorkerPTOAction":
+    pending: "Approve, reject or cancel several PTO requests at once."
+  "mutation cancelWorkerPTO":
+    tools: [cancel_worker_pto]
+  "mutation createWorkerPTO":
+    pending: "Create worker PTO."
+  "mutation patchWorker":
+    pending: "Update some fields of a worker."
+  "mutation rejectWorkerPTO":
+    tools: [reject_worker_pto]
+  "mutation updateWorkerPTO":
+    pending: "Update worker PTO."
+
+  # workerchecklist
+  "mutation archiveWorkerChecklistTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation cancelWorkerChecklist":
+    pending: "Cancel worker checklist."
+  "mutation completeWorkerChecklistItem":
+    pending: "Complete worker checklist item."
+  "mutation createWorkerChecklistTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation markWorkerChecklistItemNotApplicable":
+    pending: "Mark worker checklist item not applicable."
+  "mutation reopenWorkerChecklistItem":
+    pending: "Reopen worker checklist item."
+  "mutation restoreWorkerChecklistTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation skipWorkerChecklistItem":
+    pending: "Skip worker checklist item."
+  "mutation startWorkerChecklist":
+    pending: "Start worker checklist."
+  "mutation updateWorkerChecklistTemplate":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # workercredential
+  "mutation archiveWorkerCredential":
+    pending: "Archive worker credential."
+  "mutation archiveWorkerCredentialType":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation attachWorkerCredentialDocument":
+    pending: "Attach worker credential document."
+  "mutation createWorkerCredential":
+    pending: "Create worker credential."
+  "mutation createWorkerCredentialType":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation restoreWorkerCredentialType":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation updateWorkerCredential":
+    pending: "Update worker credential."
+  "mutation updateWorkerCredentialType":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation verifyWorkerCredential":
+    pending: "Verify worker credential."
+
+  # workerdqf
+  "mutation deleteEmploymentVerification":
+    pending: "Delete employment verification."
+  "mutation markEmploymentVerificationRequested":
+    pending: "Mark employment verification requested."
+  "mutation recordEmploymentVerification":
+    pending: "Record employment verification."
+  "mutation recordEmploymentVerificationFollowUp":
+    pending: "Record a follow-up on an employment verification request."
+  "mutation updateEmploymentVerification":
+    pending: "Update employment verification."
+
+  # workerdrugalcohol
+  "mutation cancelDotRandomDraw":
+    pending: "Cancel DOT random draw."
+  "mutation cancelDotTest":
+    pending: "Cancel DOT test."
+  "mutation completeClearinghouseQuery":
+    pending: "Complete clearinghouse query."
+  "mutation createDotRandomPool":
+    pending: "Create DOT random pool."
+  "mutation finalizeDotRandomDraw":
+    pending: "Finalize DOT random draw."
+  "mutation recordClearinghouseQuery":
+    pending: "Record clearinghouse query."
+  "mutation recordDotTest":
+    pending: "Record DOT test."
+  "mutation recordDotTestResult":
+    pending: "Record DOT test result."
+  "mutation recordDotViolation":
+    pending: "Record DOT violation."
+  "mutation runDotRandomDraw":
+    pending: "Run DOT random draw."
+  "mutation updateDotRandomDrawEntry":
+    pending: "Update DOT random draw entry."
+  "mutation updateDotRandomPool":
+    pending: "Update DOT random pool."
+  "mutation updateDotViolation":
+    pending: "Update DOT violation."
+
+  # workeremployment
+  "mutation amendWorkerEmploymentEvent":
+    pending: "Amend worker employment event."
+  "mutation recordWorkerEmploymentEvent":
+    pending: "Record worker employment event."
+
+  # workerinjury
+  "mutation certifyOshaSummary":
+    exempt: attestation
+    reason: "OSHA requires a company executive to certify the annual injury summary."
+  "mutation deleteWorkerInjury":
+    pending: "Delete worker injury."
+  "mutation recordWorkerInjury":
+    pending: "Record worker injury."
+  "mutation saveOshaSummary":
+    pending: "Save OSHA summary."
+  "mutation uncertifyOshaSummary":
+    exempt: attestation
+    reason: "Withdraws the executive certification of the annual injury summary."
+  "mutation updateWorkerInjury":
+    pending: "Update worker injury."
+
+  # workerleave
+  "mutation closeLeaveCase":
+    pending: "Close leave case."
+  "mutation decideLeaveCase":
+    pending: "Decide leave case."
+  "mutation deleteLeaveDay":
+    pending: "Delete leave day."
+  "mutation openLeaveCase":
+    pending: "Open leave case."
+  "mutation recordLeaveCertification":
+    pending: "Record leave certification."
+  "mutation recordLeaveDay":
+    pending: "Record leave day."
+  "mutation requestLeaveCertification":
+    pending: "Request leave certification."
+  "mutation updateLeaveCase":
+    pending: "Update leave case."
+  "mutation updateLeaveControl":
+    exempt: configuration
+    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+  "mutation updateLeaveDay":
+    pending: "Update leave day."
+
+  # workersafety
+  "mutation acknowledgeMyDisciplinaryAction":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation closeWorkerSafetyEvent":
+    pending: "Close worker safety event."
+  "mutation createWorkerSafetyEvent":
+    pending: "Create worker safety event."
+  "mutation deleteWorkerRecognition":
+    pending: "Delete worker recognition."
+  "mutation deleteWorkerSafetyEvent":
+    pending: "Delete worker safety event."
+  "mutation giveWorkerRecognition":
+    pending: "Give worker recognition."
+  "mutation issueDisciplinaryAction":
+    pending: "Issue disciplinary action."
+  "mutation reopenWorkerSafetyEvent":
+    pending: "Reopen worker safety event."
+  "mutation rescindDisciplinaryAction":
+    pending: "Rescind disciplinary action."
+  "mutation reviewWorkerSafetyEvent":
+    pending: "Review worker safety event."
+  "mutation updateWorkerSafetyEvent":
+    pending: "Update worker safety event."
+
+  # workertraining
+  "mutation acknowledgeMyTraining":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation archiveTrainingCourse":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation assignRequiredWorkerTraining":
+    pending: "Assign required worker training."
+  "mutation assignWorkerTraining":
+    pending: "Assign worker training."
+  "mutation attachWorkerTrainingDocument":
+    pending: "Attach worker training document."
+  "mutation bulkAssignTraining":
+    pending: "Bulk assign training."
+  "mutation cancelWorkerTraining":
+    pending: "Cancel worker training."
+  "mutation completeWorkerTraining":
+    pending: "Complete worker training."
+  "mutation createTrainingCourse":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation restoreTrainingCourse":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation startMyTraining":
+    exempt: counterparty
+    reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
+  "mutation updateTrainingCourse":
+    exempt: configuration
+    reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+  "mutation waiveWorkerTraining":
+    pending: "Waive worker training."

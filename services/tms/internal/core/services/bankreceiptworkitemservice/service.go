@@ -2,7 +2,6 @@ package bankreceiptworkitemservice
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -155,26 +154,10 @@ func (s *Service) Resolve(
 	if err != nil {
 		return nil, err
 	}
-	if !entity.Status.IsActive() {
-		return nil, errortypes.NewBusinessError(
-			"Only active bank receipt work items can be resolved",
-		)
-	}
-	if strings.TrimSpace(req.ResolutionNote) == "" {
-		return nil, errortypes.NewValidationError(
-			"resolutionNote",
-			errortypes.ErrRequired,
-			"Resolution note is required",
-		)
-	}
 	original := *entity
-	now := timeutils.NowUnix()
-	entity.Status = bankreceiptworkitem.StatusResolved
-	entity.ResolutionType = req.ResolutionType
-	entity.ResolutionNote = strings.TrimSpace(req.ResolutionNote)
-	entity.ResolvedByUserID = userID
-	entity.ResolvedAt = &now
-	entity.UpdatedByID = userID
+	if err = ResolveWorkItem(entity, req, userID, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 	updated, err := s.repo.Update(ctx, entity)
 	if err != nil {
 		return nil, err
@@ -202,19 +185,10 @@ func (s *Service) Dismiss(
 	if err != nil {
 		return nil, err
 	}
-	if !entity.Status.IsActive() {
-		return nil, errortypes.NewBusinessError(
-			"Only active bank receipt work items can be dismissed",
-		)
-	}
 	original := *entity
-	now := timeutils.NowUnix()
-	entity.Status = bankreceiptworkitem.StatusDismissed
-	entity.ResolutionType = bankreceiptworkitem.ResolutionMarkedFalsePositive
-	entity.ResolutionNote = strings.TrimSpace(req.ResolutionNote)
-	entity.ResolvedByUserID = userID
-	entity.ResolvedAt = &now
-	entity.UpdatedByID = userID
+	if err = DismissWorkItem(entity, req, userID, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 	updated, err := s.repo.Update(ctx, entity)
 	if err != nil {
 		return nil, err

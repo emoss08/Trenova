@@ -220,7 +220,6 @@ type snapshotResult struct {
 	version    *int64
 	missing    bool
 	preview    *agent.ToolPreview
-	simulated  bool
 	previewErr error
 	labels     services.RecordLabels
 }
@@ -259,9 +258,11 @@ func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotRes
 			return err
 		}
 
-		previewCtx, cancel := context.WithTimeout(txCtx, in.timeout)
-		result.preview, result.simulated, result.previewErr = runPreview(previewCtx, in)
-		cancel()
+		if previewer, ok := in.tool.(services.ToolPreviewer); ok {
+			previewCtx, cancel := context.WithTimeout(txCtx, in.timeout)
+			result.preview, result.previewErr = runPreview(previewCtx, previewer, &in.params)
+			cancel()
+		}
 
 		if in.labelled && result.previewErr == nil && result.preview != nil {
 			result.labels = s.labels(txCtx, &in.params, result.preview)
@@ -301,52 +302,26 @@ func (s *Service) readPin(ctx context.Context, in *snapshotInput, result *snapsh
 	return nil
 }
 
-// runPreview asks the tool what its write would do. A tool that previews is
-// asked for its preview; one that only simulates is read from its simulation;
-// any other has nothing to say. A tool that panics has failed its preview,
-// never the request.
+// runPreview asks the tool what its write would do. A tool that panics has
+// failed its preview, never the request.
 func runPreview(
 	ctx context.Context,
-	in *snapshotInput,
-) (preview *agent.ToolPreview, simulated bool, err error) {
+	previewer services.ToolPreviewer,
+	params *services.ToolExecuteParams,
+) (preview *agent.ToolPreview, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			preview, simulated = nil, false
+			preview = nil
 			err = fmt.Errorf("the preview failed: %v", recovered)
 		}
 	}()
 
-	if previewer, ok := in.tool.(services.ToolPreviewer); ok {
-		preview, err = previewer.Preview(ctx, in.params)
-		if err == nil && preview == nil {
-			err = errors.New("the tool returned no preview")
-		}
-
-		return preview.Bounded(), false, err
+	preview, err = previewer.Preview(ctx, *params)
+	if err == nil && preview == nil {
+		err = errors.New("the tool returned no preview")
 	}
 
-	if simulator, ok := in.tool.(services.ToolSimulator); ok {
-		simulation, simErr := simulator.Simulate(ctx, in.params)
-		if simErr != nil {
-			return nil, true, simErr
-		}
-		target, _ := targetOf(in.tool, in.params.Params)
-
-		return toolpreview.FromSimulation(toolpreview.Record{
-			Resource: recordResource(target, in.tool),
-			ID:       target.ID,
-		}, simulation), true, nil
-	}
-
-	return nil, false, nil
-}
-
-func recordResource(target services.ToolTarget, tool services.AgentTool) permission.Resource {
-	if target.Resource != "" {
-		return target.Resource
-	}
-
-	return tool.Policy().Resource
+	return preview.Bounded(), err
 }
 
 func tenantOfParams(params *services.ToolExecuteParams) pagination.TenantInfo {
@@ -387,7 +362,7 @@ func (s *Service) assemble(d *draft, tool services.AgentTool, found *snapshotRes
 		preview.AddWarning(warning)
 	}
 	preview.Coverage = agent.PreviewCoverageFull
-	if found.preview.Partial || found.simulated {
+	if found.preview.Partial {
 		preview.Coverage = agent.PreviewCoveragePartial
 	}
 	applyLabels(preview.Changes, found.labels)

@@ -709,7 +709,7 @@ func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 		}, nil).
 		Once()
 
-	err := svc.preflightServiceFailure214(t.Context(), serviceFailure214Params{current: failure})
+	_, err := svc.preflightServiceFailure214(t.Context(), serviceFailure214Params{current: failure})
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "status reason required")
@@ -749,7 +749,7 @@ func TestPreflightServiceFailure214AllowsNonMandatoryBlockedAndSkipped(t *testin
 				Return(tt.result, nil).
 				Once()
 
-			err := svc.preflightServiceFailure214(
+			_, err := svc.preflightServiceFailure214(
 				t.Context(),
 				serviceFailure214Params{current: failure},
 			)

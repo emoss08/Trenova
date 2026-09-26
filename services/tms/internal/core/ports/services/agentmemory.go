@@ -25,6 +25,11 @@ type RememberRequest struct {
 	Taint       *agent.RunTaint
 }
 
+type RememberPlan struct {
+	Memory   *agent.Memory
+	Existing *agent.Memory
+}
+
 // UpdateAgentMemoryRequest rewrites what a memory says or is about. Its
 // source and history stay as they were.
 type UpdateAgentMemoryRequest struct {
@@ -133,6 +138,11 @@ type DismissAgentMemorySuggestionRequest struct {
 
 type AgentMemoryService interface {
 	Remember(ctx context.Context, req *RememberRequest, actor *RequestActor) (*agent.Memory, error)
+	PreviewRemember(
+		ctx context.Context,
+		req *RememberRequest,
+		actor *RequestActor,
+	) (*RememberPlan, error)
 	Update(
 		ctx context.Context,
 		req *UpdateAgentMemoryRequest,

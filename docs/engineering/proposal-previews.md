@@ -62,7 +62,6 @@ fields, services compute totals — so each tool shares one plan function betwee
 | `MoneyBlock(currency, lines...)`, `Money(rec, block, opts...)`, `AttachMoney(change, block, opts...)` | Amounts with totals and delta; the block takes the highest sensitivity of the fields named by `SensitiveAs`, and a Confidential one is dropped. |
 | `Build(summary, changes...)`, `Warn(preview, code, message, args...)` | The preview, bounded. |
 | `Describe(tool, params)`, `Parameters(tool, resource, params)` | The `Unavailable` fallback: the parameters, never the owner a self-scoped call records, stamped with their sensitivity on the tool's resource. |
-| `FromSimulation(rec, simulation)` | A tool that simulates rather than previews, read as a `Partial` preview. |
 | `Chain(steps)` | A plan's projection (below). |
 
 Options: `WithRefs(path → resource)` (ids shown by the record's label, resolved later),
@@ -75,8 +74,15 @@ objects and bare ids, types each value with the artifact display classifier
 sensitivity from the permission registry and **drops a Confidential value where it is
 built**, so none reaches a baseline or a recorded preview.
 
-Until a tool previews itself, `toolsimulation.Simulate` and the preview service read its
-`ToolSimulator` as a `Partial` preview, and any other tool as `Unavailable`.
+Every write tool previews itself; `TestEveryActionToolPreviewsWhatItWouldDo` fails for one that does
+not. A tool that does not preview is shown as `Unavailable`: its parameters.
+
+An agent in simulation records what its write would have done from the same snapshot.
+The runtime reads the baseline it has just taken (`toolsimulation.FromBaseline`). A
+preview that failed there is reported as failed and **never run again outside the
+snapshot**, because the failure may be the snapshot refusing a write. The executor, on an
+approved proposal for an agent in simulation, runs the preview in a read-only,
+repeatable-read transaction of its own (`toolsimulation.InSnapshot`).
 
 ## The preview service
 
@@ -171,6 +177,42 @@ compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and ag
 runs. The parameter holding the target's id is `readOnly` in `parameterFields` and in the
 chat's editable fields (`services.ProposalFields`).
 
+## Record subsets
+
+A write over a set of records can let the person approving it drop some. A tool marks an
+array-of-ids parameter as a subset of one permission resource's records with
+`toolschema.RecordSubset(resource, property)`, which sets the `x-subsetOf` keyword;
+`transfer_to_billing.shipmentIds` is one, over `shipment`.
+
+- **The form.** `toolschema.Fields` reads the parameter as kind `RecordSubset` with its
+  `Resource`, and GraphQL serves both on `AgentProposal.parameterFields`:
+  `AgentProposalField.kind` is `RecordSubset` and `AgentProposalField.resource` names the
+  resource (`null` for every other kind). `AgentProposalField.choices` lists every record
+  the parameter proposed, from the proposal's own parameters (never a modification), in the
+  order proposed and each once, bounded by the parameter's `maxItems` and never past
+  `toolschema.MaxSubsetChoices` (5000): `{ id, label }`, the label read through
+  `RecordLabeler` and the id when the record is gone or the reader may not read the
+  resource. A client lists them as rows a person can untick and sends the ids it kept, as
+  a list of strings, back as the parameter's modification.
+- **Labels.** GraphQL reads them through the `SubsetLabels` loader: each subset field asks
+  once for all of its ids, and a request's fields are labelled together, one query per
+  resource for each `services.MaxRecordLabelsPerResource` (5000) records. The chat's
+  `/assistant/threads/{id}/proposals/` labels every pending proposal in a thread in one
+  `Labels` read. Both check the reader's read permission on the resource first and read
+  nothing without it.
+- **The rule.** `CheckModifications` (and `admit`, where the write runs) refuses a
+  modification to a subset parameter that is not a narrowing of what was proposed
+  (`toolschema.CheckSubsets`): an id the agent did not propose is refused as `forbidden`, and
+  an empty list, or one that is not a list, is refused. Removing ids is allowed, and the
+  preview, the digest and the write all follow the narrowed list.
+- **The model never sees the keyword.** Every model adapter sends tools through
+  `toolschema.ForModel`, which strips `x-` keywords at any depth (a strict endpoint refuses
+  a keyword it does not know) and keeps parameter names that merely look like one.
+
+A preview still shows at most 20 records, so a subset of more is shown in part; the
+parameter's value is the whole list, and the field's choices list it all. The approval form
+shows each preview record's outcome on its row and the rest by label.
+
 ## API
 
 `internal/api/graphql/schema/agentpreview.graphqls`:
@@ -225,6 +267,12 @@ unstable digest shows itself.
   is not scoped to one tenant.
 - **A digest is per reader.** Two people with different access see different digests for
   the same proposal; each approves what they saw.
-- **Calls outside the database are guarded by tests only.** The read-only transaction stops
-  a preview writing to the database, not sending mail or starting a workflow.
+- **Calls outside the database are guarded by the read-only mark and by tests.** The
+  read-only transaction stops a preview writing to the database. `WithTx` also marks a
+  read-only transaction's context (`ports.IsReadOnly`), and after-commit callbacks queued
+  in it are dropped, since nothing was committed. Work a service hands off outside its
+  transaction must check the mark. Distance resolution does: it counts no stored-mileage
+  hit and buffers no stored-mileage candidate, though it still asks PC*Miler, as the
+  billing panel's rate preview does. The mark does not stop mail or a workflow start a
+  preview calls directly; the previewers' tests do.
 - **Field labels are English**, humanized from the record's keys, as artifacts' are.

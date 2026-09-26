@@ -98,6 +98,35 @@ func (r *referenceRepository) Upsert(
 	return nil
 }
 
+func (r *referenceRepository) MarkRemoved(
+	ctx context.Context,
+	req *repositories.MarkAccountingReferencesRemovedRequest,
+) (int64, error) {
+	if len(req.ExternalIDs) == 0 {
+		return 0, nil
+	}
+
+	cols := buncolgen.AccountingReferenceObjectColumns
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*accountingsync.AccountingReferenceObject)(nil)).
+		WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.AccountingReferenceObjectScopeTenantUpdate(q, req.TenantInfo).
+				Where(cols.ConnectionID.Eq(), req.ConnectionID).
+				Where(cols.Kind.Eq(), req.Kind).
+				Where(cols.ExternalID.In(), bun.List(req.ExternalIDs)).
+				Where(cols.RemovedAt.IsNull())
+		}).
+		Set(cols.RemovedAt.Set(), req.At).
+		Set(cols.UpdatedAt.Set(), req.At).
+		Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return results.RowsAffected()
+}
+
 func (r *referenceRepository) MarkRemovedUnseen(
 	ctx context.Context,
 	req *repositories.MarkAccountingReferenceRemovedRequest,

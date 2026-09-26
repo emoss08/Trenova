@@ -323,6 +323,10 @@ func (c *Connection) WithTx(
 			}
 		}
 
+		if opts.ReadOnly {
+			ctx = ports.WithReadOnly(ctx)
+		}
+
 		return fn(ctx, existingTx)
 	}
 
@@ -344,7 +348,11 @@ func (c *Connection) WithTx(
 		}
 	}
 
-	txCtx, hooks := ports.WithAfterCommitHooks(context.WithValue(ctx, txContextKey{}, tx))
+	baseCtx := context.WithValue(ctx, txContextKey{}, tx)
+	if opts.ReadOnly {
+		baseCtx = ports.WithReadOnly(baseCtx)
+	}
+	txCtx, hooks := ports.WithAfterCommitHooks(baseCtx)
 
 	if err = fn(txCtx, tx); err != nil {
 		return err

@@ -5,12 +5,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
+	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
@@ -30,6 +33,15 @@ var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewReg
 func ToolProviders() []any {
 	return []any{
 		newTransitionToInReviewTool,
+		provideTransferToBillingTool,
+		provideApproveBillingQueueItemTool,
+		provideSendBackToOpsTool,
+		provideMoveToExceptionTool,
+		provideHoldBillingQueueItemTool,
+		provideCancelBillingQueueItemTool,
+		provideAssignBillerTool,
+		providePostInvoiceTool,
+		provideSendInvoiceTool,
 		newCorrectChargeCodeTool,
 		newSaveTableViewTool,
 		newCreateDashboardTool,
@@ -44,7 +56,7 @@ func ToolProviders() []any {
 		newAddShipmentCommentTool,
 		newPlaceShipmentHoldTool,
 		newReleaseShipmentHoldTool,
-		newCancelShipmentTool,
+		provideCancelShipmentTool,
 		newRecordStopActualTool,
 		provideUpdateTractorStatusTool,
 		provideUpdateTrailerStatusTool,
@@ -68,6 +80,16 @@ func ToolProviders() []any {
 		provideCreateLocationTool,
 		provideTenderToRoutingGuideTool,
 		provideTenderToCarriersTool,
+		newUnassignMovesTool,
+		newUpdateMoveStatusTool,
+		provideAssignMoveToCarrierTool,
+		provideCancelCarrierAssignmentTool,
+		provideCancelTenderTool,
+		provideRecordTenderResponseTool,
+		provideGenerateRateConfirmationTool,
+		provideSendRateConfirmationTool,
+		provideVoidRateConfirmationTool,
+		provideRecordRateConfirmationConfirmedTool,
 		newRememberTool,
 		newForgetMemoryTool,
 		provideDismissInsightTool,
@@ -78,6 +100,11 @@ func ToolProviders() []any {
 		provideRefreshAccountingReferenceDataTool,
 		provideRetryAccountingSyncTool,
 		provideSkipAccountingSyncTool,
+		provideApplyAccountingInboundChangeTool,
+		provideIgnoreAccountingInboundChangeTool,
+		provideResolveAccountingDriftTool,
+		provideDismissAccountingDriftTool,
+		provideCheckAccountingDriftTool,
 		providePauseAccountingSyncTool,
 		provideResumeAccountingSyncTool,
 		provideRequestAccountingBackfillTool,
@@ -198,8 +225,19 @@ func provideCreateLocationTool(
 	return newCreateLocationTool(locations, states, categories)
 }
 
-func provideUpdateShipmentTool(shipments services.ShipmentService) services.AgentTool {
-	return newUpdateShipmentTool(shipments)
+func provideUpdateShipmentTool(
+	shipments services.ShipmentService,
+	partners *ediservice.Service,
+) services.AgentTool {
+	return newUpdateShipmentTool(shipments, partners)
+}
+
+func provideCancelShipmentTool(
+	shipments services.ShipmentService,
+	partners *ediservice.Service,
+	tenders *tenderservice.Service,
+) services.AgentTool {
+	return newCancelShipmentTool(shipments, partners, tenders)
 }
 
 func provideTenderToRoutingGuideTool(tenders *tenderservice.Service) services.AgentTool {
@@ -214,11 +252,8 @@ func provideDismissInsightTool(insights *insightservice.Service) services.AgentT
 	return newDismissInsightTool(insights)
 }
 
-func provideMatchBankReceiptTool(
-	receipts *bankreceiptservice.Service,
-	payments services.CustomerPaymentService,
-) services.AgentTool {
-	return newMatchBankReceiptTool(receipts, payments)
+func provideMatchBankReceiptTool(receipts *bankreceiptservice.Service) services.AgentTool {
+	return newMatchBankReceiptTool(receipts)
 }
 
 func providePostCustomerPaymentTool(
@@ -237,6 +272,51 @@ func provideResolveBankReceiptWorkItemTool(
 
 func provideEscalateDetentionTool(detention *detentionservice.Service) services.AgentTool {
 	return newEscalateDetentionTool(detention)
+}
+
+func provideTransferToBillingTool(
+	shipments services.ShipmentService,
+	runs *billingtransferservice.Service,
+) services.AgentTool {
+	return newTransferToBillingTool(shipments, runs)
+}
+
+// The billing queue decision tools take the narrow billingQueueDecider; fx
+// holds the service port, so the widening happens here.
+
+func provideApproveBillingQueueItemTool(
+	billing services.BillingQueueService,
+	invoices *invoiceservice.Service,
+) services.AgentTool {
+	return newApproveBillingQueueItemTool(billing, invoices)
+}
+
+func provideSendBackToOpsTool(billing services.BillingQueueService) services.AgentTool {
+	return newSendBackToOpsTool(billing)
+}
+
+func provideMoveToExceptionTool(billing services.BillingQueueService) services.AgentTool {
+	return newMoveToExceptionTool(billing)
+}
+
+func provideHoldBillingQueueItemTool(billing services.BillingQueueService) services.AgentTool {
+	return newHoldBillingQueueItemTool(billing)
+}
+
+func provideCancelBillingQueueItemTool(billing services.BillingQueueService) services.AgentTool {
+	return newCancelBillingQueueItemTool(billing)
+}
+
+func provideAssignBillerTool(billing services.BillingQueueService) services.AgentTool {
+	return newAssignBillerTool(billing)
+}
+
+func providePostInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newPostInvoiceTool(invoices)
+}
+
+func provideSendInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newSendInvoiceTool(invoices)
 }
 
 func provideApproveDetentionTool(detention *detentionservice.Service) services.AgentTool {

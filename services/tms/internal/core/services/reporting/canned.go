@@ -43,28 +43,7 @@ func (s *Service) ForkCanned(
 		return nil, err
 	}
 
-	name := req.Name
-	if name == "" {
-		name = entry.Name
-	}
-
-	entity := &report.ReportDefinition{
-		BusinessUnitID: req.TenantInfo.BuID,
-		OrganizationID: req.TenantInfo.OrgID,
-		Name:           name,
-		Description:    entry.Description,
-		Category:       entry.Category,
-		Tags:           entry.Tags,
-		Kind:           report.DefinitionKindCannedFork,
-		CannedKey:      entry.Key,
-		CannedVersion:  entry.Version,
-		OwnerID:        req.TenantInfo.UserID,
-		Visibility:     report.VisibilityPrivate,
-		Status:         report.DefinitionStatusActive,
-		CatalogVersion: reportcatalog.Version,
-		Definition:     entry.Definition,
-		DefaultFormat:  entry.DefaultFormat,
-	}
+	entity := NewCannedFork(entry, req)
 
 	created, err := s.defRepo.Create(ctx, entity, req.TenantInfo.UserID)
 	if err != nil {

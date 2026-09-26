@@ -20,7 +20,7 @@ func WithAfterCommitHooks(ctx context.Context) (context.Context, *AfterCommitHoo
 }
 
 func AfterCommit(ctx context.Context, fn func(context.Context)) {
-	if fn == nil {
+	if fn == nil || IsReadOnly(ctx) {
 		return
 	}
 

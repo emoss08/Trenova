@@ -369,33 +369,21 @@ func (s *Service) AttachLineageToResource(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) (*document.Document, error) {
-	current, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
-		ID:         documentID,
-		TenantInfo: tenantInfo,
+	plan, err := s.planAttach(ctx, &AttachLineageRequest{
+		DocumentID:   documentID,
+		ResourceType: resourceType,
+		ResourceID:   resourceID,
+		TenantInfo:   tenantInfo,
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	if current.ResourceType == resourceType && current.ResourceID == resourceID {
-		return current, nil
+	if plan.Unchanged {
+		return plan.Current, nil
 	}
 
-	var shipmentID pulid.ID
-	if resourceType == "shipment" {
-		shipmentID, err = pulid.MustParse(resourceID)
-		if err != nil {
-			return nil, errortypes.NewValidationError(
-				"shipmentId",
-				errortypes.ErrInvalid,
-				"Invalid shipment ID",
-			)
-		}
-		if err = s.requireShipment(ctx, shipmentID, tenantInfo); err != nil {
-			return nil, err
-		}
-	}
-
+	current := plan.Current
+	shipmentID := plan.ShipmentID
 	previous := *current
 	if err = s.repo.MoveLineageToResource(ctx, &repositories.MoveDocumentLineageRequest{
 		DocumentID:   documentID,

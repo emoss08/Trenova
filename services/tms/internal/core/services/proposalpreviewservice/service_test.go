@@ -308,30 +308,6 @@ func TestForProposal_FallsBackToTheParametersWhenAToolCannotSay(t *testing.T) {
 	assert.Len(t, preview.Digest, 64)
 }
 
-func TestForProposal_ReadsASimulationAsAPartialPreview(t *testing.T) {
-	t.Parallel()
-
-	simulating := &simulatingTool{baseTool: baseTool{
-		name:     "place_shipment_hold",
-		resource: permission.ResourceShipment,
-	}}
-	f := newFixture(simulating)
-	proposal := f.proposal(f.cancelParams())
-	proposal.ToolName = simulating.name
-
-	preview, err := f.svc.ForProposal(t.Context(), &services.ProposalPreviewRequest{
-		Proposal: proposal,
-		Viewer:   f.viewer(),
-	})
-	require.NoError(t, err)
-
-	assert.Equal(t, agent.PreviewCoveragePartial, preview.Coverage)
-	assert.Equal(t, "Would put the shipment on hold.", preview.Summary)
-	change := changeOf(t, preview)
-	assert.Equal(t, f.tool.state.ID, change.EntityID)
-	assert.Equal(t, "Hold", fieldOf(t, change, "status").After)
-}
-
 func TestForProposal_APreviewThatRunsOutOfTimeIsUnavailable(t *testing.T) {
 	t.Parallel()
 

@@ -105,25 +105,39 @@ func (t *addShipmentCommentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	entity, err := t.comment(&params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.comments.Create(ctx, entity, params.Actor)
+
+	return err
+}
+
+// comment is the note the preview shows and the write creates.
+func (t *addShipmentCommentTool) comment(
+	params *serviceports.ToolExecuteParams,
+) (*shipment.ShipmentComment, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, err
 	}
 
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	body, err := requireString(params.Params, "comment")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	visibility := commentVisibility(optionalString(params.Params, "visibility"))
 
 	// Source is the assistant's, always. A note that reads as hand-typed but
 	// was not carries a colleague's authority without a colleague's check.
-	entity := &shipment.ShipmentComment{
+	return &shipment.ShipmentComment{
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		ShipmentID:     shipmentID,
@@ -133,12 +147,8 @@ func (t *addShipmentCommentTool) Execute(
 		Visibility:     visibility,
 		Priority:       commentPriority(optionalString(params.Params, "priority")),
 		Source:         shipment.CommentSourceAI,
-		Metadata:       commentTaintMetadata(params),
-	}
-
-	_, err = t.comments.Create(ctx, entity, params.Actor)
-
-	return err
+		Metadata:       commentTaintMetadata(*params),
+	}, nil
 }
 
 func commentTaintMetadata(params serviceports.ToolExecuteParams) map[string]any {
@@ -270,27 +280,38 @@ func (t *placeShipmentHoldTool) Execute(
 		return err
 	}
 
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
 
+	_, err = t.holds.Create(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *placeShipmentHoldTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*repositories.CreateShipmentHoldRequest, error) {
+	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	if err != nil {
+		return nil, err
+	}
+
 	reasonID, err := requirePulid(params.Params, "holdReasonId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// The blocking flags and severity are left unset on purpose: they default
 	// from the hold reason, which is policy the organization already decided.
 	// An agent choosing them would be quietly overriding that.
-	_, err = t.holds.Create(ctx, &repositories.CreateShipmentHoldRequest{
-		TenantInfo:   tenantFrom(params),
+	return &repositories.CreateShipmentHoldRequest{
+		TenantInfo:   tenantFrom(*params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
 		Notes:        optionalString(params.Params, "notes"),
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 // --- release_shipment_hold --------------------------------------------------
@@ -356,33 +377,50 @@ func (t *releaseShipmentHoldTool) Execute(
 		return err
 	}
 
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
+	}
+
+	_, err = t.holds.Release(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *releaseShipmentHoldTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*repositories.ReleaseShipmentHoldRequest, error) {
+	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	if err != nil {
+		return nil, err
 	}
 
 	holdID, err := requirePulid(params.Params, "holdId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = t.holds.Release(ctx, &repositories.ReleaseShipmentHoldRequest{
-		TenantInfo: tenantFrom(params),
+	return &repositories.ReleaseShipmentHoldRequest{
+		TenantInfo: tenantFrom(*params),
 		ShipmentID: shipmentID,
 		HoldID:     holdID,
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 // --- cancel_shipment --------------------------------------------------------
 
 type cancelShipmentTool struct {
 	shipments serviceports.ShipmentService
+	partners  shipmentPartnerNotices
+	tenders   liveTenderReader
 }
 
-func newCancelShipmentTool(shipments serviceports.ShipmentService) serviceports.AgentTool {
-	return &cancelShipmentTool{shipments: shipments}
+func newCancelShipmentTool(
+	shipments serviceports.ShipmentService,
+	partners shipmentPartnerNotices,
+	tenders liveTenderReader,
+) serviceports.AgentTool {
+	return &cancelShipmentTool{shipments: shipments, partners: partners, tenders: tenders}
 }
 
 func (t *cancelShipmentTool) Name() string { return "cancel_shipment" }
@@ -435,29 +473,40 @@ func (t *cancelShipmentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	request, err := t.request(&params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.shipments.Cancel(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *cancelShipmentTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*repositories.CancelShipmentRequest, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, err
 	}
 
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	reason, err := requireString(params.Params, "cancelReason")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = t.shipments.Cancel(ctx, &repositories.CancelShipmentRequest{
-		TenantInfo:   tenantFrom(params),
+	return &repositories.CancelShipmentRequest{
+		TenantInfo:   tenantFrom(*params),
 		ShipmentID:   shipmentID,
 		CanceledByID: params.Actor.UserID,
 		CanceledAt:   timeutils.NowUnix(),
 		CancelReason: reason,
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 // Target names the record this call would change, so a proposal to change it

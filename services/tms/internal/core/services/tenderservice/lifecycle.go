@@ -301,10 +301,6 @@ func (s *Service) AcceptOffer(
 		CorrelationID: offer.TenderID.String(),
 		Link:          dispatchConsoleOfferLink(offer),
 	})
-	acceptedTender := *offer.Tender
-	acceptedTender.Status = tender.StatusAccepted
-	acceptedTender.AcceptedOfferID = &offer.ID
-	acceptedTender.AcceptedAt = &now
 	s.logTenderAudit(&tenderAuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   offer.TenderID,
@@ -314,7 +310,7 @@ func (s *Service) AcceptOffer(
 			"Offer accepted by %s via %s", carrierNameOf(offer), source.String(),
 		),
 		Previous: offer.Tender,
-		Current:  &acceptedTender,
+		Current:  acceptedTender(offer.Tender, offer.ID, source, now),
 	})
 	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_accepted")
 
@@ -425,23 +421,16 @@ func (s *Service) FinalizeAccepted(
 	tenderID pulid.ID,
 	acceptedOfferID pulid.ID,
 ) error {
-	if _, err := s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
-		TenantInfo: tenantInfo,
-		TenderID:   tenderID,
-		FromStatus: []tender.OfferStatus{tender.OfferStatusPending},
-		ToStatus:   tender.OfferStatusSkipped,
-		ExceptID:   acceptedOfferID,
-	}); err != nil {
-		return err
-	}
-	if _, err := s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
-		TenantInfo: tenantInfo,
-		TenderID:   tenderID,
-		FromStatus: []tender.OfferStatus{tender.OfferStatusSent},
-		ToStatus:   tender.OfferStatusSuperseded,
-		ExceptID:   acceptedOfferID,
-	}); err != nil {
-		return err
+	for _, settlement := range acceptSettlements {
+		if _, err := s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
+			TenantInfo: tenantInfo,
+			TenderID:   tenderID,
+			FromStatus: []tender.OfferStatus{settlement.from},
+			ToStatus:   settlement.to,
+			ExceptID:   acceptedOfferID,
+		}); err != nil {
+			return err
+		}
 	}
 
 	entity, err := s.repo.GetByID(ctx, repositories.GetTenderByIDRequest{

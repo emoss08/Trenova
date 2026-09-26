@@ -109,7 +109,7 @@ func agentActorFor(orgID, buID pulid.ID) *serviceports.RequestActor {
 // in another organization by naming that organization's ids.
 func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 	assignments := mocks.NewMockAssignmentService(t)
-	tool := newAssignMoveTool(assignments)
+	tool := newAssignMoveTool(assignments, nil)
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -150,7 +150,7 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 
 func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
 	assignments := mocks.NewMockAssignmentService(t)
-	tool := newAssignMoveTool(assignments)
+	tool := newAssignMoveTool(assignments, nil)
 
 	err := tool.Execute(t.Context(), serviceports.ToolExecuteParams{
 		OrganizationID: pulid.MustNew("org_"),

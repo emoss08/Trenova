@@ -427,6 +427,9 @@ type BillingTransferCandidateIDsResult struct {
 type GetShipmentsByIDsRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
 	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
+	// IncludeCharges loads each shipment's payers, additional charges and
+	// charge allocations, which is what dividing it among its payers reads.
+	IncludeCharges bool `json:"-"`
 }
 
 // ListShipmentSummariesRequest asks for the flat per-shipment facts a document

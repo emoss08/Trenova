@@ -104,21 +104,17 @@ func (s *Service) CreateReferenceRecord(
 		return nil, err
 	}
 
-	source := accountingsync.MappingSourceCreatedInProvider
-	if req.Source == accountingsync.MappingSourceAgent {
-		source = accountingsync.MappingSourceAgent
-	}
 	before := jsonutils.MustToJSON(row)
-	updated, err := s.confirmCreated(ctx, req.TenantInfo, row, &accountingsync.Choice{
-		ExternalID:   created.ExternalID,
-		ExternalName: created.Label(),
-		Source:       source,
-		Reason: "Created in " + accountingsync.ProviderName(
-			session.Connection.IntegrationType,
-		),
-		ActorID: req.UserID,
-		At:      timeutils.NowUnix(),
-	})
+	updated, err := s.confirmCreated(ctx, req.TenantInfo, row, CreatedReferenceChoice(
+		&CreatedReference{
+			ExternalID:      created.ExternalID,
+			ExternalName:    created.Label(),
+			RequestedSource: req.Source,
+			IntegrationType: session.Connection.IntegrationType,
+			ActorID:         req.UserID,
+			At:              timeutils.NowUnix(),
+		},
+	))
 	if err != nil {
 		return nil, err
 	}

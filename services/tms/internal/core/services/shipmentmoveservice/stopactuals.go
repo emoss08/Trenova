@@ -42,35 +42,21 @@ func (s *service) RecordStopActual(
 		}
 		previousStatus = move.Status
 
-		stop, err := applyStopActual(move, req)
+		plan, err := s.planStopActual(txCtx, req, move)
 		if err != nil {
 			return err
 		}
 
-		targetStatus := deriveMoveStatusFromStops(move)
-		if targetStatus == shipment.MoveStatusInTransit && previousStatus != targetStatus {
-			if err = s.ensureEquipmentAvailableForProgress(
-				txCtx,
-				req.TenantInfo,
-				move.ID,
-			); err != nil {
-				return err
-			}
+		if _, err = s.repo.UpdateStopActuals(txCtx, req.TenantInfo, plan.stop); err != nil {
+			return err
 		}
-		if err = s.ensureNoDeliveryHold(
+
+		updatedMove, err = s.applyDerivedMoveStatus(
 			txCtx,
-			move.ShipmentID,
-			req.TenantInfo,
-			targetStatus,
-		); err != nil {
-			return err
-		}
-
-		if _, err = s.repo.UpdateStopActuals(txCtx, req.TenantInfo, stop); err != nil {
-			return err
-		}
-
-		updatedMove, err = s.applyDerivedMoveStatus(txCtx, req, previousStatus, targetStatus)
+			req,
+			plan.previousStatus,
+			plan.targetStatus,
+		)
 		if err != nil {
 			return err
 		}

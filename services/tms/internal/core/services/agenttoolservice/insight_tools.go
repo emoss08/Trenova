@@ -15,6 +15,10 @@ const maxDismissReasonChars = 500
 
 // insightDismisser is the one write these tools make on an insight.
 type insightDismisser interface {
+	GetDetail(
+		ctx context.Context,
+		req serviceports.GetInsightDetailRequest,
+	) (*serviceports.InsightDetail, error)
 	Dismiss(ctx context.Context, req serviceports.DismissInsightRequest) (*insight.Insight, error)
 }
 
@@ -91,41 +95,29 @@ func (t *dismissInsightTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	id, reason, err := t.arguments(params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.insights.Dismiss(ctx, serviceports.DismissInsightRequest{
-		ID:         id,
-		UserID:     params.Actor.UserID,
-		Reason:     reason,
-		TenantInfo: tenantFrom(params),
-	})
+	_, err = t.insights.Dismiss(ctx, request)
 
 	return err
 }
 
-func (t *dismissInsightTool) Simulate(
-	_ context.Context,
+func (t *dismissInsightTool) request(
 	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
+) (serviceports.DismissInsightRequest, error) {
 	id, reason, err := t.arguments(params)
 	if err != nil {
-		return nil, err
+		return serviceports.DismissInsightRequest{}, err
 	}
 
-	return &agent.ToolSimulation{
-		Summary:   fmt.Sprintf("Would dismiss insight %s.", id),
-		Previewed: true,
-		Changes: []agent.FieldChange{
-			{
-				Field: "status",
-				From:  string(insight.StatusActive),
-				To:    string(insight.StatusDismissed),
-			},
-			{Field: "dismissReason", From: "", To: reason},
-		},
+	return serviceports.DismissInsightRequest{
+		ID:         id,
+		UserID:     params.Actor.UserID,
+		Reason:     reason,
+		TenantInfo: tenantFrom(params),
 	}, nil
 }
 

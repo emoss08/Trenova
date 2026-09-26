@@ -79,9 +79,14 @@ var templateStarters = map[Template][]starterQuestion{
 	},
 	TemplateBillingAssistant: {
 		ask(
+			"What is ready to transfer to billing?",
+			"Which delivered shipments are ready to transfer to billing, and which cannot go yet?",
+			"list_billing_transfer_candidates",
+		),
+		ask(
 			"Which billing items are stuck the longest?",
 			"Which billing queue items have been blocked the longest, and why?",
-			"transition_item_to_in_review", "request_missing_docs",
+			"list_billing_queue_items", "transition_item_to_in_review", "request_missing_docs",
 		),
 		ask(
 			"Which deliveries are missing paperwork?",
@@ -92,11 +97,6 @@ var templateStarters = map[Template][]starterQuestion{
 			"Which billing reports can I run?",
 			"Which reports can I run for billing, and what does each one show?",
 			"list_reports",
-		),
-		ask(
-			"Which accessorial charges are set up?",
-			"List the accessorial charges we have set up and what each one bills for.",
-			"list_accessorial_charges",
 		),
 	},
 	TemplateComplianceAssistant: {
@@ -148,7 +148,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which billing items are blocked, and why?",
 			"Which billing items are blocked right now, and what is blocking each one?",
-			"transition_item_to_in_review", "search_shipments",
+			"list_billing_queue_items", "transition_item_to_in_review", "search_shipments",
 		),
 		ask(
 			"Which shipments are missing documents?",
@@ -433,6 +433,16 @@ var templateStarters = map[Template][]starterQuestion{
 			"Is the accounting connection healthy?",
 			"Is the accounting system connected and answering, and how many documents are queued?",
 			"get_accounting_sync_status",
+		),
+		ask(
+			"Which payments from the books wait?",
+			"Which payments recorded in the accounting system wait to be applied in Trenova, and why?",
+			"list_accounting_inbound_changes",
+		),
+		ask(
+			"Where do the books differ?",
+			"Which documents differ between the accounting system and Trenova, and how should each be fixed?",
+			"list_accounting_drift_findings",
 		),
 	},
 	TemplateFormulaAssistant: {

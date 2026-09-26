@@ -74,6 +74,19 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 		// The message, not a new record: a reply to a message somebody has
 		// since settled or relinked must be refused as stale.
 		{&replyToInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
+		{&assignMoveToCarrierTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{&cancelCarrierAssignmentTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		// The tender, whose version moves as it advances or ends, so a
+		// withdrawal proposed against a tender that has since moved is stale.
+		{&cancelTenderTool{}, "tenderId", permission.ResourceTender},
+		{&generateRateConfirmationTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{&sendRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
+		{&voidRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
+		{
+			&recordRateConfirmationConfirmedTool{},
+			"rateConfirmationId",
+			permission.ResourceRateConfirmation,
+		},
 	}
 
 	for _, tc := range cases {

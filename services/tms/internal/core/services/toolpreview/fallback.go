@@ -1,10 +1,7 @@
 package toolpreview
 
 import (
-	"strings"
-
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
 )
@@ -25,45 +22,6 @@ func Parameters(
 		change.Resource = resource
 		change.Fields = stamped(o, resource, change.Fields)
 	}
-
-	return preview
-}
-
-// FromSimulation reads a tool's simulation as a partial preview of the one
-// record it acts on: the simulation's words, each change as a value of that
-// record. A tool that simulates rather than previews says less than a
-// preview does, which Partial records.
-func FromSimulation(
-	rec Record,
-	simulation *agent.ToolSimulation,
-	opts ...Option,
-) *agent.ToolPreview {
-	if simulation == nil {
-		return nil
-	}
-
-	change := newChange(agent.PreviewOperationUpdate, &rec)
-	change.Fields = make([]agent.PreviewFieldChange, 0, len(simulation.Changes))
-	for _, simulated := range simulation.Changes {
-		path := strings.TrimSpace(simulated.Field)
-		if path == "" {
-			continue
-		}
-		field := agent.PreviewFieldChange{
-			Path:  path,
-			Label: assistantartifact.DisplayLabel(camelPath(path), assistantartifact.DisplayText),
-			Type:  assistantartifact.DisplayText,
-			After: simulated.To,
-		}
-		if simulated.From != "" {
-			field.Before = simulated.From
-		}
-		change.Fields = append(change.Fields, field)
-	}
-	change.Fields = stamped(newOptions(opts), rec.Resource, change.Fields)
-
-	preview := Build(simulation.Summary, change)
-	preview.Partial = true
 
 	return preview
 }

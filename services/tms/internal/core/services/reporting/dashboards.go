@@ -43,17 +43,7 @@ func (s *Service) CreateDashboard(
 	ctx context.Context,
 	req *SaveDashboardRequest,
 ) (*report.Dashboard, error) {
-	entity := &report.Dashboard{
-		BusinessUnitID: req.TenantInfo.BuID,
-		OrganizationID: req.TenantInfo.OrgID,
-		Name:           req.Name,
-		Description:    req.Description,
-		Category:       req.Category,
-		Tags:           req.Tags,
-		OwnerID:        req.TenantInfo.UserID,
-		Visibility:     defaultVisibility(req.Visibility),
-		Layout:         defaultLayout(req.Layout),
-	}
+	entity := NewDashboard(req)
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -90,13 +80,7 @@ func (s *Service) UpdateDashboard(
 		)
 	}
 
-	existing.Name = req.Name
-	existing.Description = req.Description
-	existing.Category = req.Category
-	existing.Tags = req.Tags
-	existing.Visibility = defaultVisibility(req.Visibility)
-	existing.Layout = defaultLayout(req.Layout)
-	existing.Version = req.Version
+	ApplyDashboardSave(existing, req)
 
 	multiErr := errortypes.NewMultiError()
 	existing.Validate(multiErr)

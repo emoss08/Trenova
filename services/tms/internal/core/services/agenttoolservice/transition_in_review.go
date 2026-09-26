@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 type transitionToInReviewTool struct {
@@ -31,8 +32,9 @@ func (t *transitionToInReviewTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"billingQueueItemId": map[string]any{
 				"type": "string",
-				"description": "The billing queue item to move to InReview: this run's subject " +
-					"or the record on the page. No tool lists queue items, so never guess one.",
+				toolschema.KeyDescription: "The billing queue item to move to InReview: this " +
+					"run's subject, the record on the page, or one list_billing_queue_items " +
+					"found. Never guess one.",
 			},
 		},
 		"required":             []string{"billingQueueItemId"},
@@ -96,19 +98,30 @@ func (t *transitionToInReviewTool) Execute(
 		return err
 	}
 
-	itemID, err := requirePulid(params.Params, "billingQueueItemId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.billing.UpdateStatus(ctx, &serviceports.UpdateBillingQueueStatusRequest{
+	_, err = t.billing.UpdateStatus(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *transitionToInReviewTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*serviceports.UpdateBillingQueueStatusRequest, error) {
+	itemID, err := requirePulid(params.Params, "billingQueueItemId")
+	if err != nil {
+		return nil, err
+	}
+
+	return &serviceports.UpdateBillingQueueStatusRequest{
 		ItemID:    itemID,
 		NewStatus: billingqueue.StatusInReview,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: params.OrganizationID,
 			BuID:  params.BusinessUnitID,
 		},
-	}, params.Actor)
-
-	return err
+	}, nil
 }

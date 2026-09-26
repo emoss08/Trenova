@@ -40,13 +40,6 @@ func (p ToolExecuteParams) CarriedTaint(at int64) *agent.RunTaint {
 	return agent.RunRecordTaint(p.RunID, at)
 }
 
-// ToolSimulator is a tool that can say what it would change without
-// changing it. The runtime and the executor use it when the agent is in
-// simulation; a tool without it is described by its name and parameters.
-type ToolSimulator interface {
-	Simulate(ctx context.Context, params ToolExecuteParams) (*agent.ToolSimulation, error)
-}
-
 // ToolPreviewer is a tool that can say, record by record, what its write
 // would do. Preview is read-only and deterministic given the database and
 // the parameters, and it decides what changes with the same code Execute
@@ -214,12 +207,18 @@ func TargetParameters(tool any, params map[string]any) []string {
 
 // ProposalFields is a pending proposal's parameters as a person may edit
 // them, from the tool's schema, with the parameters that name its target
-// read-only.
+// read-only and each record-subset parameter listing the records proposed,
+// named by their ids until LabelSubsetChoices names them.
 func ProposalFields(tool AgentTool, params map[string]any) []toolschema.Field {
-	fields := toolschema.Fields(tool.ParamSchema())
+	schema := tool.ParamSchema()
+	fields := toolschema.Fields(schema)
 	targets := TargetParameters(tool, params)
+	choices := toolschema.SubsetChoices(schema, params)
 	for i := range fields {
 		fields[i].ReadOnly = slices.Contains(targets, fields[i].Name)
+		if fields[i].Kind == toolschema.KindRecordSubset {
+			fields[i].Choices = choices[fields[i].Name]
+		}
 	}
 
 	return fields

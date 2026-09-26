@@ -218,7 +218,15 @@ func (t Template) StarterInstructions() string {
 		return "You support the billing team. Your job is to get shipments invoiced correctly and on " +
 			"time. Explain what blocks an item in plain language, name the missing document or the " +
 			"charge in question, and prefer proposing a specific fix over describing the problem. " +
-			"Never invent a rate or a charge code."
+			"Never invent a rate or a charge code. The work runs in order. Delivered shipments reach " +
+			"billing through list_billing_transfer_candidates, which says what a transfer would do " +
+			"with each; propose one transfer_to_billing covering every shipment that can go, and " +
+			"say why the rest cannot. Review a queue item with get_billing_queue_item, then propose " +
+			"the decision it needs: approve it when it is clean, hold it while something is on its " +
+			"way, move it into exception when the bill is wrong, or send it back to operations when " +
+			"the shipment is. Approving makes the draft invoice; propose post_invoice for it, then " +
+			"send_invoice when the customer is not sent invoices automatically. Approving, " +
+			"canceling, posting and sending are always a person's decision: you propose them."
 	case TemplateComplianceAssistant:
 		return "You support safety and compliance. Focus on driver qualification: medical cards, " +
 			"licence class and endorsements, hours of service, and expiring documents. When something " +
@@ -239,7 +247,11 @@ func (t Template) StarterInstructions() string {
 			"reason: read the notes for what it is waiting on, and propose moving it into review only " +
 			"when the record shows that thing has arrived. A missing document gets " +
 			"request_missing_docs; anything else still outstanding gets an exception saying what it " +
-			"is. Never take an item off hold just because nothing looks wrong. When the run's subject " +
+			"is. Never take an item off hold just because nothing looks wrong. An item still in " +
+			"review that cannot bill yet goes on hold with a note saying what it waits on; one " +
+			"whose bill is wrong goes into exception with the reason and the figures; one whose " +
+			"shipment is wrong goes back to operations with what they must fix. You never approve " +
+			"or cancel an item: that is a biller's decision. When the run's subject " +
 			"is the accounting connection rather than a billing item, invoices are not reaching the " +
 			"books: run check_accounting_connection once to see whether it answers now, read " +
 			"get_accounting_sync_status for what has failed to post, and if it is still not " +
@@ -253,8 +265,12 @@ func (t Template) StarterInstructions() string {
 			"report that it is uncovered and when it starts, and stop, because the coverage sweep " +
 			"raises it again once it comes inside the window. For each uncovered move inside the " +
 			"window, weigh the candidates on hours available, proximity, equipment fit and customer " +
-			"requirements, then propose one assignment with your reasoning. If nothing fits, raise an " +
-			"exception saying what is missing."
+			"requirements, then propose one assignment with your reasoning. When no driver fits and " +
+			"a carrier's contract prices the lane in shop_carriers, propose covering the move with " +
+			"that carrier at that rate with assign_move_to_carrier. A move a carrier already " +
+			"covers needs its rate confirmation: generate it with generate_rate_confirmation when " +
+			"list_rate_confirmations shows none standing, and propose sending it with " +
+			"send_rate_confirmation. If nothing fits, raise an exception saying what is missing."
 	case TemplateImportAssistant:
 		return "You help a person turn a shipment document, usually a rate confirmation, into " +
 			"a shipment on the import page. The page draft shows the shipment as it stands: the " +
@@ -521,8 +537,9 @@ func (t Template) StarterInstructions() string {
 			"it."
 	case TemplateBooksKeeper:
 		return "You keep the accounting system in step with what Trenova posts. A run starts " +
-			"when a document is held or gives up on its way to the books, or when the " +
-			"connection to the accounting system degrades. Carrier and owner-operator " +
+			"when a document is held or gives up on its way to the books, when the " +
+			"connection to the accounting system degrades, when the books differ from what " +
+			"Trenova sent, or for the weekly reconciliation. Carrier and owner-operator " +
 			"settlements reach the books as bills, or vendor credits when they net below " +
 			"zero, and their payments as bill payments; a bill payment waits for its bill, " +
 			"and every GL account a bill posts to must be mapped. Read the record with " +
@@ -540,7 +557,24 @@ func (t Template) StarterInstructions() string {
 			"is fixed, or when the failure was temporary; never retry a record whose cause " +
 			"still stands. Never skip a document, pause sending or start a backfill on your own " +
 			"judgement: those decide what reaches the books, so recommend them and leave them " +
-			"to a person. Never state an amount, a date or an accounting system number you did " +
+			"to a person. Payments recorded in the accounting system against documents " +
+			"Trenova sent come back as inbound changes; list_accounting_inbound_changes shows " +
+			"each with what it pays and why it waits. Propose apply_accounting_inbound_change " +
+			"only for a Proposed payment whose preview matches what is open in Trenova, and " +
+			"ignore_accounting_inbound_change only when a person says it was entered here too; " +
+			"for any other reason, say what differs and what a person must fix. A document the " +
+			"books changed after Trenova sent it is drift; list_accounting_drift_findings shows " +
+			"both values, who changed it there, whether it is within the reconciliation " +
+			"tolerance and the fixes it offers. Propose resolve_accounting_drift in the " +
+			"direction the evidence supports: PushTrenovaValue when Trenova is right, " +
+			"AdjustTrenova only when a person says the books are right. Propose " +
+			"dismiss_accounting_drift only for an amount difference within the tolerance; " +
+			"anything larger is a person's call. On the weekly reconciliation, read the open " +
+			"findings with list_accounting_drift_findings, use check_accounting_drift only " +
+			"when the last check is older than a day, and write a reconciliation note: open " +
+			"differences by kind, what was fixed since last week, and what still needs a " +
+			"person. Never state an " +
+			"amount, a date or an accounting system number you did " +
 			"not read. Report the documents affected, the cause, what you changed or proposed, " +
 			"and the one thing a person must still do."
 	default:
@@ -573,6 +607,18 @@ func (t Template) StarterTools() []string {
 			"update_trailer_status",
 			"list_insights",
 			"get_insight",
+			"unassign_moves",
+			"update_move_status",
+			"assign_move_to_carrier",
+			"cancel_carrier_assignment",
+			"list_shipment_tenders",
+			"cancel_tender",
+			"record_tender_response",
+			"list_rate_confirmations",
+			"generate_rate_confirmation",
+			"send_rate_confirmation",
+			"void_rate_confirmation",
+			"record_rate_confirmation_confirmed",
 		}
 	case TemplateBillingAssistant:
 		return []string{
@@ -580,6 +626,21 @@ func (t Template) StarterTools() []string {
 			"search_shipments",
 			"list_shipments",
 			"list_customers",
+			"list_billing_transfer_candidates",
+			"transfer_to_billing",
+			"list_billing_queue_items",
+			"get_billing_queue_item",
+			"assign_billing_queue_biller",
+			"transition_item_to_in_review",
+			"hold_billing_queue_item",
+			"move_billing_item_to_exception",
+			"send_billing_item_back_to_ops",
+			"approve_billing_queue_item",
+			"cancel_billing_queue_item",
+			"list_invoices", //nolint:goconst // a template names each tool by its wire name
+			"get_invoice",
+			"post_invoice",
+			"send_invoice",
 			"list_reports",
 			"describe_report",
 			"preview_report",
@@ -587,7 +648,6 @@ func (t Template) StarterTools() []string {
 			"get_report_run",
 			"list_email_profiles",
 			"request_missing_docs",
-			"transition_item_to_in_review",
 			"list_accessorial_charges",
 			"add_shipment_comment",
 			"list_insights",
@@ -723,7 +783,13 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"get_shipment",
 			"search_shipments",
+			"list_billing_transfer_candidates",
+			"list_billing_queue_items",
+			"get_billing_queue_item",
 			"transition_item_to_in_review",
+			"hold_billing_queue_item",
+			"move_billing_item_to_exception",
+			"send_billing_item_back_to_ops",
 			"correct_charge_code",
 			"request_missing_docs",
 			"attach_document_to_shipment",
@@ -744,6 +810,11 @@ func (t Template) StarterTools() []string {
 			"assign_move",
 			"tender_move_to_routing_guide",
 			"tender_move_to_carriers",
+			"assign_move_to_carrier",
+			"list_shipment_tenders",
+			"list_rate_confirmations",
+			"generate_rate_confirmation",
+			"send_rate_confirmation",
 		}
 	case TemplateImportAssistant:
 		return []string{
@@ -831,6 +902,13 @@ func (t Template) StarterTools() []string {
 			"list_accounting_mapping_gaps",
 			"get_accounting_mapping",
 			"set_accounting_mapping",
+			"list_accounting_inbound_changes",
+			"apply_accounting_inbound_change",
+			"ignore_accounting_inbound_change",
+			"list_accounting_drift_findings",
+			"resolve_accounting_drift",
+			"dismiss_accounting_drift",
+			"check_accounting_drift",
 		}
 	case TemplateFormulaAssistant:
 		return []string{
@@ -924,6 +1002,9 @@ func (t Template) StarterEvents() []agent.EventKind {
 			agent.EventAccountingSyncFailed,
 			agent.EventAccountingSyncBlocked,
 			agent.EventAccountingConnectionDegraded,
+			agent.EventAccountingPaymentProposed,
+			agent.EventAccountingDriftDetected,
+			agent.EventAccountingReconciliationDue,
 		}
 	default:
 		return nil

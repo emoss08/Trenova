@@ -267,6 +267,86 @@ type BillingTransferCandidateIDsResponse struct {
 	Truncated  bool       `json:"truncated"`
 }
 
+// PlanBillingTransfersRequest asks what transferring shipments to billing
+// would do, without doing it.
+type PlanBillingTransfersRequest struct {
+	TenantInfo                  pagination.TenantInfo
+	ShipmentIDs                 []pulid.ID
+	MarkCompletedReadyToInvoice bool
+}
+
+// BillingTransferOutcome is what a transfer would do to one shipment.
+type BillingTransferOutcome string
+
+const (
+	// BillingTransferOutcomeTransfer queues the shipment for billing.
+	BillingTransferOutcomeTransfer = BillingTransferOutcome("Transfer")
+	// BillingTransferOutcomeMarkReadyAndTransfer marks a completed shipment
+	// ready to invoice and then queues it.
+	BillingTransferOutcomeMarkReadyAndTransfer = BillingTransferOutcome("MarkReadyAndTransfer")
+	// BillingTransferOutcomeRefused leaves the shipment where it is; the
+	// failure code says why.
+	BillingTransferOutcomeRefused = BillingTransferOutcome("Refused")
+	// BillingTransferOutcomeReturnToOperations leaves the shipment with
+	// operations, whose issues the organization corrects there.
+	BillingTransferOutcomeReturnToOperations = BillingTransferOutcome("ReturnToOperations")
+)
+
+// Transfers reports whether the outcome puts the shipment in the queue.
+func (o BillingTransferOutcome) Transfers() bool {
+	return o == BillingTransferOutcomeTransfer || o == BillingTransferOutcomeMarkReadyAndTransfer
+}
+
+// BillingTransferDecision is one shipment's answer: what a transfer would do
+// and the readiness it was decided from, by the same checks a transfer makes.
+type BillingTransferDecision struct {
+	ShipmentID pulid.ID        `json:"shipmentId"`
+	ProNumber  string          `json:"proNumber"`
+	Status     shipment.Status `json:"status"`
+	// BillingTransferStatus is the stage the shipment is at now: empty for
+	// one billing has never received, SentBackToOps for one it returned.
+	BillingTransferStatus shipment.BillingTransferStatus `json:"billingTransferStatus"`
+	CustomerID            pulid.ID                       `json:"customerId"`
+	CustomerName          string                         `json:"customerName"`
+	TotalCharge           decimal.NullDecimal            `json:"totalCharge"`
+	DeliveredAt           *int64                         `json:"deliveredAt"`
+	Outcome               BillingTransferOutcome         `json:"outcome"`
+	FailureCode           BillingTransferFailureCode     `json:"failureCode,omitempty"`
+	Reason                string                         `json:"reason,omitempty"`
+	MissingRequirements   []ShipmentBillingRequirement   `json:"missingRequirements"`
+	ValidationFailures    []ShipmentBillingValidation    `json:"validationFailures"`
+	Warnings              []ShipmentBillingWarning       `json:"warnings"`
+	// AutoApprove means at least one payer's item would clear the queue on
+	// its own, by the organization's deterministic rule.
+	AutoApprove bool `json:"autoApprove"`
+	PayerCount  int  `json:"payerCount"`
+	// Version is the shipment's version the decision was read at.
+	Version int64 `json:"version"`
+}
+
+// BillingTransferPlan is every requested shipment's decision, in request
+// order, with the count of each outcome.
+type BillingTransferPlan struct {
+	Decisions []BillingTransferDecision `json:"decisions"`
+	Transfer  int                       `json:"transfer"`
+	Refused   int                       `json:"refused"`
+	Returned  int                       `json:"returned"`
+}
+
+// ListBillingTransferCandidatesRequest is the transfer dialog's list with a
+// decision on each row.
+type ListBillingTransferCandidatesRequest struct {
+	Filter                      *pagination.QueryOptions
+	Status                      shipment.Status
+	MarkCompletedReadyToInvoice bool
+}
+
+type BillingTransferCandidates struct {
+	Decisions  []BillingTransferDecision `json:"decisions"`
+	TotalCount int                       `json:"totalCount"`
+	HasMore    bool                      `json:"hasMore"`
+}
+
 type ShipmentMutationObserver interface {
 	AfterShipmentUpdate(
 		ctx context.Context,
@@ -346,6 +426,25 @@ type ContractRateAccessorial struct {
 	Unit                int16                    `json:"unit"`
 }
 
+type ShipmentRatingOutcome struct {
+	Adopted       bool
+	Amount        decimal.Decimal
+	Currency      string
+	AgreementName string
+	Explanation   string
+}
+
+type ShipmentCreatePlan struct {
+	Shipment *shipment.Shipment
+	Rating   *ShipmentRatingOutcome
+}
+
+// ShipmentCancelPreview is a shipment before and after a cancellation.
+type ShipmentCancelPreview struct {
+	Before *shipment.Shipment
+	After  *shipment.Shipment
+}
+
 type ShipmentService interface {
 	List(
 		ctx context.Context,
@@ -395,6 +494,13 @@ type ShipmentService interface {
 		req *repositories.CancelShipmentRequest,
 		actor *RequestActor,
 	) (*shipment.Shipment, error)
+	// PreviewCancel checks a cancellation as Cancel does and returns the
+	// shipment before and as cancelling it would leave it, writing nothing.
+	PreviewCancel(
+		ctx context.Context,
+		req *repositories.CancelShipmentRequest,
+		actor *RequestActor,
+	) (*ShipmentCancelPreview, error)
 	// PreviewContractRate answers what the agreements would charge for a
 	// shipment that has not been saved, which is what the billing panel offers
 	// before anyone commits to it. Nothing is written.
@@ -403,6 +509,11 @@ type ShipmentService interface {
 		entity *shipment.Shipment,
 		actor *RequestActor,
 	) (*ContractRateApplication, error)
+	PreviewCreate(
+		ctx context.Context,
+		entity *shipment.Shipment,
+		actor *RequestActor,
+	) (*ShipmentCreatePlan, error)
 	// AutoRate prices a saved shipment from its contract again, overwriting its
 	// rating method, base rate and contract accessorials.
 	AutoRate(
@@ -493,4 +604,16 @@ type ShipmentService interface {
 		ctx context.Context,
 		req *ListBillingTransferCandidateIDsRequest,
 	) (*BillingTransferCandidateIDsResponse, error)
+	// PlanBillingTransfers answers, for each shipment, what BulkTransferToBilling
+	// would do to it, by the same checks and without writing anything.
+	PlanBillingTransfers(
+		ctx context.Context,
+		req *PlanBillingTransfersRequest,
+	) (*BillingTransferPlan, error)
+	// ListBillingTransferCandidates is a page of the shipments the transfer
+	// dialog offers, oldest first, each with its decision.
+	ListBillingTransferCandidates(
+		ctx context.Context,
+		req *ListBillingTransferCandidatesRequest,
+	) (*BillingTransferCandidates, error)
 }
