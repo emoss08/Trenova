@@ -132,6 +132,21 @@ Keywords: event agent, check new shipments, load entry check, duplicate shipment
 5. Under **When it runs**, **Event** is already chosen with the events the starter listens for.
 6. Turn on **Shadow mode** to watch what it would do first, then select **Save**.
 
+### Set up an agent for settlements or receivables
+Keywords: settlements agent, driver pay agent, payroll agent, carrier settlement agent, carrier invoice matching agent, receivables agent, collections agent, accounts receivable agent, dispute agent, late charges agent, share invoice agent
+1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
+2. Select **New agent**.
+3. In **Start from**, choose the settlements clerk to draft driver and carrier settlements, sort
+   out pay that is missing or held, match carrier invoices and propose each payment, or the
+   receivables assistant to apply payments and credit, handle disputes and late charges, and
+   say which overdue invoices to chase first. Both are chat agents that act as the person
+   talking to them, and anything that moves money waits for that person to approve it. The
+   settlements clerk reads each driver's pay setup but never changes it: a pay rate, a standing
+   deduction or escrow terms stay with the people who set up driver pay.
+4. Leave **Data access** at **Restricted**, since both work with amounts and pay.
+5. Select **Save**. To let the billing assistant and the receivables assistant pass work to each
+   other, add each to the other's **Can ask** list as described below.
+
 ### Let an agent hand work to another agent
 Keywords: sub-agent, delegate, deploy a sub agent, ask another agent, report builder agent, agent can't reach another agent
 1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.

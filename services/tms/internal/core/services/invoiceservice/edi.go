@@ -260,68 +260,9 @@ func (s *Service) SendEDI(
 	req *servicesports.SendInvoiceEDIRequest,
 	actor *servicesports.RequestActor,
 ) (*servicesports.InvoiceEDISendResult, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-	if actor == nil {
-		return nil, errortypes.NewValidationError(
-			"actor",
-			errortypes.ErrRequired,
-			"Actor is required",
-		)
-	}
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
-		ID:         req.InvoiceID,
-		TenantInfo: req.TenantInfo,
-	})
+	entity, _, err := s.planEDISend(ctx, req, actor)
 	if err != nil {
 		return nil, err
-	}
-	if entity.Status != invoice.StatusPosted {
-		return nil, errortypes.NewValidationError(
-			"invoiceId",
-			errortypes.ErrInvalidOperation,
-			"Only a posted invoice can be sent by EDI",
-		)
-	}
-	plans, err := s.ResolveEDISendPlans(ctx, &servicesports.ResolveInvoiceEDISendPlansRequest{
-		TenantInfo: req.TenantInfo,
-		Invoices:   []*invoice.Invoice{entity},
-	})
-	if err != nil {
-		return nil, err
-	}
-	plan := plans[entity.ID]
-	if plan == nil || !plan.Enabled || len(plan.Blockers) > 0 {
-		blocker := ediBlockerProfileDisabled
-		if plan != nil && len(plan.Blockers) > 0 {
-			blocker = plan.Blockers[0]
-		}
-		return nil, errortypes.NewValidationError(
-			"invoiceId",
-			errortypes.ErrInvalidOperation,
-			blocker,
-		)
-	}
-	if !req.Force {
-		switch entity.EDISendStatus {
-		case invoice.EDISendStatusQueued, invoice.EDISendStatusSending:
-			return nil, errortypes.NewValidationError(
-				"invoiceId",
-				errortypes.ErrInvalidOperation,
-				"An EDI send for this invoice is already in progress",
-			)
-		case invoice.EDISendStatusSent:
-			return nil, errortypes.NewValidationError(
-				"invoiceId",
-				errortypes.ErrInvalidOperation,
-				"This invoice has already been sent by EDI; resend it with force",
-			)
-		}
 	}
 
 	return s.startEDISendWorkflow(ctx, entity, req.TenantInfo, actor, req.Force)

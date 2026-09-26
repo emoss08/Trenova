@@ -110,6 +110,48 @@ func (e *Engine) Execute(ctx context.Context, opts ExecuteOptions) (*ExecutionRe
 	return e.executeSeeds(ctx, toApply, skipped, opts)
 }
 
+func (e *Engine) Reconcile(
+	ctx context.Context,
+	env common.Environment,
+) (*ExecutionReport, error) {
+	if err := e.tracker.Initialize(ctx); err != nil {
+		return nil, fmt.Errorf("failed to initialize tracker: %w", err)
+	}
+
+	seeds, err := e.reconcilable(ctx, env)
+	if err != nil {
+		return nil, err
+	}
+	if len(seeds) == 0 {
+		return &ExecutionReport{}, nil
+	}
+
+	return e.executeSeeds(ctx, seeds, nil, ExecuteOptions{Environment: env})
+}
+
+func (e *Engine) reconcilable(ctx context.Context, env common.Environment) ([]Seed, error) {
+	ordered, err := e.registry.GetExecutionOrder(env, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get execution order: %w", err)
+	}
+
+	seeds := make([]Seed, 0, len(ordered))
+	for _, seed := range ordered {
+		if !isRepeatable(seed) {
+			continue
+		}
+		applied, err := e.tracker.IsApplied(ctx, seed, env)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check seed status for %s: %w", seed.Name(), err)
+		}
+		if applied {
+			seeds = append(seeds, seed)
+		}
+	}
+
+	return seeds, nil
+}
+
 func (e *Engine) executeSeeds(
 	ctx context.Context,
 	seeds []Seed,

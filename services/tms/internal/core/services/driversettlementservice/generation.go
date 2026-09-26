@@ -57,19 +57,9 @@ func (s *Service) GenerateBatch(
 	}
 
 	now := timeutils.NowUnix()
-	bounds := PeriodBounds{PeriodStart: req.PeriodStart, PeriodEnd: req.PeriodEnd}
-	if bounds.PeriodStart == 0 || bounds.PeriodEnd == 0 {
-		bounds = ResolveCurrentPeriod(control, now)
-	} else {
-		bounds.PayDate = time.Unix(bounds.PeriodEnd, 0).UTC().
-			AddDate(0, 0, control.PayDelayDays).Unix()
-	}
-	if bounds.PeriodEnd <= bounds.PeriodStart {
-		return nil, errortypes.NewValidationError(
-			"periodEnd",
-			errortypes.ErrInvalid,
-			"Period end must be after the period start",
-		)
+	bounds, err := ResolveBatchBounds(control, req.PeriodStart, req.PeriodEnd, now)
+	if err != nil {
+		return nil, err
 	}
 
 	batch, err := s.resolveOpenBatch(ctx, req, bounds, actor, now)
@@ -128,23 +118,11 @@ func (s *Service) resolveOpenBatch(
 	actor *serviceports.RequestActor,
 	now int64,
 ) (*driversettlement.SettlementBatch, error) {
-	existing, err := s.batchRepo.GetForPeriod(
-		ctx,
-		req.TenantInfo,
-		bounds.PeriodStart,
-		bounds.PeriodEnd,
-	)
+	existing, err := s.openBatchForPeriod(ctx, req.TenantInfo, bounds)
 	if err != nil {
 		return nil, err
 	}
 	if existing != nil {
-		if existing.Status != driversettlement.BatchStatusOpen {
-			return nil, errortypes.NewValidationError(
-				"periodEnd",
-				errortypes.ErrInvalidOperation,
-				"The batch for this pay period is already completed; generate individual settlements for late accruals instead",
-			)
-		}
 		return existing, nil
 	}
 
@@ -190,11 +168,7 @@ func (s *Service) GenerateOffCycle(
 			return nil, err
 		}
 		if batch.Status != driversettlement.BatchStatusOpen {
-			return nil, errortypes.NewValidationError(
-				"batchId",
-				errortypes.ErrInvalidOperation,
-				"Settlements can only be added to an open batch",
-			)
+			return nil, errBatchNotOpen()
 		}
 	}
 
@@ -225,7 +199,8 @@ type GenerateForWorkerRequest struct {
 
 	// PayEventIDs restricts the settlement to an explicit set of the worker's
 	// accrued events instead of everything accrued through PeriodEnd.
-	PayEventIDs []pulid.ID
+	PayEventIDs  []pulid.ID
+	ReleasedFrom pulid.ID
 	// SkipRecurring leaves out period-cycle items — recurring earnings and
 	// deductions, advance recovery, guarantee top-up, carry-forward, and
 	// variance checks — so an instant payout only covers the selected loads.
@@ -240,20 +215,12 @@ func (s *Service) GenerateForWorker(
 	if err := requireActor(actor, "Settlement generation"); err != nil {
 		return nil, err
 	}
-	if len(req.PayEventIDs) == 0 {
-		exists, existsErr := s.settlementRepo.ExistsForWorkerPeriod(
-			ctx,
-			req.TenantInfo,
-			req.WorkerID,
-			req.PeriodStart,
-			req.PeriodEnd,
-		)
-		if existsErr != nil {
-			return nil, existsErr
-		}
-		if exists {
-			return nil, nil //nolint:nilnil // nil settlement means this worker period is already settled
-		}
+	exists, err := s.periodAlreadySettled(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, nil //nolint:nilnil // nil settlement means this worker period is already settled
 	}
 
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
@@ -354,10 +321,11 @@ func (s *Service) buildSettlement(
 	events, err := s.payEventRepo.ListAccruedForWorker(
 		ctx,
 		&repositories.ListAccruedPayEventsRequest{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   req.WorkerID,
-			PeriodEnd:  req.PeriodEnd,
-			EventIDs:   req.PayEventIDs,
+			TenantInfo:   req.TenantInfo,
+			WorkerID:     req.WorkerID,
+			PeriodEnd:    req.PeriodEnd,
+			EventIDs:     req.PayEventIDs,
+			ReleasedFrom: req.ReleasedFrom,
 		},
 	)
 	if err != nil {

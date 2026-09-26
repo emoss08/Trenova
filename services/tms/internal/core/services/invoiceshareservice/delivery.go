@@ -176,25 +176,7 @@ func (s *Service) sendEmail(ctx context.Context, p *emailParams) bool {
 		return false
 	}
 
-	rendered, err := s.templates.RenderMessage(ctx, &servicesports.RenderMessageRequest{
-		TenantInfo: p.tenantInfo,
-		Kind:       documenttemplate.KindInvoiceShareEmail,
-		Data: &documenttemplate.InvoiceShareEmailContext{
-			RecipientFirstName: stringutils.FirstName(p.recipient.Name),
-			SharedByName:       p.delivery.sharer.Name,
-			InvoiceNumber:      p.delivery.invoice.Number,
-			CustomerName:       p.delivery.invoice.BillToName,
-			Note:               p.delivery.note,
-			InvoiceURL: template.URL(
-				p.invoiceURL,
-			), //nolint:gosec // configured base URL + server-encoded path
-			CompanyName: p.companyName,
-		},
-		ReferenceID:       p.delivery.invoice.ID,
-		UserID:            p.recipient.ID,
-		FallbackToBuiltIn: true,
-		Locale:            recipientLocale(p.recipient),
-	})
+	rendered, err := s.renderShareEmail(ctx, p)
 	if err != nil {
 		log.Warn("failed to render invoice share email", zap.Error(err))
 		return false
@@ -215,6 +197,31 @@ func (s *Service) sendEmail(ctx context.Context, p *emailParams) bool {
 	}
 
 	return true
+}
+
+func (s *Service) renderShareEmail(
+	ctx context.Context,
+	p *emailParams,
+) (*servicesports.RenderedMessage, error) {
+	//nolint:gosec // G203: a configured base URL joined to a server-encoded path
+	invoiceURL := template.URL(p.invoiceURL)
+	return s.templates.RenderMessage(ctx, &servicesports.RenderMessageRequest{
+		TenantInfo: p.tenantInfo,
+		Kind:       documenttemplate.KindInvoiceShareEmail,
+		Data: &documenttemplate.InvoiceShareEmailContext{
+			RecipientFirstName: stringutils.FirstName(p.recipient.Name),
+			SharedByName:       p.delivery.sharer.Name,
+			InvoiceNumber:      p.delivery.invoice.Number,
+			CustomerName:       p.delivery.invoice.BillToName,
+			Note:               p.delivery.note,
+			InvoiceURL:         invoiceURL,
+			CompanyName:        p.companyName,
+		},
+		ReferenceID:       p.delivery.invoice.ID,
+		UserID:            p.recipient.ID,
+		FallbackToBuiltIn: true,
+		Locale:            recipientLocale(p.recipient),
+	})
 }
 
 func recipientLocale(user *tenant.User) i18n.Locale {

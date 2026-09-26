@@ -48,6 +48,7 @@ type LateChargeAssessmentResult struct {
 	AsOfDate         int64                           `json:"asOfDate"`
 	Preview          bool                            `json:"preview"`
 	Mode             tenant.LateChargeAssessmentMode `json:"mode"`
+	AutoPost         bool                            `json:"autoPost"`
 	Customers        []*LateChargeCustomerResult     `json:"customers"`
 	MemosCreated     int                             `json:"memosCreated"`
 	MemosPosted      int                             `json:"memosPosted"`
@@ -57,6 +58,11 @@ type LateChargeAssessmentResult struct {
 
 type LateChargeService interface {
 	Assess(
+		ctx context.Context,
+		req *LateChargeAssessmentRequest,
+		actor *RequestActor,
+	) (*LateChargeAssessmentResult, error)
+	PlanAssess(
 		ctx context.Context,
 		req *LateChargeAssessmentRequest,
 		actor *RequestActor,

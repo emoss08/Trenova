@@ -45,17 +45,10 @@ func (s *Service) IssueAdvance(
 	if err := requireActor(actor, "Pay advance issuance"); err != nil {
 		return nil, err
 	}
-	entity.Status = driverpay.AdvanceStatusOutstanding
-	entity.RecoveredMinor = 0
-	entity.WrittenOffMinor = 0
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
+	if err := PlanIssueAdvance(entity, actor.UserID); err != nil {
+		return nil, err
 	}
 
-	entity.CreatedByID = actor.UserID
 	created, err := s.advanceRepo.Create(ctx, entity)
 	if err != nil {
 		return nil, err
@@ -132,22 +125,10 @@ func (s *Service) WriteOffAdvance(
 	if err != nil {
 		return nil, err
 	}
-	outstanding := entity.OutstandingMinor()
-	if outstanding <= 0 {
-		return nil, errortypes.NewValidationError(
-			"advanceId",
-			errortypes.ErrInvalidOperation,
-			"Advance has no outstanding balance to write off",
-		)
-	}
-
 	previous := *entity
-	now := timeutils.NowUnix()
-	entity.WrittenOffMinor += outstanding
-	entity.WriteOffReason = reason
-	entity.WrittenOffByID = actor.UserID
-	entity.WrittenOffAt = &now
-	entity.SyncStatus()
+	if err = PlanWriteOffAdvance(entity, reason, actor.UserID, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 
 	updated, err := s.advanceRepo.Update(ctx, entity)
 	if err != nil {

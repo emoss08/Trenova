@@ -58,6 +58,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/location"
@@ -4157,6 +4158,17 @@ type JobPositionInput struct {
 	Status              *domaintypes.Status  `json:"status,omitempty"`
 }
 
+type JournalEntryConnection struct {
+	Edges      []*JournalEntryEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type JournalEntryEdge struct {
+	Node   *journalentry.JournalEntry `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
 type JournalEntryLineAccount struct {
 	ID          string `json:"id"`
 	AccountCode string `json:"accountCode"`
@@ -4172,6 +4184,10 @@ type JournalReversalConnection struct {
 type JournalReversalEdge struct {
 	Node   *journalreversal.Reversal `json:"node"`
 	Cursor string                    `json:"cursor"`
+}
+
+type JournalReviewInput struct {
+	EntryIds []string `json:"entryIds"`
 }
 
 // Started tells whether a backfill workflow was launched; on a dry run it is false

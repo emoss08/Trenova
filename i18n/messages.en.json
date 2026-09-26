@@ -2559,6 +2559,15 @@
       "routes/billing-control"
     ]
   },
+  "A customer's balance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A customized home screen needs a layout": {
     "sites": 1,
     "scope": [
@@ -2683,6 +2692,15 @@
     ],
     "areas": [
       "service/carriersettlementservice"
+    ]
+  },
+  "A default cash account must be configured before recording driver settlement payments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/driversettlementservice"
     ]
   },
   "A delegate call requires the run or turn that made it": {
@@ -4916,7 +4934,7 @@
     ]
   },
   "A rejection reason is required": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -6595,7 +6613,7 @@
     ]
   },
   "A void reason is required": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -6761,7 +6779,7 @@
     ]
   },
   "A write-off reason is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -8645,7 +8663,7 @@
     ]
   },
   "Accounting date": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -8653,6 +8671,7 @@
       "apps/web/lib",
       "routes/customer-payments",
       "routes/invoice",
+      "routes/journal-review",
       "routes/manual-journal"
     ]
   },
@@ -8935,6 +8954,15 @@
     ],
     "areas": [
       "routes/carrier-settlement-workspace"
+    ]
+  },
+  "Accrued earnings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Accrued pay not yet on a settlement — attach it, or hold it for a later period.": {
@@ -12468,6 +12496,15 @@
       "routes/invoice-reconciliation"
     ]
   },
+  "Adjustment kind is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceadjustmentservice"
+    ]
+  },
   "Adjustment kind is required": {
     "sites": 1,
     "scope": [
@@ -12613,6 +12650,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Advance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Advance amount must be greater than zero": {
@@ -15031,7 +15077,7 @@
     ]
   },
   "Amount": {
-    "sites": 43,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -15053,6 +15099,7 @@
       "routes/fuel-purchase",
       "routes/invoice",
       "routes/invoice-reconciliation",
+      "routes/journal-review",
       "routes/order",
       "routes/pay-advance",
       "routes/rate-agreement",
@@ -17759,8 +17806,9 @@
     ]
   },
   "Applied": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -17769,7 +17817,8 @@
       "routes/admin",
       "routes/ar-open-items",
       "routes/customer-payments",
-      "routes/invoice"
+      "routes/invoice",
+      "service/agenttoolservice"
     ]
   },
   "Applied after guardrails; production, preview, and scenarios all round the same way": {
@@ -18368,6 +18417,15 @@
       "routes/agent-control"
     ]
   },
+  "Appointment Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "Appointment missed": {
     "sites": 1,
     "scope": [
@@ -18532,7 +18590,7 @@
     ]
   },
   "Approve": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -18549,6 +18607,7 @@
       "routes/invoice",
       "routes/invoice-approval",
       "routes/journal-reversal",
+      "routes/journal-review",
       "routes/manual-journal",
       "routes/rate-agreement",
       "routes/scheduling",
@@ -18722,6 +18781,15 @@
     ]
   },
   "Approve invoices": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Approve journal entries awaiting review and post them to the general ledger": {
     "sites": 1,
     "scope": [
       "go"
@@ -19088,6 +19156,15 @@
       "routes/formula-template"
     ]
   },
+  "Approving and posting journal entries needs a signed-in person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
+    ]
+  },
   "Approving user is required": {
     "sites": 1,
     "scope": [
@@ -19098,7 +19175,7 @@
     ]
   },
   "Approving...": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -19106,6 +19183,7 @@
       "routes/edi",
       "routes/formula-template",
       "routes/journal-reversal",
+      "routes/journal-review",
       "routes/rate-agreement",
       "routes/worker"
     ]
@@ -23591,13 +23669,15 @@
     ]
   },
   "Awaiting approval": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "packages/shared/lib",
+      "routes/journal-review",
       "routes/time-attendance"
     ]
   },
@@ -23777,13 +23857,14 @@
     ]
   },
   "BOL": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/aicorrection",
       "domain/documenttemplate",
       "routes/admin",
       "routes/billing-queue",
@@ -24243,8 +24324,9 @@
     ]
   },
   "Balance": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -24252,7 +24334,8 @@
       "routes/customer-ledger",
       "routes/customer-statement",
       "routes/escrow-account",
-      "routes/worker"
+      "routes/worker",
+      "service/agenttoolservice"
     ]
   },
   "Balance Due": {
@@ -24570,6 +24653,15 @@
     ],
     "areas": [
       "service/formula"
+    ]
+  },
+  "Banknote": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Bar": {
@@ -25406,12 +25498,13 @@
     ]
   },
   "Bill To": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "domain/aicorrection",
       "routes/billing-queue",
       "routes/carrier-invoice-matching",
       "routes/invoice-register",
@@ -30158,6 +30251,15 @@
       "template/rateconfirmation.pdf"
     ]
   },
+  "Carrier Contact": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "Carrier Equipment": {
     "sites": 1,
     "scope": [
@@ -30165,6 +30267,15 @@
     ],
     "areas": [
       "template/rateconfirmation.pdf"
+    ]
+  },
+  "Carrier Name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Carrier acceptance — signature and date": {
@@ -30537,6 +30648,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Carrier invoice match decision is invalid": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
+    ]
+  },
   "Carrier invoice matching": {
     "sites": 1,
     "scope": [
@@ -30553,6 +30673,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Carrier invoice variances": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a variance.": {
@@ -30793,6 +30922,15 @@
       "apps/web/hooks"
     ]
   },
+  "Carrier settlement action is invalid": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
+    ]
+  },
   "Carrier settlement batch": {
     "sites": 1,
     "scope": [
@@ -30849,7 +30987,7 @@
     ]
   },
   "Carrier settlement paid": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -30877,22 +31015,13 @@
     ]
   },
   "Carrier settlement posted": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
       "apps/web/lib"
-    ]
-  },
-  "Carrier settlement posting date must fall within a fiscal period": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/carriersettlementservice"
     ]
   },
   "Carrier settlement statements, batches, and cost events": {
@@ -30905,7 +31034,7 @@
     ]
   },
   "Carrier settlement voided": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -32500,6 +32629,15 @@
       "routes/admin"
     ]
   },
+  "Changing a dispute requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoicedisputeservice"
+    ]
+  },
   "Changing an axis after rates exist changes what every existing cell means. Re-upload the grid after any change here.": {
     "sites": 1,
     "scope": [
@@ -32597,6 +32735,15 @@
     ],
     "areas": [
       "service/agentaccessservice"
+    ]
+  },
+  "Changing who the invoice is emailed to is a proposal a person decides; any other change runs once a person approves it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Channel": {
@@ -33791,6 +33938,15 @@
       "routes/agent-control"
     ]
   },
+  "Choose at least one journal entry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
+    ]
+  },
   "Choose at least one measure to plot": {
     "sites": 1,
     "scope": [
@@ -33843,6 +33999,15 @@
     ],
     "areas": [
       "service/workertrainingservice"
+    ]
+  },
+  "Choose at most {0} journal entries at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
     ]
   },
   "Choose column": {
@@ -36810,6 +36975,15 @@
       "routes/pay-code"
     ]
   },
+  "Coins": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Cold storage": {
     "sites": 1,
     "scope": [
@@ -37527,12 +37701,13 @@
     ]
   },
   "Commodity": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "domain/aicorrection",
       "go/other",
       "routes/commodity",
       "routes/reports",
@@ -40005,13 +40180,14 @@
     ]
   },
   "Consignee": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/aicorrection",
       "go/other",
       "template/invoice.pdf"
     ]
@@ -40309,6 +40485,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Container Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Contains": {
@@ -45073,7 +45258,7 @@
     ]
   },
   "Credit memo posted": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -45208,6 +45393,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Credited": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Credited to": {
@@ -46499,13 +46693,13 @@
       "apps/web/hooks"
     ]
   },
-  "Customer payment application requires an authenticated user": {
+  "Customer payment applied": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "service/customerpaymentservice"
+      "apps/web/hooks"
     ]
   },
   "Customer payment currency must match the tenant functional currency": {
@@ -46536,11 +46730,12 @@
     ]
   },
   "Customer payment posted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -46562,13 +46757,13 @@
       "service/customerpaymentservice"
     ]
   },
-  "Customer payment reversal requires an authenticated user": {
+  "Customer payment reversed": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "service/customerpaymentservice"
+      "apps/web/hooks"
     ]
   },
   "Customer payments": {
@@ -46598,6 +46793,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Customer short pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Customer statement": {
@@ -48624,7 +48828,7 @@
     ]
   },
   "Debit": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -48667,7 +48871,7 @@
     ]
   },
   "Debit memo posted": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -51086,6 +51290,15 @@
       "routes/admin"
     ]
   },
+  "Delete rule sets and fixtures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Delete scenario": {
     "sites": 1,
     "scope": [
@@ -51407,20 +51620,31 @@
     ]
   },
   "Delivery Date": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "service/invoiceservice"
     ]
   },
-  "Delivery Window": {
+  "Delivery Number": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection"
+    ]
+  },
+  "Delivery Window": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection",
       "go/other"
     ]
   },
@@ -52048,7 +52272,7 @@
     ]
   },
   "Description": {
-    "sites": 142,
+    "sites": 144,
     "scope": [
       "go",
       "ts"
@@ -52081,6 +52305,7 @@
       "routes/invoice",
       "routes/invoice-approval",
       "routes/invoice-reconciliation",
+      "routes/journal-review",
       "routes/location-category",
       "routes/manual-journal",
       "routes/order",
@@ -54569,8 +54794,9 @@
     ]
   },
   "Disputed": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
@@ -54578,7 +54804,8 @@
       "routes/accounting-dashboard",
       "routes/ar-open-items",
       "routes/invoice-register",
-      "routes/shipment"
+      "routes/shipment",
+      "service/agenttoolservice"
     ]
   },
   "Disputed amount": {
@@ -55327,7 +55554,7 @@
     ]
   },
   "Document": {
-    "sites": 25,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -55341,6 +55568,7 @@
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/customer-statement",
+      "routes/journal-review",
       "routes/shipment",
       "routes/worker",
       "routes/worker-credential-type",
@@ -57556,6 +57784,33 @@
       "apps/web/config"
     ]
   },
+  "Driver settlement has no posted payable account; it cannot be paid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/driversettlementservice"
+    ]
+  },
+  "Driver settlement paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Driver settlement posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Driver settlement posting": {
     "sites": 1,
     "scope": [
@@ -57563,6 +57818,15 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Driver settlement voided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Driver type": {
@@ -59825,6 +60089,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Each time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.": {
@@ -63420,11 +63693,12 @@
     ]
   },
   "Entry": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/journal-review",
       "routes/worker"
     ]
   },
@@ -63641,11 +63915,12 @@
     ]
   },
   "Equipment Type": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "go/other"
     ]
   },
@@ -64065,6 +64340,15 @@
     ],
     "areas": [
       "routes/settlement-control"
+    ]
+  },
+  "Escrow interest accrued": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Escrow interest must accrue at least quarterly (1 to 3 months) per 49 CFR 376.12(k)": {
@@ -65269,6 +65553,15 @@
     ],
     "areas": [
       "routes/accounting-mapping"
+    ]
+  },
+  "Every line of the {0} journal needs an account and one positive side": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalposting"
     ]
   },
   "Every line was rebuilt from the miles, fuel and rates on file now.": {
@@ -66690,12 +66983,14 @@
     ]
   },
   "Expected": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "service/agenttoolservice"
     ]
   },
   "Expected DOT": {
@@ -74970,6 +75265,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Fuel Surcharge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "Fuel billing": {
     "sites": 1,
     "scope": [
@@ -82517,13 +82821,14 @@
     ]
   },
   "Inbox": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "routes/agent-control",
       "routes/carrier-monitoring",
       "routes/inbox"
     ]
@@ -85413,7 +85718,7 @@
     ]
   },
   "Invoice EDI delivery requires workflow processing to be enabled": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -85995,7 +86300,7 @@
     ]
   },
   "Invoice posted": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -86005,24 +86310,6 @@
     ]
   },
   "Invoice posted with reconciliation warning": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoiceservice"
-    ]
-  },
-  "Invoice posting cannot create ledger output in a closed period; reopen the period first": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoiceservice"
-    ]
-  },
-  "Invoice posting cannot create ledger output in an inactive fiscal period": {
     "sites": 1,
     "scope": [
       "go"
@@ -86073,6 +86360,7 @@
       "go"
     ],
     "areas": [
+      "service/invoiceledger",
       "service/invoiceservice"
     ]
   },
@@ -86294,6 +86582,15 @@
     ],
     "areas": [
       "service/customerpaymentservice"
+    ]
+  },
+  "Invoice write-off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Invoice {0}": {
@@ -87298,6 +87595,15 @@
       "routes/agent-control"
     ]
   },
+  "Its note is what accounts payable reads about the carrier's invoice, so a run that has read outside text proposes it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it.": {
     "sites": 1,
     "scope": [
@@ -87323,6 +87629,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Its worst-rated answers": {
@@ -87445,11 +87760,13 @@
     ]
   },
   "Journal entry": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
+      "apps/web/hooks",
       "routes/journal-entry"
     ]
   },
@@ -87469,6 +87786,51 @@
     ],
     "areas": [
       "service/journalreversalservice"
+    ]
+  },
+  "Journal entry {0} does not balance and cannot be posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
+  "Journal entry {0} is already posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
+  "Journal entry {0} is in an unknown state": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
+  "Journal entry {0} is {1} and cannot be posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
+  "Journal entry {0} needs approval before it can be posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
     ]
   },
   "Journal policy": {
@@ -87606,6 +87968,43 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Journals from invoices, payments, adjustments and settlements wait here until someone approves and posts them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
+  "Journals from invoices, payments, adjustments and settlements wait here until someone posts them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
+  "Journals now post on their own. These were written while posting was manual and still need a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
+  "Journals to post": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/journal-review"
     ]
   },
   "Judge": {
@@ -89815,12 +90214,14 @@
     ]
   },
   "Late charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/invoice"
+      "routes/invoice",
+      "service/agenttoolservice"
     ]
   },
   "Late charge assessment is disabled for this organization. You can still preview here; enable it in billing control to raise memos.": {
@@ -92286,6 +92687,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Load Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Load acceptance": {
@@ -95294,24 +95704,6 @@
     ]
   },
   "Manual journal cannot be cancelled from its current status": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/manualjournalservice"
-    ]
-  },
-  "Manual journal cannot be posted to a closed period; reopen the period first": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/manualjournalservice"
-    ]
-  },
-  "Manual journal cannot be posted to an inactive fiscal period": {
     "sites": 1,
     "scope": [
       "go"
@@ -101910,6 +102302,15 @@
       "service/invoicedisputeservice"
     ]
   },
+  "Name the invoice for a new draft, or the draft to change": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceadjustmentservice"
+    ]
+  },
   "Name the mapping by its id, or by its target type with a record or key": {
     "sites": 1,
     "scope": [
@@ -102938,6 +103339,15 @@
       "apps/web/config"
     ]
   },
+  "New carrier settlement": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "New commodity": {
     "sites": 1,
     "scope": [
@@ -103155,6 +103565,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "New escrow account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "New evaluation case": {
@@ -103430,6 +103849,15 @@
     ],
     "areas": [
       "service/userservice"
+    ]
+  },
+  "New pay advance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "New payload hash cannot be longer than 128 characters": {
@@ -106085,12 +106513,21 @@
     ]
   },
   "No fiscal period covers the invoice posting date": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "No fiscal period covers the {0} date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalposting"
     ]
   },
   "No fiscal periods found for this fiscal year.": {
@@ -106871,24 +107308,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "No next open fiscal period is available for invoice ledger posting": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoiceservice"
-    ]
-  },
-  "No next open fiscal period is available for manual journal posting": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/manualjournalservice"
     ]
   },
   "No next open fiscal period is available for reversal posting": {
@@ -109212,6 +109631,24 @@
       "service/carrierintelservice"
     ]
   },
+  "None of the selected entries is approved yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
+  "None of the selected entries is awaiting approval.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "None of the selected files can be reprocessed": {
     "sites": 1,
     "scope": [
@@ -109264,6 +109701,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "None of the {0} selected could be changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "None of these rows are carriers": {
@@ -112920,6 +113366,15 @@
       "routes/edi"
     ]
   },
+  "Oldest waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "Oldest {0}": {
     "sites": 1,
     "scope": [
@@ -113653,7 +114108,7 @@
     ]
   },
   "One shipment is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -114478,6 +114933,15 @@
       "packages/shared/types"
     ]
   },
+  "Only an adjustment pending approval can be approved or rejected; this one is {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceadjustmentservice"
+    ]
+  },
   "Only an agent people talk to can hand work to other agents": {
     "sites": 1,
     "scope": [
@@ -114548,24 +115012,6 @@
     ],
     "areas": [
       "domain/worker"
-    ]
-  },
-  "Only an open dispute can be resolved": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoicedisputeservice"
-    ]
-  },
-  "Only an open dispute can be withdrawn": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoicedisputeservice"
     ]
   },
   "Only applies when negative balances are allowed": {
@@ -114712,8 +115158,17 @@
       "service/invoiceadjustmentservice"
     ]
   },
-  "Only draft adjustments may be updated": {
+  "Only draft adjustments may be submitted; this one is {0}": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "Only draft adjustments may be updated": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -114758,7 +115213,7 @@
     ]
   },
   "Only draft or pending carrier settlements can be adjusted": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -114767,7 +115222,7 @@
     ]
   },
   "Only draft or pending settlements can be adjusted": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -120509,6 +120964,15 @@
       "apps/web/components"
     ]
   },
+  "PO Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "PO based": {
     "sites": 1,
     "scope": [
@@ -122871,24 +123335,6 @@
       "routes/driver-pay-event"
     ]
   },
-  "Pay events can only be added to draft settlements": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/driversettlementservice"
-    ]
-  },
-  "Pay events can only be removed from draft settlements": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/driversettlementservice"
-    ]
-  },
   "Pay events deliberately deferred — they skip generation until released.": {
     "sites": 1,
     "scope": [
@@ -123191,11 +123637,12 @@
     ]
   },
   "Payment Terms": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "service/invoiceservice"
     ]
   },
@@ -123307,7 +123754,7 @@
     ]
   },
   "Payment method is required": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -124612,7 +125059,7 @@
     ]
   },
   "Period end must be after the period start": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -124620,8 +125067,7 @@
       "domain/carriersettlement",
       "domain/driversettlement",
       "domain/invoicerun",
-      "service/carriersettlementservice",
-      "service/driversettlementservice"
+      "service/settlementshared"
     ]
   },
   "Period end must not precede its start": {
@@ -125900,20 +126346,31 @@
     ]
   },
   "Pickup Date": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "service/invoiceservice"
     ]
   },
-  "Pickup Window": {
+  "Pickup Number": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection"
+    ]
+  },
+  "Pickup Window": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection",
       "go/other"
     ]
   },
@@ -127783,6 +128240,15 @@
       "routes/manual-journal"
     ]
   },
+  "Post to ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "Post to next open": {
     "sites": 1,
     "scope": [
@@ -128052,12 +128518,13 @@
     ]
   },
   "Posting...": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/journal-reversal",
+      "routes/journal-review",
       "routes/worker"
     ]
   },
@@ -129768,11 +130235,12 @@
     ]
   },
   "Pro Number": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "domain/documenttemplate"
     ]
   },
@@ -133209,13 +133677,14 @@
     ]
   },
   "Rate": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "domain/aicorrection",
       "go/other",
       "packages/shared/lib",
       "routes/accessorial-charge",
@@ -135358,6 +135827,16 @@
       "routes/billing-queue"
     ]
   },
+  "Ready to post": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/journal-review"
+    ]
+  },
   "Ready to review": {
     "sites": 1,
     "scope": [
@@ -136036,6 +136515,15 @@
       "routes/invoice"
     ]
   },
+  "Rebill strategy is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceadjustmentservice"
+    ]
+  },
   "Rebill total": {
     "sites": 1,
     "scope": [
@@ -136046,12 +136534,14 @@
     ]
   },
   "Rebilled": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "service/agenttoolservice"
     ]
   },
   "Rebuild every line from the miles, fuel and rates on file now.": {
@@ -136228,6 +136718,15 @@
     ],
     "areas": [
       "routes/ar-aging"
+    ]
+  },
+  "Receivables assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Receivables data is unavailable.": {
@@ -138546,11 +139045,12 @@
     ]
   },
   "Reference Number": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "go/other"
     ]
   },
@@ -141876,7 +142376,7 @@
     ]
   },
   "Request and actor are required": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -141984,7 +142484,7 @@
     ]
   },
   "Request is required": {
-    "sites": 39,
+    "sites": 45,
     "scope": [
       "go"
     ],
@@ -141995,6 +142495,7 @@
       "service/bankreceiptservice",
       "service/billingqueueservice",
       "service/customerpaymentservice",
+      "service/invoiceadjustmentservice",
       "service/invoicedisputeservice",
       "service/invoicerunservice",
       "service/invoiceservice",
@@ -144414,6 +144915,15 @@
       "routes/agent-control"
     ]
   },
+  "Retire a rate agreement so it no longer prices shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Retire a template version": {
     "sites": 1,
     "scope": [
@@ -144498,7 +145008,7 @@
     ]
   },
   "Retry": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -144514,6 +145024,7 @@
       "routes/formula-template",
       "routes/fuel-purchase",
       "routes/ifta-return",
+      "routes/journal-review",
       "routes/shipment"
     ]
   },
@@ -148571,11 +149082,12 @@
     ]
   },
   "SCAC": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "service/invoiceservice"
     ]
   },
@@ -155293,6 +155805,15 @@
       "apps/web/components"
     ]
   },
+  "Send a draft rate agreement for approval": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Send a message to a driver": {
     "sites": 1,
     "scope": [
@@ -156604,6 +157125,15 @@
       "domain/sidebarpreference"
     ]
   },
+  "Service Type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "Service date": {
     "sites": 1,
     "scope": [
@@ -157532,6 +158062,15 @@
       "routes/driver-settlement"
     ]
   },
+  "Settlement action is invalid": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/driversettlementservice"
+    ]
+  },
   "Settlement batch": {
     "sites": 1,
     "scope": [
@@ -157691,15 +158230,6 @@
       "domain/permission"
     ]
   },
-  "Settlement posting date must fall within a fiscal period": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/driversettlementservice"
-    ]
-  },
   "Settlement statements are always visible to drivers — these toggles only control per-load pay detail shown before settlement.": {
     "sites": 1,
     "scope": [
@@ -157828,6 +158358,15 @@
       "service/driversettlementservice"
     ]
   },
+  "Settlements clerk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Settlements cover one month, ending on the configured weekday.": {
     "sites": 1,
     "scope": [
@@ -157916,6 +158455,15 @@
     ],
     "areas": [
       "routes/carrier-settlement-workspace"
+    ]
+  },
+  "Settlements with exceptions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Settlements without exceptions skip manual review and go straight to approved.": {
@@ -159539,7 +160087,7 @@
     ]
   },
   "Shipment must be completed or ready to invoice": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -159984,13 +160532,14 @@
     ]
   },
   "Shipper": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/aicorrection",
       "go/other",
       "routes/invoice-register",
       "template/invoice.pdf"
@@ -162393,7 +162942,7 @@
     ]
   },
   "Source": {
-    "sites": 35,
+    "sites": 37,
     "scope": [
       "ts"
     ],
@@ -162409,6 +162958,7 @@
       "routes/fuel-purchase",
       "routes/ifta-jurisdiction-mileage",
       "routes/ifta-tax-rate",
+      "routes/journal-review",
       "routes/jurisdiction-rule",
       "routes/pay-advance",
       "routes/service-failure",
@@ -164608,7 +165158,7 @@
     ]
   },
   "Status": {
-    "sites": 257,
+    "sites": 259,
     "scope": [
       "go",
       "ts"
@@ -164659,6 +165209,7 @@
       "routes/invoice-reconciliation",
       "routes/invoice-register",
       "routes/journal-reversal",
+      "routes/journal-review",
       "routes/jurisdiction-rule",
       "routes/location",
       "routes/manual-journal",
@@ -165170,6 +165721,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Still owed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Still stuck?": {
@@ -167872,14 +168432,16 @@
     ]
   },
   "Target": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/edi",
       "routes/escrow-account",
-      "routes/reports"
+      "routes/reports",
+      "service/agenttoolservice"
     ]
   },
   "Target EDI partner does not have an active internal communication profile": {
@@ -173419,6 +173981,15 @@
       "routes/worker"
     ]
   },
+  "The driver settlement already has a payment journal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The driver who normally carries this card.": {
     "sites": 1,
     "scope": [
@@ -174954,6 +175525,15 @@
       "routes/worker"
     ]
   },
+  "The journal review queue could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "The jurisdiction is the state or province the pump stands in, which is what the return credits. A chain's billing address or the state on the receipt header can be somewhere else entirely, so read the location line, not the vendor line.": {
     "sites": 1,
     "scope": [
@@ -176143,6 +176723,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The organization and business unit are required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
     ]
   },
   "The organization default policy cannot target a customer, facility, or type": {
@@ -177379,6 +177968,15 @@
     ],
     "areas": [
       "routes/escrow-account"
+    ]
+  },
+  "The repair needs a user to record as the author of the journals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalrepairservice"
     ]
   },
   "The repeating working patterns a roster is built from": {
@@ -179853,6 +180451,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "The {0} journal does not balance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalposting"
     ]
   },
   "The {0} protocol has no embedding endpoint": {
@@ -183511,7 +184118,7 @@
     ]
   },
   "This statement has no shipments on it yet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -186745,6 +187352,15 @@
       "go/other"
     ]
   },
+  "Tractor Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "Tractor cost per mile": {
     "sites": 1,
     "scope": [
@@ -186967,6 +187583,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Trailer Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Trailer continuity": {
@@ -189480,11 +190105,12 @@
     ]
   },
   "Unapplied cash": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/accounting-dashboard",
       "routes/customer-ledger",
       "routes/customer-payments"
@@ -189545,15 +190171,6 @@
     ]
   },
   "Unapply the customer payments and credit memos on this invoice before voiding it": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoiceservice"
-    ]
-  },
-  "Unapply this credit memo from the invoices it settles before voiding it": {
     "sites": 1,
     "scope": [
       "go"
@@ -193546,14 +194163,25 @@
     ]
   },
   "Variance": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/components",
-      "routes/carrier-invoice-matching"
+      "routes/carrier-invoice-matching",
+      "service/agenttoolservice"
+    ]
+  },
+  "Variance adjustment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Variance lookback weeks must be between 1 and 52": {
@@ -200877,6 +201505,15 @@
       "routes/review-template"
     ]
   },
+  "Who to chase today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Who to show": {
     "sites": 2,
     "scope": [
@@ -201007,6 +201644,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Why is a load missing?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Why is this adjustment being rejected?": {
@@ -203402,6 +204048,15 @@
       "service/agentdefinitionservice"
     ]
   },
+  "You can see these journals, but approving and posting them needs the Journal Entry approve permission.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "You can view these settings but not change them.": {
     "sites": 1,
     "scope": [
@@ -205009,6 +205664,15 @@
       "routes/scheduling"
     ]
   },
+  "accounting date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "accounts for {0}% of everything forgiven — {1} across {2} {3}.": {
     "sites": 1,
     "scope": [
@@ -205340,6 +206004,15 @@
       "service/roleservice"
     ]
   },
+  "carrier settlement": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
+    ]
+  },
   "change how they're split": {
     "sites": 1,
     "scope": [
@@ -205599,6 +206272,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "driver settlement": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/driversettlementservice"
     ]
   },
   "e.g. (555) 123-4567": {
@@ -208024,6 +208706,24 @@
       "service/realtimeservice"
     ]
   },
+  "invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceledger"
+    ]
+  },
+  "invoice write-off": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceadjustmentservice"
+    ]
+  },
   "is gearing up for you.": {
     "sites": 1,
     "scope": [
@@ -208085,6 +208785,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "journal entry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
     ]
   },
   "keeps assignment": {
@@ -208176,6 +208885,15 @@
     ],
     "areas": [
       "service/samsarasyncservice"
+    ]
+  },
+  "manual journal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/manualjournalservice"
     ]
   },
   "mapped Samsara driver is deactivated": {
@@ -208948,6 +209666,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "rendering this invoice's PDF would email it to the customer at once, as their billing profile sends invoices when the PDF is made; use send_invoice, which a person approves, instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "replies@example.com": {
@@ -211862,6 +212589,15 @@
       "routes/admin"
     ]
   },
+  "{0} (and {1} more)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "{0} (default)": {
     "sites": 1,
     "scope": [
@@ -212274,6 +213010,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "{0} approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "{0} approved · {1} changed · {2} rejected · {3} failed": {
@@ -215348,6 +216093,15 @@
       "routes/fleet-safety"
     ]
   },
+  "{0} posted to the general ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "{0} provided every section of the profile.": {
     "sites": 1,
     "scope": [
@@ -217085,6 +217839,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0}; {1} could not be changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "{0}d": {

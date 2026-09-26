@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
-	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -104,13 +103,9 @@ func (s *Service) Preview(
 		)
 	}
 
-	customerIDs := req.CustomerIDs
-	if len(customerIDs) == 0 {
-		return nil, errortypes.NewValidationError(
-			"customerIds",
-			errortypes.ErrRequired,
-			"Select at least one customer to bill",
-		)
+	run, customerIDs, err := planRunHeader(req, actor)
+	if err != nil {
+		return nil, err
 	}
 
 	number, err := s.sequenceGenerator.Generate(ctx, &seqgen.GenerateRequest{
@@ -121,31 +116,7 @@ func (s *Service) Preview(
 	if err != nil {
 		return nil, err
 	}
-
-	invoiceDate := req.InvoiceDate
-	if invoiceDate == 0 {
-		invoiceDate = timeutils.NowUnix()
-	}
-
-	source := req.Source
-	if source == "" {
-		source = invoicerun.SourceManual
-	}
-
-	run := &invoicerun.InvoiceRun{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		Number:         number,
-		Status:         invoicerun.StatusBuilding,
-		Source:         source,
-		Cycle:          req.Cycle,
-		PeriodStart:    req.PeriodStart,
-		PeriodEnd:      req.PeriodEnd,
-		InvoiceDate:    invoiceDate,
-		CustomerIDs:    idsToStrings(customerIDs),
-		CurrencyCode:   money.DefaultCurrencyCode,
-		BuiltByID:      actor.UserID,
-	}
+	run.Number = number
 
 	if multiErr := s.validator.ValidateCreate(run); multiErr != nil {
 		return nil, multiErr
@@ -276,19 +247,9 @@ func (s *Service) Cancel(
 		return nil, err
 	}
 
-	if !invoicerun.CanTransition(run.Status, invoicerun.StatusCanceled) {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"An invoice run that is {0} cannot be canceled", run.Status,
-		)
+	if err = planCancel(run, req, actor, timeutils.NowUnix()); err != nil {
+		return nil, err
 	}
-
-	canceledAt := timeutils.NowUnix()
-	run.Status = invoicerun.StatusCanceled
-	run.CanceledByID = actor.UserID
-	run.CanceledAt = &canceledAt
-	run.FailureReason = req.Reason
 
 	updated, err := s.repo.Update(ctx, run)
 	if err != nil {

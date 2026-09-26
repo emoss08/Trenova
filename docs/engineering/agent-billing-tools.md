@@ -87,12 +87,65 @@ for (`AccountingSyncPlanner`) and the EDI 210 plan. `send_invoice` takes only th
 the recipients, wording and attachments are `PlanSend`'s, and a send whose attachments would
 go as download links is refused, since those links are built against the browser's address.
 
+## After the invoice: receivables
+
+The same rules carry past posting. Every write calls the service its page calls
+(`invoiceservice`, `invoiceadjustmentservice`, `customerpaymentservice`,
+`invoicedisputeservice`, `invoicerunservice`, `latechargeservice`, `invoiceshareservice`),
+and each preview is that service's own plan, read-only, so it refuses what the write would.
+
+| Tool | Class | Most it may do | Runs only from a person's approval |
+| --- | --- | --- | --- |
+| `update_invoice_draft` | inside | Ask first (a change of recipients: Propose) | no |
+| `generate_invoice_pdf` | inside | Automatic | no |
+| `create_invoice`, `create_invoice_memo`, `void_invoice` | money | Propose | yes |
+| `send_invoice_edi` | sent outside | Propose | yes |
+| `save_invoice_adjustment_draft` | inside | Automatic (from outside content: Propose) | no |
+| `submit_invoice_adjustment`, `approve_invoice_adjustment` | money | Propose | yes |
+| `reject_invoice_adjustment` | inside | Propose | yes |
+| `apply_customer_payment`, `reverse_customer_payment` | money | Propose | yes |
+| `apply_credit_memo`, `unapply_credit_memo` | money | Propose | yes |
+| `open_invoice_dispute`, `withdraw_invoice_dispute` | inside | Ask first (from outside content: Propose) | no |
+| `resolve_invoice_dispute` | inside | Propose | yes |
+| `build_invoice_run` | inside | Automatic | no |
+| `adjust_invoice_run_membership` | inside | Automatic (from outside content: Propose) | no |
+| `cancel_invoice_run` | inside | Ask first | no |
+| `commit_invoice_run`, `bill_statement_now`, `assess_late_charges` | money | Propose | yes |
+| `share_invoice` | inside | Propose | yes |
+
+`create_invoice` covers the four create mutations (one invoice or one per shipment, from
+shipments or an order) through `invoiceservice.PlanCreateInvoices`. A memo is always manual
+and never auto-posted. `generate_invoice_pdf` refuses whenever the customer's billing profile
+would email the invoice the moment its PDF exists, so it cannot send by the back door.
+`submit_invoice_adjustment` covers the single, draft and bulk submit routes. A preview of
+a planned draft or memo shows no number, since numbers are issued when a record is made.
+
+The reads that pick targets: `get_invoice` (now with each line's id), `list_invoices` (a
+bill type filter), `list_invoice_adjustments`, `get_invoice_adjustment`,
+`list_invoice_disputes`, `list_credit_memo_applications`, `list_invoice_runs`,
+`get_invoice_run`, `list_open_statements` and `list_invoice_share_candidates`. Amounts are
+left out when the reader's data access does not reach invoice totals.
+
+Pinning: disputes, runs and payments pin to their version; adjustments to theirs (record
+kind `invoice_adjustment`); a credit memo application to its `updated_at` (record kind
+`credit_memo_application`), which moves only when it is unapplied. `bill_statement_now` is
+unpinned: an open statement is computed when asked and has no row.
+
 ## Who holds them
 
 | Template | Runs | Holds |
 | --- | --- | --- |
-| Billing assistant | in chat, as the person | every tool above |
+| Billing assistant | in chat, as the person | the lifecycle up to an invoice in the customer's hands and its corrections: transfer, the queue decisions, `create_invoice`, `update_invoice_draft`, `generate_invoice_pdf`, `post_invoice`, `send_invoice`, `send_invoice_edi`, `void_invoice`, `create_invoice_memo`, the adjustment tools, invoice runs and statements, and `share_invoice` |
+| Receivables assistant | in chat, as the person | what happens after: `apply_customer_payment`, `reverse_customer_payment`, `apply_credit_memo`, `unapply_credit_memo`, the dispute tools, `assess_late_charges`, `send_invoice` to send a copy again, `share_invoice`, and the reads `get_ar_aging`, `list_ar_open_items`, `list_collections_worklist`, `get_customer_statement`, `list_customer_payments`, `list_credit_memo_applications`, `list_invoice_adjustments` |
+| Cash application agent | unattended, on bank receipt exceptions | `match_bank_receipt` and `post_customer_payment` for money that arrived at the bank |
 | Billing exception agent | unattended, on queue events | the reads, review, hold, exception, send back |
+
+The receivables assistant works cash already recorded and never posts a payment or matches a
+bank receipt, so it does not do the cash application agent's job twice. A dispute settled by a
+credit or a write-off is closed by receivables naming the adjustment, which the billing
+assistant makes. Each prompt tells its agent to hand the other's work over when the other is on
+its delegation allowlist ([agent-delegation.md](agent-delegation.md)); a template cannot carry
+the allowlist itself, since it names agents by their id in one organization.
 
 The agent permission ceiling (`permission/agent.go`) is unchanged but for being claimed: the
 exception desk needs billing queue read and update and shipment read, which it already had.
@@ -106,6 +159,13 @@ resource does, so an unattended desk at Internal data access sees what an item i
 on without seeing what it bills.
 
 ## Known limits
+
+- An agent definition holds at most 64 tools. Every template leaves room for at least eight of
+  an organization's own (`TestTemplates_LeaveRoomForAnOrganizationsOwnTools`): the billing
+  assistant holds 53 and the receivables assistant 27.
+- A template is copied into an agent when the agent is made. An agent made from the billing
+  assistant before collections moved to receivables keeps the tools it was saved with, and no
+  existing agent gains `share_invoice`; an administrator changes either in AI control.
 
 - A preview shows twenty records; a transfer of more lists its refusals first, and a
   background transfer previews its first hundred shipments and says it is partial.

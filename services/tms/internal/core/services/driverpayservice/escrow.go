@@ -48,43 +48,8 @@ func (s *Service) OpenEscrowAccount(
 	if err := requireActor(actor, "Escrow account opening"); err != nil {
 		return nil, err
 	}
-	entity.Status = driverpay.EscrowAccountStatusActive
-	entity.BalanceMinor = 0
-	if entity.OpenedDate == 0 {
-		entity.OpenedDate = timeutils.NowUnix()
-	}
-	if entity.AnnualInterestRate.IsZero() {
-		control, err := s.settlementControl.GetOrCreate(ctx, pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		})
-		if err == nil {
-			entity.AnnualInterestRate = control.DefaultEscrowInterestRate
-		}
-	}
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	existing, err := s.escrowRepo.GetActiveForWorker(
-		ctx,
-		repositories.GetActiveEscrowAccountForWorkerRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-			WorkerID: entity.WorkerID,
-		},
-	)
-	if err == nil && existing != nil {
-		return nil, errortypes.NewValidationError(
-			"workerId",
-			errortypes.ErrDuplicate,
-			"Worker already has an active escrow account",
-		)
+	if err := s.PlanOpenEscrowAccount(ctx, entity, timeutils.NowUnix()); err != nil {
+		return nil, err
 	}
 
 	created, err := s.escrowRepo.Create(ctx, entity)
@@ -103,25 +68,9 @@ func (s *Service) UpdateEscrowAccount(
 	if err := requireActor(actor, "Escrow account update"); err != nil {
 		return nil, err
 	}
-	previous, err := s.escrowRepo.GetByID(ctx, repositories.GetEscrowAccountByIDRequest{
-		ID: entity.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	})
+	previous, err := s.PlanUpdateEscrowAccount(ctx, entity)
 	if err != nil {
 		return nil, err
-	}
-	entity.BalanceMinor = previous.BalanceMinor
-	entity.Status = previous.Status
-	entity.ClosedDate = previous.ClosedDate
-	entity.LastInterestAccrualDate = previous.LastInterestAccrualDate
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	updated, err := s.escrowRepo.Update(ctx, entity)
@@ -149,19 +98,8 @@ func (s *Service) AdjustEscrowAccount(
 	if err := requireActor(actor, "Escrow adjustment"); err != nil {
 		return nil, err
 	}
-	if req.AmountMinor == 0 {
-		return nil, errortypes.NewValidationError(
-			"amountMinor",
-			errortypes.ErrInvalid,
-			"Adjustment amount cannot be zero",
-		)
-	}
-	if req.Description == "" {
-		return nil, errortypes.NewValidationError(
-			"description",
-			errortypes.ErrRequired,
-			"Adjustment description is required",
-		)
+	if err := CheckEscrowAdjustment(req); err != nil {
+		return nil, err
 	}
 	if req.OccurredDate == 0 {
 		req.OccurredDate = timeutils.NowUnix()
@@ -176,28 +114,11 @@ func (s *Service) AdjustEscrowAccount(
 		if txErr != nil {
 			return txErr
 		}
-		if account.Status != driverpay.EscrowAccountStatusActive {
-			return errortypes.NewValidationError(
-				"accountId",
-				errortypes.ErrInvalidOperation,
-				"Escrow account is not active",
-			)
+		transaction, txErr := PlanEscrowAdjustment(account, req, actor.UserID)
+		if txErr != nil {
+			return txErr
 		}
-		if account.BalanceMinor+req.AmountMinor < 0 {
-			return errortypes.NewValidationError(
-				"amountMinor",
-				errortypes.ErrInvalid,
-				"Adjustment would drive the escrow balance negative",
-			)
-		}
-
-		updated, txErr = s.applyEscrowTransaction(txCtx, account, &driverpay.EscrowTransaction{
-			Type:         driverpay.EscrowTransactionTypeAdjustment,
-			AmountMinor:  req.AmountMinor,
-			OccurredDate: req.OccurredDate,
-			Description:  req.Description,
-			CreatedByID:  actor.UserID,
-		})
+		updated, txErr = s.applyEscrowTransaction(txCtx, account, transaction)
 		return txErr
 	})
 	if err != nil {
@@ -226,34 +147,19 @@ func (s *Service) CloseEscrowAccount(
 		if txErr != nil {
 			return txErr
 		}
-		if account.Status != driverpay.EscrowAccountStatusActive {
-			return errortypes.NewValidationError(
-				"accountId",
-				errortypes.ErrInvalidOperation,
-				"Escrow account is already closed",
-			)
-		}
-
 		now := timeutils.NowUnix()
-		if account.BalanceMinor > 0 {
-			account, txErr = s.applyEscrowTransaction(
-				txCtx,
-				account,
-				&driverpay.EscrowTransaction{
-					Type:         driverpay.EscrowTransactionTypeRefund,
-					AmountMinor:  -account.BalanceMinor,
-					OccurredDate: now,
-					Description:  "Escrow balance refunded on account closure",
-					CreatedByID:  actor.UserID,
-				},
-			)
+		refund, txErr := PlanCloseEscrowAccount(account, actor.UserID, now)
+		if txErr != nil {
+			return txErr
+		}
+		if refund != nil {
+			account, txErr = s.applyEscrowTransaction(txCtx, account, refund)
 			if txErr != nil {
 				return txErr
 			}
 		}
 
-		account.Status = driverpay.EscrowAccountStatusClosed
-		account.ClosedDate = &now
+		CloseEscrowAccount(account, now)
 		updated, txErr = s.escrowRepo.Update(txCtx, account)
 		return txErr
 	})
@@ -335,10 +241,7 @@ func (s *Service) applyEscrowTransaction(
 	account *driverpay.EscrowAccount,
 	tx *driverpay.EscrowTransaction,
 ) (*driverpay.EscrowAccount, error) {
-	tx.OrganizationID = account.OrganizationID
-	tx.BusinessUnitID = account.BusinessUnitID
-	tx.EscrowAccountID = account.ID
-	tx.BalanceAfterMinor = account.BalanceMinor + tx.AmountMinor
+	StampEscrowTransaction(account, tx)
 
 	multiErr := errortypes.NewMultiError()
 	tx.Validate(multiErr)

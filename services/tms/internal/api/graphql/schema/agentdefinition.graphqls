@@ -21,6 +21,8 @@ enum AgentTemplate {
   EDIDesk
   FormulaAssistant
   BooksKeeper
+  SettlementsClerk
+  Receivables
 }
 
 enum AgentTriggerMode {

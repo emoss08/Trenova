@@ -53,6 +53,34 @@ const SUGGESTIONS: Partial<Record<AgentTemplateKind, Suggestion[]>> = {
     { label: "Delivery estimate", prompt: "When will PRO S12345 be delivered?" },
     { label: "Recent shipments", prompt: "What shipped for Acme Manufacturing this week?" },
   ],
+  SettlementsClerk: [
+    {
+      label: "Why is a load missing?",
+      prompt: "Why is PRO S12345 missing from Maria Ortiz's settlement?",
+    },
+    {
+      label: "Settlements with exceptions",
+      prompt: "Which driver settlements this period have exceptions or open disputes?",
+    },
+    {
+      label: "Carrier invoice variances",
+      prompt: "Which carrier invoices differ from what the load was expected to cost?",
+    },
+  ],
+  Receivables: [
+    {
+      label: "Who to chase today",
+      prompt: "Which overdue invoices should I chase today, most urgent first?",
+    },
+    {
+      label: "A customer's balance",
+      prompt: "What does Acme Manufacturing owe us, and how late is it?",
+    },
+    {
+      label: "Unapplied cash",
+      prompt: "Which customer payments still have cash not applied to an invoice?",
+    },
+  ],
   GeneralAssistant: [
     { label: "Create a rate matrix", prompt: "How do I create a rate matrix for a customer?" },
     {

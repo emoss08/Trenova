@@ -1,10 +1,12 @@
 import {
+  BanknoteIcon,
   BellIcon,
   BotIcon,
   ClipboardCheckIcon,
   CompassIcon,
   FileInputIcon,
   GaugeIcon,
+  HandCoinsIcon,
   HeadsetIcon,
   InboxIcon,
   type LucideIcon,
@@ -38,6 +40,8 @@ export const AGENT_ICONS = {
   bell: BellIcon,
   sparkle: AssistMark,
   inbox: InboxIcon,
+  banknote: BanknoteIcon,
+  coins: HandCoinsIcon,
 } as const satisfies Record<string, LucideIcon>;
 
 export type AgentIconName = keyof typeof AGENT_ICONS;
@@ -87,6 +91,8 @@ export const TEMPLATE_ICON: Partial<Record<string, AgentIconName>> = {
   EDIDesk: "file",
   FormulaAssistant: "sparkle",
   BooksKeeper: "receipt",
+  SettlementsClerk: "banknote",
+  Receivables: "coins",
 };
 
 export function isAgentIconName(value: string | null | undefined): value is AgentIconName {

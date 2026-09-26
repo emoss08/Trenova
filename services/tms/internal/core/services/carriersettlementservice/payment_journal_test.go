@@ -46,7 +46,11 @@ func TestPaymentJournalIsDatedWhenThePaymentWasMade(t *testing.T) {
 	const paidAt = int64(1_790_000_000)
 	entity := newPostingSettlement()
 	entity.SettlementNumber = "CS-1042"
-	period := &fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_")}
+	period := &fiscalperiod.FiscalPeriod{
+		ID:           pulid.MustNew("fp_"),
+		FiscalYearID: pulid.MustNew("fy_"),
+		Status:       fiscalperiod.StatusOpen,
+	}
 
 	periods := mocks.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
@@ -69,16 +73,21 @@ func TestPaymentJournalIsDatedWhenThePaymentWasMade(t *testing.T) {
 		Once()
 
 	svc := &Service{journalRepo: journals, fiscalPeriodRepo: periods, generator: numberingOnly{}}
-	_, err := svc.createJournalPosting(t.Context(), &createJournalPostingParams{
-		Entity:         entity,
-		Actor:          &serviceports.RequestActor{UserID: pulid.MustNew("usr_")},
-		Control:        &tenant.AccountingControl{},
-		Legs:           []PostingLeg{{AccountID: payableAccountID, Debit: 100}, {AccountID: cashAccountID, Credit: 100}},
+	actor := &serviceports.RequestActor{UserID: pulid.MustNew("usr_")}
+	draft, err := svc.draftJournal(t.Context(), entity, actor.UserID, &createJournalPostingParams{
+		Control: &tenant.AccountingControl{},
+		Legs: []PostingLeg{
+			{AccountID: payableAccountID, Debit: 100},
+			{AccountID: cashAccountID, Credit: 100},
+		},
 		Description:    "Payment of carrier settlement CS-1042",
 		SourceEvent:    tenant.JournalSourceEventCarrierSettlementPaid,
 		IdempotencyKey: "carrier-settlement-paid:" + entity.ID.String(),
 		AccountingDate: paidAt,
 	})
+	require.NoError(t, err)
+	assert.Equal(t, paidAt, draft.plan.AccountingDate)
+	_, err = svc.writeJournal(t.Context(), entity, actor, draft)
 	require.NoError(t, err)
 	assert.Equal(t, paidAt, posted.AccountingDate)
 	assert.Equal(t, period.ID, posted.FiscalPeriodID)

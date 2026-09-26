@@ -223,10 +223,11 @@ type ListPayEventConnectionRequest struct {
 }
 
 type ListAccruedPayEventsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	WorkerID   pulid.ID              `json:"workerId"`
-	PeriodEnd  int64                 `json:"periodEnd"`
-	EventIDs   []pulid.ID            `json:"eventIds"`
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	WorkerID     pulid.ID              `json:"workerId"`
+	PeriodEnd    int64                 `json:"periodEnd"`
+	EventIDs     []pulid.ID            `json:"eventIds"`
+	ReleasedFrom pulid.ID              `json:"releasedFrom"`
 }
 
 type ListWorkersWithAccruedEventsRequest struct {

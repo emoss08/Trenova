@@ -4,8 +4,9 @@ package journalpostingrepository
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"sort"
+
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -185,17 +186,39 @@ func (r *repository) CreatePosting(
 	}
 
 	if params.IsPosted {
-		aggregates := aggregateLinesByAccount(params.Lines)
-		for _, aggregate := range aggregates {
-			if err := r.upsertPeriodBalance(ctx, params, aggregate); err != nil {
-				return err
-			}
-			if err := r.updateGLAccountRunningBalance(ctx, params, aggregate); err != nil {
-				return err
-			}
-		}
+		return r.applyBalances(ctx, balanceTarget{
+			organizationID: params.OrganizationID.String(),
+			businessUnitID: params.BusinessUnitID.String(),
+			fiscalYearID:   params.FiscalYearID.String(),
+			fiscalPeriodID: params.FiscalPeriodID.String(),
+			entryID:        params.EntryID.String(),
+		}, params.Lines)
 	}
 
+	return nil
+}
+
+type balanceTarget struct {
+	organizationID string
+	businessUnitID string
+	fiscalYearID   string
+	fiscalPeriodID string
+	entryID        string
+}
+
+func (r *repository) applyBalances(
+	ctx context.Context,
+	target balanceTarget,
+	lines []repositories.JournalPostingLine,
+) error {
+	for _, aggregate := range aggregateLinesByAccount(lines) {
+		if err := r.upsertPeriodBalance(ctx, target, aggregate); err != nil {
+			return err
+		}
+		if err := r.updateGLAccountRunningBalance(ctx, target, aggregate); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -223,7 +246,7 @@ func aggregateLinesByAccount(lines []repositories.JournalPostingLine) []lineAggr
 
 func (r *repository) upsertPeriodBalance(
 	ctx context.Context,
-	params repositories.CreateJournalPostingParams,
+	params balanceTarget,
 	aggregate lineAggregate,
 ) error {
 	_, err := r.db.DBForContext(ctx).NewRaw(`
@@ -246,15 +269,15 @@ func (r *repository) upsertPeriodBalance(
 			last_journal_entry_id = EXCLUDED.last_journal_entry_id,
 			updated_at = `+r.db.NowEpoch()+`
 	`,
-		params.OrganizationID,
-		params.BusinessUnitID,
+		params.organizationID,
+		params.businessUnitID,
 		aggregate.glAccountID,
-		params.FiscalYearID,
-		params.FiscalPeriodID,
+		params.fiscalYearID,
+		params.fiscalPeriodID,
 		aggregate.debit,
 		aggregate.credit,
 		aggregate.net,
-		params.EntryID,
+		params.entryID,
 	).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("upsert gl balance by period: %w", err)
@@ -265,7 +288,7 @@ func (r *repository) upsertPeriodBalance(
 
 func (r *repository) updateGLAccountRunningBalance(
 	ctx context.Context,
-	params repositories.CreateJournalPostingParams,
+	params balanceTarget,
 	aggregate lineAggregate,
 ) error {
 	_, err := r.db.DBForContext(ctx).
@@ -276,8 +299,8 @@ func (r *repository) updateGLAccountRunningBalance(
 		Set("credit_balance = credit_balance + ?", aggregate.credit).
 		Set("updated_at = "+r.db.NowEpoch()).
 		Where("id = ?", aggregate.glAccountID).
-		Where("organization_id = ?", params.OrganizationID).
-		Where("business_unit_id = ?", params.BusinessUnitID).
+		Where("organization_id = ?", params.organizationID).
+		Where("business_unit_id = ?", params.businessUnitID).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("update gl account running balance: %w", err)

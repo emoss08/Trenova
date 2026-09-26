@@ -1,0 +1,31 @@
+package agenttoolservice
+
+func settlementToolProviders() []any {
+	return append(settlementDecisionProviders(),
+		provideHoldDriverPayEventTool,
+		provideReleaseDriverPayEventTool,
+		provideAttachPayEventsTool,
+		provideDetachPayEventTool,
+		provideGenerateDriverSettlementTool,
+		provideGenerateDriverSettlementBatchTool,
+		provideGenerateCarrierSettlementBatchTool,
+		providePayWorkerNowTool,
+		provideIssuePayAdvanceTool,
+		provideWriteOffPayAdvanceTool,
+		provideOpenEscrowAccountTool,
+		provideUpdateEscrowAccountTool,
+		provideAdjustEscrowAccountTool,
+		provideCloseEscrowAccountTool,
+		provideAssignPayProfileTool,
+		provideEndPayAssignmentTool,
+		provideCreateRecurringDeductionTool,
+		provideUpdateRecurringDeductionTool,
+		provideCreateRecurringEarningTool,
+		provideUpdateRecurringEarningTool,
+		provideCreateCarrierInvoiceMatchTool,
+		provideAcceptCarrierInvoiceMatchTool,
+		provideAcceptCarrierInvoiceMatchWithVarianceTool,
+		provideRejectCarrierInvoiceMatchTool,
+		provideLinkEDICarrierInvoiceTool,
+	)
+}

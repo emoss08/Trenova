@@ -7,6 +7,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { JournalEntryLine } from "@/types/journal-entry";
 import { ChevronRightIcon, TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
+import { recordPath } from "@/config/record-links";
 import { Link } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
@@ -61,13 +62,15 @@ export function JournalEntryPostingCard({
           )}
         />
         <Link
-          to={`/accounting/journal-entries/${entry.id}`}
+          to={recordPath("journal_entry", entry.id)}
           onClick={(event) => event.stopPropagation()}
           className="font-mono text-xs font-medium hover:underline"
         >
           {entry.entryNumber}
         </Link>
-        <Badge variant="neutral" appearance="outline">{entry.entryType}</Badge>
+        <Badge variant="neutral" appearance="outline">
+          {entry.entryType}
+        </Badge>
         <AccountingStatusBadge status={entry.status} />
         {entry.isReversal ? <Badge variant="warning">{t("Reversal")}</Badge> : null}
         {!isBalanced ? (

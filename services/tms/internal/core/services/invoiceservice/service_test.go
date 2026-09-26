@@ -1,6 +1,8 @@
 package invoiceservice
 
 import (
+	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
+	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"context"
 	"image"
 	"image/color"
@@ -1719,17 +1721,17 @@ func TestInvoicePostingSourceEvent(t *testing.T) {
 	assert.Equal(
 		t,
 		tenant.JournalSourceEventInvoicePosted,
-		invoicePostingSourceEvent(billingqueue.BillTypeInvoice),
+		invoiceledger.SourceEvent(billingqueue.BillTypeInvoice),
 	)
 	assert.Equal(
 		t,
 		tenant.JournalSourceEventCreditMemoPosted,
-		invoicePostingSourceEvent(billingqueue.BillTypeCreditMemo),
+		invoiceledger.SourceEvent(billingqueue.BillTypeCreditMemo),
 	)
 	assert.Equal(
 		t,
 		tenant.JournalSourceEventDebitMemoPosted,
-		invoicePostingSourceEvent(billingqueue.BillTypeDebitMemo),
+		invoiceledger.SourceEvent(billingqueue.BillTypeDebitMemo),
 	)
 }
 
@@ -1739,7 +1741,7 @@ func TestInvoicePostingWorkflow(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	now := int64(1_700_000_000)
 
-	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := invoicePostingWorkflow(
+	posted := journalposting.ResolveWorkflow(
 		&tenant.AccountingControl{
 			JournalPostingMode:      tenant.JournalPostingModeAutomatic,
 			RequireManualJEApproval: true,
@@ -1747,17 +1749,17 @@ func TestInvoicePostingWorkflow(t *testing.T) {
 		userID,
 		now,
 	)
-	assert.Equal(t, "Posted", entryStatus)
-	assert.Equal(t, "Posted", batchStatus)
-	require.NotNil(t, postedAt)
-	assert.Equal(t, now, *postedAt)
-	assert.Equal(t, userID, postedByID)
-	assert.False(t, requiresApproval)
-	assert.True(t, isApproved)
-	assert.Equal(t, userID, approvedByID)
-	require.NotNil(t, approvedAt)
+	assert.Equal(t, "Posted", posted.EntryStatus)
+	assert.Equal(t, "Posted", posted.BatchStatus)
+	require.NotNil(t, posted.PostedAt)
+	assert.Equal(t, now, *posted.PostedAt)
+	assert.Equal(t, userID, posted.PostedByID)
+	assert.False(t, posted.RequiresApproval)
+	assert.True(t, posted.IsApproved)
+	assert.Equal(t, userID, posted.ApprovedByID)
+	require.NotNil(t, posted.ApprovedAt)
 
-	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt = invoicePostingWorkflow(
+	pending := journalposting.ResolveWorkflow(
 		&tenant.AccountingControl{
 			JournalPostingMode:      tenant.JournalPostingModeManual,
 			RequireManualJEApproval: true,
@@ -1765,14 +1767,14 @@ func TestInvoicePostingWorkflow(t *testing.T) {
 		userID,
 		now,
 	)
-	assert.Equal(t, "Pending", entryStatus)
-	assert.Equal(t, "Pending", batchStatus)
-	assert.Nil(t, postedAt)
-	assert.True(t, postedByID.IsNil())
-	assert.True(t, requiresApproval)
-	assert.False(t, isApproved)
-	assert.True(t, approvedByID.IsNil())
-	assert.Nil(t, approvedAt)
+	assert.Equal(t, "Pending", pending.EntryStatus)
+	assert.Equal(t, "Pending", pending.BatchStatus)
+	assert.Nil(t, pending.PostedAt)
+	assert.True(t, pending.PostedByID.IsNil())
+	assert.True(t, pending.RequiresApproval)
+	assert.False(t, pending.IsApproved)
+	assert.True(t, pending.ApprovedByID.IsNil())
+	assert.Nil(t, pending.ApprovedAt)
 }
 
 func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
@@ -1943,19 +1945,21 @@ func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 	fiscalRepo.EXPECT().
 		ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).
 		Return([]*fiscalperiod.FiscalPeriod{{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, {ID: pulid.MustNew("fp_"), FiscalYearID: fyID, PeriodNumber: 2, Status: fiscalperiod.StatusOpen, StartDate: 1_700_001_000}}, nil)
-	svc := &Service{validator: &Validator{fiscalPeriodRepo: fiscalRepo}}
-
-	period, date, err := svc.resolveInvoicePostingPeriod(
+	resolved, err := journalposting.ResolvePeriod(
 		t.Context(),
-		&invoice.Invoice{OrganizationID: orgID, BusinessUnitID: buID, PostedAt: &now},
-		&tenant.AccountingControl{
-			ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
+		fiscalRepo,
+		&journalposting.ResolvePeriodRequest{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			Date:           now,
+			Policy:         tenant.ClosedPeriodPostingPolicyPostToNextOpen,
+			Subject:        "invoice",
 		},
 	)
 
 	require.NoError(t, err)
-	require.NotNil(t, period)
-	assert.Equal(t, int64(1_700_001_000), date)
+	require.NotNil(t, resolved.Period)
+	assert.Equal(t, int64(1_700_001_000), resolved.AccountingDate)
 }
 
 //go:fix inline

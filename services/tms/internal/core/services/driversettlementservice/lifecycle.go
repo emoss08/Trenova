@@ -57,18 +57,10 @@ func (s *Service) SubmitForApproval(
 	if err != nil {
 		return nil, err
 	}
-	if !driversettlement.IsAllowedTransition(
-		entity.Status,
-		driversettlement.StatusPendingApproval,
-	) || entity.Status == driversettlement.StatusPendingApproval {
-		return nil, transitionError(entity.Status, driversettlement.StatusPendingApproval)
-	}
-
 	previous := *entity
-	now := timeutils.NowUnix()
-	entity.Status = driversettlement.StatusPendingApproval
-	entity.SubmittedByID = actor.UserID
-	entity.SubmittedAt = &now
+	if err = PlanSubmit(entity, actor.UserID, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 
 	updated, err := s.settlementRepo.Update(ctx, entity)
 	if err != nil {
@@ -107,28 +99,22 @@ func (s *Service) approveInternal(
 			return txErr
 		}
 		if fromDraft && entity.Status == driversettlement.StatusDraft {
-			now := timeutils.NowUnix()
-			entity.Status = driversettlement.StatusPendingApproval
-			entity.SubmittedByID = actor.UserID
-			entity.SubmittedAt = &now
+			if txErr = PlanSubmit(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
+				return txErr
+			}
 			entity, txErr = s.settlementRepo.Update(txCtx, entity)
 			if txErr != nil {
 				return txErr
 			}
 		}
-		if entity.Status != driversettlement.StatusPendingApproval {
-			return transitionError(entity.Status, driversettlement.StatusApproved)
-		}
 
 		previous = *entity
+		if txErr = PlanApprove(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
+			return txErr
+		}
 		if txErr = s.applyDeductionSideEffects(txCtx, entity, actor); txErr != nil {
 			return txErr
 		}
-
-		now := timeutils.NowUnix()
-		entity.Status = driversettlement.StatusApproved
-		entity.ApprovedByID = actor.UserID
-		entity.ApprovedAt = &now
 		updated, txErr = s.settlementRepo.Update(txCtx, entity)
 		return txErr
 	})
@@ -172,18 +158,10 @@ func (s *Service) Reject(
 	if err != nil {
 		return nil, err
 	}
-	if entity.Status != driversettlement.StatusPendingApproval {
-		return nil, transitionError(entity.Status, driversettlement.StatusDraft)
-	}
-
 	previous := *entity
-	entity.Status = driversettlement.StatusDraft
-	entity.SubmittedByID = pulid.Nil
-	entity.SubmittedAt = nil
-	if entity.Notes != "" {
-		entity.Notes += "\n"
+	if err = PlanReject(entity, reason); err != nil {
+		return nil, err
 	}
-	entity.Notes += "Rejected: " + reason
 
 	updated, err := s.settlementRepo.Update(ctx, entity)
 	if err != nil {
@@ -219,19 +197,27 @@ func (s *Service) MarkPaid(
 		if txErr != nil {
 			return txErr
 		}
-		if entity.Status != driversettlement.StatusPosted {
-			return transitionError(entity.Status, driversettlement.StatusPaid)
-		}
 		previous = *entity
 		paidAt := req.PaidAt
 		if paidAt == 0 {
 			paidAt = timeutils.NowUnix()
 		}
-		entity.Status = driversettlement.StatusPaid
-		entity.PaidAt = &paidAt
-		entity.PaidByID = actor.UserID
-		entity.PaymentMethod = paymentMethod
-		entity.PaymentReference = req.PaymentReference
+		if txErr = PlanMarkPaid(entity, &MarkPaidInput{
+			PaymentMethod:    paymentMethod,
+			PaymentReference: req.PaymentReference,
+			PaidAt:           paidAt,
+			UserID:           actor.UserID,
+		}); txErr != nil {
+			return txErr
+		}
+		if entity.PaidJournalBatchID, txErr = s.postPaymentJournal(
+			txCtx,
+			entity,
+			actor.UserID,
+			paidAt,
+		); txErr != nil {
+			return txErr
+		}
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr
 		}
@@ -299,11 +285,8 @@ func (s *Service) Void(
 		if txErr != nil {
 			return txErr
 		}
-		if !driversettlement.IsAllowedTransition(
-			entity.Status,
-			driversettlement.StatusVoided,
-		) || entity.Status == driversettlement.StatusVoided {
-			return transitionError(entity.Status, driversettlement.StatusVoided)
+		if txErr = CheckVoid(entity, reason); txErr != nil {
+			return txErr
 		}
 		previous = *entity
 
@@ -325,11 +308,9 @@ func (s *Service) Void(
 			return txErr
 		}
 
-		now := timeutils.NowUnix()
-		entity.Status = driversettlement.StatusVoided
-		entity.VoidedByID = actor.UserID
-		entity.VoidedAt = &now
-		entity.VoidReason = reason
+		if txErr = PlanVoid(entity, reason, actor.UserID, timeutils.NowUnix()); txErr != nil {
+			return txErr
+		}
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr
 		}
@@ -369,12 +350,8 @@ func (s *Service) Recalculate(
 		if txErr != nil {
 			return txErr
 		}
-		if entity.Status != driversettlement.StatusDraft {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"Only draft settlements can be recalculated",
-			)
+		if txErr = PlanRecalculate(entity); txErr != nil {
+			return txErr
 		}
 		previous = *entity
 
@@ -414,46 +391,9 @@ func (s *Service) rebuildDraftSettlementTx(
 		return nil, err
 	}
 	if rebuilt == nil {
-		return nil, errortypes.NewValidationError(
-			"settlementId",
-			errortypes.ErrInvalid,
-			"No accrued pay events remain for this settlement's period",
-		)
+		return nil, errNoAccruedEventsRemain()
 	}
-
-	manualLines := make([]*driversettlement.SettlementLine, 0)
-	for _, line := range entity.Lines {
-		if line != nil && line.Category == driversettlement.LineCategoryAdjustment {
-			line.ID = pulid.Nil
-			manualLines = append(manualLines, line)
-		}
-	}
-
-	mergedLines := make(
-		[]*driversettlement.SettlementLine,
-		0,
-		len(rebuilt.Lines)+len(manualLines),
-	)
-	mergedLines = append(mergedLines, rebuilt.Lines...)
-	mergedLines = append(mergedLines, manualLines...)
-	entity.Lines = mergedLines
-	entity.ClearExceptions()
-	entity.Exceptions = rebuilt.Exceptions
-	entity.HasExceptions = rebuilt.HasExceptions
-	entity.PayProfileID = rebuilt.PayProfileID
-	entity.PayProfileName = rebuilt.PayProfileName
-	entity.Classification = rebuilt.Classification
-	entity.CurrencyCode = rebuilt.CurrencyCode
-	entity.TotalMiles = rebuilt.TotalMiles
-	entity.ShipmentCount = rebuilt.ShipmentCount
-	if len(manualLines) > 0 {
-		entity.AddException(
-			driversettlement.ExceptionCodeManualAdjustment,
-			driversettlement.ExceptionSeverityWarning,
-			"Settlement contains manual adjustment lines",
-		)
-	}
-	entity.SyncTotals()
+	MergeRebuilt(entity, rebuilt)
 
 	if err = s.settlementRepo.ReplaceLines(txCtx, entity); err != nil {
 		return nil, err
@@ -514,34 +454,18 @@ func (s *Service) AddAdjustmentLine(
 	if err := requireActor(actor, "Settlement adjustment"); err != nil {
 		return nil, err
 	}
-	if input.Description == "" {
-		return nil, errortypes.NewValidationError(
-			"description",
-			errortypes.ErrRequired,
-			"Adjustment description is required",
-		)
-	}
-	if input.AmountMinor == 0 {
-		return nil, errortypes.NewValidationError(
-			"amountMinor",
-			errortypes.ErrInvalid,
-			"Adjustment amount cannot be zero",
-		)
+	if err := checkAdjustmentInput(input); err != nil {
+		return nil, err
 	}
 
 	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)
 	if err != nil {
 		return nil, err
 	}
-	if !entity.IsEditable() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only draft or pending settlements can be adjusted",
-		)
+	if err = checkEditable(entity); err != nil {
+		return nil, err
 	}
 
-	var payCodeID *pulid.ID
 	if input.PayCodeID != nil && !input.PayCodeID.IsNil() {
 		if _, err = s.payCodeRepo.GetByID(ctx, repositories.GetPayCodeByIDRequest{
 			ID:         *input.PayCodeID,
@@ -549,24 +473,12 @@ func (s *Service) AddAdjustmentLine(
 		}); err != nil {
 			return nil, err
 		}
-		payCodeID = input.PayCodeID
 	}
 
 	previous := *entity
-	entity.Lines = append(entity.Lines, &driversettlement.SettlementLine{
-		Category:    driversettlement.LineCategoryAdjustment,
-		Description: input.Description,
-		AmountMinor: input.AmountMinor,
-		Quantity:    input.Quantity,
-		Rate:        input.Rate,
-		PayCodeID:   payCodeID,
-	})
-	entity.AddException(
-		driversettlement.ExceptionCodeManualAdjustment,
-		driversettlement.ExceptionSeverityWarning,
-		"Settlement contains manual adjustment lines",
-	)
-	entity.SyncTotals()
+	if err = PlanAddAdjustment(entity, input); err != nil {
+		return nil, err
+	}
 
 	if err = s.settlementRepo.ReplaceLines(ctx, entity); err != nil {
 		return nil, err
@@ -593,58 +505,10 @@ func (s *Service) RemoveAdjustmentLine(
 	if err != nil {
 		return nil, err
 	}
-	if !entity.IsEditable() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only draft or pending settlements can be adjusted",
-		)
-	}
-
 	previous := *entity
-	found := false
-	remaining := make([]*driversettlement.SettlementLine, 0, len(entity.Lines))
-	hasOtherAdjustments := false
-	for _, line := range entity.Lines {
-		if line == nil {
-			continue
-		}
-		if line.ID == lineID {
-			if line.Category != driversettlement.LineCategoryAdjustment {
-				return nil, errortypes.NewValidationError(
-					"lineId",
-					errortypes.ErrInvalidOperation,
-					"Only manual adjustment lines can be removed",
-				)
-			}
-			found = true
-			continue
-		}
-		if line.Category == driversettlement.LineCategoryAdjustment {
-			hasOtherAdjustments = true
-		}
-		remaining = append(remaining, line)
+	if err = PlanRemoveAdjustment(entity, lineID); err != nil {
+		return nil, err
 	}
-	if !found {
-		return nil, errortypes.NewValidationError(
-			"lineId",
-			errortypes.ErrInvalid,
-			"Adjustment line not found on this settlement",
-		)
-	}
-
-	entity.Lines = remaining
-	if !hasOtherAdjustments {
-		filtered := make([]driversettlement.Exception, 0, len(entity.Exceptions))
-		for _, exception := range entity.Exceptions {
-			if exception.Code != driversettlement.ExceptionCodeManualAdjustment {
-				filtered = append(filtered, exception)
-			}
-		}
-		entity.Exceptions = filtered
-		entity.HasExceptions = len(filtered) > 0
-	}
-	entity.SyncTotals()
 
 	if err = s.settlementRepo.ReplaceLines(ctx, entity); err != nil {
 		return nil, err

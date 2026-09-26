@@ -81,11 +81,26 @@ type mockSeeder struct {
 	statusErr     error
 	statusCalls   int
 	registry      *Registry
+
+	reconcileEnvs   []common.Environment
+	reconcileResult *ExecutionReport
+	reconcileErr    error
 }
 
 func (s *mockSeeder) Execute(ctx context.Context, opts ExecuteOptions) (*ExecutionReport, error) {
 	s.executeCalls++
 	return s.executeResult, s.executeErr
+}
+
+func (s *mockSeeder) Reconcile(
+	ctx context.Context,
+	env common.Environment,
+) (*ExecutionReport, error) {
+	s.reconcileEnvs = append(s.reconcileEnvs, env)
+	if s.reconcileResult == nil && s.reconcileErr == nil {
+		return &ExecutionReport{}, nil
+	}
+	return s.reconcileResult, s.reconcileErr
 }
 
 func (s *mockSeeder) Status(ctx context.Context) ([]*common.SeedStatus, error) {
@@ -899,6 +914,13 @@ func (s *optCapturingSeeder) Execute(
 	return s.result, s.err
 }
 
+func (s *optCapturingSeeder) Reconcile(
+	_ context.Context,
+	_ common.Environment,
+) (*ExecutionReport, error) {
+	return &ExecutionReport{}, nil
+}
+
 func (s *optCapturingSeeder) Status(_ context.Context) ([]*common.SeedStatus, error) {
 	return nil, nil
 }
@@ -954,4 +976,55 @@ func (m *optCapturingMigrator) CreateMigration(
 	_ bool,
 ) ([]string, error) {
 	return nil, nil
+}
+
+func TestManager_Migrate_ReconcilesRepeatableSeedsInTheEnvironment(t *testing.T) {
+	t.Parallel()
+
+	mig := &mockMigrator{migrateResult: &common.OperationResult{Success: true}}
+	seeds := &mockSeeder{reconcileResult: &ExecutionReport{}}
+	m := NewManagerWithDeps(ManagerDeps{Migrator: mig, Seeder: seeds})
+
+	require.NoError(t, m.Migrate(t.Context(), common.OperationOptions{
+		Environment: common.EnvDevelopment,
+	}))
+
+	assert.Equal(t, []common.Environment{common.EnvDevelopment}, seeds.reconcileEnvs)
+	assert.Zero(t, seeds.executeCalls)
+}
+
+func TestManager_Migrate_DryRunDoesNotReconcile(t *testing.T) {
+	t.Parallel()
+
+	mig := &mockMigrator{migrateResult: &common.OperationResult{Success: true}}
+	seeds := &mockSeeder{reconcileResult: &ExecutionReport{}}
+	m := NewManagerWithDeps(ManagerDeps{Migrator: mig, Seeder: seeds})
+
+	require.NoError(t, m.Migrate(t.Context(), common.OperationOptions{DryRun: true}))
+
+	assert.Empty(t, seeds.reconcileEnvs)
+}
+
+func TestManager_Migrate_FailedMigrationDoesNotReconcile(t *testing.T) {
+	t.Parallel()
+
+	mig := &mockMigrator{migrateErr: errors.New("migration failed")}
+	seeds := &mockSeeder{reconcileResult: &ExecutionReport{}}
+	m := NewManagerWithDeps(ManagerDeps{Migrator: mig, Seeder: seeds})
+
+	require.Error(t, m.Migrate(t.Context(), common.OperationOptions{}))
+
+	assert.Empty(t, seeds.reconcileEnvs)
+}
+
+func TestManager_Migrate_ReportsAFailedReconcile(t *testing.T) {
+	t.Parallel()
+
+	mig := &mockMigrator{migrateResult: &common.OperationResult{Success: true}}
+	seeds := &mockSeeder{reconcileErr: errors.New("sync failed")}
+	m := NewManagerWithDeps(ManagerDeps{Migrator: mig, Seeder: seeds})
+
+	err := m.Migrate(t.Context(), common.OperationOptions{})
+
+	require.ErrorContains(t, err, "reconcile seeds after migrating")
 }

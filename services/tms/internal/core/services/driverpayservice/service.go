@@ -189,25 +189,8 @@ func (s *Service) AssignProfileToWorker(
 	if err := requireActor(actor, "Pay profile assignment"); err != nil {
 		return nil, err
 	}
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	profile, err := s.profileRepo.GetByID(ctx, repositories.GetPayProfileByIDRequest{
-		ID: entity.PayProfileID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-		IncludeComponents: true,
-	})
+	plan, err := s.PlanAssignment(ctx, entity)
 	if err != nil {
-		return nil, err
-	}
-
-	if err = validateRateOverrides(entity, profile); err != nil {
 		return nil, err
 	}
 
@@ -226,7 +209,7 @@ func (s *Service) AssignProfileToWorker(
 	}
 
 	s.logAssignmentAudit(created, actor.UserID, permission.OpAssign,
-		"Pay profile "+profile.Name+" assigned to worker")
+		"Pay profile "+plan.Profile.Name+" assigned to worker")
 	return created, nil
 }
 
@@ -267,20 +250,12 @@ func (s *Service) endOverlappingAssignments(
 	if err != nil {
 		return err
 	}
-	for _, existing := range overlapping {
-		if existing.EffectiveTo != nil && *existing.EffectiveTo <= entity.EffectiveFrom {
-			continue
-		}
-		if existing.EffectiveFrom >= entity.EffectiveFrom {
-			return errortypes.NewValidationError(
-				"effectiveFrom",
-				errortypes.ErrInvalid,
-				"Worker already has a pay assignment starting on or after this date",
-			)
-		}
-		endDate := entity.EffectiveFrom
-		existing.EffectiveTo = &endDate
-		if _, err = s.assignmentRepo.Update(ctx, existing); err != nil {
+	ended, err := PlanEndOverlapping(entity, overlapping)
+	if err != nil {
+		return err
+	}
+	for _, closed := range ended {
+		if _, err = s.assignmentRepo.Update(ctx, closed); err != nil {
 			return err
 		}
 	}
@@ -301,14 +276,9 @@ func (s *Service) EndAssignment(
 	if err != nil {
 		return nil, err
 	}
-	if endDate <= entity.EffectiveFrom {
-		return nil, errortypes.NewValidationError(
-			"endDate",
-			errortypes.ErrInvalid,
-			"End date must be after the assignment's effective from date",
-		)
+	if err = PlanEndAssignment(entity, endDate); err != nil {
+		return nil, err
 	}
-	entity.EffectiveTo = &endDate
 	updated, err := s.assignmentRepo.Update(ctx, entity)
 	if err != nil {
 		return nil, err
