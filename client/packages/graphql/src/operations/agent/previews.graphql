@@ -80,6 +80,12 @@ fragment AgentProposalPreviewFields on AgentProposalPreview {
     code
     args
     message
+    reasons {
+      field
+      label
+      message
+      param
+    }
   }
   stale
   staleness {

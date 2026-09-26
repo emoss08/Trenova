@@ -3,7 +3,9 @@ import type {
   PreviewFieldChange,
   PreviewMessage,
   PreviewMoney,
+  PreviewReason,
   PreviewRecordChange,
+  PreviewWarning,
   ProposalPreview,
 } from "@/lib/graphql/agent-preview";
 
@@ -15,6 +17,26 @@ value, and each builder takes overrides so a test can construct what the
 contract permits and no other fixture does — a withheld field with no values,
 a moved value, a Run record with no resource, a money block with no before.
 */
+
+export function reason(overrides: Partial<PreviewReason> = {}): PreviewReason {
+  return {
+    field: "bol",
+    label: "BOL",
+    message: "BOL is already in use by shipment SEED-DET-009",
+    param: "shipment.bol",
+    ...overrides,
+  };
+}
+
+export function warning(overrides: Partial<PreviewWarning> = {}): PreviewWarning {
+  return {
+    code: "would_fail",
+    args: [],
+    message: "This would be refused as it stands: validation failed",
+    reasons: [],
+    ...overrides,
+  };
+}
 
 export function field(overrides: Partial<PreviewFieldChange> = {}): PreviewFieldChange {
   return {
@@ -120,11 +142,11 @@ export function planPreview(overrides: Partial<PlanPreview> = {}): PlanPreview {
           digest: "sha256:bbbb",
           changes: [record({ dependsOnStep: 1, fields: [field({ projectedFromStep: 1 })] })],
           warnings: [
-            {
+            warning({
               code: "depends_on_step",
               args: ["1"],
               message: "This step changes a record step 1 changes first.",
-            },
+            }),
           ],
         }),
       },

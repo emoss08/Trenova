@@ -7,6 +7,7 @@ import {
   ProposalPreview as ProposalPreviewView,
   StaleNotice,
   type PreviewDensity,
+  type WouldFailActions,
 } from "./proposal-preview";
 
 /**
@@ -43,11 +44,14 @@ export function PlanPreview({
   plan,
   density = "full",
   stepTitle,
+  wouldFail,
 }: {
   plan: PlanPreviewData;
   density?: PreviewDensity;
   /** The sentence a surface already has for a step; "Step 2" when it has none. */
   stepTitle?: (proposalId: string, step: number) => ReactNode;
+  /** What the surface offers when a step would be refused; a plan's steps cannot be edited one by one. */
+  wouldFail?: WouldFailActions;
 }) {
   const t = useT();
   const anyStepStale = plan.steps.some((step) => step.preview.stale);
@@ -69,7 +73,12 @@ export function PlanPreview({
                   {stepTitle ? stepTitle(step.proposalId, step.step) : t("Step {0}", step.step)}
                 </span>
                 <StepDependencyNote preview={step.preview} />
-                <ProposalPreviewView preview={step.preview} density={density} inPlan />
+                <ProposalPreviewView
+                  preview={step.preview}
+                  density={density}
+                  inPlan
+                  wouldFail={wouldFail}
+                />
               </div>
             </li>
           ))}

@@ -25,6 +25,7 @@ export type PreviewRecordLink = NonNullable<PreviewRecordChange["record"]>;
 export type PreviewMessage = NonNullable<PreviewRecordChange["message"]>;
 export type PreviewMoney = NonNullable<PreviewRecordChange["money"]>;
 export type PreviewWarning = ProposalPreview["warnings"][number];
+export type PreviewReason = PreviewWarning["reasons"][number];
 
 export type PlanStepPreview = {
   proposalId: string;

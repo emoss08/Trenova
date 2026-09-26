@@ -15,14 +15,17 @@ import {
   XIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { useAskAgent } from "./ask-agent";
 import { DecisionFrame, DecisionReceipt, ProposedBy, useWatchedChange } from "./decision-chrome";
 import { useDecisionFollowUp } from "./decision-follow-up";
-import { ProposalEditor, type ProposalEditorRequest } from "./proposal-editor";
+import { ProposalEditor, type EditorFocus, type ProposalEditorRequest } from "./proposal-editor";
 import { canApprove, gateDigest } from "./proposal-preview/preview-gate";
+import { askAgentMessage, editableParam } from "./proposal-preview/preview-warnings";
 import {
   ChangedNotice,
   PreviewLoadState,
   ProposalPreview,
+  type WouldFailActions,
 } from "./proposal-preview/proposal-preview";
 import { useApprovalGate, useProposalPreview } from "./proposal-preview/use-proposal-preview";
 import { presentProposal } from "./proposal-presenters";
@@ -73,6 +76,7 @@ export function ProposalCard({
   const approval = useApprovalGate(previewQuery);
 
   const followUp = useDecisionFollowUp();
+  const askAgent = useAskAgent();
   // Decided as the person whose conversation raised it, which needs only the
   // assistant: someone who may ask an agent may answer what it asks them,
   // without the approver's permission the decisions queue needs.
@@ -117,11 +121,12 @@ export function ProposalCard({
 
   // The values open as a form built from the tool's schema; approval carries
   // only what was changed, and the server validates it before recording.
-  const openEditor = () =>
+  const openEditor = (focus?: EditorFocus) =>
     setEditor({
       summary: view.summary,
       fields,
       arguments: proposal.arguments,
+      focus,
       preview: { scope: "mine", proposalId: proposal.id },
       onConfirm: async (modifications, _reason, previewDigest) => {
         await decideMyProposal(proposal.id, {
@@ -135,6 +140,22 @@ export function ProposalCard({
         followUp?.(proposal.id);
       },
     });
+
+  // A write that would be refused as it stands is not a question either; the
+  // card names what is wrong and offers the two ways forward it has: change
+  // the value here, or have the agent fix it in the conversation. Approve
+  // stays offered and warned, as it was, so the card treats it as before.
+  const wouldFail: WouldFailActions = {
+    canChange: editable ? (param) => editableParam(param, fields) : undefined,
+    onChange:
+      editable && approval.gate.state !== "stale"
+        ? (reason) => openEditor({ param: reason.param, label: reason.label })
+        : undefined,
+    onAskAgent:
+      askAgent && awaiting
+        ? (reasons) => askAgent(askAgentMessage(proposal.toolName, reasons, t))
+        : undefined,
+  };
 
   // Once a decision is made the card is history, not a question. It keeps the
   // sentence and the outcome and drops everything that existed to help decide.
@@ -186,7 +207,7 @@ export function ProposalCard({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={openEditor}
+                onClick={() => openEditor()}
                 disabled={decideMutation.isPending || approval.gate.state === "stale"}
               >
                 <PencilIcon className="size-3.5" />
@@ -224,7 +245,9 @@ export function ProposalCard({
           density="compact"
           fallback={<Highlights highlights={view.highlights} />}
         >
-          {(preview) => <ProposalPreview preview={preview} density="compact" />}
+          {(preview) => (
+            <ProposalPreview preview={preview} density="compact" wouldFail={wouldFail} />
+          )}
         </PreviewLoadState>
       ) : (
         approval.changed && <ChangedNotice />

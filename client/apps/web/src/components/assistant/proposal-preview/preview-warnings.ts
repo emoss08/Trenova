@@ -1,5 +1,7 @@
-import type { PreviewWarning } from "@/lib/graphql/agent-preview";
+import type { PreviewReason, PreviewWarning } from "@/lib/graphql/agent-preview";
+import type { ProposalField } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { humanizeToolName } from "../proposal-state";
 
 /**
  * The server names what a person deciding should know with a code and sends
@@ -59,14 +61,149 @@ function firstArg(warning: PreviewWarning): string {
   return warning.args.find((arg) => arg.trim() !== "")?.trim() ?? "";
 }
 
+/**
+ * One rule a write would break: the field the rule names in the record's
+ * own words (empty for a refusal of the whole write), what is wrong, and the
+ * proposal parameter that carries the field, when the call carries it.
+ */
+export type WouldFailReason = PreviewReason;
+
+/**
+ * The sentences the server leads a refusal with. They are stripped so the
+ * person reads the reason itself, never a heading with the reason folded
+ * into it.
+ */
+const REFUSAL_PREFIXES = [
+  "This would be refused as it stands:",
+  "This change would fail as proposed:",
+  "validation failed:",
+];
+
+function stripRefusalPrefixes(text: string): string {
+  let rest = text.trim();
+  let stripped = true;
+  while (stripped) {
+    stripped = false;
+    for (const prefix of REFUSAL_PREFIXES) {
+      if (rest.startsWith(prefix)) {
+        rest = rest.slice(prefix.length).trim();
+        stripped = true;
+      }
+    }
+  }
+
+  return rest;
+}
+
+/**
+ * What a would_fail warning is made of. The server's structured reasons when
+ * it sent them; otherwise its message, without the sentence that leads it,
+ * split into the lines a validation failure lists. A server that said why
+ * is never reduced to the bare "would not go through".
+ */
+export function wouldFailReasons(warning: PreviewWarning): WouldFailReason[] {
+  if (warning.code !== "would_fail") {
+    return [];
+  }
+  const structured = warning.reasons.filter((entry) => entry.message.trim() !== "");
+  if (structured.length > 0) {
+    return structured.map((entry) => ({
+      field: entry.field,
+      label: entry.label,
+      message: entry.message.trim(),
+      param: entry.param,
+    }));
+  }
+
+  const text = stripRefusalPrefixes(firstArg(warning) || warning.message);
+  if (text === "") {
+    return [];
+  }
+
+  return text
+    .split(/\n-\s*/u)
+    .map((line) => stripRefusalPrefixes(line.replace(/^-\s*/u, "")))
+    .filter((line) => line !== "")
+    .map((message) => ({ field: "", label: "", message, param: "" }));
+}
+
+/** A reason in one line: "BOL: already in use", or the message alone. */
+export function reasonText(entry: WouldFailReason): string {
+  return entry.label !== "" ? `${entry.label}: ${entry.message}` : entry.message;
+}
+
+/**
+ * Whether a person approving may change the parameter a reason names: its
+ * top-level field is one the editor offers and not the record the write is
+ * about. A nested parameter (shipment.bol) is edited inside its field.
+ */
+export function editableParam(param: string, fields: readonly ProposalField[]): boolean {
+  const top = param.split(/[.[]/u, 1)[0] ?? "";
+  if (top === "") {
+    return false;
+  }
+  const field = fields.find((entry) => entry.name === top);
+
+  return field !== undefined && field.readOnly !== true;
+}
+
+/**
+ * What the person tells the agent when they want the proposal fixed rather
+ * than approved as it stands: each reason, and that a corrected proposal is
+ * wanted, so the agent proposes again instead of leaving it.
+ */
+export function askAgentMessage(
+  toolName: string,
+  reasons: readonly WouldFailReason[],
+  t: TranslateFn,
+): string {
+  const tool = humanizeToolName(toolName);
+  const what = tool.charAt(0).toLowerCase() + tool.slice(1);
+  const listed = reasons.map(reasonText).join("; ");
+
+  return listed === ""
+    ? t(
+        "The proposal to {0} would not go through as it stands. Fix it and propose it again; ask me for anything you need.",
+        what,
+      )
+    : t(
+        "The proposal to {0} would not go through as it stands: {1}. Fix it and propose it again; ask me for anything you need.",
+        what,
+        listed,
+      );
+}
+
+/** The same request for a plan, which is named by its title rather than a tool. */
+export function askAgentPlanMessage(
+  title: string,
+  reasons: readonly WouldFailReason[],
+  t: TranslateFn,
+): string {
+  const listed = reasons.map(reasonText).join("; ");
+
+  return listed === ""
+    ? t(
+        'The plan "{0}" would not go through as it stands. Fix it and propose it again; ask me for anything you need.',
+        title,
+      )
+    : t(
+        'The plan "{0}" would not go through as it stands: {1}. Fix it and propose it again; ask me for anything you need.',
+        title,
+        listed,
+      );
+}
+
 export function previewWarningText(warning: PreviewWarning, t: TranslateFn): string {
   const arg = firstArg(warning);
 
   switch (warning.code) {
-    case "would_fail":
-      return arg !== ""
-        ? t("This would not go through as it stands: {0}", arg)
+    case "would_fail": {
+      const listed = wouldFailReasons(warning).map(reasonText).join("; ");
+
+      return listed !== ""
+        ? t("This would not go through as it stands: {0}", listed)
         : t("This would not go through as it stands.");
+    }
     case "already_told_customer":
       return t("The customer has already been told about this.");
     case "driver_unreachable":
