@@ -37,11 +37,17 @@ export default function AgentPlanTable() {
     ]);
   };
 
-  const decide = (row: Row<AgentPlanRow>, decision: "Accepted" | "Rejected") => {
+  const decide = (
+    row: Row<AgentPlanRow>,
+    decision: "Accepted" | "Rejected",
+    initialReason?: string,
+  ) => {
     const plan = row.original;
     const accepting = decision === "Accepted";
 
     setDialog({
+      initialReason,
+      onAskAgent: accepting ? (reason) => decide(row, "Rejected", reason) : undefined,
       title: accepting
         ? t("Approve all {0} changes?", plan.stepCount)
         : t("Reject all {0} changes?", plan.stepCount),

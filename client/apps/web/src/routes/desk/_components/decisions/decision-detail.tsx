@@ -1,11 +1,18 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { conversationPath } from "@/lib/conversation-path";
 import { SimulationLine } from "@/components/assistant/proposal-card";
+import type { EditorFocus } from "@/components/assistant/proposal-editor";
 import { PlanPreview } from "@/components/assistant/proposal-preview/plan-preview";
 import { canApprove } from "@/components/assistant/proposal-preview/preview-gate";
 import {
+  askAgentMessage,
+  askAgentPlanMessage,
+  editableParam,
+} from "@/components/assistant/proposal-preview/preview-warnings";
+import {
   PreviewLoadState,
   ProposalPreview,
+  type WouldFailActions,
 } from "@/components/assistant/proposal-preview/proposal-preview";
 import {
   useApprovalGate,
@@ -43,8 +50,10 @@ import { agentRunPath } from "@/lib/record-paths";
 
 export type DecisionActions = {
   onAccept: () => void;
-  onReject: () => void;
-  onModify?: () => void;
+  /** Rejects; a reason given here is what the rejection opens with. */
+  onReject: (initialReason?: string) => void;
+  /** Opens the editor, on one value when a reason named it. */
+  onModify?: (focus?: EditorFocus) => void;
   busy: boolean;
 };
 
@@ -141,7 +150,12 @@ function ActionRow({
         {t("Approve")}
         <Kbd className="ml-1">a</Kbd>
       </Button>
-      <Button size="sm" variant="outline" onClick={actions.onReject} disabled={actions.busy}>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => actions.onReject()}
+        disabled={actions.busy}
+      >
         <XIcon className="size-3.5" />
         {t("Reject")}
         <Kbd className="ml-1">r</Kbd>
@@ -150,7 +164,7 @@ function ActionRow({
         <Button
           size="sm"
           variant="ghost"
-          onClick={actions.onModify}
+          onClick={() => actions.onModify?.()}
           disabled={actions.busy || !approvable}
         >
           <PencilIcon className="size-3.5" />
@@ -249,6 +263,22 @@ function ProposalDetail({
     }
   }, [node.id, onPreviewShown, shownDigest]);
 
+  // A write that would be refused: change the value it names here, or turn
+  // it down with the reasons so the agent in its conversation learns what to
+  // fix. Approve stays offered and warned, as the chat card leaves it.
+  const editable = proposal.fields.length > 0 && actions.onModify !== undefined;
+  const approvable = canApprove(approval.gate);
+  const wouldFail: WouldFailActions = {
+    canChange: editable ? (param) => editableParam(param, proposal.fields) : undefined,
+    onChange:
+      editable && approvable && !actions.busy
+        ? (reason) => actions.onModify?.({ param: reason.param, label: reason.label })
+        : undefined,
+    onAskAgent: actions.busy
+      ? undefined
+      : (reasons) => actions.onReject(askAgentMessage(proposal.toolName, reasons, t)),
+  };
+
   return (
     <article className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
       <header className="flex flex-col gap-1.5">
@@ -279,7 +309,7 @@ function ProposalDetail({
           changed={approval.changed}
           fallback={<Highlights highlights={view.highlights} />}
         >
-          {(preview) => <ProposalPreview preview={preview} />}
+          {(preview) => <ProposalPreview preview={preview} wouldFail={wouldFail} />}
         </PreviewLoadState>
       </section>
 
@@ -319,7 +349,7 @@ function ProposalDetail({
         actions={actions}
         reversible={view.reversible}
         editable={proposal.fields.length > 0}
-        approvable={canApprove(approval.gate)}
+        approvable={approvable}
       />
     </article>
   );
@@ -352,6 +382,13 @@ function PlanDetail({ node, actions }: { node: PendingPlanNode; actions: Decisio
     () => new Map((stepsQuery.data ?? []).map((step) => [step.id, step])),
     [stepsQuery.data],
   );
+  // A plan is decided whole, so a step that would be refused can only be
+  // turned down with its reasons.
+  const wouldFail: WouldFailActions = {
+    onAskAgent: actions.busy
+      ? undefined
+      : (reasons) => actions.onReject(askAgentPlanMessage(node.title, reasons, t)),
+  };
 
   return (
     <article className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
@@ -388,6 +425,7 @@ function PlanDetail({ node, actions }: { node: PendingPlanNode; actions: Decisio
               <PlanPreview
                 plan={plan}
                 stepTitle={(proposalId) => <StepSentence step={stepsById.get(proposalId)} />}
+                wouldFail={wouldFail}
               />
             )}
           </PreviewLoadState>
