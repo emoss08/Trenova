@@ -1589,6 +1589,13 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/capture",
+    title: "Scanning and printing",
+    group: "Document Management",
+    resource: Resource.CaptureProfile,
+    requiredOperation: Operation.Read,
+  },
+  {
     href: "/admin/document-parsing-rules",
     title: "Parsing rules",
     group: "Document Management",

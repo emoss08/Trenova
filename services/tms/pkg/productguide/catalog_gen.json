@@ -1,5 +1,5 @@
 {
-  "version": "sha256:20032c5f16a051b2f21debb173bf763a9f26cb4f0cca815beced25e788cc222c",
+  "version": "sha256:e6c278e73ee70abe29f933e201b5f820ae9e9db2c936b04ac1d335f018593515",
   "modules": [
     {
       "id": "home",
@@ -2689,6 +2689,88 @@
         "/accounting/ar/late-charges",
         "/billing/configuration-files/formula-templates",
         "/admin/invoice-adjustment-controls"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/admin/capture",
+      "name": "Scanning and printing",
+      "module": "admin",
+      "breadcrumb": [
+        "Organization settings",
+        "Document Management",
+        "Scanning and printing"
+      ],
+      "description": "Turn on Trenova Capture, set the scan profiles people pick from, and see every computer paired to scan",
+      "summary": "Scanning and printing is where administrators run Trenova Capture, the Windows companion that scans paper and catches print jobs into Trenova. **Settings** turns it on for the organization and sets how long unfiled pages are kept and which versions of the companion may connect. **Scan profiles** are the settings people pick from when they start a scan: resolution, color, both sides, and how a stack is split into documents. **Computers** lists every computer paired to scan, whose it is, and whether it is online.",
+      "requires": [
+        {
+          "resource": "capture_profile",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "scanning settings",
+        "Trenova Capture settings",
+        "scanner profiles",
+        "scan settings",
+        "virtual printer settings",
+        "paired computers",
+        "scanner fleet"
+      ],
+      "tasks": [
+        {
+          "title": "Turn on scanning and printing",
+          "keywords": [
+            "enable Trenova Capture",
+            "allow scanning",
+            "turn on virtual printer"
+          ],
+          "steps": [
+            "Open [Scanning and printing](/admin/capture) and select **Settings**.",
+            "Turn on **Turn on scanning and printing into Trenova**.",
+            "Optionally turn on **File documents behind a cover sheet on their own**, and set **Keep unfiled pages for (days)**.",
+            "Select **Save changes**."
+          ]
+        },
+        {
+          "title": "Add a scan profile",
+          "keywords": [
+            "scanner settings",
+            "DPI",
+            "color scanning",
+            "duplex",
+            "split stack"
+          ],
+          "steps": [
+            "Open [Scanning and printing](/admin/capture) and select **Scan profiles**.",
+            "Select **New scan profile**.",
+            "Fill in **Name**, choose the **Resolution** and **Color mode**, and tick what to **Split the stack on**.",
+            "Turn on **Use when nobody picks one** to make it the default, then select **Create profile**."
+          ]
+        },
+        {
+          "title": "Stop a computer from scanning",
+          "keywords": [
+            "revoke scanner",
+            "lost laptop",
+            "employee left",
+            "remove device"
+          ],
+          "steps": [
+            "Open [Scanning and printing](/admin/capture) and select **Computers**.",
+            "Find the computer, select **Revoke**, optionally say why, and select **Revoke** again. It stops at once."
+          ]
+        }
+      ],
+      "notes": "Settings needs access to document settings; scan profiles and computers each have their own permission. Turning scanning off stops every paired computer without unpairing it. A change to a profile reaches the next scan started with it; stacks already scanned keep the settings they were scanned with.\n\nPeople pair their own computers from [My scanners](/capture/devices).",
+      "related": [
+        "/intake",
+        "/capture/devices",
+        "/admin/document-intelligence"
       ],
       "covers": [],
       "createAction": null,

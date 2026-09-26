@@ -955,6 +955,15 @@
       "apps/web/lib"
     ]
   },
+  "300 reads well and keeps a page small.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "300A figures for {0}": {
     "sites": 1,
     "scope": [
@@ -2358,6 +2367,24 @@
       "service/reporting"
     ]
   },
+  "A computer appears here once somebody approves it from Trenova Capture's pairing code.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "A computer running anything older is asked to update before it can scan. Leave blank to allow any version.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "A condition only applies to an automatically applied accessorial": {
     "sites": 1,
     "scope": [
@@ -2970,6 +2997,15 @@
     ],
     "areas": [
       "domain/capture"
+    ]
+  },
+  "A document that follows a Trenova cover sheet is filed onto the sheet's record without waiting in Intake. Anything else still waits for a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "A document type needs a record to file onto": {
@@ -13608,7 +13644,7 @@
     ]
   },
   "All": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -20004,6 +20040,15 @@
       "routes/customer"
     ]
   },
+  "Ask the scanner to leave out empty backs. Trenova sets aside any it still sends.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Ask {0} anything about your operation": {
     "sites": 1,
     "scope": [
@@ -23303,12 +23348,13 @@
     ]
   },
   "Availability": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -25247,6 +25293,15 @@
       "routes/admin"
     ]
   },
+  "Between 1 and 365. Pages not filed by then are deleted, and their owner is reminded a week before.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Between 10 and 500 characters, kept with the amendment as the record of why it exists.": {
     "sites": 1,
     "scope": [
@@ -25263,6 +25318,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Between 30 and 95. Higher is sharper and larger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Between dates": {
@@ -27043,6 +27107,15 @@
       "api/handlers"
     ]
   },
+  "Both sides": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Both versions must exist for comparison": {
     "sites": 1,
     "scope": [
@@ -28543,7 +28616,7 @@
     ]
   },
   "Cancel": {
-    "sites": 266,
+    "sites": 267,
     "scope": [
       "ts"
     ],
@@ -35421,11 +35494,12 @@
     ]
   },
   "Clear the search": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/inbox",
       "routes/intake"
     ]
@@ -36867,6 +36941,15 @@
       "routes/service-type",
       "routes/shipment-type",
       "routes/worker"
+    ]
+  },
+  "Color mode": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Color must be a valid hex color": {
@@ -38344,6 +38427,24 @@
     "areas": [
       "apps/web/components",
       "routes/capture"
+    ]
+  },
+  "Computers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Computers could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Concat": {
@@ -44068,6 +44169,15 @@
       "routes/edi"
     ]
   },
+  "Create profile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Create program": {
     "sites": 1,
     "scope": [
@@ -49009,7 +49119,7 @@
     ]
   },
   "Default": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -50756,6 +50866,15 @@
       "domain/permission"
     ]
   },
+  "Delete profile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Delete purchase": {
     "sites": 1,
     "scope": [
@@ -50965,11 +51084,12 @@
     ]
   },
   "Delete {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/billing-queue"
     ]
   },
@@ -50983,11 +51103,12 @@
     ]
   },
   "Delete {0}?": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/fuel-management",
       "routes/reports"
     ]
@@ -51771,7 +51892,7 @@
     ]
   },
   "Description": {
-    "sites": 142,
+    "sites": 143,
     "scope": [
       "go",
       "ts"
@@ -57634,6 +57755,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Drop blank pages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Drop files here or click to upload": {
     "sites": 1,
     "scope": [
@@ -60085,7 +60215,7 @@
     ]
   },
   "Edit {0}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -70663,6 +70793,15 @@
       "routes/admin"
     ]
   },
+  "Feed a stack rather than scanning one page from the glass.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Feed reference cannot be longer than 255 characters": {
     "sites": 1,
     "scope": [
@@ -71129,6 +71268,15 @@
       "routes/intake"
     ]
   },
+  "File documents behind a cover sheet on their own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "File envelope was parsed and transactions are being processed.": {
     "sites": 1,
     "scope": [
@@ -71413,12 +71561,13 @@
     ]
   },
   "Filing": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/admin",
       "routes/intake"
     ]
   },
@@ -73238,6 +73387,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "For scanners that need their settings chosen on the computer, such as Kofax VRS. The person scanning confirms each scan there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "For the 1,250-hour eligibility test. There is no timeclock here, so it is recorded by hand.": {
@@ -79478,6 +79636,15 @@
       "apps/web/types"
     ]
   },
+  "How Trenova tells where one document ends and the next begins. Pages it splits on are set aside.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "How a looked-up rate is rounded before it becomes a charge": {
     "sites": 1,
     "scope": [
@@ -81131,6 +81298,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Image quality": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Image quality is required": {
@@ -83264,6 +83440,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Installs new versions when they are released. Turn off where software is rolled out by IT.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Instance ID is required": {
@@ -86668,6 +86853,15 @@
       "routes/agent-control"
     ]
   },
+  "It stops being offered. A scan waiting to start with it uses the default instead, and stacks already scanned keep the settings they were scanned with.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "It stops working at once, including a scan it is in the middle of. Pages it already uploaded stay in Intake. To use it again, pair it again.": {
     "sites": 1,
     "scope": [
@@ -87538,12 +87732,13 @@
     ]
   },
   "Keep it": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/desk",
       "routes/intake",
       "routes/time-attendance"
@@ -87727,6 +87922,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Keep unfiled pages for (days)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Keep your phone and address current so dispatch and payroll can reach you.": {
@@ -90436,6 +90640,15 @@
     "areas": [
       "domain/tractor",
       "domain/trailer"
+    ]
+  },
+  "Let Trenova Capture update itself": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Let agents search and read the web for this person": {
@@ -94423,6 +94636,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Making this the default takes it off the one that had it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Male": {
@@ -100930,7 +101152,7 @@
     ]
   },
   "Name": {
-    "sites": 140,
+    "sites": 141,
     "scope": [
       "go",
       "ts"
@@ -103161,6 +103383,15 @@
       "packages/shared/components"
     ]
   },
+  "New scan profile": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "New scenario": {
     "sites": 1,
     "scope": [
@@ -104742,6 +104973,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No computer matches": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "No computers paired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No computers paired yet": {
@@ -107588,6 +107837,15 @@
       "apps/web/components"
     ]
   },
+  "No scan profiles yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No scanner reported yet": {
     "sites": 1,
     "scope": [
@@ -107903,6 +108161,15 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "No splitting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No standards exist for this template type yet.": {
@@ -109352,6 +109619,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Not offered": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Not on a shift": {
@@ -112217,11 +112493,12 @@
     ]
   },
   "Offered": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/worker"
     ]
   },
@@ -112467,6 +112744,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Oldest version allowed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Oldest {0}": {
@@ -113208,6 +113494,15 @@
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "One side": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "One way": {
@@ -120683,6 +120978,15 @@
       "routes/intake"
     ]
   },
+  "Pages per document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Pages per document must be between 1 and {0}": {
     "sites": 1,
     "scope": [
@@ -120860,6 +121164,15 @@
       "routes/capture"
     ]
   },
+  "Paired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Paired Trenova Capture installs across the organization": {
     "sites": 1,
     "scope": [
@@ -120903,6 +121216,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Paperwork": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Param: {0}": {
@@ -129551,6 +129873,24 @@
       "routes/worker"
     ]
   },
+  "Profile created": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Profile deleted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Profile details": {
     "sites": 1,
     "scope": [
@@ -129658,6 +129998,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Profile saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Profile self-Service": {
@@ -142856,12 +143205,13 @@
     ]
   },
   "Resolution": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/bank-receipt-queue",
       "routes/invoice",
       "routes/settlement-dispute",
@@ -145777,12 +146127,13 @@
     ]
   },
   "Revoked": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/carrier"
     ]
   },
@@ -149187,7 +149538,7 @@
     ]
   },
   "Save changes": {
-    "sites": 43,
+    "sites": 45,
     "scope": [
       "ts"
     ],
@@ -149840,7 +150191,7 @@
     ]
   },
   "Saving…": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -150215,6 +150566,24 @@
       "domain/permission"
     ]
   },
+  "Scan profiles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Scan profiles could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Scan settings": {
     "sites": 2,
     "scope": [
@@ -150222,6 +150591,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Scan the back of every page as well as the front.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Scanned": {
@@ -150294,6 +150672,16 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Scanning and printing": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/admin"
     ]
   },
   "Scanning and printing into Trenova is turned off for your organization. Ask an administrator to turn it on.": {
@@ -151379,6 +151767,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Search computer, user or Windows account": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Search conversations": {
@@ -157208,7 +157605,7 @@
     ]
   },
   "Settings": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -157226,6 +157623,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Settings people pick from when they start a scan. The scanner is asked for each; one it cannot do is noted on the stack, not refused.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Settings to change are required": {
@@ -160325,6 +160731,15 @@
       "routes/reports"
     ]
   },
+  "Show the scanner's own window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Show the workspace": {
     "sites": 1,
     "scope": [
@@ -163038,6 +163453,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Split the stack on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Split this charge…": {
     "sites": 1,
     "scope": [
@@ -163081,6 +163505,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Splits on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Splits text into a list on the separator.": {
@@ -164425,7 +164858,7 @@
     ]
   },
   "Status": {
-    "sites": 248,
+    "sites": 249,
     "scope": [
       "go",
       "ts"
@@ -187783,6 +188216,15 @@
       "routes/capture"
     ]
   },
+  "Trenova Capture versions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trenova Capture {0}": {
     "sites": 1,
     "scope": [
@@ -188533,6 +188975,15 @@
       "routes/worker"
     ]
   },
+  "Turn on Trenova Capture, set the scan profiles people pick from, and see every computer paired to scan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Turn on Vet as a broker on the General tab and save to check this customer's broker authority, surety bond and insurance.": {
     "sites": 1,
     "scope": [
@@ -188549,6 +189000,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Turn on scanning and printing into Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Turn on when the employer's testing history reports a violation.": {
@@ -192227,6 +192687,15 @@
       "apps/web/lib"
     ]
   },
+  "Use the document feeder": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Use the expression currently in the editor": {
     "sites": 1,
     "scope": [
@@ -192370,6 +192839,15 @@
     ],
     "areas": [
       "service/jurisdictionruleservice"
+    ]
+  },
+  "Use when nobody picks one": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Use your own app": {
@@ -197734,6 +198212,15 @@
       "routes/billing-control"
     ]
   },
+  "What happens to a stack once it is read, and how long unfiled pages are kept.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "What happens to tenders and assignments when the provider cannot be reached.": {
     "sites": 1,
     "scope": [
@@ -197896,6 +198383,15 @@
       "routes/agent-control"
     ]
   },
+  "What it is for, so people pick the right one": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "What it may look up and what it may change. Reads run as soon as the agent asks; a change waits at its own tier, never above the ceiling below.": {
     "sites": 1,
     "scope": [
@@ -197966,6 +198462,15 @@
     ],
     "areas": [
       "routes/leave-control"
+    ]
+  },
+  "What people pick from when they start a scan. The default is used when nobody picks one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "What people see when they pick this agent.": {
@@ -199792,6 +200297,15 @@
       "routes/customer"
     ]
   },
+  "Whether people can scan and print into Trenova with Trenova Capture. Turning it off stops every paired computer until it is turned on again; nothing is unpaired.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Whether requests are blocked when a balance runs out, and whether dispatch must approve them.": {
     "sites": 1,
     "scope": [
@@ -200107,6 +200621,15 @@
       "routes/worker"
     ]
   },
+  "Which computers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Which cover to show": {
     "sites": 1,
     "scope": [
@@ -200321,6 +200844,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Which versions of the companion may connect, and whether it updates itself.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Which worker types are asked to sign; a handbook for employees is not a contract term for an owner-operator.": {
@@ -201377,6 +201909,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Without one, each computer scans with its scanner's own settings. Add a profile to set the resolution, color and splitting once for everybody.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Words only": {
@@ -207324,6 +207865,15 @@
       "routes/reports"
     ]
   },
+  "every {0} pages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "every {0}s": {
     "sites": 1,
     "scope": [
@@ -211631,6 +212181,15 @@
       "routes/worker"
     ]
   },
+  "{0} DPI": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} Every row that failed is listed below; fix the file and upload it again.": {
     "sites": 1,
     "scope": [
@@ -213694,11 +214253,12 @@
     ]
   },
   "{0} is revoked": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/capture"
     ]
   },

@@ -1696,6 +1696,14 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                path: "capture",
+                loader: createPermissionLoader(Resource.CaptureProfile, Operation.Read),
+                async lazy() {
+                  const { CaptureAdminPage } = await import("@/routes/admin/capture/page");
+                  return { Component: CaptureAdminPage };
+                },
+              },
+              {
                 path: "document-intelligence",
                 loader: createPermissionLoader(Resource.DocumentControl, Operation.Read),
                 async lazy() {
