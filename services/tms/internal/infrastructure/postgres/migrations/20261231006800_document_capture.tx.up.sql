@@ -229,7 +229,9 @@ CREATE INDEX IF NOT EXISTS "idx_capture_batches_queue" ON "capture_batches"("org
 CREATE INDEX IF NOT EXISTS "idx_capture_batches_user" ON "capture_batches"("organization_id", "business_unit_id", "user_id", "created_at" DESC);
 
 --bun:split
-CREATE INDEX IF NOT EXISTS "idx_capture_batches_retention" ON "capture_batches"("retain_until") WHERE "status" NOT IN ('Filed', 'Discarded', 'Expired');
+-- Every batch leaves storage once its retention passes, filed or not: a filed
+-- document has its own copy, and the pages behind it are only a working set.
+CREATE INDEX IF NOT EXISTS "idx_capture_batches_retention" ON "capture_batches"("retain_until") WHERE "status" NOT IN ('Receiving', 'Sealed', 'Processing');
 
 --bun:split
 CREATE TABLE IF NOT EXISTS "capture_pages"(

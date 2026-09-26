@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
@@ -221,6 +222,7 @@ type RouterParams struct {
 	DotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	EDIHandler                      *edihandler.Handler
 	InboundHandler                  *inboundhandler.Handler
+	CaptureHandler                  *capturehandler.Handler
 	EmailHandler                    *emailhandler.Handler
 	TelematicsHandler               *telematicshandler.Handler
 	AccountingWebhookHandler        *accountingwebhookhandler.Handler
@@ -358,6 +360,7 @@ type Router struct {
 	dotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	ediHandler                      *edihandler.Handler
 	inboundHandler                  *inboundhandler.Handler
+	captureHandler                  *capturehandler.Handler
 	emailHandler                    *emailhandler.Handler
 	telematicsHandler               *telematicshandler.Handler
 	accountingWebhookHandler        *accountingwebhookhandler.Handler
@@ -497,6 +500,7 @@ func NewRouter(p RouterParams) *Router {
 		dotHazmatReferenceHandler:       p.DotHazmatReferenceHandler,
 		ediHandler:                      p.EDIHandler,
 		inboundHandler:                  p.InboundHandler,
+		captureHandler:                  p.CaptureHandler,
 		emailHandler:                    p.EmailHandler,
 		telematicsHandler:               p.TelematicsHandler,
 		accountingWebhookHandler:        p.AccountingWebhookHandler,
@@ -606,6 +610,8 @@ func (r *Router) setupMiddleware() {
 				// An event stream is flushed a frame at a time; compressing it
 				// adds a buffer between each frame and the reader.
 				`^/api/v1/realtime/stream/$`,
+				`^/api/v1/capture/device/stream/$`,
+				`^/api/v1/capture/pages/[^/]+/content/$`,
 			}),
 		),
 	)
@@ -645,6 +651,8 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.invoiceHandler.RegisterPublicRoutes(rg)
 	r.ediHandler.RegisterPublicRoutes(rg)
 	r.inboundHandler.RegisterPublicRoutes(rg)
+	r.captureHandler.RegisterPublicRoutes(rg)
+	r.captureHandler.RegisterDeviceRoutes(r.captureDeviceGroup(parent))
 	r.tenderPublicHandler.RegisterPublicRoutes(rg)
 	r.rateConfirmationPublicHandler.RegisterPublicRoutes(rg)
 }
@@ -767,6 +775,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.tableChangeAlertHandler.RegisterRoutes(protected)
 	r.documentPacketRuleHandler.RegisterRoutes(protected)
 	r.documentTemplateHandler.RegisterRoutes(protected)
+	r.captureHandler.RegisterRoutes(protected)
 }
 
 func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
@@ -781,6 +790,19 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected.Use(middleware.NewPasswordChangeMiddleware(r.errorHandler).RequireCurrentPassword())
 	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
 	return protected
+}
+
+// captureDeviceGroup is where a paired Trenova Capture device calls. It takes
+// a device credential and nothing else, then applies the same per-person rate
+// limit and entitlement checks a signed-in session gets. There is no CSRF check
+// because nothing here is reachable with a cookie.
+func (r *Router) captureDeviceGroup(rg *gin.RouterGroup) *gin.RouterGroup {
+	device := rg.Group("")
+	device.Use(r.rateLimiter.ByClientIP())
+	device.Use(r.captureHandler.RequireDevice())
+	device.Use(r.rateLimiter.ByPrincipal())
+	device.Use(r.controlPlaneAccessMiddleware.RequireAccess())
+	return device
 }
 
 func (r *Router) publicGroup(rg *gin.RouterGroup) *gin.RouterGroup {

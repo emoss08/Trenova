@@ -34,11 +34,13 @@ const (
 	IsPortalUserKey           = Key("isPortalUser")
 	MustChangePasswordKey     = Key("mustChangePassword")
 	LocaleKey                 = Key("locale")
+	CaptureDeviceIDKey        = Key("captureDeviceId")
 )
 
 const (
-	PrincipalTypeUser   = "session_user"
-	PrincipalTypeAPIKey = "api_key"
+	PrincipalTypeUser          = "session_user"
+	PrincipalTypeAPIKey        = "api_key"
+	PrincipalTypeCaptureDevice = "capture_device"
 )
 
 func SetLocale(c *gin.Context, locale string) {
@@ -166,6 +168,19 @@ func SetAPIKeyContext(
 	SetOrganizationID(c, orgID)
 }
 
+// SetCaptureDeviceContext marks the request as coming from a paired Trenova
+// Capture device. The device acts for exactly one person, so the user is set
+// and every permission check runs as them; the principal stays the device so
+// what the device did is attributable to it.
+func SetCaptureDeviceContext(c *gin.Context, deviceID, userID, buID, orgID pulid.ID) {
+	c.Set(string(TypeKey), PrincipalTypeCaptureDevice)
+	c.Set(string(ActorKey), deviceID)
+	c.Set(string(CaptureDeviceIDKey), deviceID)
+	SetUserID(c, userID)
+	SetBusinessUnitID(c, buID)
+	SetOrganizationID(c, orgID)
+}
+
 type AuthContext struct {
 	PrincipalType          string
 	PrincipalID            pulid.ID
@@ -186,6 +201,15 @@ type AuthContext struct {
 	RiskDecision           string
 	RiskDecisionID         pulid.ID
 	IsPortalUser           bool
+	CaptureDeviceID        pulid.ID
+}
+
+// IsCaptureDevice reports whether a paired capture device made the request.
+func (ac *AuthContext) IsCaptureDevice() bool {
+	if ac == nil {
+		return false
+	}
+	return ac.PrincipalType == PrincipalTypeCaptureDevice && ac.CaptureDeviceID.IsNotNil()
 }
 
 func (ac *AuthContext) IsAPIKey() bool {
@@ -319,6 +343,11 @@ func authContextFromGin(c *gin.Context) *AuthContext {
 			c,
 			string(IsPortalUserKey),
 			false,
+		),
+		CaptureDeviceID: helpers.ContextValueOr[pulid.ID](
+			c,
+			string(CaptureDeviceIDKey),
+			pulid.Nil,
 		),
 	}
 }

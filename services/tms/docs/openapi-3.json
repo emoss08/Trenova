@@ -851,6 +851,1035 @@
                 ],
                 "type": "object"
             },
+            "capture.Architecture": {
+                "enum": [
+                    "x64"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ArchitectureX64"
+                ]
+            },
+            "capture.BatchStatus": {
+                "enum": [
+                    "Receiving",
+                    "Sealed",
+                    "Processing",
+                    "Ready",
+                    "PartiallyFiled",
+                    "Filed",
+                    "Discarded",
+                    "Expired",
+                    "Failed"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "BatchReceiving",
+                    "BatchSealed",
+                    "BatchProcessing",
+                    "BatchReady",
+                    "BatchPartiallyFiled",
+                    "BatchFiled",
+                    "BatchDiscarded",
+                    "BatchExpired",
+                    "BatchFailed"
+                ]
+            },
+            "capture.CaptureBatch": {
+                "properties": {
+                    "businessUnit": {
+                        "$ref": "#/components/schemas/tenant.BusinessUnit"
+                    },
+                    "businessUnitId": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "integer"
+                    },
+                    "device": {
+                        "$ref": "#/components/schemas/capture.CaptureDevice"
+                    },
+                    "deviceId": {
+                        "type": "string"
+                    },
+                    "documentTypeId": {
+                        "type": "string"
+                    },
+                    "expectedPageCount": {
+                        "type": "integer"
+                    },
+                    "failureMessage": {
+                        "type": "string"
+                    },
+                    "filedItemCount": {
+                        "type": "integer"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "itemCount": {
+                        "type": "integer"
+                    },
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/capture.CaptureItem"
+                        },
+                        "type": "array"
+                    },
+                    "jobName": {
+                        "type": "string"
+                    },
+                    "organization": {
+                        "$ref": "#/components/schemas/tenant.Organization"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "pages": {
+                        "items": {
+                            "$ref": "#/components/schemas/capture.CapturePage"
+                        },
+                        "type": "array"
+                    },
+                    "processedAt": {
+                        "type": "integer"
+                    },
+                    "profileId": {
+                        "type": "string"
+                    },
+                    "receivedPageCount": {
+                        "type": "integer"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "retainUntil": {
+                        "type": "integer"
+                    },
+                    "sealedAt": {
+                        "type": "integer"
+                    },
+                    "settings": {
+                        "$ref": "#/components/schemas/capture.Settings"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/capture.Source"
+                    },
+                    "sourceName": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/capture.BatchStatus"
+                    },
+                    "targetId": {
+                        "type": "string"
+                    },
+                    "targetType": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "integer"
+                    },
+                    "userId": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "capture.CaptureDevice": {
+                "properties": {
+                    "agentVersion": {
+                        "type": "string"
+                    },
+                    "architecture": {
+                        "$ref": "#/components/schemas/capture.Architecture"
+                    },
+                    "businessUnit": {
+                        "$ref": "#/components/schemas/tenant.BusinessUnit"
+                    },
+                    "businessUnitId": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "integer"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "lastIp": {
+                        "type": "string"
+                    },
+                    "lastSeenAt": {
+                        "type": "integer"
+                    },
+                    "machineName": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "organization": {
+                        "$ref": "#/components/schemas/tenant.Organization"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "osVersion": {
+                        "type": "string"
+                    },
+                    "revokedAt": {
+                        "type": "integer"
+                    },
+                    "revokedById": {
+                        "type": "string"
+                    },
+                    "revokedReason": {
+                        "type": "string"
+                    },
+                    "sources": {
+                        "items": {
+                            "$ref": "#/components/schemas/capture.SourceInfo"
+                        },
+                        "type": "array"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/capture.DeviceStatus"
+                    },
+                    "updatedAt": {
+                        "type": "integer"
+                    },
+                    "userId": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "windowsUser": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "capture.CaptureItem": {
+                "properties": {
+                    "batchId": {
+                        "type": "string"
+                    },
+                    "businessUnitId": {
+                        "type": "string"
+                    },
+                    "coverSheetId": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "integer"
+                    },
+                    "detectedKind": {
+                        "type": "string"
+                    },
+                    "documentId": {
+                        "type": "string"
+                    },
+                    "failureMessage": {
+                        "type": "string"
+                    },
+                    "filedAt": {
+                        "type": "integer"
+                    },
+                    "filedById": {
+                        "type": "string"
+                    },
+                    "filedDocTypeId": {
+                        "type": "string"
+                    },
+                    "filedId": {
+                        "type": "string"
+                    },
+                    "filedType": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "pageIds": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "position": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/capture.ItemStatus"
+                    },
+                    "suggestedDocTypeId": {
+                        "type": "string"
+                    },
+                    "suggestedId": {
+                        "type": "string"
+                    },
+                    "suggestedType": {
+                        "type": "string"
+                    },
+                    "suggestionConfidence": {
+                        "type": "number"
+                    },
+                    "suggestionReason": {
+                        "type": "string"
+                    },
+                    "suggestionSource": {
+                        "$ref": "#/components/schemas/capture.SuggestionSource"
+                    },
+                    "updatedAt": {
+                        "type": "integer"
+                    },
+                    "version": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "capture.CapturePage": {
+                "properties": {
+                    "batchId": {
+                        "type": "string"
+                    },
+                    "blankScore": {
+                        "type": "number"
+                    },
+                    "businessUnitId": {
+                        "type": "string"
+                    },
+                    "byteSize": {
+                        "type": "integer"
+                    },
+                    "checksumSha256": {
+                        "type": "string"
+                    },
+                    "contentType": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "integer"
+                    },
+                    "dpi": {
+                        "type": "integer"
+                    },
+                    "failureMessage": {
+                        "type": "string"
+                    },
+                    "heightPx": {
+                        "type": "integer"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "isSeparator": {
+                        "type": "boolean"
+                    },
+                    "markers": {
+                        "$ref": "#/components/schemas/capture.PageMarkers"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "rotation": {
+                        "type": "integer"
+                    },
+                    "sequence": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/capture.PageStatus"
+                    },
+                    "updatedAt": {
+                        "type": "integer"
+                    },
+                    "widthPx": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "capture.CaptureProfile": {
+                "properties": {
+                    "businessUnit": {
+                        "$ref": "#/components/schemas/tenant.BusinessUnit"
+                    },
+                    "businessUnitId": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "integer"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "discardBlankPages": {
+                        "type": "boolean"
+                    },
+                    "dpi": {
+                        "type": "integer"
+                    },
+                    "duplex": {
+                        "type": "boolean"
+                    },
+                    "fixedPageCount": {
+                        "type": "integer"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "isDefault": {
+                        "type": "boolean"
+                    },
+                    "jpegQuality": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "organization": {
+                        "$ref": "#/components/schemas/tenant.Organization"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "pixelType": {
+                        "$ref": "#/components/schemas/capture.PixelType"
+                    },
+                    "separatorStrategies": {
+                        "items": {
+                            "$ref": "#/components/schemas/capture.SeparatorStrategy"
+                        },
+                        "type": "array"
+                    },
+                    "showDriverUi": {
+                        "type": "boolean"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/capture.ProfileStatus"
+                    },
+                    "updatedAt": {
+                        "type": "integer"
+                    },
+                    "useFeeder": {
+                        "type": "boolean"
+                    },
+                    "version": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "capture.CaptureRequest": {
+                "properties": {
+                    "batchId": {
+                        "type": "string"
+                    },
+                    "businessUnit": {
+                        "$ref": "#/components/schemas/tenant.BusinessUnit"
+                    },
+                    "businessUnitId": {
+                        "type": "string"
+                    },
+                    "completedAt": {
+                        "type": "integer"
+                    },
+                    "createdAt": {
+                        "type": "integer"
+                    },
+                    "deliveredAt": {
+                        "type": "integer"
+                    },
+                    "deviceId": {
+                        "type": "string"
+                    },
+                    "documentTypeId": {
+                        "type": "string"
+                    },
+                    "expiresAt": {
+                        "type": "integer"
+                    },
+                    "failureCode": {
+                        "$ref": "#/components/schemas/capture.RequestFailureCode"
+                    },
+                    "failureMessage": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "mode": {
+                        "$ref": "#/components/schemas/capture.RequestMode"
+                    },
+                    "organization": {
+                        "$ref": "#/components/schemas/tenant.Organization"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "profile": {
+                        "$ref": "#/components/schemas/capture.CaptureProfile"
+                    },
+                    "profileId": {
+                        "type": "string"
+                    },
+                    "sourceName": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/capture.RequestStatus"
+                    },
+                    "targetId": {
+                        "type": "string"
+                    },
+                    "targetType": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "integer"
+                    },
+                    "userId": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "capture.DeviceStatus": {
+                "enum": [
+                    "Active",
+                    "Revoked"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "DeviceActive",
+                    "DeviceRevoked"
+                ]
+            },
+            "capture.ItemStatus": {
+                "enum": [
+                    "Proposed",
+                    "Filing",
+                    "Filed",
+                    "Discarded",
+                    "Failed"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ItemProposed",
+                    "ItemFiling",
+                    "ItemFiled",
+                    "ItemDiscarded",
+                    "ItemFailed"
+                ]
+            },
+            "capture.PageMarkers": {
+                "properties": {
+                    "coverSheetId": {
+                        "description": "CoverSheetID is set when the server read a cover sheet on this page and\nfound it genuine for this organization.",
+                        "type": "string"
+                    },
+                    "deviceBarcodes": {
+                        "description": "DeviceBarcodes are the barcodes the scanner's own driver decoded.",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "patchCode": {
+                        "description": "PatchCode is the patch sheet the scanner reported (1, 2, 3, 4, 6 or T),\nempty when there was none. Only the device can see these: the scanner\nreads them from the paper as it passes.",
+                        "type": "string"
+                    },
+                    "unrecognizedCoverSheet": {
+                        "description": "UnrecognizedCoverSheet is a page that looked like a cover sheet but did\nnot verify. It still divides the stack; it routes nothing.",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "capture.PageStatus": {
+                "enum": [
+                    "Received",
+                    "Processed",
+                    "Failed"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "PageReceived",
+                    "PageProcessed",
+                    "PageFailed"
+                ]
+            },
+            "capture.PixelType": {
+                "enum": [
+                    "BlackWhite",
+                    "Grayscale",
+                    "Color"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "PixelBlackWhite",
+                    "PixelGrayscale",
+                    "PixelColor"
+                ]
+            },
+            "capture.ProfileStatus": {
+                "enum": [
+                    "Active",
+                    "Inactive"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ProfileActive",
+                    "ProfileInactive"
+                ]
+            },
+            "capture.RequestFailureCode": {
+                "enum": [
+                    "SOURCE_UNAVAILABLE",
+                    "SOURCE_BUSY",
+                    "PAPER_JAM",
+                    "FEEDER_EMPTY",
+                    "CANCELED_BY_USER",
+                    "DRIVER_ERROR",
+                    "UPLOAD_FAILED",
+                    "NOT_DELIVERED",
+                    "INTERNAL"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "FailureSourceUnavailable",
+                    "FailureSourceBusy",
+                    "FailurePaperJam",
+                    "FailureFeederEmpty",
+                    "FailureCanceledByUser",
+                    "FailureDriverError",
+                    "FailureUploadFailed",
+                    "FailureNotDelivered",
+                    "FailureInternal"
+                ]
+            },
+            "capture.RequestMode": {
+                "enum": [
+                    "Scan",
+                    "Print"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "RequestModeScan",
+                    "RequestModePrint"
+                ]
+            },
+            "capture.RequestStatus": {
+                "enum": [
+                    "Pending",
+                    "Delivered",
+                    "InProgress",
+                    "Completed",
+                    "Canceled",
+                    "Expired",
+                    "Failed"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "RequestPending",
+                    "RequestDelivered",
+                    "RequestInProgress",
+                    "RequestCompleted",
+                    "RequestCanceled",
+                    "RequestExpired",
+                    "RequestFailed"
+                ]
+            },
+            "capture.SeparatorStrategy": {
+                "enum": [
+                    "PatchCode",
+                    "CaptureCoverSheet",
+                    "BlankPage",
+                    "FixedPageCount"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "SeparatorPatchCode",
+                    "SeparatorCoverSheet",
+                    "SeparatorBlankPage",
+                    "SeparatorFixedPageCount"
+                ]
+            },
+            "capture.Settings": {
+                "properties": {
+                    "application": {
+                        "type": "string"
+                    },
+                    "bitness": {
+                        "type": "integer"
+                    },
+                    "blankDiscard": {
+                        "type": "boolean"
+                    },
+                    "dpi": {
+                        "type": "integer"
+                    },
+                    "driverVersion": {
+                        "type": "string"
+                    },
+                    "duplex": {
+                        "type": "boolean"
+                    },
+                    "feeder": {
+                        "type": "boolean"
+                    },
+                    "pixelType": {
+                        "$ref": "#/components/schemas/capture.PixelType"
+                    },
+                    "protocol": {
+                        "$ref": "#/components/schemas/capture.SourceProtocol"
+                    },
+                    "refused": {
+                        "description": "Refused lists the capabilities the source declined, by TWAIN name.",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "showDriverUi": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "capture.Source": {
+                "enum": [
+                    "Scan",
+                    "Print"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "SourceScan",
+                    "SourcePrint"
+                ]
+            },
+            "capture.SourceInfo": {
+                "properties": {
+                    "barcodes": {
+                        "type": "boolean"
+                    },
+                    "bitness": {
+                        "description": "Bitness is 32 or 64: the TWAIN data source's own, which decides which\nscan helper the companion starts for it.",
+                        "type": "integer"
+                    },
+                    "blankDiscard": {
+                        "type": "boolean"
+                    },
+                    "duplex": {
+                        "type": "boolean"
+                    },
+                    "feeder": {
+                        "type": "boolean"
+                    },
+                    "isDefault": {
+                        "type": "boolean"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "patchCodes": {
+                        "type": "boolean"
+                    },
+                    "pixelTypes": {
+                        "items": {
+                            "$ref": "#/components/schemas/capture.PixelType"
+                        },
+                        "type": "array"
+                    },
+                    "protocol": {
+                        "$ref": "#/components/schemas/capture.SourceProtocol"
+                    },
+                    "resolutions": {
+                        "description": "Resolutions are the DPI values the source accepts, so the web app offers\nonly what the scanner can do.",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "capture.SourceProtocol": {
+                "enum": [
+                    "TWAIN",
+                    "WIA"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ProtocolTWAIN",
+                    "ProtocolWIA"
+                ]
+            },
+            "capture.SuggestionSource": {
+                "enum": [
+                    "CaptureCoverSheet",
+                    "CaptureRequest",
+                    "Classifier",
+                    "Person"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "SuggestionCoverSheet",
+                    "SuggestionRequest",
+                    "SuggestionClassifier",
+                    "SuggestionPerson"
+                ]
+            },
+            "capturehandler.exchangePairingRequest": {
+                "properties": {
+                    "deviceCode": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "capturehandler.reportSourcesRequest": {
+                "properties": {
+                    "sources": {
+                        "items": {
+                            "$ref": "#/components/schemas/capture.SourceInfo"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "capturehandler.revokeDeviceRequest": {
+                "properties": {
+                    "reason": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.CreateRequestInput": {
+                "properties": {
+                    "deviceId": {
+                        "type": "string"
+                    },
+                    "documentTypeId": {
+                        "type": "string"
+                    },
+                    "mode": {
+                        "$ref": "#/components/schemas/capture.RequestMode"
+                    },
+                    "profileId": {
+                        "type": "string"
+                    },
+                    "sourceName": {
+                        "type": "string"
+                    },
+                    "targetId": {
+                        "type": "string"
+                    },
+                    "targetType": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.DecidePairingRequest": {
+                "properties": {
+                    "approve": {
+                        "type": "boolean"
+                    },
+                    "deviceName": {
+                        "type": "string"
+                    },
+                    "userCode": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.OpenBatchInput": {
+                "properties": {
+                    "clientKey": {
+                        "description": "ClientKey is the device's own name for the batch. Opening twice with\nthe same key returns the same batch.",
+                        "type": "string"
+                    },
+                    "jobName": {
+                        "type": "string"
+                    },
+                    "profileId": {
+                        "type": "string"
+                    },
+                    "requestId": {
+                        "type": "string"
+                    },
+                    "settings": {
+                        "$ref": "#/components/schemas/capture.Settings"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/capture.Source"
+                    },
+                    "sourceName": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.PairingGrant": {
+                "properties": {
+                    "deviceCode": {
+                        "type": "string"
+                    },
+                    "expiresIn": {
+                        "type": "integer"
+                    },
+                    "interval": {
+                        "type": "integer"
+                    },
+                    "userCode": {
+                        "type": "string"
+                    },
+                    "verificationUri": {
+                        "type": "string"
+                    },
+                    "verificationUriComplete": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.PairingPreview": {
+                "properties": {
+                    "agentVersion": {
+                        "type": "string"
+                    },
+                    "architecture": {
+                        "$ref": "#/components/schemas/capture.Architecture"
+                    },
+                    "clientIp": {
+                        "type": "string"
+                    },
+                    "expiresAt": {
+                        "type": "integer"
+                    },
+                    "machineName": {
+                        "type": "string"
+                    },
+                    "osVersion": {
+                        "type": "string"
+                    },
+                    "userCode": {
+                        "type": "string"
+                    },
+                    "windowsUser": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.RefreshRequest": {
+                "properties": {
+                    "agentVersion": {
+                        "type": "string"
+                    },
+                    "osVersion": {
+                        "type": "string"
+                    },
+                    "refreshToken": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.RequestStatusReport": {
+                "properties": {
+                    "failureCode": {
+                        "$ref": "#/components/schemas/capture.RequestFailureCode"
+                    },
+                    "failureMessage": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/capture.RequestStatus"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.SealBatchInput": {
+                "properties": {
+                    "manifestDigest": {
+                        "description": "ManifestDigest is SHA-256 over the pages' own SHA-256 hex digests in\nsequence order, one per line. It proves the server holds exactly the\npages the device captured, in the order it captured them.",
+                        "type": "string"
+                    },
+                    "pageCount": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.StartPairingRequest": {
+                "properties": {
+                    "agentVersion": {
+                        "type": "string"
+                    },
+                    "architecture": {
+                        "$ref": "#/components/schemas/capture.Architecture"
+                    },
+                    "machineName": {
+                        "type": "string"
+                    },
+                    "osVersion": {
+                        "type": "string"
+                    },
+                    "windowsUser": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.TokenPair": {
+                "properties": {
+                    "accessToken": {
+                        "type": "string"
+                    },
+                    "accessTokenExpiresAt": {
+                        "type": "integer"
+                    },
+                    "businessUnitId": {
+                        "type": "string"
+                    },
+                    "deviceId": {
+                        "type": "string"
+                    },
+                    "deviceName": {
+                        "type": "string"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "refreshToken": {
+                        "type": "string"
+                    },
+                    "tokenType": {
+                        "type": "string"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "carrier.Carrier": {
                 "properties": {
                     "addressLine1": {
@@ -4116,14 +5145,16 @@
                     "none",
                     "rate_confirmation_import",
                     "assistant_attachment",
-                    "inbound_attachment"
+                    "inbound_attachment",
+                    "capture"
                 ],
                 "type": "string",
                 "x-enum-varnames": [
                     "ProcessingProfileNone",
                     "ProcessingProfileRateConfirmationImport",
                     "ProcessingProfileAssistantAttachment",
-                    "ProcessingProfileInboundAttachment"
+                    "ProcessingProfileInboundAttachment",
+                    "ProcessingProfileCapture"
                 ]
             },
             "document.ShipmentDraftStatus": {
@@ -10692,6 +11723,26 @@
                     "results": {
                         "items": {
                             "$ref": "#/components/schemas/billingqueue.BillingQueueItem"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "pagination.Response-array_capture_CaptureDevice": {
+                "properties": {
+                    "count": {
+                        "type": "integer"
+                    },
+                    "next": {
+                        "type": "string"
+                    },
+                    "previous": {
+                        "type": "string"
+                    },
+                    "results": {
+                        "items": {
+                            "$ref": "#/components/schemas/capture.CaptureDevice"
                         },
                         "type": "array"
                     }
@@ -26942,6 +27993,1202 @@
                 "summary": "Bill an open statement before its cycle closes",
                 "tags": [
                     "Invoice Run"
+                ]
+            }
+        },
+        "/capture/device/": {
+            "get": {
+                "description": "Returns the device record, including the person it acts for, so the tray can\nshow who it is signed in as.",
+                "operationId": "getCaptureDevice",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CaptureDevice"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Describe the calling device",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/batches/": {
+            "post": {
+                "description": "Opening twice with the same client key returns the same batch, so a retried\nopen after a lost response does not start a second batch.",
+                "operationId": "openCaptureBatch",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/captureservice.OpenBatchInput"
+                            }
+                        }
+                    },
+                    "description": "The batch to open",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CaptureBatch"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Conflict"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unprocessable Entity"
+                    },
+                    "426": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Upgrade Required"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Open a capture batch",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/batches/{batchID}/pages/{sequence}/": {
+            "put": {
+                "description": "The body is a one-page PDF. Idempotent on the sequence: the same page sent\nagain returns the stored page, and a different page for a sequence already\ntaken is refused. Scanner-reported markers travel in headers.",
+                "operationId": "putCapturePage",
+                "parameters": [
+                    {
+                        "description": "Capture batch ID",
+                        "in": "path",
+                        "name": "batchID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Page sequence, from 1",
+                        "in": "path",
+                        "name": "sequence",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Resolution the page was scanned at",
+                        "in": "header",
+                        "name": "X-Capture-Dpi",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Patch sheet the scanner detected",
+                        "in": "header",
+                        "name": "X-Capture-Patch-Code",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "A barcode the scanner decoded; repeatable",
+                        "in": "header",
+                        "name": "X-Capture-Barcode",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CapturePage"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Conflict"
+                    },
+                    "413": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Request Entity Too Large"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unprocessable Entity"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Upload one scanned page",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/batches/{batchID}/print-job/": {
+            "put": {
+                "description": "The body is the job as a PDF. It is split into pages and the batch is sealed.",
+                "operationId": "putCapturePrintJob",
+                "parameters": [
+                    {
+                        "description": "Capture batch ID",
+                        "in": "path",
+                        "name": "batchID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CaptureBatch"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "413": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Request Entity Too Large"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unprocessable Entity"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Upload a whole print job",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/batches/{batchID}/seal/": {
+            "post": {
+                "description": "Closes the batch to new pages once every page is stored and the manifest digest\nmatches, then starts reading it. Sealing a sealed batch returns it unchanged.",
+                "operationId": "sealCaptureBatch",
+                "parameters": [
+                    {
+                        "description": "Capture batch ID",
+                        "in": "path",
+                        "name": "batchID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/captureservice.SealBatchInput"
+                            }
+                        }
+                    },
+                    "description": "Page count and manifest digest",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CaptureBatch"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Conflict"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Seal a capture batch",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/requests/": {
+            "get": {
+                "description": "Returns the device's open capture requests, oldest first. Requests whose time\nran out are expired on the way and not returned.",
+                "operationId": "listCaptureDeviceRequests",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/capture.CaptureRequest"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List what the device still has to do",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/requests/{requestID}/status/": {
+            "post": {
+                "operationId": "reportCaptureRequestStatus",
+                "parameters": [
+                    {
+                        "description": "Capture request ID",
+                        "in": "path",
+                        "name": "requestID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/captureservice.RequestStatusReport"
+                            }
+                        }
+                    },
+                    "description": "The new status",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CaptureRequest"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unprocessable Entity"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Report how a capture request is going",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/sources/": {
+            "put": {
+                "operationId": "reportCaptureSources",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/capturehandler.reportSourcesRequest"
+                            }
+                        }
+                    },
+                    "description": "Every scanner the device found",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CaptureDevice"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unprocessable Entity"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Report the scanners a device can reach",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/stream/": {
+            "get": {
+                "description": "A server-sent event stream carrying ready, heartbeat, reset and close as the web\napp's stream does, plus capture.request when the device has something to do and\ncapture.revoked when it has been revoked. The device fetches its requests on\ncapture.request, on reset, and whenever it reconnects.",
+                "operationId": "openCaptureDeviceStream",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "text/event-stream": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "description": "event stream"
+                    },
+                    "401": {
+                        "content": {
+                            "text/event-stream": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "429": {
+                        "content": {
+                            "text/event-stream": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Too Many Requests"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Open the device's live stream",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/devices/": {
+            "get": {
+                "description": "With mine=true, the caller's own devices; otherwise every device in the\norganization, which takes capture device read.",
+                "operationId": "listCaptureDevices",
+                "parameters": [
+                    {
+                        "description": "Only the caller's own devices",
+                        "in": "query",
+                        "name": "mine",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "description": "Active or Revoked",
+                        "in": "query",
+                        "name": "status",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/pagination.Response-array_capture_CaptureDevice"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List paired devices",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/devices/{deviceID}/revoke/": {
+            "post": {
+                "description": "Anyone may revoke their own device; revoking somebody else's takes capture\ndevice update. The device's stream is closed and its credential stops working.",
+                "operationId": "revokeCaptureDevice",
+                "parameters": [
+                    {
+                        "description": "Device ID",
+                        "in": "path",
+                        "name": "deviceID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/capturehandler.revokeDeviceRequest"
+                            }
+                        }
+                    },
+                    "description": "Why",
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CaptureDevice"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Revoke a paired device",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/pages/{pageID}/content/": {
+            "get": {
+                "description": "Pages are encrypted at rest, so they are served through the API. kind is pdf\n(the default) or thumbnail.",
+                "operationId": "getCapturePageContent",
+                "parameters": [
+                    {
+                        "description": "Page ID",
+                        "in": "path",
+                        "name": "pageID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "pdf or thumbnail",
+                        "in": "query",
+                        "name": "kind",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "format": "binary",
+                                    "type": "string"
+                                }
+                            },
+                            "image/jpeg": {
+                                "schema": {
+                                    "format": "binary",
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "403": {
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            },
+                            "image/jpeg": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            },
+                            "image/jpeg": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Read a captured page",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/pair/": {
+            "post": {
+                "description": "Issues an RFC 8628 device authorization grant. The device shows the user code\nand polls the token endpoint with the device code until a signed-in person\napproves it.",
+                "operationId": "startCapturePairing",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/captureservice.StartPairingRequest"
+                            }
+                        }
+                    },
+                    "description": "The machine asking to be paired",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/captureservice.PairingGrant"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Too Many Requests"
+                    }
+                },
+                "summary": "Start pairing a Trenova Capture device",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/pair/token/": {
+            "post": {
+                "description": "Polled by the device. Answers authorization_pending, slow_down, access_denied,\nexpired_token or invalid_grant as an RFC 8628 error body until the grant is\napproved, then returns the device's first credential exactly once.",
+                "operationId": "exchangeCapturePairing",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/capturehandler.exchangePairingRequest"
+                            }
+                        }
+                    },
+                    "description": "The device code",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/captureservice.TokenPair"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    }
+                },
+                "summary": "Exchange an approved pairing for device credentials",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/pairings/decide/": {
+            "post": {
+                "description": "Approval binds the device to the person approving it, in the organization\nthey are signed in to.",
+                "operationId": "decideCapturePairing",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/captureservice.DecidePairingRequest"
+                            }
+                        }
+                    },
+                    "description": "The decision",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Approve or deny a pairing",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/pairings/{userCode}/": {
+            "get": {
+                "description": "Shows which machine is asking to be paired, before the person approves it.",
+                "operationId": "previewCapturePairing",
+                "parameters": [
+                    {
+                        "description": "The code the device shows",
+                        "in": "path",
+                        "name": "userCode",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/captureservice.PairingPreview"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Preview a pairing code",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/requests/": {
+            "post": {
+                "description": "Sends a scan to one of the caller's own devices, or arms the next print from it,\nfiled onto the record given.",
+                "operationId": "createCaptureRequest",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/captureservice.CreateRequestInput"
+                            }
+                        }
+                    },
+                    "description": "What to capture, and where",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CaptureRequest"
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unprocessable Entity"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Ask a device to capture into a record",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/requests/{requestID}/cancel/": {
+            "post": {
+                "operationId": "cancelCaptureRequest",
+                "parameters": [
+                    {
+                        "description": "Capture request ID",
+                        "in": "path",
+                        "name": "requestID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capture.CaptureRequest"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Cancel a capture request",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/token/refresh/": {
+            "post": {
+                "description": "Exchanges a refresh token for a new access and refresh token. A refresh token\nis single use; presenting one that was already replaced revokes the device.",
+                "operationId": "refreshCaptureToken",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/captureservice.RefreshRequest"
+                            }
+                        }
+                    },
+                    "description": "The refresh token",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/captureservice.TokenPair"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unprocessable Entity"
+                    },
+                    "426": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Upgrade Required"
+                    }
+                },
+                "summary": "Rotate a device's credential",
+                "tags": [
+                    "Capture"
                 ]
             }
         },
@@ -64583,6 +66830,10 @@
             "x-displayName": "Database Sessions"
         },
         {
+            "name": "Capture",
+            "x-displayName": "Capture"
+        },
+        {
             "name": "Invoice Run",
             "x-displayName": "Invoice Run"
         },
@@ -64713,6 +66964,7 @@
         {
             "name": "Other",
             "tags": [
+                "Capture",
                 "Invoice Run",
                 "Jurisdiction Rules",
                 "Permits",

@@ -230,7 +230,7 @@ CREATE INDEX IF NOT EXISTS "idx_capture_batches_user" ON "capture_batches" ("org
 
 --bun:split
 
-CREATE INDEX IF NOT EXISTS "idx_capture_batches_retention" ON "capture_batches" ("retain_until")WHERE "status" NOT IN ('Filed', 'Discarded', 'Expired');
+CREATE INDEX IF NOT EXISTS "idx_capture_batches_retention" ON "capture_batches" ("retain_until")WHERE "status" NOT IN ('Receiving', 'Sealed', 'Processing');
 
 --bun:split
 

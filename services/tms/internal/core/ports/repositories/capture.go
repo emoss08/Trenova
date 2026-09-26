@@ -180,6 +180,8 @@ type ListStaleCaptureBatchesRequest struct {
 	Limit         int                   `json:"limit"`
 }
 
+// ListRetentionDueCaptureBatchesRequest finds batches past their retention,
+// settled or not, excluding those still receiving or being read.
 type ListRetentionDueCaptureBatchesRequest struct {
 	Now   int64 `json:"now"`
 	Limit int   `json:"limit"`
@@ -292,8 +294,17 @@ type MarkCaptureCoverSheetUsedRequest struct {
 	UsedAt     int64                 `json:"usedAt"`
 }
 
+type GetCaptureCoverSheetByIDRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type CaptureCoverSheetRepository interface {
 	CreateMany(ctx context.Context, entities []*capture.CaptureCoverSheet) error
+	GetByID(
+		ctx context.Context,
+		req GetCaptureCoverSheetByIDRequest,
+	) (*capture.CaptureCoverSheet, error)
 	GetByTokenHash(
 		ctx context.Context,
 		req GetCaptureCoverSheetByTokenRequest,

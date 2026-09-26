@@ -1,7 +1,6 @@
 package realtimehandler
 
 import (
-	"math/rand/v2"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -138,7 +138,7 @@ func (h *Handler) stream(c *gin.Context) {
 	// Streams are recycled on a jittered clock so a long session re-proves its
 	// authentication, and so a fleet restart does not bring every reader back
 	// in the same second.
-	rotate := time.NewTimer(jittered(h.maxLifetime))
+	rotate := time.NewTimer(timeutils.Jittered(h.maxLifetime))
 	defer rotate.Stop()
 
 	frames := rt.Frames()
@@ -303,13 +303,4 @@ func cursorFrom(c *gin.Context) string {
 	}
 
 	return c.Query("lastEventId")
-}
-
-func jittered(d time.Duration) time.Duration {
-	spread := int64(d / 10)
-	if spread <= 0 {
-		return d
-	}
-	offset := rand.Int64N(2 * spread) //nolint:gosec // rotation jitter, not security
-	return d - time.Duration(spread) + time.Duration(offset)
 }

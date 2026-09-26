@@ -41,6 +41,24 @@ func (r *coverSheetRepository) CreateMany(
 	return err
 }
 
+func (r *coverSheetRepository) GetByID(
+	ctx context.Context,
+	req repositories.GetCaptureCoverSheetByIDRequest,
+) (*capture.CaptureCoverSheet, error) {
+	entity := new(capture.CaptureCoverSheet)
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Apply(buncolgen.CaptureCoverSheetApplyTenant(req.TenantInfo)).
+		Where(buncolgen.CaptureCoverSheetColumns.ID.Eq(), req.ID).
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, "Cover sheet")
+	}
+
+	return entity, nil
+}
+
 func (r *coverSheetRepository) GetByTokenHash(
 	ctx context.Context,
 	req repositories.GetCaptureCoverSheetByTokenRequest,

@@ -29,10 +29,12 @@ func NewBatchRepository(p Params) repositories.CaptureBatchRepository {
 	}
 }
 
-var settledBatchStatuses = []capture.BatchStatus{
-	capture.BatchFiled,
-	capture.BatchDiscarded,
-	capture.BatchExpired,
+// inFlightBatchStatuses are never swept by retention: their pages are still
+// arriving or being read, and the sweep that notices a lost run handles them.
+var inFlightBatchStatuses = []capture.BatchStatus{
+	capture.BatchReceiving,
+	capture.BatchSealed,
+	capture.BatchProcessing,
 }
 
 func (r *batchRepository) Create(
@@ -202,7 +204,7 @@ func (r *batchRepository) ListRetentionDue(
 	if err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
-		Where(cols.Status.NotIn(), bun.List(settledBatchStatuses)).
+		Where(cols.Status.NotIn(), bun.List(inFlightBatchStatuses)).
 		Where(cols.RetainUntil.Lte(), req.Now).
 		Order(cols.RetainUntil.OrderAsc()).
 		Limit(limit).

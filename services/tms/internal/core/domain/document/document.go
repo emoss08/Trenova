@@ -68,6 +68,10 @@ const (
 	// labelling them all a rate confirmation would be a lie the pipeline then
 	// acts on.
 	ProcessingProfileInboundAttachment ProcessingProfile = "inbound_attachment"
+	// ProcessingProfileCapture is paper scanned or printed into Trenova. It is
+	// read like an inbound attachment: what a scan is, and whose it is, is only
+	// known once its text has been read.
+	ProcessingProfileCapture ProcessingProfile = "capture"
 )
 
 func (s Status) String() string {
@@ -130,6 +134,7 @@ func AllProcessingProfiles() []ProcessingProfile {
 		ProcessingProfileRateConfirmationImport,
 		ProcessingProfileAssistantAttachment,
 		ProcessingProfileInboundAttachment,
+		ProcessingProfileCapture,
 	}
 }
 
@@ -152,7 +157,8 @@ func (p ProcessingProfile) IsValid() bool {
 	case ProcessingProfileNone,
 		ProcessingProfileRateConfirmationImport,
 		ProcessingProfileAssistantAttachment,
-		ProcessingProfileInboundAttachment:
+		ProcessingProfileInboundAttachment,
+		ProcessingProfileCapture:
 		return true
 	}
 	return false
@@ -172,7 +178,8 @@ func NormalizeProcessingProfile(raw string) (ProcessingProfile, error) {
 func (p ProcessingProfile) SupportsIntelligence() bool {
 	return p == ProcessingProfileRateConfirmationImport ||
 		p == ProcessingProfileAssistantAttachment ||
-		p == ProcessingProfileInboundAttachment
+		p == ProcessingProfileInboundAttachment ||
+		p == ProcessingProfileCapture
 }
 
 func SupportsPreview(fileType string) bool {
