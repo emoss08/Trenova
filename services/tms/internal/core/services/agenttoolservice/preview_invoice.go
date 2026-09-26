@@ -83,7 +83,11 @@ func (t *postInvoiceTool) Preview(
 		changes = append(changes, queueChange)
 	}
 	if post.Journal != nil {
-		journalChange, changeErr := journalEntryChange(post)
+		journalChange, changeErr := journalEntryChange(
+			post.Journal,
+			post.Before.CurrencyCode,
+			"Journal entry for "+invoiceLabel(post.Before),
+		)
 		if changeErr != nil {
 			return nil, changeErr
 		}
@@ -114,11 +118,11 @@ func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange,
 	return change, nil
 }
 
-// journalEntryChange is the entry posting books: the receivable debited and
-// revenue credited (the other way round for a credit memo), in the period it
-// lands in.
-func journalEntryChange(post *invoiceservice.PostPreview) (*agent.RecordChange, error) {
-	journal := post.Journal
+func journalEntryChange(
+	journal *serviceports.JournalPreview,
+	currency string,
+	label string,
+) (*agent.RecordChange, error) {
 	view := &journalView{
 		AccountingDate:   journal.AccountingDate,
 		FiscalPeriodID:   journal.FiscalPeriodID,
@@ -130,20 +134,24 @@ func journalEntryChange(post *invoiceservice.PostPreview) (*agent.RecordChange, 
 		view.Description = line.Description
 		switch {
 		case line.DebitMinor > 0:
-			view.DebitAccountID = line.GLAccountID
+			if view.DebitAccountID.IsNil() {
+				view.DebitAccountID = line.GLAccountID
+			}
 			lines = append(lines, agent.MoneyLine{
 				Label: "Debit",
 				After: knownAmount(money.DecimalFromMinor(line.DebitMinor)),
 			})
 		case line.CreditMinor > 0:
-			view.CreditAccountID = line.GLAccountID
+			if view.CreditAccountID.IsNil() {
+				view.CreditAccountID = line.GLAccountID
+			}
 		}
 	}
 
 	change, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceJournalEntry,
-			Label:    "Journal entry for " + invoiceLabel(post.Before),
+			Label:    label,
 		},
 		view,
 		toolpreview.WithRefs(map[string]permission.Resource{
@@ -158,7 +166,7 @@ func journalEntryChange(post *invoiceservice.PostPreview) (*agent.RecordChange, 
 	if err != nil {
 		return nil, err
 	}
-	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(post.Before.CurrencyCode, lines...),
+	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(currency, lines...),
 		toolpreview.SensitiveAs("totalAmount"))
 
 	return change, nil

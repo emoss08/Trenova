@@ -620,3 +620,299 @@ func (_c *MockCustomerPaymentService_PreviewPostAndApply_Call) RunAndReturn(run 
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewApplyUnapplied provides a mock function for the type MockCustomerPaymentService
+func (_mock *MockCustomerPaymentService) PreviewApplyUnapplied(ctx context.Context, req *services.ApplyCustomerPaymentRequest, actor *services.RequestActor) (*services.CustomerPaymentChangePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewApplyUnapplied")
+	}
+
+	var r0 *services.CustomerPaymentChangePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApplyCustomerPaymentRequest, *services.RequestActor) (*services.CustomerPaymentChangePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApplyCustomerPaymentRequest, *services.RequestActor) *services.CustomerPaymentChangePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.CustomerPaymentChangePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ApplyCustomerPaymentRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentService_PreviewApplyUnapplied_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewApplyUnapplied'
+type MockCustomerPaymentService_PreviewApplyUnapplied_Call struct {
+	*mock.Call
+}
+
+// PreviewApplyUnapplied is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ApplyCustomerPaymentRequest
+//   - actor *services.RequestActor
+func (_e *MockCustomerPaymentService_Expecter) PreviewApplyUnapplied(ctx any, req any, actor any) *MockCustomerPaymentService_PreviewApplyUnapplied_Call {
+	return &MockCustomerPaymentService_PreviewApplyUnapplied_Call{Call: _e.mock.On("PreviewApplyUnapplied", ctx, req, actor)}
+}
+
+func (_c *MockCustomerPaymentService_PreviewApplyUnapplied_Call) Run(run func(ctx context.Context, req *services.ApplyCustomerPaymentRequest, actor *services.RequestActor)) *MockCustomerPaymentService_PreviewApplyUnapplied_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ApplyCustomerPaymentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ApplyCustomerPaymentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_PreviewApplyUnapplied_Call) Return(result *services.CustomerPaymentChangePreview, err error) *MockCustomerPaymentService_PreviewApplyUnapplied_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_PreviewApplyUnapplied_Call) RunAndReturn(run func(ctx context.Context, req *services.ApplyCustomerPaymentRequest, actor *services.RequestActor) (*services.CustomerPaymentChangePreview, error)) *MockCustomerPaymentService_PreviewApplyUnapplied_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewReverse provides a mock function for the type MockCustomerPaymentService
+func (_mock *MockCustomerPaymentService) PreviewReverse(ctx context.Context, req *services.ReverseCustomerPaymentRequest, actor *services.RequestActor) (*services.CustomerPaymentChangePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewReverse")
+	}
+
+	var r0 *services.CustomerPaymentChangePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ReverseCustomerPaymentRequest, *services.RequestActor) (*services.CustomerPaymentChangePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ReverseCustomerPaymentRequest, *services.RequestActor) *services.CustomerPaymentChangePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.CustomerPaymentChangePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ReverseCustomerPaymentRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentService_PreviewReverse_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewReverse'
+type MockCustomerPaymentService_PreviewReverse_Call struct {
+	*mock.Call
+}
+
+// PreviewReverse is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ReverseCustomerPaymentRequest
+//   - actor *services.RequestActor
+func (_e *MockCustomerPaymentService_Expecter) PreviewReverse(ctx any, req any, actor any) *MockCustomerPaymentService_PreviewReverse_Call {
+	return &MockCustomerPaymentService_PreviewReverse_Call{Call: _e.mock.On("PreviewReverse", ctx, req, actor)}
+}
+
+func (_c *MockCustomerPaymentService_PreviewReverse_Call) Run(run func(ctx context.Context, req *services.ReverseCustomerPaymentRequest, actor *services.RequestActor)) *MockCustomerPaymentService_PreviewReverse_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ReverseCustomerPaymentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ReverseCustomerPaymentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_PreviewReverse_Call) Return(result *services.CustomerPaymentChangePreview, err error) *MockCustomerPaymentService_PreviewReverse_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_PreviewReverse_Call) RunAndReturn(run func(ctx context.Context, req *services.ReverseCustomerPaymentRequest, actor *services.RequestActor) (*services.CustomerPaymentChangePreview, error)) *MockCustomerPaymentService_PreviewReverse_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewApplyCreditMemo provides a mock function for the type MockCustomerPaymentService
+func (_mock *MockCustomerPaymentService) PreviewApplyCreditMemo(ctx context.Context, req *services.ApplyCreditMemoRequest, actor *services.RequestActor) (*services.CreditMemoApplicationPreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewApplyCreditMemo")
+	}
+
+	var r0 *services.CreditMemoApplicationPreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApplyCreditMemoRequest, *services.RequestActor) (*services.CreditMemoApplicationPreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApplyCreditMemoRequest, *services.RequestActor) *services.CreditMemoApplicationPreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.CreditMemoApplicationPreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ApplyCreditMemoRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentService_PreviewApplyCreditMemo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewApplyCreditMemo'
+type MockCustomerPaymentService_PreviewApplyCreditMemo_Call struct {
+	*mock.Call
+}
+
+// PreviewApplyCreditMemo is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ApplyCreditMemoRequest
+//   - actor *services.RequestActor
+func (_e *MockCustomerPaymentService_Expecter) PreviewApplyCreditMemo(ctx any, req any, actor any) *MockCustomerPaymentService_PreviewApplyCreditMemo_Call {
+	return &MockCustomerPaymentService_PreviewApplyCreditMemo_Call{Call: _e.mock.On("PreviewApplyCreditMemo", ctx, req, actor)}
+}
+
+func (_c *MockCustomerPaymentService_PreviewApplyCreditMemo_Call) Run(run func(ctx context.Context, req *services.ApplyCreditMemoRequest, actor *services.RequestActor)) *MockCustomerPaymentService_PreviewApplyCreditMemo_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ApplyCreditMemoRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ApplyCreditMemoRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_PreviewApplyCreditMemo_Call) Return(result *services.CreditMemoApplicationPreview, err error) *MockCustomerPaymentService_PreviewApplyCreditMemo_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_PreviewApplyCreditMemo_Call) RunAndReturn(run func(ctx context.Context, req *services.ApplyCreditMemoRequest, actor *services.RequestActor) (*services.CreditMemoApplicationPreview, error)) *MockCustomerPaymentService_PreviewApplyCreditMemo_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewUnapplyCreditMemoApplication provides a mock function for the type MockCustomerPaymentService
+func (_mock *MockCustomerPaymentService) PreviewUnapplyCreditMemoApplication(ctx context.Context, req *services.UnapplyCreditMemoApplicationRequest, actor *services.RequestActor) (*services.CreditMemoApplicationPreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewUnapplyCreditMemoApplication")
+	}
+
+	var r0 *services.CreditMemoApplicationPreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UnapplyCreditMemoApplicationRequest, *services.RequestActor) (*services.CreditMemoApplicationPreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UnapplyCreditMemoApplicationRequest, *services.RequestActor) *services.CreditMemoApplicationPreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.CreditMemoApplicationPreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.UnapplyCreditMemoApplicationRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewUnapplyCreditMemoApplication'
+type MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call struct {
+	*mock.Call
+}
+
+// PreviewUnapplyCreditMemoApplication is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.UnapplyCreditMemoApplicationRequest
+//   - actor *services.RequestActor
+func (_e *MockCustomerPaymentService_Expecter) PreviewUnapplyCreditMemoApplication(ctx any, req any, actor any) *MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call {
+	return &MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call{Call: _e.mock.On("PreviewUnapplyCreditMemoApplication", ctx, req, actor)}
+}
+
+func (_c *MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call) Run(run func(ctx context.Context, req *services.UnapplyCreditMemoApplicationRequest, actor *services.RequestActor)) *MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.UnapplyCreditMemoApplicationRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.UnapplyCreditMemoApplicationRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call) Return(result *services.CreditMemoApplicationPreview, err error) *MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call) RunAndReturn(run func(ctx context.Context, req *services.UnapplyCreditMemoApplicationRequest, actor *services.RequestActor) (*services.CreditMemoApplicationPreview, error)) *MockCustomerPaymentService_PreviewUnapplyCreditMemoApplication_Call {
+	_c.Call.Return(run)
+	return _c
+}

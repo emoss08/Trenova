@@ -21,6 +21,9 @@ const (
 	maxResolutionNoteChars = 500
 	maxPaymentApplications = 50
 	defaultPaymentMethod   = customerpayment.MethodACH
+	paramApplications      = "applications"
+	paramAmount            = "amount"
+	paramShortPayAmount    = "shortPayAmount"
 )
 
 // bankReceiptMatcher is the slice of the bank receipt service the write
@@ -481,55 +484,9 @@ func paymentApplications(
 	params map[string]any,
 	amount int64,
 ) ([]*serviceports.CustomerPaymentApplicationInput, error) {
-	raw, ok := params["applications"]
-	if !ok || raw == nil {
-		return nil, nil
-	}
-	entries, ok := raw.([]any)
-	if !ok {
-		return nil, fmt.Errorf("applications must be a list of {invoiceId, amount}")
-	}
-	if len(entries) > maxPaymentApplications {
-		return nil, fmt.Errorf(
-			"applications lists %d invoices; at most %d can be applied in one payment",
-			len(entries),
-			maxPaymentApplications,
-		)
-	}
-
-	applications := make([]*serviceports.CustomerPaymentApplicationInput, 0, len(entries))
-	seen := make(map[pulid.ID]struct{}, len(entries))
-	total := int64(0)
-	for idx, entry := range entries {
-		fields, ok := entry.(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf(
-				"applications[%d] must be an object with invoiceId and amount",
-				idx,
-			)
-		}
-		invoiceID, err := requirePulid(fields, "invoiceId")
-		if err != nil {
-			return nil, fmt.Errorf("applications[%d]: %w", idx, err)
-		}
-		if _, duplicate := seen[invoiceID]; duplicate {
-			return nil, fmt.Errorf("applications[%d] repeats invoice %s", idx, invoiceID)
-		}
-		seen[invoiceID] = struct{}{}
-		applied, err := requireMoney(fields, "amount")
-		if err != nil {
-			return nil, fmt.Errorf("applications[%d]: %w", idx, err)
-		}
-		shortPay, _, err := optionalMoney(fields, "shortPayAmount")
-		if err != nil {
-			return nil, fmt.Errorf("applications[%d]: %w", idx, err)
-		}
-		total += applied
-		applications = append(applications, &serviceports.CustomerPaymentApplicationInput{
-			InvoiceID:           invoiceID,
-			AppliedAmountMinor:  applied,
-			ShortPayAmountMinor: shortPay,
-		})
+	applications, total, err := readPaymentApplications(params, paramApplications)
+	if err != nil {
+		return nil, err
 	}
 	if total > amount {
 		return nil, fmt.Errorf(
@@ -541,6 +498,66 @@ func paymentApplications(
 	}
 
 	return applications, nil
+}
+
+func readPaymentApplications(
+	params map[string]any,
+	key string,
+) ([]*serviceports.CustomerPaymentApplicationInput, int64, error) {
+	raw, ok := params[key]
+	if !ok || raw == nil {
+		return nil, 0, nil
+	}
+	entries, ok := raw.([]any)
+	if !ok {
+		return nil, 0, fmt.Errorf("%s must be a list of {invoiceId, amount}", key)
+	}
+	if len(entries) > maxPaymentApplications {
+		return nil, 0, fmt.Errorf(
+			"%s lists %d invoices; at most %d can be applied in one payment",
+			key,
+			len(entries),
+			maxPaymentApplications,
+		)
+	}
+
+	applications := make([]*serviceports.CustomerPaymentApplicationInput, 0, len(entries))
+	seen := make(map[pulid.ID]struct{}, len(entries))
+	total := int64(0)
+	for idx, entry := range entries {
+		fields, ok := entry.(map[string]any)
+		if !ok {
+			return nil, 0, fmt.Errorf(
+				"%s[%d] must be an object with invoiceId and amount",
+				key,
+				idx,
+			)
+		}
+		invoiceID, err := requirePulid(fields, paramInvoiceID)
+		if err != nil {
+			return nil, 0, fmt.Errorf("%s[%d]: %w", key, idx, err)
+		}
+		if _, duplicate := seen[invoiceID]; duplicate {
+			return nil, 0, fmt.Errorf("%s[%d] repeats invoice %s", key, idx, invoiceID)
+		}
+		seen[invoiceID] = struct{}{}
+		applied, err := requireMoney(fields, paramAmount)
+		if err != nil {
+			return nil, 0, fmt.Errorf("%s[%d]: %w", key, idx, err)
+		}
+		shortPay, _, err := optionalMoney(fields, paramShortPayAmount)
+		if err != nil {
+			return nil, 0, fmt.Errorf("%s[%d]: %w", key, idx, err)
+		}
+		total += applied
+		applications = append(applications, &serviceports.CustomerPaymentApplicationInput{
+			InvoiceID:           invoiceID,
+			AppliedAmountMinor:  applied,
+			ShortPayAmountMinor: shortPay,
+		})
+	}
+
+	return applications, total, nil
 }
 
 func paymentMethodNames() []string {

@@ -78,6 +78,23 @@ type CustomerPaymentPostPreview struct {
 	InvoicesAfter  []*invoice.Invoice
 }
 
+type CustomerPaymentChangePreview struct {
+	PaymentBefore  *customerpayment.Payment
+	PaymentAfter   *customerpayment.Payment
+	InvoicesBefore []*invoice.Invoice
+	InvoicesAfter  []*invoice.Invoice
+	Journal        *JournalPreview
+}
+
+type CreditMemoApplicationPreview struct {
+	CreditMemoBefore  *invoice.Invoice
+	CreditMemoAfter   *invoice.Invoice
+	InvoicesBefore    []*invoice.Invoice
+	InvoicesAfter     []*invoice.Invoice
+	Applications      []*customerpayment.CreditMemoApplication
+	ApplicationBefore *customerpayment.CreditMemoApplication
+}
+
 type CustomerPaymentService interface {
 	List(
 		ctx context.Context,
@@ -117,4 +134,24 @@ type CustomerPaymentService interface {
 		req *UnapplyCreditMemoApplicationRequest,
 		actor *RequestActor,
 	) (*customerpayment.CreditMemoApplication, error)
+	PreviewApplyUnapplied(
+		ctx context.Context,
+		req *ApplyCustomerPaymentRequest,
+		actor *RequestActor,
+	) (*CustomerPaymentChangePreview, error)
+	PreviewReverse(
+		ctx context.Context,
+		req *ReverseCustomerPaymentRequest,
+		actor *RequestActor,
+	) (*CustomerPaymentChangePreview, error)
+	PreviewApplyCreditMemo(
+		ctx context.Context,
+		req *ApplyCreditMemoRequest,
+		actor *RequestActor,
+	) (*CreditMemoApplicationPreview, error)
+	PreviewUnapplyCreditMemoApplication(
+		ctx context.Context,
+		req *UnapplyCreditMemoApplicationRequest,
+		actor *RequestActor,
+	) (*CreditMemoApplicationPreview, error)
 }

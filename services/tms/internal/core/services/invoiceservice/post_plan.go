@@ -12,7 +12,6 @@ import (
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -77,7 +76,7 @@ type PostPreview struct {
 	QueueAfter    *billingqueue.BillingQueueItem
 	// Journal is the ledger entry posting writes; nil when the organization's
 	// accounting control creates none for this invoice.
-	Journal *JournalPreview
+	Journal *servicesports.JournalPreview
 	// AccountingSync is where the invoice is queued for the accounting
 	// system; empty when no connection covers it.
 	AccountingSync []servicesports.AccountingSyncDestination
@@ -94,22 +93,6 @@ func (p *PostPreview) Refused() bool {
 type LegChange struct {
 	Before *shipment.Shipment
 	After  *shipment.Shipment
-}
-
-// JournalPreview is the entry posting books, with its lines in minor units.
-type JournalPreview struct {
-	AccountingDate   int64
-	FiscalPeriodID   pulid.ID
-	EntryStatus      string
-	RequiresApproval bool
-	Lines            []JournalLinePreview
-}
-
-type JournalLinePreview struct {
-	GLAccountID pulid.ID
-	Description string
-	DebitMinor  int64
-	CreditMinor int64
 }
 
 // PreviewPost plans Post for the invoice as it stands, for the person
@@ -197,21 +180,21 @@ func (s *Service) previewJournal(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	actor *servicesports.RequestActor,
-) (*JournalPreview, error) {
+) (*servicesports.JournalPreview, error) {
 	plan, err := s.planInvoiceJournal(ctx, entity, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	journal := &JournalPreview{
+	journal := &servicesports.JournalPreview{
 		AccountingDate:   plan.postingDate,
 		FiscalPeriodID:   plan.period.ID,
 		EntryStatus:      plan.entryStatus,
 		RequiresApproval: plan.requiresApproval,
-		Lines:            make([]JournalLinePreview, 0, len(plan.lines)),
+		Lines:            make([]servicesports.JournalLinePreview, 0, len(plan.lines)),
 	}
 	for _, line := range plan.lines {
-		journal.Lines = append(journal.Lines, JournalLinePreview{
+		journal.Lines = append(journal.Lines, servicesports.JournalLinePreview{
 			GLAccountID: line.GLAccountID,
 			Description: line.Description,
 			DebitMinor:  line.DebitAmount,
