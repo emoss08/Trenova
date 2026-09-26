@@ -133,14 +133,8 @@ func TestPaymentJournalIsWrittenOnThePaidDateAgainstThePostedPayable(t *testing.
 	assert.Equal(t, int64(1_250), written.Lines[1].CreditAmount)
 }
 
-func TestPaymentJournalNeedsThePostedPayableAndACashAccount(t *testing.T) {
+func TestPaymentJournalNeedsACashAccount(t *testing.T) {
 	t.Parallel()
-
-	noSnapshot := paidSettlement(1_250)
-	noSnapshot.PostedPayableAccountID = nil
-	_, err := (&Service{}).postPaymentJournal(t.Context(), noSnapshot, pulid.MustNew("usr_"), 1)
-	require.Error(t, err)
-	assert.True(t, errortypes.IsBusinessError(err))
 
 	entity := paidSettlement(1_250)
 	accounting := mocks.NewMockAccountingControlRepository(t)
@@ -148,8 +142,53 @@ func TestPaymentJournalNeedsThePostedPayableAndACashAccount(t *testing.T) {
 		GetByOrgID(mock.Anything, entity.OrganizationID).
 		Return(&tenant.AccountingControl{}, nil).
 		Once()
-	_, err = (&Service{accountingRepo: accounting}).
+	_, err := (&Service{accountingRepo: accounting}).
 		postPaymentJournal(t.Context(), entity, pulid.MustNew("usr_"), 1)
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation)
+	assert.Equal(t, "accountingControl", validation.Field)
+}
+
+func TestASettlementPostedWithoutAJournalRecordsNoPaymentJournal(t *testing.T) {
+	t.Parallel()
+
+	entity := paidSettlement(1_250)
+	entity.PostedPayableAccountID = nil
+
+	batchID, err := (&Service{}).postPaymentJournal(t.Context(), entity, pulid.MustNew("usr_"), 1)
+	require.NoError(t, err)
+	assert.Nil(t, batchID)
+}
+
+func TestASettlementPostedBeforeThePayableSnapshotPaysFromTheDefaultPayable(t *testing.T) {
+	t.Parallel()
+
+	postedBatch := pulid.MustNew("jb_")
+	entity := paidSettlement(1_250)
+	entity.PostedPayableAccountID = nil
+	entity.PostedJournalBatchID = &postedBatch
+	control := &tenant.AccountingControl{
+		DefaultSettlementsPayableAccountID: pulid.MustNew("gla_"),
+		DefaultCashAccountID:               pulid.MustNew("gla_"),
+	}
+
+	journal, err := PaymentJournal(entity, control, pulid.MustNew("usr_"), 1, 1)
+	require.NoError(t, err)
+	require.NotNil(t, journal)
+	assert.Equal(t, []PostingLeg{
+		{AccountID: control.DefaultSettlementsPayableAccountID, Debit: 1_250},
+		{AccountID: control.DefaultCashAccountID, Credit: 1_250},
+	}, journal.Legs)
+
+	snapshot := pulid.MustNew("gla_")
+	entity.PostedPayableAccountID = &snapshot
+	journal, err = PaymentJournal(entity, control, pulid.MustNew("usr_"), 1, 1)
+	require.NoError(t, err)
+	assert.Equal(t, snapshot, journal.Legs[0].AccountID)
+
+	entity.PostedPayableAccountID = nil
+	control.DefaultSettlementsPayableAccountID = pulid.Nil
+	_, err = PaymentJournal(entity, control, pulid.MustNew("usr_"), 1, 1)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
 	assert.Equal(t, "accountingControl", validation.Field)

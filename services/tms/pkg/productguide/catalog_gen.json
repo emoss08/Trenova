@@ -1,5 +1,5 @@
 {
-  "version": "sha256:102422514788d18953ff0e286fb91fa0fa6545e4b196c34c52c7ea9508c3c317",
+  "version": "sha256:16474f89d2eafbd0b924f22dc87793284b641a00e56703b6e5ad2bcfae06772f",
   "modules": [
     {
       "id": "home",
@@ -2395,6 +2395,29 @@
             "Check the tools, the **Ceiling** and **Data access** the starter filled in. The insight analyst also starts with a cap on **Runs per day**.",
             "Under **When it runs**, **Event** is already chosen with the events the starter listens for.",
             "Turn on **Shadow mode** to watch what it would do first, then select **Save**."
+          ]
+        },
+        {
+          "title": "Set up an agent for settlements or receivables",
+          "keywords": [
+            "settlements agent",
+            "driver pay agent",
+            "payroll agent",
+            "carrier settlement agent",
+            "carrier invoice matching agent",
+            "receivables agent",
+            "collections agent",
+            "accounts receivable agent",
+            "dispute agent",
+            "late charges agent",
+            "share invoice agent"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Agents** in the rail.",
+            "Select **New agent**.",
+            "In **Start from**, choose the settlements clerk to draft driver and carrier settlements, sort out pay that is missing or held, match carrier invoices and propose each payment, or the receivables assistant to apply payments and credit, handle disputes and late charges, and say which overdue invoices to chase first. Both are chat agents that act as the person talking to them, and anything that moves money waits for that person to approve it. The settlements clerk reads each driver's pay setup but never changes it: a pay rate, a standing deduction or escrow terms stay with the people who set up driver pay.",
+            "Leave **Data access** at **Restricted**, since both work with amounts and pay.",
+            "Select **Save**. To let the billing assistant and the receivables assistant pass work to each other, add each to the other's **Can ask** list as described below."
           ]
         },
         {

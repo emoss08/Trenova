@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -133,6 +132,9 @@ func (s *Service) reviewOne(
 			EntryID:    entryID,
 		})
 		if lockErr != nil {
+			if errortypes.IsNotFoundError(lockErr) {
+				return errEntryNotFound
+			}
 			return lockErr
 		}
 		outcome.EntryNumber = entry.EntryNumber
@@ -282,12 +284,21 @@ func validateRequest(
 		)
 	}
 
-	entryIDs := make([]pulid.ID, 0, len(req.EntryIDs))
+	limit := min(len(req.EntryIDs), serviceports.MaxJournalReviewEntries+1)
+	entryIDs := make([]pulid.ID, 0, limit)
+	seen := make(map[pulid.ID]struct{}, limit)
 	for _, id := range req.EntryIDs {
-		if id.IsNil() || slices.Contains(entryIDs, id) {
+		if id.IsNil() {
 			continue
 		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
 		entryIDs = append(entryIDs, id)
+		if len(entryIDs) > serviceports.MaxJournalReviewEntries {
+			break
+		}
 	}
 	switch {
 	case len(entryIDs) == 0:
@@ -307,8 +318,11 @@ func validateRequest(
 	return entryIDs, nil
 }
 
+var errEntryNotFound = errortypes.NewNotFoundError("Journal entry not found")
+
 func isRefusal(err error) bool {
-	return errortypes.IsBusinessError(err) ||
+	return errors.Is(err, errEntryNotFound) ||
+		errortypes.IsBusinessError(err) ||
 		errortypes.IsConflictError(err) ||
 		errortypes.IsNotFoundError(err) ||
 		errortypes.IsError(err)
@@ -319,7 +333,7 @@ type localizedError interface {
 }
 
 func refusalMessage(ctx context.Context, err error) string {
-	if errortypes.IsNotFoundError(err) {
+	if errors.Is(err, errEntryNotFound) {
 		return i18n.T(ctx, "Journal entry not found")
 	}
 	var localized localizedError

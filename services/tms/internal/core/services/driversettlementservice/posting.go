@@ -520,7 +520,11 @@ func PaymentJournal(
 	actorID pulid.ID,
 	paidAt, now int64,
 ) (*SettlementJournal, error) {
-	if payable, err := paymentNeeded(entity); err != nil || !payable {
+	if !paymentBooked(entity) {
+		return nil, nil //nolint:nilnil // nothing was booked to a payable, so no payment journal is due
+	}
+	payable, err := paymentPayableAccount(entity, control)
+	if err != nil {
 		return nil, err
 	}
 	if control.DefaultCashAccountID.IsNil() {
@@ -540,24 +544,36 @@ func PaymentJournal(
 		Description:    "Payment of driver settlement " + entity.SettlementNumber,
 		Event:          tenant.JournalSourceEventDriverSettlementPaid,
 		IdempotencyKey: PaymentIdempotencyKey(entity.ID),
-		Legs: BuildSettlementPaymentLegs(
-			entity,
-			*entity.PostedPayableAccountID,
-			control.DefaultCashAccountID,
-		),
+		Legs:           BuildSettlementPaymentLegs(entity, payable, control.DefaultCashAccountID),
 	}, nil
 }
 
-func paymentNeeded(entity *driversettlement.Settlement) (bool, error) {
+func paymentBooked(entity *driversettlement.Settlement) bool {
 	if entity.NetPayMinor == 0 {
-		return false, nil
+		return false
 	}
-	if entity.PostedPayableAccountID == nil || entity.PostedPayableAccountID.IsNil() {
-		return false, errortypes.NewBusinessError(
-			"Driver settlement has no posted payable account; it cannot be paid",
-		).WithParam("settlementId", entity.ID.String())
+	return hasID(entity.PostedPayableAccountID) || hasID(entity.PostedJournalBatchID)
+}
+
+func paymentPayableAccount(
+	entity *driversettlement.Settlement,
+	control *tenant.AccountingControl,
+) (pulid.ID, error) {
+	if hasID(entity.PostedPayableAccountID) {
+		return *entity.PostedPayableAccountID, nil
 	}
-	return true, nil
+	if control.DefaultSettlementsPayableAccountID.IsNil() {
+		return pulid.Nil, errortypes.NewValidationError(
+			"accountingControl",
+			errortypes.ErrRequired,
+			"A settlements payable account must be configured before recording driver settlement payments",
+		)
+	}
+	return control.DefaultSettlementsPayableAccountID, nil
+}
+
+func hasID(id *pulid.ID) bool {
+	return id != nil && id.IsNotNil()
 }
 
 func PaymentIdempotencyKey(settlementID pulid.ID) string {
@@ -570,8 +586,8 @@ func (s *Service) postPaymentJournal(
 	actorID pulid.ID,
 	paidAt int64,
 ) (*pulid.ID, error) {
-	if payable, err := paymentNeeded(entity); err != nil || !payable {
-		return nil, err
+	if !paymentBooked(entity) {
+		return nil, nil //nolint:nilnil // nothing was booked to a payable, so no payment journal is due
 	}
 
 	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)

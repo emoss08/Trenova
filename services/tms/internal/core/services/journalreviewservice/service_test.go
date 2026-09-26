@@ -298,3 +298,49 @@ func TestSummaryReportsTheQueueAndThePostingMode(t *testing.T) {
 	assert.Equal(t, tenant.JournalPostingModeManual, summary.PostingMode)
 	assert.True(t, summary.RequiresApproval)
 }
+
+func TestPostNamesTheRealCauseWhenSomethingOtherThanTheEntryIsMissing(t *testing.T) {
+	t.Parallel()
+
+	ready := entry("JE-8", journalentry.StatusApproved, true)
+	repo := &fakeReview{entries: map[pulid.ID]*journalentry.JournalEntry{ready.ID: ready}}
+	controls := mocks.NewMockAccountingControlRepository(t)
+	controls.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(nil, errortypes.NewNotFoundError("Accounting control not found")).
+		Once()
+	svc := &Service{
+		l:        zap.NewNop(),
+		db:       dbtest.NopConnection{},
+		repo:     repo,
+		controls: controls,
+		periods:  mocks.NewMockFiscalPeriodRepository(t),
+		now:      func() int64 { return 9_000 },
+	}
+
+	result, err := svc.Post(t.Context(), request(ready.ID, pulid.MustNew("je_")), actor())
+	require.NoError(t, err)
+
+	require.Len(t, result.Outcomes, 2)
+	assert.Equal(t, 2, result.Failed)
+	assert.Equal(t, "JE-8", result.Outcomes[0].EntryNumber)
+	assert.Equal(t, "Accounting control not found", result.Outcomes[0].Error)
+	assert.Equal(t, "Journal entry not found", result.Outcomes[1].Error)
+}
+
+func TestReviewCollapsesRepeatedEntryIDsBeforeCountingThem(t *testing.T) {
+	t.Parallel()
+
+	pending := entry("JE-9", journalentry.StatusPending, false)
+	repo := &fakeReview{entries: map[pulid.ID]*journalentry.JournalEntry{pending.ID: pending}}
+	repeated := make([]pulid.ID, 0, 2*serviceports.MaxJournalReviewEntries)
+	for range 2 * serviceports.MaxJournalReviewEntries {
+		repeated = append(repeated, pending.ID)
+	}
+
+	result, err := newService(t, repo, &tenant.AccountingControl{}, nil).
+		Approve(t.Context(), request(repeated...), actor())
+	require.NoError(t, err)
+	require.Len(t, result.Outcomes, 1)
+	assert.Equal(t, 1, result.Changed)
+}
