@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -343,12 +342,11 @@ func (s *Service) DeleteMappingProfileItem(
 	return s.mappingProfileRepo.DeleteMappingProfileItem(ctx, req)
 }
 
-//nolint:cyclop,funlen,nestif // Tender submission keeps the transaction and non-transaction paths explicit.
-func (s *Service) SubmitLoadTender(
+//nolint:funlen // Tender planning checks each partner, connection, and profile explicitly.
+func (s *Service) PlanLoadTender(
 	ctx context.Context,
 	req *SubmitLoadTenderRequest,
-	actor *services.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*LoadTenderPlan, error) {
 	if err := validateSubmitLoadTender(req); err != nil {
 		return nil, err
 	}
@@ -479,17 +477,38 @@ func (s *Service) SubmitLoadTender(
 		status = edi.TransferStatusMappingRequired
 	}
 
+	return &LoadTenderPlan{
+		SourceShipment: sourceShipment,
+		SourcePartner:  sourcePartner,
+		TargetPartner:  targetPartner,
+		Payload:        payload,
+		Mapping:        preview,
+		Status:         status,
+	}, nil
+}
+
+//nolint:nestif // Tender submission keeps the transaction and non-transaction paths explicit.
+func (s *Service) SubmitLoadTender(
+	ctx context.Context,
+	req *SubmitLoadTenderRequest,
+	actor *services.RequestActor,
+) (*edi.EDITransfer, error) {
+	plan, err := s.PlanLoadTender(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
 	entity := &edi.EDITransfer{
 		SourceOrganizationID: req.TenantInfo.OrgID,
 		SourceBusinessUnitID: req.TenantInfo.BuID,
-		TargetOrganizationID: targetPartner.OrganizationID,
+		TargetOrganizationID: plan.TargetPartner.OrganizationID,
 		TargetBusinessUnitID: req.TenantInfo.BuID,
-		SourcePartnerID:      sourcePartner.ID,
-		TargetPartnerID:      targetPartner.ID,
-		SourceShipmentID:     sourceShipment.ID,
-		Status:               status,
-		TenderPayload:        payload,
-		MappingSnapshot:      preview.All,
+		SourcePartnerID:      plan.SourcePartner.ID,
+		TargetPartnerID:      plan.TargetPartner.ID,
+		SourceShipmentID:     plan.SourceShipment.ID,
+		Status:               plan.Status,
+		TenderPayload:        plan.Payload,
+		MappingSnapshot:      plan.Mapping.All,
 		SubmittedByID:        actor.UserID,
 	}
 
@@ -661,12 +680,8 @@ func (s *Service) ApproveTransfer(
 	req *ApproveTransferRequest,
 	actor *services.RequestActor,
 ) (*edi.EDITransfer, error) {
-	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"approver",
-			errortypes.ErrRequired,
-			"Approving user is required",
-		)
+	if err := RequireReviewer(actor, "approver", "Approving user is required"); err != nil {
+		return nil, err
 	}
 
 	var original *edi.EDITransfer
@@ -684,12 +699,8 @@ func (s *Service) ApproveTransfer(
 		if err != nil {
 			return err
 		}
-		if !transfer.Status.IsActionable() {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"EDI transfer cannot be approved while finalized or processing",
-			)
+		if err = RequireActionableTransfer(transfer, "approved"); err != nil {
+			return err
 		}
 		originalCopy := *transfer
 		original = &originalCopy
@@ -721,16 +732,12 @@ func (s *Service) ApproveTransfer(
 			return unresolvedMappingsError(preview.Unresolved)
 		}
 
-		now := timeutils.NowUnix()
-		transfer.Status = edi.TransferStatusProcessing
-		transfer.TargetBusinessUnitID = req.TenantInfo.BuID
-		transfer.MappingSnapshot = preview.All
-		transfer.ApprovedByID = actor.UserID
-		transfer.ApprovedAt = &now
-		transfer.ProcessingStartedAt = &now
-		transfer.ApprovalWorkflowID = buildLoadTenderApprovalWorkflowID(transfer.ID)
-		transfer.ApprovalWorkflowRunID = ""
-		transfer.FailureReason = ""
+		MarkTransferApprovalStarted(transfer, &TransferApprovalMark{
+			BusinessUnitID: req.TenantInfo.BuID,
+			Mapping:        preview.All,
+			ApproverID:     actor.UserID,
+			At:             timeutils.NowUnix(),
+		})
 
 		updated, err = s.transferRepo.UpdateTransfer(txCtx, transfer)
 		return err
@@ -1080,18 +1087,14 @@ func (s *Service) RejectTransfer(
 	req *RejectTransferRequest,
 	actor *services.RequestActor,
 ) (*edi.EDITransfer, error) {
-	reason := strings.TrimSpace(req.Reason)
-	if reason == "" {
-		return nil, errortypes.NewValidationError(
-			"reason",
-			errortypes.ErrRequired,
-			"Rejection reason is required",
-		)
+	reason, err := TransferRejectionReason(req.Reason)
+	if err != nil {
+		return nil, err
 	}
 
 	var original edi.EDITransfer
 	var updated *edi.EDITransfer
-	err := s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			repositories.GetEDITransferForUpdateRequest{
@@ -1103,20 +1106,12 @@ func (s *Service) RejectTransfer(
 		if err != nil {
 			return err
 		}
-		if !transfer.Status.IsActionable() {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"EDI transfer cannot be rejected while finalized or processing",
-			)
+		if err = RequireActionableTransfer(transfer, "rejected"); err != nil {
+			return err
 		}
 
-		now := timeutils.NowUnix()
 		original = *transfer
-		transfer.Status = edi.TransferStatusRejected
-		transfer.RejectionReason = reason
-		transfer.RejectedByID = actor.UserID
-		transfer.RejectedAt = &now
+		MarkTransferRejected(transfer, reason, actor.UserID, timeutils.NowUnix())
 
 		updated, err = s.transferRepo.UpdateTransfer(txCtx, transfer)
 		if err != nil {
@@ -1180,19 +1175,12 @@ func (s *Service) CancelTransfer(
 		if err != nil {
 			return err
 		}
-		if !transfer.Status.IsActionable() {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"EDI transfer cannot be canceled while finalized or processing",
-			)
+		if err = RequireActionableTransfer(transfer, "canceled"); err != nil {
+			return err
 		}
 
-		now := timeutils.NowUnix()
 		original = *transfer
-		transfer.Status = edi.TransferStatusCanceled
-		transfer.CanceledByID = actor.UserID
-		transfer.CanceledAt = &now
+		MarkTransferCanceled(transfer, actor.UserID, timeutils.NowUnix())
 
 		updated, err = s.transferRepo.UpdateTransfer(txCtx, transfer)
 		if err != nil {
@@ -1249,18 +1237,12 @@ func (s *Service) ExpireTransfer(
 		if err != nil {
 			return err
 		}
-		if !transfer.Status.IsActionable() {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"EDI transfer cannot be expired while finalized or processing",
-			)
+		if err = RequireActionableTransfer(transfer, "expired"); err != nil {
+			return err
 		}
 
-		now := timeutils.NowUnix()
 		original = *transfer
-		transfer.Status = edi.TransferStatusExpired
-		transfer.ProcessedAt = &now
+		MarkTransferExpired(transfer, timeutils.NowUnix())
 
 		updated, err = s.transferRepo.UpdateTransfer(txCtx, transfer)
 		if err != nil {
@@ -1350,12 +1332,8 @@ func (s *Service) reviewTransferChange(
 	actor *services.RequestActor,
 	status edi.TransferChangeStatus,
 ) (*edi.TransferChange, error) {
-	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"userId",
-			errortypes.ErrRequired,
-			"Reviewing user is required",
-		)
+	if err := RequireReviewer(actor, "userId", "Reviewing user is required"); err != nil {
+		return nil, err
 	}
 
 	change, err := s.transferChangeRepo.GetTransferChangeByID(
@@ -1368,14 +1346,7 @@ func (s *Service) reviewTransferChange(
 	if err != nil {
 		return nil, err
 	}
-	if change.Status != edi.TransferChangeStatusPendingReview {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"EDI transfer change has already been reviewed",
-		)
-	}
-	if err = s.validateTransferChangeReviewer(ctx, change, req.TenantInfo); err != nil {
+	if err = s.CheckTransferChangeReview(ctx, change, req.TenantInfo); err != nil {
 		return nil, err
 	}
 
@@ -1395,16 +1366,12 @@ func (s *Service) reviewTransferChange(
 			}
 		}
 
-		change.Status = status
-		change.ReviewedByID = actor.UserID
-		change.ReviewedAt = &now
-		if status == edi.TransferChangeStatusApplied {
-			change.AppliedByID = actor.UserID
-			change.AppliedAt = &now
-		}
-		if strings.TrimSpace(req.Reason) != "" {
-			change.FailureReason = strings.TrimSpace(req.Reason)
-		}
+		MarkTransferChangeReviewed(change, &ChangeReviewMark{
+			Applied:    status == edi.TransferChangeStatusApplied,
+			ReviewerID: actor.UserID,
+			Reason:     req.Reason,
+			At:         now,
+		})
 
 		var txErr error
 		updated, txErr = s.transferChangeRepo.UpdateTransferChange(txCtx, change)

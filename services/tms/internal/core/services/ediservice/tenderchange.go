@@ -217,12 +217,8 @@ func (s *Service) reviewTenderChange(
 			"EDI tender change review request is required",
 		)
 	}
-	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"userId",
-			errortypes.ErrRequired,
-			"Reviewing user is required",
-		)
+	if err := RequireReviewer(actor, "userId", "Reviewing user is required"); err != nil {
+		return nil, err
 	}
 
 	change, err := s.tenderChangeRepo.GetTenderChangeByID(
@@ -232,14 +228,7 @@ func (s *Service) reviewTenderChange(
 	if err != nil {
 		return nil, err
 	}
-	if change.Status != edi.TenderChangeStatusPendingReview {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"EDI tender change is not pending review",
-		)
-	}
-	if err = validateTenderChangeReviewer(change, req.TenantInfo); err != nil {
+	if err = CheckTenderChangeReview(change, req.TenantInfo); err != nil {
 		return nil, err
 	}
 
@@ -256,16 +245,12 @@ func (s *Service) reviewTenderChange(
 				return applyErr
 			}
 		}
-		change.Status = status
-		change.ReviewedByID = actor.UserID
-		change.ReviewedAt = &now
-		if strings.TrimSpace(req.Reason) != "" {
-			change.FailureReason = strings.TrimSpace(req.Reason)
-		}
-		if status == edi.TenderChangeStatusApplied {
-			change.AppliedByID = actor.UserID
-			change.AppliedAt = &now
-		}
+		MarkTenderChangeReviewed(change, &ChangeReviewMark{
+			Applied:    status == edi.TenderChangeStatusApplied,
+			ReviewerID: actor.UserID,
+			Reason:     req.Reason,
+			At:         now,
+		})
 		_, updateErr := s.tenderChangeRepo.UpdateTenderChange(txCtx, change)
 		return updateErr
 	})

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
@@ -23,6 +24,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editenderchangerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferchangerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferrepository"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -59,6 +63,7 @@ type lookup struct {
 	scope   func(*bun.SelectQuery, pagination.TenantInfo) *bun.SelectQuery
 	idEq    string
 	version func(versioned) int64
+	kinds   map[string]lookup
 }
 
 type versioned any
@@ -204,6 +209,38 @@ var lookups = map[permission.Resource]lookup{
 			return entity.Version
 		},
 	},
+	permission.ResourceEDI: {kinds: map[string]lookup{
+		"edilt_": {
+			model:   func() versioned { return new(edi.EDITransfer) },
+			scope:   editransferrepository.ScopeTenant,
+			idEq:    buncolgen.EDITransferColumns.ID.Eq(),
+			version: versionOf(func(entity *edi.EDITransfer) int64 { return entity.Version }),
+		},
+		"editcg_": {
+			model:   func() versioned { return new(edi.TenderChange) },
+			scope:   editenderchangerepository.ScopeTenant,
+			idEq:    buncolgen.TenderChangeColumns.ID.Eq(),
+			version: versionOf(func(entity *edi.TenderChange) int64 { return entity.Version }),
+		},
+		"editc_": {
+			model:   func() versioned { return new(edi.TransferChange) },
+			scope:   editransferchangerepository.ScopeTenant,
+			idEq:    buncolgen.TransferChangeColumns.ID.Eq(),
+			version: versionOf(func(entity *edi.TransferChange) int64 { return entity.Version }),
+		},
+		"edimsg_": {
+			model:   func() versioned { return new(edi.EDIMessage) },
+			scope:   buncolgen.EDIMessageScopeTenant,
+			idEq:    buncolgen.EDIMessageColumns.ID.Eq(),
+			version: versionOf(func(entity *edi.EDIMessage) int64 { return entity.Version }),
+		},
+		"ediinf_": {
+			model:   func() versioned { return new(edi.EDIInboundFile) },
+			scope:   buncolgen.EDIInboundFileScopeTenant,
+			idEq:    buncolgen.EDIInboundFileColumns.ID.Eq(),
+			version: versionOf(func(entity *edi.EDIInboundFile) int64 { return entity.Version }),
+		},
+	}},
 	// Likewise the carrier intelligence tools act on one event.
 	permission.ResourceCarrierIntelligence: {
 		model:   func() versioned { return new(carrierintel.CarrierIntelEvent) },
@@ -211,6 +248,17 @@ var lookups = map[permission.Resource]lookup{
 		idEq:    buncolgen.CarrierIntelEventColumns.ID.Eq(),
 		version: func(v versioned) int64 { return v.(*carrierintel.CarrierIntelEvent).Version },
 	},
+}
+
+func versionOf[T any](read func(*T) int64) func(versioned) int64 {
+	return func(v versioned) int64 {
+		entity, ok := v.(*T)
+		if !ok {
+			return 0
+		}
+
+		return read(entity)
+	}
 }
 
 // Version reads the record's current version inside the tenant. A record that
@@ -222,6 +270,9 @@ func (r *Reader) Version(
 	target services.ToolTarget,
 ) (int64, error) {
 	entry, ok := lookups[target.Resource]
+	if ok && entry.kinds != nil {
+		entry, ok = entry.kinds[target.ID.Prefix()]
+	}
 	if !ok {
 		return 0, fmt.Errorf("%w: %s", services.ErrRecordVersionUnsupported, target.Resource)
 	}
