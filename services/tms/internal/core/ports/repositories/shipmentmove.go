@@ -42,6 +42,10 @@ func (a StopActualAction) IsValid() bool {
 	return a == StopActualActionArrive || a == StopActualActionDepart
 }
 
+func StopActualActionValues() []StopActualAction {
+	return []StopActualAction{StopActualActionArrive, StopActualActionDepart}
+}
+
 const StopActualClockSkewSeconds = int64(300)
 
 type RecordStopActualRequest struct {
