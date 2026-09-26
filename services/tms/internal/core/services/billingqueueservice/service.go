@@ -651,8 +651,8 @@ func (s *service) UpdateStatus(
 	req *services.UpdateBillingQueueStatusRequest,
 	actor *services.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	if actor.IsAgent() {
-		return nil, errAgentCannotTransition()
+	if err := guardAgentTransition(actor, req.NewStatus); err != nil {
+		return nil, err
 	}
 
 	var (
@@ -832,23 +832,7 @@ func (s *service) createOpsComment(
 	entity *billingqueue.BillingQueueItem,
 	actor *services.RequestActor,
 ) {
-	reasonLabel := string(*entity.ExceptionReasonCode)
-	comment := "Sent back from billing: " + reasonLabel
-	if entity.ExceptionNotes != "" {
-		comment += "\n\n" + entity.ExceptionNotes
-	}
-
-	_, err := s.commentRepo.Create(ctx, &shipment.ShipmentComment{
-		OrganizationID: entity.OrganizationID,
-		BusinessUnitID: entity.BusinessUnitID,
-		ShipmentID:     entity.ShipmentID,
-		UserID:         actor.UserID,
-		Comment:        comment,
-		Type:           shipment.CommentTypeBilling,
-		Visibility:     shipment.CommentVisibilityOperations,
-		Priority:       shipment.CommentPriorityHigh,
-		Source:         shipment.CommentSourceSystem,
-	})
+	_, err := s.commentRepo.Create(ctx, SendBackComment(entity, actor.UserIDOrNil()))
 	if err != nil {
 		s.l.Warn("failed to create ops comment for billing exception",
 			zap.String("shipmentId", entity.ShipmentID.String()),
