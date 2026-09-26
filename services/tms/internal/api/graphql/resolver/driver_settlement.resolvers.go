@@ -42,6 +42,14 @@ func (r *driverSettlementResolver) TotalMiles(ctx context.Context, obj *driverse
 	return obj.TotalMiles.String(), nil
 }
 
+func (r *driverSettlementResolver) ExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error) {
+	return nullDecimalStringPtr(obj.ExchangeRate), nil
+}
+
+func (r *driverSettlementResolver) PaidExchangeRate(ctx context.Context, obj *driversettlement.Settlement) (*string, error) {
+	return nullDecimalStringPtr(obj.PaidExchangeRate), nil
+}
+
 func (r *driverSettlementLineResolver) Quantity(ctx context.Context, obj *driversettlement.SettlementLine) (string, error) {
 	return obj.Quantity.String(), nil
 }

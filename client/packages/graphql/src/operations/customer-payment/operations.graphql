@@ -66,6 +66,8 @@ query CustomerPaymentDetail($id: ID!) {
     referenceNumber
     memo
     currencyCode
+    exchangeRate
+    exchangeRateDate
     postedBatchId
     reversalBatchId
     reversedById

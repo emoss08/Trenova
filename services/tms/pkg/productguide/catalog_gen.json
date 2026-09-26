@@ -1,5 +1,5 @@
 {
-  "version": "sha256:1ce10c747b8ac45b338e8fced0ddfe539be1ce3f847c44e04bb6a4309b8d481a",
+  "version": "sha256:031767f23f07ded41fd5d9dde14a259a457acd5a34ffdbbcd676e276f88515b5",
   "modules": [
     {
       "id": "home",
@@ -1750,6 +1750,21 @@
           "steps": [
             "Open [Sync ledger](/accounting/sync) and open the record held for a closed period.",
             "Select **Send on first open day**. The document goes out dated on the day after the closing date in QuickBooks, and its note in QuickBooks keeps Trenova's date. This is offered only while Trenova's closed-period policy is to post to the next open period; otherwise reopen the period in QuickBooks, then select **Retry now**."
+          ]
+        },
+        {
+          "title": "Send a document in another currency",
+          "keywords": [
+            "foreign currency",
+            "exchange rate",
+            "multicurrency",
+            "CAD invoice",
+            "rate missing"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and open the record whose reason names a currency.",
+            "When the reason says the books are kept in one currency, turn on multicurrency in QuickBooks, then select **Retry now**.",
+            "When the reason says Trenova has no exchange rate for a day, connect OANDA under [Accounting controls](/admin/accounting-control) so the rate can be fetched, then select **Retry now**. The rate the books received is shown on the invoice, payment or settlement as **Exchange rate**, with the day it was quoted."
           ]
         },
         {

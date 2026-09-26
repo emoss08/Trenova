@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -208,6 +209,14 @@ func (s *Service) MarkPaid(
 			PaidAt:           paidAt,
 			UserID:           actor.UserID,
 		}); txErr != nil {
+			return txErr
+		}
+		if txErr = s.stamper.StampInto(txCtx, &exchangeratestamp.Request{
+			TenantInfo:     tenantInfo,
+			CurrencyCode:   entity.CurrencyCode,
+			DocumentDate:   paidAt,
+			AccountingDate: paidAt,
+		}, &entity.PaidExchangeRate, &entity.PaidExchangeRateDate); txErr != nil {
 			return txErr
 		}
 		if entity.PaidJournalBatchID, txErr = s.postPaymentJournal(

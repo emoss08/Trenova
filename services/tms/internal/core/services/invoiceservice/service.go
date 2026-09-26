@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
@@ -56,6 +57,7 @@ type Params struct {
 	CustomerLedgerRepo   repositories.CustomerLedgerProjectionRepository
 	BillingRepo          repositories.BillingControlRepository
 	AccountingRepo       repositories.AccountingControlRepository
+	Stamper              *exchangeratestamp.Stamper
 	JournalRepo          repositories.JournalPostingRepository
 	AdjustmentRepo       repositories.InvoiceAdjustmentRepository
 	ChargeAllocationRepo repositories.ChargeAllocationRepository
@@ -98,6 +100,7 @@ type Service struct {
 	customerLedgerRepo   repositories.CustomerLedgerProjectionRepository
 	billingRepo          repositories.BillingControlRepository
 	accountingRepo       repositories.AccountingControlRepository
+	stamper              *exchangeratestamp.Stamper
 	journalRepo          repositories.JournalPostingRepository
 	adjustmentRepo       repositories.InvoiceAdjustmentRepository
 	chargeAllocationRepo repositories.ChargeAllocationRepository
@@ -172,6 +175,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		customerLedgerRepo:          p.CustomerLedgerRepo,
 		billingRepo:                 p.BillingRepo,
 		accountingRepo:              p.AccountingRepo,
+		stamper:                     p.Stamper,
 		journalRepo:                 p.JournalRepo,
 		adjustmentRepo:              p.AdjustmentRepo,
 		chargeAllocationRepo:        p.ChargeAllocationRepo,

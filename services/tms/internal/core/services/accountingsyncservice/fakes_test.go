@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 func sameTenant(orgID, buID pulid.ID, tenantInfo pagination.TenantInfo) bool {
@@ -1530,6 +1531,8 @@ type fakeControls struct {
 
 func newFakeControls() *fakeControls {
 	return &fakeControls{control: &tenant.AccountingControl{
+		FunctionalCurrencyCode:    "USD",
+		ExchangeRateDatePolicy:    tenant.ExchangeRateDatePolicyDocumentDate,
 		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
 	}}
 }
@@ -1550,3 +1553,108 @@ func (f *fakeControls) set(mutate func(*tenant.AccountingControl)) {
 	mutate(f.control)
 }
 
+func (f *fakeInvoices) StampExchangeRate(
+	_ context.Context,
+	req *repositories.StampExchangeRateRequest,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	inv, ok := f.rows[req.ID]
+	if !ok {
+		return errortypes.NewNotFoundError("Invoice not found")
+	}
+	inv.ExchangeRate = decimal.NewNullDecimal(req.Rate)
+	date := req.Date
+	inv.ExchangeRateDate = &date
+	return nil
+}
+
+func (f *fakePayments) StampExchangeRate(
+	_ context.Context,
+	req *repositories.StampExchangeRateRequest,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	payment, ok := f.rows[req.ID]
+	if !ok {
+		return errortypes.NewNotFoundError("Payment not found")
+	}
+	payment.ExchangeRate = decimal.NewNullDecimal(req.Rate)
+	date := req.Date
+	payment.ExchangeRateDate = &date
+	return nil
+}
+
+func (f *fakePayables) StampExchangeRate(
+	_ context.Context,
+	req *repositories.StampPayableExchangeRateRequest,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	row, ok := f.rows[req.ID]
+	if !ok || row.settlement.Kind != req.Kind {
+		return errortypes.NewNotFoundError("Settlement not found")
+	}
+	date := req.Date
+	if req.Paid {
+		row.settlement.PaidExchangeRate = decimal.NewNullDecimal(req.Rate)
+		row.settlement.PaidExchangeRateDate = &date
+		return nil
+	}
+	row.settlement.ExchangeRate = decimal.NewNullDecimal(req.Rate)
+	row.settlement.ExchangeRateDate = &date
+	return nil
+}
+
+type fakeRates struct {
+	services.ExchangeRateService
+
+	mu    sync.Mutex
+	rates map[string]decimal.Decimal
+	calls []string
+	err   error
+}
+
+func newFakeRates() *fakeRates {
+	return &fakeRates{rates: map[string]decimal.Decimal{}}
+}
+
+func (f *fakeRates) set(from, to string, rate decimal.Decimal) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.rates[from+"/"+to] = rate
+}
+
+func (f *fakeRates) requests() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.calls)
+}
+
+func (f *fakeRates) Convert(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	fromCurrency, toCurrency string,
+	amount decimal.Decimal,
+	date time.Time,
+) (*services.RateConversionResult, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	day := date.Format("2006-01-02")
+	f.calls = append(f.calls, fromCurrency+"/"+toCurrency+"@"+day)
+	if f.err != nil {
+		return nil, f.err
+	}
+	rate, ok := f.rates[fromCurrency+"/"+toCurrency]
+	if !ok {
+		return nil, errortypes.NewBusinessError("no exchange rate")
+	}
+	return &services.RateConversionResult{
+		FromCurrency: fromCurrency,
+		ToCurrency:   toCurrency,
+		Amount:       amount,
+		Rate:         rate,
+		Converted:    amount.Mul(rate),
+		Date:         day,
+	}, nil
+}

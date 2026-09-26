@@ -418,6 +418,10 @@ query DriverSettlementDetail($id: ID!) {
     totalMiles
     shipmentCount
     currencyCode
+    exchangeRate
+    exchangeRateDate
+    paidExchangeRate
+    paidExchangeRateDate
     hasExceptions
     exceptions {
       code

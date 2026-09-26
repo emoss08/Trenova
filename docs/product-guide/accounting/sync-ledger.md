@@ -52,6 +52,16 @@ Keywords: closed period, books closed, re-date, first open day, closing date
    Trenova's closed-period policy is to post to the next open period; otherwise reopen the period
    in QuickBooks, then select **Retry now**.
 
+### Send a document in another currency
+Keywords: foreign currency, exchange rate, multicurrency, CAD invoice, rate missing
+1. Open [Sync ledger](/accounting/sync) and open the record whose reason names a currency.
+2. When the reason says the books are kept in one currency, turn on multicurrency in QuickBooks,
+   then select **Retry now**.
+3. When the reason says Trenova has no exchange rate for a day, connect OANDA under
+   [Accounting controls](/admin/accounting-control) so the rate can be fetched, then select
+   **Retry now**. The rate the books received is shown on the invoice, payment or settlement
+   as **Exchange rate**, with the day it was quoted.
+
 ### Release documents waiting for approval
 Keywords: approve sync, send held documents, manual sync
 1. Open [Sync ledger](/accounting/sync) and select **Waiting for release** in the strip.

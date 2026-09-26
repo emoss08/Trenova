@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingconnlookup"
+	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -48,6 +49,8 @@ type Params struct {
 	Organizations     repositories.OrganizationRepository
 	Controls          repositories.AccountingControlRepository
 	Payables          repositories.AccountingPayablesSource
+	Rates             services.ExchangeRateService
+	Policy            *accountingcontrolpolicyservice.Service
 	AuditService      services.AuditService
 	Enqueuer          *Enqueuer
 	Dispatcher        services.AccountingSyncDispatcher `optional:"true"`
@@ -71,6 +74,8 @@ type Service struct {
 	organizations  repositories.OrganizationRepository
 	controls       repositories.AccountingControlRepository
 	payables       repositories.AccountingPayablesSource
+	rates          services.ExchangeRateService
+	policy         *accountingcontrolpolicyservice.Service
 	audit          services.AuditService
 	enqueuer       *Enqueuer
 	dispatcher     services.AccountingSyncDispatcher
@@ -98,6 +103,8 @@ func New(p Params) *Service {
 		organizations:  p.Organizations,
 		controls:       p.Controls,
 		payables:       p.Payables,
+		rates:          p.Rates,
+		policy:         p.Policy,
 		audit:          p.AuditService,
 		enqueuer:       p.Enqueuer,
 		dispatcher:     p.Dispatcher,

@@ -4932,7 +4932,7 @@
       "kind": "query",
       "domain": "carrier-settlement",
       "sourceFile": "src/operations/carrier-settlement/operations.graphql",
-      "hash": "sha256:cc5b9ce4ed7968de7ec3e10c1c9d40d598baaca2516559ddccbf9ac24d9f8b90",
+      "hash": "sha256:ce4bead9b7849043b03387d1c1d5d40806f860290a99294a4908d571f4a1bbb1",
       "rootFields": [
         "carrierSettlement"
       ],
@@ -4945,7 +4945,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query CarrierSettlementDetail($id: ID!) {\n  carrierSettlement(id: $id) {\n    id\n    carrierId\n    batchId\n    settlementNumber\n    status\n    periodStart\n    periodEnd\n    payDate\n    grossCostMinor\n    adjustmentsMinor\n    netPayableMinor\n    shipmentCount\n    currencyCode\n    notes\n    submittedById\n    submittedAt\n    approvedById\n    approvedAt\n    postedById\n    postedAt\n    postedJournalBatchId\n    paidAt\n    paidById\n    paymentMethod\n    paymentReference\n    paidJournalBatchId\n    voidedById\n    voidedAt\n    voidReason\n    voidJournalBatchId\n    version\n    createdAt\n    updatedAt\n    carrier {\n      id\n      code\n      name\n      scac\n      paymentMethod\n      paymentTermDays\n      remitToName\n      remitAddressLine1\n      remitAddressLine2\n      remitCity\n      remitPostalCode\n      remitState {\n        id\n        abbreviation\n      }\n    }\n    lines {\n      id\n      lineNumber\n      eventType\n      description\n      amountMinor\n      costEventId\n      glAccountId\n      shipmentId\n      moveId\n      proNumber\n    }\n  }\n}"
+      "sdl": "query CarrierSettlementDetail($id: ID!) {\n  carrierSettlement(id: $id) {\n    id\n    carrierId\n    batchId\n    settlementNumber\n    status\n    periodStart\n    periodEnd\n    payDate\n    grossCostMinor\n    adjustmentsMinor\n    netPayableMinor\n    shipmentCount\n    currencyCode\n    exchangeRate\n    exchangeRateDate\n    paidExchangeRate\n    paidExchangeRateDate\n    notes\n    submittedById\n    submittedAt\n    approvedById\n    approvedAt\n    postedById\n    postedAt\n    postedJournalBatchId\n    paidAt\n    paidById\n    paymentMethod\n    paymentReference\n    paidJournalBatchId\n    voidedById\n    voidedAt\n    voidReason\n    voidJournalBatchId\n    version\n    createdAt\n    updatedAt\n    carrier {\n      id\n      code\n      name\n      scac\n      paymentMethod\n      paymentTermDays\n      remitToName\n      remitAddressLine1\n      remitAddressLine2\n      remitCity\n      remitPostalCode\n      remitState {\n        id\n        abbreviation\n      }\n    }\n    lines {\n      id\n      lineNumber\n      eventType\n      description\n      amountMinor\n      costEventId\n      glAccountId\n      shipmentId\n      moveId\n      proNumber\n    }\n  }\n}"
     },
     {
       "name": "CarrierSettlementTable",
@@ -6790,7 +6790,7 @@
       "kind": "query",
       "domain": "customer-payment",
       "sourceFile": "src/operations/customer-payment/operations.graphql",
-      "hash": "sha256:63ba0ffb6ef2656f7dc2721a0f6fc0da8dc0d184ee08e3871f26e1048b6a9c3f",
+      "hash": "sha256:8ceaa86923b4d5123e16061199d80abf95f74c4a113fb29352d02b0372405f91",
       "rootFields": [
         "customerPayment"
       ],
@@ -6803,7 +6803,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query CustomerPaymentDetail($id: ID!) {\n  customerPayment(id: $id) {\n    id\n    organizationId\n    businessUnitId\n    customerId\n    paymentDate\n    accountingDate\n    amountMinor\n    appliedAmountMinor\n    unappliedAmountMinor\n    status\n    paymentMethod\n    referenceNumber\n    memo\n    currencyCode\n    postedBatchId\n    reversalBatchId\n    reversedById\n    reversedAt\n    reversalReason\n    createdById\n    updatedById\n    version\n    createdAt\n    updatedAt\n    customer {\n      id\n      code\n      name\n    }\n    applications {\n      id\n      customerPaymentId\n      invoiceId\n      appliedAmountMinor\n      shortPayAmountMinor\n      lineNumber\n      createdAt\n      updatedAt\n      invoice {\n        id\n        number\n        invoiceDate\n        dueDate\n        totalAmount\n        appliedAmount\n        settlementStatus\n        disputeStatus\n        billToName\n      }\n    }\n  }\n}"
+      "sdl": "query CustomerPaymentDetail($id: ID!) {\n  customerPayment(id: $id) {\n    id\n    organizationId\n    businessUnitId\n    customerId\n    paymentDate\n    accountingDate\n    amountMinor\n    appliedAmountMinor\n    unappliedAmountMinor\n    status\n    paymentMethod\n    referenceNumber\n    memo\n    currencyCode\n    exchangeRate\n    exchangeRateDate\n    postedBatchId\n    reversalBatchId\n    reversedById\n    reversedAt\n    reversalReason\n    createdById\n    updatedById\n    version\n    createdAt\n    updatedAt\n    customer {\n      id\n      code\n      name\n    }\n    applications {\n      id\n      customerPaymentId\n      invoiceId\n      appliedAmountMinor\n      shortPayAmountMinor\n      lineNumber\n      createdAt\n      updatedAt\n      invoice {\n        id\n        number\n        invoiceDate\n        dueDate\n        totalAmount\n        appliedAmount\n        settlementStatus\n        disputeStatus\n        billToName\n      }\n    }\n  }\n}"
     },
     {
       "name": "CustomerPaymentTable",
@@ -8761,7 +8761,7 @@
       "kind": "query",
       "domain": "driver-settlement",
       "sourceFile": "src/operations/driver-settlement/operations.graphql",
-      "hash": "sha256:0f96d6515e17c15b83b8b0e56cf436a5626dd09d6bbb87efbcfbdbddcf0bf68b",
+      "hash": "sha256:fe7fadd0dc31904e091ab0e58dcec6101ce58e9fd5a1950469b89204b744668e",
       "rootFields": [
         "driverSettlement"
       ],
@@ -8774,7 +8774,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query DriverSettlementDetail($id: ID!) {\n  driverSettlement(id: $id) {\n    id\n    workerId\n    batchId\n    payProfileId\n    settlementNumber\n    status\n    classification\n    payProfileName\n    periodStart\n    periodEnd\n    payDate\n    grossEarningsMinor\n    reimbursementsMinor\n    deductionsMinor\n    carryForwardInMinor\n    carryForwardOutMinor\n    netPayMinor\n    totalMiles\n    shipmentCount\n    currencyCode\n    hasExceptions\n    exceptions {\n      code\n      severity\n      message\n    }\n    notes\n    submittedById\n    submittedAt\n    approvedById\n    approvedAt\n    postedById\n    postedAt\n    paidAt\n    paymentMethod\n    paymentReference\n    voidedById\n    voidedAt\n    voidReason\n    version\n    createdAt\n    updatedAt\n    worker {\n      id\n      firstName\n      lastName\n    }\n    lines {\n      id\n      lineNumber\n      category\n      componentKind\n      method\n      description\n      quantity\n      rate\n      amountMinor\n      shipmentId\n      moveId\n      payEventId\n      recurringDeductionId\n      advanceId\n      escrowAccountId\n      proNumber\n    }\n  }\n}"
+      "sdl": "query DriverSettlementDetail($id: ID!) {\n  driverSettlement(id: $id) {\n    id\n    workerId\n    batchId\n    payProfileId\n    settlementNumber\n    status\n    classification\n    payProfileName\n    periodStart\n    periodEnd\n    payDate\n    grossEarningsMinor\n    reimbursementsMinor\n    deductionsMinor\n    carryForwardInMinor\n    carryForwardOutMinor\n    netPayMinor\n    totalMiles\n    shipmentCount\n    currencyCode\n    exchangeRate\n    exchangeRateDate\n    paidExchangeRate\n    paidExchangeRateDate\n    hasExceptions\n    exceptions {\n      code\n      severity\n      message\n    }\n    notes\n    submittedById\n    submittedAt\n    approvedById\n    approvedAt\n    postedById\n    postedAt\n    paidAt\n    paymentMethod\n    paymentReference\n    voidedById\n    voidedAt\n    voidReason\n    version\n    createdAt\n    updatedAt\n    worker {\n      id\n      firstName\n      lastName\n    }\n    lines {\n      id\n      lineNumber\n      category\n      componentKind\n      method\n      description\n      quantity\n      rate\n      amountMinor\n      shipmentId\n      moveId\n      payEventId\n      recurringDeductionId\n      advanceId\n      escrowAccountId\n      proNumber\n    }\n  }\n}"
     },
     {
       "name": "DriverSettlementTable",

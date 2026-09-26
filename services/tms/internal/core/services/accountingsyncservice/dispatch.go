@@ -31,6 +31,7 @@ type pushSession struct {
 	loc               *time.Location
 	providerName      string
 	limits            services.AccountingDocumentLimits
+	control           *tenant.AccountingControl
 	redatesToNextOpen bool
 }
 
@@ -79,8 +80,8 @@ func (s *Service) openSession(
 	ctx context.Context,
 	conn *accountingsync.AccountingConnection,
 ) (*pushSession, error) {
-	tenant := tenantOf(conn)
-	session, err := s.connService.Session(ctx, tenant, conn.ID)
+	tenantInfo := tenantOf(conn)
+	session, err := s.connService.Session(ctx, tenantInfo, conn.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -92,17 +93,17 @@ func (s *Service) openSession(
 		)
 	}
 
-	loc, err := s.orgLocation(ctx, tenant)
+	loc, err := s.orgLocation(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	redates, err := s.redatesToNextOpen(ctx, tenant)
+	control, err := s.controls.GetByOrgID(ctx, tenantInfo.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &pushSession{
-		tenant: tenant,
+		tenant: tenantInfo,
 		conn:   session.Connection,
 		writer: writer,
 		auth: services.AccountingDocumentAuth{
@@ -112,7 +113,8 @@ func (s *Service) openSession(
 		loc:               loc,
 		providerName:      accountingsync.ProviderName(conn.IntegrationType),
 		limits:            writer.DocumentLimits(),
-		redatesToNextOpen: redates,
+		control:           control,
+		redatesToNextOpen: control.ClosedPeriodPostingPolicy == tenant.ClosedPeriodPostingPolicyPostToNextOpen,
 	}, nil
 }
 

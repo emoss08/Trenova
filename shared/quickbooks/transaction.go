@@ -114,6 +114,7 @@ type SalesTxn struct {
 	DueDate      string
 	TermID       string
 	CurrencyCode string
+	ExchangeRate decimal.Decimal
 	PrivateNote  string
 	CustomerMemo string
 	Lines        []SalesLine
@@ -129,6 +130,7 @@ type PaymentTxn struct {
 	CustomerID       string
 	TxnDate          string
 	CurrencyCode     string
+	ExchangeRate     decimal.Decimal
 	PaymentMethodID  string
 	DepositAccountID string
 	PaymentRefNum    string
@@ -150,6 +152,20 @@ type money decimal.Decimal
 
 func (m money) MarshalJSON() ([]byte, error) {
 	return []byte(decimal.Decimal(m).StringFixed(2)), nil
+}
+
+type exchangeRate decimal.Decimal
+
+func (r exchangeRate) MarshalJSON() ([]byte, error) {
+	return []byte(decimal.Decimal(r).String()), nil
+}
+
+func exchangeRateOf(rate decimal.Decimal) *exchangeRate {
+	if !rate.IsPositive() {
+		return nil
+	}
+	value := exchangeRate(rate)
+	return &value
 }
 
 type quantity decimal.Decimal
@@ -185,6 +201,7 @@ type salesBody struct {
 	DueDate      string          `json:"DueDate,omitempty"`
 	SalesTermRef *refValue       `json:"SalesTermRef,omitempty"`
 	CurrencyRef  *refValue       `json:"CurrencyRef,omitempty"`
+	ExchangeRate *exchangeRate   `json:"ExchangeRate,omitempty"`
 	PrivateNote  string          `json:"PrivateNote,omitempty"`
 	CustomerMemo *memoValue      `json:"CustomerMemo,omitempty"`
 	Line         []wireSalesLine `json:"Line"`
@@ -207,6 +224,7 @@ type paymentBody struct {
 	TotalAmt            money             `json:"TotalAmt"`
 	TxnDate             string            `json:"TxnDate,omitempty"`
 	CurrencyRef         *refValue         `json:"CurrencyRef,omitempty"`
+	ExchangeRate        *exchangeRate     `json:"ExchangeRate,omitempty"`
 	PaymentMethodRef    *refValue         `json:"PaymentMethodRef,omitempty"`
 	DepositToAccountRef *refValue         `json:"DepositToAccountRef,omitempty"`
 	PaymentRefNum       string            `json:"PaymentRefNum,omitempty"`
@@ -370,6 +388,7 @@ func salesBodyOf(requestID string, txn *SalesTxn) (*salesBody, error) {
 	}
 	if currency := strings.TrimSpace(txn.CurrencyCode); currency != "" {
 		body.CurrencyRef = &refValue{Value: strings.ToUpper(currency)}
+		body.ExchangeRate = exchangeRateOf(txn.ExchangeRate)
 	}
 	if memo := truncate(txn.CustomerMemo, MaxCustomerMemoLength); memo != "" {
 		body.CustomerMemo = &memoValue{Value: memo}
@@ -459,6 +478,7 @@ func paymentBodyOf(requestID string, txn *PaymentTxn) (*paymentBody, error) {
 	}
 	if currency := strings.TrimSpace(txn.CurrencyCode); currency != "" {
 		body.CurrencyRef = &refValue{Value: strings.ToUpper(currency)}
+		body.ExchangeRate = exchangeRateOf(txn.ExchangeRate)
 	}
 	if method := strings.TrimSpace(txn.PaymentMethodID); method != "" {
 		body.PaymentMethodRef = &refValue{Value: method}

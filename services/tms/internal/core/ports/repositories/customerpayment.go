@@ -60,6 +60,7 @@ type PaymentsReceived struct {
 }
 
 type CustomerPaymentRepository interface {
+	StampExchangeRate(ctx context.Context, req *StampExchangeRateRequest) error
 	// SumReceived totals posted payments by currency over a span.
 	SumReceived(ctx context.Context, req SumPaymentsReceivedRequest) ([]*PaymentsReceived, error)
 	List(

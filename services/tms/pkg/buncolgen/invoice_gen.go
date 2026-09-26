@@ -957,6 +957,8 @@ var InvoiceColumns = struct {
 	InvoiceDate               Column // "invoice_date" → qualified: "inv.invoice_date"
 	DueDate                   Column // "due_date" → qualified: "inv.due_date"
 	PostedAt                  Column // "posted_at" → qualified: "inv.posted_at"
+	ExchangeRate              Column // "exchange_rate" → qualified: "inv.exchange_rate"
+	ExchangeRateDate          Column // "exchange_rate_date" → qualified: "inv.exchange_rate_date"
 	ShipmentProNumber         Column // "shipment_pro_number" → qualified: "inv.shipment_pro_number"
 	ShipmentBOL               Column // "shipment_bol" → qualified: "inv.shipment_bol"
 	OrderNumber               Column // "order_number" → qualified: "inv.order_number"
@@ -1039,6 +1041,8 @@ var InvoiceColumns = struct {
 	InvoiceDate:               NewColumn("invoice_date", "inv"),
 	DueDate:                   NewColumn("due_date", "inv"),
 	PostedAt:                  NewColumn("posted_at", "inv"),
+	ExchangeRate:              NewColumn("exchange_rate", "inv"),
+	ExchangeRateDate:          NewColumn("exchange_rate_date", "inv"),
 	ShipmentProNumber:         NewColumn("shipment_pro_number", "inv"),
 	ShipmentBOL:               NewColumn("shipment_bol", "inv"),
 	OrderNumber:               NewColumn("order_number", "inv"),
@@ -1127,6 +1131,8 @@ var InvoiceFieldMap = map[string]string{
 	"invoiceDate":               "invoice_date",
 	"dueDate":                   "due_date",
 	"postedAt":                  "posted_at",
+	"exchangeRate":              "exchange_rate",
+	"exchangeRateDate":          "exchange_rate_date",
 	"shipmentProNumber":         "shipment_pro_number",
 	"shipmentBol":               "shipment_bol",
 	"orderNumber":               "order_number",
@@ -1213,6 +1219,8 @@ var InvoiceInsertableColumns = []string{
 	"invoice_date",
 	"due_date",
 	"posted_at",
+	"exchange_rate",
+	"exchange_rate_date",
 	"shipment_pro_number",
 	"shipment_bol",
 	"order_number",
@@ -1374,6 +1382,8 @@ var InvoiceFilter = struct {
 	InvoiceDate               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceDate" → DB: "invoice_date"
 	DueDate                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueDate" → DB: "due_date"
 	PostedAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedAt" → DB: "posted_at"
+	ExchangeRate              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRate" → DB: "exchange_rate"
+	ExchangeRateDate          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateDate" → DB: "exchange_rate_date"
 	ShipmentProNumber         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentProNumber" → DB: "shipment_pro_number"
 	ShipmentBOL               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentBol" → DB: "shipment_bol"
 	OrderNumber               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "orderNumber" → DB: "order_number"
@@ -1500,6 +1510,12 @@ var InvoiceFilter = struct {
 	},
 	PostedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("postedAt", op, value)
+	},
+	ExchangeRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("exchangeRate", op, value)
+	},
+	ExchangeRateDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("exchangeRateDate", op, value)
 	},
 	ShipmentProNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("shipmentProNumber", op, value)

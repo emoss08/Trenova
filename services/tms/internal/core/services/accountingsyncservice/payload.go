@@ -242,6 +242,23 @@ func (s *Service) salesDocument(
 		sign = decimal.NewFromInt(-1)
 	}
 
+	postedAt := inv.InvoiceDate
+	if inv.PostedAt != nil {
+		postedAt = *inv.PostedAt
+	}
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          documentLabel(record.ObjectType, inv.Number),
+		currency:       inv.CurrencyCode,
+		stamp:          inv.ExchangeRate,
+		stampDate:      inv.ExchangeRateDate,
+		documentDate:   inv.InvoiceDate,
+		accountingDate: postedAt,
+		persist:        s.stampInvoice(sess, inv.ID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	doc := &services.AccountingSalesDocument{
 		Auth:         sess.auth,
 		RequestID:    record.RequestID,
@@ -249,6 +266,7 @@ func (s *Service) salesDocument(
 		DocNumber:    inv.Number,
 		TxnDate:      timeutils.FormatCalendarDate(record.SentDate(inv.InvoiceDate), sess.loc),
 		CurrencyCode: inv.CurrencyCode,
+		ExchangeRate: rate,
 		PrivateNote:  salesNote(inv) + sentDateNote(record, inv.InvoiceDate, sess.loc),
 		CustomerMemo: customerMemo(inv),
 		Lines:        make([]services.AccountingDocumentLine, 0, len(inv.Lines)),
@@ -548,6 +566,18 @@ func (s *Service) pushPayment(
 	if err != nil {
 		return nil, err
 	}
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          label,
+		currency:       payment.CurrencyCode,
+		stamp:          payment.ExchangeRate,
+		stampDate:      payment.ExchangeRateDate,
+		documentDate:   payment.PaymentDate,
+		accountingDate: payment.AccountingDate,
+		persist:        s.stampPayment(sess, payment.ID),
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	doc := &services.AccountingPaymentDocument{
 		Auth:               sess.auth,
@@ -559,6 +589,7 @@ func (s *Service) pushPayment(
 			sess.loc,
 		),
 		CurrencyCode:             payment.CurrencyCode,
+		ExchangeRate:             rate,
 		PaymentMethodExternalID:  refs.method,
 		DepositAccountExternalID: refs.deposit,
 		ReferenceNumber:          payment.ReferenceNumber,
@@ -803,6 +834,18 @@ func (s *Service) pushCreditApplication(
 	if err != nil {
 		return nil, err
 	}
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          label,
+		currency:       memo.CurrencyCode,
+		stamp:          memo.ExchangeRate,
+		stampDate:      memo.ExchangeRateDate,
+		documentDate:   memo.InvoiceDate,
+		accountingDate: app.AccountingDate,
+		persist:        s.stampInvoice(sess, memo.ID),
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	doc := &services.AccountingCreditApplicationDocument{
 		Auth:               sess.auth,
@@ -813,6 +856,7 @@ func (s *Service) pushCreditApplication(
 			sess.loc,
 		),
 		CurrencyCode:         memo.CurrencyCode,
+		ExchangeRate:         rate,
 		InvoiceExternalID:    invoiceID,
 		CreditMemoExternalID: memoID,
 		Amount:               money.DecimalFromMinor(app.AppliedAmountMinor),

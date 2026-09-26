@@ -387,6 +387,19 @@ func (s *Service) pushBill(
 		}
 	}
 
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          label,
+		currency:       settlement.CurrencyCode,
+		stamp:          settlement.ExchangeRate,
+		stampDate:      settlement.ExchangeRateDate,
+		documentDate:   *settlement.PostedAt,
+		accountingDate: *settlement.PostedAt,
+		persist:        s.stampPayable(sess, settlement, false),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	doc := &services.AccountingPurchaseDocument{
 		Auth:                sess.auth,
 		RequestID:           record.RequestID,
@@ -400,6 +413,7 @@ func (s *Service) pushBill(
 			sess.loc,
 		),
 		CurrencyCode: settlement.CurrencyCode,
+		ExchangeRate: rate,
 		PrivateNote: billNote(record.ObjectType, settlement, sess.loc) +
 			sentDateNote(record, *settlement.PostedAt, sess.loc),
 		Lines: lines,
@@ -588,6 +602,19 @@ func (s *Service) pushBillPayment(
 		return nil, err
 	}
 
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          label,
+		currency:       settlement.CurrencyCode,
+		stamp:          settlement.PaidExchangeRate,
+		stampDate:      settlement.PaidExchangeRateDate,
+		documentDate:   *settlement.PaidAt,
+		accountingDate: *settlement.PaidAt,
+		persist:        s.stampPayable(sess, settlement, true),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	doc := &services.AccountingBillPaymentDocument{
 		Auth:                  sess.auth,
 		RequestID:             record.RequestID,
@@ -601,6 +628,7 @@ func (s *Service) pushBillPayment(
 		),
 		TxnDate:      timeutils.FormatCalendarDate(record.SentDate(*settlement.PaidAt), sess.loc),
 		CurrencyCode: settlement.CurrencyCode,
+		ExchangeRate: rate,
 		PrivateNote: billPaymentNote(record.ObjectType, settlement) +
 			sentDateNote(record, *settlement.PaidAt, sess.loc),
 		Amount: money.DecimalFromMinor(settlement.NetMinor),

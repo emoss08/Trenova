@@ -776,3 +776,86 @@ func TestUpdateVendorRejectsACustomerReply(t *testing.T) {
 	})
 	require.ErrorIs(t, err, quickbooks.ErrUnexpectedPayload)
 }
+
+func TestExchangeRateIsSentOnlyWithACurrency(t *testing.T) {
+	t.Parallel()
+
+	var bodies []map[string]any
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		bodies = append(bodies, readJSON(t, r))
+		_, _ = w.Write(fixture(t, "create_invoice.json"))
+	})
+
+	priced := freightInvoice()
+	priced.CurrencyCode = "CAD"
+	priced.ExchangeRate = decimal.RequireFromString("0.7312")
+	_, err := client.CreateInvoice(t.Context(), testRequestID, priced)
+	require.NoError(t, err)
+
+	unpriced := freightInvoice()
+	unpriced.CurrencyCode = "CAD"
+	_, err = client.CreateInvoice(t.Context(), testRequestID, unpriced)
+	require.NoError(t, err)
+
+	homeless := freightInvoice()
+	homeless.CurrencyCode = ""
+	homeless.ExchangeRate = decimal.RequireFromString("0.7312")
+	_, err = client.CreateInvoice(t.Context(), testRequestID, homeless)
+	require.NoError(t, err)
+
+	require.Len(t, bodies, 3)
+	assert.Equal(t, map[string]any{"value": "CAD"}, bodies[0]["CurrencyRef"])
+	assert.InDelta(t, 0.7312, bodies[0]["ExchangeRate"], 1e-9)
+	assert.NotContains(t, bodies[1], "ExchangeRate", "a zero rate is never sent")
+	assert.NotContains(t, bodies[2], "ExchangeRate", "a rate without a currency means nothing")
+}
+
+func TestExchangeRateRidesEveryTransactionKind(t *testing.T) {
+	t.Parallel()
+
+	var bodies []map[string]any
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		bodies = append(bodies, readJSON(t, r))
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/payment"):
+			_, _ = w.Write(fixture(t, "create_payment.json"))
+		case strings.HasSuffix(r.URL.Path, "/billpayment"):
+			_, _ = w.Write(fixture(t, "create_bill_payment.json"))
+		default:
+			_, _ = w.Write(fixture(t, "create_bill.json"))
+		}
+	})
+	rate := decimal.RequireFromString("0.7312")
+
+	payment := &quickbooks.PaymentTxn{
+		CustomerID:   "58",
+		CurrencyCode: "CAD",
+		ExchangeRate: rate,
+		TotalAmount:  decimal.NewFromInt(10),
+		Links:        []quickbooks.PaymentLink{{TxnID: "1", TxnKind: quickbooks.TxnInvoice, Amount: decimal.NewFromInt(10)}},
+	}
+	_, err := client.CreatePayment(t.Context(), testRequestID, payment)
+	require.NoError(t, err)
+
+	bill := carrierBill()
+	bill.CurrencyCode = "CAD"
+	bill.ExchangeRate = rate
+	_, err = client.CreateBill(t.Context(), testRequestID, bill)
+	require.NoError(t, err)
+
+	billPayment := &quickbooks.BillPaymentTxn{
+		VendorID:      "91",
+		BankAccountID: "35",
+		BillID:        "210",
+		CurrencyCode:  "CAD",
+		ExchangeRate:  rate,
+		Amount:        decimal.NewFromInt(10),
+	}
+	_, err = client.CreateBillPayment(t.Context(), testRequestID, billPayment)
+	require.NoError(t, err)
+
+	require.Len(t, bodies, 3)
+	for idx, body := range bodies {
+		assert.InDelta(t, 0.7312, body["ExchangeRate"], 1e-9, "body %d", idx)
+	}
+}

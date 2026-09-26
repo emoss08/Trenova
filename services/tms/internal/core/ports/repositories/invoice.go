@@ -97,6 +97,7 @@ type NetBilledByChargeRequest struct {
 }
 
 type InvoiceRepository interface {
+	StampExchangeRate(ctx context.Context, req *StampExchangeRateRequest) error
 	// ListLineCharges returns the distinct shipment charges the invoices'
 	// lines bill.
 	ListLineCharges(
