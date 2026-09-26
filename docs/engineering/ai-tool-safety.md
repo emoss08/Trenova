@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 322.
+Tools listed: 343.
 
 ## The model
 
@@ -51,13 +51,13 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 155 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 158 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 6 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 79 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 88 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 1 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 10 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 26 |
-| Money | Moves or commits money. | Automatic | Yes | 54 |
+| Money | Moves or commits money. | Automatic | Yes | 63 |
 
 ## Reads only
 
@@ -106,6 +106,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get invoice adjustment (`get_invoice_adjustment`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get invoice run (`get_invoice_run`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get journal entry (`get_journal_entry`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get manual journal (`get_manual_journal`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get my home layout (`get_my_home_layout`) | Reads only | Automatic | — | — | Reads the caller's own home page; nothing changes and nothing is sent. |
 | Get order (`get_order`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get rate agreement (`get_rate_agreement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -172,8 +173,10 @@ Looks something up. Nothing changes and nothing is sent.
 | List invoice share candidates (`list_invoice_share_candidates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List invoices (`list_invoices`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List journal entries (`list_journal_entries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List journal reversals (`list_journal_reversals`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List location categories (`list_location_categories`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List locations (`list_locations`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List manual journals (`list_manual_journals`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List open statements (`list_open_statements`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List orders (`list_orders`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List pay advances (`list_pay_advances`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -248,9 +251,13 @@ Changes records only people inside the organization see.
 | Attach pay events to settlement (`attach_pay_events_to_settlement`) | Inside the organization | Automatic | — | — | Moves pay a driver already earned between the pool and a draft settlement inside Trenova; nothing is paid until a person approves it. |
 | Build invoice run (`build_invoice_run`) | Inside the organization | Automatic | — | — | Builds a proposal of invoices inside Trenova for a biller to review; it invoices nothing and is discarded with cancel_invoice_run. |
 | Cancel invoice run (`cancel_invoice_run`) | Inside the organization | Ask first | — | — | Discards a proposal of invoices; nothing was invoiced, and a new run is built with build_invoice_run. |
+| Cancel journal reversal (`cancel_journal_reversal`) | Inside the organization | Ask first | The reason is what the reversal's requester reads next, so a run that has read outside text proposes it. | — | Withdraws a reversal before it reaches the ledger; nothing is booked, and it is requested again if it was needed after all. |
+| Cancel manual journal (`cancel_manual_journal`) | Inside the organization | Ask first | The reason is what the journal's author reads next, so a run that has read outside text proposes it. | — | Withdraws a journal before it reaches the ledger; nothing is booked, and the entry is drafted again if it was needed after all. |
+| Change accounting backfill (`change_accounting_backfill`) | Inside the organization | Ask first | — | — | Changes how much history reaches the organization's books; a person who manages the integration approves it, and pausing or cancelling sends nothing. |
 | Check accounting connection (`check_accounting_connection`) | Inside the organization | Automatic | — | — | Asks the accounting system whether it answers and records the result in Trenova; it writes nothing to the books. |
 | Check accounting drift (`check_accounting_drift`) | Inside the organization | Ask first | — | — | Reads every synced document back from the accounting system, which spends the provider's call allowance, so a person approves it. |
 | Clear accounting mapping (`clear_accounting_mapping`) | Inside the organization | Ask first | — | — | Unmatches a record so it cannot sync until someone maps it again; mapping it again undoes it. |
+| Confirm accounting mapping proposals (`confirm_accounting_mapping_proposals`) | Inside the organization | Ask first | — | — | Decides which accounts and records Trenova's documents post to in the books, so a person approves it; clearing or changing a mapping undoes it. |
 | Create accounting reference record (`create_accounting_reference_record`) | Inside the organization | Ask first | — | — | Creates a record in the organization's own accounting system; Trenova cannot delete it again, so a person approves it. |
 | Create carrier invoice match (`create_carrier_invoice_match`) | Inside the organization | Automatic | — | — | Records how a carrier's invoice compares with the expected cost inside Trenova; nothing is paid until a person accepts it. |
 | Create dashboard (`create_dashboard`) | Inside the organization | Automatic | — | — | Saves a report dashboard colleagues can open; nothing leaves the organization. |
@@ -261,6 +268,7 @@ Changes records only people inside the organization see.
 | Detach pay event from settlement (`detach_pay_event_from_settlement`) | Inside the organization | Automatic | — | — | Moves pay a driver already earned between the pool and a draft settlement inside Trenova; nothing is paid until a person approves it. |
 | Dismiss accounting drift (`dismiss_accounting_drift`) | Inside the organization | Ask first | — | — | Closes a difference with the books without fixing it, so a person approves it. |
 | Dismiss insight (`dismiss_insight`) | Inside the organization | Automatic | — | — | Dismisses an insight inside Trenova; it can be restored. |
+| Draft manual journal (`draft_manual_journal`) | Inside the organization | Ask first | A journal drafted from what someone outside wrote is proposed, since its lines are what an approver books. | — | Saves a draft journal inside Trenova; nothing reaches the ledger until a person submits, approves and posts it, and a draft is cancelled the same way. |
 | Escalate detention (`escalate_detention`) | Inside the organization | Automatic | — | — | Hands a detention clock to a person inside the organization. |
 | Evaluate service failures (`evaluate_service_failures`) | Inside the organization | Automatic | — | — | Opens service failures from stop actuals inside Trenova; an open failure sends nothing. |
 | Flag for manual review (`flag_for_manual_review`) | Inside the organization | Automatic | — | — | Records an exception on the run for a person inside the organization to work. |
@@ -286,6 +294,7 @@ Changes records only people inside the organization see.
 | Recalculate driver settlement (`recalculate_driver_settlement`) | Inside the organization | Automatic | — | — | Rebuilds a draft from the records it is computed from inside Trenova; nothing is paid until a person approves it. |
 | Record stop actual (`record_stop_actual`) | Inside the organization | Automatic | — | — | Records arrival and departure times on a stop; no model-written text leaves the organization. |
 | Refresh accounting reference data (`refresh_accounting_reference_data`) | Inside the organization | Automatic | — | — | Reads the accounting system and refreshes Trenova's suggestions; it writes nothing to the books and leaves confirmed mappings alone. |
+| Reject accounting mapping proposal (`reject_accounting_mapping_proposal`) | Inside the organization | Ask first | — | — | Unmatches a proposal so it is not used; choosing a record for the mapping undoes it. |
 | Reject carrier invoice match (`reject_carrier_invoice_match`) | Inside the organization | Automatic | Its note is what accounts payable reads about the carrier's invoice, so a run that has read outside text proposes it. | — | Marks a carrier's invoice as not payable inside Trenova; nothing is paid and a corrected invoice is matched afresh. |
 | Reject carrier settlement (`reject_carrier_settlement`) | Inside the organization | Automatic | Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Returns a settlement to draft with a note inside Trenova; nothing is paid and it is submitted again once fixed. |
 | Reject driver settlement (`reject_driver_settlement`) | Inside the organization | Automatic | Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Returns a settlement to draft with a note inside Trenova; nothing is paid and it is submitted again once fixed. |
@@ -299,6 +308,7 @@ Changes records only people inside the organization see.
 | Resolve invoice dispute (`resolve_invoice_dispute`) | Inside the organization | Propose | — | — | Records the outcome of a customer's dispute and releases the invoice back to collections; the outcome is a biller's call, so the agent proposes it. |
 | Resume accounting sync (`resume_accounting_sync`) | Inside the organization | Ask first | — | — | Releases everything held to the organization's books at once, and a person paused it for a reason, so a person approves it; what is sent cannot be called back. |
 | Retry accounting sync (`retry_accounting_sync`) | Inside the organization | Automatic | — | — | Sends again, to the organization's own books, documents Trenova already decided to send; the accounting system recognizes a repeat by its request id, so nothing is entered twice, and a document held for release stays held. |
+| Revise manual journal draft (`revise_manual_journal_draft`) | Inside the organization | Ask first | A journal rewritten from what someone outside wrote is proposed, since its lines are what an approver books. | — | Changes a draft journal inside Trenova; nothing reaches the ledger until a person submits, approves and posts it, and a later revision changes it back. |
 | Save invoice adjustment draft (`save_invoice_adjustment_draft`) | Inside the organization | Automatic | A draft written from what a customer sent is proposed, since its reason and amounts are what a biller submits. | — | Saves a draft adjustment inside Trenova; it credits nothing until a person submits it, and a later save rewrites it. |
 | Save table view (`save_table_view`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. A call on the caller's own records runs unasked while they are present. | — | A private view is the caller's own picker entry; a shared one appears for every colleague, and nothing leaves the organization. |
 | Send billing item back to ops (`send_billing_item_back_to_ops`) | Inside the organization | Automatic | Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it. | — | Returns an item to operations with a note on its shipment inside Trenova; it creates no money and the item comes back when operations fixes it. |
@@ -307,8 +317,10 @@ Changes records only people inside the organization see.
 | Skip accounting sync (`skip_accounting_sync`) | Inside the organization | Ask first | — | — | Leaves a document out of the organization's books for good; nothing sends it again, so a person approves it. |
 | Submit carrier settlement (`submit_carrier_settlement`) | Inside the organization | Automatic | — | — | Moves a draft into the approval queue inside Trenova; nothing is paid and a reviewer sends it back to draft. |
 | Submit driver settlement (`submit_driver_settlement`) | Inside the organization | Automatic | — | — | Moves a draft into the approval queue inside Trenova; nothing is paid and a reviewer sends it back to draft. |
+| Submit manual journal (`submit_manual_journal`) | Inside the organization | Ask first | — | — | Moves a draft journal into the approval queue inside Trenova; an approver decides and it books nothing until a person posts it. |
 | Transfer to billing (`transfer_to_billing`) | Inside the organization | Automatic | — | — | Hands delivered shipments to the billing queue inside Trenova, by the checks the transfer dialog makes; a biller, or the organization's own auto-approve rule, still decides every item. |
 | Transition item to in review (`transition_item_to_in_review`) | Inside the organization | Automatic | An item on hold was held there by a person or a rule, so moving one into review is a proposal a person decides; an item in any other state moves as far as the agent allows, and one that cannot be read waits for a person. | — | Moves the run's billing queue item into review inside Trenova; nothing is sent anywhere. |
+| Triage bank receipt work item (`triage_bank_receipt_work_item`) | Inside the organization | Automatic | — | — | Changes who works a reconciliation item and says it is being looked into; it moves no money and the item is reassigned the same way. |
 | Unassign moves (`unassign_moves`) | Inside the organization | Automatic | Only one move at a time, still freshly assigned, is taken off its driver without a decision; several moves, a move the service would refuse and a move that cannot be read each wait for a person. | — | Takes the driver off a move that has not started, inside Trenova; the driver is told the load was taken off them but sees no text the model wrote, and assigning the move again undoes it. |
 | Update invoice draft (`update_invoice_draft`) | Inside the organization | Ask first | Changing who the invoice is emailed to is a proposal a person decides; any other change runs once a person approves it. Outside content could put its own wording or recipients on an invoice the customer receives. | — | Edits a draft nobody outside has seen; the customer sees it only when a person sends it, but the recipients decide where it goes then. |
 | Update move status (`update_move_status`) | Inside the organization | Ask first | Canceling a move ends it for good, so a cancellation is a proposal a person decides; any other status runs once a person approves it. | — | Moves a move's status forward inside Trenova, which re-derives its shipment's status and, on completion, releases its equipment; a move never moves back, so it is not undone by running it again. |
@@ -388,6 +400,7 @@ Moves or commits money.
 | Cancel billing queue item (`cancel_billing_queue_item`) | Money | Propose | — | — | Drops a charge from billing for good, so only a person decides; the agent proposes it. |
 | Cancel carrier assignment (`cancel_carrier_assignment`) | Money | Ask first | Taking off a carrier who has confirmed the rate breaks an executed agreement, so it is a proposal a person decides, as is one the service would refuse or that cannot be read; a carrier who has not confirmed comes off once a person approves it. | — | Releases the organization's commitment to pay an outside carrier and voids the carrier's rate confirmation, whose sign link stops working; covering the move again makes a new agreement the carrier has to confirm afresh. |
 | Close escrow account (`close_escrow_account`) | Money | Propose | — | — | Refunds an owner-operator's escrow balance and closes the account for good; only a person closes it. |
+| Close fiscal period (`close_fiscal_period`) | Money | Propose | — | — | Ends posting to a period of the books a person signs off; only a person closes one. |
 | Commit invoice run (`commit_invoice_run`) | Money | Propose | — | — | Issues the invoices a run proposes and advances the customers' billing period; only a person commits a run. |
 | Correct charge code (`correct_charge_code`) | Money | Automatic | — | — | Rewrites the accessorial charges a customer will be invoiced, so it moves money. |
 | Create invoice (`create_invoice`) | Money | Propose | — | — | Turns freight into receivables and takes it off the billing queue and any statement; only a person decides what is billed and when. |
@@ -396,23 +409,31 @@ Moves or commits money.
 | Create recurring earning (`create_recurring_earning`) | Money | Propose | — | — | Sets money taken from or added to a driver's pay every settlement; only a person agrees it. |
 | End pay assignment (`end_pay_assignment`) | Money | Propose | — | — | Stops how a driver is paid from a date; only a person decides someone's pay. |
 | Issue pay advance (`issue_pay_advance`) | Money | Propose | — | — | Records money handed to a driver that their pay then repays; only a person records it. |
+| Lock fiscal period (`lock_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person locks a period. |
 | Match bank receipt (`match_bank_receipt`) | Money | Automatic | — | — | Matches a bank receipt to a posted payment, closing its reconciliation. |
 | Open escrow account (`open_escrow_account`) | Money | Propose | — | — | Sets escrow terms under an owner-operator's lease that their pay is then withheld against; only a person agrees them. |
+| Open fiscal period (`open_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person opens a period. |
 | Pay driver now (`pay_driver_now`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Approves, posts and records a payment to a driver in one step; only a person pays someone. |
 | Post carrier settlement (`post_carrier_settlement`) | Money | Propose | — | — | Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts. |
 | Post customer payment (`post_customer_payment`) | Money | Automatic | — | — | Records a customer payment and applies it to invoices. |
 | Post driver settlement (`post_driver_settlement`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts. |
 | Post invoice (`post_invoice`) | Money | Propose | — | — | Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting. |
+| Post journal reversal (`post_journal_reversal`) | Money | Propose | — | — | Books the reversing entry to the general ledger; only a person posts a reversal. |
+| Post manual journal (`post_manual_journal`) | Money | Propose | — | — | Books the journal's lines to the general ledger; only a person posts a manual journal. |
 | Record carrier settlement payment (`record_carrier_settlement_payment`) | Money | Propose | — | — | Records a payment to the carrier and queues it for the accounting system; only a person says money went out. |
 | Record driver settlement payment (`record_driver_settlement_payment`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Records a payment to the driver and queues it for the accounting system; only a person says money went out. |
 | Record rate confirmation confirmed (`record_rate_confirmation_confirmed`) | Money | Ask first | — | — | Makes the revision the executed agreement to pay the carrier and confirms their assignment, on the word of someone outside the organization; voiding it afterwards withdraws the agreement rather than restoring it. |
 | Record tender response (`record_tender_response`) | Sent outside the organization, money | Ask first | Each call is classified by what it reaches. Recording an acceptance commits the load to the carrier at the offered rate, so it is a proposal a person decides; a decline runs once a person approves it. | — | An acceptance commits the organization to pay the carrier and sends them the rate confirmation; a decline sends the next carrier its offer. Neither is undone by recording another answer. |
+| Release accounting sync (`release_accounting_sync`) | Money | Propose | — | — | Sends documents a review policy held for a person to the organization's books; only a person releases them. |
 | Remove carrier settlement adjustment (`remove_carrier_settlement_adjustment`) | Money | Automatic | — | — | Changes what the carrier will be paid on a settlement a person still approves, so it moves money; the line is added back the same way. |
 | Remove driver settlement adjustment (`remove_driver_settlement_adjustment`) | Money | Automatic | — | — | Changes what the driver will be paid on a settlement a person still approves, so it moves money; the line is added back the same way. |
+| Reopen fiscal period (`reopen_fiscal_period`) | Money | Propose | — | — | Lets postings land again in books a person closed; only a person reopens a period. |
+| Request journal reversal (`request_journal_reversal`) | Money | Propose | — | — | Commits the organization to taking a posted entry back out of the ledger, approved at once where approval is off; only a person requests a reversal. |
 | Resolve accounting drift (`resolve_accounting_drift`) | Money | Ask first | — | — | Changes money on one side of the books: it posts a memo, void or reversal in Trenova, or sends a document to the accounting system, so a person approves each fix. |
 | Reverse customer payment (`reverse_customer_payment`) | Money | Propose | — | — | Takes cash back off the books and reopens the invoices it paid; only a person reverses a payment. |
 | Submit invoice adjustment (`submit_invoice_adjustment`) | Money | Propose | — | — | Credits, rebills or writes off receivables and books the entries that say so; only a person submits an adjustment, and the adjustment policy may still hold it for an approver. |
 | Unapply credit memo (`unapply_credit_memo`) | Money | Propose | — | — | Reopens an invoice's balance and restores a customer's credit; only a person moves credit. |
+| Unlock fiscal period (`unlock_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person unlocks a period. |
 | Update escrow account (`update_escrow_account`) | Money | Propose | — | — | Changes the escrow terms of an owner-operator's lease; only a person agrees them. |
 | Update recurring deduction (`update_recurring_deduction`) | Money | Propose | — | — | Changes money taken from or added to a driver's pay every settlement; only a person agrees it. |
 | Update recurring earning (`update_recurring_earning`) | Money | Propose | — | — | Changes money taken from or added to a driver's pay every settlement; only a person agrees it. |

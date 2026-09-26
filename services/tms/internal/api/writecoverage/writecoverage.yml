@@ -31,7 +31,7 @@ writes:
   "mutation applyAccountingInboundChange":
     tools: [apply_accounting_inbound_change]
   "mutation changeAccountingBackfill":
-    pending: "Change the range or scope of an accounting backfill that has not finished."
+    tools: [change_accounting_backfill]
   "mutation checkAccountingDrift":
     tools: [check_accounting_drift]
   "mutation checkAccountingConnection":
@@ -45,7 +45,7 @@ writes:
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
   "mutation confirmAccountingMappings":
-    pending: "Confirm the suggested accounting mappings so sync can use them."
+    tools: [confirm_accounting_mapping_proposals]
   "mutation createAccountingReferenceRecord":
     tools: [create_accounting_reference_record]
   "mutation disconnectAccountingSystem":
@@ -63,9 +63,9 @@ writes:
   "mutation refreshAccountingReferenceData":
     tools: [refresh_accounting_reference_data]
   "mutation rejectAccountingMapping":
-    pending: "Reject a suggested accounting mapping."
+    tools: [reject_accounting_mapping_proposal]
   "mutation releaseAccountingSync":
-    pending: "Release accounting sync records held for review so they post."
+    tools: [release_accounting_sync]
   "mutation removeAccountingApp":
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
@@ -98,13 +98,17 @@ writes:
 
   # accounttype
   "PATCH /api/v1/account-types/:accountTypeID/":
-    pending: "Update some fields of an account type."
+    exempt: configuration
+    reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
   "POST /api/v1/account-types/":
-    pending: "Create an account type."
+    exempt: configuration
+    reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
   "POST /api/v1/account-types/bulk-update-status/":
-    pending: "Change the status of several account types at once."
+    exempt: configuration
+    reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
   "PUT /api/v1/account-types/:accountTypeID/":
-    pending: "Update an account type."
+    exempt: configuration
+    reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
 
   # agent
   "mutation approveAgentMemorySuggestion":
@@ -303,23 +307,25 @@ writes:
 
   # bankreceipt
   "POST /api/v1/accounting/bank-receipts/":
-    pending: "Import a bank receipt line so it can be matched to open invoices."
+    exempt: infrastructure
+    reason: "Records a line as the bank reported it, from its file or feed; a receipt is the bank's own record of cash that arrived, which an agent only ever matches and never writes."
   "POST /api/v1/accounting/bank-receipts/:receiptID/match/":
     tools: [match_bank_receipt]
 
   # bankreceiptbatch
   "POST /api/v1/accounting/bank-receipt-batches/":
-    pending: "Import a batch of bank receipts from a bank file."
+    exempt: infrastructure
+    reason: "Loads a bank file's receipts as the bank reported them; the bank's record of cash that arrived is imported, never written by an agent."
 
   # bankreceiptworkitem
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/assign/":
-    pending: "Assign a bank receipt work item to a person."
+    tools: [triage_bank_receipt_work_item]
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/dismiss/":
     tools: [resolve_bank_receipt_work_item]
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/resolve/":
     tools: [resolve_bank_receipt_work_item]
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/":
-    pending: "Mark a bank receipt work item as under review."
+    tools: [triage_bank_receipt_work_item]
 
   # benefits
   "mutation createBenefitPlan":
@@ -1142,7 +1148,8 @@ writes:
     exempt: infrastructure
     reason: "Fetches exchange rates from the provider now; the scheduler refreshes them on its own."
   "POST /api/v1/exchange-rates/settlement-quotes":
-    pending: "Lock an exchange rate quote for settling a foreign-currency payment."
+    exempt: infrastructure
+    reason: "Fetches a live rate from the rate provider and keeps a short-lived quote for the screen that asked; it books nothing, and nothing uses the quote unless a person settles a payment with it."
 
   # extractioneval
   "mutation cancelExtractionEvalRun":
@@ -1163,39 +1170,50 @@ writes:
 
   # fiscalperiod
   "DELETE /api/v1/fiscal-periods/:fiscalPeriodID/":
-    pending: "Delete a fiscal period."
+    exempt: configuration
+    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "PATCH /api/v1/fiscal-periods/:fiscalPeriodID/":
-    pending: "Update some fields of a fiscal period."
+    exempt: configuration
+    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "POST /api/v1/fiscal-periods/":
-    pending: "Create a fiscal period."
+    exempt: configuration
+    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/":
-    pending: "Update a fiscal period."
+    exempt: configuration
+    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/":
-    pending: "Activate a fiscal period."
+    tools: [open_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/":
-    pending: "Close a fiscal period."
+    tools: [close_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/":
-    pending: "Lock a fiscal period."
+    tools: [lock_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/":
-    pending: "Reopen a fiscal period."
+    tools: [reopen_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/":
-    pending: "Unlock a fiscal period."
+    tools: [unlock_fiscal_period]
 
   # fiscalyear
   "DELETE /api/v1/fiscal-years/:fiscalYearID/":
-    pending: "Delete a fiscal year."
+    exempt: configuration
+    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
   "PATCH /api/v1/fiscal-years/:fiscalYearID/":
-    pending: "Update some fields of a fiscal year."
+    exempt: configuration
+    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
   "POST /api/v1/fiscal-years/":
-    pending: "Create a fiscal year."
+    exempt: configuration
+    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
   "PUT /api/v1/fiscal-years/:fiscalYearID/":
-    pending: "Update a fiscal year."
+    exempt: configuration
+    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
   "PUT /api/v1/fiscal-years/:fiscalYearID/activate/":
-    pending: "Activate a fiscal year."
+    exempt: configuration
+    reason: "Makes a fiscal year the one the calendar runs on, part of setting up the year that an accounting administrator does once."
   "PUT /api/v1/fiscal-years/:fiscalYearID/close/":
-    pending: "Close a fiscal year."
+    exempt: attestation
+    reason: "Closing the year books its closing entries into retained earnings and is the year-end sign-off the person accountable for the books makes."
   "PUT /api/v1/fiscal-years/:fiscalYearID/reopen/":
-    pending: "Reopen a fiscal year."
+    exempt: attestation
+    reason: "Reverses the year's closing entries and withdraws the year-end sign-off, which only the person accountable for the books does."
 
   # fleetcode
   "PATCH /api/v1/fleet-codes/:fleetCodeID":
@@ -1346,15 +1364,20 @@ writes:
 
   # glaccount
   "DELETE /api/v1/gl-accounts/:glAccountID/":
-    pending: "Delete a gl account."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
   "PATCH /api/v1/gl-accounts/:glAccountID/":
-    pending: "Update some fields of a gl account."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
   "POST /api/v1/gl-accounts/":
-    pending: "Create a gl account."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
   "POST /api/v1/gl-accounts/bulk-update-status/":
-    pending: "Change the status of several gl accounts at once."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
   "PUT /api/v1/gl-accounts/:glAccountID/":
-    pending: "Update a gl account."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
 
   # googlemaps
   "POST /api/v1/google-maps/autocomplete/":
@@ -1524,12 +1547,14 @@ writes:
     exempt: configuration
     reason: "Tests an integration's credentials and records the connection status on its configuration."
   "POST /api/v1/integrations/samsara/workers/sync/":
-    pending: "Sync workers from the telematics provider now."
+    exempt: configuration
+    reason: "Creates and links drivers' accounts in the telematics provider from the integration's setup page; connecting that integration and the accounts it holds is an administrator's."
   "POST /api/v1/integrations/samsara/workers/sync/drift/detect/":
     exempt: read-only
     reason: "Compares workers with the telematics provider and reports the drift."
   "POST /api/v1/integrations/samsara/workers/sync/drift/repair/":
-    pending: "Repair the drift found between workers and the telematics provider."
+    exempt: configuration
+    reason: "Rewrites drivers' accounts in the telematics provider to match Trenova from the integration's setup page; an administrator owns that connection and the accounts it holds."
   "PUT /api/v1/integrations/:type/config/":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -1625,15 +1650,17 @@ writes:
 
   # journalreversal
   "POST /api/v1/accounting/journal-reversals/":
-    pending: "Create a journal reversal."
+    tools: [request_journal_reversal]
   "POST /api/v1/accounting/journal-reversals/:reversalID/approve/":
-    pending: "Approve a journal reversal."
+    exempt: attestation
+    reason: "Approving a reversal is the second person's sign-off on taking a posted entry back out of the ledger; an agent requests reversals and never stands in as their approver."
   "POST /api/v1/accounting/journal-reversals/:reversalID/cancel/":
-    pending: "Cancel a journal reversal."
+    tools: [cancel_journal_reversal]
   "POST /api/v1/accounting/journal-reversals/:reversalID/post/":
-    pending: "Post a journal reversal."
+    tools: [post_journal_reversal]
   "POST /api/v1/accounting/journal-reversals/:reversalID/reject/":
-    pending: "Reject a journal reversal."
+    exempt: attestation
+    reason: "Turning a reversal down is the approver's half of the same sign-off, made by the accountable person reviewing it."
 
   # jurisdictionrule
   "DELETE /api/v1/jurisdiction-rule-overrides/:overrideID/":
@@ -1682,19 +1709,21 @@ writes:
 
   # manualjournal
   "POST /api/v1/accounting/manual-journals/:requestID/approve/":
-    pending: "Approve a manual journal."
+    exempt: attestation
+    reason: "Approving a manual journal is the second person's sign-off on an entry someone else prepared; an agent prepares journals and never stands in as their approver."
   "POST /api/v1/accounting/manual-journals/:requestID/cancel/":
-    pending: "Cancel a manual journal."
+    tools: [cancel_manual_journal]
   "POST /api/v1/accounting/manual-journals/:requestID/post/":
-    pending: "Post a manual journal."
+    tools: [post_manual_journal]
   "POST /api/v1/accounting/manual-journals/:requestID/reject/":
-    pending: "Reject a manual journal."
+    exempt: attestation
+    reason: "Sending a manual journal back is the approver's half of the same sign-off, made by the accountable person reviewing it."
   "POST /api/v1/accounting/manual-journals/:requestID/submit/":
-    pending: "Submit a manual journal."
+    tools: [submit_manual_journal]
   "POST /api/v1/accounting/manual-journals/drafts/":
-    pending: "Create draft (manual journal)."
+    tools: [draft_manual_journal]
   "PUT /api/v1/accounting/manual-journals/drafts/:requestID/":
-    pending: "Update draft (manual journal)."
+    tools: [revise_manual_journal_draft]
 
   # notification
   "mutation dismissNotifications":
@@ -1762,9 +1791,11 @@ writes:
 
   # orgstructure
   "mutation assignUserPosition":
-    pending: "Assign user position."
+    exempt: security
+    reason: "Places a person in the reporting line that time-off and expense approvals route through, which decides whose requests they may approve."
   "mutation assignWorkerPosition":
-    pending: "Assign worker position."
+    exempt: security
+    reason: "Places a driver in the reporting line their time-off and expense approvals route through, which decides who may approve their requests."
   "mutation createJobPosition":
     exempt: configuration
     reason: "The organization chart that approvals and scoping follow."

@@ -61,14 +61,14 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 58 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 210 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 60 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 230 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 28 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 31 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 47 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 46 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 10 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 16 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
 
 ## Totals
@@ -77,21 +77,21 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 166 |
-| Exempt | 458 |
-| — Security | 58 |
-| — Configuration | 210 |
+| Covered by a tool | 185 |
+| Exempt | 489 |
+| — Security | 60 |
+| — Configuration | 230 |
 | — User preference | 23 |
-| — Infrastructure | 28 |
+| — Infrastructure | 31 |
 | — Agent administration | 47 |
 | — Counterparty | 33 |
 | — Read-only | 46 |
-| — Attestation | 10 |
+| — Attestation | 16 |
 | — Duplicate | 3 |
-| **Pending** | **300** |
+| **Pending** | **250** |
 | Total | 924 |
 
-Of the 466 writes an agent should be able to make, 166 have a tool (35%).
+Of the 435 writes an agent should be able to make, 185 have a tool (42%).
 
 ## Pending
 
@@ -99,18 +99,6 @@ The writes no tool performs yet, and what the tool would do.
 
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
-| accountingsync | `mutation changeAccountingBackfill` | Change the range or scope of an accounting backfill that has not finished. |
-| accountingsync | `mutation confirmAccountingMappings` | Confirm the suggested accounting mappings so sync can use them. |
-| accountingsync | `mutation rejectAccountingMapping` | Reject a suggested accounting mapping. |
-| accountingsync | `mutation releaseAccountingSync` | Release accounting sync records held for review so they post. |
-| accounttype | `PATCH /api/v1/account-types/:accountTypeID/` | Update some fields of an account type. |
-| accounttype | `POST /api/v1/account-types/` | Create an account type. |
-| accounttype | `POST /api/v1/account-types/bulk-update-status/` | Change the status of several account types at once. |
-| accounttype | `PUT /api/v1/account-types/:accountTypeID/` | Update an account type. |
-| bankreceipt | `POST /api/v1/accounting/bank-receipts/` | Import a bank receipt line so it can be matched to open invoices. |
-| bankreceiptbatch | `POST /api/v1/accounting/bank-receipt-batches/` | Import a batch of bank receipts from a bank file. |
-| bankreceiptworkitem | `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/assign/` | Assign a bank receipt work item to a person. |
-| bankreceiptworkitem | `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/` | Mark a bank receipt work item as under review. |
 | benefits | `mutation endBenefitEnrollment` | End benefit enrollment. |
 | benefits | `mutation enrollBenefit` | Enroll benefit. |
 | billingqueue | `POST /api/v1/billing-queue/:itemID/reassign-charge/` | Move a charge from one billing queue item to another. |
@@ -148,23 +136,6 @@ The writes no tool performs yet, and what the tool would do.
 | driverportal | `mutation resolveSettlementDispute` | Resolve settlement dispute. |
 | driverportal | `mutation reviewDriverExpense` | Review driver expense. |
 | driverportal | `mutation startSettlementDisputeReview` | Start settlement dispute review. |
-| exchangerate | `POST /api/v1/exchange-rates/settlement-quotes` | Lock an exchange rate quote for settling a foreign-currency payment. |
-| fiscalperiod | `DELETE /api/v1/fiscal-periods/:fiscalPeriodID/` | Delete a fiscal period. |
-| fiscalperiod | `PATCH /api/v1/fiscal-periods/:fiscalPeriodID/` | Update some fields of a fiscal period. |
-| fiscalperiod | `POST /api/v1/fiscal-periods/` | Create a fiscal period. |
-| fiscalperiod | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/` | Update a fiscal period. |
-| fiscalperiod | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/` | Activate a fiscal period. |
-| fiscalperiod | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/` | Close a fiscal period. |
-| fiscalperiod | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/` | Lock a fiscal period. |
-| fiscalperiod | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/` | Reopen a fiscal period. |
-| fiscalperiod | `PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/` | Unlock a fiscal period. |
-| fiscalyear | `DELETE /api/v1/fiscal-years/:fiscalYearID/` | Delete a fiscal year. |
-| fiscalyear | `PATCH /api/v1/fiscal-years/:fiscalYearID/` | Update some fields of a fiscal year. |
-| fiscalyear | `POST /api/v1/fiscal-years/` | Create a fiscal year. |
-| fiscalyear | `PUT /api/v1/fiscal-years/:fiscalYearID/` | Update a fiscal year. |
-| fiscalyear | `PUT /api/v1/fiscal-years/:fiscalYearID/activate/` | Activate a fiscal year. |
-| fiscalyear | `PUT /api/v1/fiscal-years/:fiscalYearID/close/` | Close a fiscal year. |
-| fiscalyear | `PUT /api/v1/fiscal-years/:fiscalYearID/reopen/` | Reopen a fiscal year. |
 | fleetsafety | `mutation deleteSafetyViolation` | Delete safety violation. |
 | fleetsafety | `mutation recordSafetyViolation` | Record safety violation. |
 | fleetsafety | `mutation updateSafetyViolation` | Update safety violation. |
@@ -184,11 +155,6 @@ The writes no tool performs yet, and what the tool would do.
 | fuelsurcharge | `mutation addFuelIndexPrice` | Add fuel index price. |
 | fuelsurcharge | `mutation deleteFuelIndexPrice` | Delete fuel index price. |
 | fuelsurcharge | `mutation updateFuelIndexPrice` | Update fuel index price. |
-| glaccount | `DELETE /api/v1/gl-accounts/:glAccountID/` | Delete a gl account. |
-| glaccount | `PATCH /api/v1/gl-accounts/:glAccountID/` | Update some fields of a gl account. |
-| glaccount | `POST /api/v1/gl-accounts/` | Create a gl account. |
-| glaccount | `POST /api/v1/gl-accounts/bulk-update-status/` | Change the status of several gl accounts at once. |
-| glaccount | `PUT /api/v1/gl-accounts/:glAccountID/` | Update a gl account. |
 | hazardousmaterial | `PATCH /api/v1/hazardous-materials/:hazardousMaterialID/` | Update some fields of a hazardous material. |
 | hazardousmaterial | `POST /api/v1/hazardous-materials/` | Create a hazardous material. |
 | hazardousmaterial | `POST /api/v1/hazardous-materials/bulk-update-status/` | Change the status of several hazardous materials at once. |
@@ -206,23 +172,9 @@ The writes no tool performs yet, and what the tool would do.
 | ifta | `mutation updateIftaMileageEntry` | Update IFTA mileage entry. |
 | ifta | `mutation upsertIftaTaxRates` | Upsert IFTA tax rates. |
 | insight | `POST /api/v1/insights/:insightID/restore/` | Restore an insight that was dismissed. |
-| integration | `POST /api/v1/integrations/samsara/workers/sync/` | Sync workers from the telematics provider now. |
-| integration | `POST /api/v1/integrations/samsara/workers/sync/drift/repair/` | Repair the drift found between workers and the telematics provider. |
-| journalreversal | `POST /api/v1/accounting/journal-reversals/` | Create a journal reversal. |
-| journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/approve/` | Approve a journal reversal. |
-| journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/cancel/` | Cancel a journal reversal. |
-| journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/post/` | Post a journal reversal. |
-| journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/reject/` | Reject a journal reversal. |
 | location | `PATCH /api/v1/locations/:locationID/` | Update some fields of a location. |
 | location | `POST /api/v1/locations/bulk-update-status/` | Change the status of several locations at once. |
 | location | `PUT /api/v1/locations/:locationID/` | Update a location. |
-| manualjournal | `POST /api/v1/accounting/manual-journals/:requestID/approve/` | Approve a manual journal. |
-| manualjournal | `POST /api/v1/accounting/manual-journals/:requestID/cancel/` | Cancel a manual journal. |
-| manualjournal | `POST /api/v1/accounting/manual-journals/:requestID/post/` | Post a manual journal. |
-| manualjournal | `POST /api/v1/accounting/manual-journals/:requestID/reject/` | Reject a manual journal. |
-| manualjournal | `POST /api/v1/accounting/manual-journals/:requestID/submit/` | Submit a manual journal. |
-| manualjournal | `POST /api/v1/accounting/manual-journals/drafts/` | Create draft (manual journal). |
-| manualjournal | `PUT /api/v1/accounting/manual-journals/drafts/:requestID/` | Update draft (manual journal). |
 | order | `mutation addOrderCharge` | Add order charge. |
 | order | `mutation attachOrderShipments` | Attach order shipments. |
 | order | `mutation cancelOrder` | Cancel order. |
@@ -233,8 +185,6 @@ The writes no tool performs yet, and what the tool would do.
 | order | `mutation setOrderChargeAllocations` | Set order charge allocations. |
 | order | `mutation updateOrder` | Update order. |
 | order | `mutation updateOrderCharge` | Update order charge. |
-| orgstructure | `mutation assignUserPosition` | Assign user position. |
-| orgstructure | `mutation assignWorkerPosition` | Assign worker position. |
 | performancereview | `mutation closePerformanceReview` | Close performance review. |
 | performancereview | `mutation createPerformanceReview` | Create performance review. |
 | performancereview | `mutation deletePerformanceReview` | Delete performance review. |
@@ -406,9 +356,9 @@ The writes no tool performs yet, and what the tool would do.
 | --- | --- | --- | --- | --- |
 | accessorialcharge | 3 | 0 | 3 | 0 |
 | accountingcontrol | 1 | 0 | 1 | 0 |
-| accountingsync | 27 | 15 | 8 | 4 |
+| accountingsync | 27 | 19 | 8 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
-| accounttype | 4 | 0 | 0 | 4 |
+| accounttype | 4 | 0 | 4 | 0 |
 | agent | 12 | 2 | 10 | 0 |
 | agentdefinition | 6 | 0 | 6 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
@@ -422,9 +372,9 @@ The writes no tool performs yet, and what the tool would do.
 | assignment | 1 | 0 | 1 | 0 |
 | assistant | 8 | 0 | 8 | 0 |
 | auth | 6 | 0 | 6 | 0 |
-| bankreceipt | 2 | 1 | 0 | 1 |
-| bankreceiptbatch | 1 | 0 | 0 | 1 |
-| bankreceiptworkitem | 4 | 2 | 0 | 2 |
+| bankreceipt | 2 | 1 | 1 | 0 |
+| bankreceiptbatch | 1 | 0 | 1 | 0 |
+| bankreceiptworkitem | 4 | 4 | 0 | 0 |
 | benefits | 4 | 0 | 2 | 2 |
 | billingcontrol | 1 | 0 | 1 | 0 |
 | billingqueue | 8 | 4 | 3 | 1 |
@@ -463,16 +413,16 @@ The writes no tool performs yet, and what the tool would do.
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
-| exchangerate | 2 | 0 | 1 | 1 |
+| exchangerate | 2 | 0 | 2 | 0 |
 | extractioneval | 5 | 0 | 5 | 0 |
-| fiscalperiod | 9 | 0 | 0 | 9 |
-| fiscalyear | 7 | 0 | 0 | 7 |
+| fiscalperiod | 9 | 5 | 4 | 0 |
+| fiscalyear | 7 | 0 | 7 | 0 |
 | fleetcode | 3 | 0 | 3 | 0 |
 | fleetsafety | 3 | 0 | 0 | 3 |
 | formulatemplate | 24 | 0 | 24 | 0 |
 | fuelpurchase | 13 | 0 | 0 | 13 |
 | fuelsurcharge | 9 | 0 | 6 | 3 |
-| glaccount | 5 | 0 | 0 | 5 |
+| glaccount | 5 | 0 | 5 | 0 |
 | googlemaps | 1 | 0 | 1 | 0 |
 | graphql | 1 | 0 | 1 | 0 |
 | hazardousmaterial | 4 | 0 | 0 | 4 |
@@ -484,7 +434,7 @@ The writes no tool performs yet, and what the tool would do.
 | inbound | 1 | 0 | 1 | 0 |
 | inboundmessage | 6 | 2 | 4 | 0 |
 | insight | 2 | 1 | 0 | 1 |
-| integration | 5 | 0 | 3 | 2 |
+| integration | 5 | 0 | 5 | 0 |
 | invoice | 12 | 11 | 1 | 0 |
 | invoiceadjustment | 10 | 7 | 3 | 0 |
 | invoiceadjustmentcontrol | 1 | 0 | 1 | 0 |
@@ -492,17 +442,17 @@ The writes no tool performs yet, and what the tool would do.
 | invoicerun | 5 | 5 | 0 | 0 |
 | invoiceshare | 1 | 1 | 0 | 0 |
 | journalentry | 2 | 0 | 2 | 0 |
-| journalreversal | 5 | 0 | 0 | 5 |
+| journalreversal | 5 | 3 | 2 | 0 |
 | jurisdictionrule | 6 | 0 | 6 | 0 |
 | latecharge | 1 | 1 | 0 | 0 |
 | location | 4 | 1 | 0 | 3 |
 | locationcategory | 3 | 0 | 3 | 0 |
-| manualjournal | 7 | 0 | 0 | 7 |
+| manualjournal | 7 | 5 | 2 | 0 |
 | notification | 5 | 0 | 5 | 0 |
 | order | 10 | 0 | 0 | 10 |
 | organization | 4 | 0 | 4 | 0 |
 | orgholiday | 3 | 0 | 3 | 0 |
-| orgstructure | 6 | 0 | 4 | 2 |
+| orgstructure | 6 | 0 | 6 | 0 |
 | pagefavorite | 1 | 0 | 1 | 0 |
 | performancereview | 11 | 0 | 5 | 6 |
 | permission | 1 | 0 | 1 | 0 |
@@ -595,13 +545,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation applyAccountingInboundChange` | Tool: `apply_accounting_inbound_change` |
-| `mutation changeAccountingBackfill` | Pending: Change the range or scope of an accounting backfill that has not finished. |
+| `mutation changeAccountingBackfill` | Tool: `change_accounting_backfill` |
 | `mutation checkAccountingConnection` | Tool: `check_accounting_connection` |
 | `mutation checkAccountingDrift` | Tool: `check_accounting_drift` |
 | `mutation clearAccountingMapping` | Tool: `clear_accounting_mapping` |
 | `mutation completeAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation completeAccountingSetup` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
-| `mutation confirmAccountingMappings` | Pending: Confirm the suggested accounting mappings so sync can use them. |
+| `mutation confirmAccountingMappings` | Tool: `confirm_accounting_mapping_proposals` |
 | `mutation createAccountingReferenceRecord` | Tool: `create_accounting_reference_record` |
 | `mutation disconnectAccountingSystem` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation dismissAccountingDrift` | Tool: `dismiss_accounting_drift` |
@@ -609,8 +559,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation ignoreAccountingInboundChange` | Tool: `ignore_accounting_inbound_change` |
 | `mutation pauseAccountingSync` | Tool: `pause_accounting_sync` |
 | `mutation refreshAccountingReferenceData` | Tool: `refresh_accounting_reference_data` |
-| `mutation rejectAccountingMapping` | Pending: Reject a suggested accounting mapping. |
-| `mutation releaseAccountingSync` | Pending: Release accounting sync records held for review so they post. |
+| `mutation rejectAccountingMapping` | Tool: `reject_accounting_mapping_proposal` |
+| `mutation releaseAccountingSync` | Tool: `release_accounting_sync` |
 | `mutation removeAccountingApp` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation requestAccountingBackfill` | Tool: `request_accounting_backfill` |
 | `mutation resolveAccountingDrift` | Tool: `resolve_accounting_drift` |
@@ -632,10 +582,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/account-types/:accountTypeID/`<br>accounttypehandler.patch | Pending: Update some fields of an account type. |
-| `POST /api/v1/account-types/`<br>accounttypehandler.create | Pending: Create an account type. |
-| `POST /api/v1/account-types/bulk-update-status/`<br>accounttypehandler.bulkUpdateStatus | Pending: Change the status of several account types at once. |
-| `PUT /api/v1/account-types/:accountTypeID/`<br>accounttypehandler.update | Pending: Update an account type. |
+| `PATCH /api/v1/account-types/:accountTypeID/`<br>accounttypehandler.patch | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
+| `POST /api/v1/account-types/`<br>accounttypehandler.create | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
+| `POST /api/v1/account-types/bulk-update-status/`<br>accounttypehandler.bulkUpdateStatus | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
+| `PUT /api/v1/account-types/:accountTypeID/`<br>accounttypehandler.update | Exempt, configuration: The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them. |
 
 ### agent
 
@@ -763,23 +713,23 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/bank-receipts/`<br>bankreceipthandler.importReceipt | Pending: Import a bank receipt line so it can be matched to open invoices. |
+| `POST /api/v1/accounting/bank-receipts/`<br>bankreceipthandler.importReceipt | Exempt, infrastructure: Records a line as the bank reported it, from its file or feed; a receipt is the bank's own record of cash that arrived, which an agent only ever matches and never writes. |
 | `POST /api/v1/accounting/bank-receipts/:receiptID/match/`<br>bankreceipthandler.match | Tool: `match_bank_receipt` |
 
 ### bankreceiptbatch
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/bank-receipt-batches/`<br>bankreceiptbatchhandler.importBatch | Pending: Import a batch of bank receipts from a bank file. |
+| `POST /api/v1/accounting/bank-receipt-batches/`<br>bankreceiptbatchhandler.importBatch | Exempt, infrastructure: Loads a bank file's receipts as the bank reported them; the bank's record of cash that arrived is imported, never written by an agent. |
 
 ### bankreceiptworkitem
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/assign/`<br>bankreceiptworkitemhandler.assign | Pending: Assign a bank receipt work item to a person. |
+| `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/assign/`<br>bankreceiptworkitemhandler.assign | Tool: `triage_bank_receipt_work_item` |
 | `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/dismiss/`<br>bankreceiptworkitemhandler.dismiss | Tool: `resolve_bank_receipt_work_item` |
 | `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/resolve/`<br>bankreceiptworkitemhandler.resolve | Tool: `resolve_bank_receipt_work_item` |
-| `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/`<br>bankreceiptworkitemhandler.startReview | Pending: Mark a bank receipt work item as under review. |
+| `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/`<br>bankreceiptworkitemhandler.startReview | Tool: `triage_bank_receipt_work_item` |
 
 ### benefits
 
@@ -1261,7 +1211,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/exchange-rates/refresh`<br>exchangeratehandler.refresh | Exempt, infrastructure: Fetches exchange rates from the provider now; the scheduler refreshes them on its own. |
-| `POST /api/v1/exchange-rates/settlement-quotes`<br>exchangeratehandler.createSettlementQuote | Pending: Lock an exchange rate quote for settling a foreign-currency payment. |
+| `POST /api/v1/exchange-rates/settlement-quotes`<br>exchangeratehandler.createSettlementQuote | Exempt, infrastructure: Fetches a live rate from the rate provider and keeps a short-lived quote for the screen that asked; it books nothing, and nothing uses the quote unless a person settles a payment with it. |
 
 ### extractioneval
 
@@ -1277,27 +1227,27 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.delete | Pending: Delete a fiscal period. |
-| `PATCH /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.patch | Pending: Update some fields of a fiscal period. |
-| `POST /api/v1/fiscal-periods/`<br>fiscalperiodhandler.create | Pending: Create a fiscal period. |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.update | Pending: Update a fiscal period. |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/`<br>fiscalperiodhandler.activate | Pending: Activate a fiscal period. |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/`<br>fiscalperiodhandler.close | Pending: Close a fiscal period. |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/`<br>fiscalperiodhandler.lock | Pending: Lock a fiscal period. |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/`<br>fiscalperiodhandler.reopen | Pending: Reopen a fiscal period. |
-| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/`<br>fiscalperiodhandler.unlock | Pending: Unlock a fiscal period. |
+| `DELETE /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.delete | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
+| `PATCH /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.patch | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
+| `POST /api/v1/fiscal-periods/`<br>fiscalperiodhandler.create | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/`<br>fiscalperiodhandler.update | Exempt, configuration: The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work. |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/`<br>fiscalperiodhandler.activate | Tool: `open_fiscal_period` |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/`<br>fiscalperiodhandler.close | Tool: `close_fiscal_period` |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/`<br>fiscalperiodhandler.lock | Tool: `lock_fiscal_period` |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/`<br>fiscalperiodhandler.reopen | Tool: `reopen_fiscal_period` |
+| `PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/`<br>fiscalperiodhandler.unlock | Tool: `unlock_fiscal_period` |
 
 ### fiscalyear
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.delete | Pending: Delete a fiscal year. |
-| `PATCH /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.patch | Pending: Update some fields of a fiscal year. |
-| `POST /api/v1/fiscal-years/`<br>fiscalyearhandler.create | Pending: Create a fiscal year. |
-| `PUT /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.update | Pending: Update a fiscal year. |
-| `PUT /api/v1/fiscal-years/:fiscalYearID/activate/`<br>fiscalyearhandler.activate | Pending: Activate a fiscal year. |
-| `PUT /api/v1/fiscal-years/:fiscalYearID/close/`<br>fiscalyearhandler.close | Pending: Close a fiscal year. |
-| `PUT /api/v1/fiscal-years/:fiscalYearID/reopen/`<br>fiscalyearhandler.reopen | Pending: Reopen a fiscal year. |
+| `DELETE /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.delete | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
+| `PATCH /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.patch | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
+| `POST /api/v1/fiscal-years/`<br>fiscalyearhandler.create | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
+| `PUT /api/v1/fiscal-years/:fiscalYearID/`<br>fiscalyearhandler.update | Exempt, configuration: The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from. |
+| `PUT /api/v1/fiscal-years/:fiscalYearID/activate/`<br>fiscalyearhandler.activate | Exempt, configuration: Makes a fiscal year the one the calendar runs on, part of setting up the year that an accounting administrator does once. |
+| `PUT /api/v1/fiscal-years/:fiscalYearID/close/`<br>fiscalyearhandler.close | Exempt, attestation: Closing the year books its closing entries into retained earnings and is the year-end sign-off the person accountable for the books makes. |
+| `PUT /api/v1/fiscal-years/:fiscalYearID/reopen/`<br>fiscalyearhandler.reopen | Exempt, attestation: Reverses the year's closing entries and withdraws the year-end sign-off, which only the person accountable for the books does. |
 
 ### fleetcode
 
@@ -1380,11 +1330,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/gl-accounts/:glAccountID/`<br>glaccounthandler.delete | Pending: Delete a gl account. |
-| `PATCH /api/v1/gl-accounts/:glAccountID/`<br>glaccounthandler.patch | Pending: Update some fields of a gl account. |
-| `POST /api/v1/gl-accounts/`<br>glaccounthandler.create | Pending: Create a gl account. |
-| `POST /api/v1/gl-accounts/bulk-update-status/`<br>glaccounthandler.bulkUpdateStatus | Pending: Change the status of several gl accounts at once. |
-| `PUT /api/v1/gl-accounts/:glAccountID/`<br>glaccounthandler.update | Pending: Update a gl account. |
+| `DELETE /api/v1/gl-accounts/:glAccountID/`<br>glaccounthandler.delete | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
+| `PATCH /api/v1/gl-accounts/:glAccountID/`<br>glaccounthandler.patch | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
+| `POST /api/v1/gl-accounts/`<br>glaccounthandler.create | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
+| `POST /api/v1/gl-accounts/bulk-update-status/`<br>glaccounthandler.bulkUpdateStatus | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
+| `PUT /api/v1/gl-accounts/:glAccountID/`<br>glaccounthandler.update | Exempt, configuration: The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means. |
 
 ### googlemaps
 
@@ -1500,9 +1450,9 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/integrations/:type/test-connection/`<br>integrationhandler.testConnection | Exempt, configuration: Tests an integration's credentials and records the connection status on its configuration. |
-| `POST /api/v1/integrations/samsara/workers/sync/`<br>integrationhandler.startWorkerSync | Pending: Sync workers from the telematics provider now. |
+| `POST /api/v1/integrations/samsara/workers/sync/`<br>integrationhandler.startWorkerSync | Exempt, configuration: Creates and links drivers' accounts in the telematics provider from the integration's setup page; connecting that integration and the accounts it holds is an administrator's. |
 | `POST /api/v1/integrations/samsara/workers/sync/drift/detect/`<br>integrationhandler.detectWorkerSyncDrift | Exempt, read-only: Compares workers with the telematics provider and reports the drift. |
-| `POST /api/v1/integrations/samsara/workers/sync/drift/repair/`<br>integrationhandler.repairWorkerSyncDrift | Pending: Repair the drift found between workers and the telematics provider. |
+| `POST /api/v1/integrations/samsara/workers/sync/drift/repair/`<br>integrationhandler.repairWorkerSyncDrift | Exempt, configuration: Rewrites drivers' accounts in the telematics provider to match Trenova from the integration's setup page; an administrator owns that connection and the accounts it holds. |
 | `PUT /api/v1/integrations/:type/config/`<br>integrationhandler.updateConfig | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 
 ### invoice
@@ -1578,11 +1528,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/journal-reversals/`<br>journalreversalhandler.create | Pending: Create a journal reversal. |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/approve/`<br>journalreversalhandler.approve | Pending: Approve a journal reversal. |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/cancel/`<br>journalreversalhandler.cancel | Pending: Cancel a journal reversal. |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/post/`<br>journalreversalhandler.post | Pending: Post a journal reversal. |
-| `POST /api/v1/accounting/journal-reversals/:reversalID/reject/`<br>journalreversalhandler.reject | Pending: Reject a journal reversal. |
+| `POST /api/v1/accounting/journal-reversals/`<br>journalreversalhandler.create | Tool: `request_journal_reversal` |
+| `POST /api/v1/accounting/journal-reversals/:reversalID/approve/`<br>journalreversalhandler.approve | Exempt, attestation: Approving a reversal is the second person's sign-off on taking a posted entry back out of the ledger; an agent requests reversals and never stands in as their approver. |
+| `POST /api/v1/accounting/journal-reversals/:reversalID/cancel/`<br>journalreversalhandler.cancel | Tool: `cancel_journal_reversal` |
+| `POST /api/v1/accounting/journal-reversals/:reversalID/post/`<br>journalreversalhandler.post | Tool: `post_journal_reversal` |
+| `POST /api/v1/accounting/journal-reversals/:reversalID/reject/`<br>journalreversalhandler.reject | Exempt, attestation: Turning a reversal down is the approver's half of the same sign-off, made by the accountable person reviewing it. |
 
 ### jurisdictionrule
 
@@ -1622,13 +1572,13 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/accounting/manual-journals/:requestID/approve/`<br>manualjournalhandler.approve | Pending: Approve a manual journal. |
-| `POST /api/v1/accounting/manual-journals/:requestID/cancel/`<br>manualjournalhandler.cancel | Pending: Cancel a manual journal. |
-| `POST /api/v1/accounting/manual-journals/:requestID/post/`<br>manualjournalhandler.post | Pending: Post a manual journal. |
-| `POST /api/v1/accounting/manual-journals/:requestID/reject/`<br>manualjournalhandler.reject | Pending: Reject a manual journal. |
-| `POST /api/v1/accounting/manual-journals/:requestID/submit/`<br>manualjournalhandler.submit | Pending: Submit a manual journal. |
-| `POST /api/v1/accounting/manual-journals/drafts/`<br>manualjournalhandler.createDraft | Pending: Create draft (manual journal). |
-| `PUT /api/v1/accounting/manual-journals/drafts/:requestID/`<br>manualjournalhandler.updateDraft | Pending: Update draft (manual journal). |
+| `POST /api/v1/accounting/manual-journals/:requestID/approve/`<br>manualjournalhandler.approve | Exempt, attestation: Approving a manual journal is the second person's sign-off on an entry someone else prepared; an agent prepares journals and never stands in as their approver. |
+| `POST /api/v1/accounting/manual-journals/:requestID/cancel/`<br>manualjournalhandler.cancel | Tool: `cancel_manual_journal` |
+| `POST /api/v1/accounting/manual-journals/:requestID/post/`<br>manualjournalhandler.post | Tool: `post_manual_journal` |
+| `POST /api/v1/accounting/manual-journals/:requestID/reject/`<br>manualjournalhandler.reject | Exempt, attestation: Sending a manual journal back is the approver's half of the same sign-off, made by the accountable person reviewing it. |
+| `POST /api/v1/accounting/manual-journals/:requestID/submit/`<br>manualjournalhandler.submit | Tool: `submit_manual_journal` |
+| `POST /api/v1/accounting/manual-journals/drafts/`<br>manualjournalhandler.createDraft | Tool: `draft_manual_journal` |
+| `PUT /api/v1/accounting/manual-journals/drafts/:requestID/`<br>manualjournalhandler.updateDraft | Tool: `revise_manual_journal_draft` |
 
 ### notification
 
@@ -1676,8 +1626,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignUserPosition` | Pending: Assign user position. |
-| `mutation assignWorkerPosition` | Pending: Assign worker position. |
+| `mutation assignUserPosition` | Exempt, security: Places a person in the reporting line that time-off and expense approvals route through, which decides whose requests they may approve. |
+| `mutation assignWorkerPosition` | Exempt, security: Places a driver in the reporting line their time-off and expense approvals route through, which decides who may approve their requests. |
 | `mutation createJobPosition` | Exempt, configuration: The organization chart that approvals and scoping follow. |
 | `mutation delegateApproval` | Exempt, security: Hands a person's approval authority to someone else. |
 | `mutation revokeApprovalDelegation` | Exempt, security: Withdraws approval authority handed to someone else. |
