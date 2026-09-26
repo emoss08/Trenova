@@ -5,6 +5,7 @@ import type {
   SelectOption as GraphQLSelectOption,
   GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
+import type { CaptureRecordKind } from "@/lib/capture";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
 import {
   selectOptionMetaBoolean,
@@ -14,6 +15,7 @@ import {
 import { formatRange } from "@trenova/shared/lib/date";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Document } from "@trenova/shared/types/document";
+import type { DocumentCategory } from "@trenova/shared/types/document-type";
 import type { SelectOption as StaticSelectOption } from "@trenova/shared/types/fields";
 import {
   TRAINING_DELIVERY_LABELS,
@@ -1298,6 +1300,135 @@ export function ControlledShipmentAutocompleteField({
             selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")
           }
         />
+      )}
+      {...props}
+    />
+  );
+}
+
+type CaptureRecordPicker = {
+  link: SELECT_OPTIONS_ENDPOINTS;
+  graphql: GraphQLSelectOptionsConfig;
+  placeholder: string;
+  display: (option: GraphQLSelectOption) => string;
+  detail: (option: GraphQLSelectOption) => string;
+};
+
+function codeAndName(option: GraphQLSelectOption): string {
+  const code = selectOptionMetaString(option, "code");
+  return code ? `${code} - ${option.label}` : option.label;
+}
+
+/*
+ * Each kind of record a captured document can be filed onto, searched the way
+ * the rest of the app searches it. Keyed by the kind's permission resource,
+ * which is the name the capture API uses for it.
+ */
+const CAPTURE_RECORD_PICKERS: Record<CaptureRecordKind, CaptureRecordPicker> = {
+  shipment: {
+    link: "/shipments/select-options/",
+    graphql: shipmentSelectOptionsGraphQL,
+    placeholder: "Search by Pro # or BOL...",
+    display: (option) => option.label,
+    detail: (option) =>
+      selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status") || "",
+  },
+  worker: {
+    link: "/workers/select-options/",
+    graphql: workerSelectOptionsGraphQL,
+    placeholder: "Search by name",
+    display: (option) => option.label,
+    detail: (option) => selectOptionMetaString(option, "fleetCode") || "",
+  },
+  tractor: {
+    link: "/tractors/select-options/",
+    graphql: tractorSelectOptionsGraphQL,
+    placeholder: "Search by unit number",
+    display: (option) => option.label,
+    detail: () => "",
+  },
+  trailer: {
+    link: "/trailers/select-options/",
+    graphql: trailerSelectOptionsGraphQL,
+    placeholder: "Search by unit number",
+    display: (option) => option.label,
+    detail: () => "",
+  },
+  customer: {
+    link: "/customers/select-options/",
+    graphql: customerSelectOptionsGraphQL,
+    placeholder: "Search by code or name",
+    display: codeAndName,
+    detail: () => "",
+  },
+  carrier: {
+    link: "/carriers/select-options/",
+    graphql: carrierSelectOptionsGraphQL,
+    placeholder: "Search by code or name",
+    display: codeAndName,
+    detail: () => "",
+  },
+};
+
+/** Picks a record of the given kind to file a captured document onto. */
+export function ControlledCaptureRecordAutocompleteField({
+  kind,
+  label,
+  placeholder,
+  ...props
+}: Omit<ControlledGraphQLAutocompleteFieldProps, "label"> & {
+  kind: CaptureRecordKind;
+  label: string;
+}) {
+  const t = useT();
+  const picker = CAPTURE_RECORD_PICKERS[kind];
+
+  return (
+    <ControlledAutocompleteField<GraphQLSelectOption>
+      label={label}
+      link={picker.link}
+      graphql={picker.graphql}
+      placeholder={placeholder ?? t(picker.placeholder)}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={picker.display}
+      renderOption={(option) => (
+        <EDIOptionStack primary={picker.display(option)} secondary={picker.detail(option)} />
+      )}
+      {...props}
+    />
+  );
+}
+
+/**
+ * Picks a document type outside a form. A category narrows it to the types
+ * kept for that kind of record, as the Documents tab does.
+ */
+export function ControlledDocumentTypeAutocompleteField({
+  category,
+  ...props
+}: Omit<
+  ControlledAutocompleteFieldProps<GraphQLSelectOption>,
+  "link" | "graphql" | "renderOption" | "getOptionValue" | "getDisplayValue" | "extraSearchParams"
+> & {
+  category: DocumentCategory | null;
+}) {
+  return (
+    <ControlledAutocompleteField<GraphQLSelectOption>
+      link="/document-types/select-options/"
+      extraSearchParams={category === null ? undefined : { documentCategory: category }}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => (
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
+      )}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
+          {selectOptionMetaString(option, "name") && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {selectOptionMetaString(option, "name")}
+            </span>
+          )}
+        </div>
       )}
       {...props}
     />

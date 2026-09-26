@@ -64,6 +64,10 @@ func ReadPrediction(data map[string]any) *Prediction {
 			if value == "" {
 				continue
 			}
+			key = CanonicalFieldKey(key)
+			if _, seen := p.Snapshot.Fields[key]; seen || key == "" {
+				continue
+			}
 			p.Snapshot.Fields[key] = value
 			p.FieldMeta[key] = FieldMeta{
 				Source:     sliceutils.StringValue(field["source"]),

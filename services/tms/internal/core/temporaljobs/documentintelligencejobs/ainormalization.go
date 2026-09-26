@@ -281,7 +281,7 @@ func validateAIExtract(result *services.AIExtractResult) string {
 
 func normalizeAISource(source string) string {
 	if strings.TrimSpace(source) == "" {
-		return "ai"
+		return services.AIDocumentSourceAI
 	}
 	return source
 }

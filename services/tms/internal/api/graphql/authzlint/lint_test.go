@@ -42,6 +42,9 @@ var authOnlyAllowlist = map[string]string{
 	"mutationResolver.DeleteTableConfiguration":     "table layouts are UI preferences, not resource data",
 	"mutationResolver.SetDefaultTableConfiguration": "table layouts are UI preferences, not resource data",
 
+	"queryResolver.CaptureAgentRelease": "public release metadata, served unauthenticated at " +
+		"/api/v1/capture/releases/latest; carries no tenant data",
+
 	"queryResolver.TelematicsStatus": "org-wide integration health indicator shown in the " +
 		"application shell; carries no resource data",
 

@@ -138,8 +138,8 @@ const extractPayload = `{
   "missingFields": [],
   "signals": [],
   "fields": [
-    {"key": "loadNumber", "label": "Load", "value": "4471", "confidence": 0.98},
-    {"key": "  ", "label": "Blank", "value": "dropped"}
+    {"key": "loadNumber", "value": "4471", "confidence": 0.98},
+    {"key": "  ", "value": "dropped"}
   ],
   "stops": [],
   "conflicts": []

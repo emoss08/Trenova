@@ -60,6 +60,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingwriter"
+	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
+	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
@@ -389,6 +391,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	networkpulseservice.New,
 	passwordresetservice.New,
 	versionservice.New,
+	capturereleaseservice.New,
 	servicetypeservice.New,
 	orderservice.New,
 	servicefailurereasoncodeservice.New,
@@ -431,6 +434,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	ediservice.New,
 	ediinboundservice.New,
 	inboundmessageservice.New,
+	captureservice.New,
 	func(s *ediservice.Service) services.EDIService { return s },
 	fx.Annotate(
 		func(s *ediservice.Service) services.ShipmentMutationObserver { return s },

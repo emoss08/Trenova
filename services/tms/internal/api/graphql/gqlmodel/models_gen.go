@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
+	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
@@ -1178,6 +1179,85 @@ type CannedReport struct {
 	Definition    map[string]any `json:"definition"`
 }
 
+type CaptureBatchConnection struct {
+	Edges      []*CaptureBatchEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type CaptureBatchEdge struct {
+	Node   *capture.CaptureBatch `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type CaptureBatchesInput struct {
+	First *int              `json:"first,omitempty"`
+	After *string           `json:"after,omitempty"`
+	Sort  *CaptureBatchSort `json:"sort,omitempty"`
+	// Only these statuses; empty is every status.
+	Statuses []capture.BatchStatus `json:"statuses,omitempty"`
+	Source   *capture.Source       `json:"source,omitempty"`
+	// Only the caller's own batches, even when they could see everybody's.
+	Mine *bool `json:"mine,omitempty"`
+	// Only batches scanned into this record.
+	TargetType *string `json:"targetType,omitempty"`
+	TargetID   *string `json:"targetId,omitempty"`
+	// Words from the scanner, print job or device name.
+	Query *string `json:"query,omitempty"`
+}
+
+// A cover sheet ready to print.
+//
+// The payload is what its QR code must carry. It is returned once, here, and
+// only its hash is kept, so a sheet cannot be reprinted from Trenova: a lost
+// sheet is replaced by a new one.
+type CaptureCoverSheet struct {
+	ID             string                           `json:"id"`
+	TargetType     string                           `json:"targetType"`
+	TargetID       *string                          `json:"targetId,omitempty"`
+	Target         *repositories.CaptureRecordLabel `json:"target,omitempty"`
+	DocumentTypeID *string                          `json:"documentTypeId,omitempty"`
+	Payload        string                           `json:"payload"`
+	// The code to print, drawn from the payload.
+	QRCode    *services.CaptureQRCode `json:"qrCode"`
+	ExpiresAt int                     `json:"expiresAt"`
+	CreatedAt int                     `json:"createdAt"`
+}
+
+type CaptureCoverSheetInput struct {
+	// Leave the record out for a plain separator that divides a stack and routes nothing.
+	TargetType     *string `json:"targetType,omitempty"`
+	TargetID       *string `json:"targetId,omitempty"`
+	DocumentTypeID *string `json:"documentTypeId,omitempty"`
+}
+
+type CaptureItemLayoutInput struct {
+	// The item's pages, in order.
+	PageIds []string `json:"pageIds"`
+}
+
+type CapturePageRotationInput struct {
+	PageID string `json:"pageId"`
+	// Clockwise degrees: 0, 90, 180 or 270.
+	Rotation int `json:"rotation"`
+}
+
+type CaptureProfileInput struct {
+	Name                string                      `json:"name"`
+	Description         *string                     `json:"description,omitempty"`
+	Status              capture.ProfileStatus       `json:"status"`
+	IsDefault           bool                        `json:"isDefault"`
+	DPI                 int                         `json:"dpi"`
+	PixelType           capture.PixelType           `json:"pixelType"`
+	Duplex              bool                        `json:"duplex"`
+	UseFeeder           bool                        `json:"useFeeder"`
+	DiscardBlankPages   bool                        `json:"discardBlankPages"`
+	JPEGQuality         int                         `json:"jpegQuality"`
+	ShowDriverUI        bool                        `json:"showDriverUi"`
+	SeparatorStrategies []capture.SeparatorStrategy `json:"separatorStrategies"`
+	FixedPageCount      int                         `json:"fixedPageCount"`
+}
+
 type CarrierConnection struct {
 	Edges      []*CarrierEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -1584,6 +1664,18 @@ type CreateAgentEvalCaseInput struct {
 	FromProposal *AgentEvalCaseFromProposalInput `json:"fromProposal,omitempty"`
 	FromFeedback *AgentEvalCaseFromFeedbackInput `json:"fromFeedback,omitempty"`
 	Curated      *AgentEvalCaseCuratedInput      `json:"curated,omitempty"`
+}
+
+type CreateCaptureRequestInput struct {
+	// One of the caller's own devices.
+	DeviceID       string              `json:"deviceId"`
+	Mode           capture.RequestMode `json:"mode"`
+	TargetType     string              `json:"targetType"`
+	TargetID       string              `json:"targetId"`
+	DocumentTypeID *string             `json:"documentTypeId,omitempty"`
+	ProfileID      *string             `json:"profileId,omitempty"`
+	// The scanner to use; blank for the device's default.
+	SourceName *string `json:"sourceName,omitempty"`
 }
 
 type CreateCarrierInvoiceMatchInput struct {
@@ -3052,6 +3144,14 @@ type EDIVolumePoint struct {
 	ReceivedCount int `json:"receivedCount"`
 }
 
+type EditCaptureItemsInput struct {
+	// The batch version the person was looking at.
+	Version int `json:"version"`
+	// How the open pages divide into documents. Pages left out are dropped.
+	Items     []*CaptureItemLayoutInput   `json:"items"`
+	Rotations []*CapturePageRotationInput `json:"rotations,omitempty"`
+}
+
 type EmailProfileConnection struct {
 	Edges      []*EmailProfileEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
@@ -3245,6 +3345,23 @@ type FieldFilterInput struct {
 	Field    string `json:"field"`
 	Operator string `json:"operator"`
 	Value    any    `json:"value,omitempty"`
+}
+
+type FileCaptureItemInput struct {
+	TargetType     string  `json:"targetType"`
+	TargetID       string  `json:"targetId"`
+	DocumentTypeID *string `json:"documentTypeId,omitempty"`
+	// The item version the person was looking at.
+	Version int `json:"version"`
+}
+
+type FileCaptureItemsEntryInput struct {
+	ItemID         string  `json:"itemId"`
+	TargetType     string  `json:"targetType"`
+	TargetID       string  `json:"targetId"`
+	DocumentTypeID *string `json:"documentTypeId,omitempty"`
+	// The item version the person was looking at.
+	Version int `json:"version"`
 }
 
 type FilterGroupInput struct {
@@ -9233,6 +9350,70 @@ func (e *AssignmentStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e AssignmentStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How the intake queue is ordered.
+type CaptureBatchSort string
+
+const (
+	// Most recently captured first.
+	CaptureBatchSortNewest CaptureBatchSort = "Newest"
+	// Longest waiting first.
+	CaptureBatchSortOldest CaptureBatchSort = "Oldest"
+	// Soonest to have its unfiled pages deleted first.
+	CaptureBatchSortExpiringSoonest CaptureBatchSort = "ExpiringSoonest"
+	// Largest stack first.
+	CaptureBatchSortMostPages CaptureBatchSort = "MostPages"
+)
+
+var AllCaptureBatchSort = []CaptureBatchSort{
+	CaptureBatchSortNewest,
+	CaptureBatchSortOldest,
+	CaptureBatchSortExpiringSoonest,
+	CaptureBatchSortMostPages,
+}
+
+func (e CaptureBatchSort) IsValid() bool {
+	switch e {
+	case CaptureBatchSortNewest, CaptureBatchSortOldest, CaptureBatchSortExpiringSoonest, CaptureBatchSortMostPages:
+		return true
+	}
+	return false
+}
+
+func (e CaptureBatchSort) String() string {
+	return string(e)
+}
+
+func (e *CaptureBatchSort) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CaptureBatchSort(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CaptureBatchSort", str)
+	}
+	return nil
+}
+
+func (e CaptureBatchSort) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CaptureBatchSort) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CaptureBatchSort) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

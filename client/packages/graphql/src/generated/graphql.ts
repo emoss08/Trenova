@@ -1422,6 +1422,164 @@ export type CancelWorkerTrainingInput = {
   version?: number | null | undefined;
 };
 
+/** The processor a companion was built for. Trenova Capture ships for 64-bit Windows only. */
+export type CaptureArchitecture =
+  | 'x64';
+
+/** How the intake queue is ordered. */
+export type CaptureBatchSort =
+  /** Soonest to have its unfiled pages deleted first. */
+  | 'ExpiringSoonest'
+  /** Largest stack first. */
+  | 'MostPages'
+  /** Most recently captured first. */
+  | 'Newest'
+  /** Longest waiting first. */
+  | 'Oldest';
+
+/** How far a captured stack has got, from the first page arriving to the last document being filed. */
+export type CaptureBatchStatus =
+  | 'Discarded'
+  | 'Expired'
+  | 'Failed'
+  | 'Filed'
+  | 'PartiallyFiled'
+  | 'Processing'
+  | 'Ready'
+  | 'Receiving'
+  | 'Sealed';
+
+export type CaptureBatchesInput = {
+  after?: string | null | undefined;
+  first?: number | null | undefined;
+  /** Only the caller's own batches, even when they could see everybody's. */
+  mine?: boolean | null | undefined;
+  /** Words from the scanner, print job or device name. */
+  query?: string | null | undefined;
+  sort?: CaptureBatchSort | null | undefined;
+  source?: CaptureSource | null | undefined;
+  /** Only these statuses; empty is every status. */
+  statuses?: Array<CaptureBatchStatus> | null | undefined;
+  targetId?: string | number | null | undefined;
+  /** Only batches scanned into this record. */
+  targetType?: string | null | undefined;
+};
+
+export type CaptureCoverSheetInput = {
+  documentTypeId?: string | number | null | undefined;
+  targetId?: string | number | null | undefined;
+  /** Leave the record out for a plain separator that divides a stack and routes nothing. */
+  targetType?: string | null | undefined;
+};
+
+/** Whether a paired companion may still act for its person. */
+export type CaptureDeviceStatus =
+  | 'Active'
+  | 'Revoked';
+
+export type CaptureItemLayoutInput = {
+  /** The item's pages, in order. */
+  pageIds: Array<string | number>;
+};
+
+/** Where one proposed document is: waiting on a person, being filed, done, or thrown away. */
+export type CaptureItemStatus =
+  | 'Discarded'
+  | 'Failed'
+  | 'Filed'
+  | 'Filing'
+  | 'Proposed';
+
+export type CapturePageRotationInput = {
+  pageId: string | number;
+  /** Clockwise degrees: 0, 90, 180 or 270. */
+  rotation: number;
+};
+
+/** Whether a page could be read. */
+export type CapturePageStatus =
+  | 'Failed'
+  | 'Processed'
+  | 'Received';
+
+/** The colour mode a profile scans in. */
+export type CapturePixelType =
+  | 'BlackWhite'
+  | 'Color'
+  | 'Grayscale';
+
+export type CaptureProfileInput = {
+  description?: string | null | undefined;
+  discardBlankPages: boolean;
+  dpi: number;
+  duplex: boolean;
+  fixedPageCount: number;
+  isDefault: boolean;
+  jpegQuality: number;
+  name: string;
+  pixelType: CapturePixelType;
+  separatorStrategies: Array<CaptureSeparatorStrategy>;
+  showDriverUi: boolean;
+  status: CaptureProfileStatus;
+  useFeeder: boolean;
+};
+
+/** Whether a profile is still offered when somebody starts a scan. */
+export type CaptureProfileStatus =
+  | 'Active'
+  | 'Inactive';
+
+/** Why a companion could not carry out a request. */
+export type CaptureRequestFailureCode =
+  | 'CANCELED_BY_USER'
+  | 'DRIVER_ERROR'
+  | 'FEEDER_EMPTY'
+  | 'INTERNAL'
+  | 'NOT_DELIVERED'
+  | 'PAPER_JAM'
+  | 'SOURCE_BUSY'
+  | 'SOURCE_UNAVAILABLE'
+  | 'UPLOAD_FAILED';
+
+/** What a request asks the companion to do. */
+export type CaptureRequestMode =
+  | 'Print'
+  | 'Scan';
+
+/** How far a request to a companion has got. */
+export type CaptureRequestStatus =
+  | 'Canceled'
+  | 'Completed'
+  | 'Delivered'
+  | 'Expired'
+  | 'Failed'
+  | 'InProgress'
+  | 'Pending';
+
+/** A rule for where one document in a stack ends and the next begins. */
+export type CaptureSeparatorStrategy =
+  | 'BlankPage'
+  | 'CoverSheet'
+  | 'FixedPageCount'
+  | 'PatchCode';
+
+/** How the pages reached Trenova: from a scanner, or from another program's print dialog. */
+export type CaptureSource =
+  | 'Print'
+  | 'Scan';
+
+/** The Windows scanning interface a source speaks. */
+export type CaptureSourceProtocol =
+  | 'TWAIN'
+  | 'WIA';
+
+/** What suggested where a document goes. */
+export type CaptureSuggestionSource =
+  | 'Classifier'
+  | 'CoverSheet'
+  | 'Person'
+  | 'Request';
+
 export type CarrierAssignmentStatus =
   | 'Canceled'
   | 'Confirmed'
@@ -1936,6 +2094,18 @@ export type CreateAgentEvalCaseInput = {
   fromFeedback?: AgentEvalCaseFromFeedbackInput | null | undefined;
   fromMessage?: AgentEvalCaseFromMessageInput | null | undefined;
   fromProposal?: AgentEvalCaseFromProposalInput | null | undefined;
+};
+
+export type CreateCaptureRequestInput = {
+  /** One of the caller's own devices. */
+  deviceId: string | number;
+  documentTypeId?: string | number | null | undefined;
+  mode: CaptureRequestMode;
+  profileId?: string | number | null | undefined;
+  /** The scanner to use; blank for the device's default. */
+  sourceName?: string | null | undefined;
+  targetId: string | number;
+  targetType: string;
 };
 
 export type CreateCarrierInvoiceMatchInput = {
@@ -2802,6 +2972,14 @@ export type EdiTransferStatus =
   | 'Rejected'
   | 'Submitted';
 
+export type EditCaptureItemsInput = {
+  /** How the open pages divide into documents. Pages left out are dropped. */
+  items: Array<CaptureItemLayoutInput>;
+  rotations?: Array<CapturePageRotationInput> | null | undefined;
+  /** The batch version the person was looking at. */
+  version: number;
+};
+
 export type EffectiveRateSource =
   | 'Benchmark'
   | 'GLActual'
@@ -2980,6 +3158,23 @@ export type FieldType =
   | 'number'
   | 'select'
   | 'text';
+
+export type FileCaptureItemInput = {
+  documentTypeId?: string | number | null | undefined;
+  targetId: string | number;
+  targetType: string;
+  /** The item version the person was looking at. */
+  version: number;
+};
+
+export type FileCaptureItemsEntryInput = {
+  documentTypeId?: string | number | null | undefined;
+  itemId: string | number;
+  targetId: string | number;
+  targetType: string;
+  /** The item version the person was looking at. */
+  version: number;
+};
 
 export type FilterGroupInput = {
   filters: Array<FieldFilterInput>;
@@ -8467,6 +8662,221 @@ export type RegenerateBriefingMutationVariables = Exact<{
 
 
 export type RegenerateBriefingMutation = { regenerateBriefing: { ' $fragmentRefs'?: { 'BriefingFieldsFragment': BriefingFieldsFragment } } };
+
+export type CaptureRecordRefFieldsFragment = { resourceType: string, id: string, title: string, subtitle: string } & { ' $fragmentName'?: 'CaptureRecordRefFieldsFragment' };
+
+export type CaptureSourceInfoFieldsFragment = { name: string, protocol: CaptureSourceProtocol, bitness: number, isDefault: boolean, duplex: boolean, feeder: boolean, patchCodes: boolean, barcodes: boolean, blankDiscard: boolean, resolutions: Array<number> } & { ' $fragmentName'?: 'CaptureSourceInfoFieldsFragment' };
+
+export type CaptureDeviceFieldsFragment = { id: string, userId: string, name: string, machineName: string, windowsUser: string, agentVersion: string, architecture: CaptureArchitecture, osVersion: string, status: CaptureDeviceStatus, lastSeenAt: number | null, isOnline: boolean, lastIp: string, revokedAt: number | null, revokedReason: string, version: number, createdAt: number, sources: Array<{ ' $fragmentRefs'?: { 'CaptureSourceInfoFieldsFragment': CaptureSourceInfoFieldsFragment } }> } & { ' $fragmentName'?: 'CaptureDeviceFieldsFragment' };
+
+export type CaptureDeviceFleetFieldsFragment = (
+  { user: { id: string, name: string, emailAddress: string } | null }
+  & { ' $fragmentRefs'?: { 'CaptureDeviceFieldsFragment': CaptureDeviceFieldsFragment } }
+) & { ' $fragmentName'?: 'CaptureDeviceFleetFieldsFragment' };
+
+export type CaptureProfileFieldsFragment = { id: string, name: string, description: string, status: CaptureProfileStatus, isDefault: boolean, dpi: number, pixelType: CapturePixelType, duplex: boolean, useFeeder: boolean, discardBlankPages: boolean, jpegQuality: number, showDriverUi: boolean, separatorStrategies: Array<CaptureSeparatorStrategy>, fixedPageCount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CaptureProfileFieldsFragment' };
+
+export type CaptureRequestFieldsFragment = { id: string, deviceId: string, mode: CaptureRequestMode, status: CaptureRequestStatus, targetType: string, targetId: string, documentTypeId: string | null, profileId: string | null, sourceName: string, batchId: string | null, failureCode: CaptureRequestFailureCode | null, failureMessage: string, expiresAt: number, deliveredAt: number | null, completedAt: number | null, isOpen: boolean, createdAt: number } & { ' $fragmentName'?: 'CaptureRequestFieldsFragment' };
+
+export type CaptureBatchRowFieldsFragment = { id: string, userId: string, source: CaptureSource, status: CaptureBatchStatus, sourceName: string, jobName: string, targetType: string, targetId: string | null, receivedPageCount: number, itemCount: number, filedItemCount: number, openItemCount: number, failureMessage: string, sealedAt: number | null, processedAt: number | null, retainUntil: number, isEditable: boolean, version: number, createdAt: number, updatedAt: number, user: { id: string, name: string } | null, device: { id: string, name: string, machineName: string } | null, target: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null } & { ' $fragmentName'?: 'CaptureBatchRowFieldsFragment' };
+
+export type CapturePageFieldsFragment = { id: string, sequence: number, status: CapturePageStatus, rotation: number, widthPx: number, heightPx: number, dpi: number, isBlank: boolean, isSeparator: boolean, patchCode: string, isCoverSheet: boolean, unrecognizedCoverSheet: boolean, failureMessage: string, contentPath: string, thumbnailPath: string } & { ' $fragmentName'?: 'CapturePageFieldsFragment' };
+
+export type CaptureItemFieldsFragment = { id: string, position: number, status: CaptureItemStatus, pageIds: Array<string>, pageCount: number, suggestedType: string, suggestedId: string | null, suggestedDocumentTypeId: string | null, suggestionSource: CaptureSuggestionSource | null, suggestionConfidence: number | null, suggestionReason: string, detectedKind: string, filedType: string, filedId: string | null, filedDocumentTypeId: string | null, documentId: string | null, filedAt: number | null, failureMessage: string, version: number, suggestedRecord: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null, filedRecord: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null } & { ' $fragmentName'?: 'CaptureItemFieldsFragment' };
+
+export type CaptureBatchDetailFieldsFragment = (
+  { documentTypeId: string | null, settings: { protocol: CaptureSourceProtocol | null, dpi: number, pixelType: CapturePixelType | null, duplex: boolean, feeder: boolean, driverVersion: string, application: string, refused: Array<string> }, pages: Array<{ ' $fragmentRefs'?: { 'CapturePageFieldsFragment': CapturePageFieldsFragment } }>, items: Array<{ ' $fragmentRefs'?: { 'CaptureItemFieldsFragment': CaptureItemFieldsFragment } }> }
+  & { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } }
+) & { ' $fragmentName'?: 'CaptureBatchDetailFieldsFragment' };
+
+export type MyCaptureAccessQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyCaptureAccessQuery = { myCaptureAccess: { enabled: boolean, canCapture: boolean } };
+
+export type CaptureAgentReleaseQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CaptureAgentReleaseQuery = { captureAgentRelease: { version: string, publishedAt: number, minimumWindowsBuild: number, notes: string, installer: { fileName: string, url: string, sha256: string, size: number } } | null };
+
+export type CaptureBatchesQueryVariables = Exact<{
+  input: CaptureBatchesInput;
+}>;
+
+
+export type CaptureBatchesQuery = { captureBatches: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type CaptureBatchCountQueryVariables = Exact<{
+  input: CaptureBatchesInput;
+}>;
+
+
+export type CaptureBatchCountQuery = { captureBatches: { totalCount: number | null } };
+
+export type CaptureBatchQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CaptureBatchQuery = { captureBatch: { ' $fragmentRefs'?: { 'CaptureBatchDetailFieldsFragment': CaptureBatchDetailFieldsFragment } } };
+
+export type MyCaptureDevicesQueryVariables = Exact<{
+  status?: CaptureDeviceStatus | null | undefined;
+}>;
+
+
+export type MyCaptureDevicesQuery = { myCaptureDevices: Array<{ ' $fragmentRefs'?: { 'CaptureDeviceFieldsFragment': CaptureDeviceFieldsFragment } }> };
+
+export type CaptureDevicesQueryVariables = Exact<{
+  status?: CaptureDeviceStatus | null | undefined;
+  query?: string | null | undefined;
+}>;
+
+
+export type CaptureDevicesQuery = { captureDevices: Array<{ ' $fragmentRefs'?: { 'CaptureDeviceFleetFieldsFragment': CaptureDeviceFleetFieldsFragment } }> };
+
+export type AvailableCaptureProfilesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AvailableCaptureProfilesQuery = { availableCaptureProfiles: Array<{ ' $fragmentRefs'?: { 'CaptureProfileFieldsFragment': CaptureProfileFieldsFragment } }> };
+
+export type CaptureProfilesQueryVariables = Exact<{
+  status?: CaptureProfileStatus | null | undefined;
+  query?: string | null | undefined;
+}>;
+
+
+export type CaptureProfilesQuery = { captureProfiles: Array<{ ' $fragmentRefs'?: { 'CaptureProfileFieldsFragment': CaptureProfileFieldsFragment } }> };
+
+export type CaptureRequestsForTargetQueryVariables = Exact<{
+  targetType: string;
+  targetId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type CaptureRequestsForTargetQuery = { captureRequestsForTarget: Array<{ ' $fragmentRefs'?: { 'CaptureRequestFieldsFragment': CaptureRequestFieldsFragment } }> };
+
+export type CaptureDevicePairingQueryVariables = Exact<{
+  userCode: string;
+}>;
+
+
+export type CaptureDevicePairingQuery = { captureDevicePairing: { userCode: string, machineName: string, windowsUser: string, agentVersion: string, architecture: CaptureArchitecture, osVersion: string, clientIp: string, expiresAt: number } };
+
+export type EditCaptureItemsMutationVariables = Exact<{
+  batchId: string | number;
+  input: EditCaptureItemsInput;
+}>;
+
+
+export type EditCaptureItemsMutation = { editCaptureItems: { ' $fragmentRefs'?: { 'CaptureBatchDetailFieldsFragment': CaptureBatchDetailFieldsFragment } } };
+
+export type FileCaptureItemMutationVariables = Exact<{
+  id: string | number;
+  input: FileCaptureItemInput;
+}>;
+
+
+export type FileCaptureItemMutation = { fileCaptureItem: { ' $fragmentRefs'?: { 'CaptureItemFieldsFragment': CaptureItemFieldsFragment } } };
+
+export type FileCaptureItemsMutationVariables = Exact<{
+  items: Array<FileCaptureItemsEntryInput> | FileCaptureItemsEntryInput;
+}>;
+
+
+export type FileCaptureItemsMutation = { fileCaptureItems: { filed: Array<{ ' $fragmentRefs'?: { 'CaptureItemFieldsFragment': CaptureItemFieldsFragment } }>, failures: Array<{ itemId: string, message: string }> } };
+
+export type DiscardCaptureItemMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type DiscardCaptureItemMutation = { discardCaptureItem: { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } } };
+
+export type DiscardCaptureBatchMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type DiscardCaptureBatchMutation = { discardCaptureBatch: { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } } };
+
+export type CreateCaptureRequestMutationVariables = Exact<{
+  input: CreateCaptureRequestInput;
+}>;
+
+
+export type CreateCaptureRequestMutation = { createCaptureRequest: { ' $fragmentRefs'?: { 'CaptureRequestFieldsFragment': CaptureRequestFieldsFragment } } };
+
+export type CancelCaptureRequestMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CancelCaptureRequestMutation = { cancelCaptureRequest: { ' $fragmentRefs'?: { 'CaptureRequestFieldsFragment': CaptureRequestFieldsFragment } } };
+
+export type CreateCaptureCoverSheetsMutationVariables = Exact<{
+  sheets: Array<CaptureCoverSheetInput> | CaptureCoverSheetInput;
+}>;
+
+
+export type CreateCaptureCoverSheetsMutation = { createCaptureCoverSheets: Array<{ id: string, targetType: string, targetId: string | null, documentTypeId: string | null, payload: string, expiresAt: number, qrCode: { size: number, modules: Array<string> }, target: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null }> };
+
+export type ApproveCaptureDevicePairingMutationVariables = Exact<{
+  userCode: string;
+  deviceName?: string | null | undefined;
+}>;
+
+
+export type ApproveCaptureDevicePairingMutation = { approveCaptureDevicePairing: boolean };
+
+export type DenyCaptureDevicePairingMutationVariables = Exact<{
+  userCode: string;
+}>;
+
+
+export type DenyCaptureDevicePairingMutation = { denyCaptureDevicePairing: boolean };
+
+export type RevokeMyCaptureDeviceMutationVariables = Exact<{
+  id: string | number;
+  reason?: string | null | undefined;
+}>;
+
+
+export type RevokeMyCaptureDeviceMutation = { revokeMyCaptureDevice: { ' $fragmentRefs'?: { 'CaptureDeviceFieldsFragment': CaptureDeviceFieldsFragment } } };
+
+export type RevokeCaptureDeviceMutationVariables = Exact<{
+  id: string | number;
+  reason?: string | null | undefined;
+}>;
+
+
+export type RevokeCaptureDeviceMutation = { revokeCaptureDevice: { ' $fragmentRefs'?: { 'CaptureDeviceFleetFieldsFragment': CaptureDeviceFleetFieldsFragment } } };
+
+export type CreateCaptureProfileMutationVariables = Exact<{
+  input: CaptureProfileInput;
+}>;
+
+
+export type CreateCaptureProfileMutation = { createCaptureProfile: { ' $fragmentRefs'?: { 'CaptureProfileFieldsFragment': CaptureProfileFieldsFragment } } };
+
+export type UpdateCaptureProfileMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: CaptureProfileInput;
+}>;
+
+
+export type UpdateCaptureProfileMutation = { updateCaptureProfile: { ' $fragmentRefs'?: { 'CaptureProfileFieldsFragment': CaptureProfileFieldsFragment } } };
+
+export type DeleteCaptureProfileMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteCaptureProfileMutation = { deleteCaptureProfile: boolean };
 
 export type CarrierIntelFindingFieldsFragment = { code: string, category: CarrierIntelSection, action: CarrierIntelRuleAction, severity: CarrierIntelSeverity, message: string, unverifiable: boolean, unconfirmed: boolean, overridden: boolean, overrideId: string | null, overrideExpiresAt: number | null } & { ' $fragmentName'?: 'CarrierIntelFindingFieldsFragment' };
 
@@ -16244,6 +16654,345 @@ export const BriefingFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BriefingFields"}) as unknown as TypedDocumentString<BriefingFieldsFragment, unknown>;
+export const CaptureSourceInfoFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureSourceInfoFields on CaptureSourceInfo {
+  name
+  protocol
+  bitness
+  isDefault
+  duplex
+  feeder
+  patchCodes
+  barcodes
+  blankDiscard
+  resolutions
+}
+    `, {"fragmentName":"CaptureSourceInfoFields"}) as unknown as TypedDocumentString<CaptureSourceInfoFieldsFragment, unknown>;
+export const CaptureDeviceFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureDeviceFields on CaptureDevice {
+  id
+  userId
+  name
+  machineName
+  windowsUser
+  agentVersion
+  architecture
+  osVersion
+  status
+  lastSeenAt
+  isOnline
+  lastIp
+  revokedAt
+  revokedReason
+  version
+  createdAt
+  sources {
+    ...CaptureSourceInfoFields
+  }
+}
+    fragment CaptureSourceInfoFields on CaptureSourceInfo {
+  name
+  protocol
+  bitness
+  isDefault
+  duplex
+  feeder
+  patchCodes
+  barcodes
+  blankDiscard
+  resolutions
+}`, {"fragmentName":"CaptureDeviceFields"}) as unknown as TypedDocumentString<CaptureDeviceFieldsFragment, unknown>;
+export const CaptureDeviceFleetFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureDeviceFleetFields on CaptureDevice {
+  ...CaptureDeviceFields
+  user {
+    id
+    name
+    emailAddress
+  }
+}
+    fragment CaptureSourceInfoFields on CaptureSourceInfo {
+  name
+  protocol
+  bitness
+  isDefault
+  duplex
+  feeder
+  patchCodes
+  barcodes
+  blankDiscard
+  resolutions
+}
+fragment CaptureDeviceFields on CaptureDevice {
+  id
+  userId
+  name
+  machineName
+  windowsUser
+  agentVersion
+  architecture
+  osVersion
+  status
+  lastSeenAt
+  isOnline
+  lastIp
+  revokedAt
+  revokedReason
+  version
+  createdAt
+  sources {
+    ...CaptureSourceInfoFields
+  }
+}`, {"fragmentName":"CaptureDeviceFleetFields"}) as unknown as TypedDocumentString<CaptureDeviceFleetFieldsFragment, unknown>;
+export const CaptureProfileFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureProfileFields on CaptureProfile {
+  id
+  name
+  description
+  status
+  isDefault
+  dpi
+  pixelType
+  duplex
+  useFeeder
+  discardBlankPages
+  jpegQuality
+  showDriverUi
+  separatorStrategies
+  fixedPageCount
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CaptureProfileFields"}) as unknown as TypedDocumentString<CaptureProfileFieldsFragment, unknown>;
+export const CaptureRequestFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureRequestFields on CaptureRequest {
+  id
+  deviceId
+  mode
+  status
+  targetType
+  targetId
+  documentTypeId
+  profileId
+  sourceName
+  batchId
+  failureCode
+  failureMessage
+  expiresAt
+  deliveredAt
+  completedAt
+  isOpen
+  createdAt
+}
+    `, {"fragmentName":"CaptureRequestFields"}) as unknown as TypedDocumentString<CaptureRequestFieldsFragment, unknown>;
+export const CaptureRecordRefFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureRecordRefFields on CaptureRecordRef {
+  resourceType
+  id
+  title
+  subtitle
+}
+    `, {"fragmentName":"CaptureRecordRefFields"}) as unknown as TypedDocumentString<CaptureRecordRefFieldsFragment, unknown>;
+export const CaptureBatchRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureBatchRowFields on CaptureBatch {
+  id
+  userId
+  source
+  status
+  sourceName
+  jobName
+  targetType
+  targetId
+  receivedPageCount
+  itemCount
+  filedItemCount
+  openItemCount
+  failureMessage
+  sealedAt
+  processedAt
+  retainUntil
+  isEditable
+  version
+  createdAt
+  updatedAt
+  user {
+    id
+    name
+  }
+  device {
+    id
+    name
+    machineName
+  }
+  target {
+    ...CaptureRecordRefFields
+  }
+}
+    fragment CaptureRecordRefFields on CaptureRecordRef {
+  resourceType
+  id
+  title
+  subtitle
+}`, {"fragmentName":"CaptureBatchRowFields"}) as unknown as TypedDocumentString<CaptureBatchRowFieldsFragment, unknown>;
+export const CapturePageFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CapturePageFields on CapturePage {
+  id
+  sequence
+  status
+  rotation
+  widthPx
+  heightPx
+  dpi
+  isBlank
+  isSeparator
+  patchCode
+  isCoverSheet
+  unrecognizedCoverSheet
+  failureMessage
+  contentPath
+  thumbnailPath
+}
+    `, {"fragmentName":"CapturePageFields"}) as unknown as TypedDocumentString<CapturePageFieldsFragment, unknown>;
+export const CaptureItemFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureItemFields on CaptureItem {
+  id
+  position
+  status
+  pageIds
+  pageCount
+  suggestedType
+  suggestedId
+  suggestedDocumentTypeId
+  suggestionSource
+  suggestionConfidence
+  suggestionReason
+  detectedKind
+  filedType
+  filedId
+  filedDocumentTypeId
+  documentId
+  filedAt
+  failureMessage
+  version
+  suggestedRecord {
+    ...CaptureRecordRefFields
+  }
+  filedRecord {
+    ...CaptureRecordRefFields
+  }
+}
+    fragment CaptureRecordRefFields on CaptureRecordRef {
+  resourceType
+  id
+  title
+  subtitle
+}`, {"fragmentName":"CaptureItemFields"}) as unknown as TypedDocumentString<CaptureItemFieldsFragment, unknown>;
+export const CaptureBatchDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureBatchDetailFields on CaptureBatch {
+  ...CaptureBatchRowFields
+  documentTypeId
+  settings {
+    protocol
+    dpi
+    pixelType
+    duplex
+    feeder
+    driverVersion
+    application
+    refused
+  }
+  pages {
+    ...CapturePageFields
+  }
+  items {
+    ...CaptureItemFields
+  }
+}
+    fragment CaptureRecordRefFields on CaptureRecordRef {
+  resourceType
+  id
+  title
+  subtitle
+}
+fragment CaptureBatchRowFields on CaptureBatch {
+  id
+  userId
+  source
+  status
+  sourceName
+  jobName
+  targetType
+  targetId
+  receivedPageCount
+  itemCount
+  filedItemCount
+  openItemCount
+  failureMessage
+  sealedAt
+  processedAt
+  retainUntil
+  isEditable
+  version
+  createdAt
+  updatedAt
+  user {
+    id
+    name
+  }
+  device {
+    id
+    name
+    machineName
+  }
+  target {
+    ...CaptureRecordRefFields
+  }
+}
+fragment CapturePageFields on CapturePage {
+  id
+  sequence
+  status
+  rotation
+  widthPx
+  heightPx
+  dpi
+  isBlank
+  isSeparator
+  patchCode
+  isCoverSheet
+  unrecognizedCoverSheet
+  failureMessage
+  contentPath
+  thumbnailPath
+}
+fragment CaptureItemFields on CaptureItem {
+  id
+  position
+  status
+  pageIds
+  pageCount
+  suggestedType
+  suggestedId
+  suggestedDocumentTypeId
+  suggestionSource
+  suggestionConfidence
+  suggestionReason
+  detectedKind
+  filedType
+  filedId
+  filedDocumentTypeId
+  documentId
+  filedAt
+  failureMessage
+  version
+  suggestedRecord {
+    ...CaptureRecordRefFields
+  }
+  filedRecord {
+    ...CaptureRecordRefFields
+  }
+}`, {"fragmentName":"CaptureBatchDetailFields"}) as unknown as TypedDocumentString<CaptureBatchDetailFieldsFragment, unknown>;
 export const CarrierIntelFindingFieldsFragmentDoc = new TypedDocumentString(`
     fragment CarrierIntelFindingFields on CarrierIntelFinding {
   code
@@ -23135,6 +23884,32 @@ export const RetryBillingTransferRunDocument = {"__meta__":{"kind":"mutation","n
 export const TodaysBriefingDocument = {"__meta__":{"kind":"query","name":"TodaysBriefing","hash":"sha256:efa1e68a6557f06f8c90f3e6482f6a73399254696a433c83e2f5a821f891a838"}} as unknown as TypedDocumentString<TodaysBriefingQuery, TodaysBriefingQueryVariables>;
 export const MarkBriefingReadDocument = {"__meta__":{"kind":"mutation","name":"MarkBriefingRead","hash":"sha256:a528508c33bf6da76c15bf36e4159bdb24aeeb7c644cabbd8e779423cfe86371"}} as unknown as TypedDocumentString<MarkBriefingReadMutation, MarkBriefingReadMutationVariables>;
 export const RegenerateBriefingDocument = {"__meta__":{"kind":"mutation","name":"RegenerateBriefing","hash":"sha256:78838e889a7a2e313f67553e5f19966a6338ae041961bd169a6bf8e9ad5108df"}} as unknown as TypedDocumentString<RegenerateBriefingMutation, RegenerateBriefingMutationVariables>;
+export const MyCaptureAccessDocument = {"__meta__":{"kind":"query","name":"MyCaptureAccess","hash":"sha256:0e0e3bed6cfbb9210e5d3a2f3d7a07d91e26763205dd3c68f4b4885d3d7b23c2"}} as unknown as TypedDocumentString<MyCaptureAccessQuery, MyCaptureAccessQueryVariables>;
+export const CaptureAgentReleaseDocument = {"__meta__":{"kind":"query","name":"CaptureAgentRelease","hash":"sha256:871e3e29040b717530d9bdae990b25cbdefea215ade1970666878959c1219e44"}} as unknown as TypedDocumentString<CaptureAgentReleaseQuery, CaptureAgentReleaseQueryVariables>;
+export const CaptureBatchesDocument = {"__meta__":{"kind":"query","name":"CaptureBatches","hash":"sha256:d40d49842db626aa6d822a89f8f3be992c716d71db561f1a4deb6127f19e40ce"}} as unknown as TypedDocumentString<CaptureBatchesQuery, CaptureBatchesQueryVariables>;
+export const CaptureBatchCountDocument = {"__meta__":{"kind":"query","name":"CaptureBatchCount","hash":"sha256:b72597d4462c7841309af83ee9f1217281f91dac439d6841b736ece7af92f402"}} as unknown as TypedDocumentString<CaptureBatchCountQuery, CaptureBatchCountQueryVariables>;
+export const CaptureBatchDocument = {"__meta__":{"kind":"query","name":"CaptureBatch","hash":"sha256:255eebc82d775317997d672fded4e4026bab5ffc76dcb793de5d5909311e255a"}} as unknown as TypedDocumentString<CaptureBatchQuery, CaptureBatchQueryVariables>;
+export const MyCaptureDevicesDocument = {"__meta__":{"kind":"query","name":"MyCaptureDevices","hash":"sha256:f0a7a8fb1db403a1954eeeb2c75defe50fcb341e515af418b73561ae814d368a"}} as unknown as TypedDocumentString<MyCaptureDevicesQuery, MyCaptureDevicesQueryVariables>;
+export const CaptureDevicesDocument = {"__meta__":{"kind":"query","name":"CaptureDevices","hash":"sha256:7ed34756eb9cbcfe72d1c537858c28eb8195e3379d1135036e1253c99b48e7c8"}} as unknown as TypedDocumentString<CaptureDevicesQuery, CaptureDevicesQueryVariables>;
+export const AvailableCaptureProfilesDocument = {"__meta__":{"kind":"query","name":"AvailableCaptureProfiles","hash":"sha256:a2d1f056167566bda91fd73250f53846888fef9ba1b1ff3e55b3d7ba1c55e1de"}} as unknown as TypedDocumentString<AvailableCaptureProfilesQuery, AvailableCaptureProfilesQueryVariables>;
+export const CaptureProfilesDocument = {"__meta__":{"kind":"query","name":"CaptureProfiles","hash":"sha256:2103f21a0d012b8ccb48e32ad18b5a160398424b61dc860f390be96c92cda1aa"}} as unknown as TypedDocumentString<CaptureProfilesQuery, CaptureProfilesQueryVariables>;
+export const CaptureRequestsForTargetDocument = {"__meta__":{"kind":"query","name":"CaptureRequestsForTarget","hash":"sha256:de806e1cc66ab39521e34f5e9e6c75d2643ff1e8a53d73e92c226b173da599d5"}} as unknown as TypedDocumentString<CaptureRequestsForTargetQuery, CaptureRequestsForTargetQueryVariables>;
+export const CaptureDevicePairingDocument = {"__meta__":{"kind":"query","name":"CaptureDevicePairing","hash":"sha256:b7581d44accbc6f587878682111c7d54b4ba3ea85c33460b45478c030b6198bf"}} as unknown as TypedDocumentString<CaptureDevicePairingQuery, CaptureDevicePairingQueryVariables>;
+export const EditCaptureItemsDocument = {"__meta__":{"kind":"mutation","name":"EditCaptureItems","hash":"sha256:06d6ea7c7108d379fda0f748bfd8f0cc67e0858c0e12ebe10077ddab0e22ed48"}} as unknown as TypedDocumentString<EditCaptureItemsMutation, EditCaptureItemsMutationVariables>;
+export const FileCaptureItemDocument = {"__meta__":{"kind":"mutation","name":"FileCaptureItem","hash":"sha256:61340153bcc7647b8cba47c96ebb6c5234d6d7cf70689826ac13863304a77154"}} as unknown as TypedDocumentString<FileCaptureItemMutation, FileCaptureItemMutationVariables>;
+export const FileCaptureItemsDocument = {"__meta__":{"kind":"mutation","name":"FileCaptureItems","hash":"sha256:61e2b7bd0d853ce8ce7959b820c8f954855355108629c60b9849b339f090d865"}} as unknown as TypedDocumentString<FileCaptureItemsMutation, FileCaptureItemsMutationVariables>;
+export const DiscardCaptureItemDocument = {"__meta__":{"kind":"mutation","name":"DiscardCaptureItem","hash":"sha256:5e69ac2162aa94b31c531a951def13cf7af38ee2c80141f8b32ac7b21f8efd5e"}} as unknown as TypedDocumentString<DiscardCaptureItemMutation, DiscardCaptureItemMutationVariables>;
+export const DiscardCaptureBatchDocument = {"__meta__":{"kind":"mutation","name":"DiscardCaptureBatch","hash":"sha256:58fba2eb65ea4ee0f0a268f1e1d1f43603612e23e3cfb2b7b33e0c485829a357"}} as unknown as TypedDocumentString<DiscardCaptureBatchMutation, DiscardCaptureBatchMutationVariables>;
+export const CreateCaptureRequestDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureRequest","hash":"sha256:c6ab98771f332dcd609f88468c69d5cb046414a8ab5454d211d378fd4957113f"}} as unknown as TypedDocumentString<CreateCaptureRequestMutation, CreateCaptureRequestMutationVariables>;
+export const CancelCaptureRequestDocument = {"__meta__":{"kind":"mutation","name":"CancelCaptureRequest","hash":"sha256:523c78072a4b0888ebc217c6c591a0a80ab6bd37332a1bc8f2dc1086c6479738"}} as unknown as TypedDocumentString<CancelCaptureRequestMutation, CancelCaptureRequestMutationVariables>;
+export const CreateCaptureCoverSheetsDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureCoverSheets","hash":"sha256:92cdbeededfd2516038b67e659007032a039c7edd3beb8d5f82a930d1b578bf4"}} as unknown as TypedDocumentString<CreateCaptureCoverSheetsMutation, CreateCaptureCoverSheetsMutationVariables>;
+export const ApproveCaptureDevicePairingDocument = {"__meta__":{"kind":"mutation","name":"ApproveCaptureDevicePairing","hash":"sha256:a067e97cc02b4eca7b297eba42cbf83b4a50cff9e4a209ccdeeeacdc47ec5095"}} as unknown as TypedDocumentString<ApproveCaptureDevicePairingMutation, ApproveCaptureDevicePairingMutationVariables>;
+export const DenyCaptureDevicePairingDocument = {"__meta__":{"kind":"mutation","name":"DenyCaptureDevicePairing","hash":"sha256:237bff94778c77c4f486752e4e75be79e727ab7d06fb1c17566c6af97686407b"}} as unknown as TypedDocumentString<DenyCaptureDevicePairingMutation, DenyCaptureDevicePairingMutationVariables>;
+export const RevokeMyCaptureDeviceDocument = {"__meta__":{"kind":"mutation","name":"RevokeMyCaptureDevice","hash":"sha256:56477b12d596360918b78d4d1bad09d67fde4a40e055561d24df95725f02c7b5"}} as unknown as TypedDocumentString<RevokeMyCaptureDeviceMutation, RevokeMyCaptureDeviceMutationVariables>;
+export const RevokeCaptureDeviceDocument = {"__meta__":{"kind":"mutation","name":"RevokeCaptureDevice","hash":"sha256:904d43dd85b5681c83e1e6c6053b0e747fff2c59ddd2fae630eb03e7cd17112b"}} as unknown as TypedDocumentString<RevokeCaptureDeviceMutation, RevokeCaptureDeviceMutationVariables>;
+export const CreateCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureProfile","hash":"sha256:f164652c5c381d1301d9449d1623dffe9ddba96c450c61815b9f4d71e3ec473b"}} as unknown as TypedDocumentString<CreateCaptureProfileMutation, CreateCaptureProfileMutationVariables>;
+export const UpdateCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"UpdateCaptureProfile","hash":"sha256:906331e1953ab30bbb168a6963ec72cd98e087a9c7578f438d087d7ea6e90c7b"}} as unknown as TypedDocumentString<UpdateCaptureProfileMutation, UpdateCaptureProfileMutationVariables>;
+export const DeleteCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"DeleteCaptureProfile","hash":"sha256:cb6a096217b18ad0fa8d5e532e70b09329738262494bfb7a7f348a488e1c18cb"}} as unknown as TypedDocumentString<DeleteCaptureProfileMutation, DeleteCaptureProfileMutationVariables>;
 export const CarrierIntelSettingsDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSettings","hash":"sha256:4a7babaf1487c88a6bd87dffabb128a4aa3596f4588b785dc0d829fb13ae17c6"}} as unknown as TypedDocumentString<CarrierIntelSettingsQuery, CarrierIntelSettingsQueryVariables>;
 export const CarrierIntelCostEstimateDocument = {"__meta__":{"kind":"query","name":"CarrierIntelCostEstimate","hash":"sha256:bdbf9851d96a8afa735c9a57aa94a2cb1178adc0ad769eae1dcbfe566a39af79"}} as unknown as TypedDocumentString<CarrierIntelCostEstimateQuery, CarrierIntelCostEstimateQueryVariables>;
 export const CarrierIntelUsageDocument = {"__meta__":{"kind":"query","name":"CarrierIntelUsage","hash":"sha256:2781e60e21bd7c2e05802c14748eddc0b97a4f3f22d6d7dfda25f5aefd9d4d63"}} as unknown as TypedDocumentString<CarrierIntelUsageQuery, CarrierIntelUsageQueryVariables>;

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:102422514788d18953ff0e286fb91fa0fa6545e4b196c34c52c7ea9508c3c317",
+  "version": "sha256:5f95e592eab0319b594fde3435f0c6d86b878fcf3a986c2f006af66a4dde92fc",
   "modules": [
     {
       "id": "home",
@@ -15,6 +15,11 @@
       "id": "inbox",
       "label": "Inbox",
       "description": "Mail that arrived on a monitored address, and what was made of it"
+    },
+    {
+      "id": "intake",
+      "label": "Intake",
+      "description": "Scanned and printed paper, split into documents and waiting to be filed"
     },
     {
       "id": "shipment",
@@ -2398,6 +2403,29 @@
           ]
         },
         {
+          "title": "Set up an agent for settlements or receivables",
+          "keywords": [
+            "settlements agent",
+            "driver pay agent",
+            "payroll agent",
+            "carrier settlement agent",
+            "carrier invoice matching agent",
+            "receivables agent",
+            "collections agent",
+            "accounts receivable agent",
+            "dispute agent",
+            "late charges agent",
+            "share invoice agent"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Agents** in the rail.",
+            "Select **New agent**.",
+            "In **Start from**, choose the settlements clerk to draft driver and carrier settlements, sort out pay that is missing or held, match carrier invoices and propose each payment, or the receivables assistant to apply payments and credit, handle disputes and late charges, and say which overdue invoices to chase first. Both are chat agents that act as the person talking to them, and anything that moves money waits for that person to approve it. The settlements clerk reads each driver's pay setup but never changes it: a pay rate, a standing deduction or escrow terms stay with the people who set up driver pay.",
+            "Leave **Data access** at **Restricted**, since both work with amounts and pay.",
+            "Select **Save**. To let the billing assistant and the receivables assistant pass work to each other, add each to the other's **Can ask** list as described below."
+          ]
+        },
+        {
           "title": "Let an agent hand work to another agent",
           "keywords": [
             "sub-agent",
@@ -2929,6 +2957,105 @@
         "/accounting/ar/late-charges",
         "/billing/configuration-files/formula-templates",
         "/admin/invoice-adjustment-controls"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/admin/capture",
+      "name": "Scanning and printing",
+      "module": "admin",
+      "breadcrumb": [
+        "Organization settings",
+        "Document Management",
+        "Scanning and printing"
+      ],
+      "description": "Turn on Trenova Capture, set the scan profiles people pick from, and see every computer paired to scan",
+      "summary": "Scanning and printing is where administrators run Trenova Capture, the Windows companion that scans paper and catches print jobs into Trenova. **Settings** turns it on for the organization and sets how long unfiled pages are kept and which versions of the companion may connect. **Scan profiles** are the settings people pick from when they start a scan: resolution, color, both sides, and how a stack is split into documents. **Computers** lists every computer paired to scan, whose it is, and whether it is online.",
+      "requires": [
+        {
+          "resource": "capture_profile",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "scanning settings",
+        "Trenova Capture settings",
+        "scanner profiles",
+        "scan settings",
+        "virtual printer settings",
+        "paired computers",
+        "scanner fleet"
+      ],
+      "tasks": [
+        {
+          "title": "Turn on scanning and printing",
+          "keywords": [
+            "enable Trenova Capture",
+            "allow scanning",
+            "turn on virtual printer"
+          ],
+          "steps": [
+            "Open [Scanning and printing](/admin/capture) and select **Settings**.",
+            "Turn on **Turn on scanning and printing into Trenova**.",
+            "Optionally turn on **File documents behind a cover sheet on their own**, and set **Keep unfiled pages for (days)**.",
+            "Select **Save changes**."
+          ]
+        },
+        {
+          "title": "Add a scan profile",
+          "keywords": [
+            "scanner settings",
+            "DPI",
+            "color scanning",
+            "duplex",
+            "split stack"
+          ],
+          "steps": [
+            "Open [Scanning and printing](/admin/capture) and select **Scan profiles**.",
+            "Select **New scan profile**.",
+            "Fill in **Name**, choose the **Resolution** and **Color mode**, and tick what to **Split the stack on**.",
+            "Turn on **Use when nobody picks one** to make it the default, then select **Create profile**."
+          ]
+        },
+        {
+          "title": "Roll out Trenova Capture to computers",
+          "keywords": [
+            "install Trenova Capture",
+            "download installer",
+            "deploy MSI",
+            "silent install",
+            "Intune",
+            "group policy"
+          ],
+          "steps": [
+            "Open [Scanning and printing](/admin/capture) and select **Computers**.",
+            "Select **Download Trenova Capture** to get the current installer. The panel shows its version, size and SHA-256, so a deployment tool can check the file it got.",
+            "Install it on each computer with administrator rights, or deploy it silently: `msiexec /i TrenovaCapture.msi /qn TRENOVAURL=https://your-trenova-server AUTOUPDATE=0` presets the server address and leaves updates to your deployment tool; without `AUTOUPDATE=0`, computers update themselves to each release.",
+            "Each person then signs in from the Trenova Capture icon in the notification area and approves their computer on [My scanners](/capture/devices)."
+          ]
+        },
+        {
+          "title": "Stop a computer from scanning",
+          "keywords": [
+            "revoke scanner",
+            "lost laptop",
+            "employee left",
+            "remove device"
+          ],
+          "steps": [
+            "Open [Scanning and printing](/admin/capture) and select **Computers**.",
+            "Find the computer, select **Revoke**, optionally say why, and select **Revoke** again. It stops at once."
+          ]
+        }
+      ],
+      "notes": "Settings needs access to document settings; scan profiles and computers each have their own permission. Turning scanning off stops every paired computer without unpairing it. A change to a profile reaches the next scan started with it; stacks already scanned keep the settings they were scanned with.\n\nPeople pair their own computers from [My scanners](/capture/devices), where the installer is also offered. **Settings** can name the oldest version of Trenova Capture that may connect and whether computers update themselves; a computer below the minimum is told to update the next time it connects.",
+      "related": [
+        "/intake",
+        "/capture/devices",
+        "/admin/document-intelligence"
       ],
       "covers": [],
       "createAction": null,
@@ -7160,6 +7287,113 @@
       "covers": [],
       "createAction": null,
       "inNavigation": true
+    },
+    {
+      "path": "/capture/devices",
+      "name": "My scanners",
+      "module": "",
+      "breadcrumb": [
+        "My scanners"
+      ],
+      "description": "The computers you paired with Trenova Capture to scan and print into Trenova",
+      "summary": "My scanners lists the computers you have paired with Trenova Capture, the Windows companion that scans and prints into Trenova. Each one shows whether it is online, which scanners it can reach, and its Trenova Capture version. A paired computer acts as you: it can only file what you could file yourself, and it stops working if it is revoked or your access changes.\n\nPairing happens on the pairing page, where you approve the code Trenova Capture shows.",
+      "requires": [],
+      "capabilities": [],
+      "aliases": [
+        "my scanners",
+        "pair a scanner",
+        "Trenova Capture",
+        "companion app",
+        "scanner computer",
+        "pairing code",
+        "revoke scanner",
+        "tray icon",
+        "paper jam",
+        "Trenova printer",
+        "print to Trenova"
+      ],
+      "tasks": [
+        {
+          "title": "Pair a computer",
+          "keywords": [
+            "set up scanner",
+            "connect Trenova Capture",
+            "sign in the companion",
+            "approve code"
+          ],
+          "steps": [
+            "On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** and run the installer (it needs administrator rights). Then choose Sign in from the Trenova Capture icon in the notification area. It shows an eight-letter code and opens the pairing page.",
+            "If the page did not open, open [My scanners](/capture/devices), select **Enter a pairing code**, type the code and select **Look up**.",
+            "Check that **The computer asking** is the one in front of you, change **Name it** if you like, and select **Approve**."
+          ]
+        },
+        {
+          "title": "Scan without opening Trenova",
+          "keywords": [
+            "scan to intake",
+            "tray menu",
+            "scan from the computer",
+            "quick scan"
+          ],
+          "steps": [
+            "On the paired computer, select the Trenova Capture icon in the notification area.",
+            "Choose Scan to intake, then the scanner, then the scan profile (the organization's default is marked).",
+            "When the scan finishes, a notification says how many pages were sent; select it to open them in [Intake](/intake)."
+          ]
+        },
+        {
+          "title": "Print a document into Trenova",
+          "keywords": [
+            "print to Trenova",
+            "virtual printer",
+            "print from any program",
+            "print a PDF",
+            "print into a shipment",
+            "print into a record"
+          ],
+          "steps": [
+            "In any program on the paired computer, choose Print and pick the printer named Trenova.",
+            "Trenova Capture sends what you printed, and a notification says how many pages arrived. It goes to [Intake](/intake), or to the record where you first chose **Print into this record** from **More ways to capture** on its Documents tab.",
+            "If you are signed out of Trenova Capture, the print waits on the computer and is sent when you sign in."
+          ]
+        },
+        {
+          "title": "Carry on after a paper jam",
+          "keywords": [
+            "jam",
+            "double feed",
+            "cover open",
+            "scanner stopped",
+            "continue scanning"
+          ],
+          "steps": [
+            "Clear the scanner. The pages scanned before it stopped are kept on the computer.",
+            "From the Trenova Capture icon, choose Continue scanning to add the rest to the same stack, or Finish to send what was scanned as it is."
+          ]
+        },
+        {
+          "title": "Stop a computer from scanning as you",
+          "keywords": [
+            "lost laptop",
+            "remove scanner",
+            "unpair",
+            "revoke device"
+          ],
+          "steps": [
+            "Open [My scanners](/capture/devices).",
+            "Select **Revoke** beside the computer, optionally say why, and select **Revoke** again. It stops at once; pages it already sent stay in [Intake](/intake)."
+          ]
+        }
+      ],
+      "notes": "Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the icon's menu shows how many are waiting. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.",
+      "related": [
+        "/intake"
+      ],
+      "covers": [
+        "/capture/pair"
+      ],
+      "createAction": null,
+      "inNavigation": false
     },
     {
       "path": "/carrier-settlements/batches",
@@ -12529,6 +12763,111 @@
       "inNavigation": true
     },
     {
+      "path": "/intake",
+      "name": "Intake",
+      "module": "intake",
+      "breadcrumb": [
+        "Intake"
+      ],
+      "description": "Paper scanned and documents printed into Trenova, split into documents and waiting to be filed onto their records",
+      "summary": "Intake holds paper scanned into Trenova and documents printed into it from other programs through Trenova Capture, the Windows companion. Each scan or print job arrives as a stack. Trenova splits a stack into documents on patch code sheets, Trenova cover sheets or blank pages, reads each document, and suggests where it goes: the record a cover sheet names, the record it was scanned into, or a shipment whose number appears on the page. Clerks, dispatchers and billing staff use it to check each document and file it onto its record.\n\nIt is one queue with views on the left (**To file**, **Arriving**, **Filed**, **Discarded and expired**, **Everything**), filters for where the stack **Came from** and **Only mine**, the list of stacks in the middle with a search and a sort, and the open stack on the right with its documents.",
+      "requires": [
+        {
+          "resource": "capture_batch",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "scanning",
+        "scanned documents",
+        "scan queue",
+        "virtual printer",
+        "print to Trenova",
+        "paperwork queue",
+        "document intake",
+        "Kofax",
+        "batch scanning"
+      ],
+      "tasks": [
+        {
+          "title": "File a scanned stack",
+          "keywords": [
+            "file scans",
+            "assign documents",
+            "batch scan",
+            "process scanned paperwork"
+          ],
+          "steps": [
+            "Open [Intake](/intake) and select **To file**.",
+            "Select a stack. Each document shows its pages, what Trenova suggested and why, and where it will be filed.",
+            "For each document, check **File onto**, the record and the **Document type**, and change any that are wrong.",
+            "Select **File** on one document, or the button at the top to file every document that has a record chosen. A document that cannot be filed says why on its card; the rest are filed."
+          ]
+        },
+        {
+          "title": "Split, join or reorder pages",
+          "keywords": [
+            "separate documents",
+            "merge pages",
+            "wrong split",
+            "rotate page",
+            "remove page"
+          ],
+          "steps": [
+            "Open the stack in [Intake](/intake).",
+            "Drag a page to another document or to **Set aside**, or open a page's menu and choose **Start a new document after this page**, **Move to**, **Rotate right**, **Rotate left** or **Set aside**.",
+            "Select **Join with next** on a document to make it and the one after it one document.",
+            "Select **Save split**, or **Undo changes** to go back. Documents are filed as saved, so save before filing."
+          ]
+        },
+        {
+          "title": "Bring back a page that was set aside",
+          "keywords": [
+            "missing page",
+            "blank page removed",
+            "separator page"
+          ],
+          "steps": [
+            "Open the stack in [Intake](/intake) and find the page under **Set aside**.",
+            "Drag it into a document, or open its menu and choose **Make it a document of its own**, then **Save split**."
+          ]
+        },
+        {
+          "title": "Discard a stack",
+          "keywords": [
+            "delete scan",
+            "throw away pages",
+            "duplicate scan"
+          ],
+          "steps": [
+            "Open the stack in [Intake](/intake).",
+            "Open the menu beside the filing button and choose **Discard the stack**, then **Discard stack**. Documents already filed stay on their records; every other page is deleted."
+          ]
+        },
+        {
+          "title": "Find a stack",
+          "keywords": [
+            "search scans",
+            "find print job",
+            "expiring scans"
+          ],
+          "steps": [
+            "Open [Intake](/intake) and pick a view on the left.",
+            "Type in **Search scanner, print job or device**, or change the sort to **Expiring soonest** to see what will be deleted first."
+          ]
+        }
+      ],
+      "notes": "Needs read access to capture batches to see the queue; filing needs update access and the permission to add documents to the record, and discarding needs delete access. A person whose access is limited to their own records sees only the stacks they captured.\n\nPages that are not filed are deleted when the stack's retention runs out, set in the organization's document settings. A stack within a week of that says so on its row and when it is opened.",
+      "related": [
+        "/inbox",
+        "/shipment-management/shipments"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": false
+    },
+    {
       "path": "/organization/data-retention",
       "name": "Data retention",
       "module": "admin",
@@ -14870,6 +15209,23 @@
           ]
         },
         {
+          "title": "Scan or print paperwork into a shipment",
+          "keywords": [
+            "scan POD",
+            "scan BOL",
+            "scan paperwork",
+            "print to shipment",
+            "cover sheet",
+            "Kofax"
+          ],
+          "steps": [
+            "Open the shipment and go to its **Documents** tab.",
+            "Select **Scan**, choose the **Computer**, the **Scanner** and **Scan settings**, optionally a **Document type**, then **Start scan**. The pages are filed onto the shipment as they arrive; anything Trenova cannot place waits in [Intake](/intake).",
+            "To file something you print from another program instead, open the menu beside **Scan**, choose **Print into this record**, select **Wait for my print**, and print to the Trenova printer within ten minutes.",
+            "To scan paperwork for this shipment later or on another scanner, choose **Print cover sheets**, pick how many **Sheets**, select **Print**, and put a sheet on top of the paper before it is scanned."
+          ]
+        },
+        {
           "title": "Send an EDI load tender",
           "keywords": [
             "204",
@@ -14882,13 +15238,14 @@
           ]
         }
       ],
-      "notes": "Needs read access to shipments; **New shipment** appears only with create permission. **Send EDI load tender** needs create access to EDI. An invoiced shipment is locked and cannot be edited.\n\nTo create a shipment from a rate confirmation document instead of typing it, use [Import from rate confirmation](/shipment-management/shipments/import).",
+      "notes": "Needs read access to shipments; **New shipment** appears only with create permission. **Send EDI load tender** needs create access to EDI. An invoiced shipment is locked and cannot be edited. Scanning needs Trenova Capture paired from [My scanners](/capture/devices) and scanning turned on for the organization.\n\nTo create a shipment from a rate confirmation document instead of typing it, use [Import from rate confirmation](/shipment-management/shipments/import).",
       "related": [
         "/shipment-management/orders",
         "/shipment-management/service-failures",
         "/shipment-management/shipments/import",
         "/dispatch/console",
-        "/billing/queue"
+        "/billing/queue",
+        "/intake"
       ],
       "covers": [],
       "createAction": {

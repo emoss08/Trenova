@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
@@ -82,6 +83,13 @@ type ResolverRoot interface {
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
 	BriefingSection() BriefingSectionResolver
+	CaptureBatch() CaptureBatchResolver
+	CaptureCoverSheet() CaptureCoverSheetResolver
+	CaptureDevice() CaptureDeviceResolver
+	CaptureItem() CaptureItemResolver
+	CapturePage() CapturePageResolver
+	CaptureRequest() CaptureRequestResolver
+	CaptureSettings() CaptureSettingsResolver
 	Carrier() CarrierResolver
 	CarrierAssignment() CarrierAssignmentResolver
 	CarrierAssignmentAccessorial() CarrierAssignmentAccessorialResolver
@@ -2756,6 +2764,260 @@ type ComplexityRoot struct {
 		Name          func(childComplexity int) int
 		Tags          func(childComplexity int) int
 		Version       func(childComplexity int) int
+	}
+
+	CaptureAccess struct {
+		CanCapture func(childComplexity int) int
+		Enabled    func(childComplexity int) int
+	}
+
+	CaptureAgentInstaller struct {
+		FileName func(childComplexity int) int
+		SHA256   func(childComplexity int) int
+		Size     func(childComplexity int) int
+		URL      func(childComplexity int) int
+	}
+
+	CaptureAgentRelease struct {
+		Installer           func(childComplexity int) int
+		MinimumWindowsBuild func(childComplexity int) int
+		Notes               func(childComplexity int) int
+		PublishedAt         func(childComplexity int) int
+		Version             func(childComplexity int) int
+	}
+
+	CaptureBatch struct {
+		BusinessUnitID    func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		Device            func(childComplexity int) int
+		DeviceID          func(childComplexity int) int
+		DocumentTypeID    func(childComplexity int) int
+		FailureMessage    func(childComplexity int) int
+		FiledItemCount    func(childComplexity int) int
+		ID                func(childComplexity int) int
+		IsEditable        func(childComplexity int) int
+		ItemCount         func(childComplexity int) int
+		Items             func(childComplexity int) int
+		JobName           func(childComplexity int) int
+		OpenItemCount     func(childComplexity int) int
+		OrganizationID    func(childComplexity int) int
+		Pages             func(childComplexity int) int
+		ProcessedAt       func(childComplexity int) int
+		ProfileID         func(childComplexity int) int
+		ReceivedPageCount func(childComplexity int) int
+		RequestID         func(childComplexity int) int
+		RetainUntil       func(childComplexity int) int
+		SealedAt          func(childComplexity int) int
+		Settings          func(childComplexity int) int
+		Source            func(childComplexity int) int
+		SourceName        func(childComplexity int) int
+		Status            func(childComplexity int) int
+		Target            func(childComplexity int) int
+		TargetID          func(childComplexity int) int
+		TargetType        func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		User              func(childComplexity int) int
+		UserID            func(childComplexity int) int
+		Version           func(childComplexity int) int
+	}
+
+	CaptureBatchConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	CaptureBatchEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	CaptureCoverSheet struct {
+		CreatedAt      func(childComplexity int) int
+		DocumentTypeID func(childComplexity int) int
+		ExpiresAt      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Payload        func(childComplexity int) int
+		QRCode         func(childComplexity int) int
+		Target         func(childComplexity int) int
+		TargetID       func(childComplexity int) int
+		TargetType     func(childComplexity int) int
+	}
+
+	CaptureDevice struct {
+		AgentVersion   func(childComplexity int) int
+		Architecture   func(childComplexity int) int
+		BusinessUnitID func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		ID             func(childComplexity int) int
+		IsOnline       func(childComplexity int) int
+		LastIP         func(childComplexity int) int
+		LastSeenAt     func(childComplexity int) int
+		MachineName    func(childComplexity int) int
+		Name           func(childComplexity int) int
+		OSVersion      func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		RevokedAt      func(childComplexity int) int
+		RevokedByID    func(childComplexity int) int
+		RevokedReason  func(childComplexity int) int
+		Sources        func(childComplexity int) int
+		Status         func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		User           func(childComplexity int) int
+		UserID         func(childComplexity int) int
+		Version        func(childComplexity int) int
+		WindowsUser    func(childComplexity int) int
+	}
+
+	CaptureItem struct {
+		BatchID              func(childComplexity int) int
+		CoverSheetID         func(childComplexity int) int
+		CreatedAt            func(childComplexity int) int
+		DetectedKind         func(childComplexity int) int
+		DocumentID           func(childComplexity int) int
+		FailureMessage       func(childComplexity int) int
+		FiledAt              func(childComplexity int) int
+		FiledByID            func(childComplexity int) int
+		FiledDocTypeID       func(childComplexity int) int
+		FiledID              func(childComplexity int) int
+		FiledRecord          func(childComplexity int) int
+		FiledType            func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		PageCount            func(childComplexity int) int
+		PageIDs              func(childComplexity int) int
+		Position             func(childComplexity int) int
+		Status               func(childComplexity int) int
+		SuggestedDocTypeID   func(childComplexity int) int
+		SuggestedID          func(childComplexity int) int
+		SuggestedRecord      func(childComplexity int) int
+		SuggestedType        func(childComplexity int) int
+		SuggestionConfidence func(childComplexity int) int
+		SuggestionReason     func(childComplexity int) int
+		SuggestionSource     func(childComplexity int) int
+		UpdatedAt            func(childComplexity int) int
+		Version              func(childComplexity int) int
+	}
+
+	CaptureItemFailure struct {
+		ItemID  func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
+	CapturePage struct {
+		BatchID                func(childComplexity int) int
+		BlankScore             func(childComplexity int) int
+		ByteSize               func(childComplexity int) int
+		ContentPath            func(childComplexity int) int
+		CreatedAt              func(childComplexity int) int
+		DPI                    func(childComplexity int) int
+		FailureMessage         func(childComplexity int) int
+		HeightPx               func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		IsBlank                func(childComplexity int) int
+		IsCoverSheet           func(childComplexity int) int
+		IsSeparator            func(childComplexity int) int
+		PatchCode              func(childComplexity int) int
+		Rotation               func(childComplexity int) int
+		Sequence               func(childComplexity int) int
+		Status                 func(childComplexity int) int
+		ThumbnailPath          func(childComplexity int) int
+		UnrecognizedCoverSheet func(childComplexity int) int
+		WidthPx                func(childComplexity int) int
+	}
+
+	CapturePairingPreview struct {
+		AgentVersion func(childComplexity int) int
+		Architecture func(childComplexity int) int
+		ClientIP     func(childComplexity int) int
+		ExpiresAt    func(childComplexity int) int
+		MachineName  func(childComplexity int) int
+		OSVersion    func(childComplexity int) int
+		UserCode     func(childComplexity int) int
+		WindowsUser  func(childComplexity int) int
+	}
+
+	CaptureProfile struct {
+		BusinessUnitID      func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		DPI                 func(childComplexity int) int
+		Description         func(childComplexity int) int
+		DiscardBlankPages   func(childComplexity int) int
+		Duplex              func(childComplexity int) int
+		FixedPageCount      func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		IsDefault           func(childComplexity int) int
+		JPEGQuality         func(childComplexity int) int
+		Name                func(childComplexity int) int
+		OrganizationID      func(childComplexity int) int
+		PixelType           func(childComplexity int) int
+		SeparatorStrategies func(childComplexity int) int
+		ShowDriverUI        func(childComplexity int) int
+		Status              func(childComplexity int) int
+		UpdatedAt           func(childComplexity int) int
+		UseFeeder           func(childComplexity int) int
+		Version             func(childComplexity int) int
+	}
+
+	CaptureQRCode struct {
+		Modules func(childComplexity int) int
+		Size    func(childComplexity int) int
+	}
+
+	CaptureRecordRef struct {
+		ID           func(childComplexity int) int
+		ResourceType func(childComplexity int) int
+		Subtitle     func(childComplexity int) int
+		Title        func(childComplexity int) int
+	}
+
+	CaptureRequest struct {
+		BatchID        func(childComplexity int) int
+		CompletedAt    func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		DeliveredAt    func(childComplexity int) int
+		DeviceID       func(childComplexity int) int
+		DocumentTypeID func(childComplexity int) int
+		ExpiresAt      func(childComplexity int) int
+		FailureCode    func(childComplexity int) int
+		FailureMessage func(childComplexity int) int
+		ID             func(childComplexity int) int
+		IsOpen         func(childComplexity int) int
+		Mode           func(childComplexity int) int
+		ProfileID      func(childComplexity int) int
+		SourceName     func(childComplexity int) int
+		Status         func(childComplexity int) int
+		TargetID       func(childComplexity int) int
+		TargetType     func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		UserID         func(childComplexity int) int
+		Version        func(childComplexity int) int
+	}
+
+	CaptureSettings struct {
+		Application   func(childComplexity int) int
+		Bitness       func(childComplexity int) int
+		BlankDiscard  func(childComplexity int) int
+		DPI           func(childComplexity int) int
+		DriverVersion func(childComplexity int) int
+		Duplex        func(childComplexity int) int
+		Feeder        func(childComplexity int) int
+		PixelType     func(childComplexity int) int
+		Protocol      func(childComplexity int) int
+		Refused       func(childComplexity int) int
+		ShowDriverUI  func(childComplexity int) int
+	}
+
+	CaptureSourceInfo struct {
+		Barcodes     func(childComplexity int) int
+		Bitness      func(childComplexity int) int
+		BlankDiscard func(childComplexity int) int
+		Duplex       func(childComplexity int) int
+		Feeder       func(childComplexity int) int
+		IsDefault    func(childComplexity int) int
+		Name         func(childComplexity int) int
+		PatchCodes   func(childComplexity int) int
+		Protocol     func(childComplexity int) int
+		Resolutions  func(childComplexity int) int
 	}
 
 	Carrier struct {
@@ -6110,6 +6372,11 @@ type ComplexityRoot struct {
 		WaivedAmount       func(childComplexity int) int
 	}
 
+	FileCaptureItemsResult struct {
+		Failures func(childComplexity int) int
+		Filed    func(childComplexity int) int
+	}
+
 	FiscalPeriod struct {
 		AdjustmentDeadline    func(childComplexity int) int
 		AllowAdjustingEntries func(childComplexity int) int
@@ -8009,6 +8276,7 @@ type ComplexityRoot struct {
 		ApplyCreditMemo                       func(childComplexity int, input gqlmodel.ApplyCreditMemoInput) int
 		ApplyUnappliedCustomerPayment         func(childComplexity int, input gqlmodel.ApplyCustomerPaymentInput) int
 		ApproveAgentMemorySuggestion          func(childComplexity int, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) int
+		ApproveCaptureDevicePairing           func(childComplexity int, userCode string, deviceName *string) int
 		ApproveCarrierSettlement              func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		ApproveDetentionOccurrence            func(childComplexity int, occurrenceID string) int
 		ApproveDriverSettlement               func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
@@ -8051,6 +8319,7 @@ type ComplexityRoot struct {
 		CalculateShipmentLoadingOptimization  func(childComplexity int, input gqlmodel.ShipmentLoadingOptimizationInput) int
 		CalculateShipmentTotals               func(childComplexity int, input gqlmodel.ShipmentInput) int
 		CancelBillingTransferRun              func(childComplexity int, id string) int
+		CancelCaptureRequest                  func(childComplexity int, id string) int
 		CancelDOTRandomDraw                   func(childComplexity int, id string, reason string) int
 		CancelDOTTest                         func(childComplexity int, id string, reason string) int
 		CancelExtractionEvalRun               func(childComplexity int, id string) int
@@ -8089,6 +8358,9 @@ type ComplexityRoot struct {
 		CreateAgentEvalCase                   func(childComplexity int, input gqlmodel.CreateAgentEvalCaseInput) int
 		CreateAgentMemory                     func(childComplexity int, input gqlmodel.AgentMemoryInput) int
 		CreateBenefitPlan                     func(childComplexity int, input gqlmodel.BenefitPlanInput) int
+		CreateCaptureCoverSheets              func(childComplexity int, sheets []*gqlmodel.CaptureCoverSheetInput) int
+		CreateCaptureProfile                  func(childComplexity int, input gqlmodel.CaptureProfileInput) int
+		CreateCaptureRequest                  func(childComplexity int, input gqlmodel.CreateCaptureRequestInput) int
 		CreateCarrierInvoiceMatch             func(childComplexity int, input gqlmodel.CreateCarrierInvoiceMatchInput) int
 		CreateDOTRandomPool                   func(childComplexity int, input gqlmodel.DOTRandomPoolInput) int
 		CreateDetentionPolicy                 func(childComplexity int, input gqlmodel.DetentionPolicyInput) int
@@ -8146,6 +8418,7 @@ type ComplexityRoot struct {
 		DecideMyProposal                      func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
 		DecideProfileChange                   func(childComplexity int, input gqlmodel.DecideProfileChangeInput) int
 		DelegateApproval                      func(childComplexity int, input gqlmodel.DelegateApprovalInput) int
+		DeleteCaptureProfile                  func(childComplexity int, id string) int
 		DeleteDetentionPolicy                 func(childComplexity int, id string) int
 		DeleteDocumentTemplate                func(childComplexity int, id string) int
 		DeleteDocumentTemplateVersion         func(childComplexity int, id string) int
@@ -8174,9 +8447,12 @@ type ComplexityRoot struct {
 		DeleteWorkerInjury                    func(childComplexity int, id string) int
 		DeleteWorkerRecognition               func(childComplexity int, id string) int
 		DeleteWorkerSafetyEvent               func(childComplexity int, id string) int
+		DenyCaptureDevicePairing              func(childComplexity int, userCode string) int
 		DetachOrderShipment                   func(childComplexity int, orderID string, shipmentID string) int
 		DetachPayEventFromSettlement          func(childComplexity int, input gqlmodel.DetachPayEventInput) int
 		DetentionBacktest                     func(childComplexity int, input gqlmodel.DetentionBacktestInput) int
+		DiscardCaptureBatch                   func(childComplexity int, id string, version int) int
+		DiscardCaptureItem                    func(childComplexity int, id string, version int) int
 		DiscardFuelPurchaseImport             func(childComplexity int, id string, version int, reason *string) int
 		DisconnectAccountingSystem            func(childComplexity int, integrationType integration.Type) int
 		DismissAccountingDrift                func(childComplexity int, input gqlmodel.DismissAccountingDriftInput) int
@@ -8191,12 +8467,15 @@ type ComplexityRoot struct {
 		DispatchUnassignMoves                 func(childComplexity int, moveIds []string) int
 		DisputeDetentionOccurrence            func(childComplexity int, input gqlmodel.DetentionDisputeInput) int
 		DuplicateShipment                     func(childComplexity int, input gqlmodel.ShipmentDuplicateInput) int
+		EditCaptureItems                      func(childComplexity int, batchID string, input gqlmodel.EditCaptureItemsInput) int
 		EnableAccountingSync                  func(childComplexity int, input gqlmodel.EnableAccountingSyncInput) int
 		EndBenefitEnrollment                  func(childComplexity int, input gqlmodel.EndBenefitEnrollmentInput) int
 		EndWorkerPTOPolicyAssignment          func(childComplexity int, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) int
 		EndWorkerPayAssignment                func(childComplexity int, input gqlmodel.EndWorkerPayAssignmentInput) int
 		EndWorkerShiftAssignment              func(childComplexity int, id string, effectiveTo int) int
 		EnrollBenefit                         func(childComplexity int, input gqlmodel.EnrollBenefitInput) int
+		FileCaptureItem                       func(childComplexity int, id string, input gqlmodel.FileCaptureItemInput) int
+		FileCaptureItems                      func(childComplexity int, items []*gqlmodel.FileCaptureItemsEntryInput) int
 		FinalizeDOTRandomDraw                 func(childComplexity int, id string) int
 		FinalizeIFTAReturn                    func(childComplexity int, id string, version int) int
 		ForkCannedReport                      func(childComplexity int, input gqlmodel.ForkCannedReportInput) int
@@ -8325,7 +8604,9 @@ type ComplexityRoot struct {
 		ReviewInboundMessage                  func(childComplexity int, id string, input gqlmodel.ReviewInboundMessageInput) int
 		ReviewWorkerSafetyEvent               func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
 		RevokeApprovalDelegation              func(childComplexity int, id string) int
+		RevokeCaptureDevice                   func(childComplexity int, id string, reason *string) int
 		RevokeCarrierIntelOverride            func(childComplexity int, id string, reason string) int
+		RevokeMyCaptureDevice                 func(childComplexity int, id string, reason *string) int
 		RevokeWorkerPortalAccess              func(childComplexity int, workerID string) int
 		RollbackDocumentTemplate              func(childComplexity int, versionID string, notes *string) int
 		RotateInboundMailboxToken             func(childComplexity int, id string) int
@@ -8386,6 +8667,7 @@ type ComplexityRoot struct {
 		UpdateAgentQualityControl             func(childComplexity int, input gqlmodel.UpdateAgentQualityControlInput) int
 		UpdateBenefitPlan                     func(childComplexity int, input gqlmodel.UpdateBenefitPlanInput) int
 		UpdateBillingQueueStatus              func(childComplexity int, id string, input gqlmodel.BillingQueueUpdateStatusInput) int
+		UpdateCaptureProfile                  func(childComplexity int, id string, version int, input gqlmodel.CaptureProfileInput) int
 		UpdateCarrierIntelControl             func(childComplexity int, input gqlmodel.CarrierIntelControlPatchInput) int
 		UpdateCarrierSettlementControl        func(childComplexity int, input gqlmodel.UpdateCarrierSettlementControlInput) int
 		UpdateCostCategory                    func(childComplexity int, input gqlmodel.CostCategoryUpdateInput) int
@@ -9459,6 +9741,7 @@ type ComplexityRoot struct {
 		AuditEntries                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AuditEntriesByResourceID            func(childComplexity int, input gqlmodel.DataTableConnectionInput, resourceID string) int
 		AuditEntry                          func(childComplexity int, id string) int
+		AvailableCaptureProfiles            func(childComplexity int) int
 		BenefitCosts                        func(childComplexity int, planYear *int) int
 		BenefitEnrollments                  func(childComplexity int, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) int
 		BenefitPlan                         func(childComplexity int, id string) int
@@ -9468,6 +9751,14 @@ type ComplexityRoot struct {
 		Briefing                            func(childComplexity int, id string) int
 		Briefings                           func(childComplexity int, input gqlmodel.ListBriefingsInput) int
 		CannedReports                       func(childComplexity int) int
+		CaptureAgentRelease                 func(childComplexity int) int
+		CaptureBatch                        func(childComplexity int, id string) int
+		CaptureBatches                      func(childComplexity int, input gqlmodel.CaptureBatchesInput) int
+		CaptureDevicePairing                func(childComplexity int, userCode string) int
+		CaptureDevices                      func(childComplexity int, status *capture.DeviceStatus, query *string) int
+		CaptureProfile                      func(childComplexity int, id string) int
+		CaptureProfiles                     func(childComplexity int, status *capture.ProfileStatus, query *string) int
+		CaptureRequestsForTarget            func(childComplexity int, targetType string, targetID string, limit *int) int
 		Carrier                             func(childComplexity int, id string) int
 		CarrierCostEvents                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		CarrierEquipmentVerifications       func(childComplexity int, carrierAssignmentID string) int
@@ -9668,6 +9959,8 @@ type ComplexityRoot struct {
 		MyAdvances                          func(childComplexity int) int
 		MyAgents                            func(childComplexity int, input gqlmodel.MyAgentsInput) int
 		MyAvailability                      func(childComplexity int) int
+		MyCaptureAccess                     func(childComplexity int) int
+		MyCaptureDevices                    func(childComplexity int, status *capture.DeviceStatus) int
 		MyCarrierIntelligence               func(childComplexity int, refresh *bool) int
 		MyComplianceProfile                 func(childComplexity int) int
 		MyCredentials                       func(childComplexity int) int
@@ -24971,6 +25264,1224 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CannedReport.Version(childComplexity), true
+
+	case "CaptureAccess.canCapture":
+		if e.ComplexityRoot.CaptureAccess.CanCapture == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAccess.CanCapture(childComplexity), true
+	case "CaptureAccess.enabled":
+		if e.ComplexityRoot.CaptureAccess.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAccess.Enabled(childComplexity), true
+
+	case "CaptureAgentInstaller.fileName":
+		if e.ComplexityRoot.CaptureAgentInstaller.FileName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentInstaller.FileName(childComplexity), true
+	case "CaptureAgentInstaller.sha256":
+		if e.ComplexityRoot.CaptureAgentInstaller.SHA256 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentInstaller.SHA256(childComplexity), true
+	case "CaptureAgentInstaller.size":
+		if e.ComplexityRoot.CaptureAgentInstaller.Size == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentInstaller.Size(childComplexity), true
+	case "CaptureAgentInstaller.url":
+		if e.ComplexityRoot.CaptureAgentInstaller.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentInstaller.URL(childComplexity), true
+
+	case "CaptureAgentRelease.installer":
+		if e.ComplexityRoot.CaptureAgentRelease.Installer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.Installer(childComplexity), true
+	case "CaptureAgentRelease.minimumWindowsBuild":
+		if e.ComplexityRoot.CaptureAgentRelease.MinimumWindowsBuild == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.MinimumWindowsBuild(childComplexity), true
+	case "CaptureAgentRelease.notes":
+		if e.ComplexityRoot.CaptureAgentRelease.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.Notes(childComplexity), true
+	case "CaptureAgentRelease.publishedAt":
+		if e.ComplexityRoot.CaptureAgentRelease.PublishedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.PublishedAt(childComplexity), true
+	case "CaptureAgentRelease.version":
+		if e.ComplexityRoot.CaptureAgentRelease.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.Version(childComplexity), true
+
+	case "CaptureBatch.businessUnitId":
+		if e.ComplexityRoot.CaptureBatch.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.BusinessUnitID(childComplexity), true
+	case "CaptureBatch.createdAt":
+		if e.ComplexityRoot.CaptureBatch.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.CreatedAt(childComplexity), true
+	case "CaptureBatch.device":
+		if e.ComplexityRoot.CaptureBatch.Device == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.Device(childComplexity), true
+	case "CaptureBatch.deviceId":
+		if e.ComplexityRoot.CaptureBatch.DeviceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.DeviceID(childComplexity), true
+	case "CaptureBatch.documentTypeId":
+		if e.ComplexityRoot.CaptureBatch.DocumentTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.DocumentTypeID(childComplexity), true
+	case "CaptureBatch.failureMessage":
+		if e.ComplexityRoot.CaptureBatch.FailureMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.FailureMessage(childComplexity), true
+	case "CaptureBatch.filedItemCount":
+		if e.ComplexityRoot.CaptureBatch.FiledItemCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.FiledItemCount(childComplexity), true
+	case "CaptureBatch.id":
+		if e.ComplexityRoot.CaptureBatch.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.ID(childComplexity), true
+	case "CaptureBatch.isEditable":
+		if e.ComplexityRoot.CaptureBatch.IsEditable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.IsEditable(childComplexity), true
+	case "CaptureBatch.itemCount":
+		if e.ComplexityRoot.CaptureBatch.ItemCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.ItemCount(childComplexity), true
+	case "CaptureBatch.items":
+		if e.ComplexityRoot.CaptureBatch.Items == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.Items(childComplexity), true
+	case "CaptureBatch.jobName":
+		if e.ComplexityRoot.CaptureBatch.JobName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.JobName(childComplexity), true
+	case "CaptureBatch.openItemCount":
+		if e.ComplexityRoot.CaptureBatch.OpenItemCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.OpenItemCount(childComplexity), true
+	case "CaptureBatch.organizationId":
+		if e.ComplexityRoot.CaptureBatch.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.OrganizationID(childComplexity), true
+	case "CaptureBatch.pages":
+		if e.ComplexityRoot.CaptureBatch.Pages == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.Pages(childComplexity), true
+	case "CaptureBatch.processedAt":
+		if e.ComplexityRoot.CaptureBatch.ProcessedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.ProcessedAt(childComplexity), true
+	case "CaptureBatch.profileId":
+		if e.ComplexityRoot.CaptureBatch.ProfileID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.ProfileID(childComplexity), true
+	case "CaptureBatch.receivedPageCount":
+		if e.ComplexityRoot.CaptureBatch.ReceivedPageCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.ReceivedPageCount(childComplexity), true
+	case "CaptureBatch.requestId":
+		if e.ComplexityRoot.CaptureBatch.RequestID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.RequestID(childComplexity), true
+	case "CaptureBatch.retainUntil":
+		if e.ComplexityRoot.CaptureBatch.RetainUntil == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.RetainUntil(childComplexity), true
+	case "CaptureBatch.sealedAt":
+		if e.ComplexityRoot.CaptureBatch.SealedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.SealedAt(childComplexity), true
+	case "CaptureBatch.settings":
+		if e.ComplexityRoot.CaptureBatch.Settings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.Settings(childComplexity), true
+	case "CaptureBatch.source":
+		if e.ComplexityRoot.CaptureBatch.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.Source(childComplexity), true
+	case "CaptureBatch.sourceName":
+		if e.ComplexityRoot.CaptureBatch.SourceName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.SourceName(childComplexity), true
+	case "CaptureBatch.status":
+		if e.ComplexityRoot.CaptureBatch.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.Status(childComplexity), true
+	case "CaptureBatch.target":
+		if e.ComplexityRoot.CaptureBatch.Target == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.Target(childComplexity), true
+	case "CaptureBatch.targetId":
+		if e.ComplexityRoot.CaptureBatch.TargetID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.TargetID(childComplexity), true
+	case "CaptureBatch.targetType":
+		if e.ComplexityRoot.CaptureBatch.TargetType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.TargetType(childComplexity), true
+	case "CaptureBatch.updatedAt":
+		if e.ComplexityRoot.CaptureBatch.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.UpdatedAt(childComplexity), true
+	case "CaptureBatch.user":
+		if e.ComplexityRoot.CaptureBatch.User == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.User(childComplexity), true
+	case "CaptureBatch.userId":
+		if e.ComplexityRoot.CaptureBatch.UserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.UserID(childComplexity), true
+	case "CaptureBatch.version":
+		if e.ComplexityRoot.CaptureBatch.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatch.Version(childComplexity), true
+
+	case "CaptureBatchConnection.edges":
+		if e.ComplexityRoot.CaptureBatchConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatchConnection.Edges(childComplexity), true
+	case "CaptureBatchConnection.pageInfo":
+		if e.ComplexityRoot.CaptureBatchConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatchConnection.PageInfo(childComplexity), true
+	case "CaptureBatchConnection.totalCount":
+		if e.ComplexityRoot.CaptureBatchConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatchConnection.TotalCount(childComplexity), true
+
+	case "CaptureBatchEdge.cursor":
+		if e.ComplexityRoot.CaptureBatchEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatchEdge.Cursor(childComplexity), true
+	case "CaptureBatchEdge.node":
+		if e.ComplexityRoot.CaptureBatchEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureBatchEdge.Node(childComplexity), true
+
+	case "CaptureCoverSheet.createdAt":
+		if e.ComplexityRoot.CaptureCoverSheet.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.CreatedAt(childComplexity), true
+	case "CaptureCoverSheet.documentTypeId":
+		if e.ComplexityRoot.CaptureCoverSheet.DocumentTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.DocumentTypeID(childComplexity), true
+	case "CaptureCoverSheet.expiresAt":
+		if e.ComplexityRoot.CaptureCoverSheet.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.ExpiresAt(childComplexity), true
+	case "CaptureCoverSheet.id":
+		if e.ComplexityRoot.CaptureCoverSheet.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.ID(childComplexity), true
+	case "CaptureCoverSheet.payload":
+		if e.ComplexityRoot.CaptureCoverSheet.Payload == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.Payload(childComplexity), true
+	case "CaptureCoverSheet.qrCode":
+		if e.ComplexityRoot.CaptureCoverSheet.QRCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.QRCode(childComplexity), true
+	case "CaptureCoverSheet.target":
+		if e.ComplexityRoot.CaptureCoverSheet.Target == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.Target(childComplexity), true
+	case "CaptureCoverSheet.targetId":
+		if e.ComplexityRoot.CaptureCoverSheet.TargetID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.TargetID(childComplexity), true
+	case "CaptureCoverSheet.targetType":
+		if e.ComplexityRoot.CaptureCoverSheet.TargetType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.TargetType(childComplexity), true
+
+	case "CaptureDevice.agentVersion":
+		if e.ComplexityRoot.CaptureDevice.AgentVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.AgentVersion(childComplexity), true
+	case "CaptureDevice.architecture":
+		if e.ComplexityRoot.CaptureDevice.Architecture == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.Architecture(childComplexity), true
+	case "CaptureDevice.businessUnitId":
+		if e.ComplexityRoot.CaptureDevice.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.BusinessUnitID(childComplexity), true
+	case "CaptureDevice.createdAt":
+		if e.ComplexityRoot.CaptureDevice.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.CreatedAt(childComplexity), true
+	case "CaptureDevice.id":
+		if e.ComplexityRoot.CaptureDevice.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.ID(childComplexity), true
+	case "CaptureDevice.isOnline":
+		if e.ComplexityRoot.CaptureDevice.IsOnline == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.IsOnline(childComplexity), true
+	case "CaptureDevice.lastIp":
+		if e.ComplexityRoot.CaptureDevice.LastIP == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.LastIP(childComplexity), true
+	case "CaptureDevice.lastSeenAt":
+		if e.ComplexityRoot.CaptureDevice.LastSeenAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.LastSeenAt(childComplexity), true
+	case "CaptureDevice.machineName":
+		if e.ComplexityRoot.CaptureDevice.MachineName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.MachineName(childComplexity), true
+	case "CaptureDevice.name":
+		if e.ComplexityRoot.CaptureDevice.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.Name(childComplexity), true
+	case "CaptureDevice.osVersion":
+		if e.ComplexityRoot.CaptureDevice.OSVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.OSVersion(childComplexity), true
+	case "CaptureDevice.organizationId":
+		if e.ComplexityRoot.CaptureDevice.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.OrganizationID(childComplexity), true
+	case "CaptureDevice.revokedAt":
+		if e.ComplexityRoot.CaptureDevice.RevokedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.RevokedAt(childComplexity), true
+	case "CaptureDevice.revokedById":
+		if e.ComplexityRoot.CaptureDevice.RevokedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.RevokedByID(childComplexity), true
+	case "CaptureDevice.revokedReason":
+		if e.ComplexityRoot.CaptureDevice.RevokedReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.RevokedReason(childComplexity), true
+	case "CaptureDevice.sources":
+		if e.ComplexityRoot.CaptureDevice.Sources == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.Sources(childComplexity), true
+	case "CaptureDevice.status":
+		if e.ComplexityRoot.CaptureDevice.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.Status(childComplexity), true
+	case "CaptureDevice.updatedAt":
+		if e.ComplexityRoot.CaptureDevice.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.UpdatedAt(childComplexity), true
+	case "CaptureDevice.user":
+		if e.ComplexityRoot.CaptureDevice.User == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.User(childComplexity), true
+	case "CaptureDevice.userId":
+		if e.ComplexityRoot.CaptureDevice.UserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.UserID(childComplexity), true
+	case "CaptureDevice.version":
+		if e.ComplexityRoot.CaptureDevice.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.Version(childComplexity), true
+	case "CaptureDevice.windowsUser":
+		if e.ComplexityRoot.CaptureDevice.WindowsUser == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureDevice.WindowsUser(childComplexity), true
+
+	case "CaptureItem.batchId":
+		if e.ComplexityRoot.CaptureItem.BatchID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.BatchID(childComplexity), true
+	case "CaptureItem.coverSheetId":
+		if e.ComplexityRoot.CaptureItem.CoverSheetID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.CoverSheetID(childComplexity), true
+	case "CaptureItem.createdAt":
+		if e.ComplexityRoot.CaptureItem.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.CreatedAt(childComplexity), true
+	case "CaptureItem.detectedKind":
+		if e.ComplexityRoot.CaptureItem.DetectedKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.DetectedKind(childComplexity), true
+	case "CaptureItem.documentId":
+		if e.ComplexityRoot.CaptureItem.DocumentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.DocumentID(childComplexity), true
+	case "CaptureItem.failureMessage":
+		if e.ComplexityRoot.CaptureItem.FailureMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.FailureMessage(childComplexity), true
+	case "CaptureItem.filedAt":
+		if e.ComplexityRoot.CaptureItem.FiledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.FiledAt(childComplexity), true
+	case "CaptureItem.filedById":
+		if e.ComplexityRoot.CaptureItem.FiledByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.FiledByID(childComplexity), true
+	case "CaptureItem.filedDocumentTypeId":
+		if e.ComplexityRoot.CaptureItem.FiledDocTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.FiledDocTypeID(childComplexity), true
+	case "CaptureItem.filedId":
+		if e.ComplexityRoot.CaptureItem.FiledID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.FiledID(childComplexity), true
+	case "CaptureItem.filedRecord":
+		if e.ComplexityRoot.CaptureItem.FiledRecord == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.FiledRecord(childComplexity), true
+	case "CaptureItem.filedType":
+		if e.ComplexityRoot.CaptureItem.FiledType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.FiledType(childComplexity), true
+	case "CaptureItem.id":
+		if e.ComplexityRoot.CaptureItem.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.ID(childComplexity), true
+	case "CaptureItem.pageCount":
+		if e.ComplexityRoot.CaptureItem.PageCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.PageCount(childComplexity), true
+	case "CaptureItem.pageIds":
+		if e.ComplexityRoot.CaptureItem.PageIDs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.PageIDs(childComplexity), true
+	case "CaptureItem.position":
+		if e.ComplexityRoot.CaptureItem.Position == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.Position(childComplexity), true
+	case "CaptureItem.status":
+		if e.ComplexityRoot.CaptureItem.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.Status(childComplexity), true
+	case "CaptureItem.suggestedDocumentTypeId":
+		if e.ComplexityRoot.CaptureItem.SuggestedDocTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.SuggestedDocTypeID(childComplexity), true
+	case "CaptureItem.suggestedId":
+		if e.ComplexityRoot.CaptureItem.SuggestedID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.SuggestedID(childComplexity), true
+	case "CaptureItem.suggestedRecord":
+		if e.ComplexityRoot.CaptureItem.SuggestedRecord == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.SuggestedRecord(childComplexity), true
+	case "CaptureItem.suggestedType":
+		if e.ComplexityRoot.CaptureItem.SuggestedType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.SuggestedType(childComplexity), true
+	case "CaptureItem.suggestionConfidence":
+		if e.ComplexityRoot.CaptureItem.SuggestionConfidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.SuggestionConfidence(childComplexity), true
+	case "CaptureItem.suggestionReason":
+		if e.ComplexityRoot.CaptureItem.SuggestionReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.SuggestionReason(childComplexity), true
+	case "CaptureItem.suggestionSource":
+		if e.ComplexityRoot.CaptureItem.SuggestionSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.SuggestionSource(childComplexity), true
+	case "CaptureItem.updatedAt":
+		if e.ComplexityRoot.CaptureItem.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.UpdatedAt(childComplexity), true
+	case "CaptureItem.version":
+		if e.ComplexityRoot.CaptureItem.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItem.Version(childComplexity), true
+
+	case "CaptureItemFailure.itemId":
+		if e.ComplexityRoot.CaptureItemFailure.ItemID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItemFailure.ItemID(childComplexity), true
+	case "CaptureItemFailure.message":
+		if e.ComplexityRoot.CaptureItemFailure.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureItemFailure.Message(childComplexity), true
+
+	case "CapturePage.batchId":
+		if e.ComplexityRoot.CapturePage.BatchID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.BatchID(childComplexity), true
+	case "CapturePage.blankScore":
+		if e.ComplexityRoot.CapturePage.BlankScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.BlankScore(childComplexity), true
+	case "CapturePage.byteSize":
+		if e.ComplexityRoot.CapturePage.ByteSize == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.ByteSize(childComplexity), true
+	case "CapturePage.contentPath":
+		if e.ComplexityRoot.CapturePage.ContentPath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.ContentPath(childComplexity), true
+	case "CapturePage.createdAt":
+		if e.ComplexityRoot.CapturePage.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.CreatedAt(childComplexity), true
+	case "CapturePage.dpi":
+		if e.ComplexityRoot.CapturePage.DPI == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.DPI(childComplexity), true
+	case "CapturePage.failureMessage":
+		if e.ComplexityRoot.CapturePage.FailureMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.FailureMessage(childComplexity), true
+	case "CapturePage.heightPx":
+		if e.ComplexityRoot.CapturePage.HeightPx == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.HeightPx(childComplexity), true
+	case "CapturePage.id":
+		if e.ComplexityRoot.CapturePage.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.ID(childComplexity), true
+	case "CapturePage.isBlank":
+		if e.ComplexityRoot.CapturePage.IsBlank == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.IsBlank(childComplexity), true
+	case "CapturePage.isCoverSheet":
+		if e.ComplexityRoot.CapturePage.IsCoverSheet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.IsCoverSheet(childComplexity), true
+	case "CapturePage.isSeparator":
+		if e.ComplexityRoot.CapturePage.IsSeparator == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.IsSeparator(childComplexity), true
+	case "CapturePage.patchCode":
+		if e.ComplexityRoot.CapturePage.PatchCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.PatchCode(childComplexity), true
+	case "CapturePage.rotation":
+		if e.ComplexityRoot.CapturePage.Rotation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.Rotation(childComplexity), true
+	case "CapturePage.sequence":
+		if e.ComplexityRoot.CapturePage.Sequence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.Sequence(childComplexity), true
+	case "CapturePage.status":
+		if e.ComplexityRoot.CapturePage.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.Status(childComplexity), true
+	case "CapturePage.thumbnailPath":
+		if e.ComplexityRoot.CapturePage.ThumbnailPath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.ThumbnailPath(childComplexity), true
+	case "CapturePage.unrecognizedCoverSheet":
+		if e.ComplexityRoot.CapturePage.UnrecognizedCoverSheet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.UnrecognizedCoverSheet(childComplexity), true
+	case "CapturePage.widthPx":
+		if e.ComplexityRoot.CapturePage.WidthPx == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePage.WidthPx(childComplexity), true
+
+	case "CapturePairingPreview.agentVersion":
+		if e.ComplexityRoot.CapturePairingPreview.AgentVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePairingPreview.AgentVersion(childComplexity), true
+	case "CapturePairingPreview.architecture":
+		if e.ComplexityRoot.CapturePairingPreview.Architecture == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePairingPreview.Architecture(childComplexity), true
+	case "CapturePairingPreview.clientIp":
+		if e.ComplexityRoot.CapturePairingPreview.ClientIP == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePairingPreview.ClientIP(childComplexity), true
+	case "CapturePairingPreview.expiresAt":
+		if e.ComplexityRoot.CapturePairingPreview.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePairingPreview.ExpiresAt(childComplexity), true
+	case "CapturePairingPreview.machineName":
+		if e.ComplexityRoot.CapturePairingPreview.MachineName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePairingPreview.MachineName(childComplexity), true
+	case "CapturePairingPreview.osVersion":
+		if e.ComplexityRoot.CapturePairingPreview.OSVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePairingPreview.OSVersion(childComplexity), true
+	case "CapturePairingPreview.userCode":
+		if e.ComplexityRoot.CapturePairingPreview.UserCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePairingPreview.UserCode(childComplexity), true
+	case "CapturePairingPreview.windowsUser":
+		if e.ComplexityRoot.CapturePairingPreview.WindowsUser == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CapturePairingPreview.WindowsUser(childComplexity), true
+
+	case "CaptureProfile.businessUnitId":
+		if e.ComplexityRoot.CaptureProfile.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.BusinessUnitID(childComplexity), true
+	case "CaptureProfile.createdAt":
+		if e.ComplexityRoot.CaptureProfile.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.CreatedAt(childComplexity), true
+	case "CaptureProfile.dpi":
+		if e.ComplexityRoot.CaptureProfile.DPI == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.DPI(childComplexity), true
+	case "CaptureProfile.description":
+		if e.ComplexityRoot.CaptureProfile.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.Description(childComplexity), true
+	case "CaptureProfile.discardBlankPages":
+		if e.ComplexityRoot.CaptureProfile.DiscardBlankPages == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.DiscardBlankPages(childComplexity), true
+	case "CaptureProfile.duplex":
+		if e.ComplexityRoot.CaptureProfile.Duplex == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.Duplex(childComplexity), true
+	case "CaptureProfile.fixedPageCount":
+		if e.ComplexityRoot.CaptureProfile.FixedPageCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.FixedPageCount(childComplexity), true
+	case "CaptureProfile.id":
+		if e.ComplexityRoot.CaptureProfile.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.ID(childComplexity), true
+	case "CaptureProfile.isDefault":
+		if e.ComplexityRoot.CaptureProfile.IsDefault == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.IsDefault(childComplexity), true
+	case "CaptureProfile.jpegQuality":
+		if e.ComplexityRoot.CaptureProfile.JPEGQuality == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.JPEGQuality(childComplexity), true
+	case "CaptureProfile.name":
+		if e.ComplexityRoot.CaptureProfile.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.Name(childComplexity), true
+	case "CaptureProfile.organizationId":
+		if e.ComplexityRoot.CaptureProfile.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.OrganizationID(childComplexity), true
+	case "CaptureProfile.pixelType":
+		if e.ComplexityRoot.CaptureProfile.PixelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.PixelType(childComplexity), true
+	case "CaptureProfile.separatorStrategies":
+		if e.ComplexityRoot.CaptureProfile.SeparatorStrategies == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.SeparatorStrategies(childComplexity), true
+	case "CaptureProfile.showDriverUi":
+		if e.ComplexityRoot.CaptureProfile.ShowDriverUI == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.ShowDriverUI(childComplexity), true
+	case "CaptureProfile.status":
+		if e.ComplexityRoot.CaptureProfile.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.Status(childComplexity), true
+	case "CaptureProfile.updatedAt":
+		if e.ComplexityRoot.CaptureProfile.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.UpdatedAt(childComplexity), true
+	case "CaptureProfile.useFeeder":
+		if e.ComplexityRoot.CaptureProfile.UseFeeder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.UseFeeder(childComplexity), true
+	case "CaptureProfile.version":
+		if e.ComplexityRoot.CaptureProfile.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureProfile.Version(childComplexity), true
+
+	case "CaptureQRCode.modules":
+		if e.ComplexityRoot.CaptureQRCode.Modules == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureQRCode.Modules(childComplexity), true
+	case "CaptureQRCode.size":
+		if e.ComplexityRoot.CaptureQRCode.Size == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureQRCode.Size(childComplexity), true
+
+	case "CaptureRecordRef.id":
+		if e.ComplexityRoot.CaptureRecordRef.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRecordRef.ID(childComplexity), true
+	case "CaptureRecordRef.resourceType":
+		if e.ComplexityRoot.CaptureRecordRef.ResourceType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRecordRef.ResourceType(childComplexity), true
+	case "CaptureRecordRef.subtitle":
+		if e.ComplexityRoot.CaptureRecordRef.Subtitle == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRecordRef.Subtitle(childComplexity), true
+	case "CaptureRecordRef.title":
+		if e.ComplexityRoot.CaptureRecordRef.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRecordRef.Title(childComplexity), true
+
+	case "CaptureRequest.batchId":
+		if e.ComplexityRoot.CaptureRequest.BatchID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.BatchID(childComplexity), true
+	case "CaptureRequest.completedAt":
+		if e.ComplexityRoot.CaptureRequest.CompletedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.CompletedAt(childComplexity), true
+	case "CaptureRequest.createdAt":
+		if e.ComplexityRoot.CaptureRequest.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.CreatedAt(childComplexity), true
+	case "CaptureRequest.deliveredAt":
+		if e.ComplexityRoot.CaptureRequest.DeliveredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.DeliveredAt(childComplexity), true
+	case "CaptureRequest.deviceId":
+		if e.ComplexityRoot.CaptureRequest.DeviceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.DeviceID(childComplexity), true
+	case "CaptureRequest.documentTypeId":
+		if e.ComplexityRoot.CaptureRequest.DocumentTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.DocumentTypeID(childComplexity), true
+	case "CaptureRequest.expiresAt":
+		if e.ComplexityRoot.CaptureRequest.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.ExpiresAt(childComplexity), true
+	case "CaptureRequest.failureCode":
+		if e.ComplexityRoot.CaptureRequest.FailureCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.FailureCode(childComplexity), true
+	case "CaptureRequest.failureMessage":
+		if e.ComplexityRoot.CaptureRequest.FailureMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.FailureMessage(childComplexity), true
+	case "CaptureRequest.id":
+		if e.ComplexityRoot.CaptureRequest.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.ID(childComplexity), true
+	case "CaptureRequest.isOpen":
+		if e.ComplexityRoot.CaptureRequest.IsOpen == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.IsOpen(childComplexity), true
+	case "CaptureRequest.mode":
+		if e.ComplexityRoot.CaptureRequest.Mode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.Mode(childComplexity), true
+	case "CaptureRequest.profileId":
+		if e.ComplexityRoot.CaptureRequest.ProfileID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.ProfileID(childComplexity), true
+	case "CaptureRequest.sourceName":
+		if e.ComplexityRoot.CaptureRequest.SourceName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.SourceName(childComplexity), true
+	case "CaptureRequest.status":
+		if e.ComplexityRoot.CaptureRequest.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.Status(childComplexity), true
+	case "CaptureRequest.targetId":
+		if e.ComplexityRoot.CaptureRequest.TargetID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.TargetID(childComplexity), true
+	case "CaptureRequest.targetType":
+		if e.ComplexityRoot.CaptureRequest.TargetType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.TargetType(childComplexity), true
+	case "CaptureRequest.updatedAt":
+		if e.ComplexityRoot.CaptureRequest.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.UpdatedAt(childComplexity), true
+	case "CaptureRequest.userId":
+		if e.ComplexityRoot.CaptureRequest.UserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.UserID(childComplexity), true
+	case "CaptureRequest.version":
+		if e.ComplexityRoot.CaptureRequest.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureRequest.Version(childComplexity), true
+
+	case "CaptureSettings.application":
+		if e.ComplexityRoot.CaptureSettings.Application == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.Application(childComplexity), true
+	case "CaptureSettings.bitness":
+		if e.ComplexityRoot.CaptureSettings.Bitness == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.Bitness(childComplexity), true
+	case "CaptureSettings.blankDiscard":
+		if e.ComplexityRoot.CaptureSettings.BlankDiscard == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.BlankDiscard(childComplexity), true
+	case "CaptureSettings.dpi":
+		if e.ComplexityRoot.CaptureSettings.DPI == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.DPI(childComplexity), true
+	case "CaptureSettings.driverVersion":
+		if e.ComplexityRoot.CaptureSettings.DriverVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.DriverVersion(childComplexity), true
+	case "CaptureSettings.duplex":
+		if e.ComplexityRoot.CaptureSettings.Duplex == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.Duplex(childComplexity), true
+	case "CaptureSettings.feeder":
+		if e.ComplexityRoot.CaptureSettings.Feeder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.Feeder(childComplexity), true
+	case "CaptureSettings.pixelType":
+		if e.ComplexityRoot.CaptureSettings.PixelType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.PixelType(childComplexity), true
+	case "CaptureSettings.protocol":
+		if e.ComplexityRoot.CaptureSettings.Protocol == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.Protocol(childComplexity), true
+	case "CaptureSettings.refused":
+		if e.ComplexityRoot.CaptureSettings.Refused == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.Refused(childComplexity), true
+	case "CaptureSettings.showDriverUi":
+		if e.ComplexityRoot.CaptureSettings.ShowDriverUI == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSettings.ShowDriverUI(childComplexity), true
+
+	case "CaptureSourceInfo.barcodes":
+		if e.ComplexityRoot.CaptureSourceInfo.Barcodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.Barcodes(childComplexity), true
+	case "CaptureSourceInfo.bitness":
+		if e.ComplexityRoot.CaptureSourceInfo.Bitness == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.Bitness(childComplexity), true
+	case "CaptureSourceInfo.blankDiscard":
+		if e.ComplexityRoot.CaptureSourceInfo.BlankDiscard == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.BlankDiscard(childComplexity), true
+	case "CaptureSourceInfo.duplex":
+		if e.ComplexityRoot.CaptureSourceInfo.Duplex == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.Duplex(childComplexity), true
+	case "CaptureSourceInfo.feeder":
+		if e.ComplexityRoot.CaptureSourceInfo.Feeder == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.Feeder(childComplexity), true
+	case "CaptureSourceInfo.isDefault":
+		if e.ComplexityRoot.CaptureSourceInfo.IsDefault == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.IsDefault(childComplexity), true
+	case "CaptureSourceInfo.name":
+		if e.ComplexityRoot.CaptureSourceInfo.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.Name(childComplexity), true
+	case "CaptureSourceInfo.patchCodes":
+		if e.ComplexityRoot.CaptureSourceInfo.PatchCodes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.PatchCodes(childComplexity), true
+	case "CaptureSourceInfo.protocol":
+		if e.ComplexityRoot.CaptureSourceInfo.Protocol == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.Protocol(childComplexity), true
+	case "CaptureSourceInfo.resolutions":
+		if e.ComplexityRoot.CaptureSourceInfo.Resolutions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureSourceInfo.Resolutions(childComplexity), true
 
 	case "Carrier.addressLine1":
 		if e.ComplexityRoot.Carrier.AddressLine1 == nil {
@@ -40681,6 +42192,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.FacilityDetentionStat.WaivedAmount(childComplexity), true
 
+	case "FileCaptureItemsResult.failures":
+		if e.ComplexityRoot.FileCaptureItemsResult.Failures == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FileCaptureItemsResult.Failures(childComplexity), true
+	case "FileCaptureItemsResult.filed":
+		if e.ComplexityRoot.FileCaptureItemsResult.Filed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FileCaptureItemsResult.Filed(childComplexity), true
+
 	case "FiscalPeriod.adjustmentDeadline":
 		if e.ComplexityRoot.FiscalPeriod.AdjustmentDeadline == nil {
 			break
@@ -49634,6 +51158,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ApproveAgentMemorySuggestion(childComplexity, args["id"].(string), args["input"].(gqlmodel.ApproveAgentMemorySuggestionInput)), true
+	case "Mutation.approveCaptureDevicePairing":
+		if e.ComplexityRoot.Mutation.ApproveCaptureDevicePairing == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_approveCaptureDevicePairing_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ApproveCaptureDevicePairing(childComplexity, args["userCode"].(string), args["deviceName"].(*string)), true
 	case "Mutation.approveCarrierSettlement":
 		if e.ComplexityRoot.Mutation.ApproveCarrierSettlement == nil {
 			break
@@ -50096,6 +51631,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CancelBillingTransferRun(childComplexity, args["id"].(string)), true
+	case "Mutation.cancelCaptureRequest":
+		if e.ComplexityRoot.Mutation.CancelCaptureRequest == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_cancelCaptureRequest_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CancelCaptureRequest(childComplexity, args["id"].(string)), true
 	case "Mutation.cancelDotRandomDraw":
 		if e.ComplexityRoot.Mutation.CancelDOTRandomDraw == nil {
 			break
@@ -50514,6 +52060,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateBenefitPlan(childComplexity, args["input"].(gqlmodel.BenefitPlanInput)), true
+	case "Mutation.createCaptureCoverSheets":
+		if e.ComplexityRoot.Mutation.CreateCaptureCoverSheets == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCaptureCoverSheets_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateCaptureCoverSheets(childComplexity, args["sheets"].([]*gqlmodel.CaptureCoverSheetInput)), true
+	case "Mutation.createCaptureProfile":
+		if e.ComplexityRoot.Mutation.CreateCaptureProfile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCaptureProfile_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateCaptureProfile(childComplexity, args["input"].(gqlmodel.CaptureProfileInput)), true
+	case "Mutation.createCaptureRequest":
+		if e.ComplexityRoot.Mutation.CreateCaptureRequest == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCaptureRequest_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateCaptureRequest(childComplexity, args["input"].(gqlmodel.CreateCaptureRequestInput)), true
 	case "Mutation.createCarrierInvoiceMatch":
 		if e.ComplexityRoot.Mutation.CreateCarrierInvoiceMatch == nil {
 			break
@@ -51141,6 +52720,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DelegateApproval(childComplexity, args["input"].(gqlmodel.DelegateApprovalInput)), true
+	case "Mutation.deleteCaptureProfile":
+		if e.ComplexityRoot.Mutation.DeleteCaptureProfile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteCaptureProfile_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteCaptureProfile(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteDetentionPolicy":
 		if e.ComplexityRoot.Mutation.DeleteDetentionPolicy == nil {
 			break
@@ -51449,6 +53039,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteWorkerSafetyEvent(childComplexity, args["id"].(string)), true
+	case "Mutation.denyCaptureDevicePairing":
+		if e.ComplexityRoot.Mutation.DenyCaptureDevicePairing == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_denyCaptureDevicePairing_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DenyCaptureDevicePairing(childComplexity, args["userCode"].(string)), true
 	case "Mutation.detachOrderShipment":
 		if e.ComplexityRoot.Mutation.DetachOrderShipment == nil {
 			break
@@ -51482,6 +53083,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DetentionBacktest(childComplexity, args["input"].(gqlmodel.DetentionBacktestInput)), true
+	case "Mutation.discardCaptureBatch":
+		if e.ComplexityRoot.Mutation.DiscardCaptureBatch == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_discardCaptureBatch_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DiscardCaptureBatch(childComplexity, args["id"].(string), args["version"].(int)), true
+	case "Mutation.discardCaptureItem":
+		if e.ComplexityRoot.Mutation.DiscardCaptureItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_discardCaptureItem_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DiscardCaptureItem(childComplexity, args["id"].(string), args["version"].(int)), true
 	case "Mutation.discardFuelPurchaseImport":
 		if e.ComplexityRoot.Mutation.DiscardFuelPurchaseImport == nil {
 			break
@@ -51636,6 +53259,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DuplicateShipment(childComplexity, args["input"].(gqlmodel.ShipmentDuplicateInput)), true
+	case "Mutation.editCaptureItems":
+		if e.ComplexityRoot.Mutation.EditCaptureItems == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editCaptureItems_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.EditCaptureItems(childComplexity, args["batchId"].(string), args["input"].(gqlmodel.EditCaptureItemsInput)), true
 	case "Mutation.enableAccountingSync":
 		if e.ComplexityRoot.Mutation.EnableAccountingSync == nil {
 			break
@@ -51702,6 +53336,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.EnrollBenefit(childComplexity, args["input"].(gqlmodel.EnrollBenefitInput)), true
+	case "Mutation.fileCaptureItem":
+		if e.ComplexityRoot.Mutation.FileCaptureItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_fileCaptureItem_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.FileCaptureItem(childComplexity, args["id"].(string), args["input"].(gqlmodel.FileCaptureItemInput)), true
+	case "Mutation.fileCaptureItems":
+		if e.ComplexityRoot.Mutation.FileCaptureItems == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_fileCaptureItems_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.FileCaptureItems(childComplexity, args["items"].([]*gqlmodel.FileCaptureItemsEntryInput)), true
 	case "Mutation.finalizeDotRandomDraw":
 		if e.ComplexityRoot.Mutation.FinalizeDOTRandomDraw == nil {
 			break
@@ -53090,6 +54746,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RevokeApprovalDelegation(childComplexity, args["id"].(string)), true
+	case "Mutation.revokeCaptureDevice":
+		if e.ComplexityRoot.Mutation.RevokeCaptureDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_revokeCaptureDevice_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RevokeCaptureDevice(childComplexity, args["id"].(string), args["reason"].(*string)), true
 	case "Mutation.revokeCarrierIntelOverride":
 		if e.ComplexityRoot.Mutation.RevokeCarrierIntelOverride == nil {
 			break
@@ -53101,6 +54768,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RevokeCarrierIntelOverride(childComplexity, args["id"].(string), args["reason"].(string)), true
+	case "Mutation.revokeMyCaptureDevice":
+		if e.ComplexityRoot.Mutation.RevokeMyCaptureDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_revokeMyCaptureDevice_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RevokeMyCaptureDevice(childComplexity, args["id"].(string), args["reason"].(*string)), true
 	case "Mutation.revokeWorkerPortalAccess":
 		if e.ComplexityRoot.Mutation.RevokeWorkerPortalAccess == nil {
 			break
@@ -53761,6 +55439,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateBillingQueueStatus(childComplexity, args["id"].(string), args["input"].(gqlmodel.BillingQueueUpdateStatusInput)), true
+	case "Mutation.updateCaptureProfile":
+		if e.ComplexityRoot.Mutation.UpdateCaptureProfile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateCaptureProfile_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateCaptureProfile(childComplexity, args["id"].(string), args["version"].(int), args["input"].(gqlmodel.CaptureProfileInput)), true
 	case "Mutation.updateCarrierIntelControl":
 		if e.ComplexityRoot.Mutation.UpdateCarrierIntelControl == nil {
 			break
@@ -59669,6 +61358,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AuditEntry(childComplexity, args["id"].(string)), true
+	case "Query.availableCaptureProfiles":
+		if e.ComplexityRoot.Query.AvailableCaptureProfiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AvailableCaptureProfiles(childComplexity), true
 	case "Query.benefitCosts":
 		if e.ComplexityRoot.Query.BenefitCosts == nil {
 			break
@@ -59763,6 +61458,89 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.CannedReports(childComplexity), true
+	case "Query.captureAgentRelease":
+		if e.ComplexityRoot.Query.CaptureAgentRelease == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CaptureAgentRelease(childComplexity), true
+	case "Query.captureBatch":
+		if e.ComplexityRoot.Query.CaptureBatch == nil {
+			break
+		}
+
+		args, err := ec.field_Query_captureBatch_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CaptureBatch(childComplexity, args["id"].(string)), true
+	case "Query.captureBatches":
+		if e.ComplexityRoot.Query.CaptureBatches == nil {
+			break
+		}
+
+		args, err := ec.field_Query_captureBatches_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CaptureBatches(childComplexity, args["input"].(gqlmodel.CaptureBatchesInput)), true
+	case "Query.captureDevicePairing":
+		if e.ComplexityRoot.Query.CaptureDevicePairing == nil {
+			break
+		}
+
+		args, err := ec.field_Query_captureDevicePairing_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CaptureDevicePairing(childComplexity, args["userCode"].(string)), true
+	case "Query.captureDevices":
+		if e.ComplexityRoot.Query.CaptureDevices == nil {
+			break
+		}
+
+		args, err := ec.field_Query_captureDevices_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CaptureDevices(childComplexity, args["status"].(*capture.DeviceStatus), args["query"].(*string)), true
+	case "Query.captureProfile":
+		if e.ComplexityRoot.Query.CaptureProfile == nil {
+			break
+		}
+
+		args, err := ec.field_Query_captureProfile_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CaptureProfile(childComplexity, args["id"].(string)), true
+	case "Query.captureProfiles":
+		if e.ComplexityRoot.Query.CaptureProfiles == nil {
+			break
+		}
+
+		args, err := ec.field_Query_captureProfiles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CaptureProfiles(childComplexity, args["status"].(*capture.ProfileStatus), args["query"].(*string)), true
+	case "Query.captureRequestsForTarget":
+		if e.ComplexityRoot.Query.CaptureRequestsForTarget == nil {
+			break
+		}
+
+		args, err := ec.field_Query_captureRequestsForTarget_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CaptureRequestsForTarget(childComplexity, args["targetType"].(string), args["targetId"].(string), args["limit"].(*int)), true
 	case "Query.carrier":
 		if e.ComplexityRoot.Query.Carrier == nil {
 			break
@@ -61819,6 +63597,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyAvailability(childComplexity), true
+	case "Query.myCaptureAccess":
+		if e.ComplexityRoot.Query.MyCaptureAccess == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.MyCaptureAccess(childComplexity), true
+	case "Query.myCaptureDevices":
+		if e.ComplexityRoot.Query.MyCaptureDevices == nil {
+			break
+		}
+
+		args, err := ec.field_Query_myCaptureDevices_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MyCaptureDevices(childComplexity, args["status"].(*capture.DeviceStatus)), true
 	case "Query.myCarrierIntelligence":
 		if e.ComplexityRoot.Query.MyCarrierIntelligence == nil {
 			break
@@ -81987,6 +83782,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCancelFuelCardInput,
 		ec.unmarshalInputCancelWorkerChecklistInput,
 		ec.unmarshalInputCancelWorkerTrainingInput,
+		ec.unmarshalInputCaptureBatchesInput,
+		ec.unmarshalInputCaptureCoverSheetInput,
+		ec.unmarshalInputCaptureItemLayoutInput,
+		ec.unmarshalInputCapturePageRotationInput,
+		ec.unmarshalInputCaptureProfileInput,
 		ec.unmarshalInputCarrierIntelControlPatchInput,
 		ec.unmarshalInputCarrierIntelEventFilterInput,
 		ec.unmarshalInputCarrierIntelLookupInput,
@@ -82007,6 +83807,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCostingControlInput,
 		ec.unmarshalInputCreateAccountingReferenceRecordInput,
 		ec.unmarshalInputCreateAgentEvalCaseInput,
+		ec.unmarshalInputCreateCaptureRequestInput,
 		ec.unmarshalInputCreateCarrierInvoiceMatchInput,
 		ec.unmarshalInputCreateDocumentTemplateVersionInput,
 		ec.unmarshalInputCreateFuelPurchaseImportInput,
@@ -82054,6 +83855,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDocumentTemplatePreviewInput,
 		ec.unmarshalInputDocumentTemplateVersionInput,
 		ec.unmarshalInputDriverSettlementActionInput,
+		ec.unmarshalInputEditCaptureItemsInput,
 		ec.unmarshalInputEnableAccountingSyncInput,
 		ec.unmarshalInputEndBenefitEnrollmentInput,
 		ec.unmarshalInputEndWorkerPTOPolicyAssignmentInput,
@@ -82064,6 +83866,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputEquipmentTypeInput,
 		ec.unmarshalInputEquipmentTypePatchInput,
 		ec.unmarshalInputFieldFilterInput,
+		ec.unmarshalInputFileCaptureItemInput,
+		ec.unmarshalInputFileCaptureItemsEntryInput,
 		ec.unmarshalInputFilterGroupInput,
 		ec.unmarshalInputFleetSafetyInput,
 		ec.unmarshalInputForkCannedReportInput,
@@ -87600,6 +89404,623 @@ extend type Mutation {
   markBriefingRead(id: ID!): Briefing!
   "Writes today's page again from current figures, replacing what was there."
   regenerateBriefing(input: TodaysBriefingInput!): Briefing!
+}
+`, BuiltIn: false},
+	{Name: "../schema/capture.graphqls", Input: `"Whether a paired companion may still act for its person."
+enum CaptureDeviceStatus {
+  Active
+  Revoked
+}
+
+"The processor a companion was built for. Trenova Capture ships for 64-bit Windows only."
+enum CaptureArchitecture {
+  x64
+}
+
+"How the pages reached Trenova: from a scanner, or from another program's print dialog."
+enum CaptureSource {
+  Scan
+  Print
+}
+
+"What a request asks the companion to do."
+enum CaptureRequestMode {
+  Scan
+  Print
+}
+
+"How far a request to a companion has got."
+enum CaptureRequestStatus {
+  Pending
+  Delivered
+  InProgress
+  Completed
+  Canceled
+  Expired
+  Failed
+}
+
+"Why a companion could not carry out a request."
+enum CaptureRequestFailureCode {
+  SOURCE_UNAVAILABLE
+  SOURCE_BUSY
+  PAPER_JAM
+  FEEDER_EMPTY
+  CANCELED_BY_USER
+  DRIVER_ERROR
+  UPLOAD_FAILED
+  NOT_DELIVERED
+  INTERNAL
+}
+
+"How far a captured stack has got, from the first page arriving to the last document being filed."
+enum CaptureBatchStatus {
+  Receiving
+  Sealed
+  Processing
+  Ready
+  PartiallyFiled
+  Filed
+  Discarded
+  Expired
+  Failed
+}
+
+"Whether a page could be read."
+enum CapturePageStatus {
+  Received
+  Processed
+  Failed
+}
+
+"Where one proposed document is: waiting on a person, being filed, done, or thrown away."
+enum CaptureItemStatus {
+  Proposed
+  Filing
+  Filed
+  Discarded
+  Failed
+}
+
+"What suggested where a document goes."
+enum CaptureSuggestionSource {
+  CoverSheet
+  Request
+  Classifier
+  Person
+}
+
+"The colour mode a profile scans in."
+enum CapturePixelType {
+  BlackWhite
+  Grayscale
+  Color
+}
+
+"A rule for where one document in a stack ends and the next begins."
+enum CaptureSeparatorStrategy {
+  PatchCode
+  CoverSheet
+  BlankPage
+  FixedPageCount
+}
+
+"Whether a profile is still offered when somebody starts a scan."
+enum CaptureProfileStatus {
+  Active
+  Inactive
+}
+
+"The Windows scanning interface a source speaks."
+enum CaptureSourceProtocol {
+  TWAIN
+  WIA
+}
+
+"A scanner a companion can reach, as the companion reported it."
+type CaptureSourceInfo {
+  name: String!
+  protocol: CaptureSourceProtocol!
+  "32 or 64: the driver's own, which decides which scan helper the companion starts for it."
+  bitness: Int!
+  isDefault: Boolean!
+  duplex: Boolean!
+  feeder: Boolean!
+  patchCodes: Boolean!
+  barcodes: Boolean!
+  blankDiscard: Boolean!
+  "The resolutions the source accepts, so the scan dialog only offers those."
+  resolutions: [Int!]!
+}
+
+"""
+A Trenova Capture companion paired to a person.
+
+It acts as that person: everything it uploads is checked against their
+permissions, and it stops working the moment they lose them. Its credential is
+never returned.
+"""
+type CaptureDevice {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  userId: ID!
+  "The person the device acts for, when the reader may see them."
+  user: User
+  name: String!
+  machineName: String!
+  windowsUser: String!
+  agentVersion: String!
+  architecture: CaptureArchitecture!
+  osVersion: String!
+  status: CaptureDeviceStatus!
+  sources: [CaptureSourceInfo!]!
+  lastSeenAt: Timestamp
+  "Whether the companion has an open connection right now."
+  isOnline: Boolean!
+  lastIp: String!
+  revokedAt: Timestamp
+  revokedById: ID
+  revokedReason: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+The machine asking to pair, as it described itself. Shown to the person
+before they approve, so a code read off somebody else's screen is
+recognisably not theirs.
+"""
+type CapturePairingPreview {
+  userCode: String!
+  machineName: String!
+  windowsUser: String!
+  agentVersion: String!
+  architecture: CaptureArchitecture!
+  osVersion: String!
+  "The address the request came from."
+  clientIp: String!
+  expiresAt: Timestamp!
+}
+
+"A named set of scanner settings people pick from when they start a scan."
+type CaptureProfile {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  status: CaptureProfileStatus!
+  "The profile a scan uses when nobody picks one."
+  isDefault: Boolean!
+  dpi: Int!
+  pixelType: CapturePixelType!
+  duplex: Boolean!
+  useFeeder: Boolean!
+  discardBlankPages: Boolean!
+  "JPEG quality for colour and greyscale pages, between 30 and 95."
+  jpegQuality: Int!
+  "Whether the scanner's own dialog opens, for sources that need it."
+  showDriverUi: Boolean!
+  separatorStrategies: [CaptureSeparatorStrategy!]!
+  "How many pages each document has, when splitting by page count."
+  fixedPageCount: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input CaptureProfileInput {
+  name: String!
+  description: String
+  status: CaptureProfileStatus!
+  isDefault: Boolean!
+  dpi: Int!
+  pixelType: CapturePixelType!
+  duplex: Boolean!
+  useFeeder: Boolean!
+  discardBlankPages: Boolean!
+  jpegQuality: Int!
+  showDriverUi: Boolean!
+  separatorStrategies: [CaptureSeparatorStrategy!]!
+  fixedPageCount: Int!
+}
+
+"How a person recognises a record a capture is filed onto."
+type CaptureRecordRef {
+  "The kind of record: shipment, worker, tractor, trailer, customer or carrier."
+  resourceType: String!
+  id: ID!
+  "A shipment's PRO number, a worker's name, a unit's number."
+  title: String!
+  "A second number, where the kind has one: a BOL, a plate, a code."
+  subtitle: String!
+}
+
+"A person asking one of their companions to scan, or to catch the next print, into a record."
+type CaptureRequest {
+  id: ID!
+  userId: ID!
+  deviceId: ID!
+  mode: CaptureRequestMode!
+  status: CaptureRequestStatus!
+  targetType: String!
+  targetId: ID!
+  documentTypeId: ID
+  profileId: ID
+  "The scanner the person chose; blank for the device's default."
+  sourceName: String!
+  "The batch the request produced, once pages arrived."
+  batchId: ID
+  failureCode: CaptureRequestFailureCode
+  failureMessage: String!
+  expiresAt: Timestamp!
+  deliveredAt: Timestamp
+  completedAt: Timestamp
+  "Whether the companion may still act on it."
+  isOpen: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"What the scanner reported about how it captured a stack."
+type CaptureSettings {
+  protocol: CaptureSourceProtocol
+  bitness: Int!
+  dpi: Int!
+  pixelType: CapturePixelType
+  duplex: Boolean!
+  feeder: Boolean!
+  blankDiscard: Boolean!
+  showDriverUi: Boolean!
+  driverVersion: String!
+  "The program that printed, for a print."
+  application: String!
+  "Settings the scanner would not take, by name."
+  refused: [String!]!
+}
+
+"One scanned or printed page."
+type CapturePage {
+  id: ID!
+  batchId: ID!
+  sequence: Int!
+  status: CapturePageStatus!
+  byteSize: Int!
+  widthPx: Int!
+  heightPx: Int!
+  dpi: Int!
+  "Clockwise rotation in degrees a person set for this page."
+  rotation: Int!
+  "How much of the page is ink, between 0 and 1. Absent until the page is read."
+  blankScore: Float
+  "Whether the page reads as blank."
+  isBlank: Boolean!
+  "Whether the page only divides documents, and is left out of all of them."
+  isSeparator: Boolean!
+  patchCode: String!
+  "Whether the page is a Trenova cover sheet."
+  isCoverSheet: Boolean!
+  "Whether the page looked like a cover sheet this organization did not issue, or one that expired."
+  unrecognizedCoverSheet: Boolean!
+  failureMessage: String!
+  "Where to fetch the page to show it, under the API's base URL."
+  contentPath: String!
+  "Where to fetch a small image of the page, under the API's base URL."
+  thumbnailPath: String!
+  createdAt: Timestamp!
+}
+
+"One document proposed from a stack: some of its pages, and where they might go."
+type CaptureItem {
+  id: ID!
+  batchId: ID!
+  position: Int!
+  status: CaptureItemStatus!
+  "The item's pages, in order."
+  pageIds: [ID!]!
+  pageCount: Int!
+  suggestedType: String!
+  suggestedId: ID
+  "The suggested record, named. Absent when there is none or it is gone."
+  suggestedRecord: CaptureRecordRef
+  suggestedDocumentTypeId: ID
+  suggestionSource: CaptureSuggestionSource
+  "How sure the suggestion is, between 0 and 1."
+  suggestionConfidence: Float
+  "Why this was suggested, in words a person can check."
+  suggestionReason: String!
+  coverSheetId: ID
+  "What the document looked like it was, when it was read."
+  detectedKind: String!
+  filedType: String!
+  filedId: ID
+  "The record it was filed onto, named."
+  filedRecord: CaptureRecordRef
+  filedDocumentTypeId: ID
+  "The document it became."
+  documentId: ID
+  filedById: ID
+  filedAt: Timestamp
+  failureMessage: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+One stack of pages from one scan or one print job.
+
+A batch is split into items, each a proposed document, which a person checks
+and files. Pages that are not filed are kept only until the retention date,
+then deleted.
+"""
+type CaptureBatch {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  userId: ID!
+  "The person who captured it, when the reader may see them."
+  user: User
+  deviceId: ID!
+  "The companion it came from."
+  device: CaptureDevice
+  requestId: ID
+  profileId: ID
+  source: CaptureSource!
+  status: CaptureBatchStatus!
+  "The scanner or printer name the companion reported."
+  sourceName: String!
+  "The print job's name, for a print."
+  jobName: String!
+  settings: CaptureSettings!
+  "Where the whole stack was sent, when it was scanned into a record."
+  targetType: String!
+  targetId: ID
+  target: CaptureRecordRef
+  documentTypeId: ID
+  receivedPageCount: Int!
+  itemCount: Int!
+  filedItemCount: Int!
+  "How many items still wait on a person."
+  openItemCount: Int!
+  failureMessage: String!
+  sealedAt: Timestamp
+  processedAt: Timestamp
+  "When unfiled pages are deleted."
+  retainUntil: Timestamp!
+  "Whether items can still be split, merged, filed or discarded."
+  isEditable: Boolean!
+  "The pages, on a single-batch read. A list leaves them out."
+  pages: [CapturePage!]!
+  "The items, on a single-batch read. A list leaves them out."
+  items: [CaptureItem!]!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type CaptureBatchEdge {
+  node: CaptureBatch!
+  cursor: String!
+}
+
+type CaptureBatchConnection {
+  edges: [CaptureBatchEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"How the intake queue is ordered."
+enum CaptureBatchSort {
+  "Most recently captured first."
+  Newest
+  "Longest waiting first."
+  Oldest
+  "Soonest to have its unfiled pages deleted first."
+  ExpiringSoonest
+  "Largest stack first."
+  MostPages
+}
+
+input CaptureBatchesInput {
+  first: Int = 25
+  after: String
+  sort: CaptureBatchSort = Newest
+  "Only these statuses; empty is every status."
+  statuses: [CaptureBatchStatus!]
+  source: CaptureSource
+  "Only the caller's own batches, even when they could see everybody's."
+  mine: Boolean
+  "Only batches scanned into this record."
+  targetType: String
+  targetId: ID
+  "Words from the scanner, print job or device name."
+  query: String
+}
+
+input CaptureItemLayoutInput {
+  "The item's pages, in order."
+  pageIds: [ID!]!
+}
+
+input CapturePageRotationInput {
+  pageId: ID!
+  "Clockwise degrees: 0, 90, 180 or 270."
+  rotation: Int!
+}
+
+input EditCaptureItemsInput {
+  "The batch version the person was looking at."
+  version: Int!
+  "How the open pages divide into documents. Pages left out are dropped."
+  items: [CaptureItemLayoutInput!]!
+  rotations: [CapturePageRotationInput!]
+}
+
+input FileCaptureItemInput {
+  targetType: String!
+  targetId: ID!
+  documentTypeId: ID
+  "The item version the person was looking at."
+  version: Int!
+}
+
+input FileCaptureItemsEntryInput {
+  itemId: ID!
+  targetType: String!
+  targetId: ID!
+  documentTypeId: ID
+  "The item version the person was looking at."
+  version: Int!
+}
+
+"One document that did not file, and why."
+type CaptureItemFailure {
+  itemId: ID!
+  message: String!
+}
+
+"What a bulk filing did: the documents now filing, and the ones that could not be."
+type FileCaptureItemsResult {
+  filed: [CaptureItem!]!
+  failures: [CaptureItemFailure!]!
+}
+
+input CreateCaptureRequestInput {
+  "One of the caller's own devices."
+  deviceId: ID!
+  mode: CaptureRequestMode!
+  targetType: String!
+  targetId: ID!
+  documentTypeId: ID
+  profileId: ID
+  "The scanner to use; blank for the device's default."
+  sourceName: String
+}
+
+input CaptureCoverSheetInput {
+  "Leave the record out for a plain separator that divides a stack and routes nothing."
+  targetType: String
+  targetId: ID
+  documentTypeId: ID
+}
+
+"A QR code as its modules, for drawing on a printed sheet."
+type CaptureQRCode {
+  "How many modules along each side. The quiet zone is not included."
+  size: Int!
+  "One string per row, top to bottom; 1 is a dark module."
+  modules: [String!]!
+}
+
+"""
+A cover sheet ready to print.
+
+The payload is what its QR code must carry. It is returned once, here, and
+only its hash is kept, so a sheet cannot be reprinted from Trenova: a lost
+sheet is replaced by a new one.
+"""
+type CaptureCoverSheet {
+  id: ID!
+  targetType: String!
+  targetId: ID
+  target: CaptureRecordRef
+  documentTypeId: ID
+  payload: String!
+  "The code to print, drawn from the payload."
+  qrCode: CaptureQRCode!
+  expiresAt: Timestamp!
+  createdAt: Timestamp!
+}
+
+"Whether the caller can scan or print into Trenova."
+type CaptureAccess {
+  "Whether this organization has turned capture on."
+  enabled: Boolean!
+  "Whether the caller may start a scan, print into a record, or pair a computer."
+  canCapture: Boolean!
+}
+
+"The installer a Trenova Capture release ships."
+type CaptureAgentInstaller {
+  fileName: String!
+  "Where it downloads from."
+  url: String!
+  "Lowercase hex SHA-256 of the file, for anyone who checks it by hand."
+  sha256: String!
+  "Its size in bytes."
+  size: Int!
+}
+
+"A published Trenova Capture release, as its signed manifest describes it."
+type CaptureAgentRelease {
+  version: String!
+  publishedAt: Timestamp!
+  "The oldest Windows build it installs on; 19045 is Windows 10 22H2."
+  minimumWindowsBuild: Int!
+  installer: CaptureAgentInstaller!
+  notes: String!
+}
+
+extend type Query {
+  "Whether capture is on here and whether the caller may use it."
+  myCaptureAccess: CaptureAccess!
+  "The current Trenova Capture release, for the download button; null when none is published."
+  captureAgentRelease: CaptureAgentRelease
+  "The intake queue: captured stacks, newest first."
+  captureBatches(input: CaptureBatchesInput!): CaptureBatchConnection!
+  "One stack with its pages and proposed documents."
+  captureBatch(id: ID!): CaptureBatch!
+  "The companions the caller has paired."
+  myCaptureDevices(status: CaptureDeviceStatus): [CaptureDevice!]!
+  "Every companion in the organization, for the people who manage them."
+  captureDevices(status: CaptureDeviceStatus, query: String): [CaptureDevice!]!
+  "The profiles offered when somebody starts a scan: active ones, default first."
+  availableCaptureProfiles: [CaptureProfile!]!
+  "Every profile, for the people who manage them."
+  captureProfiles(status: CaptureProfileStatus, query: String): [CaptureProfile!]!
+  captureProfile(id: ID!): CaptureProfile!
+  "The caller's recent requests into one record, so its page can show a scan in flight."
+  captureRequestsForTarget(targetType: String!, targetId: ID!, limit: Int): [CaptureRequest!]!
+  "A machine waiting to pair, by the code it shows."
+  captureDevicePairing(userCode: String!): CapturePairingPreview!
+}
+
+extend type Mutation {
+  "Changes how a stack's open pages divide into documents: split, merge, reorder, drop, rotate."
+  editCaptureItems(batchId: ID!, input: EditCaptureItemsInput!): CaptureBatch!
+  "Files one proposed document onto a record, as the caller."
+  fileCaptureItem(id: ID!, input: FileCaptureItemInput!): CaptureItem!
+  """
+  Files several proposed documents at once, each as fileCaptureItem would.
+  One that cannot be filed does not stop the rest; it comes back with its reason.
+  """
+  fileCaptureItems(items: [FileCaptureItemsEntryInput!]!): FileCaptureItemsResult!
+  "Throws away one proposed document without filing it, and returns its stack as it now is."
+  discardCaptureItem(id: ID!, version: Int!): CaptureBatch!
+  "Throws away everything in a stack that is not already filed."
+  discardCaptureBatch(id: ID!, version: Int!): CaptureBatch!
+  "Asks one of the caller's companions to scan, or to catch the next print, into a record."
+  createCaptureRequest(input: CreateCaptureRequestInput!): CaptureRequest!
+  "Withdraws one of the caller's requests."
+  cancelCaptureRequest(id: ID!): CaptureRequest!
+  "Issues cover sheets to print. Each payload is returned once."
+  createCaptureCoverSheets(sheets: [CaptureCoverSheetInput!]!): [CaptureCoverSheet!]!
+  "Approves a machine waiting to pair, as the caller. It then acts for them."
+  approveCaptureDevicePairing(userCode: String!, deviceName: String): Boolean!
+  "Refuses a machine waiting to pair."
+  denyCaptureDevicePairing(userCode: String!): Boolean!
+  "Revokes one of the caller's own companions. It stops working at once."
+  revokeMyCaptureDevice(id: ID!, reason: String): CaptureDevice!
+  "Revokes anybody's companion."
+  revokeCaptureDevice(id: ID!, reason: String): CaptureDevice!
+  createCaptureProfile(input: CaptureProfileInput!): CaptureProfile!
+  "Changes a profile. Stacks already captured keep the settings they were captured with."
+  updateCaptureProfile(id: ID!, version: Int!, input: CaptureProfileInput!): CaptureProfile!
+  deleteCaptureProfile(id: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/carrier.graphqls", Input: `enum CarrierStatus {
@@ -112574,6 +114995,514 @@ func (ec *executionContext) childFields_CannedReport(ctx context.Context, field 
 	return nil, fmt.Errorf("no field named %q was found under type CannedReport", field.Name)
 }
 
+func (ec *executionContext) childFields_CaptureAccess(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "enabled":
+		return ec.fieldContext_CaptureAccess_enabled(ctx, field)
+	case "canCapture":
+		return ec.fieldContext_CaptureAccess_canCapture(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureAccess", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureAgentInstaller(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "fileName":
+		return ec.fieldContext_CaptureAgentInstaller_fileName(ctx, field)
+	case "url":
+		return ec.fieldContext_CaptureAgentInstaller_url(ctx, field)
+	case "sha256":
+		return ec.fieldContext_CaptureAgentInstaller_sha256(ctx, field)
+	case "size":
+		return ec.fieldContext_CaptureAgentInstaller_size(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureAgentInstaller", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureAgentRelease(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "version":
+		return ec.fieldContext_CaptureAgentRelease_version(ctx, field)
+	case "publishedAt":
+		return ec.fieldContext_CaptureAgentRelease_publishedAt(ctx, field)
+	case "minimumWindowsBuild":
+		return ec.fieldContext_CaptureAgentRelease_minimumWindowsBuild(ctx, field)
+	case "installer":
+		return ec.fieldContext_CaptureAgentRelease_installer(ctx, field)
+	case "notes":
+		return ec.fieldContext_CaptureAgentRelease_notes(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureAgentRelease", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureBatch(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CaptureBatch_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_CaptureBatch_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_CaptureBatch_organizationId(ctx, field)
+	case "userId":
+		return ec.fieldContext_CaptureBatch_userId(ctx, field)
+	case "user":
+		return ec.fieldContext_CaptureBatch_user(ctx, field)
+	case "deviceId":
+		return ec.fieldContext_CaptureBatch_deviceId(ctx, field)
+	case "device":
+		return ec.fieldContext_CaptureBatch_device(ctx, field)
+	case "requestId":
+		return ec.fieldContext_CaptureBatch_requestId(ctx, field)
+	case "profileId":
+		return ec.fieldContext_CaptureBatch_profileId(ctx, field)
+	case "source":
+		return ec.fieldContext_CaptureBatch_source(ctx, field)
+	case "status":
+		return ec.fieldContext_CaptureBatch_status(ctx, field)
+	case "sourceName":
+		return ec.fieldContext_CaptureBatch_sourceName(ctx, field)
+	case "jobName":
+		return ec.fieldContext_CaptureBatch_jobName(ctx, field)
+	case "settings":
+		return ec.fieldContext_CaptureBatch_settings(ctx, field)
+	case "targetType":
+		return ec.fieldContext_CaptureBatch_targetType(ctx, field)
+	case "targetId":
+		return ec.fieldContext_CaptureBatch_targetId(ctx, field)
+	case "target":
+		return ec.fieldContext_CaptureBatch_target(ctx, field)
+	case "documentTypeId":
+		return ec.fieldContext_CaptureBatch_documentTypeId(ctx, field)
+	case "receivedPageCount":
+		return ec.fieldContext_CaptureBatch_receivedPageCount(ctx, field)
+	case "itemCount":
+		return ec.fieldContext_CaptureBatch_itemCount(ctx, field)
+	case "filedItemCount":
+		return ec.fieldContext_CaptureBatch_filedItemCount(ctx, field)
+	case "openItemCount":
+		return ec.fieldContext_CaptureBatch_openItemCount(ctx, field)
+	case "failureMessage":
+		return ec.fieldContext_CaptureBatch_failureMessage(ctx, field)
+	case "sealedAt":
+		return ec.fieldContext_CaptureBatch_sealedAt(ctx, field)
+	case "processedAt":
+		return ec.fieldContext_CaptureBatch_processedAt(ctx, field)
+	case "retainUntil":
+		return ec.fieldContext_CaptureBatch_retainUntil(ctx, field)
+	case "isEditable":
+		return ec.fieldContext_CaptureBatch_isEditable(ctx, field)
+	case "pages":
+		return ec.fieldContext_CaptureBatch_pages(ctx, field)
+	case "items":
+		return ec.fieldContext_CaptureBatch_items(ctx, field)
+	case "version":
+		return ec.fieldContext_CaptureBatch_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CaptureBatch_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CaptureBatch_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureBatch", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureBatchConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_CaptureBatchConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_CaptureBatchConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_CaptureBatchConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureBatchConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureBatchEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_CaptureBatchEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_CaptureBatchEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureBatchEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureCoverSheet(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CaptureCoverSheet_id(ctx, field)
+	case "targetType":
+		return ec.fieldContext_CaptureCoverSheet_targetType(ctx, field)
+	case "targetId":
+		return ec.fieldContext_CaptureCoverSheet_targetId(ctx, field)
+	case "target":
+		return ec.fieldContext_CaptureCoverSheet_target(ctx, field)
+	case "documentTypeId":
+		return ec.fieldContext_CaptureCoverSheet_documentTypeId(ctx, field)
+	case "payload":
+		return ec.fieldContext_CaptureCoverSheet_payload(ctx, field)
+	case "qrCode":
+		return ec.fieldContext_CaptureCoverSheet_qrCode(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_CaptureCoverSheet_expiresAt(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CaptureCoverSheet_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureCoverSheet", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureDevice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CaptureDevice_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_CaptureDevice_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_CaptureDevice_organizationId(ctx, field)
+	case "userId":
+		return ec.fieldContext_CaptureDevice_userId(ctx, field)
+	case "user":
+		return ec.fieldContext_CaptureDevice_user(ctx, field)
+	case "name":
+		return ec.fieldContext_CaptureDevice_name(ctx, field)
+	case "machineName":
+		return ec.fieldContext_CaptureDevice_machineName(ctx, field)
+	case "windowsUser":
+		return ec.fieldContext_CaptureDevice_windowsUser(ctx, field)
+	case "agentVersion":
+		return ec.fieldContext_CaptureDevice_agentVersion(ctx, field)
+	case "architecture":
+		return ec.fieldContext_CaptureDevice_architecture(ctx, field)
+	case "osVersion":
+		return ec.fieldContext_CaptureDevice_osVersion(ctx, field)
+	case "status":
+		return ec.fieldContext_CaptureDevice_status(ctx, field)
+	case "sources":
+		return ec.fieldContext_CaptureDevice_sources(ctx, field)
+	case "lastSeenAt":
+		return ec.fieldContext_CaptureDevice_lastSeenAt(ctx, field)
+	case "isOnline":
+		return ec.fieldContext_CaptureDevice_isOnline(ctx, field)
+	case "lastIp":
+		return ec.fieldContext_CaptureDevice_lastIp(ctx, field)
+	case "revokedAt":
+		return ec.fieldContext_CaptureDevice_revokedAt(ctx, field)
+	case "revokedById":
+		return ec.fieldContext_CaptureDevice_revokedById(ctx, field)
+	case "revokedReason":
+		return ec.fieldContext_CaptureDevice_revokedReason(ctx, field)
+	case "version":
+		return ec.fieldContext_CaptureDevice_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CaptureDevice_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CaptureDevice_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureDevice", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureItem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CaptureItem_id(ctx, field)
+	case "batchId":
+		return ec.fieldContext_CaptureItem_batchId(ctx, field)
+	case "position":
+		return ec.fieldContext_CaptureItem_position(ctx, field)
+	case "status":
+		return ec.fieldContext_CaptureItem_status(ctx, field)
+	case "pageIds":
+		return ec.fieldContext_CaptureItem_pageIds(ctx, field)
+	case "pageCount":
+		return ec.fieldContext_CaptureItem_pageCount(ctx, field)
+	case "suggestedType":
+		return ec.fieldContext_CaptureItem_suggestedType(ctx, field)
+	case "suggestedId":
+		return ec.fieldContext_CaptureItem_suggestedId(ctx, field)
+	case "suggestedRecord":
+		return ec.fieldContext_CaptureItem_suggestedRecord(ctx, field)
+	case "suggestedDocumentTypeId":
+		return ec.fieldContext_CaptureItem_suggestedDocumentTypeId(ctx, field)
+	case "suggestionSource":
+		return ec.fieldContext_CaptureItem_suggestionSource(ctx, field)
+	case "suggestionConfidence":
+		return ec.fieldContext_CaptureItem_suggestionConfidence(ctx, field)
+	case "suggestionReason":
+		return ec.fieldContext_CaptureItem_suggestionReason(ctx, field)
+	case "coverSheetId":
+		return ec.fieldContext_CaptureItem_coverSheetId(ctx, field)
+	case "detectedKind":
+		return ec.fieldContext_CaptureItem_detectedKind(ctx, field)
+	case "filedType":
+		return ec.fieldContext_CaptureItem_filedType(ctx, field)
+	case "filedId":
+		return ec.fieldContext_CaptureItem_filedId(ctx, field)
+	case "filedRecord":
+		return ec.fieldContext_CaptureItem_filedRecord(ctx, field)
+	case "filedDocumentTypeId":
+		return ec.fieldContext_CaptureItem_filedDocumentTypeId(ctx, field)
+	case "documentId":
+		return ec.fieldContext_CaptureItem_documentId(ctx, field)
+	case "filedById":
+		return ec.fieldContext_CaptureItem_filedById(ctx, field)
+	case "filedAt":
+		return ec.fieldContext_CaptureItem_filedAt(ctx, field)
+	case "failureMessage":
+		return ec.fieldContext_CaptureItem_failureMessage(ctx, field)
+	case "version":
+		return ec.fieldContext_CaptureItem_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CaptureItem_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CaptureItem_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureItem", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureItemFailure(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "itemId":
+		return ec.fieldContext_CaptureItemFailure_itemId(ctx, field)
+	case "message":
+		return ec.fieldContext_CaptureItemFailure_message(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureItemFailure", field.Name)
+}
+
+func (ec *executionContext) childFields_CapturePage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CapturePage_id(ctx, field)
+	case "batchId":
+		return ec.fieldContext_CapturePage_batchId(ctx, field)
+	case "sequence":
+		return ec.fieldContext_CapturePage_sequence(ctx, field)
+	case "status":
+		return ec.fieldContext_CapturePage_status(ctx, field)
+	case "byteSize":
+		return ec.fieldContext_CapturePage_byteSize(ctx, field)
+	case "widthPx":
+		return ec.fieldContext_CapturePage_widthPx(ctx, field)
+	case "heightPx":
+		return ec.fieldContext_CapturePage_heightPx(ctx, field)
+	case "dpi":
+		return ec.fieldContext_CapturePage_dpi(ctx, field)
+	case "rotation":
+		return ec.fieldContext_CapturePage_rotation(ctx, field)
+	case "blankScore":
+		return ec.fieldContext_CapturePage_blankScore(ctx, field)
+	case "isBlank":
+		return ec.fieldContext_CapturePage_isBlank(ctx, field)
+	case "isSeparator":
+		return ec.fieldContext_CapturePage_isSeparator(ctx, field)
+	case "patchCode":
+		return ec.fieldContext_CapturePage_patchCode(ctx, field)
+	case "isCoverSheet":
+		return ec.fieldContext_CapturePage_isCoverSheet(ctx, field)
+	case "unrecognizedCoverSheet":
+		return ec.fieldContext_CapturePage_unrecognizedCoverSheet(ctx, field)
+	case "failureMessage":
+		return ec.fieldContext_CapturePage_failureMessage(ctx, field)
+	case "contentPath":
+		return ec.fieldContext_CapturePage_contentPath(ctx, field)
+	case "thumbnailPath":
+		return ec.fieldContext_CapturePage_thumbnailPath(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CapturePage_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CapturePage", field.Name)
+}
+
+func (ec *executionContext) childFields_CapturePairingPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "userCode":
+		return ec.fieldContext_CapturePairingPreview_userCode(ctx, field)
+	case "machineName":
+		return ec.fieldContext_CapturePairingPreview_machineName(ctx, field)
+	case "windowsUser":
+		return ec.fieldContext_CapturePairingPreview_windowsUser(ctx, field)
+	case "agentVersion":
+		return ec.fieldContext_CapturePairingPreview_agentVersion(ctx, field)
+	case "architecture":
+		return ec.fieldContext_CapturePairingPreview_architecture(ctx, field)
+	case "osVersion":
+		return ec.fieldContext_CapturePairingPreview_osVersion(ctx, field)
+	case "clientIp":
+		return ec.fieldContext_CapturePairingPreview_clientIp(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_CapturePairingPreview_expiresAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CapturePairingPreview", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureProfile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CaptureProfile_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_CaptureProfile_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_CaptureProfile_organizationId(ctx, field)
+	case "name":
+		return ec.fieldContext_CaptureProfile_name(ctx, field)
+	case "description":
+		return ec.fieldContext_CaptureProfile_description(ctx, field)
+	case "status":
+		return ec.fieldContext_CaptureProfile_status(ctx, field)
+	case "isDefault":
+		return ec.fieldContext_CaptureProfile_isDefault(ctx, field)
+	case "dpi":
+		return ec.fieldContext_CaptureProfile_dpi(ctx, field)
+	case "pixelType":
+		return ec.fieldContext_CaptureProfile_pixelType(ctx, field)
+	case "duplex":
+		return ec.fieldContext_CaptureProfile_duplex(ctx, field)
+	case "useFeeder":
+		return ec.fieldContext_CaptureProfile_useFeeder(ctx, field)
+	case "discardBlankPages":
+		return ec.fieldContext_CaptureProfile_discardBlankPages(ctx, field)
+	case "jpegQuality":
+		return ec.fieldContext_CaptureProfile_jpegQuality(ctx, field)
+	case "showDriverUi":
+		return ec.fieldContext_CaptureProfile_showDriverUi(ctx, field)
+	case "separatorStrategies":
+		return ec.fieldContext_CaptureProfile_separatorStrategies(ctx, field)
+	case "fixedPageCount":
+		return ec.fieldContext_CaptureProfile_fixedPageCount(ctx, field)
+	case "version":
+		return ec.fieldContext_CaptureProfile_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CaptureProfile_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CaptureProfile_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureProfile", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureQRCode(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "size":
+		return ec.fieldContext_CaptureQRCode_size(ctx, field)
+	case "modules":
+		return ec.fieldContext_CaptureQRCode_modules(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureQRCode", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureRecordRef(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "resourceType":
+		return ec.fieldContext_CaptureRecordRef_resourceType(ctx, field)
+	case "id":
+		return ec.fieldContext_CaptureRecordRef_id(ctx, field)
+	case "title":
+		return ec.fieldContext_CaptureRecordRef_title(ctx, field)
+	case "subtitle":
+		return ec.fieldContext_CaptureRecordRef_subtitle(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureRecordRef", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureRequest(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CaptureRequest_id(ctx, field)
+	case "userId":
+		return ec.fieldContext_CaptureRequest_userId(ctx, field)
+	case "deviceId":
+		return ec.fieldContext_CaptureRequest_deviceId(ctx, field)
+	case "mode":
+		return ec.fieldContext_CaptureRequest_mode(ctx, field)
+	case "status":
+		return ec.fieldContext_CaptureRequest_status(ctx, field)
+	case "targetType":
+		return ec.fieldContext_CaptureRequest_targetType(ctx, field)
+	case "targetId":
+		return ec.fieldContext_CaptureRequest_targetId(ctx, field)
+	case "documentTypeId":
+		return ec.fieldContext_CaptureRequest_documentTypeId(ctx, field)
+	case "profileId":
+		return ec.fieldContext_CaptureRequest_profileId(ctx, field)
+	case "sourceName":
+		return ec.fieldContext_CaptureRequest_sourceName(ctx, field)
+	case "batchId":
+		return ec.fieldContext_CaptureRequest_batchId(ctx, field)
+	case "failureCode":
+		return ec.fieldContext_CaptureRequest_failureCode(ctx, field)
+	case "failureMessage":
+		return ec.fieldContext_CaptureRequest_failureMessage(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_CaptureRequest_expiresAt(ctx, field)
+	case "deliveredAt":
+		return ec.fieldContext_CaptureRequest_deliveredAt(ctx, field)
+	case "completedAt":
+		return ec.fieldContext_CaptureRequest_completedAt(ctx, field)
+	case "isOpen":
+		return ec.fieldContext_CaptureRequest_isOpen(ctx, field)
+	case "version":
+		return ec.fieldContext_CaptureRequest_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CaptureRequest_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CaptureRequest_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureRequest", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureSettings(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "protocol":
+		return ec.fieldContext_CaptureSettings_protocol(ctx, field)
+	case "bitness":
+		return ec.fieldContext_CaptureSettings_bitness(ctx, field)
+	case "dpi":
+		return ec.fieldContext_CaptureSettings_dpi(ctx, field)
+	case "pixelType":
+		return ec.fieldContext_CaptureSettings_pixelType(ctx, field)
+	case "duplex":
+		return ec.fieldContext_CaptureSettings_duplex(ctx, field)
+	case "feeder":
+		return ec.fieldContext_CaptureSettings_feeder(ctx, field)
+	case "blankDiscard":
+		return ec.fieldContext_CaptureSettings_blankDiscard(ctx, field)
+	case "showDriverUi":
+		return ec.fieldContext_CaptureSettings_showDriverUi(ctx, field)
+	case "driverVersion":
+		return ec.fieldContext_CaptureSettings_driverVersion(ctx, field)
+	case "application":
+		return ec.fieldContext_CaptureSettings_application(ctx, field)
+	case "refused":
+		return ec.fieldContext_CaptureSettings_refused(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureSettings", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureSourceInfo(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_CaptureSourceInfo_name(ctx, field)
+	case "protocol":
+		return ec.fieldContext_CaptureSourceInfo_protocol(ctx, field)
+	case "bitness":
+		return ec.fieldContext_CaptureSourceInfo_bitness(ctx, field)
+	case "isDefault":
+		return ec.fieldContext_CaptureSourceInfo_isDefault(ctx, field)
+	case "duplex":
+		return ec.fieldContext_CaptureSourceInfo_duplex(ctx, field)
+	case "feeder":
+		return ec.fieldContext_CaptureSourceInfo_feeder(ctx, field)
+	case "patchCodes":
+		return ec.fieldContext_CaptureSourceInfo_patchCodes(ctx, field)
+	case "barcodes":
+		return ec.fieldContext_CaptureSourceInfo_barcodes(ctx, field)
+	case "blankDiscard":
+		return ec.fieldContext_CaptureSourceInfo_blankDiscard(ctx, field)
+	case "resolutions":
+		return ec.fieldContext_CaptureSourceInfo_resolutions(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureSourceInfo", field.Name)
+}
+
 func (ec *executionContext) childFields_Carrier(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -119276,6 +122205,16 @@ func (ec *executionContext) childFields_FacilityDetentionStat(ctx context.Contex
 		return ec.fieldContext_FacilityDetentionStat_suppressedCount(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type FacilityDetentionStat", field.Name)
+}
+
+func (ec *executionContext) childFields_FileCaptureItemsResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "filed":
+		return ec.fieldContext_FileCaptureItemsResult_filed(ctx, field)
+	case "failures":
+		return ec.fieldContext_FileCaptureItemsResult_failures(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FileCaptureItemsResult", field.Name)
 }
 
 func (ec *executionContext) childFields_FiscalPeriod(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

@@ -13,6 +13,7 @@ type Document interface {
 	Close() error
 	NumPage() int
 	Image(pageNumber int) (*image.RGBA, error)
+	ImageDPI(pageNumber int, dpi float64) (*image.RGBA, error)
 	ImagePNG(pageNumber int, dpi float64) ([]byte, error)
 	Text(pageNumber int) (string, error)
 }

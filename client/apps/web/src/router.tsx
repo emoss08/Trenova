@@ -74,6 +74,37 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/intake",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CaptureBatch, Operation.Read),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/intake/page"))),
+            ),
+            async lazy() {
+              const { IntakePage } = await import("@/routes/intake/page");
+              return { Component: IntakePage };
+            },
+          },
+          {
+            path: "/capture/pair",
+            loader: protectedLoader,
+            async lazy() {
+              const { CapturePairPage } = await import("@/routes/capture/pair/page");
+              return { Component: CapturePairPage };
+            },
+          },
+          {
+            path: "/capture/devices",
+            loader: combineLoaders(
+              protectedLoader,
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/capture/devices/page"))),
+            ),
+            async lazy() {
+              const { CaptureDevicesPage } = await import("@/routes/capture/devices/page");
+              return { Component: CaptureDevicesPage };
+            },
+          },
+          {
             path: "/organization/data-retention",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
             async lazy() {
@@ -1692,6 +1723,14 @@ export const routes: RouteObject[] = [
                 async lazy() {
                   const { ShipmentControlPage } = await import("@/routes/shipment-control/page");
                   return { Component: ShipmentControlPage };
+                },
+              },
+              {
+                path: "capture",
+                loader: createPermissionLoader(Resource.CaptureProfile, Operation.Read),
+                async lazy() {
+                  const { CaptureAdminPage } = await import("@/routes/admin/capture/page");
+                  return { Component: CaptureAdminPage };
                 },
               },
               {

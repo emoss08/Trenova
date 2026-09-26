@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,5 +48,7 @@ func TestJournalReviewRequestParsesEveryEntryID(t *testing.T) {
 	assert.Equal(t, authCtx.BusinessUnitID, req.TenantInfo.BuID)
 
 	_, err = journalReviewRequest(authCtx, gqlmodel.JournalReviewInput{EntryIds: []string{"not-an-id"}})
-	require.Error(t, err)
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation)
+	assert.Equal(t, "entryIds", validation.Field)
 }

@@ -1,6 +1,6 @@
 {
-  "operationCount": 920,
-  "fragmentCount": 255,
+  "operationCount": 946,
+  "fragmentCount": 265,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -2473,6 +2473,31 @@
       "sdl": "mutation ApproveAgentMemorySuggestion($id: ID!, $input: ApproveAgentMemorySuggestionInput!) {\n  approveAgentMemorySuggestion(id: $id, input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "ApproveCaptureDevicePairing",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:a067e97cc02b4eca7b297eba42cbf83b4a50cff9e4a209ccdeeeacdc47ec5095",
+      "rootFields": [
+        "approveCaptureDevicePairing"
+      ],
+      "variables": [
+        {
+          "name": "userCode",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "deviceName",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation ApproveCaptureDevicePairing($userCode: String!, $deviceName: String) {\n  approveCaptureDevicePairing(userCode: $userCode, deviceName: $deviceName)\n}"
+    },
+    {
       "name": "ApproveCarrierSettlement",
       "kind": "mutation",
       "domain": "carrier-settlement",
@@ -3422,6 +3447,22 @@
       "sdl": "mutation AutoRateShipment($id: ID!) {\n  autoRateShipment(id: $id) {\n    shipment {\n      ...ShipmentFields\n    }\n    contractRate {\n      ...ShipmentContractRateFields\n    }\n  }\n}\n\nfragment ChargeAllocationFields on ChargeAllocation {\n  id\n  organizationId\n  businessUnitId\n  shipmentId\n  additionalChargeId\n  orderChargeId\n  chargeKind\n  billToCustomerId\n  method\n  percent\n  amount\n  sequence\n  invoiceId\n  invoicedAt\n  version\n  billToCustomer {\n    id\n    name\n    code\n  }\n}\n\nfragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  accessorialChargeId\n  isSystemGenerated\n  method\n  amount\n  unit\n  fuelSurchargeProgramId\n  fuelSurchargeDetail\n  isDetention\n  version\n  createdAt\n  updatedAt\n  accessorialCharge {\n    id\n    businessUnitId\n    organizationId\n    code\n    description\n    status\n    method\n    rateUnit\n    amount\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentAssignmentFields on ShipmentAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  primaryWorkerId\n  tractorId\n  trailerId\n  secondaryWorkerId\n  status\n  archivedAt\n  version\n  createdAt\n  updatedAt\n  tractor {\n    ...ShipmentTractorFields\n  }\n  trailer {\n    ...ShipmentTrailerFields\n  }\n  primaryWorker {\n    ...ShipmentWorkerFields\n  }\n  secondaryWorker {\n    ...ShipmentWorkerFields\n  }\n}\n\nfragment ShipmentCarrierAssignmentFields on CarrierAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  carrierId\n  status\n  rateMethod\n  baseRate\n  baseAmount\n  fuelSurcharge\n  accessorialTotal\n  totalCost\n  currencyCode\n  proNumber\n  externalDriverName\n  externalDriverPhone\n  externalTractorNumber\n  externalTrailerNumber\n  confirmedAt\n  canceledAt\n  cancellationReason\n  version\n  createdAt\n  updatedAt\n  carrier {\n    id\n    code\n    name\n    scac\n  }\n  accessorials {\n    id\n    carrierAssignmentId\n    accessorialChargeId\n    description\n    amount\n    version\n  }\n}\n\nfragment ShipmentCommodityFields on ShipmentCommodity {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  commodityId\n  pieces\n  weight\n  lengthFeet\n  widthFeet\n  heightFeet\n  version\n  createdAt\n  updatedAt\n  commodity {\n    id\n    businessUnitId\n    organizationId\n    hazardousMaterialId\n    status\n    name\n    description\n    minTemperature\n    maxTemperature\n    weightPerUnit\n    linearFeetPerUnit\n    maxQuantityPerShipment\n    freightClass\n    loadingInstructions\n    stackable\n    fragile\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentContractRateFields on ShipmentContractRate {\n  applied\n  outcome\n  agreementId\n  agreementName\n  ruleId\n  ruleLabel\n  formulaTemplateId\n  formulaTemplateName\n  baseRate\n  linehaulAmount\n  otherChargeAmount\n  totalChargeAmount\n  previousLinehaulAmount\n  explanation\n  accessorials {\n    accessorialChargeId\n    description\n    method\n    amount\n    unit\n  }\n}\n\nfragment ShipmentFields on Shipment {\n  id\n  businessUnitId\n  organizationId\n  sourceDocumentId\n  serviceTypeId\n  shipmentTypeId\n  customerId\n  billToCustomerId\n  freightTerms\n  tractorTypeId\n  trailerTypeId\n  ownerId\n  enteredById\n  canceledById\n  formulaTemplateId\n  consolidationGroupId\n  orderId\n  orderNumber\n  orderStatus\n  status\n  tenderStatus\n  entryMethod\n  proNumber\n  bol\n  cancelReason\n  otherChargeAmount\n  freightChargeAmount\n  baseRate\n  totalChargeAmount\n  pieces\n  weight\n  temperatureMin\n  temperatureMax\n  actualDeliveryDate\n  actualShipDate\n  canceledAt\n  billingTransferStatus\n  transferredToBillingAt\n  markedReadyToBillAt\n  billedAt\n  ratingUnit\n  fuelSurchargeLocked\n  profitabilityEstimate {\n    shipmentId\n    loadedMiles\n    deadheadMiles\n    totalMiles\n    costPerMile\n    estimatedCost\n    profit\n    marginPercent\n    breakEvenRpm\n    targetMarginPercent\n    missingDistance\n  }\n  ratingDetail {\n    ...ShipmentRatingDetailFields\n  }\n  autoRated\n  autoRatedAt\n  rateAgreementId\n  rateAgreementRuleId\n  rateQuoteId\n  rateOverrideAmount\n  rateOverrideReason\n  rateOverrideAt\n  rateLocked\n  version\n  createdAt\n  updatedAt\n  moves {\n    ...ShipmentMoveFields\n  }\n  additionalCharges {\n    ...ShipmentAdditionalChargeFields\n  }\n  commodities {\n    ...ShipmentCommodityFields\n  }\n  chargeAllocations {\n    ...ChargeAllocationFields\n  }\n  billingSplitSummary {\n    payerId\n    payerName\n    payerCode\n    isPrimary\n    freightAmount\n    accessorialAmount\n    totalAmount\n    isSplit\n  }\n  customer {\n    id\n    businessUnitId\n    organizationId\n    stateId\n    status\n    code\n    name\n    addressLine1\n    addressLine2\n    city\n    postalCode\n    isGeocoded\n    longitude\n    latitude\n    placeId\n    externalId\n    allowConsolidation\n    exclusiveConsolidation\n    consolidationPriority\n    version\n    createdAt\n    updatedAt\n    ediPartner {\n      id\n      name\n      code\n    }\n  }\n  billToCustomer {\n    id\n    businessUnitId\n    organizationId\n    stateId\n    status\n    code\n    name\n    addressLine1\n    addressLine2\n    city\n    postalCode\n    isGeocoded\n    longitude\n    latitude\n    placeId\n    externalId\n    allowConsolidation\n    exclusiveConsolidation\n    consolidationPriority\n    version\n    createdAt\n    updatedAt\n  }\n  owner {\n    ...ShipmentUserFields\n  }\n  formulaTemplate {\n    id\n    organizationId\n    businessUnitId\n    name\n    description\n    type\n    expression\n    status\n    schemaId\n    variableDefinitions {\n      name\n      type\n      description\n      required\n      defaultValue\n      source\n    }\n    metadata\n    version\n    sourceTemplateId\n    sourceVersionNumber\n    currentVersionNumber\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentLocationFields on Location {\n  id\n  name\n  code\n  status\n  locationCategoryId\n  stateId\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  longitude\n  latitude\n}\n\nfragment ShipmentMoveFields on ShipmentMove {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  status\n  loaded\n  sequence\n  distance\n  distanceSource\n  distanceProvider\n  distanceCalculatedAt\n  distanceRouteSignature\n  distanceDataVersion\n  distanceRoutingType\n  distanceUnits\n  distanceMetadata\n  version\n  createdAt\n  updatedAt\n  coverageType\n  stops {\n    ...ShipmentStopFields\n  }\n  assignment {\n    ...ShipmentAssignmentFields\n  }\n  carrierAssignment {\n    ...ShipmentCarrierAssignmentFields\n  }\n}\n\nfragment ShipmentRatingDetailFields on ShipmentRatingDetail {\n  formulaTemplateId\n  formulaTemplateName\n  expression\n  resolvedVariables\n  result\n  ratedAt\n  versionNumber\n  breakdown {\n    name\n    label\n    amount\n    error\n  }\n  guardrail {\n    applied\n    bound\n    rawResult\n    minCharge\n    maxCharge\n  }\n  rateQuoteId\n  agreementId\n  agreementName\n  ruleId\n  ruleLabel\n  source\n  explanation\n}\n\nfragment ShipmentStopFields on ShipmentStop {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  locationId\n  status\n  type\n  scheduleType\n  sequence\n  pieces\n  weight\n  scheduledWindowStart\n  scheduledWindowEnd\n  actualArrival\n  actualDeparture\n  countLateOverride\n  countDetentionOverride\n  addressLine\n  version\n  createdAt\n  updatedAt\n  location {\n    ...ShipmentLocationFields\n  }\n}\n\nfragment ShipmentTractorFields on Tractor {\n  id\n  code\n}\n\nfragment ShipmentTrailerFields on Trailer {\n  id\n  code\n  equipmentTypeId\n}\n\nfragment ShipmentUserFields on User {\n  id\n  name\n  username\n  emailAddress\n  timezone\n  status\n  profilePicUrl\n  thumbnailUrl\n}\n\nfragment ShipmentWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
     },
     {
+      "name": "AvailableCaptureProfiles",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:a2d1f056167566bda91fd73250f53846888fef9ba1b1ff3e55b3d7ba1c55e1de",
+      "rootFields": [
+        "availableCaptureProfiles"
+      ],
+      "variables": [],
+      "fragments": [
+        "CaptureProfileFields"
+      ],
+      "usages": [],
+      "sdl": "query AvailableCaptureProfiles {\n  availableCaptureProfiles {\n    ...CaptureProfileFields\n  }\n}\n\nfragment CaptureProfileFields on CaptureProfile {\n  id\n  name\n  description\n  status\n  isDefault\n  dpi\n  pixelType\n  duplex\n  useFeeder\n  discardBlankPages\n  jpegQuality\n  showDriverUi\n  separatorStrategies\n  fixedPageCount\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "BackfillJurisdictionMiles",
       "kind": "mutation",
       "domain": "ifta-return",
@@ -3804,6 +3845,28 @@
       "sdl": "mutation CancelBillingTransferRun($id: ID!) {\n  cancelBillingTransferRun(id: $id) {\n    id\n    status\n    scope\n    billType\n    searchQuery\n    shipmentStatus\n    sourceRunId\n    totalCount\n    processedCount\n    transferredCount\n    notTransferredCount\n    skippedCount\n    markedReadyToInvoiceCount\n    retryableCount\n    unmatchedCount\n    failureMessage\n    cancelRequestedAt\n    queuedAt\n    startedAt\n    completedAt\n  }\n}"
     },
     {
+      "name": "CancelCaptureRequest",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:523c78072a4b0888ebc217c6c591a0a80ab6bd37332a1bc8f2dc1086c6479738",
+      "rootFields": [
+        "cancelCaptureRequest"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureRequestFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CancelCaptureRequest($id: ID!) {\n  cancelCaptureRequest(id: $id) {\n    ...CaptureRequestFields\n  }\n}\n\nfragment CaptureRequestFields on CaptureRequest {\n  id\n  deviceId\n  mode\n  status\n  targetType\n  targetId\n  documentTypeId\n  profileId\n  sourceName\n  batchId\n  failureCode\n  failureMessage\n  expiresAt\n  deliveredAt\n  completedAt\n  isOpen\n  createdAt\n}"
+    },
+    {
       "name": "CancelDotRandomDraw",
       "kind": "mutation",
       "domain": "worker-drug-alcohol",
@@ -4116,6 +4179,197 @@
       "fragments": [],
       "usages": [],
       "sdl": "query CannedReports {\n  cannedReports {\n    key\n    version\n    name\n    description\n    category\n    tags\n    defaultFormat\n    definition\n  }\n}"
+    },
+    {
+      "name": "CaptureAgentRelease",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:871e3e29040b717530d9bdae990b25cbdefea215ade1970666878959c1219e44",
+      "rootFields": [
+        "captureAgentRelease"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CaptureAgentRelease {\n  captureAgentRelease {\n    version\n    publishedAt\n    minimumWindowsBuild\n    notes\n    installer {\n      fileName\n      url\n      sha256\n      size\n    }\n  }\n}"
+    },
+    {
+      "name": "CaptureBatch",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:255eebc82d775317997d672fded4e4026bab5ffc76dcb793de5d5909311e255a",
+      "rootFields": [
+        "captureBatch"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureBatchDetailFields",
+        "CaptureBatchRowFields",
+        "CaptureItemFields",
+        "CapturePageFields",
+        "CaptureRecordRefFields"
+      ],
+      "usages": [],
+      "sdl": "query CaptureBatch($id: ID!) {\n  captureBatch(id: $id) {\n    ...CaptureBatchDetailFields\n  }\n}\n\nfragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
+      "name": "CaptureBatchCount",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:b72597d4462c7841309af83ee9f1217281f91dac439d6841b736ece7af92f402",
+      "rootFields": [
+        "captureBatches"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CaptureBatchesInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CaptureBatchCount($input: CaptureBatchesInput!) {\n  captureBatches(input: $input) {\n    totalCount\n  }\n}"
+    },
+    {
+      "name": "CaptureBatches",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:d40d49842db626aa6d822a89f8f3be992c716d71db561f1a4deb6127f19e40ce",
+      "rootFields": [
+        "captureBatches"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CaptureBatchesInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureBatchRowFields",
+        "CaptureRecordRefFields"
+      ],
+      "usages": [],
+      "sdl": "query CaptureBatches($input: CaptureBatchesInput!) {\n  captureBatches(input: $input) {\n    edges {\n      cursor\n      node {\n        ...CaptureBatchRowFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
+      "name": "CaptureDevicePairing",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:b7581d44accbc6f587878682111c7d54b4ba3ea85c33460b45478c030b6198bf",
+      "rootFields": [
+        "captureDevicePairing"
+      ],
+      "variables": [
+        {
+          "name": "userCode",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CaptureDevicePairing($userCode: String!) {\n  captureDevicePairing(userCode: $userCode) {\n    userCode\n    machineName\n    windowsUser\n    agentVersion\n    architecture\n    osVersion\n    clientIp\n    expiresAt\n  }\n}"
+    },
+    {
+      "name": "CaptureDevices",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:7ed34756eb9cbcfe72d1c537858c28eb8195e3379d1135036e1253c99b48e7c8",
+      "rootFields": [
+        "captureDevices"
+      ],
+      "variables": [
+        {
+          "name": "status",
+          "type": "CaptureDeviceStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureDeviceFields",
+        "CaptureDeviceFleetFields",
+        "CaptureSourceInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query CaptureDevices($status: CaptureDeviceStatus, $query: String) {\n  captureDevices(status: $status, query: $query) {\n    ...CaptureDeviceFleetFields\n  }\n}\n\nfragment CaptureDeviceFields on CaptureDevice {\n  id\n  userId\n  name\n  machineName\n  windowsUser\n  agentVersion\n  architecture\n  osVersion\n  status\n  lastSeenAt\n  isOnline\n  lastIp\n  revokedAt\n  revokedReason\n  version\n  createdAt\n  sources {\n    ...CaptureSourceInfoFields\n  }\n}\n\nfragment CaptureDeviceFleetFields on CaptureDevice {\n  ...CaptureDeviceFields\n  user {\n    id\n    name\n    emailAddress\n  }\n}\n\nfragment CaptureSourceInfoFields on CaptureSourceInfo {\n  name\n  protocol\n  bitness\n  isDefault\n  duplex\n  feeder\n  patchCodes\n  barcodes\n  blankDiscard\n  resolutions\n}"
+    },
+    {
+      "name": "CaptureProfiles",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:2103f21a0d012b8ccb48e32ad18b5a160398424b61dc860f390be96c92cda1aa",
+      "rootFields": [
+        "captureProfiles"
+      ],
+      "variables": [
+        {
+          "name": "status",
+          "type": "CaptureProfileStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureProfileFields"
+      ],
+      "usages": [],
+      "sdl": "query CaptureProfiles($status: CaptureProfileStatus, $query: String) {\n  captureProfiles(status: $status, query: $query) {\n    ...CaptureProfileFields\n  }\n}\n\nfragment CaptureProfileFields on CaptureProfile {\n  id\n  name\n  description\n  status\n  isDefault\n  dpi\n  pixelType\n  duplex\n  useFeeder\n  discardBlankPages\n  jpegQuality\n  showDriverUi\n  separatorStrategies\n  fixedPageCount\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CaptureRequestsForTarget",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:de806e1cc66ab39521e34f5e9e6c75d2643ff1e8a53d73e92c226b173da599d5",
+      "rootFields": [
+        "captureRequestsForTarget"
+      ],
+      "variables": [
+        {
+          "name": "targetType",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "targetId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureRequestFields"
+      ],
+      "usages": [],
+      "sdl": "query CaptureRequestsForTarget($targetType: String!, $targetId: ID!, $limit: Int) {\n  captureRequestsForTarget(\n    targetType: $targetType\n    targetId: $targetId\n    limit: $limit\n  ) {\n    ...CaptureRequestFields\n  }\n}\n\nfragment CaptureRequestFields on CaptureRequest {\n  id\n  deviceId\n  mode\n  status\n  targetType\n  targetId\n  documentTypeId\n  profileId\n  sourceName\n  batchId\n  failureCode\n  failureMessage\n  expiresAt\n  deliveredAt\n  completedAt\n  isOpen\n  createdAt\n}"
     },
     {
       "name": "CarrierCostEventTable",
@@ -5446,6 +5700,72 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation CreateBenefitPlan($input: BenefitPlanInput!) {\n  createBenefitPlan(input: $input) {\n    id\n    name\n    version\n  }\n}"
+    },
+    {
+      "name": "CreateCaptureCoverSheets",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:92cdbeededfd2516038b67e659007032a039c7edd3beb8d5f82a930d1b578bf4",
+      "rootFields": [
+        "createCaptureCoverSheets"
+      ],
+      "variables": [
+        {
+          "name": "sheets",
+          "type": "[CaptureCoverSheetInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureRecordRefFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateCaptureCoverSheets($sheets: [CaptureCoverSheetInput!]!) {\n  createCaptureCoverSheets(sheets: $sheets) {\n    id\n    targetType\n    targetId\n    documentTypeId\n    payload\n    expiresAt\n    qrCode {\n      size\n      modules\n    }\n    target {\n      ...CaptureRecordRefFields\n    }\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
+      "name": "CreateCaptureProfile",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:f164652c5c381d1301d9449d1623dffe9ddba96c450c61815b9f4d71e3ec473b",
+      "rootFields": [
+        "createCaptureProfile"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CaptureProfileInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureProfileFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateCaptureProfile($input: CaptureProfileInput!) {\n  createCaptureProfile(input: $input) {\n    ...CaptureProfileFields\n  }\n}\n\nfragment CaptureProfileFields on CaptureProfile {\n  id\n  name\n  description\n  status\n  isDefault\n  dpi\n  pixelType\n  duplex\n  useFeeder\n  discardBlankPages\n  jpegQuality\n  showDriverUi\n  separatorStrategies\n  fixedPageCount\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CreateCaptureRequest",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:c6ab98771f332dcd609f88468c69d5cb046414a8ab5454d211d378fd4957113f",
+      "rootFields": [
+        "createCaptureRequest"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateCaptureRequestInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureRequestFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateCaptureRequest($input: CreateCaptureRequestInput!) {\n  createCaptureRequest(input: $input) {\n    ...CaptureRequestFields\n  }\n}\n\nfragment CaptureRequestFields on CaptureRequest {\n  id\n  deviceId\n  mode\n  status\n  targetType\n  targetId\n  documentTypeId\n  profileId\n  sourceName\n  batchId\n  failureCode\n  failureMessage\n  expiresAt\n  deliveredAt\n  completedAt\n  isOpen\n  createdAt\n}"
     },
     {
       "name": "CreateCarrierInvoiceMatch",
@@ -6829,6 +7149,26 @@
       "sdl": "mutation DelegateApproval($input: DelegateApprovalInput!) {\n  delegateApproval(input: $input) {\n    id\n    scope\n    startsAt\n    endsAt\n    version\n  }\n}"
     },
     {
+      "name": "DeleteCaptureProfile",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:cb6a096217b18ad0fa8d5e532e70b09329738262494bfb7a7f348a488e1c18cb",
+      "rootFields": [
+        "deleteCaptureProfile"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteCaptureProfile($id: ID!) {\n  deleteCaptureProfile(id: $id)\n}"
+    },
+    {
       "name": "DeleteDetentionPolicy",
       "kind": "mutation",
       "domain": "detention",
@@ -7374,6 +7714,26 @@
       "sdl": "mutation DeleteWorkerSafetyEvent($id: ID!) {\n  deleteWorkerSafetyEvent(id: $id)\n}"
     },
     {
+      "name": "DenyCaptureDevicePairing",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:237bff94778c77c4f486752e4e75be79e727ab7d06fb1c17566c6af97686407b",
+      "rootFields": [
+        "denyCaptureDevicePairing"
+      ],
+      "variables": [
+        {
+          "name": "userCode",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DenyCaptureDevicePairing($userCode: String!) {\n  denyCaptureDevicePairing(userCode: $userCode)\n}"
+    },
+    {
       "name": "DetachOrderShipment",
       "kind": "mutation",
       "domain": "order",
@@ -7642,6 +8002,62 @@
       "fragments": [],
       "usages": [],
       "sdl": "query DetentionWaiverStats($input: DetentionStatsInput!) {\n  detentionWaiverStats(input: $input) {\n    reason\n    waiverCount\n    approverCount\n    waivedAmount\n  }\n}"
+    },
+    {
+      "name": "DiscardCaptureBatch",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:58fba2eb65ea4ee0f0a268f1e1d1f43603612e23e3cfb2b7b33e0c485829a357",
+      "rootFields": [
+        "discardCaptureBatch"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureBatchRowFields",
+        "CaptureRecordRefFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DiscardCaptureBatch($id: ID!, $version: Int!) {\n  discardCaptureBatch(id: $id, version: $version) {\n    ...CaptureBatchRowFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
+      "name": "DiscardCaptureItem",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:5e69ac2162aa94b31c531a951def13cf7af38ee2c80141f8b32ac7b21f8efd5e",
+      "rootFields": [
+        "discardCaptureItem"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureBatchRowFields",
+        "CaptureRecordRefFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DiscardCaptureItem($id: ID!, $version: Int!) {\n  discardCaptureItem(id: $id, version: $version) {\n    ...CaptureBatchRowFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "DiscardFuelPurchaseImport",
@@ -8633,6 +9049,37 @@
       "sdl": "query EdiSummary($sinceHours: Int) {\n  ediSummary(sinceHours: $sinceHours) {\n    deliveryStatusCounts {\n      status\n      count\n    }\n    ackStatusCounts {\n      status\n      count\n    }\n    inboundFileStatusCounts {\n      status\n      count\n    }\n    inboundTransferStatusCounts {\n      status\n      count\n    }\n    overdueAckCount\n    attentionItems {\n      kind\n      id\n      partnerId\n      partnerName\n      partnerCode\n      reference\n      error\n      occurredAt\n    }\n  }\n}"
     },
     {
+      "name": "EditCaptureItems",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:06d6ea7c7108d379fda0f748bfd8f0cc67e0858c0e12ebe10077ddab0e22ed48",
+      "rootFields": [
+        "editCaptureItems"
+      ],
+      "variables": [
+        {
+          "name": "batchId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "EditCaptureItemsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureBatchDetailFields",
+        "CaptureBatchRowFields",
+        "CaptureItemFields",
+        "CapturePageFields",
+        "CaptureRecordRefFields"
+      ],
+      "usages": [],
+      "sdl": "mutation EditCaptureItems($batchId: ID!, $input: EditCaptureItemsInput!) {\n  editCaptureItems(batchId: $batchId, input: $input) {\n    ...CaptureBatchDetailFields\n  }\n}\n\nfragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
       "name": "EdiTemplateList",
       "kind": "query",
       "domain": "edi",
@@ -9337,6 +9784,57 @@
       ],
       "usages": [],
       "sdl": "query ExtractionEvalRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  extractionEvalRuns(input: $input) {\n    edges {\n      node {\n        ...ExtractionEvalRunFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "FileCaptureItem",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:61340153bcc7647b8cba47c96ebb6c5234d6d7cf70689826ac13863304a77154",
+      "rootFields": [
+        "fileCaptureItem"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "FileCaptureItemInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureItemFields",
+        "CaptureRecordRefFields"
+      ],
+      "usages": [],
+      "sdl": "mutation FileCaptureItem($id: ID!, $input: FileCaptureItemInput!) {\n  fileCaptureItem(id: $id, input: $input) {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
+      "name": "FileCaptureItems",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:61e2b7bd0d853ce8ce7959b820c8f954855355108629c60b9849b339f090d865",
+      "rootFields": [
+        "fileCaptureItems"
+      ],
+      "variables": [
+        {
+          "name": "items",
+          "type": "[FileCaptureItemsEntryInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureItemFields",
+        "CaptureRecordRefFields"
+      ],
+      "usages": [],
+      "sdl": "mutation FileCaptureItems($items: [FileCaptureItemsEntryInput!]!) {\n  fileCaptureItems(items: $items) {\n    filed {\n      ...CaptureItemFields\n    }\n    failures {\n      itemId\n      message\n    }\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "FinalizeDotRandomDraw",
@@ -11690,6 +12188,43 @@
       "fragments": [],
       "usages": [],
       "sdl": "query MyAvailability {\n  myAvailability {\n    id\n    dayOfWeek\n    preference\n    note\n  }\n}"
+    },
+    {
+      "name": "MyCaptureAccess",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:0e0e3bed6cfbb9210e5d3a2f3d7a07d91e26763205dd3c68f4b4885d3d7b23c2",
+      "rootFields": [
+        "myCaptureAccess"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query MyCaptureAccess {\n  myCaptureAccess {\n    enabled\n    canCapture\n  }\n}"
+    },
+    {
+      "name": "MyCaptureDevices",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:f0a7a8fb1db403a1954eeeb2c75defe50fcb341e515af418b73561ae814d368a",
+      "rootFields": [
+        "myCaptureDevices"
+      ],
+      "variables": [
+        {
+          "name": "status",
+          "type": "CaptureDeviceStatus",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureDeviceFields",
+        "CaptureSourceInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query MyCaptureDevices($status: CaptureDeviceStatus) {\n  myCaptureDevices(status: $status) {\n    ...CaptureDeviceFields\n  }\n}\n\nfragment CaptureDeviceFields on CaptureDevice {\n  id\n  userId\n  name\n  machineName\n  windowsUser\n  agentVersion\n  architecture\n  osVersion\n  status\n  lastSeenAt\n  isOnline\n  lastIp\n  revokedAt\n  revokedReason\n  version\n  createdAt\n  sources {\n    ...CaptureSourceInfoFields\n  }\n}\n\nfragment CaptureSourceInfoFields on CaptureSourceInfo {\n  name\n  protocol\n  bitness\n  isDefault\n  duplex\n  feeder\n  patchCodes\n  barcodes\n  blankDiscard\n  resolutions\n}"
     },
     {
       "name": "MyCarrierIntelligence",
@@ -15527,6 +16062,35 @@
       "sdl": "mutation RevokeApprovalDelegation($id: ID!) {\n  revokeApprovalDelegation(id: $id) {\n    id\n    revokedAt\n    version\n  }\n}"
     },
     {
+      "name": "RevokeCaptureDevice",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:904d43dd85b5681c83e1e6c6053b0e747fff2c59ddd2fae630eb03e7cd17112b",
+      "rootFields": [
+        "revokeCaptureDevice"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureDeviceFields",
+        "CaptureDeviceFleetFields",
+        "CaptureSourceInfoFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RevokeCaptureDevice($id: ID!, $reason: String) {\n  revokeCaptureDevice(id: $id, reason: $reason) {\n    ...CaptureDeviceFleetFields\n  }\n}\n\nfragment CaptureDeviceFields on CaptureDevice {\n  id\n  userId\n  name\n  machineName\n  windowsUser\n  agentVersion\n  architecture\n  osVersion\n  status\n  lastSeenAt\n  isOnline\n  lastIp\n  revokedAt\n  revokedReason\n  version\n  createdAt\n  sources {\n    ...CaptureSourceInfoFields\n  }\n}\n\nfragment CaptureDeviceFleetFields on CaptureDevice {\n  ...CaptureDeviceFields\n  user {\n    id\n    name\n    emailAddress\n  }\n}\n\nfragment CaptureSourceInfoFields on CaptureSourceInfo {\n  name\n  protocol\n  bitness\n  isDefault\n  duplex\n  feeder\n  patchCodes\n  barcodes\n  blankDiscard\n  resolutions\n}"
+    },
+    {
       "name": "RevokeCarrierIntelOverride",
       "kind": "mutation",
       "domain": "carrier-intelligence",
@@ -15552,6 +16116,34 @@
       ],
       "usages": [],
       "sdl": "mutation RevokeCarrierIntelOverride($id: ID!, $reason: String!) {\n  revokeCarrierIntelOverride(id: $id, reason: $reason) {\n    ...CarrierIntelOverrideFields\n  }\n}\n\nfragment CarrierIntelOverrideFields on CarrierIntelOverride {\n  id\n  carrierId\n  ruleCode\n  reason\n  grantedById\n  grantedAt\n  expiresAt\n  revokedById\n  revokedAt\n  revokeReason\n  active\n  version\n  createdAt\n}"
+    },
+    {
+      "name": "RevokeMyCaptureDevice",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:56477b12d596360918b78d4d1bad09d67fde4a40e055561d24df95725f02c7b5",
+      "rootFields": [
+        "revokeMyCaptureDevice"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureDeviceFields",
+        "CaptureSourceInfoFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RevokeMyCaptureDevice($id: ID!, $reason: String) {\n  revokeMyCaptureDevice(id: $id, reason: $reason) {\n    ...CaptureDeviceFields\n  }\n}\n\nfragment CaptureDeviceFields on CaptureDevice {\n  id\n  userId\n  name\n  machineName\n  windowsUser\n  agentVersion\n  architecture\n  osVersion\n  status\n  lastSeenAt\n  isOnline\n  lastIp\n  revokedAt\n  revokedReason\n  version\n  createdAt\n  sources {\n    ...CaptureSourceInfoFields\n  }\n}\n\nfragment CaptureSourceInfoFields on CaptureSourceInfo {\n  name\n  protocol\n  bitness\n  isDefault\n  duplex\n  feeder\n  patchCodes\n  barcodes\n  blankDiscard\n  resolutions\n}"
     },
     {
       "name": "RevokeWorkerPortalAccess",
@@ -18356,6 +18948,38 @@
       ],
       "usages": [],
       "sdl": "mutation UpdateBillingQueueStatus($id: ID!, $input: BillingQueueUpdateStatusInput!) {\n  updateBillingQueueStatus(id: $id, input: $input) {\n    ...BillingQueueActionFields\n  }\n}\n\nfragment BillingQueueActionFields on BillingQueueItem {\n  id\n  organizationId\n  businessUnitId\n  shipmentId\n  billToCustomerId\n  allocatedTotalAmount\n  billToCustomer {\n    id\n    name\n    code\n  }\n  assignedBillerId\n  number\n  status\n  billType\n  exceptionReasonCode\n  reviewNotes\n  exceptionNotes\n  reviewStartedAt\n  reviewCompletedAt\n  canceledById\n  canceledAt\n  cancelReason\n  isAdjustmentOrigin\n  sourceInvoiceId\n  sourceInvoiceAdjustmentId\n  sourceCreditMemoInvoiceId\n  correctionGroupId\n  rebillStrategy\n  requiresReplacementReview\n  rerateVariancePercent\n  adjustmentContext\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "UpdateCaptureProfile",
+      "kind": "mutation",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:906331e1953ab30bbb168a6963ec72cd98e087a9c7578f438d087d7ea6e90c7b",
+      "rootFields": [
+        "updateCaptureProfile"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "CaptureProfileInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CaptureProfileFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateCaptureProfile($id: ID!, $version: Int!, $input: CaptureProfileInput!) {\n  updateCaptureProfile(id: $id, version: $version, input: $input) {\n    ...CaptureProfileFields\n  }\n}\n\nfragment CaptureProfileFields on CaptureProfile {\n  id\n  name\n  description\n  status\n  isDefault\n  dpi\n  pixelType\n  duplex\n  useFeeder\n  discardBlankPages\n  jpegQuality\n  showDriverUi\n  separatorStrategies\n  fixedPageCount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateCarrierIntelControl",
@@ -22000,6 +22624,168 @@
       ],
       "usages": [],
       "sdl": "fragment BriefingFields on Briefing {\n  id\n  roleKey\n  briefingDate\n  status\n  headline\n  narrated\n  readAt\n  sections {\n    key\n    title\n    summary\n    body\n    read\n    path\n    items {\n      label\n      value\n      path\n    }\n  }\n}"
+    },
+    {
+      "name": "CaptureBatchDetailFields",
+      "typeCondition": "CaptureBatch",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [
+        "CaptureBatchRowFields",
+        "CaptureItemFields",
+        "CapturePageFields",
+        "CaptureRecordRefFields"
+      ],
+      "usedByOperations": [
+        "CaptureBatch",
+        "EditCaptureItems"
+      ],
+      "usages": [],
+      "sdl": "fragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
+      "name": "CaptureBatchRowFields",
+      "typeCondition": "CaptureBatch",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [
+        "CaptureRecordRefFields"
+      ],
+      "usedByOperations": [
+        "CaptureBatch",
+        "CaptureBatches",
+        "DiscardCaptureBatch",
+        "DiscardCaptureItem",
+        "EditCaptureItems"
+      ],
+      "usages": [],
+      "sdl": "fragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
+      "name": "CaptureDeviceFields",
+      "typeCondition": "CaptureDevice",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [
+        "CaptureSourceInfoFields"
+      ],
+      "usedByOperations": [
+        "CaptureDevices",
+        "MyCaptureDevices",
+        "RevokeCaptureDevice",
+        "RevokeMyCaptureDevice"
+      ],
+      "usages": [],
+      "sdl": "fragment CaptureDeviceFields on CaptureDevice {\n  id\n  userId\n  name\n  machineName\n  windowsUser\n  agentVersion\n  architecture\n  osVersion\n  status\n  lastSeenAt\n  isOnline\n  lastIp\n  revokedAt\n  revokedReason\n  version\n  createdAt\n  sources {\n    ...CaptureSourceInfoFields\n  }\n}\n\nfragment CaptureSourceInfoFields on CaptureSourceInfo {\n  name\n  protocol\n  bitness\n  isDefault\n  duplex\n  feeder\n  patchCodes\n  barcodes\n  blankDiscard\n  resolutions\n}"
+    },
+    {
+      "name": "CaptureDeviceFleetFields",
+      "typeCondition": "CaptureDevice",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [
+        "CaptureDeviceFields",
+        "CaptureSourceInfoFields"
+      ],
+      "usedByOperations": [
+        "CaptureDevices",
+        "RevokeCaptureDevice"
+      ],
+      "usages": [],
+      "sdl": "fragment CaptureDeviceFleetFields on CaptureDevice {\n  ...CaptureDeviceFields\n  user {\n    id\n    name\n    emailAddress\n  }\n}\n\nfragment CaptureDeviceFields on CaptureDevice {\n  id\n  userId\n  name\n  machineName\n  windowsUser\n  agentVersion\n  architecture\n  osVersion\n  status\n  lastSeenAt\n  isOnline\n  lastIp\n  revokedAt\n  revokedReason\n  version\n  createdAt\n  sources {\n    ...CaptureSourceInfoFields\n  }\n}\n\nfragment CaptureSourceInfoFields on CaptureSourceInfo {\n  name\n  protocol\n  bitness\n  isDefault\n  duplex\n  feeder\n  patchCodes\n  barcodes\n  blankDiscard\n  resolutions\n}"
+    },
+    {
+      "name": "CaptureItemFields",
+      "typeCondition": "CaptureItem",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [
+        "CaptureRecordRefFields"
+      ],
+      "usedByOperations": [
+        "CaptureBatch",
+        "EditCaptureItems",
+        "FileCaptureItem",
+        "FileCaptureItems"
+      ],
+      "usages": [],
+      "sdl": "fragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
+      "name": "CapturePageFields",
+      "typeCondition": "CapturePage",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CaptureBatch",
+        "EditCaptureItems"
+      ],
+      "usages": [],
+      "sdl": "fragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}"
+    },
+    {
+      "name": "CaptureProfileFields",
+      "typeCondition": "CaptureProfile",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AvailableCaptureProfiles",
+        "CaptureProfiles",
+        "CreateCaptureProfile",
+        "UpdateCaptureProfile"
+      ],
+      "usages": [],
+      "sdl": "fragment CaptureProfileFields on CaptureProfile {\n  id\n  name\n  description\n  status\n  isDefault\n  dpi\n  pixelType\n  duplex\n  useFeeder\n  discardBlankPages\n  jpegQuality\n  showDriverUi\n  separatorStrategies\n  fixedPageCount\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CaptureRecordRefFields",
+      "typeCondition": "CaptureRecordRef",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CaptureBatch",
+        "CaptureBatches",
+        "CreateCaptureCoverSheets",
+        "DiscardCaptureBatch",
+        "DiscardCaptureItem",
+        "EditCaptureItems",
+        "FileCaptureItem",
+        "FileCaptureItems"
+      ],
+      "usages": [],
+      "sdl": "fragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+    },
+    {
+      "name": "CaptureRequestFields",
+      "typeCondition": "CaptureRequest",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CancelCaptureRequest",
+        "CaptureRequestsForTarget",
+        "CreateCaptureRequest"
+      ],
+      "usages": [],
+      "sdl": "fragment CaptureRequestFields on CaptureRequest {\n  id\n  deviceId\n  mode\n  status\n  targetType\n  targetId\n  documentTypeId\n  profileId\n  sourceName\n  batchId\n  failureCode\n  failureMessage\n  expiresAt\n  deliveredAt\n  completedAt\n  isOpen\n  createdAt\n}"
+    },
+    {
+      "name": "CaptureSourceInfoFields",
+      "typeCondition": "CaptureSourceInfo",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CaptureDevices",
+        "MyCaptureDevices",
+        "RevokeCaptureDevice",
+        "RevokeMyCaptureDevice"
+      ],
+      "usages": [],
+      "sdl": "fragment CaptureSourceInfoFields on CaptureSourceInfo {\n  name\n  protocol\n  bitness\n  isDefault\n  duplex\n  feeder\n  patchCodes\n  barcodes\n  blankDiscard\n  resolutions\n}"
     },
     {
       "name": "CarrierContactFields",
@@ -26232,6 +27018,167 @@
       ],
       "sdl": "input CancelWorkerTrainingInput {\n  id: ID!\n  reason: String\n  version: Int\n}"
     },
+    "CaptureBatchesInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "25",
+          "defaultJson": 25
+        },
+        {
+          "name": "mine",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "CaptureBatchSort",
+          "defaultValue": "Newest",
+          "defaultJson": "Newest"
+        },
+        {
+          "name": "source",
+          "type": "CaptureSource",
+          "defaultValue": null
+        },
+        {
+          "name": "statuses",
+          "type": "[CaptureBatchStatus!]",
+          "defaultValue": null
+        },
+        {
+          "name": "targetId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "targetType",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CaptureBatchesInput {\n  after: String\n  first: Int = 25\n  \"\"\"Only the caller's own batches, even when they could see everybody's.\"\"\"\n  mine: Boolean\n  \"\"\"Words from the scanner, print job or device name.\"\"\"\n  query: String\n  sort: CaptureBatchSort = Newest\n  source: CaptureSource\n  \"\"\"Only these statuses; empty is every status.\"\"\"\n  statuses: [CaptureBatchStatus!]\n  targetId: ID\n  \"\"\"Only batches scanned into this record.\"\"\"\n  targetType: String\n}"
+    },
+    "CaptureCoverSheetInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "documentTypeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "targetId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "targetType",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CaptureCoverSheetInput {\n  documentTypeId: ID\n  targetId: ID\n  \"\"\"\n  Leave the record out for a plain separator that divides a stack and routes nothing.\n  \"\"\"\n  targetType: String\n}"
+    },
+    "CaptureDeviceStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Revoked"
+      ],
+      "sdl": "\"\"\"Whether a paired companion may still act for its person.\"\"\"\nenum CaptureDeviceStatus {\n  Active\n  Revoked\n}"
+    },
+    "CaptureProfileInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "description",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "discardBlankPages",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "dpi",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "duplex",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "fixedPageCount",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "isDefault",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "jpegQuality",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "pixelType",
+          "type": "CapturePixelType!",
+          "defaultValue": null
+        },
+        {
+          "name": "separatorStrategies",
+          "type": "[CaptureSeparatorStrategy!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "showDriverUi",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "CaptureProfileStatus!",
+          "defaultValue": null
+        },
+        {
+          "name": "useFeeder",
+          "type": "Boolean!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CaptureProfileInput {\n  description: String\n  discardBlankPages: Boolean!\n  dpi: Int!\n  duplex: Boolean!\n  fixedPageCount: Int!\n  isDefault: Boolean!\n  jpegQuality: Int!\n  name: String!\n  pixelType: CapturePixelType!\n  separatorStrategies: [CaptureSeparatorStrategy!]!\n  showDriverUi: Boolean!\n  status: CaptureProfileStatus!\n  useFeeder: Boolean!\n}"
+    },
+    "CaptureProfileStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Inactive"
+      ],
+      "sdl": "\"\"\"Whether a profile is still offered when somebody starts a scan.\"\"\"\nenum CaptureProfileStatus {\n  Active\n  Inactive\n}"
+    },
     "CarrierIntelControlPatchInput": {
       "kind": "input",
       "fields": [
@@ -26938,6 +27885,47 @@
         }
       ],
       "sdl": "\"\"\"Exactly one of the four.\"\"\"\ninput CreateAgentEvalCaseInput {\n  curated: AgentEvalCaseCuratedInput\n  fromFeedback: AgentEvalCaseFromFeedbackInput\n  fromMessage: AgentEvalCaseFromMessageInput\n  fromProposal: AgentEvalCaseFromProposalInput\n}"
+    },
+    "CreateCaptureRequestInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "deviceId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "documentTypeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "mode",
+          "type": "CaptureRequestMode!",
+          "defaultValue": null
+        },
+        {
+          "name": "profileId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "sourceName",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "targetId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "targetType",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateCaptureRequestInput {\n  \"\"\"One of the caller's own devices.\"\"\"\n  deviceId: ID!\n  documentTypeId: ID\n  mode: CaptureRequestMode!\n  profileId: ID\n  \"\"\"The scanner to use; blank for the device's default.\"\"\"\n  sourceName: String\n  targetId: ID!\n  targetType: String!\n}"
     },
     "CreateCarrierInvoiceMatchInput": {
       "kind": "input",
@@ -28468,6 +29456,27 @@
       ],
       "sdl": "enum EdiDocumentDirection {\n  Inbound\n  Outbound\n}"
     },
+    "EditCaptureItemsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "items",
+          "type": "[CaptureItemLayoutInput!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "rotations",
+          "type": "[CapturePageRotationInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input EditCaptureItemsInput {\n  \"\"\"How the open pages divide into documents. Pages left out are dropped.\"\"\"\n  items: [CaptureItemLayoutInput!]!\n  rotations: [CapturePageRotationInput!]\n  \"\"\"The batch version the person was looking at.\"\"\"\n  version: Int!\n}"
+    },
     "EdiTemplateStatus": {
       "kind": "enum",
       "values": [
@@ -28721,6 +29730,63 @@
         }
       ],
       "sdl": "input EquipmentTypePatchInput {\n  \"\"\"Omit to leave unchanged; null is rejected.\"\"\"\n  class: EquipmentClass @goField(omittable: true)\n  \"\"\"Omit to leave unchanged; null is rejected.\"\"\"\n  code: String @goField(omittable: true)\n  \"\"\"Omit to leave unchanged; pass null to clear.\"\"\"\n  color: String @goField(omittable: true)\n  \"\"\"Omit to leave unchanged; pass null to clear.\"\"\"\n  description: String @goField(omittable: true)\n  \"\"\"Omit to leave unchanged; pass null to clear.\"\"\"\n  interiorLength: Float @goField(omittable: true)\n  \"\"\"Omit to leave unchanged; null is rejected.\"\"\"\n  status: EntityStatus @goField(omittable: true)\n  \"\"\"Omit to leave unchanged; null is rejected.\"\"\"\n  version: Int @goField(omittable: true)\n}"
+    },
+    "FileCaptureItemInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "documentTypeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "targetId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "targetType",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FileCaptureItemInput {\n  documentTypeId: ID\n  targetId: ID!\n  targetType: String!\n  \"\"\"The item version the person was looking at.\"\"\"\n  version: Int!\n}"
+    },
+    "FileCaptureItemsEntryInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "documentTypeId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "itemId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "targetId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "targetType",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input FileCaptureItemsEntryInput {\n  documentTypeId: ID\n  itemId: ID!\n  targetId: ID!\n  targetType: String!\n  \"\"\"The item version the person was looking at.\"\"\"\n  version: Int!\n}"
     },
     "FleetSafetyInput": {
       "kind": "input",
@@ -37357,6 +38423,58 @@
       ],
       "sdl": "enum WorkerPTOBulkAction {\n  Approve\n  Cancel\n  Reject\n}"
     },
+    "CaptureBatchSort": {
+      "kind": "enum",
+      "values": [
+        "ExpiringSoonest",
+        "MostPages",
+        "Newest",
+        "Oldest"
+      ],
+      "sdl": "\"\"\"How the intake queue is ordered.\"\"\"\nenum CaptureBatchSort {\n  \"\"\"Soonest to have its unfiled pages deleted first.\"\"\"\n  ExpiringSoonest\n  \"\"\"Largest stack first.\"\"\"\n  MostPages\n  \"\"\"Most recently captured first.\"\"\"\n  Newest\n  \"\"\"Longest waiting first.\"\"\"\n  Oldest\n}"
+    },
+    "CaptureSource": {
+      "kind": "enum",
+      "values": [
+        "Print",
+        "Scan"
+      ],
+      "sdl": "\"\"\"\nHow the pages reached Trenova: from a scanner, or from another program's print dialog.\n\"\"\"\nenum CaptureSource {\n  Print\n  Scan\n}"
+    },
+    "CaptureBatchStatus": {
+      "kind": "enum",
+      "values": [
+        "Discarded",
+        "Expired",
+        "Failed",
+        "Filed",
+        "PartiallyFiled",
+        "Processing",
+        "Ready",
+        "Receiving",
+        "Sealed"
+      ],
+      "sdl": "\"\"\"\nHow far a captured stack has got, from the first page arriving to the last document being filed.\n\"\"\"\nenum CaptureBatchStatus {\n  Discarded\n  Expired\n  Failed\n  Filed\n  PartiallyFiled\n  Processing\n  Ready\n  Receiving\n  Sealed\n}"
+    },
+    "CapturePixelType": {
+      "kind": "enum",
+      "values": [
+        "BlackWhite",
+        "Color",
+        "Grayscale"
+      ],
+      "sdl": "\"\"\"The colour mode a profile scans in.\"\"\"\nenum CapturePixelType {\n  BlackWhite\n  Color\n  Grayscale\n}"
+    },
+    "CaptureSeparatorStrategy": {
+      "kind": "enum",
+      "values": [
+        "BlankPage",
+        "CoverSheet",
+        "FixedPageCount",
+        "PatchCode"
+      ],
+      "sdl": "\"\"\"A rule for where one document in a stack ends and the next begins.\"\"\"\nenum CaptureSeparatorStrategy {\n  BlankPage\n  CoverSheet\n  FixedPageCount\n  PatchCode\n}"
+    },
     "CarrierIntelOutagePolicy": {
       "kind": "enum",
       "values": [
@@ -37621,6 +38739,14 @@
         }
       ],
       "sdl": "input AgentEvalCaseFromProposalInput {\n  proposalId: ID!\n  title: String\n}"
+    },
+    "CaptureRequestMode": {
+      "kind": "enum",
+      "values": [
+        "Print",
+        "Scan"
+      ],
+      "sdl": "\"\"\"What a request asks the companion to do.\"\"\"\nenum CaptureRequestMode {\n  Print\n  Scan\n}"
     },
     "IFTAFuelType": {
       "kind": "enum",
@@ -38064,6 +39190,33 @@
         "SemiAnnual"
       ],
       "sdl": "enum RandomPeriod {\n  Annual\n  Monthly\n  Quarterly\n  SemiAnnual\n}"
+    },
+    "CaptureItemLayoutInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "pageIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CaptureItemLayoutInput {\n  \"\"\"The item's pages, in order.\"\"\"\n  pageIds: [ID!]!\n}"
+    },
+    "CapturePageRotationInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "pageId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "rotation",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CapturePageRotationInput {\n  pageId: ID!\n  \"\"\"Clockwise degrees: 0, 90, 180 or 270.\"\"\"\n  rotation: Int!\n}"
     },
     "CoverageTier": {
       "kind": "enum",
