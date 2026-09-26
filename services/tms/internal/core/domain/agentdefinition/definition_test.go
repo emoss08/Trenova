@@ -1,6 +1,7 @@
 package agentdefinition_test
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -453,6 +454,48 @@ func TestTemplates_CarryTheToolsTheirPurposeRequires(t *testing.T) {
 
 	assert.Contains(t, agentdefinition.TemplateBillingAssistant.StarterTools(),
 		"list_shipments")
+}
+
+// The billing assistant works the whole lifecycle with the person it is
+// talking to: it finds what can transfer and proposes the transfer, reviews
+// queue items and proposes each decision, and proposes posting and sending
+// the invoice approval made. The exception desk runs unattended, so it holds
+// the reads and the three decisions that make no money, never an approval,
+// a cancellation, a transfer or a post.
+func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
+	t.Parallel()
+
+	reads := []string{
+		"list_billing_transfer_candidates",
+		"list_billing_queue_items",
+		"get_billing_queue_item",
+	}
+	moneyless := []string{
+		"send_billing_item_back_to_ops",
+		"move_billing_item_to_exception",
+		"hold_billing_queue_item",
+	}
+	personal := []string{
+		"transfer_to_billing",
+		"approve_billing_queue_item",
+		"cancel_billing_queue_item",
+		"assign_billing_queue_biller",
+		"post_invoice",
+		"send_invoice",
+	}
+
+	assistant := agentdefinition.TemplateBillingAssistant.StarterTools()
+	for _, tool := range slices.Concat(reads, moneyless, personal) {
+		assert.Contains(t, assistant, tool)
+	}
+
+	desk := agentdefinition.TemplateBillingException.StarterTools()
+	for _, tool := range slices.Concat(reads, moneyless) {
+		assert.Contains(t, desk, tool)
+	}
+	for _, tool := range personal {
+		assert.NotContains(t, desk, tool, "the unattended desk never holds %s", tool)
+	}
 }
 
 // A duplicate name is silently dropped by the registry, and an empty one fails

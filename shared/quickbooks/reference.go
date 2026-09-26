@@ -212,15 +212,15 @@ func (c *Client) ListReference(
 	}
 
 	query := c.query()
-	query.Set("query", "select * from "+string(kind)+
+	query.Set(queryResource, "select * from "+string(kind)+
 		" where Active in (true, false) startposition "+strconv.Itoa(startPosition)+
 		" maxresults "+strconv.Itoa(pageSize))
 
 	var out queryEnvelope
 	if _, err := c.transport.Do(ctx, &restx.Request{
-		Endpoint: "query",
+		Endpoint: queryResource,
 		Method:   http.MethodGet,
-		Path:     c.companyPath("query"),
+		Path:     c.companyPath(queryResource),
 		Query:    query,
 		Out:      &out,
 	}); err != nil {

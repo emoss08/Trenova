@@ -395,6 +395,48 @@ func latestOf(
 	return found
 }
 
+func documentRecord(
+	records []*accountingsync.AccountingSyncRecord,
+) *accountingsync.AccountingSyncRecord {
+	var found *accountingsync.AccountingSyncRecord
+	for _, record := range records {
+		if record.Operation != accountingsync.SyncOperationCreate &&
+			record.Operation != accountingsync.SyncOperationRecreate {
+			continue
+		}
+		if found == nil || record.Revision >= found.Revision {
+			found = record
+		}
+	}
+	return found
+}
+
+func (s *Service) updateTarget(
+	ctx context.Context,
+	sess *pushSession,
+	record *accountingsync.AccountingSyncRecord,
+	label string,
+) (*accountingsync.AccountingSyncRecord, error) {
+	existing, err := s.objectRecords(ctx, sess, record.ObjectType, record.ObjectID)
+	if err != nil {
+		return nil, err
+	}
+	sent := documentRecord(existing)
+	switch {
+	case sent == nil:
+		return nil, &noopError{reason: label + " was never sent, so there is nothing to update"}
+	case isSynced(sent) && sent.SharesProviderDocument():
+		return nil, sharedDocumentError(sess, label)
+	case isSynced(sent):
+		return sent, nil
+	case sent.Status.IsFinal():
+		return nil, &noopError{reason: label + " was skipped, so its changes are not sent"}
+	default:
+		s.kick(ctx, sess.tenant, sess.conn.ID)
+		return nil, waitingOn(sent, label)
+	}
+}
+
 func isSynced(record *accountingsync.AccountingSyncRecord) bool {
 	return record.Status == accountingsync.SyncStatusSynced && record.ExternalID != ""
 }

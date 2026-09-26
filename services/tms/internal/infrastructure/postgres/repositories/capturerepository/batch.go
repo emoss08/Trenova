@@ -38,6 +38,13 @@ var inFlightBatchStatuses = []capture.BatchStatus{
 	capture.BatchProcessing,
 }
 
+// awaitingPersonStatuses are the batches a person still has something to file
+// in, the only ones worth a reminder. The reminder index names the same two.
+var awaitingPersonStatuses = []capture.BatchStatus{
+	capture.BatchReady,
+	capture.BatchPartiallyFiled,
+}
+
 func (r *batchRepository) Create(
 	ctx context.Context,
 	entity *capture.CaptureBatch,
@@ -247,6 +254,58 @@ func (r *batchRepository) ListRetentionDue(
 	}
 
 	return entities, nil
+}
+
+func (r *batchRepository) ListRetentionReminders(
+	ctx context.Context,
+	req repositories.ListRetentionReminderCaptureBatchesRequest,
+) ([]*capture.CaptureBatch, error) {
+	limit := boundedLimit(req.Limit)
+	entities := make([]*capture.CaptureBatch, 0, limit)
+	cols := buncolgen.CaptureBatchColumns
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Where(cols.Status.In(), bun.List(awaitingPersonStatuses)).
+		Where(cols.RetentionRemindedAt.IsNull()).
+		Where(cols.RetainUntil.Gt(), req.From).
+		Where(cols.RetainUntil.Lte(), req.Until).
+		Order(cols.RetainUntil.OrderAsc()).
+		Limit(limit).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func (r *batchRepository) ClaimRetentionReminder(
+	ctx context.Context,
+	req repositories.ClaimRetentionReminderRequest,
+) (bool, error) {
+	cols := buncolgen.CaptureBatchColumns
+
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*capture.CaptureBatch)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.CaptureBatchScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID).
+				Where(cols.RetentionRemindedAt.IsNull())
+		}).
+		Set(cols.RetentionRemindedAt.Set(), req.At).
+		Exec(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	affected, err := results.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return affected == 1, nil
 }
 
 func (r *batchRepository) IncrementReceived(

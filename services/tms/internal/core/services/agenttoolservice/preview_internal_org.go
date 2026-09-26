@@ -103,6 +103,12 @@ func planned[T any](
 	return plannedChange{change: change, refused: refused}, nil
 }
 
+// accepted reports whether the plan would run; a refused one previews as a
+// would-fail warning.
+func (p plannedChange) accepted() bool {
+	return p.refused == nil
+}
+
 func (p plannedChange) preview(
 	summary string,
 	extra ...*agent.RecordChange,

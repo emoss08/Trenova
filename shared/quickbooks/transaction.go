@@ -177,6 +177,8 @@ type wireSalesLine struct {
 }
 
 type salesBody struct {
+	ID           string          `json:"Id,omitempty"`
+	SyncToken    string          `json:"SyncToken,omitempty"`
 	CustomerRef  refValue        `json:"CustomerRef"`
 	DocNumber    string          `json:"DocNumber,omitempty"`
 	TxnDate      string          `json:"TxnDate,omitempty"`
@@ -569,14 +571,14 @@ func (c *Client) FindTransactionByDocNumber(
 	}
 
 	query := c.query()
-	query.Set("query", "select * from "+string(kind)+" where DocNumber = '"+
+	query.Set(queryResource, "select * from "+string(kind)+" where DocNumber = '"+
 		strings.ReplaceAll(number, "'", `\'`)+"'")
 
 	var out txnQueryEnvelope
 	if _, err := c.transport.Do(ctx, &restx.Request{
-		Endpoint: "query",
+		Endpoint: queryResource,
 		Method:   http.MethodGet,
-		Path:     c.companyPath("query"),
+		Path:     c.companyPath(queryResource),
 		Query:    query,
 		Out:      &out,
 	}); err != nil {

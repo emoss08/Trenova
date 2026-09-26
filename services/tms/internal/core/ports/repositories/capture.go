@@ -190,6 +190,23 @@ type ListRetentionDueCaptureBatchesRequest struct {
 	Limit int   `json:"limit"`
 }
 
+// ListRetentionReminderCaptureBatchesRequest finds batches still waiting on a
+// person whose retention runs out between From and Until, whose owner has not
+// been told yet.
+type ListRetentionReminderCaptureBatchesRequest struct {
+	From  int64 `json:"from"`
+	Until int64 `json:"until"`
+	Limit int   `json:"limit"`
+}
+
+// ClaimRetentionReminderRequest marks a batch's reminder as sent, only if no
+// other sweep already did.
+type ClaimRetentionReminderRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	At         int64                 `json:"at"`
+}
+
 type DeleteCaptureBatchRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -223,6 +240,14 @@ type CaptureBatchRepository interface {
 		ctx context.Context,
 		req ListRetentionDueCaptureBatchesRequest,
 	) ([]*capture.CaptureBatch, error)
+	ListRetentionReminders(
+		ctx context.Context,
+		req ListRetentionReminderCaptureBatchesRequest,
+	) ([]*capture.CaptureBatch, error)
+	// ClaimRetentionReminder reports whether this call set the reminder. It
+	// does not touch the version: a reminder is not an edit, and a person's
+	// open edit must not fail because a sweep ran.
+	ClaimRetentionReminder(ctx context.Context, req ClaimRetentionReminderRequest) (bool, error)
 	// IncrementReceived counts one newly stored page without touching the
 	// version, because pages land concurrently and each one is not an edit.
 	IncrementReceived(ctx context.Context, req IncrementCaptureBatchPagesRequest) error

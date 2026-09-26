@@ -177,6 +177,42 @@ compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and ag
 runs. The parameter holding the target's id is `readOnly` in `parameterFields` and in the
 chat's editable fields (`services.ProposalFields`).
 
+## Record subsets
+
+A write over a set of records can let the person approving it drop some. A tool marks an
+array-of-ids parameter as a subset of one permission resource's records with
+`toolschema.RecordSubset(resource, property)`, which sets the `x-subsetOf` keyword;
+`transfer_to_billing.shipmentIds` is one, over `shipment`.
+
+- **The form.** `toolschema.Fields` reads the parameter as kind `RecordSubset` with its
+  `Resource`, and GraphQL serves both on `AgentProposal.parameterFields`:
+  `AgentProposalField.kind` is `RecordSubset` and `AgentProposalField.resource` names the
+  resource (`null` for every other kind). `AgentProposalField.choices` lists every record
+  the parameter proposed, from the proposal's own parameters (never a modification), in the
+  order proposed and each once, bounded by the parameter's `maxItems` and never past
+  `toolschema.MaxSubsetChoices` (5000): `{ id, label }`, the label read through
+  `RecordLabeler` and the id when the record is gone or the reader may not read the
+  resource. A client lists them as rows a person can untick and sends the ids it kept, as
+  a list of strings, back as the parameter's modification.
+- **Labels.** GraphQL reads them through the `SubsetLabels` loader: each subset field asks
+  once for all of its ids, and a request's fields are labelled together, one query per
+  resource for each `services.MaxRecordLabelsPerResource` (5000) records. The chat's
+  `/assistant/threads/{id}/proposals/` labels every pending proposal in a thread in one
+  `Labels` read. Both check the reader's read permission on the resource first and read
+  nothing without it.
+- **The rule.** `CheckModifications` (and `admit`, where the write runs) refuses a
+  modification to a subset parameter that is not a narrowing of what was proposed
+  (`toolschema.CheckSubsets`): an id the agent did not propose is refused as `forbidden`, and
+  an empty list, or one that is not a list, is refused. Removing ids is allowed, and the
+  preview, the digest and the write all follow the narrowed list.
+- **The model never sees the keyword.** Every model adapter sends tools through
+  `toolschema.ForModel`, which strips `x-` keywords at any depth (a strict endpoint refuses
+  a keyword it does not know) and keeps parameter names that merely look like one.
+
+A preview still shows at most 20 records, so a subset of more is shown in part; the
+parameter's value is the whole list, and the field's choices list it all. The approval form
+shows each preview record's outcome on its row and the rest by label.
+
 ## API
 
 `internal/api/graphql/schema/agentpreview.graphqls`:

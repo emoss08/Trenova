@@ -30,3 +30,7 @@ func (m Method) IsValid() bool {
 		return false
 	}
 }
+
+func AllMethods() []Method {
+	return []Method{MethodACH, MethodCheck, MethodWire, MethodCard, MethodCash, MethodOther}
+}

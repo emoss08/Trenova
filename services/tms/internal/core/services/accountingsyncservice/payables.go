@@ -336,6 +336,12 @@ func (s *Service) pushBill(
 	if err = s.checkBooks(sess, settlement.CurrencyCode, *settlement.PostedAt, label); err != nil {
 		return nil, err
 	}
+	var target *accountingsync.AccountingSyncRecord
+	if record.Operation == accountingsync.SyncOperationUpdate {
+		if target, err = s.updateTarget(ctx, sess, record, label); err != nil {
+			return nil, err
+		}
+	}
 
 	res := newResolver(s, sess)
 	vendorID, err := s.partyRef(
@@ -396,7 +402,7 @@ func (s *Service) pushBill(
 		doc.DocNumber = ""
 	}
 
-	written, err := sess.writer.CreatePurchaseDocument(ctx, doc)
+	written, err := writeBill(ctx, sess, target, doc, label)
 	if err != nil {
 		return partial(written), err
 	}
@@ -492,7 +498,7 @@ func (s *Service) pushBillVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate)
+	created := documentRecord(existing)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}
@@ -541,6 +547,13 @@ func (s *Service) pushBillPayment(
 		return nil, err
 	}
 
+	var target *accountingsync.AccountingSyncRecord
+	if record.Operation == accountingsync.SyncOperationUpdate {
+		if target, err = s.updateTarget(ctx, sess, record, label); err != nil {
+			return nil, err
+		}
+	}
+
 	billID, err := s.billRef(ctx, sess, billType, settlement)
 	if err != nil {
 		return nil, err
@@ -577,7 +590,13 @@ func (s *Service) pushBillPayment(
 		PrivateNote:  billPaymentNote(record.ObjectType, settlement),
 		Amount:       money.DecimalFromMinor(settlement.NetMinor),
 	}
-	written, err := sess.writer.CreateBillPayment(ctx, doc)
+	var written *services.AccountingDocumentResult
+	if target != nil {
+		doc.ExternalID = target.ExternalID
+		written, err = sess.writer.UpdateBillPayment(ctx, doc)
+	} else {
+		written, err = sess.writer.CreateBillPayment(ctx, doc)
+	}
 	if err != nil {
 		return partial(written), err
 	}
@@ -595,7 +614,7 @@ func (s *Service) billRef(
 	if err != nil {
 		return "", err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate)
+	created := documentRecord(existing)
 	if created == nil {
 		if !sess.conn.Covers(*settlement.PostedAt) {
 			return "", &noopError{
@@ -648,4 +667,30 @@ func billPaymentNote(
 		note += " · Reference " + reference
 	}
 	return note
+}
+
+func sentAsCredit(record *accountingsync.AccountingSyncRecord) bool {
+	return record.ExternalRefs[accountingsync.ExternalRefDocumentType] == "VendorCredit"
+}
+
+func writeBill(
+	ctx context.Context,
+	sess *pushSession,
+	target *accountingsync.AccountingSyncRecord,
+	doc *services.AccountingPurchaseDocument,
+	label string,
+) (*services.AccountingDocumentResult, error) {
+	if target == nil {
+		return sess.writer.CreatePurchaseDocument(ctx, doc)
+	}
+	if sentAsCredit(target) != doc.VendorCredit {
+		return nil, blocked(
+			accountingsync.SyncErrorValidation,
+			label+" now nets to the other side of zero, so "+sess.providerName+
+				" holds it as the wrong kind of document",
+			"Send it again as a new document, then delete the old one in "+sess.providerName,
+		)
+	}
+	doc.ExternalID = target.ExternalID
+	return sess.writer.UpdatePurchaseDocument(ctx, doc)
 }

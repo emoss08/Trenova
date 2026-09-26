@@ -1,7 +1,7 @@
 -- Code generated from the PostgreSQL migrations by
 -- scripts/dialect-convert/convert.py. Hand-edits are preserved only if you
 -- stop regenerating this file; see docs/databases.md.
--- Source: 20261231006800_document_capture.tx.up.sql
+-- Source: 20261231006820_document_capture.tx.up.sql
 
 CREATE TABLE IF NOT EXISTS "capture_devices"(
     "id" TEXT NOT NULL,
@@ -204,6 +204,7 @@ CREATE TABLE IF NOT EXISTS "capture_batches"(
     "sealed_at" INTEGER,
     "processed_at" INTEGER,
     "retain_until" INTEGER NOT NULL,
+    "retention_reminded_at" INTEGER,
     "version" INTEGER NOT NULL DEFAULT 0,
     "created_at" INTEGER NOT NULL DEFAULT (unixepoch()),
     "updated_at" INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -231,6 +232,10 @@ CREATE INDEX IF NOT EXISTS "idx_capture_batches_user" ON "capture_batches" ("org
 --bun:split
 
 CREATE INDEX IF NOT EXISTS "idx_capture_batches_retention" ON "capture_batches" ("retain_until")WHERE "status" NOT IN ('Receiving', 'Sealed', 'Processing');
+
+--bun:split
+
+CREATE INDEX IF NOT EXISTS "idx_capture_batches_retention_reminder" ON "capture_batches" ("retain_until")WHERE "retention_reminded_at" IS NULL AND "status" IN ('Ready', 'PartiallyFiled');
 
 --bun:split
 

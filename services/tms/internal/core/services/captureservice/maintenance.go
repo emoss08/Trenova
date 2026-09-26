@@ -2,8 +2,11 @@ package captureservice
 
 import (
 	"context"
+	"fmt"
+	"net/url"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -30,6 +33,7 @@ type MaintenanceResult struct {
 	BatchesAbandoned int `json:"batchesAbandoned"`
 	BatchesExpired   int `json:"batchesExpired"`
 	BatchesPurged    int `json:"batchesPurged"`
+	OwnersReminded   int `json:"ownersReminded"`
 }
 
 // Maintain runs every housekeeping pass. Each pass is independent, so one
@@ -51,6 +55,8 @@ func (s *Service) Maintain(ctx context.Context) (*MaintenanceResult, error) {
 	result.BatchesRestarted, err = s.RestartStaleProcessing(ctx)
 	record(err)
 	result.BatchesAbandoned, err = s.AbandonStaleUploads(ctx)
+	record(err)
+	result.OwnersReminded, err = s.RemindRetention(ctx)
 	record(err)
 	result.BatchesExpired, result.BatchesPurged, err = s.EnforceRetention(ctx)
 	record(err)
@@ -184,4 +190,115 @@ func (s *Service) purgeBatchPages(ctx context.Context, batch *capture.CaptureBat
 		ctx,
 		repositories.DeleteCaptureBatchRequest{ID: batch.ID, TenantInfo: tenantInfo},
 	)
+}
+
+const (
+	// retentionReminderSeconds is how far ahead of deletion an owner is told:
+	// a week, so someone back from a few days off still has time to file.
+	retentionReminderSeconds = 7 * secondsPerDay
+	retentionReminderEvent   = "capture.retention_reminder"
+	retentionReminderSource  = "captureservice"
+)
+
+// RemindRetention tells the owner of each stack still waiting to be filed
+// that its unfiled pages are deleted within the week. Each stack is claimed
+// before its owner is told, so two sweeps running at once tell them once.
+func (s *Service) RemindRetention(ctx context.Context) (int, error) {
+	if s.notifications == nil {
+		return 0, nil
+	}
+
+	now := timeutils.NowUnix()
+	due, err := s.batches.ListRetentionReminders(
+		ctx,
+		repositories.ListRetentionReminderCaptureBatchesRequest{
+			From:  now,
+			Until: now + retentionReminderSeconds,
+			Limit: maintenanceBatchSize,
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	reminded := 0
+	for _, batch := range due {
+		tenantInfo := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
+		claimed, claimErr := s.batches.ClaimRetentionReminder(
+			ctx,
+			repositories.ClaimRetentionReminderRequest{
+				ID:         batch.ID,
+				TenantInfo: tenantInfo,
+				At:         now,
+			},
+		)
+		if claimErr != nil {
+			s.l.Warn("could not claim a capture retention reminder",
+				zap.String("batchId", batch.ID.String()), zap.Error(claimErr))
+
+			continue
+		}
+		if !claimed {
+			continue
+		}
+
+		if notifyErr := s.remindOwner(ctx, batch, now); notifyErr != nil {
+			s.l.Warn("could not remind a capture batch owner",
+				zap.String("batchId", batch.ID.String()), zap.Error(notifyErr))
+
+			continue
+		}
+		reminded++
+	}
+
+	return reminded, nil
+}
+
+func (s *Service) remindOwner(ctx context.Context, batch *capture.CaptureBatch, now int64) error {
+	daysLeft := max(1, (batch.RetainUntil-now+secondsPerDay-1)/secondsPerDay)
+	waiting := max(batch.ItemCount-batch.FiledItemCount, 1)
+	owner := batch.UserID
+	buID := batch.BusinessUnitID
+	correlation := batch.ID.String()
+	expires := batch.RetainUntil
+
+	_, err := s.notifications.Create(ctx, &notification.Notification{
+		OrganizationID: batch.OrganizationID,
+		BusinessUnitID: &buID,
+		TargetUserID:   &owner,
+		Channel:        notification.ChannelUser,
+		EventType:      retentionReminderEvent,
+		Priority:       notification.PriorityMedium,
+		Title:          "Scanned pages will be deleted soon",
+		Message: fmt.Sprintf(
+			"%s has %d document(s) not filed yet. Unfiled pages are deleted in %d day(s).",
+			batchName(batch), waiting, daysLeft,
+		),
+		Data: map[string]any{
+			"link":        "/intake?view=all&batch=" + url.QueryEscape(batch.ID.String()),
+			"batchId":     batch.ID.String(),
+			"retainUntil": batch.RetainUntil,
+		},
+		RelatedEntities: map[string]any{"captureBatchId": batch.ID.String()},
+		ExpiresAt:       &expires,
+		Source:          retentionReminderSource,
+		CorrelationID:   &correlation,
+	})
+
+	return err
+}
+
+// batchName is what the reminder calls a stack: the print job, else the
+// scanner it came from, else what it is.
+func batchName(batch *capture.CaptureBatch) string {
+	switch {
+	case batch.JobName != "":
+		return batch.JobName
+	case batch.SourceName != "":
+		return "A scan from " + batch.SourceName
+	case batch.Source == capture.SourcePrint:
+		return "A printed document"
+	default:
+		return "A scanned stack"
+	}
 }

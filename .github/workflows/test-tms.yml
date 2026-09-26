@@ -17,6 +17,7 @@ on:
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
       - "docs/engineering/ai-tool-safety.md"
+      - "docs/engineering/agent-write-coverage.md"
   pull_request:
     branches:
       - master
@@ -32,6 +33,7 @@ on:
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
       - "docs/engineering/ai-tool-safety.md"
+      - "docs/engineering/agent-write-coverage.md"
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
@@ -358,6 +360,19 @@ jobs:
           go generate ./internal/core/services/agenttoolpolicy/safetydoc/...
           if ! git diff --exit-code -- ../../docs/engineering/ai-tool-safety.md; then
             echo "::error::docs/engineering/ai-tool-safety.md is stale - run 'go generate ./internal/core/services/agenttoolpolicy/safetydoc/...' in services/tms and commit"
+            exit 1
+          fi
+
+      - name: Agent write coverage
+        working-directory: ./services/tms/internal/api/writecoverage
+        run: |
+          set -euo pipefail
+          # Fails when a mutation or write route has no decision in
+          # writecoverage.yml, an entry names a missing write or tool, an
+          # exemption has no reason, or the document is stale. Pending writes
+          # are counted, never failed.
+          if ! go run -tags nofitz,nomsgpack ./gen -check -output=../../../../../docs/engineering/agent-write-coverage.md; then
+            echo "::error::Agent write coverage needs attention - fix services/tms/internal/api/writecoverage/writecoverage.yml as the messages above say, run 'go generate ./internal/api/writecoverage/...' in services/tms and commit"
             exit 1
           fi
 

@@ -631,7 +631,7 @@ Every phase is shipped complete; the order only reflects dependencies.
      with Protected Print Mode, and which formats it sends;
    - TWAIN memory transfer in both bitnesses against a VRS-equipped scanner, plus one of each
      common family (Fujitsu/Ricoh fi, Canon DR, Epson DS, Kodak Alaris).
-1. **Server domain and companion API — complete.** Migration `20261231006800_document_capture`
+1. **Server domain and companion API — complete.** Migration `20261231006820_document_capture`
    (and its generated SQLite twin); the `capture` domain with the split rules; repositories on
    buncolgen; pairing, credentials and the `capture_device` principal; the device stream; batch,
    page and print-job intake; processing, auto-filing and filing workflows on `capture-queue`;
@@ -650,7 +650,9 @@ Every phase is shipped complete; the order only reflects dependencies.
      (QR code and label per sheet);
    - the `/capture/pair` approval page, device settings, and the capture section of the
      document admin (settings, profiles, device fleet, installer download);
-   - the retention reminder notification to a batch's owner seven days before it expires;
+   - **complete:** the retention reminder: a week before a stack still waiting on a person
+     loses its unfiled pages, its owner is notified once (the stack is claimed through
+     `retention_reminded_at` before the notification is sent, so concurrent sweeps notify once);
    - product guide regeneration.
 3. **Companion core:** agent, tray, pairing, stream, spool/upload queue, TWAIN helper (x64 and
    x86) and WIA.

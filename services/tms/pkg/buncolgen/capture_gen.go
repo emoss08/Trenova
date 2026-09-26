@@ -49,63 +49,65 @@ var CaptureBatchTable = TableInfo{
 //	q.Where(CaptureBatchColumns.ID.Eq(), id)           // WHERE cbat.id = ?
 //	q.Order(CaptureBatchColumns.CreatedAt.OrderDesc())  // ORDER BY cbat.created_at DESC
 var CaptureBatchColumns = struct {
-	ID                Column // "id" → qualified: "cbat.id"
-	BusinessUnitID    Column // "business_unit_id" → qualified: "cbat.business_unit_id"
-	OrganizationID    Column // "organization_id" → qualified: "cbat.organization_id"
-	UserID            Column // "user_id" → qualified: "cbat.user_id"
-	DeviceID          Column // "device_id" → qualified: "cbat.device_id"
-	RequestID         Column // "request_id" → qualified: "cbat.request_id"
-	ProfileID         Column // "profile_id" → qualified: "cbat.profile_id"
-	ClientKey         Column // "client_key" → qualified: "cbat.client_key"
-	Source            Column // "source" → qualified: "cbat.source"
-	Status            Column // "status" → qualified: "cbat.status"
-	SourceName        Column // "source_name" → qualified: "cbat.source_name"
-	JobName           Column // "job_name" → qualified: "cbat.job_name"
-	Settings          Column // "settings" → qualified: "cbat.settings"
-	TargetType        Column // "target_type" → qualified: "cbat.target_type"
-	TargetID          Column // "target_id" → qualified: "cbat.target_id"
-	DocumentTypeID    Column // "document_type_id" → qualified: "cbat.document_type_id"
-	ExpectedPageCount Column // "expected_page_count" → qualified: "cbat.expected_page_count"
-	ReceivedPageCount Column // "received_page_count" → qualified: "cbat.received_page_count"
-	ItemCount         Column // "item_count" → qualified: "cbat.item_count"
-	FiledItemCount    Column // "filed_item_count" → qualified: "cbat.filed_item_count"
-	ManifestDigest    Column // "manifest_digest" → qualified: "cbat.manifest_digest"
-	FailureMessage    Column // "failure_message" → qualified: "cbat.failure_message"
-	SealedAt          Column // "sealed_at" → qualified: "cbat.sealed_at"
-	ProcessedAt       Column // "processed_at" → qualified: "cbat.processed_at"
-	RetainUntil       Column // "retain_until" → qualified: "cbat.retain_until"
-	Version           Column // "version" → qualified: "cbat.version"
-	CreatedAt         Column // "created_at" → qualified: "cbat.created_at"
-	UpdatedAt         Column // "updated_at" → qualified: "cbat.updated_at"
+	ID                  Column // "id" → qualified: "cbat.id"
+	BusinessUnitID      Column // "business_unit_id" → qualified: "cbat.business_unit_id"
+	OrganizationID      Column // "organization_id" → qualified: "cbat.organization_id"
+	UserID              Column // "user_id" → qualified: "cbat.user_id"
+	DeviceID            Column // "device_id" → qualified: "cbat.device_id"
+	RequestID           Column // "request_id" → qualified: "cbat.request_id"
+	ProfileID           Column // "profile_id" → qualified: "cbat.profile_id"
+	ClientKey           Column // "client_key" → qualified: "cbat.client_key"
+	Source              Column // "source" → qualified: "cbat.source"
+	Status              Column // "status" → qualified: "cbat.status"
+	SourceName          Column // "source_name" → qualified: "cbat.source_name"
+	JobName             Column // "job_name" → qualified: "cbat.job_name"
+	Settings            Column // "settings" → qualified: "cbat.settings"
+	TargetType          Column // "target_type" → qualified: "cbat.target_type"
+	TargetID            Column // "target_id" → qualified: "cbat.target_id"
+	DocumentTypeID      Column // "document_type_id" → qualified: "cbat.document_type_id"
+	ExpectedPageCount   Column // "expected_page_count" → qualified: "cbat.expected_page_count"
+	ReceivedPageCount   Column // "received_page_count" → qualified: "cbat.received_page_count"
+	ItemCount           Column // "item_count" → qualified: "cbat.item_count"
+	FiledItemCount      Column // "filed_item_count" → qualified: "cbat.filed_item_count"
+	ManifestDigest      Column // "manifest_digest" → qualified: "cbat.manifest_digest"
+	FailureMessage      Column // "failure_message" → qualified: "cbat.failure_message"
+	SealedAt            Column // "sealed_at" → qualified: "cbat.sealed_at"
+	ProcessedAt         Column // "processed_at" → qualified: "cbat.processed_at"
+	RetainUntil         Column // "retain_until" → qualified: "cbat.retain_until"
+	RetentionRemindedAt Column // "retention_reminded_at" → qualified: "cbat.retention_reminded_at"
+	Version             Column // "version" → qualified: "cbat.version"
+	CreatedAt           Column // "created_at" → qualified: "cbat.created_at"
+	UpdatedAt           Column // "updated_at" → qualified: "cbat.updated_at"
 }{
-	ID:                NewColumn("id", "cbat"),
-	BusinessUnitID:    NewColumn("business_unit_id", "cbat"),
-	OrganizationID:    NewColumn("organization_id", "cbat"),
-	UserID:            NewColumn("user_id", "cbat"),
-	DeviceID:          NewColumn("device_id", "cbat"),
-	RequestID:         NewColumn("request_id", "cbat"),
-	ProfileID:         NewColumn("profile_id", "cbat"),
-	ClientKey:         NewColumn("client_key", "cbat"),
-	Source:            NewColumn("source", "cbat"),
-	Status:            NewColumn("status", "cbat"),
-	SourceName:        NewColumn("source_name", "cbat"),
-	JobName:           NewColumn("job_name", "cbat"),
-	Settings:          NewColumn("settings", "cbat"),
-	TargetType:        NewColumn("target_type", "cbat"),
-	TargetID:          NewColumn("target_id", "cbat"),
-	DocumentTypeID:    NewColumn("document_type_id", "cbat"),
-	ExpectedPageCount: NewColumn("expected_page_count", "cbat"),
-	ReceivedPageCount: NewColumn("received_page_count", "cbat"),
-	ItemCount:         NewColumn("item_count", "cbat"),
-	FiledItemCount:    NewColumn("filed_item_count", "cbat"),
-	ManifestDigest:    NewColumn("manifest_digest", "cbat"),
-	FailureMessage:    NewColumn("failure_message", "cbat"),
-	SealedAt:          NewColumn("sealed_at", "cbat"),
-	ProcessedAt:       NewColumn("processed_at", "cbat"),
-	RetainUntil:       NewColumn("retain_until", "cbat"),
-	Version:           NewColumn("version", "cbat"),
-	CreatedAt:         NewColumn("created_at", "cbat"),
-	UpdatedAt:         NewColumn("updated_at", "cbat"),
+	ID:                  NewColumn("id", "cbat"),
+	BusinessUnitID:      NewColumn("business_unit_id", "cbat"),
+	OrganizationID:      NewColumn("organization_id", "cbat"),
+	UserID:              NewColumn("user_id", "cbat"),
+	DeviceID:            NewColumn("device_id", "cbat"),
+	RequestID:           NewColumn("request_id", "cbat"),
+	ProfileID:           NewColumn("profile_id", "cbat"),
+	ClientKey:           NewColumn("client_key", "cbat"),
+	Source:              NewColumn("source", "cbat"),
+	Status:              NewColumn("status", "cbat"),
+	SourceName:          NewColumn("source_name", "cbat"),
+	JobName:             NewColumn("job_name", "cbat"),
+	Settings:            NewColumn("settings", "cbat"),
+	TargetType:          NewColumn("target_type", "cbat"),
+	TargetID:            NewColumn("target_id", "cbat"),
+	DocumentTypeID:      NewColumn("document_type_id", "cbat"),
+	ExpectedPageCount:   NewColumn("expected_page_count", "cbat"),
+	ReceivedPageCount:   NewColumn("received_page_count", "cbat"),
+	ItemCount:           NewColumn("item_count", "cbat"),
+	FiledItemCount:      NewColumn("filed_item_count", "cbat"),
+	ManifestDigest:      NewColumn("manifest_digest", "cbat"),
+	FailureMessage:      NewColumn("failure_message", "cbat"),
+	SealedAt:            NewColumn("sealed_at", "cbat"),
+	ProcessedAt:         NewColumn("processed_at", "cbat"),
+	RetainUntil:         NewColumn("retain_until", "cbat"),
+	RetentionRemindedAt: NewColumn("retention_reminded_at", "cbat"),
+	Version:             NewColumn("version", "cbat"),
+	CreatedAt:           NewColumn("created_at", "cbat"),
+	UpdatedAt:           NewColumn("updated_at", "cbat"),
 }
 
 // CaptureBatchFieldMap maps JSON API field names to database column names.
@@ -169,6 +171,7 @@ var CaptureBatchInsertableColumns = []string{
 	"sealed_at",
 	"processed_at",
 	"retain_until",
+	"retention_reminded_at",
 	"version",
 	"created_at",
 	"updated_at",

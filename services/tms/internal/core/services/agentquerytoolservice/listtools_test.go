@@ -407,6 +407,26 @@ func TestListTool_DescribesItsFields(t *testing.T) {
 	assert.Contains(t, description, "Active")
 }
 
+func TestListTool_KeepsUnlistedValuesOutOfTheDescriptionButStillRefusesOthers(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturedList{}
+	spec := probeSpec(capture)
+	spec.fields[1].ValuesUnlisted = true
+	spec.fields[1].Note = "the probe's state"
+	tool := newListTool(spec)
+
+	description := tool.Description()
+	assert.Contains(t, description, "status (enum): the probe's state")
+	assert.NotContains(t, description, "Inactive")
+
+	_, err := tool.Query(t.Context(), testParams(filterParams(
+		map[string]any{"field": "status", "operator": "eq", "value": "Archived"},
+	)))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Inactive")
+}
+
 func TestListTool_SchemaOffersOnlyTheDeclaredFields(t *testing.T) {
 	t.Parallel()
 

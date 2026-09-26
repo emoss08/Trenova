@@ -40,15 +40,7 @@ func (r *CancelTenderRequest) Validate() *errortypes.MultiError {
 // tender no longer has a workflow and is canceled directly. The direct path
 // also serves as the fallback when the workflow is lost.
 func (s *Service) Cancel(ctx context.Context, req *CancelTenderRequest) error {
-	if multiErr := req.Validate(); multiErr != nil {
-		return multiErr
-	}
-
-	entity, err := s.repo.GetByID(ctx, repositories.GetTenderByIDRequest{
-		TenantInfo:    req.TenantInfo,
-		TenderID:      req.TenderID,
-		IncludeOffers: true,
-	})
+	entity, err := s.planCancel(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -196,11 +188,6 @@ func (s *Service) CancelDirect(
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
 
-	canceled := *entity
-	canceled.Status = tender.StatusCanceled
-	canceled.CancellationReason = reason
-	canceled.CanceledAt = &now
-	canceled.CanceledByID = userIDPtr(tenantInfo)
 	s.logTenderAudit(&tenderAuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   entity.ID,
@@ -208,7 +195,7 @@ func (s *Service) CancelDirect(
 		UserID:     tenantInfo.UserID,
 		Comment:    "Tender canceled: " + reason,
 		Previous:   entity,
-		Current:    &canceled,
+		Current:    withdrawnTender(entity, tenantInfo, reason, now),
 	})
 	s.publishInvalidation(ctx, tenantInfo, entity.ShipmentID, "tender_canceled")
 

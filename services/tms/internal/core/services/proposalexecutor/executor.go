@@ -324,6 +324,13 @@ func (s *Service) admit(
 		if err := refuseRetarget(tool, proposal.ToolParams, params); err != nil {
 			return nil, nil, err
 		}
+		if err := toolschema.CheckSubsets(
+			tool.ParamSchema(),
+			proposal.ToolParams,
+			modifications,
+		); err != nil {
+			return nil, nil, err
+		}
 		if err := validateParams(tool, params); err != nil {
 			return nil, nil, err
 		}
@@ -456,6 +463,13 @@ func (s *Service) CheckModifications(
 
 	params := MergeParams(proposal.ToolParams, modifications)
 	if err := refuseRetarget(tool, proposal.ToolParams, params); err != nil {
+		return nil, err
+	}
+	if err := toolschema.CheckSubsets(
+		tool.ParamSchema(),
+		proposal.ToolParams,
+		modifications,
+	); err != nil {
 		return nil, err
 	}
 	if err := validateParams(tool, params); err != nil {

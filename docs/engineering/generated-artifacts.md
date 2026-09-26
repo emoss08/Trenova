@@ -11,7 +11,7 @@ covers how to build a resource; this covers what breaks afterwards.
 
 ## Run the whole gate locally
 
-`Codegen Checks` in `.github/workflows/test-tms.yml` is six independent steps. All paths
+`Codegen Checks` in `.github/workflows/test-tms.yml` is seven independent steps. All paths
 are relative to `services/tms`:
 
 ```bash
@@ -22,6 +22,7 @@ go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhel
 go generate ./internal/api/graphql/projection/...                  # internal/api/graphql/projection/specs_gen.go
 go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
 go generate ./internal/core/services/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
+go generate ./internal/api/writecoverage/...                       # ../../docs/engineering/agent-write-coverage.md
 
 task docs-generate                                                 # swag + cmd/openapi-postprocess; then: git diff --quiet -- docs
 ```
@@ -32,7 +33,7 @@ every dependency took CI half an hour. An annotation that names a type from any 
 fails with `cannot find type definition`: add that module to the prefix in `Taskfile.yml`
 (`SWAG_INIT`) and `.github/workflows/test-tms.yml`, which runs the same command.
 
-A clean `git status` after all six means the job will pass.
+A clean `git status` after all seven means the job will pass.
 
 ## GraphQL projections: the one that fails on correct code
 
@@ -86,6 +87,31 @@ The `AI tool safety document` step runs exactly that and fails on any difference
 Never edit the file by hand: the next generate overwrites it and CI rejects the hand edit.
 A tool constructor that dereferences a dependency while building fails the generator the
 same way it fails the contract tests; keep constructors to storing what they are given.
+
+## Agent write coverage
+
+`docs/engineering/agent-write-coverage.md` is the ledger of every write a person can make
+(each GraphQL mutation and each POST, PUT, PATCH or DELETE route) and the agent tool that
+performs it or the reason none should. It is written from the schema, the gin route table
+(`api.RouteTable` registers every handler with zero-valued dependencies), the registered agent
+tools and the decisions in `internal/api/writecoverage/writecoverage.yml`.
+
+So **adding a mutation or a write route, renaming one, renaming a tool, or editing
+`writecoverage.yml` means regenerating the document**, and a new write needs an entry first:
+`tools: [...]`, `exempt: <category>` with a `reason:`, or `pending: <what the tool would do>`.
+
+```bash
+cd services/tms
+go generate ./internal/api/writecoverage/...   # task generate-write-coverage
+```
+
+The generator refuses, naming the key and the file, when a write has no entry, an entry names
+a write or a tool that no longer exists, or an exemption has no reason. The `Agent write
+coverage` step runs it with `-check` (`task generate-write-coverage-check`), which also fails
+when the document differs, and `TestCoverageIsCurrent` in the `writecoverage` package says the
+same under `task test`. Pending writes are the backlog: they are counted, never failed. A REST
+route that reaches exactly the service calls a mutation reaches is merged into it and needs no
+entry of its own; the failure says so when an entry for such a route is left behind.
 
 ## Agent prompt and tool snapshots
 

@@ -526,6 +526,14 @@ var AccountingConnectionColumns = struct {
 	SyncEnabledAt                 Column // "sync_enabled_at" → qualified: "acctc.sync_enabled_at"
 	AutoSync                      Column // "auto_sync" → qualified: "acctc.auto_sync"
 	DriverSettlementsEnabledAt    Column // "driver_settlements_enabled_at" → qualified: "acctc.driver_settlements_enabled_at"
+	InboundPaymentPolicy          Column // "inbound_payment_policy" → qualified: "acctc.inbound_payment_policy"
+	ChangeCursor                  Column // "change_cursor" → qualified: "acctc.change_cursor"
+	ChangesReadAt                 Column // "changes_read_at" → qualified: "acctc.changes_read_at"
+	ChangesErrorCategory          Column // "changes_error_category" → qualified: "acctc.changes_error_category"
+	ChangesErrorMessage           Column // "changes_error_message" → qualified: "acctc.changes_error_message"
+	DriftCheckedAt                Column // "drift_checked_at" → qualified: "acctc.drift_checked_at"
+	DriftErrorCategory            Column // "drift_error_category" → qualified: "acctc.drift_error_category"
+	DriftErrorMessage             Column // "drift_error_message" → qualified: "acctc.drift_error_message"
 	PausedAt                      Column // "paused_at" → qualified: "acctc.paused_at"
 	PausedByID                    Column // "paused_by_id" → qualified: "acctc.paused_by_id"
 	PausedReason                  Column // "paused_reason" → qualified: "acctc.paused_reason"
@@ -573,6 +581,14 @@ var AccountingConnectionColumns = struct {
 	SyncEnabledAt:                 NewColumn("sync_enabled_at", "acctc"),
 	AutoSync:                      NewColumn("auto_sync", "acctc"),
 	DriverSettlementsEnabledAt:    NewColumn("driver_settlements_enabled_at", "acctc"),
+	InboundPaymentPolicy:          NewColumn("inbound_payment_policy", "acctc"),
+	ChangeCursor:                  NewColumn("change_cursor", "acctc"),
+	ChangesReadAt:                 NewColumn("changes_read_at", "acctc"),
+	ChangesErrorCategory:          NewColumn("changes_error_category", "acctc"),
+	ChangesErrorMessage:           NewColumn("changes_error_message", "acctc"),
+	DriftCheckedAt:                NewColumn("drift_checked_at", "acctc"),
+	DriftErrorCategory:            NewColumn("drift_error_category", "acctc"),
+	DriftErrorMessage:             NewColumn("drift_error_message", "acctc"),
 	PausedAt:                      NewColumn("paused_at", "acctc"),
 	PausedByID:                    NewColumn("paused_by_id", "acctc"),
 	PausedReason:                  NewColumn("paused_reason", "acctc"),
@@ -623,6 +639,13 @@ var AccountingConnectionFieldMap = map[string]string{
 	"syncEnabledAt":                 "sync_enabled_at",
 	"autoSync":                      "auto_sync",
 	"driverSettlementsEnabledAt":    "driver_settlements_enabled_at",
+	"inboundPaymentPolicy":          "inbound_payment_policy",
+	"changesReadAt":                 "changes_read_at",
+	"changesErrorCategory":          "changes_error_category",
+	"changesErrorMessage":           "changes_error_message",
+	"driftCheckedAt":                "drift_checked_at",
+	"driftErrorCategory":            "drift_error_category",
+	"driftErrorMessage":             "drift_error_message",
 	"pausedAt":                      "paused_at",
 	"pausedById":                    "paused_by_id",
 	"pausedReason":                  "paused_reason",
@@ -674,6 +697,14 @@ var AccountingConnectionInsertableColumns = []string{
 	"sync_enabled_at",
 	"auto_sync",
 	"driver_settlements_enabled_at",
+	"inbound_payment_policy",
+	"change_cursor",
+	"changes_read_at",
+	"changes_error_category",
+	"changes_error_message",
+	"drift_checked_at",
+	"drift_error_category",
+	"drift_error_message",
 	"paused_at",
 	"paused_by_id",
 	"paused_reason",
@@ -788,6 +819,13 @@ var AccountingConnectionFilter = struct {
 	SyncEnabledAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "syncEnabledAt" → DB: "sync_enabled_at"
 	AutoSync                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSync" → DB: "auto_sync"
 	DriverSettlementsEnabledAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverSettlementsEnabledAt" → DB: "driver_settlements_enabled_at"
+	InboundPaymentPolicy          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inboundPaymentPolicy" → DB: "inbound_payment_policy"
+	ChangesReadAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changesReadAt" → DB: "changes_read_at"
+	ChangesErrorCategory          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changesErrorCategory" → DB: "changes_error_category"
+	ChangesErrorMessage           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changesErrorMessage" → DB: "changes_error_message"
+	DriftCheckedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driftCheckedAt" → DB: "drift_checked_at"
+	DriftErrorCategory            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driftErrorCategory" → DB: "drift_error_category"
+	DriftErrorMessage             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driftErrorMessage" → DB: "drift_error_message"
 	PausedAt                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedAt" → DB: "paused_at"
 	PausedByID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedById" → DB: "paused_by_id"
 	PausedReason                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedReason" → DB: "paused_reason"
@@ -898,6 +936,27 @@ var AccountingConnectionFilter = struct {
 	DriverSettlementsEnabledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("driverSettlementsEnabledAt", op, value)
 	},
+	InboundPaymentPolicy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("inboundPaymentPolicy", op, value)
+	},
+	ChangesReadAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("changesReadAt", op, value)
+	},
+	ChangesErrorCategory: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("changesErrorCategory", op, value)
+	},
+	ChangesErrorMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("changesErrorMessage", op, value)
+	},
+	DriftCheckedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("driftCheckedAt", op, value)
+	},
+	DriftErrorCategory: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("driftErrorCategory", op, value)
+	},
+	DriftErrorMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("driftErrorMessage", op, value)
+	},
 	PausedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("pausedAt", op, value)
 	},
@@ -918,6 +977,712 @@ var AccountingConnectionFilter = struct {
 	},
 	DisconnectedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("disconnectedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// AccountingDriftFinding — table "accounting_drift_findings", alias "acctdf"
+// ---------------------------------------------------------------------------
+
+// AccountingDriftFindingTable holds the table name, alias, and primary key columns
+// for the "accounting_drift_findings" table. The alias "acctdf" is used in all generated
+// SQL fragments (e.g. "acctdf.id = ?").
+var AccountingDriftFindingTable = TableInfo{
+	Name:       "accounting_drift_findings",
+	Alias:      "acctdf",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AccountingDriftFindingColumns provides type-safe column references for the "accounting_drift_findings" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccountingDriftFindingColumns.ID.String())
+//	// SELECT acctdf.id FROM accounting_drift_findings AS acctdf
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccountingDriftFindingColumns.ID.Eq(), id)           // WHERE acctdf.id = ?
+//	q.Order(AccountingDriftFindingColumns.CreatedAt.OrderDesc())  // ORDER BY acctdf.created_at DESC
+var AccountingDriftFindingColumns = struct {
+	ID                 Column // "id" → qualified: "acctdf.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "acctdf.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "acctdf.organization_id"
+	ConnectionID       Column // "connection_id" → qualified: "acctdf.connection_id"
+	ObjectType         Column // "object_type" → qualified: "acctdf.object_type"
+	ObjectID           Column // "object_id" → qualified: "acctdf.object_id"
+	ObjectNumber       Column // "object_number" → qualified: "acctdf.object_number"
+	PartyID            Column // "party_id" → qualified: "acctdf.party_id"
+	PartyName          Column // "party_name" → qualified: "acctdf.party_name"
+	ExternalID         Column // "external_id" → qualified: "acctdf.external_id"
+	ExternalURL        Column // "external_url" → qualified: "acctdf.external_url"
+	Kind               Column // "kind" → qualified: "acctdf.kind"
+	CurrencyCode       Column // "currency_code" → qualified: "acctdf.currency_code"
+	TrenovaMinor       Column // "trenova_minor" → qualified: "acctdf.trenova_minor"
+	ProviderMinor      Column // "provider_minor" → qualified: "acctdf.provider_minor"
+	DifferenceMinor    Column // "difference_minor" → qualified: "acctdf.difference_minor"
+	TrenovaState       Column // "trenova_state" → qualified: "acctdf.trenova_state"
+	ProviderState      Column // "provider_state" → qualified: "acctdf.provider_state"
+	Detail             Column // "detail" → qualified: "acctdf.detail"
+	ProviderModifiedAt Column // "provider_modified_at" → qualified: "acctdf.provider_modified_at"
+	ProviderModifiedBy Column // "provider_modified_by" → qualified: "acctdf.provider_modified_by"
+	Status             Column // "status" → qualified: "acctdf.status"
+	Resolution         Column // "resolution" → qualified: "acctdf.resolution"
+	ResolutionNote     Column // "resolution_note" → qualified: "acctdf.resolution_note"
+	FixObjectType      Column // "fix_object_type" → qualified: "acctdf.fix_object_type"
+	FixObjectID        Column // "fix_object_id" → qualified: "acctdf.fix_object_id"
+	ResolvedByID       Column // "resolved_by_id" → qualified: "acctdf.resolved_by_id"
+	ResolvedAt         Column // "resolved_at" → qualified: "acctdf.resolved_at"
+	DetectedAt         Column // "detected_at" → qualified: "acctdf.detected_at"
+	LastSeenAt         Column // "last_seen_at" → qualified: "acctdf.last_seen_at"
+	Version            Column // "version" → qualified: "acctdf.version"
+	CreatedAt          Column // "created_at" → qualified: "acctdf.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "acctdf.updated_at"
+}{
+	ID:                 NewColumn("id", "acctdf"),
+	BusinessUnitID:     NewColumn("business_unit_id", "acctdf"),
+	OrganizationID:     NewColumn("organization_id", "acctdf"),
+	ConnectionID:       NewColumn("connection_id", "acctdf"),
+	ObjectType:         NewColumn("object_type", "acctdf"),
+	ObjectID:           NewColumn("object_id", "acctdf"),
+	ObjectNumber:       NewColumn("object_number", "acctdf"),
+	PartyID:            NewColumn("party_id", "acctdf"),
+	PartyName:          NewColumn("party_name", "acctdf"),
+	ExternalID:         NewColumn("external_id", "acctdf"),
+	ExternalURL:        NewColumn("external_url", "acctdf"),
+	Kind:               NewColumn("kind", "acctdf"),
+	CurrencyCode:       NewColumn("currency_code", "acctdf"),
+	TrenovaMinor:       NewColumn("trenova_minor", "acctdf"),
+	ProviderMinor:      NewColumn("provider_minor", "acctdf"),
+	DifferenceMinor:    NewColumn("difference_minor", "acctdf"),
+	TrenovaState:       NewColumn("trenova_state", "acctdf"),
+	ProviderState:      NewColumn("provider_state", "acctdf"),
+	Detail:             NewColumn("detail", "acctdf"),
+	ProviderModifiedAt: NewColumn("provider_modified_at", "acctdf"),
+	ProviderModifiedBy: NewColumn("provider_modified_by", "acctdf"),
+	Status:             NewColumn("status", "acctdf"),
+	Resolution:         NewColumn("resolution", "acctdf"),
+	ResolutionNote:     NewColumn("resolution_note", "acctdf"),
+	FixObjectType:      NewColumn("fix_object_type", "acctdf"),
+	FixObjectID:        NewColumn("fix_object_id", "acctdf"),
+	ResolvedByID:       NewColumn("resolved_by_id", "acctdf"),
+	ResolvedAt:         NewColumn("resolved_at", "acctdf"),
+	DetectedAt:         NewColumn("detected_at", "acctdf"),
+	LastSeenAt:         NewColumn("last_seen_at", "acctdf"),
+	Version:            NewColumn("version", "acctdf"),
+	CreatedAt:          NewColumn("created_at", "acctdf"),
+	UpdatedAt:          NewColumn("updated_at", "acctdf"),
+}
+
+// AccountingDriftFindingFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccountingDriftFinding.GetStaticFieldMap().
+var AccountingDriftFindingFieldMap = map[string]string{
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"connectionId":       "connection_id",
+	"objectType":         "object_type",
+	"objectId":           "object_id",
+	"objectNumber":       "object_number",
+	"partyId":            "party_id",
+	"partyName":          "party_name",
+	"externalId":         "external_id",
+	"externalUrl":        "external_url",
+	"kind":               "kind",
+	"currencyCode":       "currency_code",
+	"trenovaMinor":       "trenova_minor",
+	"providerMinor":      "provider_minor",
+	"differenceMinor":    "difference_minor",
+	"trenovaState":       "trenova_state",
+	"providerState":      "provider_state",
+	"detail":             "detail",
+	"providerModifiedAt": "provider_modified_at",
+	"providerModifiedBy": "provider_modified_by",
+	"status":             "status",
+	"resolution":         "resolution",
+	"resolutionNote":     "resolution_note",
+	"fixObjectType":      "fix_object_type",
+	"fixObjectId":        "fix_object_id",
+	"resolvedById":       "resolved_by_id",
+	"resolvedAt":         "resolved_at",
+	"detectedAt":         "detected_at",
+	"lastSeenAt":         "last_seen_at",
+	"version":            "version",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
+}
+
+// AccountingDriftFindingInsertableColumns lists column names suitable for INSERT statements on the "accounting_drift_findings" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccountingDriftFindingInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"connection_id",
+	"object_type",
+	"object_id",
+	"object_number",
+	"party_id",
+	"party_name",
+	"external_id",
+	"external_url",
+	"kind",
+	"currency_code",
+	"trenova_minor",
+	"provider_minor",
+	"difference_minor",
+	"trenova_state",
+	"provider_state",
+	"detail",
+	"provider_modified_at",
+	"provider_modified_by",
+	"status",
+	"resolution",
+	"resolution_note",
+	"fix_object_type",
+	"fix_object_id",
+	"resolved_by_id",
+	"resolved_at",
+	"detected_at",
+	"last_seen_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AccountingDriftFindingRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AccountingDriftFindingRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var AccountingDriftFindingRelations = struct {
+	Organization string
+	BusinessUnit string
+	ResolvedBy   string
+}{
+	Organization: "Organization",
+	BusinessUnit: "BusinessUnit",
+	ResolvedBy:   "ResolvedBy",
+}
+
+// AccountingDriftFindingScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE acctdf.organization_id = ? AND acctdf.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AccountingDriftFindingScopeTenant(sq, ti).
+//		Where(buncolgen.AccountingDriftFindingColumns.ID.Eq(), id)
+func AccountingDriftFindingScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AccountingDriftFindingColumns.OrganizationID, AccountingDriftFindingColumns.BusinessUnitID, ti)
+}
+
+// AccountingDriftFindingScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AccountingDriftFindingScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AccountingDriftFindingColumns.ID.In(), bun.List(ids))
+//	})
+func AccountingDriftFindingScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AccountingDriftFindingColumns.OrganizationID, AccountingDriftFindingColumns.BusinessUnitID, ti)
+}
+
+// AccountingDriftFindingScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AccountingDriftFindingScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AccountingDriftFindingColumns.ID.Eq(), id)
+//	})
+func AccountingDriftFindingScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AccountingDriftFindingColumns.OrganizationID, AccountingDriftFindingColumns.BusinessUnitID, ti)
+}
+
+// AccountingDriftFindingApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AccountingDriftFindingApplyTenant(tenantInfo))
+func AccountingDriftFindingApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AccountingDriftFindingColumns.OrganizationID, AccountingDriftFindingColumns.BusinessUnitID, ti)
+}
+
+// AccountingDriftFindingFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "accounting_drift_findings" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccountingDriftFindingFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AccountingDriftFindingFilter = struct {
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ConnectionID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "connectionId" → DB: "connection_id"
+	ObjectType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "objectType" → DB: "object_type"
+	ObjectID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "objectId" → DB: "object_id"
+	ObjectNumber       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "objectNumber" → DB: "object_number"
+	PartyID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyId" → DB: "party_id"
+	PartyName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyName" → DB: "party_name"
+	ExternalID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
+	ExternalURL        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalUrl" → DB: "external_url"
+	Kind               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	CurrencyCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	TrenovaMinor       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trenovaMinor" → DB: "trenova_minor"
+	ProviderMinor      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerMinor" → DB: "provider_minor"
+	DifferenceMinor    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "differenceMinor" → DB: "difference_minor"
+	TrenovaState       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trenovaState" → DB: "trenova_state"
+	ProviderState      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerState" → DB: "provider_state"
+	Detail             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detail" → DB: "detail"
+	ProviderModifiedAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerModifiedAt" → DB: "provider_modified_at"
+	ProviderModifiedBy func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerModifiedBy" → DB: "provider_modified_by"
+	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Resolution         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolution" → DB: "resolution"
+	ResolutionNote     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolutionNote" → DB: "resolution_note"
+	FixObjectType      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fixObjectType" → DB: "fix_object_type"
+	FixObjectID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fixObjectId" → DB: "fix_object_id"
+	ResolvedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedById" → DB: "resolved_by_id"
+	ResolvedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolvedAt" → DB: "resolved_at"
+	DetectedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detectedAt" → DB: "detected_at"
+	LastSeenAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastSeenAt" → DB: "last_seen_at"
+	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ConnectionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("connectionId", op, value)
+	},
+	ObjectType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("objectType", op, value)
+	},
+	ObjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("objectId", op, value)
+	},
+	ObjectNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("objectNumber", op, value)
+	},
+	PartyID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partyId", op, value)
+	},
+	PartyName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partyName", op, value)
+	},
+	ExternalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalId", op, value)
+	},
+	ExternalURL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalUrl", op, value)
+	},
+	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("kind", op, value)
+	},
+	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("currencyCode", op, value)
+	},
+	TrenovaMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("trenovaMinor", op, value)
+	},
+	ProviderMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerMinor", op, value)
+	},
+	DifferenceMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("differenceMinor", op, value)
+	},
+	TrenovaState: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("trenovaState", op, value)
+	},
+	ProviderState: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerState", op, value)
+	},
+	Detail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("detail", op, value)
+	},
+	ProviderModifiedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerModifiedAt", op, value)
+	},
+	ProviderModifiedBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerModifiedBy", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	Resolution: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolution", op, value)
+	},
+	ResolutionNote: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolutionNote", op, value)
+	},
+	FixObjectType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fixObjectType", op, value)
+	},
+	FixObjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fixObjectId", op, value)
+	},
+	ResolvedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolvedById", op, value)
+	},
+	ResolvedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolvedAt", op, value)
+	},
+	DetectedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("detectedAt", op, value)
+	},
+	LastSeenAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastSeenAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// AccountingInboundChange — table "accounting_inbound_changes", alias "acctic"
+// ---------------------------------------------------------------------------
+
+// AccountingInboundChangeTable holds the table name, alias, and primary key columns
+// for the "accounting_inbound_changes" table. The alias "acctic" is used in all generated
+// SQL fragments (e.g. "acctic.id = ?").
+var AccountingInboundChangeTable = TableInfo{
+	Name:       "accounting_inbound_changes",
+	Alias:      "acctic",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AccountingInboundChangeColumns provides type-safe column references for the "accounting_inbound_changes" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccountingInboundChangeColumns.ID.String())
+//	// SELECT acctic.id FROM accounting_inbound_changes AS acctic
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccountingInboundChangeColumns.ID.Eq(), id)           // WHERE acctic.id = ?
+//	q.Order(AccountingInboundChangeColumns.CreatedAt.OrderDesc())  // ORDER BY acctic.created_at DESC
+var AccountingInboundChangeColumns = struct {
+	ID                 Column // "id" → qualified: "acctic.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "acctic.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "acctic.organization_id"
+	ConnectionID       Column // "connection_id" → qualified: "acctic.connection_id"
+	Kind               Column // "kind" → qualified: "acctic.kind"
+	ExternalID         Column // "external_id" → qualified: "acctic.external_id"
+	ExternalNumber     Column // "external_number" → qualified: "acctic.external_number"
+	ExternalURL        Column // "external_url" → qualified: "acctic.external_url"
+	ProviderModifiedAt Column // "provider_modified_at" → qualified: "acctic.provider_modified_at"
+	ProviderModifiedBy Column // "provider_modified_by" → qualified: "acctic.provider_modified_by"
+	TxnDate            Column // "txn_date" → qualified: "acctic.txn_date"
+	AmountMinor        Column // "amount_minor" → qualified: "acctic.amount_minor"
+	CurrencyCode       Column // "currency_code" → qualified: "acctic.currency_code"
+	PartyExternalID    Column // "party_external_id" → qualified: "acctic.party_external_id"
+	PartyName          Column // "party_name" → qualified: "acctic.party_name"
+	PartyObjectID      Column // "party_object_id" → qualified: "acctic.party_object_id"
+	Document           Column // "document" → qualified: "acctic.document"
+	Status             Column // "status" → qualified: "acctic.status"
+	Reason             Column // "reason" → qualified: "acctic.reason"
+	Resolution         Column // "resolution" → qualified: "acctic.resolution"
+	AppliedObjects     Column // "applied_objects" → qualified: "acctic.applied_objects"
+	DecidedByID        Column // "decided_by_id" → qualified: "acctic.decided_by_id"
+	DecidedAt          Column // "decided_at" → qualified: "acctic.decided_at"
+	Note               Column // "note" → qualified: "acctic.note"
+	DetectedAt         Column // "detected_at" → qualified: "acctic.detected_at"
+	Version            Column // "version" → qualified: "acctic.version"
+	CreatedAt          Column // "created_at" → qualified: "acctic.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "acctic.updated_at"
+}{
+	ID:                 NewColumn("id", "acctic"),
+	BusinessUnitID:     NewColumn("business_unit_id", "acctic"),
+	OrganizationID:     NewColumn("organization_id", "acctic"),
+	ConnectionID:       NewColumn("connection_id", "acctic"),
+	Kind:               NewColumn("kind", "acctic"),
+	ExternalID:         NewColumn("external_id", "acctic"),
+	ExternalNumber:     NewColumn("external_number", "acctic"),
+	ExternalURL:        NewColumn("external_url", "acctic"),
+	ProviderModifiedAt: NewColumn("provider_modified_at", "acctic"),
+	ProviderModifiedBy: NewColumn("provider_modified_by", "acctic"),
+	TxnDate:            NewColumn("txn_date", "acctic"),
+	AmountMinor:        NewColumn("amount_minor", "acctic"),
+	CurrencyCode:       NewColumn("currency_code", "acctic"),
+	PartyExternalID:    NewColumn("party_external_id", "acctic"),
+	PartyName:          NewColumn("party_name", "acctic"),
+	PartyObjectID:      NewColumn("party_object_id", "acctic"),
+	Document:           NewColumn("document", "acctic"),
+	Status:             NewColumn("status", "acctic"),
+	Reason:             NewColumn("reason", "acctic"),
+	Resolution:         NewColumn("resolution", "acctic"),
+	AppliedObjects:     NewColumn("applied_objects", "acctic"),
+	DecidedByID:        NewColumn("decided_by_id", "acctic"),
+	DecidedAt:          NewColumn("decided_at", "acctic"),
+	Note:               NewColumn("note", "acctic"),
+	DetectedAt:         NewColumn("detected_at", "acctic"),
+	Version:            NewColumn("version", "acctic"),
+	CreatedAt:          NewColumn("created_at", "acctic"),
+	UpdatedAt:          NewColumn("updated_at", "acctic"),
+}
+
+// AccountingInboundChangeFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccountingInboundChange.GetStaticFieldMap().
+var AccountingInboundChangeFieldMap = map[string]string{
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"connectionId":       "connection_id",
+	"kind":               "kind",
+	"externalId":         "external_id",
+	"externalNumber":     "external_number",
+	"externalUrl":        "external_url",
+	"providerModifiedAt": "provider_modified_at",
+	"providerModifiedBy": "provider_modified_by",
+	"txnDate":            "txn_date",
+	"amountMinor":        "amount_minor",
+	"currencyCode":       "currency_code",
+	"partyExternalId":    "party_external_id",
+	"partyName":          "party_name",
+	"partyObjectId":      "party_object_id",
+	"document":           "document",
+	"status":             "status",
+	"reason":             "reason",
+	"resolution":         "resolution",
+	"appliedObjects":     "applied_objects",
+	"decidedById":        "decided_by_id",
+	"decidedAt":          "decided_at",
+	"note":               "note",
+	"detectedAt":         "detected_at",
+	"version":            "version",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
+}
+
+// AccountingInboundChangeInsertableColumns lists column names suitable for INSERT statements on the "accounting_inbound_changes" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccountingInboundChangeInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"connection_id",
+	"kind",
+	"external_id",
+	"external_number",
+	"external_url",
+	"provider_modified_at",
+	"provider_modified_by",
+	"txn_date",
+	"amount_minor",
+	"currency_code",
+	"party_external_id",
+	"party_name",
+	"party_object_id",
+	"document",
+	"status",
+	"reason",
+	"resolution",
+	"applied_objects",
+	"decided_by_id",
+	"decided_at",
+	"note",
+	"detected_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AccountingInboundChangeRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AccountingInboundChangeRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var AccountingInboundChangeRelations = struct {
+	Organization string
+	BusinessUnit string
+	DecidedBy    string
+}{
+	Organization: "Organization",
+	BusinessUnit: "BusinessUnit",
+	DecidedBy:    "DecidedBy",
+}
+
+// AccountingInboundChangeScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE acctic.organization_id = ? AND acctic.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AccountingInboundChangeScopeTenant(sq, ti).
+//		Where(buncolgen.AccountingInboundChangeColumns.ID.Eq(), id)
+func AccountingInboundChangeScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AccountingInboundChangeColumns.OrganizationID, AccountingInboundChangeColumns.BusinessUnitID, ti)
+}
+
+// AccountingInboundChangeScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AccountingInboundChangeScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AccountingInboundChangeColumns.ID.In(), bun.List(ids))
+//	})
+func AccountingInboundChangeScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AccountingInboundChangeColumns.OrganizationID, AccountingInboundChangeColumns.BusinessUnitID, ti)
+}
+
+// AccountingInboundChangeScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AccountingInboundChangeScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AccountingInboundChangeColumns.ID.Eq(), id)
+//	})
+func AccountingInboundChangeScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AccountingInboundChangeColumns.OrganizationID, AccountingInboundChangeColumns.BusinessUnitID, ti)
+}
+
+// AccountingInboundChangeApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AccountingInboundChangeApplyTenant(tenantInfo))
+func AccountingInboundChangeApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AccountingInboundChangeColumns.OrganizationID, AccountingInboundChangeColumns.BusinessUnitID, ti)
+}
+
+// AccountingInboundChangeFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "accounting_inbound_changes" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccountingInboundChangeFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AccountingInboundChangeFilter = struct {
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ConnectionID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "connectionId" → DB: "connection_id"
+	Kind               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	ExternalID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
+	ExternalNumber     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalNumber" → DB: "external_number"
+	ExternalURL        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalUrl" → DB: "external_url"
+	ProviderModifiedAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerModifiedAt" → DB: "provider_modified_at"
+	ProviderModifiedBy func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerModifiedBy" → DB: "provider_modified_by"
+	TxnDate            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "txnDate" → DB: "txn_date"
+	AmountMinor        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amountMinor" → DB: "amount_minor"
+	CurrencyCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	PartyExternalID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyExternalId" → DB: "party_external_id"
+	PartyName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyName" → DB: "party_name"
+	PartyObjectID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyObjectId" → DB: "party_object_id"
+	Document           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "document" → DB: "document"
+	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Reason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reason" → DB: "reason"
+	Resolution         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolution" → DB: "resolution"
+	AppliedObjects     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appliedObjects" → DB: "applied_objects"
+	DecidedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedById" → DB: "decided_by_id"
+	DecidedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedAt" → DB: "decided_at"
+	Note               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "note" → DB: "note"
+	DetectedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detectedAt" → DB: "detected_at"
+	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ConnectionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("connectionId", op, value)
+	},
+	Kind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("kind", op, value)
+	},
+	ExternalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalId", op, value)
+	},
+	ExternalNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalNumber", op, value)
+	},
+	ExternalURL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalUrl", op, value)
+	},
+	ProviderModifiedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerModifiedAt", op, value)
+	},
+	ProviderModifiedBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerModifiedBy", op, value)
+	},
+	TxnDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("txnDate", op, value)
+	},
+	AmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("amountMinor", op, value)
+	},
+	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("currencyCode", op, value)
+	},
+	PartyExternalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partyExternalId", op, value)
+	},
+	PartyName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partyName", op, value)
+	},
+	PartyObjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partyObjectId", op, value)
+	},
+	Document: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("document", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	Reason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reason", op, value)
+	},
+	Resolution: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolution", op, value)
+	},
+	AppliedObjects: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appliedObjects", op, value)
+	},
+	DecidedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("decidedById", op, value)
+	},
+	DecidedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("decidedAt", op, value)
+	},
+	Note: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("note", op, value)
+	},
+	DetectedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("detectedAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

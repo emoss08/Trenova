@@ -15,6 +15,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -23,8 +24,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/captureqr"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfassembly"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,6 +64,7 @@ type world struct {
 	sessions    map[pulid.ID]*documentupload.DocumentUploadSession
 	uploaded    map[pulid.ID][]byte
 	published   []string
+	notified    []*notification.Notification
 }
 
 func newWorld() *world {
@@ -112,6 +114,7 @@ func (w *world) service() *Service {
 		assembler:     pdfassembly.New(),
 		inspector:     &fakeInspector{w},
 		qrCodes:       captureqr.New(),
+		notifications: &fakeNotifier{w},
 		realtime:      &fakeRealtime{w},
 	}
 }
@@ -610,6 +613,33 @@ func (f *fakeBatches) ListRetentionDue(_ context.Context, req repositories.ListR
 	return out, nil
 }
 
+func (f *fakeBatches) ListRetentionReminders(_ context.Context, req repositories.ListRetentionReminderCaptureBatchesRequest) ([]*capture.CaptureBatch, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	out := []*capture.CaptureBatch{}
+	for _, b := range f.w.batches {
+		waiting := b.Status == capture.BatchReady || b.Status == capture.BatchPartiallyFiled
+		if waiting && b.RetentionRemindedAt == nil && b.RetainUntil > req.From && b.RetainUntil <= req.Until {
+			out = append(out, clone(b))
+		}
+	}
+
+	return out, nil
+}
+
+func (f *fakeBatches) ClaimRetentionReminder(_ context.Context, req repositories.ClaimRetentionReminderRequest) (bool, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	b, ok := f.w.batches[req.ID]
+	if !ok || !inTenant(b.OrganizationID, b.BusinessUnitID, req.TenantInfo) || b.RetentionRemindedAt != nil {
+		return false, nil
+	}
+	at := req.At
+	b.RetentionRemindedAt = &at
+
+	return true, nil
+}
+
 func (f *fakeBatches) IncrementReceived(_ context.Context, req repositories.IncrementCaptureBatchPagesRequest) error {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
@@ -996,4 +1026,14 @@ func pdfPage(t *testing.T, shade uint8) []byte {
 		model.NewDefaultConfiguration()))
 
 	return out.Bytes()
+}
+
+type fakeNotifier struct{ w *world }
+
+func (f *fakeNotifier) Create(_ context.Context, n *notification.Notification) (*notification.Notification, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	f.w.notified = append(f.w.notified, n)
+
+	return n, nil
 }

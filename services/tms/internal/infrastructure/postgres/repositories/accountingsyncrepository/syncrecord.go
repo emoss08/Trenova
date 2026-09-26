@@ -307,6 +307,50 @@ func (r *syncRecordRepository) ListByObjects(
 	return entities, nil
 }
 
+func (r *syncRecordRepository) ListByExternalIDs(
+	ctx context.Context,
+	req *repositories.ListAccountingSyncRecordsByExternalIDsRequest,
+) ([]*accountingsync.AccountingSyncRecord, error) {
+	entities := make([]*accountingsync.AccountingSyncRecord, 0, len(req.ExternalIDs))
+	if len(req.ExternalIDs) == 0 {
+		return entities, nil
+	}
+
+	cols := buncolgen.AccountingSyncRecordColumns
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+		Where(cols.ConnectionID.Eq(), req.ConnectionID).
+		Where(cols.ExternalID.In(), bun.List(req.ExternalIDs)).
+		Order(cols.QueuedAt.OrderAsc(), cols.ID.OrderAsc())
+	if len(req.ObjectTypes) > 0 {
+		query = query.Where(cols.ObjectType.In(), bun.List(req.ObjectTypes))
+	}
+	if err := query.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func (r *syncRecordRepository) CountInFlight(
+	ctx context.Context,
+	req *repositories.CountAccountingSyncInFlightRequest,
+) (int, error) {
+	cols := buncolgen.AccountingSyncRecordColumns
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*accountingsync.AccountingSyncRecord)(nil)).
+		Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+		Where(cols.ConnectionID.Eq(), req.ConnectionID).
+		Where(cols.Status.Eq(), accountingsync.SyncStatusInFlight)
+	if len(req.ObjectTypes) > 0 {
+		query = query.Where(cols.ObjectType.In(), bun.List(req.ObjectTypes))
+	}
+	return query.Count(ctx)
+}
+
 func (r *syncRecordRepository) Claim(
 	ctx context.Context,
 	req *repositories.ClaimAccountingSyncRecordsRequest,

@@ -25,7 +25,14 @@ const mocks = vi.hoisted(() => ({
   changeAccountingBackfill: vi.fn(),
   fetchAccountingSyncRecord: vi.fn(),
   fetchAccountingSyncAttempts: vi.fn(),
+  fetchAccountingDriftOverview: vi.fn(),
   granted: new Set<string>(),
+}));
+
+vi.mock("@/lib/graphql/accounting-drift", () => ({
+  fetchAccountingDriftOverview: mocks.fetchAccountingDriftOverview,
+  fetchAccountingDriftFinding: vi.fn(),
+  fetchAccountingDriftFixPreview: vi.fn(),
 }));
 
 vi.mock("@/lib/graphql/accounting-sync-ledger", () => ({
@@ -86,6 +93,9 @@ const connection: AccountingConnection = {
   autoSync: true,
   driverSettlementsEnabledAt: null,
   syncsDriverSettlements: false,
+  inboundPaymentPolicy: "Propose",
+  changesReadAt: null,
+  changesErrorMessage: "",
   pausedAt: null,
   pausedBy: null,
   pausedReason: "",
@@ -176,6 +186,43 @@ beforeEach(() => {
 });
 
 describe("LedgerSummary", () => {
+  it("links the open drift findings", async () => {
+    mocks.fetchAccountingDriftOverview.mockResolvedValue({
+      connectionId: "acctc_1",
+      providerName: "QuickBooks Online",
+      checkedAt: 1_790_000_000,
+      checkError: "",
+      toleranceMinor: 0,
+      currencyCode: "USD",
+      summary: {
+        open: 6,
+        amountOpen: 4,
+        goneOpen: 2,
+        statusOpen: 0,
+        balanceOpen: 0,
+        resolvedSince: 1,
+      },
+    });
+    renderWith(<LedgerSummary summary={summary()} />);
+
+    const drift = await screen.findByRole("link", { name: /Drift findings/ });
+    await waitFor(() => expect(drift).toHaveTextContent("6"));
+    expect(drift).toHaveAttribute("href", "/accounting/sync/drift");
+    expect(mocks.fetchAccountingDriftOverview).toHaveBeenCalledWith(
+      "QuickBooksOnline",
+      expect.anything(),
+    );
+  });
+
+  it("shows no drift figure before syncing starts", () => {
+    renderWith(
+      <LedgerSummary summary={summary({ connection: { ...connection, syncEnabledAt: null } })} />,
+    );
+
+    expect(screen.queryByRole("link", { name: /Drift findings/ })).not.toBeInTheDocument();
+    expect(mocks.fetchAccountingDriftOverview).not.toHaveBeenCalled();
+  });
+
   it("groups the counts the way people read them", () => {
     renderWith(<LedgerSummary summary={summary()} />);
 

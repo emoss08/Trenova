@@ -147,15 +147,34 @@ func (t *assignMoveTool) assignmentChanges(
 		return nil, err
 	}
 
-	changes := []*agent.RecordChange{assignment}
-	before := plan.ShipmentBefore.FindMove(request.ShipmentMoveID)
+	coverage, err := coverageChanges(
+		plan.ShipmentBefore,
+		plan.ShipmentAfter,
+		request.ShipmentMoveID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return append([]*agent.RecordChange{assignment}, coverage...), nil
+}
+
+// coverageChanges is what a change of cover does to the move and its
+// shipment: the move's status and who covers it, and the shipment's status
+// when the coordinator moves it. A record that does not change is left out.
+func coverageChanges(
+	before, after *shipment.Shipment,
+	moveID pulid.ID,
+) ([]*agent.RecordChange, error) {
+	shipmentLabel := before.ProNumber
+	changes := make([]*agent.RecordChange, 0, 2)
 	move, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipmentMove,
-		ID:       request.ShipmentMoveID,
+		ID:       moveID,
 		Label:    "Move on " + shipmentLabel,
-		Version:  moveVersion(before),
-	}, assignedMoveOf(plan.ShipmentBefore, request.ShipmentMoveID),
-		assignedMoveOf(plan.ShipmentAfter, request.ShipmentMoveID),
+		Version:  moveVersion(before.FindMove(moveID)),
+	}, assignedMoveOf(before, moveID),
+		assignedMoveOf(after, moveID),
 		toolpreview.Labels(assignedStatusLabels),
 	)
 	if err != nil {
@@ -165,22 +184,29 @@ func (t *assignMoveTool) assignmentChanges(
 		changes = append(changes, move)
 	}
 
-	if plan.ShipmentBefore.Status != plan.ShipmentAfter.Status {
-		shipmentChange, sErr := toolpreview.Changed(toolpreview.Record{
-			Resource: permission.ResourceShipment,
-			ID:       plan.ShipmentBefore.ID,
-			Label:    shipmentLabel,
-			Version:  previewVersion(plan.ShipmentBefore.Version),
-		}, &shipmentStatusView{Status: string(plan.ShipmentBefore.Status)},
-			&shipmentStatusView{Status: string(plan.ShipmentAfter.Status)},
-		)
-		if sErr != nil {
-			return nil, sErr
-		}
-		changes = append(changes, shipmentChange)
+	shipmentChange, err := shipmentStatusChange(before, after)
+	if err != nil || shipmentChange == nil {
+		return changes, err
 	}
 
-	return changes, nil
+	return append(changes, shipmentChange), nil
+}
+
+// shipmentStatusChange is the shipment's status before and after, or nil when
+// the write leaves it where it is.
+func shipmentStatusChange(before, after *shipment.Shipment) (*agent.RecordChange, error) {
+	if before.Status == after.Status {
+		return nil, nil //nolint:nilnil // an unmoved shipment is no change and no error
+	}
+
+	return toolpreview.Changed(toolpreview.Record{
+		Resource: permission.ResourceShipment,
+		ID:       before.ID,
+		Label:    before.ProNumber,
+		Version:  previewVersion(before.Version),
+	}, &shipmentStatusView{Status: string(before.Status)},
+		&shipmentStatusView{Status: string(after.Status)},
+	)
 }
 
 func moveVersion(move *shipment.ShipmentMove) *int64 {

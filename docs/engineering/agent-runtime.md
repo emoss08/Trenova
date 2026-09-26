@@ -819,6 +819,15 @@ condition: no open execution on `agent-queue`.
 the branches that test it are dead and can go with the next change that touches
 each of them.
 
+## Billing lifecycle tools
+
+The tools that take a delivered shipment to a sent invoice (transfer, the billing queue
+decisions, posting and sending), their tiers, and why approving, canceling, posting and
+sending always stop at a proposal a person approves, are described in
+[agent-billing-tools.md](agent-billing-tools.md). An agent principal may move a billing
+queue item into review, onto hold, into exception or back to operations; the queue refuses
+it every other status.
+
 ## Known limits
 
 - **Resume is at-most-once.** A crash in the execute→settle window reports

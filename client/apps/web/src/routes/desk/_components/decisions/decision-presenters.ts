@@ -68,6 +68,8 @@ export function asAssistantProposal(node: PlanStepNode): AssistantProposal {
       maximum: field.maximum ?? null,
       maxLength: field.maxLength ?? null,
       readOnly: field.readOnly,
+      resource: field.resource,
+      choices: field.choices,
     })),
     modifications: (node.modifications as Record<string, unknown> | null) ?? null,
   };

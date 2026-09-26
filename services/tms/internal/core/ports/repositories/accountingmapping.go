@@ -25,6 +25,14 @@ type MarkAccountingReferenceRemovedRequest struct {
 	At           int64
 }
 
+type MarkAccountingReferencesRemovedRequest struct {
+	TenantInfo   pagination.TenantInfo
+	ConnectionID pulid.ID
+	Kind         accountingsync.ReferenceKind
+	ExternalIDs  []string
+	At           int64
+}
+
 type ListAccountingReferenceObjectsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
@@ -50,6 +58,7 @@ type GetAccountingReferenceObjectsRequest struct {
 
 type AccountingReferenceObjectRepository interface {
 	Upsert(ctx context.Context, req *UpsertAccountingReferenceObjectsRequest) error
+	MarkRemoved(ctx context.Context, req *MarkAccountingReferencesRemovedRequest) (int64, error)
 	MarkRemovedUnseen(
 		ctx context.Context,
 		req *MarkAccountingReferenceRemovedRequest,

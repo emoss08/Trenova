@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/uptrace/bun"
@@ -61,4 +62,17 @@ func TestDistinctIDs_DropsBlanksAndDuplicatesWithinTheBound(t *testing.T) {
 		many = append(many, pulid.MustNew("rec_"))
 	}
 	assert.Len(t, distinctIDs(many), MaxIDsPerResource)
+}
+
+// A person unticks shipments from every one a transfer proposed, each named by
+// its label, so one read names every record the longest subset may offer.
+func TestDistinctIDs_KeepsEveryRecordASubsetMayOffer(t *testing.T) {
+	t.Parallel()
+
+	offered := make([]pulid.ID, 0, toolschema.MaxSubsetChoices)
+	for range toolschema.MaxSubsetChoices {
+		offered = append(offered, pulid.MustNew("shp_"))
+	}
+
+	assert.Len(t, distinctIDs(offered), toolschema.MaxSubsetChoices)
 }

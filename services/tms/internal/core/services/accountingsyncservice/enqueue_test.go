@@ -312,3 +312,38 @@ func TestEnqueueAccountingSyncIgnoresAMissingEnqueuer(t *testing.T) {
 
 	require.NoError(t, services.EnqueueAccountingSync(t.Context(), nil, &services.AccountingSyncEnqueueRequest{}))
 }
+
+func TestEnqueueReportsWhatItQueuedToACollector(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	second := h.addConnection(syncingConnection)
+	inv := h.postedInvoice(pulid.MustNew("cus_"), invoiceSpec{number: "INV-200"})
+
+	ctx, collector := services.CollectAccountingSync(t.Context())
+	require.NoError(t, h.enqueuer.Enqueue(
+		ctx,
+		services.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
+	))
+	require.NoError(t, h.enqueuer.Enqueue(
+		ctx,
+		services.InvoiceSyncRequest(inv, accountingsync.SyncSourceInvoicePosted),
+	))
+
+	collected := collector.Records()
+	require.Len(t, collected, 2, "a repeat enqueue inserts nothing and reports nothing")
+	connections := []pulid.ID{collected[0].ConnectionID, collected[1].ConnectionID}
+	assert.ElementsMatch(t, []pulid.ID{h.conn.ID, second.ID}, connections)
+	for _, record := range collected {
+		assert.Equal(t, inv.ID, record.ObjectID)
+	}
+
+	require.NoError(t, h.enqueuer.Enqueue(
+		t.Context(),
+		services.InvoiceSyncRequest(
+			h.postedInvoice(pulid.MustNew("cus_"), invoiceSpec{number: "INV-201"}),
+			accountingsync.SyncSourceInvoicePosted,
+		),
+	))
+	assert.Len(t, collector.Records(), 2, "only a context that asked collects")
+}

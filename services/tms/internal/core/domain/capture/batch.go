@@ -31,36 +31,39 @@ type CaptureBatch struct {
 	bun.BaseModel             `bun:"table:capture_batches,alias:cbat" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                           json:"-"`
 
-	ID                pulid.ID       `json:"id"                bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID    pulid.ID       `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID       `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	UserID            pulid.ID       `json:"userId"            bun:"user_id,type:VARCHAR(100),notnull"`
-	DeviceID          pulid.ID       `json:"deviceId"          bun:"device_id,type:VARCHAR(100),notnull"`
-	RequestID         *pulid.ID      `json:"requestId"         bun:"request_id,type:VARCHAR(100),nullzero"`
-	ProfileID         *pulid.ID      `json:"profileId"         bun:"profile_id,type:VARCHAR(100),nullzero"`
-	ClientKey         string         `json:"-"                 bun:"client_key,type:VARCHAR(100),notnull"`
-	Source            Source         `json:"source"            bun:"source,type:VARCHAR(10),notnull"`
-	Status            BatchStatus    `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
-	SourceName        string         `json:"sourceName"        bun:"source_name,type:VARCHAR(255),nullzero"`
-	JobName           string         `json:"jobName"           bun:"job_name,type:VARCHAR(255),nullzero"`
-	Settings          Settings       `json:"settings"          bun:"settings,type:JSONB,notnull,default:'{}'"`
-	TargetType        string         `json:"targetType"        bun:"target_type,type:VARCHAR(50),nullzero"`
-	TargetID          *pulid.ID      `json:"targetId"          bun:"target_id,type:VARCHAR(100),nullzero"`
-	DocumentTypeID    *pulid.ID      `json:"documentTypeId"    bun:"document_type_id,type:VARCHAR(100),nullzero"`
-	ExpectedPageCount int            `json:"expectedPageCount" bun:"expected_page_count,type:INTEGER,notnull,default:0"`
-	ReceivedPageCount int            `json:"receivedPageCount" bun:"received_page_count,type:INTEGER,notnull,default:0"`
-	ItemCount         int            `json:"itemCount"         bun:"item_count,type:INTEGER,notnull,default:0"`
-	FiledItemCount    int            `json:"filedItemCount"    bun:"filed_item_count,type:INTEGER,notnull,default:0"`
-	ManifestDigest    string         `json:"-"                 bun:"manifest_digest,type:VARCHAR(64),nullzero"`
-	FailureMessage    string         `json:"failureMessage"    bun:"failure_message,type:VARCHAR(500),nullzero"`
-	SealedAt          *int64         `json:"sealedAt"          bun:"sealed_at,type:BIGINT,nullzero"`
-	ProcessedAt       *int64         `json:"processedAt"       bun:"processed_at,type:BIGINT,nullzero"`
-	RetainUntil       int64          `json:"retainUntil"       bun:"retain_until,type:BIGINT,notnull"`
-	Version           int64          `json:"version"           bun:"version,type:BIGINT"`
-	CreatedAt         int64          `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	Pages             []*CapturePage `json:"pages,omitempty"   bun:"rel:has-many,join:id=batch_id,join:business_unit_id=business_unit_id,join:organization_id=organization_id"`
-	Items             []*CaptureItem `json:"items,omitempty"   bun:"rel:has-many,join:id=batch_id,join:business_unit_id=business_unit_id,join:organization_id=organization_id"`
+	ID                pulid.ID    `json:"id"                bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID    pulid.ID    `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID    pulid.ID    `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	UserID            pulid.ID    `json:"userId"            bun:"user_id,type:VARCHAR(100),notnull"`
+	DeviceID          pulid.ID    `json:"deviceId"          bun:"device_id,type:VARCHAR(100),notnull"`
+	RequestID         *pulid.ID   `json:"requestId"         bun:"request_id,type:VARCHAR(100),nullzero"`
+	ProfileID         *pulid.ID   `json:"profileId"         bun:"profile_id,type:VARCHAR(100),nullzero"`
+	ClientKey         string      `json:"-"                 bun:"client_key,type:VARCHAR(100),notnull"`
+	Source            Source      `json:"source"            bun:"source,type:VARCHAR(10),notnull"`
+	Status            BatchStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
+	SourceName        string      `json:"sourceName"        bun:"source_name,type:VARCHAR(255),nullzero"`
+	JobName           string      `json:"jobName"           bun:"job_name,type:VARCHAR(255),nullzero"`
+	Settings          Settings    `json:"settings"          bun:"settings,type:JSONB,notnull,default:'{}'"`
+	TargetType        string      `json:"targetType"        bun:"target_type,type:VARCHAR(50),nullzero"`
+	TargetID          *pulid.ID   `json:"targetId"          bun:"target_id,type:VARCHAR(100),nullzero"`
+	DocumentTypeID    *pulid.ID   `json:"documentTypeId"    bun:"document_type_id,type:VARCHAR(100),nullzero"`
+	ExpectedPageCount int         `json:"expectedPageCount" bun:"expected_page_count,type:INTEGER,notnull,default:0"`
+	ReceivedPageCount int         `json:"receivedPageCount" bun:"received_page_count,type:INTEGER,notnull,default:0"`
+	ItemCount         int         `json:"itemCount"         bun:"item_count,type:INTEGER,notnull,default:0"`
+	FiledItemCount    int         `json:"filedItemCount"    bun:"filed_item_count,type:INTEGER,notnull,default:0"`
+	ManifestDigest    string      `json:"-"                 bun:"manifest_digest,type:VARCHAR(64),nullzero"`
+	FailureMessage    string      `json:"failureMessage"    bun:"failure_message,type:VARCHAR(500),nullzero"`
+	SealedAt          *int64      `json:"sealedAt"          bun:"sealed_at,type:BIGINT,nullzero"`
+	ProcessedAt       *int64      `json:"processedAt"       bun:"processed_at,type:BIGINT,nullzero"`
+	RetainUntil       int64       `json:"retainUntil"       bun:"retain_until,type:BIGINT,notnull"`
+	// RetentionRemindedAt is when the owner was told the unfiled pages are
+	// about to go. It is set once, by whichever sweep claims the reminder.
+	RetentionRemindedAt *int64         `json:"-"               bun:"retention_reminded_at,type:BIGINT,nullzero"`
+	Version             int64          `json:"version"         bun:"version,type:BIGINT"`
+	CreatedAt           int64          `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt           int64          `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Pages               []*CapturePage `json:"pages,omitempty" bun:"rel:has-many,join:id=batch_id,join:business_unit_id=business_unit_id,join:organization_id=organization_id"`
+	Items               []*CaptureItem `json:"items,omitempty" bun:"rel:has-many,join:id=batch_id,join:business_unit_id=business_unit_id,join:organization_id=organization_id"`
 
 	CaptureDevice *CaptureDevice       `json:"device,omitempty"       bun:"rel:belongs-to,join:device_id=id,join:business_unit_id=business_unit_id,join:organization_id=organization_id"`
 	Organization  *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

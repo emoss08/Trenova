@@ -379,3 +379,71 @@ func (_c *MockShipmentMoveService_PreviewStopActual_Call) RunAndReturn(run func(
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewUpdateStatus provides a mock function for the type MockShipmentMoveService
+func (_mock *MockShipmentMoveService) PreviewUpdateStatus(ctx context.Context, req *repositories.BulkUpdateMoveStatusRequest) (*services.MoveStatusPlan, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewUpdateStatus")
+	}
+
+	var r0 *services.MoveStatusPlan
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.BulkUpdateMoveStatusRequest) (*services.MoveStatusPlan, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.BulkUpdateMoveStatusRequest) *services.MoveStatusPlan); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.MoveStatusPlan)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.BulkUpdateMoveStatusRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentMoveService_PreviewUpdateStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewUpdateStatus'
+type MockShipmentMoveService_PreviewUpdateStatus_Call struct {
+	*mock.Call
+}
+
+// PreviewUpdateStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.BulkUpdateMoveStatusRequest
+func (_e *MockShipmentMoveService_Expecter) PreviewUpdateStatus(ctx any, req any) *MockShipmentMoveService_PreviewUpdateStatus_Call {
+	return &MockShipmentMoveService_PreviewUpdateStatus_Call{Call: _e.mock.On("PreviewUpdateStatus", ctx, req)}
+}
+
+func (_c *MockShipmentMoveService_PreviewUpdateStatus_Call) Run(run func(ctx context.Context, req *repositories.BulkUpdateMoveStatusRequest)) *MockShipmentMoveService_PreviewUpdateStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.BulkUpdateMoveStatusRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.BulkUpdateMoveStatusRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentMoveService_PreviewUpdateStatus_Call) Return(moveStatusPlan *services.MoveStatusPlan, err error) *MockShipmentMoveService_PreviewUpdateStatus_Call {
+	_c.Call.Return(moveStatusPlan, err)
+	return _c
+}
+
+func (_c *MockShipmentMoveService_PreviewUpdateStatus_Call) RunAndReturn(run func(ctx context.Context, req *repositories.BulkUpdateMoveStatusRequest) (*services.MoveStatusPlan, error)) *MockShipmentMoveService_PreviewUpdateStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}

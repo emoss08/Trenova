@@ -42,6 +42,8 @@ import {
 } from "./proposal-preview/preview-gate";
 import { PreviewLoadState, ProposalPreview } from "./proposal-preview/proposal-preview";
 import { useApprovalGate, useProposalPreview } from "./proposal-preview/use-proposal-preview";
+import { previewOutcomes } from "./record-subset";
+import { RecordSubsetField } from "./record-subset-field";
 
 /** How long typing settles before the draft is previewed. */
 export const PREVIEW_DEBOUNCE_MS = 400;
@@ -96,6 +98,7 @@ export function ProposalEditor({
 }
 
 const LOADING: ApprovalGate = { state: "loading" };
+const NO_OUTCOMES: ReadonlyMap<string, string> = new Map();
 
 // Mounted only while open, so each request starts from the proposed values
 // without an effect having to reset the draft.
@@ -133,6 +136,21 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
     keepPrevious: true,
   });
   const approval = useApprovalGate(previewQuery);
+
+  // A record-subset field lists every record proposed, each with what the
+  // preview says happens to it. The preview as proposed names the records a
+  // person unticks, so its word on them stays on their rows once they are
+  // out of the draft; the draft's own preview has the last word on the rest.
+  const hasSubset = request.fields.some((field) => field.kind === "RecordSubset");
+  const proposedPreview = useProposalPreview({
+    scope: target?.scope ?? "mine",
+    id: target?.proposalId ?? "",
+    enabled: target !== undefined && hasSubset,
+  });
+  const outcomes = useMemo(
+    () => (hasSubset ? previewOutcomes([proposedPreview.data, previewQuery.data], t) : NO_OUTCOMES),
+    [hasSubset, previewQuery.data, proposedPreview.data, t],
+  );
 
   // What is on screen is the preview of the values in the form only once the
   // debounce has caught up and the read for them has landed.
@@ -187,23 +205,37 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
         <div className="flex flex-col gap-3">
           {request.fields.map((field) => {
             const id = `${idPrefix}-${field.name}`;
-            const error = touched[field.name] || submitted ? errors[field.name] : undefined;
+            const subset = field.kind === "RecordSubset";
+            const error =
+              !subset && (touched[field.name] || submitted) ? errors[field.name] : undefined;
             const readOnly = field.readOnly === true;
 
             return (
               <div key={field.name} className="flex flex-col gap-1.5">
-                <Label htmlFor={id}>
+                <Label id={`${id}-label`} htmlFor={subset ? undefined : id}>
                   {field.label}
-                  {field.required ? "" : ` (${t("optional")})`}
+                  {field.required || subset ? "" : ` (${t("optional")})`}
                 </Label>
-                <FieldControl
-                  id={id}
-                  field={field}
-                  value={draft[field.name] ?? ""}
-                  invalid={error !== undefined}
-                  readOnly={readOnly}
-                  onChange={(value) => set(field.name, value)}
-                />
+                {subset ? (
+                  <RecordSubsetField
+                    labelId={`${id}-label`}
+                    field={field}
+                    proposed={request.arguments?.[field.name]}
+                    value={draft[field.name] ?? ""}
+                    outcomes={outcomes}
+                    readOnly={readOnly}
+                    onChange={(value) => set(field.name, value)}
+                  />
+                ) : (
+                  <FieldControl
+                    id={id}
+                    field={field}
+                    value={draft[field.name] ?? ""}
+                    invalid={error !== undefined}
+                    readOnly={readOnly}
+                    onChange={(value) => set(field.name, value)}
+                  />
+                )}
                 {readOnly ? (
                   <p className="text-foreground-subtle flex items-center gap-1 text-xs">
                     <LockIcon aria-hidden className="size-3 shrink-0" />

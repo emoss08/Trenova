@@ -154,6 +154,39 @@ func (ca *CarrierAssignment) IsActive() bool {
 	return ca != nil && ca.Status != CarrierAssignmentStatusCanceled
 }
 
+// Cancel retires the assignment, recording when and why.
+func (ca *CarrierAssignment) Cancel(at int64, reason string) {
+	ca.Status = CarrierAssignmentStatusCanceled
+	ca.CanceledAt = &at
+	ca.CancellationReason = reason
+}
+
+// Confirm marks a pending assignment confirmed and reports whether it moved;
+// an assignment in any other state is left as it is.
+func (ca *CarrierAssignment) Confirm(at int64) bool {
+	if ca.Status != CarrierAssignmentStatusPending {
+		return false
+	}
+
+	ca.Status = CarrierAssignmentStatusConfirmed
+	ca.ConfirmedAt = &at
+
+	return true
+}
+
+// RevertConfirmation returns a confirmed assignment to pending, the
+// counterpart of Confirm, and reports whether it moved.
+func (ca *CarrierAssignment) RevertConfirmation() bool {
+	if ca.Status != CarrierAssignmentStatusConfirmed {
+		return false
+	}
+
+	ca.Status = CarrierAssignmentStatusPending
+	ca.ConfirmedAt = nil
+
+	return true
+}
+
 func (ca *CarrierAssignment) GetID() pulid.ID {
 	return ca.ID
 }

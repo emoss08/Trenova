@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingconnectionservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/accountingdriftservice"
+	"github.com/emoss08/trenova/internal/core/services/accountinginboundservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
@@ -517,6 +519,14 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(e *accountingsyncservice.Enqueuer) services.AccountingSyncEnqueuer { return e },
 	accountingsyncservice.New,
 	func(s *accountingsyncservice.Service) services.AccountingSyncService { return s },
+	accountinginboundservice.New,
+	func(s *accountinginboundservice.Service) services.AccountingInboundService { return s },
+	accountingdriftservice.New,
+	func(s *accountingdriftservice.Service) services.AccountingDriftReconciler { return s },
+	func(s *accountingdriftservice.Service) services.AccountingDriftRechecker { return s },
+	func(s *accountingdriftservice.Service) services.AccountingDriftService { return s },
+	func(s *carriersettlementservice.Service) services.CarrierSettlementPayer { return s },
+	func(s *driversettlementservice.Service) services.DriverSettlementPayer { return s },
 	detentionbillingservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(

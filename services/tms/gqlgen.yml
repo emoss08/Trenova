@@ -2363,6 +2363,14 @@ models:
   AgentProposalField:
     model:
       - github.com/emoss08/trenova/pkg/toolschema.Field
+    fields:
+      resource:
+        resolver: true
+      choices:
+        resolver: true
+  AgentProposalFieldChoice:
+    model:
+      - github.com/emoss08/trenova/pkg/toolschema.Choice
   AgentProposalFieldKind:
     model:
       - github.com/emoss08/trenova/pkg/toolschema.Kind
@@ -4133,6 +4141,123 @@ models:
   AccountingBackfill:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingBackfill
+  AccountingInboundPaymentPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundPaymentPolicy
+  AccountingInboundChangeKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundChangeKind
+  AccountingInboundChangeStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundChangeStatus
+  AccountingInboundChangeReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundChangeReason
+  AccountingInboundDocumentKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundDocumentKind
+  AccountingAppliedObjectType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AppliedObjectType
+  AccountingInboundLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundLine
+    fields:
+      objectType:
+        resolver: true
+      objectId:
+        resolver: true
+  AccountingAppliedObject:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AppliedObject
+  AccountingInboundChange:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingInboundChange
+    fields:
+      reason:
+        resolver: true
+      partyObjectId:
+        resolver: true
+      referenceNumber:
+        resolver: true
+      methodName:
+        resolver: true
+      unappliedMinor:
+        resolver: true
+      lines:
+        resolver: true
+      decidedBy:
+        resolver: true
+  AccountingInboundSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingInboundSummary
+  AccountingInboundOverview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundOverview
+  AccountingInboundPostingLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundPostingLine
+  AccountingInboundApplyPreview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundApplyPreview
+  AccountingDriftKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftKind
+  AccountingDriftStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftStatus
+  AccountingDriftResolution:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftResolution
+  AccountingDriftDirection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftDirection
+  AccountingDriftFixObject:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftFixObject
+  AccountingDriftLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftLine
+  AccountingDriftFinding:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingDriftFinding
+    fields:
+      partyId:
+        resolver: true
+      trenovaMinor:
+        resolver: true
+      providerMinor:
+        resolver: true
+      differenceMinor:
+        resolver: true
+      resolution:
+        resolver: true
+      fixObjectType:
+        resolver: true
+      fixObjectId:
+        resolver: true
+      directions:
+        resolver: true
+      pushed:
+        resolver: true
+      resolvedBy:
+        resolver: true
+  AccountingDriftSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingDriftSummary
+  AccountingDriftOverview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftOverview
+  AccountingDriftFixPreview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftFixPreview
+    fields:
+      direction:
+        resolver: true
+      fixObject:
+        resolver: true
+      operation:
+        resolver: true
   AccountingSyncStatusCount:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingSyncStatusCount

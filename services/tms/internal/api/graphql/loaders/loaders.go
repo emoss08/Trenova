@@ -96,6 +96,7 @@ type FactoryParams struct {
 	CaptureRecordLabel                        *CaptureRecordLabelLoaderFactory
 	CarrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	AuditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
+	SubsetLabels                              *SubsetLabelsLoaderFactory
 	PermissionEngine                          services.PermissionEngine
 }
 
@@ -153,6 +154,7 @@ type Factory struct {
 	captureRecordLabel                        *CaptureRecordLabelLoaderFactory
 	carrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	auditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
+	subsetLabels                              *SubsetLabelsLoaderFactory
 	permissionEngine                          services.PermissionEngine
 }
 
@@ -210,6 +212,8 @@ type Loaders struct {
 	CaptureRecordLabel                        *dataloadgen.Loader[string, *repositories.CaptureRecordLabel]
 	CarrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
 	AuditEntriesByAIAuditEventID              *dataloadgen.Loader[string, []*audit.Entry]
+	// SubsetLabels names the records each record-subset field offers.
+	SubsetLabels *dataloadgen.Loader[string, services.RecordLabels]
 	// FieldCeilings is the reader's sensitivity ceiling per resource, asked
 	// of the permission engine once per resource per request.
 	FieldCeilings services.FieldCeilings
@@ -270,6 +274,7 @@ func NewFactory(p FactoryParams) *Factory {
 		captureRecordLabel:                        p.CaptureRecordLabel,
 		carrierMonitoringEnrollmentByCarrierID:    p.CarrierMonitoringEnrollmentByCarrierID,
 		auditEntriesByAIAuditEventID:              p.AuditEntriesByAIAuditEventID,
+		subsetLabels:                              p.SubsetLabels,
 		permissionEngine:                          p.PermissionEngine,
 	}
 }
@@ -389,6 +394,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 			tenantInfo,
 		),
 		AuditEntriesByAIAuditEventID: f.auditEntriesByAIAuditEventID.NewForTenant(tenantInfo),
+		SubsetLabels:                 f.subsetLabels.NewForTenant(tenantInfo),
 		FieldCeilings: fieldsensitivity.NewCeilings(
 			f.permissionEngine,
 			tenantInfo.UserID,

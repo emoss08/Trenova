@@ -244,6 +244,35 @@ func (f *fakeConnections) MarkWebhookReceived(
 	return count, nil
 }
 
+func (f *fakeConnections) SaveDriftCheck(
+	context.Context,
+	*repositories.SaveAccountingDriftCheckRequest,
+) error {
+	return nil
+}
+
+func (f *fakeConnections) SaveChangeFeed(
+	_ context.Context,
+	req *repositories.SaveAccountingChangeFeedRequest,
+) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	row, ok := f.rows[req.ID]
+	if !ok || (req.OnlyIfEmpty && row.ChangeCursor != "") {
+		return false, nil
+	}
+	if req.Cursor != "" {
+		row.ChangeCursor = req.Cursor
+	}
+	if req.ReadAt != nil {
+		at := *req.ReadAt
+		row.ChangesReadAt = &at
+	}
+	row.ChangesErrorCategory = req.ErrorCategory
+	row.ChangesErrorMessage = req.ErrorMessage
+	return true, nil
+}
+
 func (f *fakeConnections) MarkReferenceRefresh(
 	_ context.Context,
 	req repositories.MarkAccountingReferenceRefreshRequest,
@@ -709,4 +738,22 @@ func (f *fakeApps) Delete(
 	defer f.mu.Unlock()
 	delete(f.rows, integrationKey(req.TenantInfo, req.IntegrationType))
 	return nil
+}
+
+type fakePoller struct {
+	mu     sync.Mutex
+	polled []pulid.ID
+}
+
+func (f *fakePoller) PollNow(_ context.Context, _ pagination.TenantInfo, connectionID pulid.ID) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.polled = append(f.polled, connectionID)
+	return nil
+}
+
+func (f *fakePoller) calls() []pulid.ID {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]pulid.ID{}, f.polled...)
 }

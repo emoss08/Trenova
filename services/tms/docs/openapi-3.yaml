@@ -152,6 +152,8 @@ components:
                 - AccountingConnection
                 - FormulaTemplate
                 - AccountingSyncRecord
+                - AccountingInboundChange
+                - AccountingDriftFinding
             type: string
             x-enum-varnames:
                 - SubjectBillingQueueItem
@@ -172,6 +174,8 @@ components:
                 - SubjectAccountingConnection
                 - SubjectFormulaTemplate
                 - SubjectAccountingSyncRecord
+                - SubjectAccountingInbound
+                - SubjectAccountingDrift
         agent.TaintMark:
             properties:
                 at:

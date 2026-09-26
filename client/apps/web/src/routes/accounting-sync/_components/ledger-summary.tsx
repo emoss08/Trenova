@@ -9,6 +9,10 @@ import { useAccountingSyncActions } from "@/hooks/use-accounting-sync-actions";
 import { useAccountingSyncLabels } from "@/hooks/use-accounting-sync-labels";
 import { usePermission } from "@/hooks/use-permission";
 import { recordPath } from "@/config/record-links";
+import { ACCOUNTING_DRIFT_PATH } from "@/lib/accounting-sync";
+import { queries } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
+import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import type { AccountingSyncSummary } from "@/lib/graphql/accounting-sync-ledger";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -67,7 +71,26 @@ export function LedgerSummary({ summary }: { summary: AccountingSyncSummary }) {
         active={current === "attention"}
         onClick={() => select("attention")}
       />
+      {summary.connection?.syncEnabledAt != null ? (
+        <LedgerDriftItem system={summary.integrationType} />
+      ) : null}
     </KpiStrip>
+  );
+}
+
+function LedgerDriftItem({ system }: { system: AccountingSystem }) {
+  const t = useT();
+  const overview = useQuery(queries.accountingSync.driftOverview(system));
+  const open = overview.data?.summary.open;
+
+  return (
+    <KpiStripItem
+      label={t("Drift findings")}
+      value={open ?? "—"}
+      sub={t("differ in the books")}
+      tone={open ? "warning" : undefined}
+      to={ACCOUNTING_DRIFT_PATH}
+    />
   );
 }
 

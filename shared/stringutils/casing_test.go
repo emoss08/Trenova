@@ -26,3 +26,19 @@ func TestHumanizeCamelCaseSentence(t *testing.T) {
 		assert.Equal(t, want, HumanizeCamelCaseSentence(in), in)
 	}
 }
+
+func TestLowerFirst(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]string{
+		"":                  "",
+		"Send the invoice.": "send the invoice.",
+		"already lower":     "already lower",
+		"Ünited":            "ünited",
+	}
+	for in, want := range cases {
+		if got := LowerFirst(in); got != want {
+			t.Errorf("LowerFirst(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

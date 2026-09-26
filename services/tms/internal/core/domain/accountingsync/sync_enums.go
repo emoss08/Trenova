@@ -1,6 +1,10 @@
 package accountingsync
 
-import "github.com/emoss08/trenova/internal/core/domain/billingqueue"
+import (
+	"slices"
+
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+)
 
 type SyncObjectType string
 
@@ -144,16 +148,17 @@ func AllSyncObjectTypes() []SyncObjectType {
 type SyncOperation string
 
 const (
-	SyncOperationCreate = SyncOperation("Create")
-	SyncOperationUpdate = SyncOperation("Update")
-	SyncOperationVoid   = SyncOperation("Void")
+	SyncOperationCreate   = SyncOperation("Create")
+	SyncOperationUpdate   = SyncOperation("Update")
+	SyncOperationVoid     = SyncOperation("Void")
+	SyncOperationRecreate = SyncOperation("Recreate")
 )
 
 func (o SyncOperation) String() string { return string(o) }
 
 func (o SyncOperation) IsValid() bool {
 	switch o {
-	case SyncOperationCreate, SyncOperationUpdate, SyncOperationVoid:
+	case SyncOperationCreate, SyncOperationUpdate, SyncOperationVoid, SyncOperationRecreate:
 		return true
 	default:
 		return false
@@ -161,7 +166,12 @@ func (o SyncOperation) IsValid() bool {
 }
 
 func AllSyncOperations() []SyncOperation {
-	return []SyncOperation{SyncOperationCreate, SyncOperationUpdate, SyncOperationVoid}
+	return []SyncOperation{
+		SyncOperationCreate,
+		SyncOperationUpdate,
+		SyncOperationVoid,
+		SyncOperationRecreate,
+	}
 }
 
 type SyncSourceEvent string
@@ -188,6 +198,7 @@ const (
 	SyncSourceDependencyOf            = SyncSourceEvent("DependencyOf")
 	SyncSourceSafetyNet               = SyncSourceEvent("SafetyNet")
 	SyncSourceBackfill                = SyncSourceEvent("Backfill")
+	SyncSourceDriftResolved           = SyncSourceEvent("DriftResolved")
 )
 
 func (e SyncSourceEvent) String() string { return string(e) }
@@ -214,7 +225,8 @@ func (e SyncSourceEvent) IsValid() bool {
 		SyncSourceDriverUpdated,
 		SyncSourceDependencyOf,
 		SyncSourceSafetyNet,
-		SyncSourceBackfill:
+		SyncSourceBackfill,
+		SyncSourceDriftResolved:
 		return true
 	default:
 		return false
@@ -244,6 +256,7 @@ func AllSyncSourceEvents() []SyncSourceEvent {
 		SyncSourceDependencyOf,
 		SyncSourceSafetyNet,
 		SyncSourceBackfill,
+		SyncSourceDriftResolved,
 	}
 }
 
@@ -280,8 +293,12 @@ func (s SyncStatus) IsValid() bool {
 	}
 }
 
+func FinalSyncStatuses() []SyncStatus {
+	return []SyncStatus{SyncStatusSynced, SyncStatusSkipped, SyncStatusSuperseded}
+}
+
 func (s SyncStatus) IsFinal() bool {
-	return s == SyncStatusSynced || s == SyncStatusSkipped || s == SyncStatusSuperseded
+	return slices.Contains(FinalSyncStatuses(), s)
 }
 
 func (s SyncStatus) NeedsAttention() bool {

@@ -24,6 +24,11 @@ fragment PendingProposalFields on AgentProposal {
     maximum
     maxLength
     readOnly
+    resource
+    choices {
+      id
+      label
+    }
   }
   modifications
   evidence {

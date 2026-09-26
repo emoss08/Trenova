@@ -203,6 +203,7 @@ CREATE TABLE IF NOT EXISTS "capture_batches"(
     "sealed_at" bigint,
     "processed_at" bigint,
     "retain_until" bigint NOT NULL,
+    "retention_reminded_at" bigint,
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
@@ -232,6 +233,11 @@ CREATE INDEX IF NOT EXISTS "idx_capture_batches_user" ON "capture_batches"("orga
 -- Every batch leaves storage once its retention passes, filed or not: a filed
 -- document has its own copy, and the pages behind it are only a working set.
 CREATE INDEX IF NOT EXISTS "idx_capture_batches_retention" ON "capture_batches"("retain_until") WHERE "status" NOT IN ('Receiving', 'Sealed', 'Processing');
+
+--bun:split
+-- A stack still waiting on a person is its owner's to file; they are told a
+-- week before its pages go, once.
+CREATE INDEX IF NOT EXISTS "idx_capture_batches_retention_reminder" ON "capture_batches"("retain_until") WHERE "retention_reminded_at" IS NULL AND "status" IN ('Ready', 'PartiallyFiled');
 
 --bun:split
 CREATE TABLE IF NOT EXISTS "capture_pages"(

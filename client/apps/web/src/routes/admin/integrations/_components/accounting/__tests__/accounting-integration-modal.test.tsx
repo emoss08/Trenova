@@ -110,6 +110,9 @@ const connected: AccountingConnection = {
   autoSync: true,
   driverSettlementsEnabledAt: null,
   syncsDriverSettlements: false,
+  inboundPaymentPolicy: "Propose",
+  changesReadAt: null,
+  changesErrorMessage: "",
   pausedAt: null,
   pausedBy: null,
   pausedReason: "",
@@ -851,9 +854,39 @@ describe("QuickBooksIntegrationModal", () => {
         integrationType: "QuickBooksOnline",
         autoSync: true,
         driverSettlements: true,
+        inboundPayments: "Propose",
       }),
     );
     await waitFor(() => expect(screen.getByRole("button", { name: "Save" })).toBeDisabled());
+  });
+
+  it("chooses what happens to payments recorded in the books", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
+    mocks.updateAccountingSyncSettings.mockResolvedValue({
+      ...connected,
+      inboundPaymentPolicy: "Apply",
+    });
+
+    renderModal();
+    expect(await screen.findByText("Payments recorded in QuickBooks Online")).toBeInTheDocument();
+    const policy = screen.getByRole("button", { name: "Wait for someone to apply them" });
+    await userEvent.click(policy);
+    await userEvent.click(await screen.findByRole("option", { name: "Apply them automatically" }));
+    expect(
+      screen.getByText(
+        "Payments that match open invoices and settlements are applied without anyone looking at them. The rest still wait for a person.",
+      ),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(mocks.updateAccountingSyncSettings).toHaveBeenCalledWith({
+        integrationType: "QuickBooksOnline",
+        autoSync: true,
+        driverSettlements: false,
+        inboundPayments: "Apply",
+      }),
+    );
   });
 
   it("puts the sync settings back when the change is cancelled", async () => {

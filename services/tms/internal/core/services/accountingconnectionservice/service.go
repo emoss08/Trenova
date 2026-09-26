@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -58,6 +59,7 @@ type Params struct {
 	Watchtower   services.WatchtowerProjector          `optional:"true"`
 	Publisher    services.AgentEventPublisher          `optional:"true"`
 	Refresher    services.AccountingReferenceRefresher `optional:"true"`
+	Poller       services.AccountingChangePoller       `optional:"true"`
 }
 
 type Service struct {
@@ -74,6 +76,7 @@ type Service struct {
 	watchtower   services.WatchtowerProjector
 	publisher    services.AgentEventPublisher
 	refresher    services.AccountingReferenceRefresher
+	poller       services.AccountingChangePoller
 }
 
 var _ services.AccountingConnectionService = (*Service)(nil)
@@ -94,6 +97,7 @@ func New(p Params) *Service {
 		watchtower:   p.Watchtower,
 		publisher:    p.Publisher,
 		refresher:    p.Refresher,
+		poller:       p.Poller,
 	}
 }
 
@@ -900,7 +904,28 @@ func (s *Service) ReceiveWebhook(
 		return err
 	}
 
+	s.pollChanged(ctx, holders, verified)
 	return nil
+}
+
+func (s *Service) pollChanged(
+	ctx context.Context,
+	holders []*accountingsync.AccountingConnection,
+	verified []string,
+) {
+	if s.poller == nil {
+		return
+	}
+	for _, holder := range holders {
+		if !slices.Contains(verified, holder.ExternalRealmID) || !holder.ReadsChanges() {
+			continue
+		}
+		tenant := pagination.TenantInfo{OrgID: holder.OrganizationID, BuID: holder.BusinessUnitID}
+		if err := s.poller.PollNow(ctx, tenant, holder.ID); err != nil {
+			s.l.Warn("failed to wake the change reader after a webhook",
+				zap.String("connectionId", holder.ID.String()), zap.Error(err))
+		}
+	}
 }
 
 func (s *Service) verifiedRealms(

@@ -38,6 +38,39 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
+			ID:            "accounting-changes-read",
+			Description:   "Read what changed in every syncing accounting system and bring payments in",
+			Spec:          schedule.Cron("*/5 * * * *"),
+			Workflow:      KickAccountingChangesWorkflow,
+			TaskQueue:     temporaltype.IntegrationTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "accounting-changes-read",
+			},
+		},
+		{
+			ID:            "accounting-drift-reconcile",
+			Description:   "Compare what every syncing accounting system holds with what Trenova sent it",
+			Spec:          schedule.Cron("13 6 * * *"),
+			Workflow:      KickAccountingDriftWorkflow,
+			TaskQueue:     temporaltype.IntegrationTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "accounting-drift-reconcile",
+			},
+		},
+		{
+			ID:            "accounting-drift-weekly",
+			Description:   "Raise the weekly books reconciliation for every syncing accounting connection",
+			Spec:          schedule.Cron("37 7 * * 1"),
+			Workflow:      AnnounceAccountingReconciliationDueWorkflow,
+			TaskQueue:     temporaltype.IntegrationTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "accounting-drift-weekly",
+			},
+		},
+		{
 			ID:            "accounting-sync-dispatch",
 			Description:   "Wake the sender for every accounting connection with documents due",
 			Spec:          schedule.Cron("* * * * *"),

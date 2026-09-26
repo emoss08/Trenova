@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,6 +79,17 @@ type Params struct {
 	Analyzer services.CaptureAnalyzer `optional:"true"`
 	// Shipments resolves a reference number the analyzer found to a shipment.
 	Shipments repositories.InboundShipmentFinder `optional:"true"`
+	// Notifications tells an owner their unfiled pages are about to go.
+	// Without it the pages are still kept and deleted on time; nobody is told.
+	Notifications *notificationservice.Service `optional:"true"`
+}
+
+// notifier is the one thing capture asks of notifications.
+type notifier interface {
+	Create(
+		ctx context.Context,
+		entity *notification.Notification,
+	) (*notification.Notification, error)
 }
 
 type Service struct {
@@ -101,6 +114,7 @@ type Service struct {
 	assembler     services.CapturePDFAssembler
 	inspector     services.CapturePageInspector
 	qrCodes       services.CaptureQREncoder
+	notifications notifier
 	workflows     services.WorkflowStarter
 	realtime      services.RealtimeService
 	audit         services.AuditService
@@ -113,6 +127,10 @@ func New(p Params) *Service {
 	var cipher envelopeCipher
 	if p.Encryption != nil {
 		cipher = p.Encryption
+	}
+	var notifications notifier
+	if p.Notifications != nil {
+		notifications = p.Notifications
 	}
 
 	return &Service{
@@ -142,6 +160,7 @@ func New(p Params) *Service {
 		audit:         p.Audit,
 		analyzer:      p.Analyzer,
 		shipments:     p.Shipments,
+		notifications: notifications,
 	}
 }
 
