@@ -22,9 +22,6 @@ import (
 const (
 	paramEDITransferID      = "transferId"
 	maxTenderDeclineChars   = 500
-	transferVerbRejected    = "rejected"
-	transferVerbCanceled    = "canceled"
-	transferVerbExpired     = "expired"
 	ediTransferIDGuidance   = "The load tender transfer, from list_edi_transfers or get_edi_transfer. Never guess one."
 	ediDecisionRationaleEnd = " A person always decides."
 )
@@ -296,7 +293,7 @@ func planDeclineTender(
 ) (*tenderOutcome, error) {
 	return tenderSettlement{
 		direction: ediservice.TransferDirectionInbound,
-		verb:      transferVerbRejected,
+		verb:      ediservice.TransferVerbRejected,
 		mark: func(transfer *edi.EDITransfer) {
 			ediservice.MarkTransferRejected(
 				transfer, call.reason, actorUserID(call.actor), timeutils.NowUnix(),
@@ -312,7 +309,7 @@ func planCancelTender(
 ) (*tenderOutcome, error) {
 	return tenderSettlement{
 		direction: ediservice.TransferDirectionOutbound,
-		verb:      transferVerbCanceled,
+		verb:      ediservice.TransferVerbCanceled,
 		mark: func(transfer *edi.EDITransfer) {
 			ediservice.MarkTransferCanceled(transfer, actorUserID(call.actor), timeutils.NowUnix())
 		},
@@ -326,7 +323,7 @@ func planExpireTender(
 ) (*tenderOutcome, error) {
 	return tenderSettlement{
 		direction: ediservice.TransferDirectionAny,
-		verb:      transferVerbExpired,
+		verb:      ediservice.TransferVerbExpired,
 		mark: func(transfer *edi.EDITransfer) {
 			ediservice.MarkTransferExpired(transfer, timeutils.NowUnix())
 		},

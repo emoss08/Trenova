@@ -217,8 +217,12 @@ func (s *Service) reviewTenderChange(
 			"EDI tender change review request is required",
 		)
 	}
-	if err := RequireReviewer(actor, "userId", "Reviewing user is required"); err != nil {
-		return nil, err
+	if actor == nil || actor.UserID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"userId",
+			errortypes.ErrRequired,
+			"Reviewing user is required",
+		)
 	}
 
 	change, err := s.tenderChangeRepo.GetTenderChangeByID(

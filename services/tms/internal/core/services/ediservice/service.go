@@ -680,8 +680,12 @@ func (s *Service) ApproveTransfer(
 	req *ApproveTransferRequest,
 	actor *services.RequestActor,
 ) (*edi.EDITransfer, error) {
-	if err := RequireReviewer(actor, "approver", "Approving user is required"); err != nil {
-		return nil, err
+	if actor == nil || actor.UserID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"approver",
+			errortypes.ErrRequired,
+			"Approving user is required",
+		)
 	}
 
 	var original *edi.EDITransfer
@@ -699,7 +703,7 @@ func (s *Service) ApproveTransfer(
 		if err != nil {
 			return err
 		}
-		if err = RequireActionableTransfer(transfer, "approved"); err != nil {
+		if err = RequireActionableTransfer(transfer, TransferVerbApproved); err != nil {
 			return err
 		}
 		originalCopy := *transfer
@@ -1106,7 +1110,7 @@ func (s *Service) RejectTransfer(
 		if err != nil {
 			return err
 		}
-		if err = RequireActionableTransfer(transfer, "rejected"); err != nil {
+		if err = RequireActionableTransfer(transfer, TransferVerbRejected); err != nil {
 			return err
 		}
 
@@ -1175,7 +1179,7 @@ func (s *Service) CancelTransfer(
 		if err != nil {
 			return err
 		}
-		if err = RequireActionableTransfer(transfer, "canceled"); err != nil {
+		if err = RequireActionableTransfer(transfer, TransferVerbCanceled); err != nil {
 			return err
 		}
 
@@ -1237,7 +1241,7 @@ func (s *Service) ExpireTransfer(
 		if err != nil {
 			return err
 		}
-		if err = RequireActionableTransfer(transfer, "expired"); err != nil {
+		if err = RequireActionableTransfer(transfer, TransferVerbExpired); err != nil {
 			return err
 		}
 
@@ -1332,8 +1336,12 @@ func (s *Service) reviewTransferChange(
 	actor *services.RequestActor,
 	status edi.TransferChangeStatus,
 ) (*edi.TransferChange, error) {
-	if err := RequireReviewer(actor, "userId", "Reviewing user is required"); err != nil {
-		return nil, err
+	if actor == nil || actor.UserID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"userId",
+			errortypes.ErrRequired,
+			"Reviewing user is required",
+		)
 	}
 
 	change, err := s.transferChangeRepo.GetTransferChangeByID(

@@ -18,6 +18,10 @@ const (
 	TransferDirectionInbound  = "inbound"
 	TransferDirectionOutbound = "outbound"
 	TransferDirectionAny      = ""
+	TransferVerbApproved      = "approved"
+	TransferVerbRejected      = "rejected"
+	TransferVerbCanceled      = "canceled"
+	TransferVerbExpired       = "expired"
 )
 
 type TransferApprovalPlan struct {
@@ -127,11 +131,32 @@ func RequireActionableTransfer(transfer *edi.EDITransfer, verb string) error {
 		return nil
 	}
 
-	return errortypes.NewValidationError(
-		"status",
-		errortypes.ErrInvalidOperation,
-		"EDI transfer cannot be "+verb+" while finalized or processing",
-	)
+	switch verb {
+	case TransferVerbApproved:
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"EDI transfer cannot be approved while finalized or processing",
+		)
+	case TransferVerbRejected:
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"EDI transfer cannot be rejected while finalized or processing",
+		)
+	case TransferVerbCanceled:
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"EDI transfer cannot be canceled while finalized or processing",
+		)
+	default:
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"EDI transfer cannot be expired while finalized or processing",
+		)
+	}
 }
 
 func TransferRejectionReason(raw string) (string, error) {
@@ -145,14 +170,6 @@ func TransferRejectionReason(raw string) (string, error) {
 	}
 
 	return reason, nil
-}
-
-func RequireReviewer(actor *services.RequestActor, field, message string) error {
-	if actor != nil && actor.UserID.IsNotNil() {
-		return nil
-	}
-
-	return errortypes.NewValidationError(field, errortypes.ErrRequired, message)
 }
 
 func CheckTenderChangeReview(change *edi.TenderChange, tenantInfo pagination.TenantInfo) error {
@@ -200,7 +217,7 @@ func (s *Service) PlanApproveTransfer(
 	plan := &TransferApprovalPlan{
 		Transfer:      transfer,
 		SendsResponse: transfer.InboundMessageID.IsNotNil(),
-		Refusal:       RequireActionableTransfer(transfer, "approved"),
+		Refusal:       RequireActionableTransfer(transfer, TransferVerbApproved),
 	}
 	if plan.Refusal == nil {
 		if err = s.planApproval(ctx, req, actor, plan); err != nil {
