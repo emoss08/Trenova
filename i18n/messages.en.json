@@ -20032,6 +20032,15 @@
       "apps/web/components"
     ]
   },
+  "Ask the agent to fix it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ask the assistant": {
     "sites": 3,
     "scope": [
@@ -32256,6 +32265,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Change {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Change, retire or restore a memory": {
@@ -51212,6 +51230,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Delete rule sets and fixtures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Delete scenario": {
@@ -121808,6 +121835,15 @@
       "service/proposalpreviewservice"
     ]
   },
+  "Part of {0}; the rest stays as proposed unless you change it below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Part size cannot be negative": {
     "sites": 1,
     "scope": [
@@ -144767,6 +144803,15 @@
       "routes/agent-control"
     ]
   },
+  "Retire a rate agreement so it no longer prices shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Retire a template version": {
     "sites": 1,
     "scope": [
@@ -155645,6 +155690,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Send a draft rate agreement for approval": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Send a message to a driver": {
@@ -176884,6 +176938,24 @@
       "routes/admin"
     ]
   },
+  "The plan \"{0}\" would not go through as it stands. Fix it and propose it again; ask me for anything you need.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The plan \"{0}\" would not go through as it stands: {1}. Fix it and propose it again; ask me for anything you need.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The plan behind this is no longer in the conversation.": {
     "sites": 1,
     "scope": [
@@ -177152,6 +177224,24 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "The proposal to {0} would not go through as it stands. Fix it and propose it again; ask me for anything you need.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The proposal to {0} would not go through as it stands: {1}. Fix it and propose it again; ask me for anything you need.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The provider data is wrong. A note explaining why is required.": {
@@ -184399,6 +184489,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "This would not go through as it stands": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This would not go through as it stands.": {
