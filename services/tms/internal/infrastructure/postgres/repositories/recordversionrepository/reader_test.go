@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -34,7 +35,7 @@ func TestEveryResourceAToolTargetsHasAVersionLookup(t *testing.T) {
 	require.NoError(t, err)
 
 	target := regexp.MustCompile(
-		`(?:targetOf\([^)]*|ToolTarget\{Resource:\s*)permission\.(Resource\w+)`,
+		`(?:targetOf\([^)]*|ToolTarget\{Resource:\s*)(?:permission|serviceports)\.((?:Resource|Record)\w+)`,
 	)
 	resources := resourceNames(t)
 
@@ -84,6 +85,8 @@ func resourceNames(t *testing.T) map[string]permission.Resource {
 		out[match[1]] = permission.Resource(match[2])
 	}
 	require.NotEmpty(t, out)
+	out["RecordInvoiceAdjustment"] = services.RecordInvoiceAdjustment
+	out["RecordCreditMemoApplication"] = services.RecordCreditMemoApplication
 
 	return out
 }

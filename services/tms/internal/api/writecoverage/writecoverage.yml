@@ -492,15 +492,15 @@ writes:
 
   # customerpayment
   "mutation applyCreditMemo":
-    pending: "Apply credit memo."
+    tools: [apply_credit_memo]
   "mutation applyUnappliedCustomerPayment":
-    pending: "Apply unapplied customer payment."
+    tools: [apply_customer_payment]
   "mutation postAndApplyCustomerPayment":
     tools: [post_customer_payment]
   "mutation reverseCustomerPayment":
-    pending: "Reverse customer payment."
+    tools: [reverse_customer_payment]
   "mutation unapplyCreditMemoApplication":
-    pending: "Unapply credit memo application."
+    tools: [unapply_credit_memo]
 
   # customfield
   "DELETE /api/v1/custom-fields/definitions/:definitionID/":
@@ -1514,9 +1514,9 @@ writes:
 
   # invoice
   "PATCH /api/v1/billing/invoices/:invoiceID/":
-    pending: "Update draft (invoice)."
+    tools: [update_invoice_draft]
   "POST /api/v1/billing/invoices/:invoiceID/generate-pdf/":
-    pending: "Generate pdf (invoice)."
+    tools: [generate_invoice_pdf]
   "POST /api/v1/billing/invoices/:invoiceID/post/":
     tools: [post_invoice]
   "POST /api/v1/billing/invoices/:invoiceID/preview/":
@@ -1525,44 +1525,44 @@ writes:
   "POST /api/v1/billing/invoices/:invoiceID/send/":
     tools: [send_invoice]
   "mutation createInvoiceFromOrder":
-    pending: "Create invoice from order."
+    tools: [create_invoice]
   "mutation createInvoiceFromShipments":
-    pending: "Create invoice from shipments."
+    tools: [create_invoice]
   "mutation createInvoicesFromOrder":
-    pending: "Create invoices from order."
+    tools: [create_invoice]
   "mutation createInvoicesFromShipments":
-    pending: "Create invoices from shipments."
+    tools: [create_invoice]
   "mutation createMemo":
-    pending: "Create memo."
+    tools: [create_invoice_memo]
   "mutation sendInvoiceEdi":
-    pending: "Send invoice EDI."
+    tools: [send_invoice_edi]
   "mutation voidInvoice":
-    pending: "Void invoice."
+    tools: [void_invoice]
 
   # invoiceadjustment
   "PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/":
-    pending: "Update draft (invoice adjustment)."
+    tools: [save_invoice_adjustment_draft]
   "POST /api/v1/billing/invoice-adjustments/bulk-preview/":
     exempt: read-only
     reason: "Previews an invoice adjustment and saves nothing."
   "POST /api/v1/billing/invoice-adjustments/bulk-submit/":
-    pending: "Bulk submit (invoice adjustment)."
+    tools: [submit_invoice_adjustment]
   "POST /api/v1/billing/invoice-adjustments/drafts/":
-    pending: "Create draft (invoice adjustment)."
+    tools: [save_invoice_adjustment_draft]
   "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/":
     exempt: read-only
     reason: "Previews an invoice adjustment and saves nothing."
   "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/":
-    pending: "Submit draft (invoice adjustment)."
+    tools: [submit_invoice_adjustment]
   "POST /api/v1/billing/invoice-adjustments/preview/":
     exempt: read-only
     reason: "Previews an invoice adjustment and saves nothing."
   "POST /api/v1/billing/invoice-adjustments/submit/":
-    pending: "Submit an invoice adjustment."
+    tools: [submit_invoice_adjustment]
   "mutation approveInvoiceAdjustment":
-    pending: "Approve invoice adjustment."
+    tools: [approve_invoice_adjustment]
   "mutation rejectInvoiceAdjustment":
-    pending: "Reject invoice adjustment."
+    tools: [reject_invoice_adjustment]
 
   # invoiceadjustmentcontrol
   "PUT /api/v1/invoice-adjustment-controls/":
@@ -1571,27 +1571,27 @@ writes:
 
   # invoicedispute
   "mutation openInvoiceDispute":
-    pending: "Open invoice dispute."
+    tools: [open_invoice_dispute]
   "mutation resolveInvoiceDispute":
-    pending: "Resolve invoice dispute."
+    tools: [resolve_invoice_dispute]
   "mutation withdrawInvoiceDispute":
-    pending: "Withdraw invoice dispute."
+    tools: [withdraw_invoice_dispute]
 
   # invoicerun
   "PATCH /api/v1/billing/invoice-runs/:runID/membership/":
-    pending: "Adjust membership (invoice run)."
+    tools: [adjust_invoice_run_membership]
   "POST /api/v1/billing/invoice-runs/:runID/cancel/":
-    pending: "Cancel an invoice run."
+    tools: [cancel_invoice_run]
   "POST /api/v1/billing/invoice-runs/:runID/commit/":
-    pending: "Commit an invoice run."
+    tools: [commit_invoice_run]
   "POST /api/v1/billing/invoice-runs/preview/":
-    pending: "Create an invoice run in preview for review before committing it."
+    tools: [build_invoice_run]
   "POST /api/v1/billing/statements/:customerID/bill/":
-    pending: "Bill statement (statement)."
+    tools: [bill_statement_now]
 
   # invoiceshare
   "POST /api/v1/billing/invoices/:invoiceID/shares/":
-    pending: "Share an invoice."
+    tools: [share_invoice]
 
   # journalreversal
   "POST /api/v1/accounting/journal-reversals/":
@@ -1627,7 +1627,7 @@ writes:
 
   # latecharge
   "mutation assessLateCharges":
-    pending: "Assess late charges."
+    tools: [assess_late_charges]
 
   # location
   "PATCH /api/v1/locations/:locationID/":

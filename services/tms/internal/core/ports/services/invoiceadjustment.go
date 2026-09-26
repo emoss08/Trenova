@@ -64,6 +64,8 @@ type InvoiceAdjustmentPreviewLine struct {
 
 type InvoiceAdjustmentPreview struct {
 	InvoiceID                        pulid.ID                         `json:"invoiceId"`
+	InvoiceNumber                    string                           `json:"invoiceNumber"`
+	CurrencyCode                     string                           `json:"currencyCode"`
 	CorrectionGroupID                pulid.ID                         `json:"correctionGroupId"`
 	Kind                             invoiceadjustment.Kind           `json:"kind"`
 	RebillStrategy                   invoiceadjustment.RebillStrategy `json:"rebillStrategy"`
@@ -79,6 +81,36 @@ type InvoiceAdjustmentPreview struct {
 	Warnings                         []string                         `json:"warnings"`
 	Errors                           map[string][]string              `json:"errors"`
 	Lines                            []*InvoiceAdjustmentPreviewLine  `json:"lines"`
+}
+
+type SaveInvoiceAdjustmentDraftRequest struct {
+	AdjustmentID          pulid.ID                         `json:"adjustmentId"`
+	InvoiceID             pulid.ID                         `json:"invoiceId"`
+	Kind                  invoiceadjustment.Kind           `json:"kind"`
+	RebillStrategy        invoiceadjustment.RebillStrategy `json:"rebillStrategy"`
+	Reason                string                           `json:"reason"`
+	ReferencedDocumentIDs []pulid.ID                       `json:"referencedDocumentIds"`
+	Lines                 []*InvoiceAdjustmentLineInput    `json:"lines"`
+	TenantInfo            pagination.TenantInfo            `json:"tenantInfo"`
+}
+
+type InvoiceAdjustmentDraftPreview struct {
+	Before  *invoiceadjustment.InvoiceAdjustment
+	After   *invoiceadjustment.InvoiceAdjustment
+	Invoice *invoice.Invoice
+	Figures *InvoiceAdjustmentPreview
+}
+
+type InvoiceAdjustmentDecisionRequest struct {
+	AdjustmentID pulid.ID
+	Approve      bool
+	TenantInfo   pagination.TenantInfo
+}
+
+type InvoiceAdjustmentDecisionPreview struct {
+	Adjustment *invoiceadjustment.InvoiceAdjustment
+	Invoice    *invoice.Invoice
+	Figures    *InvoiceAdjustmentPreview
 }
 
 type ApproveInvoiceAdjustmentRequest struct {
@@ -148,6 +180,20 @@ type InvoiceAdjustmentService interface {
 		req *GetInvoiceAdjustmentDetailRequest,
 		actor *RequestActor,
 	) (*invoiceadjustment.InvoiceAdjustment, error)
+	SaveDraft(
+		ctx context.Context,
+		req *SaveInvoiceAdjustmentDraftRequest,
+		actor *RequestActor,
+	) (*invoiceadjustment.InvoiceAdjustment, error)
+	PreviewSaveDraft(
+		ctx context.Context,
+		req *SaveInvoiceAdjustmentDraftRequest,
+		actor *RequestActor,
+	) (*InvoiceAdjustmentDraftPreview, error)
+	PreviewDecision(
+		ctx context.Context,
+		req *InvoiceAdjustmentDecisionRequest,
+	) (*InvoiceAdjustmentDecisionPreview, error)
 	Preview(
 		ctx context.Context,
 		req *InvoiceAdjustmentRequest,

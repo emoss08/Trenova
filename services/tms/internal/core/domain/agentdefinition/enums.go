@@ -236,8 +236,23 @@ func (t Template) StarterInstructions() string {
 			"the decision it needs: approve it when it is clean, hold it while something is on its " +
 			"way, move it into exception when the bill is wrong, or send it back to operations when " +
 			"the shipment is. Approving makes the draft invoice; propose post_invoice for it, then " +
-			"send_invoice when the customer is not sent invoices automatically. Approving, " +
-			"canceling, posting and sending are always a person's decision: you propose them."
+			"send_invoice when the customer is not sent invoices automatically. Freight billed " +
+			"outside the queue is drafted with create_invoice. Change what a draft says or where it " +
+			"goes with update_invoice_draft, render it with generate_invoice_pdf, and send a posted " +
+			"invoice by EDI with send_invoice_edi when the customer takes 210s. A posted invoice is " +
+			"never edited: correct it with an invoice adjustment, saving a draft with " +
+			"save_invoice_adjustment_draft and submitting it with submit_invoice_adjustment, naming " +
+			"each line by the id get_invoice gives, or void it with void_invoice when it should never " +
+			"have been billed. A credit or charge with no shipment behind it is create_invoice_memo; " +
+			"late charges are assess_late_charges. Customers billed on statements are worked from " +
+			"list_open_statements: build_invoice_run, review it with get_invoice_run, then " +
+			"commit_invoice_run, or bill_statement_now for one customer who must be billed early. " +
+			"Recorded cash is applied with apply_customer_payment and posted credit with " +
+			"apply_credit_memo against what list_ar_open_items shows open. A customer's objection " +
+			"is open_invoice_dispute, closed with resolve_invoice_dispute or " +
+			"withdraw_invoice_dispute. Approving, canceling, posting, sending, voiding and " +
+			"anything that moves money are always a person's decision: you propose them with the " +
+			"figures."
 	case TemplateComplianceAssistant:
 		return "You support safety and compliance. Focus on driver qualification: medical cards, " +
 			"licence class and endorsements, hours of service, and expiring documents. When something " +
@@ -699,6 +714,39 @@ func (t Template) StarterTools() []string {
 			"add_shipment_comment",
 			"list_insights",
 			"get_insight",
+			"create_invoice",
+			"update_invoice_draft",
+			"generate_invoice_pdf",
+			"void_invoice",
+			"create_invoice_memo",
+			"send_invoice_edi",
+			"search_documents",
+			"list_invoice_adjustments",
+			"get_invoice_adjustment",
+			"save_invoice_adjustment_draft",
+			"submit_invoice_adjustment",
+			"approve_invoice_adjustment",
+			"reject_invoice_adjustment",
+			"list_open_statements",
+			"list_invoice_runs",
+			"get_invoice_run",
+			"build_invoice_run",
+			"adjust_invoice_run_membership",
+			"commit_invoice_run",
+			"cancel_invoice_run",
+			"bill_statement_now",
+			"list_ar_open_items",
+			"list_customer_payments",
+			"apply_customer_payment",
+			"reverse_customer_payment",
+			"list_credit_memo_applications",
+			"apply_credit_memo",
+			"unapply_credit_memo",
+			"assess_late_charges",
+			"list_invoice_disputes",
+			"open_invoice_dispute",
+			"resolve_invoice_dispute",
+			"withdraw_invoice_dispute",
 		}
 	case TemplateComplianceAssistant:
 		return []string{

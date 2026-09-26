@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -363,46 +362,16 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 	return created, nil
 }
 
-func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
+func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 	ctx context.Context,
 	req *serviceports.ApplyCustomerPaymentRequest,
 	actor *serviceports.RequestActor,
 ) (*customerpayment.Payment, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError(
-			"Customer payment application requires an authenticated user",
-		)
-	}
-	payment, err := s.repo.GetByID(
-		ctx,
-		repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo},
-	)
+	plan, err := s.planApplyUnapplied(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	control, err := s.accountingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
-	if err != nil {
-		return nil, err
-	}
-	applications := mapApplications(req.Applications)
-	invoices, period, me := s.validator.ValidateApplyUnapplied(
-		ctx,
-		payment,
-		req.AccountingDate,
-		applications,
-		repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
-		control,
-	)
-	if me != nil {
-		return nil, me
-	}
+	payment, control, applications, invoices, period := plan.payment, plan.control, plan.applications, plan.invoices, plan.period
 	entryNumber, err := s.generator.GenerateJournalEntryNumber(
 		ctx,
 		payment.OrganizationID,
@@ -435,9 +404,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 		payment.Applications = append(payment.Applications, applications...)
 		payment.UpdatedByID = actor.UserID
 		for idx, inv := range invoices {
-			inv.ApplyPaymentMinor(
-				applications[idx].AppliedAmountMinor + applications[idx].ShortPayAmountMinor,
-			)
+			applyPostedApplication(inv, applications[idx])
 			updatedInvoice, txErr := s.invoiceRepo.Update(txCtx, inv)
 			if txErr != nil {
 				return txErr
@@ -450,81 +417,12 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 		}
 		payment = updatedPayment
 
-		entryDescription := fmt.Sprintf("Customer payment application %s", payment.DocumentLabel())
-		creditAccountID := control.DefaultARAccountID
-		if control.AccountingBasis == tenant.AccountingBasisCash ||
-			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
-			creditAccountID = control.DefaultRevenueAccountID
-			entryDescription = fmt.Sprintf(
-				"Customer payment revenue recognition %s",
-				payment.DocumentLabel(),
-			)
-		}
-		lines := make([]repositories.JournalPostingLine, 0, len(applications)+1)
-		var totalApplied int64
-		lineNumber := int16(1)
-		lines = append(
-			lines,
-			repositories.JournalPostingLine{
-				ID:          pulid.MustNew("jel_"),
-				GLAccountID: control.DefaultUnappliedCashAccountID,
-				LineNumber:  lineNumber,
-				Description: entryDescription,
-				DebitAmount: payment.AppliedAmountMinor - originalPayment.AppliedAmountMinor,
-				NetAmount:   payment.AppliedAmountMinor - originalPayment.AppliedAmountMinor,
-				CustomerID:  payment.CustomerID,
-			},
+		journal := applicationJournal(
+			control,
+			payment,
+			payment.AppliedAmountMinor-originalPayment.AppliedAmountMinor,
+			applications,
 		)
-		lineNumber++
-		for _, app := range applications {
-			if app == nil {
-				continue
-			}
-			totalApplied += app.AppliedAmountMinor
-			if app.AppliedAmountMinor > 0 {
-				lines = append(
-					lines,
-					repositories.JournalPostingLine{
-						ID:           pulid.MustNew("jel_"),
-						GLAccountID:  creditAccountID,
-						LineNumber:   lineNumber,
-						Description:  entryDescription,
-						CreditAmount: app.AppliedAmountMinor,
-						NetAmount:    -app.AppliedAmountMinor,
-						CustomerID:   payment.CustomerID,
-					},
-				)
-				lineNumber++
-			}
-			if app.ShortPayAmountMinor > 0 {
-				lines = append(
-					lines,
-					repositories.JournalPostingLine{
-						ID:           pulid.MustNew("jel_"),
-						GLAccountID:  control.DefaultARAccountID,
-						LineNumber:   lineNumber,
-						Description:  entryDescription,
-						CreditAmount: app.ShortPayAmountMinor,
-						NetAmount:    -app.ShortPayAmountMinor,
-						CustomerID:   payment.CustomerID,
-					},
-				)
-				lineNumber++
-				lines = append(
-					lines,
-					repositories.JournalPostingLine{
-						ID:          pulid.MustNew("jel_"),
-						GLAccountID: control.DefaultWriteOffAccountID,
-						LineNumber:  lineNumber,
-						Description: entryDescription,
-						DebitAmount: app.ShortPayAmountMinor,
-						NetAmount:   app.ShortPayAmountMinor,
-						CustomerID:  payment.CustomerID,
-					},
-				)
-				lineNumber++
-			}
-		}
 		if txErr = s.journalRepo.CreatePosting(
 			txCtx,
 			repositories.CreateJournalPostingParams{
@@ -534,7 +432,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 				BatchNumber:          batchNumber,
 				BatchType:            "System",
 				BatchStatus:          batchStatus,
-				BatchDescription:     entryDescription,
+				BatchDescription:     journal.description,
 				FiscalYearID:         period.FiscalYearID,
 				FiscalPeriodID:       period.ID,
 				AccountingDate:       req.AccountingDate,
@@ -549,9 +447,9 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 				ReferenceNumber:      payment.ReferenceNumber,
 				ReferenceType:        "CustomerPaymentApplied",
 				ReferenceID:          payment.ID.String(),
-				EntryDescription:     entryDescription,
-				TotalDebit:           totalApplied,
-				TotalCredit:          totalApplied,
+				EntryDescription:     journal.description,
+				TotalDebit:           journal.total,
+				TotalCredit:          journal.total,
 				IsPosted:             postedAt != nil,
 				IsAutoGenerated:      false,
 				RequiresApproval:     requiresApproval,
@@ -568,7 +466,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 					payment.AppliedAmountMinor,
 					10,
 				),
-				Lines: lines,
+				Lines: journal.lines,
 			},
 		); txErr != nil {
 			return txErr
@@ -653,44 +551,16 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 	return payment, nil
 }
 
-func (s *Service) Reverse( //nolint:funlen,gocognit // legacy workflow
+func (s *Service) Reverse( //nolint:funlen // legacy workflow
 	ctx context.Context,
 	req *serviceports.ReverseCustomerPaymentRequest,
 	actor *serviceports.RequestActor,
 ) (*customerpayment.Payment, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError(
-			"Customer payment reversal requires an authenticated user",
-		)
-	}
-	payment, err := s.repo.GetByID(
-		ctx,
-		repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo},
-	)
+	plan, err := s.planReverse(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	control, err := s.accountingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
-	if err != nil {
-		return nil, err
-	}
-	invoices, period, me := s.validator.ValidateReverse(
-		ctx,
-		payment,
-		req.AccountingDate,
-		control,
-		repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
-	)
-	if me != nil {
-		return nil, me
-	}
+	payment, control, invoices, period := plan.payment, plan.control, plan.invoices, plan.period
 	batchNumber, err := s.generator.GenerateJournalBatchNumber(
 		ctx,
 		payment.OrganizationID,
@@ -732,61 +602,7 @@ func (s *Service) Reverse( //nolint:funlen,gocognit // legacy workflow
 			invoices[idx] = updatedInvoice
 		}
 
-		entryDescription := fmt.Sprintf("Customer payment reversal %s", payment.DocumentLabel())
-		debitAccountID := control.DefaultARAccountID
-		if control.AccountingBasis == tenant.AccountingBasisCash ||
-			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
-			debitAccountID = control.DefaultRevenueAccountID
-			entryDescription = fmt.Sprintf(
-				"Customer cash receipt reversal %s",
-				payment.DocumentLabel(),
-			)
-		}
-		lines := make([]repositories.JournalPostingLine, 0, 3)
-		lineNumber := int16(1)
-		if payment.AppliedAmountMinor > 0 {
-			lines = append(
-				lines,
-				repositories.JournalPostingLine{
-					ID:          pulid.MustNew("jel_"),
-					GLAccountID: debitAccountID,
-					LineNumber:  lineNumber,
-					Description: entryDescription,
-					DebitAmount: payment.AppliedAmountMinor,
-					NetAmount:   payment.AppliedAmountMinor,
-					CustomerID:  payment.CustomerID,
-				},
-			)
-			lineNumber++
-		}
-		if payment.UnappliedAmountMinor > 0 {
-			lines = append(
-				lines,
-				repositories.JournalPostingLine{
-					ID:          pulid.MustNew("jel_"),
-					GLAccountID: control.DefaultUnappliedCashAccountID,
-					LineNumber:  lineNumber,
-					Description: entryDescription,
-					DebitAmount: payment.UnappliedAmountMinor,
-					NetAmount:   payment.UnappliedAmountMinor,
-					CustomerID:  payment.CustomerID,
-				},
-			)
-			lineNumber++
-		}
-		lines = append(
-			lines,
-			repositories.JournalPostingLine{
-				ID:           pulid.MustNew("jel_"),
-				GLAccountID:  control.DefaultCashAccountID,
-				LineNumber:   lineNumber,
-				Description:  entryDescription,
-				CreditAmount: payment.AmountMinor,
-				NetAmount:    -payment.AmountMinor,
-				CustomerID:   payment.CustomerID,
-			},
-		)
-
+		journal := reversalJournal(control, payment)
 		batchID := pulid.MustNew("jb_")
 		if txErr := s.journalRepo.CreatePosting(
 			txCtx,
@@ -797,7 +613,7 @@ func (s *Service) Reverse( //nolint:funlen,gocognit // legacy workflow
 				BatchNumber:          batchNumber,
 				BatchType:            "Reversal",
 				BatchStatus:          batchStatus,
-				BatchDescription:     entryDescription,
+				BatchDescription:     journal.description,
 				FiscalYearID:         period.FiscalYearID,
 				FiscalPeriodID:       period.ID,
 				AccountingDate:       req.AccountingDate,
@@ -812,9 +628,9 @@ func (s *Service) Reverse( //nolint:funlen,gocognit // legacy workflow
 				ReferenceNumber:      payment.ReferenceNumber,
 				ReferenceType:        tenant.JournalSourceEventCustomerPaymentReversed.String(),
 				ReferenceID:          payment.ID.String(),
-				EntryDescription:     entryDescription,
-				TotalDebit:           payment.AmountMinor,
-				TotalCredit:          payment.AmountMinor,
+				EntryDescription:     journal.description,
+				TotalDebit:           journal.total,
+				TotalCredit:          journal.total,
 				IsPosted:             postedAt != nil,
 				IsAutoGenerated:      false,
 				ReversalDate:         postedAt,
@@ -830,7 +646,7 @@ func (s *Service) Reverse( //nolint:funlen,gocognit // legacy workflow
 				SourceStatus:         entryStatus,
 				SourceDocumentNumber: payment.ReferenceNumber,
 				SourceIdempotencyKey: "customer-payment-reversed:" + payment.ID.String(),
-				Lines:                lines,
+				Lines:                journal.lines,
 			},
 		); txErr != nil {
 			return txErr
@@ -865,13 +681,8 @@ func (s *Service) Reverse( //nolint:funlen,gocognit // legacy workflow
 			}
 		}
 
-		nowCopy := now
-		payment.Status = customerpayment.StatusReversed
+		markReversed(payment, req, actor.UserID, now)
 		payment.ReversalBatchID = batchID
-		payment.ReversedByID = actor.UserID
-		payment.ReversedAt = &nowCopy
-		payment.ReversalReason = req.Reason
-		payment.UpdatedByID = actor.UserID
 		updatedPayment, txErr := s.repo.Update(txCtx, payment)
 		if txErr != nil {
 			return txErr

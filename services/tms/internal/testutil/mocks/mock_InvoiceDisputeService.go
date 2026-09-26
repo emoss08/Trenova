@@ -260,3 +260,225 @@ func (_c *MockInvoiceDisputeService_Withdraw_Call) RunAndReturn(run func(ctx con
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewOpen provides a mock function for the type MockInvoiceDisputeService
+func (_mock *MockInvoiceDisputeService) PreviewOpen(ctx context.Context, req *services.OpenInvoiceDisputeRequest, actor *services.RequestActor) (*services.InvoiceDisputePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewOpen")
+	}
+
+	var r0 *services.InvoiceDisputePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.OpenInvoiceDisputeRequest, *services.RequestActor) (*services.InvoiceDisputePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.OpenInvoiceDisputeRequest, *services.RequestActor) *services.InvoiceDisputePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.InvoiceDisputePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.OpenInvoiceDisputeRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceDisputeService_PreviewOpen_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewOpen'
+type MockInvoiceDisputeService_PreviewOpen_Call struct {
+	*mock.Call
+}
+
+// PreviewOpen is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.OpenInvoiceDisputeRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceDisputeService_Expecter) PreviewOpen(ctx any, req any, actor any) *MockInvoiceDisputeService_PreviewOpen_Call {
+	return &MockInvoiceDisputeService_PreviewOpen_Call{Call: _e.mock.On("PreviewOpen", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceDisputeService_PreviewOpen_Call) Run(run func(ctx context.Context, req *services.OpenInvoiceDisputeRequest, actor *services.RequestActor)) *MockInvoiceDisputeService_PreviewOpen_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.OpenInvoiceDisputeRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.OpenInvoiceDisputeRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceDisputeService_PreviewOpen_Call) Return(result *services.InvoiceDisputePreview, err error) *MockInvoiceDisputeService_PreviewOpen_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockInvoiceDisputeService_PreviewOpen_Call) RunAndReturn(run func(ctx context.Context, req *services.OpenInvoiceDisputeRequest, actor *services.RequestActor) (*services.InvoiceDisputePreview, error)) *MockInvoiceDisputeService_PreviewOpen_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewResolve provides a mock function for the type MockInvoiceDisputeService
+func (_mock *MockInvoiceDisputeService) PreviewResolve(ctx context.Context, req *services.ResolveInvoiceDisputeRequest, actor *services.RequestActor) (*services.InvoiceDisputePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewResolve")
+	}
+
+	var r0 *services.InvoiceDisputePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ResolveInvoiceDisputeRequest, *services.RequestActor) (*services.InvoiceDisputePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ResolveInvoiceDisputeRequest, *services.RequestActor) *services.InvoiceDisputePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.InvoiceDisputePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ResolveInvoiceDisputeRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceDisputeService_PreviewResolve_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewResolve'
+type MockInvoiceDisputeService_PreviewResolve_Call struct {
+	*mock.Call
+}
+
+// PreviewResolve is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ResolveInvoiceDisputeRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceDisputeService_Expecter) PreviewResolve(ctx any, req any, actor any) *MockInvoiceDisputeService_PreviewResolve_Call {
+	return &MockInvoiceDisputeService_PreviewResolve_Call{Call: _e.mock.On("PreviewResolve", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceDisputeService_PreviewResolve_Call) Run(run func(ctx context.Context, req *services.ResolveInvoiceDisputeRequest, actor *services.RequestActor)) *MockInvoiceDisputeService_PreviewResolve_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ResolveInvoiceDisputeRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ResolveInvoiceDisputeRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceDisputeService_PreviewResolve_Call) Return(result *services.InvoiceDisputePreview, err error) *MockInvoiceDisputeService_PreviewResolve_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockInvoiceDisputeService_PreviewResolve_Call) RunAndReturn(run func(ctx context.Context, req *services.ResolveInvoiceDisputeRequest, actor *services.RequestActor) (*services.InvoiceDisputePreview, error)) *MockInvoiceDisputeService_PreviewResolve_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewWithdraw provides a mock function for the type MockInvoiceDisputeService
+func (_mock *MockInvoiceDisputeService) PreviewWithdraw(ctx context.Context, req *services.WithdrawInvoiceDisputeRequest, actor *services.RequestActor) (*services.InvoiceDisputePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewWithdraw")
+	}
+
+	var r0 *services.InvoiceDisputePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.WithdrawInvoiceDisputeRequest, *services.RequestActor) (*services.InvoiceDisputePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.WithdrawInvoiceDisputeRequest, *services.RequestActor) *services.InvoiceDisputePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.InvoiceDisputePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.WithdrawInvoiceDisputeRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceDisputeService_PreviewWithdraw_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewWithdraw'
+type MockInvoiceDisputeService_PreviewWithdraw_Call struct {
+	*mock.Call
+}
+
+// PreviewWithdraw is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.WithdrawInvoiceDisputeRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceDisputeService_Expecter) PreviewWithdraw(ctx any, req any, actor any) *MockInvoiceDisputeService_PreviewWithdraw_Call {
+	return &MockInvoiceDisputeService_PreviewWithdraw_Call{Call: _e.mock.On("PreviewWithdraw", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceDisputeService_PreviewWithdraw_Call) Run(run func(ctx context.Context, req *services.WithdrawInvoiceDisputeRequest, actor *services.RequestActor)) *MockInvoiceDisputeService_PreviewWithdraw_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.WithdrawInvoiceDisputeRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.WithdrawInvoiceDisputeRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceDisputeService_PreviewWithdraw_Call) Return(result *services.InvoiceDisputePreview, err error) *MockInvoiceDisputeService_PreviewWithdraw_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockInvoiceDisputeService_PreviewWithdraw_Call) RunAndReturn(run func(ctx context.Context, req *services.WithdrawInvoiceDisputeRequest, actor *services.RequestActor) (*services.InvoiceDisputePreview, error)) *MockInvoiceDisputeService_PreviewWithdraw_Call {
+	_c.Call.Return(run)
+	return _c
+}

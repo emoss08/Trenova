@@ -209,19 +209,8 @@ func (s *Service) BillStatementNow(
 	req *servicesports.BillStatementNowRequest,
 	actor *servicesports.RequestActor,
 ) (*servicesports.CommitInvoiceRunResult, error) {
-	if req == nil || actor == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request and actor are required",
-		)
-	}
-	if req.Reason == "" {
-		return nil, errortypes.NewValidationError(
-			"reason",
-			errortypes.ErrRequired,
-			"Say why this statement is being billed before its cycle closes",
-		)
+	if err := validateBillStatementRequest(req, actor); err != nil {
+		return nil, err
 	}
 
 	statement, err := s.GetOpenStatement(ctx, &servicesports.ListOpenStatementsRequest{
@@ -290,30 +279,13 @@ func (s *Service) applyStatementExclusions(
 		return run, nil
 	}
 
-	reasons := make(map[pulid.ID]string, len(req.Exclude))
-	for _, exclusion := range req.Exclude {
-		reasons[exclusion.BillingQueueItemID] = exclusion.Reason
-	}
-
 	exclusions := make([]servicesports.ItemExclusion, 0, len(req.Exclude))
-	for _, group := range run.Groups {
-		if group == nil {
-			continue
-		}
-		for _, item := range group.Items {
-			reason, excluded := reasons[item.BillingQueueItemID]
-			if !excluded || item.Excluded {
-				continue
-			}
-			if reason == "" {
-				reason = "Held back by the biller before this statement billed"
-			}
-			exclusions = append(exclusions, servicesports.ItemExclusion{
-				ItemID: item.ID,
-				Reason: reason,
-			})
-		}
-	}
+	matchStatementExclusions(run, req, func(item *invoicerun.InvoiceRunGroupItem, reason string) {
+		exclusions = append(exclusions, servicesports.ItemExclusion{
+			ItemID: item.ID,
+			Reason: reason,
+		})
+	})
 
 	if len(exclusions) == 0 {
 		return run, nil

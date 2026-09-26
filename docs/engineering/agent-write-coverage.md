@@ -77,7 +77,7 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 93 |
+| Covered by a tool | 123 |
 | Exempt | 446 |
 | — Security | 58 |
 | — Configuration | 206 |
@@ -88,10 +88,10 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | — Read-only | 46 |
 | — Attestation | 8 |
 | — Duplicate | 2 |
-| **Pending** | **378** |
+| **Pending** | **348** |
 | Total | 917 |
 
-Of the 471 writes an agent should be able to make, 93 have a tool (19%).
+Of the 471 writes an agent should be able to make, 123 have a tool (26%).
 
 ## Pending
 
@@ -151,10 +151,6 @@ The writes no tool performs yet, and what the tool would do.
 | customer | `POST /api/v1/customers/` | Create a customer. |
 | customer | `POST /api/v1/customers/bulk-update-status/` | Change the status of several customers at once. |
 | customer | `PUT /api/v1/customers/:customerID/` | Update a customer. |
-| customerpayment | `mutation applyCreditMemo` | Apply credit memo. |
-| customerpayment | `mutation applyUnappliedCustomerPayment` | Apply unapplied customer payment. |
-| customerpayment | `mutation reverseCustomerPayment` | Reverse customer payment. |
-| customerpayment | `mutation unapplyCreditMemoApplication` | Unapply credit memo application. |
 | detention | `mutation disputeDetentionOccurrence` | Dispute detention occurrence. |
 | distanceoverride | `DELETE /api/v1/distance-overrides/:distanceOverrideID/` | Delete a distance override. |
 | distanceoverride | `PATCH /api/v1/distance-overrides/:distanceOverrideID/` | Update some fields of a distance override. |
@@ -260,37 +256,11 @@ The writes no tool performs yet, and what the tool would do.
 | insight | `POST /api/v1/insights/:insightID/restore/` | Restore an insight that was dismissed. |
 | integration | `POST /api/v1/integrations/samsara/workers/sync/` | Sync workers from the telematics provider now. |
 | integration | `POST /api/v1/integrations/samsara/workers/sync/drift/repair/` | Repair the drift found between workers and the telematics provider. |
-| invoice | `mutation createInvoiceFromOrder` | Create invoice from order. |
-| invoice | `mutation createInvoiceFromShipments` | Create invoice from shipments. |
-| invoice | `mutation createInvoicesFromOrder` | Create invoices from order. |
-| invoice | `mutation createInvoicesFromShipments` | Create invoices from shipments. |
-| invoice | `mutation createMemo` | Create memo. |
-| invoice | `mutation sendInvoiceEdi` | Send invoice EDI. |
-| invoice | `mutation voidInvoice` | Void invoice. |
-| invoice | `PATCH /api/v1/billing/invoices/:invoiceID/` | Update draft (invoice). |
-| invoice | `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/` | Generate pdf (invoice). |
-| invoiceadjustment | `mutation approveInvoiceAdjustment` | Approve invoice adjustment. |
-| invoiceadjustment | `mutation rejectInvoiceAdjustment` | Reject invoice adjustment. |
-| invoiceadjustment | `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/` | Update draft (invoice adjustment). |
-| invoiceadjustment | `POST /api/v1/billing/invoice-adjustments/bulk-submit/` | Bulk submit (invoice adjustment). |
-| invoiceadjustment | `POST /api/v1/billing/invoice-adjustments/drafts/` | Create draft (invoice adjustment). |
-| invoiceadjustment | `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/` | Submit draft (invoice adjustment). |
-| invoiceadjustment | `POST /api/v1/billing/invoice-adjustments/submit/` | Submit an invoice adjustment. |
-| invoicedispute | `mutation openInvoiceDispute` | Open invoice dispute. |
-| invoicedispute | `mutation resolveInvoiceDispute` | Resolve invoice dispute. |
-| invoicedispute | `mutation withdrawInvoiceDispute` | Withdraw invoice dispute. |
-| invoicerun | `PATCH /api/v1/billing/invoice-runs/:runID/membership/` | Adjust membership (invoice run). |
-| invoicerun | `POST /api/v1/billing/invoice-runs/:runID/cancel/` | Cancel an invoice run. |
-| invoicerun | `POST /api/v1/billing/invoice-runs/:runID/commit/` | Commit an invoice run. |
-| invoicerun | `POST /api/v1/billing/invoice-runs/preview/` | Create an invoice run in preview for review before committing it. |
-| invoicerun | `POST /api/v1/billing/statements/:customerID/bill/` | Bill statement (statement). |
-| invoiceshare | `POST /api/v1/billing/invoices/:invoiceID/shares/` | Share an invoice. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/` | Create a journal reversal. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/approve/` | Approve a journal reversal. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/cancel/` | Cancel a journal reversal. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/post/` | Post a journal reversal. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/reject/` | Reject a journal reversal. |
-| latecharge | `mutation assessLateCharges` | Assess late charges. |
 | location | `PATCH /api/v1/locations/:locationID/` | Update some fields of a location. |
 | location | `POST /api/v1/locations/bulk-update-status/` | Change the status of several locations at once. |
 | location | `PUT /api/v1/locations/:locationID/` | Update a location. |
@@ -515,7 +485,7 @@ The writes no tool performs yet, and what the tool would do.
 | controlplaneprovisioning | 1 | 0 | 1 | 0 |
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 0 | 0 | 4 |
-| customerpayment | 5 | 1 | 0 | 4 |
+| customerpayment | 5 | 5 | 0 | 0 |
 | customfield | 4 | 0 | 4 | 0 |
 | databasesession | 1 | 0 | 1 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
@@ -562,15 +532,15 @@ The writes no tool performs yet, and what the tool would do.
 | inboundmessage | 6 | 2 | 4 | 0 |
 | insight | 2 | 1 | 0 | 1 |
 | integration | 5 | 0 | 3 | 2 |
-| invoice | 12 | 2 | 1 | 9 |
-| invoiceadjustment | 10 | 0 | 3 | 7 |
+| invoice | 12 | 11 | 1 | 0 |
+| invoiceadjustment | 10 | 7 | 3 | 0 |
 | invoiceadjustmentcontrol | 1 | 0 | 1 | 0 |
-| invoicedispute | 3 | 0 | 0 | 3 |
-| invoicerun | 5 | 0 | 0 | 5 |
-| invoiceshare | 1 | 0 | 0 | 1 |
+| invoicedispute | 3 | 3 | 0 | 0 |
+| invoicerun | 5 | 5 | 0 | 0 |
+| invoiceshare | 1 | 1 | 0 | 0 |
 | journalreversal | 5 | 0 | 0 | 5 |
 | jurisdictionrule | 6 | 0 | 6 | 0 |
-| latecharge | 1 | 0 | 0 | 1 |
+| latecharge | 1 | 1 | 0 | 0 |
 | location | 4 | 1 | 0 | 3 |
 | locationcategory | 3 | 0 | 3 | 0 |
 | manualjournal | 7 | 0 | 0 | 7 |
@@ -985,11 +955,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation applyCreditMemo`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/` | Pending: Apply credit memo. |
-| `mutation applyUnappliedCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/apply/` | Pending: Apply unapplied customer payment. |
+| `mutation applyCreditMemo`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/` | Tool: `apply_credit_memo` |
+| `mutation applyUnappliedCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/apply/` | Tool: `apply_customer_payment` |
 | `mutation postAndApplyCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/` | Tool: `post_customer_payment` |
-| `mutation reverseCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/reverse/` | Pending: Reverse customer payment. |
-| `mutation unapplyCreditMemoApplication`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/:applicationID/unapply/` | Pending: Unapply credit memo application. |
+| `mutation reverseCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/reverse/` | Tool: `reverse_customer_payment` |
+| `mutation unapplyCreditMemoApplication`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/:applicationID/unapply/` | Tool: `unapply_credit_memo` |
 
 ### customfield
 
@@ -1575,15 +1545,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation createInvoiceFromOrder`<br>twin `POST /api/v1/billing/invoices/from-order/` | Pending: Create invoice from order. |
-| `mutation createInvoiceFromShipments`<br>twin `POST /api/v1/billing/invoices/from-shipments/` | Pending: Create invoice from shipments. |
-| `mutation createInvoicesFromOrder` | Pending: Create invoices from order. |
-| `mutation createInvoicesFromShipments` | Pending: Create invoices from shipments. |
-| `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Pending: Create memo. |
-| `mutation sendInvoiceEdi` | Pending: Send invoice EDI. |
-| `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Pending: Void invoice. |
-| `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Pending: Update draft (invoice). |
-| `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Pending: Generate pdf (invoice). |
+| `mutation createInvoiceFromOrder`<br>twin `POST /api/v1/billing/invoices/from-order/` | Tool: `create_invoice` |
+| `mutation createInvoiceFromShipments`<br>twin `POST /api/v1/billing/invoices/from-shipments/` | Tool: `create_invoice` |
+| `mutation createInvoicesFromOrder` | Tool: `create_invoice` |
+| `mutation createInvoicesFromShipments` | Tool: `create_invoice` |
+| `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Tool: `create_invoice_memo` |
+| `mutation sendInvoiceEdi` | Tool: `send_invoice_edi` |
+| `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Tool: `void_invoice` |
+| `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Tool: `update_invoice_draft` |
+| `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Tool: `generate_invoice_pdf` |
 | `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `post_invoice` |
 | `POST /api/v1/billing/invoices/:invoiceID/preview/`<br>invoicehandler.preview | Exempt, read-only: Renders an invoice for review and saves nothing. |
 | `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `send_invoice` |
@@ -1592,16 +1562,16 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Pending: Approve invoice adjustment. |
-| `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Pending: Reject invoice adjustment. |
-| `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Pending: Update draft (invoice adjustment). |
+| `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Tool: `approve_invoice_adjustment` |
+| `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Tool: `reject_invoice_adjustment` |
+| `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Tool: `save_invoice_adjustment_draft` |
 | `POST /api/v1/billing/invoice-adjustments/bulk-preview/`<br>invoiceadjustmenthandler.bulkPreview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/bulk-submit/`<br>invoiceadjustmenthandler.bulkSubmit | Pending: Bulk submit (invoice adjustment). |
-| `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Pending: Create draft (invoice adjustment). |
+| `POST /api/v1/billing/invoice-adjustments/bulk-submit/`<br>invoiceadjustmenthandler.bulkSubmit | Tool: `submit_invoice_adjustment` |
+| `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Tool: `save_invoice_adjustment_draft` |
 | `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/`<br>invoiceadjustmenthandler.previewDraft | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Pending: Submit draft (invoice adjustment). |
+| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Tool: `submit_invoice_adjustment` |
 | `POST /api/v1/billing/invoice-adjustments/preview/`<br>invoiceadjustmenthandler.preview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/submit/`<br>invoiceadjustmenthandler.submit | Pending: Submit an invoice adjustment. |
+| `POST /api/v1/billing/invoice-adjustments/submit/`<br>invoiceadjustmenthandler.submit | Tool: `submit_invoice_adjustment` |
 
 ### invoiceadjustmentcontrol
 
@@ -1613,25 +1583,25 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation openInvoiceDispute` | Pending: Open invoice dispute. |
-| `mutation resolveInvoiceDispute` | Pending: Resolve invoice dispute. |
-| `mutation withdrawInvoiceDispute` | Pending: Withdraw invoice dispute. |
+| `mutation openInvoiceDispute` | Tool: `open_invoice_dispute` |
+| `mutation resolveInvoiceDispute` | Tool: `resolve_invoice_dispute` |
+| `mutation withdrawInvoiceDispute` | Tool: `withdraw_invoice_dispute` |
 
 ### invoicerun
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/billing/invoice-runs/:runID/membership/`<br>invoicerunhandler.adjustMembership | Pending: Adjust membership (invoice run). |
-| `POST /api/v1/billing/invoice-runs/:runID/cancel/`<br>invoicerunhandler.cancel | Pending: Cancel an invoice run. |
-| `POST /api/v1/billing/invoice-runs/:runID/commit/`<br>invoicerunhandler.commit | Pending: Commit an invoice run. |
-| `POST /api/v1/billing/invoice-runs/preview/`<br>invoicerunhandler.preview | Pending: Create an invoice run in preview for review before committing it. |
-| `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Pending: Bill statement (statement). |
+| `PATCH /api/v1/billing/invoice-runs/:runID/membership/`<br>invoicerunhandler.adjustMembership | Tool: `adjust_invoice_run_membership` |
+| `POST /api/v1/billing/invoice-runs/:runID/cancel/`<br>invoicerunhandler.cancel | Tool: `cancel_invoice_run` |
+| `POST /api/v1/billing/invoice-runs/:runID/commit/`<br>invoicerunhandler.commit | Tool: `commit_invoice_run` |
+| `POST /api/v1/billing/invoice-runs/preview/`<br>invoicerunhandler.preview | Tool: `build_invoice_run` |
+| `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Tool: `bill_statement_now` |
 
 ### invoiceshare
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Pending: Share an invoice. |
+| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Tool: `share_invoice` |
 
 ### journalreversal
 
@@ -1658,7 +1628,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assessLateCharges` | Pending: Assess late charges. |
+| `mutation assessLateCharges` | Tool: `assess_late_charges` |
 
 ### location
 

@@ -74,6 +74,45 @@ type CommitInvoiceRunResult struct {
 	ErrorCount   int                    `json:"errorCount"`
 }
 
+type InvoiceRunGroupOutcome string
+
+const (
+	InvoiceRunGroupBills            = InvoiceRunGroupOutcome("Bills")
+	InvoiceRunGroupSkips            = InvoiceRunGroupOutcome("Skips")
+	InvoiceRunGroupAlreadyCommitted = InvoiceRunGroupOutcome("AlreadyCommitted")
+	InvoiceRunGroupAlreadySkipped   = InvoiceRunGroupOutcome("AlreadySkipped")
+)
+
+type InvoiceRunGroupPlan struct {
+	GroupID       pulid.ID
+	GroupLabel    string
+	CustomerID    pulid.ID
+	InvoiceID     pulid.ID
+	ShipmentCount int
+	Total         decimal.Decimal
+	CurrencyCode  string
+	Outcome       InvoiceRunGroupOutcome
+	Reason        string
+}
+
+type InvoiceRunCommitPlan struct {
+	Run              *invoicerun.InvoiceRun
+	AlreadyCommitted bool
+	Groups           []InvoiceRunGroupPlan
+}
+
+type InvoiceRunChangePreview struct {
+	Before *invoicerun.InvoiceRun
+	After  *invoicerun.InvoiceRun
+}
+
+type StatementBillPlan struct {
+	Statement           *OpenStatement
+	Run                 *invoicerun.InvoiceRun
+	Groups              []InvoiceRunGroupPlan
+	UnmatchedExclusions []pulid.ID
+}
+
 type CancelInvoiceRunRequest struct {
 	TenantInfo pagination.TenantInfo
 	RunID      pulid.ID

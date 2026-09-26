@@ -471,6 +471,101 @@
       }
     },
     {
+      "name": "adjust_invoice_run_membership",
+      "description": "Take shipments off an invoice run that is still a proposal, put them back, or move them to another of the same customer's invoices on it. An excluded shipment stays approved and rolls into the next period. Every exclusion needs a reason the next biller can read.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "exclude": {
+            "description": "Shipments to take off the run, each with why.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "itemId": {
+                  "description": "A shipment on the run, by the item id get_invoice_run lists under each group.",
+                  "type": "string"
+                },
+                "reason": {
+                  "description": "Why it is held back.",
+                  "maxLength": 1000,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "itemId",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "maxItems": 500,
+            "type": "array"
+          },
+          "include": {
+            "description": "Excluded shipments to put back, by the item id get_invoice_run lists.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "type": "array"
+          },
+          "invoiceRunId": {
+            "description": "The invoice run, from list_invoice_runs or get_invoice_run. Never guess one.",
+            "type": "string"
+          },
+          "moves": {
+            "description": "Shipments to move to another invoice of the same customer.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "itemId": {
+                  "description": "A shipment on the run, by the item id get_invoice_run lists under each group.",
+                  "type": "string"
+                },
+                "targetGroupId": {
+                  "description": "The invoice it moves to, by the group id get_invoice_run lists.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "itemId",
+                "targetGroupId"
+              ],
+              "type": "object"
+            },
+            "maxItems": 500,
+            "type": "array"
+          }
+        },
+        "required": [
+          "invoiceRunId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice_run",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "An exclusion read from what a customer sent is proposed, since it decides what they are billed this period.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Edits a proposal of invoices before anything is invoiced; each change is undone by the opposite edit."
+      }
+    },
+    {
       "name": "apply_accounting_inbound_change",
       "description": "Accept an inbound change: one payment the accounting system recorded against documents Trenova sent, shown as Proposed by list_accounting_inbound_changes. Accepting brings it into Trenova on the day it was made, with any credits it used, or marks the settlement it pays as paid, and only while it still matches what is open. The preview shows exactly what would post.",
       "parameters": {
@@ -512,6 +607,146 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Posts money in Trenova: a customer payment or a settlement payment, so a person approves each one."
+      }
+    },
+    {
+      "name": "apply_credit_memo",
+      "description": "Propose settling a customer's open invoices with a posted credit memo of theirs. Name each invoice and the amount of credit it takes; together they cannot exceed what is left of the memo, nor any invoice its open balance. A person always decides. Find the memo with list_invoices (billType CreditMemo).",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "accountingDate": {
+            "description": "The day it is booked to the ledger, YYYY-MM-DD, usually today; it must fall in an open fiscal period.",
+            "type": "string"
+          },
+          "applications": {
+            "description": "The invoices the credit settles and how much goes to each.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "description": "Applied to this invoice, as a decimal such as 250.00.",
+                  "type": "string"
+                },
+                "invoiceId": {
+                  "description": "An open posted invoice or debit memo of the same customer, from list_invoices or list_ar_open_items.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "invoiceId",
+                "amount"
+              ],
+              "type": "object"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "creditMemoId": {
+            "description": "The posted credit memo, from list_invoices or get_invoice.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "creditMemoId",
+          "accountingDate",
+          "applications"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "customer_payment",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Uses a customer's credit to settle what they owe; only a person applies credit."
+      }
+    },
+    {
+      "name": "apply_customer_payment",
+      "description": "Propose applying a posted payment's unapplied cash to that customer's open invoices. Name each invoice and the amount it takes, and any short pay to write off; together they cannot exceed what is unapplied. It books a ledger entry, so a person always decides. Find the payment with list_customer_payments and the invoices with list_ar_open_items.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "accountingDate": {
+            "description": "The day it is booked to the ledger, YYYY-MM-DD, usually today; it must fall in an open fiscal period.",
+            "type": "string"
+          },
+          "applications": {
+            "description": "The invoices the unapplied cash pays and how much goes to each.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "description": "Applied to this invoice, as a decimal such as 250.00.",
+                  "type": "string"
+                },
+                "invoiceId": {
+                  "description": "An open posted invoice or debit memo of the same customer, from list_invoices or list_ar_open_items.",
+                  "type": "string"
+                },
+                "shortPayAmount": {
+                  "description": "Written off on this invoice as a short pay, if the customer will not pay it.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "invoiceId",
+                "amount"
+              ],
+              "type": "object"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "customerPaymentId": {
+            "description": "The posted payment, from list_customer_payments. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerPaymentId",
+          "accountingDate",
+          "applications"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "customer_payment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves a customer's cash onto their invoices and books the entry that says so; only a person applies cash."
       }
     },
     {
@@ -599,6 +834,44 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Releases a held detention charge onto the customer's invoice; only a person approves it."
+      }
+    },
+    {
+      "name": "approve_invoice_adjustment",
+      "description": "Propose approving an invoice adjustment that waits for approval, which executes it: the credit memo and any replacement invoice are made and posted. It is checked again against the invoice as it stands, as execution does. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "adjustmentId": {
+            "description": "The pending adjustment, from list_invoice_adjustments or get_invoice_adjustment. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "adjustmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Executes a credit, rebill or write-off an approver was asked to sign off; approving is a person's decision."
       }
     },
     {
@@ -722,6 +995,53 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Asks the person in the conversation a question; nothing is saved or sent."
+      }
+    },
+    {
+      "name": "assess_late_charges",
+      "description": "Propose assessing late charges on overdue invoices as of a date, as one debit memo per customer. Each has a line per invoice and overdue period at the customer's rate, and no period is charged twice. Leave out customerIds to assess every customer. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "asOfDate": {
+            "description": "The day overdue periods are counted to, usually today; YYYY-MM-DD, a UTC day.",
+            "type": "string"
+          },
+          "customerIds": {
+            "description": "Only these customers, from list_customers or list_ar_open_items.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "asOfDate"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Bills customers for paying late; only a person assesses late charges, and the billing control may post the memos as they are raised."
       }
     },
     {
@@ -984,6 +1304,131 @@
       }
     },
     {
+      "name": "bill_statement_now",
+      "description": "Propose billing a statement customer's open period now, before its cycle closes, with the reason recorded on the run. Shipments you name in exclude stay on the statement for the period's end. The customer's next boundary does not move. A person always decides; read list_open_statements first.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "The statement customer, from list_open_statements.",
+            "type": "string"
+          },
+          "exclude": {
+            "description": "Shipments to leave on the statement for now.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "billingQueueItemId": {
+                  "description": "The shipment's billing queue item, from list_open_statements.",
+                  "type": "string"
+                },
+                "reason": {
+                  "description": "Why it is held back.",
+                  "maxLength": 1000,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "billingQueueItemId",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "maxItems": 500,
+            "type": "array"
+          },
+          "reason": {
+            "description": "Why it is billed before the cycle closes.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice_run",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Invoices a customer off their agreed cycle; only a person decides to bill early, and the reason stays on the run."
+      }
+    },
+    {
+      "name": "build_invoice_run",
+      "description": "Build an invoice run: a reviewable proposal of the consolidated invoices for customers' approved, uninvoiced freight over a period. Nothing is invoiced until the run is committed with commit_invoice_run. Find the run afterwards with list_invoice_runs, newest first.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerIds": {
+            "description": "The customers to bill, from list_customers or list_open_statements.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          },
+          "invoiceDate": {
+            "description": "The date the invoices carry, defaulting to today; YYYY-MM-DD, a UTC day.",
+            "type": "string"
+          },
+          "periodEnd": {
+            "description": "The last day of the period, included, YYYY-MM-DD, a UTC day.",
+            "type": "string"
+          },
+          "periodStart": {
+            "description": "The first day of the period, YYYY-MM-DD, a UTC day.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerIds",
+          "periodStart",
+          "periodEnd"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice_run",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Builds a proposal of invoices inside Trenova for a biller to review; it invoices nothing and is discarded with cancel_invoice_run."
+      }
+    },
+    {
       "name": "cancel_billing_queue_item",
       "description": "Propose canceling a billing queue item that should never be billed, such as a duplicate of another item. Canceling drops the charge from billing for good, so a person always decides; say which item it duplicates or why it must not bill.",
       "parameters": {
@@ -1107,6 +1552,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Withdraws freight offered to another organization, which sees the tender canceled; a withdrawn tender is sent afresh, never reopened. A person always decides."
+      }
+    },
+    {
+      "name": "cancel_invoice_run",
+      "description": "Cancel an invoice run that will never be committed, such as one built for the wrong period or customers. Its shipments stay approved for the next run. Say why; the reason is kept on the run.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceRunId": {
+            "description": "The invoice run, from list_invoice_runs or get_invoice_run. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it is canceled.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceRunId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice_run",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Discards a proposal of invoices; nothing was invoiced, and a new run is built with build_invoice_run."
       }
     },
     {
@@ -1401,6 +1890,44 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Unmatches a record so it cannot sync until someone maps it again; mapping it again undoes it."
+      }
+    },
+    {
+      "name": "commit_invoice_run",
+      "description": "Propose committing an invoice run, which turns each of its proposed invoices into a draft invoice for the customer. A group below the customer's minimum, or whose shipments were invoiced or re-approved elsewhere since it was built, is skipped with a reason. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceRunId": {
+            "description": "The invoice run, from list_invoice_runs or get_invoice_run. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceRunId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice_run",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Issues the invoices a run proposes and advances the customers' billing period; only a person commits a run."
       }
     },
     {
@@ -1778,6 +2305,157 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Saves a report dashboard colleagues can open; nothing leaves the organization."
+      }
+    },
+    {
+      "name": "create_invoice",
+      "description": "Propose drafting invoices for completed freight: an order's billable shipments as one grouped invoice, or shipments on their own. A split-billed shipment makes one draft per payer. Drafts are posted with post_invoice. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "offCycleReason": {
+            "description": "Why this customer's freight is billed now rather than on their periodic statement. Required only for statement customers.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order to bill as one grouped invoice, from get_order or get_shipment.",
+            "type": "string"
+          },
+          "shipmentIds": {
+            "description": "The shipments to bill, from search_shipments or get_shipment. With orderId, only these of the order's shipments.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": null,
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Turns freight into receivables and takes it off the billing queue and any statement; only a person decides what is billed and when."
+      }
+    },
+    {
+      "name": "create_invoice_memo",
+      "description": "Propose a draft credit or debit memo to a customer with no shipment behind it, such as a goodwill credit or a returned-check fee. It stays a draft until post_invoice posts it; apply a posted credit with apply_credit_memo. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billType": {
+            "description": "CreditMemo lowers what the customer owes; DebitMemo raises it.",
+            "enum": [
+              "CreditMemo",
+              "DebitMemo"
+            ],
+            "type": "string"
+          },
+          "customerId": {
+            "description": "The customer, from list_customers or get_invoice.",
+            "type": "string"
+          },
+          "invoiceDate": {
+            "description": "The memo's date; defaults to today. YYYY-MM-DD, a UTC day.",
+            "type": "string"
+          },
+          "lines": {
+            "description": "The memo's lines, each a positive amount.",
+            "items": {
+              "properties": {
+                "accessorialChargeId": {
+                  "description": "The accessorial the line corrects, from get_invoice's lines.",
+                  "type": "string"
+                },
+                "amount": {
+                  "description": "The line's unit amount in major units, such as 125.00.",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "What the line is for.",
+                  "maxLength": 500,
+                  "type": "string"
+                },
+                "quantity": {
+                  "description": "How many; defaults to 1.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "description",
+                "amount"
+              ],
+              "type": "object"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          },
+          "memo": {
+            "description": "A note printed on the memo.",
+            "maxLength": 4000,
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the memo is raised; the customer sees it.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "referenceInvoiceId": {
+            "description": "The posted invoice this memo relates to, from list_invoices or get_invoice.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId",
+          "billType",
+          "reason",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Raises what a customer owes or is owed outside any shipment; only a person decides it, and it is never posted as it is made."
       }
     },
     {
@@ -3255,6 +3933,44 @@
       }
     },
     {
+      "name": "generate_invoice_pdf",
+      "description": "Render an invoice's PDF from what it says now and file it on the invoice, replacing the one there. Refused when the customer's billing profile would email the invoice the moment its PDF is made; send it with send_invoice.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Renders the invoice as it stands into its filed PDF; nothing is sent, and it is refused whenever rendering would email the customer."
+      }
+    },
+    {
       "name": "generate_rate_confirmation",
       "description": "Generate the rate confirmation for a move covered by an outside carrier. It is a new revision of the agreement, with the carrier's pay and the stops as they stand, rendered as a PDF and filed on the shipment. Generate after assign_move_to_carrier, or again after the rate or the stops change; a new revision voids the one before it. Nothing is sent: find the new revision with list_rate_confirmations and send it with send_rate_confirmation. A tender acceptance issues its own.",
       "parameters": {
@@ -4360,7 +5076,7 @@
     },
     {
       "name": "get_invoice",
-      "description": "Retrieve one invoice by id, with its line items, totals, payment and dispute state. Use list_invoices first when you have a number or are looking for what is unpaid. Amounts and the memo are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "description": "Retrieve one invoice by id, with its line items, totals, payment and dispute state. Each line's id is what an invoice adjustment names. Use list_invoices first when you have a number or are looking for what is unpaid. Amounts and the memo are left out, and named in withheldByAccess, when your data access does not reach them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -4377,6 +5093,82 @@
       "policy": {
         "kind": "query",
         "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_invoice_adjustment",
+      "description": "Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "adjustmentId": {
+            "description": "The adjustment's id, from list_invoice_adjustments.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "adjustmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_invoice_run",
+      "description": "Retrieve one invoice run by id with each group, the invoice it would make or made, and the items in it: the ids adjust_invoice_run_membership moves or excludes.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceRunId": {
+            "description": "The run's id, from list_invoice_runs.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceRunId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice_run",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -6609,6 +7401,49 @@
       }
     },
     {
+      "name": "list_credit_memo_applications",
+      "description": "List where credit memos were applied to the invoices or credit memos you name. Each application shows the amount and whether it still stands or was taken back; unapply_credit_memo takes one back.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceIds": {
+            "description": "Invoices or credit memos, from list_invoices or get_invoice.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_customer_payments",
       "description": "List recorded customer payments, newest first, with the amount, how much of it is applied to invoices, the method, the reference and the memo. Search by reference or memo text, narrow to one customer, or include reversed payments. Use it to find the payment a bank receipt represents when get_bank_receipt suggested nothing, and to see whether a customer's payment is already recorded before posting another.",
       "parameters": {
@@ -8586,8 +9421,255 @@
       }
     },
     {
+      "name": "list_invoice_adjustments",
+      "description": "List the invoice adjustments on one invoice, drafts included, or those waiting for an approver. With invoiceId it lists every credit, rebill and reversal made or drafted against the invoice and its replacements; without it, the approval queue. Open one with get_invoice_adjustment.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "Optional: the invoice, from list_invoices or get_invoice. Leave it out for the approval queue.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many to return, at most 50.",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_invoice_disputes",
+      "description": "List the dispute cases on invoices, open and closed, newest first: the reason, the amount in dispute, the notes and how each was resolved. Find disputed invoices with list_invoices filtered to disputeStatus Disputed.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceIds": {
+            "description": "The invoices, from list_invoices or get_invoice.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice_dispute",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_invoice_runs",
+      "description": "List invoice runs, the reviewable batches of consolidated invoices for a billing period, by status, number or period. Open one with get_invoice_run to see its groups and items. Filters: status (Building|Ready|Committing|Committed|Failed|Canceled): Ready runs are waiting to be committed or canceled; text: number; date: periodEnd, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "number",
+                    "periodEnd",
+                    "createdAt"
+                  ],
+                  "type": "string"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "number",
+              "periodEnd",
+              "createdAt"
+            ],
+            "type": "string"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice_run",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_invoice_share_candidates",
+      "description": "List the teammates an invoice can be shared with: only people whose role lets them read invoices. Search by name or username.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "The invoice, from list_invoices or get_invoice.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many to return, at most 50.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional: part of a name or username.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_invoices",
-      "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. This answers receivables questions — what is unpaid, what is overdue, what is in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. This answers receivables questions — what is unpaid, what is overdue, what is in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -8604,6 +9686,7 @@
                     "status",
                     "settlementStatus",
                     "disputeStatus",
+                    "billType",
                     "number",
                     "billToName",
                     "shipmentProNumber",
@@ -9008,6 +10091,41 @@
       "policy": {
         "kind": "query",
         "resource": "location",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_open_statements",
+      "description": "List the open billing periods of customers billed on statements, as they stand now. Each shows the period, the freight on it, the invoices it would make and what is held back. Name a customerId to see the shipments on theirs, which bill_statement_now can exclude.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "Optional: one customer, from list_customers, with the shipments on their statement.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice_run",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -10835,6 +11953,69 @@
       }
     },
     {
+      "name": "open_invoice_dispute",
+      "description": "Open a dispute on a posted invoice the customer is withholding payment on. The invoice is marked Disputed until the case is resolved or withdrawn. The disputed amount cannot exceed the open balance, and an invoice holds one open case at a time. Record the customer's reason as they gave it; read get_invoice first.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "disputedAmount": {
+            "description": "How much of the invoice the customer disputes, as a decimal such as 125.00.",
+            "type": "string"
+          },
+          "invoiceId": {
+            "description": "The posted invoice, from list_invoices or get_invoice.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "What the customer said, in a sentence collections can act on.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "Why the customer is withholding payment.",
+            "enum": [
+              "RateDiscrepancy",
+              "AccessorialDisputed",
+              "ServiceFailure",
+              "DuplicateBilling",
+              "WrongBillTo",
+              "MissingDocumentation",
+              "Other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "reasonCode",
+          "disputedAmount"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice_dispute",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A dispute opened from what a customer wrote is proposed, since the notes and the amount are what collections acts on.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Marks an invoice Disputed inside Trenova with the customer's reason; it moves no money and is withdrawn by withdraw_invoice_dispute."
+      }
+    },
+    {
       "name": "open_page",
       "description": "Take the person to a page or a record in Trenova: the app moves there as soon as you call it. Use it only when they ask to be taken, opened or shown somewhere. Pass a page's path from find_in_trenova, or a record's entity and id from the tool that found it; action create opens the page's create form. It refuses a page they may not open.",
       "parameters": {
@@ -12246,6 +13427,50 @@
       }
     },
     {
+      "name": "reject_invoice_adjustment",
+      "description": "Propose rejecting an invoice adjustment that waits for approval, with the reason the submitter will read. Nothing is credited and the invoice is left as it is. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "adjustmentId": {
+            "description": "The pending adjustment, from list_invoice_adjustments or get_invoice_adjustment. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it is rejected, for the person who submitted it.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "adjustmentId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Turns down an adjustment an approver was asked to sign off; the approval decision is a person's."
+      }
+    },
+    {
       "name": "reject_worker_pto",
       "description": "Decline a worker's time-off request. A rejection is final — the request cannot be reopened, and the worker is told why — so the reason must be the one you were actually given, not one you composed.",
       "parameters": {
@@ -12945,6 +14170,65 @@
       }
     },
     {
+      "name": "resolve_invoice_dispute",
+      "description": "Propose closing an open invoice dispute with its outcome. A credit or a write-off must name the executed adjustment that settled it, from list_invoice_adjustments; an upheld invoice, a rebill or a customer who dropped it need none. Resolving clears the invoice's Disputed flag. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "disputeId": {
+            "description": "The open dispute, from list_invoice_disputes. Never guess one.",
+            "type": "string"
+          },
+          "resolution": {
+            "description": "How the dispute ended.",
+            "enum": [
+              "CreditIssued",
+              "InvoiceUpheld",
+              "Rebilled",
+              "WrittenOff",
+              "CustomerWithdrew"
+            ],
+            "type": "string"
+          },
+          "resolutionAdjustmentId": {
+            "description": "The executed adjustment that credited or wrote off the amount, from list_invoice_adjustments. Required for CreditIssued and WrittenOff.",
+            "type": "string"
+          },
+          "resolutionNotes": {
+            "description": "What was agreed with the customer.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "disputeId",
+          "resolution"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice_dispute",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Records the outcome of a customer's dispute and releases the invoice back to collections; the outcome is a biller's call, so the agent proposes it."
+      }
+    },
+    {
       "name": "resolve_service_failure",
       "description": "Close an open service failure with the reason it happened and a note on what was done. The reason code comes from list_service_failure_reason_codes and must match the cause; a failure that already carries one keeps it unless you send another. Do not resolve a failure nobody has looked into: the note should say what was learned, not that the stop was late.",
       "parameters": {
@@ -13166,6 +14450,55 @@
       }
     },
     {
+      "name": "reverse_customer_payment",
+      "description": "Propose reversing a posted customer payment that bounced, was charged back or was recorded in error. Every invoice it paid is reopened by what it applied and a reversing ledger entry takes the cash back out. It cannot be undone, so a person always decides; say why.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "accountingDate": {
+            "description": "The day it is booked to the ledger, YYYY-MM-DD, usually today; it must fall in an open fiscal period.",
+            "type": "string"
+          },
+          "customerPaymentId": {
+            "description": "The posted payment, from list_customer_payments. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it is reversed, such as the bank's return reason.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerPaymentId",
+          "accountingDate",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "customer_payment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Takes cash back off the books and reopens the invoices it paid; only a person reverses a payment."
+      }
+    },
+    {
       "name": "review_edi_tender_change",
       "description": "Propose applying or rejecting a change another Trenova organization made to a load it tendered to this one over EDI, after this organization received it. Applying takes the new stops, dates, weights or charges onto the pending tender or the shipment made from it; rejecting keeps the load as it is. Compare the change with the load in list_edi_tender_changes first. A person always decides.",
       "parameters": {
@@ -13324,6 +14657,122 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "save_invoice_adjustment_draft",
+      "description": "Save a draft credit, rebill, reversal or write-off on a posted invoice for a biller to review and submit; nothing is credited until it is submitted. Give invoiceId for a new draft, or adjustmentId to rewrite a draft already saved. The result names the draft, which submit_invoice_adjustment takes as draftAdjustmentId.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "adjustmentId": {
+            "description": "The draft adjustment, from list_invoice_adjustments or get_invoice_adjustment. Never guess one.",
+            "type": "string"
+          },
+          "invoiceId": {
+            "description": "The posted invoice a new draft adjusts, from list_invoices or get_invoice.",
+            "type": "string"
+          },
+          "kind": {
+            "description": "CreditOnly credits lines; CreditAndRebill credits them and reissues a corrected invoice; FullReversal credits the whole invoice; WriteOff writes an uncollectable balance off.",
+            "enum": [
+              "CreditOnly",
+              "CreditAndRebill",
+              "FullReversal",
+              "WriteOff"
+            ],
+            "type": "string"
+          },
+          "lines": {
+            "description": "The invoice lines to adjust. Leave out a line to leave it alone; leave out an amount to credit the whole of what is left on the line.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "creditAmount": {
+                  "description": "How much of the line to credit, as a decimal.",
+                  "type": "string"
+                },
+                "creditQuantity": {
+                  "description": "The quantity credited, as a decimal.",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "The line's wording on the credit memo, when it should differ.",
+                  "maxLength": 500,
+                  "type": "string"
+                },
+                "invoiceLineId": {
+                  "description": "The line's id, from get_invoice's lines.",
+                  "type": "string"
+                },
+                "rebillAmount": {
+                  "description": "The line's corrected amount on the reissued invoice, for a Manual rebill.",
+                  "type": "string"
+                },
+                "rebillQuantity": {
+                  "description": "The line's corrected quantity on the reissued invoice.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "invoiceLineId"
+              ],
+              "type": "object"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "reason": {
+            "description": "Why, as the customer or the biller would say it.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "rebillStrategy": {
+            "description": "How a CreditAndRebill reissues: CloneExact copies the lines, Rerate prices them again, Manual takes the rebill amounts you give. Defaults to CloneExact.",
+            "enum": [
+              "CloneExact",
+              "Rerate",
+              "Manual"
+            ],
+            "type": "string"
+          },
+          "supportingDocumentIds": {
+            "description": "Documents on the invoice's shipments that support it, from search_documents or get_shipment.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A draft written from what a customer sent is proposed, since its reason and amounts are what a biller submits.",
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Saves a draft adjustment inside Trenova; it credits nothing until a person submits it, and a later save rewrites it."
       }
     },
     {
@@ -13931,6 +15380,48 @@
       }
     },
     {
+      "name": "send_invoice_edi",
+      "description": "Propose sending a posted invoice to the customer's EDI partner as a 210. Set force only to resend one that already went, when the partner asks for it again. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "force": {
+            "description": "Resend an invoice that was already sent by EDI.",
+            "type": "boolean"
+          },
+          "invoiceId": {
+            "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "submit",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Transmits the invoice to the customer's EDI trading partner, which cannot be called back; only a person sends it."
+      }
+    },
+    {
       "name": "send_rate_confirmation",
       "description": "Email a rate confirmation to the carrier, with a link to sign it while it is unsigned. The PDF goes to the carrier's contacts that receive rate confirmations, or the carrier's own address. The recipients come from the carrier's record and cannot be chosen here; fix the carrier's contacts first if they are wrong. Send a revision that is Generated, Sent (to send it again) or Confirmed (the executed copy); find it with list_rate_confirmations.",
       "parameters": {
@@ -14278,6 +15769,70 @@
       }
     },
     {
+      "name": "share_invoice",
+      "description": "Propose sharing an invoice with teammates, who get a notification and an email with your note and a link to it. Pick them with list_invoice_share_candidates, which lists only people who may read invoices. It is sent in the name of the person who approves it, so a person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "The invoice, from list_invoices or get_invoice.",
+            "type": "string"
+          },
+          "note": {
+            "description": "A note for them, such as what to look at.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "tab": {
+            "description": "The part of the invoice the link opens on. Defaults to overview.",
+            "enum": [
+              "overview",
+              "delivery",
+              "charges",
+              "documents",
+              "activity"
+            ],
+            "type": "string"
+          },
+          "userIds": {
+            "description": "The teammates, from list_invoice_share_candidates.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "userIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Notifies and emails colleagues in the name of the person who shares it, with a note they read as theirs; only that person sends it."
+      }
+    },
+    {
       "name": "shop_carriers",
       "description": "Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank. Leave the carrier list empty to use the shipment's routing guide. Read this before tendering; nothing is tendered or written by it.",
       "parameters": {
@@ -14385,6 +15940,136 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Leaves a document out of the organization's books for good; nothing sends it again, so a person approves it."
+      }
+    },
+    {
+      "name": "submit_invoice_adjustment",
+      "description": "Propose crediting, rebilling, reversing or writing off posted invoices. Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to submit a saved draft as it stands. Each executes at once or waits for approval as the organization's adjustment policy says. It creates credit memos and replacement invoices, so a person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "adjustments": {
+            "description": "The adjustments to submit, one per invoice. Leave out when submitting a draft.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "invoiceId": {
+                  "description": "The posted invoice, from list_invoices or get_invoice.",
+                  "type": "string"
+                },
+                "kind": {
+                  "description": "CreditOnly credits lines; CreditAndRebill credits them and reissues a corrected invoice; FullReversal credits the whole invoice; WriteOff writes an uncollectable balance off.",
+                  "enum": [
+                    "CreditOnly",
+                    "CreditAndRebill",
+                    "FullReversal",
+                    "WriteOff"
+                  ],
+                  "type": "string"
+                },
+                "lines": {
+                  "description": "The invoice lines to adjust. Leave out a line to leave it alone; leave out an amount to credit the whole of what is left on the line.",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "creditAmount": {
+                        "description": "How much of the line to credit, as a decimal.",
+                        "type": "string"
+                      },
+                      "creditQuantity": {
+                        "description": "The quantity credited, as a decimal.",
+                        "type": "string"
+                      },
+                      "description": {
+                        "description": "The line's wording on the credit memo, when it should differ.",
+                        "maxLength": 500,
+                        "type": "string"
+                      },
+                      "invoiceLineId": {
+                        "description": "The line's id, from get_invoice's lines.",
+                        "type": "string"
+                      },
+                      "rebillAmount": {
+                        "description": "The line's corrected amount on the reissued invoice, for a Manual rebill.",
+                        "type": "string"
+                      },
+                      "rebillQuantity": {
+                        "description": "The line's corrected quantity on the reissued invoice.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "invoiceLineId"
+                    ],
+                    "type": "object"
+                  },
+                  "maxItems": 200,
+                  "type": "array"
+                },
+                "reason": {
+                  "description": "Why, as the customer or the biller would say it.",
+                  "maxLength": 1000,
+                  "type": "string"
+                },
+                "rebillStrategy": {
+                  "description": "How a CreditAndRebill reissues: CloneExact copies the lines, Rerate prices them again, Manual takes the rebill amounts you give. Defaults to CloneExact.",
+                  "enum": [
+                    "CloneExact",
+                    "Rerate",
+                    "Manual"
+                  ],
+                  "type": "string"
+                },
+                "supportingDocumentIds": {
+                  "description": "Documents on the invoice's shipments that support it, from search_documents or get_shipment.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 20,
+                  "minItems": 1,
+                  "type": "array"
+                }
+              },
+              "required": [
+                "invoiceId",
+                "kind",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          },
+          "draftAdjustmentId": {
+            "description": "The draft adjustment, from list_invoice_adjustments or get_invoice_adjustment. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Credits, rebills or writes off receivables and books the entries that say so; only a person submits an adjustment, and the adjustment policy may still hold it for an approver."
       }
     },
     {
@@ -14710,6 +16395,50 @@
       }
     },
     {
+      "name": "unapply_credit_memo",
+      "description": "Propose taking back one credit memo application: the invoice it settled is reopened by that amount and the credit is available again. Use it when credit went to the wrong invoice. A person always decides; say why.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "creditMemoApplicationId": {
+            "description": "The application, from list_credit_memo_applications. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it is taken back.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "creditMemoApplicationId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "customer_payment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reopens an invoice's balance and restores a customer's credit; only a person moves credit."
+      }
+    },
+    {
       "name": "unassign_moves",
       "description": "Take the driver and equipment off one or more moves that have not started, leaving each uncovered for someone else. Use it when a driver can no longer run a load: the driver called off, broke down or ran out of hours before pickup. A move can be unassigned only while its assignment is fresh — assigned, not yet in transit; a move under way is not taken off its driver. The drivers are told the load was taken off them. Cover the move again with assign_move or a tender.",
       "parameters": {
@@ -14750,6 +16479,98 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Takes the driver off a move that has not started, inside Trenova; the driver is told the load was taken off them but sees no text the model wrote, and assigning the move again undoes it."
+      }
+    },
+    {
+      "name": "update_invoice_draft",
+      "description": "Change what a draft invoice says and where it goes: its memo, remittance instructions, email subject and body, recipients and attached documents. Only the fields you pass change; an empty string or list clears one. A posted invoice is changed with an invoice adjustment instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "attachmentDocumentIds": {
+            "description": "The documents attached to the email, from search_documents; replaces the list.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "emailBcc": {
+            "description": "Who is blind-copied; replaces the list.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "type": "array"
+          },
+          "emailBody": {
+            "description": "The body of the email the invoice goes in.",
+            "maxLength": 20000,
+            "type": "string"
+          },
+          "emailCc": {
+            "description": "Who is copied; replaces the list.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "type": "array"
+          },
+          "emailSubject": {
+            "description": "The subject of the email the invoice goes in.",
+            "maxLength": 998,
+            "type": "string"
+          },
+          "emailTo": {
+            "description": "Who the invoice is emailed to; replaces the list.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "type": "array"
+          },
+          "invoiceId": {
+            "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
+            "type": "string"
+          },
+          "memo": {
+            "description": "The note printed on the invoice.",
+            "maxLength": 4000,
+            "type": "string"
+          },
+          "remittanceInstructions": {
+            "description": "How the customer should pay, printed on the invoice.",
+            "maxLength": 4000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "condition": "Changing who the invoice is emailed to is a proposal a person decides; any other change runs once a person approves it.",
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "Outside content could put its own wording or recipients on an invoice the customer receives.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Edits a draft nobody outside has seen; the customer sees it only when a person sends it, but the recipients decide where it goes then."
       }
     },
     {
@@ -15353,6 +17174,60 @@
       }
     },
     {
+      "name": "void_invoice",
+      "description": "Propose voiding an invoice. A draft is voided in place; a posted one through a full-reversal adjustment that credits it, which may wait for an approver. Its freight is rebilled or canceled as you say. Unapply payments and credits first. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "disposition": {
+            "description": "Rebill puts its freight back on the billing queue to be billed again; DoNotRebill cancels it.",
+            "enum": [
+              "Rebill",
+              "DoNotRebill"
+            ],
+            "type": "string"
+          },
+          "invoiceId": {
+            "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it is voided; kept on the invoice.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId",
+          "reason",
+          "disposition"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Takes an invoice out of circulation and reverses what it booked; it cannot be undone, so only a person voids one."
+      }
+    },
+    {
       "name": "void_rate_confirmation",
       "description": "Void a rate confirmation so the revision stops standing and its sign link stops working. Voiding one the carrier confirmed returns their assignment to awaiting confirmation. Use it when the agreement as written is wrong and should not be signed; to correct it, generate a new revision instead, which voids this one. Say why in reason. Find the revision with list_rate_confirmations.",
       "parameters": {
@@ -15586,6 +17461,50 @@
         "source": "web",
         "carriesTaint": false,
         "rationale": "Searches the public web through the organization's extension; it changes nothing in Trenova, sends only the query, and returns text written outside it."
+      }
+    },
+    {
+      "name": "withdraw_invoice_dispute",
+      "description": "Withdraw an open invoice dispute the customer no longer pursues, without recording an outcome. The invoice's Disputed flag clears and it goes back to collections as it was. Use resolve_invoice_dispute instead when there is an outcome to record.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "disputeId": {
+            "description": "The open dispute, from list_invoice_disputes. Never guess one.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Why the customer dropped it.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "disputeId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice_dispute",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A withdrawal read from what a customer wrote is proposed, since it sends the invoice back to collections.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Closes a dispute case inside Trenova with no outcome; it moves no money and a new case can be opened with open_invoice_dispute."
       }
     }
   ]

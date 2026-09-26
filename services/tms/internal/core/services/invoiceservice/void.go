@@ -34,54 +34,16 @@ func (s *Service) VoidInvoice(
 	req *servicesports.VoidInvoiceRequest,
 	actor *servicesports.RequestActor,
 ) (*servicesports.VoidInvoiceResult, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-	if actor == nil {
-		return nil, errortypes.NewValidationError(
-			"actor",
-			errortypes.ErrRequired,
-			"Actor is required",
-		)
-	}
-	if multiErr := validateVoidRequest(req); multiErr != nil {
-		return nil, multiErr
-	}
-
-	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
-		ID:         req.InvoiceID,
-		TenantInfo: req.TenantInfo,
-	})
+	entity, err := s.planVoid(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	if err = s.refuseVoidWithStandingLateCharges(ctx, entity, req.TenantInfo); err != nil {
-		return nil, err
+
+	if entity.Status == invoice.StatusDraft {
+		return s.voidDraft(ctx, req, actor)
 	}
 
-	switch entity.Status {
-	case invoice.StatusDraft:
-		return s.voidDraft(ctx, req, actor)
-	case invoice.StatusPosted:
-		return s.voidPosted(ctx, req, entity, actor)
-	case invoice.StatusVoided:
-		return nil, errortypes.NewValidationError(
-			"invoiceId",
-			errortypes.ErrInvalidOperation,
-			"Invoice {0} is already voided",
-			entity.Number,
-		)
-	default:
-		return nil, errortypes.NewValidationError(
-			"invoiceId",
-			errortypes.ErrInvalidOperation,
-			"Invoice cannot be voided from its current status",
-		)
-	}
+	return s.voidPosted(ctx, req, entity, actor)
 }
 
 func validateVoidRequest(req *servicesports.VoidInvoiceRequest) *errortypes.MultiError {
@@ -135,23 +97,11 @@ func (s *Service) voidDraft(
 				"Invoice is no longer a draft; reload and try again",
 			)
 		}
-		if entity.AppliedAmountMinor > 0 {
-			return errortypes.NewValidationError(
-				"invoiceId",
-				errortypes.ErrInvalidOperation,
-				"Unapply the customer payments and credit memos on this invoice before voiding it",
-			)
-		}
 
 		previous := *entity
 		now := timeutils.NowUnix()
-		entity.Status = invoice.StatusVoided
-		entity.VoidedAt = &now
-		entity.VoidedByID = actor.UserID
-		entity.VoidReason = strings.TrimSpace(req.Reason)
-		entity.VoidDisposition = req.Disposition
-		if multiErr := s.validator.ValidateUpdate(txCtx, entity); multiErr != nil {
-			return multiErr
+		if txErr = s.markDraftVoided(txCtx, entity, req, actor, now); txErr != nil {
+			return txErr
 		}
 		updated, txErr := s.repo.Update(txCtx, entity)
 		if txErr != nil {
@@ -193,24 +143,8 @@ func (s *Service) voidPosted(
 	entity *invoice.Invoice,
 	actor *servicesports.RequestActor,
 ) (*servicesports.VoidInvoiceResult, error) {
-	if entity.AppliedAmountMinor > 0 {
-		return nil, errortypes.NewValidationError(
-			"invoiceId",
-			errortypes.ErrInvalidOperation,
-			"Unapply the customer payments and credit memos on this invoice before voiding it",
-		)
-	}
-	if entity.BillType == billingqueue.BillTypeCreditMemo && entity.AppliedAmountMinor > 0 {
-		return nil, errortypes.NewValidationError(
-			"invoiceId",
-			errortypes.ErrInvalidOperation,
-			"Unapply this credit memo from the invoices it settles before voiding it",
-		)
-	}
-	if s.adjustmentService == nil {
-		return nil, errortypes.NewConflictError(
-			"Invoice adjustments are unavailable; a posted invoice cannot be voided",
-		)
+	if err := s.refuseVoidingPosted(entity); err != nil {
+		return nil, err
 	}
 
 	// The reason and disposition are recorded before the reversal runs, so an
@@ -222,13 +156,7 @@ func (s *Service) voidPosted(
 		return nil, err
 	}
 
-	adjustment, err := s.adjustmentService.Submit(ctx, &servicesports.InvoiceAdjustmentRequest{
-		InvoiceID:      entity.ID,
-		Kind:           invoiceadjustment.KindFullReversal,
-		Reason:         entity.VoidReason,
-		IdempotencyKey: "invoice-void:" + entity.ID.String(),
-		TenantInfo:     req.TenantInfo,
-	}, actor)
+	adjustment, err := s.adjustmentService.Submit(ctx, voidReversalRequest(entity, req), actor)
 	if err != nil {
 		return nil, err
 	}

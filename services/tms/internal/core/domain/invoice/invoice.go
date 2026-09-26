@@ -896,7 +896,7 @@ func (a *EmailAttempt) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&a.Subject,
 			validation.Required.Error("Subject is required"),
-			validation.Length(1, maxEmailSubjectLength).
+			validation.Length(1, MaxEmailSubjectLength).
 				Error("Subject cannot be longer than 998 characters"),
 		),
 		validation.Field(&a.EstimatedSize,
@@ -989,7 +989,7 @@ func (t *DocumentShareToken) Validate(multiErr *errortypes.MultiError) {
 
 const (
 	maxProviderMessageIDLength     = 160
-	maxEmailSubjectLength          = 998
+	MaxEmailSubjectLength          = 998
 	maxAttachmentFileNameLength    = 255
 	maxAttachmentContentTypeLength = 120
 	maxShareTokenHashLength        = 128

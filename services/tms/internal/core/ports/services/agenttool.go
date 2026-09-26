@@ -172,6 +172,11 @@ type ToolTarget struct {
 	ID       pulid.ID
 }
 
+const (
+	RecordInvoiceAdjustment     permission.Resource = "invoice_adjustment"
+	RecordCreditMemoApplication permission.Resource = "credit_memo_application"
+)
+
 // TargetedTool is a tool that can say which record a call would change, from
 // the arguments alone. It is pure: no lookup, no service — the tool already
 // knows which argument names its subject.

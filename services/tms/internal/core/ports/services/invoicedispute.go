@@ -36,6 +36,13 @@ type WithdrawInvoiceDisputeRequest struct {
 	Notes      string                `json:"notes"`
 }
 
+type InvoiceDisputePreview struct {
+	Before        *invoice.InvoiceDispute
+	After         *invoice.InvoiceDispute
+	InvoiceBefore *invoice.Invoice
+	InvoiceAfter  *invoice.Invoice
+}
+
 type InvoiceDisputeService interface {
 	Open(
 		ctx context.Context,
@@ -52,4 +59,19 @@ type InvoiceDisputeService interface {
 		req *WithdrawInvoiceDisputeRequest,
 		actor *RequestActor,
 	) (*invoice.InvoiceDispute, error)
+	PreviewOpen(
+		ctx context.Context,
+		req *OpenInvoiceDisputeRequest,
+		actor *RequestActor,
+	) (*InvoiceDisputePreview, error)
+	PreviewResolve(
+		ctx context.Context,
+		req *ResolveInvoiceDisputeRequest,
+		actor *RequestActor,
+	) (*InvoiceDisputePreview, error)
+	PreviewWithdraw(
+		ctx context.Context,
+		req *WithdrawInvoiceDisputeRequest,
+		actor *RequestActor,
+	) (*InvoiceDisputePreview, error)
 }

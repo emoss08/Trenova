@@ -100,6 +100,42 @@ type CreateInvoiceFromShipmentsRequest struct {
 	OffCycleReason string
 }
 
+type PlanCreateInvoicesRequest struct {
+	OrderID        pulid.ID
+	ShipmentIDs    []pulid.ID
+	TenantInfo     pagination.TenantInfo
+	OffCycleReason string
+}
+
+type CreateInvoicesPlan struct {
+	Drafts       []*invoice.Invoice
+	PrimaryIndex int
+}
+
+type InvoiceDraftUpdatePreview struct {
+	Before            *invoice.Invoice
+	After             *invoice.Invoice
+	AttachmentsBefore []pulid.ID
+	AttachmentsAfter  []pulid.ID
+}
+
+type InvoicePDFGenerationPlan struct {
+	Invoice   *invoice.Invoice
+	AutoSends bool
+}
+
+type InvoiceEDISendPreview struct {
+	Invoice *invoice.Invoice
+	Plan    *InvoiceEDISendPlan
+}
+
+type InvoiceVoidPreview struct {
+	Before   *invoice.Invoice
+	After    *invoice.Invoice
+	Posted   bool
+	Reversal *InvoiceAdjustmentPreview
+}
+
 type CreateInvoiceFromOrderRequest struct {
 	OrderID pulid.ID
 	// ShipmentIDs optionally restricts the grouped invoice to an explicit subset of the

@@ -60,6 +60,48 @@ func New(p Params) servicesports.LateChargeService {
 	}
 }
 
+func refuseDisabled(mode tenant.LateChargeAssessmentMode) error {
+	if mode != tenant.LateChargeAssessmentModeDisabled {
+		return nil
+	}
+
+	return errortypes.NewValidationError(
+		"mode",
+		errortypes.ErrInvalidOperation,
+		"Late charge assessment is disabled for this organization; enable it in billing control or run a preview",
+	)
+}
+
+func memosAutoPost(control *tenant.BillingControl) bool {
+	return control.InvoicePostingMode == tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions
+}
+
+func (s *Service) PlanAssess(
+	ctx context.Context,
+	req *servicesports.LateChargeAssessmentRequest,
+	actor *servicesports.RequestActor,
+) (*servicesports.LateChargeAssessmentResult, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
+	}
+
+	planned := *req
+	planned.Preview = true
+	result, err := s.Assess(ctx, &planned, actor)
+	if err != nil {
+		return nil, err
+	}
+	if err = refuseDisabled(result.Mode); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // customerPlan is what one customer is owed before anything is written.
 type customerPlan struct {
 	result      *servicesports.LateChargeCustomerResult
@@ -102,14 +144,13 @@ func (s *Service) Assess(
 		AsOfDate:  asOf,
 		Preview:   req.Preview,
 		Mode:      mode,
+		AutoPost:  memosAutoPost(control),
 		Customers: make([]*servicesports.LateChargeCustomerResult, 0),
 	}
-	if !req.Preview && mode == tenant.LateChargeAssessmentModeDisabled {
-		return nil, errortypes.NewValidationError(
-			"mode",
-			errortypes.ErrInvalidOperation,
-			"Late charge assessment is disabled for this organization; enable it in billing control or run a preview",
-		)
+	if !req.Preview {
+		if err = refuseDisabled(mode); err != nil {
+			return nil, err
+		}
 	}
 
 	candidates, err := s.repo.ListCandidates(ctx, &repositories.ListLateChargeCandidatesRequest{
@@ -279,7 +320,7 @@ func (s *Service) raiseMemo(
 		InvoiceDate: inserted[0].AsOfDate,
 		Memo:        "Late charge run " + runKey,
 		MemoKind:    invoice.MemoKindLateCharge,
-		AutoPost:    control.InvoicePostingMode == tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
+		AutoPost:    memosAutoPost(control),
 	}, actor)
 	if err != nil {
 		if _, delErr := s.repo.DeleteByRunKey(ctx, tenantInfo, runKey); delErr != nil {

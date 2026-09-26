@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -99,43 +98,29 @@ func (s *Service) commitGroup(
 		GroupLabel: group.GroupLabel,
 	}
 
-	// A group committed by an earlier attempt is left alone; that is what makes a
-	// retry safe.
-	if group.Status == invoicerun.GroupStatusCommitted {
-		outcome.Success = true
-		outcome.InvoiceID = group.InvoiceID
-		return outcome
-	}
-	if group.Status == invoicerun.GroupStatusSkipped {
-		outcome.Skipped = true
-		outcome.Error = group.SkipReason
-		return outcome
-	}
-
 	tenantInfo := pagination.TenantInfo{
 		OrgID: run.OrganizationID,
 		BuID:  run.BusinessUnitID,
 	}
 
-	included := group.IncludedItems()
-	if len(included) == 0 {
-		return s.skipGroup(ctx, group, &outcome, "Every shipment on this group was excluded")
-	}
-
-	// A customer's floor is a deliberate instruction not to send them a trivial
-	// invoice. The shipments stay billable, so they roll into the next period
-	// rather than being lost.
-	if reason := belowMinimum(group, included); reason != "" {
-		return s.skipGroup(ctx, group, &outcome, reason)
-	}
-
-	legs, queueItems, reason, err := s.resolveGroupLegs(ctx, tenantInfo, group, included)
+	decision, err := s.decideGroup(ctx, tenantInfo, group)
 	if err != nil {
 		return s.failGroup(ctx, group, &outcome, err)
 	}
-	if reason != "" {
-		return s.skipGroup(ctx, group, &outcome, reason)
+	switch decision.plan.Outcome {
+	case servicesports.InvoiceRunGroupAlreadyCommitted:
+		outcome.Success = true
+		outcome.InvoiceID = group.InvoiceID
+		return outcome
+	case servicesports.InvoiceRunGroupAlreadySkipped:
+		outcome.Skipped = true
+		outcome.Error = group.SkipReason
+		return outcome
+	case servicesports.InvoiceRunGroupSkips:
+		return s.skipGroup(ctx, group, &outcome, decision.plan.Reason)
+	case servicesports.InvoiceRunGroupBills:
 	}
+	legs, queueItems := decision.legs, decision.queueItems
 
 	invoiceEntity, err := s.consolidatedMaker.CreateConsolidated(
 		ctx,
@@ -422,11 +407,7 @@ func belowMinimum(
 		return ""
 	}
 
-	total := decimal.Zero
-	for _, item := range included {
-		total = total.Add(item.Amount)
-	}
-	if total.GreaterThanOrEqual(group.MinimumAmount.Decimal) {
+	if includedTotal(included).GreaterThanOrEqual(group.MinimumAmount.Decimal) {
 		return ""
 	}
 

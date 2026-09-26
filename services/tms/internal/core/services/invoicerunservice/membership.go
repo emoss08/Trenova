@@ -44,56 +44,9 @@ func (s *Service) AdjustMembership(
 		return nil, multiErr
 	}
 
-	index := indexItems(run)
-	touched := make(map[pulid.ID]*invoicerun.InvoiceRunGroupItem, len(req.Exclude)+len(req.Moves))
-
-	for _, exclusion := range req.Exclude {
-		item, ok := index.items[exclusion.ItemID]
-		if !ok {
-			return nil, unknownItem(exclusion.ItemID)
-		}
-		if exclusion.Reason == "" {
-			return nil, errortypes.NewValidationError(
-				"exclude",
-				errortypes.ErrRequired,
-				"Say why the shipment is being taken off the invoice",
-			)
-		}
-		item.Excluded = true
-		item.ExclusionReason = exclusion.Reason
-		touched[item.ID] = item
-	}
-
-	for _, itemID := range req.Include {
-		item, ok := index.items[itemID]
-		if !ok {
-			return nil, unknownItem(itemID)
-		}
-		item.Excluded = false
-		item.ExclusionReason = ""
-		touched[item.ID] = item
-	}
-
-	for _, move := range req.Moves {
-		item, ok := index.items[move.ItemID]
-		if !ok {
-			return nil, unknownItem(move.ItemID)
-		}
-		target, ok := index.groups[move.TargetGroupID]
-		if !ok {
-			return nil, unknownGroup(move.TargetGroupID)
-		}
-		// An invoice never spans customers, so a move across them is refused here
-		// rather than discovered at commit.
-		if target.CustomerID != index.groups[item.GroupID].CustomerID {
-			return nil, errortypes.NewValidationError(
-				"moves",
-				errortypes.ErrInvalid,
-				"A shipment can only move between groups of the same customer",
-			)
-		}
-		item.GroupID = move.TargetGroupID
-		touched[item.ID] = item
+	touched, err := applyMembership(run, req)
+	if err != nil {
+		return nil, err
 	}
 
 	if len(touched) == 0 {
