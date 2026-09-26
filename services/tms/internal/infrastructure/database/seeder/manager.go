@@ -171,6 +171,22 @@ func (m *Manager) Migrate(ctx context.Context, opts common.OperationOptions) err
 		return fmt.Errorf("migration failed: %s", result.Message)
 	}
 
+	return m.reconcileSeeds(ctx, opts)
+}
+
+func (m *Manager) reconcileSeeds(ctx context.Context, opts common.OperationOptions) error {
+	if opts.DryRun || m.seeder == nil {
+		return nil
+	}
+
+	report, err := m.seeder.Reconcile(ctx, opts.Environment)
+	if err != nil {
+		return fmt.Errorf("reconcile seeds after migrating: %w", err)
+	}
+	if report != nil && !report.Success() {
+		return fmt.Errorf("reconciling seeds after migrating failed %d times", report.Failed)
+	}
+
 	return nil
 }
 
