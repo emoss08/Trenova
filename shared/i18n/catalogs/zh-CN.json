@@ -3816,6 +3816,7 @@
   "Nightly PTO accrual, carryover cap, and expiry posting": "每晚过账带薪休假累积、结转上限与过期",
   "No AI provider is configured for {0}": "尚未为 {0} 配置 AI 提供方",
   "No BIPD liability filing is on record with FMCSA.": "FMCSA 并无 BIPD 责任险申报记录。",
+  "No Trenova Capture release is published": "未发布任何 Trenova Capture 版本",
   "No Trenova user exists for this {0} account": "此 {0} 账户没有对应的 Trenova 用户",
   "No accrued pay events remain for this settlement's period": "此结算所属期间已无剩余的计提薪酬事件",
   "No active AS2 communication profile matches the AS2 identifiers": "没有生效中的 AS2 通信配置文件匹配这些 AS2 标识码",

@@ -3816,6 +3816,7 @@
   "Nightly PTO accrual, carryover cap, and expiry posting": "Contabilización nocturna de acumulaciones, límites de arrastre y caducidades del tiempo libre remunerado",
   "No AI provider is configured for {0}": "No hay ningún proveedor de IA configurado para {0}",
   "No BIPD liability filing is on record with FMCSA.": "No hay presentación de responsabilidad BIPD registrada ante la FMCSA.",
+  "No Trenova Capture release is published": "No hay ninguna versión de Trenova Capture publicada",
   "No Trenova user exists for this {0} account": "No existe ningún usuario de Trenova para esta cuenta de {0}",
   "No accrued pay events remain for this settlement's period": "No quedan eventos de pago devengados para el período de esta liquidación",
   "No active AS2 communication profile matches the AS2 identifiers": "Ningún perfil de comunicación AS2 activo coincide con los identificadores AS2",

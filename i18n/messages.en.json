@@ -56766,6 +56766,15 @@
       "routes/shipment"
     ]
   },
+  "Download Trenova Capture": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Download again": {
     "sites": 1,
     "scope": [
@@ -84036,6 +84045,15 @@
       "routes/formula-template"
     ]
   },
+  "Install Trenova Capture": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Install Trenova Capture on the computer your scanner is plugged into, choose Sign in from its tray icon, and approve the code it shows.": {
     "sites": 1,
     "scope": [
@@ -84070,6 +84088,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Installing takes administrator rights. It adds the Trenova printer and starts Trenova Capture in the notification area at sign-in; once it is installed, updates arrive by themselves unless your organization turns that off.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Installs new versions when they are released. Turn off where software is rolled out by IT.": {
@@ -104829,6 +104856,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No Trenova Capture installer is published yet, or this server does not serve one. Once it is, people download it from here and from My scanners.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "No Trenova Capture release is published": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "No Trenova user exists for this {0} account": {
@@ -140736,6 +140781,15 @@
       "routes/driver-pay-event"
     ]
   },
+  "Released": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Released for rebilling": {
     "sites": 2,
     "scope": [
@@ -143985,6 +144039,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Requires": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Requires a default EDI channel on the carrier": {
@@ -149907,11 +149970,12 @@
     ]
   },
   "SHA-256": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control",
       "routes/edi"
     ]
@@ -162765,7 +162829,7 @@
     ]
   },
   "Size": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -195862,11 +195926,12 @@
     ]
   },
   "Version {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin"
     ]
   },
@@ -203233,6 +203298,15 @@
     ],
     "areas": [
       "routes/capture"
+    ]
+  },
+  "Windows build {0} or later, 64-bit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Windows user": {
@@ -217078,6 +217152,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} or later, 64-bit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} original": {
