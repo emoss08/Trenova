@@ -62,7 +62,16 @@ pub struct Device {
 
 /// A device whose access token has `expires_in` seconds left.
 pub fn device(server: &MockServer, expires_in: i64) -> Device {
-    let base = Server::parse(&server.uri()).expect("server");
+    signed_in(&server.uri(), expires_in)
+}
+
+/// A device signed in to an address nothing answers at.
+pub fn device_at(uri: &str) -> Device {
+    signed_in(uri, 900)
+}
+
+fn signed_in(uri: &str, expires_in: i64) -> Device {
+    let base = Server::parse(uri).expect("server");
     let store = Arc::new(MemoryStore::with(Credential {
         server: base.as_str().to_owned(),
         web_base: "https://app.trenova.test".into(),

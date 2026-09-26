@@ -6,7 +6,7 @@ use capture_client::api::PairingPoll;
 use capture_client::pairing::{PairingOutcome, pair};
 use capture_client::{ApiError, SecretStore};
 use capture_protocol::api::{Architecture, StartPairingRequest};
-use common::{device, problem, token_json};
+use common::{device, device_at, problem, token_json};
 use serde_json::json;
 use tokio_util::sync::CancellationToken;
 use wiremock::matchers::{body_partial_json, header, method, path};
@@ -274,5 +274,28 @@ async fn poll_answers_map_to_rfc_8628() {
     assert_eq!(
         device.api.poll_pairing("dc").await.expect("poll"),
         PairingPoll::SlowDown
+    );
+}
+
+#[tokio::test]
+async fn signing_out_revokes_the_device_and_forgets_it_even_offline() {
+    let server = MockServer::start().await;
+    Mock::given(method("DELETE"))
+        .and(path("/api/v1/capture/device/"))
+        .and(header("authorization", "Bearer tcd_at_old"))
+        .respond_with(ResponseTemplate::new(204))
+        .expect(1)
+        .mount(&server)
+        .await;
+    let device = device(&server, 900);
+    device.api.revoke_self().await.expect("signed out");
+    assert!(device.store.load().expect("load").is_none());
+
+    let unreachable = device_at("http://127.0.0.1:9");
+    let err = unreachable.api.revoke_self().await.expect_err("offline");
+    assert!(err.is_retryable());
+    assert!(
+        unreachable.store.load().expect("load").is_none(),
+        "forgotten anyway"
     );
 }

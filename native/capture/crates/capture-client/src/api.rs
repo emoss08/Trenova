@@ -152,6 +152,31 @@ impl Api {
         forget(&self.store, &mut guard);
     }
 
+    /// Signs this computer out: revokes the device on the server, then
+    /// forgets the credential here. It is forgotten even if the server cannot
+    /// be reached, because a person who signed out expects it gone; the
+    /// device then shows as offline until someone removes it in the web app.
+    pub async fn revoke_self(&self) -> Result<(), ApiError> {
+        let revoked = match self
+            .send(|token| {
+                self.http
+                    .delete(self.server.api("device/"))
+                    .timeout(CALL_TIMEOUT)
+                    .bearer_auth(token)
+            })
+            .await
+        {
+            Ok(response) if response.status().is_success() => Ok(()),
+            Ok(response) => Err(error_from(response).await),
+            Err(err) => Err(err),
+        };
+        self.sign_out().await;
+        match revoked {
+            Err(ApiError::SignedOut | ApiError::NotSignedIn) => Ok(()),
+            other => other,
+        }
+    }
+
     /// Starts pairing: the grant whose code the person approves.
     pub async fn start_pairing(
         &self,

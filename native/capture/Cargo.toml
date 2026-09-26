@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/capture-protocol", "crates/capture-imaging", "crates/capture-twain", "crates/capture-wia", "crates/capture-client", "crates/capture-platform", "bins/trenova-capture-scan"]
+members = ["crates/capture-protocol", "crates/capture-imaging", "crates/capture-twain", "crates/capture-wia", "crates/capture-client", "crates/capture-platform", "bins/trenova-capture-scan", "bins/trenova-capture"]
 
 [workspace.package]
 version = "1.0.0"
