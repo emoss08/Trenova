@@ -34963,7 +34963,7 @@
     ]
   },
   "Clear": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -71005,6 +71005,15 @@
       "routes/worker"
     ]
   },
+  "Filter by name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Filter by status": {
     "sites": 1,
     "scope": [
@@ -71102,6 +71111,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Filter {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Filter {0}…": {
@@ -86878,6 +86896,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Keep at least one, or reject the proposal instead.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Keep card": {
@@ -109655,6 +109682,15 @@
     ]
   },
   "Nothing matches that": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Nothing matches that filter.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -151960,7 +151996,7 @@
     ]
   },
   "Select all": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -200462,6 +200498,15 @@
       "routes/time-attendance"
     ]
   },
+  "Would change {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Would charge": {
     "sites": 1,
     "scope": [
@@ -212483,6 +212528,24 @@
       "routes/reports"
     ]
   },
+  "{0} of 1 record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} of 1 shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} of 17 characters. VINs never use the letters I, O or Q.": {
     "sites": 1,
     "scope": [
@@ -212642,6 +212705,15 @@
       "routes/shipment"
     ]
   },
+  "{0} of {1} records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} of {1} required courses are current.": {
     "sites": 1,
     "scope": [
@@ -212685,6 +212757,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} of {1} shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} of {1} shipments checked": {
