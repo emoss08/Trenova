@@ -222,6 +222,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"refresh_accounting_reference_data": {agent.EgressInternal},
 		"retry_accounting_sync":             {agent.EgressInternal},
 		"skip_accounting_sync":              {agent.EgressInternal},
+		"redate_accounting_sync":            {agent.EgressInternal},
 		"ignore_accounting_inbound_change":  {agent.EgressInternal},
 		"dismiss_accounting_drift":          {agent.EgressInternal},
 		"check_accounting_drift":            {agent.EgressInternal},
