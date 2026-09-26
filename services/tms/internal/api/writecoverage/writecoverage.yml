@@ -1144,6 +1144,23 @@ writes:
   "POST /api/v1/exchange-rates/settlement-quotes":
     pending: "Lock an exchange rate quote for settling a foreign-currency payment."
 
+  # extractioneval
+  "mutation cancelExtractionEvalRun":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation deleteExtractionEvalCase":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation promoteAICorrection":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation startExtractionEvalRun":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation updateExtractionEvalCase":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+
   # fiscalperiod
   "DELETE /api/v1/fiscal-periods/:fiscalPeriodID/":
     pending: "Delete a fiscal period."

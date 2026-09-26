@@ -65,7 +65,7 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 210 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 28 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 42 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 47 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 46 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 8 |
@@ -73,23 +73,23 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 ## Totals
 
-917 writes: 470 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
+922 writes: 475 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 166 |
-| Exempt | 451 |
+| Exempt | 456 |
 | — Security | 58 |
 | — Configuration | 210 |
 | — User preference | 23 |
 | — Infrastructure | 28 |
-| — Agent administration | 42 |
+| — Agent administration | 47 |
 | — Counterparty | 33 |
 | — Read-only | 46 |
 | — Attestation | 8 |
 | — Duplicate | 3 |
 | **Pending** | **300** |
-| Total | 917 |
+| Total | 922 |
 
 Of the 466 writes an agent should be able to make, 166 have a tool (35%).
 
@@ -464,6 +464,7 @@ The writes no tool performs yet, and what the tool would do.
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
 | exchangerate | 2 | 0 | 1 | 1 |
+| extractioneval | 5 | 0 | 5 | 0 |
 | fiscalperiod | 9 | 0 | 0 | 9 |
 | fiscalyear | 7 | 0 | 0 | 7 |
 | fleetcode | 3 | 0 | 3 | 0 |
@@ -1260,6 +1261,16 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `POST /api/v1/exchange-rates/refresh`<br>exchangeratehandler.refresh | Exempt, infrastructure: Fetches exchange rates from the provider now; the scheduler refreshes them on its own. |
 | `POST /api/v1/exchange-rates/settlement-quotes`<br>exchangeratehandler.createSettlementQuote | Pending: Lock an exchange rate quote for settling a foreign-currency payment. |
+
+### extractioneval
+
+| Write | Decision |
+| --- | --- |
+| `mutation cancelExtractionEvalRun` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+| `mutation deleteExtractionEvalCase` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+| `mutation promoteAICorrection` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+| `mutation startExtractionEvalRun` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+| `mutation updateExtractionEvalCase` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
 
 ### fiscalperiod
 
