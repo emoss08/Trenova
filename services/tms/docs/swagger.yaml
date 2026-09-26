@@ -244,6 +244,8 @@ definitions:
             - EDIDesk
             - FormulaAssistant
             - BooksKeeper
+            - SettlementsClerk
+            - Receivables
         type: string
         x-enum-varnames:
             - TemplateDispatchAssistant
@@ -268,6 +270,8 @@ definitions:
             - TemplateEDIDesk
             - TemplateFormulaAssistant
             - TemplateBooksKeeper
+            - TemplateSettlementsClerk
+            - TemplateReceivables
     apikeyservice.AllowedResourceCategory:
         properties:
             category:

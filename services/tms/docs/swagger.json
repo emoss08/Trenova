@@ -316,7 +316,9 @@
                 "InsightAnalyst",
                 "EDIDesk",
                 "FormulaAssistant",
-                "BooksKeeper"
+                "BooksKeeper",
+                "SettlementsClerk",
+                "Receivables"
             ],
             "type": "string",
             "x-enum-varnames": [
@@ -341,7 +343,9 @@
                 "TemplateInsightAnalyst",
                 "TemplateEDIDesk",
                 "TemplateFormulaAssistant",
-                "TemplateBooksKeeper"
+                "TemplateBooksKeeper",
+                "TemplateSettlementsClerk",
+                "TemplateReceivables"
             ]
         },
         "apikeyservice.AllowedResourceCategory": {
