@@ -52,18 +52,10 @@ func (s *Service) SubmitForApproval(
 	if err != nil {
 		return nil, err
 	}
-	if !carriersettlement.IsAllowedTransition(
-		entity.Status,
-		carriersettlement.StatusPendingApproval,
-	) || entity.Status == carriersettlement.StatusPendingApproval {
-		return nil, transitionError(entity.Status, carriersettlement.StatusPendingApproval)
-	}
-
 	previous := *entity
-	now := timeutils.NowUnix()
-	entity.Status = carriersettlement.StatusPendingApproval
-	entity.SubmittedByID = actor.UserID
-	entity.SubmittedAt = &now
+	if err = PlanSubmit(entity, actor.UserID, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 
 	updated, err := s.settlementRepo.Update(ctx, entity)
 	if err != nil {
@@ -102,24 +94,19 @@ func (s *Service) approveInternal(
 			return txErr
 		}
 		if fromDraft && entity.Status == carriersettlement.StatusDraft {
-			now := timeutils.NowUnix()
-			entity.Status = carriersettlement.StatusPendingApproval
-			entity.SubmittedByID = actor.UserID
-			entity.SubmittedAt = &now
+			if txErr = PlanSubmit(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
+				return txErr
+			}
 			entity, txErr = s.settlementRepo.Update(txCtx, entity)
 			if txErr != nil {
 				return txErr
 			}
 		}
-		if entity.Status != carriersettlement.StatusPendingApproval {
-			return transitionError(entity.Status, carriersettlement.StatusApproved)
-		}
 
 		previous = *entity
-		now := timeutils.NowUnix()
-		entity.Status = carriersettlement.StatusApproved
-		entity.ApprovedByID = actor.UserID
-		entity.ApprovedAt = &now
+		if txErr = PlanApprove(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
+			return txErr
+		}
 		updated, txErr = s.settlementRepo.Update(txCtx, entity)
 		return txErr
 	})
@@ -163,18 +150,10 @@ func (s *Service) Reject(
 	if err != nil {
 		return nil, err
 	}
-	if entity.Status != carriersettlement.StatusPendingApproval {
-		return nil, transitionError(entity.Status, carriersettlement.StatusDraft)
-	}
-
 	previous := *entity
-	entity.Status = carriersettlement.StatusDraft
-	entity.SubmittedByID = pulid.Nil
-	entity.SubmittedAt = nil
-	if entity.Notes != "" {
-		entity.Notes += "\n"
+	if err = PlanReject(entity, reason); err != nil {
+		return nil, err
 	}
-	entity.Notes += "Rejected: " + reason
 
 	updated, err := s.settlementRepo.Update(ctx, entity)
 	if err != nil {
@@ -213,8 +192,8 @@ func (s *Service) MarkPaid(
 		if txErr != nil {
 			return txErr
 		}
-		if entity.Status != carriersettlement.StatusPosted {
-			return transitionError(entity.Status, carriersettlement.StatusPaid)
+		if txErr = CheckMarkPaid(entity, paymentMethod); txErr != nil {
+			return txErr
 		}
 		previous = *entity
 
@@ -238,11 +217,14 @@ func (s *Service) MarkPaid(
 			return txErr
 		}
 
-		entity.Status = carriersettlement.StatusPaid
-		entity.PaidAt = &paidAt
-		entity.PaidByID = actor.UserID
-		entity.PaymentMethod = paymentMethod
-		entity.PaymentReference = req.PaymentReference
+		if txErr = PlanMarkPaid(entity, &MarkPaidInput{
+			PaymentMethod:    paymentMethod,
+			PaymentReference: req.PaymentReference,
+			PaidAt:           paidAt,
+			UserID:           actor.UserID,
+		}); txErr != nil {
+			return txErr
+		}
 		entity.PaidJournalBatchID = batchID
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr
@@ -291,11 +273,8 @@ func (s *Service) Void(
 		if txErr != nil {
 			return txErr
 		}
-		if !carriersettlement.IsAllowedTransition(
-			entity.Status,
-			carriersettlement.StatusVoided,
-		) || entity.Status == carriersettlement.StatusVoided {
-			return transitionError(entity.Status, carriersettlement.StatusVoided)
+		if txErr = CheckVoid(entity, reason); txErr != nil {
+			return txErr
 		}
 		previous = *entity
 
@@ -310,11 +289,9 @@ func (s *Service) Void(
 			return txErr
 		}
 
-		now := timeutils.NowUnix()
-		entity.Status = carriersettlement.StatusVoided
-		entity.VoidedByID = actor.UserID
-		entity.VoidedAt = &now
-		entity.VoidReason = reason
+		if txErr = PlanVoid(entity, reason, actor.UserID, timeutils.NowUnix()); txErr != nil {
+			return txErr
+		}
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr
 		}
@@ -354,12 +331,8 @@ func (s *Service) Recalculate(
 		if txErr != nil {
 			return txErr
 		}
-		if entity.Status != carriersettlement.StatusDraft {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"Only draft carrier settlements can be recalculated",
-			)
+		if txErr = PlanRecalculate(entity); txErr != nil {
+			return txErr
 		}
 		previous = *entity
 
@@ -395,32 +368,9 @@ func (s *Service) rebuildDraftSettlementTx(
 		return nil, err
 	}
 	if rebuilt == nil {
-		return nil, errortypes.NewValidationError(
-			"settlementId",
-			errortypes.ErrInvalid,
-			"No pending cost events remain for this settlement's period",
-		)
+		return nil, errNoPendingCostEventsRemain()
 	}
-
-	manualLines := make([]*carriersettlement.CarrierSettlementLine, 0)
-	for _, line := range entity.Lines {
-		if line != nil && line.IsManualAdjustment() {
-			line.ID = pulid.Nil
-			manualLines = append(manualLines, line)
-		}
-	}
-
-	mergedLines := make(
-		[]*carriersettlement.CarrierSettlementLine,
-		0,
-		len(rebuilt.Lines)+len(manualLines),
-	)
-	mergedLines = append(mergedLines, rebuilt.Lines...)
-	mergedLines = append(mergedLines, manualLines...)
-	entity.Lines = mergedLines
-	entity.CurrencyCode = rebuilt.CurrencyCode
-	entity.ShipmentCount = rebuilt.ShipmentCount
-	entity.SyncTotals()
+	MergeRebuilt(entity, rebuilt)
 
 	if err = s.settlementRepo.ReplaceLines(txCtx, entity); err != nil {
 		return nil, err
@@ -451,46 +401,19 @@ func (s *Service) AddAdjustmentLine(
 	if err := requireActor(actor, "Carrier settlement adjustment"); err != nil {
 		return nil, err
 	}
-	if input.Description == "" {
-		return nil, errortypes.NewValidationError(
-			"description",
-			errortypes.ErrRequired,
-			"Adjustment description is required",
-		)
-	}
-	if input.AmountMinor == 0 {
-		return nil, errortypes.NewValidationError(
-			"amountMinor",
-			errortypes.ErrInvalid,
-			"Adjustment amount cannot be zero",
-		)
+	if err := checkAdjustmentInput(input); err != nil {
+		return nil, err
 	}
 
 	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)
 	if err != nil {
 		return nil, err
 	}
-	if !entity.IsEditable() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only draft or pending carrier settlements can be adjusted",
-		)
-	}
-
-	var glAccountID *pulid.ID
-	if input.GLAccountID != nil && !input.GLAccountID.IsNil() {
-		glAccountID = input.GLAccountID
-	}
 
 	previous := *entity
-	entity.Lines = append(entity.Lines, &carriersettlement.CarrierSettlementLine{
-		EventType:   carriersettlement.CostEventTypeAdjustment,
-		Description: input.Description,
-		AmountMinor: input.AmountMinor,
-		GLAccountID: glAccountID,
-	})
-	entity.SyncTotals()
+	if err = PlanAddAdjustment(entity, input); err != nil {
+		return nil, err
+	}
 
 	var updated *carriersettlement.CarrierSettlement
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
@@ -522,44 +445,10 @@ func (s *Service) RemoveAdjustmentLine(
 	if err != nil {
 		return nil, err
 	}
-	if !entity.IsEditable() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only draft or pending carrier settlements can be adjusted",
-		)
-	}
-
 	previous := *entity
-	found := false
-	remaining := make([]*carriersettlement.CarrierSettlementLine, 0, len(entity.Lines))
-	for _, line := range entity.Lines {
-		if line == nil {
-			continue
-		}
-		if line.ID == lineID {
-			if !line.IsManualAdjustment() {
-				return nil, errortypes.NewValidationError(
-					"lineId",
-					errortypes.ErrInvalidOperation,
-					"Only manual adjustment lines can be removed",
-				)
-			}
-			found = true
-			continue
-		}
-		remaining = append(remaining, line)
+	if err = PlanRemoveAdjustment(entity, lineID); err != nil {
+		return nil, err
 	}
-	if !found {
-		return nil, errortypes.NewValidationError(
-			"lineId",
-			errortypes.ErrInvalid,
-			"Adjustment line not found on this settlement",
-		)
-	}
-
-	entity.Lines = remaining
-	entity.SyncTotals()
 
 	var updated *carriersettlement.CarrierSettlement
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
