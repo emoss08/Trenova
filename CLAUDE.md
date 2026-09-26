@@ -358,7 +358,11 @@ written, consent is read at export time and again before an organization's files
 and every example is recorded so a withdrawal can be honoured later. **Read
 [docs/engineering/ai-training-export.md](docs/engineering/ai-training-export.md) before
 changing `domain/aitraining`, `aitrainingservice`, `aitrainingjobs`, or what a correction
-stores.**
+stores.** Datasets are rendered from an export with the production prompt builder and scored
+with the production reply reader; the Python trainer in `ml/extraction-finetune` only trains and
+generates. **Read [docs/engineering/extraction-fine-tuning.md](docs/engineering/extraction-fine-tuning.md)
+before changing the extraction prompt, reply schema, `aicorrection.Score`, or that pipeline** — a
+prompt or schema change means rendering again and retraining.
 
 ## AI Audit Trail
 

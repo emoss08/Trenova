@@ -2,6 +2,9 @@ package services
 
 import (
 	"context"
+	"io"
+
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 
 	"github.com/emoss08/trenova/internal/core/domain/aitraining"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -70,4 +73,34 @@ type AITrainingHistoryService interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]*aitraining.ExportHistoryEntry, error)
+}
+
+type TrainingDatasetSink interface {
+	Create(name string) (io.WriteCloser, error)
+}
+
+type RenderTrainingDatasetRequest struct {
+	ExportID             pulid.ID
+	StructuredOutputMode aiprovider.StructuredOutputMode
+	KeepUnverified       bool
+	Sink                 TrainingDatasetSink
+}
+
+type AITrainingDatasetRenderer interface {
+	Render(
+		ctx context.Context,
+		req *RenderTrainingDatasetRequest,
+	) (*aitraining.DatasetManifest, error)
+}
+
+type ScoreTrainingPredictionsRequest struct {
+	Evaluation  io.Reader
+	Predictions io.Reader
+}
+
+type AITrainingScorer interface {
+	Score(
+		ctx context.Context,
+		req *ScoreTrainingPredictionsRequest,
+	) (*aitraining.ScoreReport, error)
 }

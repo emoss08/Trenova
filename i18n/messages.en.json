@@ -4444,6 +4444,15 @@
       "domain/journalreversal"
     ]
   },
+  "A prediction is missing its example id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
   "A preference is required": {
     "sites": 1,
     "scope": [
@@ -16210,6 +16219,15 @@
       "service/driversettlementservice"
     ]
   },
+  "An evaluation record is missing its id or expected values": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
   "An evaluation replays exactly one recorded run or one evaluation case": {
     "sites": 1,
     "scope": [
@@ -16653,6 +16671,15 @@
     ],
     "areas": [
       "domain/ifta"
+    ]
+  },
+  "An output is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "An overridden rate cannot be negative": {
@@ -27101,6 +27128,15 @@
     ],
     "areas": [
       "routes/accounting-drift"
+    ]
+  },
+  "Both the evaluation set and the predictions are required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "Both versions must exist for comparison": {
@@ -66052,6 +66088,15 @@
     ],
     "areas": [
       "service/sequenceconfigservice"
+    ]
+  },
+  "Example {0} has more than one prediction": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "Exceeds eligibility by {0}": {
@@ -165804,6 +165849,15 @@
       "routes/agent-control"
     ]
   },
+  "Structured output mode is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
   "Structured output mode is required": {
     "sites": 1,
     "scope": [
@@ -173972,6 +174026,33 @@
       "domain/documenttemplate"
     ]
   },
+  "The export's manifest does not match its recorded checksum; it has been changed since it was written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
+  "The export's manifest is larger than any manifest Trenova writes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
+  "The export's manifest is not one this version of Trenova can render": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
   "The extended linehaul amount, unformatted.": {
     "sites": 1,
     "scope": [
@@ -181444,6 +181525,15 @@
       "service/aiauditservice"
     ]
   },
+  "This export has not finished; render it once its manifest is written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
   "This export is too large to write while you wait. It is being written in the background; you'll be notified when the file is ready, and it will be under Exports.": {
     "sites": 1,
     "scope": [
@@ -187138,6 +187228,24 @@
     "areas": [
       "packages/shared/lib",
       "routes/home"
+    ]
+  },
+  "Training part {0} does not match the manifest; it has been changed since it was written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
+  "Training part {0} holds an example this version of Trenova cannot render": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "Training record is invalid": {

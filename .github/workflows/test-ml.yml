@@ -1,0 +1,48 @@
+name: Test ML Pipelines
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+      - "claude/**"
+    paths:
+      - "ml/**"
+      - ".github/workflows/test-ml.yml"
+  pull_request:
+    branches:
+      - master
+      - main
+      - develop
+    paths:
+      - "ml/**"
+      - ".github/workflows/test-ml.yml"
+
+jobs:
+  extraction-finetune:
+    name: Extraction fine-tuning
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml/extraction-finetune
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: uv sync --extra dev
+
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Test
+        run: uv run pytest

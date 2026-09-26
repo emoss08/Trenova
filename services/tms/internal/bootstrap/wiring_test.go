@@ -95,6 +95,7 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						services.AITrainingExportOperator,
 						services.AITrainingExportRunner,
 						services.AITrainingHistoryService,
+						services.AITrainingDatasetRenderer,
 						// The change feed compares edited documents only when
 						// the drift check is there; without it an edit waits
 						// for the nightly run.
@@ -114,6 +115,6 @@ func TestWiring_TrainingExportCommandResolvesWithoutAProcess(t *testing.T) {
 
 	require.NoError(t, fx.ValidateApp(
 		bootstrap.TrainingExportCommandOptions(),
-		fx.Invoke(func(services.AITrainingExportOperator) {}),
+		fx.Invoke(func(services.AITrainingExportOperator, services.AITrainingDatasetRenderer) {}),
 	))
 }

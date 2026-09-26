@@ -1,0 +1,42 @@
+base_model: Qwen/Qwen2.5-7B-Instruct
+revision: null
+trust_remote_code: false
+quantization: 4bit
+seed: 42
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+sft:
+  learning_rate: 0.0002
+  epochs: 2
+  per_device_batch_size: 1
+  gradient_accumulation_steps: 16
+  max_length: 8192
+  warmup_ratio: 0.03
+  lr_scheduler: cosine
+  weight_decay: 0.0
+  logging_steps: 10
+  save_total_limit: 2
+  gradient_checkpointing: true
+  max_dropped_fraction: 0.02
+
+dpo:
+  enabled: false
+  beta: 0.1
+  learning_rate: 0.000005
+  epochs: 1
+  per_device_batch_size: 1
+  gradient_accumulation_steps: 16
+  max_length: 8192
+  logging_steps: 10
+  min_pairs: 50
+
+predict:
+  max_model_len: 16384
+  max_tokens: 2048
+  tensor_parallel_size: 1
+  gpu_memory_utilization: 0.9
