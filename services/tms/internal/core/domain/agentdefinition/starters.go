@@ -79,9 +79,14 @@ var templateStarters = map[Template][]starterQuestion{
 	},
 	TemplateBillingAssistant: {
 		ask(
+			"What is ready to transfer to billing?",
+			"Which delivered shipments are ready to transfer to billing, and which cannot go yet?",
+			"list_billing_transfer_candidates",
+		),
+		ask(
 			"Which billing items are stuck the longest?",
 			"Which billing queue items have been blocked the longest, and why?",
-			"transition_item_to_in_review", "request_missing_docs",
+			"list_billing_queue_items", "transition_item_to_in_review", "request_missing_docs",
 		),
 		ask(
 			"Which deliveries are missing paperwork?",
@@ -92,11 +97,6 @@ var templateStarters = map[Template][]starterQuestion{
 			"Which billing reports can I run?",
 			"Which reports can I run for billing, and what does each one show?",
 			"list_reports",
-		),
-		ask(
-			"Which accessorial charges are set up?",
-			"List the accessorial charges we have set up and what each one bills for.",
-			"list_accessorial_charges",
 		),
 	},
 	TemplateComplianceAssistant: {
@@ -148,7 +148,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Which billing items are blocked, and why?",
 			"Which billing items are blocked right now, and what is blocking each one?",
-			"transition_item_to_in_review", "search_shipments",
+			"list_billing_queue_items", "transition_item_to_in_review", "search_shipments",
 		),
 		ask(
 			"Which shipments are missing documents?",
