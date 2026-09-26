@@ -691,7 +691,7 @@ Every phase is shipped complete; the order only reflects dependencies.
      with Protected Print Mode, and which formats it sends;
    - TWAIN memory transfer in both bitnesses against a VRS-equipped scanner, plus one of each
      common family (Fujitsu/Ricoh fi, Canon DR, Epson DS, Kodak Alaris).
-1. **Server domain and companion API — complete.** Migration `20261231006820_document_capture`
+1. **Server domain and companion API — complete.** Migration `20261231006880_document_capture`
    (and its generated SQLite twin); the `capture` domain with the split rules; repositories on
    buncolgen; pairing, credentials and the `capture_device` principal; the device stream; batch,
    page and print-job intake; processing, auto-filing and filing workflows on `capture-queue`;

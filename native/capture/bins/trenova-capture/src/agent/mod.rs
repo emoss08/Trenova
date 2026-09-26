@@ -141,6 +141,13 @@ struct Agent {
     releases_rx: Option<mpsc::Receiver<Result<Option<Release>, ApiError>>>,
     /// The organization's say over updates, from the device identity.
     update_policy: DeviceUpdatePolicy,
+    /// Whether the server has said what the organization allows. Until it
+    /// has, a release is held rather than acted on: the check for a release
+    /// and the identity are fetched at the same time, and installing on a
+    /// default the organization may refuse is the wrong guess.
+    policy_known: bool,
+    /// A release that arrived before the policy did.
+    held_release: Option<Release>,
     /// The release the updater was asked to install, so it is asked once.
     update_started: Option<String>,
     wake: Option<Arc<Notify>>,
@@ -191,6 +198,8 @@ pub async fn run(
         prints_rx: None,
         releases_rx: None,
         update_policy: DeviceUpdatePolicy::default(),
+        policy_known: false,
+        held_release: None,
         update_started: None,
         wake: None,
         pairing: None,
@@ -410,6 +419,8 @@ impl Agent {
         self.stream_rx = None;
         self.upload_rx = None;
         self.releases_rx = None;
+        self.policy_known = false;
+        self.held_release = None;
         self.wake = None;
         self.fetching = false;
         self.fetch_again = false;
@@ -666,11 +677,14 @@ impl Agent {
         match message {
             Internal::Identity(Ok(identity)) => {
                 self.update_policy = identity.updates.clone();
+                self.policy_known = true;
                 self.shared.update(|s| {
                     s.person = Some(identity.person.name.clone());
                     s.organization = Some(identity.organization.name.clone());
                 });
-                if self.shared.snapshot().update.is_some() {
+                if let Some(release) = self.held_release.take() {
+                    self.release(Ok(Some(release)));
+                } else if self.shared.snapshot().update.is_some() {
                     self.install_update(false);
                 }
             }
@@ -1186,6 +1200,10 @@ impl Agent {
                 return;
             }
         };
+        if !self.policy_known {
+            self.held_release = Some(release);
+            return;
+        }
         let status = match decide(&self.env.agent.version, &release, self.env.windows_build) {
             Decision::UpToDate => {
                 self.shared.update(|s| s.update = None);
@@ -1313,6 +1331,7 @@ impl Agent {
                 let minimum = minimum_version.clone();
                 self.update_policy.minimum_version.clone_from(&minimum);
                 self.update_policy.allow_auto_update = *auto_update;
+                self.policy_known = true;
                 self.shared.update(|s| {
                     s.update_required = Some(minimum.clone());
                     s.connection = Connection::Blocked {

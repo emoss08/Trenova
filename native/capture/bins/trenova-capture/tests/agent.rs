@@ -648,12 +648,16 @@ async fn where_the_organization_installs_updates_itself_the_release_is_only_anno
     publish(&server, "9.9.9").await;
     Mock::given(method("GET"))
         .and(path("/api/v1/capture/device/"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "device": {"id": "cdev_1", "sources": null},
-            "person": {"id": "usr_1", "name": "Jordan Doe"},
-            "organization": {"id": "org_1", "name": "Acme Freight"},
-            "updates": {"minimumVersion": "", "allowAutoUpdate": false}
-        })))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_json(json!({
+                    "device": {"id": "cdev_1", "sources": null},
+                    "person": {"id": "usr_1", "name": "Jordan Doe"},
+                    "organization": {"id": "org_1", "name": "Acme Freight"},
+                    "updates": {"minimumVersion": "", "allowAutoUpdate": false}
+                }))
+                .set_delay(Duration::from_millis(500)),
+        )
         .with_priority(1)
         .mount(&server)
         .await;
