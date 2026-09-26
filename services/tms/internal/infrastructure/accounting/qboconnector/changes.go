@@ -116,6 +116,9 @@ func changeTargets(req *services.ReadAccountingChangesRequest) ([]quickbooks.Cha
 	if req.BillPayments {
 		targets = append(targets, quickbooks.ChangeBillPayment)
 	}
+	if req.Documents {
+		targets = append(targets, documentChangeEntities()...)
+	}
 	for _, kind := range req.ReferenceKinds {
 		providerRef, err := providerKind(kind)
 		if err != nil {
@@ -245,6 +248,14 @@ func pageOf(
 		for idx := range set.BillPayments {
 			page.Payments = append(page.Payments, inboundBillPaymentOf(&set.BillPayments[idx]))
 		}
+	}
+	page.Documents = make([]services.AccountingChangedDocument, 0, len(set.Documents))
+	for idx := range set.Documents {
+		doc := &set.Documents[idx]
+		if skip[quickbooks.DocumentChangeEntity(doc.Kind)] {
+			continue
+		}
+		page.Documents = append(page.Documents, changedDocumentOf(doc))
 	}
 	for idx := range set.References {
 		ref := &set.References[idx]

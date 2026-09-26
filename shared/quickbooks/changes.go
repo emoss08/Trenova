@@ -15,8 +15,12 @@ import (
 type ChangeEntity string
 
 const (
-	ChangePayment     = ChangeEntity("Payment")
-	ChangeBillPayment = ChangeEntity("BillPayment")
+	ChangePayment      = ChangeEntity("Payment")
+	ChangeBillPayment  = ChangeEntity("BillPayment")
+	ChangeInvoice      = ChangeEntity("Invoice")
+	ChangeCreditMemo   = ChangeEntity("CreditMemo")
+	ChangeBill         = ChangeEntity("Bill")
+	ChangeVendorCredit = ChangeEntity("VendorCredit")
 )
 
 const (
@@ -41,12 +45,32 @@ func ReferenceChangeEntity(kind ReferenceKind) ChangeEntity {
 	return ChangeEntity(kind)
 }
 
+func DocumentChangeEntity(kind TxnKind) ChangeEntity {
+	return ChangeEntity(kind)
+}
+
 func (e ChangeEntity) IsValid() bool {
 	switch e {
-	case ChangePayment, ChangeBillPayment:
+	case ChangePayment,
+		ChangeBillPayment,
+		ChangeInvoice,
+		ChangeCreditMemo,
+		ChangeBill,
+		ChangeVendorCredit:
 		return true
 	default:
 		return ReferenceKind(e).IsValid()
+	}
+}
+
+func (e ChangeEntity) Document() (TxnKind, bool) {
+	switch e {
+	case ChangeInvoice, ChangeCreditMemo, ChangeBill, ChangeVendorCredit:
+		return TxnKind(e), true
+	case ChangePayment, ChangeBillPayment:
+		return "", false
+	default:
+		return "", false
 	}
 }
 
@@ -104,14 +128,23 @@ type ChangedReference struct {
 	Deleted bool
 }
 
+type ChangedDocument struct {
+	ChangeMeta
+	Kind        TxnKind
+	DocNumber   string
+	TotalAmount decimal.Decimal
+}
+
 type ChangeSet struct {
 	Payments     []ChangedPayment
 	BillPayments []ChangedBillPayment
+	Documents    []ChangedDocument
 	References   []ChangedReference
 	Full         []ChangeEntity
 }
 
 func (s *ChangeSet) merge(other *ChangeSet) {
+	s.Documents = append(s.Documents, other.Documents...)
 	s.Payments = append(s.Payments, other.Payments...)
 	s.BillPayments = append(s.BillPayments, other.BillPayments...)
 	s.References = append(s.References, other.References...)
@@ -184,6 +217,10 @@ type wireChangeEntity struct {
 type changeQueryResponse struct {
 	Payment       []wireChangeTxn    `json:"Payment"`
 	BillPayment   []wireChangeTxn    `json:"BillPayment"`
+	Invoice       []wireChangeTxn    `json:"Invoice"`
+	CreditMemo    []wireChangeTxn    `json:"CreditMemo"`
+	Bill          []wireChangeTxn    `json:"Bill"`
+	VendorCredit  []wireChangeTxn    `json:"VendorCredit"`
 	Account       []wireChangeEntity `json:"Account"`
 	Item          []wireChangeEntity `json:"Item"`
 	Customer      []wireChangeEntity `json:"Customer"`
@@ -291,7 +328,7 @@ func (c *Client) QueryChangedSince(
 }
 
 func (s *ChangeSet) count() int {
-	return len(s.Payments) + len(s.BillPayments) + len(s.References)
+	return len(s.Payments) + len(s.BillPayments) + len(s.Documents) + len(s.References)
 }
 
 func decodeChanges(resp *changeQueryResponse) *ChangeSet {
@@ -304,6 +341,15 @@ func decodeChanges(resp *changeQueryResponse) *ChangeSet {
 	}
 	for idx := range resp.BillPayment {
 		set.BillPayments = append(set.BillPayments, resp.BillPayment[idx].billPayment())
+	}
+	for _, kind := range documentChangeKinds() {
+		wire := resp.documents(kind)
+		for idx := range wire {
+			set.Documents = append(set.Documents, wire[idx].document(kind))
+		}
+		if len(wire) >= MaxChangesPerCall {
+			set.Full = append(set.Full, DocumentChangeEntity(kind))
+		}
 	}
 	for _, kind := range AllReferenceKinds() {
 		wire := resp.references(kind)
@@ -323,6 +369,36 @@ func decodeChanges(resp *changeQueryResponse) *ChangeSet {
 		}
 	}
 	return set
+}
+
+func documentChangeKinds() []TxnKind {
+	return []TxnKind{TxnInvoice, TxnCreditMemo, TxnBill, TxnVendorCredit}
+}
+
+func (r *changeQueryResponse) documents(kind TxnKind) []wireChangeTxn {
+	switch kind {
+	case TxnInvoice:
+		return r.Invoice
+	case TxnCreditMemo:
+		return r.CreditMemo
+	case TxnBill:
+		return r.Bill
+	case TxnVendorCredit:
+		return r.VendorCredit
+	case TxnPayment, TxnBillPayment:
+		return nil
+	default:
+		return nil
+	}
+}
+
+func (w *wireChangeTxn) document(kind TxnKind) ChangedDocument {
+	return ChangedDocument{
+		ChangeMeta:  w.MetaData.meta(w.ID, w.Status, w.PrivateNote, w.TotalAmt),
+		Kind:        kind,
+		DocNumber:   w.DocNumber,
+		TotalAmount: w.TotalAmt,
+	}
 }
 
 func (r *changeQueryResponse) references(kind ReferenceKind) []wireChangeEntity {

@@ -1,0 +1,10 @@
+{
+  "Bill": {
+    "Id": "401",
+    "SyncToken": "1",
+    "DocNumber": "CS-0042",
+    "TotalAmt": 1500,
+    "VendorRef": { "value": "77" }
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

@@ -1,0 +1,9 @@
+{
+  "BillPayment": {
+    "Id": "501",
+    "SyncToken": "0",
+    "TotalAmt": 1500,
+    "VendorRef": { "value": "77" }
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}
