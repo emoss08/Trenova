@@ -188,12 +188,11 @@ class ReplyBuilder:
         return "", confidence
 
     def _field(self, key: str, value: str, confidence: float, pages: tuple[Page, ...]) -> dict:
-        page, excerpt = locate_evidence(value, pages, self.recipe.evidence_context_chars)
+        page, _ = locate_evidence(value, pages, self.recipe.evidence_context_chars)
         field = {
             "key": key,
             "value": value,
             "confidence": confidence,
-            "evidenceExcerpt": excerpt,
             "pageNumber": page,
             "reviewRequired": False,
         }

@@ -75,7 +75,7 @@ configuration sets every choice it makes:
 | `verified_confidence` | `0.95` | Confidence given to a confirmed field or stop |
 | `unverified_confidence` | `0.7` | Confidence given to an unconfirmed field, and to every value in a rejected reply |
 | `overall_confidence`, `review_status` | `0.9`, `Ready` | The reply's top-level confidence and status |
-| `evidence_context_chars` | `60` | How much page text surrounds a value in its evidence excerpt |
+| `evidence_context_chars` | `60` | How much page text surrounds a stop name in its evidence excerpt |
 | `preference_outcomes` | `[Corrected, Missed]` | A training example becomes a preference pair when a field has one of these outcomes |
 
 A reply is built in the production wire format:
@@ -227,7 +227,8 @@ tokenizer:
 |---|---|
 | Former schema, pretty-printed | 1767 |
 | Former schema, compact | 1283 |
-| Current schema, compact | 1040 |
+| Derived properties removed, compact | 1040 |
+| Field evidence also removed (current), compact | 656 |
 
 Everything the model used to write that Go can work out is filled in by
 `aidocumentservice.convertExtractResponse` after parsing. That covers production, evaluation
@@ -240,6 +241,7 @@ runs and `trenova ai fine-tune score` alike:
 | stop `sequence` | Position in the reply, from 1 | Ordering and scoring use array order, never the model's number |
 | field `conflict` | The field's key appears in `conflicts` | The UI already treated either signal as a conflict |
 | field `alternativeValues` | Not produced | It was dropped before storage; the UI's alternatives come from `conflicts[].values` |
+| field `evidenceExcerpt`, and `pageNumber` when the model left it out | Found in the page text by `documentintelligencejobs.withFieldEvidence` when a finished extraction is applied (see below) | Reviewers see a quote of the document itself rather than the model's retelling of it |
 
 Conflict keys are also run through `aicorrection.CanonicalFieldKey`, so a conflict on
 `pickupwindow` now lines up with the `pickupWindow` field it is about.
@@ -250,8 +252,23 @@ changes the prompt fingerprint, so exports rendered before it must be rendered a
 training; `trenova-finetune targets` refuses a dataset whose schema asks for a property the
 recipe no longer builds.
 
-Evidence excerpts are the largest remaining cost, about 30% of a reply. They stay model-written:
-reviewers read them, and `validateAIExtract` rejects an extraction whose stops have none.
+**Field evidence.** A field's excerpt is taken from the same page text the model was sent
+(`toAIDocumentPages`), when the extraction is applied and before it is validated:
+
+- The value is searched for case-insensitively, on the page the model named first and then on
+  the others.
+- A money value is also searched for with thousands separators (`2563.12` finds `$2,563.12`).
+- The excerpt is the match with 60 bytes of text on each side, on one line, held to 200 runes.
+- A field whose value the model reworded (a date written in another format, for example) has no
+  excerpt; nothing else about it changes.
+- An excerpt a model does write, as one trained on the former schema will, is kept.
+- A page found for a field the model gave no page is filled in, which can let an extraction pass
+  the required-page check it would otherwise fail.
+
+Stop and conflict evidence stay model-written. `validateAIExtract` rejects an extraction whose
+stops have no excerpt, and a stop name the model tidied up would often not be found verbatim.
+The training recipe mirrors this: it still finds a field's page, and no longer writes its
+excerpt.
 
 ### Benchmark
 

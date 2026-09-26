@@ -50,10 +50,6 @@
           "confidence": {
             "type": "number"
           },
-          "evidenceExcerpt": {
-            "maxLength": 200,
-            "type": "string"
-          },
           "key": {
             "enum": [
               "loadNumber",
@@ -101,7 +97,6 @@
           "key",
           "value",
           "confidence",
-          "evidenceExcerpt",
           "pageNumber",
           "reviewRequired"
         ],

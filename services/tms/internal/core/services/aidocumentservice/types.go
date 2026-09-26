@@ -19,9 +19,9 @@ type extractFieldResponse struct {
 	Key             string  `json:"key"`
 	Value           string  `json:"value"`
 	Confidence      float64 `json:"confidence"`
-	EvidenceExcerpt string  `json:"evidenceExcerpt"`
 	PageNumber      int     `json:"pageNumber"`
 	ReviewRequired  bool    `json:"reviewRequired"`
+	EvidenceExcerpt string  `json:"evidenceExcerpt"`
 }
 
 type extractResponse struct {

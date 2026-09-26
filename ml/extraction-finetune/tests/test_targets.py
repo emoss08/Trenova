@@ -70,7 +70,7 @@ def test_the_target_is_the_confirmed_answer(dataset_dir: Path) -> None:
     assert fields["shipper"]["confidence"] == pytest.approx(0.95)
     assert fields["loadNumber"]["confidence"] == pytest.approx(0.7)
     assert fields["rate"]["pageNumber"] == 1
-    assert "$2,563.12" in fields["rate"]["evidenceExcerpt"]
+    assert "evidenceExcerpt" not in fields["rate"]
     assert "weight" not in fields
 
     pickup, delivery = reply["stops"]

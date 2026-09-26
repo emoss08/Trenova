@@ -136,7 +136,9 @@ func TestExtractSchemaHoldsOnlyWhatTheModelMustDecide(t *testing.T) {
 		return items["properties"].(map[string]any)
 	}
 
-	for _, derived := range []string{"label", "source", "conflict", "alternativeValues"} {
+	for _, derived := range []string{
+		"label", "source", "conflict", "alternativeValues", "evidenceExcerpt",
+	} {
 		assert.NotContains(t, objectProperties("fields"), derived)
 	}
 	for _, derived := range []string{"sequence", "source"} {
