@@ -10422,6 +10422,7 @@
               "driver_settlement",
               "edi_inbound_file",
               "invoice",
+              "journal_entry",
               "location",
               "order",
               "rate_matrix",
