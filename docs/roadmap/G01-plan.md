@@ -737,6 +737,123 @@ The actor is the person who confirmed, or the seeded system user under `Apply`. 
 
 ---
 
+### 9.6 M5b design, pinned to the code
+
+M5b is drift: Trenova compares what it sent with what the provider holds now, raises a finding for each difference with both values, and offers a fix in either direction. It closes the brief's drift criterion: the editor and time are shown, and one action fixes it either way.
+
+**Provider-neutral, as always.** The reconcile reads the provider through a new capability, `AccountingDocumentReader`, and compares against Trenova through neutral states. QuickBooks reads by id in batches with a query. Xero reads by id list, Business Central with `$filter` on ids, and NetSuite with a saved search. Each adapter declares its batch size as data. Nothing in the drift service knows which provider it talks to.
+
+**What the survey found.**
+- **Nothing reads a document back.** The writer has only `FindSalesDocument` (by number, sales only). `quickbooks.ReadTransaction` reads one transaction, and its result carries no balance, dates or editor. There is no generic query and no `Id in (...)` read.
+- **The change feed never asks for documents.** It reads `Payment`, `BillPayment` and reference kinds. An invoice or bill edited in the provider is never seen.
+- **A sales document or bill cannot be re-sent.** A non-void sales record goes to `CreateSalesDocument`, which returns the id it already has without writing. Bills and bill payments have only create. Only customer payments, customers and vendors have an update path. "Push Trenova's value" needs update methods on the writer, and a way to create a document again when the provider deleted it.
+- **What was sent survives only as a hash.** Records keep `PayloadHash`, and the JSON payload is cleared after 90 days, so drift compares the provider with Trenova's **current** document, not with the old payload. Posted documents are immutable in Trenova, so these are the same thing.
+- **Adjusting Trenova goes through documents that sync.** A memo posts a new sales document, voiding an invoice runs a full-reversal adjustment that posts a credit memo, and reversing a payment enqueues a void. Each would send the provider a second change it already has. The fix must mark those records as already reflected there.
+- **The invoice adjustment service cannot raise a total.** It credits line by line and rejects a zero credit. A memo against the invoice (`CreateMemo` with `ReferenceInvoiceID`, `AutoPost`) fits both directions: a credit memo lowers the invoice and a debit memo raises it.
+- **There is no per-customer balance that matches the provider's.** The AR queries give current open invoices, not a point-in-time figure, and the provider's customer balance includes documents entered there by hand. A like-for-like comparison has to sum both sides over the same documents.
+- **The tolerance exists.** `AccountingControl.ReconciliationToleranceAmount` is in major units, and zero when reconciliation is disabled.
+
+**Reader port.** `AccountingDocumentReader`, beside the writer and the change reader:
+- `DocumentReadLimits()` returns `MaxPerRead`, the ids one read may carry (1,000 for QuickBooks).
+- `ReadDocuments(ctx, {Auth, Kind, ExternalIDs})` returns one `AccountingDocumentState` per id asked for: `{ExternalID, Found, Voided, DocNumber, Total, Balance (sales documents only), CurrencyCode, ModifiedAt, ModifiedBy}`. `Found=false` means the provider deleted it.
+- `Kind` is the neutral document kind: invoice, credit memo, customer payment, credit application, bill, vendor credit or bill payment.
+- The QuickBooks adapter runs `select * from <Entity> where Id in (...)` through a new exported `QueryByIDs` on the client. It reads `MetaData.LastUpdatedTime` and `LastModifiedByRef` and marks voids the way the change feed already does.
+
+**Writer additions** for pushing Trenova's value:
+- `UpdateSalesDocument`, `UpdatePurchaseDocument` and `UpdateBillPayment`. Each takes the neutral document plus the provider id, and the QuickBooks adapter reads the `SyncToken` and sends a full update.
+- A new sync operation, **`Recreate`**, for a document the provider deleted or voided. The dispatcher sends it as a create that ignores the old document ref, and stores the new id. A voided invoice cannot be un-voided in QuickBooks, so it is recreated.
+- `Update` records for sales documents, bills and bill payments now go to the update methods instead of the create path.
+- The migration widens the operation check with `Recreate`, and the source event check with `DriftResolved`.
+- A record whose Create `SharesProviderDocument()` still refuses both, with the existing message.
+
+**Findings table.** `accounting_drift_findings`:
+- **Identity:** `connection_id`, `object_type` (the sync object types, plus `Customer` for balances), `object_id`, `object_number`, `party_id`, `party_name`, `external_id`, `external_url`.
+- **Kind:** `AmountMismatch`, `StatusMismatch`, `DeletedInProvider`, `VoidedInProvider` or `CustomerBalanceMismatch`.
+- **Values:** `currency_code`, `trenova_minor`, `provider_minor`, `difference_minor`, `trenova_state`, `provider_state` (plain words such as "Posted" or "Voided"), and `detail` (JSONB; for a balance, the documents that differ, each with both values).
+- **Provider edit:** `provider_modified_at` and `provider_modified_by`.
+- **Lifecycle:**
+  - `status` is `Open`, `Resolved` or `Dismissed`.
+  - `resolution` is `PushedTrenovaValue`, `AdjustedTrenova`, `NoLongerDiffers` or `Dismissed`, with `resolution_note`.
+  - `fix_object_type`/`fix_object_id` name what the fix made: the sync record pushed, or the memo, reversal or void posted.
+  - Also `resolved_by_id`, `resolved_at`, `detected_at`, `last_seen_at` and `version`.
+- **Uniqueness:** a partial unique index keeps one open finding per `(connection_id, object_type, object_id, kind)`.
+
+`MissingInProvider` and `UnknownInProvider` from §3.6 are left out:
+- A posted document that never reached the provider is the safety net's job, and it already enqueues one.
+- A provider document that names no Trenova record cannot be told apart from one entered by hand.
+
+**What is compared.** For each object with a `Synced` Create record on the connection, the nightly run compares the provider state with Trenova's:
+
+| Trenova object | Trenova value | Provider value | Kinds |
+|---|---|---|---|
+| Invoice, debit memo | total, voided, open balance | total, voided, balance | amount, voided, deleted, status (Trenova voided, provider live) |
+| Credit memo | absolute total, voided | total, voided | amount, voided, deleted, status |
+| Customer payment | amount, reversed | total, voided | amount, voided, deleted, status |
+| Credit application | applied or unapplied | voided | voided, deleted, status |
+| Carrier and owner-operator bill | net (bill or vendor credit), voided | total, found | amount, deleted, status |
+| Carrier and owner-operator bill payment | amount, voided | total, voided | amount, voided, deleted, status |
+
+- **Skipped:** an object is left out while it has any record that is not final. A queued, sending, blocked or dead-lettered record is the ledger's business, not drift.
+- **Customer balance:** for each customer, the run sums Trenova's open balance and the provider's balance over the same synced invoices and debit memos. A difference there is one `CustomerBalanceMismatch`, listing the documents that differ.
+  - A customer with an inbound payment still `Detected` or `Proposed` is skipped: that payment is the difference, and it already waits for a person.
+- **Adjusted documents:** a document that was already adjusted to match adds its reflected memos to the Trenova side, as the next point describes.
+
+**Reflected records.** When a fix adjusts Trenova, every sync record the fix's own transaction enqueued is marked `Skipped` with the resolution "Made in Trenova to match {provider}; already there", and carries the provider id it is reflected in (`ExternalRefs["reflectedIn"]`). The memo, the reversal's void and the adjustment's credit memo never reach the provider. The compare adds a document's reflected memos to its Trenova value, so the invoice and the provider agree afterwards.
+
+**Reconcile.**
+- **Nightly:** `ReconcileAccountingDriftWorkflow`, one per connection (`accounting-drift:<connectionID>`), is started by a kick on the schedule `accounting-drift-reconcile` (`13 6 * * *`) and by **Check now**.
+  - Each activity reads one batch of objects in record order, reads the provider in one call per kind, and opens, updates or resolves their findings in one transaction.
+  - The cursor is the last record id, so a crash resumes where it stopped. A final activity compares customer balances.
+  - The workflow continues as new every 50 batches.
+- **Scope:** objects dated in periods that are still open or locked, per Trenova's fiscal periods. Closed periods are final on both sides, and the change feed still catches any later edit to them.
+- **Between runs:** the change feed also asks for invoices, credit memos, bills and vendor credits. Each page's changed documents that Trenova sent are re-read and compared within the same poll, so an edit in the provider shows up within five minutes, not the next morning. A change to a payment already applied from the provider (M5a) is compared the same way, through the payment's linked record.
+- **Resolving:** a finding whose object compares equal again is resolved with `NoLongerDiffers`.
+- **Connection columns:** `drift_checked_at`, `drift_error_category` and `drift_error_message`.
+
+**Fixes**, each through the drift service, previewed, and made in one transaction that holds the finding `FOR UPDATE`:
+- **Push Trenova's value.**
+  - Amount and status differences enqueue an `Update` (or a `Void` again) at the next revision, with source `DriftResolved`.
+  - A deleted or voided document enqueues a `Recreate`.
+  - The finding resolves only once a later compare matches. Until then it shows the record it is waiting on.
+  - Offered for every kind except a customer balance.
+- **Adjust Trenova.** Offered only where Trenova has a clean operation:
+  - **Invoice or debit memo amount:** a credit memo (the provider is lower) or a debit memo (higher) for the difference, posted against the invoice, dated today.
+  - **Invoice or debit memo voided or deleted in the provider:** void the invoice with `DoNotRebill`, only while nothing is applied to it.
+  - **Customer payment voided or deleted in the provider:** reverse the payment.
+  - Payables, credit memos, credit applications and customer balances offer no Trenova-side fix. Settlements have no adjustment document, and changing a settlement's money belongs to payroll and settlement review, not to a sync screen.
+- **Dismiss** needs a note.
+- **Permissions:** every fix needs `accounting_sync` update. Adjusting also needs the permission of the operation it runs (`invoice` update, or `customer_payment` update), checked in the service, so a tool cannot get round it.
+
+**Tolerance.**
+- Findings are raised for any difference, and the page shows how each compares with the tolerance.
+- Agents may dismiss an amount finding only when its difference is within `ReconciliationToleranceAmount`. With reconciliation disabled, the tolerance is zero, so agents dismiss none. A person may dismiss any finding.
+
+**Agent surface.**
+- **Tools:**
+  - `list_accounting_drift_findings` (read)
+  - `resolve_accounting_drift` (`accounting_sync` update, `ActWithApproval`, money egress; `direction` is `PushTrenovaValue` or `AdjustTrenova`; the preview shows both values and what the fix posts or sends)
+  - `dismiss_accounting_drift` (`ActWithApproval`, note required, refuses an agent above the tolerance)
+  - `check_accounting_drift` (`accounting_sync` update, `ActWithApproval`, starts **Check now**)
+
+  All three writes implement `ToolPreviewer` and are mapped in `writecoverage.yml`.
+- **Events:**
+  - `accounting.drift_detected`: raised for each new finding, with the finding as subject, at most 20 per run; the rest wait in Watchtower.
+  - `accounting.reconciliation_due`: raised every Monday by the schedule `accounting-drift-weekly`, with each syncing connection as subject.
+- **Books Keeper** wakes on both. On the weekly event it writes a reconciliation note as its run summary: open findings by kind, what was fixed, and what still needs a person. The note shows under the connection's agent activity.
+- **Subject:** `AccountingDriftFinding` (prefix `acctdf_`).
+- **Watchtower:** open findings older than a day, grouped by kind per connection.
+
+**Reporting.**
+- A catalog entity `accounting_drift_finding`, with an edge to the connection.
+- A canned report, **Open drift by customer**: open findings by party, kind and difference.
+
+**UI.**
+- **Drift findings:** `/accounting/sync/drift`, a `PageLayout` with a `KpiStrip` (open findings, amount findings, deleted or voided, resolved this week). Its header has **Check now** and the last check time.
+  - The table shows the document, kind, Trenova value, provider value, difference, and when and by whom the provider changed it.
+  - A row opens a panel with both sides, the tolerance, and **Push Trenova's value**, **Adjust Trenova** and **Dismiss**, each with its preview.
+- **Sync ledger** gains a **Drift findings** figure linking to the page.
+- A record link `accounting_drift_finding`, a navigation entry, and a product guide page `accounting/sync-drift.md`.
+
 ## 10. Testing
 
 - **Unit**: payload builders with golden JSON per document type and edge case (negative credit memo totals, short pay, multi-shipment consolidated invoice, split bill), error classifier per provider fault, mapping scorer with a fixture chart of accounts, retry schedule, token refresh race (two refreshers, one wins, the other reads the new token).
