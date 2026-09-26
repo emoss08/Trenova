@@ -34,8 +34,7 @@ type receivableSpec struct {
 	rationale   string
 	properties  map[string]any
 	required    []string
-	targetParam string
-	targetOf    permission.Resource
+	target      func(params map[string]any) (serviceports.ToolTarget, bool)
 }
 
 type receivablePlan[R, P any] struct {
@@ -121,11 +120,11 @@ func (t *receivableTool[R, P]) Policy() serviceports.ToolPolicy {
 }
 
 func (t *receivableTool[R, P]) Target(params map[string]any) (serviceports.ToolTarget, bool) {
-	if t.spec.targetParam == "" {
+	if t.spec.target == nil {
 		return serviceports.ToolTarget{}, false
 	}
 
-	return targetOf(params, t.spec.targetParam, t.spec.targetOf)
+	return t.spec.target(params)
 }
 
 func (t *receivableTool[R, P]) request(params *serviceports.ToolExecuteParams) (R, error) {
@@ -180,11 +179,11 @@ func (t *receivableTool[R, P]) execute(
 	ctx context.Context,
 	params *serviceports.ToolExecuteParams,
 ) (*agent.ToolExecutionResult, error) {
-	if err := guardExecute(t, *params); err != nil {
-		return nil, err
-	}
 	if t.spec.personOnly && !params.ApprovedFromProposal() {
 		return nil, fmt.Errorf("%s: %w", t.spec.name, ErrNeedsAPersonsApproval)
+	}
+	if err := guardExecute(t, *params); err != nil {
+		return nil, err
 	}
 
 	req, err := t.steps.request(params)
@@ -200,6 +199,10 @@ func (t reportingReceivableTool[R, P]) ExecuteWithResult(
 	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
 ) (*agent.ToolExecutionResult, error) {
 	return t.execute(ctx, &params)
+}
+
+func targetInvoice(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 
 func stringProperty(description string, maxLength int) map[string]any {

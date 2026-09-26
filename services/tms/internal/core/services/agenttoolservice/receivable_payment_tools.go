@@ -66,6 +66,10 @@ type receivablesKeeper interface {
 	) (*serviceports.CreditMemoApplicationPreview, error)
 }
 
+func targetCustomerPayment(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, paramCustomerPaymentID, permission.ResourceCustomerPayment)
+}
+
 func accountingDateProperty() map[string]any {
 	return stringProperty("The day it is booked to the ledger, YYYY-MM-DD, usually today; it "+
 		"must fall in an open fiscal period.", 0)
@@ -128,9 +132,8 @@ func newApplyCustomerPaymentTool(payments receivablesKeeper) serviceports.AgentT
 			paramApplications: applicationsProperty(
 				"The invoices the unapplied cash pays and how much goes to each.", true),
 		},
-		required:    []string{paramCustomerPaymentID, paramAccountingDate, paramApplications},
-		targetParam: paramCustomerPaymentID,
-		targetOf:    permission.ResourceCustomerPayment,
+		required: []string{paramCustomerPaymentID, paramAccountingDate, paramApplications},
+		target:   targetCustomerPayment,
 	}), receivablePlan[*serviceports.ApplyCustomerPaymentRequest, *serviceports.CustomerPaymentChangePreview]{
 		request: applyPaymentRequest,
 		plan: func(
@@ -200,9 +203,8 @@ func newReverseCustomerPaymentTool(payments receivablesKeeper) serviceports.Agen
 			paramReason: stringProperty(
 				"Why it is reversed, such as the bank's return reason.", maxReceivableReasonChars),
 		},
-		required:    []string{paramCustomerPaymentID, paramAccountingDate, paramReason},
-		targetParam: paramCustomerPaymentID,
-		targetOf:    permission.ResourceCustomerPayment,
+		required: []string{paramCustomerPaymentID, paramAccountingDate, paramReason},
+		target:   targetCustomerPayment,
 	}), receivablePlan[*serviceports.ReverseCustomerPaymentRequest, *serviceports.CustomerPaymentChangePreview]{
 		request: reversePaymentRequest,
 		plan: func(
@@ -269,9 +271,10 @@ func newApplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool {
 			paramApplications: applicationsProperty(
 				"The invoices the credit settles and how much goes to each.", false),
 		},
-		required:    []string{paramCreditMemoID, paramAccountingDate, paramApplications},
-		targetParam: paramCreditMemoID,
-		targetOf:    permission.ResourceInvoice,
+		required: []string{paramCreditMemoID, paramAccountingDate, paramApplications},
+		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+			return targetOf(params, paramCreditMemoID, permission.ResourceInvoice)
+		},
 	}), receivablePlan[*serviceports.ApplyCreditMemoRequest, *serviceports.CreditMemoApplicationPreview]{
 		request: applyCreditRequest,
 		plan: func(

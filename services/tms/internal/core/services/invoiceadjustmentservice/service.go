@@ -944,6 +944,8 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 
 	preview := &servicesports.InvoiceAdjustmentPreview{
 		InvoiceID:      entity.ID,
+		InvoiceNumber:  entity.Number,
+		CurrencyCode:   entity.CurrencyCode,
 		Kind:           req.Kind,
 		RebillStrategy: req.RebillStrategy,
 		Warnings:       make([]string, 0),

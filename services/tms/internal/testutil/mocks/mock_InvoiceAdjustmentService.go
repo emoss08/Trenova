@@ -1263,3 +1263,219 @@ func (_c *MockInvoiceAdjustmentService_UpdateDraft_Call) RunAndReturn(run func(c
 	_c.Call.Return(run)
 	return _c
 }
+
+// SaveDraft provides a mock function for the type MockInvoiceAdjustmentService
+func (_mock *MockInvoiceAdjustmentService) SaveDraft(ctx context.Context, req *services.SaveInvoiceAdjustmentDraftRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveDraft")
+	}
+
+	var r0 *invoiceadjustment.InvoiceAdjustment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.SaveInvoiceAdjustmentDraftRequest, *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.SaveInvoiceAdjustmentDraftRequest, *services.RequestActor) *invoiceadjustment.InvoiceAdjustment); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.SaveInvoiceAdjustmentDraftRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceAdjustmentService_SaveDraft_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveDraft'
+type MockInvoiceAdjustmentService_SaveDraft_Call struct {
+	*mock.Call
+}
+
+// SaveDraft is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.SaveInvoiceAdjustmentDraftRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceAdjustmentService_Expecter) SaveDraft(ctx any, req any, actor any) *MockInvoiceAdjustmentService_SaveDraft_Call {
+	return &MockInvoiceAdjustmentService_SaveDraft_Call{Call: _e.mock.On("SaveDraft", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceAdjustmentService_SaveDraft_Call) Run(run func(ctx context.Context, req *services.SaveInvoiceAdjustmentDraftRequest, actor *services.RequestActor)) *MockInvoiceAdjustmentService_SaveDraft_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.SaveInvoiceAdjustmentDraftRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.SaveInvoiceAdjustmentDraftRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceAdjustmentService_SaveDraft_Call) Return(result *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_SaveDraft_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockInvoiceAdjustmentService_SaveDraft_Call) RunAndReturn(run func(ctx context.Context, req *services.SaveInvoiceAdjustmentDraftRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentService_SaveDraft_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewSaveDraft provides a mock function for the type MockInvoiceAdjustmentService
+func (_mock *MockInvoiceAdjustmentService) PreviewSaveDraft(ctx context.Context, req *services.SaveInvoiceAdjustmentDraftRequest, actor *services.RequestActor) (*services.InvoiceAdjustmentDraftPreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewSaveDraft")
+	}
+
+	var r0 *services.InvoiceAdjustmentDraftPreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.SaveInvoiceAdjustmentDraftRequest, *services.RequestActor) (*services.InvoiceAdjustmentDraftPreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.SaveInvoiceAdjustmentDraftRequest, *services.RequestActor) *services.InvoiceAdjustmentDraftPreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.InvoiceAdjustmentDraftPreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.SaveInvoiceAdjustmentDraftRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceAdjustmentService_PreviewSaveDraft_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewSaveDraft'
+type MockInvoiceAdjustmentService_PreviewSaveDraft_Call struct {
+	*mock.Call
+}
+
+// PreviewSaveDraft is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.SaveInvoiceAdjustmentDraftRequest
+//   - actor *services.RequestActor
+func (_e *MockInvoiceAdjustmentService_Expecter) PreviewSaveDraft(ctx any, req any, actor any) *MockInvoiceAdjustmentService_PreviewSaveDraft_Call {
+	return &MockInvoiceAdjustmentService_PreviewSaveDraft_Call{Call: _e.mock.On("PreviewSaveDraft", ctx, req, actor)}
+}
+
+func (_c *MockInvoiceAdjustmentService_PreviewSaveDraft_Call) Run(run func(ctx context.Context, req *services.SaveInvoiceAdjustmentDraftRequest, actor *services.RequestActor)) *MockInvoiceAdjustmentService_PreviewSaveDraft_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.SaveInvoiceAdjustmentDraftRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.SaveInvoiceAdjustmentDraftRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceAdjustmentService_PreviewSaveDraft_Call) Return(result *services.InvoiceAdjustmentDraftPreview, err error) *MockInvoiceAdjustmentService_PreviewSaveDraft_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockInvoiceAdjustmentService_PreviewSaveDraft_Call) RunAndReturn(run func(ctx context.Context, req *services.SaveInvoiceAdjustmentDraftRequest, actor *services.RequestActor) (*services.InvoiceAdjustmentDraftPreview, error)) *MockInvoiceAdjustmentService_PreviewSaveDraft_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewDecision provides a mock function for the type MockInvoiceAdjustmentService
+func (_mock *MockInvoiceAdjustmentService) PreviewDecision(ctx context.Context, req *services.InvoiceAdjustmentDecisionRequest) (*services.InvoiceAdjustmentDecisionPreview, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewDecision")
+	}
+
+	var r0 *services.InvoiceAdjustmentDecisionPreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentDecisionRequest) (*services.InvoiceAdjustmentDecisionPreview, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentDecisionRequest) *services.InvoiceAdjustmentDecisionPreview); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.InvoiceAdjustmentDecisionPreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.InvoiceAdjustmentDecisionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceAdjustmentService_PreviewDecision_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewDecision'
+type MockInvoiceAdjustmentService_PreviewDecision_Call struct {
+	*mock.Call
+}
+
+// PreviewDecision is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.InvoiceAdjustmentDecisionRequest
+func (_e *MockInvoiceAdjustmentService_Expecter) PreviewDecision(ctx any, req any) *MockInvoiceAdjustmentService_PreviewDecision_Call {
+	return &MockInvoiceAdjustmentService_PreviewDecision_Call{Call: _e.mock.On("PreviewDecision", ctx, req)}
+}
+
+func (_c *MockInvoiceAdjustmentService_PreviewDecision_Call) Run(run func(ctx context.Context, req *services.InvoiceAdjustmentDecisionRequest)) *MockInvoiceAdjustmentService_PreviewDecision_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.InvoiceAdjustmentDecisionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.InvoiceAdjustmentDecisionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceAdjustmentService_PreviewDecision_Call) Return(result *services.InvoiceAdjustmentDecisionPreview, err error) *MockInvoiceAdjustmentService_PreviewDecision_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockInvoiceAdjustmentService_PreviewDecision_Call) RunAndReturn(run func(ctx context.Context, req *services.InvoiceAdjustmentDecisionRequest) (*services.InvoiceAdjustmentDecisionPreview, error)) *MockInvoiceAdjustmentService_PreviewDecision_Call {
+	_c.Call.Return(run)
+	return _c
+}

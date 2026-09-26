@@ -72,6 +72,10 @@ type invoiceDisputer interface {
 	) (*serviceports.InvoiceDisputePreview, error)
 }
 
+func targetDispute(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, paramDisputeID, permission.ResourceInvoiceDispute)
+}
+
 func disputeIDProperty() map[string]any {
 	return stringProperty("The open dispute, from list_invoice_disputes. Never guess one.", 0)
 }
@@ -104,9 +108,8 @@ func newOpenInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool 
 				"What the customer said, in a sentence collections can act on.",
 				maxDisputeNoteChars),
 		},
-		required:    []string{paramInvoiceID, paramDisputeReasonCode, paramDisputedAmount},
-		targetParam: paramInvoiceID,
-		targetOf:    permission.ResourceInvoice,
+		required: []string{paramInvoiceID, paramDisputeReasonCode, paramDisputedAmount},
+		target:   targetInvoice,
 	}, receivablePlan[*serviceports.OpenInvoiceDisputeRequest, *serviceports.InvoiceDisputePreview]{
 		request: openDisputeRequest,
 		plan: func(
@@ -190,9 +193,8 @@ func newResolveInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTo
 			paramResolutionNotes: stringProperty(
 				"What was agreed with the customer.", maxDisputeNoteChars),
 		},
-		required:    []string{paramDisputeID, paramDisputeResolution},
-		targetParam: paramDisputeID,
-		targetOf:    permission.ResourceInvoiceDispute,
+		required: []string{paramDisputeID, paramDisputeResolution},
+		target:   targetDispute,
 	}, receivablePlan[*serviceports.ResolveInvoiceDisputeRequest, *serviceports.InvoiceDisputePreview]{
 		request: resolveDisputeRequest,
 		plan: func(
@@ -274,9 +276,8 @@ func newWithdrawInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentT
 			paramDisputeNotes: stringProperty(
 				"Why the customer dropped it.", maxDisputeNoteChars),
 		},
-		required:    []string{paramDisputeID},
-		targetParam: paramDisputeID,
-		targetOf:    permission.ResourceInvoiceDispute,
+		required: []string{paramDisputeID},
+		target:   targetDispute,
 	}, receivablePlan[*serviceports.WithdrawInvoiceDisputeRequest, *serviceports.InvoiceDisputePreview]{
 		request: withdrawDisputeRequest,
 		plan: func(
