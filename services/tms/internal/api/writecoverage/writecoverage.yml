@@ -338,16 +338,16 @@ writes:
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
   "POST /api/v1/billing-queue/transfer/":
-    pending: "Transfer shipments into the billing queue (transfer_to_billing is in progress)."
+    tools: [transfer_to_billing]
   "PUT /api/v1/billing-queue/:itemID/charges/":
     tools: [correct_charge_code]
   "PUT /api/v1/billing-queue/filter-presets/:presetId/":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
   "mutation assignBillingQueueBiller":
-    pending: "Assign a biller to a billing queue item (assign_billing_queue_biller is in progress)."
+    tools: [assign_billing_queue_biller]
   "mutation updateBillingQueueStatus":
-    pending: "Move a billing queue item between statuses: approve, hold, cancel, send back to operations or to exception. transition_item_to_in_review covers only the move to in review; the rest are in progress."
+    tools: [approve_billing_queue_item, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review]
 
   # billingtransfer
   "mutation cancelBillingTransferRun":
@@ -355,7 +355,7 @@ writes:
   "mutation retryBillingTransferRun":
     pending: "Retry billing transfer run."
   "mutation startBillingTransferRun":
-    pending: "Start billing transfer run."
+    tools: [transfer_to_billing]
 
   # briefing
   "mutation markBriefingRead":
@@ -1506,12 +1506,12 @@ writes:
   "POST /api/v1/billing/invoices/:invoiceID/generate-pdf/":
     pending: "Generate pdf (invoice)."
   "POST /api/v1/billing/invoices/:invoiceID/post/":
-    pending: "Post an invoice to the ledger (post_invoice is in progress)."
+    tools: [post_invoice]
   "POST /api/v1/billing/invoices/:invoiceID/preview/":
     exempt: read-only
     reason: "Renders an invoice for review and saves nothing."
   "POST /api/v1/billing/invoices/:invoiceID/send/":
-    pending: "Send an invoice to the customer (send_invoice is in progress)."
+    tools: [send_invoice]
   "mutation createInvoiceFromOrder":
     pending: "Create invoice from order."
   "mutation createInvoiceFromShipments":
@@ -2114,7 +2114,7 @@ writes:
   "mutation autoRateShipment":
     pending: "Auto rate shipment."
   "mutation bulkTransferShipmentsToBilling":
-    pending: "Transfer several shipments to billing (transfer_to_billing is in progress)."
+    tools: [transfer_to_billing]
   "mutation calculateShipmentDistance":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
@@ -2152,7 +2152,7 @@ writes:
   "mutation transferShipmentOwnership":
     pending: "Transfer shipment ownership."
   "mutation transferShipmentToBilling":
-    pending: "Transfer a shipment to billing (transfer_to_billing is in progress)."
+    tools: [transfer_to_billing]
   "mutation transferShipmentToBillingItems":
     pending: "Transfer chosen shipment charges to billing as separate items."
   "mutation uncancelShipment":
