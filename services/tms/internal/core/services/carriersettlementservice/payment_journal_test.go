@@ -46,7 +46,11 @@ func TestPaymentJournalIsDatedWhenThePaymentWasMade(t *testing.T) {
 	const paidAt = int64(1_790_000_000)
 	entity := newPostingSettlement()
 	entity.SettlementNumber = "CS-1042"
-	period := &fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_")}
+	period := &fiscalperiod.FiscalPeriod{
+		ID:           pulid.MustNew("fp_"),
+		FiscalYearID: pulid.MustNew("fy_"),
+		Status:       fiscalperiod.StatusOpen,
+	}
 
 	periods := mocks.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().

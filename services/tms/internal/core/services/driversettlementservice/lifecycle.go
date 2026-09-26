@@ -227,6 +227,11 @@ func (s *Service) MarkPaid(
 		if paidAt == 0 {
 			paidAt = timeutils.NowUnix()
 		}
+		batchID, txErr := s.postPaymentJournal(txCtx, entity, actor.UserID, paidAt)
+		if txErr != nil {
+			return txErr
+		}
+		entity.PaidJournalBatchID = batchID
 		entity.Status = driversettlement.StatusPaid
 		entity.PaidAt = &paidAt
 		entity.PaidByID = actor.UserID

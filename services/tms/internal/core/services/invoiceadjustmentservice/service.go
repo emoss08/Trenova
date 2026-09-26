@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
+
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 
 	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
@@ -78,6 +80,8 @@ type Params struct {
 	Generator          servicesports.InvoiceAdjustGenerator
 	SequenceGenerator  seqgen.Generator
 	AccountingSync     servicesports.AccountingSyncEnqueuer `optional:"true"`
+	CustomerLedgerRepo repositories.CustomerLedgerProjectionRepository
+	AccountingPolicy   *accountingcontrolpolicyservice.Service
 }
 
 type Service struct {
@@ -107,6 +111,8 @@ type Service struct {
 	generator          servicesports.InvoiceAdjustGenerator
 	sequenceGenerator  seqgen.Generator
 	accountingSync     servicesports.AccountingSyncEnqueuer
+	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
+	accountingPolicy   *accountingcontrolpolicyservice.Service
 }
 
 type previewComputation struct {
@@ -164,6 +170,8 @@ func New(p Params) servicesports.InvoiceAdjustmentService { //nolint:gocritic //
 		generator:          p.Generator,
 		sequenceGenerator:  p.SequenceGenerator,
 		accountingSync:     p.AccountingSync,
+		customerLedgerRepo: p.CustomerLedgerRepo,
+		accountingPolicy:   p.AccountingPolicy,
 	}
 }
 
@@ -1950,6 +1958,15 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		return nil, err
 	}
 	adjustment.CreditMemoInvoiceID = creditMemoInvoice.ID
+	if err = s.postCreditMemoLedger(
+		ctx,
+		adjustment,
+		creditMemoInvoice,
+		lockedInvoice,
+		actor,
+	); err != nil {
+		return nil, err
+	}
 	if err = servicesports.EnqueueAccountingSync(
 		ctx,
 		s.accountingSync,

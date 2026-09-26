@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
@@ -360,6 +361,23 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		require.Equal(t, invoiceadjustment.StatusExecuted, adjustment.Status)
 		require.True(t, adjustment.ReplacementInvoiceID.IsNil())
 		require.True(t, adjustment.RebillQueueItemID.IsNil())
+		require.Contains(t, adjustment.Metadata, "creditMemoJournalEntryId")
+
+		journal := h.creditMemoJournal(t, adjustment.CreditMemoInvoiceID)
+		require.NotNil(t, journal)
+		assert.Equal(t, "CreditMemoPosted", journal.SourceEventType)
+		assert.Equal(t, "Posted", journal.Status)
+		require.Len(t, journal.Lines, 2)
+		assert.Equal(t, h.lookupGLAccount(t, "4000"), journal.Lines[0].GLAccountID)
+		assert.Equal(t, int64(12500), journal.Lines[0].DebitAmount)
+		assert.Equal(t, h.lookupGLAccount(t, "1110"), journal.Lines[1].GLAccountID)
+		assert.Equal(t, int64(12500), journal.Lines[1].CreditAmount)
+
+		ledger := h.customerLedgerLines(t, adjustment.CreditMemoInvoiceID)
+		require.Len(t, ledger, 1)
+		assert.Equal(t, int64(-12500), ledger[0].AmountMinor)
+		assert.Equal(t, "CreditMemoPosted", ledger[0].SourceEventType)
+		assert.Equal(t, entity.ID, ledger[0].RelatedInvoiceID)
 	})
 
 	t.Run("credit and rebill creates draft replacement invoice and lineage", func(t *testing.T) {
@@ -621,6 +639,12 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			Scan(h.ctx, &balance))
 		assert.Equal(t, int64(8000), balance.PeriodDebitMinor)
 		assert.Equal(t, int64(0), balance.PeriodCreditMinor)
+
+		assert.Nil(t, h.creditMemoJournal(t, approved.CreditMemoInvoiceID))
+		ledger := h.customerLedgerLines(t, approved.CreditMemoInvoiceID)
+		require.Len(t, ledger, 1)
+		assert.Equal(t, int64(-8000), ledger[0].AmountMinor)
+		assert.Equal(t, entity.ID, ledger[0].RelatedInvoiceID)
 	})
 
 	t.Run("approve revalidates against current state", func(t *testing.T) {
@@ -1104,6 +1128,9 @@ func newIntegrationHarness(
 		),
 		FiscalPeriodRepo: fiscalPeriodRepo,
 		DocumentRepo:     documentRepo,
+		CustomerLedgerRepo: customerledgerrepository.New(
+			customerledgerrepository.Params{DB: conn, Logger: logger},
+		),
 		Validator:        NewValidator(ValidatorParams{}),
 		AuditService:     noopAuditService{},
 		WorkflowStarter:  starter,
@@ -1116,7 +1143,9 @@ func newIntegrationHarness(
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator:         &fakeGenerator{},
-		SequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
+		SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
+			TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
+		},
 	})
 
 	return h
@@ -1157,6 +1186,9 @@ func (h *integrationHarness) buildService(
 		FiscalPeriodRepo: fiscalperiodrepository.New(
 			fiscalperiodrepository.Params{DB: h.conn, Logger: zap.NewNop()},
 		),
+		CustomerLedgerRepo: customerledgerrepository.New(
+			customerledgerrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+		),
 		DocumentRepo: documentrepository.New(
 			documentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
 		),
@@ -1172,7 +1204,9 @@ func (h *integrationHarness) buildService(
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator:         &fakeGenerator{},
-		SequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
+		SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
+			TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
+		},
 	})
 }
 
@@ -1264,11 +1298,78 @@ func (h *integrationHarness) ensureAccountingDefaults(t *testing.T) {
 	require.NoError(t, err)
 	control.DefaultARAccountID = h.lookupGLAccount(t, "1110")
 	control.DefaultWriteOffAccountID = h.lookupGLAccount(t, "6940")
+	control.DefaultRevenueAccountID = h.lookupGLAccount(t, "4000")
+	control.AccountingBasis = tenant.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
 	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
 	control.ManualJournalEntryPolicy = tenant.ManualJournalEntryPolicyAdjustmentOnly
 	control.RequireManualJEApproval = true
 	_, err = h.accountingRepo.Update(h.ctx, control)
 	require.NoError(t, err)
+}
+
+type creditMemoJournalRow struct {
+	SourceEventType string
+	Status          string
+	Lines           []journalEntryLineRow
+}
+
+func (h *integrationHarness) creditMemoJournal(
+	t *testing.T,
+	creditMemoID pulid.ID,
+) *creditMemoJournalRow {
+	t.Helper()
+
+	var sources []struct {
+		SourceEventType string   `bun:"source_event_type"`
+		Status          string   `bun:"status"`
+		JournalEntryID  pulid.ID `bun:"journal_entry_id"`
+	}
+	require.NoError(t, h.db.NewSelect().
+		Table("journal_sources").
+		Column("source_event_type", "status", "journal_entry_id").
+		Where("organization_id = ?", h.orgID).
+		Where("source_object_type = ?", "Invoice").
+		Where("source_object_id = ?", creditMemoID.String()).
+		Scan(h.ctx, &sources))
+	require.LessOrEqual(t, len(sources), 1)
+	if len(sources) == 0 {
+		return nil
+	}
+
+	row := &creditMemoJournalRow{
+		SourceEventType: sources[0].SourceEventType,
+		Status:          sources[0].Status,
+	}
+	require.NoError(t, h.db.NewSelect().
+		Table("journal_entry_lines").
+		Column("gl_account_id", "debit_amount", "credit_amount").
+		Where("journal_entry_id = ?", sources[0].JournalEntryID).
+		OrderExpr("line_number ASC").
+		Scan(h.ctx, &row.Lines))
+	return row
+}
+
+type customerLedgerRow struct {
+	AmountMinor      int64    `bun:"amount_minor"`
+	SourceEventType  string   `bun:"source_event_type"`
+	RelatedInvoiceID pulid.ID `bun:"related_invoice_id"`
+}
+
+func (h *integrationHarness) customerLedgerLines(
+	t *testing.T,
+	invoiceID pulid.ID,
+) []customerLedgerRow {
+	t.Helper()
+
+	rows := make([]customerLedgerRow, 0, 1)
+	require.NoError(t, h.db.NewSelect().
+		Table("customer_ledger_entries").
+		Column("amount_minor", "source_event_type", "related_invoice_id").
+		Where("organization_id = ?", h.orgID).
+		Where("source_object_id = ?", invoiceID.String()).
+		Scan(h.ctx, &rows))
+	return rows
 }
 
 func (h *integrationHarness) lookupGLAccount(t *testing.T, code string) pulid.ID {

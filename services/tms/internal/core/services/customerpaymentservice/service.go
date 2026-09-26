@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/core/services/journalposting"
+
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 
 	"github.com/emoss08/trenova/internal/core/domain/customerledger"
@@ -930,30 +932,9 @@ func paymentPostingWorkflow( //nolint:gocritic // stable API shape
 	userID pulid.ID,
 	now int64,
 ) (string, string, *int64, pulid.ID, bool, bool, pulid.ID, *int64) {
-	entryStatus := "Posted"
-	batchStatus := "Posted"
-	postedAt := &now
-	postedByID := userID
-	requiresApproval := false
-	isApproved := true
-	approvedByID := userID
-	approvedAt := &now
-	if control != nil && control.JournalPostingMode == tenant.JournalPostingModeManual {
-		entryStatus = "Pending"
-		batchStatus = "Pending"
-		postedAt = nil
-		postedByID = pulid.Nil
-		requiresApproval = control.RequireManualJEApproval
-		isApproved = !control.RequireManualJEApproval
-		if !requiresApproval {
-			entryStatus = "Approved"
-			batchStatus = "Approved"
-		} else {
-			approvedByID = pulid.Nil
-			approvedAt = nil
-		}
-	}
-	return entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt
+	w := journalposting.ResolveWorkflow(control, userID, now)
+	return w.EntryStatus, w.BatchStatus, w.PostedAt, w.PostedByID, w.RequiresApproval,
+		w.IsApproved, w.ApprovedByID, w.ApprovedAt
 }
 
 func cloneInvoices(invoices []*invoice.Invoice) []*invoice.Invoice {
