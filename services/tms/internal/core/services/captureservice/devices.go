@@ -45,6 +45,9 @@ const (
 type OutdatedAgentError struct {
 	Current string
 	Minimum string
+	// AutoUpdate is whether the organization lets the companion update
+	// itself, so it knows to start the update rather than say to ask IT.
+	AutoUpdate bool
 }
 
 func (e *OutdatedAgentError) Error() string {
@@ -208,8 +211,9 @@ func (s *Service) Refresh(ctx context.Context, req *RefreshRequest) (*TokenPair,
 	}
 	if !versionutils.AtLeast(agentVersion, control.CaptureMinAgentVersion) {
 		return nil, &OutdatedAgentError{
-			Current: agentVersion,
-			Minimum: control.CaptureMinAgentVersion,
+			Current:    agentVersion,
+			Minimum:    control.CaptureMinAgentVersion,
+			AutoUpdate: control.CaptureAllowAutoUpdate,
 		}
 	}
 

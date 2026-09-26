@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -125,6 +126,222 @@ func (ec *executionContext) _CaptureAccess_canCapture(ctx context.Context, field
 }
 func (ec *executionContext) fieldContext_CaptureAccess_canCapture(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CaptureAccess", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureAgentInstaller_fileName(ctx context.Context, field graphql.CollectedField, obj *capturereleaseservice.Installer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAgentInstaller_fileName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FileName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAgentInstaller_fileName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAgentInstaller", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureAgentInstaller_url(ctx context.Context, field graphql.CollectedField, obj *capturereleaseservice.Installer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAgentInstaller_url(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.URL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAgentInstaller_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAgentInstaller", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureAgentInstaller_sha256(ctx context.Context, field graphql.CollectedField, obj *capturereleaseservice.Installer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAgentInstaller_sha256(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SHA256, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAgentInstaller_sha256(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAgentInstaller", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureAgentInstaller_size(ctx context.Context, field graphql.CollectedField, obj *capturereleaseservice.Installer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAgentInstaller_size(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Size, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAgentInstaller_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAgentInstaller", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureAgentRelease_version(ctx context.Context, field graphql.CollectedField, obj *capturereleaseservice.Release) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAgentRelease_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAgentRelease_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAgentRelease", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureAgentRelease_publishedAt(ctx context.Context, field graphql.CollectedField, obj *capturereleaseservice.Release) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAgentRelease_publishedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PublishedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAgentRelease_publishedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAgentRelease", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureAgentRelease_minimumWindowsBuild(ctx context.Context, field graphql.CollectedField, obj *capturereleaseservice.Release) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAgentRelease_minimumWindowsBuild(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinimumWindowsBuild, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAgentRelease_minimumWindowsBuild(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAgentRelease", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureAgentRelease_installer(ctx context.Context, field graphql.CollectedField, obj *capturereleaseservice.Release) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAgentRelease_installer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Installer, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v capturereleaseservice.Installer) graphql.Marshaler {
+			return ec.marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐInstaller(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAgentRelease_installer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CaptureAgentRelease",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CaptureAgentInstaller(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CaptureAgentRelease_notes(ctx context.Context, field graphql.CollectedField, obj *capturereleaseservice.Release) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAgentRelease_notes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Notes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAgentRelease_notes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAgentRelease", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _CaptureBatch_id(ctx context.Context, field graphql.CollectedField, obj *capture.CaptureBatch) (ret graphql.Marshaler) {
@@ -5271,6 +5488,117 @@ func (ec *executionContext) _CaptureAccess(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var captureAgentInstallerImplementors = []string{"CaptureAgentInstaller"}
+
+func (ec *executionContext) _CaptureAgentInstaller(ctx context.Context, sel ast.SelectionSet, obj *capturereleaseservice.Installer) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, captureAgentInstallerImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CaptureAgentInstaller")
+		case "fileName":
+			out.Values[i] = ec._CaptureAgentInstaller_fileName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "url":
+			out.Values[i] = ec._CaptureAgentInstaller_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sha256":
+			out.Values[i] = ec._CaptureAgentInstaller_sha256(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "size":
+			out.Values[i] = ec._CaptureAgentInstaller_size(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var captureAgentReleaseImplementors = []string{"CaptureAgentRelease"}
+
+func (ec *executionContext) _CaptureAgentRelease(ctx context.Context, sel ast.SelectionSet, obj *capturereleaseservice.Release) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, captureAgentReleaseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CaptureAgentRelease")
+		case "version":
+			out.Values[i] = ec._CaptureAgentRelease_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "publishedAt":
+			out.Values[i] = ec._CaptureAgentRelease_publishedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minimumWindowsBuild":
+			out.Values[i] = ec._CaptureAgentRelease_minimumWindowsBuild(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "installer":
+			out.Values[i] = ec._CaptureAgentRelease_installer(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "notes":
+			out.Values[i] = ec._CaptureAgentRelease_notes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var captureBatchImplementors = []string{"CaptureBatch"}
 
 func (ec *executionContext) _CaptureBatch(ctx context.Context, sel ast.SelectionSet, obj *capture.CaptureBatch) graphql.Marshaler {
@@ -7560,6 +7888,10 @@ func (ec *executionContext) marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtr
 	return ec._CaptureAccess(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNCaptureAgentInstaller2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐInstaller(ctx context.Context, sel ast.SelectionSet, v capturereleaseservice.Installer) graphql.Marshaler {
+	return ec._CaptureAgentInstaller(ctx, sel, &v)
+}
+
 func (ec *executionContext) unmarshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐArchitecture(ctx context.Context, v any) (capture.Architecture, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := capture.Architecture(tmp)
@@ -8155,6 +8487,13 @@ func (ec *executionContext) marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemo
 		return graphql.Null
 	}
 	return ec._FileCaptureItemsResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCaptureAgentRelease2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcapturereleaseserviceᚐRelease(ctx context.Context, sel ast.SelectionSet, v *capturereleaseservice.Release) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CaptureAgentRelease(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOCaptureBatchSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCaptureBatchSort(ctx context.Context, v any) (*gqlmodel.CaptureBatchSort, error) {

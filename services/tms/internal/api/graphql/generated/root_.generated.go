@@ -2694,6 +2694,21 @@ type ComplexityRoot struct {
 		Enabled    func(childComplexity int) int
 	}
 
+	CaptureAgentInstaller struct {
+		FileName func(childComplexity int) int
+		SHA256   func(childComplexity int) int
+		Size     func(childComplexity int) int
+		URL      func(childComplexity int) int
+	}
+
+	CaptureAgentRelease struct {
+		Installer           func(childComplexity int) int
+		MinimumWindowsBuild func(childComplexity int) int
+		Notes               func(childComplexity int) int
+		PublishedAt         func(childComplexity int) int
+		Version             func(childComplexity int) int
+	}
+
 	CaptureBatch struct {
 		BusinessUnitID    func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
@@ -9404,6 +9419,7 @@ type ComplexityRoot struct {
 		Briefing                            func(childComplexity int, id string) int
 		Briefings                           func(childComplexity int, input gqlmodel.ListBriefingsInput) int
 		CannedReports                       func(childComplexity int) int
+		CaptureAgentRelease                 func(childComplexity int) int
 		CaptureBatch                        func(childComplexity int, id string) int
 		CaptureBatches                      func(childComplexity int, input gqlmodel.CaptureBatchesInput) int
 		CaptureDevicePairing                func(childComplexity int, userCode string) int
@@ -24596,6 +24612,62 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CaptureAccess.Enabled(childComplexity), true
+
+	case "CaptureAgentInstaller.fileName":
+		if e.ComplexityRoot.CaptureAgentInstaller.FileName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentInstaller.FileName(childComplexity), true
+	case "CaptureAgentInstaller.sha256":
+		if e.ComplexityRoot.CaptureAgentInstaller.SHA256 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentInstaller.SHA256(childComplexity), true
+	case "CaptureAgentInstaller.size":
+		if e.ComplexityRoot.CaptureAgentInstaller.Size == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentInstaller.Size(childComplexity), true
+	case "CaptureAgentInstaller.url":
+		if e.ComplexityRoot.CaptureAgentInstaller.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentInstaller.URL(childComplexity), true
+
+	case "CaptureAgentRelease.installer":
+		if e.ComplexityRoot.CaptureAgentRelease.Installer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.Installer(childComplexity), true
+	case "CaptureAgentRelease.minimumWindowsBuild":
+		if e.ComplexityRoot.CaptureAgentRelease.MinimumWindowsBuild == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.MinimumWindowsBuild(childComplexity), true
+	case "CaptureAgentRelease.notes":
+		if e.ComplexityRoot.CaptureAgentRelease.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.Notes(childComplexity), true
+	case "CaptureAgentRelease.publishedAt":
+		if e.ComplexityRoot.CaptureAgentRelease.PublishedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.PublishedAt(childComplexity), true
+	case "CaptureAgentRelease.version":
+		if e.ComplexityRoot.CaptureAgentRelease.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAgentRelease.Version(childComplexity), true
 
 	case "CaptureBatch.businessUnitId":
 		if e.ComplexityRoot.CaptureBatch.BusinessUnitID == nil {
@@ -59520,6 +59592,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.CannedReports(childComplexity), true
+	case "Query.captureAgentRelease":
+		if e.ComplexityRoot.Query.CaptureAgentRelease == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CaptureAgentRelease(childComplexity), true
 	case "Query.captureBatch":
 		if e.ComplexityRoot.Query.CaptureBatch == nil {
 			break
@@ -87858,9 +87936,32 @@ type CaptureAccess {
   canCapture: Boolean!
 }
 
+"The installer a Trenova Capture release ships."
+type CaptureAgentInstaller {
+  fileName: String!
+  "Where it downloads from."
+  url: String!
+  "Lowercase hex SHA-256 of the file, for anyone who checks it by hand."
+  sha256: String!
+  "Its size in bytes."
+  size: Int!
+}
+
+"A published Trenova Capture release, as its signed manifest describes it."
+type CaptureAgentRelease {
+  version: String!
+  publishedAt: Timestamp!
+  "The oldest Windows build it installs on; 19045 is Windows 10 22H2."
+  minimumWindowsBuild: Int!
+  installer: CaptureAgentInstaller!
+  notes: String!
+}
+
 extend type Query {
   "Whether capture is on here and whether the caller may use it."
   myCaptureAccess: CaptureAccess!
+  "The current Trenova Capture release, for the download button; null when none is published."
+  captureAgentRelease: CaptureAgentRelease
   "The intake queue: captured stacks, newest first."
   captureBatches(input: CaptureBatchesInput!): CaptureBatchConnection!
   "One stack with its pages and proposed documents."
@@ -112350,6 +112451,36 @@ func (ec *executionContext) childFields_CaptureAccess(ctx context.Context, field
 		return ec.fieldContext_CaptureAccess_canCapture(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CaptureAccess", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureAgentInstaller(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "fileName":
+		return ec.fieldContext_CaptureAgentInstaller_fileName(ctx, field)
+	case "url":
+		return ec.fieldContext_CaptureAgentInstaller_url(ctx, field)
+	case "sha256":
+		return ec.fieldContext_CaptureAgentInstaller_sha256(ctx, field)
+	case "size":
+		return ec.fieldContext_CaptureAgentInstaller_size(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureAgentInstaller", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureAgentRelease(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "version":
+		return ec.fieldContext_CaptureAgentRelease_version(ctx, field)
+	case "publishedAt":
+		return ec.fieldContext_CaptureAgentRelease_publishedAt(ctx, field)
+	case "minimumWindowsBuild":
+		return ec.fieldContext_CaptureAgentRelease_minimumWindowsBuild(ctx, field)
+	case "installer":
+		return ec.fieldContext_CaptureAgentRelease_installer(ctx, field)
+	case "notes":
+		return ec.fieldContext_CaptureAgentRelease_notes(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureAgentRelease", field.Name)
 }
 
 func (ec *executionContext) childFields_CaptureBatch(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

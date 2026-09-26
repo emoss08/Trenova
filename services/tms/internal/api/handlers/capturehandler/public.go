@@ -2,8 +2,10 @@ package capturehandler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 )
 
@@ -105,4 +107,35 @@ func (h *Handler) refreshToken(c *gin.Context) {
 
 	c.Header("Cache-Control", "no-store")
 	c.JSON(http.StatusOK, pair)
+}
+
+// releaseCacheSeconds is how long a browser or proxy may keep the manifest.
+const releaseCacheSeconds = 300
+
+// @Summary The current Trenova Capture release
+// @Description Returns the release manifest exactly as it was signed: its bytes, base64, and
+// @Description their ed25519 signature. The companion verifies the signature against a key built
+// @Description into it before acting on anything the manifest says. 404 when no release is
+// @Description published or this server does not serve one.
+// @ID getLatestCaptureRelease
+// @Tags Capture
+// @Produce json
+// @Success 200 {object} capturereleaseservice.SignedRelease
+// @Failure 404 {object} helpers.ProblemDetail
+// @Router /capture/releases/latest/ [get]
+func (h *Handler) latestRelease(c *gin.Context) {
+	latest, err := h.releases.Latest(c.Request.Context())
+	if err != nil {
+		h.eh.HandleError(c, err)
+
+		return
+	}
+	if latest == nil {
+		h.eh.HandleError(c, errortypes.NewNotFoundError("No Trenova Capture release is published"))
+
+		return
+	}
+
+	c.Header("Cache-Control", "public, max-age="+strconv.Itoa(releaseCacheSeconds))
+	c.JSON(http.StatusOK, latest.Signed)
 }

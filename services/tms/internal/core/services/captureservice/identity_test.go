@@ -16,9 +16,13 @@ func TestDescribeDeviceNamesItsPersonAndOrganization(t *testing.T) {
 	w := newWorld()
 	s := w.service()
 	principal := principalFor(t, s, pair(t, w, s))
+	w.control.CaptureMinAgentVersion = "1.2.0"
+	w.control.CaptureAllowAutoUpdate = false
 
 	identity, err := s.DescribeDevice(t.Context(), principal)
 	require.NoError(t, err)
+	assert.Equal(t, "1.2.0", identity.Updates.MinimumVersion)
+	assert.False(t, identity.Updates.AllowAutoUpdate)
 	assert.Equal(t, "Jordan Doe", identity.Person.Name)
 	assert.Equal(t, "jordan@carrier.test", identity.Person.EmailAddress)
 	assert.Equal(t, "Acme Freight", identity.Organization.Name)
@@ -33,6 +37,7 @@ func TestDescribeDeviceNamesItsPersonAndOrganization(t *testing.T) {
 	assert.NotContains(t, device, "refreshTokenHash")
 	assert.NotContains(t, device, "accessTokenHash")
 	assert.Equal(t, "Jordan Doe", body["person"].(map[string]any)["name"])
+	assert.Equal(t, map[string]any{"minimumVersion": "1.2.0", "allowAutoUpdate": false}, body["updates"])
 }
 
 func TestDeviceProfilesFollowTheCapturePermission(t *testing.T) {

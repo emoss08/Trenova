@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -443,6 +444,19 @@ func (r *queryResolver) MyCaptureAccess(ctx context.Context) (*captureservice.Ac
 	}
 
 	return r.captureService.Access(ctx, tenantInfo(authCtx))
+}
+
+func (r *queryResolver) CaptureAgentRelease(ctx context.Context) (*capturereleaseservice.Release, error) {
+	if _, err := r.requireAuth(ctx); err != nil {
+		return nil, err
+	}
+
+	latest, err := r.captureReleaseService.Latest(ctx)
+	if err != nil || latest == nil {
+		return nil, err
+	}
+
+	return latest.Release, nil
 }
 
 func (r *queryResolver) CaptureBatches(ctx context.Context, input gqlmodel.CaptureBatchesInput) (*gqlmodel.CaptureBatchConnection, error) {

@@ -1205,6 +1205,13 @@ definitions:
                     $ref: '#/definitions/capture.SourceInfo'
                 type: array
         type: object
+    capturereleaseservice.SignedRelease:
+        properties:
+            manifest:
+                type: string
+            signature:
+                type: string
+        type: object
     captureservice.DeviceIdentity:
         properties:
             device:
@@ -1213,6 +1220,8 @@ definitions:
                 $ref: '#/definitions/captureservice.DeviceOrganization'
             person:
                 $ref: '#/definitions/captureservice.DevicePerson'
+            updates:
+                $ref: '#/definitions/captureservice.DeviceUpdatePolicy'
         type: object
     captureservice.DeviceOrganization:
         properties:
@@ -1228,6 +1237,19 @@ definitions:
             id:
                 type: string
             name:
+                type: string
+        type: object
+    captureservice.DeviceUpdatePolicy:
+        properties:
+            allowAutoUpdate:
+                description: |-
+                    AllowAutoUpdate is whether the companion installs a new release by
+                    itself. When it is off, IT deploys new versions.
+                type: boolean
+            minimumVersion:
+                description: |-
+                    MinimumVersion is the oldest companion that may refresh its token;
+                    empty when there is none.
                 type: string
         type: object
     captureservice.OpenBatchInput:
@@ -19253,6 +19275,28 @@ paths:
                             type: string
                         type: object
             summary: Exchange an approved pairing for device credentials
+            tags:
+                - Capture
+    /capture/releases/latest/:
+        get:
+            description: |-
+                Returns the release manifest exactly as it was signed: its bytes, base64, and
+                their ed25519 signature. The companion verifies the signature against a key built
+                into it before acting on anything the manifest says. 404 when no release is
+                published or this server does not serve one.
+            operationId: getLatestCaptureRelease
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/capturereleaseservice.SignedRelease'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/helpers.ProblemDetail'
+            summary: The current Trenova Capture release
             tags:
                 - Capture
     /capture/token/refresh/:

@@ -21,6 +21,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -43,6 +44,7 @@ type Params struct {
 	fx.In
 
 	Service      *captureservice.Service
+	Releases     *capturereleaseservice.Service
 	Gateway      services.RealtimeGateway `optional:"true"`
 	ErrorHandler *helpers.ErrorHandler
 	Config       *config.Config
@@ -51,6 +53,7 @@ type Params struct {
 
 type Handler struct {
 	service     *captureservice.Service
+	releases    *capturereleaseservice.Service
 	gateway     services.RealtimeGateway
 	eh          *helpers.ErrorHandler
 	maxLifetime int64
@@ -60,6 +63,7 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service:     p.Service,
+		releases:    p.Releases,
 		gateway:     p.Gateway,
 		eh:          p.ErrorHandler,
 		maxLifetime: int64(p.Config.GetRealtimeConfig().GetMaxStreamLifetime().Seconds()),
@@ -85,9 +89,12 @@ func PageContentPath(pageID pulid.ID, kind captureservice.PageContentKind) strin
 	return path + "?kind=" + url.QueryEscape(string(kind))
 }
 
-// RegisterPublicRoutes mounts pairing and token refresh.
+// RegisterPublicRoutes mounts pairing, token refresh, and the current
+// release, which an agent too old to refresh its token must still be able
+// to read.
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/capture/")
+	api.GET("releases/latest/", h.latestRelease)
 	api.POST("pair/", h.startPairing)
 	api.POST("pair/token/", h.exchangePairing)
 	api.POST("token/refresh/", h.refreshToken)
@@ -136,6 +143,7 @@ func (h *Handler) fail(c *gin.Context, err error) {
 			"error":          "agent_outdated",
 			"message":        outdated.Error(),
 			"minimumVersion": outdated.Minimum,
+			"autoUpdate":     outdated.AutoUpdate,
 		})
 
 		return

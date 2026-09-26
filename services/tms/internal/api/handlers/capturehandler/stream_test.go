@@ -100,6 +100,10 @@ func TestFailMapsDeviceErrors(t *testing.T) {
 			&captureservice.OutdatedAgentError{Current: "1.0.0", Minimum: "1.2.0"},
 			http.StatusUpgradeRequired, `"minimumVersion":"1.2.0"`,
 		},
+		{
+			&captureservice.OutdatedAgentError{Current: "1.0.0", Minimum: "1.2.0", AutoUpdate: true},
+			http.StatusUpgradeRequired, `"autoUpdate":true`,
+		},
 	}
 
 	for _, tc := range cases {

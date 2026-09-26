@@ -536,9 +536,32 @@ type CaptureAccess {
   canCapture: Boolean!
 }
 
+"The installer a Trenova Capture release ships."
+type CaptureAgentInstaller {
+  fileName: String!
+  "Where it downloads from."
+  url: String!
+  "Lowercase hex SHA-256 of the file, for anyone who checks it by hand."
+  sha256: String!
+  "Its size in bytes."
+  size: Int!
+}
+
+"A published Trenova Capture release, as its signed manifest describes it."
+type CaptureAgentRelease {
+  version: String!
+  publishedAt: Timestamp!
+  "The oldest Windows build it installs on; 19045 is Windows 10 22H2."
+  minimumWindowsBuild: Int!
+  installer: CaptureAgentInstaller!
+  notes: String!
+}
+
 extend type Query {
   "Whether capture is on here and whether the caller may use it."
   myCaptureAccess: CaptureAccess!
+  "The current Trenova Capture release, for the download button; null when none is published."
+  captureAgentRelease: CaptureAgentRelease
   "The intake queue: captured stacks, newest first."
   captureBatches(input: CaptureBatchesInput!): CaptureBatchConnection!
   "One stack with its pages and proposed documents."

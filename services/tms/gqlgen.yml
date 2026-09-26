@@ -2508,6 +2508,17 @@ models:
   CaptureAccess:
     model:
       - github.com/emoss08/trenova/internal/core/services/captureservice.Access
+  CaptureAgentRelease:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/capturereleaseservice.Release
+  CaptureAgentInstaller:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/capturereleaseservice.Installer
+    fields:
+      url:
+        fieldName: URL
+      sha256:
+        fieldName: SHA256
   CaptureQRCode:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.CaptureQRCode

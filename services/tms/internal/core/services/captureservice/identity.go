@@ -8,13 +8,25 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// DeviceIdentity is the device as its own companion sees it: the record, and
-// the person and organization it acts for, named so the tray can say who it
-// is signed in as. It carries names only, never anything else about them.
+// DeviceIdentity is the device as its own companion sees it: the record, the
+// person and organization it acts for, named so the tray can say who it is
+// signed in as, and how the organization wants it kept up to date. It carries
+// names only, never anything else about the person.
 type DeviceIdentity struct {
 	Device       *capture.CaptureDevice `json:"device"`
 	Person       DevicePerson           `json:"person"`
 	Organization DeviceOrganization     `json:"organization"`
+	Updates      DeviceUpdatePolicy     `json:"updates"`
+}
+
+// DeviceUpdatePolicy is the organization's say over the companion's version.
+type DeviceUpdatePolicy struct {
+	// MinimumVersion is the oldest companion that may refresh its token;
+	// empty when there is none.
+	MinimumVersion string `json:"minimumVersion"`
+	// AllowAutoUpdate is whether the companion installs a new release by
+	// itself. When it is off, IT deploys new versions.
+	AllowAutoUpdate bool `json:"allowAutoUpdate"`
 }
 
 type DevicePerson struct {
@@ -28,7 +40,8 @@ type DeviceOrganization struct {
 	Name string   `json:"name"`
 }
 
-// DescribeDevice names the device's person and organization.
+// DescribeDevice names the device's person and organization, and the
+// organization's update policy.
 func (s *Service) DescribeDevice(
 	ctx context.Context,
 	principal *DevicePrincipal,
@@ -50,6 +63,11 @@ func (s *Service) DescribeDevice(
 		return nil, err
 	}
 
+	control, err := s.control(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	return &DeviceIdentity{
 		Device: principal.Device,
 		Person: DevicePerson{
@@ -58,6 +76,10 @@ func (s *Service) DescribeDevice(
 			EmailAddress: person.EmailAddress,
 		},
 		Organization: DeviceOrganization{ID: org.ID, Name: org.Name},
+		Updates: DeviceUpdatePolicy{
+			MinimumVersion:  control.CaptureMinAgentVersion,
+			AllowAutoUpdate: control.CaptureAllowAutoUpdate,
+		},
 	}, nil
 }
 

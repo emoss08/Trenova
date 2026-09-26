@@ -1665,6 +1665,17 @@
                 },
                 "type": "object"
             },
+            "capturereleaseservice.SignedRelease": {
+                "properties": {
+                    "manifest": {
+                        "type": "string"
+                    },
+                    "signature": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "captureservice.DeviceIdentity": {
                 "properties": {
                     "device": {
@@ -1675,6 +1686,9 @@
                     },
                     "person": {
                         "$ref": "#/components/schemas/captureservice.DevicePerson"
+                    },
+                    "updates": {
+                        "$ref": "#/components/schemas/captureservice.DeviceUpdatePolicy"
                     }
                 },
                 "type": "object"
@@ -1699,6 +1713,19 @@
                         "type": "string"
                     },
                     "name": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "captureservice.DeviceUpdatePolicy": {
+                "properties": {
+                    "allowAutoUpdate": {
+                        "description": "AllowAutoUpdate is whether the companion installs a new release by\nitself. When it is off, IT deploys new versions.",
+                        "type": "boolean"
+                    },
+                    "minimumVersion": {
+                        "description": "MinimumVersion is the oldest companion that may refresh its token;\nempty when there is none.",
                         "type": "string"
                     }
                 },
@@ -28791,6 +28818,38 @@
                     }
                 },
                 "summary": "Exchange an approved pairing for device credentials",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/releases/latest/": {
+            "get": {
+                "description": "Returns the release manifest exactly as it was signed: its bytes, base64, and\ntheir ed25519 signature. The companion verifies the signature against a key built\ninto it before acting on anything the manifest says. 404 when no release is\npublished or this server does not serve one.",
+                "operationId": "getLatestCaptureRelease",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/capturereleaseservice.SignedRelease"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    }
+                },
+                "summary": "The current Trenova Capture release",
                 "tags": [
                     "Capture"
                 ]

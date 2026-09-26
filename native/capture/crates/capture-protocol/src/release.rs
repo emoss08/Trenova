@@ -60,7 +60,11 @@ impl FromStr for Version {
         let mut parts = value.split('.');
         let mut next = || -> Result<u32, ReleaseError> {
             let part = parts.next().ok_or(invalid.clone())?;
-            if part.is_empty() || part.len() > 9 || !part.bytes().all(|b: u8| b.is_ascii_digit()) {
+            if part.is_empty()
+                || part.len() > 9
+                || (part.len() > 1 && part.starts_with('0'))
+                || !part.bytes().all(|b: u8| b.is_ascii_digit())
+            {
                 return Err(invalid.clone());
             }
             part.parse().map_err(|_| invalid.clone())
@@ -125,6 +129,9 @@ impl Release {
     pub fn validate(&self) -> Result<Version, ReleaseError> {
         if self.product != PRODUCT {
             return Err(ReleaseError::Invalid("the manifest is for another product"));
+        }
+        if self.version.starts_with('v') {
+            return Err(ReleaseError::Invalid("a manifest version has no prefix"));
         }
         let version = self.version.parse::<Version>()?;
         let installer = &self.installer;
@@ -313,7 +320,16 @@ mod tests {
         huge.installer.size = MAX_INSTALLER_BYTES + 1;
         let mut checksum = release("1.0.0");
         checksum.installer.sha256 = "AB".repeat(32);
-        for bad in [plain_http, path, exe, other, huge, checksum, release("1.0")] {
+        for bad in [
+            plain_http,
+            path,
+            exe,
+            other,
+            huge,
+            checksum,
+            release("1.0"),
+            release("v1.0.0"),
+        ] {
             assert!(
                 matches!(sign(&bad, &private), Err(ReleaseError::Invalid(_))),
                 "{bad:?}"

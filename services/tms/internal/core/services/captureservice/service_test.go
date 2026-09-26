@@ -200,11 +200,13 @@ func TestRefreshEnforcesMinimumVersion(t *testing.T) {
 	s := w.service()
 	tokens := pair(t, w, s)
 	w.control.CaptureMinAgentVersion = "1.2.0"
+	w.control.CaptureAllowAutoUpdate = true
 
 	_, err := s.Refresh(t.Context(), &RefreshRequest{RefreshToken: tokens.RefreshToken, AgentVersion: "1.1.9"})
 	var outdated *OutdatedAgentError
 	require.ErrorAs(t, err, &outdated)
 	assert.Equal(t, "1.2.0", outdated.Minimum)
+	assert.True(t, outdated.AutoUpdate, "the companion is told it may update itself")
 
 	_, err = s.Refresh(t.Context(), &RefreshRequest{RefreshToken: tokens.RefreshToken, AgentVersion: "1.2.0"})
 	require.NoError(t, err, "a refused refresh does not consume the token")
