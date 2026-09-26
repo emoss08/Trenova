@@ -1,7 +1,12 @@
 import { recordPath, type RecordEntityType } from "@/config/record-links";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import type {
+  AccountingAppliedObjectType,
   AccountingConnectionStatus,
+  AccountingInboundChangeReason,
+  AccountingInboundChangeStatus,
+  AccountingInboundPaymentPolicy,
+  AccountingSyncObjectType,
   AccountingSyncRecordStatus,
   AccountingMappingFilterInput,
   AccountingMappingState,
@@ -11,10 +16,117 @@ import type {
   AccountingSystem,
 } from "@trenova/graphql/generated/graphql";
 import type { StatusPhase } from "@trenova/shared/lib/status-phase";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 
 export const ACCOUNTING_MAPPINGS_PATH = "/accounting/sync/mappings";
 
 export const ACCOUNTING_SYNC_PATH = "/accounting/sync";
+
+export const ACCOUNTING_INBOUND_PATH = "/accounting/sync/inbound";
+
+const INBOUND_PHASES: Record<AccountingInboundChangeStatus, StatusPhase> = {
+  Detected: "queued",
+  Proposed: "awaiting",
+  Applied: "complete",
+  Ignored: "closed",
+  Superseded: "closed",
+};
+
+export function accountingInboundPhase(status: AccountingInboundChangeStatus): StatusPhase {
+  return INBOUND_PHASES[status];
+}
+
+export const ACCOUNTING_INBOUND_STATUSES: readonly AccountingInboundChangeStatus[] = [
+  "Detected",
+  "Proposed",
+  "Applied",
+  "Ignored",
+  "Superseded",
+];
+
+export const ACCOUNTING_INBOUND_REASONS: readonly AccountingInboundChangeReason[] = [
+  "PolicyPropose",
+  "PeriodNotOpen",
+  "UnknownDocument",
+  "PartyMismatch",
+  "Overpayment",
+  "PartialBillPayment",
+  "AlreadyPaid",
+  "CurrencyMismatch",
+  "Voided",
+  "NotTrenovaDocument",
+  "SentFromTrenova",
+  "ApplyFailed",
+];
+
+const APPLICABLE_REASONS = new Set<AccountingInboundChangeReason>([
+  "PolicyPropose",
+  "PeriodNotOpen",
+  "ApplyFailed",
+]);
+
+export function accountingInboundCanApply(
+  status: AccountingInboundChangeStatus,
+  reason: AccountingInboundChangeReason | null | undefined,
+): boolean {
+  return status === "Proposed" && reason != null && APPLICABLE_REASONS.has(reason);
+}
+
+export function accountingInboundIsOpen(status: AccountingInboundChangeStatus): boolean {
+  return status === "Detected" || status === "Proposed";
+}
+
+export function accountingSyncObjectPath(
+  objectType: AccountingSyncObjectType,
+  objectId: string,
+): string | null {
+  switch (objectType) {
+    case "Invoice":
+    case "CreditMemo":
+    case "DebitMemo":
+      return recordPath("invoice", objectId);
+    case "Customer":
+      return recordPath("customer", objectId);
+    case "CarrierBill":
+    case "CarrierBillPayment":
+      return recordPath("carrier_settlement", objectId);
+    case "DriverBill":
+    case "DriverBillPayment":
+      return recordPath("driver_settlement", objectId);
+    case "CarrierVendor":
+      return recordPath("carrier", objectId);
+    case "DriverVendor":
+      return recordPath("worker", objectId);
+    case "CustomerPayment":
+    case "CreditApplication":
+      return null;
+  }
+}
+
+export function accountingAppliedObjectPath(
+  type: AccountingAppliedObjectType,
+  id: string,
+): string | null {
+  switch (type) {
+    case "CarrierSettlement":
+      return recordPath("carrier_settlement", id);
+    case "DriverSettlement":
+      return recordPath("driver_settlement", id);
+    case "CustomerPayment":
+    case "CreditMemoApplication":
+      return null;
+  }
+}
+
+export function formatAccountingMinor(minor: number, currency: string): string {
+  return formatCurrency(minor / 100, currency || "USD");
+}
+
+export const ACCOUNTING_INBOUND_POLICIES: readonly AccountingInboundPaymentPolicy[] = [
+  "Propose",
+  "Apply",
+  "Off",
+];
 
 const SYNC_RECORD_PHASES: Record<AccountingSyncRecordStatus, StatusPhase> = {
   Queued: "queued",

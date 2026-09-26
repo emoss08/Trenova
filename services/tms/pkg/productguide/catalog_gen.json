@@ -1,5 +1,5 @@
 {
-  "version": "sha256:e2ecf28fca5059067d5b5debd5614b051b7a9df960a7941bd9bcb947016c6d14",
+  "version": "sha256:c041ca6854554e053198f9d0f89c3dab328ae06ccc69fb35d54ad6d65eb578e8",
   "modules": [
     {
       "id": "home",
@@ -1719,6 +1719,89 @@
       "notes": "Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing and resuming need update access; a backfill needs manage access to the accounting integration. A document that fails for a temporary reason is retried on its own, backing off from 30 seconds to 6 hours, and is marked failed after 8 tries. Invoices, customer payments, customers, carrier and driver settlements, carriers and workers show where they stand in QuickBooks Online on their own pages, with a link back to this ledger.",
       "related": [
         "/accounting/sync/mappings",
+        "/accounting/sync/inbound",
+        "/admin/integrations"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/accounting/sync/inbound",
+      "name": "Payments from the books",
+      "module": "accounting",
+      "breadcrumb": [
+        "Accounting management",
+        "Accounting sync",
+        "Payments from the books"
+      ],
+      "description": "Payments recorded in {0} against invoices and settlements Trenova sent, and whether each was brought into Trenova.",
+      "summary": "Payments from the books lists the payments someone recorded in QuickBooks Online against invoices and settlements Trenova sent: customer payments that pay invoices, and bill payments that pay carrier or owner-operator settlements. Trenova reads them every few minutes, and as soon as QuickBooks tells it something changed. Each one says what it pays and whether it was brought into Trenova, so the invoice or settlement shows as paid here too.\n\nPayments Trenova sent itself are never read back. A payment waits for a person when it does not match cleanly, such as one that pays more than is open, pays documents Trenova did not send, pays a settlement only in part, or falls in a period that is not open; its reason says which. What happens to the rest follows the choice for payments recorded in QuickBooks Online in the integration's sync settings.\n\nThe strip at the top counts payments **Waiting for you**, **Just read**, and those **Applied** or **Ignored** in the last seven days; selecting a figure filters the table to it.",
+      "requires": [
+        {
+          "resource": "accounting_sync",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "QuickBooks payments",
+        "payment entered in QuickBooks",
+        "customer paid in QuickBooks",
+        "bill paid in QuickBooks",
+        "receive payment QuickBooks",
+        "payments from QuickBooks",
+        "inbound payments",
+        "two-way sync",
+        "invoice paid in books",
+        "settlement paid in books"
+      ],
+      "tasks": [
+        {
+          "title": "Apply a payment recorded in QuickBooks",
+          "keywords": [
+            "bring payment into Trenova",
+            "mark invoice paid",
+            "settlement paid in QuickBooks",
+            "receive payment"
+          ],
+          "steps": [
+            "Open [Payments from the books](/accounting/sync/inbound) and select **Waiting for you** in the strip.",
+            "Open the payment. **Applying it posts** shows each invoice or settlement it pays and any cash left on the customer's account as unapplied.",
+            "Select **Apply in Trenova**. A customer payment is posted and applied to its invoices, with its credit memos applied first; a bill payment marks its settlement paid on the day it was paid in QuickBooks."
+          ]
+        },
+        {
+          "title": "Ignore a payment",
+          "keywords": [
+            "already entered",
+            "duplicate payment",
+            "do not bring in",
+            "refund"
+          ],
+          "steps": [
+            "Open [Payments from the books](/accounting/sync/inbound) and open the payment.",
+            "Select **Ignore**, say why it stays out of Trenova, then select **Ignore payment**."
+          ]
+        },
+        {
+          "title": "Choose what happens to payments recorded in QuickBooks",
+          "keywords": [
+            "automatic payments",
+            "apply automatically",
+            "turn off payment sync",
+            "inbound payment policy"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and open the QuickBooks Online card.",
+            "Under **Sync settings**, choose what happens to payments recorded in QuickBooks Online: **Wait for someone to apply them**, **Apply them automatically**, or **Leave them out of Trenova**.",
+            "Select **Save**."
+          ]
+        }
+      ],
+      "notes": "Viewing the page needs read access to accounting sync; applying and ignoring need update access, and applying also needs permission to post customer payments or to mark the settlement paid. A payment applied here cannot be voided or changed from Trenova while it pays more than one document, because QuickBooks holds it as one payment; change it in QuickBooks instead. A payment voided in QuickBooks before it was applied is marked **Voided in the books**.",
+      "related": [
+        "/accounting/sync",
         "/admin/integrations"
       ],
       "covers": [],
@@ -4352,6 +4435,7 @@
             "Open [Integrations](/admin/integrations) and open the QuickBooks Online card.",
             "Under **Sync settings**, turn **Send posted documents automatically** on or off. When it is off, each new document waits in the [Sync ledger](/accounting/sync) until someone releases it; documents already held stay held.",
             "Turn **Send owner-operator settlements** on to send owner-operator settlements to QuickBooks as bills, with a 1099 vendor for each driver. Settlements posted from then on are sent; request a backfill from the [Sync ledger](/accounting/sync) to send earlier ones.",
+            "Choose what happens to payments recorded in QuickBooks Online: **Wait for someone to apply them** lists each one on [Payments from the books](/accounting/sync/inbound), **Apply them automatically** brings in those that match, and **Leave them out of Trenova** stops reading them.",
             "Select **Save**."
           ]
         },
@@ -14698,6 +14782,15 @@
     }
   ],
   "records": [
+    {
+      "entity": "accounting_inbound_change",
+      "label": "Payment from the books",
+      "path": "/accounting/sync/inbound",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
     {
       "entity": "accounting_sync_record",
       "label": "Sync record",

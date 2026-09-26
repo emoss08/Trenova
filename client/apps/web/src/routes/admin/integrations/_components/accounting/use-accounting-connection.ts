@@ -179,6 +179,7 @@ export function useAccountingSyncSettingsAction(
         integrationType: vendor.system,
         autoSync: values.autoSync,
         driverSettlements: values.driverSettlements,
+        inboundPayments: values.inboundPayments,
       }),
     form,
     resourceName: vendor.name,
@@ -186,6 +187,7 @@ export function useAccountingSyncSettingsAction(
       form.reset({
         autoSync: connection.autoSync,
         driverSettlements: connection.syncsDriverSettlements,
+        inboundPayments: connection.inboundPaymentPolicy,
       });
       await Promise.all([
         queryClient.invalidateQueries({
@@ -193,6 +195,9 @@ export function useAccountingSyncSettingsAction(
         }),
         queryClient.invalidateQueries({
           queryKey: queries.accountingSync.syncSummary(vendor.system).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queries.accountingSync.inboundOverview(vendor.system).queryKey,
         }),
       ]);
       toast.success(t("Sync settings saved"));

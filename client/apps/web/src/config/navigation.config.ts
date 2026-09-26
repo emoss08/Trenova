@@ -964,6 +964,12 @@ const accountingModule: NavModule = {
           resource: Resource.AccountingSync,
         },
         {
+          id: "accounting-inbound",
+          label: "Payments from the books",
+          path: "/accounting/sync/inbound",
+          resource: Resource.AccountingSync,
+        },
+        {
           id: "accounting-mappings",
           label: "Mappings",
           path: "/accounting/sync/mappings",
