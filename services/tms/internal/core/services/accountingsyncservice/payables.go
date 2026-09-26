@@ -402,21 +402,7 @@ func (s *Service) pushBill(
 		doc.DocNumber = ""
 	}
 
-	var written *services.AccountingDocumentResult
-	if target != nil {
-		if sentAsCredit(target) != credit {
-			return nil, blocked(
-				accountingsync.SyncErrorValidation,
-				label+" now nets to the other side of zero, so "+sess.providerName+
-					" holds it as the wrong kind of document",
-				"Send it again as a new document, then delete the old one in "+sess.providerName,
-			)
-		}
-		doc.ExternalID = target.ExternalID
-		written, err = sess.writer.UpdatePurchaseDocument(ctx, doc)
-	} else {
-		written, err = sess.writer.CreatePurchaseDocument(ctx, doc)
-	}
+	written, err := writeBill(ctx, sess, target, doc, label)
 	if err != nil {
 		return partial(written), err
 	}
@@ -685,4 +671,26 @@ func billPaymentNote(
 
 func sentAsCredit(record *accountingsync.AccountingSyncRecord) bool {
 	return record.ExternalRefs[accountingsync.ExternalRefDocumentType] == "VendorCredit"
+}
+
+func writeBill(
+	ctx context.Context,
+	sess *pushSession,
+	target *accountingsync.AccountingSyncRecord,
+	doc *services.AccountingPurchaseDocument,
+	label string,
+) (*services.AccountingDocumentResult, error) {
+	if target == nil {
+		return sess.writer.CreatePurchaseDocument(ctx, doc)
+	}
+	if sentAsCredit(target) != doc.VendorCredit {
+		return nil, blocked(
+			accountingsync.SyncErrorValidation,
+			label+" now nets to the other side of zero, so "+sess.providerName+
+				" holds it as the wrong kind of document",
+			"Send it again as a new document, then delete the old one in "+sess.providerName,
+		)
+	}
+	doc.ExternalID = target.ExternalID
+	return sess.writer.UpdatePurchaseDocument(ctx, doc)
 }
