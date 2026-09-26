@@ -73,6 +73,7 @@ type Settlement struct {
 	PaidByID               pulid.ID                      `json:"paidById"               bun:"paid_by_id,type:VARCHAR(100),nullzero"`
 	PaymentMethod          string                        `json:"paymentMethod"          bun:"payment_method,type:VARCHAR(50),nullzero"`
 	PaymentReference       string                        `json:"paymentReference"       bun:"payment_reference,type:VARCHAR(100),nullzero"`
+	PaidJournalBatchID     *pulid.ID                     `json:"paidJournalBatchId"     bun:"paid_journal_batch_id,type:VARCHAR(100),nullzero"`
 	VoidedByID             pulid.ID                      `json:"voidedById"             bun:"voided_by_id,type:VARCHAR(100),nullzero"`
 	VoidedAt               *int64                        `json:"voidedAt"               bun:"voided_at,type:BIGINT,nullzero"`
 	VoidReason             string                        `json:"voidReason"             bun:"void_reason,type:TEXT,nullzero"`

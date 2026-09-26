@@ -161,6 +161,7 @@ const (
 	JournalSourceEventCarrierSettlementPosted = JournalSourceEventType("CarrierSettlementPosted")
 	JournalSourceEventCarrierSettlementVoided = JournalSourceEventType("CarrierSettlementVoided")
 	JournalSourceEventCarrierSettlementPaid   = JournalSourceEventType("CarrierSettlementPaid")
+	JournalSourceEventDriverSettlementPaid    = JournalSourceEventType("DriverSettlementPaid")
 )
 
 func (j JournalSourceEventType) String() string {
@@ -182,7 +183,8 @@ func (j JournalSourceEventType) IsValid() bool {
 		JournalSourceEventEscrowInterestAccrued,
 		JournalSourceEventCarrierSettlementPosted,
 		JournalSourceEventCarrierSettlementVoided,
-		JournalSourceEventCarrierSettlementPaid:
+		JournalSourceEventCarrierSettlementPaid,
+		JournalSourceEventDriverSettlementPaid:
 		return true
 	}
 	return false
@@ -218,6 +220,8 @@ func (j JournalSourceEventType) GetDescription() string {
 		return "Trigger on voided carrier settlement"
 	case JournalSourceEventCarrierSettlementPaid:
 		return "Trigger on paid carrier settlement"
+	case JournalSourceEventDriverSettlementPaid:
+		return "Trigger on paid driver settlement"
 	default:
 		return "Unknown journal source event"
 	}

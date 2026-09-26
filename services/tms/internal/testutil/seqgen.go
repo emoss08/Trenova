@@ -159,3 +159,27 @@ func (g TestSequenceGenerator) GenerateCarrierSettlementNumber(
 ) (string, error) {
 	return g.SingleValue, nil
 }
+
+type UniqueJournalSequenceGenerator struct {
+	TestSequenceGenerator
+}
+
+func (UniqueJournalSequenceGenerator) GenerateJournalBatchNumber(
+	_ context.Context,
+	_ pulid.ID,
+	_ pulid.ID,
+	_ string,
+	_ string,
+) (string, error) {
+	return pulid.MustNew("jb_").String(), nil
+}
+
+func (UniqueJournalSequenceGenerator) GenerateJournalEntryNumber(
+	_ context.Context,
+	_ pulid.ID,
+	_ pulid.ID,
+	_ string,
+	_ string,
+) (string, error) {
+	return pulid.MustNew("je_").String(), nil
+}

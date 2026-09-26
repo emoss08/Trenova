@@ -2694,6 +2694,15 @@
       "service/carriersettlementservice"
     ]
   },
+  "A default cash account must be configured before recording driver settlement payments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/driversettlementservice"
+    ]
+  },
   "A delegate call requires the run or turn that made it": {
     "sites": 1,
     "scope": [
@@ -8645,7 +8654,7 @@
     ]
   },
   "Accounting date": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -8653,6 +8662,7 @@
       "apps/web/lib",
       "routes/customer-payments",
       "routes/invoice",
+      "routes/journal-review",
       "routes/manual-journal"
     ]
   },
@@ -15058,7 +15068,7 @@
     ]
   },
   "Amount": {
-    "sites": 43,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -15080,6 +15090,7 @@
       "routes/fuel-purchase",
       "routes/invoice",
       "routes/invoice-reconciliation",
+      "routes/journal-review",
       "routes/order",
       "routes/pay-advance",
       "routes/rate-agreement",
@@ -18543,7 +18554,7 @@
     ]
   },
   "Approve": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -18560,6 +18571,7 @@
       "routes/invoice",
       "routes/invoice-approval",
       "routes/journal-reversal",
+      "routes/journal-review",
       "routes/manual-journal",
       "routes/rate-agreement",
       "routes/scheduling",
@@ -18733,6 +18745,15 @@
     ]
   },
   "Approve invoices": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Approve journal entries awaiting review and post them to the general ledger": {
     "sites": 1,
     "scope": [
       "go"
@@ -19099,6 +19120,15 @@
       "routes/formula-template"
     ]
   },
+  "Approving and posting journal entries needs a signed-in person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
+    ]
+  },
   "Approving user is required": {
     "sites": 1,
     "scope": [
@@ -19109,7 +19139,7 @@
     ]
   },
   "Approving...": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -19117,6 +19147,7 @@
       "routes/edi",
       "routes/formula-template",
       "routes/journal-reversal",
+      "routes/journal-review",
       "routes/rate-agreement",
       "routes/worker"
     ]
@@ -23602,13 +23633,15 @@
     ]
   },
   "Awaiting approval": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "packages/shared/lib",
+      "routes/journal-review",
       "routes/time-attendance"
     ]
   },
@@ -30889,7 +30922,7 @@
     ]
   },
   "Carrier settlement paid": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -30917,22 +30950,13 @@
     ]
   },
   "Carrier settlement posted": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
       "apps/web/lib"
-    ]
-  },
-  "Carrier settlement posting date must fall within a fiscal period": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/carriersettlementservice"
     ]
   },
   "Carrier settlement statements, batches, and cost events": {
@@ -30945,7 +30969,7 @@
     ]
   },
   "Carrier settlement voided": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -33849,6 +33873,15 @@
       "routes/agent-control"
     ]
   },
+  "Choose at least one journal entry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
+    ]
+  },
   "Choose at least one measure to plot": {
     "sites": 1,
     "scope": [
@@ -33901,6 +33934,15 @@
     ],
     "areas": [
       "service/workertrainingservice"
+    ]
+  },
+  "Choose at most {0} journal entries at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
     ]
   },
   "Choose column": {
@@ -45140,7 +45182,7 @@
     ]
   },
   "Credit memo posted": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -46575,6 +46617,15 @@
       "apps/web/hooks"
     ]
   },
+  "Customer payment applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Customer payment currency must match the tenant functional currency": {
     "sites": 1,
     "scope": [
@@ -46603,11 +46654,12 @@
     ]
   },
   "Customer payment posted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -46627,6 +46679,15 @@
     ],
     "areas": [
       "service/customerpaymentservice"
+    ]
+  },
+  "Customer payment reversed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Customer payments": {
@@ -46656,6 +46717,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Customer short pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Customer statement": {
@@ -48725,7 +48795,7 @@
     ]
   },
   "Debit memo posted": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -52106,7 +52176,7 @@
     ]
   },
   "Description": {
-    "sites": 142,
+    "sites": 144,
     "scope": [
       "go",
       "ts"
@@ -52139,6 +52209,7 @@
       "routes/invoice",
       "routes/invoice-approval",
       "routes/invoice-reconciliation",
+      "routes/journal-review",
       "routes/location-category",
       "routes/manual-journal",
       "routes/order",
@@ -55387,7 +55458,7 @@
     ]
   },
   "Document": {
-    "sites": 25,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -55401,6 +55472,7 @@
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/customer-statement",
+      "routes/journal-review",
       "routes/shipment",
       "routes/worker",
       "routes/worker-credential-type",
@@ -57616,6 +57688,33 @@
       "apps/web/config"
     ]
   },
+  "Driver settlement has no posted payable account; it cannot be paid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/driversettlementservice"
+    ]
+  },
+  "Driver settlement paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Driver settlement posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Driver settlement posting": {
     "sites": 1,
     "scope": [
@@ -57623,6 +57722,15 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Driver settlement voided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Driver type": {
@@ -63489,11 +63597,12 @@
     ]
   },
   "Entry": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/journal-review",
       "routes/worker"
     ]
   },
@@ -64134,6 +64243,15 @@
     ],
     "areas": [
       "routes/settlement-control"
+    ]
+  },
+  "Escrow interest accrued": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Escrow interest must accrue at least quarterly (1 to 3 months) per 49 CFR 376.12(k)": {
@@ -65338,6 +65456,15 @@
     ],
     "areas": [
       "routes/accounting-mapping"
+    ]
+  },
+  "Every line of the {0} journal needs an account and one positive side": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalposting"
     ]
   },
   "Every line was rebuilt from the miles, fuel and rates on file now.": {
@@ -86058,7 +86185,7 @@
     ]
   },
   "Invoice posted": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -86068,24 +86195,6 @@
     ]
   },
   "Invoice posted with reconciliation warning": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoiceservice"
-    ]
-  },
-  "Invoice posting cannot create ledger output in a closed period; reopen the period first": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoiceservice"
-    ]
-  },
-  "Invoice posting cannot create ledger output in an inactive fiscal period": {
     "sites": 1,
     "scope": [
       "go"
@@ -86136,6 +86245,7 @@
       "go"
     ],
     "areas": [
+      "service/invoiceledger",
       "service/invoiceservice"
     ]
   },
@@ -86357,6 +86467,15 @@
     ],
     "areas": [
       "service/customerpaymentservice"
+    ]
+  },
+  "Invoice write-off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Invoice {0}": {
@@ -87526,11 +87645,13 @@
     ]
   },
   "Journal entry": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
+      "apps/web/hooks",
       "routes/journal-entry"
     ]
   },
@@ -87550,6 +87671,51 @@
     ],
     "areas": [
       "service/journalreversalservice"
+    ]
+  },
+  "Journal entry {0} does not balance and cannot be posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
+  "Journal entry {0} is already posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
+  "Journal entry {0} is in an unknown state": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
+  "Journal entry {0} is {1} and cannot be posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
+  "Journal entry {0} needs approval before it can be posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
     ]
   },
   "Journal policy": {
@@ -87687,6 +87853,43 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Journals from invoices, payments, adjustments and settlements wait here until someone approves and posts them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
+  "Journals from invoices, payments, adjustments and settlements wait here until someone posts them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
+  "Journals now post on their own. These were written while posting was manual and still need a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
+  "Journals to post": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/journal-review"
     ]
   },
   "Judge": {
@@ -95377,24 +95580,6 @@
     ]
   },
   "Manual journal cannot be cancelled from its current status": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/manualjournalservice"
-    ]
-  },
-  "Manual journal cannot be posted to a closed period; reopen the period first": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/manualjournalservice"
-    ]
-  },
-  "Manual journal cannot be posted to an inactive fiscal period": {
     "sites": 1,
     "scope": [
       "go"
@@ -106204,12 +106389,21 @@
     ]
   },
   "No fiscal period covers the invoice posting date": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "No fiscal period covers the {0} date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalposting"
     ]
   },
   "No fiscal periods found for this fiscal year.": {
@@ -106990,24 +107184,6 @@
     ],
     "areas": [
       "routes/rate-agreement"
-    ]
-  },
-  "No next open fiscal period is available for invoice ledger posting": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/invoiceservice"
-    ]
-  },
-  "No next open fiscal period is available for manual journal posting": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/manualjournalservice"
     ]
   },
   "No next open fiscal period is available for reversal posting": {
@@ -109331,6 +109507,24 @@
       "service/carrierintelservice"
     ]
   },
+  "None of the selected entries is approved yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
+  "None of the selected entries is awaiting approval.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "None of the selected files can be reprocessed": {
     "sites": 1,
     "scope": [
@@ -109383,6 +109577,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "None of the {0} selected could be changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "None of these rows are carriers": {
@@ -113037,6 +113240,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Oldest waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
     ]
   },
   "Oldest {0}": {
@@ -127883,6 +128095,15 @@
       "routes/manual-journal"
     ]
   },
+  "Post to ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "Post to next open": {
     "sites": 1,
     "scope": [
@@ -128152,12 +128373,13 @@
     ]
   },
   "Posting...": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/journal-reversal",
+      "routes/journal-review",
       "routes/worker"
     ]
   },
@@ -135456,6 +135678,16 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/billing-queue"
+    ]
+  },
+  "Ready to post": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/journal-review"
     ]
   },
   "Ready to review": {
@@ -144619,7 +144851,7 @@
     ]
   },
   "Retry": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -144635,6 +144867,7 @@
       "routes/formula-template",
       "routes/fuel-purchase",
       "routes/ifta-return",
+      "routes/journal-review",
       "routes/shipment"
     ]
   },
@@ -157821,15 +158054,6 @@
       "domain/permission"
     ]
   },
-  "Settlement posting date must fall within a fiscal period": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/driversettlementservice"
-    ]
-  },
   "Settlement statements are always visible to drivers — these toggles only control per-load pay detail shown before settlement.": {
     "sites": 1,
     "scope": [
@@ -162541,7 +162765,7 @@
     ]
   },
   "Source": {
-    "sites": 35,
+    "sites": 37,
     "scope": [
       "ts"
     ],
@@ -162557,6 +162781,7 @@
       "routes/fuel-purchase",
       "routes/ifta-jurisdiction-mileage",
       "routes/ifta-tax-rate",
+      "routes/journal-review",
       "routes/jurisdiction-rule",
       "routes/pay-advance",
       "routes/service-failure",
@@ -164756,7 +164981,7 @@
     ]
   },
   "Status": {
-    "sites": 257,
+    "sites": 259,
     "scope": [
       "go",
       "ts"
@@ -164807,6 +165032,7 @@
       "routes/invoice-reconciliation",
       "routes/invoice-register",
       "routes/journal-reversal",
+      "routes/journal-review",
       "routes/jurisdiction-rule",
       "routes/location",
       "routes/manual-journal",
@@ -173569,6 +173795,15 @@
       "routes/worker"
     ]
   },
+  "The driver settlement already has a payment journal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The driver who normally carries this card.": {
     "sites": 1,
     "scope": [
@@ -175077,6 +175312,15 @@
       "routes/worker"
     ]
   },
+  "The journal review queue could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "The jurisdiction is the state or province the pump stands in, which is what the return credits. A chain's billing address or the state on the receipt header can be somewhere else entirely, so read the location line, not the vendor line.": {
     "sites": 1,
     "scope": [
@@ -176266,6 +176510,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The organization and business unit are required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
     ]
   },
   "The organization default policy cannot target a customer, facility, or type": {
@@ -177502,6 +177755,15 @@
     ],
     "areas": [
       "routes/escrow-account"
+    ]
+  },
+  "The repair needs a user to record as the author of the journals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalrepairservice"
     ]
   },
   "The repeating working patterns a roster is built from": {
@@ -179976,6 +180238,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "The {0} journal does not balance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalposting"
     ]
   },
   "The {0} protocol has no embedding endpoint": {
@@ -203519,6 +203790,15 @@
       "service/agentdefinitionservice"
     ]
   },
+  "You can see these journals, but approving and posting them needs the Journal Entry approve permission.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "You can view these settings but not change them.": {
     "sites": 1,
     "scope": [
@@ -205126,6 +205406,15 @@
       "routes/scheduling"
     ]
   },
+  "accounting date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/journal-review"
+    ]
+  },
   "accounts for {0}% of everything forgiven — {1} across {2} {3}.": {
     "sites": 1,
     "scope": [
@@ -205457,6 +205746,15 @@
       "service/roleservice"
     ]
   },
+  "carrier settlement": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
+    ]
+  },
   "change how they're split": {
     "sites": 1,
     "scope": [
@@ -205716,6 +206014,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "driver settlement": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/driversettlementservice"
     ]
   },
   "e.g. (555) 123-4567": {
@@ -208141,6 +208448,24 @@
       "service/realtimeservice"
     ]
   },
+  "invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceledger"
+    ]
+  },
+  "invoice write-off": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceadjustmentservice"
+    ]
+  },
   "is gearing up for you.": {
     "sites": 1,
     "scope": [
@@ -208202,6 +208527,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "journal entry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
     ]
   },
   "keeps assignment": {
@@ -208293,6 +208627,15 @@
     ],
     "areas": [
       "service/samsarasyncservice"
+    ]
+  },
+  "manual journal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/manualjournalservice"
     ]
   },
   "mapped Samsara driver is deactivated": {
@@ -211988,6 +212331,15 @@
       "routes/admin"
     ]
   },
+  "{0} (and {1} more)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "{0} (default)": {
     "sites": 1,
     "scope": [
@@ -212400,6 +212752,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "{0} approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "{0} approved · {1} changed · {2} rejected · {3} failed": {
@@ -215474,6 +215835,15 @@
       "routes/fleet-safety"
     ]
   },
+  "{0} posted to the general ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "{0} provided every section of the profile.": {
     "sites": 1,
     "scope": [
@@ -217211,6 +217581,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0}; {1} could not be changed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "{0}d": {
