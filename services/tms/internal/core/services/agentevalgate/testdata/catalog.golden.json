@@ -983,6 +983,7 @@
               "customers",
               "locations",
               "invoices",
+              "billing queue items",
               "carriers",
               "equipment types",
               "fleet codes",
@@ -2921,6 +2922,44 @@
         "source": "bank_receipt",
         "carriesTaint": false,
         "rationale": "Reads a bank receipt whose memo the payer wrote; nothing changes and nothing is sent."
+      }
+    },
+    {
+      "name": "get_billing_queue_item",
+      "description": "Open one billing queue item: its payer, shipment, the charges this payer is billed, the detention charges holding it, its exception and review notes, what its shipment still lacks for billing, and the invoice it made once approved. Read it before proposing approve_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops or cancel_billing_queue_item. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The item's id, from list_billing_queue_items, this run's subject or the page you are on.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "billing_queue",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
       }
     },
     {
@@ -4941,6 +4980,199 @@
         "source": "bank_receipt",
         "carriesTaint": false,
         "rationale": "Lists bank receipts whose memos the payers wrote; nothing changes and nothing is sent."
+      }
+    },
+    {
+      "name": "list_billing_queue_items",
+      "description": "List billing queue items, the shipments waiting on a biller, by status, bill type, exception reason, assigned biller, payer or age. Open one with get_billing_queue_item before proposing a decision on it. Posted items are left out unless you filter status to Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview are waiting on a biller; OnHold, Exception and SentBackToOps are blocked; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; createdAt (date): when it was queued; age is how long ago; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "billType",
+                    "exceptionReasonCode",
+                    "assignedBillerId",
+                    "billToCustomerId",
+                    "number",
+                    "shipment.proNumber",
+                    "createdAt",
+                    "reviewStartedAt",
+                    "allocatedTotalAmount"
+                  ],
+                  "type": "string"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "number",
+              "createdAt",
+              "reviewStartedAt",
+              "allocatedTotalAmount"
+            ],
+            "type": "string"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "billing_queue",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_billing_transfer_candidates",
+      "description": "List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers. Each row says what a transfer would do with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or ReturnToOperations), the documents it still lacks and its rate or validation issues, decided by the checks the transfer itself makes. To transfer, propose one transfer_to_billing covering the rows that can go, rather than one call per shipment.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "Only this customer's shipments, by id from list_customers.",
+            "type": "string"
+          },
+          "deliveredFrom": {
+            "description": "Only shipments delivered on or after this day. A date as YYYY-MM-DD, or today.",
+            "type": "string"
+          },
+          "deliveredTo": {
+            "description": "Only shipments delivered on or before this day. A date as YYYY-MM-DD, or today.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "markCompletedReadyToInvoice": {
+            "description": "Decide as a transfer that first marks completed shipments ready to invoice would. Defaults to false.",
+            "type": "boolean"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Words matched against pro number, BOL and the other searchable columns, as the dialog's search box does.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only shipments in this status. Completed shipments transfer only when markCompletedReadyToInvoice is true.",
+            "enum": [
+              "ReadyToInvoice",
+              "Completed"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "shipment",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
       }
     },
     {
@@ -8255,7 +8487,7 @@
     },
     {
       "name": "list_shipments",
-      "description": "List shipments by status, billing state, dates or charges: anything with a date or threshold, such as delivered yesterday or not yet billed. search_shipments matches text like a pro number. Filters: status (New|PartiallyAssigned|Assigned|InTransit|Delayed|PartiallyCompleted|ReadyToInvoice|Completed|Invoiced|Canceled): no Delivered; a delivered load is Completed, then ReadyToInvoice, then Invoiced. For when it delivered, filter actualDeliveryDate; billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): the billing handoff stage; freightTerms (Prepaid|Collect|ThirdParty); customerId (text): from list_customers, never guessed; text: proNumber, bol; date: actualShipDate, actualDeliveryDate, billedAt, canceledAt, createdAt; number: totalChargeAmount, weight. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List shipments by status, billing state, dates or charges: anything with a date or threshold, such as delivered yesterday or not yet billed. search_shipments matches text like a pro number. Filters: status (New|PartiallyAssigned|Assigned|InTransit|Delayed|PartiallyCompleted|ReadyToInvoice|Completed|Invoiced|Canceled): no Delivered; a delivered load is Completed, then ReadyToInvoice, then Invoiced. For when it delivered, filter actualDeliveryDate; billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): the billing handoff stage; isnull means never transferred, and list_billing_transfer_candidates lists the ones ready to go; freightTerms (Prepaid|Collect|ThirdParty); customerId (text): from list_customers, never guessed; text: proNumber, bol; date: actualShipDate, actualDeliveryDate, billedAt, canceledAt, createdAt; number: totalChargeAmount, weight. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -11274,6 +11506,7 @@
               "customers",
               "locations",
               "invoices",
+              "billing queue items",
               "carriers",
               "equipment types",
               "fleet codes",
