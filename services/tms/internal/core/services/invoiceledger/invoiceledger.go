@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customerledger"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -76,6 +77,22 @@ func SourceEvent(billType billingqueue.BillType) tenant.JournalSourceEventType {
 func HasRequiredAccounts(control *tenant.AccountingControl) bool {
 	return control != nil && control.DefaultARAccountID.IsNotNil() &&
 		control.DefaultRevenueAccountID.IsNotNil()
+}
+
+func CreditMemoRequest(
+	kind invoiceadjustment.Kind,
+	creditMemo *invoice.Invoice,
+	sourceInvoiceID pulid.ID,
+	actorID pulid.ID,
+) *Request {
+	creditMemo.SyncMinorAmounts()
+	return &Request{
+		Invoice:          creditMemo,
+		ActorID:          actorID,
+		AccountingDate:   creditMemo.InvoiceDate,
+		RelatedInvoiceID: sourceInvoiceID,
+		LedgerOnly:       kind == invoiceadjustment.KindWriteOff,
+	}
 }
 
 func IdempotencyKey(invoiceID pulid.ID) string {

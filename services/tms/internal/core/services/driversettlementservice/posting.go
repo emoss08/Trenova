@@ -284,7 +284,6 @@ func codeLegs(codeDebits, codeCredits map[pulid.ID]int64) []PostingLeg {
 	return legs
 }
 
-//nolint:funlen,cyclop // journal assembly enumerates every posting leg explicitly
 func (s *Service) postSettlementJournal(
 	ctx context.Context,
 	entity *driversettlement.Settlement,
@@ -370,7 +369,7 @@ func (s *Service) postSettlementJournal(
 	}
 
 	now := timeutils.NowUnix()
-	return s.writeJournal(ctx, &settlementJournal{
+	return s.writeJournal(ctx, &SettlementJournal{
 		Entity:         entity,
 		Control:        control,
 		ActorID:        actor.UserID,
@@ -383,7 +382,7 @@ func (s *Service) postSettlementJournal(
 	})
 }
 
-type settlementJournal struct {
+type SettlementJournal struct {
 	Entity         *driversettlement.Settlement
 	Control        *tenant.AccountingControl
 	ActorID        pulid.ID
@@ -395,34 +394,38 @@ type settlementJournal struct {
 	Legs           []PostingLeg
 }
 
-func (s *Service) writeJournal(ctx context.Context, journal *settlementJournal) (*pulid.ID, error) {
-	lines := make([]journalposting.Line, 0, len(journal.Legs))
-	for _, leg := range journal.Legs {
+func (j *SettlementJournal) WriteRequest() *journalposting.WriteRequest {
+	lines := make([]journalposting.Line, 0, len(j.Legs))
+	for _, leg := range j.Legs {
 		lines = append(lines, journalposting.Line{
 			AccountID: leg.AccountID,
 			Debit:     leg.Debit,
 			Credit:    leg.Credit,
 		})
 	}
-	result, err := s.journalWriter().Write(ctx, &journalposting.WriteRequest{
-		OrganizationID: journal.Entity.OrganizationID,
-		BusinessUnitID: journal.Entity.BusinessUnitID,
-		Control:        journal.Control,
-		ActorID:        journal.ActorID,
-		AccountingDate: journal.AccountingDate,
-		Now:            journal.Now,
+	return &journalposting.WriteRequest{
+		OrganizationID: j.Entity.OrganizationID,
+		BusinessUnitID: j.Entity.BusinessUnitID,
+		Control:        j.Control,
+		ActorID:        j.ActorID,
+		AccountingDate: j.AccountingDate,
+		Now:            j.Now,
 		Subject:        "driver settlement",
 		DateField:      "payDate",
-		Description:    journal.Description,
+		Description:    j.Description,
 		Source: journalposting.Source{
 			ObjectType:     "DriverSettlement",
-			ObjectID:       journal.Entity.ID,
-			DocumentNumber: journal.Entity.SettlementNumber,
-			Event:          journal.Event,
-			IdempotencyKey: journal.IdempotencyKey,
+			ObjectID:       j.Entity.ID,
+			DocumentNumber: j.Entity.SettlementNumber,
+			Event:          j.Event,
+			IdempotencyKey: j.IdempotencyKey,
 		},
 		Lines: lines,
-	})
+	}
+}
+
+func (s *Service) writeJournal(ctx context.Context, journal *SettlementJournal) (*pulid.ID, error) {
+	result, err := s.journalWriter().Write(ctx, journal.WriteRequest())
 	if err != nil {
 		return nil, err
 	}
@@ -466,23 +469,13 @@ func BuildSettlementPaymentLegs(
 	}
 }
 
-func (s *Service) postPaymentJournal(
-	ctx context.Context,
+func PaymentJournal(
 	entity *driversettlement.Settlement,
+	control *tenant.AccountingControl,
 	actorID pulid.ID,
-	paidAt int64,
-) (*pulid.ID, error) {
-	if entity.NetPayMinor == 0 {
-		return nil, nil //nolint:nilnil // a zero-amount settlement records no payment journal
-	}
-	if entity.PostedPayableAccountID == nil || entity.PostedPayableAccountID.IsNil() {
-		return nil, errortypes.NewBusinessError(
-			"Driver settlement has no posted payable account; it cannot be paid",
-		).WithParam("settlementId", entity.ID.String())
-	}
-
-	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
-	if err != nil {
+	paidAt, now int64,
+) (*SettlementJournal, error) {
+	if payable, err := paymentNeeded(entity); err != nil || !payable {
 		return nil, err
 	}
 	if control.DefaultCashAccountID.IsNil() {
@@ -493,21 +486,58 @@ func (s *Service) postPaymentJournal(
 		)
 	}
 
-	return s.writeJournal(ctx, &settlementJournal{
+	return &SettlementJournal{
 		Entity:         entity,
 		Control:        control,
 		ActorID:        actorID,
 		AccountingDate: paidAt,
-		Now:            timeutils.NowUnix(),
+		Now:            now,
 		Description:    "Payment of driver settlement " + entity.SettlementNumber,
 		Event:          tenant.JournalSourceEventDriverSettlementPaid,
-		IdempotencyKey: "driver-settlement-paid:" + entity.ID.String(),
+		IdempotencyKey: PaymentIdempotencyKey(entity.ID),
 		Legs: BuildSettlementPaymentLegs(
 			entity,
 			*entity.PostedPayableAccountID,
 			control.DefaultCashAccountID,
 		),
-	})
+	}, nil
+}
+
+func paymentNeeded(entity *driversettlement.Settlement) (bool, error) {
+	if entity.NetPayMinor == 0 {
+		return false, nil
+	}
+	if entity.PostedPayableAccountID == nil || entity.PostedPayableAccountID.IsNil() {
+		return false, errortypes.NewBusinessError(
+			"Driver settlement has no posted payable account; it cannot be paid",
+		).WithParam("settlementId", entity.ID.String())
+	}
+	return true, nil
+}
+
+func PaymentIdempotencyKey(settlementID pulid.ID) string {
+	return "driver-settlement-paid:" + settlementID.String()
+}
+
+func (s *Service) postPaymentJournal(
+	ctx context.Context,
+	entity *driversettlement.Settlement,
+	actorID pulid.ID,
+	paidAt int64,
+) (*pulid.ID, error) {
+	if payable, err := paymentNeeded(entity); err != nil || !payable {
+		return nil, err
+	}
+
+	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	journal, err := PaymentJournal(entity, control, actorID, paidAt, timeutils.NowUnix())
+	if err != nil || journal == nil {
+		return nil, err
+	}
+	return s.writeJournal(ctx, journal)
 }
 
 func (s *Service) settlementCodeAccounts(

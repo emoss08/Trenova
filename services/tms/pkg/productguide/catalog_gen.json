@@ -1,5 +1,5 @@
 {
-  "version": "sha256:44aa364b05d61ee79b2d5f5b5055afae9e4103073d9177c73aae0eb675b08fcf",
+  "version": "sha256:209531674ed080a2cafb307fc36524bdfb295c853eed5fa3bca72090d3f414bc",
   "modules": [
     {
       "id": "home",
@@ -1151,7 +1151,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to journal entries; approving and posting need the journal entry approve permission, which agents never hold. An entry is posted on its own accounting date. If that date's fiscal period has been closed since the entry was written, the closed-period policy decides: the entry moves to the first day of the next open period, or it is refused until the period is reopened. An entry that does not balance is refused. When posting is switched to **Automatic**, new journals post on their own; entries written while posting was manual stay here until someone posts them.",
+      "notes": "Viewing the page needs read access to journal entries; approving and posting need the journal entry approve permission, which agents never hold. An entry is posted on its own accounting date. If that date's fiscal period has been closed since the entry was written, the closed-period policy decides: the entry moves to the first day of the next open period, or it is refused until the period is reopened. An entry that does not balance is refused. When posting is switched to **Automatic**, new journals post on their own; entries written while posting was manual stay here until someone posts them. Credit memo and driver settlement payment journals that an administrator restores for records from before those journals were written also wait here in Manual mode.",
       "related": [
         "/accounting/manual-journals",
         "/accounting/journal-reversals",

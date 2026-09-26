@@ -41,4 +41,5 @@ If that date's fiscal period has been closed since the entry was written, the cl
 policy decides: the entry moves to the first day of the next open period, or it is refused until
 the period is reopened. An entry that does not balance is refused. When posting is switched to
 **Automatic**, new journals post on their own; entries written while posting was manual stay here
-until someone posts them.
+until someone posts them. Credit memo and driver settlement payment journals that an administrator
+restores for records from before those journals were written also wait here in Manual mode.

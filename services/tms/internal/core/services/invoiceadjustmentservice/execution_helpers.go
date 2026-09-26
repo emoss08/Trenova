@@ -1,4 +1,3 @@
-//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package invoiceadjustmentservice
 
 import (
@@ -86,7 +85,6 @@ func (s *Service) createReplacementDraftInvoice(
 	return created, nil
 }
 
-//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *Service) createWriteOffJournalEntry(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
@@ -206,14 +204,10 @@ func (s *Service) postCreditMemoLedger(
 	sourceInvoice *invoice.Invoice,
 	actor *servicesports.RequestActor,
 ) error {
-	creditMemo.SyncMinorAmounts()
-	result, err := s.creditMemoLedger().Post(ctx, &invoiceledger.Request{
-		Invoice:          creditMemo,
-		ActorID:          actor.UserID,
-		AccountingDate:   creditMemo.InvoiceDate,
-		RelatedInvoiceID: sourceInvoice.ID,
-		LedgerOnly:       adjustment.Kind == invoiceadjustment.KindWriteOff,
-	})
+	result, err := s.creditMemoLedger().Post(
+		ctx,
+		invoiceledger.CreditMemoRequest(adjustment.Kind, creditMemo, sourceInvoice.ID, actor.UserID),
+	)
 	if errors.Is(err, invoiceledger.ErrNoLedgerEntry) {
 		return nil
 	}
