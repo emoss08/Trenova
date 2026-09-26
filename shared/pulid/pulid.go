@@ -241,3 +241,13 @@ func ClonePointer(id *ID) *ID {
 	copied := *id
 	return &copied
 }
+
+func FirstNotNil(ids ...ID) ID {
+	for _, id := range ids {
+		if id.IsNotNil() {
+			return id
+		}
+	}
+
+	return Nil
+}

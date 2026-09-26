@@ -207,6 +207,7 @@ type Params struct {
 	StoredMileageService         *storedmileageservice.Service
 	ManualJournalService         *manualjournalservice.Service
 	JournalEntryService          *journalentryservice.Service
+	JournalReview                services.JournalReviewService
 	JournalReversalService       *journalreversalservice.Service
 	AuditService                 services.AuditService
 	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
@@ -227,6 +228,8 @@ type Params struct {
 	AIFeedbackService            services.AIFeedbackService
 	AgentEvaluationService       services.AgentEvaluationService
 	AgentEvalCaseService         services.AgentEvalCaseService
+	ExtractionEvalService        services.ExtractionEvalService
+	AITrainingHistoryService     services.AITrainingHistoryService
 	AgentQualityService          services.AgentQualityService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
@@ -378,6 +381,7 @@ type Resolver struct {
 	storedMileageService         *storedmileageservice.Service
 	manualJournalService         *manualjournalservice.Service
 	journalEntryService          *journalentryservice.Service
+	journalReview                services.JournalReviewService
 	journalReversalService       *journalreversalservice.Service
 	auditService                 services.AuditService
 	serviceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
@@ -398,6 +402,8 @@ type Resolver struct {
 	aiFeedbackService            services.AIFeedbackService
 	agentEvaluationService       services.AgentEvaluationService
 	agentEvalCaseService         services.AgentEvalCaseService
+	extractionEvalService        services.ExtractionEvalService
+	aiTrainingHistoryService     services.AITrainingHistoryService
 	agentQualityService          services.AgentQualityService
 	agentExceptionService        services.AgentExceptionService
 	agentDecisionService         services.AgentDecisionService
@@ -550,6 +556,7 @@ func New(p Params) *Resolver {
 		storedMileageService:         p.StoredMileageService,
 		manualJournalService:         p.ManualJournalService,
 		journalEntryService:          p.JournalEntryService,
+		journalReview:                p.JournalReview,
 		journalReversalService:       p.JournalReversalService,
 		auditService:                 p.AuditService,
 		serviceFailureReasonCodeSvc:  p.ServiceFailureReasonCodeSvc,
@@ -570,6 +577,8 @@ func New(p Params) *Resolver {
 		aiFeedbackService:            p.AIFeedbackService,
 		agentEvaluationService:       p.AgentEvaluationService,
 		agentEvalCaseService:         p.AgentEvalCaseService,
+		extractionEvalService:        p.ExtractionEvalService,
+		aiTrainingHistoryService:     p.AITrainingHistoryService,
 		agentQualityService:          p.AgentQualityService,
 		agentExceptionService:        p.AgentExceptionService,
 		agentDecisionService:         p.AgentDecisionService,

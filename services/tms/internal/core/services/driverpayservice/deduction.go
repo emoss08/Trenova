@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,39 +44,8 @@ func (s *Service) CreateDeduction(
 	if err := requireActor(actor, "Recurring deduction creation"); err != nil {
 		return nil, err
 	}
-	if err := s.resolvePayCode(
-		ctx,
-		pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		entity.PayCodeID,
-		driverpay.PayCodeDirectionDeduction,
-	); err != nil {
+	if err := s.CheckDeduction(ctx, entity, autoLinkEscrow); err != nil {
 		return nil, err
-	}
-	if autoLinkEscrow && !entity.IsEscrowContribution() {
-		account, err := s.escrowRepo.GetActiveForWorker(
-			ctx,
-			repositories.GetActiveEscrowAccountForWorkerRequest{
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-				WorkerID: entity.WorkerID,
-			},
-		)
-		if err != nil {
-			return nil, errortypes.NewValidationError(
-				"escrowAccountId",
-				errortypes.ErrRequired,
-				"Worker has no active escrow account; open one before adding an escrow contribution",
-			)
-		}
-		entity.EscrowAccountID = &account.ID
-	}
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	entity.CreatedByID = actor.UserID
@@ -98,18 +66,8 @@ func (s *Service) UpdateDeduction(
 	if err := requireActor(actor, "Recurring deduction update"); err != nil {
 		return nil, err
 	}
-	if err := s.resolvePayCode(
-		ctx,
-		pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		entity.PayCodeID,
-		driverpay.PayCodeDirectionDeduction,
-	); err != nil {
+	if err := s.CheckDeduction(ctx, entity, false); err != nil {
 		return nil, err
-	}
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	previous, err := s.deductionRepo.GetByID(ctx, repositories.GetRecurringDeductionByIDRequest{

@@ -828,6 +828,14 @@ sending always stop at a proposal a person approves, are described in
 queue item into review, onto hold, into exception or back to operations; the queue refuses
 it every other status.
 
+Three chat templates that act as the person hold the money tools: the billing assistant (up
+to an invoice in the customer's hands, and its corrections), the receivables assistant (what
+the customer pays, disputes and owes late) and the settlements clerk (driver and carrier
+settlements, carrier invoice matching, advances and escrow money). The settlements clerk reads
+a driver's pay profile, recurring pay and escrow accounts but holds none of the tools that
+change them, so the one who processes pay is not the one who sets it. None of them runs
+unattended, so the agent permission ceiling does not grow for them.
+
 ## Known limits
 
 - **Resume is at-most-once.** A crash in the execute→settle window reports

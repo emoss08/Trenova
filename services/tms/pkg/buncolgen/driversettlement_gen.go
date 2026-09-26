@@ -642,6 +642,7 @@ var SettlementColumns = struct {
 	PaidByID               Column // "paid_by_id" → qualified: "dstl.paid_by_id"
 	PaymentMethod          Column // "payment_method" → qualified: "dstl.payment_method"
 	PaymentReference       Column // "payment_reference" → qualified: "dstl.payment_reference"
+	PaidJournalBatchID     Column // "paid_journal_batch_id" → qualified: "dstl.paid_journal_batch_id"
 	VoidedByID             Column // "voided_by_id" → qualified: "dstl.voided_by_id"
 	VoidedAt               Column // "voided_at" → qualified: "dstl.voided_at"
 	VoidReason             Column // "void_reason" → qualified: "dstl.void_reason"
@@ -687,6 +688,7 @@ var SettlementColumns = struct {
 	PaidByID:               NewColumn("paid_by_id", "dstl"),
 	PaymentMethod:          NewColumn("payment_method", "dstl"),
 	PaymentReference:       NewColumn("payment_reference", "dstl"),
+	PaidJournalBatchID:     NewColumn("paid_journal_batch_id", "dstl"),
 	VoidedByID:             NewColumn("voided_by_id", "dstl"),
 	VoidedAt:               NewColumn("voided_at", "dstl"),
 	VoidReason:             NewColumn("void_reason", "dstl"),
@@ -738,6 +740,7 @@ var SettlementFieldMap = map[string]string{
 	"paidById":               "paid_by_id",
 	"paymentMethod":          "payment_method",
 	"paymentReference":       "payment_reference",
+	"paidJournalBatchId":     "paid_journal_batch_id",
 	"voidedById":             "voided_by_id",
 	"voidedAt":               "voided_at",
 	"voidReason":             "void_reason",
@@ -787,6 +790,7 @@ var SettlementInsertableColumns = []string{
 	"paid_by_id",
 	"payment_method",
 	"payment_reference",
+	"paid_journal_batch_id",
 	"voided_by_id",
 	"voided_at",
 	"void_reason",
@@ -904,6 +908,7 @@ var SettlementFilter = struct {
 	PaidByID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidById" → DB: "paid_by_id"
 	PaymentMethod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentMethod" → DB: "payment_method"
 	PaymentReference       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentReference" → DB: "payment_reference"
+	PaidJournalBatchID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidJournalBatchId" → DB: "paid_journal_batch_id"
 	VoidedByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
 	VoidedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
 	VoidReason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidReason" → DB: "void_reason"
@@ -1022,6 +1027,9 @@ var SettlementFilter = struct {
 	},
 	PaymentReference: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("paymentReference", op, value)
+	},
+	PaidJournalBatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("paidJournalBatchId", op, value)
 	},
 	VoidedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("voidedById", op, value)

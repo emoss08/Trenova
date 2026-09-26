@@ -448,27 +448,24 @@ func (s *Service) routeLoadTender(
 	partner *edi.EDIPartner,
 	message *edi.EDIMessage,
 	transaction *parsedTransaction,
-) ([]string, error) {
+) (bool, []string, error) {
 	payload := message.PayloadSnapshot.LoadTender
 	if payload == nil {
-		return nil, fmt.Errorf(
+		return false, nil, fmt.Errorf(
 			"load tender %s/%s could not be parsed into a tender payload",
 			transaction.set,
 			transaction.controlNumber,
 		)
 	}
 	if !partner.EnabledForInbound {
-		return []string{fmt.Sprintf(
+		return false, []string{fmt.Sprintf(
 			"load tender %s/%s recorded without processing: partner %s is disabled for inbound",
 			transaction.set,
 			transaction.controlNumber,
 			partner.Code,
 		)}, nil
 	}
-	tenantInfo := pagination.TenantInfo{
-		OrgID: file.OrganizationID,
-		BuID:  file.BusinessUnitID,
-	}
+	tenantInfo := inboundFileTenant(file)
 	warnings := make([]string, 0)
 	if payload.PurposeCode == edi.LoadTenderPurposeChange {
 		supersedeWarnings, err := s.supersedePriorInboundTransfer(
@@ -479,14 +476,14 @@ func (s *Service) routeLoadTender(
 			transaction,
 		)
 		if err != nil {
-			return warnings, err
+			return false, warnings, err
 		}
 		warnings = append(warnings, supersedeWarnings...)
 	}
 
 	preview, err := s.ediService.BuildInboundMappingPreview(ctx, partner, *payload)
 	if err != nil {
-		return warnings, err
+		return false, warnings, err
 	}
 	status := edi.TransferStatusPendingApproval
 	if len(preview.Unresolved) > 0 {
@@ -506,7 +503,7 @@ func (s *Service) routeLoadTender(
 		SubmittedAt:          timeutils.NowUnix(),
 	}
 	if _, err = s.transferRepo.CreateTransfer(ctx, transfer); err != nil {
-		return warnings, err
+		return false, warnings, err
 	}
 	if status == edi.TransferStatusMappingRequired {
 		warnings = append(warnings, fmt.Sprintf(
@@ -516,7 +513,7 @@ func (s *Service) routeLoadTender(
 			len(preview.Unresolved),
 		))
 	}
-	return warnings, nil
+	return true, warnings, nil
 }
 
 func (s *Service) supersedePriorInboundTransfer(

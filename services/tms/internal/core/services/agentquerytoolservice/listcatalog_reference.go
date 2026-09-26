@@ -426,6 +426,7 @@ type invoiceRow struct {
 	Status           string       `json:"status"`
 	SettlementStatus string       `json:"settlementStatus"`
 	DisputeStatus    string       `json:"disputeStatus,omitempty"`
+	BillType         string       `json:"billType"`
 	BillTo           string       `json:"billTo,omitempty"`
 	ProNumber        string       `json:"proNumber,omitempty"`
 	TotalAmount      string       `json:"totalAmount,omitempty"`
@@ -466,6 +467,12 @@ func newListInvoicesTool(
 				Kind:   filterEnum,
 				Values: []string{"None", "Disputed"},
 			},
+			{
+				Name:   "billType",
+				Kind:   filterEnum,
+				Values: []string{"Invoice", "CreditMemo", "DebitMemo"},
+				Note:   "CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo",
+			},
 			{Name: "number", Kind: filterText, Sortable: true},
 			{Name: "billToName", Kind: filterText, Note: "who the invoice is billed to"},
 			{Name: "shipmentProNumber", Kind: filterText},
@@ -499,6 +506,7 @@ func newListInvoicesTool(
 					Status:           string(item.Status),
 					SettlementStatus: string(item.SettlementStatus),
 					DisputeStatus:    string(item.DisputeStatus),
+					BillType:         string(item.BillType),
 					BillTo:           item.BillToName,
 					ProNumber:        item.ShipmentProNumber,
 					Currency:         item.CurrencyCode,

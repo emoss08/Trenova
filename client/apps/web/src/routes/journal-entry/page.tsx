@@ -1,3 +1,4 @@
+import { recordPath } from "@/config/record-links";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
@@ -123,7 +124,7 @@ export function JournalEntryDetailPage() {
                 <dt className="text-muted-foreground">{t("Reversal Of")}</dt>
                 <dd className="mt-0.5">
                   <Link
-                    to={`/accounting/journal-entries/${entry.reversalOfId}`}
+                    to={recordPath("journal_entry", entry.reversalOfId)}
                     className="text-muted-foreground hover:text-foreground font-mono text-xs hover:underline"
                   >
                     {entry.reversalOfId}
@@ -136,7 +137,7 @@ export function JournalEntryDetailPage() {
                 <dt className="text-muted-foreground">{t("Reversed By")}</dt>
                 <dd className="mt-0.5">
                   <Link
-                    to={`/accounting/journal-entries/${entry.reversedById}`}
+                    to={recordPath("journal_entry", entry.reversedById)}
                     className="text-muted-foreground hover:text-foreground font-mono text-xs hover:underline"
                   >
                     {entry.reversedById}

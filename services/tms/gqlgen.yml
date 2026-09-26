@@ -1915,6 +1915,63 @@ models:
   AgentMemoryUsage:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentMemoryUsage
+  AICorrection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicorrection.Correction
+    fields:
+      accuracy:
+        resolver: true
+  AICorrectionOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicorrection.Outcome
+  AICorrectionFieldResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicorrection.FieldResult
+  ExtractionSnapshot:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicorrection.Snapshot
+    fields:
+      fields:
+        resolver: true
+  ExtractionStop:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicorrection.StopSnapshot
+  ExtractionFieldAccuracy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aicorrection.FieldAccuracy
+  ExtractionEvalCase:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractioneval.ExtractionCase
+  ExtractionEvalCaseStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractioneval.CaseStatus
+  ExtractionEvalPage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractioneval.Page
+  ExtractionEvalRun:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractioneval.ExtractionRun
+  ExtractionEvalRunStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractioneval.RunStatus
+  ExtractionEvalResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractioneval.ExtractionResult
+  ExtractionEvalResultStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractioneval.ResultStatus
+  ExtractionAccuracy:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionAccuracy
+  ExtractionAccuracyGroup:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionAccuracyGroup
+  AITrainingExportHistoryEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aitraining.ExportHistoryEntry
+  ExtractionEvalCaseCounts:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.ExtractionEvalCaseCounts
   AIFeedback:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aifeedback.Feedback
@@ -4259,6 +4316,15 @@ models:
   AccountingDriftOverview:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftOverview
+  JournalReviewSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.JournalReviewSummary
+  JournalReviewResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.JournalReviewResult
+  JournalReviewOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.JournalReviewOutcome
   AccountingDriftFixPreview:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftFixPreview

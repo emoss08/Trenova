@@ -493,38 +493,38 @@ writes:
 
   # carriersettlement
   "mutation acceptCarrierInvoiceMatch":
-    pending: "Accept carrier invoice match."
+    tools: [accept_carrier_invoice_match]
   "mutation acceptCarrierInvoiceMatchWithVariance":
-    pending: "Accept carrier invoice match with variance."
+    tools: [accept_carrier_invoice_match_with_variance]
   "mutation addCarrierSettlementAdjustment":
-    pending: "Add carrier settlement adjustment."
+    tools: [add_carrier_settlement_adjustment]
   "mutation approveCarrierSettlement":
-    pending: "Approve carrier settlement."
+    tools: [approve_carrier_settlement]
   "mutation createCarrierInvoiceMatch":
-    pending: "Create carrier invoice match."
+    tools: [create_carrier_invoice_match]
   "mutation generateCarrierSettlementBatch":
-    pending: "Generate carrier settlement batch."
+    tools: [generate_carrier_settlement_batch]
   "mutation linkEdiCarrierInvoiceToCarrier":
-    pending: "Link EDI carrier invoice to carrier."
+    tools: [link_edi_carrier_invoice_to_carrier]
   "mutation markCarrierSettlementPaid":
-    pending: "Mark carrier settlement paid."
+    tools: [record_carrier_settlement_payment]
   "mutation postCarrierSettlement":
-    pending: "Post carrier settlement."
+    tools: [post_carrier_settlement]
   "mutation recalculateCarrierSettlement":
-    pending: "Recalculate carrier settlement."
+    tools: [recalculate_carrier_settlement]
   "mutation rejectCarrierInvoiceMatch":
-    pending: "Reject carrier invoice match."
+    tools: [reject_carrier_invoice_match]
   "mutation rejectCarrierSettlement":
-    pending: "Reject carrier settlement."
+    tools: [reject_carrier_settlement]
   "mutation removeCarrierSettlementAdjustment":
-    pending: "Remove carrier settlement adjustment."
+    tools: [remove_carrier_settlement_adjustment]
   "mutation submitCarrierSettlement":
-    pending: "Submit carrier settlement."
+    tools: [submit_carrier_settlement]
   "mutation updateCarrierSettlementControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation voidCarrierSettlement":
-    pending: "Void carrier settlement."
+    tools: [void_carrier_settlement]
 
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
@@ -561,15 +561,15 @@ writes:
 
   # customerpayment
   "mutation applyCreditMemo":
-    pending: "Apply credit memo."
+    tools: [apply_credit_memo]
   "mutation applyUnappliedCustomerPayment":
-    pending: "Apply unapplied customer payment."
+    tools: [apply_customer_payment]
   "mutation postAndApplyCustomerPayment":
     tools: [post_customer_payment]
   "mutation reverseCustomerPayment":
-    pending: "Reverse customer payment."
+    tools: [reverse_customer_payment]
   "mutation unapplyCreditMemoApplication":
-    pending: "Unapply credit memo application."
+    tools: [unapply_credit_memo]
 
   # customfield
   "DELETE /api/v1/custom-fields/definitions/:definitionID/":
@@ -920,74 +920,79 @@ writes:
 
   # driversettlement
   "mutation addDriverSettlementAdjustment":
-    pending: "Add driver settlement adjustment."
+    tools: [add_driver_settlement_adjustment]
   "mutation adjustEscrowAccount":
-    pending: "Adjust escrow account."
+    tools: [adjust_escrow_account]
   "mutation approveDriverSettlement":
-    pending: "Approve driver settlement."
+    tools: [approve_driver_settlement]
   "mutation assignPayProfileToWorker":
-    pending: "Assign pay profile to worker."
+    tools: [assign_pay_profile]
   "mutation attachPayEventsToSettlement":
-    pending: "Attach pay events to a driver settlement."
+    tools: [attach_pay_events_to_settlement]
   "mutation bulkDriverSettlementAction":
-    pending: "Approve, post or void several driver settlements at once."
+    exempt: duplicate
+    reason: "Runs submit, approve, post or mark paid on several settlements at once; each has its own tool, and an approver decides a batch of those proposals together."
   "mutation closeEscrowAccount":
-    pending: "Close escrow account."
+    tools: [close_escrow_account]
   "mutation createPayCode":
-    pending: "Create pay code."
+    exempt: configuration
+    reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation createPayProfile":
-    pending: "Create pay profile."
+    exempt: configuration
+    reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation createRecurringDeduction":
-    pending: "Create recurring deduction."
+    tools: [create_recurring_deduction]
   "mutation createRecurringEarning":
-    pending: "Create recurring earning."
+    tools: [create_recurring_earning]
   "mutation detachPayEventFromSettlement":
-    pending: "Detach a pay event from a driver settlement."
+    tools: [detach_pay_event_from_settlement]
   "mutation endWorkerPayAssignment":
-    pending: "End worker pay assignment."
+    tools: [end_pay_assignment]
   "mutation generateDriverSettlement":
-    pending: "Generate driver settlement."
+    tools: [generate_driver_settlement]
   "mutation generateSettlementBatch":
-    pending: "Generate settlement batch."
+    tools: [generate_driver_settlement_batch]
   "mutation holdDriverPayEvent":
-    pending: "Hold driver pay event."
+    tools: [hold_driver_pay_event]
   "mutation issuePayAdvance":
-    pending: "Issue pay advance."
+    tools: [issue_pay_advance]
   "mutation markDriverSettlementPaid":
-    pending: "Mark driver settlement paid."
+    tools: [record_driver_settlement_payment]
   "mutation openEscrowAccount":
-    pending: "Open escrow account."
+    tools: [open_escrow_account]
   "mutation payWorkerNow":
-    pending: "Pay a worker off cycle now."
+    tools: [pay_driver_now]
   "mutation postDriverSettlement":
-    pending: "Post driver settlement."
+    tools: [post_driver_settlement]
   "mutation recalculateDriverSettlement":
-    pending: "Recalculate driver settlement."
+    tools: [recalculate_driver_settlement]
   "mutation rejectDriverSettlement":
-    pending: "Reject driver settlement."
+    tools: [reject_driver_settlement]
   "mutation releaseDriverPayEvent":
-    pending: "Release driver pay event."
+    tools: [release_driver_pay_event]
   "mutation removeDriverSettlementAdjustment":
-    pending: "Remove driver settlement adjustment."
+    tools: [remove_driver_settlement_adjustment]
   "mutation submitDriverSettlement":
-    pending: "Submit driver settlement."
+    tools: [submit_driver_settlement]
   "mutation updateEscrowAccount":
-    pending: "Update escrow account."
+    tools: [update_escrow_account]
   "mutation updatePayCode":
-    pending: "Update pay code."
+    exempt: configuration
+    reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation updatePayProfile":
-    pending: "Update pay profile."
+    exempt: configuration
+    reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation updateRecurringDeduction":
-    pending: "Update recurring deduction."
+    tools: [update_recurring_deduction]
   "mutation updateRecurringEarning":
-    pending: "Update recurring earning."
+    tools: [update_recurring_earning]
   "mutation updateSettlementControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation voidDriverSettlement":
-    pending: "Void driver settlement."
+    tools: [void_driver_settlement]
   "mutation writeOffPayAdvance":
-    pending: "Write off pay advance."
+    tools: [write_off_pay_advance]
 
   # edi
   "DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/":
@@ -1039,22 +1044,22 @@ writes:
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
   "POST /api/v1/edi/documents/generate/":
-    pending: "Generate an outbound EDI document (a 214, a 210) for a record."
+    tools: [send_edi_status_update]
   "POST /api/v1/edi/documents/preview/":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/inbound-files/:fileID/reprocess/":
-    pending: "Process a failed inbound EDI file again."
+    tools: [reprocess_edi_inbound_files]
   "POST /api/v1/edi/inbound-files/bulk-reprocess/":
-    pending: "Process several failed inbound EDI files again."
+    tools: [reprocess_edi_inbound_files]
   "POST /api/v1/edi/load-tenders/":
-    pending: "Send a load tender to a trading partner over EDI."
+    tools: [send_edi_tender]
   "POST /api/v1/edi/messages/:messageID/replay/":
-    pending: "Send an EDI message again to its partner."
+    tools: [replay_edi_message]
   "POST /api/v1/edi/messages/:messageID/retry-delivery/":
-    pending: "Retry delivery of an EDI message that failed to send."
+    tools: [retry_edi_message_delivery]
   "POST /api/v1/edi/messages/bulk-retry-delivery/":
-    pending: "Retry delivery of several EDI messages that failed to send."
+    tools: [retry_edi_message_delivery]
   "POST /api/v1/edi/partners/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
@@ -1083,9 +1088,9 @@ writes:
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/tender-changes/:changeID/apply/":
-    pending: "Apply a change a trading partner sent to a tendered load."
+    tools: [review_edi_tender_change]
   "POST /api/v1/edi/tender-changes/:changeID/reject/":
-    pending: "Reject a change a trading partner sent to a tendered load."
+    tools: [review_edi_tender_change]
   "POST /api/v1/edi/test-cases/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
@@ -1093,21 +1098,23 @@ writes:
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/transfer-changes/:changeID/apply/":
-    pending: "Apply a change to an inbound EDI transfer."
+    tools: [review_edi_transfer_change]
   "POST /api/v1/edi/transfer-changes/:changeID/reject/":
-    pending: "Reject a change to an inbound EDI transfer."
+    tools: [review_edi_transfer_change]
   "POST /api/v1/edi/transfers/:transferID/approve/":
-    pending: "Accept an inbound EDI load tender and create the shipment."
+    tools: [accept_edi_tender]
   "POST /api/v1/edi/transfers/:transferID/cancel/":
-    pending: "Cancel an inbound EDI transfer."
+    tools: [cancel_edi_tender]
   "POST /api/v1/edi/transfers/:transferID/expire/":
-    pending: "Expire an inbound EDI transfer that was not answered in time."
+    tools: [expire_edi_tender]
   "POST /api/v1/edi/transfers/:transferID/reject/":
-    pending: "Decline an inbound EDI load tender."
+    tools: [decline_edi_tender]
   "POST /api/v1/edi/transfers/bulk-approve/":
-    pending: "Accept several inbound EDI load tenders at once."
+    exempt: duplicate
+    reason: "Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; accept_edi_tender answers one tender per proposal so each is previewed and pinned to its own version."
   "POST /api/v1/edi/transfers/bulk-reject/":
-    pending: "Decline several inbound EDI load tenders at once."
+    exempt: duplicate
+    reason: "Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; decline_edi_tender answers one tender per proposal so each is previewed and pinned to its own version."
   "POST /api/v1/edi/x12/inspect/":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
@@ -1205,6 +1212,23 @@ writes:
     reason: "Fetches exchange rates from the provider now; the scheduler refreshes them on its own."
   "POST /api/v1/exchange-rates/settlement-quotes":
     pending: "Lock an exchange rate quote for settling a foreign-currency payment."
+
+  # extractioneval
+  "mutation cancelExtractionEvalRun":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation deleteExtractionEvalCase":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation promoteAICorrection":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation startExtractionEvalRun":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation updateExtractionEvalCase":
+    exempt: agent-administration
+    reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
 
   # fiscalperiod
   "DELETE /api/v1/fiscal-periods/:fiscalPeriodID/":
@@ -1581,9 +1605,9 @@ writes:
 
   # invoice
   "PATCH /api/v1/billing/invoices/:invoiceID/":
-    pending: "Update draft (invoice)."
+    tools: [update_invoice_draft]
   "POST /api/v1/billing/invoices/:invoiceID/generate-pdf/":
-    pending: "Generate pdf (invoice)."
+    tools: [generate_invoice_pdf]
   "POST /api/v1/billing/invoices/:invoiceID/post/":
     tools: [post_invoice]
   "POST /api/v1/billing/invoices/:invoiceID/preview/":
@@ -1592,44 +1616,44 @@ writes:
   "POST /api/v1/billing/invoices/:invoiceID/send/":
     tools: [send_invoice]
   "mutation createInvoiceFromOrder":
-    pending: "Create invoice from order."
+    tools: [create_invoice]
   "mutation createInvoiceFromShipments":
-    pending: "Create invoice from shipments."
+    tools: [create_invoice]
   "mutation createInvoicesFromOrder":
-    pending: "Create invoices from order."
+    tools: [create_invoice]
   "mutation createInvoicesFromShipments":
-    pending: "Create invoices from shipments."
+    tools: [create_invoice]
   "mutation createMemo":
-    pending: "Create memo."
+    tools: [create_invoice_memo]
   "mutation sendInvoiceEdi":
-    pending: "Send invoice EDI."
+    tools: [send_invoice_edi]
   "mutation voidInvoice":
-    pending: "Void invoice."
+    tools: [void_invoice]
 
   # invoiceadjustment
   "PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/":
-    pending: "Update draft (invoice adjustment)."
+    tools: [save_invoice_adjustment_draft]
   "POST /api/v1/billing/invoice-adjustments/bulk-preview/":
     exempt: read-only
     reason: "Previews an invoice adjustment and saves nothing."
   "POST /api/v1/billing/invoice-adjustments/bulk-submit/":
-    pending: "Bulk submit (invoice adjustment)."
+    tools: [submit_invoice_adjustment]
   "POST /api/v1/billing/invoice-adjustments/drafts/":
-    pending: "Create draft (invoice adjustment)."
+    tools: [save_invoice_adjustment_draft]
   "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/":
     exempt: read-only
     reason: "Previews an invoice adjustment and saves nothing."
   "POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/":
-    pending: "Submit draft (invoice adjustment)."
+    tools: [submit_invoice_adjustment]
   "POST /api/v1/billing/invoice-adjustments/preview/":
     exempt: read-only
     reason: "Previews an invoice adjustment and saves nothing."
   "POST /api/v1/billing/invoice-adjustments/submit/":
-    pending: "Submit an invoice adjustment."
+    tools: [submit_invoice_adjustment]
   "mutation approveInvoiceAdjustment":
-    pending: "Approve invoice adjustment."
+    tools: [approve_invoice_adjustment]
   "mutation rejectInvoiceAdjustment":
-    pending: "Reject invoice adjustment."
+    tools: [reject_invoice_adjustment]
 
   # invoiceadjustmentcontrol
   "PUT /api/v1/invoice-adjustment-controls/":
@@ -1638,27 +1662,35 @@ writes:
 
   # invoicedispute
   "mutation openInvoiceDispute":
-    pending: "Open invoice dispute."
+    tools: [open_invoice_dispute]
   "mutation resolveInvoiceDispute":
-    pending: "Resolve invoice dispute."
+    tools: [resolve_invoice_dispute]
   "mutation withdrawInvoiceDispute":
-    pending: "Withdraw invoice dispute."
+    tools: [withdraw_invoice_dispute]
 
   # invoicerun
   "PATCH /api/v1/billing/invoice-runs/:runID/membership/":
-    pending: "Adjust membership (invoice run)."
+    tools: [adjust_invoice_run_membership]
   "POST /api/v1/billing/invoice-runs/:runID/cancel/":
-    pending: "Cancel an invoice run."
+    tools: [cancel_invoice_run]
   "POST /api/v1/billing/invoice-runs/:runID/commit/":
-    pending: "Commit an invoice run."
+    tools: [commit_invoice_run]
   "POST /api/v1/billing/invoice-runs/preview/":
-    pending: "Create an invoice run in preview for review before committing it."
+    tools: [build_invoice_run]
   "POST /api/v1/billing/statements/:customerID/bill/":
-    pending: "Bill statement (statement)."
+    tools: [bill_statement_now]
 
   # invoiceshare
   "POST /api/v1/billing/invoices/:invoiceID/shares/":
-    pending: "Share an invoice."
+    tools: [share_invoice]
+
+  # journalentry
+  "mutation approveJournalEntries":
+    exempt: attestation
+    reason: "Approving a journal for the general ledger is a sign-off an accountable person makes; agents never hold the approve permission."
+  "mutation postJournalEntries":
+    exempt: attestation
+    reason: "Posting approved journals changes the general ledger balances a person signs off on; agents never hold the approve permission."
 
   # journalreversal
   "POST /api/v1/accounting/journal-reversals/":
@@ -1694,7 +1726,7 @@ writes:
 
   # latecharge
   "mutation assessLateCharges":
-    pending: "Assess late charges."
+    tools: [assess_late_charges]
 
   # location
   "PATCH /api/v1/locations/:locationID/":

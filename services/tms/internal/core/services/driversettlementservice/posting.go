@@ -14,9 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,20 +43,15 @@ func (s *Service) Post(
 		if txErr != nil {
 			return txErr
 		}
-		if entity.Status != driversettlement.StatusApproved {
-			return transitionError(entity.Status, driversettlement.StatusPosted)
-		}
 		previous = *entity
+		if txErr = PlanPost(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
+			return txErr
+		}
 
 		batchID, txErr := s.postSettlementJournal(txCtx, entity, actor, false)
 		if txErr != nil {
 			return txErr
 		}
-
-		now := timeutils.NowUnix()
-		entity.Status = driversettlement.StatusPosted
-		entity.PostedByID = actor.UserID
-		entity.PostedAt = &now
 		entity.PostedJournalBatchID = batchID
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr
@@ -285,13 +280,32 @@ func codeLegs(codeDebits, codeCredits map[pulid.ID]int64) []PostingLeg {
 	return legs
 }
 
-//nolint:funlen,cyclop // journal assembly enumerates every posting leg explicitly
+type journalDraft struct {
+	request *journalposting.WriteRequest
+	posting *journalposting.Plan
+	plan    *settlementshared.JournalPlan
+}
+
 func (s *Service) postSettlementJournal(
 	ctx context.Context,
 	entity *driversettlement.Settlement,
 	actor *serviceports.RequestActor,
 	reversal bool,
 ) (*pulid.ID, error) {
+	draft, err := s.planSettlementJournal(ctx, entity, actor.UserID, reversal)
+	if err != nil || draft == nil {
+		return nil, err
+	}
+	return s.writeSettlementJournal(ctx, entity, actor, draft)
+}
+
+//nolint:funlen // journal planning enumerates every required account explicitly
+func (s *Service) planSettlementJournal(
+	ctx context.Context,
+	entity *driversettlement.Settlement,
+	userID pulid.ID,
+	reversal bool,
+) (*journalDraft, error) {
 	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		return nil, err
@@ -342,33 +356,6 @@ func (s *Service) postSettlementJournal(
 		return nil, multiErr
 	}
 
-	period, err := s.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-		Date:  timeutils.NowUnix(),
-	})
-	if err != nil {
-		return nil, errortypes.NewValidationError(
-			"payDate",
-			errortypes.ErrInvalid,
-			"Settlement posting date must fall within a fiscal period",
-		)
-	}
-
-	batchNumber, err := s.generator.GenerateJournalBatchNumber(
-		ctx, entity.OrganizationID, entity.BusinessUnitID, "", "")
-	if err != nil {
-		return nil, err
-	}
-	entryNumber, err := s.generator.GenerateJournalEntryNumber(
-		ctx, entity.OrganizationID, entity.BusinessUnitID, "", "")
-	if err != nil {
-		return nil, err
-	}
-
-	now := timeutils.NowUnix()
-	workflow := settlementshared.ResolvePostingWorkflow(control, actor.UserID, now)
-
 	description := "Driver settlement " + entity.SettlementNumber
 	sourceEvent := tenant.JournalSourceEventDriverSettlementPosted
 	idempotencyPrefix := "driver-settlement-posted:"
@@ -393,72 +380,225 @@ func (s *Service) postSettlementJournal(
 	if len(legs) == 0 {
 		return nil, nil //nolint:nilnil // a zero-amount settlement posts no journal
 	}
-
-	lines := make([]repositories.JournalPostingLine, 0, len(legs))
-	var totalDebit, totalCredit int64
-	for idx, l := range legs {
-		debit, credit := l.Debit, l.Credit
-		if reversal {
-			debit, credit = credit, debit
-		}
-		totalDebit += debit
-		totalCredit += credit
-		lines = append(lines, repositories.JournalPostingLine{
-			ID:           pulid.MustNew("jel_"),
-			GLAccountID:  l.AccountID,
-			LineNumber:   int16(idx + 1),
-			Description:  description,
-			DebitAmount:  debit,
-			CreditAmount: credit,
-			NetAmount:    debit - credit,
-		})
+	if reversal {
+		legs = reverseLegs(legs)
 	}
 
-	batchID := pulid.MustNew("jb_")
-	if err = s.journalRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
-		BatchID:              batchID,
-		OrganizationID:       entity.OrganizationID,
-		BusinessUnitID:       entity.BusinessUnitID,
-		BatchNumber:          batchNumber,
-		BatchType:            "System",
-		BatchStatus:          workflow.BatchStatus,
-		BatchDescription:     description,
-		FiscalYearID:         period.FiscalYearID,
-		FiscalPeriodID:       period.ID,
-		AccountingDate:       now,
-		PostedAt:             workflow.PostedAt,
-		PostedByID:           workflow.PostedByID,
-		CreatedByID:          actor.UserID,
-		UpdatedByID:          actor.UserID,
-		EntryID:              pulid.MustNew("je_"),
-		EntryNumber:          entryNumber,
-		EntryType:            "Standard",
-		EntryStatus:          workflow.EntryStatus,
-		ReferenceNumber:      entity.SettlementNumber,
-		ReferenceType:        sourceEvent.String(),
-		ReferenceID:          entity.ID.String(),
-		EntryDescription:     description,
-		TotalDebit:           totalDebit,
-		TotalCredit:          totalCredit,
-		IsPosted:             workflow.PostedAt != nil,
-		IsAutoGenerated:      false,
-		RequiresApproval:     workflow.RequiresApproval,
-		IsApproved:           workflow.IsApproved,
-		ApprovedByID:         workflow.ApprovedByID,
-		ApprovedAt:           workflow.ApprovedAt,
-		SourceID:             pulid.MustNew("jsrc_"),
-		SourceObjectType:     "DriverSettlement",
-		SourceObjectID:       entity.ID.String(),
-		SourceEventType:      sourceEvent.String(),
-		SourceStatus:         workflow.EntryStatus,
-		SourceDocumentNumber: entity.SettlementNumber,
-		SourceIdempotencyKey: idempotencyPrefix + entity.ID.String(),
-		Lines:                lines,
-	}); err != nil {
+	now := timeutils.NowUnix()
+	return s.draftJournal(ctx, &SettlementJournal{
+		Entity:         entity,
+		Control:        control,
+		ActorID:        userID,
+		AccountingDate: now,
+		Now:            now,
+		Description:    description,
+		Event:          sourceEvent,
+		IdempotencyKey: idempotencyPrefix + entity.ID.String(),
+		Legs:           legs,
+	})
+}
+
+func (s *Service) draftJournal(
+	ctx context.Context,
+	journal *SettlementJournal,
+) (*journalDraft, error) {
+	request := journal.WriteRequest()
+	posting, err := s.journalWriter().Plan(ctx, request)
+	if err != nil {
 		return nil, err
 	}
+	return &journalDraft{
+		request: request,
+		posting: posting,
+		plan:    settlementshared.JournalPlanFrom(posting, journal.Description),
+	}, nil
+}
 
-	return &batchID, nil
+func (s *Service) writeSettlementJournal(
+	ctx context.Context,
+	_ *driversettlement.Settlement,
+	_ *serviceports.RequestActor,
+	draft *journalDraft,
+) (*pulid.ID, error) {
+	result, err := s.journalWriter().WritePlan(ctx, draft.request, draft.posting)
+	if err != nil {
+		return nil, err
+	}
+	return &result.BatchID, nil
+}
+
+type SettlementJournal struct {
+	Entity         *driversettlement.Settlement
+	Control        *tenant.AccountingControl
+	ActorID        pulid.ID
+	AccountingDate int64
+	Now            int64
+	Description    string
+	Event          tenant.JournalSourceEventType
+	IdempotencyKey string
+	Legs           []PostingLeg
+}
+
+func (j *SettlementJournal) WriteRequest() *journalposting.WriteRequest {
+	lines := make([]journalposting.Line, 0, len(j.Legs))
+	for _, leg := range j.Legs {
+		lines = append(lines, journalposting.Line{
+			AccountID: leg.AccountID,
+			Debit:     leg.Debit,
+			Credit:    leg.Credit,
+		})
+	}
+	return &journalposting.WriteRequest{
+		OrganizationID: j.Entity.OrganizationID,
+		BusinessUnitID: j.Entity.BusinessUnitID,
+		Control:        j.Control,
+		ActorID:        j.ActorID,
+		AccountingDate: j.AccountingDate,
+		Now:            j.Now,
+		Subject:        "driver settlement",
+		DateField:      "payDate",
+		Description:    j.Description,
+		Source: journalposting.Source{
+			ObjectType:     "DriverSettlement",
+			ObjectID:       j.Entity.ID,
+			DocumentNumber: j.Entity.SettlementNumber,
+			Event:          j.Event,
+			IdempotencyKey: j.IdempotencyKey,
+		},
+		Lines: lines,
+	}
+}
+
+func (s *Service) writeJournal(ctx context.Context, journal *SettlementJournal) (*pulid.ID, error) {
+	result, err := s.journalWriter().Write(ctx, journal.WriteRequest())
+	if err != nil {
+		return nil, err
+	}
+	return &result.BatchID, nil
+}
+
+func (s *Service) journalWriter() journalposting.Writer {
+	return journalposting.Writer{
+		Periods:  s.fiscalPeriodRepo,
+		Numbers:  s.generator,
+		Journals: s.journalRepo,
+	}
+}
+
+func reverseLegs(legs []PostingLeg) []PostingLeg {
+	reversed := make([]PostingLeg, len(legs))
+	for idx, leg := range legs {
+		reversed[idx] = PostingLeg{AccountID: leg.AccountID, Debit: leg.Credit, Credit: leg.Debit}
+	}
+	return reversed
+}
+
+func BuildSettlementPaymentLegs(
+	entity *driversettlement.Settlement,
+	payableAccountID, cashAccountID pulid.ID,
+) []PostingLeg {
+	amount := entity.NetPayMinor
+	switch {
+	case amount > 0:
+		return []PostingLeg{
+			{AccountID: payableAccountID, Debit: amount},
+			{AccountID: cashAccountID, Credit: amount},
+		}
+	case amount < 0:
+		return []PostingLeg{
+			{AccountID: cashAccountID, Debit: -amount},
+			{AccountID: payableAccountID, Credit: -amount},
+		}
+	default:
+		return nil
+	}
+}
+
+func PaymentJournal(
+	entity *driversettlement.Settlement,
+	control *tenant.AccountingControl,
+	actorID pulid.ID,
+	paidAt, now int64,
+) (*SettlementJournal, error) {
+	if !paymentBooked(entity) {
+		return nil, nil //nolint:nilnil // nothing was booked to a payable, so no payment journal is due
+	}
+	payable, err := paymentPayableAccount(entity, control)
+	if err != nil {
+		return nil, err
+	}
+	if control.DefaultCashAccountID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"accountingControl",
+			errortypes.ErrRequired,
+			"A default cash account must be configured before recording driver settlement payments",
+		)
+	}
+
+	return &SettlementJournal{
+		Entity:         entity,
+		Control:        control,
+		ActorID:        actorID,
+		AccountingDate: paidAt,
+		Now:            now,
+		Description:    "Payment of driver settlement " + entity.SettlementNumber,
+		Event:          tenant.JournalSourceEventDriverSettlementPaid,
+		IdempotencyKey: PaymentIdempotencyKey(entity.ID),
+		Legs:           BuildSettlementPaymentLegs(entity, payable, control.DefaultCashAccountID),
+	}, nil
+}
+
+func paymentBooked(entity *driversettlement.Settlement) bool {
+	if entity.NetPayMinor == 0 {
+		return false
+	}
+	return hasID(entity.PostedPayableAccountID) || hasID(entity.PostedJournalBatchID)
+}
+
+func paymentPayableAccount(
+	entity *driversettlement.Settlement,
+	control *tenant.AccountingControl,
+) (pulid.ID, error) {
+	if hasID(entity.PostedPayableAccountID) {
+		return *entity.PostedPayableAccountID, nil
+	}
+	if control.DefaultSettlementsPayableAccountID.IsNil() {
+		return pulid.Nil, errortypes.NewValidationError(
+			"accountingControl",
+			errortypes.ErrRequired,
+			"A settlements payable account must be configured before recording driver settlement payments",
+		)
+	}
+	return control.DefaultSettlementsPayableAccountID, nil
+}
+
+func hasID(id *pulid.ID) bool {
+	return id != nil && id.IsNotNil()
+}
+
+func PaymentIdempotencyKey(settlementID pulid.ID) string {
+	return "driver-settlement-paid:" + settlementID.String()
+}
+
+func (s *Service) postPaymentJournal(
+	ctx context.Context,
+	entity *driversettlement.Settlement,
+	actorID pulid.ID,
+	paidAt int64,
+) (*pulid.ID, error) {
+	if !paymentBooked(entity) {
+		return nil, nil //nolint:nilnil // nothing was booked to a payable, so no payment journal is due
+	}
+
+	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	journal, err := PaymentJournal(entity, control, actorID, paidAt, timeutils.NowUnix())
+	if err != nil || journal == nil {
+		return nil, err
+	}
+	return s.writeJournal(ctx, journal)
 }
 
 func (s *Service) settlementCodeAccounts(

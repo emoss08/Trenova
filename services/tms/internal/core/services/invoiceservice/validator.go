@@ -3,6 +3,8 @@ package invoiceservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
+
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -186,8 +188,8 @@ func (v *Validator) validatePostingPeriodPolicy(
 		return
 	}
 	if v.accountingPolicyService().
-		CanCreateInvoiceLedgerEntry(control, invoicePostingSourceEvent(entity.BillType)) &&
-		!invoicePostingHasRequiredAccounts(control) {
+		CanCreateInvoiceLedgerEntry(control, invoiceledger.SourceEvent(entity.BillType)) &&
+		!invoiceledger.HasRequiredAccounts(control) {
 		multiErr.Add(
 			"accountingControl",
 			errortypes.ErrRequired,

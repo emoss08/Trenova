@@ -47,6 +47,7 @@ func (s *Service) SubmitBackground(
 		SchemaName:          req.SchemaName,
 		MaxTokens:           req.MaxTokens,
 		PreferredProviderID: req.PreferredProviderID,
+		RequireProvider:     req.RequireProvider,
 		Attribution:         req.Attribution,
 	}
 

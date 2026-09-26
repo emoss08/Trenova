@@ -1,5 +1,5 @@
 {
-  "version": "sha256:fd49ec334accd12dd14b1e36d5fbfdda930e8afab09cd9f3f16a162f0915b892",
+  "version": "sha256:5f95e592eab0319b594fde3435f0c6d86b878fcf3a986c2f006af66a4dde92fc",
   "modules": [
     {
       "id": "home",
@@ -1097,6 +1097,72 @@
       "covers": [
         "/accounting/journal-entries/:id"
       ],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/accounting/journals-to-post",
+      "name": "Journals to post",
+      "module": "accounting",
+      "breadcrumb": [
+        "Accounting management",
+        "Journals to post"
+      ],
+      "description": "When the organization's accounting control sets journal posting to **Manual**, the journals that invoices, credit and debit memos, invoice adjustments, customer payments and driver and carrier settlements write do not reach the general ledger on their own.",
+      "summary": "When the organization's accounting control sets journal posting to **Manual**, the journals that invoices, credit and debit memos, invoice adjustments, customer payments and driver and carrier settlements write do not reach the general ledger on their own. They wait on **Journals to post** until someone posts them, and until someone approves them first when manual journal approval is required. Until an entry is posted it is not in the trial balance or any account balance.\n\nThe strip at the top counts the entries **Awaiting approval** and those **Ready to post**, and shows the accounting date of the oldest entry waiting; selecting a count filters the table to it. Selecting a row opens the journal entry with its lines.",
+      "requires": [
+        {
+          "resource": "journal_entry",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "journals awaiting approval",
+        "approve journal entries",
+        "post journal entries",
+        "pending journals",
+        "unposted journals",
+        "manual posting",
+        "journal not in trial balance",
+        "GL not updated"
+      ],
+      "tasks": [
+        {
+          "title": "Approve journal entries",
+          "keywords": [
+            "approve journals",
+            "sign off journals",
+            "review journals"
+          ],
+          "steps": [
+            "Open [Journals to post](/accounting/journals-to-post).",
+            "Select the entries marked **Awaiting approval**.",
+            "Select **Approve**. Each entry is decided on its own: the message says how many were approved and why any were not."
+          ]
+        },
+        {
+          "title": "Post journal entries to the general ledger",
+          "keywords": [
+            "post journals",
+            "post to GL",
+            "update trial balance",
+            "release journals"
+          ],
+          "steps": [
+            "Open [Journals to post](/accounting/journals-to-post).",
+            "Select the entries marked **Ready to post**.",
+            "Select **Post to ledger**. The entries update the account balances and the trial balance straight away."
+          ]
+        }
+      ],
+      "notes": "Viewing the page needs read access to journal entries; approving and posting need the journal entry approve permission, which agents never hold. An entry is posted on its own accounting date. If that date's fiscal period has been closed since the entry was written, the closed-period policy decides: the entry moves to the first day of the next open period, or it is refused until the period is reopened. An entry that does not balance is refused. When posting is switched to **Automatic**, new journals post on their own; entries written while posting was manual stay here until someone posts them. Credit memo and driver settlement payment journals that an administrator restores for records from before those journals were written also wait here in Manual mode.",
+      "related": [
+        "/accounting/manual-journals",
+        "/accounting/journal-reversals",
+        "/accounting/reports/trial-balance"
+      ],
+      "covers": [],
       "createAction": null,
       "inNavigation": true
     },
@@ -2334,6 +2400,29 @@
             "Check the tools, the **Ceiling** and **Data access** the starter filled in. The insight analyst also starts with a cap on **Runs per day**.",
             "Under **When it runs**, **Event** is already chosen with the events the starter listens for.",
             "Turn on **Shadow mode** to watch what it would do first, then select **Save**."
+          ]
+        },
+        {
+          "title": "Set up an agent for settlements or receivables",
+          "keywords": [
+            "settlements agent",
+            "driver pay agent",
+            "payroll agent",
+            "carrier settlement agent",
+            "carrier invoice matching agent",
+            "receivables agent",
+            "collections agent",
+            "accounts receivable agent",
+            "dispute agent",
+            "late charges agent",
+            "share invoice agent"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Agents** in the rail.",
+            "Select **New agent**.",
+            "In **Start from**, choose the settlements clerk to draft driver and carrier settlements, sort out pay that is missing or held, match carrier invoices and propose each payment, or the receivables assistant to apply payments and credit, handle disputes and late charges, and say which overdue invoices to chase first. Both are chat agents that act as the person talking to them, and anything that moves money waits for that person to approve it. The settlements clerk reads each driver's pay setup but never changes it: a pay rate, a standing deduction or escrow terms stay with the people who set up driver pay.",
+            "Leave **Data access** at **Restricted**, since both work with amounts and pay.",
+            "Select **Save**. To let the billing assistant and the receivables assistant pass work to each other, add each to the other's **Can ask** list as described below."
           ]
         },
         {
@@ -15381,12 +15470,27 @@
       }
     },
     {
+      "entity": "edi_message",
+      "label": "EDI message",
+      "path": "/edi/messages",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
       "entity": "invoice",
       "label": "Invoice",
       "path": "/billing/invoices",
       "params": {
         "item": "{id}"
       }
+    },
+    {
+      "entity": "journal_entry",
+      "label": "Journal entry",
+      "path": "/accounting/journal-entries/{id}",
+      "params": {}
     },
     {
       "entity": "location",

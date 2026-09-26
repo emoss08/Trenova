@@ -548,3 +548,43 @@ func TestExecutionReport_Success(t *testing.T) {
 		})
 	}
 }
+
+type repeatableTestSeed struct {
+	*seedermocks.MockSeed
+}
+
+func (repeatableTestSeed) Repeatable() bool { return true }
+
+/*
+A permission added to the registry reaches an existing database's administrator
+role only when the repeatable sync seed runs again. Migrating runs these
+reconciliation seeds, but only the ones the database has already had: a fresh
+database gets them from its first seed run instead, in order after the seeds
+they depend on.
+*/
+func TestEngine_ReconcilableIsTheRepeatableSeedsAlreadyApplied(t *testing.T) {
+	t.Parallel()
+
+	r := NewRegistry()
+	require.NoError(t, r.Register(seedermocks.NewMockSeed("Roles")))
+	require.NoError(t, r.Register(repeatableTestSeed{seedermocks.NewMockSeed(
+		"RolePermissionsSync", seedermocks.WithDependencies("Roles"),
+	)}))
+	require.NoError(t, r.Register(repeatableTestSeed{seedermocks.NewMockSeed("NeverApplied")}))
+	require.NoError(t, r.Register(seedermocks.NewMockSeed("OneOff")))
+
+	tracker := newTestTracker()
+	tracker.markApplied("Roles", "RolePermissionsSync", "OneOff")
+
+	e := NewEngine(nil, r, nil)
+	e.SetTracker(tracker)
+
+	seeds, err := e.reconcilable(t.Context(), common.EnvDevelopment)
+	require.NoError(t, err)
+
+	names := make([]string, 0, len(seeds))
+	for _, seed := range seeds {
+		names = append(names, seed.Name())
+	}
+	assert.Equal(t, []string{"RolePermissionsSync"}, names)
+}

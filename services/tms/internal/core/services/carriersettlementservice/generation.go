@@ -55,19 +55,9 @@ func (s *Service) GenerateBatch(
 	}
 
 	now := timeutils.NowUnix()
-	bounds := PeriodBounds{PeriodStart: req.PeriodStart, PeriodEnd: req.PeriodEnd}
-	if bounds.PeriodStart == 0 || bounds.PeriodEnd == 0 {
-		bounds = ResolveCurrentPeriod(control, now)
-	} else {
-		bounds.PayDate = time.Unix(bounds.PeriodEnd, 0).UTC().
-			AddDate(0, 0, control.PayDelayDays).Unix()
-	}
-	if bounds.PeriodEnd <= bounds.PeriodStart {
-		return nil, errortypes.NewValidationError(
-			"periodEnd",
-			errortypes.ErrInvalid,
-			"Period end must be after the period start",
-		)
+	bounds, err := ResolveBatchBounds(control, req.PeriodStart, req.PeriodEnd, now)
+	if err != nil {
+		return nil, err
 	}
 
 	batch, err := s.resolveOpenBatch(ctx, req, bounds, actor, now)
@@ -167,12 +157,13 @@ func (s *Service) resolveOpenBatch(
 }
 
 type GenerateForCarrierRequest struct {
-	TenantInfo  pagination.TenantInfo
-	CarrierID   pulid.ID
-	PeriodStart int64
-	PeriodEnd   int64
-	PayDate     int64
-	BatchID     *pulid.ID
+	TenantInfo   pagination.TenantInfo
+	CarrierID    pulid.ID
+	PeriodStart  int64
+	PeriodEnd    int64
+	PayDate      int64
+	BatchID      *pulid.ID
+	ReleasedFrom pulid.ID
 }
 
 func (s *Service) GenerateForCarrier(
@@ -266,9 +257,10 @@ func (s *Service) buildSettlement(
 	events, err := s.costEventRepo.ListPendingByCarrier(
 		ctx,
 		&repositories.ListPendingCostEventsRequest{
-			TenantInfo: req.TenantInfo,
-			CarrierID:  req.CarrierID,
-			PeriodEnd:  req.PeriodEnd,
+			TenantInfo:   req.TenantInfo,
+			CarrierID:    req.CarrierID,
+			PeriodEnd:    req.PeriodEnd,
+			ReleasedFrom: req.ReleasedFrom,
 		},
 	)
 	if err != nil {

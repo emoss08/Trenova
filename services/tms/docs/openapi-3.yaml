@@ -244,6 +244,8 @@ components:
                 - EDIDesk
                 - FormulaAssistant
                 - BooksKeeper
+                - SettlementsClerk
+                - Receivables
             type: string
             x-enum-varnames:
                 - TemplateDispatchAssistant
@@ -268,6 +270,8 @@ components:
                 - TemplateEDIDesk
                 - TemplateFormulaAssistant
                 - TemplateBooksKeeper
+                - TemplateSettlementsClerk
+                - TemplateReceivables
         apikeyservice.AllowedResourceCategory:
             properties:
                 category:
@@ -14923,6 +14927,7 @@ components:
                 - CarrierSettlementPosted
                 - CarrierSettlementVoided
                 - CarrierSettlementPaid
+                - DriverSettlementPaid
             type: string
             x-enum-varnames:
                 - JournalSourceEventInvoicePosted
@@ -14939,6 +14944,7 @@ components:
                 - JournalSourceEventCarrierSettlementPosted
                 - JournalSourceEventCarrierSettlementVoided
                 - JournalSourceEventCarrierSettlementPaid
+                - JournalSourceEventDriverSettlementPaid
         tenant.LateChargeAssessmentMode:
             enum:
                 - Disabled

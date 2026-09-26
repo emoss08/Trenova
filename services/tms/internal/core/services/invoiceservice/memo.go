@@ -48,55 +48,20 @@ func (s *Service) CreateMemo(
 			"Actor is required",
 		)
 	}
-	if multiErr := validateMemoRequest(req); multiErr != nil {
-		return nil, multiErr
-	}
-
-	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
-		ID:         req.CustomerID,
-		TenantInfo: req.TenantInfo,
-		CustomerFilterOptions: repositories.CustomerFilterOptions{
-			IncludeBillingProfile: true,
-			IncludeState:          true,
-		},
-	})
+	plan, err := s.planMemo(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	if err = s.validateMemoReference(ctx, req, cus); err != nil {
-		return nil, err
-	}
-
-	control, err := s.billingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
-	if err != nil && !errortypes.IsNotFoundError(err) {
-		return nil, err
-	}
+	cus, control, lines := plan.customer, plan.control, plan.lines
 
 	number, err := s.generateMemoNumber(ctx, req.TenantInfo, req.BillType)
 	if err != nil {
 		return nil, err
 	}
 
-	lines, err := s.memoLines(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
 	var created *invoice.Invoice
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		item, txErr := s.billingQueueRepo.Create(txCtx, &billingqueue.BillingQueueItem{
-			OrganizationID:   req.TenantInfo.OrgID,
-			BusinessUnitID:   req.TenantInfo.BuID,
-			BillToCustomerID: cus.ID,
-			Status:           billingqueue.StatusApproved,
-			BillType:         req.BillType,
-			Number:           number,
-			AdjustmentContext: map[string]any{
-				"memo":     true,
-				"memoKind": string(memoKindOrDefault(req.MemoKind)),
-			},
-		})
+		item, txErr := s.billingQueueRepo.Create(txCtx, memoQueueItem(req, cus, number))
 		if txErr != nil {
 			return txErr
 		}

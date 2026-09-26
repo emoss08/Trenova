@@ -159,6 +159,7 @@ export function buildRailItems(
           ? [{ view: "ratings" as const, label: t("Worst-rated answers") }]
           : []),
         { view: "golden", label: t("Golden set") },
+        { view: "extraction", label: t("Document extraction") },
         { view: "settings", label: t("Settings") },
       ],
     });

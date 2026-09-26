@@ -704,6 +704,14 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/accounting/journals-to-post",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.JournalEntry)),
+            async lazy() {
+              const { JournalReviewPage } = await import("@/routes/journal-review/page");
+              return { Component: JournalReviewPage };
+            },
+          },
+          {
             path: "/accounting/journal-entries/:id",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.JournalEntry)),
             async lazy() {

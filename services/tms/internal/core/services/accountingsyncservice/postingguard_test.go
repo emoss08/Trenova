@@ -48,6 +48,24 @@ var postingAllowList = map[string]string{
 	"invoiceservice.Service.planPost": "marks the loaded invoice Posted without saving it, for " +
 		"PreviewPost and for Post; Post, the only caller that saves it, enqueues the sync " +
 		"record in the same transaction",
+	"carriersettlementservice.PlanPost": "marks the loaded settlement Posted without saving it, " +
+		"for the agent preview and for Post; Post, the only caller that saves it, enqueues the " +
+		"sync record in the same transaction",
+	"carriersettlementservice.PlanMarkPaid": "marks the loaded settlement Paid without saving " +
+		"it, for the agent preview and for MarkPaid; MarkPaid, the only caller that saves it, " +
+		"enqueues the sync record in the same transaction",
+	"carriersettlementservice.PlanVoid": "marks the loaded settlement Voided without saving it, " +
+		"for the agent preview and for Void; Void, the only caller that saves it, enqueues the " +
+		"sync record in the same transaction",
+	"driversettlementservice.PlanPost": "marks the loaded settlement Posted without saving it, " +
+		"for the agent previews and for Post; Post, the only caller that saves it (pay-now " +
+		"saves through Post), enqueues the sync record in the same transaction",
+	"driversettlementservice.PlanMarkPaid": "marks the loaded settlement Paid without saving it, " +
+		"for the agent previews and for MarkPaid; MarkPaid, the only caller that saves it " +
+		"(pay-now saves through MarkPaid), enqueues the sync record in the same transaction",
+	"driversettlementservice.PlanVoid": "marks the loaded settlement Voided without saving it, " +
+		"for the agent preview and for Void; Void, the only caller that saves it, enqueues the " +
+		"sync record in the same transaction",
 }
 
 var postedStatusPackages = []string{"invoice", "customerpayment"}

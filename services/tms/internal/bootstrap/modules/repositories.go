@@ -31,9 +31,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentsubjectrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agenttooltrustrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiauditrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aicorrectionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aifeedbackrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiproviderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aitrainingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiusagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
@@ -118,6 +120,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/exchangeraterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/extractionevalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fleetcoderepository"
@@ -322,6 +325,12 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentplanrepository.New,
 	agentmemoryrepository.New,
 	agentmemorysubjectrepository.New,
+	aicorrectionrepository.New,
+	aitrainingrepository.NewExports,
+	aitrainingrepository.NewRecords,
+	extractionevalrepository.NewCases,
+	extractionevalrepository.NewRuns,
+	extractionevalrepository.NewResults,
 	aifeedbackrepository.New,
 	aifeedbackrepository.NewSource,
 	agentdecisionqueuerepository.New,
@@ -500,6 +509,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	invoicesharerepository.New,
 	journalentryrepository.New,
 	journalpostingrepository.New,
+	journalpostingrepository.NewReview,
 	journalreversalrepository.New,
 	journalsourcerepository.New,
 	manualjournalrepository.New,

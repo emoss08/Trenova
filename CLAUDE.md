@@ -350,6 +350,16 @@ paths) and set `AudienceUserID` for anything addressed to one person. **Read
 `realtimeservice`, `infrastructure/realtimebroker`, the stream endpoint, or the
 browser `realtimeClient`**, and before adding a presence or typing scope.
 
+## AI Training Export
+
+Operators export consenting organizations' AI corrections for fine-tuning with
+`trenova ai training-export`; examples are anonymized in the worker before anything is
+written, consent is read at export time and again before an organization's files are kept,
+and every example is recorded so a withdrawal can be honoured later. **Read
+[docs/engineering/ai-training-export.md](docs/engineering/ai-training-export.md) before
+changing `domain/aitraining`, `aitrainingservice`, `aitrainingjobs`, or what a correction
+stores.**
+
 ## AI Audit Trail
 
 `ai_audit_events` is an append-only, per-tenant hash chain, signed with keys kept outside the

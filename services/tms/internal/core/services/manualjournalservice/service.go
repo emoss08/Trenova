@@ -4,6 +4,8 @@ package manualjournalservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/journalposting"
+
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -586,55 +588,21 @@ func (s *Service) resolvePostingPeriod(
 	entity *manualjournal.Request,
 	accountingControl *tenant.AccountingControl,
 ) (*fiscalperiod.FiscalPeriod, int64, error) {
-	period, err := s.validator.fiscalRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-		Date:  entity.AccountingDate,
-	})
+	resolved, err := journalposting.ResolvePeriod(
+		ctx,
+		s.validator.fiscalRepo,
+		&journalposting.ResolvePeriodRequest{
+			OrganizationID: entity.OrganizationID,
+			BusinessUnitID: entity.BusinessUnitID,
+			Date:           entity.AccountingDate,
+			Policy:         accountingControl.ClosedPeriodPostingPolicy,
+			Subject:        "manual journal",
+		},
+	)
 	if err != nil {
 		return nil, 0, err
 	}
-
-	//nolint:exhaustive // only actionable enum states require explicit handling here
-	switch period.Status {
-	case fiscalperiod.StatusOpen, fiscalperiod.StatusLocked:
-		return period, entity.AccountingDate, nil
-	case fiscalperiod.StatusClosed, fiscalperiod.StatusPermanentlyClosed:
-		if accountingControl.ClosedPeriodPostingPolicy != tenant.ClosedPeriodPostingPolicyPostToNextOpen {
-			return nil, 0, errortypes.NewBusinessError(
-				"Manual journal cannot be posted to a closed period; reopen the period first",
-			)
-		}
-
-		periods, listErr := s.validator.fiscalRepo.ListByFiscalYearID(
-			ctx,
-			repositories.ListByFiscalYearIDRequest{
-				FiscalYearID: period.FiscalYearID,
-				OrgID:        entity.OrganizationID,
-				BuID:         entity.BusinessUnitID,
-			},
-		)
-		if listErr != nil {
-			return nil, 0, listErr
-		}
-		for _, candidate := range periods {
-			if candidate == nil || candidate.PeriodNumber <= period.PeriodNumber {
-				continue
-			}
-			if candidate.Status == fiscalperiod.StatusOpen ||
-				candidate.Status == fiscalperiod.StatusLocked {
-				return candidate, candidate.StartDate, nil
-			}
-		}
-
-		return nil, 0, errortypes.NewBusinessError(
-			"No next open fiscal period is available for manual journal posting",
-		)
-	default:
-		return nil, 0, errortypes.NewBusinessError(
-			"Manual journal cannot be posted to an inactive fiscal period",
-		)
-	}
+	return resolved.Period, resolved.AccountingDate, nil
 }
 
 func (s *Service) logAudit(

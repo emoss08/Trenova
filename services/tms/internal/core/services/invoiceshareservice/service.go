@@ -2,7 +2,6 @@ package invoiceshareservice
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -14,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -93,64 +91,18 @@ func (s *Service) Share(
 	req *servicesports.ShareInvoiceRequest,
 	actor *servicesports.RequestActor,
 ) (*servicesports.ShareInvoiceResult, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-	if !actor.IsUser() || actor.UserID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"actor",
-			errortypes.ErrInvalidOperation,
-			"Only a signed-in user can share an invoice",
-		)
-	}
-
-	input := shareInput{
-		userIDs: sliceutils.Dedupe(req.UserIDs),
-		note:    strings.TrimSpace(req.Note),
-		tab:     req.Tab,
-	}
-	if input.tab == "" {
-		input.tab = invoice.ShareTabOverview
-	}
-	if multiErr := validateShareInput(&input, actor.UserID); multiErr != nil {
-		return nil, multiErr
-	}
-
-	entity, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
-		ID:         req.InvoiceID,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, err := s.planShare(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-
-	sharer, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
-		TenantInfo:   req.TenantInfo,
-		LookupUserID: actor.UserID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	recipients, err := s.resolveRecipients(ctx, req.TenantInfo, input.userIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	shares, err := buildShares(entity, sharer.ID, recipients, &input)
-	if err != nil {
-		return nil, err
-	}
+	entity, sharer, recipients, shares, input := plan.invoice, plan.sharer, plan.recipients,
+		plan.shares, &plan.input
 
 	if err = s.repo.Upsert(ctx, shares); err != nil {
 		return nil, err
 	}
 
-	s.logShare(entity, actor, recipients, &input)
+	s.logShare(entity, actor, recipients, input)
 
 	emailsQueued, emailStatus := s.deliver(ctx, &deliveryParams{
 		invoice:    entity,

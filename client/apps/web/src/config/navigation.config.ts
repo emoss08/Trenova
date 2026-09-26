@@ -874,6 +874,12 @@ const accountingModule: NavModule = {
       resource: Resource.JournalReversal,
     },
     {
+      id: "journals-to-post",
+      label: "Journals to post",
+      path: "/accounting/journals-to-post",
+      resource: Resource.JournalEntry,
+    },
+    {
       id: "reports-group",
       label: "Reports",
       defaultOpen: false,

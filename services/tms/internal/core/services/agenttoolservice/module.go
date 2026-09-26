@@ -10,10 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
+	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
@@ -31,7 +34,7 @@ var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewReg
 // The module provides them into the group, and the description contract test
 // builds each one to read what a model is shown.
 func ToolProviders() []any {
-	return []any{
+	providers := []any{
 		newTransitionToInReviewTool,
 		provideTransferToBillingTool,
 		provideApproveBillingQueueItemTool,
@@ -42,6 +45,30 @@ func ToolProviders() []any {
 		provideAssignBillerTool,
 		providePostInvoiceTool,
 		provideSendInvoiceTool,
+		provideOpenInvoiceDisputeTool,
+		provideResolveInvoiceDisputeTool,
+		provideWithdrawInvoiceDisputeTool,
+		provideApplyCustomerPaymentTool,
+		provideReverseCustomerPaymentTool,
+		provideApplyCreditMemoTool,
+		provideUnapplyCreditMemoTool,
+		provideSaveInvoiceAdjustmentDraftTool,
+		provideSubmitInvoiceAdjustmentTool,
+		provideApproveInvoiceAdjustmentTool,
+		provideRejectInvoiceAdjustmentTool,
+		provideBuildInvoiceRunTool,
+		provideAdjustInvoiceRunMembershipTool,
+		provideCommitInvoiceRunTool,
+		provideCancelInvoiceRunTool,
+		provideBillStatementNowTool,
+		provideAssessLateChargesTool,
+		provideShareInvoiceTool,
+		provideUpdateInvoiceDraftTool,
+		provideGenerateInvoicePDFTool,
+		provideCreateInvoiceTool,
+		provideCreateInvoiceMemoTool,
+		provideVoidInvoiceTool,
+		provideSendInvoiceEDITool,
 		newCorrectChargeCodeTool,
 		newSaveTableViewTool,
 		newCreateDashboardTool,
@@ -121,6 +148,10 @@ func ToolProviders() []any {
 		newRemoveHomeWidgetTool,
 		newArrangeHomeLayoutTool,
 	}
+
+	providers = append(providers, ediToolProviders()...)
+
+	return append(providers, settlementToolProviders()...)
 }
 
 func grouped() []any {
@@ -355,4 +386,170 @@ func provideLinkInboundMessageTool(inbox *inboundmessageservice.Service) service
 
 func provideMarkInboundMessageTool(inbox *inboundmessageservice.Service) services.AgentTool {
 	return newMarkInboundMessageTool(inbox)
+}
+
+func ediToolProviders() []any {
+	return []any{
+		provideAcceptEDILoadTenderTool,
+		provideDeclineEDILoadTenderTool,
+		provideCancelEDILoadTenderTool,
+		provideExpireEDILoadTenderTool,
+		provideReviewEDITenderChangeTool,
+		provideReviewEDITransferChangeTool,
+		provideRetryEDIMessageDeliveryTool,
+		provideReplayEDIMessageTool,
+		provideReprocessEDIInboundFilesTool,
+		provideSendEDILoadTenderTool,
+		provideSendEDIStatusUpdateTool,
+	}
+}
+
+func provideAcceptEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newAcceptEDILoadTenderTool(edi)
+}
+
+func provideDeclineEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newDeclineEDILoadTenderTool(edi)
+}
+
+func provideCancelEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newCancelEDILoadTenderTool(edi)
+}
+
+func provideExpireEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newExpireEDILoadTenderTool(edi)
+}
+
+func provideReviewEDITenderChangeTool(edi *ediservice.Service) services.AgentTool {
+	return newReviewEDITenderChangeTool(edi)
+}
+
+func provideReviewEDITransferChangeTool(edi *ediservice.Service) services.AgentTool {
+	return newReviewEDITransferChangeTool(edi)
+}
+
+func provideRetryEDIMessageDeliveryTool(edi *ediservice.Service) services.AgentTool {
+	return newRetryEDIMessageDeliveryTool(edi)
+}
+
+func provideReplayEDIMessageTool(edi *ediservice.Service) services.AgentTool {
+	return newReplayEDIMessageTool(edi)
+}
+
+func provideReprocessEDIInboundFilesTool(inbound *ediinboundservice.Service) services.AgentTool {
+	return newReprocessEDIInboundFilesTool(inbound)
+}
+
+func provideSendEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newSendEDILoadTenderTool(edi)
+}
+
+func provideSendEDIStatusUpdateTool(edi *ediservice.Service) services.AgentTool {
+	return newSendEDIStatusUpdateTool(edi)
+}
+
+func provideOpenInvoiceDisputeTool(disputes services.InvoiceDisputeService) services.AgentTool {
+	return newOpenInvoiceDisputeTool(disputes)
+}
+
+func provideResolveInvoiceDisputeTool(disputes services.InvoiceDisputeService) services.AgentTool {
+	return newResolveInvoiceDisputeTool(disputes)
+}
+
+func provideWithdrawInvoiceDisputeTool(disputes services.InvoiceDisputeService) services.AgentTool {
+	return newWithdrawInvoiceDisputeTool(disputes)
+}
+
+func provideApplyCustomerPaymentTool(payments services.CustomerPaymentService) services.AgentTool {
+	return newApplyCustomerPaymentTool(payments)
+}
+
+func provideReverseCustomerPaymentTool(
+	payments services.CustomerPaymentService,
+) services.AgentTool {
+	return newReverseCustomerPaymentTool(payments)
+}
+
+func provideApplyCreditMemoTool(payments services.CustomerPaymentService) services.AgentTool {
+	return newApplyCreditMemoTool(payments)
+}
+
+func provideUnapplyCreditMemoTool(payments services.CustomerPaymentService) services.AgentTool {
+	return newUnapplyCreditMemoTool(payments)
+}
+
+func provideSaveInvoiceAdjustmentDraftTool(
+	adjustments services.InvoiceAdjustmentService,
+) services.AgentTool {
+	return newSaveInvoiceAdjustmentDraftTool(adjustments)
+}
+
+func provideSubmitInvoiceAdjustmentTool(
+	adjustments services.InvoiceAdjustmentService,
+) services.AgentTool {
+	return newSubmitInvoiceAdjustmentTool(adjustments)
+}
+
+func provideApproveInvoiceAdjustmentTool(
+	adjustments services.InvoiceAdjustmentService,
+) services.AgentTool {
+	return newApproveInvoiceAdjustmentTool(adjustments)
+}
+
+func provideRejectInvoiceAdjustmentTool(
+	adjustments services.InvoiceAdjustmentService,
+) services.AgentTool {
+	return newRejectInvoiceAdjustmentTool(adjustments)
+}
+
+func provideBuildInvoiceRunTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newBuildInvoiceRunTool(runs)
+}
+
+func provideAdjustInvoiceRunMembershipTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newAdjustInvoiceRunMembershipTool(runs)
+}
+
+func provideCommitInvoiceRunTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newCommitInvoiceRunTool(runs)
+}
+
+func provideCancelInvoiceRunTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newCancelInvoiceRunTool(runs)
+}
+
+func provideBillStatementNowTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newBillStatementNowTool(runs)
+}
+
+func provideAssessLateChargesTool(charges services.LateChargeService) services.AgentTool {
+	return newAssessLateChargesTool(charges)
+}
+
+func provideShareInvoiceTool(shares *invoiceshareservice.Service) services.AgentTool {
+	return newShareInvoiceTool(shares)
+}
+
+func provideUpdateInvoiceDraftTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newUpdateInvoiceDraftTool(invoices)
+}
+
+func provideGenerateInvoicePDFTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newGenerateInvoicePDFTool(invoices)
+}
+
+func provideCreateInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newCreateInvoiceTool(invoices)
+}
+
+func provideCreateInvoiceMemoTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newCreateInvoiceMemoTool(invoices)
+}
+
+func provideVoidInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newVoidInvoiceTool(invoices)
+}
+
+func provideSendInvoiceEDITool(invoices *invoiceservice.Service) services.AgentTool {
+	return newSendInvoiceEDITool(invoices)
 }

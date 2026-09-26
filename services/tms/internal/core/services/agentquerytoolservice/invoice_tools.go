@@ -35,9 +35,9 @@ func (t *getInvoiceTool) Name() string { return "get_invoice" }
 
 func (t *getInvoiceTool) Description() string {
 	return "Retrieve one invoice by id, with its line items, totals, payment and dispute " +
-		"state. Use list_invoices first when you have a number or are looking for what is " +
-		"unpaid. Amounts and the memo are left out, and named in withheldByAccess, when " +
-		"your data access does not reach them."
+		"state. Each line's id is what an invoice adjustment names. Use list_invoices first " +
+		"when you have a number or are looking for what is unpaid. Amounts and the memo are " +
+		"left out, and named in withheldByAccess, when your data access does not reach them."
 }
 
 func (t *getInvoiceTool) ParamSchema() map[string]any {
@@ -123,10 +123,12 @@ type invoiceDetail struct {
 }
 
 type invoiceLineDetail struct {
+	ID          string `json:"id"`
 	LineNumber  int    `json:"lineNumber"`
 	Type        string `json:"type"`
 	Description string `json:"description"`
 	ChargeCode  string `json:"chargeCode,omitempty"`
+	Accessorial string `json:"accessorialChargeId,omitempty"`
 	ProNumber   string `json:"proNumber,omitempty"`
 	Quantity    string `json:"quantity,omitempty"`
 	UnitPrice   string `json:"unitPrice,omitempty"`
@@ -229,10 +231,12 @@ func invoiceLines(lines []*invoice.InvoiceLine, gate *fieldGate) ([]invoiceLineD
 			continue
 		}
 		row := invoiceLineDetail{
+			ID:          line.ID.String(),
 			LineNumber:  line.LineNumber,
 			Type:        string(line.Type),
 			Description: line.Description,
 			ChargeCode:  line.ChargeCode,
+			Accessorial: pulidString(line.AccessorialChargeID),
 			ProNumber:   line.ShipmentProNumber,
 		}
 		if showQuantity {

@@ -2,7 +2,6 @@ package invoicedisputeservice
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
@@ -93,39 +92,9 @@ func (s *Service) Open(
 		if txErr != nil {
 			return txErr
 		}
-		if multiErr := validateDisputableInvoice(inv, req.DisputedAmount); multiErr != nil {
-			return multiErr
-		}
-		if _, txErr = s.repo.GetOpenByInvoiceID(txCtx, repositories.GetOpenInvoiceDisputeRequest{
-			InvoiceID:  inv.ID,
-			TenantInfo: req.TenantInfo,
-		}); txErr == nil {
-			return errortypes.NewValidationError(
-				"invoiceId",
-				errortypes.ErrInvalidOperation,
-				"Invoice {0} already has an open dispute",
-				inv.Number,
-			)
-		} else if !errortypes.IsNotFoundError(txErr) {
+		entity, txErr := s.planOpen(txCtx, req, inv, actor, timeutils.NowUnix())
+		if txErr != nil {
 			return txErr
-		}
-
-		now := timeutils.NowUnix()
-		entity := &invoice.InvoiceDispute{
-			OrganizationID: req.TenantInfo.OrgID,
-			BusinessUnitID: req.TenantInfo.BuID,
-			InvoiceID:      inv.ID,
-			CustomerID:     inv.CustomerID,
-			Status:         invoice.DisputeCaseStatusOpen,
-			ReasonCode:     req.ReasonCode,
-			DisputedAmount: req.DisputedAmount,
-			Notes:          strings.TrimSpace(req.Notes),
-			OpenedByID:     actor.UserID,
-			OpenedAt:       now,
-		}
-		entity.SyncMinor()
-		if multiErr := validateEntity(entity); multiErr != nil {
-			return multiErr
 		}
 		created, txErr = s.repo.Create(txCtx, entity)
 		if txErr != nil {
@@ -167,42 +136,22 @@ func (s *Service) Resolve(
 
 	var previous, updated *invoice.InvoiceDispute
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		entity, txErr := s.repo.GetByID(txCtx, repositories.GetInvoiceDisputeByIDRequest{
-			ID:         req.DisputeID,
-			TenantInfo: req.TenantInfo,
-		})
+		entity, inv, txErr := s.loadCase(txCtx, req.DisputeID, req.TenantInfo, true, verbResolved)
 		if txErr != nil {
-			return txErr
-		}
-		if !entity.IsOpen() {
-			return errortypes.NewValidationError(
-				"disputeId",
-				errortypes.ErrInvalidOperation,
-				"Only an open dispute can be resolved",
-			)
-		}
-		inv, txErr := s.invoiceRepo.LockForUpdate(txCtx, repositories.GetInvoiceByIDRequest{
-			ID:         entity.InvoiceID,
-			TenantInfo: req.TenantInfo,
-		})
-		if txErr != nil {
-			return txErr
-		}
-		if txErr = s.validateResolutionAdjustment(txCtx, req, inv); txErr != nil {
 			return txErr
 		}
 
 		snapshot := *entity
 		previous = &snapshot
-		now := timeutils.NowUnix()
-		entity.Status = invoice.DisputeCaseStatusResolved
-		entity.Resolution = req.Resolution
-		entity.ResolutionAdjustmentID = req.ResolutionAdjustmentID
-		entity.ResolutionNotes = strings.TrimSpace(req.ResolutionNotes)
-		entity.ResolvedByID = actor.UserID
-		entity.ResolvedAt = &now
-		if multiErr := validateEntity(entity); multiErr != nil {
-			return multiErr
+		if txErr = s.planResolve(
+			txCtx,
+			req,
+			entity,
+			inv,
+			actor,
+			timeutils.NowUnix(),
+		); txErr != nil {
+			return txErr
 		}
 		updated, txErr = s.repo.Update(txCtx, entity)
 		if txErr != nil {
@@ -238,54 +187,21 @@ func (s *Service) Withdraw(
 			"Withdrawing a dispute requires an authenticated user",
 		)
 	}
-	if req.DisputeID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"disputeId",
-			errortypes.ErrRequired,
-			"Dispute is required",
-		)
-	}
-	if len(req.Notes) > maxDisputeNotesLength {
-		return nil, errortypes.NewValidationError(
-			"notes",
-			errortypes.ErrInvalid,
-			"Notes must be at most {0} characters",
-			maxDisputeNotesLength,
-		)
+	if multiErr := validateWithdrawRequest(req); multiErr != nil {
+		return nil, multiErr
 	}
 
 	var previous, updated *invoice.InvoiceDispute
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		entity, txErr := s.repo.GetByID(txCtx, repositories.GetInvoiceDisputeByIDRequest{
-			ID:         req.DisputeID,
-			TenantInfo: req.TenantInfo,
-		})
-		if txErr != nil {
-			return txErr
-		}
-		if !entity.IsOpen() {
-			return errortypes.NewValidationError(
-				"disputeId",
-				errortypes.ErrInvalidOperation,
-				"Only an open dispute can be withdrawn",
-			)
-		}
-		inv, txErr := s.invoiceRepo.LockForUpdate(txCtx, repositories.GetInvoiceByIDRequest{
-			ID:         entity.InvoiceID,
-			TenantInfo: req.TenantInfo,
-		})
+		entity, inv, txErr := s.loadCase(txCtx, req.DisputeID, req.TenantInfo, true, verbWithdrawn)
 		if txErr != nil {
 			return txErr
 		}
 
 		snapshot := *entity
 		previous = &snapshot
-		now := timeutils.NowUnix()
-		entity.Status = invoice.DisputeCaseStatusWithdrawn
-		entity.ResolvedByID = actor.UserID
-		entity.ResolvedAt = &now
-		if notes := strings.TrimSpace(req.Notes); notes != "" {
-			entity.ResolutionNotes = notes
+		if txErr = planWithdraw(req, entity, actor, timeutils.NowUnix()); txErr != nil {
+			return txErr
 		}
 		updated, txErr = s.repo.Update(txCtx, entity)
 		if txErr != nil {

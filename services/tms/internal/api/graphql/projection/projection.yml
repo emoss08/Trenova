@@ -105,6 +105,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AICorrection:
+    - accuracy
   AccountingDriftFinding:
     - directions
     - pushed

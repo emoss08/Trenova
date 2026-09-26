@@ -89,11 +89,11 @@ func postPreviewFixture() *invoiceservice.PostPreview {
 		Legs:        []invoiceservice.LegChange{{Before: leg, After: &invoicedLeg}},
 		QueueBefore: queueBefore,
 		QueueAfter:  &queueAfter,
-		Journal: &invoiceservice.JournalPreview{
+		Journal: &serviceports.JournalPreview{
 			AccountingDate: postedAt,
 			FiscalPeriodID: pulid.MustNew("fp_"),
 			EntryStatus:    "Posted",
-			Lines: []invoiceservice.JournalLinePreview{
+			Lines: []serviceports.JournalLinePreview{
 				{GLAccountID: pulid.MustNew("gla_"), DebitMinor: 210000},
 				{GLAccountID: pulid.MustNew("gla_"), CreditMinor: 210000},
 			},

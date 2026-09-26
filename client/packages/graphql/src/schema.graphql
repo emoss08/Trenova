@@ -287,6 +287,74 @@ enum AIAuditVerificationStatus {
 }
 
 """
+What an extraction predicted beside what a person confirmed when they created a record from it.
+"""
+type AICorrection {
+  """Correct fields divided by scored fields."""
+  accuracy: Float!
+  businessUnitId: ID!
+  capturedAt: Timestamp!
+  capturedById: ID!
+  confirmed: ExtractionSnapshot!
+  correctCount: Int!
+  correctedCount: Int!
+  createdAt: Timestamp!
+  documentFingerprint: String!
+  documentId: ID
+  documentKind: String!
+  """Empty when the prediction came from rules alone."""
+  extractionModel: String!
+  extractionProviderId: ID
+  fieldResults: [AICorrectionFieldResult!]!
+  id: ID!
+  missedCount: Int!
+  organizationId: ID!
+  predicted: ExtractionSnapshot!
+  predictedConfidence: Float!
+  scoredCount: Int!
+  sourceId: ID!
+  sourceType: String!
+  subjectId: ID!
+  subjectType: String!
+  task: String!
+  unconfirmedCount: Int!
+  unscoredCount: Int!
+  updatedAt: Timestamp!
+}
+
+type AICorrectionConnection {
+  edges: [AICorrectionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AICorrectionEdge {
+  cursor: String!
+  node: AICorrection!
+}
+
+type AICorrectionFieldResult {
+  confidence: Float!
+  confirmed: String!
+  """A field key, or a stop field such as stops.pickup[0].city."""
+  key: String!
+  outcome: AICorrectionOutcome!
+  predicted: String!
+  """
+  Where the predicted value came from: ai, template, hybrid or deterministic.
+  """
+  source: String!
+}
+
+enum AICorrectionOutcome {
+  Correct
+  Corrected
+  Missed
+  Unconfirmed
+  Unscored
+}
+
+"""
 How an embedding endpoint is told whether a text is a stored document or a
 search query. None sends both the same way; VoyageInputType sends Voyage's
 input_type field; NomicPrefix adds the search_document and search_query
@@ -746,6 +814,20 @@ enum AITask {
   OperationalInsights
   QueryCompose
   ScopeClassification
+}
+
+"""
+A model-training export that included this organization's AI corrections, anonymized.
+"""
+type AITrainingExportHistoryEntry {
+  """When the AI training consent the export relied on was granted."""
+  consentGrantedAt: Timestamp!
+  """Corrections from this organization in the export."""
+  examples: Int!
+  exportId: ID!
+  exportedAt: Timestamp!
+  trainExamples: Int!
+  validationExamples: Int!
 }
 
 """
@@ -2304,6 +2386,14 @@ enum AgentContextProvider {
 }
 
 type AgentControl {
+  """
+  Whether the organization's AI corrections may be anonymized and used to train models outside it. Off until a person turns it on.
+  """
+  aiTrainingConsent: Boolean!
+  """When training consent was last turned on or off."""
+  aiTrainingConsentChangedAt: Timestamp
+  """Who last turned training consent on or off."""
+  aiTrainingConsentChangedById: ID
   billingAgentEnabled: Boolean! @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -2324,6 +2414,10 @@ type AgentControl {
 }
 
 input AgentControlInput {
+  """
+  Absent leaves training consent as it is. Only a signed-in person can change it.
+  """
+  aiTrainingConsent: Boolean
   billingAgentEnabled: Boolean @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   """Absent leaves the organization's earned autonomy switch as it is."""
@@ -4053,7 +4147,9 @@ enum AgentTemplate {
   IntakeDesk
   LoadEntryCheck
   LoadMonitor
+  Receivables
   ServiceFailureDesk
+  SettlementsClerk
   ShipmentIntake
 }
 
@@ -11023,6 +11119,255 @@ enum EscrowTransactionType {
   Refund
 }
 
+"""
+How well extraction did in production over a window, from the corrections people made.
+"""
+type ExtractionAccuracy {
+  accuracy: Float!
+  byKind: [ExtractionAccuracyGroup!]!
+  byModel: [ExtractionAccuracyGroup!]!
+  cases: ExtractionEvalCaseCounts!
+  correct: Int!
+  corrected: Int!
+  corrections: Int!
+  fields: [ExtractionFieldAccuracy!]!
+  missed: Int!
+  recentRuns: [ExtractionEvalRun!]!
+  """True when the window held more corrections than were read."""
+  sampled: Boolean!
+  scored: Int!
+  since: Timestamp!
+  unconfirmed: Int!
+  windowDays: Int!
+}
+
+type ExtractionAccuracyGroup {
+  accuracy: Float!
+  correct: Int!
+  corrections: Int!
+  """The model, or the document kind; empty for drafts read by rules alone."""
+  key: String!
+  scored: Int!
+}
+
+"""
+A frozen extraction test: the page text the extractor reads and the values a person confirmed.
+"""
+type ExtractionEvalCase {
+  businessUnitId: ID!
+  createdAt: Timestamp!
+  createdById: ID!
+  documentFingerprint: String!
+  documentKind: String!
+  expected: ExtractionSnapshot!
+  expectedFieldCount: Int!
+  fileName: String!
+  id: ID!
+  inputHash: String!
+  notes: String!
+  organizationId: ID!
+  pageCount: Int!
+  pages: [ExtractionEvalPage!]!
+  sourceCorrectionId: ID
+  sourceDocumentId: ID
+  status: ExtractionEvalCaseStatus!
+  task: String!
+  title: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type ExtractionEvalCaseConnection {
+  edges: [ExtractionEvalCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ExtractionEvalCaseCounts {
+  active: Int!
+  candidate: Int!
+  retired: Int!
+}
+
+type ExtractionEvalCaseEdge {
+  cursor: String!
+  node: ExtractionEvalCase!
+}
+
+enum ExtractionEvalCaseStatus {
+  Active
+  Candidate
+  Retired
+}
+
+type ExtractionEvalPage {
+  number: Int!
+  text: String!
+}
+
+"""One case evaluated within a run."""
+type ExtractionEvalResult {
+  accuracy: Float!
+  businessUnitId: ID!
+  caseId: ID!
+  caseTitle: String!
+  completedAt: Timestamp
+  correctCount: Int!
+  correctedCount: Int!
+  costUsd: Decimal!
+  createdAt: Timestamp!
+  errorMessage: String!
+  fieldResults: [AICorrectionFieldResult!]!
+  id: ID!
+  inputTokens: Int!
+  latencyMs: Int!
+  missedCount: Int!
+  model: String!
+  ordinal: Int!
+  organizationId: ID!
+  outputTokens: Int!
+  predicted: ExtractionSnapshot
+  providerId: ID
+  runId: ID!
+  scoredCount: Int!
+  startedAt: Timestamp
+  status: ExtractionEvalResultStatus!
+  unconfirmedCount: Int!
+  unscoredCount: Int!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type ExtractionEvalResultConnection {
+  edges: [ExtractionEvalResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ExtractionEvalResultEdge {
+  cursor: String!
+  node: ExtractionEvalResult!
+}
+
+enum ExtractionEvalResultStatus {
+  Completed
+  Failed
+  Pending
+  Skipped
+}
+
+"""
+One model, pinned to one AI provider, run over the active extraction cases.
+"""
+type ExtractionEvalRun {
+  accuracy: Float!
+  avgLatencyMs: Int!
+  businessUnitId: ID!
+  caseLimit: Int!
+  casesCompleted: Int!
+  casesFailed: Int!
+  casesSkipped: Int!
+  casesTotal: Int!
+  correctCount: Int!
+  correctedCount: Int!
+  costUsd: Decimal!
+  createdAt: Timestamp!
+  failureMessage: String!
+  fieldAccuracy: [ExtractionFieldAccuracy!]!
+  finishedAt: Timestamp
+  id: ID!
+  inputTokens: Int!
+  missedCount: Int!
+  organizationId: ID!
+  outputTokens: Int!
+  providerId: ID!
+  """The model the provider was configured with when the run was requested."""
+  providerModel: String!
+  providerName: String!
+  requestedById: ID!
+  scoredCount: Int!
+  """The model the provider reported serving."""
+  servedModel: String!
+  startedAt: Timestamp
+  status: ExtractionEvalRunStatus!
+  """Why the run ended before every case ran."""
+  stopReason: String!
+  task: String!
+  unconfirmedCount: Int!
+  unscoredCount: Int!
+  updatedAt: Timestamp!
+  version: Int!
+  workflowId: String!
+}
+
+type ExtractionEvalRunConnection {
+  edges: [ExtractionEvalRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ExtractionEvalRunEdge {
+  cursor: String!
+  node: ExtractionEvalRun!
+}
+
+enum ExtractionEvalRunStatus {
+  BudgetStopped
+  Canceled
+  Completed
+  Failed
+  Queued
+  Running
+}
+
+type ExtractionFieldAccuracy {
+  """Correct divided by scored; zero when nothing was scored."""
+  accuracy: Float!
+  correct: Int!
+  corrected: Int!
+  """
+  A field key, with stop fields grouped across stops (stops.pickup.city).
+  """
+  key: String!
+  missed: Int!
+  scored: Int!
+  unconfirmed: Int!
+  unscored: Int!
+}
+
+"""
+Field values and stops, either as an extraction predicted them or as a person confirmed them.
+"""
+type ExtractionSnapshot {
+  fields: [ExtractionSnapshotField!]!
+  stops: [ExtractionStop!]!
+}
+
+type ExtractionSnapshotField {
+  key: String!
+  value: String!
+}
+
+type ExtractionStop {
+  addressLine1: String!
+  addressLine2: String!
+  appointmentRequired: Boolean!
+  city: String!
+  """
+  As read from the document for a prediction; the calendar day for a confirmed stop.
+  """
+  date: String!
+  name: String!
+  postalCode: String!
+  """pickup or delivery."""
+  role: String!
+  scheduledWindowStart: Timestamp
+  sequence: Int!
+  state: String!
+  timeWindow: String!
+  timezone: String!
+}
+
 type FacilityDetentionStat {
   avgDwellMinutes: Int!
   billedAmount: Decimal!
@@ -13917,20 +14262,30 @@ input JobPositionInput {
 
 type JournalEntry {
   accountingDate: Timestamp!
+  approvedAt: Timestamp
+  approvedById: ID
   batchId: ID!
   businessUnitId: ID!
+  createdAt: Timestamp!
+  createdById: ID
   description: String!
   entryNumber: String!
   entryType: String!
   fiscalPeriodId: ID!
   fiscalYearId: ID!
   id: ID!
+  isApproved: Boolean!
+  isAutoGenerated: Boolean!
   isPosted: Boolean!
   isReversal: Boolean!
   lines: [JournalEntryLine!]
   organizationId: ID!
+  postedAt: Timestamp
+  postedById: ID
   referenceId: String!
+  referenceNumber: String!
   referenceType: String!
+  requiresApproval: Boolean!
   reversalDate: Timestamp
   reversalOfId: ID
   reversalReason: String!
@@ -13938,6 +14293,18 @@ type JournalEntry {
   status: String!
   totalCredit: Int!
   totalDebit: Int!
+  version: Int!
+}
+
+type JournalEntryConnection {
+  edges: [JournalEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type JournalEntryEdge {
+  cursor: String!
+  node: JournalEntry!
 }
 
 type JournalEntryLine {
@@ -14007,6 +14374,35 @@ enum JournalReversalStatus {
   Posted
   Rejected
   Requested
+}
+
+input JournalReviewInput {
+  entryIds: [ID!]!
+}
+
+type JournalReviewOutcome {
+  changed: Boolean!
+  entryId: ID!
+  entryNumber: String!
+  error: String!
+  status: String!
+}
+
+type JournalReviewResult {
+  changed: Int!
+  failed: Int!
+  outcomes: [JournalReviewOutcome!]!
+}
+
+"""
+How many journal entries wait for a person before they reach the general ledger.
+"""
+type JournalReviewSummary {
+  awaitingApproval: Int!
+  oldestAccountingDate: Timestamp
+  postingMode: String!
+  readyToPost: Int!
+  requiresApproval: Boolean!
 }
 
 type JournalSourceInfo {
@@ -14583,6 +14979,10 @@ type Mutation {
   Approves a pending adjustment and executes it: credit memo, rebill, and postings.
   """
   approveInvoiceAdjustment(adjustmentId: ID!): InvoiceAdjustment!
+  """
+  Approve journal entries awaiting approval. Each entry is decided on its own.
+  """
+  approveJournalEntries(input: JournalReviewInput!): JournalReviewResult!
   approveWorkerPTO(id: ID!): WorkerPTO!
   archiveDocumentTemplateVersion(id: ID!): DocumentTemplateVersion!
   archivePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
@@ -14653,6 +15053,7 @@ type Mutation {
   cancelCaptureRequest(id: ID!): CaptureRequest!
   cancelDotRandomDraw(id: ID!, reason: String!): DOTRandomDraw!
   cancelDotTest(id: ID!, reason: String!): WorkerDOTTest!
+  cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
   cancelFuelCard(input: CancelFuelCardInput!): FuelCard!
   cancelMyExpense(id: ID!): DriverExpense!
   cancelMyPto(id: ID!): PortalPto!
@@ -14816,6 +15217,7 @@ type Mutation {
   deleteDocumentTemplate(id: ID!): Boolean!
   deleteDocumentTemplateVersion(id: ID!): Boolean!
   deleteEmploymentVerification(id: ID!): Boolean!
+  deleteExtractionEvalCase(id: ID!): Boolean!
   deleteFuelIndex(id: ID!): Boolean!
   deleteFuelIndexPrice(id: ID!): Boolean!
   """
@@ -14987,11 +15389,19 @@ type Mutation {
   postCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   postDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   """
+  Post approved journal entries to the general ledger. Each entry is decided on its own.
+  """
+  postJournalEntries(input: JournalReviewInput!): JournalReviewResult!
+  """
   Asks the rate agreements what they would charge for a shipment, without
   writing anything. This is what the billing panel offers before anyone commits
   to a contract rate.
   """
   previewShipmentContractRate(input: ShipmentInput!): ShipmentContractRate!
+  """
+  Freezes a correction's document text and confirmed values into an evaluation case.
+  """
+  promoteAICorrection(input: PromoteAICorrectionInput!): ExtractionEvalCase!
   """The signed-in driver asking a colleague to take a day."""
   proposeMyShiftSwap(input: ProposeMyShiftSwapInput!): ShiftSwapRequest!
   proposeShiftSwap(input: ProposeShiftSwapInput!): ShiftSwapRequest!
@@ -15212,6 +15622,10 @@ type Mutation {
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
   startBillingTransferRun(input: StartBillingTransferRunInput!): BillingTransferRun!
   """
+  Runs one provider's model over the active cases, within the evaluation budget.
+  """
+  startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
+  """
   Marks one of the signed-in driver's courses in progress and returns the link.
   """
   startMyTraining(id: ID!): PortalTraining!
@@ -15270,6 +15684,7 @@ type Mutation {
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateEscrowAccount(input: UpdateEscrowAccountInput!): EscrowAccount!
+  updateExtractionEvalCase(id: ID!, input: UpdateExtractionEvalCaseInput!): ExtractionEvalCase!
   updateFuelCard(id: ID!, input: FuelCardInput!, version: Int!): FuelCard!
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
   updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
@@ -17029,6 +17444,13 @@ type ProfileFieldChange {
   to: String!
 }
 
+input PromoteAICorrectionInput {
+  """Start the case as Active rather than Candidate."""
+  activate: Boolean
+  correctionId: ID!
+  title: String
+}
+
 input ProposeMyShiftSwapInput {
   """The day offered back, when the swap is a trade rather than a hand-off."""
   counterpartyShiftDate: Timestamp
@@ -17216,6 +17638,8 @@ type Query {
   aiAuditEvents(input: DataTableConnectionInput!): AIAuditEventConnection!
   aiAuditExport(id: ID!): AIAuditExport
   aiAuditExports(input: DataTableConnectionInput!): AIAuditExportConnection!
+  aiCorrection(id: ID!): AICorrection
+  aiCorrections(input: DataTableConnectionInput!): AICorrectionConnection!
   """Everyone's ratings, for administrators."""
   aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider
@@ -17233,6 +17657,10 @@ type Query {
   Whether search by meaning works, what is indexed, and what it has cost this month.
   """
   aiRetrievalStatus: AIRetrievalStatus!
+  """
+  Training exports that included this organization's AI corrections, newest first.
+  """
+  aiTrainingExportHistory: [AITrainingExportHistoryEntry!]!
   """
   Model usage since the given instant, defaulting to the last seven days.
   """
@@ -17429,6 +17857,13 @@ type Query {
   escrowAccounts(input: DataTableConnectionInput!): EscrowAccountConnection!
   exportCarrierSettlementBatchCsv(batchId: ID!): String!
   exportSettlementBatchCsv(batchId: ID!): String!
+  extractionAccuracy(windowDays: Int): ExtractionAccuracy!
+  extractionEvalCase(id: ID!): ExtractionEvalCase
+  extractionEvalCases(input: DataTableConnectionInput!): ExtractionEvalCaseConnection!
+  extractionEvalResult(id: ID!): ExtractionEvalResult
+  extractionEvalResults(input: DataTableConnectionInput!, runId: ID!): ExtractionEvalResultConnection!
+  extractionEvalRun(id: ID!): ExtractionEvalRun
+  extractionEvalRuns(input: DataTableConnectionInput!): ExtractionEvalRunConnection!
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
@@ -17507,6 +17942,9 @@ type Query {
   journalEntry(id: ID!): JournalEntry
   journalReversal(id: ID!): JournalReversal
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
+  journalReviewSummary: JournalReviewSummary!
+  """Journal entries waiting to be approved or posted, oldest first."""
+  journalReviewTable(input: DataTableConnectionInput!): JournalEntryConnection!
   journalSourceByObject(sourceId: String!, sourceType: String!): JournalSourceInfo
   jurisdictionRule(id: ID!): JurisdictionRule
   jurisdictionRuleOverrides(input: DataTableConnectionInput!): JurisdictionRuleOverrideConnection!
@@ -21923,6 +22361,14 @@ input StartBillingTransferRunInput {
   status: ShipmentStatus
 }
 
+input StartExtractionEvalRunInput {
+  """
+  How many active cases to run, newest first; 50 by default, at most 500.
+  """
+  caseLimit: Int
+  providerId: ID!
+}
+
 input StartWorkerChecklistInput {
   startedAt: Timestamp
   templateId: ID!
@@ -22937,6 +23383,13 @@ input UpdateEscrowAccountInput {
   targetAmountMinor: Int!
   version: Int!
   workerId: ID!
+}
+
+input UpdateExtractionEvalCaseInput {
+  notes: String
+  status: ExtractionEvalCaseStatus
+  title: String
+  version: Int!
 }
 
 input UpdateFuelIndexPriceInput {
