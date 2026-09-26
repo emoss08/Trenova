@@ -150,6 +150,37 @@ type PreviewReason struct {
 	Param   string `json:"param,omitempty"`
 }
 
+// ReasonLines are the warning's reasons in plain words, one a line: the
+// field's label and the rule's message, and the parameter the field rides
+// in where there is one. A warning without reasons is its message alone.
+func (w *PreviewWarning) ReasonLines() []string {
+	if w == nil {
+		return nil
+	}
+	if len(w.Reasons) == 0 {
+		return []string{strings.TrimSpace(w.Message)}
+	}
+
+	lines := make([]string, 0, len(w.Reasons))
+	for i := range w.Reasons {
+		reason := &w.Reasons[i]
+		var b strings.Builder
+		if reason.Label != "" {
+			b.WriteString(reason.Label)
+			b.WriteString(": ")
+		}
+		b.WriteString(reason.Message)
+		if reason.Param != "" {
+			b.WriteString(" (parameter ")
+			b.WriteString(reason.Param)
+			b.WriteByte(')')
+		}
+		lines = append(lines, b.String())
+	}
+
+	return lines
+}
+
 // PreviewRef is a record a value points at: the id a tool holds, resolved to
 // the words a person knows it by once the preview is built.
 type PreviewRef struct {

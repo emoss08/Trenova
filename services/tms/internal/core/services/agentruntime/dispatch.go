@@ -218,13 +218,26 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
-		action.Target, _ = s.fileBaseline(ctx, &baselineCall{
-			req:        req,
-			tool:       tool,
-			call:       call,
-			proposalID: action.ProposalID,
-			persist:    req.AttributedPurpose() != serviceports.AIUsagePurposeEvaluation,
+		// The write is previewed as it is filed. One that its own rules would
+		// refuse is not filed: a person could only reject it, so the model is
+		// told why and asked for what is missing instead. A write on a record
+		// an earlier step of this turn changes is the exception, since that
+		// step may be what makes it valid.
+		dependsOnStep := dependsOnEarlierStep(tool, call, proposedSoFar)
+		target, baseline := s.fileBaseline(ctx, &baselineCall{
+			req:         req,
+			tool:        tool,
+			call:        call,
+			proposalID:  action.ProposalID,
+			persist:     req.AttributedPurpose() != serviceports.AIUsagePurposeEvaluation,
+			fileRefused: dependsOnStep,
 		})
+		if baseline != nil && !dependsOnStep {
+			if refusal := baseline.Preview.Refusal(); refusal != nil {
+				return refusedBeforeFiling(call.Name, refusal)
+			}
+		}
+		action.Target = target
 
 		content := fmt.Sprintf(
 			"Recorded a proposal to run %q. It is awaiting a person's review at the %s tier and has not run.",
