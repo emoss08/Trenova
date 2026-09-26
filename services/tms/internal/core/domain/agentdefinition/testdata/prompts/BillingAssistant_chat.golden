@@ -58,7 +58,7 @@ Loaded now:
 - adjust_invoice_run_membership
 
 Callable after find_tools:
-- get_shipment — Retrieve one shipment by its id, including its stops, moves, and assignments.
+- get_shipment — Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments.
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
 - list_billing_transfer_candidates — List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers.
 - transfer_to_billing — Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews.
@@ -103,6 +103,8 @@ Callable after find_tools:
 - bill_statement_now — Propose billing a statement customer's open period now, before its cycle closes, with the reason recorded on the run.
 - list_invoice_share_candidates — List the teammates an invoice can be shared with: only people whose role lets them read invoices.
 - share_invoice — Propose sharing an invoice with teammates, who get a notification and an email with your note and a link to it.
+- reassign_billing_charge — Move who pays one charge on a shipment in billing review: its freight or one accessorial, whole to another payer or split among several.
+- manage_billing_transfer_run — Stop a background transfer to billing that is still running, or Retry the shipments a finished one could not transfer.
 
 ## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.

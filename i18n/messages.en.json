@@ -1304,7 +1304,7 @@
     ]
   },
   "A DOT number is required to import a carrier": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -1839,7 +1839,7 @@
     ]
   },
   "A carrier with DOT {0} already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -11564,7 +11564,7 @@
     ]
   },
   "Add the customer's DOT number before vetting them as a broker": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -16610,8 +16610,17 @@
       "service/invoicerunservice"
     ]
   },
-  "An invoiced order charge cannot be re-allocated": {
+  "An invoiced order charge cannot be changed": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/orderservice"
+    ]
+  },
+  "An invoiced order charge cannot be re-allocated": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -26526,6 +26535,24 @@
     ],
     "areas": [
       "routes/organization"
+    ]
+  },
+  "Billing transfer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "Billing transfer retry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Billing warnings": {
@@ -37510,7 +37537,7 @@
     ]
   },
   "Comment request is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -51214,6 +51241,15 @@
       "routes/admin"
     ]
   },
+  "Delete rule sets and fixtures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Delete scenario": {
     "sites": 1,
     "scope": [
@@ -58854,15 +58890,6 @@
       "routes/service-failure"
     ]
   },
-  "EDI 214 service failure resolved": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/agenttoolservice"
-    ]
-  },
   "EDI 214 shipment status": {
     "sites": 1,
     "scope": [
@@ -62091,7 +62118,25 @@
       "routes/admin"
     ]
   },
+  "Enable a carrier intelligence provider before importing carriers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carrierintelservice"
+    ]
+  },
   "Enable a carrier intelligence provider before monitoring carriers": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carrierintelservice"
+    ]
+  },
+  "Enable a carrier intelligence provider before vetting carriers": {
     "sites": 1,
     "scope": [
       "go"
@@ -103889,6 +103934,24 @@
       "apps/web/config"
     ]
   },
+  "New shift assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "New shift swap": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "New shipment": {
     "sites": 2,
     "scope": [
@@ -109499,7 +109562,7 @@
     ]
   },
   "None of the selected carriers have a DOT number to monitor": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -110560,7 +110623,7 @@
     ]
   },
   "Note cannot exceed 2000 characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -118481,7 +118544,7 @@
     ]
   },
   "Order charge not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -118490,7 +118553,7 @@
     ]
   },
   "Order charge not found or already carried on an invoice": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -138083,7 +138146,7 @@
     ]
   },
   "Record what was reviewed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -142336,7 +142399,7 @@
     ]
   },
   "Request is required": {
-    "sites": 45,
+    "sites": 47,
     "scope": [
       "go"
     ],
@@ -144765,6 +144828,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Retire a rate agreement so it no longer prices shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Retire a template version": {
@@ -148238,7 +148310,7 @@
     ]
   },
   "Run carrier intelligence for this carrier first": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -153937,7 +154009,7 @@
     ]
   },
   "Select at least one carrier": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -155645,6 +155717,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Send a draft rate agreement for approval": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Send a message to a driver": {
@@ -158745,6 +158826,15 @@
       "routes/worker"
     ]
   },
+  "Shift assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Shift driving violation cannot be negative": {
     "sites": 1,
     "scope": [
@@ -159608,7 +159698,7 @@
     ]
   },
   "Shipment hold request is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -205990,7 +206080,7 @@
     ]
   },
   "distance calculation service is not configured": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -213415,7 +213505,7 @@
     ]
   },
   "{0} does not support carrier monitoring": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],

@@ -394,3 +394,59 @@ cases:
     expect: [propose_formula]
   - request: propose a rating formula with a hazmat surcharge
     expect: [propose_formula]
+  - request: reopen the canceled shipment, the load is back on
+    expect: [uncancel_shipment]
+  - request: make Maria the owner of shipment 4471
+    expect: [transfer_shipment_ownership]
+  - request: rerate the shipment from its contract
+    expect: [rerate_shipment]
+  - request: recalculate the miles on shipment 4471
+    expect: [recalculate_shipment_distance]
+  - request: duplicate shipment 4471 three times for next week
+    expect: [duplicate_shipment]
+  - request: change the hold so it also blocks billing
+    expect: [update_shipment_hold]
+  - request: split the move at the Memphis yard as a relay
+    expect: [split_move_at_relay]
+  - request: pin that comment to the top of the thread
+    expect: [pin_shipment_comment]
+  - request: mark the comment about the late pickup resolved
+    expect: [resolve_shipment_comment]
+  - request: delete my comment on the shipment
+    expect: [delete_shipment_comment]
+  - request: void the service failure that was opened by mistake
+    expect: [void_service_failure]
+  - request: the customer disputes the detention charge
+    expect: [dispute_detention]
+  - request: create an order for Acme with PO 5512
+    expect: [create_order]
+  - request: add a consolidation fee to the order
+    expect: [add_order_charge]
+  - request: attach these shipments to the order
+    expect: [attach_order_shipments]
+  - request: close the billed order
+    expect: [close_order]
+  - request: set up a recurring shipment every weekday for Acme
+    expect: [create_recurring_shipment]
+  - request: pause the recurring shipment
+    expect: [set_recurring_shipment_status]
+  - request: which recurring shipments generate tomorrow
+    expect: [list_recurring_shipments]
+  - request: put Maria on the early shift pattern from Monday
+    expect: [assign_worker_shift]
+  - request: what shift schedule is the driver on
+    expect: [get_worker_schedule]
+  - request: approve the shift swap between the two drivers
+    expect: [approve_shift_swap]
+  - request: vet this carrier before we tender to it
+    expect: [vet_carrier]
+  - request: turn on monitoring for these carriers
+    expect: [set_carrier_monitoring]
+  - request: import the carrier we found in sourcing by its DOT number
+    expect: [import_sourced_carrier]
+  - request: verify the carrier's truck VIN is registered to them
+    expect: [verify_carrier_equipment]
+  - request: reassign the fuel charge on this billing item to the other customer
+    expect: [reassign_billing_charge]
+  - request: stop the billing transfer that is still running
+    expect: [manage_billing_transfer_run]

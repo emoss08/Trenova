@@ -609,6 +609,91 @@
       }
     },
     {
+      "name": "add_order_charge",
+      "description": "Add an order-level charge, one billed once for the whole order rather than on a shipment: a consolidation fee, a quoted flat rate. Give allocations only to split it among several payers; left out, the order's customer pays it all.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "allocations": {
+            "description": "How the charge is split among payers.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "description": "The share as an amount such as 250.00, when method is Amount.",
+                  "type": "string"
+                },
+                "billToCustomerId": {
+                  "description": "The customer who pays this share, from list_customers. Never guess one.",
+                  "type": "string"
+                },
+                "method": {
+                  "description": "Whether the share is a percent of the charge or a fixed amount.",
+                  "enum": [
+                    "Percent",
+                    "Amount"
+                  ],
+                  "type": "string"
+                },
+                "percent": {
+                  "description": "The share as a percent such as 60, when method is Percent.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "billToCustomerId",
+                "method"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "amount": {
+            "description": "The amount, as a decimal such as 150.00.",
+            "type": "string"
+          },
+          "description": {
+            "description": "What the charge is for, as the invoice line should read.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "description",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds to what the customer is billed; nothing is invoiced or sent, and remove_order_charge takes it off until it is invoiced."
+      }
+    },
+    {
       "name": "add_shipment_comment",
       "description": "Leave a note on a shipment's comment thread, where dispatch will read it. Use it to record what you found or what you did — a carrier's confirmation, a discrepancy, why something was held. The note is internal unless you say otherwise, and is marked as written by the assistant.",
       "parameters": {
@@ -863,6 +948,74 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Posts money in Trenova: a customer payment or a settlement payment, so a person approves each one."
+      }
+    },
+    {
+      "name": "apply_carrier_intel_suggestions",
+      "description": "Correct a carrier's profile where its intelligence result disagrees: name, DBA, MC number, safety rating, address, phone, email or insurance. Name the fields and policies to apply, or leave both out to apply every suggestion there is now.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "carrierId": {
+            "description": "The carrier, from list_carriers or get_carrier. Never guess one.",
+            "type": "string"
+          },
+          "fields": {
+            "description": "The profile fields to correct.",
+            "items": {
+              "description": "A profile field.",
+              "enum": [
+                "safetyRating",
+                "mcNumber",
+                "name",
+                "dbaName",
+                "addressLine1",
+                "city",
+                "postalCode",
+                "phone",
+                "email"
+              ],
+              "type": "string"
+            },
+            "maxItems": 9,
+            "type": "array"
+          },
+          "policyIds": {
+            "description": "The insurance policies to correct, by the policy id on the page you are on.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "carrierId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_intelligence",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Edits the carrier's own profile inside Trenova from what the provider reports; nothing is sent, and the old values are set back by hand."
       }
     },
     {
@@ -1205,6 +1358,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Executes a credit, rebill or write-off an approver was asked to sign off; approving is a person's decision."
+      }
+    },
+    {
+      "name": "approve_shift_swap",
+      "description": "Approve a shift swap the other worker has accepted, so the day changes hands on the rota. Only a person approves one.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "description": "What the workers are told about it.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "swapId": {
+            "description": "The swap, from get_worker_schedule. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "swapId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shift_swap",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "driver_visible"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "worker",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes who works a day; approving is the office's decision, so only a person makes it."
       }
     },
     {
@@ -1655,6 +1852,66 @@
       }
     },
     {
+      "name": "assign_worker_shift",
+      "description": "Put a worker on a shift pattern from a day onward. The pattern they are on now ends the day before; a worker who already has a pattern starting on or after that day is refused. Take the shift from list_shift_templates and the day from what the person asked for.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "cycleOffsetWeeks": {
+            "description": "Which week of a rotating pattern the worker starts on, 0 for the first.",
+            "maximum": 7,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "effectiveFrom": {
+            "description": "The first day the worker works it. YYYY-MM-DD, a UTC day.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Anything the planner should know.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "shiftTemplateId": {
+            "description": "The shift pattern, from list_shift_templates. Never guess one.",
+            "type": "string"
+          },
+          "workerId": {
+            "description": "The driver, from search_worker or list_workers. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workerId",
+          "shiftTemplateId",
+          "effectiveFrom"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "worker_schedule",
+        "operation": "assign",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "worker",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a worker's standing schedule inside Trenova; nothing is sent, and end_worker_shift_assignment or a new assignment changes it back."
+      }
+    },
+    {
       "name": "attach_document_to_shipment",
       "description": "Attach a document that already exists to a shipment, so it rides with the load and its billing. Use it for a POD, a rate confirmation or a signed bill that arrived on its own and belongs to a shipment you have identified. Find the document first — get_document_summary and the document searches return its id. This moves an existing file; it cannot upload one, so a document that is not in the system yet has to be uploaded by a person before it can be attached.",
       "parameters": {
@@ -1695,6 +1952,56 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Files a document already in Trenova against a shipment; nobody outside is told."
+      }
+    },
+    {
+      "name": "attach_order_shipments",
+      "description": "Put shipments on an order so they are billed and tracked together. Each must be the order's customer's and neither canceled nor invoiced; a shipment on another open order moves off it, and an order it leaves empty is removed. A Billed or Closed order takes no more shipments.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "description": "The order to add them to, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
+            "type": "string"
+          },
+          "shipmentIds": {
+            "description": "The shipments to attach, from search_shipments or get_shipment.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "shipment"
+          }
+        },
+        "required": [
+          "orderId",
+          "shipmentIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Regroups shipments under an order inside Trenova; nothing is sent, and detach_order_shipment moves one back out."
       }
     },
     {
@@ -2041,6 +2348,51 @@
       }
     },
     {
+      "name": "cancel_order",
+      "description": "Cancel an order and every shipment on it that is not already canceled, with the reason the customer gave. An order with an invoiced shipment cannot be canceled; credit the invoice first. Canceling a shipment tells its carrier and trading partner as cancel_shipment would.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "cancelReason": {
+            "description": "Why, as the customer said it.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order to cancel, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "cancelReason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Cancels every live shipment on the order, which reaches carriers and trading partners; only a person cancels an order."
+      }
+    },
+    {
       "name": "cancel_shipment",
       "description": "Cancel a shipment. This releases its assignments and stops it being billed, and it is not an undo — a cancelled shipment is not re-opened, it is rebooked. Only propose this when the person has said the load is dead, never to tidy up a record that merely looks wrong.",
       "parameters": {
@@ -2373,6 +2725,45 @@
       }
     },
     {
+      "name": "close_order",
+      "description": "Close a Billed order once nothing more will be billed on it. Closing is final: a Closed order takes no more shipments or charges.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "description": "The Billed order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Settles an order for good; nothing reopens it, so only a person closes one."
+      }
+    },
+    {
       "name": "commit_invoice_run",
       "description": "Propose committing an invoice run, which turns each of its proposed invoices into a draft invoice for the customer. A group below the customer's minimum, or whose shipments were invoiced or re-approved elsewhere since it was built, is skipped with a reason. A person always decides.",
       "parameters": {
@@ -2506,6 +2897,7 @@
               "general ledger accounts",
               "fiscal periods",
               "orders",
+              "recurring shipments",
               "formula templates"
             ],
             "type": "string"
@@ -3067,6 +3459,72 @@
       }
     },
     {
+      "name": "create_order",
+      "description": "Open a customer order: the commercial record that groups a customer's shipments and order-level charges under their PO or BOL. It starts as a Draft with its own number; attach shipments with attach_order_shipments and add charges with add_order_charge. Only from what the person or the customer asked for.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "baseAmount": {
+            "description": "The base amount before accessorials, as a decimal such as 1250.00. An empty string clears it.",
+            "type": "string"
+          },
+          "bol": {
+            "description": "The bill of lading number.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "The ISO 4217 currency, such as USD. Defaults to USD.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "customerId": {
+            "description": "The customer the order is for, from list_customers. Never guess one.",
+            "type": "string"
+          },
+          "ownerId": {
+            "description": "The user who owns the order: the person who asked, or an ownerId get_order shows. Never guess one.",
+            "type": "string"
+          },
+          "poNumber": {
+            "description": "The customer's purchase order number.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "quotedAmount": {
+            "description": "What the customer was quoted, as a decimal such as 1250.00. An empty string clears it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Opens an empty order inside Trenova; nothing is billed or sent, and an order opened in error is canceled."
+      }
+    },
+    {
       "name": "create_recurring_deduction",
       "description": "Propose setting up a recurring deduction for a driver, an amount taken from the driver's pay each settlement or once a month. It runs from a start date, optionally until an end date or a total cap. A person always decides. Set escrowContribution to pay it into the driver's escrow account.",
       "parameters": {
@@ -3218,6 +3676,113 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Sets money taken from or added to a driver's pay every settlement; only a person agrees it."
+      }
+    },
+    {
+      "name": "create_recurring_shipment",
+      "description": "Start a recurring shipment: a series that copies one saved shipment on a schedule, for a customer's standing lane. Give the source shipment, a name, the cron schedule and its timezone, all from what the person or the customer asked for. It starts Active.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "autoGenerate": {
+            "description": "Create each shipment on schedule without anyone asking. Off, a person generates each one.",
+            "type": "boolean"
+          },
+          "blackoutDates": {
+            "description": "Days no shipment is generated, such as holidays.",
+            "items": {
+              "description": "A blackout day. YYYY-MM-DD.",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "cronExpression": {
+            "description": "When shipments repeat, as a five-field cron expression read in the series' timezone: \"0 8 * * 1-5\" is 08:00 every weekday. Take it from what the person or customer asked for.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "description": {
+            "description": "Anything a planner should know about it.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "endDate": {
+            "description": "The last day shipments may be generated, in the series' timezone. Leave out for no end. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "exceptionPolicy": {
+            "description": "What a shipment that falls on a blackout day or weekend does: Skip it, or move it to the business day before or after.",
+            "enum": [
+              "Skip",
+              "PreviousBusinessDay",
+              "NextBusinessDay"
+            ],
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "description": "How many days before each pickup its shipment is created.",
+            "maximum": 60,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxOccurrences": {
+            "description": "Stop after this many shipments. Leave out for no limit.",
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "name": {
+            "description": "What dispatch calls the series, such as \"Acme weekday Dallas run\".",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "skipWeekends": {
+            "description": "Treat Saturday and Sunday like blackout days.",
+            "type": "boolean"
+          },
+          "sourceShipmentId": {
+            "description": "The shipment every one copies (customer, stops, commodities and charges), from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "startDate": {
+            "description": "The first day shipments may be generated, in the series' timezone. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The IANA timezone the schedule is read in, such as America/Chicago.",
+            "maxLength": 64,
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceShipmentId",
+          "name",
+          "cronExpression",
+          "timezone"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "recurring_shipment",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Sets up a schedule inside Trenova that creates shipments later; nothing is sent, and pausing the series stops it."
       }
     },
     {
@@ -3936,6 +4501,50 @@
       }
     },
     {
+      "name": "delete_shipment_comment",
+      "description": "Delete a comment from a shipment's thread: your own, or another person's when the person you act for may moderate comments. One with replies is left as a placeholder so the replies keep their place. Prefer resolve_shipment_comment for a note that was right at the time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "commentId": {
+            "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId",
+          "commentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_comment",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Removes a note from a shipment's own thread inside Trenova; the text is gone, so a person confirms it."
+      }
+    },
+    {
       "name": "describe_formula_schema",
       "description": "Describe what a rating formula may use: the shipment variables, the functions and the rate tables it can look up. Read it before writing or explaining a formula, so every name you use is one the engine knows.",
       "parameters": {
@@ -4066,6 +4675,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "detach_order_shipment",
+      "description": "Take one shipment off an order onto an order of its own, so it is billed on its own. The order's only shipment and an invoiced one stay where they are.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "description": "The order the shipment is on, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "The shipment to take off it, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "shipmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves a shipment onto a new order inside Trenova; nothing is sent, and attach_order_shipments puts it back."
       }
     },
     {
@@ -4205,6 +4858,175 @@
       }
     },
     {
+      "name": "dispute_detention",
+      "description": "Record that the customer disputes a detention charge, with what they said. The charge is kept as computed and held back from billing until a person settles the dispute by approving or waiving it. Use it when a customer's message rejects the charge; do not raise a dispute on your own reading of the clock.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "description": "What the customer disputes, in their words where you have them.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "occurrenceId": {
+            "description": "The occurrence, from list_detention_desk or get_shipment. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "occurrenceId",
+          "note"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "detention_policy",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "detention_occurrence",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Marks a detention charge disputed inside Trenova and holds it from billing; nothing is sent, but the hold is not undone by a tool."
+      }
+    },
+    {
+      "name": "duplicate_shipment",
+      "description": "Copy an existing shipment into new ones on the server, carrying its customer, stops, commodities, charges, freight terms and rating method exactly as saved. Prefer it to create_shipment whenever the freight repeats one already booked, since nothing is retyped. Give firstPickupAt to move every stop window so the first pickup starts then; leave it out to keep the source's dates. Each copy gets its own pro number and order; they appear in search_shipments within a minute.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "description": "How many copies to make, 1 to 20. Defaults to 1.",
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "firstPickupAt": {
+            "description": "When the copies' first pickup window starts; every other stop keeps its distance from it. Only from what the person asked for, never invented. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "The shipment to copy, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "duplicate",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Creates new shipments inside Trenova from one already saved; nothing is sent, and a copy made in error is canceled."
+      }
+    },
+    {
+      "name": "edit_shipment_comment",
+      "description": "Change the text, visibility, priority or acknowledgment request of a comment on a shipment. Send only what changes. Your own comments and those the person may moderate can be edited; a note widened past the organization's staff is read by whoever it is widened to, so only do it when asked.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "description": "The new text, in full.",
+            "maxLength": 4000,
+            "type": "string"
+          },
+          "commentId": {
+            "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "priority": {
+            "description": "How urgently dispatch should read it.",
+            "enum": [
+              "Low",
+              "Normal",
+              "High"
+            ],
+            "type": "string"
+          },
+          "requiresAcknowledgment": {
+            "description": "Whether the people it mentions must acknowledge it.",
+            "type": "boolean"
+          },
+          "shipmentId": {
+            "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "visibility": {
+            "description": "Who sees it. Only widen it to a customer or a driver when the person asked.",
+            "enum": [
+              "Internal",
+              "Operations",
+              "Customer",
+              "Driver",
+              "Accounting"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId",
+          "commentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_comment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal",
+          "customer_visible",
+          "driver_visible"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Edits a shipment's own comment inside Trenova; one made visible to a customer or a driver is read by them, so its visibility argument decides."
+      }
+    },
+    {
       "name": "email_customer",
       "description": "Email a shipment's customer a status update: a delay and the new expected time, a delivery confirmation, a request to reschedule. The recipients are the customer's own notice contacts on file, never addresses you supply, and the message goes out in the organization's letterhead. Write the body as plain prose with the facts the customer needs; never quote internal cost, margin, or the driver's hours. The email is recorded on the shipment as a customer update. Every send needs a person's approval.",
       "parameters": {
@@ -4301,6 +5123,50 @@
       }
     },
     {
+      "name": "end_worker_shift_assignment",
+      "description": "End a worker's shift pattern after a day, leaving them on no pattern from the day after. Use assign_worker_shift instead to move them onto another pattern.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "effectiveTo": {
+            "description": "The last day the worker works the pattern. YYYY-MM-DD, a UTC day.",
+            "type": "string"
+          },
+          "shiftAssignmentId": {
+            "description": "The assignment, from get_worker_schedule. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shiftAssignmentId",
+          "effectiveTo"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "worker_schedule",
+        "operation": "assign",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "worker",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Ends a worker's standing schedule inside Trenova; nothing is sent, and assign_worker_shift puts them back on it."
+      }
+    },
+    {
       "name": "escalate_detention",
       "description": "Hand a detention clock to a person, with the reason it cannot be worked automatically. Use it when the notice window has closed, a gate is holding the notice back, or the customer has nobody on file to send it to. This does not change the charge — waiving, approving and disputing stay a person's decision — it only puts the occurrence in front of one.",
       "parameters": {
@@ -4345,7 +5211,7 @@
     },
     {
       "name": "evaluate_service_failures",
-      "description": "Run the service failure check on one shipment now, opening a failure for a late or missed stop that has none. Every stop is compared against its window and the grace period. Use it when get_shipment_tracking shows a stop late or overdue and list_service_failures shows nothing for it, so the failure is on record before anyone is told. It records what the stop actuals prove and nothing else; it cannot create a failure from a guess.",
+      "description": "Run the service failure check on a shipment now, opening a failure for a late or missed stop that has none. Every stop is compared against its window and the grace period; send stopId to check one stop, or shipmentIds to check several shipments in one pass. Use it when get_shipment_tracking shows a stop late or overdue and list_service_failures shows nothing for it, so the failure is on record before anyone is told. It records what the stop actuals prove and nothing else; it cannot create a failure from a guess.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -4354,13 +5220,23 @@
             "type": "boolean"
           },
           "shipmentId": {
-            "description": "The shipment to check, from get_shipment_tracking, list_shipments or this run's subject.",
+            "description": "The shipment to check, from get_shipment_tracking, list_shipments or this run's subject. Send this or shipmentIds.",
+            "type": "string"
+          },
+          "shipmentIds": {
+            "description": "Several shipments to check in one pass, from list_shipments or search_shipments. Send this or shipmentId.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "stopId": {
+            "description": "One stop of that shipment to check on its own, from get_shipment_tracking or get_shipment. Needs shipmentId.",
             "type": "string"
           }
         },
-        "required": [
-          "shipmentId"
-        ],
         "type": "object"
       },
       "policy": {
@@ -4923,6 +5799,49 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Renders the agreement and files it on the shipment inside Trenova; nothing reaches the carrier until it is sent, and voiding the revision undoes it."
+      }
+    },
+    {
+      "name": "generate_recurring_shipment",
+      "description": "Create the shipment for a recurring shipment's next slot now, or for the slot at occurrenceAt, instead of waiting for the schedule. A slot that already has its shipment is not made twice.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "occurrenceAt": {
+            "description": "The slot to generate, one the schedule produces. Leave out for the next one. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "recurringShipmentId": {
+            "description": "The series, from list_recurring_shipments. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recurringShipmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "recurring_shipment",
+        "operation": "duplicate",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Creates one shipment inside Trenova from the series' source; nothing is sent, and a shipment made in error is canceled."
       }
     },
     {
@@ -6196,6 +7115,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "charges",
+        "invoiced",
+        "legs"
+      ],
       "policy": {
         "kind": "query",
         "resource": "order",
@@ -6462,7 +7386,7 @@
     },
     {
       "name": "get_shipment",
-      "description": "Retrieve one shipment by its id, including its stops, moves, and assignments. Use search_shipments first when you only have a pro number or customer name.",
+      "description": "Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments. Each hold carries the holdId update_shipment_hold and release_shipment_hold take. Use search_shipments first when you only have a pro number or customer name.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -6806,6 +7730,44 @@
       }
     },
     {
+      "name": "get_worker_schedule",
+      "description": "Read one worker's schedule: the shift patterns they have been on (the current one open-ended), what they said about each weekday, and their open shift swaps. It gives the shiftAssignmentId and swapId the scheduling tools take.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "workerId": {
+            "description": "The worker, from search_worker or list_workers.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workerId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "worker_schedule",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "hold_billing_queue_item",
       "description": "Put a billing queue item on hold, with a note saying what it waits on. Use it when an item waiting for or in review cannot be billed yet but nothing is wrong with it: a document on its way, a customer's confirmation. A held item is taken off hold only when the note's condition is met.",
       "parameters": {
@@ -6942,6 +7904,55 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Keeps a payment the books hold out of Trenova for good, so a person approves it."
+      }
+    },
+    {
+      "name": "import_sourced_carrier",
+      "description": "Add a carrier found through carrier sourcing to the organization's carriers by its DOT number, filled from the provider's profile. A DOT number already on a carrier is refused.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The short code to file it under. Left out, one is made from its name.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "dotNumber": {
+            "description": "The carrier's USDOT number, from the sourcing search.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "enrollMonitoring": {
+            "description": "Start monitoring it at once. Monitoring is billed per carrier.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dotNumber"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_sourcing",
+        "operation": "import",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Creates a carrier inside Trenova from the provider's profile; nothing is sent to it, and one added in error is made inactive."
       }
     },
     {
@@ -11834,6 +12845,126 @@
       }
     },
     {
+      "name": "list_recurring_shipments",
+      "description": "List recurring shipments: the series that copy one saved shipment on a schedule for a customer's standing lane, with when each next generates. Use the id with update_recurring_shipment, set_recurring_shipment_status or generate_recurring_shipment. Filters: status (Active|Paused|Expired): Paused generates nothing until resumed; Expired has ended; text: name; boolean: autoGenerate; date: nextOccurrenceAt, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "name",
+                    "autoGenerate",
+                    "nextOccurrenceAt",
+                    "createdAt"
+                  ],
+                  "type": "string"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "name",
+              "nextOccurrenceAt",
+              "createdAt"
+            ],
+            "type": "string"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "recurring_shipment",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_report_datasets",
       "description": "List the datasets a new report can be built on, such as shipment, invoice or worker. Use it before create_report to pick the dataset, searching with query (\"shipment\", \"invoice\") rather than paging through all of them, then call describe_report_dataset for its fields. It lists kinds of data, not records: to find a customer or a shipment use list_customers or list_shipments.",
       "parameters": {
@@ -12234,6 +13365,36 @@
       "policy": {
         "kind": "query",
         "resource": "service_type",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_shift_templates",
+      "description": "List the organization's active shift patterns: the days, start time and length of each, and how many weeks it rotates over. assign_worker_shift takes the id.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "shift_template",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -13190,6 +14351,99 @@
       }
     },
     {
+      "name": "manage_billing_transfer_run",
+      "description": "Stop a background transfer to billing that is still running, or Retry the shipments a finished one could not transfer. Take the run id from transfer_to_billing's result. Only the person who started a transfer can stop it; shipments already transferred stay in the queue.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "description": "Stop a running transfer, or Retry a finished one.",
+            "enum": [
+              "Stop",
+              "Retry"
+            ],
+            "type": "string"
+          },
+          "billingTransferRunId": {
+            "description": "The billing transfer run, from transfer_to_billing's result. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingTransferRunId",
+          "action"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "billing_queue_item",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Stops or reruns a transfer inside Trenova; nothing is invoiced or sent, and a stopped run is retried the same way."
+      }
+    },
+    {
+      "name": "mark_carrier_intel_reviewed",
+      "description": "Record that a person reviewed a carrier's current intelligence result, with what they checked. It is their sign-off, so it only runs once they approve it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "carrierId": {
+            "description": "The carrier, from list_carriers or get_carrier. Never guess one.",
+            "type": "string"
+          },
+          "note": {
+            "description": "What was reviewed and concluded.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "carrierId",
+          "note"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_intelligence",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Puts a person's name on a carrier risk review; only that person can say they reviewed it."
+      }
+    },
+    {
       "name": "mark_inbound_message",
       "description": "Settle a message that arrived on a monitored address as Actioned or Ignored. Actioned when what it asked for has been done — the load created, the document attached, the question answered — Ignored when there was nothing to do. Say what happened in the note; it is what the person reading the inbox sees. Settling takes the message off the waiting lane. A quarantined message is a person's to clear and is refused.",
       "parameters": {
@@ -13731,6 +14985,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Approves, posts and records a payment to a driver in one step; only a person pays someone."
+      }
+    },
+    {
+      "name": "pin_shipment_comment",
+      "description": "Pin a comment to the top of a shipment's thread so dispatch sees it first. Use it for the note that says what the shipment is waiting on or how it must be handled. A reply cannot be pinned, and a shipment keeps at most twenty-five pinned.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "commentId": {
+            "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId",
+          "commentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_comment",
+        "operation": "pin",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Orders a shipment's own comment thread inside Trenova; unpinning undoes it and nothing is sent."
       }
     },
     {
@@ -14530,6 +15828,63 @@
       }
     },
     {
+      "name": "propose_shift_swap",
+      "description": "Raise a shift swap for a worker who asked the office: they give up a day, handed to another worker or traded for one of theirs. It waits for the other worker to accept and the office to approve.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "counterpartyShiftDate": {
+            "description": "The day offered back, when it is a trade rather than a hand-off. YYYY-MM-DD, a UTC day.",
+            "type": "string"
+          },
+          "counterpartyWorkerId": {
+            "description": "The worker asked to take it, from search_worker. Leave out to offer it to anyone.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why, in the worker's words where you have them.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "requestingWorkerId": {
+            "description": "The worker giving the day up, from search_worker. Never guess one.",
+            "type": "string"
+          },
+          "shiftDate": {
+            "description": "The day given up. YYYY-MM-DD, a UTC day.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestingWorkerId",
+          "shiftDate"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shift_swap",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "worker",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Opens a request inside Trenova that changes nobody's schedule until it is approved; withdraw_shift_swap takes it back."
+      }
+    },
+    {
       "name": "publish_artifact",
       "policy": {
         "kind": "runtime",
@@ -14811,6 +16166,94 @@
       }
     },
     {
+      "name": "reassign_billing_charge",
+      "description": "Move who pays one charge on a shipment in billing review: its freight or one accessorial, whole to another payer or split among several. A payer who gains a share gets a queue item and one left with nothing has theirs canceled. An empty allocations list gives the charge back to the shipment's own payer. Only while every queue item for the shipment is in review or on hold.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "additionalChargeId": {
+            "description": "The accessorial charge, from the shipment's charges get_billing_queue_item lists. Needed for Accessorial.",
+            "type": "string"
+          },
+          "allocations": {
+            "description": "The payers and their shares.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "description": "The share as an amount such as 250.00, when method is Amount.",
+                  "type": "string"
+                },
+                "billToCustomerId": {
+                  "description": "The customer who pays this share, from list_customers. Never guess one.",
+                  "type": "string"
+                },
+                "method": {
+                  "description": "Whether the share is a percent of the charge or a fixed amount.",
+                  "enum": [
+                    "Percent",
+                    "Amount"
+                  ],
+                  "type": "string"
+                },
+                "percent": {
+                  "description": "The share as a percent such as 60, when method is Percent.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "billToCustomerId",
+                "method"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "chargeKind": {
+            "description": "Which charge: the freight, or one accessorial.",
+            "enum": [
+              "Freight",
+              "Accessorial"
+            ],
+            "type": "string"
+          },
+          "itemId": {
+            "description": "The billing queue item, from list_billing_queue_items or get_billing_queue_item. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "chargeKind",
+          "allocations"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "billing_queue_item",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves what each customer is billed for a shipment and opens or cancels their queue items; only a person reassigns a charge."
+      }
+    },
+    {
       "name": "recalculate_carrier_settlement",
       "description": "Recalculate a draft carrier settlement from what has accrued for its period, keeping manual adjustments. Use it after a late load, a corrected rate or a released hold changed what the carrier is owed.",
       "parameters": {
@@ -14884,6 +16327,45 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Rebuilds a draft from the records it is computed from inside Trenova; nothing is paid until a person approves it."
+      }
+    },
+    {
+      "name": "recalculate_shipment_distance",
+      "description": "Work out a shipment's move miles again from its stops through the organization's distance profile and routing provider, and save them. Use it after its stops changed and the miles on the board look wrong. It changes the miles only; the charges follow them the next time the shipment is rated.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "shipmentId": {
+            "description": "The shipment, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Re-derives the shipment's move distances inside Trenova from its stops; nothing is sent and running it again gives the same miles."
       }
     },
     {
@@ -15445,6 +16927,50 @@
       }
     },
     {
+      "name": "reject_shift_swap",
+      "description": "Reject a shift swap, with the reason the workers read, when the office cannot let the day change hands.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "description": "What the workers are told about it.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "swapId": {
+            "description": "The swap, from get_worker_schedule. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "swapId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shift_swap",
+        "operation": "reject",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "driver_visible"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "worker",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Refuses a request the workers read in their portal; a person approves each refusal."
+      }
+    },
+    {
       "name": "reject_worker_pto",
       "description": "Decline a worker's time-off request. A rejection is final — the request cannot be reopened, and the worker is told why — so the reason must be the one you were actually given, not one you composed.",
       "parameters": {
@@ -15771,6 +17297,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Changes only the caller's own home page."
+      }
+    },
+    {
+      "name": "remove_order_charge",
+      "description": "Take a charge off an order before it is invoiced. An invoiced charge stays; credit its invoice instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "chargeId": {
+            "description": "The order charge, from the charges get_order lists. Never guess one.",
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "chargeId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Lowers what the customer is billed; nothing is invoiced or sent, and add_order_charge puts it back."
       }
     },
     {
@@ -16107,6 +17677,45 @@
       }
     },
     {
+      "name": "rerate_shipment",
+      "description": "Price a saved shipment again from its customer's rate agreement, replacing its rating method, base rate and contract accessorials. Use it when the lane, the stops or the agreement changed and the person wants the contract price back; read explain_rate first to see it. A shipment whose rate is locked or that is billed is refused, and one no contract covers is left as it is.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "shipmentId": {
+            "description": "The shipment to re-rate, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes what the customer will be billed for the shipment; nothing is invoiced or sent, and a person can edit the rate back."
+      }
+    },
+    {
       "name": "resolve_accounting_drift",
       "description": "Fix an open drift finding in one direction. PushTrenovaValue sends Trenova's document to the accounting system again: an update, a void, or a new copy of a document deleted there. AdjustTrenova changes Trenova to match the accounting system: a credit or debit memo against the invoice, a void of an invoice gone from it, or the reversal of a payment voided there, none of which is sent back. Only the directions the finding lists under fixes are offered. The preview says exactly what happens.",
       "parameters": {
@@ -16371,6 +17980,54 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Resolving a failure generates an EDI 214 to the customer's trading partner carrying the reason chosen."
+      }
+    },
+    {
+      "name": "resolve_shipment_comment",
+      "description": "Mark a comment on a shipment resolved once what it asked for is done, or reopen one with resolved=false when it is not. Say what settled it in a reply with add_shipment_comment first, so the thread shows why.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "commentId": {
+            "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "resolved": {
+            "description": "True to mark the comment resolved, false to reopen it. Defaults to true.",
+            "type": "boolean"
+          },
+          "shipmentId": {
+            "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId",
+          "commentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_comment",
+        "operation": "resolve",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Marks a shipment's own comment settled inside Trenova; reopening undoes it and nothing is sent."
       }
     },
     {
@@ -16701,6 +18358,54 @@
       }
     },
     {
+      "name": "review_service_failure",
+      "description": "Mark an open service failure reviewed, with the reason code that explains it, once a person has looked into what happened. A reviewed failure keeps its reason and waits to be resolved. The customer's trading partner may be sent an EDI 214, so a person approves it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "notes": {
+            "description": "What was found, in a sentence a person reads on the failure later.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "reasonCodeId": {
+            "description": "The reason code, from list_service_failure_reason_codes. Required when the failure has none; otherwise replaces it.",
+            "type": "string"
+          },
+          "serviceFailureId": {
+            "description": "The failure, from list_service_failures or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "serviceFailureId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "service_failure",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "service_failure",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reviewing a failure is a person's attestation and may send an EDI 214 to the customer's trading partner; only a person approves it."
+      }
+    },
+    {
       "name": "run_report",
       "description": "Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId. Take every parameter you can from what the person already said — a request naming a window, a date range or a customer has supplied it — and ask_user for the rest, offering the allowed values list_reports gave rather than choices you made up. Reports run in the background: a run that finishes within a few seconds comes back with its outcome and a sample of its first rows; otherwise this returns a run id, and you say that it has started and stop there. The conversation tracks the run and shows the person its progress, its row count and a download button as soon as it finishes, so there is nothing to poll and nowhere to send them. Never describe figures you have not seen.",
       "parameters": {
@@ -16908,6 +18613,7 @@
               "general ledger accounts",
               "fiscal periods",
               "orders",
+              "recurring shipments",
               "formula templates"
             ],
             "type": "string"
@@ -17649,6 +19355,56 @@
       }
     },
     {
+      "name": "set_carrier_monitoring",
+      "description": "Turn continuous monitoring on or off for carriers, so the provider reports authority, insurance and safety changes as they happen. Carriers without a DOT number are skipped.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "carrierIds": {
+            "description": "The carriers, from list_carriers.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "carrier"
+          },
+          "enabled": {
+            "description": "True to monitor them, false to stop.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "carrierIds",
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_intelligence",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Monitoring is billed per carrier by the provider; turning it off again undoes it, and nothing is sent to the carriers."
+      }
+    },
+    {
       "name": "set_field_value",
       "description": "Set or correct the value of a field on the import page, such as the BOL, the weight, the pieces or the freight rate. Use it with the value the person gave you or one the document plainly shows; never make a value up.",
       "parameters": {
@@ -17699,6 +19455,134 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "set_order_charge_allocations",
+      "description": "Replace how one order charge is split among payers without touching the charge itself. Percents must add up to 100 and amounts to the charge; an empty list bills it all to the order's customer.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "allocations": {
+            "description": "The whole new payer split.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "description": "The share as an amount such as 250.00, when method is Amount.",
+                  "type": "string"
+                },
+                "billToCustomerId": {
+                  "description": "The customer who pays this share, from list_customers. Never guess one.",
+                  "type": "string"
+                },
+                "method": {
+                  "description": "Whether the share is a percent of the charge or a fixed amount.",
+                  "enum": [
+                    "Percent",
+                    "Amount"
+                  ],
+                  "type": "string"
+                },
+                "percent": {
+                  "description": "The share as a percent such as 60, when method is Percent.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "billToCustomerId",
+                "method"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "chargeId": {
+            "description": "The order charge, from the charges get_order lists. Never guess one.",
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "chargeId",
+          "allocations"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves who is billed for a charge; nothing is invoiced or sent, and the split is set back the same way until it is invoiced."
+      }
+    },
+    {
+      "name": "set_recurring_shipment_status",
+      "description": "Pause a recurring shipment so it creates nothing, resume it (Active) from its next future slot without back-filling what it missed, or end it (Expired). A resumed series with no slot left ends on its own.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "recurringShipmentId": {
+            "description": "The series, from list_recurring_shipments. Never guess one.",
+            "type": "string"
+          },
+          "status": {
+            "description": "The status to set.",
+            "enum": [
+              "Active",
+              "Paused",
+              "Expired"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "recurringShipmentId",
+          "status"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "recurring_shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Starts or stops a schedule inside Trenova; nothing is sent, and the status is set back the same way."
       }
     },
     {
@@ -17864,6 +19748,74 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "set_worker_availability_preference",
+      "description": "Record whether a worker prefers, is available for or cannot work one weekday, as they told the office. The rota shows it beside their pattern; it does not change the pattern.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "dayOfWeek": {
+            "description": "The weekday it is about.",
+            "enum": [
+              "Sunday",
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday"
+            ],
+            "type": "string"
+          },
+          "note": {
+            "description": "Why, in the worker's words where you have them.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "preference": {
+            "description": "What the worker said about that day.",
+            "enum": [
+              "Preferred",
+              "Available",
+              "Unavailable"
+            ],
+            "type": "string"
+          },
+          "workerId": {
+            "description": "The driver, from search_worker or list_workers. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workerId",
+          "dayOfWeek",
+          "preference"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "worker_schedule",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "worker",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Records a worker's own stated preference inside Trenova; nothing is sent, and it is set again the same way."
       }
     },
     {
@@ -18038,6 +19990,80 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Leaves a document out of the organization's books for good; nothing sends it again, so a person approves it."
+      }
+    },
+    {
+      "name": "split_move_at_relay",
+      "description": "Split a two-stop move at its delivery stop so the freight is dropped there as a relay and a new move carries it on to a new delivery location. The relay pickup window and the new delivery window come from the person who asked or the customer's instructions, never from a guess: the move keeps its driver only as far as the relay. Only a New or Assigned pickup-to-delivery move splits.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "moveId": {
+            "description": "The two-stop move to split, from get_shipment (its moves) or get_dispatch_board. Never guess one.",
+            "type": "string"
+          },
+          "newDeliveryEnd": {
+            "description": "When the final delivery window closes. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "newDeliveryLocationId": {
+            "description": "Where the freight finally goes, from list_locations. It must differ from the current delivery location.",
+            "type": "string"
+          },
+          "newDeliveryStart": {
+            "description": "When the final delivery window opens; after the relay pickup window. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "pieces": {
+            "description": "Pieces going on from the relay.",
+            "maximum": 1000000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "relayPickupEnd": {
+            "description": "When that relay pickup window closes. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "relayPickupStart": {
+            "description": "When the new move's pickup at the relay opens; after the current delivery window ends. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "weight": {
+            "description": "Weight going on from the relay.",
+            "maximum": 1000000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "moveId",
+          "newDeliveryLocationId",
+          "relayPickupStart",
+          "newDeliveryStart"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_move",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a move and turns a delivery into a relay inside Trenova; the two new windows are times only a person can vouch for, so a person always approves it."
       }
     },
     {
@@ -18472,6 +20498,50 @@
       }
     },
     {
+      "name": "transfer_shipment_ownership",
+      "description": "Make another person the owner of a shipment, the one it is filed under and who is asked about it. Take the new owner from the person who asked or the ownerId get_shipment shows on another of the customer's shipments; never guess a user. Only the current owner or someone allowed to change the shipment may hand it on.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "ownerId": {
+            "description": "The user who takes it over: the person who asked, or an ownerId get_shipment shows. Never guess one.",
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "The shipment, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId",
+          "ownerId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes who owns a shipment inside Trenova; nothing is sent, and it is transferred back the same way."
+      }
+    },
+    {
       "name": "transfer_to_billing",
       "description": "Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews. Take the ids from list_billing_transfer_candidates and cover every shipment that can go in one call rather than one call per shipment; a shipment the checks refuse is reported, not transferred, and the rest still go. The person approving may untick shipments. Up to 100 transfer at once; more run as a background transfer.",
       "parameters": {
@@ -18653,6 +20723,89 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Takes the driver off a move that has not started, inside Trenova; the driver is told the load was taken off them but sees no text the model wrote, and assigning the move again undoes it."
+      }
+    },
+    {
+      "name": "uncancel_shipment",
+      "description": "Reopen a canceled shipment as New, with its moves and stops back to New, when the person says the freight is back on. Nothing is sent to the customer, a carrier or a trading partner, and nobody is assigned: tender or assign it again afterwards. Read it with get_shipment first to be sure it is the canceled one.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "shipmentId": {
+            "description": "The canceled shipment, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Puts a canceled shipment back to New inside Trenova; nothing is sent, and canceling it again undoes it."
+      }
+    },
+    {
+      "name": "unpin_shipment_comment",
+      "description": "Take a pinned comment off the top of a shipment's thread once what it said no longer applies.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "commentId": {
+            "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentId",
+          "commentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_comment",
+        "operation": "unpin",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Orders a shipment's own comment thread inside Trenova; pinning again undoes it and nothing is sent."
       }
     },
     {
@@ -18847,6 +21000,165 @@
       }
     },
     {
+      "name": "update_order",
+      "description": "Change an order's customer, owner, PO number, BOL, currency, quoted amount or base amount. Send only what changes. Its status and total follow its shipments and charges and cannot be set here.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "baseAmount": {
+            "description": "The base amount before accessorials, as a decimal such as 1250.00. An empty string clears it.",
+            "type": "string"
+          },
+          "bol": {
+            "description": "The bill of lading number.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "The ISO 4217 currency, such as USD. Defaults to USD.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "customerId": {
+            "description": "The customer the order is for, from list_customers. Only an order with no shipments can change customer. Never guess one.",
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order to change, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
+            "type": "string"
+          },
+          "ownerId": {
+            "description": "The user who owns the order: the person who asked, or an ownerId get_order shows. Never guess one.",
+            "type": "string"
+          },
+          "poNumber": {
+            "description": "The customer's purchase order number.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "quotedAmount": {
+            "description": "What the customer was quoted, as a decimal such as 1250.00. An empty string clears it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal",
+          "money"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Edits an order's own fields inside Trenova; nothing is sent, and the old values are set back the same way. A changed amount is a money change."
+      }
+    },
+    {
+      "name": "update_order_charge",
+      "description": "Change an order charge's description, amount or payer split. Send only what changes. An invoiced charge cannot be changed; adjust its invoice instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "allocations": {
+            "description": "The whole new payer split; an empty list bills it all to the order's customer.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "amount": {
+                  "description": "The share as an amount such as 250.00, when method is Amount.",
+                  "type": "string"
+                },
+                "billToCustomerId": {
+                  "description": "The customer who pays this share, from list_customers. Never guess one.",
+                  "type": "string"
+                },
+                "method": {
+                  "description": "Whether the share is a percent of the charge or a fixed amount.",
+                  "enum": [
+                    "Percent",
+                    "Amount"
+                  ],
+                  "type": "string"
+                },
+                "percent": {
+                  "description": "The share as a percent such as 60, when method is Percent.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "billToCustomerId",
+                "method"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "amount": {
+            "description": "The new amount, as a decimal such as 150.00.",
+            "type": "string"
+          },
+          "chargeId": {
+            "description": "The order charge, from the charges get_order lists. Never guess one.",
+            "type": "string"
+          },
+          "description": {
+            "description": "The new description, in full.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "chargeId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "order",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "order",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes what the customer is billed; nothing is invoiced or sent, and the old amount is set back the same way until it is invoiced."
+      }
+    },
+    {
       "name": "update_recurring_deduction",
       "description": "Propose changing a driver's recurring deduction: its amount, cap, schedule, dates or description, or pausing, resuming or completing it. What was already taken or paid stays as it is. Only the values you give change. A person always decides.",
       "parameters": {
@@ -19004,6 +21316,110 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Changes money taken from or added to a driver's pay every settlement; only a person agrees it."
+      }
+    },
+    {
+      "name": "update_recurring_shipment",
+      "description": "Change a recurring shipment's name, schedule, timezone, dates, limits, blackout days or whether it generates on its own. Send only what changes; an empty endDate removes the end. Pause or resume it with set_recurring_shipment_status.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "autoGenerate": {
+            "description": "Create each shipment on schedule without anyone asking. Off, a person generates each one.",
+            "type": "boolean"
+          },
+          "blackoutDates": {
+            "description": "Days no shipment is generated, such as holidays.",
+            "items": {
+              "description": "A blackout day. YYYY-MM-DD.",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "cronExpression": {
+            "description": "When shipments repeat, as a five-field cron expression read in the series' timezone: \"0 8 * * 1-5\" is 08:00 every weekday. Take it from what the person or customer asked for.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "description": {
+            "description": "Anything a planner should know about it.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "endDate": {
+            "description": "The last day shipments may be generated, in the series' timezone. Leave out for no end. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "exceptionPolicy": {
+            "description": "What a shipment that falls on a blackout day or weekend does: Skip it, or move it to the business day before or after.",
+            "enum": [
+              "Skip",
+              "PreviousBusinessDay",
+              "NextBusinessDay"
+            ],
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "description": "How many days before each pickup its shipment is created.",
+            "maximum": 60,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxOccurrences": {
+            "description": "Stop after this many shipments. Leave out for no limit.",
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "name": {
+            "description": "What dispatch calls the series, such as \"Acme weekday Dallas run\".",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "recurringShipmentId": {
+            "description": "The series to change, from list_recurring_shipments. Never guess one.",
+            "type": "string"
+          },
+          "skipWeekends": {
+            "description": "Treat Saturday and Sunday like blackout days.",
+            "type": "boolean"
+          },
+          "startDate": {
+            "description": "The first day shipments may be generated, in the series' timezone. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The IANA timezone the schedule is read in, such as America/Chicago.",
+            "maxLength": 64,
+            "type": "string"
+          }
+        },
+        "required": [
+          "recurringShipmentId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "recurring_shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes when a series creates shipments inside Trenova; nothing is sent, and the old schedule is set back the same way."
       }
     },
     {
@@ -19368,6 +21784,78 @@
       }
     },
     {
+      "name": "update_service_failure",
+      "description": "Change the reason code, notes or EDI 214 code overrides on an open or reviewed service failure. Send only what changes; an empty string clears a note or override. It does not move the failure through its lifecycle: use review_service_failure, resolve_service_failure or void_service_failure for that.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "clearReasonCode": {
+            "description": "True to remove the reason code. A reviewed failure keeps its reason.",
+            "type": "boolean"
+          },
+          "internalNotes": {
+            "description": "What staff should know.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "notes": {
+            "description": "What the customer may read about the failure.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "reasonCodeId": {
+            "description": "The reason code to set, from list_service_failure_reason_codes.",
+            "type": "string"
+          },
+          "serviceFailureId": {
+            "description": "The failure, from list_service_failures or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "x12ExceptionCode": {
+            "description": "EDI 214 exception code, three characters.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "x12ReasonCodeOverride": {
+            "description": "EDI 214 reason code override, three characters.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "x12StatusCodeOverride": {
+            "description": "EDI 214 status code override, three characters.",
+            "maxLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "serviceFailureId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "service_failure",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "service_failure",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Edits a service failure's own notes and codes inside Trenova; the overrides shape a later EDI 214, so a person approves each edit."
+      }
+    },
+    {
       "name": "update_shipment",
       "description": "Change the details of a saved shipment: the customer, service type, shipment type, equipment types, BOL, pieces, weight or temperature range. Send only the fields to change. Stops, moves, rates and status are not changed here; use the move, hold and cancel tools for those.",
       "parameters": {
@@ -19446,6 +21934,81 @@
       }
     },
     {
+      "name": "update_shipment_hold",
+      "description": "Change an active hold on a shipment: its severity, its notes, what it blocks (dispatch, delivery, billing) and whether the customer sees it. Send only what changes; everything else stays as it is. Use release_shipment_hold to clear a hold rather than unblocking everything. Making a hold visible to the customer is shown to them, so only do it when the person asked.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "blocksBilling": {
+            "description": "Whether it stops the shipment being billed.",
+            "type": "boolean"
+          },
+          "blocksDelivery": {
+            "description": "Whether it stops the shipment being delivered.",
+            "type": "boolean"
+          },
+          "blocksDispatch": {
+            "description": "Whether it stops the shipment being dispatched.",
+            "type": "boolean"
+          },
+          "holdId": {
+            "description": "The hold to change, from the holds get_shipment lists or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "What the hold waits on, replacing the notes on it.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "severity": {
+            "description": "How strongly it applies.",
+            "enum": [
+              "Informational",
+              "Advisory",
+              "Blocking"
+            ],
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "The shipment the hold is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
+            "type": "string"
+          },
+          "visibleToCustomer": {
+            "description": "Whether the customer sees the hold.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "shipmentId",
+          "holdId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_hold",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal",
+          "customer_visible"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "shipment",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a hold inside Trenova; one made visible to the customer is shown to them, so that call is held to the customer-visible ceiling."
+      }
+    },
+    {
       "name": "update_tractor_status",
       "description": "Change the status of one or more tractors, which is what makes a truck available to dispatch or takes it off the board. Available means it can be dispatched. OutOfService means it cannot, for any reason other than scheduled work. AtMaintenance means it is in the shop. Sold means it has left the fleet and is not coming back. Get the ids from list_tractors; a unit number is not an id.",
       "parameters": {
@@ -19477,6 +22040,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "out of service",
+        "maintenance",
+        "available"
+      ],
       "policy": {
         "kind": "action",
         "resource": "tractor",
@@ -19551,6 +22119,170 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Changes a trailer's status inside Trenova."
+      }
+    },
+    {
+      "name": "verify_carrier_equipment",
+      "description": "Check that the truck or trailer a carrier sent for a load is registered to that carrier, by VIN or plate, and record the answer on the assignment. Take the numbers from the driver or the carrier's dispatch, never from a guess.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "carrierAssignmentId": {
+            "description": "The carrier assignment, from list_rate_confirmations or get_shipment. Never guess one.",
+            "type": "string"
+          },
+          "plateNumber": {
+            "description": "The license plate number.",
+            "maxLength": 15,
+            "type": "string"
+          },
+          "plateState": {
+            "description": "The plate's two-letter state.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "unitNumber": {
+            "description": "The carrier's own unit number.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "unitType": {
+            "description": "What was checked.",
+            "enum": [
+              "Tractor",
+              "Trailer",
+              "Straight"
+            ],
+            "type": "string"
+          },
+          "vin": {
+            "description": "The vehicle identification number.",
+            "maxLength": 17,
+            "type": "string"
+          }
+        },
+        "required": [
+          "carrierAssignmentId",
+          "unitType"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "equipment_verification",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Records an equipment check inside Trenova after a provider lookup; nothing is sent to the carrier."
+      }
+    },
+    {
+      "name": "vet_carrier",
+      "description": "Look a carrier up with the organization's carrier intelligence provider now: authority, insurance, safety and the organization's rules, recorded on the carrier. Use it before tendering to a carrier nobody has checked lately. A result still current is reused unless force is true.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "carrierId": {
+            "description": "The carrier, from list_carriers or get_carrier. Never guess one.",
+            "type": "string"
+          },
+          "depth": {
+            "description": "How deep a lookup: FMCSA is the public record, Lite and Full add the provider's profile. Defaults to Full.",
+            "enum": [
+              "FMCSA",
+              "Lite",
+              "Full"
+            ],
+            "type": "string"
+          },
+          "force": {
+            "description": "Look up again even when the last result is still current. It is charged; only when the person asks.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "carrierId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_intelligence",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Spends the organization's carrier intelligence budget on a lookup and records the result; nothing is sent to the carrier."
+      }
+    },
+    {
+      "name": "vet_customer_broker",
+      "description": "Check a customer that is a freight broker against the public FMCSA record by its DOT number: broker authority and bond. Use it before taking freight from a broker nobody has checked lately.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "The broker customer, from list_customers. Never guess one.",
+            "type": "string"
+          },
+          "force": {
+            "description": "Look up again even when the last result is still current. It is charged; only when the person asks.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_intelligence",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "customer",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Spends the organization's carrier intelligence budget on a lookup and records the result; nothing is sent to the customer."
       }
     },
     {
@@ -19737,6 +22469,51 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Withdraws the organization's written agreement to pay a carrier, whose sign link stops working, and undoes a confirmation it carried; a voided revision cannot be restored, only replaced."
+      }
+    },
+    {
+      "name": "void_service_failure",
+      "description": "Void a service failure that should never have been opened, with the reason why: a wrong appointment window, a corrected arrival, a stop that was not late. Voiding is final. For a failure that was real and is now handled, use resolve_service_failure instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "notes": {
+            "description": "What was found, in a sentence a person reads on the failure later.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "serviceFailureId": {
+            "description": "The failure, from list_service_failures or the page you are on. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "serviceFailureId",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "service_failure",
+        "operation": "archive",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "service_failure",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Voiding a failure is final and may send an EDI 214 to the customer's trading partner; only a person approves it."
       }
     },
     {
@@ -19973,6 +22750,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Closes a dispute case inside Trenova with no outcome; it moves no money and a new case can be opened with open_invoice_dispute."
+      }
+    },
+    {
+      "name": "withdraw_shift_swap",
+      "description": "Withdraw a shift swap on the proposing worker's behalf, when they told the office they no longer want it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "description": "What the workers are told about it.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "swapId": {
+            "description": "The swap, from get_worker_schedule. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "swapId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shift_swap",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "driver_visible"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "worker",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Takes back a request the workers read in their portal; a person approves each withdrawal."
       }
     },
     {

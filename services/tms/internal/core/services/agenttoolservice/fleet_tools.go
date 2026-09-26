@@ -59,6 +59,10 @@ func newUpdateTractorStatusTool(tractors tractorStatusUpdater) serviceports.Agen
 
 func (t *updateTractorStatusTool) Name() string { return "update_tractor_status" }
 
+func (t *updateTractorStatusTool) SearchTerms() []string {
+	return []string{"out of service", "maintenance", "available"}
+}
+
 func (t *updateTractorStatusTool) Description() string {
 	return "Change the status of one or more tractors, which is what makes a truck " +
 		"available to dispatch or takes it off the board. " + equipmentStatusNote +

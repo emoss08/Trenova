@@ -44,10 +44,10 @@ Loaded now:
 - search_shipments
 - list_shipments
 - assign_move
-- add_shipment_comment
-- place_shipment_hold
-- release_shipment_hold
-- list_shipment_tenders
+- uncancel_shipment
+- duplicate_shipment
+- transfer_shipment_ownership
+- list_recurring_shipments
 
 Callable after find_tools:
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
@@ -60,6 +60,9 @@ Callable after find_tools:
 - list_hold_reasons — List the reasons a shipment can be put on hold, and what each one blocks — dispatch, delivery, billing.
 - rank_move_candidates — Rank the drivers who could cover a shipment move, scored as the dispatch console scores them: hours left, deadhead, slack against the window, equipment fit.
 - shop_carriers — Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank.
+- add_shipment_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
+- place_shipment_hold — Put a shipment on hold so it stops moving, billing or delivering until someone clears it.
+- release_shipment_hold — Clear a hold so the shipment can move again.
 - update_tractor_status — Change the status of one or more tractors, which is what makes a truck available to dispatch or takes it off the board.
 - update_trailer_status — Change the status of one or more trailers, which is what makes a trailer available to dispatch or takes it off the board.
 - list_insights — List insight detector findings: service slipping for a customer, cash tied up in unbilled work, cost leaking at a location, compliance about to lapse.
@@ -68,6 +71,7 @@ Callable after find_tools:
 - update_move_status — Set the status of one or more moves directly: InTransit when a load is rolling, Completed when it has been delivered, Canceled when the move will not run.
 - assign_move_to_carrier — Cover a move with an outside carrier at a rate the carrier already agreed to.
 - cancel_carrier_assignment — Take the outside carrier off a move that has not started, leaving it uncovered, and void the carrier's rate confirmation.
+- list_shipment_tenders — List a shipment's tenders, newest first, with every offer in rank order.
 - cancel_tender — Withdraw a live tender: every offer a carrier still holds is withdrawn and its answer link stops working, and the carriers not yet asked are skipped.
 - record_tender_response — Record a carrier's answer to a tender offer that reached you by phone or email instead of through the offer's link.
 - list_rate_confirmations — List a move's rate confirmations, newest revision first.
@@ -87,6 +91,12 @@ Callable after find_tools:
 - send_edi_status_update — Propose sending a trading partner an EDI 214 shipment status built from a shipment or a service failure.
 - retry_edi_message_delivery — Propose sending outbound EDI documents that failed to reach their trading partner again, over the partner's communication profile.
 - replay_edi_message — Propose sending an outbound EDI document its trading partner already received once more, exactly as it was generated.
+- update_shipment_hold — Change an active hold on a shipment: its severity, its notes, what it blocks (dispatch, delivery, billing) and whether the customer sees it.
+- split_move_at_relay — Split a two-stop move at its delivery stop so the freight is dropped there as a relay and a new move carries it on to a new delivery location.
+- recalculate_shipment_distance — Work out a shipment's move miles again from its stops through the organization's distance profile and routing provider, and save them.
+- pin_shipment_comment — Pin a comment to the top of a shipment's thread so dispatch sees it first.
+- resolve_shipment_comment — Mark a comment on a shipment resolved once what it asked for is done, or reopen one with resolved=false when it is not.
+- generate_recurring_shipment — Create the shipment for a recurring shipment's next slot now, or for the slot at occurrenceAt, instead of waiting for the schedule.
 
 ## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.
