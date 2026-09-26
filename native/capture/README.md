@@ -16,10 +16,13 @@ to their agent. The design, and why it is Rust, is in
 | `crates/capture-twain` | TWAIN 2.5: bindings, session, negotiation, memory transfer | Windows (tested anywhere against a scripted DSM) |
 | `crates/capture-wia` | WIA 2.0 scanning | Windows |
 | `crates/capture-client` | API, pairing, device stream, encrypted spool, uploader | anywhere |
+| `crates/capture-update` | The release decision and the verified installer download | anywhere |
 | `crates/capture-platform` | DPAPI, Credential Manager, accounts and SIDs, registry, paths, logging, shell | Windows |
 | `bins/trenova-capture-scan` | The per-scan helper, built x64 and x86 | Windows |
 | `bins/trenova-capture` | The tray agent; its core is a library that runs anywhere | Windows |
 | `bins/trenova-capture-svc` | The print service; its listener, attribution and hand-off are a library that runs anywhere | Windows |
+| `bins/trenova-capture-update` | The updater service; its flow is a library that runs anywhere | Windows |
+| `bins/trenova-capture-release` | The release build's tool: key pair, signed manifest, verification | anywhere |
 
 ## Building
 
@@ -27,9 +30,13 @@ Release builds are made on Windows with the MSVC toolchain (`rust-toolchain.toml
 both targets). The CRT is linked statically, so nothing else needs installing.
 
 ```powershell
-cargo build --release --target x86_64-pc-windows-msvc -p trenova-capture -p trenova-capture-scan -p trenova-capture-svc
+cargo build --release --target x86_64-pc-windows-msvc -p trenova-capture -p trenova-capture-scan -p trenova-capture-svc -p trenova-capture-update
 cargo build --release --target i686-pc-windows-msvc -p trenova-capture-scan
 ```
+
+`TRENOVA_CAPTURE_PUBLIC_KEY` (the base64 ed25519 key releases are signed with) must be in the
+environment when the agent and the updater are built; a build without it never updates itself.
+CI takes it from a repository variable.
 
 The installer ships the helper as `trenova-capture-scan-x64.exe` and
 `trenova-capture-scan-x86.exe` beside `trenova-capture.exe`. A development build finds the
@@ -108,3 +115,50 @@ leaves each print in `%ProgramData%\Trenova\Capture\spool\<SID of the person who
 which only that person, the service, SYSTEM and Administrators can open. The agent takes it
 from there within two seconds, or at its next start. A job the agent could not read is renamed
 `.rejected` there, not deleted.
+
+## The installer
+
+`installer/Package.wxs` is the MSI (WiX v4): the agent, both helpers, the two services, the
+Trenova printer, the machine settings and a Start menu shortcut, as one per-machine package
+that upgrades in place. Build it on Windows after both release builds above:
+
+```powershell
+dotnet tool install --global wix
+wix extension add -g WixToolset.Util.wixext
+./installer/build.ps1            # installer\out\TrenovaCapture-<version>-x64.msi
+./installer/build.ps1 -Sign      # also signs the executables and the MSI; see sign.ps1
+```
+
+A silent install takes the server address, whether computers update themselves, and the
+printer's port:
+
+```powershell
+msiexec /i TrenovaCapture-1.0.0-x64.msi /qn TRENOVAURL=https://app.example.com AUTOUPDATE=0 PRINTPORT=8631
+```
+
+## Releases and updates
+
+A release is a `capture-vX.Y.Z` tag on a commit whose `Cargo.toml` says `X.Y.Z`. The
+`native-capture.yml` workflow builds and signs the MSI, signs the release manifest with
+`trenova-capture-release` (the private key is the `TRENOVA_CAPTURE_SIGNING_KEY` secret),
+publishes both on that release, and copies the manifest to the rolling `capture-stable`
+release, which servers read (`update.captureManifestUrl`, verified with
+`update.capturePublicKey`) and mirror at `/api/v1/capture/releases/latest/`.
+
+The agent checks that address at sign-in and every six hours. When a newer release is
+published, the organization allows self-update and the computer's policy does not forbid it,
+the agent starts the updater service, which verifies everything itself (the manifest's
+signature, the download's size and SHA-256, the MSI's Authenticode signature and that its
+signer is the same publisher as the running updater) before running the installer. Otherwise
+the tray says a version is available for IT to install.
+
+To make a key pair once:
+
+```powershell
+trenova-capture-release keygen
+```
+
+Keep the private half in the CI secret and nowhere else; the public half goes in the
+`TRENOVA_CAPTURE_PUBLIC_KEY` repository variable and in each server's configuration. The
+updater keeps its logs in `%ProgramData%\Trenova\Capture\logs\updater.<date>.log` and
+Windows Installer's in `install.log` beside them.

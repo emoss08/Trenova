@@ -1,6 +1,6 @@
 # Document Capture — Scanning and Virtual Printing
 
-> Status: phases 1 (server), 2 (web), 3 (companion core) and 4 (virtual printer) complete; distribution (phase 5) is next. Purpose: let a person put paper or
+> Status: all five phases complete; the Windows-only code runs for the first time in the phase-5 CI, and the phase-0 lab gates a release. Purpose: let a person put paper or
 > another program's output into Trenova without first producing a file on their own disk, from a
 > scanner (including one behind Kofax VRS) or from the Windows print dialog of any application.
 
@@ -252,12 +252,15 @@ native/capture/                  Cargo workspace
 │   ├── capture-wia/             WIA 2.0 over windows-rs
 │   ├── capture-imaging/         G4/JPEG encode, PDF writer (one page or many), BMP and PWG raster decode
 │   ├── capture-ipp/             IPP/2.0 codec and the Trenova printer's operations
-│   └── capture-platform/        DPAPI, Credential Manager, accounts and SIDs, settings, paths, logging, shell
+│   ├── capture-update/          release decision and the verified download, for the agent and the updater
+│   └── capture-platform/        DPAPI, Credential Manager, accounts and SIDs, ACLs, settings, paths, logging, shell
 ├── bins/
 │   ├── trenova-capture/         per-user agent + tray
 │   ├── trenova-capture-svc/     print service: listener, attribution, inboxes, install
+│   ├── trenova-capture-update/  updater service: verify, download, WinVerifyTrust, msiexec, relaunch
+│   ├── trenova-capture-release/ the release build's signing tool (keygen, sign, verify)
 │   └── trenova-capture-scan/    scan helper (built x64 and x86)
-└── installer/                   WiX v4 MSI
+└── installer/                   WiX v4 MSI (Package.wxs), build.ps1, sign.ps1
 ```
 
 TLS is the platform's own (SChannel, through `native-tls`) rather than rustls: it trusts what
@@ -660,10 +663,21 @@ resolver reaches a permission check (authzlint).
 - **Cover sheets:** random tokens, hashed at rest and resolved only within the scanning tenant;
   never a grant of access.
 - **At rest:** pages are envelope-encrypted like documents, and purged with the batch.
-- **Updates:** the manifest is signed (ed25519, key pinned in the binary). The MSI is
-  Authenticode-signed and checked with `WinVerifyTrust` before the service installs it.
-  Organisations can pin a minimum version or turn auto-update off and deploy through Intune or
-  GPO (the MSI takes `TRENOVAURL` and `AUTOUPDATE` properties for silent install).
+- **Updates:** the manifest is signed (ed25519; the public key is built into the agent and the
+  updater from `TRENOVA_CAPTURE_PUBLIC_KEY`, and configured on the server as
+  `update.capturePublicKey`). The server mirrors the manifest at
+  `GET /api/v1/capture/releases/latest/` after verifying it, and the agent verifies it again.
+  Installing is the updater service's job (`TrenovaCaptureUpdater`, LocalSystem, demand start,
+  startable by signed-in users and nothing more): it re-reads the manifest over HTTPS, verifies
+  the signature, refuses anything not newer than itself or needing a newer Windows, downloads
+  the MSI checking size and SHA-256, has Windows verify its Authenticode signature
+  (`WinVerifyTrust`) and requires the signer to be the same publisher as the running updater,
+  and only then runs `msiexec /qn`. An unprivileged process can thus cause a genuine, newer
+  Trenova Capture to be installed and nothing else. Organisations pin a minimum version and
+  allow or refuse self-update on the server (`captureMinAgentVersion`,
+  `captureAllowAutoUpdate`); IT can also refuse it per computer (`AutoUpdate` under
+  `HKLM\SOFTWARE\Policies\Trenova\Capture`) and deploy through Intune or GPO (the MSI takes
+  `TRENOVAURL`, `AUTOUPDATE` and `PRINTPORT` for a silent install).
 - **Existing gap, not introduced here:** uploads are not virus-scanned
   (`StatusQuarantined` is never set). Capture widens intake, so this is worth closing, but it
   is its own change.
@@ -739,12 +753,34 @@ Every phase is shipped complete; the order only reflects dependencies.
    code (the service host, spooler and session queries, SID lookups, directory ACLs and the
    install commands) is compile-checked and linted for x64 and x86. It has not run, and the
    phase-0 spike on the IPP Class Driver still gates a release.
-5. **Distribution:**
-   - MSI (WiX v4), signing, and the update manifest and flow;
-   - the installer download on the admin page and `/capture/devices`, served from
-     `releases/latest` once there is an installer to serve;
-   - a `native-capture.yml` workflow on `windows-latest`: `cargo fmt`/`clippy`/`test`, both
-     targets, MSI build.
+5. **Distribution — complete.**
+   - The signed release manifest (`capture_protocol::release`, `capturereleaseservice` on the
+     server; a fixture signed by the Rust tool is verified by the Go tests, so the two
+     languages are held to the same bytes), the `trenova-capture-release` tool, the server's
+     `releases/latest` mirror and the `captureAgentRelease` query, and the update policy a
+     device learns when it describes itself (and on a 426).
+   - The updater service and the agent's update flow: a check at sign-in and every six hours,
+     the updater started when both the organization and the computer allow it, a note for IT
+     when they do not, and never during a scan.
+   - The MSI (`installer/Package.wxs`): agent, helpers, both services, the printer, the
+     machine settings, a Start menu shortcut; major upgrades; `configure` commands for what
+     Windows Installer cannot declare. `build.ps1` and `sign.ps1` (Azure Trusted Signing, a
+     store certificate or a PFX).
+   - The installer download on `/capture/devices` and the admin Computers tab, with the
+     version, size, Windows requirement and SHA-256 from the manifest.
+   - `native-capture.yml`: Linux (fmt, clippy for every target, tests, the sample PDFs read
+     back in MuPDF) and Windows (tests, both targets, the MSI); a `capture-vX.Y.Z` tag signs
+     and publishes the MSI and manifest and moves the rolling `capture-stable` manifest.
+
+   **Changed from the plan:** agents are closed and restarted around an install by the
+   updater (and by the MSI's final `relaunch` step for IT-deployed upgrades) rather than left
+   to Windows Installer's restart manager, which under `/qn` would have scheduled a reboot
+   instead. The `install`/`uninstall` service commands remain for development; the MSI owns
+   the services and calls `configure` for the ACLs and the printer.
+
+   Tested on Linux by 159 tests across the workspace and the server's Go tests. The Windows
+   code (services, WinVerifyTrust and the publisher check, the session relaunch, the DACLs, the
+   MSI itself) runs first in the Windows CI job, and against real hardware in the phase-0 lab.
 
 ## 13. Answered questions
 
