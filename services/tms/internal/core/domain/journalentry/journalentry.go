@@ -3,6 +3,8 @@ package journalentry
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/pagination"
+
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
@@ -23,7 +25,8 @@ var (
 )
 
 type JournalEntry struct {
-	bun.BaseModel `bun:"table:journal_entries,alias:je" json:"-"`
+	bun.BaseModel             `bun:"table:journal_entries,alias:je" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                         json:"-"`
 
 	ID               pulid.ID  `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID   pulid.ID  `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`

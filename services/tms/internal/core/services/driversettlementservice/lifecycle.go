@@ -210,6 +210,14 @@ func (s *Service) MarkPaid(
 		}); txErr != nil {
 			return txErr
 		}
+		if entity.PaidJournalBatchID, txErr = s.postPaymentJournal(
+			txCtx,
+			entity,
+			actor.UserID,
+			paidAt,
+		); txErr != nil {
+			return txErr
+		}
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr
 		}

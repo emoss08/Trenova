@@ -7,8 +7,8 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
@@ -17,16 +17,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (r *journalEntryResolver) EntryType(ctx context.Context, obj *journalentry.JournalEntry) (string, error) {
-	panic(fmt.Errorf("not implemented: EntryType - entryType"))
+	return string(obj.EntryType), nil
 }
 
 func (r *journalEntryResolver) Status(ctx context.Context, obj *journalentry.JournalEntry) (string, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
+	return string(obj.Status), nil
 }
 
 func (r *journalEntryLineResolver) GlAccount(ctx context.Context, obj *journalentry.JournalEntryLine) (*gqlmodel.JournalEntryLineAccount, error) {
@@ -57,6 +58,36 @@ func (r *journalEntryLineResolver) GlAccount(ctx context.Context, obj *journalen
 		AccountCode: account.AccountCode,
 		Name:        account.Name,
 	}, nil
+}
+
+func (r *journalReviewSummaryResolver) PostingMode(ctx context.Context, obj *services.JournalReviewSummary) (string, error) {
+	return string(obj.PostingMode), nil
+}
+
+func (r *mutationResolver) ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceJournalEntry, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+	req, err := journalReviewRequest(authCtx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.journalReview.Approve(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*services.JournalReviewResult, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceJournalEntry, permission.OpApprove)
+	if err != nil {
+		return nil, err
+	}
+	req, err := journalReviewRequest(authCtx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.journalReview.Post(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *queryResolver) JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error) {
@@ -110,13 +141,49 @@ func (r *queryResolver) JournalSourceByObject(ctx context.Context, sourceType st
 	return source, nil
 }
 
+func (r *queryResolver) JournalReviewTable(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceJournalEntry, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := dataTableConnectionFromGraphQL(ctx, &input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.journalReview.List(ctx, &services.ListJournalReviewRequest{
+		TenantInfo: tenantInfo(authCtx),
+		Filter:     tableInput.Filter,
+		Cursor:     tableInput.Cursor,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return journalEntryConnectionToModel(result)
+}
+
+func (r *queryResolver) JournalReviewSummary(ctx context.Context) (*services.JournalReviewSummary, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceJournalEntry, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.journalReview.Summary(ctx, tenantInfo(authCtx))
+}
+
 func (r *Resolver) JournalEntry() generated.JournalEntryResolver { return &journalEntryResolver{r} }
 
 func (r *Resolver) JournalEntryLine() generated.JournalEntryLineResolver {
 	return &journalEntryLineResolver{r}
 }
 
+func (r *Resolver) JournalReviewSummary() generated.JournalReviewSummaryResolver {
+	return &journalReviewSummaryResolver{r}
+}
+
 type (
-	journalEntryResolver     struct{ *Resolver }
-	journalEntryLineResolver struct{ *Resolver }
+	journalEntryResolver         struct{ *Resolver }
+	journalEntryLineResolver     struct{ *Resolver }
+	journalReviewSummaryResolver struct{ *Resolver }
 )

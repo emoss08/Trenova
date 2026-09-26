@@ -20034,7 +20034,8 @@
                 "EscrowInterestAccrued",
                 "CarrierSettlementPosted",
                 "CarrierSettlementVoided",
-                "CarrierSettlementPaid"
+                "CarrierSettlementPaid",
+                "DriverSettlementPaid"
             ],
             "type": "string",
             "x-enum-varnames": [
@@ -20051,7 +20052,8 @@
                 "JournalSourceEventEscrowInterestAccrued",
                 "JournalSourceEventCarrierSettlementPosted",
                 "JournalSourceEventCarrierSettlementVoided",
-                "JournalSourceEventCarrierSettlementPaid"
+                "JournalSourceEventCarrierSettlementPaid",
+                "JournalSourceEventDriverSettlementPaid"
             ]
         },
         "tenant.LateChargeAssessmentMode": {

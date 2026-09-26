@@ -205,6 +205,7 @@ type Params struct {
 	StoredMileageService         *storedmileageservice.Service
 	ManualJournalService         *manualjournalservice.Service
 	JournalEntryService          *journalentryservice.Service
+	JournalReview                services.JournalReviewService
 	JournalReversalService       *journalreversalservice.Service
 	AuditService                 services.AuditService
 	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
@@ -376,6 +377,7 @@ type Resolver struct {
 	storedMileageService         *storedmileageservice.Service
 	manualJournalService         *manualjournalservice.Service
 	journalEntryService          *journalentryservice.Service
+	journalReview                services.JournalReviewService
 	journalReversalService       *journalreversalservice.Service
 	auditService                 services.AuditService
 	serviceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
@@ -548,6 +550,7 @@ func New(p Params) *Resolver {
 		storedMileageService:         p.StoredMileageService,
 		manualJournalService:         p.ManualJournalService,
 		journalEntryService:          p.JournalEntryService,
+		journalReview:                p.JournalReview,
 		journalReversalService:       p.JournalReversalService,
 		auditService:                 p.AuditService,
 		serviceFailureReasonCodeSvc:  p.ServiceFailureReasonCodeSvc,

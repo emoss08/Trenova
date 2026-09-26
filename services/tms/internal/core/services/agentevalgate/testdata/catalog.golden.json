@@ -13557,6 +13557,7 @@
               "edi_inbound_file",
               "edi_message",
               "invoice",
+              "journal_entry",
               "location",
               "order",
               "rate_matrix",

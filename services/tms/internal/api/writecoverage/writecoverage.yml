@@ -1615,6 +1615,14 @@ writes:
   "POST /api/v1/billing/invoices/:invoiceID/shares/":
     tools: [share_invoice]
 
+  # journalentry
+  "mutation approveJournalEntries":
+    exempt: attestation
+    reason: "Approving a journal for the general ledger is a sign-off an accountable person makes; agents never hold the approve permission."
+  "mutation postJournalEntries":
+    exempt: attestation
+    reason: "Posting approved journals changes the general ledger balances a person signs off on; agents never hold the approve permission."
+
   # journalreversal
   "POST /api/v1/accounting/journal-reversals/":
     pending: "Create a journal reversal."

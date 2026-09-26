@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:66e87a8c0e1d99d6769537d2747f7d77f8953b45f21d8da8d51bff8c015d423c"
+const Version = "sha256:5f8056c623407d3043832a83f8d08e3a6a9fbfc61d78997d18439437e0241849"
 
 var Default = indexed(defaultCatalog)
 
@@ -4510,6 +4510,16 @@ var defaultCatalog = Catalog{
 					Column:       buncolgen.NewColumn("payment_reference", "dstl"),
 					Label:        "Payment Reference",
 					Type:         FieldString,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "paidJournalBatchId",
+					Column:       buncolgen.NewColumn("paid_journal_batch_id", "dstl"),
+					Label:        "Paid Journal Batch ID",
+					Type:         FieldRef,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,

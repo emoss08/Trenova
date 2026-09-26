@@ -3603,6 +3603,11 @@ func (r *Registry) registerAccountingResources() {
 				DisplayName: "Export",
 				Description: "Export journal entries and their lines",
 			},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Approve and post",
+				Description: "Approve journal entries awaiting review and post them to the general ledger",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{

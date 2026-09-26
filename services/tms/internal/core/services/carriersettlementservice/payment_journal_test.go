@@ -49,6 +49,7 @@ func TestPaymentJournalIsDatedWhenThePaymentWasMade(t *testing.T) {
 	period := &fiscalperiod.FiscalPeriod{
 		ID:           pulid.MustNew("fp_"),
 		FiscalYearID: pulid.MustNew("fy_"),
+		Status:       fiscalperiod.StatusOpen,
 	}
 
 	periods := mocks.NewMockFiscalPeriodRepository(t)

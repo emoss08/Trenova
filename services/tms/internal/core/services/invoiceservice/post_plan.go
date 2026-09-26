@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
+
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
@@ -158,7 +160,7 @@ func (s *Service) PreviewPost(
 	}
 	journal, err := s.previewJournal(ctx, entity, actor)
 	switch {
-	case errors.Is(err, errNoLedgerEntry):
+	case errors.Is(err, invoiceledger.ErrNoLedgerEntry):
 	case isRefusal(err):
 		preview.Refusal = err
 
@@ -187,13 +189,13 @@ func (s *Service) previewJournal(
 	}
 
 	journal := &servicesports.JournalPreview{
-		AccountingDate:   plan.postingDate,
-		FiscalPeriodID:   plan.period.ID,
-		EntryStatus:      plan.entryStatus,
-		RequiresApproval: plan.requiresApproval,
-		Lines:            make([]servicesports.JournalLinePreview, 0, len(plan.lines)),
+		AccountingDate:   plan.Journal.AccountingDate,
+		FiscalPeriodID:   plan.Journal.Period.ID,
+		EntryStatus:      plan.Journal.Workflow.EntryStatus,
+		RequiresApproval: plan.Journal.Workflow.RequiresApproval,
+		Lines:            make([]servicesports.JournalLinePreview, 0, len(plan.Journal.Lines)),
 	}
-	for _, line := range plan.lines {
+	for _, line := range plan.Journal.Lines {
 		journal.Lines = append(journal.Lines, servicesports.JournalLinePreview{
 			GLAccountID: line.GLAccountID,
 			Description: line.Description,
