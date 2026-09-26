@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
@@ -31,7 +32,7 @@ var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewReg
 // The module provides them into the group, and the description contract test
 // builds each one to read what a model is shown.
 func ToolProviders() []any {
-	return []any{
+	providers := []any{
 		newTransitionToInReviewTool,
 		provideTransferToBillingTool,
 		provideApproveBillingQueueItemTool,
@@ -118,6 +119,8 @@ func ToolProviders() []any {
 		newRemoveHomeWidgetTool,
 		newArrangeHomeLayoutTool,
 	}
+
+	return append(providers, ediToolProviders()...)
 }
 
 func grouped() []any {
@@ -352,4 +355,64 @@ func provideLinkInboundMessageTool(inbox *inboundmessageservice.Service) service
 
 func provideMarkInboundMessageTool(inbox *inboundmessageservice.Service) services.AgentTool {
 	return newMarkInboundMessageTool(inbox)
+}
+
+func ediToolProviders() []any {
+	return []any{
+		provideAcceptEDILoadTenderTool,
+		provideDeclineEDILoadTenderTool,
+		provideCancelEDILoadTenderTool,
+		provideExpireEDILoadTenderTool,
+		provideReviewEDITenderChangeTool,
+		provideReviewEDITransferChangeTool,
+		provideRetryEDIMessageDeliveryTool,
+		provideReplayEDIMessageTool,
+		provideReprocessEDIInboundFilesTool,
+		provideSendEDILoadTenderTool,
+		provideSendEDIStatusUpdateTool,
+	}
+}
+
+func provideAcceptEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newAcceptEDILoadTenderTool(edi)
+}
+
+func provideDeclineEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newDeclineEDILoadTenderTool(edi)
+}
+
+func provideCancelEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newCancelEDILoadTenderTool(edi)
+}
+
+func provideExpireEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newExpireEDILoadTenderTool(edi)
+}
+
+func provideReviewEDITenderChangeTool(edi *ediservice.Service) services.AgentTool {
+	return newReviewEDITenderChangeTool(edi)
+}
+
+func provideReviewEDITransferChangeTool(edi *ediservice.Service) services.AgentTool {
+	return newReviewEDITransferChangeTool(edi)
+}
+
+func provideRetryEDIMessageDeliveryTool(edi *ediservice.Service) services.AgentTool {
+	return newRetryEDIMessageDeliveryTool(edi)
+}
+
+func provideReplayEDIMessageTool(edi *ediservice.Service) services.AgentTool {
+	return newReplayEDIMessageTool(edi)
+}
+
+func provideReprocessEDIInboundFilesTool(inbound *ediinboundservice.Service) services.AgentTool {
+	return newReprocessEDIInboundFilesTool(inbound)
+}
+
+func provideSendEDILoadTenderTool(edi *ediservice.Service) services.AgentTool {
+	return newSendEDILoadTenderTool(edi)
+}
+
+func provideSendEDIStatusUpdateTool(edi *ediservice.Service) services.AgentTool {
+	return newSendEDIStatusUpdateTool(edi)
 }

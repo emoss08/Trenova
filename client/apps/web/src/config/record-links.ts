@@ -101,6 +101,11 @@ export const RECORD_LINKS = {
     path: "/edi/inbound-files",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  edi_message: {
+    label: "EDI message",
+    path: "/edi/messages",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   report: {
     label: "Report",
     path: "/reports/explore/{id}",

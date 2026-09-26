@@ -1,5 +1,5 @@
 {
-  "version": "sha256:d035989702d3b02c1cd45dba553d004ce099f16e0378885a3cd5cd477c42a623",
+  "version": "sha256:91f0713087439a78af656a3a0c8c6a44d1e04fdcecc165f4117b3e2345b954fe",
   "modules": [
     {
       "id": "home",
@@ -14936,6 +14936,15 @@
       "entity": "edi_inbound_file",
       "label": "EDI inbound file",
       "path": "/edi/inbound-files",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
+      "entity": "edi_message",
+      "label": "EDI message",
+      "path": "/edi/messages",
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"
