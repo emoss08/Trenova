@@ -19,6 +19,9 @@ const (
 	KindChoice    Kind = "Choice"
 	KindList      Kind = "List"
 	KindJSON      Kind = "JSON"
+	// KindRecordSubset is a list of record ids an approver may narrow but
+	// never widen; Resource names what the ids are.
+	KindRecordSubset Kind = "RecordSubset"
 )
 
 // Field is one top-level parameter of a tool as a person can edit it: what
@@ -39,6 +42,9 @@ type Field struct {
 	// ReadOnly is a parameter shown but not editable: the one naming the
 	// record the call acts on, which an approver may not point elsewhere.
 	ReadOnly bool `json:"readOnly"`
+	// Resource is the permission resource a RecordSubset field's ids belong
+	// to; empty for every other kind.
+	Resource string `json:"resource,omitempty"`
 }
 
 // multilineThreshold is the declared length past which a string is prose.
@@ -105,6 +111,13 @@ func fieldFrom(name string, property map[string]any, required bool) Field {
 		Minimum:     numberOf(property["minimum"]),
 		Maximum:     numberOf(property["maximum"]),
 		MaxLength:   intOf(property["maxLength"]),
+	}
+
+	if resource := SubsetResource(property); resource != "" {
+		field.Kind = KindRecordSubset
+		field.Resource = resource
+
+		return field
 	}
 
 	if options := optionsOf(property["enum"]); len(options) > 0 {

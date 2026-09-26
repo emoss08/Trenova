@@ -137,6 +137,14 @@ func (r *agentProposalResolver) TraceURL(ctx context.Context, obj *agent.AgentPr
 	return r.traceURLOf(obj.TraceID), nil
 }
 
+func (r *agentProposalFieldResolver) Resource(ctx context.Context, obj *toolschema.Field) (*string, error) {
+	if obj.Resource == "" {
+		return nil, nil
+	}
+
+	return &obj.Resource, nil
+}
+
 func (r *agentRunResolver) TraceURL(ctx context.Context, obj *agent.AgentRun) (*string, error) {
 	return r.traceURLOf(obj.TraceID), nil
 }
@@ -714,12 +722,17 @@ func (r *Resolver) AgentPlan() generated.AgentPlanResolver { return &agentPlanRe
 
 func (r *Resolver) AgentProposal() generated.AgentProposalResolver { return &agentProposalResolver{r} }
 
+func (r *Resolver) AgentProposalField() generated.AgentProposalFieldResolver {
+	return &agentProposalFieldResolver{r}
+}
+
 func (r *Resolver) AgentRun() generated.AgentRunResolver { return &agentRunResolver{r} }
 
 type (
-	agentDecisionResolver   struct{ *Resolver }
-	agentEvaluationResolver struct{ *Resolver }
-	agentPlanResolver       struct{ *Resolver }
-	agentProposalResolver   struct{ *Resolver }
-	agentRunResolver        struct{ *Resolver }
+	agentDecisionResolver      struct{ *Resolver }
+	agentEvaluationResolver    struct{ *Resolver }
+	agentPlanResolver          struct{ *Resolver }
+	agentProposalResolver      struct{ *Resolver }
+	agentProposalFieldResolver struct{ *Resolver }
+	agentRunResolver           struct{ *Resolver }
 )

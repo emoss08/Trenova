@@ -64,6 +64,7 @@ type ResolverRoot interface {
 	AgentPreviewRef() AgentPreviewRefResolver
 	AgentPreviewWarning() AgentPreviewWarningResolver
 	AgentProposal() AgentProposalResolver
+	AgentProposalField() AgentProposalFieldResolver
 	AgentQualityAgent() AgentQualityAgentResolver
 	AgentQualityControl() AgentQualityControlResolver
 	AgentRun() AgentRunResolver
@@ -1714,6 +1715,7 @@ type ComplexityRoot struct {
 		Options     func(childComplexity int) int
 		ReadOnly    func(childComplexity int) int
 		Required    func(childComplexity int) int
+		Resource    func(childComplexity int) int
 	}
 
 	AgentProposalPreview struct {
@@ -19858,6 +19860,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposalField.Required(childComplexity), true
+	case "AgentProposalField.resource":
+		if e.ComplexityRoot.AgentProposalField.Resource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Resource(childComplexity), true
 
 	case "AgentProposalPreview.changes":
 		if e.ComplexityRoot.AgentProposalPreview.Changes == nil {
@@ -80614,6 +80622,8 @@ type AgentProposalField {
   maxLength: Int
   "The parameter names the record the change is for, which an approver may not change."
   readOnly: Boolean!
+  "For a RecordSubset field, the permission resource its ids belong to (such as shipment); absent for every other kind."
+  resource: String
 }
 
 "The control a parameter takes when edited: the schema's type, read for a form."
@@ -80626,6 +80636,8 @@ enum AgentProposalFieldKind {
   Choice
   List
   JSON
+  "A list of record ids the agent proposed to act on. An approver may remove ids, never add one, and must keep at least one; the records are listed in the preview by their ids."
+  RecordSubset
 }
 
 "Several proposals from one run, decided once and run in order."
@@ -106549,6 +106561,8 @@ func (ec *executionContext) childFields_AgentProposalField(ctx context.Context, 
 		return ec.fieldContext_AgentProposalField_maxLength(ctx, field)
 	case "readOnly":
 		return ec.fieldContext_AgentProposalField_readOnly(ctx, field)
+	case "resource":
+		return ec.fieldContext_AgentProposalField_resource(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposalField", field.Name)
 }
