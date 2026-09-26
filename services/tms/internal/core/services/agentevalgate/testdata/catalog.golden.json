@@ -3584,7 +3584,7 @@
     },
     {
       "name": "create_shipment",
-      "description": "Enter a new shipment. Give the customer, service type and shipment type by id, the BOL or reference, the freight (pieces, weight, temperature range when it matters), and one move with its stops in travel order: each stop has a location id from list_locations, a type, and a scheduled window. Rate fields are optional; a shipment with none is rated from the customer's agreements. When the shipment comes from an uploaded document, pass sourceDocumentId so the document is linked and its import conversation closed. The pro number is assigned by the system.",
+      "description": "Enter a new shipment. Give the customer, service type and shipment type by id, the BOL or reference, the freight (pieces, weight, temperature range when it matters), and one move with its stops in travel order: each stop has a location id from list_locations, a type, and a scheduled window. Rate fields are optional; a shipment with none is rated from the customer's agreements. When the shipment comes from an uploaded document, pass sourceDocumentId so the document is linked and its import conversation closed. The pro number is assigned by the system. A BOL must be unique among open shipments, so a copied shipment needs a new BOL or none; ask the person for it rather than reusing one.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -3593,7 +3593,7 @@
             "description": "The shipment, in the shape the shipment form sends.",
             "properties": {
               "bol": {
-                "description": "The customer's BOL or reference.",
+                "description": "The customer's BOL or reference. It must be unique among open shipments, so never reuse one from another shipment. Optional unless the customer's billing requires a BOL; leave it out when none is known.",
                 "type": "string"
               },
               "customerId": {
