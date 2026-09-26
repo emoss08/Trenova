@@ -1,0 +1,244 @@
+name: Trenova Capture
+
+# The Windows companion under native/capture. Every push checks the workspace
+# on Linux (where everything that is not Windows runs and is tested) and on
+# Windows (where it all compiles, links and runs, for both targets, and the
+# MSI is built). A tag capture-vX.Y.Z publishes a signed release: the MSI, its
+# signed manifest, and the rolling capture-stable manifest the server and the
+# updater read.
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+      - "claude/**"
+    tags:
+      - "capture-v*"
+    paths:
+      - "native/capture/**"
+      - "client/apps/web/public/logo.ico"
+      - ".github/workflows/native-capture.yml"
+  pull_request:
+    branches:
+      - master
+      - main
+      - develop
+    paths:
+      - "native/capture/**"
+      - "client/apps/web/public/logo.ico"
+      - ".github/workflows/native-capture.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -D warnings
+  # The ed25519 key releases are signed with, built into the agent and the
+  # updater. A build without it never updates itself.
+  TRENOVA_CAPTURE_PUBLIC_KEY: ${{ vars.TRENOVA_CAPTURE_PUBLIC_KEY }}
+
+defaults:
+  run:
+    working-directory: native/capture
+
+jobs:
+  linux:
+    name: Linux (fmt, clippy for every target, tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.0
+          components: rustfmt, clippy
+          targets: x86_64-pc-windows-msvc, i686-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native/capture
+
+      - name: Format
+        run: cargo fmt --all -- --check
+
+      - name: Clippy (Linux)
+        run: cargo clippy --workspace --all-targets
+
+      - name: Clippy (Windows x64)
+        run: cargo clippy --workspace --all-targets --target x86_64-pc-windows-msvc
+
+      - name: Clippy (Windows x86)
+        run: cargo clippy --workspace --all-targets --target i686-pc-windows-msvc
+
+      - name: Test
+        run: cargo test --workspace
+
+      - name: Sample pages read back in an independent PDF reader
+        run: |
+          pip install --quiet pymupdf
+          cargo run -q -p capture-imaging --example sample_pages -- /tmp/samples
+          python3 - <<'EOF'
+          import pymupdf
+          for name, pages in (("bilevel.pdf", 1), ("colour.pdf", 1), ("printed.pdf", 2)):
+              doc = pymupdf.open(f"/tmp/samples/{name}")
+              assert doc.page_count == pages, (name, doc.page_count)
+              for page in doc:
+                  assert page.get_images(), (name, "no image")
+                  page.get_pixmap()
+          print("samples ok")
+          EOF
+
+  windows:
+    name: Windows (build, tests, MSI)
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.0
+          components: rustfmt, clippy
+          targets: x86_64-pc-windows-msvc, i686-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native/capture
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          $manifest = Get-Content Cargo.toml -Raw
+          if ($manifest -notmatch '(?m)^\[workspace\.package\][^\[]*?^version\s*=\s*"([^"]+)"') { throw 'no workspace version' }
+          $version = $Matches[1]
+          if ('${{ github.ref }}' -like 'refs/tags/capture-v*') {
+            $tag = '${{ github.ref_name }}'.Substring('capture-v'.Length)
+            if ($tag -ne $version) { throw "The tag names $tag but Cargo.toml says $version." }
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Test (everything runs here, Windows code included)
+        run: cargo test --workspace --target x86_64-pc-windows-msvc
+
+      - name: Build (x64)
+        run: cargo build --release --target x86_64-pc-windows-msvc -p trenova-capture -p trenova-capture-scan -p trenova-capture-svc -p trenova-capture-update -p trenova-capture-release
+
+      - name: Build (x86 scan helper)
+        run: cargo build --release --target i686-pc-windows-msvc -p trenova-capture-scan
+
+      - name: WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add -g WixToolset.Util.wixext/5.0.2
+
+      - name: Sign in to Azure for Trusted Signing
+        if: startsWith(github.ref, 'refs/tags/capture-v')
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Trusted Signing client
+        if: startsWith(github.ref, 'refs/tags/capture-v')
+        shell: pwsh
+        run: |
+          nuget install Microsoft.Trusted.Signing.Client -Version 1.0.60 -OutputDirectory $env:RUNNER_TEMP\tsc -x
+          $dlib = Get-ChildItem "$env:RUNNER_TEMP\tsc" -Recurse -Filter Azure.CodeSigning.Dlib.dll | Where-Object FullName -like '*x64*' | Select-Object -First 1
+          if (-not $dlib) { throw 'Azure.CodeSigning.Dlib.dll not found' }
+          "TRENOVA_SIGNING_DLIB=$($dlib.FullName)" >> $env:GITHUB_ENV
+
+      - name: Build the MSI (unsigned, on a branch)
+        if: ${{ !startsWith(github.ref, 'refs/tags/capture-v') }}
+        shell: pwsh
+        run: ./installer/build.ps1 -Version ${{ steps.version.outputs.version }}
+
+      - name: Build and sign the MSI (release)
+        if: startsWith(github.ref, 'refs/tags/capture-v')
+        shell: pwsh
+        env:
+          TRENOVA_SIGNING: trusted-signing
+          TRENOVA_SIGNING_ENDPOINT: ${{ secrets.TRENOVA_SIGNING_ENDPOINT }}
+          TRENOVA_SIGNING_ACCOUNT: ${{ secrets.TRENOVA_SIGNING_ACCOUNT }}
+          TRENOVA_SIGNING_PROFILE: ${{ secrets.TRENOVA_SIGNING_PROFILE }}
+        run: ./installer/build.ps1 -Version ${{ steps.version.outputs.version }} -Sign
+
+      - name: Sign the release manifest
+        if: startsWith(github.ref, 'refs/tags/capture-v')
+        shell: pwsh
+        env:
+          TRENOVA_CAPTURE_SIGNING_KEY: ${{ secrets.TRENOVA_CAPTURE_SIGNING_KEY }}
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $msi = "installer/out/TrenovaCapture-$version-x64.msi"
+          $url = "https://github.com/${{ github.repository }}/releases/download/capture-v$version/TrenovaCapture-$version-x64.msi"
+          $notes = "$env:RUNNER_TEMP\notes.md"
+          git log -1 --pretty=%B | Set-Content $notes
+          ./target/x86_64-pc-windows-msvc/release/trenova-capture-release.exe sign --msi $msi --version $version --url $url --notes $notes --out installer/out/trenova-capture-manifest.json
+          ./target/x86_64-pc-windows-msvc/release/trenova-capture-release.exe verify --manifest installer/out/trenova-capture-manifest.json --public-key $env:TRENOVA_CAPTURE_PUBLIC_KEY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trenova-capture-msi
+          path: |
+            native/capture/installer/out/*.msi
+            native/capture/installer/out/*.json
+          if-no-files-found: error
+
+  release:
+    name: Publish the release
+    if: startsWith(github.ref, 'refs/tags/capture-v')
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: trenova-capture-msi
+          path: out
+
+      - name: Release capture-v${{ needs.windows.outputs.version }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.windows.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release create "capture-v$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Trenova Capture $VERSION" \
+            --notes "Trenova Capture $VERSION for Windows. The manifest is signed; the server and the updater verify it before acting on it." \
+            "out/TrenovaCapture-$VERSION-x64.msi" \
+            "out/trenova-capture-manifest.json"
+
+      - name: Point capture-stable at it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.windows.outputs.version }}
+        run: |
+          set -euo pipefail
+          if ! gh release view capture-stable --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create capture-stable \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Trenova Capture (current)" \
+              --notes "The manifest of the current Trenova Capture release. Servers read it from here; the tag moves with each release." \
+              --target "$GITHUB_SHA"
+          fi
+          gh release upload capture-stable "out/trenova-capture-manifest.json" --clobber --repo "$GITHUB_REPOSITORY"
+          gh release edit capture-stable --repo "$GITHUB_REPOSITORY" \
+            --notes "Trenova Capture $VERSION is current. The manifest here is what servers and the updater read; the installer itself is on release capture-v$VERSION."
