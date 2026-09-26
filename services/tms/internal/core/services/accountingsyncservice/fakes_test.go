@@ -1139,7 +1139,9 @@ func (f *fakeWriter) CreateSalesDocument(
 	_ context.Context,
 	doc *services.AccountingSalesDocument,
 ) (*services.AccountingDocumentResult, error) {
-	return f.record("CreateSalesDocument", doc)
+	sent := *doc
+	sent.Refs = maps.Clone(doc.Refs)
+	return f.record("CreateSalesDocument", &sent)
 }
 
 func (f *fakeWriter) VoidSalesDocument(
@@ -1189,6 +1191,27 @@ func (f *fakeWriter) CreatePurchaseDocument(
 	doc *services.AccountingPurchaseDocument,
 ) (*services.AccountingDocumentResult, error) {
 	return f.record("CreatePurchaseDocument", doc)
+}
+
+func (f *fakeWriter) UpdateSalesDocument(
+	_ context.Context,
+	doc *services.AccountingSalesDocument,
+) (*services.AccountingDocumentResult, error) {
+	return f.record("UpdateSalesDocument", doc)
+}
+
+func (f *fakeWriter) UpdatePurchaseDocument(
+	_ context.Context,
+	doc *services.AccountingPurchaseDocument,
+) (*services.AccountingDocumentResult, error) {
+	return f.record("UpdatePurchaseDocument", doc)
+}
+
+func (f *fakeWriter) UpdateBillPayment(
+	_ context.Context,
+	doc *services.AccountingBillPaymentDocument,
+) (*services.AccountingDocumentResult, error) {
+	return f.record("UpdateBillPayment", doc)
 }
 
 func (f *fakeWriter) VoidPurchaseDocument(
