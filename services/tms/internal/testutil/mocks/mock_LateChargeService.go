@@ -111,3 +111,77 @@ func (_c *MockLateChargeService_Assess_Call) RunAndReturn(run func(ctx context.C
 	_c.Call.Return(run)
 	return _c
 }
+
+// PlanAssess provides a mock function for the type MockLateChargeService
+func (_mock *MockLateChargeService) PlanAssess(ctx context.Context, req *services.LateChargeAssessmentRequest, actor *services.RequestActor) (*services.LateChargeAssessmentResult, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PlanAssess")
+	}
+
+	var r0 *services.LateChargeAssessmentResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.LateChargeAssessmentRequest, *services.RequestActor) (*services.LateChargeAssessmentResult, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.LateChargeAssessmentRequest, *services.RequestActor) *services.LateChargeAssessmentResult); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.LateChargeAssessmentResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.LateChargeAssessmentRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockLateChargeService_PlanAssess_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PlanAssess'
+type MockLateChargeService_PlanAssess_Call struct {
+	*mock.Call
+}
+
+// PlanAssess is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.LateChargeAssessmentRequest
+//   - actor *services.RequestActor
+func (_e *MockLateChargeService_Expecter) PlanAssess(ctx any, req any, actor any) *MockLateChargeService_PlanAssess_Call {
+	return &MockLateChargeService_PlanAssess_Call{Call: _e.mock.On("PlanAssess", ctx, req, actor)}
+}
+
+func (_c *MockLateChargeService_PlanAssess_Call) Run(run func(ctx context.Context, req *services.LateChargeAssessmentRequest, actor *services.RequestActor)) *MockLateChargeService_PlanAssess_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.LateChargeAssessmentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.LateChargeAssessmentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockLateChargeService_PlanAssess_Call) Return(result *services.LateChargeAssessmentResult, err error) *MockLateChargeService_PlanAssess_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockLateChargeService_PlanAssess_Call) RunAndReturn(run func(ctx context.Context, req *services.LateChargeAssessmentRequest, actor *services.RequestActor) (*services.LateChargeAssessmentResult, error)) *MockLateChargeService_PlanAssess_Call {
+	_c.Call.Return(run)
+	return _c
+}
