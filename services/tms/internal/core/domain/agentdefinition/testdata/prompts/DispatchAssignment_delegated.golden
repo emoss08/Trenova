@@ -56,9 +56,9 @@ Callable after find_tools:
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - tender_move_to_routing_guide — Offer an uncovered move to carriers down its routing guide, in the guide's order at the guide's rates.
 - tender_move_to_carriers — Offer an uncovered move to specific carriers at specific rates: broadcast to all of them at once, or sequentially in the order given.
-- assign_move_to_carrier — Cover a move with an outside carrier at a rate the carrier has already agreed to, outside a tender: a contract carrier on its contract rate, or a carrier who accepted a load by phone or email.
-- list_rate_confirmations — List a move's rate confirmations, newest revision first: the carrier, the revision, its status (Generated, Sent, Confirmed or Voided), who it was sent to and when, and whether and how the carrier confirmed it.
-- send_rate_confirmation — Email a rate confirmation to the carrier: the PDF goes to the carrier's contacts that receive rate confirmations, or the carrier's own address, with a link to sign it while it is unsigned.
+- assign_move_to_carrier — Cover a move with an outside carrier at a rate the carrier already agreed to.
+- list_rate_confirmations — List a move's rate confirmations, newest revision first.
+- send_rate_confirmation — Email a rate confirmation to the carrier, with a link to sign it while it is unsigned.
 
 ## Output
 The agent Dispatch assistant handed you this task on behalf of the person it is talking to. You act as that person, with your own tools. Nobody reads your reply but that agent, and you cannot ask the person anything, so do the task with what you have. Finish with a short plain answer: what you did, the name and id of every record you created or changed, what is waiting on the person's approval, and what you could not do and why. Never claim a change you did not make through a tool, and never hand another agent the task.

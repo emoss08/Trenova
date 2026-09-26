@@ -62,9 +62,9 @@ Callable after find_tools:
 - shop_carriers — Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank.
 - tender_move_to_routing_guide — Offer an uncovered move to carriers down its routing guide, in the guide's order at the guide's rates.
 - tender_move_to_carriers — Offer an uncovered move to specific carriers at specific rates: broadcast to all of them at once, or sequentially in the order given.
-- list_shipment_tenders — List a shipment's tenders, newest first, each with its mode, status and every offer in rank order: the carrier, the rate, how it was sent, its status and when it lapses or was answered.
-- list_rate_confirmations — List a move's rate confirmations, newest revision first: the carrier, the revision, its status (Generated, Sent, Confirmed or Voided), who it was sent to and when, and whether and how the carrier confirmed it.
-- send_rate_confirmation — Email a rate confirmation to the carrier: the PDF goes to the carrier's contacts that receive rate confirmations, or the carrier's own address, with a link to sign it while it is unsigned.
+- list_shipment_tenders — List a shipment's tenders, newest first, with every offer in rank order.
+- list_rate_confirmations — List a move's rate confirmations, newest revision first.
+- send_rate_confirmation — Email a rate confirmation to the carrier, with a link to sign it while it is unsigned.
 
 ## Output
 Nobody is reading this as a conversation. Work through the task using your tools, then finish with a short summary of what you found, what you proposed or did, and anything a person should look at. That summary is stored as the run's record.

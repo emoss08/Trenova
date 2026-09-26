@@ -211,9 +211,9 @@ func newSendInvoiceTool(invoices invoiceSender) serviceports.AgentTool {
 func (t *sendInvoiceTool) Name() string { return "send_invoice" }
 
 func (t *sendInvoiceTool) Description() string {
-	return "Propose emailing an invoice to the customer, to the recipients, subject, wording " +
-		"and attachments the organization and the customer's billing profile set; nothing is " +
-		"chosen by you. A person always decides. Propose it after post_invoice when the " +
+	return "Propose emailing an invoice to the customer. The recipients, subject, wording " +
+		"and attachments come from the organization and the customer's billing profile; " +
+		"nothing is chosen by you. A person always decides. Propose it after post_invoice when the " +
 		"customer is not sent invoices automatically."
 }
 

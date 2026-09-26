@@ -382,8 +382,8 @@ func fillCancel(params map[string]any, req *serviceports.UpdateBillingQueueStatu
 func newSendBackToOpsTool(billing billingQueueDecider) serviceports.AgentTool {
 	return &billingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name: "send_billing_item_back_to_ops",
-		description: "Send a billing queue item in review back to operations to fix, with the " +
-			"reason, when the fix belongs to the shipment rather than the bill: a missing " +
+		description: "Send a billing queue item in review back to operations to fix, with a " +
+			"reason. Use it when the fix belongs to the shipment rather than the bill: a missing " +
 			"document operations must collect, a wrong weight, a missing reference number. " +
 			"Operations sees a high-priority note on the shipment saying why. Read the item " +
 			"with get_billing_queue_item first. Notes are required when the reason is Other.",
@@ -407,8 +407,8 @@ func newSendBackToOpsTool(billing billingQueueDecider) serviceports.AgentTool {
 func newMoveToExceptionTool(billing billingQueueDecider) serviceports.AgentTool {
 	return &billingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name: "move_billing_item_to_exception",
-		description: "Move a billing queue item in review into exception when the bill itself " +
-			"is wrong and a biller has to resolve it: a rate that disagrees with the agreement, " +
+		description: "Move a billing queue item in review into exception for a biller to " +
+			"resolve. Use it when the bill itself is wrong: a rate that disagrees with the agreement, " +
 			"a disputed accessorial, a duplicate charge. Give the reason and notes that say " +
 			"what is wrong and what would clear it.",
 		status:           billingqueue.StatusException,
@@ -431,9 +431,9 @@ func newMoveToExceptionTool(billing billingQueueDecider) serviceports.AgentTool 
 func newHoldBillingQueueItemTool(billing billingQueueDecider) serviceports.AgentTool {
 	return &billingQueueDecisionTool{billing: billing, decision: queueDecision{
 		name: "hold_billing_queue_item",
-		description: "Put a billing queue item that is waiting for or in review on hold, with " +
-			"a note saying what it waits on, when it cannot be billed yet but nothing is wrong " +
-			"with it: a document on its way, a customer's confirmation. A held item is taken " +
+		description: "Put a billing queue item on hold, with a note saying what it waits on. " +
+			"Use it when an item waiting for or in review cannot be billed yet but nothing is " +
+			"wrong with it: a document on its way, a customer's confirmation. A held item is taken " +
 			"off hold only when the note's condition is met.",
 		status:           billingqueue.StatusOnHold,
 		egress:           agent.EgressInternal,
@@ -511,8 +511,10 @@ func (t *assignBillerTool) ParamSchema() map[string]any {
 					"list_billing_queue_items or get_billing_queue_item.",
 			},
 			paramBillerID: map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: "The biller's user id.",
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "The biller's user id: the assignedBillerId " +
+					"get_billing_queue_item shows on this or another of the customer's items, " +
+					"or the person who asked. Never guess one.",
 			},
 		},
 		toolschema.KeyRequired:             []string{paramBillingQueueItemID, paramBillerID},

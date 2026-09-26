@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -183,6 +184,20 @@ var lookups = map[permission.Resource]lookup{
 		idEq:  buncolgen.RateConfirmationColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*rateconfirmation.RateConfirmation)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
+	},
+	// An invoice is posted or sent as a whole; its version moves with each
+	// change to it, so an approval refuses one edited since it was proposed.
+	permission.ResourceInvoice: {
+		model: func() versioned { return new(invoice.Invoice) },
+		scope: buncolgen.InvoiceScopeTenant,
+		idEq:  buncolgen.InvoiceColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*invoice.Invoice)
 			if !ok {
 				return 0
 			}

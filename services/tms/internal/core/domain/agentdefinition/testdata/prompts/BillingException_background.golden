@@ -58,7 +58,7 @@ Loaded now:
 Callable after find_tools:
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
 - list_billing_transfer_candidates — List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers.
-- list_billing_queue_items — List billing queue items, the shipments waiting on a biller, by status, bill type, exception reason, assigned biller, payer or age.
+- list_billing_queue_items — List billing queue items, the shipments waiting on a biller.
 - request_missing_docs — Request missing documentation from a party by sending them an email.
 - attach_document_to_shipment — Attach a document that already exists to a shipment, so it rides with the load and its billing.
 - get_accounting_sync_status — Get whether the accounting system is connected, to which company, and why it last failed.

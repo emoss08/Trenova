@@ -51,8 +51,8 @@ Loaded now:
 
 Callable after find_tools:
 - transition_item_to_in_review — Move a blocked billing queue item into the InReview state so a biller can work it.
-- hold_billing_queue_item — Put a billing queue item that is waiting for or in review on hold, with a note saying what it waits on, when it cannot be billed yet but nothing is wrong with it: a document on its way, a customer's confirmation.
-- move_billing_item_to_exception — Move a billing queue item in review into exception when the bill itself is wrong and a biller has to resolve it: a rate that disagrees with the agreement, a disputed accessorial, a duplicate charge.
+- hold_billing_queue_item — Put a billing queue item on hold, with a note saying what it waits on.
+- move_billing_item_to_exception — Move a billing queue item in review into exception for a biller to resolve.
 - correct_charge_code — Correct or normalize the accessorial charge codes on a billing queue item's charges.
 - get_accounting_sync_status — Get whether the accounting system is connected, to which company, and why it last failed.
 - check_accounting_connection — Check the accounting system connection now and record whether it answers.

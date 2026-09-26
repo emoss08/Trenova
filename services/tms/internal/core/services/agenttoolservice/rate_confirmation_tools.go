@@ -84,8 +84,8 @@ func newGenerateRateConfirmationTool(rateCons rateConfirmations) serviceports.Ag
 func (t *generateRateConfirmationTool) Name() string { return "generate_rate_confirmation" }
 
 func (t *generateRateConfirmationTool) Description() string {
-	return "Generate the rate confirmation for a move covered by an outside carrier: a new " +
-		"revision of the agreement, with the carrier's pay and the stops as they stand, " +
+	return "Generate the rate confirmation for a move covered by an outside carrier. It is " +
+		"a new revision of the agreement, with the carrier's pay and the stops as they stand, " +
 		"rendered as a PDF and filed on the shipment. Generate after assign_move_to_carrier, " +
 		"or again after the rate or the stops change; a new revision voids the one before " +
 		"it. Nothing is sent: find the new revision with list_rate_confirmations and send " +
@@ -200,9 +200,9 @@ func newSendRateConfirmationTool(rateCons rateConfirmations) serviceports.AgentT
 func (t *sendRateConfirmationTool) Name() string { return "send_rate_confirmation" }
 
 func (t *sendRateConfirmationTool) Description() string {
-	return "Email a rate confirmation to the carrier: the PDF goes to the carrier's contacts " +
-		"that receive rate confirmations, or the carrier's own address, with a link to " +
-		"sign it while it is unsigned. The recipients come from the carrier's record and " +
+	return "Email a rate confirmation to the carrier, with a link to sign it while it is " +
+		"unsigned. The PDF goes to the carrier's contacts that receive rate confirmations, " +
+		"or the carrier's own address. The recipients come from the carrier's record and " +
 		"cannot be chosen here; fix the carrier's contacts first if they are wrong. Send a " +
 		"revision that is Generated, Sent (to send it again) or Confirmed (the executed " +
 		"copy); find it with list_rate_confirmations."
@@ -277,8 +277,8 @@ func newVoidRateConfirmationTool(rateCons rateConfirmations) serviceports.AgentT
 func (t *voidRateConfirmationTool) Name() string { return "void_rate_confirmation" }
 
 func (t *voidRateConfirmationTool) Description() string {
-	return "Void a rate confirmation: the revision stops standing and its sign link stops " +
-		"working, and voiding one the carrier confirmed returns their assignment to " +
+	return "Void a rate confirmation so the revision stops standing and its sign link stops " +
+		"working. Voiding one the carrier confirmed returns their assignment to " +
 		"awaiting confirmation. Use it when the agreement as written is wrong and should " +
 		"not be signed; to correct it, generate a new revision instead, which voids this " +
 		"one. Say why in reason. Find the revision with list_rate_confirmations."

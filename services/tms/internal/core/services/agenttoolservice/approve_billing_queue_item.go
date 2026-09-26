@@ -50,8 +50,8 @@ func newApproveBillingQueueItemTool(
 			decision: queueDecision{
 				name: "approve_billing_queue_item",
 				description: "Propose approving a billing queue item you have reviewed and found " +
-					"clean: charges that match the agreement, the documents the customer requires, " +
-					"no detention charge waiting on approval. Approval creates the item's draft " +
+					"clean. Clean means charges that match the agreement, the documents the customer " +
+					"requires, and no detention charge waiting on approval. Approval creates the item's draft " +
 					"invoice, or puts it on a statement customer's statement, and the organization's " +
 					"auto-post setting may post it; a person always decides. Say in reviewNotes what " +
 					"you checked. Once approved, propose post_invoice for the draft.",

@@ -478,7 +478,7 @@
     },
     {
       "name": "approve_billing_queue_item",
-      "description": "Propose approving a billing queue item you have reviewed and found clean: charges that match the agreement, the documents the customer requires, no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft.",
+      "description": "Propose approving a billing queue item you have reviewed and found clean. Clean means charges that match the agreement, the documents the customer requires, and no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -693,7 +693,7 @@
         "additionalProperties": false,
         "properties": {
           "billerId": {
-            "description": "The biller's user id.",
+            "description": "The biller's user id: the assignedBillerId get_billing_queue_item shows on this or another of the customer's items, or the person who asked. Never guess one.",
             "type": "string"
           },
           "billingQueueItemId": {
@@ -787,7 +787,7 @@
     },
     {
       "name": "assign_move_to_carrier",
-      "description": "Cover a move with an outside carrier at a rate the carrier has already agreed to, outside a tender: a contract carrier on its contract rate, or a carrier who accepted a load by phone or email. Read shop_carriers first so the rate comes from a contract or a quote; a rate you cannot source is a reason to ask, never to guess. The move must have no driver. Nothing is sent to the carrier: generate the rate confirmation with generate_rate_confirmation and send it with send_rate_confirmation next. To offer a load and wait for an answer, tender it instead.",
+      "description": "Cover a move with an outside carrier at a rate the carrier already agreed to. Use it outside a tender: a contract carrier on its contract rate, or a carrier who accepted a load by phone or email. Read shop_carriers first so the rate comes from a contract or a quote; a rate you cannot source is a reason to ask, never to guess. The move must have no driver. Nothing is sent to the carrier: generate the rate confirmation with generate_rate_confirmation and send it with send_rate_confirmation next. To offer a load and wait for an answer, tender it instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -3003,7 +3003,7 @@
     },
     {
       "name": "generate_rate_confirmation",
-      "description": "Generate the rate confirmation for a move covered by an outside carrier: a new revision of the agreement, with the carrier's pay and the stops as they stand, rendered as a PDF and filed on the shipment. Generate after assign_move_to_carrier, or again after the rate or the stops change; a new revision voids the one before it. Nothing is sent: find the new revision with list_rate_confirmations and send it with send_rate_confirmation. A tender acceptance issues its own.",
+      "description": "Generate the rate confirmation for a move covered by an outside carrier. It is a new revision of the agreement, with the carrier's pay and the stops as they stand, rendered as a PDF and filed on the shipment. Generate after assign_move_to_carrier, or again after the rate or the stops change; a new revision voids the one before it. Nothing is sent: find the new revision with list_rate_confirmations and send it with send_rate_confirmation. A tender acceptance issues its own.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -3345,7 +3345,7 @@
     },
     {
       "name": "get_billing_queue_item",
-      "description": "Open one billing queue item: its payer, shipment, the charges this payer is billed, the detention charges holding it, its exception and review notes, what its shipment still lacks for billing, and the invoice it made once approved. Read it before proposing approve_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops or cancel_billing_queue_item. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "description": "Open one billing queue item with its payer, shipment and the charges this payer is billed. It also shows the detention charges holding it, its exception and review notes, what its shipment still lacks for billing, and the invoice it made once approved. Read it before proposing approve_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops or cancel_billing_queue_item. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -4807,7 +4807,7 @@
     },
     {
       "name": "hold_billing_queue_item",
-      "description": "Put a billing queue item that is waiting for or in review on hold, with a note saying what it waits on, when it cannot be billed yet but nothing is wrong with it: a document on its way, a customer's confirmation. A held item is taken off hold only when the note's condition is met.",
+      "description": "Put a billing queue item on hold, with a note saying what it waits on. Use it when an item waiting for or in review cannot be billed yet but nothing is wrong with it: a document on its way, a customer's confirmation. A held item is taken off hold only when the note's condition is met.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -5607,7 +5607,7 @@
     },
     {
       "name": "list_billing_queue_items",
-      "description": "List billing queue items, the shipments waiting on a biller, by status, bill type, exception reason, assigned biller, payer or age. Open one with get_billing_queue_item before proposing a decision on it. Posted items are left out unless you filter status to Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview are waiting on a biller; OnHold, Exception and SentBackToOps are blocked; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; createdAt (date): when it was queued; age is how long ago; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List billing queue items, the shipments waiting on a biller. Open one with get_billing_queue_item before proposing a decision; Posted items appear only when status is Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview await a biller; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; createdAt (date): when it was queued; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -8572,7 +8572,7 @@
     },
     {
       "name": "list_rate_confirmations",
-      "description": "List a move's rate confirmations, newest revision first: the carrier, the revision, its status (Generated, Sent, Confirmed or Voided), who it was sent to and when, and whether and how the carrier confirmed it. At most one revision stands at a time; a new one voids the last. Use it before sending, voiding or recording a confirmation, and to find the revision generate_rate_confirmation made.",
+      "description": "List a move's rate confirmations, newest revision first. Each shows the carrier, the revision, its status (Generated, Sent, Confirmed or Voided), who it was sent to and when, and whether and how the carrier confirmed it. At most one revision stands at a time; a new one voids the last. Use it before sending, voiding or recording a confirmation, and to find the revision generate_rate_confirmation made.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -9030,7 +9030,7 @@
     },
     {
       "name": "list_shipment_tenders",
-      "description": "List a shipment's tenders, newest first, each with its mode, status and every offer in rank order: the carrier, the rate, how it was sent, its status and when it lapses or was answered. Use it to see who holds an offer before recording a carrier's answer with record_tender_response, or to find a live tender to withdraw with cancel_tender. Narrow to one move with shipmentMoveId.",
+      "description": "List a shipment's tenders, newest first, with every offer in rank order. Each tender shows its mode and status; each offer the carrier, the rate, how it was sent, its status and when it lapses or was answered. Use it to see who holds an offer before recording a carrier's answer with record_tender_response, or to find a live tender to withdraw with cancel_tender. Narrow to one move with shipmentMoveId.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -9190,7 +9190,7 @@
     },
     {
       "name": "list_shipments",
-      "description": "List shipments by status, billing state, dates or charges: anything with a date or threshold, such as delivered yesterday or not yet billed. search_shipments matches text like a pro number. Filters: status (New|PartiallyAssigned|Assigned|InTransit|Delayed|PartiallyCompleted|ReadyToInvoice|Completed|Invoiced|Canceled): no Delivered; a delivered load is Completed, then ReadyToInvoice, then Invoiced. For when it delivered, filter actualDeliveryDate; billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): the billing handoff stage; isnull means never transferred, and list_billing_transfer_candidates lists the ones ready to go; freightTerms (Prepaid|Collect|ThirdParty); customerId (text): from list_customers, never guessed; text: proNumber, bol; date: actualShipDate, actualDeliveryDate, billedAt, canceledAt, createdAt; number: totalChargeAmount, weight. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List shipments by status, billing state, dates or charges: anything with a date or threshold, such as delivered yesterday or not yet billed. search_shipments matches text like a pro number. Filters: status (New|PartiallyAssigned|Assigned|InTransit|Delayed|PartiallyCompleted|ReadyToInvoice|Completed|Invoiced|Canceled): no Delivered; a delivered load is Completed, then ReadyToInvoice, then Invoiced. For when it delivered, filter actualDeliveryDate; billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): isnull means never transferred; freightTerms (Prepaid|Collect|ThirdParty); customerId (text): from list_customers, never guessed; text: proNumber, bol; date: actualShipDate, actualDeliveryDate, billedAt, canceledAt, createdAt; number: totalChargeAmount, weight. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -10063,7 +10063,7 @@
     },
     {
       "name": "move_billing_item_to_exception",
-      "description": "Move a billing queue item in review into exception when the bill itself is wrong and a biller has to resolve it: a rate that disagrees with the agreement, a disputed accessorial, a duplicate charge. Give the reason and notes that say what is wrong and what would clear it.",
+      "description": "Move a billing queue item in review into exception for a biller to resolve. Use it when the bill itself is wrong: a rate that disagrees with the agreement, a disputed accessorial, a duplicate charge. Give the reason and notes that say what is wrong and what would clear it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12768,7 +12768,7 @@
     },
     {
       "name": "send_billing_item_back_to_ops",
-      "description": "Send a billing queue item in review back to operations to fix, with the reason, when the fix belongs to the shipment rather than the bill: a missing document operations must collect, a wrong weight, a missing reference number. Operations sees a high-priority note on the shipment saying why. Read the item with get_billing_queue_item first. Notes are required when the reason is Other.",
+      "description": "Send a billing queue item in review back to operations to fix, with a reason. Use it when the fix belongs to the shipment rather than the bill: a missing document operations must collect, a wrong weight, a missing reference number. Operations sees a high-priority note on the shipment saying why. Read the item with get_billing_queue_item first. Notes are required when the reason is Other.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12867,7 +12867,7 @@
     },
     {
       "name": "send_invoice",
-      "description": "Propose emailing an invoice to the customer, to the recipients, subject, wording and attachments the organization and the customer's billing profile set; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically.",
+      "description": "Propose emailing an invoice to the customer. The recipients, subject, wording and attachments come from the organization and the customer's billing profile; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12905,7 +12905,7 @@
     },
     {
       "name": "send_rate_confirmation",
-      "description": "Email a rate confirmation to the carrier: the PDF goes to the carrier's contacts that receive rate confirmations, or the carrier's own address, with a link to sign it while it is unsigned. The recipients come from the carrier's record and cannot be chosen here; fix the carrier's contacts first if they are wrong. Send a revision that is Generated, Sent (to send it again) or Confirmed (the executed copy); find it with list_rate_confirmations.",
+      "description": "Email a rate confirmation to the carrier, with a link to sign it while it is unsigned. The PDF goes to the carrier's contacts that receive rate confirmations, or the carrier's own address. The recipients come from the carrier's record and cannot be chosen here; fix the carrier's contacts first if they are wrong. Send a revision that is Generated, Sent (to send it again) or Confirmed (the executed copy); find it with list_rate_confirmations.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -14327,7 +14327,7 @@
     },
     {
       "name": "void_rate_confirmation",
-      "description": "Void a rate confirmation: the revision stops standing and its sign link stops working, and voiding one the carrier confirmed returns their assignment to awaiting confirmation. Use it when the agreement as written is wrong and should not be signed; to correct it, generate a new revision instead, which voids this one. Say why in reason. Find the revision with list_rate_confirmations.",
+      "description": "Void a rate confirmation so the revision stops standing and its sign link stops working. Voiding one the carrier confirmed returns their assignment to awaiting confirmation. Use it when the agreement as written is wrong and should not be signed; to correct it, generate a new revision instead, which voids this one. Say why in reason. Find the revision with list_rate_confirmations.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

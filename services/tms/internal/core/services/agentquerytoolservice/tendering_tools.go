@@ -60,9 +60,9 @@ func newListShipmentTendersTool(
 func (t *listShipmentTendersTool) Name() string { return "list_shipment_tenders" }
 
 func (t *listShipmentTendersTool) Description() string {
-	return "List a shipment's tenders, newest first, each with its mode, status and every " +
-		"offer in rank order: the carrier, the rate, how it was sent, its status and when " +
-		"it lapses or was answered. Use it to see who holds an offer before recording a " +
+	return "List a shipment's tenders, newest first, with every offer in rank order. Each " +
+		"tender shows its mode and status; each offer the carrier, the rate, how it was sent, " +
+		"its status and when it lapses or was answered. Use it to see who holds an offer before recording a " +
 		"carrier's answer with record_tender_response, or to find a live tender to " +
 		"withdraw with cancel_tender. Narrow to one move with shipmentMoveId."
 }
@@ -215,8 +215,8 @@ func newListRateConfirmationsTool(
 func (t *listRateConfirmationsTool) Name() string { return "list_rate_confirmations" }
 
 func (t *listRateConfirmationsTool) Description() string {
-	return "List a move's rate confirmations, newest revision first: the carrier, the " +
-		"revision, its status (Generated, Sent, Confirmed or Voided), who it was sent to " +
+	return "List a move's rate confirmations, newest revision first. Each shows the carrier, " +
+		"the revision, its status (Generated, Sent, Confirmed or Voided), who it was sent to " +
 		"and when, and whether and how the carrier confirmed it. At most one revision " +
 		"stands at a time; a new one voids the last. Use it before sending, voiding or " +
 		"recording a confirmation, and to find the revision generate_rate_confirmation made."

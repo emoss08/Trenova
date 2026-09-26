@@ -51,17 +51,17 @@ Loaded now:
 
 Callable after find_tools:
 - list_billing_transfer_candidates — List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers.
-- list_billing_queue_items — List billing queue items, the shipments waiting on a biller, by status, bill type, exception reason, assigned biller, payer or age.
+- list_billing_queue_items — List billing queue items, the shipments waiting on a biller.
 - assign_billing_queue_biller — Assign the biller who reviews a billing queue item.
 - transition_item_to_in_review — Move a blocked billing queue item into the InReview state so a biller can work it.
-- hold_billing_queue_item — Put a billing queue item that is waiting for or in review on hold, with a note saying what it waits on, when it cannot be billed yet but nothing is wrong with it: a document on its way, a customer's confirmation.
-- move_billing_item_to_exception — Move a billing queue item in review into exception when the bill itself is wrong and a biller has to resolve it: a rate that disagrees with the agreement, a disputed accessorial, a duplicate charge.
-- approve_billing_queue_item — Propose approving a billing queue item you have reviewed and found clean: charges that match the agreement, the documents the customer requires, no detention charge waiting on approval.
+- hold_billing_queue_item — Put a billing queue item on hold, with a note saying what it waits on.
+- move_billing_item_to_exception — Move a billing queue item in review into exception for a biller to resolve.
+- approve_billing_queue_item — Propose approving a billing queue item you have reviewed and found clean.
 - cancel_billing_queue_item — Propose canceling a billing queue item that should never be billed, such as a duplicate of another item.
 - list_invoices — List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates.
 - get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
 - post_invoice — Propose posting a draft invoice, usually the one approve_billing_queue_item just made.
-- send_invoice — Propose emailing an invoice to the customer, to the recipients, subject, wording and attachments the organization and the customer's billing profile set; nothing is chosen by you.
+- send_invoice — Propose emailing an invoice to the customer.
 - list_reports — List the reports this organization can run and what each takes: built-in ones with a reportKey, and ones saved in the report builder with a definitionId.
 - describe_report — Show what a report contains: its dataset, columns, filters, sort, parameters and the full definition as the report builder saves it.
 - preview_report — Run a report definition now and see its first rows, without saving it or producing a file.

@@ -91,10 +91,9 @@ func buildBillingQueueList(
 	return newListTool(listSpec{
 		name:         "list_billing_queue_items",
 		entityPlural: "billing queue items",
-		summary: "List billing queue items, the shipments waiting on a biller, by status, " +
-			"bill type, exception reason, assigned biller, payer or age. Open one with " +
-			"get_billing_queue_item before proposing a decision on it. Posted items are left " +
-			"out unless you filter status to Posted.",
+		summary: "List billing queue items, the shipments waiting on a biller. Open one with " +
+			"get_billing_queue_item before proposing a decision; Posted items appear only " +
+			"when status is Posted.",
 		resource: permission.ResourceBillingQueue,
 		config:   querybuilder.GetFieldConfiguration((*billingqueue.BillingQueueItem)(nil)),
 		fields: []listField{
@@ -102,8 +101,7 @@ func buildBillingQueueList(
 				Name:   paramStatus,
 				Kind:   filterEnum,
 				Values: billingQueueStatuses,
-				Note: "ReadyForReview and InReview are waiting on a biller; OnHold, Exception " +
-					"and SentBackToOps are blocked",
+				Note:   "ReadyForReview and InReview await a biller",
 			},
 			{Name: "billType", Kind: filterEnum, Values: billTypes},
 			{Name: "exceptionReasonCode", Kind: filterEnum, Values: exceptionReasonCodes},
@@ -119,7 +117,7 @@ func buildBillingQueueList(
 				Name:     agentRunFieldCreatedAt,
 				Kind:     filterDate,
 				Sortable: true,
-				Note:     "when it was queued; age is how long ago",
+				Note:     "when it was queued",
 			},
 			{Name: "reviewStartedAt", Kind: filterDate, Sortable: true},
 			{Name: fieldAllocatedTotal, Kind: filterNumber, Sortable: true},
@@ -263,9 +261,9 @@ func newGetBillingQueueItemTool(
 func (t *getBillingQueueItemTool) Name() string { return "get_billing_queue_item" }
 
 func (t *getBillingQueueItemTool) Description() string {
-	return "Open one billing queue item: its payer, shipment, the charges this payer is " +
-		"billed, the detention charges holding it, its exception and review notes, what its " +
-		"shipment still lacks for billing, and the invoice it made once approved. Read it " +
+	return "Open one billing queue item with its payer, shipment and the charges this payer " +
+		"is billed. It also shows the detention charges holding it, its exception and review " +
+		"notes, what its shipment still lacks for billing, and the invoice it made once approved. Read it " +
 		"before proposing approve_billing_queue_item, hold_billing_queue_item, " +
 		"move_billing_item_to_exception, send_billing_item_back_to_ops or " +
 		"cancel_billing_queue_item. Amounts are left out, and named in withheldByAccess, when " +

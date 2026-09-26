@@ -61,17 +61,17 @@ Callable after find_tools:
 - get_shipment — Retrieve one shipment by its id, including its stops, moves, and assignments.
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
 - transfer_to_billing — Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews.
-- get_billing_queue_item — Open one billing queue item: its payer, shipment, the charges this payer is billed, the detention charges holding it, its exception and review notes, what its shipment still lacks for billing, and the invoice it made once approved.
+- get_billing_queue_item — Open one billing queue item with its payer, shipment and the charges this payer is billed.
 - assign_billing_queue_biller — Assign the biller who reviews a billing queue item.
 - transition_item_to_in_review — Move a blocked billing queue item into the InReview state so a biller can work it.
-- hold_billing_queue_item — Put a billing queue item that is waiting for or in review on hold, with a note saying what it waits on, when it cannot be billed yet but nothing is wrong with it: a document on its way, a customer's confirmation.
-- move_billing_item_to_exception — Move a billing queue item in review into exception when the bill itself is wrong and a biller has to resolve it: a rate that disagrees with the agreement, a disputed accessorial, a duplicate charge.
-- send_billing_item_back_to_ops — Send a billing queue item in review back to operations to fix, with the reason, when the fix belongs to the shipment rather than the bill: a missing document operations must collect, a wrong weight, a missing reference number.
-- approve_billing_queue_item — Propose approving a billing queue item you have reviewed and found clean: charges that match the agreement, the documents the customer requires, no detention charge waiting on approval.
+- hold_billing_queue_item — Put a billing queue item on hold, with a note saying what it waits on.
+- move_billing_item_to_exception — Move a billing queue item in review into exception for a biller to resolve.
+- send_billing_item_back_to_ops — Send a billing queue item in review back to operations to fix, with a reason.
+- approve_billing_queue_item — Propose approving a billing queue item you have reviewed and found clean.
 - cancel_billing_queue_item — Propose canceling a billing queue item that should never be billed, such as a duplicate of another item.
 - get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
 - post_invoice — Propose posting a draft invoice, usually the one approve_billing_queue_item just made.
-- send_invoice — Propose emailing an invoice to the customer, to the recipients, subject, wording and attachments the organization and the customer's billing profile set; nothing is chosen by you.
+- send_invoice — Propose emailing an invoice to the customer.
 - list_reports — List the reports this organization can run and what each takes: built-in ones with a reportKey, and ones saved in the report builder with a definitionId.
 - describe_report — Show what a report contains: its dataset, columns, filters, sort, parameters and the full definition as the report builder saves it.
 - preview_report — Run a report definition now and see its first rows, without saving it or producing a file.
