@@ -18,7 +18,11 @@ pub enum ApiError {
     SignedOut,
     /// The organization needs a newer companion.
     #[error("Trenova Capture {minimum_version} or later is required")]
-    Outdated { minimum_version: String },
+    Outdated {
+        minimum_version: String,
+        /// Whether the organization lets the companion update itself.
+        auto_update: bool,
+    },
     /// The organization turned capture off. Pages stay on this computer
     /// until it is turned back on.
     #[error("scanning into Trenova is turned off for your organization")]

@@ -309,12 +309,16 @@ pub struct OAuthError {
 
 /// The `426 Upgrade Required` body: the organization requires a newer
 /// companion than this one.
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OutdatedAgent {
     #[serde(default)]
     pub message: String,
+    #[serde(default)]
     pub minimum_version: String,
+    /// Whether the organization lets the companion update itself.
+    #[serde(default)]
+    pub auto_update: bool,
 }
 
 /// `helpers.ValidationError`.
@@ -452,6 +456,32 @@ pub struct DeviceIdentity {
     pub device: CaptureDevice,
     pub person: DevicePerson,
     pub organization: DeviceOrganization,
+    /// Absent from a server older than the update flow, which means no
+    /// policy: no minimum, and updating itself allowed.
+    #[serde(default)]
+    pub updates: DeviceUpdatePolicy,
+}
+
+/// `captureservice.DeviceUpdatePolicy`: the organization's say over the
+/// companion's version.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceUpdatePolicy {
+    /// The oldest companion that may refresh its token; empty for none.
+    #[serde(default)]
+    pub minimum_version: String,
+    /// Whether the companion installs a new release by itself. When it is
+    /// off, IT deploys new versions.
+    pub allow_auto_update: bool,
+}
+
+impl Default for DeviceUpdatePolicy {
+    fn default() -> Self {
+        Self {
+            minimum_version: String::new(),
+            allow_auto_update: true,
+        }
+    }
 }
 
 /// `capture.CaptureProfile`, the fields a scan needs.

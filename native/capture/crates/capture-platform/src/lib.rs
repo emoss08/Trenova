@@ -14,12 +14,14 @@
 //!   both processes' logs.
 //!
 //! - [`accounts`] turns Windows accounts into the SIDs that name and guard a
-//!   person's print inbox.
+//!   person's print inbox, and [`acl`] creates the directories they guard.
 //!
 //! On anything but Windows this crate is empty.
 
 #[cfg(windows)]
 pub mod accounts;
+#[cfg(windows)]
+pub mod acl;
 #[cfg(windows)]
 mod credman;
 #[cfg(windows)]

@@ -3,13 +3,15 @@
 //! It keeps the session with the server (the device stream, the uploader),
 //! turns requests into scans, runs one scan at a time through the helpers,
 //! and spools every page before anything else happens to it. It also takes
-//! printed jobs from this person's print inbox (`prints`) into the same spool.
+//! printed jobs from this person's print inbox (`prints`) into the same spool,
+//! and keeps itself current (`updates`).
 //! Network calls
 //! run as their own tasks and report back here, so a slow server never holds
 //! up a command from the tray, and there is exactly one place state changes.
 
 pub mod plan;
 pub mod prints;
+pub mod updates;
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::io;
@@ -24,18 +26,23 @@ use capture_client::{
     AgentInfo, Api, ApiError, PageMarkers, Protector, SecretStore, Server, Spool, SpoolError,
 };
 use capture_protocol::api::{
-    Architecture, BatchSource, CaptureProfile, CaptureRequest, DeviceIdentity, Id,
-    RequestFailureCode, RequestMode, RequestStatus, RequestStatusReport, SourceInfo,
+    Architecture, BatchSource, CaptureProfile, CaptureRequest, DeviceIdentity, DeviceUpdatePolicy,
+    Id, RequestFailureCode, RequestMode, RequestStatus, RequestStatusReport, SourceInfo,
     SourceProtocol, StartPairingRequest,
 };
 use capture_protocol::handoff::Inbox;
+use capture_protocol::release::Release;
+use capture_update::ed25519_dalek::VerifyingKey;
+use capture_update::{Decision, decide};
 use tokio::sync::{Notify, mpsc};
 use tokio_util::sync::CancellationToken;
 
 use self::prints::Imported;
+pub use self::updates::UpdateStarter;
 use crate::scanners::{ScanOutcome, ScanRun, ScanUpdate, ScannerHost};
 use crate::state::{
-    Command, Connection, Notice, PausedBatch, RECENT, RecentBatch, Severity, Shared,
+    Command, Connection, Notice, PausedBatch, RECENT, RecentBatch, Severity, Shared, UpdateState,
+    UpdateStatus,
 };
 
 /// Where the server address is kept.
@@ -70,6 +77,14 @@ pub struct Environment {
     pub browser: Arc<Browser>,
     /// How long to wait before trying again after being blocked.
     pub recheck_after: Duration,
+    /// Starts the updater service.
+    pub updater: Arc<dyn UpdateStarter>,
+    /// The key releases are signed with; none means this build never updates.
+    pub release_key: Option<VerifyingKey>,
+    /// This Windows, as a release's minimum names it.
+    pub windows_build: u32,
+    /// Whether this computer's own policy lets Trenova Capture update itself.
+    pub machine_auto_update: bool,
 }
 
 impl std::fmt::Debug for Environment {
@@ -90,6 +105,7 @@ enum Internal {
     Requests(Result<Vec<CaptureRequest>, ApiError>),
     Paired(Result<PairingOutcome, ApiError>),
     Reported(Result<(), ApiError>),
+    Release(Result<Option<Release>, ApiError>),
     Recheck,
 }
 
@@ -122,6 +138,11 @@ struct Agent {
     stream_rx: Option<mpsc::Receiver<DeviceEvent>>,
     upload_rx: Option<mpsc::Receiver<UploadEvent>>,
     prints_rx: Option<mpsc::Receiver<Imported>>,
+    releases_rx: Option<mpsc::Receiver<Result<Option<Release>, ApiError>>>,
+    /// The organization's say over updates, from the device identity.
+    update_policy: DeviceUpdatePolicy,
+    /// The release the updater was asked to install, so it is asked once.
+    update_started: Option<String>,
     wake: Option<Arc<Notify>>,
     pairing: Option<CancellationToken>,
     internal_tx: mpsc::Sender<Internal>,
@@ -168,6 +189,9 @@ pub async fn run(
         stream_rx: None,
         upload_rx: None,
         prints_rx: None,
+        releases_rx: None,
+        update_policy: DeviceUpdatePolicy::default(),
+        update_started: None,
         wake: None,
         pairing: None,
         internal_tx,
@@ -219,6 +243,10 @@ pub async fn run(
             imported = next(agent.prints_rx.as_mut()) => match imported {
                 Some(imported) => agent.printed(imported).await,
                 None => agent.prints_rx = None,
+            },
+            release = next(agent.releases_rx.as_mut()) => match release {
+                Some(release) => agent.release(release),
+                None => agent.releases_rx = None,
             },
             update = next(agent.active.as_mut().map(|a| &mut a.run.updates)) => match update {
                 Some(update) => agent.scan_update(update),
@@ -354,6 +382,14 @@ impl Agent {
         ));
         self.stream_rx = Some(stream_rx);
         self.upload_rx = Some(upload_rx);
+        let (release_tx, release_rx) = mpsc::channel(4);
+        tokio::spawn(updates::watch(
+            Arc::clone(&api),
+            self.env.release_key,
+            release_tx,
+            token.child_token(),
+        ));
+        self.releases_rx = Some(release_rx);
         self.session = Some(token);
 
         let tx = self.internal_tx.clone();
@@ -373,6 +409,7 @@ impl Agent {
         }
         self.stream_rx = None;
         self.upload_rx = None;
+        self.releases_rx = None;
         self.wake = None;
         self.fetching = false;
         self.fetch_again = false;
@@ -470,6 +507,7 @@ impl Agent {
                 }
             }
             Command::RefreshScanners => self.enumerate(),
+            Command::Update => self.install_update(true),
             Command::Quit => {}
         }
     }
@@ -627,10 +665,14 @@ impl Agent {
     async fn internal(&mut self, message: Internal) {
         match message {
             Internal::Identity(Ok(identity)) => {
+                self.update_policy = identity.updates.clone();
                 self.shared.update(|s| {
                     s.person = Some(identity.person.name.clone());
                     s.organization = Some(identity.organization.name.clone());
                 });
+                if self.shared.snapshot().update.is_some() {
+                    self.install_update(false);
+                }
             }
             Internal::Profiles(Ok(profiles)) => {
                 self.profiles = profiles;
@@ -655,6 +697,7 @@ impl Agent {
                 }
             }
             Internal::Paired(result) => self.paired(result).await,
+            Internal::Release(release) => self.release(release),
             Internal::Recheck => {
                 if self.blocked && self.api.is_some() {
                     self.start_session().await;
@@ -1110,6 +1153,135 @@ impl Agent {
         }
     }
 
+    /// Asks the server for the current release once, outside the regular
+    /// schedule: after a 426, when the update is what unblocks everything.
+    fn check_release(&self) {
+        let Some(api) = self.api.clone() else {
+            return;
+        };
+        let (tx, key) = (self.internal_tx.clone(), self.env.release_key);
+        tokio::spawn(async move {
+            let _ = tx
+                .send(Internal::Release(updates::check(&api, key.as_ref()).await))
+                .await;
+        });
+    }
+
+    /// Whether the organization and this computer both let the companion
+    /// install a release itself.
+    fn may_self_update(&self) -> bool {
+        self.update_policy.allow_auto_update && self.env.machine_auto_update
+    }
+
+    /// What the server publishes, compared with what this is.
+    fn release(&mut self, release: Result<Option<Release>, ApiError>) {
+        let release = match release {
+            Ok(Some(release)) => release,
+            Ok(None) => {
+                self.shared.update(|s| s.update = None);
+                return;
+            }
+            Err(err) => {
+                tracing::warn!(error = %err, "could not check for a new release");
+                return;
+            }
+        };
+        let status = match decide(&self.env.agent.version, &release, self.env.windows_build) {
+            Decision::UpToDate => {
+                self.shared.update(|s| s.update = None);
+                return;
+            }
+            Decision::WindowsTooOld { .. } => UpdateStatus::WindowsTooOld,
+            Decision::Install if self.may_self_update() => UpdateStatus::Available,
+            Decision::Install => UpdateStatus::AskAdministrator,
+        };
+        let known = self.shared.snapshot().update;
+        let version = release.version.clone();
+        self.shared.update(|s| {
+            s.update = Some(UpdateState {
+                version: version.clone(),
+                download_url: release.installer.url.clone(),
+                status: match &s.update {
+                    Some(current) if current.status == UpdateStatus::Installing => {
+                        UpdateStatus::Installing
+                    }
+                    _ => status,
+                },
+            });
+        });
+        match status {
+            UpdateStatus::Available => self.install_update(false),
+            UpdateStatus::AskAdministrator
+                if known.as_ref().is_none_or(|k| k.version != version) =>
+            {
+                self.notify(
+                    Severity::Info,
+                    format!("Trenova Capture {version} is available"),
+                    "Your organization installs updates itself; ask your administrator.",
+                    None,
+                );
+            }
+            _ => {}
+        }
+    }
+
+    /// Starts the updater for the release the snapshot names. A scan in
+    /// progress is never interrupted; `asked` is a person choosing it from
+    /// the menu, who is told why it waits.
+    fn install_update(&mut self, asked: bool) {
+        let Some(update) = self.shared.snapshot().update else {
+            return;
+        };
+        if update.status != UpdateStatus::Available || !self.may_self_update() {
+            return;
+        }
+        if self.active.is_some() {
+            if asked {
+                self.notify(
+                    Severity::Info,
+                    "The update will start after this scan",
+                    "Trenova Capture does not update while a scanner is running.",
+                    None,
+                );
+            }
+            return;
+        }
+        if self.update_started.as_deref() == Some(update.version.as_str()) {
+            return;
+        }
+        let Some(api) = &self.api else {
+            return;
+        };
+        match self.env.updater.start(&updates::manifest_url(api)) {
+            Ok(()) => {
+                self.update_started = Some(update.version.clone());
+                self.shared.update(|s| {
+                    if let Some(u) = &mut s.update {
+                        u.status = UpdateStatus::Installing;
+                    }
+                });
+                self.notify(
+                    Severity::Info,
+                    format!("Updating Trenova Capture to {}", update.version),
+                    "It restarts by itself when the update is done.",
+                    None,
+                );
+            }
+            Err(err) => {
+                tracing::error!(error = %err, "could not start the updater");
+                self.notify(
+                    Severity::Warning,
+                    "Trenova Capture could not update",
+                    format!(
+                        "{err}. Ask your administrator to install version {}.",
+                        update.version
+                    ),
+                    Some(update.download_url.clone()),
+                );
+            }
+        }
+    }
+
     /// Acts on an error from anywhere: most are logged, but one that blocks
     /// everything ends the session and says why.
     fn api_error(&mut self, err: &ApiError) {
@@ -1134,14 +1306,20 @@ impl Agent {
                 );
                 return;
             }
-            ApiError::Outdated { minimum_version } => {
+            ApiError::Outdated {
+                minimum_version,
+                auto_update,
+            } => {
                 let minimum = minimum_version.clone();
+                self.update_policy.minimum_version.clone_from(&minimum);
+                self.update_policy.allow_auto_update = *auto_update;
                 self.shared.update(|s| {
                     s.update_required = Some(minimum.clone());
                     s.connection = Connection::Blocked {
                         reason: format!("Trenova Capture {minimum} or later is required."),
                     };
                 });
+                self.check_release();
             }
             other => {
                 let reason = other.to_string();

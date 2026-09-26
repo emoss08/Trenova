@@ -11,12 +11,15 @@ use capture_protocol::api::{Id, PixelType, Settings, SourceInfo, SourceProtocol,
 use capture_protocol::handoff::Inbox;
 use capture_protocol::helper::{PageMeta, ScanCondition, ScanJob};
 use capture_protocol::page_checksum;
+use capture_protocol::release::{
+    Installer, PRODUCT, Release, encode_key_pair, public_key, sign, signing_key,
+};
 use serde_json::json;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
-use trenova_capture::agent::{self, Environment, Machine, ServerSetting};
+use trenova_capture::agent::{self, Environment, Machine, ServerSetting, UpdateStarter};
 use trenova_capture::scanners::{ScanOutcome, ScanRun, ScanUpdate, ScannerHost, SourcesFuture};
-use trenova_capture::state::{Command, Connection, Notice, Shared, Snapshot, Ui};
+use trenova_capture::state::{Command, Connection, Notice, Shared, Snapshot, Ui, UpdateStatus};
 use wiremock::matchers::{body_partial_json, method, path};
 use wiremock::{Mock, MockServer, Request, Respond, ResponseTemplate};
 
@@ -55,6 +58,53 @@ impl Protector for Plain {
     fn unprotect(&self, sealed: &[u8]) -> std::io::Result<Vec<u8>> {
         Ok(sealed.to_vec())
     }
+}
+
+/// Records what the agent asked the updater to install from.
+#[derive(Default)]
+struct FakeUpdater {
+    started: Mutex<Vec<String>>,
+}
+
+impl UpdateStarter for FakeUpdater {
+    fn start(&self, manifest_url: &str) -> std::io::Result<()> {
+        self.started
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push(manifest_url.to_owned());
+        Ok(())
+    }
+}
+
+const RELEASE_SEED: [u8; 32] = [5u8; 32];
+
+fn release_key() -> capture_update::ed25519_dalek::VerifyingKey {
+    let (_, public) = encode_key_pair(RELEASE_SEED);
+    public_key(&public).expect("key")
+}
+
+/// Publishes a signed release on the mock server.
+async fn publish(server: &MockServer, version: &str) {
+    let (private, _) = encode_key_pair(RELEASE_SEED);
+    let release = Release {
+        product: PRODUCT.into(),
+        version: version.into(),
+        published_at: 1_780_000_000,
+        minimum_windows_build: 19045,
+        installer: Installer {
+            file_name: format!("TrenovaCapture-{version}-x64.msi"),
+            url: format!("https://releases.example.test/TrenovaCapture-{version}-x64.msi"),
+            sha256: "ab".repeat(32),
+            size: 1000,
+        },
+        notes: String::new(),
+    };
+    let signed = sign(&release, &signing_key(&private).expect("key")).expect("signs");
+    Mock::given(method("GET"))
+        .and(path("/api/v1/capture/releases/latest/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(signed))
+        .mount(server)
+        .await;
 }
 
 struct FixedServer(String);
@@ -279,6 +329,7 @@ struct Running {
     task: tokio::task::JoinHandle<()>,
     scanner: Arc<FakeScanner>,
     inbox: Inbox,
+    updater: Arc<FakeUpdater>,
     _dir: tempfile::TempDir,
 }
 
@@ -289,6 +340,7 @@ fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
         scripts: Mutex::new(scripts.into()),
         jobs: Mutex::new(Vec::new()),
     });
+    let updater = Arc::new(FakeUpdater::default());
     let inbox_dir = dir.path().join("inbox");
     std::fs::create_dir_all(&inbox_dir).expect("inbox");
     let env = Environment {
@@ -308,6 +360,10 @@ fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
         server_setting: Arc::new(FixedServer(server.uri())),
         browser: Arc::new(|_| {}),
         recheck_after: Duration::from_secs(600),
+        updater: Arc::clone(&updater) as Arc<dyn UpdateStarter>,
+        release_key: Some(release_key()),
+        windows_build: 22631,
+        machine_auto_update: true,
     };
     let ui = Arc::new(TestUi::default());
     let shared = Shared::new(Arc::clone(&ui) as Arc<dyn Ui>);
@@ -325,6 +381,7 @@ fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
         task,
         scanner,
         inbox: Inbox::new(inbox_dir),
+        updater,
         _dir: dir,
     }
 }
@@ -555,5 +612,74 @@ async fn a_print_left_in_the_inbox_is_sent_whole_to_where_it_was_armed() {
         .expect("sent");
     assert_eq!(sent.body, b"%PDF-1.7 printed");
     assert!(requests.iter().all(|r| !r.url.path().ends_with("/seal/")));
+    stop(running).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_newer_release_is_installed_through_the_updater_service() {
+    let server = server(json!([])).await;
+    publish(&server, "9.9.9").await;
+    let running = start(&server, Vec::new());
+
+    until(&running, "the updater to be started", |s, titles| {
+        titles
+            .iter()
+            .any(|t| t == "Updating Trenova Capture to 9.9.9")
+            && s.update
+                .as_ref()
+                .is_some_and(|u| u.status == UpdateStatus::Installing)
+    })
+    .await;
+    assert_eq!(
+        *running
+            .updater
+            .started
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner),
+        [format!("{}/api/v1/capture/releases/latest/", server.uri())],
+        "the updater is pointed at the server's manifest, once"
+    );
+    stop(running).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn where_the_organization_installs_updates_itself_the_release_is_only_announced() {
+    let server = server(json!([])).await;
+    publish(&server, "9.9.9").await;
+    Mock::given(method("GET"))
+        .and(path("/api/v1/capture/device/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "device": {"id": "cdev_1", "sources": null},
+            "person": {"id": "usr_1", "name": "Jordan Doe"},
+            "organization": {"id": "org_1", "name": "Acme Freight"},
+            "updates": {"minimumVersion": "", "allowAutoUpdate": false}
+        })))
+        .with_priority(1)
+        .mount(&server)
+        .await;
+    let running = start(&server, Vec::new());
+
+    until(&running, "the release to be announced", |s, titles| {
+        titles
+            .iter()
+            .any(|t| t == "Trenova Capture 9.9.9 is available")
+            && s.update
+                .as_ref()
+                .is_some_and(|u| u.status == UpdateStatus::AskAdministrator)
+    })
+    .await;
+    assert!(
+        running
+            .updater
+            .started
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .is_empty()
+    );
+    let menu = running.shared.snapshot().menu();
+    assert!(
+        format!("{menu:?}").contains("ask your administrator"),
+        "{menu:?}"
+    );
     stop(running).await;
 }

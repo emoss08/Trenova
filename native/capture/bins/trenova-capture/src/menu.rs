@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use capture_protocol::api::{ProfileStatus, SourceProtocol};
 
-use crate::state::{Command, Connection, Snapshot};
+use crate::state::{Command, Connection, Snapshot, UpdateStatus};
 
 /// What choosing a menu item does.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -90,6 +90,41 @@ impl Snapshot {
         }
     }
 
+    /// What the menu says about a newer release, if anything.
+    fn update_entries(&self) -> Vec<MenuEntry> {
+        let mut entries = Vec::new();
+        if let Some(version) = &self.update_required
+            && self.update.is_none()
+        {
+            entries.push(note(format!(
+                "Update to Trenova Capture {version} or later"
+            )));
+        }
+        if let Some(update) = &self.update {
+            entries.push(match update.status {
+                UpdateStatus::Available => item(
+                    format!("Update to Trenova Capture {}", update.version),
+                    MenuAction::Command(Command::Update),
+                ),
+                UpdateStatus::AskAdministrator => item(
+                    format!(
+                        "Trenova Capture {} is available; ask your administrator",
+                        update.version
+                    ),
+                    MenuAction::Open(update.download_url.clone()),
+                ),
+                UpdateStatus::Installing => {
+                    note(format!("Installing Trenova Capture {}", update.version))
+                }
+                UpdateStatus::WindowsTooOld => note(format!(
+                    "Trenova Capture {} needs a newer Windows",
+                    update.version
+                )),
+            });
+        }
+        entries
+    }
+
     fn scan_menu(&self) -> MenuEntry {
         if self.sources.is_empty() {
             return note("No scanners found");
@@ -152,11 +187,7 @@ impl Snapshot {
         };
         menu.push(note(who));
         menu.push(note(self.status_line()));
-        if let Some(version) = &self.update_required {
-            menu.push(note(format!(
-                "Update to Trenova Capture {version} or later"
-            )));
-        }
+        menu.extend(self.update_entries());
         menu.push(MenuEntry::Separator);
 
         let online = self.signed_in() && !matches!(self.connection, Connection::Blocked { .. });
@@ -424,6 +455,31 @@ mod tests {
                 .iter()
                 .any(|a| matches!(a, MenuAction::Command(Command::Scan { .. })))
         );
+    }
+
+    #[test]
+    fn a_new_release_is_offered_installed_or_passed_to_the_administrator() {
+        let update = |status| Snapshot {
+            connection: Connection::Online,
+            update: Some(crate::state::UpdateState {
+                version: "2.1.0".into(),
+                download_url: "https://releases.example.test/TrenovaCapture-2.1.0-x64.msi".into(),
+                status,
+            }),
+            ..Snapshot::default()
+        };
+        let available = update(crate::state::UpdateStatus::Available).menu();
+        assert!(actions(&available).contains(&MenuAction::Command(Command::Update)));
+
+        let ask = update(crate::state::UpdateStatus::AskAdministrator).menu();
+        assert!(actions(&ask).contains(&MenuAction::Open(
+            "https://releases.example.test/TrenovaCapture-2.1.0-x64.msi".into()
+        )));
+        assert!(!actions(&ask).contains(&MenuAction::Command(Command::Update)));
+
+        let installing = update(crate::state::UpdateStatus::Installing);
+        assert!(!actions(&installing.menu()).contains(&MenuAction::Command(Command::Update)));
+        assert!(format!("{:?}", installing.menu()).contains("Installing Trenova Capture 2.1.0"));
     }
 
     #[test]

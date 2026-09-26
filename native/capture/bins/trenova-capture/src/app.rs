@@ -11,14 +11,17 @@ use capture_platform::settings::{self, ServerSource};
 use capture_platform::{
     CredentialManager, Dpapi, SingleInstance, accounts, logging, machine, paths, shell,
 };
+use capture_protocol::release::pinned_public_key;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
-use trenova_capture::agent::{self, Environment, Machine, ServerSetting};
+use trenova_capture::agent::{self, Environment, Machine, ServerSetting, UpdateStarter};
 use trenova_capture::scanners::HelperHost;
 use trenova_capture::state::{Command, Shared, Ui};
 use windows::Win32::UI::HiDpi::{
     DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext,
 };
+use windows_service::service::ServiceAccess;
+use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 
 use crate::tray::Tray;
 
@@ -77,6 +80,25 @@ fn print_inbox() -> Option<PathBuf> {
     Some(root.join(sid))
 }
 
+/// The updater service, `TrenovaCaptureUpdater`, which the installer lets
+/// signed-in users start and nothing more.
+struct ServiceUpdater;
+
+impl UpdateStarter for ServiceUpdater {
+    fn start(&self, manifest_url: &str) -> std::io::Result<()> {
+        let os = |err: windows_service::Error| match err {
+            windows_service::Error::Winapi(err) => err,
+            other => std::io::Error::other(other),
+        };
+        let manager = ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)
+            .map_err(os)?;
+        let service = manager
+            .open_service("TrenovaCaptureUpdater", ServiceAccess::START)
+            .map_err(os)?;
+        service.start(&[manifest_url]).map_err(os)
+    }
+}
+
 fn environment(data_dir: &Path) -> Environment {
     let helpers = std::env::current_exe()
         .ok()
@@ -105,6 +127,10 @@ fn environment(data_dir: &Path) -> Environment {
             }
         }),
         recheck_after: RECHECK_AFTER,
+        updater: Arc::new(ServiceUpdater),
+        release_key: pinned_public_key(),
+        windows_build: machine::windows_build(),
+        machine_auto_update: settings::auto_update_allowed(),
     }
 }
 

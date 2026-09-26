@@ -144,6 +144,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "capture-update"
+version = "1.0.0"
+dependencies = [
+ "capture-protocol",
+ "ed25519-dalek",
+ "futures-util",
+ "hex",
+ "reqwest",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
 name = "capture-wia"
 version = "1.0.0"
 dependencies = [
@@ -1747,6 +1764,7 @@ dependencies = [
  "capture-client",
  "capture-platform",
  "capture-protocol",
+ "capture-update",
  "serde",
  "serde_json",
  "tempfile",
@@ -1756,6 +1774,7 @@ dependencies = [
  "tracing",
  "windows",
  "windows-core",
+ "windows-service",
  "winresource",
  "wiremock",
 ]
@@ -1808,6 +1827,27 @@ dependencies = [
  "windows",
  "windows-core",
  "windows-service",
+]
+
+[[package]]
+name = "trenova-capture-update"
+version = "1.0.0"
+dependencies = [
+ "capture-platform",
+ "capture-protocol",
+ "capture-update",
+ "hex",
+ "reqwest",
+ "sha2",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "url",
+ "windows",
+ "windows-core",
+ "windows-service",
+ "wiremock",
 ]
 
 [[package]]

@@ -19,6 +19,7 @@ const POLICY_KEY: &str = "SOFTWARE\\Policies\\Trenova\\Capture";
 const KEY: &str = "SOFTWARE\\Trenova\\Capture";
 const SERVER_URL: &str = "ServerUrl";
 const PRINT_PORT: &str = "PrintPort";
+const AUTO_UPDATE: &str = "AutoUpdate";
 const CRYPTOGRAPHY_KEY: &str = "SOFTWARE\\Microsoft\\Cryptography";
 const MACHINE_GUID: &str = "MachineGuid";
 
@@ -89,6 +90,17 @@ pub fn print_port() -> Option<u16> {
         .find_map(|key| read_dword(HKEY_LOCAL_MACHINE, key, PRINT_PORT))
         .and_then(|port| u16::try_from(port).ok())
         .filter(|&port| port != 0)
+}
+
+/// Whether this computer may update Trenova Capture by itself: `AutoUpdate`
+/// (a DWORD, 0 for no) under the policy key, else under the installer's key
+/// (its `AUTOUPDATE` property). Unset means yes. The organization's own say
+/// is a server setting; this one is IT's, for computers it manages.
+pub fn auto_update_allowed() -> bool {
+    [POLICY_KEY, KEY]
+        .iter()
+        .find_map(|key| read_dword(HKEY_LOCAL_MACHINE, key, AUTO_UPDATE))
+        .is_none_or(|value| value != 0)
 }
 
 /// The GUID Windows generated for this installation, which names the

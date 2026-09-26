@@ -180,6 +180,13 @@ pub struct SignedRelease {
     pub signature: String,
 }
 
+/// The key releases are signed with, fixed at build time from
+/// `TRENOVA_CAPTURE_PUBLIC_KEY`. A build made without one, as a development
+/// build is, trusts no release and never updates itself.
+pub fn pinned_public_key() -> Option<VerifyingKey> {
+    option_env!("TRENOVA_CAPTURE_PUBLIC_KEY").and_then(|key| public_key(key).ok())
+}
+
 /// Reads a base64 ed25519 public key.
 pub fn public_key(value: &str) -> Result<VerifyingKey, ReleaseError> {
     let bytes: [u8; 32] = STANDARD

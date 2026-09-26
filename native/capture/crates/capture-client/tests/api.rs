@@ -127,7 +127,9 @@ async fn an_outdated_agent_and_capture_turned_off_are_told_apart_from_other_refu
         .await;
     let outdated = device(&server, 0);
     match outdated.api.identity().await {
-        Err(ApiError::Outdated { minimum_version }) => assert_eq!(minimum_version, "1.4.0"),
+        Err(ApiError::Outdated {
+            minimum_version, ..
+        }) => assert_eq!(minimum_version, "1.4.0"),
         other => panic!("expected outdated, got {other:?}"),
     }
     assert!(

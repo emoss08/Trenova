@@ -50,6 +50,28 @@ pub struct RecentBatch {
     pub requested: bool,
 }
 
+/// A newer release, and what is being done about it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UpdateState {
+    pub version: String,
+    /// Where the installer is, for a person who installs it themselves.
+    pub download_url: String,
+    pub status: UpdateStatus,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum UpdateStatus {
+    /// It can be installed from the menu, and will be after the next check
+    /// finds nothing scanning.
+    Available,
+    /// The organization or this computer's policy leaves installing to IT.
+    AskAdministrator,
+    /// The updater has been asked to install it.
+    Installing,
+    /// It needs a newer Windows than this one.
+    WindowsTooOld,
+}
+
 /// A scan the scanner stopped partway, waiting for the person to continue
 /// or finish it.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -78,6 +100,8 @@ pub struct Snapshot {
     pub recent: VecDeque<RecentBatch>,
     /// The newest version the organization requires, when this one is older.
     pub update_required: Option<String>,
+    /// A newer release, once one is known.
+    pub update: Option<UpdateState>,
 }
 
 impl Snapshot {
@@ -150,6 +174,8 @@ pub enum Command {
     /// Send a stopped batch as it is.
     Finish(String),
     RefreshScanners,
+    /// Install the release the menu offers.
+    Update,
     Quit,
 }
 

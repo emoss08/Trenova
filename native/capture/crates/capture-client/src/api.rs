@@ -18,6 +18,7 @@ use capture_protocol::api::{
     ReportSourcesRequest, RequestStatusReport, SealBatchInput, SourceInfo, StartPairingRequest,
     TokenPair, known_patch_code,
 };
+use capture_protocol::release::{MAX_SIGNED_BYTES, SignedRelease};
 use reqwest::header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue, RETRY_AFTER};
 use reqwest::{RequestBuilder, Response, StatusCode};
 use serde::de::DeserializeOwned;
@@ -311,6 +312,26 @@ impl Api {
         Ok(response)
     }
 
+    /// The current release, from the server's public mirror of the signed
+    /// manifest. `None` when it publishes none. The caller verifies the
+    /// signature; nothing here is trusted for having come from the server.
+    pub async fn latest_release(&self) -> Result<Option<SignedRelease>, ApiError> {
+        let response = self
+            .http
+            .get(self.server.api("releases/latest/"))
+            .timeout(CALL_TIMEOUT)
+            .send()
+            .await?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+        let signed: SignedRelease = decode(response).await?;
+        if signed.manifest.len() + signed.signature.len() > MAX_SIGNED_BYTES {
+            return Err(ApiError::Decode("the release manifest is too large".into()));
+        }
+        Ok(Some(signed))
+    }
+
     async fn call<T: DeserializeOwned>(
         &self,
         build: impl Fn(&str) -> RequestBuilder,
@@ -526,11 +547,13 @@ fn error_for(status: StatusCode, body: &[u8], retry_after: Option<Duration>) -> 
                 ApiError::Invalid(Box::new(problem))
             }
         }
-        426 => ApiError::Outdated {
-            minimum_version: serde_json::from_slice::<OutdatedAgent>(body)
-                .map(|o| o.minimum_version)
-                .unwrap_or_default(),
-        },
+        426 => {
+            let outdated = serde_json::from_slice::<OutdatedAgent>(body).unwrap_or_default();
+            ApiError::Outdated {
+                minimum_version: outdated.minimum_version,
+                auto_update: outdated.auto_update,
+            }
+        }
         429 => ApiError::RateLimited { retry_after },
         500..=599 => ApiError::Server {
             status: status.as_u16(),
