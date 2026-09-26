@@ -176,7 +176,7 @@ func (s *Service) ConfirmByToken(
 			return invalidTokenError()
 		}
 		previous := *entity
-		confirmed, confirmErr := s.markConfirmed(ctx, tenantInfo, entity, confirmParams{
+		confirmed, confirmErr := s.markConfirmed(ctx, tenantInfo, entity, rateconfirmation.Confirmation{
 			Name:  signerName,
 			Title: signerTitle,
 			Via:   rateconfirmation.ViaPublicSignature,
@@ -216,7 +216,7 @@ func (s *Service) applySignLink(
 	recipientEmail string,
 	templateContext *documenttemplate.RateConfirmationContext,
 ) error {
-	if s.cfg == nil || s.cfg.Tendering.GetPublicBaseURL() == "" {
+	if !s.signLinkConfigured() {
 		s.l.Warn(
 			"tendering public base URL is not configured; the rate confirmation email carries no sign link",
 			zap.String("rateConfirmationId", entity.ID.String()),

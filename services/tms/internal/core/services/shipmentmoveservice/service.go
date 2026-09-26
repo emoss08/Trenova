@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
@@ -149,39 +150,17 @@ func (s *service) UpdateStatus(
 	var updatedMove *shipment.ShipmentMove
 	var previousStatus shipment.MoveStatus
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		move, err := s.repo.GetByID(txCtx, &repositories.GetMoveByIDRequest{
-			MoveID:            req.MoveID,
-			TenantInfo:        req.TenantInfo,
-			ExpandMoveDetails: false,
-			ForUpdate:         true,
+		plan, err := s.planMoveStatus(txCtx, &moveStatusRequest{
+			tenantInfo: req.TenantInfo,
+			moveIDs:    []pulid.ID{req.MoveID},
+			status:     req.Status,
+			forUpdate:  true,
 		})
 		if err != nil {
 			return err
 		}
+		move := plan.moves[0]
 		previousStatus = move.Status
-
-		if !shipmentstate.CanTransitionMoveStatus(move.Status, req.Status) {
-			return errortypes.NewBusinessError(
-				"Move status transition from {0} to {1} is not allowed", move.Status, req.Status,
-			).WithParam("moveId", req.MoveID.String())
-		}
-		if req.Status == shipment.MoveStatusInTransit {
-			if err = s.ensureEquipmentAvailableForProgress(
-				txCtx,
-				req.TenantInfo,
-				move.ID,
-			); err != nil {
-				return err
-			}
-		}
-		if err = s.ensureNoDeliveryHold(
-			txCtx,
-			move.ShipmentID,
-			req.TenantInfo,
-			req.Status,
-		); err != nil {
-			return err
-		}
 
 		updatedMove, err = s.repo.UpdateStatus(txCtx, req)
 		if err != nil {
@@ -231,54 +210,19 @@ func (s *service) BulkUpdateStatus(
 	}
 
 	var updatedMoves []*shipment.ShipmentMove
-	previousStatuses := make(map[pulid.ID]shipment.MoveStatus, len(req.MoveIDs))
-	shipmentIDs := make(map[pulid.ID]struct{}, len(req.MoveIDs))
+	var plan *moveStatusPlan
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		seenTractors := make(map[pulid.ID]pulid.ID, len(req.MoveIDs))
-		seenTrailers := make(map[pulid.ID]pulid.ID, len(req.MoveIDs))
-
-		for _, moveID := range req.MoveIDs {
-			move, err := s.repo.GetByID(txCtx, &repositories.GetMoveByIDRequest{
-				MoveID:            moveID,
-				TenantInfo:        req.TenantInfo,
-				ExpandMoveDetails: false,
-				ForUpdate:         true,
-			})
-			if err != nil {
-				return err
-			}
-			previousStatuses[moveID] = move.Status
-
-			if !shipmentstate.CanTransitionMoveStatus(move.Status, req.Status) {
-				return errortypes.NewBusinessError(
-					"Move status transition from {0} to {1} is not allowed",
-					move.Status,
-					req.Status,
-				).WithParam("moveId", moveID.String())
-			}
-			if err = s.ensureEquipmentAvailableForProgressBulk(
-				txCtx,
-				req.TenantInfo,
-				move.ID,
-				req.Status,
-				seenTractors,
-				seenTrailers,
-			); err != nil {
-				return err
-			}
-			if err = s.ensureNoDeliveryHold(
-				txCtx,
-				move.ShipmentID,
-				req.TenantInfo,
-				req.Status,
-			); err != nil {
-				return err
-			}
-
-			shipmentIDs[move.ShipmentID] = struct{}{}
+		var err error
+		plan, err = s.planMoveStatus(txCtx, &moveStatusRequest{
+			tenantInfo: req.TenantInfo,
+			moveIDs:    req.MoveIDs,
+			status:     req.Status,
+			forUpdate:  true,
+		})
+		if err != nil {
+			return err
 		}
 
-		var err error
 		updatedMoves, err = s.repo.BulkUpdateStatus(txCtx, req)
 		if err != nil {
 			return err
@@ -294,7 +238,7 @@ func (s *service) BulkUpdateStatus(
 			}
 		}
 
-		for shipmentID := range shipmentIDs {
+		for _, shipmentID := range plan.shipmentIDs {
 			if err = s.refreshShipmentState(txCtx, shipmentID, req.TenantInfo); err != nil {
 				return err
 			}
@@ -306,11 +250,11 @@ func (s *service) BulkUpdateStatus(
 		return nil, err
 	}
 
-	s.emitBulkMoveStatusEvents(ctx, req.TenantInfo, updatedMoves, previousStatuses)
-	for shipmentID := range shipmentIDs {
+	s.emitBulkMoveStatusEvents(ctx, req.TenantInfo, updatedMoves, plan.previous)
+	for _, shipmentID := range plan.shipmentIDs {
 		s.evaluateServiceFailuresAfterMoveStatus(ctx, shipmentID, req.TenantInfo)
 	}
-	s.notifyBulkMoveObservers(ctx, req.TenantInfo, updatedMoves, previousStatuses)
+	s.notifyBulkMoveObservers(ctx, req.TenantInfo, updatedMoves, plan.previous)
 
 	return updatedMoves, nil
 }
@@ -492,29 +436,15 @@ func (s *service) refreshShipmentState(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         shipmentID,
-		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
+	entity, err := s.loadShipment(ctx, shipmentID, tenantInfo)
 	if err != nil {
 		return err
 	}
 
-	control, err := s.controlRepo.Get(
-		ctx,
-		repositories.GetShipmentControlRequest{TenantInfo: tenantInfo},
-	)
+	control, err := s.deriveShipmentState(ctx, entity, tenantInfo)
 	if err != nil {
 		return err
 	}
-
-	s.coordinator.RefreshShipmentStateWithDelayThreshold(
-		entity,
-		shipmentstate.ResolveControlDelayThreshold(control),
-	)
 	if err = s.commercial.Recalculate(ctx, entity, control, pulid.Nil); err != nil {
 		return err
 	}
@@ -527,6 +457,43 @@ func (s *service) refreshShipmentState(
 	}
 
 	return nil
+}
+
+func (s *service) loadShipment(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*shipment.Shipment, error) {
+	return s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         shipmentID,
+		TenantInfo: tenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+}
+
+// deriveShipmentState re-derives the shipment's status and dates from its
+// moves and stops, with the organization's delay threshold.
+func (s *service) deriveShipmentState(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+) (*tenant.ShipmentControl, error) {
+	control, err := s.controlRepo.Get(
+		ctx,
+		repositories.GetShipmentControlRequest{TenantInfo: tenantInfo},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	s.coordinator.RefreshShipmentStateWithDelayThreshold(
+		entity,
+		shipmentstate.ResolveControlDelayThreshold(control),
+	)
+
+	return control, nil
 }
 
 func (s *service) ensureNoDeliveryHold(
