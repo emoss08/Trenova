@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -164,12 +165,11 @@ func (t *searchShipmentsTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Optional text to match. Omit to list shipments unfiltered.",
 			},
-			"status": map[string]any{
-				"type": "string",
-				"enum": shipmentStatuses,
-				"description": "Optional status filter. There is no Delivered: a " +
+			paramStatus: agenttoolschema.Enum(
+				"Optional status filter. There is no Delivered: a "+
 					"delivered load is Completed. Omit to include every status.",
-			},
+				listShipmentStatuses,
+			),
 			"limit": map[string]any{
 				"type":        "integer",
 				"description": "How many results to return, at most 25",

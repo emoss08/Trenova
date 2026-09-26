@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
@@ -43,6 +44,16 @@ const (
 )
 
 // ---------------------------------------------------------------- detention
+
+var carrierFindingResolutions = agenttoolschema.Source(
+	"carrierIntel.findingResolution",
+	[]carrierintel.EventResolution{
+		carrierintel.EventResolutionCarrierUpdated,
+		carrierintel.EventResolutionCarrierBlocked,
+		carrierintel.EventResolutionNoActionRequired,
+		carrierintel.EventResolutionFalsePositive,
+	},
+)
 
 type detentionEscalator interface {
 	Escalate(
@@ -767,14 +778,10 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Why you are " + verb + " it, for the carrier's record.",
 			},
-			"resolution": map[string]any{
-				"type": "string",
-				"enum": []string{
-					"CarrierUpdated", "CarrierBlocked",
-					"NoActionRequired", "FalsePositive",
-				},
-				"description": "What came of the finding. Only used when closing one.",
-			},
+			fieldResolution: agenttoolschema.Enum(
+				"What came of the finding. Only used when closing one.",
+				carrierFindingResolutions,
+			),
 		},
 		"required":             t.required(),
 		"additionalProperties": false,

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -263,15 +264,15 @@ func fillSettlementReason(params map[string]any, req *settlementshared.ActionReq
 }
 
 func fillSettlementPayment(
-	methods []string,
+	methods agenttoolschema.EnumSource[string],
 ) func(map[string]any, *settlementshared.ActionRequest) error {
 	return func(params map[string]any, req *settlementshared.ActionRequest) error {
 		method, err := boundedString(params, paramPaymentMethod, maxPaymentMethodChars, true)
 		if err != nil {
 			return err
 		}
-		if !slices.Contains(methods, method) {
-			return errUnknownValue(paramPaymentMethod, method, methods)
+		if !slices.Contains(methods.Values, method) {
+			return errUnknownValue(paramPaymentMethod, method, methods.Names())
 		}
 		reference, err := boundedString(
 			params,
@@ -293,14 +294,11 @@ func settlementReasonProperty(description string) map[string]any {
 	return stringProperty(description, maxSettlementReason)
 }
 
-func settlementPaymentProperties(methods []string) map[string]any {
+func settlementPaymentProperties(methods agenttoolschema.EnumSource[string]) map[string]any {
 	return map[string]any{
-		paramPaymentMethod: map[string]any{
-			toolschema.KeyType: toolschema.TypeString,
-			toolschema.KeyEnum: methods,
-			toolschema.KeyDescription: "How it was paid. Take it from the person; never " +
-				"assume one.",
-		},
+		paramPaymentMethod: agenttoolschema.Enum(
+			"How it was paid. Take it from the person; never assume one.", methods,
+		),
 		paramPaymentReference: stringProperty("The check number, ACH trace or batch "+
 			"reference the payment went out under, when the person gave one.",
 			maxPaymentReferenceChar),

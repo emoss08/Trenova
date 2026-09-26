@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,34 +29,34 @@ const (
 )
 
 var (
-	payCodeDirections = []string{
+	payCodeDirections = agenttoolschema.Source("driverPay.payCodeDirection", []string{
 		string(driverpay.PayCodeDirectionEarning),
 		string(driverpay.PayCodeDirectionDeduction),
-	}
-	payeeClassifications = []string{
+	})
+	payeeClassifications = agenttoolschema.Source("driverPay.payeeClassification", []string{
 		string(driverpay.PayeeClassificationCompanyDriver),
 		string(driverpay.PayeeClassificationOwnerOperator),
-	}
-	escrowStatuses = []string{
+	})
+	escrowStatuses = agenttoolschema.Source("driverPay.escrowAccountStatus", []string{
 		string(driverpay.EscrowAccountStatusActive),
 		string(driverpay.EscrowAccountStatusClosed),
-	}
-	advanceStatuses = []string{
+	})
+	advanceStatuses = agenttoolschema.Source("driverPay.advanceStatus", []string{
 		string(driverpay.AdvanceStatusOutstanding),
 		string(driverpay.AdvanceStatusPartiallyRecovered),
 		string(driverpay.AdvanceStatusRecovered),
 		string(driverpay.AdvanceStatusWrittenOff),
-	}
-	deductionStatuses = []string{
+	})
+	deductionStatuses = agenttoolschema.Source("driverPay.deductionStatus", []string{
 		string(driverpay.DeductionStatusActive),
 		string(driverpay.DeductionStatusPaused),
 		string(driverpay.DeductionStatusCompleted),
-	}
-	earningStatuses = []string{
+	})
+	earningStatuses = agenttoolschema.Source("driverPay.earningStatus", []string{
 		string(driverpay.EarningStatusActive),
 		string(driverpay.EarningStatusPaused),
 		string(driverpay.EarningStatusCompleted),
-	}
+	})
 )
 
 func driverPayToolProviders() []any {
@@ -170,7 +171,7 @@ type workerFilter struct {
 
 func readWorkerFilter(
 	params *serviceports.QueryToolParams,
-	statuses []string,
+	statuses agenttoolschema.EnumSource[string],
 ) (workerFilter, error) {
 	workerID, err := optionalID(params.Params, paramWorkerID)
 	if err != nil {
@@ -210,7 +211,10 @@ func (f workerFilter) criteria(
 	return criteria
 }
 
-func workerFilterSchema(statuses []string, what string) map[string]any {
+func workerFilterSchema(
+	statuses agenttoolschema.EnumSource[string],
+	what string,
+) map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramWorkerID: stringParam(workerIDFromList),
 		paramStatus:   enumParam("Only "+what+" in this status.", statuses),

@@ -7,11 +7,15 @@ import (
 )
 
 func classifyCommentVisibility(params serviceports.ToolExecuteParams) serviceports.CallPolicy {
-	switch commentVisibility(optionalString(params.Params, "visibility")) {
+	switch shipment.CommentVisibility(optionalString(params.Params, "visibility")) {
 	case shipment.CommentVisibilityCustomer:
 		return serviceports.CallPolicy{Egress: agent.EgressCustomerVisible}
 	case shipment.CommentVisibilityDriver:
 		return serviceports.CallPolicy{Egress: agent.EgressDriverVisible}
+	case shipment.CommentVisibilityInternal,
+		shipment.CommentVisibilityOperations,
+		shipment.CommentVisibilityAccounting:
+		return serviceports.CallPolicy{Egress: agent.EgressInternal}
 	default:
 		return serviceports.CallPolicy{Egress: agent.EgressInternal}
 	}

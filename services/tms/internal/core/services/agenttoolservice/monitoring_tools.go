@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,6 +28,28 @@ import (
 // monitoring writes need. Detection runs the same evaluator the stop actuals
 // run, so an agent asking for it cannot invent a failure; resolving one goes
 // through the same lifecycle a person's click does.
+var (
+	driverMessagePriorities = agenttoolschema.Source(
+		"notification.priority",
+		[]notification.Priority{
+			notification.PriorityLow,
+			notification.PriorityMedium,
+			notification.PriorityHigh,
+			notification.PriorityCritical,
+		},
+	)
+	waiverReasons = agenttoolschema.Source("detention.waiverReason", []detention.WaiverReason{
+		detention.WaiverReasonWeather,
+		detention.WaiverReasonFacilityClosure,
+		detention.WaiverReasonCarrierFault,
+		detention.WaiverReasonEquipmentIssue,
+		detention.WaiverReasonCustomerGoodwill,
+		detention.WaiverReasonDataCorrection,
+		detention.WaiverReasonForceMajeure,
+		detention.WaiverReasonOther,
+	})
+)
+
 type serviceFailureDecider interface {
 	EvaluateShipment(
 		ctx context.Context,
@@ -333,11 +356,10 @@ func (t *notifyDriverTool) ParamSchema() map[string]any {
 					"The message, at most %d characters, in plain words.", maxDriverMessageChars,
 				),
 			},
-			"priority": map[string]any{
-				"type":        "string",
-				"enum":        []string{"low", "medium", "high", "critical"},
-				"description": "How urgently the phone should show it. Default medium.",
-			},
+			"priority": agenttoolschema.Enum(
+				"How urgently the phone should show it. Default medium.",
+				driverMessagePriorities,
+			),
 			"shipmentId": map[string]any{
 				"type": "string",
 				"description": "Optional: the shipment the message is about, so Dash can open " +
@@ -741,14 +763,7 @@ func (t *waiveDetentionTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The occurrence id from list_detention_desk.",
 			},
-			"reason": map[string]any{
-				"type": "string",
-				"enum": []string{
-					"Weather", "FacilityClosure", "CarrierFault", "EquipmentIssue",
-					"CustomerGoodwill", "DataCorrection", "ForceMajeure", "Other",
-				},
-				"description": "The coded reason for the waiver.",
-			},
+			fieldReason: agenttoolschema.Enum("The coded reason for the waiver.", waiverReasons),
 			"note": map[string]any{
 				"type":        "string",
 				"description": "Why, in a sentence a person can read on the occurrence later.",

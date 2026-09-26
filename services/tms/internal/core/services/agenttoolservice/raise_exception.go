@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -46,11 +47,10 @@ func (t *raiseExceptionTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"subjectType": map[string]any{
-				"type":        "string",
-				"enum":        subjectTypeNames(),
-				"description": "The kind of record the case is about.",
-			},
+			fieldSubjectType: agenttoolschema.Enum(
+				"The kind of record the case is about.",
+				agenttoolschema.SubjectTypes,
+			),
 			"subjectId": map[string]any{
 				"type": "string",
 				"description": "The id of that record: usually this run's subject, or an id a " +
@@ -58,17 +58,14 @@ func (t *raiseExceptionTool) ParamSchema() map[string]any {
 					"match subjectType: a report's id starts rd_, a dashboard's rdb_, an " +
 					"insight's inst_.",
 			},
-			"category": map[string]any{
-				"type":        "string",
-				"enum":        exceptionCategoryNames(),
-				"description": "What kind of problem it is.",
-			},
-			"severity": map[string]any{
-				"type": "string",
-				"enum": []string{"Low", "Medium", "High", "Critical"},
-				"description": "How urgent it is for the person who takes over. Defaults to " +
-					"Medium.",
-			},
+			fieldCategory: agenttoolschema.Enum(
+				"What kind of problem it is.",
+				agenttoolschema.ExceptionCategories,
+			),
+			fieldSeverity: agenttoolschema.Enum(
+				"How urgent it is for the person who takes over. Defaults to Medium.",
+				agenttoolschema.Severities,
+			),
 			"attemptSummary": map[string]any{
 				"type":        "string",
 				"description": "What you tried and why it was not enough, for the person who takes over.",
@@ -141,12 +138,22 @@ func (t *raiseExceptionTool) request(
 		return nil, err
 	}
 
-	category := agent.ExceptionCategory(optionalString(params.Params, "category"))
-	if !category.IsValid() {
+	category, given, err := optionalEnum(
+		params.Params, "category", agenttoolschema.ExceptionCategories.Values,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !given {
 		category = agent.CategoryOther
 	}
-	severity := agent.Severity(optionalString(params.Params, "severity"))
-	if !severity.IsValid() {
+	severity, given, err := optionalEnum(
+		params.Params, "severity", agenttoolschema.Severities.Values,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !given {
 		severity = agent.SeverityMedium
 	}
 
@@ -200,7 +207,7 @@ func (t *raiseExceptionTool) subject(
 	if !subjectType.IsValid() {
 		return "", pulid.Nil, fmt.Errorf(
 			"parameter \"subjectType\" is not a known record kind; use one of %s",
-			strings.Join(subjectTypeNames(), ", "),
+			strings.Join(agenttoolschema.SubjectTypes.Names(), ", "),
 		)
 	}
 	subjectID, err := requirePulid(params.Params, "subjectId")
@@ -230,24 +237,4 @@ func (t *raiseExceptionTool) subject(
 	}
 
 	return subjectType, subjectID, nil
-}
-
-func subjectTypeNames() []string {
-	kinds := agent.AllSubjectTypes()
-	names := make([]string, 0, len(kinds))
-	for _, kind := range kinds {
-		names = append(names, string(kind))
-	}
-
-	return names
-}
-
-func exceptionCategoryNames() []string {
-	categories := agent.AllExceptionCategories()
-	names := make([]string, 0, len(categories))
-	for _, category := range categories {
-		names = append(names, string(category))
-	}
-
-	return names
 }

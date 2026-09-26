@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tablequeryservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -69,11 +70,10 @@ func (t *composeTableViewTool) ParamSchema() map[string]any {
 		"type":     "object",
 		"required": []string{"entity", "description"},
 		"properties": map[string]any{
-			"entity": map[string]any{
-				"type":        "string",
-				"enum":        t.entities(),
-				"description": "Which table to build the view of.",
-			},
+			"entity": agenttoolschema.Enum(
+				"Which table to build the view of.",
+				agenttoolschema.Derived("tableView.entity", t.entities()),
+			),
 			"description": map[string]any{
 				"type": "string",
 				"description": "What the view should show, in plain words. " +

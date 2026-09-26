@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -62,28 +63,16 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 				toolschema.KeyDescription: "Optional: one memory's id, to read the whole of a memory " +
 					"your instructions show cut short.",
 			},
-			"kind": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "Optional: Instruction for standing rules to follow, Fact " +
-					"for things agents were told, or Correction for fixes people made to " +
+			"kind": agenttoolschema.Enum(
+				"Optional: Instruction for standing rules to follow, Fact "+
+					"for things agents were told, or Correction for fixes people made to "+
 					"earlier proposals.",
-				"enum": []string{
-					string(agent.MemoryKindInstruction),
-					string(agent.MemoryKindFact),
-					string(agent.MemoryKindCorrection),
-				},
-			},
-			"subjectType": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "Optional: the kind of record subjectId names. Give both " +
-					"or neither.",
-				"enum": []string{
-					string(agent.MemorySubjectCustomer),
-					string(agent.MemorySubjectLocation),
-					string(agent.MemorySubjectWorker),
-					string(agent.MemorySubjectCarrier),
-				},
-			},
+				memoryKinds,
+			),
+			"subjectType": agenttoolschema.Enum(
+				"Optional: the kind of record subjectId names. Give both or neither.",
+				memoryFilterSubjectTypes,
+			),
 			"subjectId": map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "Optional: the record's id, from list_customers, " +

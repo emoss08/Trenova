@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -292,10 +293,7 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 							"type":        "string",
 							"description": "A location id from list_locations.",
 						},
-						"type": map[string]any{
-							"type": "string",
-							"enum": []string{"Pickup", "Delivery", "SplitPickup", "SplitDelivery"},
-						},
+						"type": agenttoolschema.Enum("", agenttoolschema.StopTypes),
 						"date": map[string]any{
 							"type":        "string",
 							"description": "The scheduled date, YYYY-MM-DD, or an RFC 3339 time.",
@@ -591,16 +589,10 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 				"description": "The saved shipment to price, from search_shipments or " +
 					"list_shipments, or the page you are on.",
 			},
-			"strategy": map[string]any{
-				"type": "string",
-				"enum": []string{
-					string(serviceports.ShopStrategyLeastCost),
-					string(serviceports.ShopStrategyBestMargin),
-					string(serviceports.ShopStrategyGuideRank),
-					string(serviceports.ShopStrategyFastestAccept),
-				},
-				"description": "How to rank the options. Defaults to the organization's own choice.",
-			},
+			"strategy": agenttoolschema.Enum(
+				"How to rank the options. Defaults to the organization's own choice.",
+				shopStrategies,
+			),
 			"carrierIds": map[string]any{
 				"type":  "array",
 				"items": map[string]any{"type": "string"},

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -37,26 +38,26 @@ const (
 )
 
 var (
-	messageDirections = []string{
+	messageDirections = agenttoolschema.Source("edi.documentDirection", []string{
 		string(edi.DocumentDirectionInbound),
 		string(edi.DocumentDirectionOutbound),
-	}
-	messageDeliveryStatuses = []string{
+	})
+	messageDeliveryStatuses = agenttoolschema.Source("edi.messageDeliveryStatus", []string{
 		string(edi.MessageDeliveryStatusQueued),
 		string(edi.MessageDeliveryStatusSending),
 		string(edi.MessageDeliveryStatusSent),
 		string(edi.MessageDeliveryStatusFailed),
 		string(edi.MessageDeliveryStatusDeadLettered),
-	}
-	messageTransactionSets = []string{
+	})
+	messageTransactionSets = agenttoolschema.Source("edi.transactionSet", []string{
 		string(edi.TransactionSet204),
 		string(edi.TransactionSet210),
 		string(edi.TransactionSet214),
 		string(edi.TransactionSet990),
 		string(edi.TransactionSet997),
 		string(edi.TransactionSet999),
-	}
-	tenderChangeStatuses = []string{
+	})
+	tenderChangeStatuses = agenttoolschema.Source("edi.tenderChangeStatus", []string{
 		string(edi.TenderChangeStatusPendingReview),
 		string(edi.TenderChangeStatusApplied),
 		string(edi.TenderChangeStatusRejected),
@@ -65,18 +66,18 @@ var (
 		string(edi.TenderChangeStatusFailed),
 		string(edi.TenderChangeStatusIgnored),
 		string(edi.TenderChangeStatusSuperseded),
-	}
-	transferChangeStatuses = []string{
+	})
+	transferChangeStatuses = agenttoolschema.Source("edi.transferChangeStatus", []string{
 		string(edi.TransferChangeStatusPendingReview),
 		string(edi.TransferChangeStatusApplied),
 		string(edi.TransferChangeStatusRejected),
 		string(edi.TransferChangeStatusFailed),
 		string(edi.TransferChangeStatusIgnored),
-	}
-	partnerStatuses = []string{
+	})
+	partnerStatuses = agenttoolschema.Source("edi.partnerStatus", []string{
 		string(domaintypes.StatusActive),
 		string(domaintypes.StatusInactive),
-	}
+	})
 )
 
 func ediDecisionToolProviders() []any {

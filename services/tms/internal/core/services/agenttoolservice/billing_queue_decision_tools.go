@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -286,8 +287,9 @@ func (t *billingQueueDecisionTool) Execute(
 	return err
 }
 
-func reasonCodeNames() []string {
-	codes := []billingqueue.ExceptionReasonCode{
+var billingReasonCodes = agenttoolschema.Source(
+	"billingQueue.exceptionReasonCode",
+	[]billingqueue.ExceptionReasonCode{
 		billingqueue.ExceptionMissingDocumentation,
 		billingqueue.ExceptionIncorrectRates,
 		billingqueue.ExceptionWeightDiscrepancy,
@@ -298,21 +300,11 @@ func reasonCodeNames() []string {
 		billingqueue.ExceptionServiceFailure,
 		billingqueue.ExceptionRateNotOnFile,
 		billingqueue.ExceptionOther,
-	}
-	names := make([]string, 0, len(codes))
-	for _, code := range codes {
-		names = append(names, string(code))
-	}
-
-	return names
-}
+	},
+)
 
 func reasonCodeProperty(description string) map[string]any {
-	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyEnum:        reasonCodeNames(),
-		toolschema.KeyDescription: description,
-	}
+	return agenttoolschema.Enum(description, billingReasonCodes)
 }
 
 func notesProperty(description string) map[string]any {
@@ -336,7 +328,7 @@ func fillException(params map[string]any, req *serviceports.UpdateBillingQueueSt
 		return fmt.Errorf(
 			"exceptionReasonCode %q is not one of %s",
 			raw,
-			strings.Join(reasonCodeNames(), ", "),
+			strings.Join(billingReasonCodes.Names(), ", "),
 		)
 	}
 	req.ExceptionReasonCode = &code

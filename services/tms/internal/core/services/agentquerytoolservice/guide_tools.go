@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -224,21 +225,18 @@ func (t *openPageTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "A page's path, exactly as find_in_trenova returned it.",
 			},
-			"entity": map[string]any{
-				"type":        "string",
-				"enum":        t.entities,
-				"description": "The kind of record to open, with recordId, instead of a page.",
-			},
+			paramEntity: agenttoolschema.Enum(
+				"The kind of record to open, with recordId, instead of a page.",
+				agenttoolschema.Derived("guide.entity", t.entities),
+			),
 			"recordId": map[string]any{
 				"type": "string",
 				"description": "The record's id, from the tool that found it (get_shipment, " +
 					"list_invoices and the like) or the record on screen.",
 			},
-			"action": map[string]any{
-				"type":        "string",
-				"enum":        []string{createAction},
-				"description": "Optional: create opens the page's create form.",
-			},
+			"action": agenttoolschema.Enum(
+				"Optional: create opens the page's create form.", guidePageActions,
+			),
 		},
 		"additionalProperties": false,
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -186,11 +187,9 @@ func (t *listReasonCodesTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Optional text matched against the code and label.",
 			},
-			"appliesTo": map[string]any{
-				"type":        "string",
-				"enum":        []string{"Pickup", "Delivery"},
-				"description": "Optional: only codes usable on this kind of stop.",
-			},
+			"appliesTo": agenttoolschema.Enum(
+				"Optional: only codes usable on this kind of stop.", accessorialAppliesTo,
+			),
 		},
 		"additionalProperties": false,
 	}
@@ -297,14 +296,9 @@ func (t *listDetentionDeskTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"urgency": map[string]any{
-				"type": "string",
-				"enum": []string{
-					"Lost", "NoticeOverdue", "NoticeDueSoon",
-					detentionservice.UrgencyAwaitingApproval,
-				},
-				"description": "Optional: only occurrences at this urgency.",
-			},
+			"urgency": agenttoolschema.Enum(
+				"Optional: only occurrences at this urgency.", detentionUrgencies,
+			),
 		},
 		"additionalProperties": false,
 	}
@@ -441,11 +435,9 @@ func (t *listWeatherAlertsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"severity": map[string]any{
-				"type":        "string",
-				"enum":        weatherSeverities,
-				"description": "Return alerts at this severity and worse. Default Severe.",
-			},
+			"severity": agenttoolschema.Enum(
+				"Return alerts at this severity and worse. Default Severe.", weatherSeverityLevels,
+			),
 			"query": map[string]any{
 				"type": "string",
 				"description": "Optional text matched against the event, headline and area, " +

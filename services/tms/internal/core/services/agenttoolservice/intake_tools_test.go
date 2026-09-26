@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,6 +24,9 @@ type fakeShipmentWriter struct {
 	updated  *shipment.Shipment
 	lastGet  *repositories.GetShipmentByIDRequest
 	actor    *serviceports.RequestActor
+	// previewErr is what the create plan refuses with, when it refuses.
+	previewErr error
+	previews   int
 }
 
 func (f *fakeShipmentWriter) Get(
@@ -51,6 +55,11 @@ func (f *fakeShipmentWriter) PreviewCreate(
 	entity *shipment.Shipment,
 	_ *serviceports.RequestActor,
 ) (*serviceports.ShipmentCreatePlan, error) {
+	f.previews++
+	if f.previewErr != nil {
+		return nil, f.previewErr
+	}
+
 	return &serviceports.ShipmentCreatePlan{Shipment: entity}, nil
 }
 
@@ -176,6 +185,34 @@ func TestCreateShipment_RefusesAWriteWithoutAnIdempotencyKeyOrAMismatchedActor(t
 	params.IdempotencyKey = "idem-3"
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Nil(t, writer.created)
+}
+
+// The create plan is what decides the write; Validate runs it, so a BOL the
+// organization already has, or anything else the service refuses, is
+// refused to the model before a person is asked to approve it.
+func TestCreateShipment_ValidateRefusesWhatTheServiceWould(t *testing.T) {
+	t.Parallel()
+
+	writer := &fakeShipmentWriter{previewErr: errortypes.NewValidationError(
+		"bol", errortypes.ErrDuplicate, "A shipment with this BOL already exists",
+	)}
+	tool := newCreateShipmentTool(writer, &fakeImportCompleter{}, nil)
+	validator, ok := tool.(serviceports.ToolValidator)
+	require.True(t, ok, "create_shipment checks a call before it is filed")
+
+	payload := shipmentPayload(
+		pulid.MustNew("cust_"), pulid.MustNew("st_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
+	)
+	params := executeParams(map[string]any{"shipment": payload})
+
+	err := validator.Validate(t.Context(), params)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "BOL already exists")
+	assert.Equal(t, 1, writer.previews, "the plan ran once")
+	assert.Nil(t, writer.created, "nothing was written")
+
+	writer.previewErr = nil
+	require.NoError(t, validator.Validate(t.Context(), params))
 }
 
 func TestUpdateShipment_PatchesOnlyTheNamedFields(t *testing.T) {

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingsyncservice"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -223,10 +224,7 @@ func (t *retryAccountingSyncTool) ParamSchema() map[string]any {
 		),
 		paramSyncErrorCategories: jsonschemautils.DescribedArray(
 			"Retry every retryable record that last failed for one of these reasons.",
-			jsonschemautils.Enum(
-				"An error category.",
-				sliceutils.Strings(accountingsync.AllSyncErrorCategories())...,
-			),
+			agenttoolschema.Enum("An error category.", agenttoolschema.SyncErrorCategories),
 			len(accountingsync.AllSyncErrorCategories()),
 		),
 	}, paramAccountingSystem)
@@ -718,10 +716,7 @@ func (t *requestAccountingBackfillTool) ParamSchema() map[string]any {
 		),
 		paramBackfillTypes: jsonschemautils.DescribedArray(
 			"Only these kinds of document. Defaults to all of them.",
-			jsonschemautils.Enum(
-				"A document type.",
-				sliceutils.Strings(accountingsync.BackfillObjectTypes())...,
-			),
+			agenttoolschema.Enum("A document type.", agenttoolschema.BackfillObjectTypes),
 			len(accountingsync.BackfillObjectTypes()),
 		),
 	}, paramAccountingSystem)

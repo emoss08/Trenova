@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -484,14 +485,9 @@ func (t *listCustomerPaymentsTool) ParamSchema() map[string]any {
 				"description": "Optional: only this customer's payments, by id from " +
 					"list_customers or a candidate's customerId in get_bank_receipt.",
 			},
-			"status": map[string]any{
-				"type": "string",
-				"enum": []string{
-					string(customerpayment.StatusPosted),
-					string(customerpayment.StatusReversed),
-				},
-				"description": "Which payments to list. Defaults to Posted.",
-			},
+			paramStatus: agenttoolschema.Enum(
+				"Which payments to list. Defaults to Posted.", customerPaymentListStatuses,
+			),
 			"limit": map[string]any{
 				"type":        "integer",
 				"description": fmt.Sprintf("How many to return, at most %d.", maxBankReceiptRows),

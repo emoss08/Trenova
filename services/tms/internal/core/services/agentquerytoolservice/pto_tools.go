@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -72,30 +73,11 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"status": map[string]any{
-				"type": "string",
-				"enum": []string{
-					string(worker.PTOStatusRequested),
-					string(worker.PTOStatusApproved),
-					string(worker.PTOStatusRejected),
-					string(worker.PTOStatusCancelled),
-				},
-				"description": "Requested means still awaiting a decision. Omit for " +
-					"every status.",
-			},
-			"type": map[string]any{
-				"type": "string",
-				"enum": []string{
-					string(worker.PTOTypePersonal),
-					string(worker.PTOTypeVacation),
-					string(worker.PTOTypeSick),
-					string(worker.PTOTypeHoliday),
-					string(worker.PTOTypeBereavement),
-					string(worker.PTOTypeMaternity),
-					string(worker.PTOTypePaternity),
-				},
-				"description": "The kind of leave. Omit for every kind.",
-			},
+			paramStatus: agenttoolschema.Enum(
+				"Requested means still awaiting a decision. Omit for every status.",
+				ptoStatuses,
+			),
+			"type": agenttoolschema.Enum("The kind of leave. Omit for every kind.", ptoTypes),
 			"workerId": map[string]any{
 				"type": "string",
 				"description": "Narrow to one worker, by id from list_workers or " +

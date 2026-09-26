@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -171,18 +172,6 @@ func accountingSyncMeaning(record *accountingsync.AccountingSyncRecord, provider
 	}
 }
 
-func syncStatusValues() []string {
-	return sliceutils.Strings(accountingsync.AllSyncStatuses())
-}
-
-func syncDocumentTypeValues() []string {
-	return sliceutils.Strings(accountingsync.AllSyncObjectTypes())
-}
-
-func syncErrorCategoryValues() []string {
-	return sliceutils.Strings(accountingsync.AllSyncErrorCategories())
-}
-
 type listAccountingSyncRecordsTool struct {
 	ledger accountingSyncLedgerReader
 }
@@ -221,17 +210,17 @@ func (t *listAccountingSyncRecordsTool) ParamSchema() map[string]any {
 		paramSyncStatus: jsonschemautils.DescribedArray(
 			"Only records in these statuses. Blocked and DeadLettered need a person; "+
 				"AwaitingApproval waits to be released.",
-			jsonschemautils.Enum("A sync status.", syncStatusValues()...),
+			agenttoolschema.Enum("A sync status.", agenttoolschema.SyncStatuses),
 			len(accountingsync.AllSyncStatuses()),
 		),
 		paramSyncDocumentType: jsonschemautils.DescribedArray(
 			"Only these kinds of document.",
-			jsonschemautils.Enum("A document type.", syncDocumentTypeValues()...),
+			agenttoolschema.Enum("A document type.", agenttoolschema.SyncObjectTypes),
 			len(accountingsync.AllSyncObjectTypes()),
 		),
 		paramSyncErrorCategory: jsonschemautils.DescribedArray(
 			"Only records that last failed for these reasons.",
-			jsonschemautils.Enum("An error category.", syncErrorCategoryValues()...),
+			agenttoolschema.Enum("An error category.", agenttoolschema.SyncErrorCategories),
 			len(accountingsync.AllSyncErrorCategories()),
 		),
 		paramSyncDocumentID: jsonschemautils.Text(

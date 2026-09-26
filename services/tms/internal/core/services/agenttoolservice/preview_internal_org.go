@@ -9,6 +9,10 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
+// wouldFailPrefix opens every would_fail warning, so a validator reading
+// the warning back can recover the refusal it wraps.
+const wouldFailPrefix = "This would be refused as it stands: "
+
 func warnWouldFail(preview *agent.ToolPreview, err error) *agent.ToolPreview {
 	if err == nil {
 		return preview
@@ -17,7 +21,7 @@ func warnWouldFail(preview *agent.ToolPreview, err error) *agent.ToolPreview {
 	return toolpreview.Warn(
 		preview,
 		agent.PreviewWarningWouldFail,
-		"This would be refused as it stands: "+strings.TrimSpace(err.Error()),
+		wouldFailPrefix+strings.TrimSpace(err.Error()),
 	)
 }
 
