@@ -424,38 +424,38 @@ writes:
 
   # carriersettlement
   "mutation acceptCarrierInvoiceMatch":
-    pending: "Accept carrier invoice match."
+    tools: [accept_carrier_invoice_match]
   "mutation acceptCarrierInvoiceMatchWithVariance":
-    pending: "Accept carrier invoice match with variance."
+    tools: [accept_carrier_invoice_match_with_variance]
   "mutation addCarrierSettlementAdjustment":
-    pending: "Add carrier settlement adjustment."
+    tools: [add_carrier_settlement_adjustment]
   "mutation approveCarrierSettlement":
-    pending: "Approve carrier settlement."
+    tools: [approve_carrier_settlement]
   "mutation createCarrierInvoiceMatch":
-    pending: "Create carrier invoice match."
+    tools: [create_carrier_invoice_match]
   "mutation generateCarrierSettlementBatch":
-    pending: "Generate carrier settlement batch."
+    tools: [generate_carrier_settlement_batch]
   "mutation linkEdiCarrierInvoiceToCarrier":
-    pending: "Link EDI carrier invoice to carrier."
+    tools: [link_edi_carrier_invoice_to_carrier]
   "mutation markCarrierSettlementPaid":
-    pending: "Mark carrier settlement paid."
+    tools: [record_carrier_settlement_payment]
   "mutation postCarrierSettlement":
-    pending: "Post carrier settlement."
+    tools: [post_carrier_settlement]
   "mutation recalculateCarrierSettlement":
-    pending: "Recalculate carrier settlement."
+    tools: [recalculate_carrier_settlement]
   "mutation rejectCarrierInvoiceMatch":
-    pending: "Reject carrier invoice match."
+    tools: [reject_carrier_invoice_match]
   "mutation rejectCarrierSettlement":
-    pending: "Reject carrier settlement."
+    tools: [reject_carrier_settlement]
   "mutation removeCarrierSettlementAdjustment":
-    pending: "Remove carrier settlement adjustment."
+    tools: [remove_carrier_settlement_adjustment]
   "mutation submitCarrierSettlement":
-    pending: "Submit carrier settlement."
+    tools: [submit_carrier_settlement]
   "mutation updateCarrierSettlementControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation voidCarrierSettlement":
-    pending: "Void carrier settlement."
+    tools: [void_carrier_settlement]
 
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
@@ -851,74 +851,79 @@ writes:
 
   # driversettlement
   "mutation addDriverSettlementAdjustment":
-    pending: "Add driver settlement adjustment."
+    tools: [add_driver_settlement_adjustment]
   "mutation adjustEscrowAccount":
-    pending: "Adjust escrow account."
+    tools: [adjust_escrow_account]
   "mutation approveDriverSettlement":
-    pending: "Approve driver settlement."
+    tools: [approve_driver_settlement]
   "mutation assignPayProfileToWorker":
-    pending: "Assign pay profile to worker."
+    tools: [assign_pay_profile]
   "mutation attachPayEventsToSettlement":
-    pending: "Attach pay events to a driver settlement."
+    tools: [attach_pay_events_to_settlement]
   "mutation bulkDriverSettlementAction":
-    pending: "Approve, post or void several driver settlements at once."
+    exempt: duplicate
+    reason: "Runs submit, approve, post or mark paid on several settlements at once; each has its own tool, and an approver decides a batch of those proposals together."
   "mutation closeEscrowAccount":
-    pending: "Close escrow account."
+    tools: [close_escrow_account]
   "mutation createPayCode":
-    pending: "Create pay code."
+    exempt: configuration
+    reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation createPayProfile":
-    pending: "Create pay profile."
+    exempt: configuration
+    reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation createRecurringDeduction":
-    pending: "Create recurring deduction."
+    tools: [create_recurring_deduction]
   "mutation createRecurringEarning":
-    pending: "Create recurring earning."
+    tools: [create_recurring_earning]
   "mutation detachPayEventFromSettlement":
-    pending: "Detach a pay event from a driver settlement."
+    tools: [detach_pay_event_from_settlement]
   "mutation endWorkerPayAssignment":
-    pending: "End worker pay assignment."
+    tools: [end_pay_assignment]
   "mutation generateDriverSettlement":
-    pending: "Generate driver settlement."
+    tools: [generate_driver_settlement]
   "mutation generateSettlementBatch":
-    pending: "Generate settlement batch."
+    tools: [generate_driver_settlement_batch]
   "mutation holdDriverPayEvent":
-    pending: "Hold driver pay event."
+    tools: [hold_driver_pay_event]
   "mutation issuePayAdvance":
-    pending: "Issue pay advance."
+    tools: [issue_pay_advance]
   "mutation markDriverSettlementPaid":
-    pending: "Mark driver settlement paid."
+    tools: [record_driver_settlement_payment]
   "mutation openEscrowAccount":
-    pending: "Open escrow account."
+    tools: [open_escrow_account]
   "mutation payWorkerNow":
-    pending: "Pay a worker off cycle now."
+    tools: [pay_driver_now]
   "mutation postDriverSettlement":
-    pending: "Post driver settlement."
+    tools: [post_driver_settlement]
   "mutation recalculateDriverSettlement":
-    pending: "Recalculate driver settlement."
+    tools: [recalculate_driver_settlement]
   "mutation rejectDriverSettlement":
-    pending: "Reject driver settlement."
+    tools: [reject_driver_settlement]
   "mutation releaseDriverPayEvent":
-    pending: "Release driver pay event."
+    tools: [release_driver_pay_event]
   "mutation removeDriverSettlementAdjustment":
-    pending: "Remove driver settlement adjustment."
+    tools: [remove_driver_settlement_adjustment]
   "mutation submitDriverSettlement":
-    pending: "Submit driver settlement."
+    tools: [submit_driver_settlement]
   "mutation updateEscrowAccount":
-    pending: "Update escrow account."
+    tools: [update_escrow_account]
   "mutation updatePayCode":
-    pending: "Update pay code."
+    exempt: configuration
+    reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation updatePayProfile":
-    pending: "Update pay profile."
+    exempt: configuration
+    reason: "Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool."
   "mutation updateRecurringDeduction":
-    pending: "Update recurring deduction."
+    tools: [update_recurring_deduction]
   "mutation updateRecurringEarning":
-    pending: "Update recurring earning."
+    tools: [update_recurring_earning]
   "mutation updateSettlementControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation voidDriverSettlement":
-    pending: "Void driver settlement."
+    tools: [void_driver_settlement]
   "mutation writeOffPayAdvance":
-    pending: "Write off pay advance."
+    tools: [write_off_pay_advance]
 
   # edi
   "DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/":

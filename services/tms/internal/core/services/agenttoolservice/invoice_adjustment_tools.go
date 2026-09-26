@@ -254,7 +254,7 @@ func readAdjustmentDocuments(fields map[string]any) ([]pulid.ID, error) {
 }
 
 func readRebillStrategy(fields map[string]any) (invoiceadjustment.RebillStrategy, error) {
-	strategy, err := optionalEnum(fields, paramRebillStrategy, rebillStrategies)
+	strategy, _, err := optionalEnum(fields, paramRebillStrategy, rebillStrategies)
 	if err != nil {
 		return "", err
 	}

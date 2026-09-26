@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,6 +53,26 @@ func (s *Service) PayWorkerNow(
 	if err := requireActor(actor, "Instant settlement"); err != nil {
 		return nil, err
 	}
+	generation, err := s.instantGeneration(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	settlement, err := s.GenerateForWorker(ctx, generation, actor)
+	if err != nil {
+		return nil, err
+	}
+	if settlement == nil {
+		return nil, errNoInstantSettlement()
+	}
+
+	return s.driveToPaid(ctx, req, settlement, actor)
+}
+
+func (s *Service) instantGeneration(
+	ctx context.Context,
+	req *PayWorkerNowRequest,
+) (*GenerateForWorkerRequest, error) {
 	if req.PaymentMethod == "" {
 		return nil, errortypes.NewValidationError(
 			"paymentMethod",
@@ -106,7 +127,7 @@ func (s *Service) PayWorkerNow(
 		}
 	}
 
-	settlement, err := s.GenerateForWorker(ctx, &GenerateForWorkerRequest{
+	return &GenerateForWorkerRequest{
 		TenantInfo:    req.TenantInfo,
 		WorkerID:      req.WorkerID,
 		PeriodStart:   periodStart,
@@ -114,19 +135,81 @@ func (s *Service) PayWorkerNow(
 		PayDate:       now,
 		PayEventIDs:   eventIDs,
 		SkipRecurring: !req.ApplyRecurring,
-	}, actor)
+	}, nil
+}
+
+type InstantPayPlan struct {
+	Settlement *driversettlement.Settlement
+	Journal    *settlementshared.JournalPlan
+	Refusal    error
+}
+
+func (s *Service) PlanPayWorkerNow(
+	ctx context.Context,
+	req *PayWorkerNowRequest,
+) (*InstantPayPlan, error) {
+	plan := &InstantPayPlan{}
+	generation, err := s.instantGeneration(ctx, req)
+	if err != nil {
+		if settlementshared.IsRefusal(err) {
+			plan.Refusal = err
+			return plan, nil
+		}
+		return nil, err
+	}
+
+	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
+	settlement, _, err := s.buildSettlement(ctx, generation, control)
+	if err != nil {
+		if settlementshared.IsRefusal(err) {
+			plan.Refusal = err
+			return plan, nil
+		}
+		return nil, err
+	}
 	if settlement == nil {
-		return nil, errortypes.NewValidationError(
-			"workerId",
-			errortypes.ErrInvalidOperation,
-			"No settlement could be generated for this driver",
-		)
+		plan.Refusal = errNoInstantSettlement()
+		return plan, nil
 	}
 
-	return s.driveToPaid(ctx, req, settlement, actor)
+	now := timeutils.NowUnix()
+	userID := req.TenantInfo.UserID
+	settlement.Status = driversettlement.StatusApproved
+	draft, err := s.planSettlementJournal(ctx, settlement, userID, false)
+	if err != nil {
+		if settlementshared.IsRefusal(err) {
+			plan.Refusal = err
+			return plan, nil
+		}
+		return nil, err
+	}
+	if draft != nil {
+		plan.Journal = draft.plan
+	}
+	if err = PlanPost(settlement, userID, now); err != nil {
+		return nil, err
+	}
+	if err = PlanMarkPaid(settlement, &MarkPaidInput{
+		PaymentMethod:    req.PaymentMethod,
+		PaymentReference: req.PaymentReference,
+		PaidAt:           now,
+		UserID:           userID,
+	}); err != nil {
+		return nil, err
+	}
+	plan.Settlement = settlement
+	return plan, nil
+}
+
+func errNoInstantSettlement() error {
+	return errortypes.NewValidationError(
+		"workerId",
+		errortypes.ErrInvalidOperation,
+		"No settlement could be generated for this driver",
+	)
 }
 
 // driveToPaid advances an instant settlement through approve → post → paid,

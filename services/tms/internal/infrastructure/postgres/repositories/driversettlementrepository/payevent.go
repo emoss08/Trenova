@@ -165,24 +165,38 @@ func (r *payEventRepository) ListAccruedForWorker(
 	ctx context.Context,
 	req *repositories.ListAccruedPayEventsRequest,
 ) ([]*driversettlement.PayEvent, error) {
+	cols := buncolgen.PayEventColumns
 	items := make([]*driversettlement.PayEvent, 0)
 	q := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
-		Where("dpe.organization_id = ?", req.TenantInfo.OrgID).
-		Where("dpe.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("dpe.worker_id = ?", req.WorkerID).
-		Where("dpe.status = ?", driversettlement.PayEventStatusAccrued).
-		Where("dpe.on_hold = false")
-	if len(req.EventIDs) > 0 {
-		q = q.Where("dpe.id IN (?)", bun.List(req.EventIDs))
-	} else if req.PeriodEnd > 0 {
-		q = q.Where("dpe.event_date < ?", req.PeriodEnd)
-	}
-	err := q.
-		Order("dpe.event_date ASC").
-		Scan(ctx)
-	if err != nil {
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.PayEventScopeTenant(sq, req.TenantInfo).
+				Where(cols.WorkerID.Eq(), req.WorkerID).
+				Where(cols.OnHold.Eq(), false).
+				WhereGroup(" AND ", func(status *bun.SelectQuery) *bun.SelectQuery {
+					status = status.Where(cols.Status.Eq(), driversettlement.PayEventStatusAccrued)
+					if req.ReleasedFrom.IsNil() {
+						return status
+					}
+					return status.WhereGroup(
+						" OR ",
+						func(released *bun.SelectQuery) *bun.SelectQuery {
+							return released.
+								Where(cols.Status.Eq(), driversettlement.PayEventStatusSettled).
+								Where(cols.SettlementID.Eq(), req.ReleasedFrom)
+						},
+					)
+				})
+			if len(req.EventIDs) > 0 {
+				return sq.Where(cols.ID.In(), bun.List(req.EventIDs))
+			}
+			if req.PeriodEnd > 0 {
+				return sq.Where(cols.EventDate.Lt(), req.PeriodEnd)
+			}
+			return sq
+		})
+	if err := q.Order(cols.EventDate.OrderAsc()).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("list accrued pay events: %w", err)
 	}
 	return items, nil

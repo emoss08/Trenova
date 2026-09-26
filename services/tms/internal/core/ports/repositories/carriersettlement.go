@@ -147,9 +147,10 @@ type ListCarrierCostEventConnectionRequest struct {
 }
 
 type ListPendingCostEventsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	CarrierID  pulid.ID              `json:"carrierId"`
-	PeriodEnd  int64                 `json:"periodEnd"`
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	CarrierID    pulid.ID              `json:"carrierId"`
+	PeriodEnd    int64                 `json:"periodEnd"`
+	ReleasedFrom pulid.ID              `json:"releasedFrom"`
 }
 
 type ListCarriersWithPendingEventsRequest struct {

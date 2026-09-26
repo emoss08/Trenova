@@ -222,31 +222,9 @@ func requireMoney(params map[string]any, key string) (int64, error) {
 }
 
 func optionalMoney(params map[string]any, key string) (int64, bool, error) {
-	raw, ok := params[key]
-	if !ok || raw == nil {
-		return 0, false, nil
-	}
-
-	var value decimal.Decimal
-	switch typed := raw.(type) {
-	case string:
-		trimmed := strings.TrimSpace(typed)
-		if trimmed == "" {
-			return 0, false, nil
-		}
-		parsed, err := decimal.NewFromString(trimmed)
-		if err != nil {
-			return 0, false, fmt.Errorf("parameter %q must be a decimal amount such as 1250.00", key)
-		}
-		value = parsed
-	case float64:
-		value = decimal.NewFromFloat(typed)
-	case int:
-		value = decimal.NewFromInt(int64(typed))
-	case int64:
-		value = decimal.NewFromInt(typed)
-	default:
-		return 0, false, fmt.Errorf("parameter %q must be a decimal amount such as 1250.00", key)
+	value, present, err := optionalDecimal(params, key)
+	if err != nil || !present {
+		return 0, false, err
 	}
 
 	if !value.IsPositive() {
@@ -254,6 +232,57 @@ func optionalMoney(params map[string]any, key string) (int64, bool, error) {
 	}
 
 	return money.MinorUnits(value), true, nil
+}
+
+func requireSignedMoney(params map[string]any, key string) (int64, error) {
+	value, present, err := optionalDecimal(params, key)
+	if err != nil {
+		return 0, err
+	}
+	if !present {
+		return 0, fmt.Errorf("parameter %q is required", key)
+	}
+
+	minor := money.MinorUnits(value)
+	if minor == 0 {
+		return 0, fmt.Errorf("parameter %q must not be zero", key)
+	}
+
+	return minor, nil
+}
+
+func optionalDecimal(params map[string]any, key string) (decimal.Decimal, bool, error) {
+	raw, ok := params[key]
+	if !ok || raw == nil {
+		return decimal.Zero, false, nil
+	}
+
+	switch typed := raw.(type) {
+	case string:
+		trimmed := strings.TrimSpace(typed)
+		if trimmed == "" {
+			return decimal.Zero, false, nil
+		}
+		parsed, err := decimal.NewFromString(trimmed)
+		if err != nil {
+			return decimal.Zero, false, fmt.Errorf(
+				"parameter %q must be a decimal such as 1250.00",
+				key,
+			)
+		}
+		return parsed, true, nil
+	case float64:
+		return decimal.NewFromFloat(typed), true, nil
+	case int:
+		return decimal.NewFromInt(int64(typed)), true, nil
+	case int64:
+		return decimal.NewFromInt(typed), true, nil
+	default:
+		return decimal.Zero, false, fmt.Errorf(
+			"parameter %q must be a decimal such as 1250.00",
+			key,
+		)
+	}
 }
 
 // requireDay reads a YYYY-MM-DD as the start of that day in UTC, which is
@@ -270,4 +299,28 @@ func requireDay(params map[string]any, key string) (int64, error) {
 	}
 
 	return day.Unix(), nil
+}
+
+func optionalDay(params map[string]any, key string) (day int64, ok bool, err error) {
+	if strings.TrimSpace(optionalString(params, key)) == "" {
+		return 0, false, nil
+	}
+	day, err = requireDay(params, key)
+	if err != nil {
+		return 0, false, err
+	}
+
+	return day, true, nil
+}
+
+func optionalPulidParam(params map[string]any, key string) (*pulid.ID, error) {
+	id, ok, err := optionalPulid(params, key)
+	if err != nil {
+		return nil, fmt.Errorf("parameter %q is not a valid id: %w", key, err)
+	}
+	if !ok {
+		return nil, nil //nolint:nilnil // an absent optional id is no id and no error
+	}
+
+	return &id, nil
 }

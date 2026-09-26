@@ -94,22 +94,11 @@ func (s *Service) LinkInvoiceToCarrier(
 	if err := requireActor(actor, "Carrier invoice linking"); err != nil {
 		return nil, err
 	}
-	if _, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
-		ID:         carrierID,
-		TenantInfo: tenantInfo,
-	}); err != nil {
-		return nil, err
-	}
-
-	invoice, err := s.ediInvoiceRepo.GetCarrierInvoiceByID(
-		ctx,
-		repositories.GetEDICarrierInvoiceByIDRequest{ID: invoiceID, TenantInfo: tenantInfo},
-	)
+	plan, err := s.PlanLinkInvoice(ctx, tenantInfo, invoiceID, carrierID)
 	if err != nil {
 		return nil, err
 	}
-	invoice.CarrierID = carrierID
-	updated, err := s.ediInvoiceRepo.UpdateCarrierInvoice(ctx, invoice)
+	updated, err := s.ediInvoiceRepo.UpdateCarrierInvoice(ctx, plan.After)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +126,6 @@ type CreateMatchRequest struct {
 	ShipmentID             pulid.ID
 }
 
-//nolint:cyclop,funlen // match assembly enumerates both invoice sources explicitly
 func (s *Service) CreateMatch(
 	ctx context.Context,
 	req *CreateMatchRequest,
@@ -146,118 +134,17 @@ func (s *Service) CreateMatch(
 	if err := requireActor(actor, "Carrier invoice match creation"); err != nil {
 		return nil, err
 	}
-	hasEDI := req.EDICarrierInvoiceID != nil && !req.EDICarrierInvoiceID.IsNil()
-	hasDocAI := req.DocumentAIExtractionID != nil && !req.DocumentAIExtractionID.IsNil()
-	if hasEDI == hasDocAI {
-		return nil, errortypes.NewValidationError(
-			"ediCarrierInvoiceId",
-			errortypes.ErrInvalid,
-			"Provide exactly one source: an EDI carrier invoice or a document AI extraction",
-		)
-	}
-
-	carrierID := req.CarrierID
-	invoiceNumber := req.InvoiceNumber
-	invoiceTotalMinor := req.InvoiceTotalMinor
-	proNumber := req.ProNumber
-	shipmentID := req.ShipmentID
-	var invoice *edi.CarrierInvoice
-
-	if hasEDI {
-		existing, err := s.invoiceMatchRepo.GetOpenByEDIInvoiceID(
-			ctx,
-			req.TenantInfo,
-			*req.EDICarrierInvoiceID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if existing != nil {
-			return nil, errortypes.NewValidationError(
-				"ediCarrierInvoiceId",
-				errortypes.ErrDuplicate,
-				"This EDI carrier invoice already has an open match",
-			)
-		}
-
-		invoice, err = s.ediInvoiceRepo.GetCarrierInvoiceByID(
-			ctx,
-			repositories.GetEDICarrierInvoiceByIDRequest{
-				ID:         *req.EDICarrierInvoiceID,
-				TenantInfo: req.TenantInfo,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-		if invoice.CarrierID.IsNil() {
-			return nil, errortypes.NewValidationError(
-				"carrierId",
-				errortypes.ErrInvalid,
-				"Link the EDI invoice to a carrier before matching",
-			)
-		}
-		carrierID = invoice.CarrierID
-		invoiceNumber = invoice.InvoiceNumber
-		if invoice.TotalAmount.Valid {
-			invoiceTotalMinor = money.MinorUnits(invoice.TotalAmount.Decimal)
-		}
-		if proNumber == "" {
-			proNumber = invoice.ProNumber
-		}
-		if shipmentID.IsNil() {
-			shipmentID = invoice.ShipmentID
-		}
-	} else {
-		if carrierID.IsNil() {
-			return nil, errortypes.NewValidationError(
-				"carrierId",
-				errortypes.ErrRequired,
-				"Carrier is required for document AI invoice matches",
-			)
-		}
-
-		existing, err := s.invoiceMatchRepo.GetOpenByExtractionID(
-			ctx,
-			req.TenantInfo,
-			*req.DocumentAIExtractionID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if existing != nil {
-			return nil, errortypes.NewValidationError(
-				"documentAiExtractionId",
-				errortypes.ErrDuplicate,
-				"This document AI extraction already has an open match",
-			)
-		}
-	}
-
-	assignment, err := s.resolveMatchAssignment(ctx, req, carrierID, proNumber, shipmentID)
+	draft, err := s.draftMatch(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
+	created, err := s.createInvoiceMatch(ctx, draft.seed, draft.assignment, draft.toleranceMinor)
 	if err != nil {
 		return nil, err
 	}
-
-	created, err := s.createInvoiceMatch(ctx, &invoiceMatchSeed{
-		tenantInfo:             req.TenantInfo,
-		ediCarrierInvoiceID:    req.EDICarrierInvoiceID,
-		documentAIExtractionID: req.DocumentAIExtractionID,
-		carrierID:              carrierID,
-		invoiceNumber:          invoiceNumber,
-		invoiceTotalMinor:      invoiceTotalMinor,
-		matchedVia:             carriersettlement.MatchViaManual,
-	}, assignment, control.VarianceToleranceMinor)
-	if err != nil {
-		return nil, err
-	}
-	if invoice != nil {
-		s.syncEDIInvoiceReconciliation(ctx, invoice, created)
+	if draft.invoice != nil {
+		s.syncEDIInvoiceReconciliation(ctx, draft.invoice, created)
 	}
 	s.logInvoiceMatchAudit(ctx, created, nil, actor.UserID, permission.OpCreate,
 		"Carrier invoice match created")
@@ -289,27 +176,9 @@ func (s *Service) createInvoiceMatch(
 	assignment *shipment.CarrierAssignment,
 	toleranceMinor int64,
 ) (*carriersettlement.InvoiceMatch, error) {
-	expectedTotalMinor := money.MinorUnits(assignment.TotalCost)
-	varianceMinor := seed.invoiceTotalMinor - expectedTotalMinor
-	match := &carriersettlement.InvoiceMatch{
-		OrganizationID:         seed.tenantInfo.OrgID,
-		BusinessUnitID:         seed.tenantInfo.BuID,
-		EDICarrierInvoiceID:    seed.ediCarrierInvoiceID,
-		DocumentAIExtractionID: seed.documentAIExtractionID,
-		CarrierID:              seed.carrierID,
-		CarrierAssignmentID:    assignment.ID,
-		Status:                 matchStatusForVariance(varianceMinor, toleranceMinor),
-		MatchedVia:             seed.matchedVia,
-		InvoiceNumber:          seed.invoiceNumber,
-		InvoiceTotalMinor:      seed.invoiceTotalMinor,
-		ExpectedTotalMinor:     expectedTotalMinor,
-		VarianceMinor:          varianceMinor,
-		CurrencyCode:           assignment.CurrencyCode,
-	}
-	multiErr := errortypes.NewMultiError()
-	match.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
+	match, err := newInvoiceMatch(seed, assignment, toleranceMinor)
+	if err != nil {
+		return nil, err
 	}
 	return s.invoiceMatchRepo.Create(ctx, match)
 }
@@ -366,21 +235,10 @@ func (s *Service) AcceptMatch(
 	if err != nil {
 		return nil, err
 	}
-	if match.Status != carriersettlement.InvoiceMatchStatusMatched &&
-		match.Status != carriersettlement.InvoiceMatchStatusSuggested {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only suggested or matched invoices can be accepted without a variance; use accept-with-variance instead",
-		)
-	}
-
 	previous := *match
-	now := timeutils.NowUnix()
-	match.Status = carriersettlement.InvoiceMatchStatusResolved
-	match.ResolutionNote = note
-	match.ResolvedByID = actor.UserID
-	match.ResolvedAt = &now
+	if err = PlanAcceptMatch(match, note, actor.UserID, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 
 	updated, err := s.invoiceMatchRepo.Update(ctx, match)
 	if err != nil {
@@ -412,19 +270,8 @@ func (s *Service) AcceptWithVariance(
 	if err != nil {
 		return nil, err
 	}
-	if match.Status != carriersettlement.InvoiceMatchStatusVariance {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only variance matches can be accepted with a variance adjustment",
-		)
-	}
-	if match.VarianceMinor == 0 {
-		return nil, errortypes.NewValidationError(
-			"varianceMinor",
-			errortypes.ErrInvalid,
-			"The match carries no variance to adjust",
-		)
+	if err = CheckAcceptWithVariance(match); err != nil {
+		return nil, err
 	}
 
 	previous := *match
@@ -433,13 +280,14 @@ func (s *Service) AcceptWithVariance(
 		return nil, err
 	}
 
-	now := timeutils.NowUnix()
-	adjustmentID := adjustment.ID
-	match.Status = carriersettlement.InvoiceMatchStatusResolved
-	match.AdjustmentCostEventID = &adjustmentID
-	match.ResolutionNote = note
-	match.ResolvedByID = actor.UserID
-	match.ResolvedAt = &now
+	if err = PlanAcceptWithVariance(match, &VarianceResolution{
+		Note:         note,
+		UserID:       actor.UserID,
+		ResolvedAt:   timeutils.NowUnix(),
+		AdjustmentID: adjustment.ID,
+	}); err != nil {
+		return nil, err
+	}
 
 	updated, err := s.invoiceMatchRepo.Update(ctx, match)
 	if err != nil {
@@ -456,38 +304,16 @@ func (s *Service) createVarianceAdjustmentEvent(
 	tenantInfo pagination.TenantInfo,
 	match *carriersettlement.InvoiceMatch,
 ) (*carriersettlement.CostEvent, error) {
-	key := "carrier-invoice-variance:" + match.ID.String()
-	existing, err := s.costEventRepo.GetByIdempotencyKey(ctx, tenantInfo, key)
+	existing, err := s.costEventRepo.GetByIdempotencyKey(
+		ctx,
+		tenantInfo,
+		varianceIdempotencyKey(match),
+	)
 	if err == nil && existing != nil {
 		return existing, nil
 	}
 
-	description := "Invoice variance"
-	if match.InvoiceNumber != "" {
-		description += " (" + match.InvoiceNumber + ")"
-	}
-	assignmentID := match.CarrierAssignmentID
-	event := &carriersettlement.CostEvent{
-		OrganizationID:      tenantInfo.OrgID,
-		BusinessUnitID:      tenantInfo.BuID,
-		CarrierID:           match.CarrierID,
-		CarrierAssignmentID: &assignmentID,
-		EventType:           carriersettlement.CostEventTypeAdjustment,
-		Status:              carriersettlement.CostEventStatusPending,
-		IdempotencyKey:      key,
-		EventDate:           timeutils.NowUnix(),
-		AmountMinor:         match.VarianceMinor,
-		CurrencyCode:        match.CurrencyCode,
-		Description:         description,
-	}
-	if match.CarrierAssignment != nil {
-		moveID := match.CarrierAssignment.ShipmentMoveID
-		event.MoveID = &moveID
-		if match.CarrierAssignment.ShipmentMove != nil {
-			spID := match.CarrierAssignment.ShipmentMove.ShipmentID
-			event.ShipmentID = &spID
-		}
-	}
+	event := VarianceAdjustmentEvent(tenantInfo, match, timeutils.NowUnix())
 
 	multiErr := errortypes.NewMultiError()
 	event.Validate(multiErr)
@@ -513,11 +339,7 @@ func (s *Service) RejectMatch(
 		return nil, err
 	}
 	if note == "" {
-		return nil, errortypes.NewValidationError(
-			"resolutionNote",
-			errortypes.ErrRequired,
-			"A rejection note is required",
-		)
+		return nil, errRejectionNoteRequired()
 	}
 	match, err := s.invoiceMatchRepo.GetByID(
 		ctx,
@@ -526,20 +348,11 @@ func (s *Service) RejectMatch(
 	if err != nil {
 		return nil, err
 	}
-	if !match.Status.IsOpen() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only open matches can be rejected",
-		)
-	}
 
 	previous := *match
-	now := timeutils.NowUnix()
-	match.Status = carriersettlement.InvoiceMatchStatusRejected
-	match.ResolutionNote = note
-	match.ResolvedByID = actor.UserID
-	match.ResolvedAt = &now
+	if err = PlanRejectMatch(match, note, actor.UserID, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 
 	updated, err := s.invoiceMatchRepo.Update(ctx, match)
 	if err != nil {

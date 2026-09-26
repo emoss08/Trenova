@@ -219,14 +219,6 @@ func stringProperty(description string, maxLength int) map[string]any {
 	return property
 }
 
-func enumProperty(description string, values []string) map[string]any {
-	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyEnum:        values,
-		toolschema.KeyDescription: description,
-	}
-}
-
 func idListProperty(description string, maxItems int) map[string]any {
 	return map[string]any{
 		toolschema.KeyType:        toolschema.TypeArray,
@@ -245,18 +237,25 @@ func requireEnum[T ~string](params map[string]any, key string, values []T) (T, e
 
 	value := T(strings.TrimSpace(raw))
 	if !slices.Contains(values, value) {
-		return "", fmt.Errorf("%s %q is not one of %s", key, raw, enumList(values))
+		return "", errUnknownValue(key, raw, enumNames(values))
 	}
 
 	return value, nil
 }
 
-func optionalEnum[T ~string](params map[string]any, key string, values []T) (T, error) {
+func optionalEnum[T ~string](
+	params map[string]any,
+	key string,
+	values []T,
+) (value T, given bool, err error) {
 	if strings.TrimSpace(optionalString(params, key)) == "" {
-		return "", nil
+		return "", false, nil
+	}
+	if value, err = requireEnum(params, key, values); err != nil {
+		return "", false, err
 	}
 
-	return requireEnum(params, key, values)
+	return value, true, nil
 }
 
 func enumNames[T ~string](values []T) []string {
@@ -266,10 +265,6 @@ func enumNames[T ~string](values []T) []string {
 	}
 
 	return names
-}
-
-func enumList[T ~string](values []T) string {
-	return strings.Join(enumNames(values), ", ")
 }
 
 func requireAmount(params map[string]any, key string) (decimal.Decimal, error) {

@@ -4,7 +4,40 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
 )
+
+type PeriodSchedule struct {
+	Frequency    tenant.PayPeriodFrequency
+	EndDayOfWeek int
+	PayDelayDays int
+}
+
+func ResolveRequestedPeriod(
+	schedule PeriodSchedule,
+	periodStart, periodEnd, now int64,
+) (PeriodBounds, error) {
+	bounds := PeriodBounds{PeriodStart: periodStart, PeriodEnd: periodEnd}
+	if bounds.PeriodStart == 0 || bounds.PeriodEnd == 0 {
+		bounds = ResolvePeriod(
+			schedule.Frequency,
+			schedule.EndDayOfWeek,
+			schedule.PayDelayDays,
+			now,
+		)
+	} else {
+		bounds.PayDate = time.Unix(bounds.PeriodEnd, 0).UTC().
+			AddDate(0, 0, schedule.PayDelayDays).Unix()
+	}
+	if bounds.PeriodEnd <= bounds.PeriodStart {
+		return bounds, errortypes.NewValidationError(
+			"periodEnd",
+			errortypes.ErrInvalid,
+			"Period end must be after the period start",
+		)
+	}
+	return bounds, nil
+}
 
 type PeriodBounds struct {
 	PeriodStart int64 `json:"periodStart"`

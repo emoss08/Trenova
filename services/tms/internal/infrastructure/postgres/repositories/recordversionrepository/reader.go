@@ -9,9 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/core/domain/driverpay"
+	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
@@ -280,6 +283,90 @@ var lookups = map[permission.Resource]lookup{
 		scope:   buncolgen.CarrierIntelEventScopeTenant,
 		idEq:    buncolgen.CarrierIntelEventColumns.ID.Eq(),
 		version: func(v versioned) int64 { return v.(*carrierintel.CarrierIntelEvent).Version },
+	},
+	permission.ResourceDriverSettlement: {
+		model: func() versioned { return new(driversettlement.Settlement) },
+		scope: buncolgen.SettlementScopeTenant,
+		idEq:  buncolgen.SettlementColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*driversettlement.Settlement)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
+	},
+	permission.ResourceCarrierSettlement: {
+		model: func() versioned { return new(carriersettlement.CarrierSettlement) },
+		scope: buncolgen.CarrierSettlementScopeTenant,
+		idEq:  buncolgen.CarrierSettlementColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*carriersettlement.CarrierSettlement)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
+	},
+	permission.ResourceCarrierInvoiceMatch: {
+		model: func() versioned { return new(carriersettlement.InvoiceMatch) },
+		scope: buncolgen.InvoiceMatchScopeTenant,
+		idEq:  buncolgen.InvoiceMatchColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*carriersettlement.InvoiceMatch)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
+	},
+	permission.ResourceEscrowAccount: {
+		model: func() versioned { return new(driverpay.EscrowAccount) },
+		scope: buncolgen.EscrowAccountScopeTenant,
+		idEq:  buncolgen.EscrowAccountColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*driverpay.EscrowAccount)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
+	},
+	permission.ResourcePayAdvance: {
+		model: func() versioned { return new(driverpay.PayAdvance) },
+		scope: buncolgen.PayAdvanceScopeTenant,
+		idEq:  buncolgen.PayAdvanceColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*driverpay.PayAdvance)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
+	},
+	permission.ResourceRecurringDeduction: {
+		model: func() versioned { return new(driverpay.RecurringDeduction) },
+		scope: buncolgen.RecurringDeductionScopeTenant,
+		idEq:  buncolgen.RecurringDeductionColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*driverpay.RecurringDeduction)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
+	},
+	permission.ResourceRecurringEarning: {
+		model: func() versioned { return new(driverpay.RecurringEarning) },
+		scope: buncolgen.RecurringEarningScopeTenant,
+		idEq:  buncolgen.RecurringEarningColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*driverpay.RecurringEarning)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
 	},
 }
 

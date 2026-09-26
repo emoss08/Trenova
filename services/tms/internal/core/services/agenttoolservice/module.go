@@ -149,7 +149,9 @@ func ToolProviders() []any {
 		newArrangeHomeLayoutTool,
 	}
 
-	return append(providers, ediToolProviders()...)
+	providers = append(providers, ediToolProviders()...)
+
+	return append(providers, settlementToolProviders()...)
 }
 
 func grouped() []any {

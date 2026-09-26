@@ -268,7 +268,7 @@ func shareRequest(params *serviceports.ToolExecuteParams) (*serviceports.ShareIn
 	if err != nil {
 		return nil, err
 	}
-	tab, err := optionalEnum(params.Params, paramShareTab, shareTabs)
+	tab, _, err := optionalEnum(params.Params, paramShareTab, shareTabs)
 	if err != nil {
 		return nil, err
 	}
