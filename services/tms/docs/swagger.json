@@ -859,6 +859,1024 @@
             ],
             "type": "object"
         },
+        "capture.Architecture": {
+            "enum": [
+                "x64"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "ArchitectureX64"
+            ]
+        },
+        "capture.BatchStatus": {
+            "enum": [
+                "Receiving",
+                "Sealed",
+                "Processing",
+                "Ready",
+                "PartiallyFiled",
+                "Filed",
+                "Discarded",
+                "Expired",
+                "Failed"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "BatchReceiving",
+                "BatchSealed",
+                "BatchProcessing",
+                "BatchReady",
+                "BatchPartiallyFiled",
+                "BatchFiled",
+                "BatchDiscarded",
+                "BatchExpired",
+                "BatchFailed"
+            ]
+        },
+        "capture.CaptureBatch": {
+            "properties": {
+                "businessUnit": {
+                    "$ref": "#/definitions/tenant.BusinessUnit"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "device": {
+                    "$ref": "#/definitions/capture.CaptureDevice"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "documentTypeId": {
+                    "type": "string"
+                },
+                "expectedPageCount": {
+                    "type": "integer"
+                },
+                "failureMessage": {
+                    "type": "string"
+                },
+                "filedItemCount": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "itemCount": {
+                    "type": "integer"
+                },
+                "items": {
+                    "items": {
+                        "$ref": "#/definitions/capture.CaptureItem"
+                    },
+                    "type": "array"
+                },
+                "jobName": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/tenant.Organization"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "pages": {
+                    "items": {
+                        "$ref": "#/definitions/capture.CapturePage"
+                    },
+                    "type": "array"
+                },
+                "processedAt": {
+                    "type": "integer"
+                },
+                "profileId": {
+                    "type": "string"
+                },
+                "receivedPageCount": {
+                    "type": "integer"
+                },
+                "requestId": {
+                    "type": "string"
+                },
+                "retainUntil": {
+                    "type": "integer"
+                },
+                "sealedAt": {
+                    "type": "integer"
+                },
+                "settings": {
+                    "$ref": "#/definitions/capture.Settings"
+                },
+                "source": {
+                    "$ref": "#/definitions/capture.Source"
+                },
+                "sourceName": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/capture.BatchStatus"
+                },
+                "targetId": {
+                    "type": "string"
+                },
+                "targetType": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "capture.CaptureDevice": {
+            "properties": {
+                "agentVersion": {
+                    "type": "string"
+                },
+                "architecture": {
+                    "$ref": "#/definitions/capture.Architecture"
+                },
+                "businessUnit": {
+                    "$ref": "#/definitions/tenant.BusinessUnit"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lastIp": {
+                    "type": "string"
+                },
+                "lastSeenAt": {
+                    "type": "integer"
+                },
+                "machineName": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/tenant.Organization"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "osVersion": {
+                    "type": "string"
+                },
+                "revokedAt": {
+                    "type": "integer"
+                },
+                "revokedById": {
+                    "type": "string"
+                },
+                "revokedReason": {
+                    "type": "string"
+                },
+                "sources": {
+                    "items": {
+                        "$ref": "#/definitions/capture.SourceInfo"
+                    },
+                    "type": "array"
+                },
+                "status": {
+                    "$ref": "#/definitions/capture.DeviceStatus"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                },
+                "windowsUser": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "capture.CaptureItem": {
+            "properties": {
+                "batchId": {
+                    "type": "string"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "coverSheetId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "detectedKind": {
+                    "type": "string"
+                },
+                "documentId": {
+                    "type": "string"
+                },
+                "failureMessage": {
+                    "type": "string"
+                },
+                "filedAt": {
+                    "type": "integer"
+                },
+                "filedById": {
+                    "type": "string"
+                },
+                "filedDocTypeId": {
+                    "type": "string"
+                },
+                "filedId": {
+                    "type": "string"
+                },
+                "filedType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "pageIds": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "position": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/capture.ItemStatus"
+                },
+                "suggestedDocTypeId": {
+                    "type": "string"
+                },
+                "suggestedId": {
+                    "type": "string"
+                },
+                "suggestedType": {
+                    "type": "string"
+                },
+                "suggestionConfidence": {
+                    "type": "number"
+                },
+                "suggestionReason": {
+                    "type": "string"
+                },
+                "suggestionSource": {
+                    "$ref": "#/definitions/capture.SuggestionSource"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "capture.CapturePage": {
+            "properties": {
+                "batchId": {
+                    "type": "string"
+                },
+                "blankScore": {
+                    "type": "number"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "byteSize": {
+                    "type": "integer"
+                },
+                "checksumSha256": {
+                    "type": "string"
+                },
+                "contentType": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "dpi": {
+                    "type": "integer"
+                },
+                "failureMessage": {
+                    "type": "string"
+                },
+                "heightPx": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isSeparator": {
+                    "type": "boolean"
+                },
+                "markers": {
+                    "$ref": "#/definitions/capture.PageMarkers"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "rotation": {
+                    "type": "integer"
+                },
+                "sequence": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/capture.PageStatus"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "widthPx": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "capture.CaptureProfile": {
+            "properties": {
+                "businessUnit": {
+                    "$ref": "#/definitions/tenant.BusinessUnit"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "discardBlankPages": {
+                    "type": "boolean"
+                },
+                "dpi": {
+                    "type": "integer"
+                },
+                "duplex": {
+                    "type": "boolean"
+                },
+                "fixedPageCount": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "jpegQuality": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organization": {
+                    "$ref": "#/definitions/tenant.Organization"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "pixelType": {
+                    "$ref": "#/definitions/capture.PixelType"
+                },
+                "separatorStrategies": {
+                    "items": {
+                        "$ref": "#/definitions/capture.SeparatorStrategy"
+                    },
+                    "type": "array"
+                },
+                "showDriverUi": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "$ref": "#/definitions/capture.ProfileStatus"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "useFeeder": {
+                    "type": "boolean"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "capture.CaptureRequest": {
+            "properties": {
+                "batchId": {
+                    "type": "string"
+                },
+                "businessUnit": {
+                    "$ref": "#/definitions/tenant.BusinessUnit"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "completedAt": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "deliveredAt": {
+                    "type": "integer"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "documentTypeId": {
+                    "type": "string"
+                },
+                "expiresAt": {
+                    "type": "integer"
+                },
+                "failureCode": {
+                    "$ref": "#/definitions/capture.RequestFailureCode"
+                },
+                "failureMessage": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mode": {
+                    "$ref": "#/definitions/capture.RequestMode"
+                },
+                "organization": {
+                    "$ref": "#/definitions/tenant.Organization"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "profile": {
+                    "$ref": "#/definitions/capture.CaptureProfile"
+                },
+                "profileId": {
+                    "type": "string"
+                },
+                "sourceName": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/capture.RequestStatus"
+                },
+                "targetId": {
+                    "type": "string"
+                },
+                "targetType": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "capture.DeviceStatus": {
+            "enum": [
+                "Active",
+                "Revoked"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "DeviceActive",
+                "DeviceRevoked"
+            ]
+        },
+        "capture.ItemStatus": {
+            "enum": [
+                "Proposed",
+                "Filing",
+                "Filed",
+                "Discarded",
+                "Failed"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "ItemProposed",
+                "ItemFiling",
+                "ItemFiled",
+                "ItemDiscarded",
+                "ItemFailed"
+            ]
+        },
+        "capture.PageMarkers": {
+            "properties": {
+                "coverSheetId": {
+                    "description": "CoverSheetID is set when the server read a cover sheet on this page and\nfound it genuine for this organization.",
+                    "type": "string"
+                },
+                "deviceBarcodes": {
+                    "description": "DeviceBarcodes are the barcodes the scanner's own driver decoded.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "patchCode": {
+                    "description": "PatchCode is the patch sheet the scanner reported (1, 2, 3, 4, 6 or T),\nempty when there was none. Only the device can see these: the scanner\nreads them from the paper as it passes.",
+                    "type": "string"
+                },
+                "unrecognizedCoverSheet": {
+                    "description": "UnrecognizedCoverSheet is a page that looked like a cover sheet but did\nnot verify. It still divides the stack; it routes nothing.",
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "capture.PageStatus": {
+            "enum": [
+                "Received",
+                "Processed",
+                "Failed"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "PageReceived",
+                "PageProcessed",
+                "PageFailed"
+            ]
+        },
+        "capture.PixelType": {
+            "enum": [
+                "BlackWhite",
+                "Grayscale",
+                "Color"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "PixelBlackWhite",
+                "PixelGrayscale",
+                "PixelColor"
+            ]
+        },
+        "capture.ProfileStatus": {
+            "enum": [
+                "Active",
+                "Inactive"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "ProfileActive",
+                "ProfileInactive"
+            ]
+        },
+        "capture.RequestFailureCode": {
+            "enum": [
+                "SOURCE_UNAVAILABLE",
+                "SOURCE_BUSY",
+                "PAPER_JAM",
+                "FEEDER_EMPTY",
+                "CANCELED_BY_USER",
+                "DRIVER_ERROR",
+                "UPLOAD_FAILED",
+                "NOT_DELIVERED",
+                "INTERNAL"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "FailureSourceUnavailable",
+                "FailureSourceBusy",
+                "FailurePaperJam",
+                "FailureFeederEmpty",
+                "FailureCanceledByUser",
+                "FailureDriverError",
+                "FailureUploadFailed",
+                "FailureNotDelivered",
+                "FailureInternal"
+            ]
+        },
+        "capture.RequestMode": {
+            "enum": [
+                "Scan",
+                "Print"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "RequestModeScan",
+                "RequestModePrint"
+            ]
+        },
+        "capture.RequestStatus": {
+            "enum": [
+                "Pending",
+                "Delivered",
+                "InProgress",
+                "Completed",
+                "Canceled",
+                "Expired",
+                "Failed"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "RequestPending",
+                "RequestDelivered",
+                "RequestInProgress",
+                "RequestCompleted",
+                "RequestCanceled",
+                "RequestExpired",
+                "RequestFailed"
+            ]
+        },
+        "capture.SeparatorStrategy": {
+            "enum": [
+                "PatchCode",
+                "CoverSheet",
+                "BlankPage",
+                "FixedPageCount"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "SeparatorPatchCode",
+                "SeparatorCoverSheet",
+                "SeparatorBlankPage",
+                "SeparatorFixedPageCount"
+            ]
+        },
+        "capture.Settings": {
+            "properties": {
+                "application": {
+                    "type": "string"
+                },
+                "bitness": {
+                    "type": "integer"
+                },
+                "blankDiscard": {
+                    "type": "boolean"
+                },
+                "dpi": {
+                    "type": "integer"
+                },
+                "driverVersion": {
+                    "type": "string"
+                },
+                "duplex": {
+                    "type": "boolean"
+                },
+                "feeder": {
+                    "type": "boolean"
+                },
+                "pixelType": {
+                    "$ref": "#/definitions/capture.PixelType"
+                },
+                "protocol": {
+                    "$ref": "#/definitions/capture.SourceProtocol"
+                },
+                "refused": {
+                    "description": "Refused lists the capabilities the source declined, by TWAIN name.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "showDriverUi": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "capture.Source": {
+            "enum": [
+                "Scan",
+                "Print"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "SourceScan",
+                "SourcePrint"
+            ]
+        },
+        "capture.SourceInfo": {
+            "properties": {
+                "barcodes": {
+                    "type": "boolean"
+                },
+                "bitness": {
+                    "description": "Bitness is 32 or 64: the TWAIN data source's own, which decides which\nscan helper the companion starts for it.",
+                    "type": "integer"
+                },
+                "blankDiscard": {
+                    "type": "boolean"
+                },
+                "duplex": {
+                    "type": "boolean"
+                },
+                "feeder": {
+                    "type": "boolean"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "patchCodes": {
+                    "type": "boolean"
+                },
+                "pixelTypes": {
+                    "items": {
+                        "$ref": "#/definitions/capture.PixelType"
+                    },
+                    "type": "array"
+                },
+                "protocol": {
+                    "$ref": "#/definitions/capture.SourceProtocol"
+                },
+                "resolutions": {
+                    "description": "Resolutions are the DPI values the source accepts, so the web app offers\nonly what the scanner can do.",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "capture.SourceProtocol": {
+            "enum": [
+                "TWAIN",
+                "WIA"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "ProtocolTWAIN",
+                "ProtocolWIA"
+            ]
+        },
+        "capture.SuggestionSource": {
+            "enum": [
+                "CoverSheet",
+                "Request",
+                "Classifier",
+                "Person"
+            ],
+            "type": "string",
+            "x-enum-varnames": [
+                "SuggestionCoverSheet",
+                "SuggestionRequest",
+                "SuggestionClassifier",
+                "SuggestionPerson"
+            ]
+        },
+        "capturehandler.exchangePairingRequest": {
+            "properties": {
+                "deviceCode": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "capturehandler.reportSourcesRequest": {
+            "properties": {
+                "sources": {
+                    "items": {
+                        "$ref": "#/definitions/capture.SourceInfo"
+                    },
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "capturereleaseservice.SignedRelease": {
+            "properties": {
+                "manifest": {
+                    "type": "string"
+                },
+                "signature": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.DeviceIdentity": {
+            "properties": {
+                "device": {
+                    "$ref": "#/definitions/capture.CaptureDevice"
+                },
+                "organization": {
+                    "$ref": "#/definitions/captureservice.DeviceOrganization"
+                },
+                "person": {
+                    "$ref": "#/definitions/captureservice.DevicePerson"
+                },
+                "updates": {
+                    "$ref": "#/definitions/captureservice.DeviceUpdatePolicy"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.DeviceOrganization": {
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.DevicePerson": {
+            "properties": {
+                "emailAddress": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.DeviceUpdatePolicy": {
+            "properties": {
+                "allowAutoUpdate": {
+                    "description": "AllowAutoUpdate is whether the companion installs a new release by\nitself. When it is off, IT deploys new versions.",
+                    "type": "boolean"
+                },
+                "minimumVersion": {
+                    "description": "MinimumVersion is the oldest companion that may refresh its token;\nempty when there is none.",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.OpenBatchInput": {
+            "properties": {
+                "clientKey": {
+                    "description": "ClientKey is the device's own name for the batch. Opening twice with\nthe same key returns the same batch.",
+                    "type": "string"
+                },
+                "jobName": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "string"
+                },
+                "requestId": {
+                    "type": "string"
+                },
+                "settings": {
+                    "$ref": "#/definitions/capture.Settings"
+                },
+                "source": {
+                    "$ref": "#/definitions/capture.Source"
+                },
+                "sourceName": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.PairingGrant": {
+            "properties": {
+                "deviceCode": {
+                    "type": "string"
+                },
+                "expiresIn": {
+                    "type": "integer"
+                },
+                "interval": {
+                    "type": "integer"
+                },
+                "userCode": {
+                    "type": "string"
+                },
+                "verificationUri": {
+                    "type": "string"
+                },
+                "verificationUriComplete": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.RefreshRequest": {
+            "properties": {
+                "agentVersion": {
+                    "type": "string"
+                },
+                "osVersion": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.RequestStatusReport": {
+            "properties": {
+                "failureCode": {
+                    "$ref": "#/definitions/capture.RequestFailureCode"
+                },
+                "failureMessage": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/capture.RequestStatus"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.SealBatchInput": {
+            "properties": {
+                "manifestDigest": {
+                    "description": "ManifestDigest is SHA-256 over the pages' own SHA-256 hex digests in\nsequence order, one per line. It proves the server holds exactly the\npages the device captured, in the order it captured them.",
+                    "type": "string"
+                },
+                "pageCount": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.StartPairingRequest": {
+            "properties": {
+                "agentVersion": {
+                    "type": "string"
+                },
+                "architecture": {
+                    "$ref": "#/definitions/capture.Architecture"
+                },
+                "machineName": {
+                    "type": "string"
+                },
+                "osVersion": {
+                    "type": "string"
+                },
+                "windowsUser": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "captureservice.TokenPair": {
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "accessTokenExpiresAt": {
+                    "type": "integer"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "deviceId": {
+                    "type": "string"
+                },
+                "deviceName": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                },
+                "tokenType": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
         "carrier.Carrier": {
             "properties": {
                 "addressLine1": {
@@ -4124,14 +5142,16 @@
                 "none",
                 "rate_confirmation_import",
                 "assistant_attachment",
-                "inbound_attachment"
+                "inbound_attachment",
+                "capture"
             ],
             "type": "string",
             "x-enum-varnames": [
                 "ProcessingProfileNone",
                 "ProcessingProfileRateConfirmationImport",
                 "ProcessingProfileAssistantAttachment",
-                "ProcessingProfileInboundAttachment"
+                "ProcessingProfileInboundAttachment",
+                "ProcessingProfileCapture"
             ]
         },
         "document.ShipmentDraftStatus": {
@@ -25860,6 +26880,791 @@
                 "summary": "Bill an open statement before its cycle closes",
                 "tags": [
                     "Invoice Run"
+                ]
+            }
+        },
+        "/capture/device/": {
+            "delete": {
+                "description": "Revokes the device's own credential, as signing out in the tray does, so the\nperson's device list shows it gone rather than offline. The credential stops\nworking at once.",
+                "operationId": "revokeCaptureDeviceSelf",
+                "responses": {
+                    "204": {
+                        "description": "Signed out"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Sign the calling device out",
+                "tags": [
+                    "Capture"
+                ]
+            },
+            "get": {
+                "description": "Returns the device record with the person and organization it acts for, so the\ntray can show who it is signed in as.",
+                "operationId": "getCaptureDevice",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/captureservice.DeviceIdentity"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Describe the calling device",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/batches/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Opening twice with the same client key returns the same batch, so a retried\nopen after a lost response does not start a second batch.",
+                "operationId": "openCaptureBatch",
+                "parameters": [
+                    {
+                        "description": "The batch to open",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/captureservice.OpenBatchInput"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/capture.CaptureBatch"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "426": {
+                        "description": "Upgrade Required",
+                        "schema": {
+                            "additionalProperties": {
+                                "type": "string"
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Open a capture batch",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/batches/{batchID}/pages/{sequence}/": {
+            "put": {
+                "consumes": [
+                    "application/pdf"
+                ],
+                "description": "The body is a one-page PDF. Idempotent on the sequence: the same page sent\nagain returns the stored page, and a different page for a sequence already\ntaken is refused. Scanner-reported markers travel in headers.",
+                "operationId": "putCapturePage",
+                "parameters": [
+                    {
+                        "description": "Capture batch ID",
+                        "in": "path",
+                        "name": "batchID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Page sequence, from 1",
+                        "in": "path",
+                        "name": "sequence",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "description": "Resolution the page was scanned at",
+                        "in": "header",
+                        "name": "X-Capture-Dpi",
+                        "type": "integer"
+                    },
+                    {
+                        "description": "Patch sheet the scanner detected",
+                        "in": "header",
+                        "name": "X-Capture-Patch-Code",
+                        "type": "string"
+                    },
+                    {
+                        "description": "A barcode the scanner decoded; repeatable",
+                        "in": "header",
+                        "name": "X-Capture-Barcode",
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/capture.CapturePage"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "413": {
+                        "description": "Request Entity Too Large",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Upload one scanned page",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/batches/{batchID}/print-job/": {
+            "put": {
+                "consumes": [
+                    "application/pdf"
+                ],
+                "description": "The body is the job as a PDF. It is split into pages and the batch is sealed.",
+                "operationId": "putCapturePrintJob",
+                "parameters": [
+                    {
+                        "description": "Capture batch ID",
+                        "in": "path",
+                        "name": "batchID",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/capture.CaptureBatch"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "413": {
+                        "description": "Request Entity Too Large",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Upload a whole print job",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/batches/{batchID}/seal/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Closes the batch to new pages once every page is stored and the manifest digest\nmatches, then starts reading it. Sealing a sealed batch returns it unchanged.",
+                "operationId": "sealCaptureBatch",
+                "parameters": [
+                    {
+                        "description": "Capture batch ID",
+                        "in": "path",
+                        "name": "batchID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Page count and manifest digest",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/captureservice.SealBatchInput"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/capture.CaptureBatch"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Seal a capture batch",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/profiles/": {
+            "get": {
+                "description": "The active profiles its person may scan with, for scans started from the tray.",
+                "operationId": "listCaptureDeviceProfiles",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "items": {
+                                "$ref": "#/definitions/capture.CaptureProfile"
+                            },
+                            "type": "array"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List the scan profiles the device may use",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/requests/": {
+            "get": {
+                "description": "Returns the device's open capture requests, oldest first. Requests whose time\nran out are expired on the way and not returned.",
+                "operationId": "listCaptureDeviceRequests",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "items": {
+                                "$ref": "#/definitions/capture.CaptureRequest"
+                            },
+                            "type": "array"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "List what the device still has to do",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/requests/{requestID}/status/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "reportCaptureRequestStatus",
+                "parameters": [
+                    {
+                        "description": "Capture request ID",
+                        "in": "path",
+                        "name": "requestID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "The new status",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/captureservice.RequestStatusReport"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/capture.CaptureRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Report how a capture request is going",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/sources/": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "operationId": "reportCaptureSources",
+                "parameters": [
+                    {
+                        "description": "Every scanner the device found",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/capturehandler.reportSourcesRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/capture.CaptureDevice"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Report the scanners a device can reach",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/device/stream/": {
+            "get": {
+                "description": "A server-sent event stream carrying ready, heartbeat, reset and close as the web\napp's stream does, plus capture.request when the device has something to do and\ncapture.revoked when it has been revoked. The device fetches its requests on\ncapture.request, on reset, and whenever it reconnects.",
+                "operationId": "openCaptureDeviceStream",
+                "produces": [
+                    "text/event-stream"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "event stream",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Open the device's live stream",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/pages/{pageID}/content/": {
+            "get": {
+                "description": "Pages are encrypted at rest, so they are served through the API. kind is pdf\n(the default) or thumbnail.",
+                "operationId": "getCapturePageContent",
+                "parameters": [
+                    {
+                        "description": "Page ID",
+                        "in": "path",
+                        "name": "pageID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "pdf or thumbnail",
+                        "in": "query",
+                        "name": "kind",
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/pdf",
+                    "image/jpeg"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Read a captured page",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/pair/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Issues an RFC 8628 device authorization grant. The device shows the user code\nand polls the token endpoint with the device code until a signed-in person\napproves it.",
+                "operationId": "startCapturePairing",
+                "parameters": [
+                    {
+                        "description": "The machine asking to be paired",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/captureservice.StartPairingRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/captureservice.PairingGrant"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "summary": "Start pairing a Trenova Capture device",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/pair/token/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Polled by the device. Answers authorization_pending, slow_down, access_denied,\nexpired_token or invalid_grant as an RFC 8628 error body until the grant is\napproved, then returns the device's first credential exactly once.",
+                "operationId": "exchangeCapturePairing",
+                "parameters": [
+                    {
+                        "description": "The device code",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/capturehandler.exchangePairingRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/captureservice.TokenPair"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "additionalProperties": {
+                                "type": "string"
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "summary": "Exchange an approved pairing for device credentials",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/releases/latest/": {
+            "get": {
+                "description": "Returns the release manifest exactly as it was signed: its bytes, base64, and\ntheir ed25519 signature. The companion verifies the signature against a key built\ninto it before acting on anything the manifest says. 404 when no release is\npublished or this server does not serve one.",
+                "operationId": "getLatestCaptureRelease",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/capturereleaseservice.SignedRelease"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "summary": "The current Trenova Capture release",
+                "tags": [
+                    "Capture"
+                ]
+            }
+        },
+        "/capture/token/refresh/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Exchanges a refresh token for a new access and refresh token. A refresh token\nis single use; presenting one that was already replaced revokes the device.",
+                "operationId": "refreshCaptureToken",
+                "parameters": [
+                    {
+                        "description": "The refresh token",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/captureservice.RefreshRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/captureservice.TokenPair"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "additionalProperties": {
+                                "type": "string"
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/helpers.ProblemDetail"
+                        }
+                    },
+                    "426": {
+                        "description": "Upgrade Required",
+                        "schema": {
+                            "additionalProperties": {
+                                "type": "string"
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "summary": "Rotate a device's credential",
+                "tags": [
+                    "Capture"
                 ]
             }
         },
@@ -55096,6 +56901,10 @@
             "x-displayName": "Database Sessions"
         },
         {
+            "name": "Capture",
+            "x-displayName": "Capture"
+        },
+        {
             "name": "Invoice Run",
             "x-displayName": "Invoice Run"
         },
@@ -55226,6 +57035,7 @@
         {
             "name": "Other",
             "tags": [
+                "Capture",
                 "Invoice Run",
                 "Jurisdiction Rules",
                 "Permits",

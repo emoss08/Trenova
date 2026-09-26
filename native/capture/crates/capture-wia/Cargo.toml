@@ -1,0 +1,28 @@
+[package]
+name = "capture-wia"
+description = "WIA 2.0 scanning for the Trenova Capture scan helper, for scanners without a TWAIN driver."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+capture-imaging.workspace = true
+capture-protocol.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-core.workspace = true
+windows = { workspace = true, features = [
+    "Win32_Devices_ImageAcquisition",
+    "Win32_Foundation",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Ole",
+    "Win32_System_Variant",
+] }
+
+[lints]
+workspace = true

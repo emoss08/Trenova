@@ -52,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingtransferrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/briefingrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/capturerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierintelrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierinvoicematchrepository"
@@ -421,6 +422,15 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 		fx.As(new(repositories.InboundShipmentFinder)),
 		fx.As(new(repositories.InboundPartyFinder)),
 	),
+	capturerepository.NewDeviceRepository,
+	capturerepository.NewPairingRepository,
+	capturerepository.NewProfileRepository,
+	capturerepository.NewRequestRepository,
+	capturerepository.NewBatchRepository,
+	capturerepository.NewPageRepository,
+	capturerepository.NewItemRepository,
+	capturerepository.NewCoverSheetRepository,
+	capturerepository.NewRecordFinder,
 	edicarrierinvoicerepository.New,
 	commodityrepository.New,
 	customerpaymentrepository.New,

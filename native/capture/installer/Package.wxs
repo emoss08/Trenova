@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Trenova Capture for Windows, as one per-machine MSI (WiX v4).
+
+  What it installs, in %ProgramFiles%\Trenova\Capture:
+    trenova-capture.exe            the tray agent, started at sign-in
+    trenova-capture-scan-x64.exe   the scan helpers, one per bitness
+    trenova-capture-scan-x86.exe
+    trenova-capture-svc.exe        the print service (TrenovaCaptureSvc) behind the
+                                   "Trenova" printer
+    trenova-capture-update.exe     the updater service (TrenovaCaptureUpdater)
+
+  Properties for a silent install (msiexec /i TrenovaCapture.msi /qn PROP=value):
+    TRENOVAURL   the server address, written to HKLM\SOFTWARE\Trenova\Capture\ServerUrl
+    AUTOUPDATE   1 (default) lets Trenova Capture install new releases itself; 0 leaves
+                 that to whoever deploys this MSI
+    PRINTPORT    the loopback port the printer uses (default 8631)
+
+  Upgrades are major upgrades: a newer MSI replaces an older install in place,
+  keeping what people have not yet uploaded. A downgrade is refused.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <?ifndef Version ?>
+    <?error Pass the version: wix build -d Version=1.2.3 ... ?>
+  <?endif?>
+
+  <Package Name="Trenova Capture"
+           Manufacturer="Trenova"
+           Version="$(var.Version)"
+           UpgradeCode="7d2a9f3e-6c41-4b58-9a0e-2f1c3d4e5a6b"
+           Language="1033"
+           Scope="perMachine"
+           InstallerVersion="500"
+           Compressed="yes">
+
+    <SummaryInformation Description="Trenova Capture: scan and print into Trenova"
+                        Manufacturer="Trenova" />
+
+    <MajorUpgrade AllowSameVersionUpgrades="no"
+                  Schedule="afterInstallInitialize"
+                  DowngradeErrorMessage="A newer version of Trenova Capture is already installed." />
+
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Property Id="AUTOUPDATE" Value="1" Secure="yes" />
+    <Property Id="PRINTPORT" Value="8631" Secure="yes" />
+    <Property Id="TRENOVAURL" Secure="yes" />
+    <Property Id="ARPPRODUCTICON" Value="TrenovaIcon" />
+    <Property Id="ARPHELPLINK" Value="https://trenova.app" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+
+    <Icon Id="TrenovaIcon" SourceFile="$(var.LogoPath)" />
+
+    <Launch Condition="VersionNT64" Message="Trenova Capture needs 64-bit Windows 10 or later." />
+    <Launch Condition="Installed OR (VersionNT >= 603)" Message="Trenova Capture needs Windows 10 or later." />
+
+    <Feature Id="Main" Title="Trenova Capture" Level="1" AllowAbsent="no">
+      <ComponentGroupRef Id="Binaries" />
+      <ComponentGroupRef Id="Settings" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="TrenovaFolder" Name="Trenova">
+        <Directory Id="INSTALLFOLDER" Name="Capture" />
+      </Directory>
+    </StandardDirectory>
+
+
+    <ComponentGroup Id="Binaries" Directory="INSTALLFOLDER">
+      <Component Id="Agent" Guid="a1c2e3f4-0001-4c00-8000-7d2a9f3e6c41" Bitness="always64">
+        <File Id="AgentExe" Source="$(var.StageDir)\trenova-capture.exe" KeyPath="yes" />
+        <!-- Started for every person at sign-in; the agent keeps one instance per session. -->
+        <RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+                       Name="Trenova Capture" Type="string" Value="&quot;[#AgentExe]&quot;" />
+      </Component>
+      <Component Id="ScanHelperX64" Guid="a1c2e3f4-0002-4c00-8000-7d2a9f3e6c41" Bitness="always64">
+        <File Source="$(var.StageDir)\trenova-capture-scan-x64.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="ScanHelperX86" Guid="a1c2e3f4-0003-4c00-8000-7d2a9f3e6c41" Bitness="always64">
+        <File Source="$(var.StageDir)\trenova-capture-scan-x86.exe" KeyPath="yes" />
+      </Component>
+
+      <Component Id="PrintService" Guid="a1c2e3f4-0004-4c00-8000-7d2a9f3e6c41" Bitness="always64">
+        <File Id="PrintServiceExe" Source="$(var.StageDir)\trenova-capture-svc.exe" KeyPath="yes" />
+        <ServiceInstall Id="PrintServiceInstall"
+                        Name="TrenovaCaptureSvc"
+                        DisplayName="Trenova Capture print service"
+                        Description="Receives what is printed to the Trenova printer and hands it to Trenova Capture for upload."
+                        Type="ownProcess"
+                        Start="auto"
+                        ErrorControl="normal"
+                        Account="NT AUTHORITY\LocalService"
+                        Arguments="service"
+                        Vital="yes">
+          <ServiceConfig ServiceSid="unrestricted" OnInstall="yes" OnReinstall="yes" />
+          <util:ServiceConfig FirstFailureActionType="restart"
+                              SecondFailureActionType="restart"
+                              ThirdFailureActionType="restart"
+                              RestartServiceDelayInSeconds="30"
+                              ResetPeriodInDays="1" />
+        </ServiceInstall>
+        <!-- Stopped before its file is replaced; started once its directories exist (ConfigurePrintService). -->
+        <ServiceControl Id="PrintServiceControl" Name="TrenovaCaptureSvc"
+                        Stop="both" Remove="uninstall" Start="install" Wait="yes" />
+      </Component>
+
+      <Component Id="Updater" Guid="a1c2e3f4-0005-4c00-8000-7d2a9f3e6c41" Bitness="always64">
+        <File Id="UpdaterExe" Source="$(var.StageDir)\trenova-capture-update.exe" KeyPath="yes" />
+        <ServiceInstall Id="UpdaterInstall"
+                        Name="TrenovaCaptureUpdater"
+                        DisplayName="Trenova Capture updater"
+                        Description="Installs new releases of Trenova Capture after verifying them. Started by Trenova Capture when an update is due."
+                        Type="ownProcess"
+                        Start="demand"
+                        ErrorControl="normal"
+                        Arguments="service"
+                        Vital="yes" />
+        <ServiceControl Id="UpdaterControl" Name="TrenovaCaptureUpdater"
+                        Stop="both" Remove="uninstall" Wait="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Settings" Directory="INSTALLFOLDER">
+      <Component Id="MachineSettings" Guid="a1c2e3f4-0006-4c00-8000-7d2a9f3e6c41" Bitness="always64">
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Trenova\Capture">
+          <RegistryValue Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+          <RegistryValue Name="InstalledVersion" Type="string" Value="$(var.Version)" />
+          <RegistryValue Name="AutoUpdate" Type="integer" Value="[AUTOUPDATE]" />
+          <RegistryValue Name="PrintPort" Type="integer" Value="[PRINTPORT]" />
+        </RegistryKey>
+      </Component>
+      <!-- Written only when the deployment names a server; a person can still choose one in the tray. -->
+      <Component Id="ServerSetting" Guid="a1c2e3f4-0007-4c00-8000-7d2a9f3e6c41" Bitness="always64"
+                 Condition="TRENOVAURL &lt;&gt; &quot;&quot;">
+        <RegistryValue Root="HKLM" Key="SOFTWARE\Trenova\Capture" Name="ServerUrl"
+                       Type="string" Value="[TRENOVAURL]" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="a1c2e3f4-0008-4c00-8000-7d2a9f3e6c41" Bitness="always64">
+        <Shortcut Id="AgentShortcut" Name="Trenova Capture"
+                  Description="Scan and print into Trenova"
+                  Target="[#AgentExe]" WorkingDirectory="INSTALLFOLDER" Icon="TrenovaIcon" />
+        <RegistryValue Root="HKCU" Key="SOFTWARE\Trenova\Capture" Name="StartMenuShortcut"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <!--
+      What Windows Installer cannot declare, the binaries do for it, elevated
+      and without a window:
+        - the print service marks its own SID unrestricted (so the ACLs below can
+          name it), creates %ProgramData%\Trenova\Capture\{logs,spool} with
+          their ACLs, and the "Trenova" printer on the IPP Class Driver;
+        - the updater lets signed-in users start it (its service DACL), and at the
+          end starts the tray agent for everyone signed in.
+      Each is safe to run again, so a repair or an upgrade repeats them.
+    -->
+    <SetProperty Id="ConfigurePrintService" Value="&quot;[#PrintServiceExe]&quot; configure"
+                 Before="ConfigurePrintService" Sequence="execute" />
+    <CustomAction Id="ConfigurePrintService" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec" Execute="deferred" Impersonate="no" Return="check" />
+
+    <SetProperty Id="InstallPrinter" Value="&quot;[#PrintServiceExe]&quot; install-printer"
+                 Before="InstallPrinter" Sequence="execute" />
+    <CustomAction Id="InstallPrinter" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec" Execute="deferred" Impersonate="no" Return="check" />
+
+    <SetProperty Id="UninstallPrinter" Value="&quot;[#PrintServiceExe]&quot; uninstall-printer"
+                 Before="UninstallPrinter" Sequence="execute" />
+    <CustomAction Id="UninstallPrinter" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec" Execute="deferred" Impersonate="no" Return="ignore" />
+
+    <SetProperty Id="ConfigureUpdater" Value="&quot;[#UpdaterExe]&quot; configure"
+                 Before="ConfigureUpdater" Sequence="execute" />
+    <CustomAction Id="ConfigureUpdater" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec" Execute="deferred" Impersonate="no" Return="check" />
+
+    <SetProperty Id="RelaunchAgents" Value="&quot;[#UpdaterExe]&quot; relaunch"
+                 Before="RelaunchAgents" Sequence="execute" />
+    <CustomAction Id="RelaunchAgents" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec" Execute="deferred" Impersonate="no" Return="ignore" />
+
+    <InstallExecuteSequence>
+      <!-- The printer goes before the service is removed, while the binary that removes it is still there. -->
+      <Custom Action="UninstallPrinter" Before="StopServices" Condition="REMOVE=&quot;ALL&quot;" />
+      <!-- Directories and the updater's DACL exist before the services start. -->
+      <Custom Action="ConfigurePrintService" After="InstallServices" Condition="NOT REMOVE" />
+      <Custom Action="ConfigureUpdater" After="ConfigurePrintService" Condition="NOT REMOVE" />
+      <Custom Action="InstallPrinter" After="StartServices" Condition="NOT REMOVE" />
+      <Custom Action="RelaunchAgents" After="InstallPrinter" Condition="NOT REMOVE" />
+    </InstallExecuteSequence>
+  </Package>
+</Wix>
