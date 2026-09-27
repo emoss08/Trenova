@@ -22,5 +22,7 @@ func (r ReplyReader) ReadReply(text string) (*aicorrection.Prediction, error) {
 		return nil, err
 	}
 
-	return aicorrection.ReadPrediction(documentintelligencejobs.ShipmentDraftDataFromAIExtract(result)), nil
+	return aicorrection.ReadPrediction(
+		documentintelligencejobs.ShipmentDraftDataFromAIExtract(result),
+	), nil
 }

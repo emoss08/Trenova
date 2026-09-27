@@ -32,7 +32,9 @@ func (s *Scorer) Score(
 ) (*aitraining.ScoreReport, error) {
 	if req == nil || req.Evaluation == nil || req.Predictions == nil {
 		return nil, errortypes.NewValidationError(
-			"predictions", errortypes.ErrRequired, "Both the evaluation set and the predictions are required",
+			"predictions",
+			errortypes.ErrRequired,
+			"Both the evaluation set and the predictions are required",
 		)
 	}
 

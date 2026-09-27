@@ -20,6 +20,12 @@ const (
 	maxStopTimeWindowRunes = 64
 )
 
+const (
+	schemaTypeInteger   = "integer"
+	propReviewRequired  = "reviewRequired"
+	propEvidenceExcerpt = "evidenceExcerpt"
+)
+
 var extractFieldKeys = aicorrection.PredictedFieldKeys
 
 func buildRouteSchema() map[string]any {
@@ -108,17 +114,17 @@ func extractFieldSchema() map[string]any {
 				"type": "string",
 				"enum": slices.Clone(extractFieldKeys),
 			},
-			"value":          map[string]any{"type": "string", "maxLength": maxFieldValueRunes},
-			"confidence":     map[string]any{"type": "number"},
-			"pageNumber":     map[string]any{"type": "integer"},
-			"reviewRequired": map[string]any{"type": "boolean"},
+			"value":            map[string]any{"type": "string", "maxLength": maxFieldValueRunes},
+			"confidence":       map[string]any{"type": "number"},
+			"pageNumber":       map[string]any{"type": schemaTypeInteger},
+			propReviewRequired: map[string]any{"type": "boolean"},
 		},
 		"required": []string{
 			"key",
 			"value",
 			"confidence",
 			"pageNumber",
-			"reviewRequired",
+			propReviewRequired,
 		},
 	}
 }
@@ -138,10 +144,10 @@ func extractStopSchema() map[string]any {
 			"date":                map[string]any{"type": "string", "maxLength": maxStopDateRunes},
 			"timeWindow":          map[string]any{"type": "string", "maxLength": maxStopTimeWindowRunes},
 			"appointmentRequired": map[string]any{"type": "boolean"},
-			"pageNumber":          map[string]any{"type": "integer"},
-			"evidenceExcerpt":     map[string]any{"type": "string", "maxLength": maxEvidenceRunes},
+			"pageNumber":          map[string]any{"type": schemaTypeInteger},
+			propEvidenceExcerpt:   map[string]any{"type": "string", "maxLength": maxEvidenceRunes},
 			"confidence":          map[string]any{"type": "number"},
-			"reviewRequired":      map[string]any{"type": "boolean"},
+			propReviewRequired:    map[string]any{"type": "boolean"},
 		},
 		"required": []string{
 			"role",
@@ -155,9 +161,9 @@ func extractStopSchema() map[string]any {
 			"timeWindow",
 			"appointmentRequired",
 			"pageNumber",
-			"evidenceExcerpt",
+			propEvidenceExcerpt,
 			"confidence",
-			"reviewRequired",
+			propReviewRequired,
 		},
 	}
 }
@@ -176,12 +182,12 @@ func extractConflictSchema() map[string]any {
 			"pageNumbers": map[string]any{
 				"type":     "array",
 				"maxItems": 6,
-				"items":    map[string]any{"type": "integer"},
+				"items":    map[string]any{"type": schemaTypeInteger},
 			},
-			"evidenceExcerpt": map[string]any{"type": "string", "maxLength": maxEvidenceRunes},
+			propEvidenceExcerpt: map[string]any{"type": "string", "maxLength": maxEvidenceRunes},
 		},
 		"required": []string{
-			"key", "values", "pageNumbers", "evidenceExcerpt",
+			"key", "values", "pageNumbers", propEvidenceExcerpt,
 		},
 	}
 }
