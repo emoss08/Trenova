@@ -53,6 +53,8 @@ func (c *Connector) DocumentURL(kind accountingsync.SyncObjectType, externalID s
 		path = quickbooks.TxnBill.AppPath()
 	case accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncObjectDriverBillPay:
 		path = quickbooks.TxnBillPayment.AppPath()
+	case accountingsync.SyncObjectJournalEntry, accountingsync.SyncObjectJournalSummary:
+		path = quickbooks.TxnJournalEntry.AppPath()
 	default:
 		return ""
 	}

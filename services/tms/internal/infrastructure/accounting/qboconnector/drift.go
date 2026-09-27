@@ -36,6 +36,8 @@ func readKindOf(
 		return purchaseKindOf(target.Refs)
 	case kind.IsBillPayment():
 		return quickbooks.TxnBillPayment, nil
+	case kind.IsLedger():
+		return quickbooks.TxnJournalEntry, nil
 	default:
 		return "", errDocumentKind
 	}
