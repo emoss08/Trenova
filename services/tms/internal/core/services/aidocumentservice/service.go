@@ -145,6 +145,10 @@ func (s *Service) ExtractRateConfirmationForEvaluation(
 }
 
 func (s *Service) extractCall(req *serviceports.AIExtractRequest) *structuredCall {
+	return newExtractCall(req)
+}
+
+func newExtractCall(req *serviceports.AIExtractRequest) *structuredCall {
 	return &structuredCall{
 		tenant:     req.TenantInfo,
 		documentID: req.DocumentID,

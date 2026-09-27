@@ -248,3 +248,129 @@ func TestRun_ASimulatedWriteNeverPreviewsAgainOutsideTheSnapshot(t *testing.T) {
 	assert.False(t, action.Simulation.Previewed)
 	assert.Contains(t, action.Simulation.Summary, "read-only transaction")
 }
+
+// refusingPreviews answers every baseline with a preview, and the one for
+// refuseTool with a preview that says the write would be refused.
+type refusingPreviews struct {
+	serviceports.ProposalPreviewService
+
+	mu         sync.Mutex
+	refuseTool string
+	asked      []*serviceports.ProposalBaselineRequest
+}
+
+func (p *refusingPreviews) Baseline(
+	_ context.Context,
+	req *serviceports.ProposalBaselineRequest,
+) *serviceports.ProposalBaselineResult {
+	p.mu.Lock()
+	p.asked = append(p.asked, req)
+	p.mu.Unlock()
+
+	shipmentID, _ := req.Params.Params["shipmentId"].(string)
+	result := &serviceports.ProposalBaselineResult{
+		Target: &serviceports.ProposalTarget{
+			Resource: permission.ResourceShipment,
+			ID:       pulid.ID(shipmentID),
+			Version:  7,
+		},
+		Preview: &agent.ToolPreview{Summary: "Would change the shipment."},
+	}
+	if req.Tool.Name() == p.refuseTool {
+		result.Preview.Warnings = []agent.PreviewWarning{{
+			Code:    agent.PreviewWarningWouldFail,
+			Message: "This would be refused as it stands: validation failed:\n- BOL is already in use",
+			Reasons: []agent.PreviewReason{{
+				Field:   "bol",
+				Label:   "BOL",
+				Message: "BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",
+				Param:   "shipment.bol",
+			}, {
+				Message: "The customer is on credit hold",
+			}},
+		}}
+	}
+
+	return result
+}
+
+// A write whose baseline says it would be refused is not filed: a person
+// would only ever be able to reject it. The model is told each reason and
+// which parameter it is about, and asked to get what is missing.
+func TestRun_DoesNotFileAProposalWhoseBaselineWouldBeRefused(t *testing.T) {
+	t.Parallel()
+
+	tool := &targetedStubTool{actionTool("create_shipment", agent.TierActWithApproval, nil)}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("create_shipment", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
+		textTurn("Which BOL should I use?"),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
+		Tools: []serviceports.AgentTool{tool},
+	}, nil)
+	previews := &refusingPreviews{refuseTool: "create_shipment"}
+	rt.previews = previews
+	definition := testDefinition("create_shipment")
+	definition.AutonomyCeiling = agent.TierActWithApproval
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "copy SEED-DET-009",
+	})
+	require.NoError(t, err)
+
+	assert.Empty(t, result.Actions, "nothing is filed for a write that would be refused")
+	assert.Zero(t, tool.Calls)
+	require.Len(t, previews.asked, 1)
+	assert.False(t, previews.asked[0].FileRefused, "and no baseline is kept for it")
+
+	told := result.Messages[2]
+	assert.True(t, told.ToolFailed)
+	assert.Contains(t, told.Content, `"create_shipment" was not proposed`)
+	assert.Contains(t, told.Content,
+		"BOL: BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009")
+	assert.Contains(t, told.Content, "shipment.bol")
+	assert.Contains(t, told.Content, "The customer is on credit hold")
+	assert.Contains(t, told.Content, "Ask the person for")
+	assert.Contains(t, told.Content, "propose again")
+	assert.NotContains(t, told.Content, "This would be refused as it stands",
+		"the model gets the reasons, not the sentence the card shows")
+}
+
+// A later write on a record an earlier step of the same turn changes may be
+// refused only because that step has not run yet, so it is filed as a step
+// of the plan and its baseline kept; the plan's preview says it depends on
+// the earlier step.
+func TestRun_FilesAWriteAnEarlierStepMayMakeValid(t *testing.T) {
+	t.Parallel()
+
+	shipmentID := pulid.MustNew("shp_")
+	hold := &targetedStubTool{actionTool("place_shipment_hold", agent.TierPropose, nil)}
+	cancel := &targetedStubTool{actionTool("cancel_shipment", agent.TierPropose, nil)}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("place_shipment_hold", map[string]any{"shipmentId": shipmentID.String()}),
+		toolTurn("cancel_shipment", map[string]any{"shipmentId": shipmentID.String()}),
+		textTurn("Both are waiting for you."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
+		Tools: []serviceports.AgentTool{hold, cancel},
+	}, nil)
+	previews := &refusingPreviews{refuseTool: "cancel_shipment"}
+	rt.previews = previews
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("place_shipment_hold", "cancel_shipment"),
+		Actor:      testActor(),
+		Input:      "hold then cancel",
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Actions, 2, "the later step is filed with the earlier one")
+	assert.Equal(t, "cancel_shipment", result.Actions[1].ToolName)
+	require.Len(t, previews.asked, 2)
+	assert.False(t, previews.asked[0].FileRefused)
+	assert.True(t, previews.asked[1].FileRefused, "its baseline is kept, as any filed step's is")
+	assert.False(t, result.Messages[4].ToolFailed)
+	assert.Contains(t, result.Messages[4].Content, "Recorded a proposal")
+}

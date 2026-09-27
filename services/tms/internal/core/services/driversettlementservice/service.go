@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,6 +47,7 @@ type Params struct {
 	ShipmentRepo        repositories.ShipmentRepository
 	WorkerRepo          repositories.WorkerRepository
 	AccountingRepo      repositories.AccountingControlRepository
+	Stamper             *exchangeratestamp.Stamper
 	JournalRepo         repositories.JournalPostingRepository
 	FiscalPeriodRepo    repositories.FiscalPeriodRepository
 	Generator           seqgen.Generator
@@ -76,6 +78,7 @@ type Service struct {
 	shipmentRepo        repositories.ShipmentRepository
 	workerRepo          repositories.WorkerRepository
 	accountingRepo      repositories.AccountingControlRepository
+	stamper             *exchangeratestamp.Stamper
 	journalRepo         repositories.JournalPostingRepository
 	fiscalPeriodRepo    repositories.FiscalPeriodRepository
 	generator           seqgen.Generator
@@ -107,6 +110,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		shipmentRepo:        p.ShipmentRepo,
 		workerRepo:          p.WorkerRepo,
 		accountingRepo:      p.AccountingRepo,
+		stamper:             p.Stamper,
 		journalRepo:         p.JournalRepo,
 		fiscalPeriodRepo:    p.FiscalPeriodRepo,
 		generator:           p.Generator,

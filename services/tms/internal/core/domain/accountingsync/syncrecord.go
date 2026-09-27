@@ -49,6 +49,9 @@ var (
 	ErrSyncRecordNotSkippable  = errors.New("a record already sent or skipped cannot be skipped")
 	ErrSyncRecordNotReleasable = errors.New("only a record waiting for approval can be released")
 	ErrSkipReasonRequired      = errors.New("a reason is required to skip a record")
+	ErrSyncRecordNotRedatable  = errors.New(
+		"only a record blocked by a closed period can be sent on the first open day",
+	)
 )
 
 type AccountingSyncRecord struct {
@@ -90,6 +93,8 @@ type AccountingSyncRecord struct {
 	ReleasedByID      pulid.ID          `json:"releasedById"      bun:"released_by_id,type:VARCHAR(100),nullzero"`
 	SkippedByID       pulid.ID          `json:"skippedById"       bun:"skipped_by_id,type:VARCHAR(100),nullzero"`
 	SkippedReason     string            `json:"skippedReason"     bun:"skipped_reason,type:TEXT,nullzero"`
+	RedatedTo         *int64            `json:"redatedTo"         bun:"redated_to,type:BIGINT,nullzero"`
+	RedatedByID       pulid.ID          `json:"redatedById"       bun:"redated_by_id,type:VARCHAR(100),nullzero"`
 	Version           int64             `json:"version"           bun:"version,type:BIGINT"`
 	CreatedAt         int64             `json:"createdAt"         bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -378,6 +383,26 @@ func (r *AccountingSyncRecord) Retry(at int64) error {
 	r.NextAttemptAt = &at
 	r.LeaseExpiresAt = nil
 	return nil
+}
+
+func (r *AccountingSyncRecord) Redate(actorID pulid.ID, sentDate, at int64) error {
+	if r.Status != SyncStatusBlocked || r.ErrorCategory != SyncErrorClosedPeriod {
+		return ErrSyncRecordNotRedatable
+	}
+	r.RedatedTo = &sentDate
+	r.RedatedByID = actorID
+	r.Status = SyncStatusQueued
+	r.AttemptCount = 0
+	r.NextAttemptAt = &at
+	r.LeaseExpiresAt = nil
+	return nil
+}
+
+func (r *AccountingSyncRecord) SentDate(documentDate int64) int64 {
+	if r.RedatedTo != nil {
+		return *r.RedatedTo
+	}
+	return documentDate
 }
 
 func (r *AccountingSyncRecord) Release(actorID pulid.ID, at int64) error {

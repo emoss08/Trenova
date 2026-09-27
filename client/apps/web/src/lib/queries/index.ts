@@ -6,6 +6,7 @@ import { agentSafety } from "./agent-safety";
 import { agentScorecard } from "./agent-scorecard";
 import { aiAudit } from "./ai-audit";
 import { attention } from "./attention";
+import { capture } from "./capture";
 import { inbox } from "./inbox";
 import { watchtower } from "./watchtower";
 import { accountingReport } from "./accounting-report";
@@ -126,6 +127,7 @@ const workspaceQueries = mergeQueryKeys(
   sidebarPreferences,
   user,
   inbox,
+  capture,
   watchtower,
   worker,
   organization,

@@ -64,6 +64,8 @@ var CarrierSettlementColumns = struct {
 	NetPayableMinor        Column // "net_payable_minor" → qualified: "carstl.net_payable_minor"
 	ShipmentCount          Column // "shipment_count" → qualified: "carstl.shipment_count"
 	CurrencyCode           Column // "currency_code" → qualified: "carstl.currency_code"
+	ExchangeRate           Column // "exchange_rate" → qualified: "carstl.exchange_rate"
+	ExchangeRateDate       Column // "exchange_rate_date" → qualified: "carstl.exchange_rate_date"
 	Notes                  Column // "notes" → qualified: "carstl.notes"
 	SubmittedByID          Column // "submitted_by_id" → qualified: "carstl.submitted_by_id"
 	SubmittedAt            Column // "submitted_at" → qualified: "carstl.submitted_at"
@@ -79,6 +81,8 @@ var CarrierSettlementColumns = struct {
 	PaymentMethod          Column // "payment_method" → qualified: "carstl.payment_method"
 	PaymentReference       Column // "payment_reference" → qualified: "carstl.payment_reference"
 	PaidJournalBatchID     Column // "paid_journal_batch_id" → qualified: "carstl.paid_journal_batch_id"
+	PaidExchangeRate       Column // "paid_exchange_rate" → qualified: "carstl.paid_exchange_rate"
+	PaidExchangeRateDate   Column // "paid_exchange_rate_date" → qualified: "carstl.paid_exchange_rate_date"
 	VoidedByID             Column // "voided_by_id" → qualified: "carstl.voided_by_id"
 	VoidedAt               Column // "voided_at" → qualified: "carstl.voided_at"
 	VoidReason             Column // "void_reason" → qualified: "carstl.void_reason"
@@ -102,6 +106,8 @@ var CarrierSettlementColumns = struct {
 	NetPayableMinor:        NewColumn("net_payable_minor", "carstl"),
 	ShipmentCount:          NewColumn("shipment_count", "carstl"),
 	CurrencyCode:           NewColumn("currency_code", "carstl"),
+	ExchangeRate:           NewColumn("exchange_rate", "carstl"),
+	ExchangeRateDate:       NewColumn("exchange_rate_date", "carstl"),
 	Notes:                  NewColumn("notes", "carstl"),
 	SubmittedByID:          NewColumn("submitted_by_id", "carstl"),
 	SubmittedAt:            NewColumn("submitted_at", "carstl"),
@@ -117,6 +123,8 @@ var CarrierSettlementColumns = struct {
 	PaymentMethod:          NewColumn("payment_method", "carstl"),
 	PaymentReference:       NewColumn("payment_reference", "carstl"),
 	PaidJournalBatchID:     NewColumn("paid_journal_batch_id", "carstl"),
+	PaidExchangeRate:       NewColumn("paid_exchange_rate", "carstl"),
+	PaidExchangeRateDate:   NewColumn("paid_exchange_rate_date", "carstl"),
 	VoidedByID:             NewColumn("voided_by_id", "carstl"),
 	VoidedAt:               NewColumn("voided_at", "carstl"),
 	VoidReason:             NewColumn("void_reason", "carstl"),
@@ -146,6 +154,8 @@ var CarrierSettlementFieldMap = map[string]string{
 	"netPayableMinor":        "net_payable_minor",
 	"shipmentCount":          "shipment_count",
 	"currencyCode":           "currency_code",
+	"exchangeRate":           "exchange_rate",
+	"exchangeRateDate":       "exchange_rate_date",
 	"notes":                  "notes",
 	"submittedById":          "submitted_by_id",
 	"submittedAt":            "submitted_at",
@@ -161,6 +171,8 @@ var CarrierSettlementFieldMap = map[string]string{
 	"paymentMethod":          "payment_method",
 	"paymentReference":       "payment_reference",
 	"paidJournalBatchId":     "paid_journal_batch_id",
+	"paidExchangeRate":       "paid_exchange_rate",
+	"paidExchangeRateDate":   "paid_exchange_rate_date",
 	"voidedById":             "voided_by_id",
 	"voidedAt":               "voided_at",
 	"voidReason":             "void_reason",
@@ -188,6 +200,8 @@ var CarrierSettlementInsertableColumns = []string{
 	"net_payable_minor",
 	"shipment_count",
 	"currency_code",
+	"exchange_rate",
+	"exchange_rate_date",
 	"notes",
 	"submitted_by_id",
 	"submitted_at",
@@ -203,6 +217,8 @@ var CarrierSettlementInsertableColumns = []string{
 	"payment_method",
 	"payment_reference",
 	"paid_journal_batch_id",
+	"paid_exchange_rate",
+	"paid_exchange_rate_date",
 	"voided_by_id",
 	"voided_at",
 	"void_reason",
@@ -296,6 +312,8 @@ var CarrierSettlementFilter = struct {
 	NetPayableMinor        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "netPayableMinor" → DB: "net_payable_minor"
 	ShipmentCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentCount" → DB: "shipment_count"
 	CurrencyCode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	ExchangeRate           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRate" → DB: "exchange_rate"
+	ExchangeRateDate       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateDate" → DB: "exchange_rate_date"
 	Notes                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
 	SubmittedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
 	SubmittedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
@@ -311,6 +329,8 @@ var CarrierSettlementFilter = struct {
 	PaymentMethod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentMethod" → DB: "payment_method"
 	PaymentReference       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentReference" → DB: "payment_reference"
 	PaidJournalBatchID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidJournalBatchId" → DB: "paid_journal_batch_id"
+	PaidExchangeRate       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidExchangeRate" → DB: "paid_exchange_rate"
+	PaidExchangeRateDate   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidExchangeRateDate" → DB: "paid_exchange_rate_date"
 	VoidedByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
 	VoidedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
 	VoidReason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidReason" → DB: "void_reason"
@@ -364,6 +384,12 @@ var CarrierSettlementFilter = struct {
 	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("currencyCode", op, value)
 	},
+	ExchangeRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("exchangeRate", op, value)
+	},
+	ExchangeRateDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("exchangeRateDate", op, value)
+	},
 	Notes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("notes", op, value)
 	},
@@ -408,6 +434,12 @@ var CarrierSettlementFilter = struct {
 	},
 	PaidJournalBatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("paidJournalBatchId", op, value)
+	},
+	PaidExchangeRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("paidExchangeRate", op, value)
+	},
+	PaidExchangeRateDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("paidExchangeRateDate", op, value)
 	},
 	VoidedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("voidedById", op, value)

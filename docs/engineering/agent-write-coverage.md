@@ -61,37 +61,37 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 58 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 214 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 66 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 213 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 30 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 34 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 47 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 11 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 46 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 10 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
 
 ## Totals
 
-924 writes: 477 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
+950 writes: 493 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 215 |
-| Exempt | 466 |
-| — Security | 58 |
-| — Configuration | 214 |
+| Covered by a tool | 167 |
+| Exempt | 475 |
+| — Security | 66 |
+| — Configuration | 213 |
 | — User preference | 23 |
-| — Infrastructure | 30 |
+| — Infrastructure | 34 |
 | — Agent administration | 47 |
 | — Counterparty | 33 |
-| — Read-only | 47 |
-| — Attestation | 11 |
+| — Read-only | 46 |
+| — Attestation | 10 |
 | — Duplicate | 3 |
-| **Pending** | **243** |
-| Total | 924 |
+| **Pending** | **308** |
+| Total | 950 |
 
-Of the 458 writes an agent should be able to make, 215 have a tool (46%).
+Of the 475 writes an agent should be able to make, 167 have a tool (35%).
 
 ## Pending
 
@@ -113,10 +113,29 @@ The writes no tool performs yet, and what the tool would do.
 | bankreceiptworkitem | `POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/` | Mark a bank receipt work item as under review. |
 | benefits | `mutation endBenefitEnrollment` | End benefit enrollment. |
 | benefits | `mutation enrollBenefit` | Enroll benefit. |
+| billingqueue | `POST /api/v1/billing-queue/:itemID/reassign-charge/` | Move a charge from one billing queue item to another. |
+| billingtransfer | `mutation cancelBillingTransferRun` | Cancel billing transfer run. |
+| billingtransfer | `mutation retryBillingTransferRun` | Retry billing transfer run. |
+| capture | `mutation cancelCaptureRequest` | Cancel a scan or print request that has not started. |
+| capture | `mutation createCaptureCoverSheets` | Print cover sheets that route scanned paperwork to a record and document type. |
+| capture | `mutation createCaptureRequest` | Ask a person's paired computer to scan paperwork into a record, or send their next print there. |
+| capture | `mutation discardCaptureBatch` | Discard a scanned stack that holds nothing worth filing. |
+| capture | `mutation discardCaptureItem` | Discard one scanned document that is not needed. |
+| capture | `mutation editCaptureItems` | Split, merge, reorder, rotate or leave out pages of a scanned stack to form its documents. |
+| capture | `mutation fileCaptureItem` | File a scanned document onto the record it belongs to, as the document type it is. |
+| capture | `mutation fileCaptureItems` | File every document of a scanned stack onto its record at once. |
 | carrier | `PATCH /api/v1/carriers/:carrierID/` | Update some fields of a carrier. |
 | carrier | `POST /api/v1/carriers/` | Create a carrier. |
 | carrier | `POST /api/v1/carriers/bulk-update-status/` | Change the status of several carriers at once. |
 | carrier | `PUT /api/v1/carriers/:carrierID/` | Update a carrier. |
+| carrierintelligence | `mutation applyCarrierIntelSuggestions` | Apply the carrier profile corrections carrier intelligence suggested. |
+| carrierintelligence | `mutation importSourcedCarrier` | Import sourced carrier. |
+| carrierintelligence | `mutation markCarrierIntelReviewed` | Mark carrier intel reviewed. |
+| carrierintelligence | `mutation resumeCarrierIntelMonitoring` | Resume carrier intel monitoring. |
+| carrierintelligence | `mutation setCarrierMonitoring` | Set carrier monitoring. |
+| carrierintelligence | `mutation verifyCarrierEquipment` | Verify carrier equipment. |
+| carrierintelligence | `mutation vetCarrier` | Vet carrier. |
+| carrierintelligence | `mutation vetCustomerBroker` | Vet customer broker. |
 | commodity | `PATCH /api/v1/commodities/:commodityID/` | Update some fields of a commodity. |
 | commodity | `POST /api/v1/commodities/` | Create a commodity. |
 | commodity | `POST /api/v1/commodities/bulk-update-status/` | Change the status of several commodities at once. |
@@ -125,6 +144,7 @@ The writes no tool performs yet, and what the tool would do.
 | customer | `POST /api/v1/customers/` | Create a customer. |
 | customer | `POST /api/v1/customers/bulk-update-status/` | Change the status of several customers at once. |
 | customer | `PUT /api/v1/customers/:customerID/` | Update a customer. |
+| detention | `mutation disputeDetentionOccurrence` | Dispute detention occurrence. |
 | distanceoverride | `DELETE /api/v1/distance-overrides/:distanceOverrideID/` | Delete a distance override. |
 | distanceoverride | `PATCH /api/v1/distance-overrides/:distanceOverrideID/` | Update some fields of a distance override. |
 | distanceoverride | `POST /api/v1/distance-overrides/` | Create a distance override. |
@@ -211,6 +231,16 @@ The writes no tool performs yet, and what the tool would do.
 | manualjournal | `POST /api/v1/accounting/manual-journals/:requestID/submit/` | Submit a manual journal. |
 | manualjournal | `POST /api/v1/accounting/manual-journals/drafts/` | Create draft (manual journal). |
 | manualjournal | `PUT /api/v1/accounting/manual-journals/drafts/:requestID/` | Update draft (manual journal). |
+| order | `mutation addOrderCharge` | Add order charge. |
+| order | `mutation attachOrderShipments` | Attach order shipments. |
+| order | `mutation cancelOrder` | Cancel order. |
+| order | `mutation closeOrder` | Close order. |
+| order | `mutation createOrder` | Create order. |
+| order | `mutation detachOrderShipment` | Detach order shipment. |
+| order | `mutation removeOrderCharge` | Remove order charge. |
+| order | `mutation setOrderChargeAllocations` | Set order charge allocations. |
+| order | `mutation updateOrder` | Update order. |
+| order | `mutation updateOrderCharge` | Update order charge. |
 | orgstructure | `mutation assignUserPosition` | Assign user position. |
 | orgstructure | `mutation assignWorkerPosition` | Assign worker position. |
 | performancereview | `mutation closePerformanceReview` | Close performance review. |
@@ -247,6 +277,10 @@ The writes no tool performs yet, and what the tool would do.
 | ratezone | `DELETE /api/v1/rate-zones/:rateZoneID/` | Delete a rate zone. |
 | ratezone | `POST /api/v1/rate-zones/` | Create a rate zone. |
 | ratezone | `PUT /api/v1/rate-zones/:rateZoneID/` | Update a rate zone. |
+| recurringshipment | `POST /api/v1/recurring-shipments/` | Create a recurring shipment. |
+| recurringshipment | `POST /api/v1/recurring-shipments/:recurringShipmentID/generate/` | Generate a recurring shipment. |
+| recurringshipment | `PUT /api/v1/recurring-shipments/:recurringShipmentID/` | Update a recurring shipment. |
+| recurringshipment | `PUT /api/v1/recurring-shipments/:recurringShipmentID/status/` | Update status (recurring shipment). |
 | report | `mutation cancelReportRun` | Cancel report run. |
 | report | `mutation createReportView` | Create report view. |
 | report | `mutation deleteReportDashboard` | Delete report dashboard. |
@@ -256,7 +290,38 @@ The writes no tool performs yet, and what the tool would do.
 | report | `mutation resetCannedFork` | Reset canned fork. |
 | report | `mutation updateReportSchedule` | Update report schedule. |
 | report | `mutation updateReportView` | Update report view. |
+| routingguide | `DELETE /api/v1/routing-guides/:guideID/` | Delete a routing guide. |
+| routingguide | `POST /api/v1/routing-guides/` | Create a routing guide. |
+| routingguide | `PUT /api/v1/routing-guides/:guideID/` | Update a routing guide. |
+| scheduling | `mutation assignWorkerShift` | Assign worker shift. |
+| scheduling | `mutation endWorkerShiftAssignment` | End worker shift assignment. |
+| scheduling | `mutation proposeShiftSwap` | Propose shift swap. |
+| scheduling | `mutation setWorkerAvailabilityPreference` | Set worker availability preference. |
+| scheduling | `mutation transitionShiftSwap` | Transition shift swap. |
 | selfservice | `mutation decideProfileChange` | Decide profile change. |
+| servicefailure | `PATCH /api/v1/service-failures/:serviceFailureID/` | Update a service failure. |
+| servicefailure | `POST /api/v1/service-failures/` | Create manual (service failure). |
+| servicefailure | `POST /api/v1/service-failures/:serviceFailureID/review/` | Review a service failure. |
+| servicefailure | `POST /api/v1/service-failures/:serviceFailureID/void/` | Void a service failure. |
+| servicefailure | `POST /api/v1/service-failures/bulk-evaluate/` | Evaluate several shipments for service failures at once. |
+| servicefailure | `POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/` | Evaluate one stop for a service failure. |
+| shipment | `mutation acknowledgeShipmentComment` | Acknowledge shipment comment. |
+| shipment | `mutation autoRateShipment` | Auto rate shipment. |
+| shipment | `mutation deleteShipmentComment` | Delete shipment comment. |
+| shipment | `mutation duplicateShipment` | Duplicate shipment. |
+| shipment | `mutation pinShipmentComment` | Pin shipment comment. |
+| shipment | `mutation recalculateShipmentDistance` | Recalculate shipment distance. |
+| shipment | `mutation resolveShipmentComment` | Resolve shipment comment. |
+| shipment | `mutation transferShipmentOwnership` | Transfer shipment ownership. |
+| shipment | `mutation transferShipmentToBillingItems` | Transfer chosen shipment charges to billing as separate items. |
+| shipment | `mutation uncancelShipment` | Uncancel shipment. |
+| shipment | `mutation unpinShipmentComment` | Unpin shipment comment. |
+| shipment | `mutation unresolveShipmentComment` | Unresolve shipment comment. |
+| shipment | `mutation updateShipmentComment` | Update shipment comment. |
+| shipment | `POST /api/v1/shipments/auto-cancel/` | Cancel shipments that passed the auto-cancel threshold. |
+| shipment | `POST /api/v1/shipments/delay/` | Mark shipments as delayed. |
+| shipment | `PUT /api/v1/shipments/:shipmentID/holds/:holdID/` | Update hold (shipment). |
+| shipmentmove | `POST /api/v1/shipment-moves/:moveID/split/` | Split a two-stop move at a relay point into two moves. Left without a tool: the split needs a relay location and two new scheduled windows the system holds nowhere, so a model would have to invent the times, and the service checks only their order. |
 | storedmileage | `DELETE /api/v1/stored-mileages/:storedMileageID/` | Delete a stored mileage. |
 | tablechangealert | `DELETE /api/v1/tca/subscriptions/:id` | Delete subscription (table change alert). |
 | tablechangealert | `PATCH /api/v1/tca/subscriptions/:id/pause` | Pause subscription (table change alert). |
@@ -349,7 +414,7 @@ The writes no tool performs yet, and what the tool would do.
 | --- | --- | --- | --- | --- |
 | accessorialcharge | 3 | 0 | 3 | 0 |
 | accountingcontrol | 1 | 0 | 1 | 0 |
-| accountingsync | 27 | 15 | 8 | 4 |
+| accountingsync | 28 | 16 | 8 | 4 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 0 | 4 |
 | agent | 12 | 2 | 10 | 0 |
@@ -370,11 +435,12 @@ The writes no tool performs yet, and what the tool would do.
 | bankreceiptworkitem | 4 | 2 | 0 | 2 |
 | benefits | 4 | 0 | 2 | 2 |
 | billingcontrol | 1 | 0 | 1 | 0 |
-| billingqueue | 8 | 5 | 3 | 0 |
-| billingtransfer | 3 | 3 | 0 | 0 |
+| billingqueue | 8 | 4 | 3 | 1 |
+| billingtransfer | 3 | 1 | 0 | 2 |
 | briefing | 2 | 0 | 2 | 0 |
+| capture | 25 | 0 | 17 | 8 |
 | carrier | 4 | 0 | 0 | 4 |
-| carrierintelligence | 15 | 9 | 6 | 0 |
+| carrierintelligence | 15 | 2 | 5 | 8 |
 | carriersettlement | 16 | 15 | 1 | 0 |
 | commodity | 4 | 0 | 0 | 4 |
 | controlplaneprovisioning | 1 | 0 | 1 | 0 |
@@ -386,7 +452,7 @@ The writes no tool performs yet, and what the tool would do.
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
 | decisions | 1 | 0 | 1 | 0 |
-| detention | 8 | 4 | 4 | 0 |
+| detention | 8 | 3 | 4 | 1 |
 | detentionpolicy | 1 | 0 | 1 | 0 |
 | dispatchconsole | 5 | 4 | 1 | 0 |
 | dispatchcontrol | 1 | 0 | 1 | 0 |
@@ -442,7 +508,7 @@ The writes no tool performs yet, and what the tool would do.
 | locationcategory | 3 | 0 | 3 | 0 |
 | manualjournal | 7 | 0 | 0 | 7 |
 | notification | 5 | 0 | 5 | 0 |
-| order | 10 | 10 | 0 | 0 |
+| order | 10 | 0 | 0 | 10 |
 | organization | 4 | 0 | 4 | 0 |
 | orgholiday | 3 | 0 | 3 | 0 |
 | orgstructure | 6 | 0 | 4 | 2 |
@@ -461,19 +527,19 @@ The writes no tool performs yet, and what the tool would do.
 | ratesimulation | 1 | 0 | 0 | 1 |
 | ratezone | 3 | 0 | 0 | 3 |
 | realtime | 3 | 0 | 3 | 0 |
-| recurringshipment | 5 | 4 | 1 | 0 |
+| recurringshipment | 5 | 0 | 1 | 4 |
 | report | 17 | 7 | 1 | 9 |
 | role | 11 | 0 | 11 | 0 |
-| routingguide | 3 | 0 | 3 | 0 |
-| scheduling | 7 | 5 | 2 | 0 |
+| routingguide | 3 | 0 | 0 | 3 |
+| scheduling | 7 | 0 | 2 | 5 |
 | selfservice | 3 | 0 | 2 | 1 |
 | sequenceconfig | 1 | 0 | 1 | 0 |
-| servicefailure | 9 | 7 | 2 | 0 |
+| servicefailure | 9 | 2 | 1 | 6 |
 | servicefailurereasoncode | 6 | 0 | 6 | 0 |
 | servicetype | 4 | 0 | 4 | 0 |
-| shipment | 33 | 21 | 12 | 0 |
+| shipment | 33 | 8 | 9 | 16 |
 | shipmentcontrol | 1 | 0 | 1 | 0 |
-| shipmentmove | 4 | 4 | 0 | 0 |
+| shipmentmove | 4 | 3 | 0 | 1 |
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
 | storedmileage | 1 | 0 | 0 | 1 |
@@ -551,6 +617,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation enableAccountingSync` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation ignoreAccountingInboundChange` | Tool: `ignore_accounting_inbound_change` |
 | `mutation pauseAccountingSync` | Tool: `pause_accounting_sync` |
+| `mutation redateAccountingSync` | Tool: `redate_accounting_sync` |
 | `mutation refreshAccountingReferenceData` | Tool: `refresh_accounting_reference_data` |
 | `mutation rejectAccountingMapping` | Pending: Reject a suggested accounting mapping. |
 | `mutation releaseAccountingSync` | Pending: Release accounting sync records held for review so they post. |
@@ -746,7 +813,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation assignBillingQueueBiller`<br>twin `PUT /api/v1/billing-queue/:itemID/assign/` | Tool: `assign_billing_queue_biller` |
 | `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `approve_billing_queue_item`, `cancel_billing_queue_item`, `hold_billing_queue_item`, `move_billing_item_to_exception`, `send_billing_item_back_to_ops`, `transition_item_to_in_review` |
 | `DELETE /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.deleteFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
-| `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `reassign_billing_charge` |
+| `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Pending: Move a charge from one billing queue item to another. |
 | `POST /api/v1/billing-queue/filter-presets/`<br>billingqueuehandler.createFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 | `POST /api/v1/billing-queue/transfer/`<br>billingqueuehandler.transfer | Tool: `transfer_to_billing` |
 | `PUT /api/v1/billing-queue/:itemID/charges/`<br>billingqueuehandler.updateCharges | Tool: `correct_charge_code` |
@@ -756,8 +823,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation cancelBillingTransferRun` | Tool: `manage_billing_transfer_run` |
-| `mutation retryBillingTransferRun` | Tool: `manage_billing_transfer_run` |
+| `mutation cancelBillingTransferRun` | Pending: Cancel billing transfer run. |
+| `mutation retryBillingTransferRun` | Pending: Retry billing transfer run. |
 | `mutation startBillingTransferRun` | Tool: `transfer_to_billing` |
 
 ### briefing
@@ -766,6 +833,36 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation markBriefingRead` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation regenerateBriefing` | Exempt, agent-administration: Asks the briefing agent to write the briefing again. |
+
+### capture
+
+| Write | Decision |
+| --- | --- |
+| `mutation approveCaptureDevicePairing` | Exempt, security: Approving a pairing grants a computer the person's access; only that person may do it. |
+| `mutation cancelCaptureRequest` | Pending: Cancel a scan or print request that has not started. |
+| `mutation createCaptureCoverSheets` | Pending: Print cover sheets that route scanned paperwork to a record and document type. |
+| `mutation createCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
+| `mutation createCaptureRequest` | Pending: Ask a person's paired computer to scan paperwork into a record, or send their next print there. |
+| `mutation deleteCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
+| `mutation denyCaptureDevicePairing` | Exempt, security: Denying a pairing is the person's answer to a request for their access. |
+| `mutation discardCaptureBatch` | Pending: Discard a scanned stack that holds nothing worth filing. |
+| `mutation discardCaptureItem` | Pending: Discard one scanned document that is not needed. |
+| `mutation editCaptureItems` | Pending: Split, merge, reorder, rotate or leave out pages of a scanned stack to form its documents. |
+| `mutation fileCaptureItem` | Pending: File a scanned document onto the record it belongs to, as the document type it is. |
+| `mutation fileCaptureItems` | Pending: File every document of a scanned stack onto its record at once. |
+| `mutation revokeCaptureDevice` | Exempt, security: Revoking a paired computer removes a person's access. |
+| `mutation revokeMyCaptureDevice` | Exempt, security: A person removing their own paired computer's access. |
+| `mutation updateCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
+| `DELETE /api/v1/capture/device/`<br>capturehandler.signOut | Exempt, security: A paired computer revoking its own credential when a person signs out in the tray. |
+| `POST /api/v1/capture/device/batches/`<br>capturehandler.openBatch | Exempt, infrastructure: The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision. |
+| `POST /api/v1/capture/device/batches/:batchID/seal/`<br>capturehandler.sealBatch | Exempt, infrastructure: The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision. |
+| `POST /api/v1/capture/device/requests/:requestID/status/`<br>capturehandler.reportRequestStatus | Exempt, infrastructure: The companion reporting how a scan request is going; the request itself is the person's write. |
+| `POST /api/v1/capture/pair/`<br>capturehandler.startPairing | Exempt, security: Starts pairing a computer to a person: a grant of access that person must approve. |
+| `POST /api/v1/capture/pair/token/`<br>capturehandler.exchangePairing | Exempt, security: Exchanges an approved pairing for the device credential. |
+| `POST /api/v1/capture/token/refresh/`<br>capturehandler.refreshToken | Exempt, security: Rotates a paired device's credential. |
+| `PUT /api/v1/capture/device/batches/:batchID/pages/:sequence/`<br>capturehandler.putPage | Exempt, infrastructure: The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision. |
+| `PUT /api/v1/capture/device/batches/:batchID/print-job/`<br>capturehandler.putPrintJob | Exempt, infrastructure: The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision. |
+| `PUT /api/v1/capture/device/sources/`<br>capturehandler.reportSources | Exempt, infrastructure: The companion reporting which scanners its computer can reach. |
 
 ### carrier
 
@@ -781,20 +878,20 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation acknowledgeCarrierIntelEvents` | Tool: `acknowledge_carrier_intel_event` |
-| `mutation applyCarrierIntelSuggestions` | Tool: `apply_carrier_intel_suggestions` |
+| `mutation applyCarrierIntelSuggestions` | Pending: Apply the carrier profile corrections carrier intelligence suggested. |
 | `mutation grantCarrierIntelOverride` | Exempt, attestation: A person accepts accountability for using a carrier or equipment that failed vetting. |
-| `mutation importSourcedCarrier` | Tool: `import_sourced_carrier` |
-| `mutation markCarrierIntelReviewed` | Tool: `mark_carrier_intel_reviewed` |
+| `mutation importSourcedCarrier` | Pending: Import sourced carrier. |
+| `mutation markCarrierIntelReviewed` | Pending: Mark carrier intel reviewed. |
 | `mutation overrideCarrierEquipmentVerification` | Exempt, attestation: A person accepts accountability for using a carrier or equipment that failed vetting. |
 | `mutation resolveCarrierIntelEvent` | Tool: `resolve_carrier_intel_event` |
-| `mutation resumeCarrierIntelMonitoring` | Exempt, configuration: Turns the organization-wide carrier intelligence feed back on after it was paused; an administrator sets it once and every later lookup depends on it. |
+| `mutation resumeCarrierIntelMonitoring` | Pending: Resume carrier intel monitoring. |
 | `mutation revokeCarrierIntelOverride` | Exempt, attestation: A person accepts accountability for using a carrier or equipment that failed vetting. |
-| `mutation setCarrierMonitoring` | Tool: `set_carrier_monitoring` |
+| `mutation setCarrierMonitoring` | Pending: Set carrier monitoring. |
 | `mutation switchCarrierIntelProvider` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation updateCarrierIntelControl` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
-| `mutation verifyCarrierEquipment` | Tool: `verify_carrier_equipment` |
-| `mutation vetCarrier` | Tool: `vet_carrier` |
-| `mutation vetCustomerBroker` | Tool: `vet_customer_broker` |
+| `mutation verifyCarrierEquipment` | Pending: Verify carrier equipment. |
+| `mutation vetCarrier` | Pending: Vet carrier. |
+| `mutation vetCustomerBroker` | Pending: Vet customer broker. |
 
 ### carriersettlement
 
@@ -899,7 +996,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation createDetentionPolicy`<br>twin `POST /api/v1/detention-policies/` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
 | `mutation deleteDetentionPolicy`<br>twin `DELETE /api/v1/detention-policies/:detentionPolicyID/` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
 | `mutation detentionBacktest`<br>twin `POST /api/v1/detention/backtest/` | Exempt, read-only: Replays a detention policy against past stops and saves nothing. |
-| `mutation disputeDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/dispute/` | Tool: `dispute_detention` |
+| `mutation disputeDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/dispute/` | Pending: Dispute detention occurrence. |
 | `mutation sendDetentionNotice` | Tool: `send_detention_notice` |
 | `mutation updateDetentionPolicy`<br>twin `PUT /api/v1/detention-policies/:detentionPolicyID/` | Exempt, configuration: Detention policies are the commercial terms each customer agreed to; an administrator maintains them. |
 | `mutation waiveDetentionOccurrence`<br>twin `POST /api/v1/detention/occurrences/:occurrenceID/waive/` | Tool: `waive_detention` |
@@ -1587,16 +1684,16 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation addOrderCharge` | Tool: `add_order_charge` |
-| `mutation attachOrderShipments` | Tool: `attach_order_shipments` |
-| `mutation cancelOrder` | Tool: `cancel_order` |
-| `mutation closeOrder` | Tool: `close_order` |
-| `mutation createOrder`<br>twin `POST /api/v1/orders/` | Tool: `create_order` |
-| `mutation detachOrderShipment` | Tool: `detach_order_shipment` |
-| `mutation removeOrderCharge` | Tool: `remove_order_charge` |
-| `mutation setOrderChargeAllocations` | Tool: `set_order_charge_allocations` |
-| `mutation updateOrder`<br>twin `PATCH /api/v1/orders/:orderID/`<br>twin `PUT /api/v1/orders/:orderID/` | Tool: `update_order` |
-| `mutation updateOrderCharge` | Tool: `update_order_charge` |
+| `mutation addOrderCharge` | Pending: Add order charge. |
+| `mutation attachOrderShipments` | Pending: Attach order shipments. |
+| `mutation cancelOrder` | Pending: Cancel order. |
+| `mutation closeOrder` | Pending: Close order. |
+| `mutation createOrder`<br>twin `POST /api/v1/orders/` | Pending: Create order. |
+| `mutation detachOrderShipment` | Pending: Detach order shipment. |
+| `mutation removeOrderCharge` | Pending: Remove order charge. |
+| `mutation setOrderChargeAllocations` | Pending: Set order charge allocations. |
+| `mutation updateOrder`<br>twin `PATCH /api/v1/orders/:orderID/`<br>twin `PUT /api/v1/orders/:orderID/` | Pending: Update order. |
+| `mutation updateOrderCharge` | Pending: Update order charge. |
 
 ### organization
 
@@ -1765,11 +1862,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/recurring-shipments/`<br>recurringshipmenthandler.create | Tool: `create_recurring_shipment` |
-| `POST /api/v1/recurring-shipments/:recurringShipmentID/generate/`<br>recurringshipmenthandler.generate | Tool: `generate_recurring_shipment` |
+| `POST /api/v1/recurring-shipments/`<br>recurringshipmenthandler.create | Pending: Create a recurring shipment. |
+| `POST /api/v1/recurring-shipments/:recurringShipmentID/generate/`<br>recurringshipmenthandler.generate | Pending: Generate a recurring shipment. |
 | `POST /api/v1/recurring-shipments/match/`<br>recurringshipmenthandler.match | Exempt, read-only: Finds the recurring shipment a new shipment matches and saves nothing. |
-| `PUT /api/v1/recurring-shipments/:recurringShipmentID/`<br>recurringshipmenthandler.update | Tool: `update_recurring_shipment` |
-| `PUT /api/v1/recurring-shipments/:recurringShipmentID/status/`<br>recurringshipmenthandler.updateStatus | Tool: `set_recurring_shipment_status` |
+| `PUT /api/v1/recurring-shipments/:recurringShipmentID/`<br>recurringshipmenthandler.update | Pending: Update a recurring shipment. |
+| `PUT /api/v1/recurring-shipments/:recurringShipmentID/status/`<br>recurringshipmenthandler.updateStatus | Pending: Update status (recurring shipment). |
 
 ### report
 
@@ -1813,20 +1910,20 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/routing-guides/:guideID/`<br>routingguidehandler.delete | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it. |
-| `POST /api/v1/routing-guides/`<br>routingguidehandler.create | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it. |
-| `PUT /api/v1/routing-guides/:guideID/`<br>routingguidehandler.update | Exempt, configuration: A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it. |
+| `DELETE /api/v1/routing-guides/:guideID/`<br>routingguidehandler.delete | Pending: Delete a routing guide. |
+| `POST /api/v1/routing-guides/`<br>routingguidehandler.create | Pending: Create a routing guide. |
+| `PUT /api/v1/routing-guides/:guideID/`<br>routingguidehandler.update | Pending: Update a routing guide. |
 
 ### scheduling
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignWorkerShift` | Tool: `assign_worker_shift` |
+| `mutation assignWorkerShift` | Pending: Assign worker shift. |
 | `mutation createShiftTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation endWorkerShiftAssignment` | Tool: `end_worker_shift_assignment` |
-| `mutation proposeShiftSwap` | Tool: `propose_shift_swap` |
-| `mutation setWorkerAvailabilityPreference` | Tool: `set_worker_availability_preference` |
-| `mutation transitionShiftSwap` | Tool: `approve_shift_swap`, `reject_shift_swap`, `withdraw_shift_swap` |
+| `mutation endWorkerShiftAssignment` | Pending: End worker shift assignment. |
+| `mutation proposeShiftSwap` | Pending: Propose shift swap. |
+| `mutation setWorkerAvailabilityPreference` | Pending: Set worker availability preference. |
+| `mutation transitionShiftSwap` | Pending: Transition shift swap. |
 | `mutation updateShiftTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### selfservice
@@ -1847,15 +1944,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/service-failures/:serviceFailureID/`<br>servicefailurehandler.update<br>also `PUT /api/v1/service-failures/:serviceFailureID/` | Tool: `update_service_failure` |
-| `POST /api/v1/service-failures/`<br>servicefailurehandler.createManual | Exempt, read-only: The service refuses every manual service failure: failures are opened only by evaluation against stop actuals, which evaluate_service_failures runs, so the route changes nothing. |
+| `PATCH /api/v1/service-failures/:serviceFailureID/`<br>servicefailurehandler.update<br>also `PUT /api/v1/service-failures/:serviceFailureID/` | Pending: Update a service failure. |
+| `POST /api/v1/service-failures/`<br>servicefailurehandler.createManual | Pending: Create manual (service failure). |
 | `POST /api/v1/service-failures/:serviceFailureID/edi-214-payload/`<br>servicefailurehandler.buildEDI214Payload | Exempt, read-only: Builds the EDI 214 a service failure would send and returns it. |
 | `POST /api/v1/service-failures/:serviceFailureID/resolve/`<br>servicefailurehandler.resolve | Tool: `resolve_service_failure` |
-| `POST /api/v1/service-failures/:serviceFailureID/review/`<br>servicefailurehandler.review | Tool: `review_service_failure` |
-| `POST /api/v1/service-failures/:serviceFailureID/void/`<br>servicefailurehandler.void | Tool: `void_service_failure` |
-| `POST /api/v1/service-failures/bulk-evaluate/`<br>servicefailurehandler.bulkEvaluate | Tool: `evaluate_service_failures` |
+| `POST /api/v1/service-failures/:serviceFailureID/review/`<br>servicefailurehandler.review | Pending: Review a service failure. |
+| `POST /api/v1/service-failures/:serviceFailureID/void/`<br>servicefailurehandler.void | Pending: Void a service failure. |
+| `POST /api/v1/service-failures/bulk-evaluate/`<br>servicefailurehandler.bulkEvaluate | Pending: Evaluate several shipments for service failures at once. |
 | `POST /api/v1/service-failures/evaluate-shipment/:shipmentID/`<br>servicefailurehandler.evaluateShipment | Tool: `evaluate_service_failures` |
-| `POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/`<br>servicefailurehandler.evaluateStop | Tool: `evaluate_service_failures` |
+| `POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/`<br>servicefailurehandler.evaluateStop | Pending: Evaluate one stop for a service failure. |
 
 ### servicefailurereasoncode
 
@@ -1881,8 +1978,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation acknowledgeShipmentComment` | Exempt, attestation: Acknowledging a comment says that the person it was addressed to has read it; only that person can say so. |
-| `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Tool: `rerate_shipment` |
+| `mutation acknowledgeShipmentComment` | Pending: Acknowledge shipment comment. |
+| `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Pending: Auto rate shipment. |
 | `mutation bulkTransferShipmentsToBilling`<br>twin `POST /api/v1/shipments/bulk-transfer-to-billing/` | Tool: `transfer_to_billing` |
 | `mutation calculateShipmentDistance`<br>twin `POST /api/v1/shipments/calculate-distance/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation calculateShipmentLoadingOptimization`<br>twin `POST /api/v1/shipments/loading-optimization/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
@@ -1892,28 +1989,28 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation checkShipmentHazmatSegregation` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `mutation createShipment`<br>twin `POST /api/v1/shipments/` | Tool: `create_shipment` |
 | `mutation createShipmentComment`<br>twin `POST /api/v1/shipments/:shipmentID/comments/` | Tool: `add_shipment_comment` |
-| `mutation deleteShipmentComment`<br>twin `DELETE /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `delete_shipment_comment` |
-| `mutation duplicateShipment`<br>twin `POST /api/v1/shipments/duplicate/` | Tool: `duplicate_shipment` |
-| `mutation pinShipmentComment` | Tool: `pin_shipment_comment` |
+| `mutation deleteShipmentComment`<br>twin `DELETE /api/v1/shipments/:shipmentID/comments/:commentID/` | Pending: Delete shipment comment. |
+| `mutation duplicateShipment`<br>twin `POST /api/v1/shipments/duplicate/` | Pending: Duplicate shipment. |
+| `mutation pinShipmentComment` | Pending: Pin shipment comment. |
 | `mutation previewShipmentContractRate` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `mutation recalculateShipmentDistance`<br>twin `POST /api/v1/shipments/:shipmentID/recalculate-distance/` | Tool: `recalculate_shipment_distance` |
-| `mutation resolveShipmentComment` | Tool: `resolve_shipment_comment` |
-| `mutation transferShipmentOwnership`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-ownership/` | Tool: `transfer_shipment_ownership` |
+| `mutation recalculateShipmentDistance`<br>twin `POST /api/v1/shipments/:shipmentID/recalculate-distance/` | Pending: Recalculate shipment distance. |
+| `mutation resolveShipmentComment` | Pending: Resolve shipment comment. |
+| `mutation transferShipmentOwnership`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-ownership/` | Pending: Transfer shipment ownership. |
 | `mutation transferShipmentToBilling`<br>twin `POST /api/v1/shipments/:shipmentID/transfer-to-billing/` | Tool: `transfer_to_billing` |
-| `mutation transferShipmentToBillingItems` | Tool: `transfer_to_billing` |
-| `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `uncancel_shipment` |
-| `mutation unpinShipmentComment` | Tool: `unpin_shipment_comment` |
-| `mutation unresolveShipmentComment` | Tool: `resolve_shipment_comment` |
+| `mutation transferShipmentToBillingItems` | Pending: Transfer chosen shipment charges to billing as separate items. |
+| `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Pending: Uncancel shipment. |
+| `mutation unpinShipmentComment` | Pending: Unpin shipment comment. |
+| `mutation unresolveShipmentComment` | Pending: Unresolve shipment comment. |
 | `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `update_shipment` |
-| `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `edit_shipment_comment` |
+| `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Pending: Update shipment comment. |
 | `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `place_shipment_hold` |
 | `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `release_shipment_hold` |
-| `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Exempt, infrastructure: The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and cancel_shipment cancels one. |
+| `POST /api/v1/shipments/auto-cancel/`<br>shipmenthandler.autoCancelShipments | Pending: Cancel shipments that passed the auto-cancel threshold. |
 | `POST /api/v1/shipments/check-for-duplicate-bols/`<br>shipmenthandler.checkForDuplicateBOLs | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
 | `POST /api/v1/shipments/check-hazmat-segregation/`<br>shipmenthandler.checkHazmatSegregation | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `POST /api/v1/shipments/delay/`<br>shipmenthandler.delayShipments | Exempt, infrastructure: The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; evaluate_service_failures records a late stop for one shipment. |
+| `POST /api/v1/shipments/delay/`<br>shipmenthandler.delayShipments | Pending: Mark shipments as delayed. |
 | `POST /api/v1/shipments/previous-rates/`<br>shipmenthandler.getPreviousRates | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |
-| `PUT /api/v1/shipments/:shipmentID/holds/:holdID/`<br>shipmenthandler.updateHold | Tool: `update_shipment_hold` |
+| `PUT /api/v1/shipments/:shipmentID/holds/:holdID/`<br>shipmenthandler.updateHold | Pending: Update hold (shipment). |
 
 ### shipmentcontrol
 
@@ -1925,7 +2022,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/shipment-moves/:moveID/split/`<br>shipmentmovehandler.splitMove | Tool: `split_move_at_relay` |
+| `POST /api/v1/shipment-moves/:moveID/split/`<br>shipmentmovehandler.splitMove | Pending: Split a two-stop move at a relay point into two moves. Left without a tool: the split needs a relay location and two new scheduled windows the system holds nowhere, so a model would have to invent the times, and the service checks only their order. |
 | `POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/`<br>shipmentmovehandler.recordStopActual | Tool: `record_stop_actual` |
 | `POST /api/v1/shipment-moves/:moveID/update-status/`<br>shipmentmovehandler.updateStatus | Tool: `update_move_status` |
 | `POST /api/v1/shipment-moves/bulk-update-status/`<br>shipmentmovehandler.bulkUpdateStatus | Tool: `update_move_status` |

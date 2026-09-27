@@ -133,3 +133,40 @@ func TestReadPrediction_ReadsStopsInMemoryAndFromStorage(t *testing.T) {
 	assert.Equal(t, RoleDelivery, inMemory.Snapshot.Stops[0].Role)
 	assert.Equal(t, inMemory.Snapshot.Stops, stored.Snapshot.Stops)
 }
+
+func TestCompareDate_FallsBackToTheConfirmedCalendarDay(t *testing.T) {
+	t.Parallel()
+
+	unscheduled := &StopSnapshot{Date: "2026-03-14"}
+	assert.Equal(t, comparisonEqual, compareDate("03/14/2026", "2026-03-14", unscheduled))
+	assert.Equal(t, comparisonEqual, compareDate("Mar 14", "2026-03-14", nil))
+	assert.Equal(t, comparisonDifferent, compareDate("03/15/2026", "2026-03-14", unscheduled))
+	assert.Equal(t, comparisonUnreadable, compareDate("FCFS", "2026-03-14", unscheduled))
+	assert.Equal(t, comparisonUnreadable, compareDate("03/14/2026", "", unscheduled))
+	assert.Equal(t, comparisonUnreadable, compareDate("03/14/2026", "03/14", unscheduled))
+}
+
+func TestReadPrediction_CanonicalizesTheKeysAnAIDraftStores(t *testing.T) {
+	t.Parallel()
+
+	prediction := ReadPrediction(map[string]any{
+		"fields": map[string]any{
+			"referencenumber": map[string]any{"value": "LD-5521", "source": "ai", "confidence": 0.8},
+			"pickupwindow":    map[string]any{"value": "03/14/2026"},
+			"pickupWindow":    map[string]any{"value": "03/15/2026"},
+			"po_number":       map[string]any{"value": "PO-9"},
+			"customThing":     map[string]any{"value": "kept"},
+		},
+	})
+
+	assert.Equal(t, "LD-5521", prediction.Snapshot.Fields[FieldReference])
+	assert.Equal(t, "03/15/2026", prediction.Snapshot.Fields[FieldPickupWindow])
+	assert.Equal(t, "PO-9", prediction.Snapshot.Fields["poNumber"])
+	assert.Equal(t, "kept", prediction.Snapshot.Fields["customThing"])
+	assert.NotContains(t, prediction.Snapshot.Fields, "referencenumber")
+	assert.InDelta(t, 0.8, prediction.FieldMeta[FieldReference].Confidence, 1e-9)
+
+	results := Score(prediction, &Snapshot{Fields: map[string]string{FieldReference: "LD5521"}})
+	require.NotEmpty(t, results)
+	assert.Equal(t, OutcomeCorrect, results[0].Outcome)
+}

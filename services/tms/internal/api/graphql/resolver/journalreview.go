@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -17,7 +18,11 @@ func journalReviewRequest(
 	for _, raw := range input.EntryIds {
 		id, err := pulid.MustParse(raw)
 		if err != nil {
-			return nil, err
+			return nil, errortypes.NewValidationError(
+				"entryIds",
+				errortypes.ErrInvalid,
+				"Invalid journal entry",
+			)
 		}
 		entryIDs = append(entryIDs, id)
 	}

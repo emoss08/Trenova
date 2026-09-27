@@ -754,6 +754,7 @@ func documentManagementRouteRefs() []RouteRef {
 			"/api/v1/documents/select-options/:documentID",
 			"/api/v1/documents/uploads/:uploadSessionID/",
 			"/api/v1/documents/uploads/active/",
+			"/api/v1/capture/pages/:pageID/content/",
 		),
 		routeRefsFor("POST",
 			"/api/v1/admin/document-operations/:documentID/reextract/",

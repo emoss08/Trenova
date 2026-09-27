@@ -2,9 +2,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
+import { useState } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { planPreview, preview } from "@/components/assistant/__tests__/preview-fixtures";
+import {
+  planPreview,
+  preview,
+  reason,
+  warning,
+} from "@/components/assistant/__tests__/preview-fixtures";
 import type { PlanPreview, ProposalPreview } from "@/lib/graphql/agent-preview";
 import { ReasonDialog, type ReasonDialogRequest } from "../reason-dialog";
 
@@ -125,5 +131,123 @@ describe("ReasonDialog with a preview", () => {
 
     await waitFor(() => expect(onConfirm).toHaveBeenCalledWith("", "sha256:plan"));
     expect(fetchProposalPreview).not.toHaveBeenCalled();
+  });
+});
+
+function refusedOverBOL(): ProposalPreview {
+  return preview({ tool: "create_shipment", warnings: [warning({ reasons: [reason()] })] });
+}
+
+const ASKED =
+  "The proposal to create shipment would not go through as it stands: BOL: BOL is already in use by shipment SEED-DET-009. Fix it and propose it again; ask me for anything you need.";
+
+function renderSwitching(
+  approve: ReasonDialogRequest,
+  reject: (reason: string) => ReasonDialogRequest,
+) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+  function Surface() {
+    const [rejecting, setRejecting] = useState<ReasonDialogRequest | null>(null);
+    const [approving] = useState<ReasonDialogRequest>(() => ({
+      ...approve,
+      onAskAgent: (text) => setRejecting(reject(text)),
+    }));
+
+    return <ReasonDialog request={rejecting ?? approving} onClose={() => {}} />;
+  }
+
+  render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter>
+        <Surface />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
+
+/*
+A write the preview says would be refused used to leave the approver with a
+bare "would not go through" and nothing to do but guess a rejection. The
+dialog now names each reason, and asking the agent to fix it turns the
+approval into a rejection that carries those reasons to the agent.
+*/
+describe("ReasonDialog for a write that would be refused", () => {
+  it("opens a rejection with the reason it was given", () => {
+    fetchProposalPreview.mockReturnValue(new Promise(() => {}));
+    openDialog({
+      confirmLabel: "Reject",
+      destructive: true,
+      initialReason: "BOL is taken",
+      preview: { kind: "proposal", scope: "approver", id: "aprop_1", approving: false },
+    });
+
+    expect(screen.getByRole("textbox", { name: /^Reason/ })).toHaveValue("BOL is taken");
+  });
+
+  it("keeps approve offered, and turns it into a rejection with the reasons written", async () => {
+    const user = userEvent.setup();
+    fetchProposalPreview.mockResolvedValue(refusedOverBOL());
+    const onReject = vi.fn<ReasonDialogRequest["onConfirm"]>(async () => {});
+    const base: ReasonDialogRequest = {
+      title: "Approve this change?",
+      description: "create_shipment will run.",
+      confirmLabel: "Approve and run",
+      reasonLabel: "Reason",
+      requireReason: false,
+      preview: { kind: "proposal", scope: "approver", id: "aprop_1", approving: true },
+      onConfirm: vi.fn(async () => {}),
+    };
+    renderSwitching(base, (text) => ({
+      ...base,
+      title: "Reject this change?",
+      confirmLabel: "Reject",
+      destructive: true,
+      requireReason: true,
+      initialReason: text,
+      preview: { kind: "proposal", scope: "approver", id: "aprop_1", approving: false },
+      onConfirm: onReject,
+    }));
+
+    await screen.findByText("BOL is already in use by shipment SEED-DET-009");
+    expect(confirm()).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Ask the agent to fix it" }));
+
+    expect(await screen.findByRole("heading", { name: "Reject this change?" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /^Reason/ })).toHaveValue(ASKED);
+    await user.click(confirm("Reject"));
+    await waitFor(() => expect(onReject).toHaveBeenCalledWith(ASKED, expect.any(String)));
+  });
+
+  it("writes the reasons into its own reason when the surface sends them nowhere else", async () => {
+    const user = userEvent.setup();
+    fetchProposalPreview.mockResolvedValue(refusedOverBOL());
+    openDialog({
+      confirmLabel: "Reject",
+      destructive: true,
+      preview: { kind: "proposal", scope: "approver", id: "aprop_1", approving: false },
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Ask the agent to fix it" }));
+
+    expect(screen.getByRole("textbox", { name: /^Reason/ })).toHaveValue(ASKED);
+  });
+
+  it("names the step's own write when a plan's step would be refused", async () => {
+    const user = userEvent.setup();
+    const plan = planPreview();
+    const steps = plan.steps.map((step, index) =>
+      index === 0 ? { ...step, preview: refusedOverBOL() } : step,
+    );
+    fetchPlanPreview.mockResolvedValue({ ...plan, steps });
+    openDialog({
+      confirmLabel: "Reject",
+      destructive: true,
+      preview: { kind: "plan", scope: "approver", id: "apl_1", approving: false },
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Ask the agent to fix it" }));
+
+    expect(screen.getByRole("textbox", { name: /^Reason/ })).toHaveValue(ASKED);
   });
 });

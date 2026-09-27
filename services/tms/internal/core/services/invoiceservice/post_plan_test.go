@@ -12,12 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -342,4 +344,35 @@ func TestPreviewApprovalInvoice_PlansTheDraftApprovalWouldSave(t *testing.T) {
 	assert.True(t, result.Invoice.TotalAmount.Equal(decimal.NewFromInt(100)))
 	assert.True(t, result.Invoice.ID.IsNil(), "nothing was saved")
 	assert.True(t, result.AutoPost, "the customer's profile posts its invoices on its own")
+}
+
+func TestPreviewPost_StampsTheExchangeRateOfAForeignCurrencyInvoice(t *testing.T) {
+	t.Parallel()
+
+	f := newPostFixture(t)
+	f.invoice.CurrencyCode = "CAD"
+	f.svc.stamper = exchangeratestamp.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312"))
+
+	preview, err := f.svc.PreviewPost(t.Context(), f.request(), f.actor())
+	require.NoError(t, err)
+	require.False(t, preview.Refused())
+
+	require.True(t, preview.After.ExchangeRate.Valid)
+	assert.True(t, decimal.RequireFromString("0.7312").Equal(preview.After.ExchangeRate.Decimal))
+	require.NotNil(t, preview.After.ExchangeRateDate)
+	assert.Equal(t, timeutils.DayStartUTC(f.invoice.InvoiceDate), *preview.After.ExchangeRateDate)
+	assert.False(t, preview.Before.ExchangeRate.Valid)
+}
+
+func TestPreviewPost_LeavesAFunctionalCurrencyInvoiceUnstamped(t *testing.T) {
+	t.Parallel()
+
+	f := newPostFixture(t)
+	f.svc.stamper = exchangeratestamp.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312"))
+
+	preview, err := f.svc.PreviewPost(t.Context(), f.request(), f.actor())
+	require.NoError(t, err)
+
+	assert.False(t, preview.After.ExchangeRate.Valid)
+	assert.Nil(t, preview.After.ExchangeRateDate)
 }

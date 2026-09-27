@@ -121,6 +121,10 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 		adjustment, ok := byID[memo.SourceInvoiceAdjustmentID]
 		if !ok || adjustment.OrganizationID != memo.OrganizationID ||
 			adjustment.BusinessUnitID != memo.BusinessUnitID {
+			repairs = append(repairs, &repositories.AdjustmentMemoRepair{
+				Memo:          memo,
+				SourceMissing: true,
+			})
 			continue
 		}
 		repairs = append(repairs, &repositories.AdjustmentMemoRepair{

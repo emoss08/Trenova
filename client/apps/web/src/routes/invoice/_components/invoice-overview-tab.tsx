@@ -7,7 +7,8 @@ import {
   DescriptionList,
 } from "@trenova/shared/components/ui/description-list";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
+import { formatUnixDate, formatUnixDateMedium, formatUnixDateTime } from "@trenova/shared/lib/date";
+import { formatExchangeRate } from "@/components/accounting/exchange-rate-line";
 import { invoicePanelPath } from "@/lib/invoice-links";
 import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-scope";
 import { getDestinationLocation, getOriginLocation, shipmentPanelPath } from "@/lib/shipment-utils";
@@ -167,6 +168,16 @@ export function InvoiceOverviewTab({
                   </DescriptionItem>
                 )}
                 <DescriptionItem label={t("Currency")}>{invoice.currencyCode}</DescriptionItem>
+                {invoice.exchangeRate ? (
+                  <DescriptionItem label={t("Exchange rate")} numeric>
+                    {t(
+                      "1 {0} = {1}, quoted {2}",
+                      invoice.currencyCode,
+                      formatExchangeRate(invoice.exchangeRate),
+                      formatUnixDateMedium(invoice.exchangeRateDate),
+                    )}
+                  </DescriptionItem>
+                ) : null}
                 <DescriptionItem label={t("Posted")}>
                   {invoice.status === "Posted"
                     ? formatUnixDateTime(invoice.postedAt)

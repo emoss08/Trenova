@@ -81,6 +81,7 @@ func purchaseTxnOf(doc *services.AccountingPurchaseDocument) *quickbooks.Purchas
 		TxnDate:      doc.TxnDate,
 		DueDate:      doc.DueDate,
 		CurrencyCode: doc.CurrencyCode,
+		ExchangeRate: doc.ExchangeRate,
 		PrivateNote:  doc.PrivateNote,
 		Lines:        make([]quickbooks.PurchaseLine, 0, len(doc.Lines)),
 	}
@@ -174,6 +175,7 @@ func billPaymentTxnOf(doc *services.AccountingBillPaymentDocument) *quickbooks.B
 		DocNumber:     doc.DocNumber,
 		TxnDate:       doc.TxnDate,
 		CurrencyCode:  doc.CurrencyCode,
+		ExchangeRate:  doc.ExchangeRate,
 		PrivateNote:   doc.PrivateNote,
 		Amount:        doc.Amount,
 	}

@@ -204,6 +204,9 @@ const (
 	ResourceDocumentType           Resource = "document_type"
 	ResourceDocumentControl        Resource = "document_control"
 	ResourceDocumentParsingRule    Resource = "document_parsing_rule"
+	ResourceCaptureBatch           Resource = "capture_batch"
+	ResourceCaptureDevice          Resource = "capture_device"
+	ResourceCaptureProfile         Resource = "capture_profile"
 
 	// Reference Data
 	ResourceShipmentType Resource = "shipment_type"

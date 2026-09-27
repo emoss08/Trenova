@@ -40,6 +40,12 @@ const ProcessInboundMessageWorkflowName = "ProcessInboundMessageWorkflow"
 
 const InboundMessageRetentionWorkflowName = "InboundMessageRetentionWorkflow"
 
+const ProcessCaptureBatchWorkflowName = "ProcessCaptureBatchWorkflow"
+
+const FileCaptureItemWorkflowName = "FileCaptureItemWorkflow"
+
+const CaptureMaintenanceWorkflowName = "CaptureMaintenanceWorkflow"
+
 var DefaultRetryPolicy = &temporal.RetryPolicy{
 	InitialInterval:    time.Second,
 	BackoffCoefficient: 2.0,

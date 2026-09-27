@@ -1,0 +1,56 @@
+[package]
+name = "trenova-capture-svc"
+description = "The Trenova Capture print service: the Trenova printer's loopback IPP endpoint, which hands each printed job to the agent of the person who printed it."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+name = "trenova_capture_svc"
+path = "src/lib.rs"
+
+[[bin]]
+name = "trenova-capture-svc"
+path = "src/main.rs"
+
+[dependencies]
+bytes.workspace = true
+capture-imaging.workspace = true
+capture-ipp.workspace = true
+capture-protocol.workspace = true
+hex.workspace = true
+http.workspace = true
+http-body-util.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["net", "signal"] }
+tokio-util.workspace = true
+tracing.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+capture-platform.workspace = true
+windows-core.workspace = true
+windows-service.workspace = true
+windows = { workspace = true, features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Graphics_Printing",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_Storage_FileSystem",
+    "Win32_System_RemoteDesktop",
+    "Win32_System_SystemInformation",
+    "Win32_System_SystemServices",
+    "Win32_System_Threading",
+] }
+
+[dev-dependencies]
+reqwest.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

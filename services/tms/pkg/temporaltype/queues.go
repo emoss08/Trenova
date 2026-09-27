@@ -36,6 +36,10 @@ const (
 	// TaskQueueAgentHeavy carries replays of recorded runs, which cost as much
 	// as a run and are never urgent.
 	TaskQueueAgentHeavy TaskQueue = "agent-heavy-queue"
+	// TaskQueueCapture carries scanned and printed pages: rendering each page,
+	// reading its codes and filing what it becomes. Rendering is CPU-bound, so
+	// a stack of two hundred pages must not queue behind mail or dispatch.
+	TaskQueueCapture TaskQueue = "capture-queue"
 )
 
 func (t TaskQueue) String() string {
@@ -54,3 +58,4 @@ const DistanceMileageTaskQueue = string(TaskQueueDistanceMileage)
 const WeatherAlertTaskQueue = string(TaskQueueWeatherAlert)
 const EDITaskQueue = string(TaskQueueEDI)
 const ReportTaskQueue = string(TaskQueueReport)
+const CaptureTaskQueue = string(TaskQueueCapture)

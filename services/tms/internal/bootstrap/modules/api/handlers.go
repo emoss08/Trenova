@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
@@ -201,6 +202,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dothazmatreferencehandler.New,
 	edihandler.New,
 	inboundhandler.New,
+	capturehandler.New,
 	emailhandler.New,
 	telematicshandler.New,
 	accountingwebhookhandler.New,

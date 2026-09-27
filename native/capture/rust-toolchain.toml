@@ -1,0 +1,4 @@
+[toolchain]
+channel = "1.94"
+components = ["rustfmt", "clippy"]
+targets = ["x86_64-pc-windows-msvc", "i686-pc-windows-msvc"]

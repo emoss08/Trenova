@@ -1422,6 +1422,164 @@ export type CancelWorkerTrainingInput = {
   version?: number | null | undefined;
 };
 
+/** The processor a companion was built for. Trenova Capture ships for 64-bit Windows only. */
+export type CaptureArchitecture =
+  | 'x64';
+
+/** How the intake queue is ordered. */
+export type CaptureBatchSort =
+  /** Soonest to have its unfiled pages deleted first. */
+  | 'ExpiringSoonest'
+  /** Largest stack first. */
+  | 'MostPages'
+  /** Most recently captured first. */
+  | 'Newest'
+  /** Longest waiting first. */
+  | 'Oldest';
+
+/** How far a captured stack has got, from the first page arriving to the last document being filed. */
+export type CaptureBatchStatus =
+  | 'Discarded'
+  | 'Expired'
+  | 'Failed'
+  | 'Filed'
+  | 'PartiallyFiled'
+  | 'Processing'
+  | 'Ready'
+  | 'Receiving'
+  | 'Sealed';
+
+export type CaptureBatchesInput = {
+  after?: string | null | undefined;
+  first?: number | null | undefined;
+  /** Only the caller's own batches, even when they could see everybody's. */
+  mine?: boolean | null | undefined;
+  /** Words from the scanner, print job or device name. */
+  query?: string | null | undefined;
+  sort?: CaptureBatchSort | null | undefined;
+  source?: CaptureSource | null | undefined;
+  /** Only these statuses; empty is every status. */
+  statuses?: Array<CaptureBatchStatus> | null | undefined;
+  targetId?: string | number | null | undefined;
+  /** Only batches scanned into this record. */
+  targetType?: string | null | undefined;
+};
+
+export type CaptureCoverSheetInput = {
+  documentTypeId?: string | number | null | undefined;
+  targetId?: string | number | null | undefined;
+  /** Leave the record out for a plain separator that divides a stack and routes nothing. */
+  targetType?: string | null | undefined;
+};
+
+/** Whether a paired companion may still act for its person. */
+export type CaptureDeviceStatus =
+  | 'Active'
+  | 'Revoked';
+
+export type CaptureItemLayoutInput = {
+  /** The item's pages, in order. */
+  pageIds: Array<string | number>;
+};
+
+/** Where one proposed document is: waiting on a person, being filed, done, or thrown away. */
+export type CaptureItemStatus =
+  | 'Discarded'
+  | 'Failed'
+  | 'Filed'
+  | 'Filing'
+  | 'Proposed';
+
+export type CapturePageRotationInput = {
+  pageId: string | number;
+  /** Clockwise degrees: 0, 90, 180 or 270. */
+  rotation: number;
+};
+
+/** Whether a page could be read. */
+export type CapturePageStatus =
+  | 'Failed'
+  | 'Processed'
+  | 'Received';
+
+/** The colour mode a profile scans in. */
+export type CapturePixelType =
+  | 'BlackWhite'
+  | 'Color'
+  | 'Grayscale';
+
+export type CaptureProfileInput = {
+  description?: string | null | undefined;
+  discardBlankPages: boolean;
+  dpi: number;
+  duplex: boolean;
+  fixedPageCount: number;
+  isDefault: boolean;
+  jpegQuality: number;
+  name: string;
+  pixelType: CapturePixelType;
+  separatorStrategies: Array<CaptureSeparatorStrategy>;
+  showDriverUi: boolean;
+  status: CaptureProfileStatus;
+  useFeeder: boolean;
+};
+
+/** Whether a profile is still offered when somebody starts a scan. */
+export type CaptureProfileStatus =
+  | 'Active'
+  | 'Inactive';
+
+/** Why a companion could not carry out a request. */
+export type CaptureRequestFailureCode =
+  | 'CANCELED_BY_USER'
+  | 'DRIVER_ERROR'
+  | 'FEEDER_EMPTY'
+  | 'INTERNAL'
+  | 'NOT_DELIVERED'
+  | 'PAPER_JAM'
+  | 'SOURCE_BUSY'
+  | 'SOURCE_UNAVAILABLE'
+  | 'UPLOAD_FAILED';
+
+/** What a request asks the companion to do. */
+export type CaptureRequestMode =
+  | 'Print'
+  | 'Scan';
+
+/** How far a request to a companion has got. */
+export type CaptureRequestStatus =
+  | 'Canceled'
+  | 'Completed'
+  | 'Delivered'
+  | 'Expired'
+  | 'Failed'
+  | 'InProgress'
+  | 'Pending';
+
+/** A rule for where one document in a stack ends and the next begins. */
+export type CaptureSeparatorStrategy =
+  | 'BlankPage'
+  | 'CoverSheet'
+  | 'FixedPageCount'
+  | 'PatchCode';
+
+/** How the pages reached Trenova: from a scanner, or from another program's print dialog. */
+export type CaptureSource =
+  | 'Print'
+  | 'Scan';
+
+/** The Windows scanning interface a source speaks. */
+export type CaptureSourceProtocol =
+  | 'TWAIN'
+  | 'WIA';
+
+/** What suggested where a document goes. */
+export type CaptureSuggestionSource =
+  | 'Classifier'
+  | 'CoverSheet'
+  | 'Person'
+  | 'Request';
+
 export type CarrierAssignmentStatus =
   | 'Canceled'
   | 'Confirmed'
@@ -1936,6 +2094,18 @@ export type CreateAgentEvalCaseInput = {
   fromFeedback?: AgentEvalCaseFromFeedbackInput | null | undefined;
   fromMessage?: AgentEvalCaseFromMessageInput | null | undefined;
   fromProposal?: AgentEvalCaseFromProposalInput | null | undefined;
+};
+
+export type CreateCaptureRequestInput = {
+  /** One of the caller's own devices. */
+  deviceId: string | number;
+  documentTypeId?: string | number | null | undefined;
+  mode: CaptureRequestMode;
+  profileId?: string | number | null | undefined;
+  /** The scanner to use; blank for the device's default. */
+  sourceName?: string | null | undefined;
+  targetId: string | number;
+  targetType: string;
 };
 
 export type CreateCarrierInvoiceMatchInput = {
@@ -2802,6 +2972,14 @@ export type EdiTransferStatus =
   | 'Rejected'
   | 'Submitted';
 
+export type EditCaptureItemsInput = {
+  /** How the open pages divide into documents. Pages left out are dropped. */
+  items: Array<CaptureItemLayoutInput>;
+  rotations?: Array<CapturePageRotationInput> | null | undefined;
+  /** The batch version the person was looking at. */
+  version: number;
+};
+
 export type EffectiveRateSource =
   | 'Benchmark'
   | 'GLActual'
@@ -2980,6 +3158,23 @@ export type FieldType =
   | 'number'
   | 'select'
   | 'text';
+
+export type FileCaptureItemInput = {
+  documentTypeId?: string | number | null | undefined;
+  targetId: string | number;
+  targetType: string;
+  /** The item version the person was looking at. */
+  version: number;
+};
+
+export type FileCaptureItemsEntryInput = {
+  documentTypeId?: string | number | null | undefined;
+  itemId: string | number;
+  targetId: string | number;
+  targetType: string;
+  /** The item version the person was looking at. */
+  version: number;
+};
 
 export type FilterGroupInput = {
   filters: Array<FieldFilterInput>;
@@ -7272,7 +7467,7 @@ export type CheckAccountingConnectionMutationVariables = Exact<{
 
 export type CheckAccountingConnectionMutation = { checkAccountingConnection: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } };
 
-export type AccountingSyncRecordFieldsFragment = { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, revision: number, documentDate: number | null, dependsOnRecordId: string | null, status: AccountingSyncRecordStatus, attemptCount: number, nextAttemptAt: number | null, externalId: string, externalDocNumber: string, externalUrl: string, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, resolution: string, queuedAt: number, startedAt: number | null, syncedAt: number | null, skippedReason: string, version: number, updatedAt: number, skippedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingSyncRecordFieldsFragment' };
+export type AccountingSyncRecordFieldsFragment = { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, revision: number, documentDate: number | null, dependsOnRecordId: string | null, status: AccountingSyncRecordStatus, attemptCount: number, nextAttemptAt: number | null, externalId: string, externalDocNumber: string, externalUrl: string, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, resolution: string, queuedAt: number, startedAt: number | null, syncedAt: number | null, skippedReason: string, redatedTo: number | null, version: number, updatedAt: number, skippedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingSyncRecordFieldsFragment' };
 
 export type AccountingBackfillFieldsFragment = { id: string, rangeStart: number, rangeEnd: number, objectTypes: Array<AccountingSyncObjectType>, status: AccountingBackfillStatus, enqueuedCount: number, alreadyQueuedCount: number, startedAt: number | null, completedAt: number | null, lastError: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AccountingBackfillFieldsFragment' };
 
@@ -7370,6 +7565,13 @@ export type SkipAccountingSyncMutationVariables = Exact<{
 
 export type SkipAccountingSyncMutation = { skipAccountingSync: { ' $fragmentRefs'?: { 'AccountingSyncRecordFieldsFragment': AccountingSyncRecordFieldsFragment } } };
 
+export type RedateAccountingSyncMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RedateAccountingSyncMutation = { redateAccountingSync: { ' $fragmentRefs'?: { 'AccountingSyncRecordFieldsFragment': AccountingSyncRecordFieldsFragment } } };
+
 export type RequestAccountingBackfillMutationVariables = Exact<{
   input: RequestAccountingBackfillInput;
 }>;
@@ -7391,7 +7593,7 @@ export type AccountingSyncRecordTableQueryVariables = Exact<{
 }>;
 
 
-export type AccountingSyncRecordTableQuery = { accountingSyncRecordTable: { totalCount?: number | null, edges: Array<{ node: { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, revision: number, documentDate: number | null, dependsOnRecordId: string | null, status: AccountingSyncRecordStatus, attemptCount: number, nextAttemptAt: number | null, externalId: string, externalDocNumber: string, externalUrl: string, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, resolution: string, queuedAt: number, startedAt: number | null, syncedAt: number | null, skippedReason: string, version: number, updatedAt: number, skippedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+export type AccountingSyncRecordTableQuery = { accountingSyncRecordTable: { totalCount?: number | null, edges: Array<{ node: { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, revision: number, documentDate: number | null, dependsOnRecordId: string | null, status: AccountingSyncRecordStatus, attemptCount: number, nextAttemptAt: number | null, externalId: string, externalDocNumber: string, externalUrl: string, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, resolution: string, queuedAt: number, startedAt: number | null, syncedAt: number | null, skippedReason: string, redatedTo: number | null, version: number, updatedAt: number, skippedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type LateChargeAssessmentResultFieldsFragment = { asOfDate: number, preview: boolean, mode: LateChargeAssessmentMode, memosCreated: number, memosPosted: number, customersSkipped: number, totalChargeMinor: number, customers: Array<{ customerId: string, customerName: string, currencyCode: string, totalChargeMinor: number, debitMemoId: string | null, debitMemoNumber: string, posted: boolean, skipped: boolean, skipReason: string, lines: Array<{ invoiceId: string, invoiceNumber: string, periodIndex: number, periodStart: number, periodEnd: number, basisOpenBalanceMinor: number, ratePercent: string, chargeMinor: number }> }> } & { ' $fragmentName'?: 'LateChargeAssessmentResultFieldsFragment' };
 
@@ -7943,7 +8145,7 @@ export type DecideAgentPlanMutationVariables = Exact<{
 
 export type DecideAgentPlanMutation = { decideAgentPlan: { ' $fragmentRefs'?: { 'AgentPlanTableRowFieldsFragment': AgentPlanTableRowFieldsFragment } } };
 
-export type AgentProposalPreviewFieldsFragment = { proposalId: string, tool: string, summary: string, coverage: AgentPreviewCoverage, stale: boolean, targetVersion: number | null, withheldCount: number, omittedRecords: number, recorded: boolean, computedAt: number, digest: string, changes: Array<{ resource: string, entityId: string | null, label: string, operation: AgentPreviewOperation, version: number | null, withheld: boolean, dependsOnStep: number, omittedFields: number, record: { entityType: string, id: string } | null, fields: Array<{ path: string, label: string, valueType: string, before: unknown, after: unknown, withheld: boolean, volatile: boolean, truncated: boolean, changedSinceProposed: boolean, proposedBefore: unknown, projectedFromStep: number, beforeRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null, afterRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null }>, message: { channel: AgentPreviewMessageChannel, from: string, to: Array<string>, cc: Array<string>, bcc: Array<string>, attachments: Array<string>, subject: string, body: string, bodyTruncated: boolean, visibility: string, cadence: string, templateVersionId: string | null } | null, money: { currency: string, totalBefore: string | null, totalAfter: string | null, delta: string | null, withheld: boolean, lines: Array<{ label: string, before: string | null, after: string | null }> } | null }>, warnings: Array<{ code: string, args: Array<string>, message: string }>, staleness: { pinned: boolean, proposedVersion: number, currentVersion: number, missing: boolean } | null } & { ' $fragmentName'?: 'AgentProposalPreviewFieldsFragment' };
+export type AgentProposalPreviewFieldsFragment = { proposalId: string, tool: string, summary: string, coverage: AgentPreviewCoverage, stale: boolean, targetVersion: number | null, withheldCount: number, omittedRecords: number, recorded: boolean, computedAt: number, digest: string, changes: Array<{ resource: string, entityId: string | null, label: string, operation: AgentPreviewOperation, version: number | null, withheld: boolean, dependsOnStep: number, omittedFields: number, record: { entityType: string, id: string } | null, fields: Array<{ path: string, label: string, valueType: string, before: unknown, after: unknown, withheld: boolean, volatile: boolean, truncated: boolean, changedSinceProposed: boolean, proposedBefore: unknown, projectedFromStep: number, beforeRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null, afterRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null }>, message: { channel: AgentPreviewMessageChannel, from: string, to: Array<string>, cc: Array<string>, bcc: Array<string>, attachments: Array<string>, subject: string, body: string, bodyTruncated: boolean, visibility: string, cadence: string, templateVersionId: string | null } | null, money: { currency: string, totalBefore: string | null, totalAfter: string | null, delta: string | null, withheld: boolean, lines: Array<{ label: string, before: string | null, after: string | null }> } | null }>, warnings: Array<{ code: string, args: Array<string>, message: string, reasons: Array<{ field: string, label: string, message: string, param: string }> }>, staleness: { pinned: boolean, proposedVersion: number, currentVersion: number, missing: boolean } | null } & { ' $fragmentName'?: 'AgentProposalPreviewFieldsFragment' };
 
 export type AgentPlanPreviewFieldsFragment = { planId: string, digest: string, stale: boolean, withheldCount: number, computedAt: number, steps: Array<{ proposalId: string, step: number, preview: { ' $fragmentRefs'?: { 'AgentProposalPreviewFieldsFragment': AgentProposalPreviewFieldsFragment } } }> } & { ' $fragmentName'?: 'AgentPlanPreviewFieldsFragment' };
 
@@ -8468,6 +8670,221 @@ export type RegenerateBriefingMutationVariables = Exact<{
 
 export type RegenerateBriefingMutation = { regenerateBriefing: { ' $fragmentRefs'?: { 'BriefingFieldsFragment': BriefingFieldsFragment } } };
 
+export type CaptureRecordRefFieldsFragment = { resourceType: string, id: string, title: string, subtitle: string } & { ' $fragmentName'?: 'CaptureRecordRefFieldsFragment' };
+
+export type CaptureSourceInfoFieldsFragment = { name: string, protocol: CaptureSourceProtocol, bitness: number, isDefault: boolean, duplex: boolean, feeder: boolean, patchCodes: boolean, barcodes: boolean, blankDiscard: boolean, resolutions: Array<number> } & { ' $fragmentName'?: 'CaptureSourceInfoFieldsFragment' };
+
+export type CaptureDeviceFieldsFragment = { id: string, userId: string, name: string, machineName: string, windowsUser: string, agentVersion: string, architecture: CaptureArchitecture, osVersion: string, status: CaptureDeviceStatus, lastSeenAt: number | null, isOnline: boolean, lastIp: string, revokedAt: number | null, revokedReason: string, version: number, createdAt: number, sources: Array<{ ' $fragmentRefs'?: { 'CaptureSourceInfoFieldsFragment': CaptureSourceInfoFieldsFragment } }> } & { ' $fragmentName'?: 'CaptureDeviceFieldsFragment' };
+
+export type CaptureDeviceFleetFieldsFragment = (
+  { user: { id: string, name: string, emailAddress: string } | null }
+  & { ' $fragmentRefs'?: { 'CaptureDeviceFieldsFragment': CaptureDeviceFieldsFragment } }
+) & { ' $fragmentName'?: 'CaptureDeviceFleetFieldsFragment' };
+
+export type CaptureProfileFieldsFragment = { id: string, name: string, description: string, status: CaptureProfileStatus, isDefault: boolean, dpi: number, pixelType: CapturePixelType, duplex: boolean, useFeeder: boolean, discardBlankPages: boolean, jpegQuality: number, showDriverUi: boolean, separatorStrategies: Array<CaptureSeparatorStrategy>, fixedPageCount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CaptureProfileFieldsFragment' };
+
+export type CaptureRequestFieldsFragment = { id: string, deviceId: string, mode: CaptureRequestMode, status: CaptureRequestStatus, targetType: string, targetId: string, documentTypeId: string | null, profileId: string | null, sourceName: string, batchId: string | null, failureCode: CaptureRequestFailureCode | null, failureMessage: string, expiresAt: number, deliveredAt: number | null, completedAt: number | null, isOpen: boolean, createdAt: number } & { ' $fragmentName'?: 'CaptureRequestFieldsFragment' };
+
+export type CaptureBatchRowFieldsFragment = { id: string, userId: string, source: CaptureSource, status: CaptureBatchStatus, sourceName: string, jobName: string, targetType: string, targetId: string | null, receivedPageCount: number, itemCount: number, filedItemCount: number, openItemCount: number, failureMessage: string, sealedAt: number | null, processedAt: number | null, retainUntil: number, isEditable: boolean, version: number, createdAt: number, updatedAt: number, user: { id: string, name: string } | null, device: { id: string, name: string, machineName: string } | null, target: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null } & { ' $fragmentName'?: 'CaptureBatchRowFieldsFragment' };
+
+export type CapturePageFieldsFragment = { id: string, sequence: number, status: CapturePageStatus, rotation: number, widthPx: number, heightPx: number, dpi: number, isBlank: boolean, isSeparator: boolean, patchCode: string, isCoverSheet: boolean, unrecognizedCoverSheet: boolean, failureMessage: string, contentPath: string, thumbnailPath: string } & { ' $fragmentName'?: 'CapturePageFieldsFragment' };
+
+export type CaptureItemFieldsFragment = { id: string, position: number, status: CaptureItemStatus, pageIds: Array<string>, pageCount: number, suggestedType: string, suggestedId: string | null, suggestedDocumentTypeId: string | null, suggestionSource: CaptureSuggestionSource | null, suggestionConfidence: number | null, suggestionReason: string, detectedKind: string, filedType: string, filedId: string | null, filedDocumentTypeId: string | null, documentId: string | null, filedAt: number | null, failureMessage: string, version: number, suggestedRecord: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null, filedRecord: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null } & { ' $fragmentName'?: 'CaptureItemFieldsFragment' };
+
+export type CaptureBatchDetailFieldsFragment = (
+  { documentTypeId: string | null, settings: { protocol: CaptureSourceProtocol | null, dpi: number, pixelType: CapturePixelType | null, duplex: boolean, feeder: boolean, driverVersion: string, application: string, refused: Array<string> }, pages: Array<{ ' $fragmentRefs'?: { 'CapturePageFieldsFragment': CapturePageFieldsFragment } }>, items: Array<{ ' $fragmentRefs'?: { 'CaptureItemFieldsFragment': CaptureItemFieldsFragment } }> }
+  & { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } }
+) & { ' $fragmentName'?: 'CaptureBatchDetailFieldsFragment' };
+
+export type MyCaptureAccessQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyCaptureAccessQuery = { myCaptureAccess: { enabled: boolean, canCapture: boolean } };
+
+export type CaptureAgentReleaseQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CaptureAgentReleaseQuery = { captureAgentRelease: { version: string, publishedAt: number, minimumWindowsBuild: number, notes: string, installer: { fileName: string, url: string, sha256: string, size: number } } | null };
+
+export type CaptureBatchesQueryVariables = Exact<{
+  input: CaptureBatchesInput;
+}>;
+
+
+export type CaptureBatchesQuery = { captureBatches: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type CaptureBatchCountQueryVariables = Exact<{
+  input: CaptureBatchesInput;
+}>;
+
+
+export type CaptureBatchCountQuery = { captureBatches: { totalCount: number | null } };
+
+export type CaptureBatchQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CaptureBatchQuery = { captureBatch: { ' $fragmentRefs'?: { 'CaptureBatchDetailFieldsFragment': CaptureBatchDetailFieldsFragment } } };
+
+export type MyCaptureDevicesQueryVariables = Exact<{
+  status?: CaptureDeviceStatus | null | undefined;
+}>;
+
+
+export type MyCaptureDevicesQuery = { myCaptureDevices: Array<{ ' $fragmentRefs'?: { 'CaptureDeviceFieldsFragment': CaptureDeviceFieldsFragment } }> };
+
+export type CaptureDevicesQueryVariables = Exact<{
+  status?: CaptureDeviceStatus | null | undefined;
+  query?: string | null | undefined;
+}>;
+
+
+export type CaptureDevicesQuery = { captureDevices: Array<{ ' $fragmentRefs'?: { 'CaptureDeviceFleetFieldsFragment': CaptureDeviceFleetFieldsFragment } }> };
+
+export type AvailableCaptureProfilesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AvailableCaptureProfilesQuery = { availableCaptureProfiles: Array<{ ' $fragmentRefs'?: { 'CaptureProfileFieldsFragment': CaptureProfileFieldsFragment } }> };
+
+export type CaptureProfilesQueryVariables = Exact<{
+  status?: CaptureProfileStatus | null | undefined;
+  query?: string | null | undefined;
+}>;
+
+
+export type CaptureProfilesQuery = { captureProfiles: Array<{ ' $fragmentRefs'?: { 'CaptureProfileFieldsFragment': CaptureProfileFieldsFragment } }> };
+
+export type CaptureRequestsForTargetQueryVariables = Exact<{
+  targetType: string;
+  targetId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type CaptureRequestsForTargetQuery = { captureRequestsForTarget: Array<{ ' $fragmentRefs'?: { 'CaptureRequestFieldsFragment': CaptureRequestFieldsFragment } }> };
+
+export type CaptureDevicePairingQueryVariables = Exact<{
+  userCode: string;
+}>;
+
+
+export type CaptureDevicePairingQuery = { captureDevicePairing: { userCode: string, machineName: string, windowsUser: string, agentVersion: string, architecture: CaptureArchitecture, osVersion: string, clientIp: string, expiresAt: number } };
+
+export type EditCaptureItemsMutationVariables = Exact<{
+  batchId: string | number;
+  input: EditCaptureItemsInput;
+}>;
+
+
+export type EditCaptureItemsMutation = { editCaptureItems: { ' $fragmentRefs'?: { 'CaptureBatchDetailFieldsFragment': CaptureBatchDetailFieldsFragment } } };
+
+export type FileCaptureItemMutationVariables = Exact<{
+  id: string | number;
+  input: FileCaptureItemInput;
+}>;
+
+
+export type FileCaptureItemMutation = { fileCaptureItem: { ' $fragmentRefs'?: { 'CaptureItemFieldsFragment': CaptureItemFieldsFragment } } };
+
+export type FileCaptureItemsMutationVariables = Exact<{
+  items: Array<FileCaptureItemsEntryInput> | FileCaptureItemsEntryInput;
+}>;
+
+
+export type FileCaptureItemsMutation = { fileCaptureItems: { filed: Array<{ ' $fragmentRefs'?: { 'CaptureItemFieldsFragment': CaptureItemFieldsFragment } }>, failures: Array<{ itemId: string, message: string }> } };
+
+export type DiscardCaptureItemMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type DiscardCaptureItemMutation = { discardCaptureItem: { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } } };
+
+export type DiscardCaptureBatchMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type DiscardCaptureBatchMutation = { discardCaptureBatch: { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } } };
+
+export type CreateCaptureRequestMutationVariables = Exact<{
+  input: CreateCaptureRequestInput;
+}>;
+
+
+export type CreateCaptureRequestMutation = { createCaptureRequest: { ' $fragmentRefs'?: { 'CaptureRequestFieldsFragment': CaptureRequestFieldsFragment } } };
+
+export type CancelCaptureRequestMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CancelCaptureRequestMutation = { cancelCaptureRequest: { ' $fragmentRefs'?: { 'CaptureRequestFieldsFragment': CaptureRequestFieldsFragment } } };
+
+export type CreateCaptureCoverSheetsMutationVariables = Exact<{
+  sheets: Array<CaptureCoverSheetInput> | CaptureCoverSheetInput;
+}>;
+
+
+export type CreateCaptureCoverSheetsMutation = { createCaptureCoverSheets: Array<{ id: string, targetType: string, targetId: string | null, documentTypeId: string | null, payload: string, expiresAt: number, qrCode: { size: number, modules: Array<string> }, target: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null }> };
+
+export type ApproveCaptureDevicePairingMutationVariables = Exact<{
+  userCode: string;
+  deviceName?: string | null | undefined;
+}>;
+
+
+export type ApproveCaptureDevicePairingMutation = { approveCaptureDevicePairing: boolean };
+
+export type DenyCaptureDevicePairingMutationVariables = Exact<{
+  userCode: string;
+}>;
+
+
+export type DenyCaptureDevicePairingMutation = { denyCaptureDevicePairing: boolean };
+
+export type RevokeMyCaptureDeviceMutationVariables = Exact<{
+  id: string | number;
+  reason?: string | null | undefined;
+}>;
+
+
+export type RevokeMyCaptureDeviceMutation = { revokeMyCaptureDevice: { ' $fragmentRefs'?: { 'CaptureDeviceFieldsFragment': CaptureDeviceFieldsFragment } } };
+
+export type RevokeCaptureDeviceMutationVariables = Exact<{
+  id: string | number;
+  reason?: string | null | undefined;
+}>;
+
+
+export type RevokeCaptureDeviceMutation = { revokeCaptureDevice: { ' $fragmentRefs'?: { 'CaptureDeviceFleetFieldsFragment': CaptureDeviceFleetFieldsFragment } } };
+
+export type CreateCaptureProfileMutationVariables = Exact<{
+  input: CaptureProfileInput;
+}>;
+
+
+export type CreateCaptureProfileMutation = { createCaptureProfile: { ' $fragmentRefs'?: { 'CaptureProfileFieldsFragment': CaptureProfileFieldsFragment } } };
+
+export type UpdateCaptureProfileMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: CaptureProfileInput;
+}>;
+
+
+export type UpdateCaptureProfileMutation = { updateCaptureProfile: { ' $fragmentRefs'?: { 'CaptureProfileFieldsFragment': CaptureProfileFieldsFragment } } };
+
+export type DeleteCaptureProfileMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteCaptureProfileMutation = { deleteCaptureProfile: boolean };
+
 export type CarrierIntelFindingFieldsFragment = { code: string, category: CarrierIntelSection, action: CarrierIntelRuleAction, severity: CarrierIntelSeverity, message: string, unverifiable: boolean, unconfirmed: boolean, overridden: boolean, overrideId: string | null, overrideExpiresAt: number | null } & { ' $fragmentName'?: 'CarrierIntelFindingFieldsFragment' };
 
 export type CarrierIntelAddressFieldsFragment = { line1: string | null, city: string | null, state: string | null, postalCode: string | null, country: string | null, undelivered: boolean | null } & { ' $fragmentName'?: 'CarrierIntelAddressFieldsFragment' };
@@ -8776,7 +9193,7 @@ export type CarrierSettlementDetailQueryVariables = Exact<{
 }>;
 
 
-export type CarrierSettlementDetailQuery = { carrierSettlement: { id: string, carrierId: string, batchId: string | null, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, grossCostMinor: number, adjustmentsMinor: number, netPayableMinor: number, shipmentCount: number, currencyCode: string, notes: string, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, postedById: string | null, postedAt: number | null, postedJournalBatchId: string | null, paidAt: number | null, paidById: string | null, paymentMethod: string, paymentReference: string, paidJournalBatchId: string | null, voidedById: string | null, voidedAt: number | null, voidReason: string, voidJournalBatchId: string | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null, paymentMethod: CarrierPaymentMethod, paymentTermDays: number, remitToName: string | null, remitAddressLine1: string | null, remitAddressLine2: string | null, remitCity: string | null, remitPostalCode: string | null, remitState: { id: string, abbreviation: string } | null } | null, lines: Array<{ id: string, lineNumber: number, eventType: CarrierCostEventType, description: string, amountMinor: number, costEventId: string | null, glAccountId: string | null, shipmentId: string | null, moveId: string | null, proNumber: string }> | null } | null };
+export type CarrierSettlementDetailQuery = { carrierSettlement: { id: string, carrierId: string, batchId: string | null, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, grossCostMinor: number, adjustmentsMinor: number, netPayableMinor: number, shipmentCount: number, currencyCode: string, exchangeRate: string | null, exchangeRateDate: number | null, paidExchangeRate: string | null, paidExchangeRateDate: number | null, notes: string, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, postedById: string | null, postedAt: number | null, postedJournalBatchId: string | null, paidAt: number | null, paidById: string | null, paymentMethod: string, paymentReference: string, paidJournalBatchId: string | null, voidedById: string | null, voidedAt: number | null, voidReason: string, voidJournalBatchId: string | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null, paymentMethod: CarrierPaymentMethod, paymentTermDays: number, remitToName: string | null, remitAddressLine1: string | null, remitAddressLine2: string | null, remitCity: string | null, remitPostalCode: string | null, remitState: { id: string, abbreviation: string } | null } | null, lines: Array<{ id: string, lineNumber: number, eventType: CarrierCostEventType, description: string, amountMinor: number, costEventId: string | null, glAccountId: string | null, shipmentId: string | null, moveId: string | null, proNumber: string }> | null } | null };
 
 export type CarrierSettlementBatchTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -9053,7 +9470,7 @@ export type CustomerPaymentDetailQueryVariables = Exact<{
 }>;
 
 
-export type CustomerPaymentDetailQuery = { customerPayment: { id: string, organizationId: string, businessUnitId: string, customerId: string, paymentDate: number, accountingDate: number, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string, memo: string, currencyCode: string, postedBatchId: string | null, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, applications: Array<{ id: string, customerPaymentId: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number, createdAt: number, updatedAt: number, invoice: { id: string, number: string, invoiceDate: number, dueDate: number | null, totalAmount: string, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, billToName: string } | null }> | null } | null };
+export type CustomerPaymentDetailQuery = { customerPayment: { id: string, organizationId: string, businessUnitId: string, customerId: string, paymentDate: number, accountingDate: number, amountMinor: number, appliedAmountMinor: number, unappliedAmountMinor: number, status: CustomerPaymentStatus, paymentMethod: CustomerPaymentMethod, referenceNumber: string, memo: string, currencyCode: string, exchangeRate: string | null, exchangeRateDate: number | null, postedBatchId: string | null, reversalBatchId: string | null, reversedById: string | null, reversedAt: number | null, reversalReason: string, createdById: string, updatedById: string | null, version: number, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, applications: Array<{ id: string, customerPaymentId: string, invoiceId: string, appliedAmountMinor: number, shortPayAmountMinor: number, lineNumber: number, createdAt: number, updatedAt: number, invoice: { id: string, number: string, invoiceDate: number, dueDate: number | null, totalAmount: string, appliedAmount: string, settlementStatus: InvoiceSettlementStatus, disputeStatus: InvoiceDisputeStatus, billToName: string } | null }> | null } | null };
 
 export type PostAndApplyCustomerPaymentMutationVariables = Exact<{
   input: PostCustomerPaymentInput;
@@ -9861,7 +10278,7 @@ export type DriverSettlementDetailQueryVariables = Exact<{
 }>;
 
 
-export type DriverSettlementDetailQuery = { driverSettlement: { id: string, workerId: string, batchId: string | null, payProfileId: string | null, settlementNumber: string, status: DriverSettlementStatus, classification: PayeeClassification, payProfileName: string, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, carryForwardInMinor: number, carryForwardOutMinor: number, netPayMinor: number, totalMiles: string, shipmentCount: number, currencyCode: string, hasExceptions: boolean, notes: string, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, postedById: string | null, postedAt: number | null, paidAt: number | null, paymentMethod: string, paymentReference: string, voidedById: string | null, voidedAt: number | null, voidReason: string, version: number, createdAt: number, updatedAt: number, exceptions: Array<{ code: string, severity: string, message: string }> | null, worker: { id: string, firstName: string, lastName: string } | null, lines: Array<{ id: string, lineNumber: number, category: SettlementLineCategory, componentKind: PayComponentKind | null, method: PayCalcMethod | null, description: string, quantity: string, rate: string, amountMinor: number, shipmentId: string | null, moveId: string | null, payEventId: string | null, recurringDeductionId: string | null, advanceId: string | null, escrowAccountId: string | null, proNumber: string }> | null } | null };
+export type DriverSettlementDetailQuery = { driverSettlement: { id: string, workerId: string, batchId: string | null, payProfileId: string | null, settlementNumber: string, status: DriverSettlementStatus, classification: PayeeClassification, payProfileName: string, periodStart: number, periodEnd: number, payDate: number, grossEarningsMinor: number, reimbursementsMinor: number, deductionsMinor: number, carryForwardInMinor: number, carryForwardOutMinor: number, netPayMinor: number, totalMiles: string, shipmentCount: number, currencyCode: string, exchangeRate: string | null, exchangeRateDate: number | null, paidExchangeRate: string | null, paidExchangeRateDate: number | null, hasExceptions: boolean, notes: string, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, postedById: string | null, postedAt: number | null, paidAt: number | null, paymentMethod: string, paymentReference: string, voidedById: string | null, voidedAt: number | null, voidReason: string, version: number, createdAt: number, updatedAt: number, exceptions: Array<{ code: string, severity: string, message: string }> | null, worker: { id: string, firstName: string, lastName: string } | null, lines: Array<{ id: string, lineNumber: number, category: SettlementLineCategory, componentKind: PayComponentKind | null, method: PayCalcMethod | null, description: string, quantity: string, rate: string, amountMinor: number, shipmentId: string | null, moveId: string | null, payEventId: string | null, recurringDeductionId: string | null, advanceId: string | null, escrowAccountId: string | null, proNumber: string }> | null } | null };
 
 export type SettlementBatchTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -14640,6 +15057,7 @@ export const AccountingSyncRecordFieldsFragmentDoc = new TypedDocumentString(`
     name
   }
   skippedReason
+  redatedTo
   version
   updatedAt
 }
@@ -15532,6 +15950,12 @@ export const AgentProposalPreviewFieldsFragmentDoc = new TypedDocumentString(`
     code
     args
     message
+    reasons {
+      field
+      label
+      message
+      param
+    }
   }
   stale
   staleness {
@@ -15645,6 +16069,12 @@ export const AgentPlanPreviewFieldsFragmentDoc = new TypedDocumentString(`
     code
     args
     message
+    reasons {
+      field
+      label
+      message
+      param
+    }
   }
   stale
   staleness {
@@ -16232,6 +16662,345 @@ export const BriefingFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BriefingFields"}) as unknown as TypedDocumentString<BriefingFieldsFragment, unknown>;
+export const CaptureSourceInfoFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureSourceInfoFields on CaptureSourceInfo {
+  name
+  protocol
+  bitness
+  isDefault
+  duplex
+  feeder
+  patchCodes
+  barcodes
+  blankDiscard
+  resolutions
+}
+    `, {"fragmentName":"CaptureSourceInfoFields"}) as unknown as TypedDocumentString<CaptureSourceInfoFieldsFragment, unknown>;
+export const CaptureDeviceFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureDeviceFields on CaptureDevice {
+  id
+  userId
+  name
+  machineName
+  windowsUser
+  agentVersion
+  architecture
+  osVersion
+  status
+  lastSeenAt
+  isOnline
+  lastIp
+  revokedAt
+  revokedReason
+  version
+  createdAt
+  sources {
+    ...CaptureSourceInfoFields
+  }
+}
+    fragment CaptureSourceInfoFields on CaptureSourceInfo {
+  name
+  protocol
+  bitness
+  isDefault
+  duplex
+  feeder
+  patchCodes
+  barcodes
+  blankDiscard
+  resolutions
+}`, {"fragmentName":"CaptureDeviceFields"}) as unknown as TypedDocumentString<CaptureDeviceFieldsFragment, unknown>;
+export const CaptureDeviceFleetFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureDeviceFleetFields on CaptureDevice {
+  ...CaptureDeviceFields
+  user {
+    id
+    name
+    emailAddress
+  }
+}
+    fragment CaptureSourceInfoFields on CaptureSourceInfo {
+  name
+  protocol
+  bitness
+  isDefault
+  duplex
+  feeder
+  patchCodes
+  barcodes
+  blankDiscard
+  resolutions
+}
+fragment CaptureDeviceFields on CaptureDevice {
+  id
+  userId
+  name
+  machineName
+  windowsUser
+  agentVersion
+  architecture
+  osVersion
+  status
+  lastSeenAt
+  isOnline
+  lastIp
+  revokedAt
+  revokedReason
+  version
+  createdAt
+  sources {
+    ...CaptureSourceInfoFields
+  }
+}`, {"fragmentName":"CaptureDeviceFleetFields"}) as unknown as TypedDocumentString<CaptureDeviceFleetFieldsFragment, unknown>;
+export const CaptureProfileFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureProfileFields on CaptureProfile {
+  id
+  name
+  description
+  status
+  isDefault
+  dpi
+  pixelType
+  duplex
+  useFeeder
+  discardBlankPages
+  jpegQuality
+  showDriverUi
+  separatorStrategies
+  fixedPageCount
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CaptureProfileFields"}) as unknown as TypedDocumentString<CaptureProfileFieldsFragment, unknown>;
+export const CaptureRequestFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureRequestFields on CaptureRequest {
+  id
+  deviceId
+  mode
+  status
+  targetType
+  targetId
+  documentTypeId
+  profileId
+  sourceName
+  batchId
+  failureCode
+  failureMessage
+  expiresAt
+  deliveredAt
+  completedAt
+  isOpen
+  createdAt
+}
+    `, {"fragmentName":"CaptureRequestFields"}) as unknown as TypedDocumentString<CaptureRequestFieldsFragment, unknown>;
+export const CaptureRecordRefFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureRecordRefFields on CaptureRecordRef {
+  resourceType
+  id
+  title
+  subtitle
+}
+    `, {"fragmentName":"CaptureRecordRefFields"}) as unknown as TypedDocumentString<CaptureRecordRefFieldsFragment, unknown>;
+export const CaptureBatchRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureBatchRowFields on CaptureBatch {
+  id
+  userId
+  source
+  status
+  sourceName
+  jobName
+  targetType
+  targetId
+  receivedPageCount
+  itemCount
+  filedItemCount
+  openItemCount
+  failureMessage
+  sealedAt
+  processedAt
+  retainUntil
+  isEditable
+  version
+  createdAt
+  updatedAt
+  user {
+    id
+    name
+  }
+  device {
+    id
+    name
+    machineName
+  }
+  target {
+    ...CaptureRecordRefFields
+  }
+}
+    fragment CaptureRecordRefFields on CaptureRecordRef {
+  resourceType
+  id
+  title
+  subtitle
+}`, {"fragmentName":"CaptureBatchRowFields"}) as unknown as TypedDocumentString<CaptureBatchRowFieldsFragment, unknown>;
+export const CapturePageFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CapturePageFields on CapturePage {
+  id
+  sequence
+  status
+  rotation
+  widthPx
+  heightPx
+  dpi
+  isBlank
+  isSeparator
+  patchCode
+  isCoverSheet
+  unrecognizedCoverSheet
+  failureMessage
+  contentPath
+  thumbnailPath
+}
+    `, {"fragmentName":"CapturePageFields"}) as unknown as TypedDocumentString<CapturePageFieldsFragment, unknown>;
+export const CaptureItemFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureItemFields on CaptureItem {
+  id
+  position
+  status
+  pageIds
+  pageCount
+  suggestedType
+  suggestedId
+  suggestedDocumentTypeId
+  suggestionSource
+  suggestionConfidence
+  suggestionReason
+  detectedKind
+  filedType
+  filedId
+  filedDocumentTypeId
+  documentId
+  filedAt
+  failureMessage
+  version
+  suggestedRecord {
+    ...CaptureRecordRefFields
+  }
+  filedRecord {
+    ...CaptureRecordRefFields
+  }
+}
+    fragment CaptureRecordRefFields on CaptureRecordRef {
+  resourceType
+  id
+  title
+  subtitle
+}`, {"fragmentName":"CaptureItemFields"}) as unknown as TypedDocumentString<CaptureItemFieldsFragment, unknown>;
+export const CaptureBatchDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CaptureBatchDetailFields on CaptureBatch {
+  ...CaptureBatchRowFields
+  documentTypeId
+  settings {
+    protocol
+    dpi
+    pixelType
+    duplex
+    feeder
+    driverVersion
+    application
+    refused
+  }
+  pages {
+    ...CapturePageFields
+  }
+  items {
+    ...CaptureItemFields
+  }
+}
+    fragment CaptureRecordRefFields on CaptureRecordRef {
+  resourceType
+  id
+  title
+  subtitle
+}
+fragment CaptureBatchRowFields on CaptureBatch {
+  id
+  userId
+  source
+  status
+  sourceName
+  jobName
+  targetType
+  targetId
+  receivedPageCount
+  itemCount
+  filedItemCount
+  openItemCount
+  failureMessage
+  sealedAt
+  processedAt
+  retainUntil
+  isEditable
+  version
+  createdAt
+  updatedAt
+  user {
+    id
+    name
+  }
+  device {
+    id
+    name
+    machineName
+  }
+  target {
+    ...CaptureRecordRefFields
+  }
+}
+fragment CapturePageFields on CapturePage {
+  id
+  sequence
+  status
+  rotation
+  widthPx
+  heightPx
+  dpi
+  isBlank
+  isSeparator
+  patchCode
+  isCoverSheet
+  unrecognizedCoverSheet
+  failureMessage
+  contentPath
+  thumbnailPath
+}
+fragment CaptureItemFields on CaptureItem {
+  id
+  position
+  status
+  pageIds
+  pageCount
+  suggestedType
+  suggestedId
+  suggestedDocumentTypeId
+  suggestionSource
+  suggestionConfidence
+  suggestionReason
+  detectedKind
+  filedType
+  filedId
+  filedDocumentTypeId
+  documentId
+  filedAt
+  failureMessage
+  version
+  suggestedRecord {
+    ...CaptureRecordRefFields
+  }
+  filedRecord {
+    ...CaptureRecordRefFields
+  }
+}`, {"fragmentName":"CaptureBatchDetailFields"}) as unknown as TypedDocumentString<CaptureBatchDetailFieldsFragment, unknown>;
 export const CarrierIntelFindingFieldsFragmentDoc = new TypedDocumentString(`
     fragment CarrierIntelFindingFields on CarrierIntelFinding {
   code
@@ -22977,10 +23746,10 @@ export const CompleteAccountingAuthorizationDocument = {"__meta__":{"kind":"muta
 export const DisconnectAccountingSystemDocument = {"__meta__":{"kind":"mutation","name":"DisconnectAccountingSystem","hash":"sha256:9431a9d0efd48f288a21c041e70ec9823b50eb3723a4370296e88fc7243a6a4f"}} as unknown as TypedDocumentString<DisconnectAccountingSystemMutation, DisconnectAccountingSystemMutationVariables>;
 export const CheckAccountingConnectionDocument = {"__meta__":{"kind":"mutation","name":"CheckAccountingConnection","hash":"sha256:d4b3e0edb70d7935953b395e7956a297f692ff918ac848704c1466bb6ccd401b"}} as unknown as TypedDocumentString<CheckAccountingConnectionMutation, CheckAccountingConnectionMutationVariables>;
 export const AccountingSyncSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingSyncSummary","hash":"sha256:a369adde120fc2ce2841dcc05d9b27ae8a50061235b094b46a09f6c54b127d02"}} as unknown as TypedDocumentString<AccountingSyncSummaryQuery, AccountingSyncSummaryQueryVariables>;
-export const AccountingSyncRecordsDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecords","hash":"sha256:3022089755fa1469cd41421894de5c50fe8121974fa14f2a36709713ed761b40"}} as unknown as TypedDocumentString<AccountingSyncRecordsQuery, AccountingSyncRecordsQueryVariables>;
-export const AccountingSyncRecordDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecord","hash":"sha256:4383a49db007e46422387d7a4eb5dccd2d5e1df0de4a43ef2ff85a45cfdd3dab"}} as unknown as TypedDocumentString<AccountingSyncRecordQuery, AccountingSyncRecordQueryVariables>;
+export const AccountingSyncRecordsDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecords","hash":"sha256:3e437ac0c9a93c89c4f661f68906503feb3aa12e74eb477385bbb8ea0cf3f3e2"}} as unknown as TypedDocumentString<AccountingSyncRecordsQuery, AccountingSyncRecordsQueryVariables>;
+export const AccountingSyncRecordDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecord","hash":"sha256:d10395fde62daf184df9475782815886b7d51848c26c8158aea595d304729ee6"}} as unknown as TypedDocumentString<AccountingSyncRecordQuery, AccountingSyncRecordQueryVariables>;
 export const AccountingSyncAttemptsDocument = {"__meta__":{"kind":"query","name":"AccountingSyncAttempts","hash":"sha256:d3f0cb9f536ed5e5f3abe09b9abfc0cee6af53b85b6a57dbfb60c70412de4874"}} as unknown as TypedDocumentString<AccountingSyncAttemptsQuery, AccountingSyncAttemptsQueryVariables>;
-export const AccountingSyncObjectStatesDocument = {"__meta__":{"kind":"query","name":"AccountingSyncObjectStates","hash":"sha256:b18f5f22813de4df41fd57d9916f0257cb454cbf9eaff002e55d5b717e9ed845"}} as unknown as TypedDocumentString<AccountingSyncObjectStatesQuery, AccountingSyncObjectStatesQueryVariables>;
+export const AccountingSyncObjectStatesDocument = {"__meta__":{"kind":"query","name":"AccountingSyncObjectStates","hash":"sha256:357118625f612b1abc8c9241e7959df8f534fdd67183efe696023170bc21389b"}} as unknown as TypedDocumentString<AccountingSyncObjectStatesQuery, AccountingSyncObjectStatesQueryVariables>;
 export const AccountingBackfillsDocument = {"__meta__":{"kind":"query","name":"AccountingBackfills","hash":"sha256:949d632c126674d015d12b70208d61672d82b30e3fc9757c55f777e4e710d29b"}} as unknown as TypedDocumentString<AccountingBackfillsQuery, AccountingBackfillsQueryVariables>;
 export const EnableAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"EnableAccountingSync","hash":"sha256:0f6ad70990a94b9aeb57fdc620c0e8192aa3c212ab4ccbf146b9b9af5f4d9113"}} as unknown as TypedDocumentString<EnableAccountingSyncMutation, EnableAccountingSyncMutationVariables>;
 export const UpdateAccountingSyncSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateAccountingSyncSettings","hash":"sha256:3ab0205dfdcc2ebbe9b55c3088d976afb468ef57a78f964ab11b286a69e1774b"}} as unknown as TypedDocumentString<UpdateAccountingSyncSettingsMutation, UpdateAccountingSyncSettingsMutationVariables>;
@@ -22988,10 +23757,11 @@ export const PauseAccountingSyncDocument = {"__meta__":{"kind":"mutation","name"
 export const ResumeAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"ResumeAccountingSync","hash":"sha256:88eed132ab1713276beb3d17bd849208324bce94a4e6510dc90c67d45275ae99"}} as unknown as TypedDocumentString<ResumeAccountingSyncMutation, ResumeAccountingSyncMutationVariables>;
 export const RetryAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"RetryAccountingSync","hash":"sha256:e979623f3d680cc3e11b35af17517321244479a9490b5a33bc0d61a7fd36307b"}} as unknown as TypedDocumentString<RetryAccountingSyncMutation, RetryAccountingSyncMutationVariables>;
 export const ReleaseAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"ReleaseAccountingSync","hash":"sha256:92e93ee66e3af468923f09c1e34ce36127a8ce406ee96c7a484349f60c1bda9e"}} as unknown as TypedDocumentString<ReleaseAccountingSyncMutation, ReleaseAccountingSyncMutationVariables>;
-export const SkipAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"SkipAccountingSync","hash":"sha256:952b395783216172a3ef671af3d707ef257507d24a4cfd055641d0f9938d6168"}} as unknown as TypedDocumentString<SkipAccountingSyncMutation, SkipAccountingSyncMutationVariables>;
+export const SkipAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"SkipAccountingSync","hash":"sha256:384a1016023e7f019615d0f10adaffc909ac7b757e51fde7568ba578dcbc25cf"}} as unknown as TypedDocumentString<SkipAccountingSyncMutation, SkipAccountingSyncMutationVariables>;
+export const RedateAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"RedateAccountingSync","hash":"sha256:33d7c0706b10f300cecc21b81b096f2846719f4e23bf4d305647e9e2d5b2361a"}} as unknown as TypedDocumentString<RedateAccountingSyncMutation, RedateAccountingSyncMutationVariables>;
 export const RequestAccountingBackfillDocument = {"__meta__":{"kind":"mutation","name":"RequestAccountingBackfill","hash":"sha256:8f2d2eb0a1b533f8f6840beeb2d1acb4521cde2fb60fb4d388f3a09487d18106"}} as unknown as TypedDocumentString<RequestAccountingBackfillMutation, RequestAccountingBackfillMutationVariables>;
 export const ChangeAccountingBackfillDocument = {"__meta__":{"kind":"mutation","name":"ChangeAccountingBackfill","hash":"sha256:25c2e40a5030190dba087fe94b6f9078acff46f0065f77611f3b35f1931a9523"}} as unknown as TypedDocumentString<ChangeAccountingBackfillMutation, ChangeAccountingBackfillMutationVariables>;
-export const AccountingSyncRecordTableDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecordTable","hash":"sha256:044e65c16d681d57e28f63b395f5308354481365cb818e35c44a610e9e4728be"}} as unknown as TypedDocumentString<AccountingSyncRecordTableQuery, AccountingSyncRecordTableQueryVariables>;
+export const AccountingSyncRecordTableDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecordTable","hash":"sha256:d0768d8ff32a50dfe8cdefc06291ff2301d6c104ba05d9e87f5482b848029766"}} as unknown as TypedDocumentString<AccountingSyncRecordTableQuery, AccountingSyncRecordTableQueryVariables>;
 export const LateChargePreviewDocument = {"__meta__":{"kind":"query","name":"LateChargePreview","hash":"sha256:44fccb916e6be6056ca7ed3b6854c5dd9f7421889b8e5ce421b347391a22d5fb"}} as unknown as TypedDocumentString<LateChargePreviewQuery, LateChargePreviewQueryVariables>;
 export const AssessLateChargesDocument = {"__meta__":{"kind":"mutation","name":"AssessLateCharges","hash":"sha256:c63c2c03e469f92f955ba04285415d029b2fb6bf3b9f79432e0afb9a967ab66c"}} as unknown as TypedDocumentString<AssessLateChargesMutation, AssessLateChargesMutationVariables>;
 export const ArAgingSummaryDocument = {"__meta__":{"kind":"query","name":"ArAgingSummary","hash":"sha256:6e0cbca355dfb7e59c403efe34be542aee4f26ff779d480e08e077574626daf9"}} as unknown as TypedDocumentString<ArAgingSummaryQuery, ArAgingSummaryQueryVariables>;
@@ -23060,10 +23830,10 @@ export const DismissAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutatio
 export const AgentPlanTableDocument = {"__meta__":{"kind":"query","name":"AgentPlanTable","hash":"sha256:5255cd6f89e45711f75b6a9c0bab65c62fd49fb78028a756fa2ad1645c479b3b"}} as unknown as TypedDocumentString<AgentPlanTableQuery, AgentPlanTableQueryVariables>;
 export const AgentPlanDetailDocument = {"__meta__":{"kind":"query","name":"AgentPlanDetail","hash":"sha256:3affbeb0bac2f8967290c76d3dce18119fce77b53b295399e5764897a1a475ef"}} as unknown as TypedDocumentString<AgentPlanDetailQuery, AgentPlanDetailQueryVariables>;
 export const DecideAgentPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentPlan","hash":"sha256:b2f23a83f557ca02504d0a017043627ff687ebcebb5ac117779eb4d5611ff57c"}} as unknown as TypedDocumentString<DecideAgentPlanMutation, DecideAgentPlanMutationVariables>;
-export const AgentProposalPreviewDocument = {"__meta__":{"kind":"query","name":"AgentProposalPreview","hash":"sha256:cc8c911a73bd53b7f470b05bd8168f72c08120cc0170c4fe436c93fcd7e95116"}} as unknown as TypedDocumentString<AgentProposalPreviewQuery, AgentProposalPreviewQueryVariables>;
-export const MyProposalPreviewDocument = {"__meta__":{"kind":"query","name":"MyProposalPreview","hash":"sha256:b5f2a2de45a60b828581481d2aa42377afde5a9a9bf09d84bd778d11d967e55c"}} as unknown as TypedDocumentString<MyProposalPreviewQuery, MyProposalPreviewQueryVariables>;
-export const AgentPlanPreviewDocument = {"__meta__":{"kind":"query","name":"AgentPlanPreview","hash":"sha256:96a86d17e65b779fc5373755a99a2b8e934c0dba1fb89d4cab052205fd4a58d5"}} as unknown as TypedDocumentString<AgentPlanPreviewQuery, AgentPlanPreviewQueryVariables>;
-export const MyPlanPreviewDocument = {"__meta__":{"kind":"query","name":"MyPlanPreview","hash":"sha256:bdeb1162f88da7b25a4f705e845dca4c3d943257b88905d885af2ccb30023342"}} as unknown as TypedDocumentString<MyPlanPreviewQuery, MyPlanPreviewQueryVariables>;
+export const AgentProposalPreviewDocument = {"__meta__":{"kind":"query","name":"AgentProposalPreview","hash":"sha256:f77c3b522412cc3300bca8c075518baae408b7f156a31b9244b04b50a37cf46f"}} as unknown as TypedDocumentString<AgentProposalPreviewQuery, AgentProposalPreviewQueryVariables>;
+export const MyProposalPreviewDocument = {"__meta__":{"kind":"query","name":"MyProposalPreview","hash":"sha256:327a9c96cb62e91216adb167a9bf48138af0b464575df724555ca3333fc5787a"}} as unknown as TypedDocumentString<MyProposalPreviewQuery, MyProposalPreviewQueryVariables>;
+export const AgentPlanPreviewDocument = {"__meta__":{"kind":"query","name":"AgentPlanPreview","hash":"sha256:9968b2986229436ba4e9aa4c4c74bc4ab5bc9afc2f2de8c64179376cf12db9c2"}} as unknown as TypedDocumentString<AgentPlanPreviewQuery, AgentPlanPreviewQueryVariables>;
+export const MyPlanPreviewDocument = {"__meta__":{"kind":"query","name":"MyPlanPreview","hash":"sha256:68a1a77139aa203ae66b6848d5bb0ca7ae029e4c7ad2363cff8758b3d79c2dec"}} as unknown as TypedDocumentString<MyPlanPreviewQuery, MyPlanPreviewQueryVariables>;
 export const AgentProposalTableDocument = {"__meta__":{"kind":"query","name":"AgentProposalTable","hash":"sha256:3ea91ea4a12bd093d74e5812e6f7a869441854dff05bf953622037dbbe289e83"}} as unknown as TypedDocumentString<AgentProposalTableQuery, AgentProposalTableQueryVariables>;
 export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"AgentProposalDetail","hash":"sha256:98e4414f6480a6ee129aa3bb58274ff2507958b28ae959b9642f63bb477957a1"}} as unknown as TypedDocumentString<AgentProposalDetailQuery, AgentProposalDetailQueryVariables>;
 export const DecideAgentProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposal","hash":"sha256:d5dd2d9f5f76ec53c9208554a9161365633dc1fa2cb1823a1431098cddcf71bf"}} as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;
@@ -23123,6 +23893,32 @@ export const RetryBillingTransferRunDocument = {"__meta__":{"kind":"mutation","n
 export const TodaysBriefingDocument = {"__meta__":{"kind":"query","name":"TodaysBriefing","hash":"sha256:efa1e68a6557f06f8c90f3e6482f6a73399254696a433c83e2f5a821f891a838"}} as unknown as TypedDocumentString<TodaysBriefingQuery, TodaysBriefingQueryVariables>;
 export const MarkBriefingReadDocument = {"__meta__":{"kind":"mutation","name":"MarkBriefingRead","hash":"sha256:a528508c33bf6da76c15bf36e4159bdb24aeeb7c644cabbd8e779423cfe86371"}} as unknown as TypedDocumentString<MarkBriefingReadMutation, MarkBriefingReadMutationVariables>;
 export const RegenerateBriefingDocument = {"__meta__":{"kind":"mutation","name":"RegenerateBriefing","hash":"sha256:78838e889a7a2e313f67553e5f19966a6338ae041961bd169a6bf8e9ad5108df"}} as unknown as TypedDocumentString<RegenerateBriefingMutation, RegenerateBriefingMutationVariables>;
+export const MyCaptureAccessDocument = {"__meta__":{"kind":"query","name":"MyCaptureAccess","hash":"sha256:0e0e3bed6cfbb9210e5d3a2f3d7a07d91e26763205dd3c68f4b4885d3d7b23c2"}} as unknown as TypedDocumentString<MyCaptureAccessQuery, MyCaptureAccessQueryVariables>;
+export const CaptureAgentReleaseDocument = {"__meta__":{"kind":"query","name":"CaptureAgentRelease","hash":"sha256:871e3e29040b717530d9bdae990b25cbdefea215ade1970666878959c1219e44"}} as unknown as TypedDocumentString<CaptureAgentReleaseQuery, CaptureAgentReleaseQueryVariables>;
+export const CaptureBatchesDocument = {"__meta__":{"kind":"query","name":"CaptureBatches","hash":"sha256:d40d49842db626aa6d822a89f8f3be992c716d71db561f1a4deb6127f19e40ce"}} as unknown as TypedDocumentString<CaptureBatchesQuery, CaptureBatchesQueryVariables>;
+export const CaptureBatchCountDocument = {"__meta__":{"kind":"query","name":"CaptureBatchCount","hash":"sha256:b72597d4462c7841309af83ee9f1217281f91dac439d6841b736ece7af92f402"}} as unknown as TypedDocumentString<CaptureBatchCountQuery, CaptureBatchCountQueryVariables>;
+export const CaptureBatchDocument = {"__meta__":{"kind":"query","name":"CaptureBatch","hash":"sha256:255eebc82d775317997d672fded4e4026bab5ffc76dcb793de5d5909311e255a"}} as unknown as TypedDocumentString<CaptureBatchQuery, CaptureBatchQueryVariables>;
+export const MyCaptureDevicesDocument = {"__meta__":{"kind":"query","name":"MyCaptureDevices","hash":"sha256:f0a7a8fb1db403a1954eeeb2c75defe50fcb341e515af418b73561ae814d368a"}} as unknown as TypedDocumentString<MyCaptureDevicesQuery, MyCaptureDevicesQueryVariables>;
+export const CaptureDevicesDocument = {"__meta__":{"kind":"query","name":"CaptureDevices","hash":"sha256:7ed34756eb9cbcfe72d1c537858c28eb8195e3379d1135036e1253c99b48e7c8"}} as unknown as TypedDocumentString<CaptureDevicesQuery, CaptureDevicesQueryVariables>;
+export const AvailableCaptureProfilesDocument = {"__meta__":{"kind":"query","name":"AvailableCaptureProfiles","hash":"sha256:a2d1f056167566bda91fd73250f53846888fef9ba1b1ff3e55b3d7ba1c55e1de"}} as unknown as TypedDocumentString<AvailableCaptureProfilesQuery, AvailableCaptureProfilesQueryVariables>;
+export const CaptureProfilesDocument = {"__meta__":{"kind":"query","name":"CaptureProfiles","hash":"sha256:2103f21a0d012b8ccb48e32ad18b5a160398424b61dc860f390be96c92cda1aa"}} as unknown as TypedDocumentString<CaptureProfilesQuery, CaptureProfilesQueryVariables>;
+export const CaptureRequestsForTargetDocument = {"__meta__":{"kind":"query","name":"CaptureRequestsForTarget","hash":"sha256:de806e1cc66ab39521e34f5e9e6c75d2643ff1e8a53d73e92c226b173da599d5"}} as unknown as TypedDocumentString<CaptureRequestsForTargetQuery, CaptureRequestsForTargetQueryVariables>;
+export const CaptureDevicePairingDocument = {"__meta__":{"kind":"query","name":"CaptureDevicePairing","hash":"sha256:b7581d44accbc6f587878682111c7d54b4ba3ea85c33460b45478c030b6198bf"}} as unknown as TypedDocumentString<CaptureDevicePairingQuery, CaptureDevicePairingQueryVariables>;
+export const EditCaptureItemsDocument = {"__meta__":{"kind":"mutation","name":"EditCaptureItems","hash":"sha256:06d6ea7c7108d379fda0f748bfd8f0cc67e0858c0e12ebe10077ddab0e22ed48"}} as unknown as TypedDocumentString<EditCaptureItemsMutation, EditCaptureItemsMutationVariables>;
+export const FileCaptureItemDocument = {"__meta__":{"kind":"mutation","name":"FileCaptureItem","hash":"sha256:61340153bcc7647b8cba47c96ebb6c5234d6d7cf70689826ac13863304a77154"}} as unknown as TypedDocumentString<FileCaptureItemMutation, FileCaptureItemMutationVariables>;
+export const FileCaptureItemsDocument = {"__meta__":{"kind":"mutation","name":"FileCaptureItems","hash":"sha256:61e2b7bd0d853ce8ce7959b820c8f954855355108629c60b9849b339f090d865"}} as unknown as TypedDocumentString<FileCaptureItemsMutation, FileCaptureItemsMutationVariables>;
+export const DiscardCaptureItemDocument = {"__meta__":{"kind":"mutation","name":"DiscardCaptureItem","hash":"sha256:5e69ac2162aa94b31c531a951def13cf7af38ee2c80141f8b32ac7b21f8efd5e"}} as unknown as TypedDocumentString<DiscardCaptureItemMutation, DiscardCaptureItemMutationVariables>;
+export const DiscardCaptureBatchDocument = {"__meta__":{"kind":"mutation","name":"DiscardCaptureBatch","hash":"sha256:58fba2eb65ea4ee0f0a268f1e1d1f43603612e23e3cfb2b7b33e0c485829a357"}} as unknown as TypedDocumentString<DiscardCaptureBatchMutation, DiscardCaptureBatchMutationVariables>;
+export const CreateCaptureRequestDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureRequest","hash":"sha256:c6ab98771f332dcd609f88468c69d5cb046414a8ab5454d211d378fd4957113f"}} as unknown as TypedDocumentString<CreateCaptureRequestMutation, CreateCaptureRequestMutationVariables>;
+export const CancelCaptureRequestDocument = {"__meta__":{"kind":"mutation","name":"CancelCaptureRequest","hash":"sha256:523c78072a4b0888ebc217c6c591a0a80ab6bd37332a1bc8f2dc1086c6479738"}} as unknown as TypedDocumentString<CancelCaptureRequestMutation, CancelCaptureRequestMutationVariables>;
+export const CreateCaptureCoverSheetsDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureCoverSheets","hash":"sha256:92cdbeededfd2516038b67e659007032a039c7edd3beb8d5f82a930d1b578bf4"}} as unknown as TypedDocumentString<CreateCaptureCoverSheetsMutation, CreateCaptureCoverSheetsMutationVariables>;
+export const ApproveCaptureDevicePairingDocument = {"__meta__":{"kind":"mutation","name":"ApproveCaptureDevicePairing","hash":"sha256:a067e97cc02b4eca7b297eba42cbf83b4a50cff9e4a209ccdeeeacdc47ec5095"}} as unknown as TypedDocumentString<ApproveCaptureDevicePairingMutation, ApproveCaptureDevicePairingMutationVariables>;
+export const DenyCaptureDevicePairingDocument = {"__meta__":{"kind":"mutation","name":"DenyCaptureDevicePairing","hash":"sha256:237bff94778c77c4f486752e4e75be79e727ab7d06fb1c17566c6af97686407b"}} as unknown as TypedDocumentString<DenyCaptureDevicePairingMutation, DenyCaptureDevicePairingMutationVariables>;
+export const RevokeMyCaptureDeviceDocument = {"__meta__":{"kind":"mutation","name":"RevokeMyCaptureDevice","hash":"sha256:56477b12d596360918b78d4d1bad09d67fde4a40e055561d24df95725f02c7b5"}} as unknown as TypedDocumentString<RevokeMyCaptureDeviceMutation, RevokeMyCaptureDeviceMutationVariables>;
+export const RevokeCaptureDeviceDocument = {"__meta__":{"kind":"mutation","name":"RevokeCaptureDevice","hash":"sha256:904d43dd85b5681c83e1e6c6053b0e747fff2c59ddd2fae630eb03e7cd17112b"}} as unknown as TypedDocumentString<RevokeCaptureDeviceMutation, RevokeCaptureDeviceMutationVariables>;
+export const CreateCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureProfile","hash":"sha256:f164652c5c381d1301d9449d1623dffe9ddba96c450c61815b9f4d71e3ec473b"}} as unknown as TypedDocumentString<CreateCaptureProfileMutation, CreateCaptureProfileMutationVariables>;
+export const UpdateCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"UpdateCaptureProfile","hash":"sha256:906331e1953ab30bbb168a6963ec72cd98e087a9c7578f438d087d7ea6e90c7b"}} as unknown as TypedDocumentString<UpdateCaptureProfileMutation, UpdateCaptureProfileMutationVariables>;
+export const DeleteCaptureProfileDocument = {"__meta__":{"kind":"mutation","name":"DeleteCaptureProfile","hash":"sha256:cb6a096217b18ad0fa8d5e532e70b09329738262494bfb7a7f348a488e1c18cb"}} as unknown as TypedDocumentString<DeleteCaptureProfileMutation, DeleteCaptureProfileMutationVariables>;
 export const CarrierIntelSettingsDocument = {"__meta__":{"kind":"query","name":"CarrierIntelSettings","hash":"sha256:4a7babaf1487c88a6bd87dffabb128a4aa3596f4588b785dc0d829fb13ae17c6"}} as unknown as TypedDocumentString<CarrierIntelSettingsQuery, CarrierIntelSettingsQueryVariables>;
 export const CarrierIntelCostEstimateDocument = {"__meta__":{"kind":"query","name":"CarrierIntelCostEstimate","hash":"sha256:bdbf9851d96a8afa735c9a57aa94a2cb1178adc0ad769eae1dcbfe566a39af79"}} as unknown as TypedDocumentString<CarrierIntelCostEstimateQuery, CarrierIntelCostEstimateQueryVariables>;
 export const CarrierIntelUsageDocument = {"__meta__":{"kind":"query","name":"CarrierIntelUsage","hash":"sha256:2781e60e21bd7c2e05802c14748eddc0b97a4f3f22d6d7dfda25f5aefd9d4d63"}} as unknown as TypedDocumentString<CarrierIntelUsageQuery, CarrierIntelUsageQueryVariables>;
@@ -23160,7 +23956,7 @@ export const ImportSourcedCarrierDocument = {"__meta__":{"kind":"mutation","name
 export const VerifyCarrierEquipmentDocument = {"__meta__":{"kind":"mutation","name":"VerifyCarrierEquipment","hash":"sha256:3e26885e9458fc1311df9a73395de853e9e4f40893c567a4fc642bdf3fb54289"}} as unknown as TypedDocumentString<VerifyCarrierEquipmentMutation, VerifyCarrierEquipmentMutationVariables>;
 export const OverrideCarrierEquipmentVerificationDocument = {"__meta__":{"kind":"mutation","name":"OverrideCarrierEquipmentVerification","hash":"sha256:e64e53b407a5369a1bcc91b6b60d5ef7e5051c62e9d55d7e78ee1f8b3a701132"}} as unknown as TypedDocumentString<OverrideCarrierEquipmentVerificationMutation, OverrideCarrierEquipmentVerificationMutationVariables>;
 export const CarrierSettlementTableDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementTable","hash":"sha256:eadf21c42815fc3a90fbd8614c13a9e4960c83698f4cc6a50395a0232c35a5d1"}} as unknown as TypedDocumentString<CarrierSettlementTableQuery, CarrierSettlementTableQueryVariables>;
-export const CarrierSettlementDetailDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementDetail","hash":"sha256:cc5b9ce4ed7968de7ec3e10c1c9d40d598baaca2516559ddccbf9ac24d9f8b90"}} as unknown as TypedDocumentString<CarrierSettlementDetailQuery, CarrierSettlementDetailQueryVariables>;
+export const CarrierSettlementDetailDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementDetail","hash":"sha256:ce4bead9b7849043b03387d1c1d5d40806f860290a99294a4908d571f4a1bbb1"}} as unknown as TypedDocumentString<CarrierSettlementDetailQuery, CarrierSettlementDetailQueryVariables>;
 export const CarrierSettlementBatchTableDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementBatchTable","hash":"sha256:073382253e84d646f0909341ebf8fa4421b0830503743352686b6e3e2faee5bc"}} as unknown as TypedDocumentString<CarrierSettlementBatchTableQuery, CarrierSettlementBatchTableQueryVariables>;
 export const CarrierSettlementBatchDetailDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementBatchDetail","hash":"sha256:53418bc43e1ee89c98fab0ea098fa24ddc5bbf657ce45db363ecbfaa732027e3"}} as unknown as TypedDocumentString<CarrierSettlementBatchDetailQuery, CarrierSettlementBatchDetailQueryVariables>;
 export const CarrierCostEventTableDocument = {"__meta__":{"kind":"query","name":"CarrierCostEventTable","hash":"sha256:ffd7c0de29c14f3794189521a424fa9089bb2f909037045050944c849466a344"}} as unknown as TypedDocumentString<CarrierCostEventTableQuery, CarrierCostEventTableQueryVariables>;
@@ -23197,7 +23993,7 @@ export const UpdateCostingControlDocument = {"__meta__":{"kind":"mutation","name
 export const UpdateCostCategoryDocument = {"__meta__":{"kind":"mutation","name":"UpdateCostCategory","hash":"sha256:2c74749981a6ed8680896dcf651f47a87e3aa698c2d3bf3c5c9b717e359ca828"}} as unknown as TypedDocumentString<UpdateCostCategoryMutation, UpdateCostCategoryMutationVariables>;
 export const CustomFieldDefinitionTableDocument = {"__meta__":{"kind":"query","name":"CustomFieldDefinitionTable","hash":"sha256:8879bd728ec6963d8c91ff6a845341b39caa7a34b6a0e2422922a1c1cdfb52db"}} as unknown as TypedDocumentString<CustomFieldDefinitionTableQuery, CustomFieldDefinitionTableQueryVariables>;
 export const CustomerPaymentTableDocument = {"__meta__":{"kind":"query","name":"CustomerPaymentTable","hash":"sha256:9c4c5cd618cfa71a14c83740af38de060712349638f6dc73e636996c9ea8602e"}} as unknown as TypedDocumentString<CustomerPaymentTableQuery, CustomerPaymentTableQueryVariables>;
-export const CustomerPaymentDetailDocument = {"__meta__":{"kind":"query","name":"CustomerPaymentDetail","hash":"sha256:63ba0ffb6ef2656f7dc2721a0f6fc0da8dc0d184ee08e3871f26e1048b6a9c3f"}} as unknown as TypedDocumentString<CustomerPaymentDetailQuery, CustomerPaymentDetailQueryVariables>;
+export const CustomerPaymentDetailDocument = {"__meta__":{"kind":"query","name":"CustomerPaymentDetail","hash":"sha256:8ceaa86923b4d5123e16061199d80abf95f74c4a113fb29352d02b0372405f91"}} as unknown as TypedDocumentString<CustomerPaymentDetailQuery, CustomerPaymentDetailQueryVariables>;
 export const PostAndApplyCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"PostAndApplyCustomerPayment","hash":"sha256:8509b32952e2ba614257d3189c57cbd58da45afbb0dafb31f17958e117f62ea6"}} as unknown as TypedDocumentString<PostAndApplyCustomerPaymentMutation, PostAndApplyCustomerPaymentMutationVariables>;
 export const ApplyUnappliedCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ApplyUnappliedCustomerPayment","hash":"sha256:1c0798232c1c035894870e85c421a9f0f214ff7407eb9f35155cfd9b87a9b4e0"}} as unknown as TypedDocumentString<ApplyUnappliedCustomerPaymentMutation, ApplyUnappliedCustomerPaymentMutationVariables>;
 export const ReverseCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ReverseCustomerPayment","hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}} as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
@@ -23312,7 +24108,7 @@ export const PayAdvanceTableDocument = {"__meta__":{"kind":"query","name":"PayAd
 export const EscrowAccountTableDocument = {"__meta__":{"kind":"query","name":"EscrowAccountTable","hash":"sha256:916f0bb7ac7aa5145b3d17132631582632435a983dc6071c949475b621237fdf"}} as unknown as TypedDocumentString<EscrowAccountTableQuery, EscrowAccountTableQueryVariables>;
 export const EscrowAccountDetailDocument = {"__meta__":{"kind":"query","name":"EscrowAccountDetail","hash":"sha256:57e8a0b5d1c97b85fcb0dc2aa0b40ffaec3b9fbfaf20e3d00e4983912db939b9"}} as unknown as TypedDocumentString<EscrowAccountDetailQuery, EscrowAccountDetailQueryVariables>;
 export const DriverSettlementTableDocument = {"__meta__":{"kind":"query","name":"DriverSettlementTable","hash":"sha256:c6c4db00b320c409c60a7180e9cf218de3977bd5c3124a806e71f26a35f5a477"}} as unknown as TypedDocumentString<DriverSettlementTableQuery, DriverSettlementTableQueryVariables>;
-export const DriverSettlementDetailDocument = {"__meta__":{"kind":"query","name":"DriverSettlementDetail","hash":"sha256:0f96d6515e17c15b83b8b0e56cf436a5626dd09d6bbb87efbcfbdbddcf0bf68b"}} as unknown as TypedDocumentString<DriverSettlementDetailQuery, DriverSettlementDetailQueryVariables>;
+export const DriverSettlementDetailDocument = {"__meta__":{"kind":"query","name":"DriverSettlementDetail","hash":"sha256:fe7fadd0dc31904e091ab0e58dcec6101ce58e9fd5a1950469b89204b744668e"}} as unknown as TypedDocumentString<DriverSettlementDetailQuery, DriverSettlementDetailQueryVariables>;
 export const SettlementBatchTableDocument = {"__meta__":{"kind":"query","name":"SettlementBatchTable","hash":"sha256:09560c29a693aea9a98d7c3f6dcfee012251d437b9c294c5a00ab886507980aa"}} as unknown as TypedDocumentString<SettlementBatchTableQuery, SettlementBatchTableQueryVariables>;
 export const DriverPayEventTableDocument = {"__meta__":{"kind":"query","name":"DriverPayEventTable","hash":"sha256:86f914da516d0e76e82f1f4f8b76dba9ecd3618902c43e88b06315e3b3b8d41a"}} as unknown as TypedDocumentString<DriverPayEventTableQuery, DriverPayEventTableQueryVariables>;
 export const WorkerEarningsSummaryDocument = {"__meta__":{"kind":"query","name":"WorkerEarningsSummary","hash":"sha256:604360bedc59b36d762fa6780dbfe073bfbfeb71015006a8a74717663ea17f9a"}} as unknown as TypedDocumentString<WorkerEarningsSummaryQuery, WorkerEarningsSummaryQueryVariables>;

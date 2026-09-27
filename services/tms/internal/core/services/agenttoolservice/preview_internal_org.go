@@ -10,15 +10,12 @@ import (
 )
 
 func warnWouldFail(preview *agent.ToolPreview, err error) *agent.ToolPreview {
-	if err == nil {
+	if err == nil || preview == nil {
 		return preview
 	}
+	preview.AddWarning(toolpreview.WouldFail(err))
 
-	return toolpreview.Warn(
-		preview,
-		agent.PreviewWarningWouldFail,
-		"This would be refused as it stands: "+strings.TrimSpace(err.Error()),
-	)
+	return preview
 }
 
 func warnRefusal(preview *agent.ToolPreview, err error) (*agent.ToolPreview, error) {

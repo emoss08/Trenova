@@ -10,6 +10,7 @@ var Module = fx.Module("completion-router",
 		newService,
 		asCompletionService,
 		asEmbeddingService,
+		NewPromptRenderer,
 	),
 )
 

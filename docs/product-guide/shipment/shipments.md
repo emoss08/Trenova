@@ -7,6 +7,7 @@ related:
   - /shipment-management/shipments/import
   - /dispatch/console
   - /billing/queue
+  - /intake
 ---
 
 ## What it's for
@@ -51,12 +52,19 @@ Keywords: copy load, repeat shipment, change owner, void shipment, cancel load
 3. Or select **Transfer ownership**, choose the **New owner**, and confirm.
 4. Or select **Cancel**, optionally enter a **Cancel reason**, and select **Cancel shipment**. A canceled shipment can be restored with **Uncancel**.
 
+### Scan or print paperwork into a shipment
+Keywords: scan POD, scan BOL, scan paperwork, print to shipment, cover sheet, Kofax
+1. Open the shipment and go to its **Documents** tab.
+2. Select **Scan**, choose the **Computer**, the **Scanner** and **Scan settings**, optionally a **Document type**, then **Start scan**. The pages are filed onto the shipment as they arrive; anything Trenova cannot place waits in [Intake](/intake).
+3. To file something you print from another program instead, open the menu beside **Scan**, choose **Print into this record**, select **Wait for my print**, and print to the Trenova printer within ten minutes.
+4. To scan paperwork for this shipment later or on another scanner, choose **Print cover sheets**, pick how many **Sheets**, select **Print**, and put a sheet on top of the paper before it is scanned.
+
 ### Send an EDI load tender
 Keywords: 204, tender to partner, EDI tender
 1. Open [Shipments](/shipment-management/shipments) and open the row menu of a shipment in New status whose customer has an EDI partner.
 2. Select **Send EDI load tender** and confirm.
 
 ## Notes
-Needs read access to shipments; **New shipment** appears only with create permission. **Send EDI load tender** needs create access to EDI. An invoiced shipment is locked and cannot be edited.
+Needs read access to shipments; **New shipment** appears only with create permission. **Send EDI load tender** needs create access to EDI. An invoiced shipment is locked and cannot be edited. Scanning needs Trenova Capture paired from [My scanners](/capture/devices) and scanning turned on for the organization.
 
 To create a shipment from a rate confirmation document instead of typing it, use [Import from rate confirmation](/shipment-management/shipments/import).

@@ -23,6 +23,10 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
+func (r *customerPaymentResolver) ExchangeRate(ctx context.Context, obj *customerpayment.Payment) (*string, error) {
+	return nullDecimalStringPtr(obj.ExchangeRate), nil
+}
+
 func (r *customerPaymentResolver) Customer(ctx context.Context, obj *customerpayment.Payment) (*customer.Customer, error) {
 	authCtx, err := r.requireAuth(ctx)
 	if err != nil {

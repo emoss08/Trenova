@@ -1874,7 +1874,7 @@ func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoic
 		accountingRepo:    accountingRepo,
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
-		validator:         &Validator{},
+		validator:         &Validator{fiscalPeriodRepo: mocks.NewMockFiscalPeriodRepository(t)},
 	}
 
 	err := svc.createInvoiceJournalPosting(
@@ -1912,7 +1912,7 @@ func TestCreateInvoiceJournalPostingSkipsWhenAutoPostDisabled(t *testing.T) {
 		accountingRepo:    accountingRepo,
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
-		validator:         &Validator{},
+		validator:         &Validator{fiscalPeriodRepo: mocks.NewMockFiscalPeriodRepository(t)},
 	}
 
 	err := svc.createInvoiceJournalPosting(
@@ -1988,3 +1988,34 @@ func assertErrorField(t *testing.T, multiErr *errortypes.MultiError, field strin
 
 	t.Fatalf("expected validation error for field %q, got %#v", field, multiErr.Errors)
 }
+
+func TestCreateInvoiceJournalPostingSkipsWithoutAFiscalPeriodRepository(t *testing.T) {
+	t.Parallel()
+
+	now := int64(1_700_000_000)
+	svc := &Service{
+		l:                 zap.NewNop(),
+		accountingRepo:    mocks.NewMockAccountingControlRepository(t),
+		journalRepo:       mocks.NewMockJournalPostingRepository(t),
+		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		validator:         &Validator{},
+	}
+
+	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
+	require.NotPanics(t, func() {
+		err := svc.createInvoiceJournalPosting(
+			t.Context(),
+			&invoice.Invoice{
+				ID:               pulid.MustNew("inv_"),
+				OrganizationID:   orgID,
+				BusinessUnitID:   buID,
+				BillType:         billingqueue.BillTypeInvoice,
+				TotalAmountMinor: 10000,
+				PostedAt:         &now,
+			},
+			testutil.NewSessionActor(pulid.MustNew("usr_"), orgID, buID),
+		)
+		require.NoError(t, err)
+	})
+}
+

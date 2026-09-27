@@ -149,6 +149,7 @@ func (c *Connector) CreateSalesDocument(
 			CustomerID:   doc.CustomerExternalID,
 			TxnDate:      doc.TxnDate,
 			CurrencyCode: doc.CurrencyCode,
+			ExchangeRate: doc.ExchangeRate,
 			PrivateNote:  creditApplyNote + doc.DocNumber,
 			TotalAmount:  decimal.Zero,
 			Links: []quickbooks.PaymentLink{
@@ -184,6 +185,7 @@ func salesTxnOf(doc *services.AccountingSalesDocument) *quickbooks.SalesTxn {
 		DueDate:      doc.DueDate,
 		TermID:       doc.TermExternalID,
 		CurrencyCode: doc.CurrencyCode,
+		ExchangeRate: doc.ExchangeRate,
 		PrivateNote:  note,
 		CustomerMemo: doc.CustomerMemo,
 		Lines:        make([]quickbooks.SalesLine, 0, len(doc.Lines)),
@@ -290,6 +292,7 @@ func (c *Connector) SavePayment(
 		CustomerID:       doc.CustomerExternalID,
 		TxnDate:          doc.TxnDate,
 		CurrencyCode:     doc.CurrencyCode,
+		ExchangeRate:     doc.ExchangeRate,
 		PaymentMethodID:  doc.PaymentMethodExternalID,
 		DepositAccountID: doc.DepositAccountExternalID,
 		PaymentRefNum:    doc.ReferenceNumber,
@@ -347,6 +350,7 @@ func (c *Connector) shortPayMemo(
 			CustomerID:   doc.CustomerExternalID,
 			TxnDate:      doc.TxnDate,
 			CurrencyCode: doc.CurrencyCode,
+			ExchangeRate: doc.ExchangeRate,
 			PrivateNote:  shortPayMemoNote + app.InvoiceNumber,
 			Lines: []quickbooks.SalesLine{{
 				Description: shortPayMemoNote + app.InvoiceNumber,
@@ -411,6 +415,7 @@ func (c *Connector) CreateCreditApplication(
 		CustomerID:   doc.CustomerExternalID,
 		TxnDate:      doc.TxnDate,
 		CurrencyCode: doc.CurrencyCode,
+		ExchangeRate: doc.ExchangeRate,
 		PrivateNote:  doc.PrivateNote,
 		TotalAmount:  decimal.Zero,
 		Links: []quickbooks.PaymentLink{

@@ -607,6 +607,23 @@ func (r *mutationResolver) SkipAccountingSync(ctx context.Context, input gqlmode
 	})
 }
 
+func (r *mutationResolver) RedateAccountingSync(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	recordID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid sync record")
+	}
+
+	return r.accountingSync.Redate(ctx, &services.RedateAccountingSyncRequest{
+		TenantInfo: tenantInfo(authCtx),
+		UserID:     authCtx.UserID,
+		ID:         recordID,
+	})
+}
+
 func (r *mutationResolver) RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingsync.AccountingBackfill, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {

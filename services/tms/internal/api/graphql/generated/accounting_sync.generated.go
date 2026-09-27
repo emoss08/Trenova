@@ -7239,6 +7239,29 @@ func (ec *executionContext) fieldContext_AccountingSyncRecord_skippedReason(_ co
 	return graphql.NewScalarFieldContext("AccountingSyncRecord", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _AccountingSyncRecord_redatedTo(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingSyncRecord) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingSyncRecord_redatedTo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RedatedTo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingSyncRecord_redatedTo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingSyncRecord", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
 func (ec *executionContext) _AccountingSyncRecord_version(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingSyncRecord) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -12582,6 +12605,11 @@ func (ec *executionContext) _AccountingSyncRecord(ctx context.Context, sel ast.S
 		case "skippedReason":
 			out.Values[i] = ec._AccountingSyncRecord_skippedReason(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "redatedTo":
+			out.Values[i] = ec._AccountingSyncRecord_redatedTo(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":

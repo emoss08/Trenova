@@ -12,7 +12,7 @@ import (
 
 func (s *Service) invoiceLedger() (*invoiceledger.Poster, bool) {
 	if s.accountingRepo == nil || s.journalRepo == nil || s.sequenceGenerator == nil ||
-		s.validator == nil {
+		s.validator == nil || s.validator.fiscalPeriodRepo == nil {
 		return nil, false
 	}
 

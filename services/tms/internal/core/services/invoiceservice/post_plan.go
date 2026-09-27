@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -56,6 +57,14 @@ func (s *Service) planPost(
 
 	entity.Status = invoice.StatusPosted
 	entity.PostedAt = &now
+	if err := s.stamper.StampInto(ctx, &exchangeratestamp.Request{
+		TenantInfo:     req.TenantInfo,
+		CurrencyCode:   entity.CurrencyCode,
+		DocumentDate:   entity.InvoiceDate,
+		AccountingDate: now,
+	}, &entity.ExchangeRate, &entity.ExchangeRateDate); err != nil {
+		return false, err
+	}
 
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return false, multiErr

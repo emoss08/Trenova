@@ -132,12 +132,16 @@ func (f *exportStore) ListOrganizationPeople(
 
 type recordStore struct {
 	repositories.AITrainingRecordRepository
-	records map[pulid.ID][]*aitraining.TrainingExportRecord
-	deletes int
+	records   map[pulid.ID][]*aitraining.TrainingExportRecord
+	deletes   int
+	withdrawn map[string]struct{}
 }
 
 func newRecordStore() *recordStore {
-	return &recordStore{records: map[pulid.ID][]*aitraining.TrainingExportRecord{}}
+	return &recordStore{
+		records:   map[pulid.ID][]*aitraining.TrainingExportRecord{},
+		withdrawn: map[string]struct{}{},
+	}
 }
 
 func (f *recordStore) ReplaceForOrganization(
@@ -146,6 +150,21 @@ func (f *recordStore) ReplaceForOrganization(
 ) error {
 	f.records[req.ExportID] = slices.Clone(req.Records)
 	return nil
+}
+
+func (f *recordStore) ListWithdrawn(
+	_ context.Context,
+	req repositories.ListWithdrawnTrainingExamplesRequest,
+) ([]repositories.WithdrawnTrainingExample, error) {
+	out := make([]repositories.WithdrawnTrainingExample, 0, len(f.withdrawn))
+	for _, record := range f.records[req.ExportID] {
+		if _, ok := f.withdrawn[record.ExampleID]; ok {
+			out = append(out, repositories.WithdrawnTrainingExample{
+				ID: pulid.ID("aitr_" + record.ExampleID), ExampleID: record.ExampleID, Split: record.Split.String(),
+			})
+		}
+	}
+	return out, nil
 }
 
 func (f *recordStore) DeleteForOrganization(context.Context, pulid.ID, pagination.TenantInfo) error {
@@ -247,6 +266,16 @@ func (f *objectStore) Upload(_ context.Context, params *storage.UploadParams) (*
 	defer f.mu.Unlock()
 	f.objects[params.Key] = body
 	return &storage.FileInfo{Key: params.Key, Size: int64(len(body))}, nil
+}
+
+func (f *objectStore) Download(_ context.Context, key string) (*storage.DownloadResult, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	body, ok := f.objects[key]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Object not found")
+	}
+	return &storage.DownloadResult{Body: io.NopCloser(bytes.NewReader(slices.Clone(body))), Size: int64(len(body))}, nil
 }
 
 func (f *objectStore) Delete(_ context.Context, key string) error {

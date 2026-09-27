@@ -1,4 +1,28 @@
 aliases:
+  CaptureBatch:
+    user: userId
+    device: deviceId
+    target: targetId
+    openItemCount: itemCount
+    isEditable: status
+  CaptureDevice:
+    user: userId
+    isOnline: lastSeenAt
+  CaptureItem:
+    pageCount: pageIds
+    suggestedRecord: suggestedId
+    suggestedDocumentTypeId: suggestedDocTypeId
+    filedRecord: filedId
+    filedDocumentTypeId: filedDocTypeId
+  CapturePage:
+    isBlank: blankScore
+    patchCode: markers
+    isCoverSheet: markers
+    unrecognizedCoverSheet: markers
+    contentPath: id
+    thumbnailPath: id
+  CaptureRequest:
+    isOpen: status
   AccountingConnection:
     syncsDriverSettlements: driverSettlementsEnabledAt
   AccountingInboundChange:
@@ -122,6 +146,10 @@ virtuals:
   WatchtowerItem:
     - seen
     - kindLabel
+  CaptureCoverSheet:
+    - payload
+    - qrCode
+    - target
   InboundMailbox:
     - hasSigningSecret
   InboundMessage:

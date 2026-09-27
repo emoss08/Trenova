@@ -22,6 +22,7 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
+import { useAskAgent } from "./ask-agent";
 import { DecisionFrame, DecisionReceipt, ProposedBy, useWatchedChange } from "./decision-chrome";
 import {
   classifyPlan,
@@ -32,10 +33,12 @@ import {
 import { HoldLine } from "./proposal-card";
 import { StepDependencyNote } from "./proposal-preview/plan-preview";
 import { canApprove, gateDigest } from "./proposal-preview/preview-gate";
+import { askAgentPlanMessage } from "./proposal-preview/preview-warnings";
 import {
   PreviewLoadState,
   ProposalPreview,
   StaleNotice,
+  type WouldFailActions,
 } from "./proposal-preview/proposal-preview";
 import { useApprovalGate, usePlanPreview } from "./proposal-preview/use-proposal-preview";
 import { presentProposal } from "./proposal-presenters";
@@ -93,6 +96,16 @@ export function PlanCard({
   const decide = (decision: PlanDecision) => {
     approval.acknowledge();
     decideMutation.mutate({ decision, previewDigest: gateDigest(approval.gate) });
+  };
+
+  // A plan is decided whole, so a step that would be refused is not changed
+  // here; the person can have the agent fix the plan in the conversation.
+  const askAgent = useAskAgent();
+  const wouldFail: WouldFailActions = {
+    onAskAgent:
+      askAgent && awaiting
+        ? (reasons) => askAgent(askAgentPlanMessage(plan.title, reasons, t))
+        : undefined,
   };
 
   const decidedHere = useWatchedChange(undecided);
@@ -167,7 +180,9 @@ export function PlanCard({
         </p>
       )}
 
-      {steps.length > 0 && <StepList steps={steps} settled={false} previews={previews} />}
+      {steps.length > 0 && (
+        <StepList steps={steps} settled={false} previews={previews} wouldFail={wouldFail} />
+      )}
 
       <PreviewLoadState query={previewQuery} changed={approval.changed} density="compact">
         {(preview) =>
@@ -197,15 +212,23 @@ function StepList({
   steps,
   settled,
   previews,
+  wouldFail,
 }: {
   steps: AssistantProposal[];
   settled: boolean;
   previews?: ReadonlyMap<string, ProposalPreviewData>;
+  wouldFail?: WouldFailActions;
 }) {
   return (
     <ol className={cn("flex flex-col gap-1.5 text-xs", settled && "pl-8.5", previews && "gap-3")}>
       {steps.map((step) => (
-        <PlanStep key={step.id} step={step} settled={settled} preview={previews?.get(step.id)} />
+        <PlanStep
+          key={step.id}
+          step={step}
+          settled={settled}
+          preview={previews?.get(step.id)}
+          wouldFail={wouldFail}
+        />
       ))}
     </ol>
   );
@@ -215,10 +238,12 @@ function PlanStep({
   step,
   settled,
   preview,
+  wouldFail,
 }: {
   step: AssistantProposal;
   settled: boolean;
   preview?: ProposalPreviewData;
+  wouldFail?: WouldFailActions;
 }) {
   const view = presentProposal(step);
   const stepState = planStepState(step);
@@ -241,7 +266,7 @@ function PlanStep({
         {!settled && preview && (
           <div className="mt-1.5 flex flex-col gap-2">
             <StepDependencyNote preview={preview} />
-            <ProposalPreview preview={preview} density="compact" inPlan />
+            <ProposalPreview preview={preview} density="compact" inPlan wouldFail={wouldFail} />
           </div>
         )}
         {settled && stepState === "failed" && step.executionError !== "" && (

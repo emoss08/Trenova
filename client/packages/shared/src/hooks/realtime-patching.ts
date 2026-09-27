@@ -73,6 +73,23 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     ["inbox", "counts"],
     ["inbox", "message"],
   ],
+  // A batch moving is the intake queue, the open batch and, since a request's
+  // progress is announced under the same resource, the requests a record's
+  // Documents tab shows in flight.
+  capture_batch: [
+    ["capture", "batches"],
+    ["capture", "batchCount"],
+    ["capture", "batch"],
+    ["capture", "requests"],
+  ],
+  capture_device: [
+    ["capture", "myDevices"],
+    ["capture", "devices"],
+  ],
+  capture_profile: [
+    ["capture", "profiles"],
+    ["capture", "availableProfiles"],
+  ],
   shipments: [
     "shipment-list",
     "dispatch-board",

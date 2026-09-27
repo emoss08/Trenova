@@ -18,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CapturePanel } from "./capture/capture-panel";
 import { DocumentBulkActionDock } from "./document-bulk-action-dock";
 import { DocumentIntelligenceDialog } from "./document-intelligence-dialog";
 import { DocumentList } from "./document-list";
@@ -486,6 +487,8 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
           disabled={disabled}
         />
       )}
+
+      <CapturePanel resourceType={resourceType} resourceId={resourceId} disabled={disabled} />
 
       <DocumentToolbar
         searchQuery={searchQuery}

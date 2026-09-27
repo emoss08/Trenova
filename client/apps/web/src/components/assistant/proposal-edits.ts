@@ -182,6 +182,124 @@ export function changedValues(
   return changed;
 }
 
+/**
+ * A parameter path as the steps into a field's value: "shipment.moves[0].bol"
+ * is the field "shipment" and the steps ["moves", 0, "bol"]. Null when the
+ * path is not one the editor can follow.
+ */
+export function parseParamPath(
+  param: string,
+): { field: string; steps: (string | number)[] } | null {
+  const pattern = /^([A-Za-z_$][\w$]*)((?:\.[A-Za-z_$][\w$]*|\[\d+\])*)$/u;
+  const match = pattern.exec(param.trim());
+  if (match === null) {
+    return null;
+  }
+  const steps: (string | number)[] = [];
+  const rest = match[2] ?? "";
+  for (const step of rest.matchAll(/\.([A-Za-z_$][\w$]*)|\[(\d+)\]/gu) ?? []) {
+    steps.push(step[1] !== undefined ? step[1] : Number(step[2]));
+  }
+
+  return { field: match[1] ?? "", steps };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function parsedJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+function valueAt(value: unknown, steps: readonly (string | number)[]): unknown {
+  let current = value;
+  for (const step of steps) {
+    if (typeof step === "number") {
+      if (!Array.isArray(current)) return undefined;
+      current = current[step];
+    } else {
+      if (!isRecord(current)) return undefined;
+      current = current[step];
+    }
+  }
+
+  return current;
+}
+
+/**
+ * The value at a path inside a JSON field's draft, as text for one input.
+ * Undefined when the draft is not valid JSON or the path leads nowhere a
+ * value could sit; an absent value is "".
+ */
+export function readNested(
+  draft: ProposalDraft,
+  field: string,
+  steps: readonly (string | number)[],
+): string | undefined {
+  const value = parsedJson(draft[field] ?? "");
+  if (value === undefined) {
+    return undefined;
+  }
+  const parent = valueAt(value, steps.slice(0, -1));
+  const last = steps.at(-1);
+  if (
+    last === undefined ||
+    (typeof last === "number" ? !Array.isArray(parent) : !isRecord(parent))
+  ) {
+    return undefined;
+  }
+  const at = valueAt(value, steps);
+
+  return at === undefined || at === null ? "" : scalarText(at);
+}
+
+/**
+ * The JSON field's draft with the value at a path replaced by what a person
+ * typed: a number where a number was, otherwise the text. An emptied input
+ * drops the value, since "none" is what an empty BOL means.
+ */
+export function writeNested(
+  draft: ProposalDraft,
+  field: string,
+  steps: readonly (string | number)[],
+  text: string,
+): ProposalDraft {
+  const value = parsedJson(draft[field] ?? "");
+  const last = steps.at(-1);
+  if (value === undefined || last === undefined) {
+    return draft;
+  }
+  const next = structuredClone(value);
+  const parent = valueAt(next, steps.slice(0, -1));
+  if (typeof last === "number" ? !Array.isArray(parent) : !isRecord(parent)) {
+    return draft;
+  }
+  const before = valueAt(next, steps);
+  const trimmed = text.trim();
+  let replacement: unknown = text;
+  if (trimmed === "") {
+    replacement = undefined;
+  } else if (typeof before === "number" && Number.isFinite(Number(trimmed))) {
+    replacement = Number(trimmed);
+  }
+  if (Array.isArray(parent) && typeof last === "number") {
+    parent[last] = replacement === undefined ? null : replacement;
+  } else if (isRecord(parent) && typeof last === "string") {
+    if (replacement === undefined) {
+      Reflect.deleteProperty(parent, last);
+    } else {
+      parent[last] = replacement;
+    }
+  }
+
+  return { ...draft, [field]: JSON.stringify(next, null, 2) };
+}
+
 function sameJson(a: unknown, b: unknown): boolean {
   return canonical(a) === canonical(b);
 }

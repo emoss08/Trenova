@@ -9,12 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -133,14 +136,8 @@ func TestPaymentJournalIsWrittenOnThePaidDateAgainstThePostedPayable(t *testing.
 	assert.Equal(t, int64(1_250), written.Lines[1].CreditAmount)
 }
 
-func TestPaymentJournalNeedsThePostedPayableAndACashAccount(t *testing.T) {
+func TestPaymentJournalNeedsACashAccount(t *testing.T) {
 	t.Parallel()
-
-	noSnapshot := paidSettlement(1_250)
-	noSnapshot.PostedPayableAccountID = nil
-	_, err := (&Service{}).postPaymentJournal(t.Context(), noSnapshot, pulid.MustNew("usr_"), 1)
-	require.Error(t, err)
-	assert.True(t, errortypes.IsBusinessError(err))
 
 	entity := paidSettlement(1_250)
 	accounting := mocks.NewMockAccountingControlRepository(t)
@@ -148,8 +145,53 @@ func TestPaymentJournalNeedsThePostedPayableAndACashAccount(t *testing.T) {
 		GetByOrgID(mock.Anything, entity.OrganizationID).
 		Return(&tenant.AccountingControl{}, nil).
 		Once()
-	_, err = (&Service{accountingRepo: accounting}).
+	_, err := (&Service{accountingRepo: accounting}).
 		postPaymentJournal(t.Context(), entity, pulid.MustNew("usr_"), 1)
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation)
+	assert.Equal(t, "accountingControl", validation.Field)
+}
+
+func TestASettlementPostedWithoutAJournalRecordsNoPaymentJournal(t *testing.T) {
+	t.Parallel()
+
+	entity := paidSettlement(1_250)
+	entity.PostedPayableAccountID = nil
+
+	batchID, err := (&Service{}).postPaymentJournal(t.Context(), entity, pulid.MustNew("usr_"), 1)
+	require.NoError(t, err)
+	assert.Nil(t, batchID)
+}
+
+func TestASettlementPostedBeforeThePayableSnapshotPaysFromTheDefaultPayable(t *testing.T) {
+	t.Parallel()
+
+	postedBatch := pulid.MustNew("jb_")
+	entity := paidSettlement(1_250)
+	entity.PostedPayableAccountID = nil
+	entity.PostedJournalBatchID = &postedBatch
+	control := &tenant.AccountingControl{
+		DefaultSettlementsPayableAccountID: pulid.MustNew("gla_"),
+		DefaultCashAccountID:               pulid.MustNew("gla_"),
+	}
+
+	journal, err := PaymentJournal(entity, control, pulid.MustNew("usr_"), 1, 1)
+	require.NoError(t, err)
+	require.NotNil(t, journal)
+	assert.Equal(t, []PostingLeg{
+		{AccountID: control.DefaultSettlementsPayableAccountID, Debit: 1_250},
+		{AccountID: control.DefaultCashAccountID, Credit: 1_250},
+	}, journal.Legs)
+
+	snapshot := pulid.MustNew("gla_")
+	entity.PostedPayableAccountID = &snapshot
+	journal, err = PaymentJournal(entity, control, pulid.MustNew("usr_"), 1, 1)
+	require.NoError(t, err)
+	assert.Equal(t, snapshot, journal.Legs[0].AccountID)
+
+	entity.PostedPayableAccountID = nil
+	control.DefaultSettlementsPayableAccountID = pulid.Nil
+	_, err = PaymentJournal(entity, control, pulid.MustNew("usr_"), 1, 1)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
 	assert.Equal(t, "accountingControl", validation.Field)
@@ -253,4 +295,60 @@ func TestMarkPaidWritesThePaymentJournalAndKeepsItsBatch(t *testing.T) {
 	assert.Equal(t, "DriverSettlementPaid", written.SourceEventType)
 	assert.Equal(t, paidAt, written.AccountingDate)
 	assert.Same(t, store.saved, paid)
+}
+
+func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T) {
+	t.Parallel()
+
+	const paidAt = int64(1_790_000_000)
+	entity := paidSettlement(1_250)
+	entity.CurrencyCode = "CAD"
+	store := &settlementStore{current: entity}
+
+	accounting := mocks.NewMockAccountingControlRepository(t)
+	accounting.EXPECT().
+		GetByOrgID(mock.Anything, entity.OrganizationID).
+		Return(&tenant.AccountingControl{
+			DefaultCashAccountID: pulid.MustNew("gla_"),
+			JournalPostingMode:   tenant.JournalPostingModeAutomatic,
+		}, nil).
+		Once()
+	periods := mocks.NewMockFiscalPeriodRepository(t)
+	periods.EXPECT().
+		GetPeriodByDate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           pulid.MustNew("fp_"),
+			FiscalYearID: pulid.MustNew("fy_"),
+			Status:       fiscalperiod.StatusOpen,
+		}, nil).
+		Once()
+	journals := mocks.NewMockJournalPostingRepository(t)
+	journals.EXPECT().CreatePosting(mock.Anything, mock.Anything).Return(nil).Once()
+
+	svc := &Service{
+		db:               dbtest.NopConnection{},
+		settlementRepo:   store,
+		accountingRepo:   accounting,
+		fiscalPeriodRepo: periods,
+		journalRepo:      journals,
+		generator:        journalNumbers{},
+		auditService:     silentAudit{},
+		stamper:          exchangeratestamp.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312")),
+	}
+	paid, err := svc.MarkPaid(t.Context(), &serviceports.MarkSettlementPaidRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		SettlementID:  entity.ID,
+		PaymentMethod: "ACH",
+		PaidAt:        paidAt,
+	}, &serviceports.RequestActor{UserID: pulid.MustNew("usr_")})
+	require.NoError(t, err)
+
+	require.True(t, paid.PaidExchangeRate.Valid)
+	assert.True(t, decimal.RequireFromString("0.7312").Equal(paid.PaidExchangeRate.Decimal))
+	require.NotNil(t, paid.PaidExchangeRateDate)
+	assert.Equal(t, timeutils.DayStartUTC(paidAt), *paid.PaidExchangeRateDate)
+	assert.False(t, paid.ExchangeRate.Valid, "paying does not touch the posting stamp")
 }
