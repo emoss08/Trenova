@@ -53,6 +53,7 @@ function record(overrides: Partial<AccountingSyncRecord> = {}): AccountingSyncRe
     syncedAt: 1_780_000_020,
     skippedBy: null,
     skippedReason: "",
+    redatedTo: null,
     version: 2,
     updatedAt: 1_780_000_020,
     ...overrides,

@@ -42,6 +42,92 @@ func (_m *MockExchangeRateService) EXPECT() *MockExchangeRateService_Expecter {
 	return &MockExchangeRateService_Expecter{mock: &_m.Mock}
 }
 
+// CachedRate provides a mock function for the type MockExchangeRateService
+func (_mock *MockExchangeRateService) CachedRate(ctx context.Context, tenantInfo pagination.TenantInfo, fromCurrency string, toCurrency string, date time.Time) (*services.RateConversionResult, error) {
+	ret := _mock.Called(ctx, tenantInfo, fromCurrency, toCurrency, date)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CachedRate")
+	}
+
+	var r0 *services.RateConversionResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, string, string, time.Time) (*services.RateConversionResult, error)); ok {
+		return returnFunc(ctx, tenantInfo, fromCurrency, toCurrency, date)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, string, string, time.Time) *services.RateConversionResult); ok {
+		r0 = returnFunc(ctx, tenantInfo, fromCurrency, toCurrency, date)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.RateConversionResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, string, string, time.Time) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, fromCurrency, toCurrency, date)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockExchangeRateService_CachedRate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CachedRate'
+type MockExchangeRateService_CachedRate_Call struct {
+	*mock.Call
+}
+
+// CachedRate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - fromCurrency string
+//   - toCurrency string
+//   - date time.Time
+func (_e *MockExchangeRateService_Expecter) CachedRate(ctx any, tenantInfo any, fromCurrency any, toCurrency any, date any) *MockExchangeRateService_CachedRate_Call {
+	return &MockExchangeRateService_CachedRate_Call{Call: _e.mock.On("CachedRate", ctx, tenantInfo, fromCurrency, toCurrency, date)}
+}
+
+func (_c *MockExchangeRateService_CachedRate_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, fromCurrency string, toCurrency string, date time.Time)) *MockExchangeRateService_CachedRate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 time.Time
+		if args[4] != nil {
+			arg4 = args[4].(time.Time)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *MockExchangeRateService_CachedRate_Call) Return(rateConversionResult *services.RateConversionResult, err error) *MockExchangeRateService_CachedRate_Call {
+	_c.Call.Return(rateConversionResult, err)
+	return _c
+}
+
+func (_c *MockExchangeRateService_CachedRate_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, fromCurrency string, toCurrency string, date time.Time) (*services.RateConversionResult, error)) *MockExchangeRateService_CachedRate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Convert provides a mock function for the type MockExchangeRateService
 func (_mock *MockExchangeRateService) Convert(ctx context.Context, tenantInfo pagination.TenantInfo, fromCurrency string, toCurrency string, amount decimal.Decimal, date time.Time) (*services.RateConversionResult, error) {
 	ret := _mock.Called(ctx, tenantInfo, fromCurrency, toCurrency, amount, date)

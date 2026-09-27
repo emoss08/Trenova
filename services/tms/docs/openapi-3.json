@@ -9618,6 +9618,12 @@
                         },
                         "type": "array"
                     },
+                    "exchangeRate": {
+                        "$ref": "#/components/schemas/decimal.NullDecimal"
+                    },
+                    "exchangeRateDate": {
+                        "type": "integer"
+                    },
                     "id": {
                         "type": "string"
                     },

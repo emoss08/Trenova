@@ -108,6 +108,23 @@ func CheckRowsAffected(result sql.Result, entityName, entityID string) error {
 	return nil
 }
 
+func CheckFound(result sql.Result, entityName string) error {
+	if result == nil {
+		return ErrCheckRowNil
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+
+	if rows == 0 {
+		return errortypes.NewNotFoundError("{0} not found within your organization", entityName)
+	}
+
+	return nil
+}
+
 func CheckBulkRowsAffected(result sql.Result, entityName string, entityIDs []pulid.ID) error {
 	if result == nil {
 		return ErrCheckRowNil

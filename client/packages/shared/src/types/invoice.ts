@@ -379,6 +379,8 @@ export const invoiceSchema = z.object({
   status: invoiceStatusSchema,
   paymentTerm: customerPaymentTermSchema,
   currencyCode: z.string(),
+  exchangeRate: z.string().nullable().optional(),
+  exchangeRateDate: nullableIntegerSchema.optional(),
   invoiceDate: z.number(),
   dueDate: nullableIntegerSchema,
   postedAt: nullableIntegerSchema,

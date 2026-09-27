@@ -108,6 +108,7 @@ type ResolverRoot interface {
 	CarrierIntelSafety() CarrierIntelSafetyResolver
 	CarrierIntelSnapshot() CarrierIntelSnapshotResolver
 	CarrierMonitoringEnrollment() CarrierMonitoringEnrollmentResolver
+	CarrierSettlement() CarrierSettlementResolver
 	CarrierSourcingResult() CarrierSourcingResultResolver
 	ChargeAllocation() ChargeAllocationResolver
 	Commodity() CommodityResolver
@@ -1388,6 +1389,7 @@ type ComplexityRoot struct {
 		ObjectType        func(childComplexity int) int
 		Operation         func(childComplexity int) int
 		QueuedAt          func(childComplexity int) int
+		RedatedTo         func(childComplexity int) int
 		Resolution        func(childComplexity int) int
 		Revision          func(childComplexity int) int
 		SkippedBy         func(childComplexity int) int
@@ -3874,6 +3876,8 @@ type ComplexityRoot struct {
 		CarrierID            func(childComplexity int) int
 		CreatedAt            func(childComplexity int) int
 		CurrencyCode         func(childComplexity int) int
+		ExchangeRate         func(childComplexity int) int
+		ExchangeRateDate     func(childComplexity int) int
 		GrossCostMinor       func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		Lines                func(childComplexity int) int
@@ -3882,6 +3886,8 @@ type ComplexityRoot struct {
 		OrganizationID       func(childComplexity int) int
 		PaidAt               func(childComplexity int) int
 		PaidByID             func(childComplexity int) int
+		PaidExchangeRate     func(childComplexity int) int
+		PaidExchangeRateDate func(childComplexity int) int
 		PaidJournalBatchID   func(childComplexity int) int
 		PayDate              func(childComplexity int) int
 		PaymentMethod        func(childComplexity int) int
@@ -4380,6 +4386,8 @@ type ComplexityRoot struct {
 		CurrencyCode         func(childComplexity int) int
 		Customer             func(childComplexity int) int
 		CustomerID           func(childComplexity int) int
+		ExchangeRate         func(childComplexity int) int
+		ExchangeRateDate     func(childComplexity int) int
 		ID                   func(childComplexity int) int
 		Memo                 func(childComplexity int) int
 		OrganizationID       func(childComplexity int) int
@@ -5508,6 +5516,8 @@ type ComplexityRoot struct {
 		CurrencyCode         func(childComplexity int) int
 		DeductionsMinor      func(childComplexity int) int
 		Exceptions           func(childComplexity int) int
+		ExchangeRate         func(childComplexity int) int
+		ExchangeRateDate     func(childComplexity int) int
 		GrossEarningsMinor   func(childComplexity int) int
 		HasExceptions        func(childComplexity int) int
 		ID                   func(childComplexity int) int
@@ -5517,6 +5527,8 @@ type ComplexityRoot struct {
 		OrganizationID       func(childComplexity int) int
 		PaidAt               func(childComplexity int) int
 		PaidByID             func(childComplexity int) int
+		PaidExchangeRate     func(childComplexity int) int
+		PaidExchangeRateDate func(childComplexity int) int
 		PayDate              func(childComplexity int) int
 		PayProfileID         func(childComplexity int) int
 		PayProfileName       func(childComplexity int) int
@@ -7537,6 +7549,8 @@ type ComplexityRoot struct {
 		EDISendPlan           func(childComplexity int) int
 		EDISendStatus         func(childComplexity int) int
 		EDISentAt             func(childComplexity int) int
+		ExchangeRate          func(childComplexity int) int
+		ExchangeRateDate      func(childComplexity int) int
 		ID                    func(childComplexity int) int
 		InvoiceDate           func(childComplexity int) int
 		IsAdjustmentArtifact  func(childComplexity int) int
@@ -8551,6 +8565,7 @@ type ComplexityRoot struct {
 		RecordTimeEntry                       func(childComplexity int, input gqlmodel.RecordTimeEntryInput) int
 		RecordWorkerEmploymentEvent           func(childComplexity int, input gqlmodel.RecordWorkerEmploymentEventInput) int
 		RecordWorkerInjury                    func(childComplexity int, input gqlmodel.RecordWorkerInjuryInput) int
+		RedateAccountingSync                  func(childComplexity int, id string) int
 		RefreshAccountingReferenceData        func(childComplexity int, integrationType integration.Type) int
 		RegenerateBriefing                    func(childComplexity int, input gqlmodel.TodaysBriefingInput) int
 		ReindexAIRetrievalSource              func(childComplexity int, sourceType airetrieval.SourceType) int
@@ -19150,6 +19165,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingSyncRecord.QueuedAt(childComplexity), true
+	case "AccountingSyncRecord.redatedTo":
+		if e.ComplexityRoot.AccountingSyncRecord.RedatedTo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.RedatedTo(childComplexity), true
 	case "AccountingSyncRecord.resolution":
 		if e.ComplexityRoot.AccountingSyncRecord.Resolution == nil {
 			break
@@ -30479,6 +30500,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierSettlement.CurrencyCode(childComplexity), true
+	case "CarrierSettlement.exchangeRate":
+		if e.ComplexityRoot.CarrierSettlement.ExchangeRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSettlement.ExchangeRate(childComplexity), true
+	case "CarrierSettlement.exchangeRateDate":
+		if e.ComplexityRoot.CarrierSettlement.ExchangeRateDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSettlement.ExchangeRateDate(childComplexity), true
 	case "CarrierSettlement.grossCostMinor":
 		if e.ComplexityRoot.CarrierSettlement.GrossCostMinor == nil {
 			break
@@ -30527,6 +30560,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierSettlement.PaidByID(childComplexity), true
+	case "CarrierSettlement.paidExchangeRate":
+		if e.ComplexityRoot.CarrierSettlement.PaidExchangeRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSettlement.PaidExchangeRate(childComplexity), true
+	case "CarrierSettlement.paidExchangeRateDate":
+		if e.ComplexityRoot.CarrierSettlement.PaidExchangeRateDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSettlement.PaidExchangeRateDate(childComplexity), true
 	case "CarrierSettlement.paidJournalBatchId":
 		if e.ComplexityRoot.CarrierSettlement.PaidJournalBatchID == nil {
 			break
@@ -32903,6 +32948,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CustomerPayment.CustomerID(childComplexity), true
+	case "CustomerPayment.exchangeRate":
+		if e.ComplexityRoot.CustomerPayment.ExchangeRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerPayment.ExchangeRate(childComplexity), true
+	case "CustomerPayment.exchangeRateDate":
+		if e.ComplexityRoot.CustomerPayment.ExchangeRateDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CustomerPayment.ExchangeRateDate(childComplexity), true
 	case "CustomerPayment.id":
 		if e.ComplexityRoot.CustomerPayment.ID == nil {
 			break
@@ -38277,6 +38334,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DriverSettlement.Exceptions(childComplexity), true
+	case "DriverSettlement.exchangeRate":
+		if e.ComplexityRoot.DriverSettlement.ExchangeRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DriverSettlement.ExchangeRate(childComplexity), true
+	case "DriverSettlement.exchangeRateDate":
+		if e.ComplexityRoot.DriverSettlement.ExchangeRateDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DriverSettlement.ExchangeRateDate(childComplexity), true
 	case "DriverSettlement.grossEarningsMinor":
 		if e.ComplexityRoot.DriverSettlement.GrossEarningsMinor == nil {
 			break
@@ -38331,6 +38400,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DriverSettlement.PaidByID(childComplexity), true
+	case "DriverSettlement.paidExchangeRate":
+		if e.ComplexityRoot.DriverSettlement.PaidExchangeRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DriverSettlement.PaidExchangeRate(childComplexity), true
+	case "DriverSettlement.paidExchangeRateDate":
+		if e.ComplexityRoot.DriverSettlement.PaidExchangeRateDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DriverSettlement.PaidExchangeRateDate(childComplexity), true
 	case "DriverSettlement.payDate":
 		if e.ComplexityRoot.DriverSettlement.PayDate == nil {
 			break
@@ -47515,6 +47596,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Invoice.EDISentAt(childComplexity), true
+	case "Invoice.exchangeRate":
+		if e.ComplexityRoot.Invoice.ExchangeRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.ExchangeRate(childComplexity), true
+	case "Invoice.exchangeRateDate":
+		if e.ComplexityRoot.Invoice.ExchangeRateDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Invoice.ExchangeRateDate(childComplexity), true
 	case "Invoice.id":
 		if e.ComplexityRoot.Invoice.ID == nil {
 			break
@@ -54173,6 +54266,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RecordWorkerInjury(childComplexity, args["input"].(gqlmodel.RecordWorkerInjuryInput)), true
+	case "Mutation.redateAccountingSync":
+		if e.ComplexityRoot.Mutation.RedateAccountingSync == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_redateAccountingSync_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RedateAccountingSync(childComplexity, args["id"].(string)), true
 	case "Mutation.refreshAccountingReferenceData":
 		if e.ComplexityRoot.Mutation.RefreshAccountingReferenceData == nil {
 			break
@@ -84670,6 +84774,8 @@ type AccountingSyncRecord {
   syncedAt: Timestamp
   skippedBy: User
   skippedReason: String!
+  "The date it is sent with, when it was moved to the first open day of the books."
+  redatedTo: Timestamp
   version: Int!
   updatedAt: Timestamp!
 }
@@ -85441,6 +85547,8 @@ extend type Mutation {
   releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
   "Marks a record as not to be sent."
   skipAccountingSync(input: SkipAccountingSyncInput!): AccountingSyncRecord!
+  "Sends a document held by closed books dated on the first open day, when Trenova's closed-period policy posts to the next open period."
+  redateAccountingSync(id: ID!): AccountingSyncRecord!
   "Queues documents posted before sync was turned on. One backfill runs at a time."
   requestAccountingBackfill(input: RequestAccountingBackfillInput!): AccountingBackfill!
   changeAccountingBackfill(input: ChangeAccountingBackfillInput!): AccountingBackfill!
@@ -91332,6 +91440,17 @@ type CarrierSettlement {
   netPayableMinor: Int!
   shipmentCount: Int!
   currencyCode: String!
+  """
+  Units of the organization's functional currency per one unit of the
+  settlement currency, fixed when the settlement posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  "The day the posting exchange rate was quoted for."
+  exchangeRateDate: Timestamp
+  "The exchange rate fixed when the settlement was paid."
+  paidExchangeRate: Decimal
+  "The day the payment exchange rate was quoted for."
+  paidExchangeRateDate: Timestamp
   notes: String!
   submittedById: ID
   submittedAt: Timestamp
@@ -92380,6 +92499,13 @@ type CustomerPayment {
   referenceNumber: String!
   memo: String!
   currencyCode: String!
+  """
+  Units of the organization's functional currency per one unit of the payment
+  currency, fixed when the payment posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  "The day the exchange rate was quoted for."
+  exchangeRateDate: Timestamp
   postedBatchId: ID
   reversalBatchId: ID
   reversedById: ID
@@ -95615,6 +95741,17 @@ type DriverSettlement {
   totalMiles: Decimal!
   shipmentCount: Int!
   currencyCode: String!
+  """
+  Units of the organization's functional currency per one unit of the
+  settlement currency, fixed when the settlement posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  "The day the posting exchange rate was quoted for."
+  exchangeRateDate: Timestamp
+  "The exchange rate fixed when the settlement was paid."
+  paidExchangeRate: Decimal
+  "The day the payment exchange rate was quoted for."
+  paidExchangeRateDate: Timestamp
   hasExceptions: Boolean!
   exceptions: [SettlementException!]
   notes: String!
@@ -99887,6 +100024,13 @@ type Invoice {
   status: InvoiceStatus!
   paymentTerm: InvoicePaymentTerm!
   currencyCode: String!
+  """
+  Units of the organization's functional currency per one unit of the invoice
+  currency, fixed when the invoice posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  "The day the exchange rate was quoted for."
+  exchangeRateDate: Timestamp
   invoiceDate: Timestamp!
   dueDate: Timestamp
   postedAt: Timestamp
@@ -112255,6 +112399,8 @@ func (ec *executionContext) childFields_AccountingSyncRecord(ctx context.Context
 		return ec.fieldContext_AccountingSyncRecord_skippedBy(ctx, field)
 	case "skippedReason":
 		return ec.fieldContext_AccountingSyncRecord_skippedReason(ctx, field)
+	case "redatedTo":
+		return ec.fieldContext_AccountingSyncRecord_redatedTo(ctx, field)
 	case "version":
 		return ec.fieldContext_AccountingSyncRecord_version(ctx, field)
 	case "updatedAt":
@@ -117223,6 +117369,14 @@ func (ec *executionContext) childFields_CarrierSettlement(ctx context.Context, f
 		return ec.fieldContext_CarrierSettlement_shipmentCount(ctx, field)
 	case "currencyCode":
 		return ec.fieldContext_CarrierSettlement_currencyCode(ctx, field)
+	case "exchangeRate":
+		return ec.fieldContext_CarrierSettlement_exchangeRate(ctx, field)
+	case "exchangeRateDate":
+		return ec.fieldContext_CarrierSettlement_exchangeRateDate(ctx, field)
+	case "paidExchangeRate":
+		return ec.fieldContext_CarrierSettlement_paidExchangeRate(ctx, field)
+	case "paidExchangeRateDate":
+		return ec.fieldContext_CarrierSettlement_paidExchangeRateDate(ctx, field)
 	case "notes":
 		return ec.fieldContext_CarrierSettlement_notes(ctx, field)
 	case "submittedById":
@@ -118231,6 +118385,10 @@ func (ec *executionContext) childFields_CustomerPayment(ctx context.Context, fie
 		return ec.fieldContext_CustomerPayment_memo(ctx, field)
 	case "currencyCode":
 		return ec.fieldContext_CustomerPayment_currencyCode(ctx, field)
+	case "exchangeRate":
+		return ec.fieldContext_CustomerPayment_exchangeRate(ctx, field)
+	case "exchangeRateDate":
+		return ec.fieldContext_CustomerPayment_exchangeRateDate(ctx, field)
 	case "postedBatchId":
 		return ec.fieldContext_CustomerPayment_postedBatchId(ctx, field)
 	case "reversalBatchId":
@@ -120501,6 +120659,14 @@ func (ec *executionContext) childFields_DriverSettlement(ctx context.Context, fi
 		return ec.fieldContext_DriverSettlement_shipmentCount(ctx, field)
 	case "currencyCode":
 		return ec.fieldContext_DriverSettlement_currencyCode(ctx, field)
+	case "exchangeRate":
+		return ec.fieldContext_DriverSettlement_exchangeRate(ctx, field)
+	case "exchangeRateDate":
+		return ec.fieldContext_DriverSettlement_exchangeRateDate(ctx, field)
+	case "paidExchangeRate":
+		return ec.fieldContext_DriverSettlement_paidExchangeRate(ctx, field)
+	case "paidExchangeRateDate":
+		return ec.fieldContext_DriverSettlement_paidExchangeRateDate(ctx, field)
 	case "hasExceptions":
 		return ec.fieldContext_DriverSettlement_hasExceptions(ctx, field)
 	case "exceptions":
@@ -124523,6 +124689,10 @@ func (ec *executionContext) childFields_Invoice(ctx context.Context, field graph
 		return ec.fieldContext_Invoice_paymentTerm(ctx, field)
 	case "currencyCode":
 		return ec.fieldContext_Invoice_currencyCode(ctx, field)
+	case "exchangeRate":
+		return ec.fieldContext_Invoice_exchangeRate(ctx, field)
+	case "exchangeRateDate":
+		return ec.fieldContext_Invoice_exchangeRateDate(ctx, field)
 	case "invoiceDate":
 		return ec.fieldContext_Invoice_invoiceDate(ctx, field)
 	case "dueDate":

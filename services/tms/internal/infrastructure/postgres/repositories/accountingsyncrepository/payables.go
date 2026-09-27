@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -71,22 +72,26 @@ func (r *payablesRepository) carrierSettlement(
 	}
 
 	out := &repositories.PayableSettlement{
-		Kind:             repositories.PayableCarrier,
-		ID:               entity.ID,
-		Number:           entity.SettlementNumber,
-		PartyID:          entity.CarrierID,
-		PeriodStart:      entity.PeriodStart,
-		PeriodEnd:        entity.PeriodEnd,
-		PayDate:          entity.PayDate,
-		PostedAt:         entity.PostedAt,
-		PaidAt:           entity.PaidAt,
-		Voided:           entity.Status == carriersettlement.StatusVoided,
-		NetMinor:         entity.NetPayableMinor,
-		ShipmentCount:    entity.ShipmentCount,
-		CurrencyCode:     entity.CurrencyCode,
-		PaymentMethod:    entity.PaymentMethod,
-		PaymentReference: entity.PaymentReference,
-		PayableAccountID: pulid.ConvertFromPtr(entity.PostedAPAccountID),
+		Kind:                 repositories.PayableCarrier,
+		ID:                   entity.ID,
+		Number:               entity.SettlementNumber,
+		PartyID:              entity.CarrierID,
+		PeriodStart:          entity.PeriodStart,
+		PeriodEnd:            entity.PeriodEnd,
+		PayDate:              entity.PayDate,
+		PostedAt:             entity.PostedAt,
+		PaidAt:               entity.PaidAt,
+		Voided:               entity.Status == carriersettlement.StatusVoided,
+		NetMinor:             entity.NetPayableMinor,
+		ShipmentCount:        entity.ShipmentCount,
+		CurrencyCode:         entity.CurrencyCode,
+		ExchangeRate:         entity.ExchangeRate,
+		ExchangeRateDate:     entity.ExchangeRateDate,
+		PaidExchangeRate:     entity.PaidExchangeRate,
+		PaidExchangeRateDate: entity.PaidExchangeRateDate,
+		PaymentMethod:        entity.PaymentMethod,
+		PaymentReference:     entity.PaymentReference,
+		PayableAccountID:     pulid.ConvertFromPtr(entity.PostedAPAccountID),
 	}
 	if entity.Carrier != nil {
 		out.PartyName = entity.Carrier.Name
@@ -137,23 +142,27 @@ func (r *payablesRepository) driverSettlement(
 	}
 
 	out := &repositories.PayableSettlement{
-		Kind:             repositories.PayableDriver,
-		ID:               entity.ID,
-		Number:           entity.SettlementNumber,
-		PartyID:          entity.WorkerID,
-		OwnerOperator:    entity.Classification == driverpay.PayeeClassificationOwnerOperator,
-		PeriodStart:      entity.PeriodStart,
-		PeriodEnd:        entity.PeriodEnd,
-		PayDate:          entity.PayDate,
-		PostedAt:         entity.PostedAt,
-		PaidAt:           entity.PaidAt,
-		Voided:           entity.Status == driversettlement.StatusVoided,
-		NetMinor:         entity.NetPayMinor,
-		ShipmentCount:    entity.ShipmentCount,
-		CurrencyCode:     entity.CurrencyCode,
-		PaymentMethod:    entity.PaymentMethod,
-		PaymentReference: entity.PaymentReference,
-		PayableAccountID: pulid.ConvertFromPtr(entity.PostedPayableAccountID),
+		Kind:                 repositories.PayableDriver,
+		ID:                   entity.ID,
+		Number:               entity.SettlementNumber,
+		PartyID:              entity.WorkerID,
+		OwnerOperator:        entity.Classification == driverpay.PayeeClassificationOwnerOperator,
+		PeriodStart:          entity.PeriodStart,
+		PeriodEnd:            entity.PeriodEnd,
+		PayDate:              entity.PayDate,
+		PostedAt:             entity.PostedAt,
+		PaidAt:               entity.PaidAt,
+		Voided:               entity.Status == driversettlement.StatusVoided,
+		NetMinor:             entity.NetPayMinor,
+		ShipmentCount:        entity.ShipmentCount,
+		CurrencyCode:         entity.CurrencyCode,
+		ExchangeRate:         entity.ExchangeRate,
+		ExchangeRateDate:     entity.ExchangeRateDate,
+		PaidExchangeRate:     entity.PaidExchangeRate,
+		PaidExchangeRateDate: entity.PaidExchangeRateDate,
+		PaymentMethod:        entity.PaymentMethod,
+		PaymentReference:     entity.PaymentReference,
+		PayableAccountID:     pulid.ConvertFromPtr(entity.PostedPayableAccountID),
 	}
 	if entity.Worker != nil {
 		out.PartyName = strings.TrimSpace(
@@ -312,4 +321,56 @@ func (r *payablesRepository) invoiceNumbers(
 	}
 	slices.Sort(distinct)
 	return distinct, nil
+}
+
+func (r *payablesRepository) StampExchangeRate(
+	ctx context.Context,
+	req *repositories.StampPayableExchangeRateRequest,
+) error {
+	var (
+		q     *bun.UpdateQuery
+		label string
+	)
+	switch req.Kind {
+	case repositories.PayableCarrier:
+		cols := buncolgen.CarrierSettlementColumns
+		rate, date := cols.ExchangeRate, cols.ExchangeRateDate
+		if req.Paid {
+			rate, date = cols.PaidExchangeRate, cols.PaidExchangeRateDate
+		}
+		label = "Carrier settlement"
+		q = r.db.DBForContext(ctx).NewUpdate().
+			Model((*carriersettlement.CarrierSettlement)(nil)).
+			Set(rate.Set(), req.Rate).
+			Set(date.Set(), req.Date).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.CarrierSettlementScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			})
+	case repositories.PayableDriver:
+		cols := buncolgen.SettlementColumns
+		rate, date := cols.ExchangeRate, cols.ExchangeRateDate
+		if req.Paid {
+			rate, date = cols.PaidExchangeRate, cols.PaidExchangeRateDate
+		}
+		label = "Driver settlement"
+		q = r.db.DBForContext(ctx).NewUpdate().
+			Model((*driversettlement.Settlement)(nil)).
+			Set(rate.Set(), req.Rate).
+			Set(date.Set(), req.Date).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.SettlementScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			})
+	default:
+		return fmt.Errorf("stamp payable exchange rate: unknown payable kind %q", req.Kind)
+	}
+	result, err := q.Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("stamp %s exchange rate: %w", strings.ToLower(label), err)
+	}
+
+	return dberror.CheckFound(result, label)
 }

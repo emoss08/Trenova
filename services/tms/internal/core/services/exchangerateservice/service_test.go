@@ -332,3 +332,32 @@ func newTestService(
 		HTTPClient:         &http.Client{Timeout: 2 * time.Second},
 	})
 }
+
+func TestCachedRateReadsOnlyTheRateTableAndReportsAMiss(t *testing.T) {
+	t.Parallel()
+
+	var requestCount int
+	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		requestCount++
+	}))
+	defer server.Close()
+
+	repo := &stubExchangeRateRepository{getRateErr: errortypes.NewNotFoundError("Exchange rate not found")}
+	svc := newTestService(t, repo, server.URL, "mid")
+
+	result, err := svc.CachedRate(
+		t.Context(),
+		pagination.TenantInfo{},
+		"cad",
+		"usd",
+		time.Date(2026, 5, 27, 0, 0, 0, 0, time.UTC),
+	)
+
+	require.Nil(t, result)
+	require.ErrorIs(t, err, services.ErrExchangeRateNotCached)
+	require.Zero(t, requestCount, "posting never waits on the provider")
+
+	same, err := svc.CachedRate(t.Context(), pagination.TenantInfo{}, "USD", "usd", time.Now())
+	require.NoError(t, err)
+	require.True(t, decimal.NewFromInt(1).Equal(same.Rate))
+}

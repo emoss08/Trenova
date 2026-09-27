@@ -58,6 +58,8 @@ type Settlement struct {
 	TotalMiles             decimal.Decimal               `json:"totalMiles"             bun:"total_miles,type:NUMERIC(19,4),notnull,default:0"`
 	ShipmentCount          int                           `json:"shipmentCount"          bun:"shipment_count,type:INTEGER,notnull"`
 	CurrencyCode           string                        `json:"currencyCode"           bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
+	ExchangeRate           decimal.NullDecimal           `json:"exchangeRate"           bun:"exchange_rate,type:NUMERIC(24,12),nullzero"`
+	ExchangeRateDate       *int64                        `json:"exchangeRateDate"       bun:"exchange_rate_date,type:BIGINT,nullzero"`
 	HasExceptions          bool                          `json:"hasExceptions"          bun:"has_exceptions,type:BOOLEAN,notnull"`
 	Exceptions             []Exception                   `json:"exceptions"             bun:"exceptions,type:JSONB,nullzero"`
 	Notes                  string                        `json:"notes"                  bun:"notes,type:TEXT,nullzero"`
@@ -74,6 +76,8 @@ type Settlement struct {
 	PaymentMethod          string                        `json:"paymentMethod"          bun:"payment_method,type:VARCHAR(50),nullzero"`
 	PaymentReference       string                        `json:"paymentReference"       bun:"payment_reference,type:VARCHAR(100),nullzero"`
 	PaidJournalBatchID     *pulid.ID                     `json:"paidJournalBatchId"     bun:"paid_journal_batch_id,type:VARCHAR(100),nullzero"`
+	PaidExchangeRate       decimal.NullDecimal           `json:"paidExchangeRate"       bun:"paid_exchange_rate,type:NUMERIC(24,12),nullzero"`
+	PaidExchangeRateDate   *int64                        `json:"paidExchangeRateDate"   bun:"paid_exchange_rate_date,type:BIGINT,nullzero"`
 	VoidedByID             pulid.ID                      `json:"voidedById"             bun:"voided_by_id,type:VARCHAR(100),nullzero"`
 	VoidedAt               *int64                        `json:"voidedAt"               bun:"voided_at,type:BIGINT,nullzero"`
 	VoidReason             string                        `json:"voidReason"             bun:"void_reason,type:TEXT,nullzero"`

@@ -109,6 +109,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/extractionevalservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
@@ -496,6 +497,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	accountingcontrolservice.New,
 	accountingcontrolpolicyservice.New,
+	exchangeratestamp.New,
 	accountsreceivableservice.New,
 	accounttypeservice.New,
 	glaccountservice.New,

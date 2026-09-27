@@ -60,6 +60,8 @@ writes:
     tools: [ignore_accounting_inbound_change]
   "mutation pauseAccountingSync":
     tools: [pause_accounting_sync]
+  "mutation redateAccountingSync":
+    tools: [redate_accounting_sync]
   "mutation refreshAccountingReferenceData":
     tools: [refresh_accounting_reference_data]
   "mutation rejectAccountingMapping":
