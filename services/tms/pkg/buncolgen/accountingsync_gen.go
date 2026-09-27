@@ -527,6 +527,10 @@ var AccountingConnectionColumns = struct {
 	AutoSync                      Column // "auto_sync" → qualified: "acctc.auto_sync"
 	DriverSettlementsEnabledAt    Column // "driver_settlements_enabled_at" → qualified: "acctc.driver_settlements_enabled_at"
 	InboundPaymentPolicy          Column // "inbound_payment_policy" → qualified: "acctc.inbound_payment_policy"
+	SyncMode                      Column // "sync_mode" → qualified: "acctc.sync_mode"
+	LedgerGranularity             Column // "ledger_granularity" → qualified: "acctc.ledger_granularity"
+	LedgerOpeningBalancesSentAt   Column // "ledger_opening_balances_sent_at" → qualified: "acctc.ledger_opening_balances_sent_at"
+	ExternalFiscalYearStartMonth  Column // "external_fiscal_year_start_month" → qualified: "acctc.external_fiscal_year_start_month"
 	ChangeCursor                  Column // "change_cursor" → qualified: "acctc.change_cursor"
 	ChangesReadAt                 Column // "changes_read_at" → qualified: "acctc.changes_read_at"
 	ChangesErrorCategory          Column // "changes_error_category" → qualified: "acctc.changes_error_category"
@@ -582,6 +586,10 @@ var AccountingConnectionColumns = struct {
 	AutoSync:                      NewColumn("auto_sync", "acctc"),
 	DriverSettlementsEnabledAt:    NewColumn("driver_settlements_enabled_at", "acctc"),
 	InboundPaymentPolicy:          NewColumn("inbound_payment_policy", "acctc"),
+	SyncMode:                      NewColumn("sync_mode", "acctc"),
+	LedgerGranularity:             NewColumn("ledger_granularity", "acctc"),
+	LedgerOpeningBalancesSentAt:   NewColumn("ledger_opening_balances_sent_at", "acctc"),
+	ExternalFiscalYearStartMonth:  NewColumn("external_fiscal_year_start_month", "acctc"),
 	ChangeCursor:                  NewColumn("change_cursor", "acctc"),
 	ChangesReadAt:                 NewColumn("changes_read_at", "acctc"),
 	ChangesErrorCategory:          NewColumn("changes_error_category", "acctc"),
@@ -640,6 +648,10 @@ var AccountingConnectionFieldMap = map[string]string{
 	"autoSync":                      "auto_sync",
 	"driverSettlementsEnabledAt":    "driver_settlements_enabled_at",
 	"inboundPaymentPolicy":          "inbound_payment_policy",
+	"syncMode":                      "sync_mode",
+	"ledgerGranularity":             "ledger_granularity",
+	"ledgerOpeningBalancesSentAt":   "ledger_opening_balances_sent_at",
+	"externalFiscalYearStartMonth":  "external_fiscal_year_start_month",
 	"changesReadAt":                 "changes_read_at",
 	"changesErrorCategory":          "changes_error_category",
 	"changesErrorMessage":           "changes_error_message",
@@ -698,6 +710,10 @@ var AccountingConnectionInsertableColumns = []string{
 	"auto_sync",
 	"driver_settlements_enabled_at",
 	"inbound_payment_policy",
+	"sync_mode",
+	"ledger_granularity",
+	"ledger_opening_balances_sent_at",
+	"external_fiscal_year_start_month",
 	"change_cursor",
 	"changes_read_at",
 	"changes_error_category",
@@ -820,6 +836,10 @@ var AccountingConnectionFilter = struct {
 	AutoSync                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSync" → DB: "auto_sync"
 	DriverSettlementsEnabledAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverSettlementsEnabledAt" → DB: "driver_settlements_enabled_at"
 	InboundPaymentPolicy          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inboundPaymentPolicy" → DB: "inbound_payment_policy"
+	SyncMode                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "syncMode" → DB: "sync_mode"
+	LedgerGranularity             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ledgerGranularity" → DB: "ledger_granularity"
+	LedgerOpeningBalancesSentAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ledgerOpeningBalancesSentAt" → DB: "ledger_opening_balances_sent_at"
+	ExternalFiscalYearStartMonth  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalFiscalYearStartMonth" → DB: "external_fiscal_year_start_month"
 	ChangesReadAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changesReadAt" → DB: "changes_read_at"
 	ChangesErrorCategory          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changesErrorCategory" → DB: "changes_error_category"
 	ChangesErrorMessage           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changesErrorMessage" → DB: "changes_error_message"
@@ -938,6 +958,18 @@ var AccountingConnectionFilter = struct {
 	},
 	InboundPaymentPolicy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("inboundPaymentPolicy", op, value)
+	},
+	SyncMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("syncMode", op, value)
+	},
+	LedgerGranularity: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ledgerGranularity", op, value)
+	},
+	LedgerOpeningBalancesSentAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ledgerOpeningBalancesSentAt", op, value)
+	},
+	ExternalFiscalYearStartMonth: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalFiscalYearStartMonth", op, value)
 	},
 	ChangesReadAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("changesReadAt", op, value)

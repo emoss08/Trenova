@@ -159,7 +159,7 @@ func (f *AccountingDriftFinding) Pushed() bool {
 
 func (f *AccountingDriftFinding) Directions() []DriftDirection {
 	directions := make([]DriftDirection, 0, len(AllDriftDirections()))
-	if f.Kind != DriftCustomerBalanceMismatch {
+	if !f.Kind.IsBalance() {
 		directions = append(directions, DriftPushTrenovaValue)
 	}
 	if f.adjustable() {

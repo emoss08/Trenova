@@ -289,12 +289,12 @@ func TestReferenceObjectUsability(t *testing.T) {
 	}
 }
 
-func TestConnectStartsANewConnectionAtTheMappingStepAndKeepsAFinishedOne(t *testing.T) {
+func TestConnectStartsANewConnectionAtTheModeStepAndKeepsAFinishedOne(t *testing.T) {
 	t.Parallel()
 
 	fresh := &accountingsync.AccountingConnection{}
 	fresh.Connect(pulid.MustNew("usr_"), accountingsync.TokenGrant{}, 10)
-	assert.Equal(t, accountingsync.SetupStepMappings, fresh.SetupStep)
+	assert.Equal(t, accountingsync.SetupStepMode, fresh.SetupStep)
 
 	finished := &accountingsync.AccountingConnection{SetupStep: accountingsync.SetupStepComplete}
 	finished.Connect(pulid.MustNew("usr_"), accountingsync.TokenGrant{}, 10)
