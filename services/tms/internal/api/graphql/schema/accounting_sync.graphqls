@@ -377,6 +377,8 @@ type AccountingSyncRecord {
   syncedAt: Timestamp
   skippedBy: User
   skippedReason: String!
+  "The date it is sent with, when it was moved to the first open day of the books."
+  redatedTo: Timestamp
   version: Int!
   updatedAt: Timestamp!
 }
@@ -1148,6 +1150,8 @@ extend type Mutation {
   releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
   "Marks a record as not to be sent."
   skipAccountingSync(input: SkipAccountingSyncInput!): AccountingSyncRecord!
+  "Sends a document held by closed books dated on the first open day, when Trenova's closed-period policy posts to the next open period."
+  redateAccountingSync(id: ID!): AccountingSyncRecord!
   "Queues documents posted before sync was turned on. One backfill runs at a time."
   requestAccountingBackfill(input: RequestAccountingBackfillInput!): AccountingBackfill!
   changeAccountingBackfill(input: ChangeAccountingBackfillInput!): AccountingBackfill!

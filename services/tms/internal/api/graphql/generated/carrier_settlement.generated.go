@@ -24,6 +24,11 @@ import (
 
 // region    ************************** generated!.gotpl **************************
 
+type CarrierSettlementResolver interface {
+	ExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error)
+
+	PaidExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error)
+}
 type EdiCarrierInvoiceResolver interface {
 	TotalAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
 	ExpectedAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
@@ -2032,6 +2037,98 @@ func (ec *executionContext) _CarrierSettlement_currencyCode(ctx context.Context,
 }
 func (ec *executionContext) fieldContext_CarrierSettlement_currencyCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CarrierSettlement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierSettlement_exchangeRate(ctx context.Context, field graphql.CollectedField, obj *carriersettlement.CarrierSettlement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierSettlement_exchangeRate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.CarrierSettlement().ExchangeRate(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalODecimal2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierSettlement_exchangeRate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierSettlement", field, true, true, errors.New("field of type Decimal does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierSettlement_exchangeRateDate(ctx context.Context, field graphql.CollectedField, obj *carriersettlement.CarrierSettlement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierSettlement_exchangeRateDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExchangeRateDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierSettlement_exchangeRateDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierSettlement", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierSettlement_paidExchangeRate(ctx context.Context, field graphql.CollectedField, obj *carriersettlement.CarrierSettlement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierSettlement_paidExchangeRate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.CarrierSettlement().PaidExchangeRate(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalODecimal2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierSettlement_paidExchangeRate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierSettlement", field, true, true, errors.New("field of type Decimal does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierSettlement_paidExchangeRateDate(ctx context.Context, field graphql.CollectedField, obj *carriersettlement.CarrierSettlement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierSettlement_paidExchangeRateDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PaidExchangeRateDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierSettlement_paidExchangeRateDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierSettlement", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
 func (ec *executionContext) _CarrierSettlement_notes(ctx context.Context, field graphql.CollectedField, obj *carriersettlement.CarrierSettlement) (ret graphql.Marshaler) {
@@ -5943,187 +6040,273 @@ func (ec *executionContext) _CarrierSettlement(ctx context.Context, sel ast.Sele
 		case "id":
 			out.Values[i] = ec._CarrierSettlement_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "organizationId":
 			out.Values[i] = ec._CarrierSettlement_organizationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "businessUnitId":
 			out.Values[i] = ec._CarrierSettlement_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "carrierId":
 			out.Values[i] = ec._CarrierSettlement_carrierId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "batchId":
 			out.Values[i] = ec._CarrierSettlement_batchId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "settlementNumber":
 			out.Values[i] = ec._CarrierSettlement_settlementNumber(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._CarrierSettlement_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "periodStart":
 			out.Values[i] = ec._CarrierSettlement_periodStart(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "periodEnd":
 			out.Values[i] = ec._CarrierSettlement_periodEnd(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "payDate":
 			out.Values[i] = ec._CarrierSettlement_payDate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "grossCostMinor":
 			out.Values[i] = ec._CarrierSettlement_grossCostMinor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "adjustmentsMinor":
 			out.Values[i] = ec._CarrierSettlement_adjustmentsMinor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "netPayableMinor":
 			out.Values[i] = ec._CarrierSettlement_netPayableMinor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "shipmentCount":
 			out.Values[i] = ec._CarrierSettlement_shipmentCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "currencyCode":
 			out.Values[i] = ec._CarrierSettlement_currencyCode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "exchangeRate":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CarrierSettlement_exchangeRate(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "exchangeRateDate":
+			out.Values[i] = ec._CarrierSettlement_exchangeRateDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "paidExchangeRate":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CarrierSettlement_paidExchangeRate(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "paidExchangeRateDate":
+			out.Values[i] = ec._CarrierSettlement_paidExchangeRateDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "notes":
 			out.Values[i] = ec._CarrierSettlement_notes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "submittedById":
 			out.Values[i] = ec._CarrierSettlement_submittedById(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "submittedAt":
 			out.Values[i] = ec._CarrierSettlement_submittedAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "approvedById":
 			out.Values[i] = ec._CarrierSettlement_approvedById(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "approvedAt":
 			out.Values[i] = ec._CarrierSettlement_approvedAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "postedById":
 			out.Values[i] = ec._CarrierSettlement_postedById(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "postedAt":
 			out.Values[i] = ec._CarrierSettlement_postedAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "postedJournalBatchId":
 			out.Values[i] = ec._CarrierSettlement_postedJournalBatchId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "paidAt":
 			out.Values[i] = ec._CarrierSettlement_paidAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "paidById":
 			out.Values[i] = ec._CarrierSettlement_paidById(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "paymentMethod":
 			out.Values[i] = ec._CarrierSettlement_paymentMethod(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "paymentReference":
 			out.Values[i] = ec._CarrierSettlement_paymentReference(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "paidJournalBatchId":
 			out.Values[i] = ec._CarrierSettlement_paidJournalBatchId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "voidedById":
 			out.Values[i] = ec._CarrierSettlement_voidedById(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "voidedAt":
 			out.Values[i] = ec._CarrierSettlement_voidedAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "voidReason":
 			out.Values[i] = ec._CarrierSettlement_voidReason(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "voidJournalBatchId":
 			out.Values[i] = ec._CarrierSettlement_voidJournalBatchId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":
 			out.Values[i] = ec._CarrierSettlement_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._CarrierSettlement_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._CarrierSettlement_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "carrier":
 			out.Values[i] = ec._CarrierSettlement_carrier(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lines":
 			out.Values[i] = ec._CarrierSettlement_lines(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))

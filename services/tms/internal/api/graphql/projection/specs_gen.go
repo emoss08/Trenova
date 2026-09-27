@@ -2407,6 +2407,10 @@ func init() {
 				FieldMapKey: "skippedReason",
 			},
 			{
+				Name:        "redatedTo",
+				FieldMapKey: "redatedTo",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -7062,6 +7066,22 @@ func init() {
 				FieldMapKey: "currencyCode",
 			},
 			{
+				Name:        "exchangeRate",
+				FieldMapKey: "exchangeRate",
+			},
+			{
+				Name:        "exchangeRateDate",
+				FieldMapKey: "exchangeRateDate",
+			},
+			{
+				Name:        "paidExchangeRate",
+				FieldMapKey: "paidExchangeRate",
+			},
+			{
+				Name:        "paidExchangeRateDate",
+				FieldMapKey: "paidExchangeRateDate",
+			},
+			{
 				Name:        "notes",
 				FieldMapKey: "notes",
 			},
@@ -8437,6 +8457,14 @@ func init() {
 			{
 				Name:        "currencyCode",
 				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "exchangeRate",
+				FieldMapKey: "exchangeRate",
+			},
+			{
+				Name:        "exchangeRateDate",
+				FieldMapKey: "exchangeRateDate",
 			},
 			{
 				Name:        "postedBatchId",
@@ -10386,6 +10414,22 @@ func init() {
 			{
 				Name:        "currencyCode",
 				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "exchangeRate",
+				FieldMapKey: "exchangeRate",
+			},
+			{
+				Name:        "exchangeRateDate",
+				FieldMapKey: "exchangeRateDate",
+			},
+			{
+				Name:        "paidExchangeRate",
+				FieldMapKey: "paidExchangeRate",
+			},
+			{
+				Name:        "paidExchangeRateDate",
+				FieldMapKey: "paidExchangeRateDate",
 			},
 			{
 				Name:        "hasExceptions",
@@ -14956,6 +15000,14 @@ func init() {
 			{
 				Name:        "currencyCode",
 				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "exchangeRate",
+				FieldMapKey: "exchangeRate",
+			},
+			{
+				Name:        "exchangeRateDate",
+				FieldMapKey: "exchangeRateDate",
 			},
 			{
 				Name:        "invoiceDate",

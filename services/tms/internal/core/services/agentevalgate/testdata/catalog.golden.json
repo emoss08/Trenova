@@ -15218,6 +15218,53 @@
       }
     },
     {
+      "name": "redate_accounting_sync",
+      "description": "Send a document the accounting system refused because its date falls in closed books, dated instead on the first open day after the closing date. Use it when the bookkeeper would rather keep the period closed than reopen it. The document keeps its own date in Trenova, and its note in the books names that date. Trenova allows this only when its closed-period posting policy is to post to the next open period; otherwise the period must be reopened in the accounting system and the record retried.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "syncRecordId": {
+            "description": "The sync record's id, from list_accounting_sync_records or get_accounting_sync_record. It must be held for a closed period.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "syncRecordId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "closed period",
+        "books closed",
+        "re-date",
+        "first open day"
+      ],
+      "prerequisites": [
+        "get_accounting_sync_record"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes the date the organization's books record for a document, so a person approves it."
+      }
+    },
+    {
       "name": "refresh_accounting_reference_data",
       "description": "Read the accounting system's accounts, items, customers, vendors, terms and payment methods again and refresh Trenova's proposals. Use it after a person says they added or renamed something in the accounting system. It runs in the background; check list_accounting_mapping_gaps afterwards. It changes nothing in the books and never touches a confirmed mapping.",
       "parameters": {

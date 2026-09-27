@@ -703,3 +703,10 @@ func (f *fakePermissions) Check(
 	f.asked = append(f.asked, key)
 	return &services.PermissionCheckResult{Allowed: !f.denied[key]}, nil
 }
+
+func (f *fakePayables) StampExchangeRate(
+	context.Context,
+	*repositories.StampPayableExchangeRateRequest,
+) error {
+	return nil
+}

@@ -43,24 +43,24 @@ type Invoice struct {
 	bun.BaseModel             `bun:"table:invoices,alias:inv" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                   json:"-"`
 
-	ID                 pulid.ID `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID `json:"businessUnitId"            bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	BillingQueueItemID pulid.ID `json:"billingQueueItemId"        bun:"billing_queue_item_id,type:VARCHAR(100),notnull"`
-	ShipmentID         pulid.ID `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	OrderID            pulid.ID `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
-	CustomerID         pulid.ID `json:"customerId"                bun:"customer_id,type:VARCHAR(100),notnull"`
-	Scope              Scope    `json:"scope"                     bun:"scope,type:invoice_scope_enum,notnull,default:'Shipment'"`
-	InvoiceRunID       pulid.ID `json:"invoiceRunId"              bun:"invoice_run_id,type:VARCHAR(100),nullzero"`
-	PeriodStart        *int64   `json:"periodStart"               bun:"period_start,type:BIGINT,nullzero"`
-	PeriodEnd          *int64   `json:"periodEnd"                 bun:"period_end,type:BIGINT,nullzero"`
-	ShipmentCount      int      `json:"shipmentCount"             bun:"shipment_count,type:INTEGER,notnull"`
+	ID                 pulid.ID `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID     pulid.ID `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID     pulid.ID `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	BillingQueueItemID pulid.ID `json:"billingQueueItemId" bun:"billing_queue_item_id,type:VARCHAR(100),notnull"`
+	ShipmentID         pulid.ID `json:"shipmentId"         bun:"shipment_id,type:VARCHAR(100),nullzero"`
+	OrderID            pulid.ID `json:"orderId"            bun:"order_id,type:VARCHAR(100),nullzero"`
+	CustomerID         pulid.ID `json:"customerId"         bun:"customer_id,type:VARCHAR(100),notnull"`
+	Scope              Scope    `json:"scope"              bun:"scope,type:invoice_scope_enum,notnull,default:'Shipment'"`
+	InvoiceRunID       pulid.ID `json:"invoiceRunId"       bun:"invoice_run_id,type:VARCHAR(100),nullzero"`
+	PeriodStart        *int64   `json:"periodStart"        bun:"period_start,type:BIGINT,nullzero"`
+	PeriodEnd          *int64   `json:"periodEnd"          bun:"period_end,type:BIGINT,nullzero"`
+	ShipmentCount      int      `json:"shipmentCount"      bun:"shipment_count,type:INTEGER,notnull"`
 	// Detail and SectionBy are stamped from the customer's billing profile when
 	// the invoice is created, not read back at render time. A customer who
 	// changes their preference next month must not silently change how an invoice
 	// they were already sent reads.
-	Detail    customer.InvoiceDetail     `json:"detail"                    bun:"detail,type:invoice_detail_enum,notnull,default:'Detailed'"`
-	SectionBy customer.InvoiceSectionKey `json:"sectionBy"                 bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"`
+	Detail    customer.InvoiceDetail     `json:"detail"    bun:"detail,type:invoice_detail_enum,notnull,default:'Detailed'"`
+	SectionBy customer.InvoiceSectionKey `json:"sectionBy" bun:"section_by,type:invoice_section_key_enum,notnull,default:'Shipment'"`
 	// OffCycleReason is why this invoice was cut for a customer whose freight was
 	// supposed to accumulate onto a statement. Empty on every ordinary invoice.
 	OffCycleReason            string                `json:"offCycleReason"            bun:"off_cycle_reason,type:TEXT,nullzero"`
@@ -72,6 +72,8 @@ type Invoice struct {
 	InvoiceDate               int64                 `json:"invoiceDate"               bun:"invoice_date,type:BIGINT,notnull"`
 	DueDate                   *int64                `json:"dueDate"                   bun:"due_date,type:BIGINT,nullzero"`
 	PostedAt                  *int64                `json:"postedAt"                  bun:"posted_at,type:BIGINT,nullzero"`
+	ExchangeRate              decimal.NullDecimal   `json:"exchangeRate"              bun:"exchange_rate,type:NUMERIC(24,12),nullzero"`
+	ExchangeRateDate          *int64                `json:"exchangeRateDate"          bun:"exchange_rate_date,type:BIGINT,nullzero"`
 	ShipmentProNumber         string                `json:"shipmentProNumber"         bun:"shipment_pro_number,type:VARCHAR(100),nullzero"`
 	ShipmentBOL               string                `json:"shipmentBol"               bun:"shipment_bol,type:VARCHAR(100),nullzero"`
 	OrderNumber               string                `json:"orderNumber"               bun:"order_number,type:VARCHAR(100),nullzero"`

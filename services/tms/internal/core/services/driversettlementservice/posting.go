@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,7 +45,16 @@ func (s *Service) Post(
 			return txErr
 		}
 		previous = *entity
-		if txErr = PlanPost(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
+		now := timeutils.NowUnix()
+		if txErr = PlanPost(entity, actor.UserID, now); txErr != nil {
+			return txErr
+		}
+		if txErr = s.stamper.StampInto(txCtx, &exchangeratestamp.Request{
+			TenantInfo:     tenantInfo,
+			CurrencyCode:   entity.CurrencyCode,
+			DocumentDate:   now,
+			AccountingDate: now,
+		}, &entity.ExchangeRate, &entity.ExchangeRateDate); txErr != nil {
 			return txErr
 		}
 

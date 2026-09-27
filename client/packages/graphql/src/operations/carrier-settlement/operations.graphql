@@ -53,6 +53,10 @@ query CarrierSettlementDetail($id: ID!) {
     netPayableMinor
     shipmentCount
     currencyCode
+    exchangeRate
+    exchangeRateDate
+    paidExchangeRate
+    paidExchangeRateDate
     notes
     submittedById
     submittedAt

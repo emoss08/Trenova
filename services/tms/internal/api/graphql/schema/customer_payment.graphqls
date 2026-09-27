@@ -68,6 +68,13 @@ type CustomerPayment {
   referenceNumber: String!
   memo: String!
   currencyCode: String!
+  """
+  Units of the organization's functional currency per one unit of the payment
+  currency, fixed when the payment posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  "The day the exchange rate was quoted for."
+  exchangeRateDate: Timestamp
   postedBatchId: ID
   reversalBatchId: ID
   reversedById: ID

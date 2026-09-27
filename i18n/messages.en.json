@@ -572,6 +572,17 @@
       "routes/scheduling"
     ]
   },
+  "1 {0} = {1}, quoted {2}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/customer-payments",
+      "routes/invoice"
+    ]
+  },
   "1-3 Days": {
     "sites": 1,
     "scope": [
@@ -67509,6 +67520,17 @@
       "routes/shipment"
     ]
   },
+  "Exchange rate": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/customer-payments",
+      "routes/invoice"
+    ]
+  },
   "Exchange rate date policy": {
     "sites": 1,
     "scope": [
@@ -86630,6 +86652,15 @@
     ]
   },
   "Invalid submitter": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Invalid sync record": {
     "sites": 1,
     "scope": [
       "go"
@@ -134994,6 +135025,24 @@
       "routes/invoice-adjustment-batch"
     ]
   },
+  "Queued again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Queued again, dated {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Queued approval for": {
     "sites": 1,
     "scope": [
@@ -158407,6 +158456,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Send on first open day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Send one connection's queued documents to its accounting system": {
     "sites": 1,
     "scope": [
@@ -159058,6 +159116,15 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/billing-queue"
+    ]
+  },
+  "Sent dated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Sent from Trenova": {
@@ -170428,7 +170495,7 @@
     ]
   },
   "Sync record": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -191822,6 +191889,15 @@
       "routes/agent-control"
     ]
   },
+  "Trenova's closed-period policy keeps a document in its own period; reopen the period in {0}, or set the policy to post to the next open period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "Trenova's value is on its way to the books": {
     "sites": 1,
     "scope": [
@@ -212808,6 +212884,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "paid at {0}, quoted {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "past the pickup window": {
     "sites": 1,
     "scope": [
@@ -218154,6 +218239,15 @@
       "service/agenttoolservice"
     ]
   },
+  "{0} is not held by a closed period, so it keeps its date": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "{0} is not mapped": {
     "sites": 2,
     "scope": [
@@ -218969,6 +219063,15 @@
       "service/invoiceservice"
     ]
   },
+  "{0} no longer reports closed books, so {1} keeps its date; retry it instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "{0} not covered": {
     "sites": 1,
     "scope": [
@@ -218979,7 +219082,7 @@
     ]
   },
   "{0} not found within your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
