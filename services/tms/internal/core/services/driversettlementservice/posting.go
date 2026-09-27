@@ -309,7 +309,6 @@ func (s *Service) postSettlementJournal(
 	return s.writeSettlementJournal(ctx, entity, actor, draft)
 }
 
-//nolint:funlen // journal planning enumerates every required account explicitly
 func (s *Service) planSettlementJournal(
 	ctx context.Context,
 	entity *driversettlement.Settlement,
