@@ -246,3 +246,23 @@ func TestQueryChangedSincePagesDocumentsToo(t *testing.T) {
 	assert.Equal(t, 3, next, "a full page of documents means there may be more")
 	assert.Empty(t, set.Full)
 }
+
+func TestQueryByIDsReadsJournalEntries(t *testing.T) {
+	t.Parallel()
+
+	var statement string
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		statement = r.URL.Query().Get("query")
+		_, _ = w.Write(fixture(t, "query_journal_entries_by_id.json"))
+	})
+
+	states, err := client.QueryByIDs(t.Context(), quickbooks.TxnJournalEntry, []string{"310"})
+	require.NoError(t, err)
+	assert.Equal(t, "select * from JournalEntry where Id in ('310') maxresults 1", statement)
+	require.Len(t, states, 1)
+	assert.Equal(t, quickbooks.TxnJournalEntry, states[0].Kind)
+	assert.Equal(t, "310", states[0].ID)
+	assert.True(t, decimal.RequireFromString("1500").Equal(states[0].TotalAmount))
+	assert.Nil(t, states[0].Balance, "a journal entry has no open balance")
+	assert.Equal(t, "A Bookkeeper", states[0].LastModifiedBy)
+}

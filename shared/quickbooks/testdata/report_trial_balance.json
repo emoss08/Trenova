@@ -1,0 +1,35 @@
+{
+  "Header": {
+    "ReportName": "TrialBalance",
+    "StartPeriod": "2026-04-01",
+    "EndPeriod": "2026-09-27",
+    "ReportBasis": "Accrual",
+    "Currency": "USD"
+  },
+  "Columns": {
+    "Column": [
+      { "ColTitle": "", "ColType": "Account" },
+      { "ColTitle": "Debit", "ColType": "Money" },
+      { "ColTitle": "Credit", "ColType": "Money" }
+    ]
+  },
+  "Rows": {
+    "Row": [
+      { "ColData": [ { "value": "Checking", "id": "35" }, { "value": "12,480.50" }, { "value": "" } ] },
+      { "ColData": [ { "value": "Accounts Receivable (A/R)", "id": "84" }, { "value": "3200.00" }, { "value": "" } ] },
+      {
+        "type": "Section",
+        "Rows": {
+          "Row": [
+            { "ColData": [ { "value": "Freight revenue", "id": "79" }, { "value": "" }, { "value": "15680.50" } ] }
+          ]
+        }
+      },
+      {
+        "type": "Section",
+        "group": "GrandTotal",
+        "Summary": { "ColData": [ { "value": "TOTAL" }, { "value": "15680.50" }, { "value": "15680.50" } ] }
+      }
+    ]
+  }
+}

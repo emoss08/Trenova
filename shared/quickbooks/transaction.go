@@ -20,6 +20,7 @@ const (
 	TxnBill         = TxnKind("Bill")
 	TxnVendorCredit = TxnKind("VendorCredit")
 	TxnBillPayment  = TxnKind("BillPayment")
+	TxnJournalEntry = TxnKind("JournalEntry")
 )
 
 const (
@@ -49,7 +50,13 @@ var (
 
 func (k TxnKind) IsValid() bool {
 	switch k {
-	case TxnInvoice, TxnCreditMemo, TxnPayment, TxnBill, TxnVendorCredit, TxnBillPayment:
+	case TxnInvoice,
+		TxnCreditMemo,
+		TxnPayment,
+		TxnBill,
+		TxnVendorCredit,
+		TxnBillPayment,
+		TxnJournalEntry:
 		return true
 	default:
 		return false
@@ -74,6 +81,8 @@ func (k TxnKind) AppPath() string {
 		return "/app/vendorcredit?txnId="
 	case TxnBillPayment:
 		return "/app/billpayment?txnId="
+	case TxnJournalEntry:
+		return "/app/journal?txnId="
 	default:
 		return ""
 	}
@@ -81,7 +90,7 @@ func (k TxnKind) AppPath() string {
 
 func (k TxnKind) numbered() bool {
 	switch k {
-	case TxnInvoice, TxnCreditMemo, TxnBill, TxnVendorCredit:
+	case TxnInvoice, TxnCreditMemo, TxnBill, TxnVendorCredit, TxnJournalEntry:
 		return true
 	case TxnPayment, TxnBillPayment:
 		return false
@@ -258,6 +267,7 @@ type txnEnvelope struct {
 	Bill         *wireTxn    `json:"Bill"`
 	VendorCredit *wireTxn    `json:"VendorCredit"`
 	BillPayment  *wireTxn    `json:"BillPayment"`
+	JournalEntry *wireTxn    `json:"JournalEntry"`
 	Customer     *wireEntity `json:"Customer"`
 	Vendor       *wireEntity `json:"Vendor"`
 }
@@ -268,6 +278,7 @@ type txnQueryEnvelope struct {
 		CreditMemo   []wireTxn `json:"CreditMemo"`
 		Bill         []wireTxn `json:"Bill"`
 		VendorCredit []wireTxn `json:"VendorCredit"`
+		JournalEntry []wireTxn `json:"JournalEntry"`
 	} `json:"QueryResponse"`
 }
 
@@ -285,6 +296,8 @@ func (e *txnEnvelope) txn(kind TxnKind) *wireTxn {
 		return e.VendorCredit
 	case TxnBillPayment:
 		return e.BillPayment
+	case TxnJournalEntry:
+		return e.JournalEntry
 	default:
 		return nil
 	}
@@ -313,6 +326,8 @@ func (e *txnQueryEnvelope) matches(kind TxnKind) []wireTxn {
 		return e.QueryResponse.Bill
 	case TxnVendorCredit:
 		return e.QueryResponse.VendorCredit
+	case TxnJournalEntry:
+		return e.QueryResponse.JournalEntry
 	case TxnPayment, TxnBillPayment:
 		return nil
 	default:

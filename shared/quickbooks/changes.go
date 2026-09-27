@@ -385,7 +385,7 @@ func (r *changeQueryResponse) documents(kind TxnKind) []wireChangeTxn {
 		return r.Bill
 	case TxnVendorCredit:
 		return r.VendorCredit
-	case TxnPayment, TxnBillPayment:
+	case TxnPayment, TxnBillPayment, TxnJournalEntry:
 		return nil
 	default:
 		return nil
