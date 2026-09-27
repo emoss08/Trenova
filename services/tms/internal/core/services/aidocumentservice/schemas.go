@@ -24,6 +24,7 @@ const (
 	schemaTypeInteger   = "integer"
 	propReviewRequired  = "reviewRequired"
 	propEvidenceExcerpt = "evidenceExcerpt"
+	propPageNumber      = "pageNumber"
 )
 
 var extractFieldKeys = aicorrection.PredictedFieldKeys
@@ -116,14 +117,14 @@ func extractFieldSchema() map[string]any {
 			},
 			"value":            map[string]any{"type": "string", "maxLength": maxFieldValueRunes},
 			"confidence":       map[string]any{"type": "number"},
-			"pageNumber":       map[string]any{"type": schemaTypeInteger},
+			propPageNumber:     map[string]any{"type": schemaTypeInteger},
 			propReviewRequired: map[string]any{"type": "boolean"},
 		},
 		"required": []string{
 			"key",
 			"value",
 			"confidence",
-			"pageNumber",
+			propPageNumber,
 			propReviewRequired,
 		},
 	}
@@ -144,7 +145,7 @@ func extractStopSchema() map[string]any {
 			"date":                map[string]any{"type": "string", "maxLength": maxStopDateRunes},
 			"timeWindow":          map[string]any{"type": "string", "maxLength": maxStopTimeWindowRunes},
 			"appointmentRequired": map[string]any{"type": "boolean"},
-			"pageNumber":          map[string]any{"type": schemaTypeInteger},
+			propPageNumber:        map[string]any{"type": schemaTypeInteger},
 			propEvidenceExcerpt:   map[string]any{"type": "string", "maxLength": maxEvidenceRunes},
 			"confidence":          map[string]any{"type": "number"},
 			propReviewRequired:    map[string]any{"type": "boolean"},
@@ -160,7 +161,7 @@ func extractStopSchema() map[string]any {
 			"date",
 			"timeWindow",
 			"appointmentRequired",
-			"pageNumber",
+			propPageNumber,
 			propEvidenceExcerpt,
 			"confidence",
 			propReviewRequired,
