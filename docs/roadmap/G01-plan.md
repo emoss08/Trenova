@@ -858,6 +858,71 @@ M5b is drift: Trenova compares what it sent with what the provider holds now, ra
 - **Sync ledger** gains a **Drift findings** figure linking to the page.
 - A record link `accounting_drift_finding`, a navigation entry, and a product guide page `accounting/sync-drift.md`.
 
+### 9.7 M6 design, pinned to the code
+
+M6 is ledger mode: Trenova is the ledger, and the accounting system receives Trenova's posted journal entries instead of its documents. A connection runs in one mode. Document mode (M3 to M5) sends invoices, payments and bills. Ledger mode sends journal entries, detailed or summed per day, and compares trial balances per account. Every rule sits above the provider-neutral ports, and QuickBooks Online is the first adapter.
+
+**What the survey found.**
+- **Nothing fires when a journal is posted.** Entries reach `Posted` through two repository writes: `JournalPostingRepository.CreatePosting` with `IsPosted` (every subledger posting, manual journals, reversals, fiscal close) and `JournalReviewRepository.PostEntry` (the review page's approve-then-post). No outbox, event or trigger follows either, and the safety net sweeps hourly.
+- **A posted entry does not stay `Posted`.** Reversing one writes a new `Reversal` entry and flips the original's status to `Reversed`. What was posted is `is_posted`, not the status.
+- **Manual posting now reaches `Posted`.** Decision D4 assumed Manual-mode journals never post. emoss08/trenova#631 added the review page's post, so ledger mode works in both posting modes; in Manual mode an entry is sent once a person posts it.
+- **Journals are in the functional currency** and carry no currency of their own. Lines carry optional `customer_id` and `vendor_id`, and `journal_sources` names the document that produced the entry.
+- **Fiscal close writes `Closing` and `Opening` entries.** QuickBooks closes its own years and computes retained earnings itself, so those entries must never reach it.
+- **The trial balance has a period grain** (`gl_account_balances_by_period`); there is no as-of-date query, but posted lines can be summed by date directly.
+- **GL account mapping covers only payables accounts** (`glAccountTargets` offers the accounts payables post to). Ledger mode needs every account that has activity.
+- **The QuickBooks client has no `JournalEntry` and no reports.** A QuickBooks journal entry must balance, and a line on an Accounts Receivable or Accounts Payable account must name a customer or a vendor.
+
+**Connection settings.** Three columns on `accounting_connections`:
+- `sync_mode`: `Document` (the default for every existing connection) or `Ledger`.
+- `ledger_granularity`: `Detailed` (one provider journal entry per Trenova entry) or `DailySummary` (one per accounting date, summed per account and party). Empty in document mode.
+- `ledger_opening_balances_sent_at`: set when the opening balances entry is queued.
+
+The mode and granularity are chosen before mappings, so the mapping step knows what to ask for, and they are fixed once sync is enabled. Changing them afterwards would send some activity twice or not at all; the answer is to disconnect and connect again. A new setup step, `Mode`, comes first for new connections. Connections already past setup stay in document mode.
+
+**What ledger mode sends.**
+- **Journal entries.** A new sync object type, `JournalEntry` (source event `JournalPosted`), one per posted Trenova entry dated on or after the sync start date, except `Closing` and `Opening` entries.
+- **Daily summaries.** In `DailySummary`, an entry queues its day instead: object type `JournalSummary`, object id `jday_<yyyymmdd>`, object number the date. The push sums every sendable entry posted for that date at the time it runs. An entry posted later for a day already sent queues an `Update` for the day, which sends the whole day again, so the provider's entry always equals the day.
+- **Opening balances.** When ledger sync is enabled with **Send opening balances**, one `JournalSummary` record (`jopen_<yyyymmdd>`, dated the day before the start date) sums every posted line before the start date, closing and opening entries included, so the provider starts from Trenova's balances. Leaving it off is for a provider that already holds them; trial-balance drift then shows any difference.
+- **Parties.** Customers and vendors still sync, as dependencies of the entries that name them.
+- **Nothing else.** In ledger mode, document enqueues (invoices, memos, payments, bills) are no-ops, and in document mode journal enqueues are. Backfill offers journal entries only, and refuses a range before the start date once opening balances were sent, because they already hold that activity.
+
+**Enqueue.** A decorator in `core/services/ledgersync` wraps both repository ports. After `CreatePosting` with `IsPosted`, and after `PostEntry`, it calls the enqueuer inside the same transaction with the entry id and accounting date. Every posting path is covered by one piece of code, and the entry and its record commit together. `fx.Decorate` installs it. The safety net also finds posted entries without a record, as it does for documents.
+
+**Lines.**
+- **Accounts:** each Trenova GL account maps to a provider account (`TargetGLAccount`), falling back to an account role mapping as payables does. A missing mapping blocks the record as `Mapping`, naming the account.
+- **Parties:** a line on a provider account whose type is Accounts Receivable or Accounts Payable names a party. The line's own `customer_id` or `vendor_id` wins. Otherwise the entry's source decides: an invoice, memo or payment names its customer; a carrier settlement its carrier; a driver settlement its driver. An AR or AP line with no party blocks the record, naming the account and the entry.
+- **Summaries** add the lines of the day per provider account and party, then drop zero lines. A day whose lines all cancel sends nothing and the record is marked `Synced` with no provider id.
+- **Descriptions:** the entry's number and description, and each line's description. The provider's document number is the entry number (detailed) or `JE yyyy-mm-dd` (summary).
+- **Currency:** lines are in the functional currency. When the provider keeps its books in another currency and has multicurrency, the entry is sent in the functional currency with the rate looked up for its date (the §8.3 rule); otherwise it is `Blocked(Currency)`.
+- **Closed books and re-dating:** the M3 checks and the first-open-day redate apply unchanged.
+
+**Provider port.** `AccountingJournalWriter`, beside the document writer:
+- `CreateJournalEntry(ctx, doc)` and `UpdateJournalEntry(ctx, doc)`, with `AccountingJournalDocument{Auth, RequestID, ExternalID, DocNumber, TxnDate, CurrencyCode, ExchangeRate, PrivateNote, Lines[{AccountExternalID, PostingType (Debit or Credit), Amount, Description, PartyKind (customer or vendor), PartyExternalID}]}`.
+- The QuickBooks adapter posts `JournalEntry` with `JournalEntryLineDetail` lines (`PostingType`, `AccountRef`, `Entity`), reads the `SyncToken` for an update, and links to `journal?txnId=`.
+
+**Mapping.** In ledger mode the mapping targets are every active GL account. The ones that block sync are those with a posted line since the start date, or any posted line when opening balances will be sent. The mapping step counts only those, and the scorer proposes provider accounts by code, name and type as it does for roles.
+
+**Trial-balance drift.**
+- **What is compared:** for each provider account that Trenova accounts map to, Trenova's balance as of the check date against the provider's trial balance for the same date. A difference is a new kind, `TrialBalanceMismatch`, with object type `GLAccount`. Its object is the lowest-coded Trenova account mapped there, its number the provider account's name, and its detail each mapped Trenova account's share.
+- **Trenova's side** is what Trenova sent: opening balances (when sent) plus sendable posted lines from the start date to the check date. Income and expense accounts count only from the provider's fiscal year start (a new `external_fiscal_year_start_month`, read from the company's preferences), because the provider's trial balance shows them year to date.
+- **Left out:** the provider's retained earnings account, which the provider computes from prior years itself.
+- **Provider port:** `AccountingLedgerReader.ReadTrialBalance(ctx, {Auth, AsOf})` returns `{AccountExternalID, DebitMinor, CreditMinor}` rows. QuickBooks reads the `TrialBalance` report on the accrual basis.
+- **When:** the nightly reconcile runs it for ledger-mode connections as a third phase after documents and balances, and **Check now** runs it too.
+- **Fixes:** none in either direction. A trial balance difference means an entry made in the provider or one Trenova could not send; the finding says which account to look at from which date, and a person dismisses it once explained.
+
+**Agent surface.**
+- No new write tools: mode and granularity are setup, which `enableAccountingSync` already exempts as configuration, and a new `chooseAccountingSyncMode` mutation carries the same exemption.
+- The existing tools cover ledger records: retry, skip, release, redate and backfill accept the new object types. `get_accounting_sync_status` reports the mode.
+- `dismiss_accounting_drift` accepts the new kind; `resolve_accounting_drift` refuses it with the reason above.
+
+**UI.**
+- **Mode step** in the connect wizard, before mappings: **Send documents** or **Send journal entries**, and for journal entries **Detailed** or **Daily summary**. It explains that in Manual posting mode entries go once they are posted on **Journals to post**.
+- **Start step** gains **Send opening balances** in ledger mode.
+- **Connection panel and sync ledger** show the mode; the ledger's object filter gains **Journal entry** and **Daily summary**.
+- **Mappings page** gains the **GL accounts** group for every active account in ledger mode.
+- **Drift page** shows trial balance findings with both balances and the Trenova accounts behind them.
+- **Product guide:** a task on the integrations page for choosing the mode, and one on the sync-ledger page for journal entries.
+
 ## 10. Testing
 
 - **Unit**: payload builders with golden JSON per document type and edge case (negative credit memo totals, short pay, multi-shipment consolidated invoice, split bill), error classifier per provider fault, mapping scorer with a fixture chart of accounts, retry schedule, token refresh race (two refreshers, one wins, the other reads the new token).
