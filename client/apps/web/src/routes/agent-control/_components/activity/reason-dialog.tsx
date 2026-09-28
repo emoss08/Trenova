@@ -11,6 +11,11 @@ import {
   useProposalPreview,
 } from "@/components/assistant/proposal-preview/use-proposal-preview";
 import type { PreviewScope } from "@/lib/graphql/agent-preview";
+import {
+  askAgentMessage,
+  type WouldFailReason,
+} from "@/components/assistant/proposal-preview/preview-warnings";
+import type { WouldFailActions } from "@/components/assistant/proposal-preview/proposal-preview";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -52,8 +57,39 @@ export type ReasonDialogRequest = {
   requireReason: boolean;
   destructive?: boolean;
   preview?: ReasonDialogPreview;
+  /** What the reason starts as: the reasons a write would be refused over, when the person asked to reject over them. */
+  initialReason?: string;
+  /**
+   * Where the surface sends a person who wants the agent to fix a write the
+   * preview says would be refused: an approval dialog closes and opens the
+   * rejection with the reasons written. Absent, the dialog writes them into
+   * its own reason, which a rejection then carries to the agent.
+   */
+  onAskAgent?: (reason: string) => void;
   onConfirm: (reason: string, previewDigest: string | undefined) => Promise<void> | void;
 };
+
+/** The most a reason may hold. */
+const REASON_MAX_LENGTH = 500;
+
+/**
+ * A key per request, so a surface that swaps one request for another while
+ * the dialog is open (an approval turned into a rejection) gets a fresh form
+ * that starts from the new request's reason.
+ */
+const requestKeys = new WeakMap<ReasonDialogRequest, number>();
+let lastRequestKey = 0;
+
+function requestKey(request: ReasonDialogRequest): number {
+  const known = requestKeys.get(request);
+  if (known !== undefined) {
+    return known;
+  }
+  lastRequestKey += 1;
+  requestKeys.set(request, lastRequestKey);
+
+  return lastRequestKey;
+}
 
 type ReasonDialogProps = {
   request: ReasonDialogRequest | null;
@@ -70,18 +106,20 @@ export function ReasonDialog({ request, onClose }: ReasonDialogProps) {
   return (
     <Dialog open={request !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent size={request?.preview ? "lg" : "md"}>
-        {request && <ReasonForm request={request} onClose={onClose} />}
+        {request && <ReasonForm key={requestKey(request)} request={request} onClose={onClose} />}
       </DialogContent>
     </Dialog>
   );
 }
 
-// Mounted only while the dialog is open, so each request starts from a blank
-// reason without any effect having to reset it.
+// Mounted only while the dialog is open and keyed by its request, so each
+// request starts from its own reason without any effect having to reset it.
 function ReasonForm({ request, onClose }: { request: ReasonDialogRequest; onClose: () => void }) {
   const t = useT();
   const id = useId();
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState(() =>
+    (request.initialReason ?? "").slice(0, REASON_MAX_LENGTH),
+  );
   const [isPending, setIsPending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -100,6 +138,27 @@ function ReasonForm({ request, onClose }: { request: ReasonDialogRequest; onClos
 
   const trimmed = reason.trim();
   const previewAllows = preview?.approving !== true || canApprove(approval.gate);
+
+  // A write that would be refused is turned down with its reasons, so the
+  // agent learns what to fix. Nothing here can change a value: that is the
+  // editor's, which the surface behind the dialog offers.
+  const toolName =
+    preview?.kind === "plan"
+      ? (planQuery.data?.steps.find((step) =>
+          step.preview.warnings.some((entry) => entry.code === "would_fail"),
+        )?.preview.tool ?? "")
+      : (proposalQuery.data?.tool ?? "");
+  const wouldFail: WouldFailActions = {
+    onAskAgent: (reasons: WouldFailReason[]) => {
+      const text = askAgentMessage(toolName, reasons, t).slice(0, REASON_MAX_LENGTH);
+      if (request.onAskAgent) {
+        request.onAskAgent(text);
+      } else {
+        setReason(text);
+      }
+    },
+  };
+
   const canConfirm = !isPending && (!request.requireReason || trimmed !== "") && previewAllows;
 
   const confirm = async () => {
@@ -139,7 +198,12 @@ function ReasonForm({ request, onClose }: { request: ReasonDialogRequest; onClos
               density={preview.density}
             >
               {(plan) => (
-                <PlanPreview plan={plan} density={preview.density} stepTitle={preview.stepTitle} />
+                <PlanPreview
+                  plan={plan}
+                  density={preview.density}
+                  stepTitle={preview.stepTitle}
+                  wouldFail={wouldFail}
+                />
               )}
             </PreviewLoadState>
           ) : (
@@ -148,7 +212,9 @@ function ReasonForm({ request, onClose }: { request: ReasonDialogRequest; onClos
               changed={approval.changed}
               density={preview.density}
             >
-              {(data) => <ProposalPreview preview={data} density={preview.density} />}
+              {(data) => (
+                <ProposalPreview preview={data} density={preview.density} wouldFail={wouldFail} />
+              )}
             </PreviewLoadState>
           )}
         </section>
@@ -163,7 +229,7 @@ function ReasonForm({ request, onClose }: { request: ReasonDialogRequest; onClos
           value={reason}
           onChange={(event) => setReason(event.target.value)}
           minRows={3}
-          maxLength={500}
+          maxLength={REASON_MAX_LENGTH}
           placeholder={t("A sentence the next person can act on.")}
         />
       </div>

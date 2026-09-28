@@ -15,7 +15,7 @@ var predictedFields = []PredictedField{
 	{Key: "loadNumber", Label: "Load Number"},
 	{Key: "referenceNumber", Label: "Reference Number"},
 	{Key: "shipper", Label: "Shipper"},
-	{Key: "consignee", Label: "Consignee"},
+	{Key: FieldConsignee, Label: "Consignee"},
 	{Key: "rate", Label: "Rate"},
 	{Key: "equipmentType", Label: "Equipment Type"},
 	{Key: "commodity", Label: "Commodity"},

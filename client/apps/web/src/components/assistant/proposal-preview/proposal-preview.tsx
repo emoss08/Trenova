@@ -40,7 +40,9 @@ import {
   previewWarningText,
   previewWarningTone,
   visibleWarnings,
+  wouldFailReasons,
   type PreviewWarningTone,
+  type WouldFailReason,
 } from "./preview-warnings";
 import { ValueChange } from "./value-change";
 
@@ -71,10 +73,35 @@ const WARNING_ICON: Record<PreviewWarningTone, LucideIcon> = {
   info: InfoIcon,
 };
 
-function WarningAlert({ warning }: { warning: PreviewWarning }) {
+/**
+ * What a surface can do about a write that would be refused. Each is
+ * offered only where the surface can honour it: a chat card can change a
+ * value in the editor and ask its agent; a queue can change a value and
+ * reject with the reasons; a plan step can only ask.
+ */
+export type WouldFailActions = {
+  /** Whether the person may change the parameter a reason names. */
+  canChange?: (param: string) => boolean;
+  /** Opens the editor on the parameter the reason names. */
+  onChange?: (reason: WouldFailReason) => void;
+  /** Asks the agent for a corrected proposal, naming every reason. */
+  onAskAgent?: (reasons: WouldFailReason[]) => void;
+};
+
+function WarningAlert({
+  warning,
+  wouldFail,
+}: {
+  warning: PreviewWarning;
+  wouldFail?: WouldFailActions;
+}) {
   const t = useT();
   const tone = previewWarningTone(warning);
   const Icon = WARNING_ICON[tone];
+  const reasons = wouldFailReasons(warning);
+  if (reasons.length > 0) {
+    return <WouldFailAlert reasons={reasons} actions={wouldFail} />;
+  }
 
   return (
     <Alert size="sm" variant={WARNING_VARIANT[tone]}>
@@ -82,6 +109,68 @@ function WarningAlert({ warning }: { warning: PreviewWarning }) {
       <AlertDescription>{previewWarningText(warning, t)}</AlertDescription>
     </Alert>
   );
+}
+
+/**
+ * A write its own rules would refuse, reason by reason. The old notice said
+ * only that it would not go through; the person needs what is wrong and a
+ * way forward: change the value the rule names, where they may, or have the
+ * agent fix it.
+ */
+function WouldFailAlert({
+  reasons,
+  actions,
+}: {
+  reasons: WouldFailReason[];
+  actions?: WouldFailActions;
+}) {
+  const t = useT();
+  const changeable = (reason: WouldFailReason) =>
+    reason.param !== "" &&
+    actions?.onChange !== undefined &&
+    (actions.canChange?.(reason.param) ?? false);
+
+  return (
+    <Alert size="sm" variant="destructive">
+      <CircleAlertIcon />
+      <AlertTitle>{t("This would not go through as it stands")}</AlertTitle>
+      <AlertDescription>
+        <ul className="flex w-full flex-col gap-1">
+          {reasons.map((reason, index) => (
+            <li
+              key={`${reason.param}-${index}`}
+              className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5"
+            >
+              <span className="min-w-0 break-words">
+                {reason.label !== "" && <span className="font-medium">{reason.label}: </span>}
+                {reason.message}
+              </span>
+              {changeable(reason) && (
+                <Button size="xxs" variant="outline" onClick={() => actions?.onChange?.(reason)}>
+                  <PencilIcon className="size-3" />
+                  {t("Change {0}", reason.label !== "" ? reason.label : paramLabel(reason.param))}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+      {actions?.onAskAgent && (
+        <AlertAction>
+          <Button size="xs" variant="outline" onClick={() => actions.onAskAgent?.(reasons)}>
+            {t("Ask the agent to fix it")}
+          </Button>
+        </AlertAction>
+      )}
+    </Alert>
+  );
+}
+
+/** The last name in a parameter path, in words: shipment.moves[0].bol is "Bol". */
+function paramLabel(param: string): string {
+  const last = param.split(".").at(-1) ?? param;
+
+  return humanizeKey(last.replace(/\[\d+\]$/u, ""));
 }
 
 /**
@@ -317,11 +406,14 @@ export function ProposalPreview({
   preview,
   density = "full",
   inPlan = false,
+  wouldFail,
 }: {
   preview: ProposalPreviewData;
   density?: PreviewDensity;
   /** Inside a plan the step draws its own dependency note and the plan its own staleness. */
   inPlan?: boolean;
+  /** What the surface offers when the write would be refused; nothing when it cannot act. */
+  wouldFail?: WouldFailActions;
 }) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
@@ -347,7 +439,7 @@ export function ProposalPreview({
         </Alert>
       )}
       {warnings.map((warning, index) => (
-        <WarningAlert key={`${warning.code}-${index}`} warning={warning} />
+        <WarningAlert key={`${warning.code}-${index}`} warning={warning} wouldFail={wouldFail} />
       ))}
 
       {preview.changes.length === 0 ? (

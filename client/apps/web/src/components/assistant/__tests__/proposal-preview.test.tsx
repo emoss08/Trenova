@@ -2,13 +2,22 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MessagePreview } from "../proposal-preview/message-preview";
 import { MoneyPreview } from "../proposal-preview/money-preview";
 import { PlanPreview } from "../proposal-preview/plan-preview";
 import { ProposalPreview } from "../proposal-preview/proposal-preview";
 import { ValueChange } from "../proposal-preview/value-change";
-import { field, message, money, planPreview, preview, record } from "./preview-fixtures";
+import {
+  field,
+  message,
+  money,
+  planPreview,
+  preview,
+  reason,
+  record,
+  warning,
+} from "./preview-fixtures";
 
 function renderIn(ui: ReactElement) {
   return render(<MemoryRouter>{ui}</MemoryRouter>);
@@ -307,8 +316,8 @@ describe("ProposalPreview", () => {
       <ProposalPreview
         preview={preview({
           warnings: [
-            { code: "already_told_customer", args: [], message: "ignored English" },
-            { code: "brand_new_code", args: [], message: "Something the client has not met." },
+            warning({ code: "already_told_customer", message: "ignored English" }),
+            warning({ code: "brand_new_code", message: "Something the client has not met." }),
           ],
         })}
       />,
@@ -317,6 +326,67 @@ describe("ProposalPreview", () => {
     expect(screen.getByText("The customer has already been told about this.")).toBeInTheDocument();
     expect(screen.queryByText("ignored English")).not.toBeInTheDocument();
     expect(screen.getByText("Something the client has not met.")).toBeInTheDocument();
+  });
+
+  // The old card said only "This would not go through as it stands." and
+  // dropped the reason the server sent. The person needs each reason and a
+  // way forward: change the value it names, or have the agent fix it.
+  it("lists each reason a refusal names, with a way to change the field or ask the agent", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const onAskAgent = vi.fn();
+    const credit = reason({
+      field: "",
+      label: "",
+      param: "",
+      message: "The customer is on credit hold",
+    });
+    renderIn(
+      <ProposalPreview
+        preview={preview({ warnings: [warning({ reasons: [reason(), credit] })] })}
+        wouldFail={{
+          canChange: (param) => param === "shipment.bol",
+          onChange,
+          onAskAgent,
+        }}
+      />,
+    );
+
+    expect(screen.getByText("This would not go through as it stands")).toBeInTheDocument();
+    expect(screen.getByText("BOL is already in use by shipment SEED-DET-009")).toBeInTheDocument();
+    expect(screen.getByText("The customer is on credit hold")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^Change / })).toHaveLength(1);
+
+    await user.click(screen.getByRole("button", { name: "Change BOL" }));
+    expect(onChange).toHaveBeenCalledWith(reason());
+
+    await user.click(screen.getByRole("button", { name: "Ask the agent to fix it" }));
+    expect(onAskAgent).toHaveBeenCalledWith([reason(), credit]);
+  });
+
+  it("shows the server's reasons when it structured none, and offers nothing to change", () => {
+    renderIn(
+      <ProposalPreview
+        preview={preview({
+          warnings: [
+            warning({
+              reasons: [],
+              message:
+                "This would be refused as it stands: validation failed:\n- Rate not found\n- Customer is inactive",
+            }),
+          ],
+        })}
+        wouldFail={{ canChange: () => true, onChange: vi.fn() }}
+      />,
+    );
+
+    expect(screen.getByText("Rate not found")).toBeInTheDocument();
+    expect(screen.getByText("Customer is inactive")).toBeInTheDocument();
+    expect(screen.queryByText("This would not go through as it stands.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Change / })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Ask the agent to fix it" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps a compact preview short and opens the rest on request", async () => {

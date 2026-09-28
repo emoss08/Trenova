@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -18,11 +19,15 @@ import (
 type pricingShipments struct {
 	rating    *serviceports.ShipmentRatingOutcome
 	duplicate bool
+	refusal   error
 	saved     *shipment.Shipment
 	guard     writeGuard
 }
 
 func (f *pricingShipments) prepare(entity *shipment.Shipment) error {
+	if f.refusal != nil {
+		return f.refusal
+	}
 	if f.duplicate {
 		return errortypes.NewValidationError(
 			"bol",
@@ -160,4 +165,53 @@ func TestCreateShipment_PreviewWarnsWhenTheShipmentWouldBeRefused(t *testing.T) 
 	assert.Empty(t, preview.Changes)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Message, "BOL")
+}
+
+// A copied shipment that keeps its BOL is refused over the BOL alone, and
+// the person is told so in those words, with the parameter that carries it.
+func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
+	t.Parallel()
+
+	duplicate := errortypes.NewMultiError()
+	duplicate.Add(
+		"bol",
+		errortypes.ErrInvalid,
+		"BOL is already in use by shipment(s) with Pro Number(s): {0}",
+		"SEED-DET-009",
+	)
+	shipments := &pricingShipments{refusal: duplicate}
+	tool := newCreateShipmentTool(shipments, nil, nil).(*createShipmentTool)
+
+	preview := previewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
+		return tool.Preview(t.Context(), createShipmentParams())
+	})
+	toolpreview.LocateReasons(preview.Warnings, tool.ParamSchema())
+
+	refusal := preview.Refusal()
+	require.NotNil(t, refusal)
+	assert.Equal(t,
+		"This would be refused as it stands: validation failed:\n"+
+			"- BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",
+		refusal.Message,
+	)
+	require.Len(t, refusal.Reasons, 1)
+	assert.Equal(t, agent.PreviewReason{
+		Field:   "bol",
+		Label:   "BOL",
+		Message: "BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",
+		Param:   "shipment.bol",
+	}, refusal.Reasons[0])
+}
+
+func TestCreateShipment_SaysABOLMustBeUniqueAndIsOptional(t *testing.T) {
+	t.Parallel()
+
+	tool := newCreateShipmentTool(&pricingShipments{}, nil, nil)
+	properties := tool.ParamSchema()["properties"].(map[string]any)
+	shipmentSchema := properties["shipment"].(map[string]any)
+	bol := shipmentSchema["properties"].(map[string]any)["bol"].(map[string]any)
+
+	assert.Contains(t, bol["description"], "unique")
+	assert.Contains(t, tool.Description(), "BOL must be unique")
+	assert.NotContains(t, shipmentSchema["required"], "bol")
 }

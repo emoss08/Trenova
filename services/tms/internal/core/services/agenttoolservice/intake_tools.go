@@ -86,7 +86,8 @@ func (t *createShipmentTool) Description() string {
 		"are optional; a shipment with none is rated from the customer's agreements. " +
 		"When the shipment comes from an uploaded document, pass sourceDocumentId so " +
 		"the document is linked and its import conversation closed. The pro number is " +
-		"assigned by the system."
+		"assigned by the system. A BOL must be unique among open shipments, so a copied " +
+		"shipment needs a new BOL or none; ask the person for it rather than reusing one."
 }
 
 func (t *createShipmentTool) ParamSchema() map[string]any {
@@ -118,8 +119,11 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 						"description": "A trailer equipment type, from list_equipment_types.",
 					},
 					"bol": map[string]any{
-						"type":        "string",
-						"description": "The customer's BOL or reference.",
+						"type": "string",
+						"description": "The customer's BOL or reference. It must be unique among " +
+							"open shipments, so never reuse one from another shipment. Optional " +
+							"unless the customer's billing requires a BOL; leave it out when " +
+							"none is known.",
 					},
 					"pieces": map[string]any{"type": "integer"},
 					"weight": map[string]any{"type": "integer", "description": "Pounds."},

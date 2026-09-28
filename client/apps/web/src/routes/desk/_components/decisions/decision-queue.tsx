@@ -1,4 +1,8 @@
-import { ProposalEditor, type ProposalEditorRequest } from "@/components/assistant/proposal-editor";
+import {
+  ProposalEditor,
+  type EditorFocus,
+  type ProposalEditorRequest,
+} from "@/components/assistant/proposal-editor";
 import { batchPreviewDigests } from "@/components/assistant/proposal-preview/preview-gate";
 import {
   prefetchPlanPreview,
@@ -132,12 +136,21 @@ export function DecisionQueue() {
   );
 
   const decideOne = useCallback(
-    (node: PendingDecisionNode, decision: "Accepted" | "Rejected") => {
+    function open(
+      node: PendingDecisionNode,
+      decision: "Accepted" | "Rejected",
+      initialReason?: string,
+    ) {
       const accepting = decision === "Accepted";
       const label = isPendingPlan(node)
         ? node.title
         : presentProposal(asAssistantProposal(node)).summary;
       setDialog({
+        initialReason,
+        // A write the preview says would be refused is turned down with its
+        // reasons rather than approved: the approval closes and the
+        // rejection opens with them written.
+        onAskAgent: accepting ? (reason) => open(node, "Rejected", reason) : undefined,
         title: accepting ? t("Approve this change?") : t("Reject this change?"),
         description: accepting
           ? t("{0} Give a short reason so the audit trail explains the approval.", label)
@@ -170,7 +183,7 @@ export function DecisionQueue() {
   );
 
   const modifyOne = useCallback(
-    (node: PendingDecisionNode) => {
+    (node: PendingDecisionNode, focus?: EditorFocus) => {
       if (!isPendingProposal(node)) {
         return;
       }
@@ -183,6 +196,7 @@ export function DecisionQueue() {
         summary: presentProposal(proposal).summary,
         fields: proposal.fields,
         arguments: proposal.arguments,
+        focus,
         withReason: { label: t("Reason"), required: false },
         preview: { scope: "approver", proposalId: node.id },
         onConfirm: async (modifications, reason, previewDigest) => {
@@ -317,8 +331,8 @@ export function DecisionQueue() {
   const actions = {
     busy: busy || !canDecide,
     onAccept: () => focused && decideOne(focused, "Accepted"),
-    onReject: () => focused && decideOne(focused, "Rejected"),
-    onModify: () => focused && modifyOne(focused),
+    onReject: (initialReason?: string) => focused && decideOne(focused, "Rejected", initialReason),
+    onModify: (focus?: EditorFocus) => focused && modifyOne(focused, focus),
   };
 
   return (

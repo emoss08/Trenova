@@ -317,7 +317,9 @@ func compareCalendarDays(predicted timeutils.CalendarDay, confirmed string) comp
 	if !ok || !expected.HasYear() {
 		return comparisonUnreadable
 	}
-	if predicted.Matches(time.Date(expected.Year, expected.Month, expected.Day, 0, 0, 0, 0, time.UTC)) {
+	if predicted.Matches(
+		time.Date(expected.Year, expected.Month, expected.Day, 0, 0, 0, 0, time.UTC),
+	) {
 		return comparisonEqual
 	}
 

@@ -21,7 +21,10 @@ import (
 // Baseline pins the target and previews the write in one read-only
 // snapshot, when a proposal is filed. Whatever cannot be read is left out:
 // a baseline never fails the proposal. A kept baseline holds every value but
-// a Confidential one; it is read only to tell which values moved since.
+// a Confidential one; it is read only to tell which values moved since. A
+// preview that says the write would be refused is returned for the runtime
+// to act on and kept only when the request files it anyway, since a write
+// that is not filed has no proposal for its baseline to belong to.
 func (s *Service) Baseline(
 	ctx context.Context,
 	req *services.ProposalBaselineRequest,
@@ -84,7 +87,7 @@ func (s *Service) Baseline(
 		Records:  previewRecords(result.Preview),
 	})
 
-	if req.Persist {
+	if req.Persist && (req.FileRefused || result.Preview.Refusal() == nil) {
 		s.keepBaseline(ctx, req, result)
 	}
 
