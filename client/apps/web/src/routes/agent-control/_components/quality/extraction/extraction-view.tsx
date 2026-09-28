@@ -21,6 +21,7 @@ import { CorrectionsTable } from "./corrections-table";
 import { ExtractionFigures } from "./extraction-figures";
 import { EXTRACTION_STALE_MS, EXTRACTION_WINDOW_DAYS } from "./extraction-model";
 import { NewRunDialog } from "./new-run-dialog";
+import { ProviderTrendsPanel } from "./provider-trends-panel";
 import { RolloutView } from "./rollout-view";
 import { RunsTable } from "./runs-table";
 import { ShadowView } from "./shadow-view";
@@ -87,12 +88,16 @@ export default function ExtractionView() {
         ) : null}
       </div>
 
-      {view === "accuracy" &&
-        (accuracy.data ? (
-          <AccuracyPanel accuracy={accuracy.data} />
-        ) : (
-          <Skeleton className="h-64" aria-busy />
-        ))}
+      {view === "accuracy" && (
+        <>
+          {accuracy.data ? (
+            <AccuracyPanel accuracy={accuracy.data} />
+          ) : (
+            <Skeleton className="h-64" aria-busy />
+          )}
+          <ProviderTrendsPanel />
+        </>
+      )}
       {view === "corrections" && <CorrectionsTable />}
       {view === "cases" && <CasesTable />}
       {view === "runs" && <RunsTable />}

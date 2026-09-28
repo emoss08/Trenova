@@ -4233,6 +4233,433 @@ func (ec *executionContext) fieldContext_ExtractionFieldAccuracy_accuracy(_ cont
 	return graphql.NewScalarFieldContext("ExtractionFieldAccuracy", field, false, false, errors.New("field of type Float does not have child fields"))
 }
 
+func (ec *executionContext) _ExtractionProviderTrend_providerId(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_providerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_providerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrend", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrend_providerName(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_providerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_providerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrend", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrend_model(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_model(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Model, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_model(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrend", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrend_providerRemoved(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_providerRemoved(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderRemoved, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_providerRemoved(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrend", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrend_weeks(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_weeks(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Weeks, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []aicorrection.WeekAccuracy) graphql.Marshaler {
+			return ec.marshalNExtractionWeekAccuracy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐWeekAccuracyᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_weeks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExtractionProviderTrend",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ExtractionWeekAccuracy(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExtractionProviderTrend_checked(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_checked(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Checked, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v aicorrection.WeekAccuracy) graphql.Marshaler {
+			return ec.marshalNExtractionWeekAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐWeekAccuracy(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_checked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExtractionProviderTrend",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ExtractionWeekAccuracy(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExtractionProviderTrend_baseline(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_baseline(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Baseline, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v aicorrection.WeekAccuracy) graphql.Marshaler {
+			return ec.marshalNExtractionWeekAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐWeekAccuracy(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_baseline(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExtractionProviderTrend",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ExtractionWeekAccuracy(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExtractionProviderTrend_dropPoints(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_dropPoints(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DropPoints, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_dropPoints(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrend", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrend_comparable(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_comparable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Comparable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_comparable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrend", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrend_drifting(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrend) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrend_drifting(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Drifting, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrend_drifting(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrend", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrends_weeks(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrends) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrends_weeks(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Weeks, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2ᚕint64ᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrends_weeks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrends", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrends_checkedWeek(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrends) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrends_checkedWeek(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CheckedWeek, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrends_checkedWeek(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrends", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrends_baselineStart(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrends) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrends_baselineStart(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BaselineStart, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrends_baselineStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrends", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrends_providers(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrends) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrends_providers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Providers, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []services.ExtractionProviderTrend) graphql.Marshaler {
+			return ec.marshalNExtractionProviderTrend2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrendᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrends_providers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExtractionProviderTrends",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ExtractionProviderTrend(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExtractionProviderTrends_driftPoints(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrends) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrends_driftPoints(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriftPoints, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrends_driftPoints(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrends", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrends_minWeekFields(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrends) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrends_minWeekFields(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinWeekFields, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrends_minWeekFields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrends", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionProviderTrends_minBaselineFields(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionProviderTrends) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionProviderTrends_minBaselineFields(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinBaselineFields, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionProviderTrends_minBaselineFields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionProviderTrends", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _ExtractionSnapshot_fields(ctx context.Context, field graphql.CollectedField, obj *aicorrection.Snapshot) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4640,6 +5067,121 @@ func (ec *executionContext) _ExtractionStop_timezone(ctx context.Context, field 
 }
 func (ec *executionContext) fieldContext_ExtractionStop_timezone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ExtractionStop", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionWeekAccuracy_weekStart(ctx context.Context, field graphql.CollectedField, obj *aicorrection.WeekAccuracy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionWeekAccuracy_weekStart(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WeekStart, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionWeekAccuracy_weekStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionWeekAccuracy", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionWeekAccuracy_corrections(ctx context.Context, field graphql.CollectedField, obj *aicorrection.WeekAccuracy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionWeekAccuracy_corrections(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Corrections, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionWeekAccuracy_corrections(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionWeekAccuracy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionWeekAccuracy_scored(ctx context.Context, field graphql.CollectedField, obj *aicorrection.WeekAccuracy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionWeekAccuracy_scored(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Scored, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionWeekAccuracy_scored(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionWeekAccuracy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionWeekAccuracy_correct(ctx context.Context, field graphql.CollectedField, obj *aicorrection.WeekAccuracy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionWeekAccuracy_correct(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Correct, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionWeekAccuracy_correct(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionWeekAccuracy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ExtractionWeekAccuracy_accuracy(ctx context.Context, field graphql.CollectedField, obj *aicorrection.WeekAccuracy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtractionWeekAccuracy_accuracy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Accuracy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtractionWeekAccuracy_accuracy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtractionWeekAccuracy", field, false, false, errors.New("field of type Float does not have child fields"))
 }
 
 // endregion **************************** field.gotpl *****************************
@@ -6504,6 +7046,157 @@ func (ec *executionContext) _ExtractionFieldAccuracy(ctx context.Context, sel as
 	return out
 }
 
+var extractionProviderTrendImplementors = []string{"ExtractionProviderTrend"}
+
+func (ec *executionContext) _ExtractionProviderTrend(ctx context.Context, sel ast.SelectionSet, obj *services.ExtractionProviderTrend) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, extractionProviderTrendImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExtractionProviderTrend")
+		case "providerId":
+			out.Values[i] = ec._ExtractionProviderTrend_providerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "providerName":
+			out.Values[i] = ec._ExtractionProviderTrend_providerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "model":
+			out.Values[i] = ec._ExtractionProviderTrend_model(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "providerRemoved":
+			out.Values[i] = ec._ExtractionProviderTrend_providerRemoved(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "weeks":
+			out.Values[i] = ec._ExtractionProviderTrend_weeks(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "checked":
+			out.Values[i] = ec._ExtractionProviderTrend_checked(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "baseline":
+			out.Values[i] = ec._ExtractionProviderTrend_baseline(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dropPoints":
+			out.Values[i] = ec._ExtractionProviderTrend_dropPoints(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "comparable":
+			out.Values[i] = ec._ExtractionProviderTrend_comparable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "drifting":
+			out.Values[i] = ec._ExtractionProviderTrend_drifting(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var extractionProviderTrendsImplementors = []string{"ExtractionProviderTrends"}
+
+func (ec *executionContext) _ExtractionProviderTrends(ctx context.Context, sel ast.SelectionSet, obj *services.ExtractionProviderTrends) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, extractionProviderTrendsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExtractionProviderTrends")
+		case "weeks":
+			out.Values[i] = ec._ExtractionProviderTrends_weeks(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "checkedWeek":
+			out.Values[i] = ec._ExtractionProviderTrends_checkedWeek(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "baselineStart":
+			out.Values[i] = ec._ExtractionProviderTrends_baselineStart(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "providers":
+			out.Values[i] = ec._ExtractionProviderTrends_providers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "driftPoints":
+			out.Values[i] = ec._ExtractionProviderTrends_driftPoints(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minWeekFields":
+			out.Values[i] = ec._ExtractionProviderTrends_minWeekFields(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minBaselineFields":
+			out.Values[i] = ec._ExtractionProviderTrends_minBaselineFields(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var extractionSnapshotImplementors = []string{"ExtractionSnapshot"}
 
 func (ec *executionContext) _ExtractionSnapshot(ctx context.Context, sel ast.SelectionSet, obj *aicorrection.Snapshot) graphql.Marshaler {
@@ -6697,6 +7390,64 @@ func (ec *executionContext) _ExtractionStop(ctx context.Context, sel ast.Selecti
 			}
 		case "timezone":
 			out.Values[i] = ec._ExtractionStop_timezone(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var extractionWeekAccuracyImplementors = []string{"ExtractionWeekAccuracy"}
+
+func (ec *executionContext) _ExtractionWeekAccuracy(ctx context.Context, sel ast.SelectionSet, obj *aicorrection.WeekAccuracy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, extractionWeekAccuracyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExtractionWeekAccuracy")
+		case "weekStart":
+			out.Values[i] = ec._ExtractionWeekAccuracy_weekStart(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "corrections":
+			out.Values[i] = ec._ExtractionWeekAccuracy_corrections(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "scored":
+			out.Values[i] = ec._ExtractionWeekAccuracy_scored(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "correct":
+			out.Values[i] = ec._ExtractionWeekAccuracy_correct(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "accuracy":
+			out.Values[i] = ec._ExtractionWeekAccuracy_accuracy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7087,6 +7838,36 @@ func (ec *executionContext) marshalNExtractionFieldAccuracy2ᚕgithubᚗcomᚋem
 	return ret
 }
 
+func (ec *executionContext) marshalNExtractionProviderTrend2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrend(ctx context.Context, sel ast.SelectionSet, v services.ExtractionProviderTrend) graphql.Marshaler {
+	return ec._ExtractionProviderTrend(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExtractionProviderTrend2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrendᚄ(ctx context.Context, sel ast.SelectionSet, v []services.ExtractionProviderTrend) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNExtractionProviderTrend2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrend(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNExtractionProviderTrends2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionProviderTrends(ctx context.Context, sel ast.SelectionSet, v *services.ExtractionProviderTrends) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExtractionProviderTrends(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNExtractionSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐSnapshot(ctx context.Context, sel ast.SelectionSet, v *aicorrection.Snapshot) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -7132,6 +7913,26 @@ func (ec *executionContext) marshalNExtractionStop2ᚕgithubᚗcomᚋemoss08ᚋt
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
 		return ec.marshalNExtractionStop2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐStopSnapshot(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNExtractionWeekAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐWeekAccuracy(ctx context.Context, sel ast.SelectionSet, v aicorrection.WeekAccuracy) graphql.Marshaler {
+	return ec._ExtractionWeekAccuracy(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExtractionWeekAccuracy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐWeekAccuracyᚄ(ctx context.Context, sel ast.SelectionSet, v []aicorrection.WeekAccuracy) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNExtractionWeekAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐWeekAccuracy(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {

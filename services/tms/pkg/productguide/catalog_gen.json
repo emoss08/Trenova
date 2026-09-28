@@ -1,5 +1,5 @@
 {
-  "version": "sha256:daa86d0dea7c9b82b91d078e389c12a1dd6567d8a253b88b68277568f515b2be",
+  "version": "sha256:613be625bc096c3484441fbb6f156a7928135467aeaff8f91ece6d27907d34d4",
   "modules": [
     {
       "id": "home",
@@ -2629,6 +2629,24 @@
             "Raise the share in steps while the candidate holds up. The same documents stay with the candidate, so each step adds documents.",
             "To stop at any time, select **Stop rollout**; every document goes back to production at once. If a guard stops the rollout, the page says which one and why, and the people who can change AI providers are notified. Save the settings with the rollout on to start a new comparison.",
             "Once the candidate has served a large share without a guard stopping it, give it the highest document extraction priority in **Providers** and turn the rollout off."
+          ]
+        },
+        {
+          "title": "Check whether a document extraction model is getting worse",
+          "keywords": [
+            "extraction accuracy over time",
+            "model drift",
+            "accuracy dropped",
+            "provider accuracy trend",
+            "weekly accuracy",
+            "extraction getting worse",
+            "accuracy alert"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document extraction**, and choose **Accuracy**.",
+            "Scroll to **Accuracy by provider over time**. Each AI provider that read documents in the last 12 weeks has a row: its **Weekly accuracy** line, **Last week**, the four weeks before it, the **Change** between them, and a **Status**.",
+            "**Drifting** means last week's accuracy fell more than the allowed points below that provider's own previous four weeks. **Not enough data** means too few fields were confirmed to judge; the help on the panel says how many are needed.",
+            "When a provider drifts, the people who can update AI providers are notified on Monday. To respond, compare it with another provider under **Shadow**, or lower its document extraction priority in **Providers** so another provider reads documents first."
           ]
         },
         {

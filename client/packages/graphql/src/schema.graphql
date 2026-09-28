@@ -11392,6 +11392,53 @@ type ExtractionFieldAccuracy {
 }
 
 """
+How one provider read documents week by week, and whether last week fell below its own recent weeks.
+"""
+type ExtractionProviderTrend {
+  """The weeks before it, taken together."""
+  baseline: ExtractionWeekAccuracy!
+  """The last complete week, the one judged for drift."""
+  checked: ExtractionWeekAccuracy!
+  """Whether both weeks had enough scored fields to compare."""
+  comparable: Boolean!
+  drifting: Boolean!
+  """
+  Baseline accuracy less last week's, in points; zero until both have enough fields.
+  """
+  dropPoints: Float!
+  model: String!
+  providerId: ID!
+  """Empty when the provider has since been removed."""
+  providerName: String!
+  providerRemoved: Boolean!
+  """
+  One entry per week in the window, oldest first; the last is the week in progress.
+  """
+  weeks: [ExtractionWeekAccuracy!]!
+}
+
+"""
+Each extraction provider's accuracy over recent weeks, read from the corrections people made.
+"""
+type ExtractionProviderTrends {
+  baselineStart: Timestamp!
+  checkedWeek: Timestamp!
+  """
+  How many points below its baseline last week must fall to count as drift.
+  """
+  driftPoints: Int!
+  """Scored fields the baseline needs before it is judged."""
+  minBaselineFields: Int!
+  """Scored fields last week needs before it is judged."""
+  minWeekFields: Int!
+  """
+  Providers that read documents in the window, the busiest last week first.
+  """
+  providers: [ExtractionProviderTrend!]!
+  weeks: [Timestamp!]!
+}
+
+"""
 How a candidate AI provider serves a share of an organization's real document extractions.
 """
 type ExtractionRollout {
@@ -11691,6 +11738,16 @@ type ExtractionStop {
   state: String!
   timeWindow: String!
   timezone: String!
+}
+
+"""One provider's corrections in one UTC week, Monday to Sunday."""
+type ExtractionWeekAccuracy {
+  """Correct divided by scored; zero when nothing was scored."""
+  accuracy: Float!
+  correct: Int!
+  corrections: Int!
+  scored: Int!
+  weekStart: Timestamp!
 }
 
 type FacilityDetentionStat {
@@ -18208,6 +18265,7 @@ type Query {
   extractionEvalResults(input: DataTableConnectionInput!, runId: ID!): ExtractionEvalResultConnection!
   extractionEvalRun(id: ID!): ExtractionEvalRun
   extractionEvalRuns(input: DataTableConnectionInput!): ExtractionEvalRunConnection!
+  extractionProviderTrends: ExtractionProviderTrends!
   extractionRollout: ExtractionRollout!
   extractionRolloutReport: ExtractionRolloutReport!
   extractionShadowReport(providerId: ID, windowDays: Int): ExtractionShadowReport!

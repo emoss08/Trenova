@@ -175,6 +175,15 @@ func (r *queryResolver) ExtractionAccuracy(ctx context.Context, windowDays *int)
 	return r.extractionEvalService.Accuracy(ctx, request)
 }
 
+func (r *queryResolver) ExtractionProviderTrends(ctx context.Context) (*services.ExtractionProviderTrends, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.extractionEvalService.ProviderTrends(ctx, tenantInfo(authCtx))
+}
+
 func (r *queryResolver) AiCorrections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AICorrectionConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpRead)
 	if err != nil {

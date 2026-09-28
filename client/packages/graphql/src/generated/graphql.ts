@@ -10995,6 +10995,13 @@ export type CancelExtractionEvalRunMutationVariables = Exact<{
 
 export type CancelExtractionEvalRunMutation = { cancelExtractionEvalRun: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } };
 
+export type ExtractionWeekAccuracyFieldsFragment = { weekStart: number, corrections: number, scored: number, correct: number, accuracy: number } & { ' $fragmentName'?: 'ExtractionWeekAccuracyFieldsFragment' };
+
+export type ExtractionProviderTrendsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ExtractionProviderTrendsQuery = { extractionProviderTrends: { weeks: Array<number>, checkedWeek: number, baselineStart: number, driftPoints: number, minWeekFields: number, minBaselineFields: number, providers: Array<{ providerId: string, providerName: string, model: string, providerRemoved: boolean, dropPoints: number, comparable: boolean, drifting: boolean, weeks: Array<{ ' $fragmentRefs'?: { 'ExtractionWeekAccuracyFieldsFragment': ExtractionWeekAccuracyFieldsFragment } }>, checked: { ' $fragmentRefs'?: { 'ExtractionWeekAccuracyFieldsFragment': ExtractionWeekAccuracyFieldsFragment } }, baseline: { ' $fragmentRefs'?: { 'ExtractionWeekAccuracyFieldsFragment': ExtractionWeekAccuracyFieldsFragment } } }> } };
+
 export type ExtractionRolloutFieldsFragment = { enabled: boolean, providerId: string | null, percent: number, maxAccuracyDropPoints: number, maxRejectionIncreasePoints: number, serving: boolean, startedAt: number | null, haltedAt: number | null, haltReason: ExtractionRolloutHaltReason | null, haltCandidateRate: number, haltBaselineRate: number, updatedById: string | null, version: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionRolloutFieldsFragment' };
 
 export type ExtractionRolloutArmFieldsFragment = { assigned: number, pending: number, accepted: number, rejected: number, failed: number, superseded: number, fellBack: number, rejectionRate: number } & { ' $fragmentName'?: 'ExtractionRolloutArmFieldsFragment' };
@@ -19274,6 +19281,15 @@ export const ExtractionEvalResultTableRowFieldsFragmentDoc = new TypedDocumentSt
   updatedAt
 }
     `, {"fragmentName":"ExtractionEvalResultTableRowFields"}) as unknown as TypedDocumentString<ExtractionEvalResultTableRowFieldsFragment, unknown>;
+export const ExtractionWeekAccuracyFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionWeekAccuracyFields on ExtractionWeekAccuracy {
+  weekStart
+  corrections
+  scored
+  correct
+  accuracy
+}
+    `, {"fragmentName":"ExtractionWeekAccuracyFields"}) as unknown as TypedDocumentString<ExtractionWeekAccuracyFieldsFragment, unknown>;
 export const ExtractionRolloutFieldsFragmentDoc = new TypedDocumentString(`
     fragment ExtractionRolloutFields on ExtractionRollout {
   enabled
@@ -24448,6 +24464,7 @@ export const UpdateExtractionEvalCaseDocument = {"__meta__":{"kind":"mutation","
 export const DeleteExtractionEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"DeleteExtractionEvalCase","hash":"sha256:4c69388ebac0d5ef618839865cc3665156f2f9d625726a3c26caf1708a8e0fb1"}} as unknown as TypedDocumentString<DeleteExtractionEvalCaseMutation, DeleteExtractionEvalCaseMutationVariables>;
 export const StartExtractionEvalRunDocument = {"__meta__":{"kind":"mutation","name":"StartExtractionEvalRun","hash":"sha256:ea672f1a8f3e38c00676db1397816a9ea2fbe76a5984639646caae893a4df346"}} as unknown as TypedDocumentString<StartExtractionEvalRunMutation, StartExtractionEvalRunMutationVariables>;
 export const CancelExtractionEvalRunDocument = {"__meta__":{"kind":"mutation","name":"CancelExtractionEvalRun","hash":"sha256:a10fd933738a3fb17410e9299af3e277c6f8caf4344bab5eb8eef4427e44b24f"}} as unknown as TypedDocumentString<CancelExtractionEvalRunMutation, CancelExtractionEvalRunMutationVariables>;
+export const ExtractionProviderTrendsDocument = {"__meta__":{"kind":"query","name":"ExtractionProviderTrends","hash":"sha256:3cb7587b54ec22e7bc8c496b570f118a43a60896010706198b9fe6ba2efde5cd"}} as unknown as TypedDocumentString<ExtractionProviderTrendsQuery, ExtractionProviderTrendsQueryVariables>;
 export const ExtractionRolloutDocument = {"__meta__":{"kind":"query","name":"ExtractionRollout","hash":"sha256:52ed556373701746c9e09a6a6cbb6fd99c537a8154b970baa5edf1633c821f07"}} as unknown as TypedDocumentString<ExtractionRolloutQuery, ExtractionRolloutQueryVariables>;
 export const ExtractionRolloutReportDocument = {"__meta__":{"kind":"query","name":"ExtractionRolloutReport","hash":"sha256:e7fa1944e5394a8039715e9ccd53236be9afc632a39c10e398f9a8d432e478dd"}} as unknown as TypedDocumentString<ExtractionRolloutReportQuery, ExtractionRolloutReportQueryVariables>;
 export const UpdateExtractionRolloutDocument = {"__meta__":{"kind":"mutation","name":"UpdateExtractionRollout","hash":"sha256:703f2282aeb4eb6999e463d92396cdce12f0de857d5503138aaf7e74b2a3c6f2"}} as unknown as TypedDocumentString<UpdateExtractionRolloutMutation, UpdateExtractionRolloutMutationVariables>;

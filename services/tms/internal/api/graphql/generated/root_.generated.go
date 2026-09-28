@@ -13865,6 +13865,51 @@ type ExtractionAccuracy {
   recentRuns: [ExtractionEvalRun!]!
 }
 
+"One provider's corrections in one UTC week, Monday to Sunday."
+type ExtractionWeekAccuracy {
+  weekStart: Timestamp!
+  corrections: Int!
+  scored: Int!
+  correct: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+"How one provider read documents week by week, and whether last week fell below its own recent weeks."
+type ExtractionProviderTrend {
+  providerId: ID!
+  "Empty when the provider has since been removed."
+  providerName: String!
+  model: String!
+  providerRemoved: Boolean!
+  "One entry per week in the window, oldest first; the last is the week in progress."
+  weeks: [ExtractionWeekAccuracy!]!
+  "The last complete week, the one judged for drift."
+  checked: ExtractionWeekAccuracy!
+  "The weeks before it, taken together."
+  baseline: ExtractionWeekAccuracy!
+  "Baseline accuracy less last week's, in points; zero until both have enough fields."
+  dropPoints: Float!
+  "Whether both weeks had enough scored fields to compare."
+  comparable: Boolean!
+  drifting: Boolean!
+}
+
+"Each extraction provider's accuracy over recent weeks, read from the corrections people made."
+type ExtractionProviderTrends {
+  weeks: [Timestamp!]!
+  checkedWeek: Timestamp!
+  baselineStart: Timestamp!
+  "Providers that read documents in the window, the busiest last week first."
+  providers: [ExtractionProviderTrend!]!
+  "How many points below its baseline last week must fall to count as drift."
+  driftPoints: Int!
+  "Scored fields last week needs before it is judged."
+  minWeekFields: Int!
+  "Scored fields the baseline needs before it is judged."
+  minBaselineFields: Int!
+}
+
 input PromoteAICorrectionInput {
   correctionId: ID!
   title: String
@@ -13887,6 +13932,7 @@ input StartExtractionEvalRunInput {
 
 extend type Query {
   extractionAccuracy(windowDays: Int): ExtractionAccuracy!
+  extractionProviderTrends: ExtractionProviderTrends!
   aiCorrections(input: DataTableConnectionInput!): AICorrectionConnection!
   aiCorrection(id: ID!): AICorrection
   extractionEvalCases(input: DataTableConnectionInput!): ExtractionEvalCaseConnection!
@@ -38985,6 +39031,52 @@ func (ec *executionContext) childFields_ExtractionFieldAccuracy(ctx context.Cont
 	return nil, fmt.Errorf("no field named %q was found under type ExtractionFieldAccuracy", field.Name)
 }
 
+func (ec *executionContext) childFields_ExtractionProviderTrend(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "providerId":
+		return ec.fieldContext_ExtractionProviderTrend_providerId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_ExtractionProviderTrend_providerName(ctx, field)
+	case "model":
+		return ec.fieldContext_ExtractionProviderTrend_model(ctx, field)
+	case "providerRemoved":
+		return ec.fieldContext_ExtractionProviderTrend_providerRemoved(ctx, field)
+	case "weeks":
+		return ec.fieldContext_ExtractionProviderTrend_weeks(ctx, field)
+	case "checked":
+		return ec.fieldContext_ExtractionProviderTrend_checked(ctx, field)
+	case "baseline":
+		return ec.fieldContext_ExtractionProviderTrend_baseline(ctx, field)
+	case "dropPoints":
+		return ec.fieldContext_ExtractionProviderTrend_dropPoints(ctx, field)
+	case "comparable":
+		return ec.fieldContext_ExtractionProviderTrend_comparable(ctx, field)
+	case "drifting":
+		return ec.fieldContext_ExtractionProviderTrend_drifting(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionProviderTrend", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionProviderTrends(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "weeks":
+		return ec.fieldContext_ExtractionProviderTrends_weeks(ctx, field)
+	case "checkedWeek":
+		return ec.fieldContext_ExtractionProviderTrends_checkedWeek(ctx, field)
+	case "baselineStart":
+		return ec.fieldContext_ExtractionProviderTrends_baselineStart(ctx, field)
+	case "providers":
+		return ec.fieldContext_ExtractionProviderTrends_providers(ctx, field)
+	case "driftPoints":
+		return ec.fieldContext_ExtractionProviderTrends_driftPoints(ctx, field)
+	case "minWeekFields":
+		return ec.fieldContext_ExtractionProviderTrends_minWeekFields(ctx, field)
+	case "minBaselineFields":
+		return ec.fieldContext_ExtractionProviderTrends_minBaselineFields(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionProviderTrends", field.Name)
+}
+
 func (ec *executionContext) childFields_ExtractionRollout(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "enabled":
@@ -39337,6 +39429,22 @@ func (ec *executionContext) childFields_ExtractionStop(ctx context.Context, fiel
 		return ec.fieldContext_ExtractionStop_timezone(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ExtractionStop", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionWeekAccuracy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "weekStart":
+		return ec.fieldContext_ExtractionWeekAccuracy_weekStart(ctx, field)
+	case "corrections":
+		return ec.fieldContext_ExtractionWeekAccuracy_corrections(ctx, field)
+	case "scored":
+		return ec.fieldContext_ExtractionWeekAccuracy_scored(ctx, field)
+	case "correct":
+		return ec.fieldContext_ExtractionWeekAccuracy_correct(ctx, field)
+	case "accuracy":
+		return ec.fieldContext_ExtractionWeekAccuracy_accuracy(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionWeekAccuracy", field.Name)
 }
 
 func (ec *executionContext) childFields_FacilityDetentionStat(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

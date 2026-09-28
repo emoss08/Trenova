@@ -316,6 +316,20 @@ Keywords: gradual rollout, canary, promote extraction model, serve new model, fi
 7. Once the candidate has served a large share without a guard stopping it, give it the highest
    document extraction priority in **Providers** and turn the rollout off.
 
+### Check whether a document extraction model is getting worse
+Keywords: extraction accuracy over time, model drift, accuracy dropped, provider accuracy trend, weekly accuracy, extraction getting worse, accuracy alert
+1. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
+   extraction**, and choose **Accuracy**.
+2. Scroll to **Accuracy by provider over time**. Each AI provider that read documents in the
+   last 12 weeks has a row: its **Weekly accuracy** line, **Last week**, the four weeks
+   before it, the **Change** between them, and a **Status**.
+3. **Drifting** means last week's accuracy fell more than the allowed points below that
+   provider's own previous four weeks. **Not enough data** means too few fields were confirmed
+   to judge; the help on the panel says how many are needed.
+4. When a provider drifts, the people who can update AI providers are notified on Monday. To
+   respond, compare it with another provider under **Shadow**, or lower its document extraction
+   priority in **Providers** so another provider reads documents first.
+
 ### Read what agents did on the audit trail
 Keywords: AI audit trail, agent audit log, who approved, what did the agent do, AI compliance, tool calls, model calls, AI decisions, evaluations
 1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**.

@@ -61,6 +61,12 @@ type AICorrectionProviderTotal struct {
 	Correct   int  `bun:"correct"`
 }
 
+type WeeklyAICorrectionTotalsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Task       aicorrection.Task
+	Since      int64
+}
+
 type AICorrectionRepository interface {
 	Upsert(ctx context.Context, entity *aicorrection.Correction) (*aicorrection.Correction, error)
 	GetByID(ctx context.Context, req GetAICorrectionRequest) (*aicorrection.Correction, error)
@@ -84,5 +90,9 @@ type AICorrectionRepository interface {
 		ctx context.Context,
 		req *TotalAICorrectionsByProviderRequest,
 	) ([]AICorrectionProviderTotal, error)
+	WeeklyTotalsByProvider(
+		ctx context.Context,
+		req *WeeklyAICorrectionTotalsRequest,
+	) ([]aicorrection.WeekTotal, error)
 	PurgeBefore(ctx context.Context, req PurgeAICorrectionsRequest) (int64, error)
 }

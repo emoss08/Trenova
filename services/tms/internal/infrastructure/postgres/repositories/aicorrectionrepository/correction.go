@@ -285,6 +285,39 @@ func (r *repository) TotalsByProvider(
 	return totals, nil
 }
 
+func (r *repository) WeeklyTotalsByProvider(
+	ctx context.Context,
+	req *repositories.WeeklyAICorrectionTotalsRequest,
+) ([]aicorrection.WeekTotal, error) {
+	cols := buncolgen.CorrectionColumns
+	totals := make([]aicorrection.WeekTotal, 0, aicorrection.TrendWeeks)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*aicorrection.Correction)(nil)).
+		ColumnExpr(cols.ExtractionProviderID.Expr("{} AS provider_id")).
+		ColumnExpr(cols.CapturedAt.Expr(
+			"EXTRACT(EPOCH FROM date_trunc('week', to_timestamp({}) AT TIME ZONE 'UTC'))::bigint AS week_start",
+		)).
+		ColumnExpr(buncolgen.Count("corrections")).
+		ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
+		ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+				Where(cols.Task.Eq(), req.Task).
+				Where(cols.CapturedAt.Gte(), req.Since).
+				Where(cols.ExtractionProviderID.IsNotNull())
+		}).
+		GroupExpr("provider_id, week_start").
+		Scan(ctx, &totals)
+	if err != nil {
+		r.l.Error("failed to total ai corrections by week and provider", zap.Error(err))
+
+		return nil, fmt.Errorf("total ai corrections by week and provider: %w", err)
+	}
+
+	return totals, nil
+}
+
 func (r *repository) ListForAccuracy(
 	ctx context.Context,
 	req repositories.ListAICorrectionsForAccuracyRequest,

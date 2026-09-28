@@ -9411,6 +9411,24 @@
       "routes/agent-control"
     ]
   },
+  "Accuracy by provider could not be loaded. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Accuracy by provider over time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Accuracy guard": {
     "sites": 1,
     "scope": [
@@ -32779,12 +32797,13 @@
     ]
   },
   "Change": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/rate-agreement",
       "routes/shipment"
     ]
@@ -58351,6 +58370,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "Drifting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Drive": {
@@ -91959,12 +91987,31 @@
     ]
   },
   "Last week": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "routes/agent-control"
+    ]
+  },
+  "Last week fell further below its own recent weeks than allowed": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "routes/agent-control"
+    ]
+  },
+  "Last week held up against its own recent weeks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Last year": {
@@ -107748,6 +107795,15 @@
       "routes/desk"
     ]
   },
+  "No corrections in the last {0} weeks came from an AI provider. They are recorded when someone creates a shipment from a document's draft.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No corrections yet. They are recorded when someone creates a shipment from a document's draft.": {
     "sites": 1,
     "scope": [
@@ -112205,6 +112261,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Not enough data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Not enough data to score this pairing.": {
@@ -134013,7 +134078,7 @@
     ]
   },
   "Provider": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "ts"
     ],
@@ -143969,6 +144034,15 @@
     "areas": [
       "apps/web/components",
       "routes/formula-template"
+    ]
+  },
+  "Removed provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Removed {0}": {
@@ -168902,7 +168976,7 @@
     ]
   },
   "Status": {
-    "sites": 264,
+    "sites": 265,
     "scope": [
       "go",
       "ts"
@@ -169369,6 +169443,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Steady": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Step key": {
@@ -172986,6 +173069,15 @@
     ],
     "areas": [
       "service/driverportalservice"
+    ]
+  },
+  "Tell each organization when an extraction provider read last week's documents worse than its own recent weeks": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Tell the agent about": {
@@ -190631,6 +190723,15 @@
       "routes/shipment"
     ]
   },
+  "Too few confirmed fields last week or in the weeks before to judge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Too long": {
     "sites": 1,
     "scope": [
@@ -202815,6 +202916,15 @@
       "routes/reports"
     ]
   },
+  "Weekly accuracy": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Weekly books reconciliation": {
     "sites": 1,
     "scope": [
@@ -202894,6 +203004,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Weeks run Monday to Sunday in UTC. Last week is compared with the {0} weeks before it, once it has {1} confirmed fields and they have {2}; a drop of more than {3} points is drift, and the people who choose providers are told each Monday.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Weight": {
@@ -213405,6 +213524,15 @@
       "service/ediservice"
     ]
   },
+  "extraction accuracy drift": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "fewer than": {
     "sites": 1,
     "scope": [
@@ -213883,6 +214011,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "last {0} weeks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "level with production": {
@@ -216539,13 +216676,14 @@
     ]
   },
   "{0, plural, one {# field} other {# fields}}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# field} other {# fields}} changed": {
@@ -222422,6 +222560,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "{0} weeks before": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} weight breaks move with it": {

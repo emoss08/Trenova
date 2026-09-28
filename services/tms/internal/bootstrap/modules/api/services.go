@@ -365,6 +365,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	extractionevalservice.New,
 	extractionevalservice.AsService,
 	extractionevalservice.AsRunner,
+	extractionevalservice.AsDriftChecker,
 	extractionrolloutservice.New,
 	extractionrolloutservice.AsService,
 	extractionrolloutservice.AsRouter,

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -43,7 +44,8 @@ type Params struct {
 	Retention   repositories.DataRetentionRepository
 	Budget      services.EvaluationBudget         `optional:"true"`
 	Predictor   services.ExtractionPredictor      `optional:"true"`
-	Starter     services.ExtractionEvalRunStarter `optional:"true"`
+	Starter       services.ExtractionEvalRunStarter `optional:"true"`
+	Notifications *notificationservice.Service      `optional:"true"`
 }
 
 type Service struct {
@@ -60,10 +62,23 @@ type Service struct {
 	budget      services.EvaluationBudget
 	predictor   services.ExtractionPredictor
 	starter     services.ExtractionEvalRunStarter
+	notifier    driftNotifier
 	now         func() int64
 }
 
+type driftNotifier interface {
+	NotifyPermitted(
+		ctx context.Context,
+		req notificationservice.NotifyPermittedRequest,
+	) (int, error)
+}
+
 func New(p Params) *Service {
+	var notifier driftNotifier
+	if p.Notifications != nil {
+		notifier = p.Notifications
+	}
+
 	return &Service{
 		l:           p.Logger.Named("service.extractioneval"),
 		cases:       p.Cases,
@@ -78,6 +93,7 @@ func New(p Params) *Service {
 		budget:      p.Budget,
 		predictor:   p.Predictor,
 		starter:     p.Starter,
+		notifier:    notifier,
 		now:         timeutils.NowUnix,
 	}
 }
@@ -85,6 +101,8 @@ func New(p Params) *Service {
 func AsService(s *Service) services.ExtractionEvalService { return s }
 
 func AsRunner(s *Service) services.ExtractionEvalRunner { return s }
+
+func AsDriftChecker(s *Service) services.ExtractionDriftChecker { return s }
 
 func (s *Service) PromoteCorrection(
 	ctx context.Context,

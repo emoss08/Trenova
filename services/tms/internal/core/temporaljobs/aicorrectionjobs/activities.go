@@ -18,6 +18,7 @@ type ActivitiesParams struct {
 	Evaluations services.ExtractionEvalRunner       `optional:"true"`
 	Shadows     services.ExtractionShadowRunner     `optional:"true"`
 	Rollout     services.ExtractionRolloutRetention `optional:"true"`
+	Drift       services.ExtractionDriftChecker     `optional:"true"`
 	Tenants     repositories.TenantSyncRepository
 	Logger      *zap.Logger
 }
@@ -27,6 +28,7 @@ type Activities struct {
 	evaluations services.ExtractionEvalRunner
 	shadows     services.ExtractionShadowRunner
 	rollout     services.ExtractionRolloutRetention
+	drift       services.ExtractionDriftChecker
 	tenants     repositories.TenantSyncRepository
 	l           *zap.Logger
 }
@@ -37,6 +39,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		evaluations: p.Evaluations,
 		shadows:     p.Shadows,
 		rollout:     p.Rollout,
+		drift:       p.Drift,
 		tenants:     p.Tenants,
 		l:           p.Logger.Named("job.aicorrection-retention"),
 	}

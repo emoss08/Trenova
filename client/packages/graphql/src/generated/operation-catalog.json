@@ -1,6 +1,6 @@
 {
-  "operationCount": 955,
-  "fragmentCount": 271,
+  "operationCount": 956,
+  "fragmentCount": 272,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -9784,6 +9784,22 @@
       ],
       "usages": [],
       "sdl": "query ExtractionEvalRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  extractionEvalRuns(input: $input) {\n    edges {\n      node {\n        ...ExtractionEvalRunFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ExtractionProviderTrends",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:3cb7587b54ec22e7bc8c496b570f118a43a60896010706198b9fe6ba2efde5cd",
+      "rootFields": [
+        "extractionProviderTrends"
+      ],
+      "variables": [],
+      "fragments": [
+        "ExtractionWeekAccuracyFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionProviderTrends {\n  extractionProviderTrends {\n    weeks\n    checkedWeek\n    baselineStart\n    driftPoints\n    minWeekFields\n    minBaselineFields\n    providers {\n      providerId\n      providerName\n      model\n      providerRemoved\n      dropPoints\n      comparable\n      drifting\n      weeks {\n        ...ExtractionWeekAccuracyFields\n      }\n      checked {\n        ...ExtractionWeekAccuracyFields\n      }\n      baseline {\n        ...ExtractionWeekAccuracyFields\n      }\n    }\n  }\n}\n\nfragment ExtractionWeekAccuracyFields on ExtractionWeekAccuracy {\n  weekStart\n  corrections\n  scored\n  correct\n  accuracy\n}"
     },
     {
       "name": "ExtractionRollout",
@@ -24023,6 +24039,18 @@
       ],
       "usages": [],
       "sdl": "fragment ExtractionSnapshotFields on ExtractionSnapshot {\n  fields {\n    key\n    value\n  }\n  stops {\n    role\n    sequence\n    name\n    addressLine1\n    addressLine2\n    city\n    state\n    postalCode\n    date\n    timeWindow\n    appointmentRequired\n    scheduledWindowStart\n    timezone\n  }\n}"
+    },
+    {
+      "name": "ExtractionWeekAccuracyFields",
+      "typeCondition": "ExtractionWeekAccuracy",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ExtractionProviderTrends"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionWeekAccuracyFields on ExtractionWeekAccuracy {\n  weekStart\n  corrections\n  scored\n  correct\n  accuracy\n}"
     },
     {
       "name": "FiscalPeriodFields",

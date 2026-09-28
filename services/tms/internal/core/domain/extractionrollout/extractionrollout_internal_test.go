@@ -204,6 +204,13 @@ func TestBreachAllowsTheConfiguredGap(t *testing.T) {
 	within.CandidateAccuracy.Correct = 899
 	_, breached = rollout.Breach(within)
 	assert.True(t, breached)
+
+	unevenSides := &GuardInput{
+		CandidateAccuracy:  ArmAccuracy{Scored: 1000, Correct: 850},
+		ProductionAccuracy: ArmAccuracy{Scored: 200, Correct: 180},
+	}
+	_, breached = rollout.Breach(unevenSides)
+	assert.False(t, breached, "exactly the allowed drop, where floating point would read 5.000000000000004")
 }
 
 func TestBreachOnRejections(t *testing.T) {

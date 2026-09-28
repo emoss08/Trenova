@@ -1,5 +1,7 @@
 package extractionrollout
 
+import "github.com/emoss08/trenova/shared/intutils"
+
 const (
 	MinGuardScoredFields = 200
 	MinGuardExtractions  = 30
@@ -47,33 +49,33 @@ type Breach struct {
 func (r *ExtractionRollout) Breach(in *GuardInput) (Breach, bool) {
 	if in.CandidateAccuracy.Scored >= MinGuardScoredFields &&
 		in.ProductionAccuracy.Scored >= MinGuardScoredFields {
-		candidate := in.CandidateAccuracy.Rate()
-		baseline := in.ProductionAccuracy.Rate()
-		if exceedsPoints(baseline-candidate, r.MaxAccuracyDropPoints) {
+		if intutils.RatioLeadExceedsPoints(
+			in.ProductionAccuracy.Correct, in.ProductionAccuracy.Scored,
+			in.CandidateAccuracy.Correct, in.CandidateAccuracy.Scored,
+			r.MaxAccuracyDropPoints,
+		) {
 			return Breach{
 				Reason:        HaltReasonAccuracyDrop,
-				CandidateRate: candidate,
-				BaselineRate:  baseline,
+				CandidateRate: in.CandidateAccuracy.Rate(),
+				BaselineRate:  in.ProductionAccuracy.Rate(),
 			}, true
 		}
 	}
 
 	if in.CandidateOutcomes.Settled >= MinGuardExtractions &&
 		in.ControlOutcomes.Settled >= MinGuardExtractions {
-		candidate := in.CandidateOutcomes.Rate()
-		baseline := in.ControlOutcomes.Rate()
-		if exceedsPoints(candidate-baseline, r.MaxRejectionIncreasePoints) {
+		if intutils.RatioLeadExceedsPoints(
+			in.CandidateOutcomes.Rejected, in.CandidateOutcomes.Settled,
+			in.ControlOutcomes.Rejected, in.ControlOutcomes.Settled,
+			r.MaxRejectionIncreasePoints,
+		) {
 			return Breach{
 				Reason:        HaltReasonRejections,
-				CandidateRate: candidate,
-				BaselineRate:  baseline,
+				CandidateRate: in.CandidateOutcomes.Rate(),
+				BaselineRate:  in.ControlOutcomes.Rate(),
 			}, true
 		}
 	}
 
 	return Breach{}, false
-}
-
-func exceedsPoints(gap float64, points int) bool {
-	return gap*100 > float64(points)
 }

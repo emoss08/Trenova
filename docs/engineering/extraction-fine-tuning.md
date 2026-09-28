@@ -528,6 +528,33 @@ correction captured   →  ObserveCorrection →  accuracy guard
 - **Retention.** Assignments are purged with corrections, on the organization's AI correction
   retention period.
 
+## 8. Watch accuracy per provider over time
+
+A model that beat production when it was promoted can still drift: new customers bring new
+layouts, and a provider's hosted model can change underneath it. Every correction records the
+provider whose draft it scored (`ai_corrections.extraction_provider_id`), so accuracy per provider
+per week is read straight from them, and each provider is judged against its own recent weeks
+rather than against another model.
+
+- **Weeks.** Monday to Sunday in UTC (`timeutils.WeekStartUTC`, `date_trunc('week', …)` in
+  `AICorrectionRepository.WeeklyTotalsByProvider`). The window is the last 12 weeks including the
+  one in progress, which is shown but never judged. Drafts read by rules alone have no provider
+  and are left out.
+- **Drift.** `aicorrection.BuildProviderTrends` compares the last complete week with the four
+  weeks before it taken together. It judges only once last week has 100 scored fields and the
+  baseline 200, and calls it drift when last week is more than 5 points below. The comparison is
+  exact on the counts (`intutils.RatioLeadExceedsPoints`), so a drop of exactly 5 points is not
+  drift; the rollout guards use the same comparison.
+- **Where it shows.** AI Control → Quality → Document extraction → Accuracy, under *Accuracy by
+  provider over time*: a weekly sparkline, last week, the four weeks before, the change, and
+  *Drifting*, *Steady* or *Not enough data*. Reading it needs the evaluation suite's read
+  permission.
+- **Who is told.** `ExtractionAccuracyDriftWorkflow` runs every Monday at 06:20 UTC on the system
+  queue, one activity per organization. Each drifting provider sends one high-priority
+  notification to up to 25 people who may update AI providers, since they are the ones who can
+  move it back down the priority order; the correlation is the provider and the week, so a rerun
+  in the same week tells nobody twice. A removed provider is shown but not reported.
+
 ## Handling the data
 
 A rendered dataset is anonymized, but it is still customer data. Keep it on the training machine:
