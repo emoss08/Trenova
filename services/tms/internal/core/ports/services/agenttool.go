@@ -26,6 +26,11 @@ type ToolExecuteParams struct {
 	// Taint is the run's, handed only to a tool whose policy CarriesTaint.
 	Taint      *agent.RunTaint
 	ProposalID pulid.ID
+	Timezone string
+}
+
+type TenantTimezoneReader interface {
+	TenantTimezone(ctx context.Context, tenant pagination.TenantInfo) (string, error)
 }
 
 func (p ToolExecuteParams) ApprovedFromProposal() bool {

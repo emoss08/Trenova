@@ -87,7 +87,8 @@ type Params struct {
 	Proposals   repositories.AgentProposalRepository
 	Executor    *proposalexecutor.Service
 	Permissions services.PermissionEngine
-	Metrics     *metrics.Registry `optional:"true"`
+	Metrics     *metrics.Registry             `optional:"true"`
+	Zones       services.TenantTimezoneReader `optional:"true"`
 }
 
 type Service struct {
@@ -102,6 +103,7 @@ type Service struct {
 	checker     modificationChecker
 	permissions services.PermissionEngine
 	metrics     *metrics.ProposalPreview
+	zones       services.TenantTimezoneReader
 	now         func() int64
 	readTimeout time.Duration
 	fileTimeout time.Duration
@@ -116,6 +118,7 @@ func New(p Params) services.ProposalPreviewService {
 		versions:    p.Versions,
 		labeler:     p.Labeler,
 		permissions: p.Permissions,
+		zones:       p.Zones,
 		now:         timeutils.NowUnix,
 		readTimeout: ReadTimeout,
 		fileTimeout: BaselineTimeout,
