@@ -107,33 +107,34 @@ func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) serviceports.
 						"return the report's id.\"",
 				},
 				delegateRecordsParam: map[string]any{
-					"type":     "array",
-					"maxItems": maxDelegateRecords,
-					"description": "The records the task is about, each by its kind and id, " +
-						"so the agent opens them rather than reading a copy you typed.",
-					"items": map[string]any{
-						"type": "object",
-						"properties": map[string]any{
+					toolschema.KeyType:     toolschema.TypeArray,
+					toolschema.KeyMaxItems: maxDelegateRecords,
+					toolschema.KeyDescription: "The records the task is about, each by its " +
+						"kind and id, so the agent opens them rather than reading a copy you " +
+						"typed.",
+					toolschema.KeyItems: map[string]any{
+						toolschema.KeyType: toolschema.TypeObject,
+						toolschema.KeyProperties: map[string]any{
 							"entityType": agenttoolschema.Enum(
 								"The kind of record.", agenttoolschema.RecordEntities,
 							),
 							"id": map[string]any{
-								"type":        "string",
-								"maxLength":   maxDelegateRecordID,
-								"description": "The record's id, from the tool that found it.",
+								toolschema.KeyType:        toolschema.TypeString,
+								toolschema.KeyMaxLength:   maxDelegateRecordID,
+								toolschema.KeyDescription: "The record's id, from the tool that found it.",
 							},
 						},
-						"required":             []string{"entityType", "id"},
-						"additionalProperties": false,
+						toolschema.KeyRequired:             []string{"entityType", "id"},
+						toolschema.KeyAdditionalProperties: false,
 					},
 				},
 				delegateSharedParam: map[string]any{
-					"type":     "array",
-					"maxItems": maxSharedResults,
-					"description": "The ids of calls you made in this turn whose results the " +
-						"agent should work from, handed over as they came back. Each result " +
-						"may be at most 8 KiB.",
-					"items": map[string]any{"type": "string"},
+					toolschema.KeyType:     toolschema.TypeArray,
+					toolschema.KeyMaxItems: maxSharedResults,
+					toolschema.KeyDescription: "The ids of calls you made in this turn whose " +
+						"results the agent should work from, handed over as they came back. " +
+						"Each result may be at most 8 KiB.",
+					toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
 				},
 			},
 			"required":             []string{"agentId", "task"},
@@ -397,7 +398,9 @@ func (t *Turn) delegateFor(
 	)
 }
 
-func (t *Turn) handedOver(arguments map[string]any) (*DelegateContext, string) {
+func (t *Turn) handedOver(
+	arguments map[string]any,
+) (handed *DelegateContext, refusal string) {
 	records, refusal := delegateRecords(arguments[delegateRecordsParam])
 	if refusal != "" {
 		return nil, refusal
@@ -408,7 +411,7 @@ func (t *Turn) handedOver(arguments map[string]any) (*DelegateContext, string) {
 		return nil, refusal
 	}
 
-	handed := &DelegateContext{Records: records, Results: results}
+	handed = &DelegateContext{Records: records, Results: results}
 	if handed.empty() {
 		return nil, ""
 	}
@@ -416,9 +419,9 @@ func (t *Turn) handedOver(arguments map[string]any) (*DelegateContext, string) {
 	return handed, ""
 }
 
-func delegateRecords(raw any) ([]agent.RecordRef, string) {
+func delegateRecords(raw any) (records []agent.RecordRef, refusal string) {
 	items, _ := raw.([]any)
-	records := make([]agent.RecordRef, 0, len(items))
+	records = make([]agent.RecordRef, 0, len(items))
 	for idx, item := range items {
 		fields, _ := item.(map[string]any)
 		record := agent.RecordRef{
@@ -435,12 +438,15 @@ func delegateRecords(raw any) ([]agent.RecordRef, string) {
 	return sliceutils.Dedupe(records), ""
 }
 
-func sharedResults(messages []conversation.Message, ids []string) ([]SharedResult, string) {
+func sharedResults(
+	messages []conversation.Message,
+	ids []string,
+) (results []SharedResult, refusal string) {
 	if len(ids) == 0 {
 		return nil, ""
 	}
 
-	results := make([]SharedResult, 0, len(ids))
+	results = make([]SharedResult, 0, len(ids))
 	total := 0
 	for _, id := range ids {
 		message := ownResult(messages, id)

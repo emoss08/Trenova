@@ -83,7 +83,7 @@ func TestAgentRunHandedBy_NamesTheAgentOfTheConversationThatAsked(t *testing.T) 
 		ParentOwnerID:     pulid.MustNew("atrn_"),
 		DelegateCallID:    "call_hand",
 	}
-	by, err := agentRunHandedBy(ctx, handed)
+	by, err := (&agentRunResolver{}).HandedBy(ctx, handed)
 	require.NoError(t, err)
 	require.NotNil(t, by)
 	assert.Equal(t, "Dispatch", by.Name)
@@ -93,14 +93,14 @@ func TestAgentRunHandedBy_NamesTheAgentOfTheConversationThatAsked(t *testing.T) 
 		SubjectType:       agent.SubjectAssistantThread,
 		SubjectID:         thread.ID,
 	}
-	by, err = agentRunHandedBy(ctx, own)
+	by, err = (&agentRunResolver{}).HandedBy(ctx, own)
 	require.NoError(t, err)
 	assert.Nil(t, by, "the conversation's own run was handed nothing")
 	assert.Equal(t, 1, threads.reads)
 
 	gone := *handed
 	gone.SubjectID = pulid.MustNew("athr_")
-	by, err = agentRunHandedBy(ctx, &gone)
+	by, err = (&agentRunResolver{}).HandedBy(ctx, &gone)
 	require.NoError(t, err)
 	assert.Nil(t, by, "a conversation deleted since names nobody")
 }
@@ -108,11 +108,11 @@ func TestAgentRunHandedBy_NamesTheAgentOfTheConversationThatAsked(t *testing.T) 
 func TestAgentRunParentOwnerKind_IsAbsentForARunNothingHandedATask(t *testing.T) {
 	t.Parallel()
 
-	kind, err := agentRunParentOwnerKind(&agent.AgentRun{})
+	kind, err := (&agentRunResolver{}).ParentOwnerKind(t.Context(), &agent.AgentRun{})
 	require.NoError(t, err)
 	assert.Nil(t, kind)
 
-	kind, err = agentRunParentOwnerKind(&agent.AgentRun{ParentOwnerKind: agent.RunOwnerAssistantTurn})
+	kind, err = (&agentRunResolver{}).ParentOwnerKind(t.Context(), &agent.AgentRun{ParentOwnerKind: agent.RunOwnerAssistantTurn})
 	require.NoError(t, err)
 	require.NotNil(t, kind)
 	assert.Equal(t, gqlmodel.AgentRunEventOwnerKindAssistantTurn, *kind)

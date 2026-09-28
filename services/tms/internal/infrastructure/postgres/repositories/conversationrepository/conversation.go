@@ -121,7 +121,7 @@ func (r *repository) ListThreadAgentsByIDs(
 		).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.In(), bun.In(req.IDs))
+				Where(cols.ID.In(), bun.List(req.IDs))
 		}).
 		Scan(ctx)
 	if err != nil {

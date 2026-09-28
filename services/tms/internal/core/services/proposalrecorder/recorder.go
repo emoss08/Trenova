@@ -368,9 +368,9 @@ func (s *Service) write(
 				return nil, multiErr
 			}
 
-			created, err := s.proposals.Create(ctx, proposal)
-			if err != nil {
-				return nil, err
+			created, createErr := s.proposals.Create(ctx, proposal)
+			if createErr != nil {
+				return nil, createErr
 			}
 			group.proposals[idx] = created
 		}

@@ -573,7 +573,7 @@ func (s *Service) ListThreadPlans(
 			runIDs = append(runIDs, plan.RunID)
 		}
 	}
-	stepRuns, err := s.planStepRuns(ctx, req, len(runIDs) > 0)
+	stepRuns, err := s.planStepRuns(ctx, &req, len(runIDs) > 0)
 	if err != nil {
 		return nil, err
 	}
@@ -607,11 +607,12 @@ func (s *Service) ListThreadPlans(
 
 func (s *Service) planStepRuns(
 	ctx context.Context,
-	req repositories.GetThreadRequest,
+	req *repositories.GetThreadRequest,
 	needed bool,
 ) (map[pulid.ID][]pulid.ID, error) {
+	runs := make(map[pulid.ID][]pulid.ID)
 	if !needed || s.proposals == nil {
-		return nil, nil
+		return runs, nil
 	}
 
 	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
@@ -622,7 +623,6 @@ func (s *Service) planStepRuns(
 		return nil, err
 	}
 
-	runs := make(map[pulid.ID][]pulid.ID)
 	for _, proposal := range stored {
 		if proposal == nil || proposal.PlanID == nil ||
 			slices.Contains(runs[*proposal.PlanID], proposal.RunID) {

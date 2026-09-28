@@ -175,7 +175,7 @@ func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (s
 		return "", multiErr
 	}
 
-	steps, err := s.planSteps(ctx, p, plan.ID)
+	steps, err := s.planSteps(ctx, &p, plan.ID)
 	if err != nil {
 		return "", err
 	}
@@ -187,7 +187,7 @@ func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (s
 
 func (s *Service) planSteps(
 	ctx context.Context,
-	p decisionNoteParams,
+	p *decisionNoteParams,
 	planID pulid.ID,
 ) ([]*agent.AgentProposal, error) {
 	if s.proposals == nil {
