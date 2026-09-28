@@ -8,6 +8,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const AIDocumentSourceAI = "ai"
+
 type AIDocumentPage struct {
 	PageNumber int
 	Text       string

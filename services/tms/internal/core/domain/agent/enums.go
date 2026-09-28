@@ -356,6 +356,10 @@ func (s Severity) IsValid() bool {
 	}
 }
 
+func SeverityValues() []Severity {
+	return []Severity{SeverityLow, SeverityMedium, SeverityHigh, SeverityCritical}
+}
+
 type ResolutionState string
 
 const (

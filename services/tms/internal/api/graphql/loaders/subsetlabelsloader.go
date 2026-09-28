@@ -3,6 +3,7 @@ package loaders
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -27,10 +28,15 @@ type SubsetLabelsLoaderFactoryParams struct {
 // proposals list them.
 type SubsetLabelsLoaderFactory struct {
 	labeler services.RecordLabeler
+	wait    time.Duration
 }
 
 func NewSubsetLabelsLoaderFactory(p SubsetLabelsLoaderFactoryParams) *SubsetLabelsLoaderFactory {
-	return &SubsetLabelsLoaderFactory{labeler: p.Labeler}
+	return &SubsetLabelsLoaderFactory{labeler: p.Labeler, wait: batchWait}
+}
+
+func (f *SubsetLabelsLoaderFactory) WithBatchWait(wait time.Duration) *SubsetLabelsLoaderFactory {
+	return &SubsetLabelsLoaderFactory{labeler: f.labeler, wait: max(wait, batchWait)}
 }
 
 // SubsetLabelsKey is a record-subset field's key in the loader: the resource
@@ -55,7 +61,10 @@ func SubsetLabelsKey(resource permission.Resource, ids []string) string {
 func (f *SubsetLabelsLoaderFactory) NewForTenant(
 	tenantInfo pagination.TenantInfo,
 ) *dataloadgen.Loader[string, services.RecordLabels] {
-	return newLoader(f.batchFunc(tenantInfo))
+	return dataloadgen.NewLoader(
+		f.batchFunc(tenantInfo),
+		loaderOptionsWith(batchCapacity, f.wait)...,
+	)
 }
 
 // batchFunc answers each field's key with the labels of its records that

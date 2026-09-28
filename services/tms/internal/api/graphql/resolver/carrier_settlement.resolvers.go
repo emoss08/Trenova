@@ -24,6 +24,14 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+func (r *carrierSettlementResolver) ExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error) {
+	return nullDecimalStringPtr(obj.ExchangeRate), nil
+}
+
+func (r *carrierSettlementResolver) PaidExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error) {
+	return nullDecimalStringPtr(obj.PaidExchangeRate), nil
+}
+
 func (r *ediCarrierInvoiceResolver) TotalAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error) {
 	return nullDecimalStringPtr(obj.TotalAmount), nil
 }
@@ -504,8 +512,15 @@ func (r *queryResolver) ExportCarrierSettlementBatchCSV(ctx context.Context, bat
 	)
 }
 
+func (r *Resolver) CarrierSettlement() generated.CarrierSettlementResolver {
+	return &carrierSettlementResolver{r}
+}
+
 func (r *Resolver) EdiCarrierInvoice() generated.EdiCarrierInvoiceResolver {
 	return &ediCarrierInvoiceResolver{r}
 }
 
-type ediCarrierInvoiceResolver struct{ *Resolver }
+type (
+	carrierSettlementResolver struct{ *Resolver }
+	ediCarrierInvoiceResolver struct{ *Resolver }
+)

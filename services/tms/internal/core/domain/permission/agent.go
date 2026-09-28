@@ -59,6 +59,10 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpCreate: {},
 		OpUpdate: {},
+		// The service failure desk may propose voiding a failure it finds was
+		// opened in error; void_service_failure never runs until a person
+		// approves the proposal.
+		OpArchive: {},
 	},
 	// The three surfaces an agent builds rather than reads: a saved view of a
 	// table, a dashboard, and an alert that watches for a change. All three

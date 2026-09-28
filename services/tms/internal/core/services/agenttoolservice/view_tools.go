@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/tablequeryservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -75,11 +76,10 @@ func (t *saveTableViewTool) ParamSchema() map[string]any {
 		"type":     "object",
 		"required": []string{"entity", "name", "description"},
 		"properties": map[string]any{
-			"entity": map[string]any{
-				"type":        "string",
-				"enum":        entities,
-				"description": "Which table the view is of.",
-			},
+			"entity": agenttoolschema.Enum(
+				"Which table the view is of.",
+				agenttoolschema.Derived("tableView.entity", entities),
+			),
 			"name": map[string]any{
 				"type":        "string",
 				"description": "What to call the view in the picker.",

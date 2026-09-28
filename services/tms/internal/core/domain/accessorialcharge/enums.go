@@ -8,6 +8,10 @@ const (
 	MethodPercentage = Method("Percentage") // Percentage of linehaul (fuel surcharge)
 )
 
+func MethodValues() []Method {
+	return []Method{MethodFlat, MethodPerUnit, MethodPercentage}
+}
+
 // RateUnit defines what PerUnit method multiplies against
 type RateUnit string
 

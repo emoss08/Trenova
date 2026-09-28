@@ -50,6 +50,26 @@ func (s *Service) PreviewWaive(
 	return s.withShipmentOccurrences(ctx, change, p.TenantInfo)
 }
 
+// PreviewDispute is Dispute without the save.
+func (s *Service) PreviewDispute(
+	ctx context.Context,
+	p *DisputeParams,
+) (*OccurrenceChange, error) {
+	change, err := s.planDispute(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.withShipmentOccurrences(ctx, change, p.TenantInfo)
+}
+
+func (s *Service) planDispute(ctx context.Context, p *DisputeParams) (*OccurrenceChange, error) {
+	return s.planOccurrence(ctx, p.OccurrenceID, p.TenantInfo,
+		func(occurrence *detention.DetentionOccurrence, now int64) error {
+			return occurrence.Dispute(p.Note, now)
+		})
+}
+
 func (s *Service) planApprove(ctx context.Context, p *ApproveParams) (*OccurrenceChange, error) {
 	return s.planOccurrence(ctx, p.OccurrenceID, p.TenantInfo,
 		func(occurrence *detention.DetentionOccurrence, now int64) error {

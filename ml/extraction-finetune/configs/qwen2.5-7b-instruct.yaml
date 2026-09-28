@@ -1,0 +1,78 @@
+base_model: Qwen/Qwen2.5-7B-Instruct
+revision: null
+trust_remote_code: false
+quantization: none
+seed: 42
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+targets:
+  keep_unverified: true
+  verified_confidence: 0.95
+  unverified_confidence: 0.7
+  overall_confidence: 0.9
+  review_status: Ready
+  default_document_kind: RateConfirmation
+  evidence_context_chars: 60
+  preference_outcomes: [Corrected, Missed]
+
+sft:
+  learning_rate: 0.0002
+  epochs: 2
+  per_device_batch_size: 1
+  gradient_accumulation_steps: 16
+  max_length: 8192
+  warmup_ratio: 0.03
+  lr_scheduler: cosine
+  weight_decay: 0.0
+  logging_steps: 10
+  save_total_limit: 2
+  gradient_checkpointing: true
+  max_dropped_fraction: 0.02
+
+dpo:
+  enabled: true
+  beta: 0.1
+  learning_rate: 0.000005
+  epochs: 1
+  per_device_batch_size: 1
+  gradient_accumulation_steps: 16
+  max_length: 8192
+  logging_steps: 10
+  min_pairs: 50
+
+predict:
+  max_model_len: 16384
+  max_tokens: 5000
+  tensor_parallel_size: 1
+  gpu_memory_utilization: 0.9
+
+serve:
+  host: 0.0.0.0
+  port: 8000
+  max_model_len: 16384
+  tensor_parallel_size: 1
+  gpu_memory_utilization: 0.9
+  enable_prefix_caching: true
+  enable_chunked_prefill: true
+  max_num_seqs: 64
+  max_num_batched_tokens: 8192
+  kv_cache_dtype: auto
+  quantization: null
+  structured_outputs_backend: xgrammar
+  compact_json: true
+  report_cached_tokens: true
+  speculative:
+    method: ngram
+    num_speculative_tokens: 4
+    prompt_lookup_min: 2
+    prompt_lookup_max: 5
+
+quantize:
+  calibration_samples: 512
+  max_seq_length: null
+  ignore: [lm_head]

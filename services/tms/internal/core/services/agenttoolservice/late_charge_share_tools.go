@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,13 +30,13 @@ var (
 		"there is nothing to charge as of that date: every overdue period is assessed, or " +
 			"what is due is under the organization's minimum",
 	)
-	shareTabs = []invoice.ShareTab{
+	shareTabs = agenttoolschema.Source("invoice.shareTab", []invoice.ShareTab{
 		invoice.ShareTabOverview,
 		invoice.ShareTabDelivery,
 		invoice.ShareTabCharges,
 		invoice.ShareTabDocuments,
 		invoice.ShareTabActivity,
-	}
+	})
 )
 
 type lateChargeAssessor interface {
@@ -225,8 +226,8 @@ func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
 				invoice.MaxShareRecipients),
 			paramShareNote: stringProperty("A note for them, such as what to look at.",
 				invoice.MaxShareNoteLength),
-			paramShareTab: enumProperty("The part of the invoice the link opens on. Defaults to "+
-				"overview.", enumNames(shareTabs)),
+			paramShareTab: agenttoolschema.Enum("The part of the invoice the link opens on. "+
+				"Defaults to overview.", shareTabs),
 		},
 		required: []string{paramInvoiceID, paramUserIDs},
 		target:   targetInvoice,
@@ -270,7 +271,7 @@ func shareRequest(
 	if err != nil {
 		return nil, err
 	}
-	tab, _, err := optionalEnum(params.Params, paramShareTab, shareTabs)
+	tab, _, err := optionalEnum(params.Params, paramShareTab, shareTabs.Values)
 	if err != nil {
 		return nil, err
 	}

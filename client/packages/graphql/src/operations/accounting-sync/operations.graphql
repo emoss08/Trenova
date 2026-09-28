@@ -293,6 +293,7 @@ fragment AccountingSyncRecordFields on AccountingSyncRecord {
     name
   }
   skippedReason
+  redatedTo
   version
   updatedAt
 }
@@ -438,6 +439,12 @@ mutation ReleaseAccountingSync($input: ReleaseAccountingSyncInput!) {
 
 mutation SkipAccountingSync($input: SkipAccountingSyncInput!) {
   skipAccountingSync(input: $input) {
+    ...AccountingSyncRecordFields
+  }
+}
+
+mutation RedateAccountingSync($id: ID!) {
+  redateAccountingSync(id: $id) {
     ...AccountingSyncRecordFields
   }
 }

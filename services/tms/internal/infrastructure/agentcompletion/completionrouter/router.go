@@ -99,23 +99,7 @@ func (s *Service) CompleteStructured(
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
-	task := req.Task
-	if task == "" {
-		task = aiprovider.TaskGeneral
-	}
-
-	outcome, err := s.run(ctx, &runRequest{
-		TenantInfo:          req.TenantInfo,
-		Task:                task,
-		System:              req.System,
-		UserContent:         modeladapter.BuildContextText(req.Context),
-		Schema:              req.OutputSchema,
-		SchemaName:          req.SchemaName,
-		MaxTokens:           req.MaxTokens,
-		PreferredProviderID: req.PreferredProviderID,
-		RequireProvider:     req.RequireProvider,
-		Attribution:         req.Attribution,
-	})
+	outcome, err := s.run(ctx, structuredRun(req))
 	if err != nil {
 		return nil, err
 	}
@@ -437,11 +421,7 @@ func (s *Service) callFor(
 		Request: &modeladapter.Request{
 			// A provider that cannot enforce the schema on the wire is given it in
 			// the prompt instead, so every candidate sees the same requirements.
-			System: modeladapter.WithSchemaInstruction(
-				req.System,
-				req.Schema,
-				provider.StructuredOutputMode,
-			),
+			System:       structuredSystem(req, provider.StructuredOutputMode),
 			Messages:     modeladapter.UserMessage(req.UserContent),
 			OutputSchema: req.Schema,
 			SchemaName:   req.SchemaName,

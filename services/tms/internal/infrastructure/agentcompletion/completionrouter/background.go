@@ -33,23 +33,7 @@ func (s *Service) SubmitBackground(
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
-	task := req.Task
-	if task == "" {
-		task = aiprovider.TaskGeneral
-	}
-
-	run := &runRequest{
-		TenantInfo:          req.TenantInfo,
-		Task:                task,
-		System:              req.System,
-		UserContent:         modeladapter.BuildContextText(req.Context),
-		Schema:              req.OutputSchema,
-		SchemaName:          req.SchemaName,
-		MaxTokens:           req.MaxTokens,
-		PreferredProviderID: req.PreferredProviderID,
-		RequireProvider:     req.RequireProvider,
-		Attribution:         req.Attribution,
-	}
+	run := structuredRun(req)
 
 	usable, err := s.candidatesFor(ctx, run)
 	if err != nil {
@@ -73,7 +57,7 @@ func (s *Service) SubmitBackground(
 			lastErr = submitErr
 			s.logger.Warn("background submit failed, falling through",
 				zap.String("provider", provider.Name),
-				zap.String("task", string(task)),
+				zap.String("task", string(run.Task)),
 				zap.Error(submitErr),
 			)
 
@@ -93,7 +77,7 @@ func (s *Service) SubmitBackground(
 	// call inline still answers the question, and a submit failure that would
 	// have been fatal is reported only if the inline attempt also fails.
 	s.logger.Debug("no provider accepted a background submission, running inline",
-		zap.String("task", string(task)),
+		zap.String("task", string(run.Task)),
 		zap.Error(lastErr),
 	)
 

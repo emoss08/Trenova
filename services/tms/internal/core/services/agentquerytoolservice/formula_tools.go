@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -386,11 +387,10 @@ func (t *proposeFormulaTool) ParamSchema() map[string]any {
 					"type": "object",
 					"properties": map[string]any{
 						"name": map[string]any{"type": "string", "description": "An identifier."},
-						"type": map[string]any{
-							"type":        "string",
-							"enum":        []string{"Number", "String", "Boolean"},
-							"description": "What the variable holds.",
-						},
+						"type": agenttoolschema.Enum(
+							"What the variable holds.",
+							formulaVariableTypes,
+						),
 						"description": map[string]any{
 							"type":        "string",
 							"description": "What it is for, for a billing clerk.",

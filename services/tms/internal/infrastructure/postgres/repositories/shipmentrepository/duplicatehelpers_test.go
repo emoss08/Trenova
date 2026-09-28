@@ -17,7 +17,7 @@ func TestBuildDuplicatedShipmentGraph_ResetsOperationalState(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	source := duplicateSourceFixture()
 
-	graph := buildDuplicatedShipmentGraph(source, []string{"PRO-1", "PRO-2"}, false, userID)
+	graph := buildDuplicatedShipmentGraph(source, []string{"PRO-1", "PRO-2"}, nil, userID)
 
 	require.Len(t, graph.shipments, 2)
 	require.Len(t, graph.moves, 2)

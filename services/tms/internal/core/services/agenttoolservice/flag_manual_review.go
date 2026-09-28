@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 type flagManualReviewTool struct {
@@ -26,6 +28,29 @@ func (t *flagManualReviewTool) Description() string {
 		"charge in dispute. Not for any other kind of record (use raise_exception)."
 }
 
+// evidenceItemsProperty is a list of the records that show a problem, in
+// the shape an exception keeps them.
+func evidenceItemsProperty(description string) map[string]any {
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeArray,
+		toolschema.KeyDescription: description,
+		toolschema.KeyItems: map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
+				fieldType: stringProperty(
+					"What kind of record it is: document, charge, rate, shipment.", 0,
+				),
+				evidenceID: stringProperty("The record's id.", 0),
+				fieldNote:  stringProperty("What the record shows, in a sentence.", 0),
+			},
+			toolschema.KeyRequired:             []string{fieldType, evidenceID},
+			toolschema.KeyAdditionalProperties: false,
+		},
+	}
+}
+
+const evidenceID = "id"
+
 func (t *flagManualReviewTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
@@ -39,16 +64,15 @@ func (t *flagManualReviewTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The billing queue item being flagged: this run's subject.",
 			},
-			"category": map[string]any{
-				"type": "string",
-				"description": "What kind of problem it is, such as MissingDocumentation, " +
-					"IncorrectRates, WeightDiscrepancy, AccessorialDispute, DuplicateCharge or " +
-					"RateNotOnFile.",
-			},
-			"severity": map[string]any{
-				"type":        "string",
-				"description": "Low, Medium, High or Critical: how much it holds up billing.",
-			},
+			fieldCategory: agenttoolschema.Enum(
+				"What kind of problem it is, such as MissingDocumentation, IncorrectRates, "+
+					"WeightDiscrepancy, AccessorialDispute, DuplicateCharge or RateNotOnFile.",
+				agenttoolschema.ExceptionCategories,
+			),
+			fieldSeverity: agenttoolschema.Enum(
+				"How much it holds up billing.",
+				agenttoolschema.Severities,
+			),
 			"attemptSummary": map[string]any{
 				"type": "string",
 				"description": "What you checked and why it was not enough, for the biller who " +
@@ -58,12 +82,10 @@ func (t *flagManualReviewTool) ParamSchema() map[string]any {
 				"type":        "integer",
 				"description": "How many records the problem affects, when more than this one.",
 			},
-			"evidence": map[string]any{
-				"type": "array",
-				"description": "At least one record that shows the problem, each as {type, id, " +
+			fieldEvidence: evidenceItemsProperty(
+				"At least one record that shows the problem, each as {type, id, " +
 					"note}: a document, a charge, a rate, the shipment.",
-				"items": map[string]any{"type": "object"},
-			},
+			),
 		},
 		"required": []string{
 			"runId",
@@ -113,6 +135,16 @@ func (t *flagManualReviewTool) Execute(
 	return err
 }
 
+// Validate builds the exception the preview builds, so a call that names
+// no run, a category the domain does not have or evidence in the wrong
+// shape is refused to the model before it is proposed.
+func (t *flagManualReviewTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	return previewValidates(ctx, t, &params)
+}
+
 func (t *flagManualReviewTool) request(
 	params *serviceports.ToolExecuteParams,
 ) (*serviceports.FlagAgentExceptionRequest, error) {
@@ -126,12 +158,16 @@ func (t *flagManualReviewTool) request(
 		return nil, err
 	}
 
-	category, err := requireString(params.Params, "category")
+	category, err := requireEnum(
+		params.Params,
+		fieldCategory,
+		agenttoolschema.ExceptionCategories.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	severity, err := requireString(params.Params, "severity")
+	severity, err := requireEnum(params.Params, fieldSeverity, agenttoolschema.Severities.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +184,8 @@ func (t *flagManualReviewTool) request(
 
 	return &serviceports.FlagAgentExceptionRequest{
 		RunID:          runID,
-		Category:       agent.ExceptionCategory(category),
-		Severity:       agent.Severity(severity),
+		Category:       category,
+		Severity:       severity,
 		SubjectType:    agent.SubjectBillingQueueItem,
 		SubjectID:      subjectID,
 		AttemptSummary: attemptSummary,

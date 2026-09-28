@@ -1,0 +1,616 @@
+"Whether a paired companion may still act for its person."
+enum CaptureDeviceStatus {
+  Active
+  Revoked
+}
+
+"The processor a companion was built for. Trenova Capture ships for 64-bit Windows only."
+enum CaptureArchitecture {
+  x64
+}
+
+"How the pages reached Trenova: from a scanner, or from another program's print dialog."
+enum CaptureSource {
+  Scan
+  Print
+}
+
+"What a request asks the companion to do."
+enum CaptureRequestMode {
+  Scan
+  Print
+}
+
+"How far a request to a companion has got."
+enum CaptureRequestStatus {
+  Pending
+  Delivered
+  InProgress
+  Completed
+  Canceled
+  Expired
+  Failed
+}
+
+"Why a companion could not carry out a request."
+enum CaptureRequestFailureCode {
+  SOURCE_UNAVAILABLE
+  SOURCE_BUSY
+  PAPER_JAM
+  FEEDER_EMPTY
+  CANCELED_BY_USER
+  DRIVER_ERROR
+  UPLOAD_FAILED
+  NOT_DELIVERED
+  INTERNAL
+}
+
+"How far a captured stack has got, from the first page arriving to the last document being filed."
+enum CaptureBatchStatus {
+  Receiving
+  Sealed
+  Processing
+  Ready
+  PartiallyFiled
+  Filed
+  Discarded
+  Expired
+  Failed
+}
+
+"Whether a page could be read."
+enum CapturePageStatus {
+  Received
+  Processed
+  Failed
+}
+
+"Where one proposed document is: waiting on a person, being filed, done, or thrown away."
+enum CaptureItemStatus {
+  Proposed
+  Filing
+  Filed
+  Discarded
+  Failed
+}
+
+"What suggested where a document goes."
+enum CaptureSuggestionSource {
+  CoverSheet
+  Request
+  Classifier
+  Person
+}
+
+"The colour mode a profile scans in."
+enum CapturePixelType {
+  BlackWhite
+  Grayscale
+  Color
+}
+
+"A rule for where one document in a stack ends and the next begins."
+enum CaptureSeparatorStrategy {
+  PatchCode
+  CoverSheet
+  BlankPage
+  FixedPageCount
+}
+
+"Whether a profile is still offered when somebody starts a scan."
+enum CaptureProfileStatus {
+  Active
+  Inactive
+}
+
+"The Windows scanning interface a source speaks."
+enum CaptureSourceProtocol {
+  TWAIN
+  WIA
+}
+
+"A scanner a companion can reach, as the companion reported it."
+type CaptureSourceInfo {
+  name: String!
+  protocol: CaptureSourceProtocol!
+  "32 or 64: the driver's own, which decides which scan helper the companion starts for it."
+  bitness: Int!
+  isDefault: Boolean!
+  duplex: Boolean!
+  feeder: Boolean!
+  patchCodes: Boolean!
+  barcodes: Boolean!
+  blankDiscard: Boolean!
+  "The resolutions the source accepts, so the scan dialog only offers those."
+  resolutions: [Int!]!
+}
+
+"""
+A Trenova Capture companion paired to a person.
+
+It acts as that person: everything it uploads is checked against their
+permissions, and it stops working the moment they lose them. Its credential is
+never returned.
+"""
+type CaptureDevice {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  userId: ID!
+  "The person the device acts for, when the reader may see them."
+  user: User
+  name: String!
+  machineName: String!
+  windowsUser: String!
+  agentVersion: String!
+  architecture: CaptureArchitecture!
+  osVersion: String!
+  status: CaptureDeviceStatus!
+  sources: [CaptureSourceInfo!]!
+  lastSeenAt: Timestamp
+  "Whether the companion has an open connection right now."
+  isOnline: Boolean!
+  lastIp: String!
+  revokedAt: Timestamp
+  revokedById: ID
+  revokedReason: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+The machine asking to pair, as it described itself. Shown to the person
+before they approve, so a code read off somebody else's screen is
+recognisably not theirs.
+"""
+type CapturePairingPreview {
+  userCode: String!
+  machineName: String!
+  windowsUser: String!
+  agentVersion: String!
+  architecture: CaptureArchitecture!
+  osVersion: String!
+  "The address the request came from."
+  clientIp: String!
+  expiresAt: Timestamp!
+}
+
+"A named set of scanner settings people pick from when they start a scan."
+type CaptureProfile {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  status: CaptureProfileStatus!
+  "The profile a scan uses when nobody picks one."
+  isDefault: Boolean!
+  dpi: Int!
+  pixelType: CapturePixelType!
+  duplex: Boolean!
+  useFeeder: Boolean!
+  discardBlankPages: Boolean!
+  "JPEG quality for colour and greyscale pages, between 30 and 95."
+  jpegQuality: Int!
+  "Whether the scanner's own dialog opens, for sources that need it."
+  showDriverUi: Boolean!
+  separatorStrategies: [CaptureSeparatorStrategy!]!
+  "How many pages each document has, when splitting by page count."
+  fixedPageCount: Int!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+input CaptureProfileInput {
+  name: String!
+  description: String
+  status: CaptureProfileStatus!
+  isDefault: Boolean!
+  dpi: Int!
+  pixelType: CapturePixelType!
+  duplex: Boolean!
+  useFeeder: Boolean!
+  discardBlankPages: Boolean!
+  jpegQuality: Int!
+  showDriverUi: Boolean!
+  separatorStrategies: [CaptureSeparatorStrategy!]!
+  fixedPageCount: Int!
+}
+
+"How a person recognises a record a capture is filed onto."
+type CaptureRecordRef {
+  "The kind of record: shipment, worker, tractor, trailer, customer or carrier."
+  resourceType: String!
+  id: ID!
+  "A shipment's PRO number, a worker's name, a unit's number."
+  title: String!
+  "A second number, where the kind has one: a BOL, a plate, a code."
+  subtitle: String!
+}
+
+"A person asking one of their companions to scan, or to catch the next print, into a record."
+type CaptureRequest {
+  id: ID!
+  userId: ID!
+  deviceId: ID!
+  mode: CaptureRequestMode!
+  status: CaptureRequestStatus!
+  targetType: String!
+  targetId: ID!
+  documentTypeId: ID
+  profileId: ID
+  "The scanner the person chose; blank for the device's default."
+  sourceName: String!
+  "The batch the request produced, once pages arrived."
+  batchId: ID
+  failureCode: CaptureRequestFailureCode
+  failureMessage: String!
+  expiresAt: Timestamp!
+  deliveredAt: Timestamp
+  completedAt: Timestamp
+  "Whether the companion may still act on it."
+  isOpen: Boolean!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"What the scanner reported about how it captured a stack."
+type CaptureSettings {
+  protocol: CaptureSourceProtocol
+  bitness: Int!
+  dpi: Int!
+  pixelType: CapturePixelType
+  duplex: Boolean!
+  feeder: Boolean!
+  blankDiscard: Boolean!
+  showDriverUi: Boolean!
+  driverVersion: String!
+  "The program that printed, for a print."
+  application: String!
+  "Settings the scanner would not take, by name."
+  refused: [String!]!
+}
+
+"One scanned or printed page."
+type CapturePage {
+  id: ID!
+  batchId: ID!
+  sequence: Int!
+  status: CapturePageStatus!
+  byteSize: Int!
+  widthPx: Int!
+  heightPx: Int!
+  dpi: Int!
+  "Clockwise rotation in degrees a person set for this page."
+  rotation: Int!
+  "How much of the page is ink, between 0 and 1. Absent until the page is read."
+  blankScore: Float
+  "Whether the page reads as blank."
+  isBlank: Boolean!
+  "Whether the page only divides documents, and is left out of all of them."
+  isSeparator: Boolean!
+  patchCode: String!
+  "Whether the page is a Trenova cover sheet."
+  isCoverSheet: Boolean!
+  "Whether the page looked like a cover sheet this organization did not issue, or one that expired."
+  unrecognizedCoverSheet: Boolean!
+  failureMessage: String!
+  "Where to fetch the page to show it, under the API's base URL."
+  contentPath: String!
+  "Where to fetch a small image of the page, under the API's base URL."
+  thumbnailPath: String!
+  createdAt: Timestamp!
+}
+
+"One document proposed from a stack: some of its pages, and where they might go."
+type CaptureItem {
+  id: ID!
+  batchId: ID!
+  position: Int!
+  status: CaptureItemStatus!
+  "The item's pages, in order."
+  pageIds: [ID!]!
+  pageCount: Int!
+  suggestedType: String!
+  suggestedId: ID
+  "The suggested record, named. Absent when there is none or it is gone."
+  suggestedRecord: CaptureRecordRef
+  suggestedDocumentTypeId: ID
+  suggestionSource: CaptureSuggestionSource
+  "How sure the suggestion is, between 0 and 1."
+  suggestionConfidence: Float
+  "Why this was suggested, in words a person can check."
+  suggestionReason: String!
+  coverSheetId: ID
+  "What the document looked like it was, when it was read."
+  detectedKind: String!
+  filedType: String!
+  filedId: ID
+  "The record it was filed onto, named."
+  filedRecord: CaptureRecordRef
+  filedDocumentTypeId: ID
+  "The document it became."
+  documentId: ID
+  filedById: ID
+  filedAt: Timestamp
+  failureMessage: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+One stack of pages from one scan or one print job.
+
+A batch is split into items, each a proposed document, which a person checks
+and files. Pages that are not filed are kept only until the retention date,
+then deleted.
+"""
+type CaptureBatch {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  userId: ID!
+  "The person who captured it, when the reader may see them."
+  user: User
+  deviceId: ID!
+  "The companion it came from."
+  device: CaptureDevice
+  requestId: ID
+  profileId: ID
+  source: CaptureSource!
+  status: CaptureBatchStatus!
+  "The scanner or printer name the companion reported."
+  sourceName: String!
+  "The print job's name, for a print."
+  jobName: String!
+  settings: CaptureSettings!
+  "Where the whole stack was sent, when it was scanned into a record."
+  targetType: String!
+  targetId: ID
+  target: CaptureRecordRef
+  documentTypeId: ID
+  receivedPageCount: Int!
+  itemCount: Int!
+  filedItemCount: Int!
+  "How many items still wait on a person."
+  openItemCount: Int!
+  failureMessage: String!
+  sealedAt: Timestamp
+  processedAt: Timestamp
+  "When unfiled pages are deleted."
+  retainUntil: Timestamp!
+  "Whether items can still be split, merged, filed or discarded."
+  isEditable: Boolean!
+  "The pages, on a single-batch read. A list leaves them out."
+  pages: [CapturePage!]!
+  "The items, on a single-batch read. A list leaves them out."
+  items: [CaptureItem!]!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type CaptureBatchEdge {
+  node: CaptureBatch!
+  cursor: String!
+}
+
+type CaptureBatchConnection {
+  edges: [CaptureBatchEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"How the intake queue is ordered."
+enum CaptureBatchSort {
+  "Most recently captured first."
+  Newest
+  "Longest waiting first."
+  Oldest
+  "Soonest to have its unfiled pages deleted first."
+  ExpiringSoonest
+  "Largest stack first."
+  MostPages
+}
+
+input CaptureBatchesInput {
+  first: Int = 25
+  after: String
+  sort: CaptureBatchSort = Newest
+  "Only these statuses; empty is every status."
+  statuses: [CaptureBatchStatus!]
+  source: CaptureSource
+  "Only the caller's own batches, even when they could see everybody's."
+  mine: Boolean
+  "Only batches scanned into this record."
+  targetType: String
+  targetId: ID
+  "Words from the scanner, print job or device name."
+  query: String
+}
+
+input CaptureItemLayoutInput {
+  "The item's pages, in order."
+  pageIds: [ID!]!
+}
+
+input CapturePageRotationInput {
+  pageId: ID!
+  "Clockwise degrees: 0, 90, 180 or 270."
+  rotation: Int!
+}
+
+input EditCaptureItemsInput {
+  "The batch version the person was looking at."
+  version: Int!
+  "How the open pages divide into documents. Pages left out are dropped."
+  items: [CaptureItemLayoutInput!]!
+  rotations: [CapturePageRotationInput!]
+}
+
+input FileCaptureItemInput {
+  targetType: String!
+  targetId: ID!
+  documentTypeId: ID
+  "The item version the person was looking at."
+  version: Int!
+}
+
+input FileCaptureItemsEntryInput {
+  itemId: ID!
+  targetType: String!
+  targetId: ID!
+  documentTypeId: ID
+  "The item version the person was looking at."
+  version: Int!
+}
+
+"One document that did not file, and why."
+type CaptureItemFailure {
+  itemId: ID!
+  message: String!
+}
+
+"What a bulk filing did: the documents now filing, and the ones that could not be."
+type FileCaptureItemsResult {
+  filed: [CaptureItem!]!
+  failures: [CaptureItemFailure!]!
+}
+
+input CreateCaptureRequestInput {
+  "One of the caller's own devices."
+  deviceId: ID!
+  mode: CaptureRequestMode!
+  targetType: String!
+  targetId: ID!
+  documentTypeId: ID
+  profileId: ID
+  "The scanner to use; blank for the device's default."
+  sourceName: String
+}
+
+input CaptureCoverSheetInput {
+  "Leave the record out for a plain separator that divides a stack and routes nothing."
+  targetType: String
+  targetId: ID
+  documentTypeId: ID
+}
+
+"A QR code as its modules, for drawing on a printed sheet."
+type CaptureQRCode {
+  "How many modules along each side. The quiet zone is not included."
+  size: Int!
+  "One string per row, top to bottom; 1 is a dark module."
+  modules: [String!]!
+}
+
+"""
+A cover sheet ready to print.
+
+The payload is what its QR code must carry. It is returned once, here, and
+only its hash is kept, so a sheet cannot be reprinted from Trenova: a lost
+sheet is replaced by a new one.
+"""
+type CaptureCoverSheet {
+  id: ID!
+  targetType: String!
+  targetId: ID
+  target: CaptureRecordRef
+  documentTypeId: ID
+  payload: String!
+  "The code to print, drawn from the payload."
+  qrCode: CaptureQRCode!
+  expiresAt: Timestamp!
+  createdAt: Timestamp!
+}
+
+"Whether the caller can scan or print into Trenova."
+type CaptureAccess {
+  "Whether this organization has turned capture on."
+  enabled: Boolean!
+  "Whether the caller may start a scan, print into a record, or pair a computer."
+  canCapture: Boolean!
+}
+
+"The installer a Trenova Capture release ships."
+type CaptureAgentInstaller {
+  fileName: String!
+  "Where it downloads from."
+  url: String!
+  "Lowercase hex SHA-256 of the file, for anyone who checks it by hand."
+  sha256: String!
+  "Its size in bytes."
+  size: Int!
+}
+
+"A published Trenova Capture release, as its signed manifest describes it."
+type CaptureAgentRelease {
+  version: String!
+  publishedAt: Timestamp!
+  "The oldest Windows build it installs on; 19045 is Windows 10 22H2."
+  minimumWindowsBuild: Int!
+  installer: CaptureAgentInstaller!
+  notes: String!
+}
+
+extend type Query {
+  "Whether capture is on here and whether the caller may use it."
+  myCaptureAccess: CaptureAccess!
+  "The current Trenova Capture release, for the download button; null when none is published."
+  captureAgentRelease: CaptureAgentRelease
+  "The intake queue: captured stacks, newest first."
+  captureBatches(input: CaptureBatchesInput!): CaptureBatchConnection!
+  "One stack with its pages and proposed documents."
+  captureBatch(id: ID!): CaptureBatch!
+  "The companions the caller has paired."
+  myCaptureDevices(status: CaptureDeviceStatus): [CaptureDevice!]!
+  "Every companion in the organization, for the people who manage them."
+  captureDevices(status: CaptureDeviceStatus, query: String): [CaptureDevice!]!
+  "The profiles offered when somebody starts a scan: active ones, default first."
+  availableCaptureProfiles: [CaptureProfile!]!
+  "Every profile, for the people who manage them."
+  captureProfiles(status: CaptureProfileStatus, query: String): [CaptureProfile!]!
+  captureProfile(id: ID!): CaptureProfile!
+  "The caller's recent requests into one record, so its page can show a scan in flight."
+  captureRequestsForTarget(targetType: String!, targetId: ID!, limit: Int): [CaptureRequest!]!
+  "A machine waiting to pair, by the code it shows."
+  captureDevicePairing(userCode: String!): CapturePairingPreview!
+}
+
+extend type Mutation {
+  "Changes how a stack's open pages divide into documents: split, merge, reorder, drop, rotate."
+  editCaptureItems(batchId: ID!, input: EditCaptureItemsInput!): CaptureBatch!
+  "Files one proposed document onto a record, as the caller."
+  fileCaptureItem(id: ID!, input: FileCaptureItemInput!): CaptureItem!
+  """
+  Files several proposed documents at once, each as fileCaptureItem would.
+  One that cannot be filed does not stop the rest; it comes back with its reason.
+  """
+  fileCaptureItems(items: [FileCaptureItemsEntryInput!]!): FileCaptureItemsResult!
+  "Throws away one proposed document without filing it, and returns its stack as it now is."
+  discardCaptureItem(id: ID!, version: Int!): CaptureBatch!
+  "Throws away everything in a stack that is not already filed."
+  discardCaptureBatch(id: ID!, version: Int!): CaptureBatch!
+  "Asks one of the caller's companions to scan, or to catch the next print, into a record."
+  createCaptureRequest(input: CreateCaptureRequestInput!): CaptureRequest!
+  "Withdraws one of the caller's requests."
+  cancelCaptureRequest(id: ID!): CaptureRequest!
+  "Issues cover sheets to print. Each payload is returned once."
+  createCaptureCoverSheets(sheets: [CaptureCoverSheetInput!]!): [CaptureCoverSheet!]!
+  "Approves a machine waiting to pair, as the caller. It then acts for them."
+  approveCaptureDevicePairing(userCode: String!, deviceName: String): Boolean!
+  "Refuses a machine waiting to pair."
+  denyCaptureDevicePairing(userCode: String!): Boolean!
+  "Revokes one of the caller's own companions. It stops working at once."
+  revokeMyCaptureDevice(id: ID!, reason: String): CaptureDevice!
+  "Revokes anybody's companion."
+  revokeCaptureDevice(id: ID!, reason: String): CaptureDevice!
+  createCaptureProfile(input: CaptureProfileInput!): CaptureProfile!
+  "Changes a profile. Stacks already captured keep the settings they were captured with."
+  updateCaptureProfile(id: ID!, version: Int!, input: CaptureProfileInput!): CaptureProfile!
+  deleteCaptureProfile(id: ID!): Boolean!
+}

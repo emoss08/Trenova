@@ -68,7 +68,7 @@ Loaded now:
 Callable after find_tools:
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
 - get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
-- get_shipment — Retrieve one shipment by its id, including its stops, moves, and assignments.
+- get_shipment — Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - get_document_summary — Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, and the structured fields document intelligence found.
 - list_collections_worklist — List the collections worklist: overdue and disputed invoices ranked for a collector to chase, each marked Critical, Warning or Watch.

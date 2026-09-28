@@ -15,6 +15,7 @@ type BulkDuplicateShipmentsPayload struct {
 	ShipmentID    pulid.ID `json:"shipmentId"`
 	Count         int      `json:"count"`
 	OverrideDates bool     `json:"overrideDates"`
+	FirstPickupAt *int64   `json:"firstPickupAt,omitempty"`
 	RequestedBy   pulid.ID `json:"requestedBy"`
 }
 

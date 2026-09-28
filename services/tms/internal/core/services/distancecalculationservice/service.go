@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/countryutils"
 	"github.com/emoss08/trenova/shared/hashutils"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pcmiler"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -347,6 +348,30 @@ func (s *Service) RecalculateShipment(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*services.DistanceCalculationResponse, error) {
+	plan, err := s.planRecalculateShipment(ctx, shipmentID, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.persistMoveDistances(ctx, plan.After.Moves); err != nil {
+		return nil, err
+	}
+	s.logRuns(ctx, plan.After, plan.Distance)
+	return plan.Distance, nil
+}
+
+func (s *Service) PreviewRecalculateShipment(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*services.ShipmentDistancePreview, error) {
+	return s.planRecalculateShipment(ctx, shipmentID, tenantInfo)
+}
+
+func (s *Service) planRecalculateShipment(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*services.ShipmentDistancePreview, error) {
 	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         shipmentID,
 		TenantInfo: tenantInfo,
@@ -358,15 +383,28 @@ func (s *Service) RecalculateShipment(
 		return nil, err
 	}
 
+	before := snapshotMoveDistances(entity)
 	resp, err := s.ResolveForShipment(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
-	if err = s.persistMoveDistances(ctx, entity.Moves); err != nil {
-		return nil, err
+
+	return &services.ShipmentDistancePreview{Before: before, After: entity, Distance: resp}, nil
+}
+
+func snapshotMoveDistances(entity *shipment.Shipment) *shipment.Shipment {
+	before := *entity
+	before.Moves = make([]*shipment.ShipmentMove, 0, len(entity.Moves))
+	for _, move := range entity.Moves {
+		if move == nil {
+			continue
+		}
+		copied := *move
+		copied.Distance = intutils.ClonePointer(move.Distance)
+		before.Moves = append(before.Moves, &copied)
 	}
-	s.logRuns(ctx, entity, resp)
-	return resp, nil
+
+	return &before
 }
 
 func (s *Service) RecalculateMoveJurisdictionMiles(

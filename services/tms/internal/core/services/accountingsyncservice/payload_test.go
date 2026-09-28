@@ -320,6 +320,7 @@ func TestCurrencyIsSentWhenTheProviderHasMulticurrency(t *testing.T) {
 	h.updateConnection(func(conn *accountingsync.AccountingConnection) {
 		conn.ExternalMultiCurrencyEnabled = true
 	})
+	h.rates.set("CAD", "USD", decimal.RequireFromString("0.7312"))
 	customerID, _ := h.mappedCustomer("Acme")
 	h.confirm(freightTarget(), "qb-item-freight")
 	record := h.enqueueInvoice(t, h.postedInvoice(customerID, invoiceSpec{currency: "cad"}))
@@ -328,6 +329,7 @@ func TestCurrencyIsSentWhenTheProviderHasMulticurrency(t *testing.T) {
 
 	assert.Equal(t, accountingsync.SyncStatusSynced, h.records.get(record.ID).Status)
 	assert.Equal(t, "cad", onlySalesDoc(t, h).CurrencyCode)
+	decimalEqual(t, "0.7312", onlySalesDoc(t, h).ExchangeRate)
 }
 
 func TestDocumentDatedInAClosedPeriodBlocks(t *testing.T) {

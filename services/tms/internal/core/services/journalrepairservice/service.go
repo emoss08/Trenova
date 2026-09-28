@@ -123,6 +123,16 @@ func (s *Service) repairCreditMemos(ctx context.Context, req *Request, report *R
 
 		for _, candidate := range batch {
 			after = candidate.Memo.ID
+			if candidate.SourceMissing {
+				report.Skipped = append(report.Skipped, Skip{
+					Kind:           KindCreditMemo,
+					ID:             candidate.Memo.ID,
+					Number:         candidate.Memo.Number,
+					OrganizationID: candidate.Memo.OrganizationID,
+					Reason:         "the invoice adjustment that issued it is missing or belongs to another organization or business unit",
+				})
+				continue
+			}
 			ledgerReq := invoiceledger.CreditMemoRequest(
 				candidate.Kind,
 				candidate.Memo,
@@ -293,7 +303,7 @@ func (r *Report) skip(err error, skip Skip) error { //nolint:gocritic // Skip is
 	case errors.Is(err, invoiceledger.ErrNoLedgerEntry):
 		skip.Reason = "revenue is not recognized when an invoice posts, so it books no ledger entry"
 	case errors.Is(err, errNothingToRepair):
-		skip.Reason = "nothing is owed, so no payment journal is needed"
+		skip.Reason = "no payable was booked for it, so no payment journal is needed"
 	case errortypes.IsBusinessError(err), errortypes.IsError(err), errortypes.IsNotFoundError(err),
 		errortypes.IsConflictError(err), errortypes.IsMultiError(err):
 		skip.Reason = err.Error()

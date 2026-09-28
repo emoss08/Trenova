@@ -2,6 +2,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   changeAccountingBackfill,
   pauseAccountingSync,
+  redateAccountingSync,
   releaseAccountingSync,
   requestAccountingBackfill,
   resumeAccountingSync,
@@ -18,6 +19,7 @@ import type {
 } from "@trenova/graphql/generated/graphql";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatUnixDate } from "@trenova/shared/lib/date";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
@@ -95,6 +97,19 @@ export function useAccountingSyncActions(system: AccountingSystem, providerName:
     },
   });
 
+  const redate = useApiMutation({
+    mutationFn: (id: string) => redateAccountingSync(id),
+    resourceName: t("Sync record"),
+    onSuccess: async (record) => {
+      await refresh();
+      toast.success(
+        record.redatedTo
+          ? t("Queued again, dated {0}", formatUnixDate(record.redatedTo))
+          : t("Queued again"),
+      );
+    },
+  });
+
   const backfill = useApiMutation({
     mutationFn: (request: AccountingBackfillRequest) =>
       requestAccountingBackfill({
@@ -117,5 +132,5 @@ export function useAccountingSyncActions(system: AccountingSystem, providerName:
     onSuccess: refresh,
   });
 
-  return { pause, resume, retry, release, skip, backfill, changeBackfill, refresh };
+  return { pause, resume, retry, release, skip, redate, backfill, changeBackfill, refresh };
 }

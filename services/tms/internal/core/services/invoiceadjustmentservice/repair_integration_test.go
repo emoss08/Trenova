@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -84,7 +85,7 @@ func TestJournalRepairRestoresAdjustmentCreditMemoJournals(t *testing.T) {
 	require.Len(t, planned.Skipped, 1)
 	assert.Equal(t, journalrepairservice.KindDriverSettlement, planned.Skipped[0].Kind)
 	assert.Equal(t, settlementID, planned.Skipped[0].ID)
-	assert.Contains(t, planned.Skipped[0].Reason, "no posted payable account")
+	assert.Contains(t, planned.Skipped[0].Reason, "no payable was booked")
 	assert.Nil(t, h.creditMemoJournal(t, credit.CreditMemoInvoiceID))
 	assert.Empty(t, h.customerLedgerLines(t, credit.CreditMemoInvoiceID))
 
@@ -310,3 +311,68 @@ func (h *integrationHarness) repairService() *journalrepairservice.Service {
 		Now: func() int64 { return 1_800_000_000 },
 	})
 }
+
+func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	defer cleanup()
+
+	seedRegistry := seeder.NewRegistry()
+	seeds.Register(seedRegistry)
+	engine := seeder.NewEngine(db, seedRegistry, &config.Config{
+		System: config.SystemConfig{SystemUserPassword: "test-system-password"},
+	})
+	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
+	require.NoError(t, err)
+
+	h := newIntegrationHarness(
+		t,
+		ctx,
+		db,
+		&fakeWorkflowStarter{enabled: false},
+		decimal.NewFromInt(100),
+	)
+	h.ensureOpenFiscalPeriod(t)
+	h.ensureAccountingDefaults(t)
+	h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+		control.WriteOffApprovalPolicy = tenant.WriteOffApprovalPolicyRequireApprovalAboveThreshold
+		control.WriteOffApprovalThreshold = decimal.NewFromInt(10_000)
+	})
+
+	entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
+		makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Open balance", 1, 80),
+	}, invoice.SettlementStatusUnpaid, decimal.Zero)
+	accountingDate := timeutils.NowUnix() - 3_600
+	_, err = db.NewUpdate().
+		Table("invoices").
+		Set("invoice_date = ?", accountingDate).
+		Where("id = ?", entity.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	writtenAfter := timeutils.NowUnix()
+	adjustment, err := h.service.Submit(ctx, &servicesports.InvoiceAdjustmentRequest{
+		InvoiceID:      entity.ID,
+		Kind:           invoiceadjustment.KindWriteOff,
+		IdempotencyKey: "writeoff-stamp-" + entity.ID.String(),
+		Reason:         "Bad debt",
+		TenantInfo:     h.tenantInfo(),
+	}, h.actor())
+	require.NoError(t, err)
+	require.Equal(t, invoiceadjustment.StatusExecuted, adjustment.Status)
+	require.Equal(t, accountingDate, adjustment.AccountingDate)
+
+	var journal struct {
+		AccountingDate int64  `bun:"accounting_date"`
+		PostedAt       *int64 `bun:"posted_at"`
+	}
+	require.NoError(t, db.NewSelect().
+		Table("journal_entries").
+		Column("accounting_date", "posted_at").
+		Where("reference_id = ?", adjustment.ID.String()).
+		Limit(1).
+		Scan(ctx, &journal))
+	assert.Equal(t, accountingDate, journal.AccountingDate)
+	require.NotNil(t, journal.PostedAt)
+	assert.GreaterOrEqual(t, *journal.PostedAt, writtenAfter)
+}
+

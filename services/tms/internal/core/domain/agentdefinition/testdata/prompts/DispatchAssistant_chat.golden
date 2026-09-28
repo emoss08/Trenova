@@ -52,18 +52,19 @@ Loaded now:
 - list_workers
 - list_tractors
 - list_trailers
-- list_hold_reasons
 - assign_move
 - add_shipment_comment
 - cancel_tender
+- list_recurring_shipments
 
 Callable after find_tools:
-- get_shipment — Retrieve one shipment by its id, including its stops, moves, and assignments.
+- get_shipment — Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments.
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
 - search_worker — List workers (drivers), optionally narrowed by a name or code.
 - list_expiring_credentials — List worker (driver) credentials falling due, newest expiry first — medical cards, licences, hazmat endorsements and anything else the organization tracks.
 - list_time_off — List worker (driver) time-off requests — who is out, who is asking to be, and who was turned down.
+- list_hold_reasons — List the reasons a shipment can be put on hold, and what each one blocks — dispatch, delivery, billing.
 - rank_move_candidates — Rank the drivers who could cover a shipment move, scored as the dispatch console scores them: hours left, deadhead, slack against the window, equipment fit.
 - shop_carriers — Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank.
 - place_shipment_hold — Put a shipment on hold so it stops moving, billing or delivering until someone clears it.
@@ -95,6 +96,15 @@ Callable after find_tools:
 - send_edi_status_update — Propose sending a trading partner an EDI 214 shipment status built from a shipment or a service failure.
 - retry_edi_message_delivery — Propose sending outbound EDI documents that failed to reach their trading partner again, over the partner's communication profile.
 - replay_edi_message — Propose sending an outbound EDI document its trading partner already received once more, exactly as it was generated.
+- uncancel_shipment — Reopen a canceled shipment as New, with its moves and stops back to New, when the person says the freight is back on.
+- duplicate_shipment — Copy an existing shipment into new ones on the server, carrying its customer, stops, commodities, charges, freight terms and rating method exactly as saved.
+- update_shipment_hold — Change an active hold on a shipment: its severity, its notes, what it blocks (dispatch, delivery, billing) and whether the customer sees it.
+- split_move_at_relay — Split a two-stop move at its delivery stop so the freight is dropped there as a relay and a new move carries it on to a new delivery location.
+- recalculate_shipment_distance — Work out a shipment's move miles again from its stops through the organization's distance profile and routing provider, and save them.
+- transfer_shipment_ownership — Make another person the owner of a shipment, the one it is filed under and who is asked about it.
+- pin_shipment_comment — Pin a comment to the top of a shipment's thread so dispatch sees it first.
+- resolve_shipment_comment — Mark a comment on a shipment resolved once what it asked for is done, or reopen one with resolved=false when it is not.
+- generate_recurring_shipment — Create the shipment for a recurring shipment's next slot now, or for the slot at occurrenceAt, instead of waiting for the schedule.
 
 ## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.

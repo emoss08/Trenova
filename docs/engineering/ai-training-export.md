@@ -60,9 +60,10 @@ A correction is left out, and counted in `dropped`, for any of these reasons:
 
 ## Anonymization
 
-`aitraining.Anonymize` runs inside the worker, before anything is written. Nothing leaves the
-tenant unanonymized, and no model is called. Each example gets its own random surrogates, from a
-fresh ChaCha8 seed. The same original becomes the same surrogate throughout one example, in the
+`aitraining.Anonymize` runs inside the worker, before anything is written, and no model is
+called. It replaces the values Trenova knows and the patterns below; an identifier it does not
+know can survive in free text (see **Known limits**). Each example gets its own random
+surrogates, from a fresh ChaCha8 seed. The same original becomes the same surrogate throughout one example, in the
 page text, the target and the prediction alike. Across examples it does not, so examples cannot
 be linked by a shared surrogate.
 
@@ -150,12 +151,12 @@ Each line of a part is one `trenova.extraction-training/v1` example:
 ```
 
 - `target` is what a person confirmed, so it is the supervised answer. Only the fields in the
-  correction's scope are there, and a trainer should mask the loss on any other key.
+  correction's scope are there.
 - `prediction` and `outcomes` let the same export feed preference training: a `Corrected`
   field is a rejected answer beside its confirmed one.
-- The production prompt (`aidocumentservice` `extractSystemPrompt`, and the delimited context
-  of `Filename` and `Document Pages`) is rendered by the training pipeline, not stored in the
-  export. That way a prompt change does not require a re-export.
+- The production prompt is not stored in the export. `trenova ai training-export render` builds
+  it from the current production code when the datasets are made, so a prompt change does not
+  require a re-export. See [extraction-fine-tuning.md](extraction-fine-tuning.md).
 
 ## What is recorded
 

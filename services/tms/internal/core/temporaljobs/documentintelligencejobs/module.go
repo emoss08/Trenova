@@ -8,6 +8,7 @@ import (
 
 var Module = fx.Module("document-intelligence-jobs",
 	fx.Provide(NewActivities),
+	fx.Provide(NewCaptureAnalyzer),
 	fx.Provide(
 		fx.Annotate(
 			NewRegistry,

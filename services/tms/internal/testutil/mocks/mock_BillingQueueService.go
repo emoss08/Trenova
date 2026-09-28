@@ -762,3 +762,77 @@ func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) RunAndReturn(run fu
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewReassignCharge provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) PreviewReassignCharge(ctx context.Context, req *services.ReassignChargeRequest, actor *services.RequestActor) (*services.ReassignChargePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewReassignCharge")
+	}
+
+	var r0 *services.ReassignChargePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ReassignChargeRequest, *services.RequestActor) (*services.ReassignChargePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ReassignChargeRequest, *services.RequestActor) *services.ReassignChargePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ReassignChargePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ReassignChargeRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueService_PreviewReassignCharge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewReassignCharge'
+type MockBillingQueueService_PreviewReassignCharge_Call struct {
+	*mock.Call
+}
+
+// PreviewReassignCharge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ReassignChargeRequest
+//   - actor *services.RequestActor
+func (_e *MockBillingQueueService_Expecter) PreviewReassignCharge(ctx any, req any, actor any) *MockBillingQueueService_PreviewReassignCharge_Call {
+	return &MockBillingQueueService_PreviewReassignCharge_Call{Call: _e.mock.On("PreviewReassignCharge", ctx, req, actor)}
+}
+
+func (_c *MockBillingQueueService_PreviewReassignCharge_Call) Run(run func(ctx context.Context, req *services.ReassignChargeRequest, actor *services.RequestActor)) *MockBillingQueueService_PreviewReassignCharge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ReassignChargeRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ReassignChargeRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_PreviewReassignCharge_Call) Return(reassignChargePreview *services.ReassignChargePreview, err error) *MockBillingQueueService_PreviewReassignCharge_Call {
+	_c.Call.Return(reassignChargePreview, err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_PreviewReassignCharge_Call) RunAndReturn(run func(ctx context.Context, req *services.ReassignChargeRequest, actor *services.RequestActor) (*services.ReassignChargePreview, error)) *MockBillingQueueService_PreviewReassignCharge_Call {
+	_c.Call.Return(run)
+	return _c
+}

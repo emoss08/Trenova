@@ -629,6 +629,7 @@ func protectedProductRoutePrefixes() []protectedProductRoutePrefix {
 		{prefix: "/api/v1/billing-controls/", featureKey: FeatureBilling},
 		{prefix: "/api/v1/billing-queue/", featureKey: FeatureBilling},
 		{prefix: "/api/v1/billing/", featureKey: FeatureBilling},
+		{prefix: "/api/v1/capture/", featureKey: FeatureDocumentManagement},
 		{prefix: "/api/v1/carriers/", featureKey: FeatureCoreTMS},
 		{prefix: "/api/v1/commodities/", featureKey: FeatureCoreTMS},
 		{prefix: "/api/v1/custom-fields/", featureKey: FeatureAdministration},

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -58,18 +59,17 @@ func (t *addShipmentCommentTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "What to say, in the words a dispatcher would use.",
 			},
-			"visibility": map[string]any{
-				"type": "string",
-				"enum": []string{"Internal", "Operations", "Customer", "Driver", "Accounting"},
-				"description": "Who sees it. Defaults to Internal; only widen it when the " +
+			fieldVisibility: agenttoolschema.Enum(
+				"Who sees it. Defaults to Internal; only widen it when the "+
 					"person asked for the note to reach a customer or a driver.",
-			},
-			"priority": map[string]any{
-				"type": "string",
-				"enum": []string{"Low", "Normal", "High"},
-				"description": "How urgently dispatch should read it. Defaults to Normal; use " +
-					"High only for something that changes what happens to the load today.",
-			},
+				agenttoolschema.CommentVisibilities,
+			),
+			"priority": agenttoolschema.Enum(
+				"How urgently dispatch should read it. Defaults to Normal; use "+
+					"High or Urgent only for something that changes what happens to the "+
+					"load today.",
+				agenttoolschema.CommentPriorities,
+			),
 		},
 		"required":             []string{"shipmentId", "comment"},
 		"additionalProperties": false,
@@ -133,7 +133,28 @@ func (t *addShipmentCommentTool) comment(
 		return nil, err
 	}
 
-	visibility := commentVisibility(optionalString(params.Params, "visibility"))
+	// Widening a note's audience on a typo is the one mistake here that
+	// reaches a customer: a visibility the domain does not have is refused,
+	// never read as one it does.
+	visibility, given, err := optionalEnum(
+		params.Params, "visibility", agenttoolschema.CommentVisibilities.Values,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !given {
+		visibility = shipment.CommentVisibilityInternal
+	}
+
+	priority, given, err := optionalEnum(
+		params.Params, "priority", agenttoolschema.CommentPriorities.Values,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !given {
+		priority = shipment.CommentPriorityNormal
+	}
 
 	// Source is the assistant's, always. A note that reads as hand-typed but
 	// was not carries a colleague's authority without a colleague's check.
@@ -145,10 +166,19 @@ func (t *addShipmentCommentTool) comment(
 		Comment:        body,
 		Type:           commentType(visibility),
 		Visibility:     visibility,
-		Priority:       commentPriority(optionalString(params.Params, "priority")),
+		Priority:       priority,
 		Source:         shipment.CommentSourceAI,
 		Metadata:       commentTaintMetadata(*params),
 	}, nil
+}
+
+// Validate builds the note the preview builds, so a call the comment
+// service would refuse is refused to the model before it runs.
+func (t *addShipmentCommentTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	return previewValidates(ctx, t, &params)
 }
 
 func commentTaintMetadata(params serviceports.ToolExecuteParams) map[string]any {
@@ -157,26 +187,6 @@ func commentTaintMetadata(params serviceports.ToolExecuteParams) map[string]any 
 	}
 
 	return map[string]any{shipment.CommentMetadataTainted: true}
-}
-
-// commentVisibility defaults to Internal for anything it does not recognise.
-// Widening a note's audience on a typo is the one mistake here that reaches a
-// customer.
-func commentVisibility(raw string) shipment.CommentVisibility {
-	switch shipment.CommentVisibility(raw) {
-	case shipment.CommentVisibilityOperations:
-		return shipment.CommentVisibilityOperations
-	case shipment.CommentVisibilityCustomer:
-		return shipment.CommentVisibilityCustomer
-	case shipment.CommentVisibilityDriver:
-		return shipment.CommentVisibilityDriver
-	case shipment.CommentVisibilityAccounting:
-		return shipment.CommentVisibilityAccounting
-	case shipment.CommentVisibilityInternal:
-		return shipment.CommentVisibilityInternal
-	default:
-		return shipment.CommentVisibilityInternal
-	}
 }
 
 // commentType follows the audience. Type and visibility are separate axes in the
@@ -196,19 +206,6 @@ func commentType(visibility shipment.CommentVisibility) shipment.CommentType {
 		return shipment.CommentTypeInternal
 	default:
 		return shipment.CommentTypeInternal
-	}
-}
-
-func commentPriority(raw string) shipment.CommentPriority {
-	switch shipment.CommentPriority(raw) {
-	case shipment.CommentPriorityLow:
-		return shipment.CommentPriorityLow
-	case shipment.CommentPriorityHigh:
-		return shipment.CommentPriorityHigh
-	case shipment.CommentPriorityNormal:
-		return shipment.CommentPriorityNormal
-	default:
-		return shipment.CommentPriorityNormal
 	}
 }
 

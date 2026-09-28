@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,6 +30,66 @@ func Validate(schema, args map[string]any) error {
 		return err
 	}
 
+	return check(compiled, args)
+}
+
+// Validator is Validate with the compiled schema kept per tool name, so a
+// tool called on every turn is compiled once rather than on every call. A
+// tool's schema is fixed for the life of the process, which is what makes
+// the name a safe key.
+type Validator struct {
+	mu       sync.RWMutex
+	compiled map[string]*jsonschema.Schema
+}
+
+func NewValidator() *Validator {
+	return &Validator{compiled: make(map[string]*jsonschema.Schema, 64)}
+}
+
+// ValidateFor is Validate for the named tool, compiling its schema the first
+// time it is asked and reusing that compilation after. A nil Validator
+// keeps nothing and compiles on every call.
+func (v *Validator) ValidateFor(name string, schema, args map[string]any) error {
+	if len(schema) == 0 {
+		return nil
+	}
+	if v == nil {
+		return Validate(schema, args)
+	}
+
+	compiled, err := v.compiledFor(name, schema)
+	if err != nil {
+		return err
+	}
+
+	return check(compiled, args)
+}
+
+func (v *Validator) compiledFor(name string, schema map[string]any) (*jsonschema.Schema, error) {
+	v.mu.RLock()
+	compiled, ok := v.compiled[name]
+	v.mu.RUnlock()
+	if ok {
+		return compiled, nil
+	}
+
+	compiled, err := compile(schema)
+	if err != nil {
+		return nil, err
+	}
+
+	v.mu.Lock()
+	if existing, raced := v.compiled[name]; raced {
+		compiled = existing
+	} else {
+		v.compiled[name] = compiled
+	}
+	v.mu.Unlock()
+
+	return compiled, nil
+}
+
+func check(compiled *jsonschema.Schema, args map[string]any) error {
 	normalized, err := normalize(args)
 	if err != nil {
 		return fmt.Errorf("normalize tool arguments: %w", err)

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,12 +69,11 @@ func (t *explainRateTool) ParamSchema() map[string]any {
 				"description": "The shipment whose rate to explain, from search_shipments " +
 					"or list_shipments, or the page you are on.",
 			},
-			"side": map[string]any{
-				"type": "string",
-				"enum": []string{"Customer", "Carrier"},
-				"description": "Which side of the shipment to price: what the customer is " +
+			"side": agenttoolschema.Enum(
+				"Which side of the shipment to price: what the customer is "+
 					"charged, or what the carrier is paid. Defaults to Customer.",
-			},
+				ratingSides,
+			),
 		},
 		"additionalProperties": false,
 	}

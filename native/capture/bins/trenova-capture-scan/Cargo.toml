@@ -1,0 +1,21 @@
+[package]
+name = "trenova-capture-scan"
+description = "The Trenova Capture scan helper: one scan, in the bitness of the scanner's driver, over a pipe to the agent."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+capture-imaging.workspace = true
+capture-protocol.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+capture-twain.workspace = true
+capture-wia.workspace = true
+
+[lints]
+workspace = true

@@ -38,11 +38,20 @@ export default function AgentProposalTable() {
     ]);
   };
 
-  const decide = (row: Row<AgentProposalRow>, decision: "Accepted" | "Rejected") => {
+  const decide = (
+    row: Row<AgentProposalRow>,
+    decision: "Accepted" | "Rejected",
+    initialReason?: string,
+  ) => {
     const proposal = row.original;
     const accepting = decision === "Accepted";
 
     setDialog({
+      initialReason,
+      // A write the preview says would be refused is turned down with its
+      // reasons rather than approved: the approval closes and the rejection
+      // opens with them written.
+      onAskAgent: accepting ? (reason) => decide(row, "Rejected", reason) : undefined,
       title: accepting ? t("Approve this change?") : t("Reject this change?"),
       description: accepting
         ? t(

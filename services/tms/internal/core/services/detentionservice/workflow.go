@@ -271,24 +271,11 @@ func (s *Service) Dispute(
 	ctx context.Context,
 	p DisputeParams,
 ) (*detention.DetentionOccurrence, error) {
-	occurrence, err := s.occurrenceRepo.GetByID(
-		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
-			OccurrenceID: p.OccurrenceID,
-			TenantInfo:   p.TenantInfo,
-		},
-	)
+	change, err := s.planDispute(ctx, &p)
 	if err != nil {
 		return nil, err
 	}
-
-	original := *occurrence
-	now := s.now()
-
-	if dErr := occurrence.Dispute(p.Note, now); dErr != nil {
-		return nil, errortypes.NewValidationError(
-			"status", errortypes.ErrInvalidOperation, dErr.Error())
-	}
+	original, occurrence, now := change.Before, change.After, change.Now
 
 	saved, err := s.occurrenceRepo.Update(ctx, occurrence)
 	if err != nil {
@@ -299,8 +286,8 @@ func (s *Service) Dispute(
 		detention.EvidenceSourceManual,
 		"Customer disputed the charge: "+p.Note, now)
 
-	s.audit(&original, saved, p.UserID, "Detention charge disputed")
-	s.publishBillingHoldChange(ctx, &original, saved, p.UserID)
+	s.audit(original, saved, p.UserID, "Detention charge disputed")
+	s.publishBillingHoldChange(ctx, original, saved, p.UserID)
 
 	return saved, nil
 }

@@ -39,6 +39,7 @@ type AccountingSalesDocument struct {
 	DueDate            string
 	TermExternalID     string
 	CurrencyCode       string
+	ExchangeRate       decimal.Decimal
 	PrivateNote        string
 	CustomerMemo       string
 	Lines              []AccountingDocumentLine
@@ -62,6 +63,7 @@ type AccountingPaymentDocument struct {
 	CustomerExternalID       string
 	TxnDate                  string
 	CurrencyCode             string
+	ExchangeRate             decimal.Decimal
 	PaymentMethodExternalID  string
 	DepositAccountExternalID string
 	ReferenceNumber          string
@@ -78,6 +80,7 @@ type AccountingCreditApplicationDocument struct {
 	CustomerExternalID   string
 	TxnDate              string
 	CurrencyCode         string
+	ExchangeRate         decimal.Decimal
 	InvoiceExternalID    string
 	CreditMemoExternalID string
 	Amount               decimal.Decimal
@@ -116,6 +119,7 @@ type AccountingPurchaseDocument struct {
 	TxnDate             string
 	DueDate             string
 	CurrencyCode        string
+	ExchangeRate        decimal.Decimal
 	PrivateNote         string
 	Lines               []AccountingPurchaseLine
 }
@@ -131,6 +135,7 @@ type AccountingBillPaymentDocument struct {
 	DocNumber             string
 	TxnDate               string
 	CurrencyCode          string
+	ExchangeRate          decimal.Decimal
 	PrivateNote           string
 	Amount                decimal.Decimal
 }

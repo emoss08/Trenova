@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -130,21 +131,13 @@ func (t *listInsightsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"category": map[string]any{
-				"type":        "string",
-				"enum":        insightCategoryNames(),
-				"description": "Only findings in one area.",
-			},
-			"severity": map[string]any{
-				"type":        "string",
-				"enum":        insightSeverityNames(),
-				"description": "Only findings at one severity.",
-			},
-			"status": map[string]any{
-				"type":        "string",
-				"enum":        insightStatusNames(),
-				"description": "Which findings to list. Defaults to Active.",
-			},
+			paramCategory: agenttoolschema.Enum("Only findings in one area.", insightCategories),
+			"severity": agenttoolschema.Enum(
+				"Only findings at one severity.", insightSeverities,
+			),
+			paramStatus: agenttoolschema.Enum(
+				"Which findings to list. Defaults to Active.", insightStatuses,
+			),
 			"limit": map[string]any{
 				"type":        "integer",
 				"description": fmt.Sprintf("How many to return, at most %d.", maxInsightRows),

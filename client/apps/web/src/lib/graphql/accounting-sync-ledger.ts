@@ -11,6 +11,7 @@ import {
   ChangeAccountingBackfillDocument,
   EnableAccountingSyncDocument,
   PauseAccountingSyncDocument,
+  RedateAccountingSyncDocument,
   ReleaseAccountingSyncDocument,
   RequestAccountingBackfillDocument,
   ResumeAccountingSyncDocument,
@@ -215,6 +216,15 @@ export async function skipAccountingSync(
     variables: { input },
   });
   return getFragmentData(AccountingSyncRecordFieldsFragmentDoc, data.skipAccountingSync);
+}
+
+export async function redateAccountingSync(id: string): Promise<AccountingSyncRecord> {
+  const data = await requestGraphQL({
+    document: RedateAccountingSyncDocument,
+    operationName: "RedateAccountingSync",
+    variables: { id },
+  });
+  return getFragmentData(AccountingSyncRecordFieldsFragmentDoc, data.redateAccountingSync);
 }
 
 export async function requestAccountingBackfill(

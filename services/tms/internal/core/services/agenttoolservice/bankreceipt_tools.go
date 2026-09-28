@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -247,11 +248,9 @@ func (t *postCustomerPaymentTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The day the money arrived, YYYY-MM-DD; the receipt date for a bank receipt.",
 			},
-			"paymentMethod": map[string]any{
-				"type":        "string",
-				"enum":        paymentMethodNames(),
-				"description": "How it was paid. Defaults to ACH.",
-			},
+			"paymentMethod": agenttoolschema.Enum(
+				"How it was paid. Defaults to ACH.", customerPaymentMethods,
+			),
 			"referenceNumber": map[string]any{
 				"type":        "string",
 				"description": "The bank's reference, so the payment can be found again.",
@@ -387,7 +386,7 @@ func (t *postCustomerPaymentTool) arguments(
 			return postPaymentArgs{}, fmt.Errorf(
 				"paymentMethod %q is not one of %s",
 				raw,
-				strings.Join(paymentMethodNames(), ", "),
+				strings.Join(customerPaymentMethods.Names(), ", "),
 			)
 		}
 	}
@@ -560,16 +559,26 @@ func readPaymentApplications(
 	return applications, total, nil
 }
 
-func paymentMethodNames() []string {
-	return []string{
-		string(customerpayment.MethodACH),
-		string(customerpayment.MethodCheck),
-		string(customerpayment.MethodWire),
-		string(customerpayment.MethodCard),
-		string(customerpayment.MethodCash),
-		string(customerpayment.MethodOther),
-	}
-}
+var (
+	customerPaymentMethods = agenttoolschema.Source(
+		"customerPayment.method",
+		[]customerpayment.Method{
+			customerpayment.MethodACH,
+			customerpayment.MethodCheck,
+			customerpayment.MethodWire,
+			customerpayment.MethodCard,
+			customerpayment.MethodCash,
+			customerpayment.MethodOther,
+		},
+	)
+	bankReceiptResolutions = agenttoolschema.Source(
+		"bankReceiptWorkItem.resolution",
+		[]bankreceiptworkitem.ResolutionType{
+			bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
+			bankreceiptworkitem.ResolutionMarkedFalsePositive,
+		},
+	)
+)
 
 // resolveBankReceiptWorkItemTool closes a reconciliation queue entry
 // without a match: the receipt is not a customer payment, or it needs
@@ -601,15 +610,11 @@ func (t *resolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The work item's id, from get_bank_receipt.",
 			},
-			"resolution": map[string]any{
-				"type": "string",
-				"enum": []string{
-					string(bankreceiptworkitem.ResolutionRequiresExternalFollowUp),
-					string(bankreceiptworkitem.ResolutionMarkedFalsePositive),
-				},
-				"description": "MarkedFalsePositive when the receipt is not a customer payment; " +
+			fieldResolution: agenttoolschema.Enum(
+				"MarkedFalsePositive when the receipt is not a customer payment; "+
 					"RequiresExternalFollowUp when a person must ask the payer.",
-			},
+				bankReceiptResolutions,
+			),
 			"note": map[string]any{
 				"type": "string",
 				"description": fmt.Sprintf(

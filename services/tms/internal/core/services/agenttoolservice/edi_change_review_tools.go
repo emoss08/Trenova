@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -24,6 +25,11 @@ const (
 	reviewApply                = "Apply"
 	reviewReject               = "Reject"
 	maxChangeReviewReasonChars = 500
+)
+
+var ediReviewDecisions = agenttoolschema.Source(
+	"edi.changeReviewDecision",
+	[]string{reviewApply, reviewReject},
 )
 
 type tenderChangeReviewer interface {
@@ -111,10 +117,10 @@ func (t *ediChangeReviewTool) Description() string { return t.kind.description }
 func (t *ediChangeReviewTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramEDIChangeID: jsonschemautils.Text(t.kind.idGuidance),
-		paramEDIReviewDecision: jsonschemautils.Enum(
+		paramEDIReviewDecision: agenttoolschema.Enum(
 			"Apply takes the change onto this organization's load; Reject leaves the load "+
 				"as it is.",
-			reviewApply, reviewReject,
+			ediReviewDecisions,
 		),
 		fieldReason: map[string]any{
 			toolschema.KeyType:      toolschema.TypeString,

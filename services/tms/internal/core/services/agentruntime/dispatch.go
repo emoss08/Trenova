@@ -109,7 +109,13 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
-		call.Arguments = aliasedArguments(tool.ParamSchema(), call.Arguments)
+		arguments, err := contractArguments(
+			s.arguments, call.Name, tool.ParamSchema(), call.Arguments,
+		)
+		if err != nil {
+			return argumentOutcome(call.Name, err)
+		}
+		call.Arguments = arguments
 
 		return s.runQueryTool(ctx, req, tool, call)
 	}
@@ -129,10 +135,11 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 	}
 
-	call.Arguments = declaredArguments(
-		tool.ParamSchema(),
-		aliasedArguments(tool.ParamSchema(), call.Arguments),
-	)
+	arguments, err := contractArguments(s.arguments, call.Name, tool.ParamSchema(), call.Arguments)
+	if err != nil {
+		return argumentOutcome(call.Name, err)
+	}
+	call.Arguments = arguments
 	if selfScoped {
 		// Whose records these are is the runtime's to say, not the model's:
 		// anything the model sent under this key is overwritten. A copy, so
@@ -183,6 +190,34 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 	stampAction(ctx, action, source, p.stepKey)
 
+	// A tool that can check its own arguments does so now, at every tier,
+	// while the model can still fix the call: before a person is asked to
+	// approve a proposal that was never going to run, before a simulation
+	// records what it would have done, and before an automatic write runs.
+	if validator, validates := tool.(serviceports.ToolValidator); validates {
+		if vErr := validator.Validate(ctx, serviceports.ToolExecuteParams{
+			OrganizationID: req.Actor.OrganizationID,
+			BusinessUnitID: req.Actor.BusinessUnitID,
+			Actor:          req.Actor,
+			IdempotencyKey: p.idempotencyKey,
+			RunID:          req.RunID,
+			Params:         call.Arguments,
+		}); vErr != nil {
+			verb := "run"
+			if tier != agent.TierAutoExecute {
+				verb = "proposed"
+			}
+
+			return refusedOutcome(
+				aitrace.OutcomeInvalid,
+				vErr.Error(),
+				"Tool %q was not %s, because it would fail as called: %s\n"+
+					"Fix the call and try again.",
+				call.Name, verb, vErr.Error(),
+			)
+		}
+	}
+
 	if tier != agent.TierAutoExecute {
 		// The same write proposed twice is one decision asked for twice. A
 		// model that never learned its earlier proposal was still waiting
@@ -196,35 +231,26 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
-		// A tool that can check its own arguments does so now, while the
-		// model can still fix the call, rather than after a person has
-		// approved a proposal that was never going to run.
-		if validator, ok := tool.(serviceports.ToolValidator); ok {
-			if vErr := validator.Validate(ctx, serviceports.ToolExecuteParams{
-				OrganizationID: req.Actor.OrganizationID,
-				BusinessUnitID: req.Actor.BusinessUnitID,
-				Actor:          req.Actor,
-				IdempotencyKey: p.idempotencyKey,
-				RunID:          req.RunID,
-				Params:         call.Arguments,
-			}); vErr != nil {
-				return refusedOutcome(
-					aitrace.OutcomeInvalid,
-					vErr.Error(),
-					"Tool %q was not proposed, because it would fail as called: %s\n"+
-						"Fix the call and try again.",
-					call.Name, vErr.Error(),
-				)
+		// The write is previewed as it is filed. One that its own rules would
+		// refuse is not filed: a person could only reject it, so the model is
+		// told why and asked for what is missing instead. A write on a record
+		// an earlier step of this turn changes is the exception, since that
+		// step may be what makes it valid.
+		dependsOnStep := dependsOnEarlierStep(tool, &call, proposedSoFar)
+		target, baseline := s.fileBaseline(ctx, &baselineCall{
+			req:         req,
+			tool:        tool,
+			call:        call,
+			proposalID:  action.ProposalID,
+			persist:     req.AttributedPurpose() != serviceports.AIUsagePurposeEvaluation,
+			fileRefused: dependsOnStep,
+		})
+		if baseline != nil && !dependsOnStep {
+			if refusal := baseline.Preview.Refusal(); refusal != nil {
+				return refusedBeforeFiling(call.Name, refusal)
 			}
 		}
-
-		action.Target, _ = s.fileBaseline(ctx, &baselineCall{
-			req:        req,
-			tool:       tool,
-			call:       call,
-			proposalID: action.ProposalID,
-			persist:    req.AttributedPurpose() != serviceports.AIUsagePurposeEvaluation,
-		})
+		action.Target = target
 
 		content := fmt.Sprintf(
 			"Recorded a proposal to run %q. It is awaiting a person's review at the %s tier and has not run.",

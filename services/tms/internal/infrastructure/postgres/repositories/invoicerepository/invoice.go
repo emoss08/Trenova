@@ -1037,3 +1037,25 @@ func ediSendStatusOrDefault(status invoice.EDISendStatus) invoice.EDISendStatus 
 
 	return status
 }
+
+func (r *repository) StampExchangeRate(
+	ctx context.Context,
+	req *repositories.StampExchangeRateRequest,
+) error {
+	inv := buncolgen.InvoiceColumns
+	result, err := r.db.DBForContext(ctx).NewUpdate().
+		Model((*invoice.Invoice)(nil)).
+		Set(inv.ExchangeRate.Set(), req.Rate).
+		Set(inv.ExchangeRateDate.Set(), req.Date).
+		Set(inv.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
+				Where(inv.ID.Eq(), req.ID)
+		}).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("stamp invoice exchange rate: %w", err)
+	}
+
+	return dberror.CheckFound(result, "Invoice")
+}

@@ -34,6 +34,7 @@ func ToolProviders() []any {
 		importDraftToolProviders(),
 		formulaToolProviders(),
 		tenderingToolProviders(),
+		operationsQueryToolProviders(),
 	}
 
 	size := 0

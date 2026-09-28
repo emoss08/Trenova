@@ -4,6 +4,8 @@ import "github.com/emoss08/trenova/internal/core/domain/agent"
 
 const insightAnalystDailyRuns = 20
 
+const toolSearchDocuments = "search_documents"
+
 type Template string
 
 const (
@@ -752,6 +754,12 @@ const receivablesInstructions = "You support accounts receivable, from the momen
 	"assistant's: when it is among the agents you can ask, hand it the task with what the " +
 	"customer said; otherwise say it is billing work."
 
+const (
+	toolListCarriers        = "list_carriers"
+	toolGetCarrier          = "get_carrier"
+	toolListServiceFailures = "list_service_failures"
+)
+
 func (t Template) StarterTools() []string {
 	switch t {
 	case TemplateDispatchAssistant:
@@ -801,6 +809,16 @@ func (t Template) StarterTools() []string {
 			"send_edi_status_update",
 			"retry_edi_message_delivery",
 			"replay_edi_message",
+			"uncancel_shipment",
+			"duplicate_shipment",
+			"update_shipment_hold",
+			"split_move_at_relay",
+			"recalculate_shipment_distance",
+			"transfer_shipment_ownership",
+			"pin_shipment_comment",
+			"resolve_shipment_comment",
+			"list_recurring_shipments",
+			"generate_recurring_shipment",
 		}
 	case TemplateBillingAssistant:
 		return []string{
@@ -840,7 +858,7 @@ func (t Template) StarterTools() []string {
 			"void_invoice",
 			"create_invoice_memo",
 			"send_invoice_edi",
-			"search_documents",
+			toolSearchDocuments,
 			"list_invoice_adjustments",
 			"get_invoice_adjustment",
 			"save_invoice_adjustment_draft",
@@ -857,6 +875,8 @@ func (t Template) StarterTools() []string {
 			"bill_statement_now",
 			"list_invoice_share_candidates",
 			"share_invoice",
+			"reassign_billing_charge",
+			"manage_billing_transfer_run",
 		}
 	case TemplateComplianceAssistant:
 		return []string{
@@ -874,6 +894,23 @@ func (t Template) StarterTools() []string {
 			"get_report_run",
 			"list_insights",
 			"get_insight",
+			"get_worker_schedule",
+			"list_shift_templates",
+			"assign_worker_shift",
+			"end_worker_shift_assignment",
+			"set_worker_availability_preference",
+			"propose_shift_swap",
+			"approve_shift_swap",
+			"reject_shift_swap",
+			"withdraw_shift_swap",
+			toolListCarriers,
+			toolGetCarrier,
+			"vet_carrier",
+			"set_carrier_monitoring",
+			"mark_carrier_intel_reviewed",
+			"apply_carrier_intel_suggestions",
+			"import_sourced_carrier",
+			"verify_carrier_equipment",
 		}
 	case TemplateCustomerAssistant:
 		return []string{
@@ -893,6 +930,34 @@ func (t Template) StarterTools() []string {
 			"list_edi_tender_changes",
 			"review_edi_tender_change",
 			"send_edi_status_update",
+			"list_orders",
+			"get_order",
+			"create_order",
+			"update_order",
+			"attach_order_shipments",
+			"detach_order_shipment",
+			"add_order_charge",
+			"update_order_charge",
+			"set_order_charge_allocations",
+			"remove_order_charge",
+			"close_order",
+			"cancel_order",
+			"list_recurring_shipments",
+			"create_recurring_shipment",
+			"update_recurring_shipment",
+			"set_recurring_shipment_status",
+			"generate_recurring_shipment",
+			"rerate_shipment",
+			"edit_shipment_comment",
+			"unpin_shipment_comment",
+			"delete_shipment_comment",
+			toolListServiceFailures,
+			"get_service_failure",
+			"update_service_failure",
+			"review_service_failure",
+			"void_service_failure",
+			"dispute_detention",
+			"vet_customer_broker",
 		}
 	case TemplateLoadMonitor:
 		return []string{
@@ -928,6 +993,7 @@ func (t Template) StarterTools() []string {
 			"approve_detention",
 			"waive_detention",
 			"add_shipment_comment",
+			"dispute_detention",
 		}
 	case TemplateCredentialDesk:
 		return []string{
@@ -956,6 +1022,9 @@ func (t Template) StarterTools() []string {
 			"list_carriers",
 			"acknowledge_carrier_intel_event",
 			"resolve_carrier_intel_event",
+			"vet_carrier",
+			"set_carrier_monitoring",
+			"mark_carrier_intel_reviewed",
 		}
 	case TemplateIntakeDesk:
 		return []string{
@@ -968,7 +1037,7 @@ func (t Template) StarterTools() []string {
 			"get_customer",
 			"get_carrier",
 			"get_document_summary",
-			"search_documents",
+			toolSearchDocuments,
 			"get_shipment_draft",
 			"list_customers",
 			"list_carriers",
@@ -1090,6 +1159,8 @@ func (t Template) StarterTools() []string {
 			"resolve_service_failure",
 			"email_customer",
 			"add_shipment_comment",
+			"update_service_failure",
+			"void_service_failure",
 		}
 	case TemplateInsightAnalyst:
 		return []string{
@@ -1227,7 +1298,7 @@ func receivablesTools() []string {
 		"list_invoices",
 		"get_invoice",
 		"get_shipment",
-		"search_documents",
+		toolSearchDocuments,
 		"get_document_summary",
 		"get_ar_aging",
 		"list_ar_open_items",

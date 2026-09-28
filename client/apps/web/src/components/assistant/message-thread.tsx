@@ -23,6 +23,7 @@ import { ArrowRightIcon, InfoIcon, XIcon } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArtifactOpenerProvider } from "./artifact-opener";
+import { AskAgentProvider } from "./ask-agent";
 import { Composer } from "./composer";
 import { DecisionFollowUpProvider } from "./decision-follow-up";
 import { useFollowNavigation } from "./follow-navigation";
@@ -733,13 +734,15 @@ export function MessageThread({
     <AssistantAgentProvider agent={agent} delegates={agent?.delegates}>
       <ArtifactOpenerProvider onOpen={onOpenArtifact}>
         <DecisionFollowUpProvider value={followUpDecision}>
-          {agentAccent ? (
-            <AgentGutter agent={agent} working={isActive}>
-              {body}
-            </AgentGutter>
-          ) : (
-            body
-          )}
+          <AskAgentProvider value={answer ?? null}>
+            {agentAccent ? (
+              <AgentGutter agent={agent} working={isActive}>
+                {body}
+              </AgentGutter>
+            ) : (
+              body
+            )}
+          </AskAgentProvider>
         </DecisionFollowUpProvider>
       </ArtifactOpenerProvider>
     </AssistantAgentProvider>

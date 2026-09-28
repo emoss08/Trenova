@@ -49,36 +49,7 @@ func (s *service) ReassignCharge(
 	req *services.ReassignChargeRequest,
 	actor *services.RequestActor,
 ) (*services.ReassignChargeResult, error) {
-	if multiErr := validateReassignRequest(req, actor); multiErr != nil {
-		return nil, multiErr
-	}
-
-	item, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
-		ItemID:     req.ItemID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if item.BillType != billingqueue.BillTypeInvoice || item.ShipmentID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"itemId",
-			errortypes.ErrInvalidOperation,
-			"Only a shipment invoice item can have its charges reassigned",
-		)
-	}
-	if _, ok := reassignableStatuses[item.Status]; !ok {
-		return nil, errortypes.NewValidationError(
-			"itemId",
-			errortypes.ErrInvalidOperation,
-			"Charges can be reassigned only while the item is ready for review, in review or on hold",
-		)
-	}
-	if err = s.guardSiblingPayersUnposted(ctx, item, req.TenantInfo); err != nil {
-		return nil, err
-	}
-
-	plan, err := s.planReassignment(ctx, item, req)
+	item, plan, err := s.planReassignCharge(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +60,68 @@ func (s *service) ReassignCharge(
 	}
 
 	return s.reassignmentResult(ctx, item, plan, created, canceled, req, actor)
+}
+
+func (s *service) PreviewReassignCharge(
+	ctx context.Context,
+	req *services.ReassignChargeRequest,
+	actor *services.RequestActor,
+) (*services.ReassignChargePreview, error) {
+	item, plan, err := s.planReassignCharge(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.ReassignChargePreview{
+		Item:        item,
+		Shipment:    plan.shipment,
+		Description: plan.description,
+		Shares:      plan.resolution.Shares,
+		ToCreate:    plan.toCreate,
+		ToCancel:    plan.toCancel,
+	}, nil
+}
+
+func (s *service) planReassignCharge(
+	ctx context.Context,
+	req *services.ReassignChargeRequest,
+	actor *services.RequestActor,
+) (*billingqueue.BillingQueueItem, *reassignPlan, error) {
+	if multiErr := validateReassignRequest(req, actor); multiErr != nil {
+		return nil, nil, multiErr
+	}
+
+	item, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+		ItemID:     req.ItemID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if item.BillType != billingqueue.BillTypeInvoice || item.ShipmentID.IsNil() {
+		return nil, nil, errortypes.NewValidationError(
+			"itemId",
+			errortypes.ErrInvalidOperation,
+			"Only a shipment invoice item can have its charges reassigned",
+		)
+	}
+	if _, ok := reassignableStatuses[item.Status]; !ok {
+		return nil, nil, errortypes.NewValidationError(
+			"itemId",
+			errortypes.ErrInvalidOperation,
+			"Charges can be reassigned only while the item is ready for review, in review or on hold",
+		)
+	}
+	if err = s.guardSiblingPayersUnposted(ctx, item, req.TenantInfo); err != nil {
+		return nil, nil, err
+	}
+
+	plan, err := s.planReassignment(ctx, item, req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return item, plan, nil
 }
 
 func validateReassignRequest(
@@ -103,7 +136,11 @@ func validateReassignRequest(
 	if actor == nil {
 		multiErr.Add("actor", errortypes.ErrRequired, "Actor is required")
 	} else if actor.IsAgent() {
-		multiErr.Add("actor", errortypes.ErrForbidden, "Agent principals cannot reassign billing charges")
+		multiErr.Add(
+			"actor",
+			errortypes.ErrForbidden,
+			"Agent principals cannot reassign billing charges",
+		)
 	}
 	if req.ItemID.IsNil() {
 		multiErr.Add("itemId", errortypes.ErrRequired, "Billing queue item is required")

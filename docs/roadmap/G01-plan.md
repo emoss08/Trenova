@@ -351,6 +351,10 @@ A shared `AccountingSyncStateLine` in the header of invoice, credit memo, custom
 
 Decimal end to end (`shared/decimalutils`, `shared/money`). A document whose currency differs from the provider's home currency is `Blocked` with category `Currency` unless the provider has multicurrency enabled, in which case the document carries its currency and the exchange rate Trenova used.
 
+**The rate Trenova used.** Every document that can reach the books records its rate when it is written: invoices and credit memos (`invoices.exchange_rate`, `exchange_rate_date`), customer payments, and carrier and driver settlements, which carry one rate for the bill (`exchange_rate`, fixed at posting) and one for its payment (`paid_exchange_rate`, fixed when marked paid). The stamp is document currency → the organization's functional currency, quoted on the day `ExchangeRateDatePolicy` names (document date or accounting date). Posting reads only Trenova's own rate table (`ExchangeRateService.CachedRate`, `exchangeratestamp.Stamper`), never the network, so a rate that is not cached leaves the stamp empty rather than holding a transaction open. The ledger stays in the document currency; the stamp is a record, not a translation.
+
+At push time `accountingsyncservice.exchangeRate` decides what the provider receives. When the books are kept in Trenova's functional currency the stamp is sent as is; a missing stamp is looked up (`Convert`, which may fetch), sent, and written back onto the document so the page shows the rate the books received. When the books are kept in a third currency the stamp does not fit, so document → books-currency is looked up on the same quote day and sent without touching the stamp. No rate at all is `Blocked(Currency)` naming the pair and the day, with the resolution pointing at OANDA. QuickBooks receives it as `ExchangeRate` (home-currency units per one unit of the transaction currency) on invoices, credit memos, payments, credit applications, bills, vendor credits and bill payments.
+
 ### 8.4 Periods
 
 - Outbound: a document dated on or before the provider's books-closed date is `Blocked(ClosedPeriod)`. The Watchtower item offers two fixes: re-date to the first open day (only when Trenova's `ClosedPeriodPostingPolicy` is `PostToNextOpen`, so both sides follow one rule) or ask a QuickBooks admin to move the closing date, then retry.
@@ -511,7 +515,7 @@ A draft voided never synced. A posted invoice is reversed by a credit memo, whic
 - **Mapping changes.** Confirming or creating a mapping re-queues the connection's `Mapping`-blocked records.
 
 **Checks before a push.**
-- **Currency.** A document whose currency differs from the provider's home currency is `Blocked(Currency)`, unless the provider has multicurrency. In that case the currency is sent and the provider's rate applies, since Trenova keeps no document rate.
+- **Currency.** A document whose currency differs from the provider's home currency is `Blocked(Currency)`, unless the provider has multicurrency. In that case the currency is sent with the rate Trenova stamped on the document at posting (§8.3); a document with no stamp and no rate in Trenova's rate table for its quote day is `Blocked(Currency)` too.
 - **Closed books.** A document dated on or before `external_books_closed_through` is `Blocked(ClosedPeriod)`.
 - **Document number.** A number longer than the provider allows is left for the provider to assign, and Trenova's number is written into the private note.
 - **Dates.** Invoices use the invoice date. Payments use their accounting date, so the provider's books agree with Trenova's GL.

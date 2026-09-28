@@ -569,3 +569,379 @@ func (_mock *MockShipmentCommentService) Acknowledge(ctx context.Context, req *s
 func (_e *MockShipmentCommentService_Expecter) Acknowledge(ctx any, req any, actor any) *mock.Call {
 	return _e.mock.On("Acknowledge", ctx, req, actor)
 }
+
+// GetByID provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) GetByID(ctx context.Context, req *repositories.GetShipmentCommentByIDRequest) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByID")
+	}
+
+	var r0 *shipment.ShipmentComment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetShipmentCommentByIDRequest) (*shipment.ShipmentComment, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetShipmentCommentByIDRequest) *shipment.ShipmentComment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.ShipmentComment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetShipmentCommentByIDRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentService_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
+type MockShipmentCommentService_GetByID_Call struct {
+	*mock.Call
+}
+
+// GetByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetShipmentCommentByIDRequest
+func (_e *MockShipmentCommentService_Expecter) GetByID(ctx any, req any) *MockShipmentCommentService_GetByID_Call {
+	return &MockShipmentCommentService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
+}
+
+func (_c *MockShipmentCommentService_GetByID_Call) Run(run func(ctx context.Context, req *repositories.GetShipmentCommentByIDRequest)) *MockShipmentCommentService_GetByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetShipmentCommentByIDRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetShipmentCommentByIDRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentService_GetByID_Call) Return(shipmentComment *shipment.ShipmentComment, err error) *MockShipmentCommentService_GetByID_Call {
+	_c.Call.Return(shipmentComment, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentService_GetByID_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetShipmentCommentByIDRequest) (*shipment.ShipmentComment, error)) *MockShipmentCommentService_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewPin provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) PreviewPin(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor, pinned bool) (*services.ShipmentCommentChange, error) {
+	ret := _mock.Called(ctx, req, actor, pinned)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewPin")
+	}
+
+	var r0 *services.ShipmentCommentChange
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ToggleShipmentCommentRequest, *services.RequestActor, bool) (*services.ShipmentCommentChange, error)); ok {
+		return returnFunc(ctx, req, actor, pinned)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ToggleShipmentCommentRequest, *services.RequestActor, bool) *services.ShipmentCommentChange); ok {
+		r0 = returnFunc(ctx, req, actor, pinned)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentCommentChange)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ToggleShipmentCommentRequest, *services.RequestActor, bool) error); ok {
+		r1 = returnFunc(ctx, req, actor, pinned)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentService_PreviewPin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewPin'
+type MockShipmentCommentService_PreviewPin_Call struct {
+	*mock.Call
+}
+
+// PreviewPin is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ToggleShipmentCommentRequest
+//   - actor *services.RequestActor
+//   - pinned bool
+func (_e *MockShipmentCommentService_Expecter) PreviewPin(ctx any, req any, actor any, pinned any) *MockShipmentCommentService_PreviewPin_Call {
+	return &MockShipmentCommentService_PreviewPin_Call{Call: _e.mock.On("PreviewPin", ctx, req, actor, pinned)}
+}
+
+func (_c *MockShipmentCommentService_PreviewPin_Call) Run(run func(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor, pinned bool)) *MockShipmentCommentService_PreviewPin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ToggleShipmentCommentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ToggleShipmentCommentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentService_PreviewPin_Call) Return(shipmentCommentChange *services.ShipmentCommentChange, err error) *MockShipmentCommentService_PreviewPin_Call {
+	_c.Call.Return(shipmentCommentChange, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentService_PreviewPin_Call) RunAndReturn(run func(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor, pinned bool) (*services.ShipmentCommentChange, error)) *MockShipmentCommentService_PreviewPin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewResolve provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) PreviewResolve(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor, resolved bool) (*services.ShipmentCommentChange, error) {
+	ret := _mock.Called(ctx, req, actor, resolved)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewResolve")
+	}
+
+	var r0 *services.ShipmentCommentChange
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ToggleShipmentCommentRequest, *services.RequestActor, bool) (*services.ShipmentCommentChange, error)); ok {
+		return returnFunc(ctx, req, actor, resolved)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ToggleShipmentCommentRequest, *services.RequestActor, bool) *services.ShipmentCommentChange); ok {
+		r0 = returnFunc(ctx, req, actor, resolved)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentCommentChange)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ToggleShipmentCommentRequest, *services.RequestActor, bool) error); ok {
+		r1 = returnFunc(ctx, req, actor, resolved)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentService_PreviewResolve_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewResolve'
+type MockShipmentCommentService_PreviewResolve_Call struct {
+	*mock.Call
+}
+
+// PreviewResolve is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ToggleShipmentCommentRequest
+//   - actor *services.RequestActor
+//   - resolved bool
+func (_e *MockShipmentCommentService_Expecter) PreviewResolve(ctx any, req any, actor any, resolved any) *MockShipmentCommentService_PreviewResolve_Call {
+	return &MockShipmentCommentService_PreviewResolve_Call{Call: _e.mock.On("PreviewResolve", ctx, req, actor, resolved)}
+}
+
+func (_c *MockShipmentCommentService_PreviewResolve_Call) Run(run func(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor, resolved bool)) *MockShipmentCommentService_PreviewResolve_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ToggleShipmentCommentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ToggleShipmentCommentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentService_PreviewResolve_Call) Return(shipmentCommentChange *services.ShipmentCommentChange, err error) *MockShipmentCommentService_PreviewResolve_Call {
+	_c.Call.Return(shipmentCommentChange, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentService_PreviewResolve_Call) RunAndReturn(run func(ctx context.Context, req *services.ToggleShipmentCommentRequest, actor *services.RequestActor, resolved bool) (*services.ShipmentCommentChange, error)) *MockShipmentCommentService_PreviewResolve_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewUpdate provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) PreviewUpdate(ctx context.Context, req *services.UpdateShipmentCommentRequest, actor *services.RequestActor) (*services.ShipmentCommentChange, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewUpdate")
+	}
+
+	var r0 *services.ShipmentCommentChange
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateShipmentCommentRequest, *services.RequestActor) (*services.ShipmentCommentChange, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateShipmentCommentRequest, *services.RequestActor) *services.ShipmentCommentChange); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentCommentChange)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.UpdateShipmentCommentRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentService_PreviewUpdate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewUpdate'
+type MockShipmentCommentService_PreviewUpdate_Call struct {
+	*mock.Call
+}
+
+// PreviewUpdate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.UpdateShipmentCommentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentCommentService_Expecter) PreviewUpdate(ctx any, req any, actor any) *MockShipmentCommentService_PreviewUpdate_Call {
+	return &MockShipmentCommentService_PreviewUpdate_Call{Call: _e.mock.On("PreviewUpdate", ctx, req, actor)}
+}
+
+func (_c *MockShipmentCommentService_PreviewUpdate_Call) Run(run func(ctx context.Context, req *services.UpdateShipmentCommentRequest, actor *services.RequestActor)) *MockShipmentCommentService_PreviewUpdate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.UpdateShipmentCommentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.UpdateShipmentCommentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentService_PreviewUpdate_Call) Return(shipmentCommentChange *services.ShipmentCommentChange, err error) *MockShipmentCommentService_PreviewUpdate_Call {
+	_c.Call.Return(shipmentCommentChange, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentService_PreviewUpdate_Call) RunAndReturn(run func(ctx context.Context, req *services.UpdateShipmentCommentRequest, actor *services.RequestActor) (*services.ShipmentCommentChange, error)) *MockShipmentCommentService_PreviewUpdate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewDelete provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) PreviewDelete(ctx context.Context, req *services.DeleteShipmentCommentRequest, actor *services.RequestActor) (*services.ShipmentCommentDeletion, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewDelete")
+	}
+
+	var r0 *services.ShipmentCommentDeletion
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.DeleteShipmentCommentRequest, *services.RequestActor) (*services.ShipmentCommentDeletion, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.DeleteShipmentCommentRequest, *services.RequestActor) *services.ShipmentCommentDeletion); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentCommentDeletion)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.DeleteShipmentCommentRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentService_PreviewDelete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewDelete'
+type MockShipmentCommentService_PreviewDelete_Call struct {
+	*mock.Call
+}
+
+// PreviewDelete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.DeleteShipmentCommentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentCommentService_Expecter) PreviewDelete(ctx any, req any, actor any) *MockShipmentCommentService_PreviewDelete_Call {
+	return &MockShipmentCommentService_PreviewDelete_Call{Call: _e.mock.On("PreviewDelete", ctx, req, actor)}
+}
+
+func (_c *MockShipmentCommentService_PreviewDelete_Call) Run(run func(ctx context.Context, req *services.DeleteShipmentCommentRequest, actor *services.RequestActor)) *MockShipmentCommentService_PreviewDelete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.DeleteShipmentCommentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.DeleteShipmentCommentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentService_PreviewDelete_Call) Return(shipmentCommentDeletion *services.ShipmentCommentDeletion, err error) *MockShipmentCommentService_PreviewDelete_Call {
+	_c.Call.Return(shipmentCommentDeletion, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentService_PreviewDelete_Call) RunAndReturn(run func(ctx context.Context, req *services.DeleteShipmentCommentRequest, actor *services.RequestActor) (*services.ShipmentCommentDeletion, error)) *MockShipmentCommentService_PreviewDelete_Call {
+	_c.Call.Return(run)
+	return _c
+}

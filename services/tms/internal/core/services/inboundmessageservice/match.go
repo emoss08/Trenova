@@ -2,13 +2,13 @@ package inboundmessageservice
 
 import (
 	"context"
-	"regexp"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/referenceutils"
 	"go.uber.org/zap"
 )
 
@@ -19,18 +19,6 @@ import (
 // turn one message into a hundred queries for no better answer. The ones worth
 // having are near the top.
 const maxReferenceCandidates = 12
-
-// referenceToken is a run of characters that could be a pro number or a BOL.
-//
-// It is deliberately loose. Pro numbers are free text the organization formats
-// however it likes, so there is no pattern to match against — the extractor
-// proposes and the database disposes. A candidate that matches no shipment is
-// simply not a match, which costs one indexed lookup and nothing else.
-var referenceToken = regexp.MustCompile(`\b[A-Za-z0-9]+(?:[-_/][A-Za-z0-9]+)*\b`)
-
-// hasDigit is what separates a reference from a word. "Thursday" and "confirm"
-// are not reference numbers; "88213" and "SEED-SHP-001" are.
-var hasDigit = regexp.MustCompile(`[0-9]`)
 
 // ShipmentFinder and PartyFinder are the lookups matching and linking need.
 // They are the repository ports under the names this package reads them by.
@@ -58,43 +46,7 @@ type Match struct {
 // writing about; the body follows, in order, so the earliest mention wins over
 // something buried in a quoted reply from last week.
 func referenceCandidates(subject, body string) []string {
-	seen := make(map[string]struct{}, maxReferenceCandidates)
-	candidates := make([]string, 0, maxReferenceCandidates)
-
-	for _, source := range []string{subject, body} {
-		for _, token := range referenceToken.FindAllString(source, -1) {
-			if len(candidates) >= maxReferenceCandidates {
-				return candidates
-			}
-			if !plausibleReference(token) {
-				continue
-			}
-
-			key := strings.ToUpper(token)
-			if _, repeated := seen[key]; repeated {
-				continue
-			}
-			seen[key] = struct{}{}
-			candidates = append(candidates, token)
-		}
-	}
-
-	return candidates
-}
-
-// plausibleReference keeps the tokens that could name a record.
-//
-// A reference has a digit in it and is long enough not to be a quantity. "2" and
-// "48" are pallet counts and hours; "88213" and "BOL-2026-0001" are things to
-// look up.
-func plausibleReference(token string) bool {
-	const minReferenceLength = 4
-
-	if len(token) < minReferenceLength || len(token) > 100 {
-		return false
-	}
-
-	return hasDigit.MatchString(token)
+	return referenceutils.Candidates(maxReferenceCandidates, subject, body)
 }
 
 // Match works out what a message is about.

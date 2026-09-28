@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -364,4 +365,26 @@ func (r *repository) SumReceived(
 	}
 
 	return rows, nil
+}
+
+func (r *repository) StampExchangeRate(
+	ctx context.Context,
+	req *repositories.StampExchangeRateRequest,
+) error {
+	cols := buncolgen.PaymentColumns
+	result, err := r.db.DBForContext(ctx).NewUpdate().
+		Model((*customerpayment.Payment)(nil)).
+		Set(cols.ExchangeRate.Set(), req.Rate).
+		Set(cols.ExchangeRateDate.Set(), req.Date).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.PaymentScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("stamp customer payment exchange rate: %w", err)
+	}
+
+	return dberror.CheckFound(result, "Customer payment")
 }

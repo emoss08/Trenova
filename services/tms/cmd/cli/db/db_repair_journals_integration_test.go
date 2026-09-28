@@ -3,6 +3,7 @@
 package db
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
@@ -50,9 +51,10 @@ func TestRepairJournalsWritesTheMissingDriverPaymentJournal(t *testing.T) {
 
 	preview, err := repairJournals(ctx, conn, settlement.OrganizationID, true)
 	require.NoError(t, err)
-	require.Len(t, preview.Skipped, 1)
-	assert.Equal(t, journalrepairservice.KindDriverSettlement, preview.Skipped[0].Kind)
-	assert.Equal(t, settlement.ID, preview.Skipped[0].ID)
+	assert.Zero(t, preview.PaymentsJournaled)
+	assert.True(t, slices.ContainsFunc(preview.Skipped, func(skip journalrepairservice.Skip) bool {
+		return skip.Kind == journalrepairservice.KindDriverSettlement && skip.ID == settlement.ID
+	}))
 
 	account := func(code string) pulid.ID {
 		var row struct {
@@ -131,7 +133,7 @@ func TestRepairJournalsWritesTheMissingDriverPaymentJournal(t *testing.T) {
 		Scan(ctx, &batch))
 	assert.NotEmpty(t, batch.BatchNumber)
 
-	again, err := repairJournals(ctx, conn, pulid.Nil, false)
+	again, err := repairJournals(ctx, conn, settlement.OrganizationID, false)
 	require.NoError(t, err)
 	assert.Zero(t, again.PaymentsJournaled)
 	assert.Zero(t, again.PaymentsLinked)

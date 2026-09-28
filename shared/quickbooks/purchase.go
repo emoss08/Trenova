@@ -37,6 +37,7 @@ type PurchaseTxn struct {
 	TxnDate      string
 	DueDate      string
 	CurrencyCode string
+	ExchangeRate decimal.Decimal
 	PrivateNote  string
 	Lines        []PurchaseLine
 }
@@ -48,6 +49,7 @@ type BillPaymentTxn struct {
 	DocNumber     string
 	TxnDate       string
 	CurrencyCode  string
+	ExchangeRate  decimal.Decimal
 	PrivateNote   string
 	Amount        decimal.Decimal
 }
@@ -72,6 +74,7 @@ type purchaseBody struct {
 	TxnDate      string             `json:"TxnDate,omitempty"`
 	DueDate      string             `json:"DueDate,omitempty"`
 	CurrencyRef  *refValue          `json:"CurrencyRef,omitempty"`
+	ExchangeRate *exchangeRate      `json:"ExchangeRate,omitempty"`
 	PrivateNote  string             `json:"PrivateNote,omitempty"`
 	Line         []wirePurchaseLine `json:"Line"`
 }
@@ -91,6 +94,7 @@ type billPaymentBody struct {
 	DocNumber    string            `json:"DocNumber,omitempty"`
 	PrivateNote  string            `json:"PrivateNote,omitempty"`
 	CurrencyRef  *refValue         `json:"CurrencyRef,omitempty"`
+	ExchangeRate *exchangeRate     `json:"ExchangeRate,omitempty"`
 	Line         []wirePaymentLine `json:"Line"`
 }
 
@@ -168,6 +172,7 @@ func purchaseBodyOf(requestID string, kind TxnKind, txn *PurchaseTxn) (*purchase
 	}
 	if currency := strings.TrimSpace(txn.CurrencyCode); currency != "" {
 		body.CurrencyRef = &refValue{Value: strings.ToUpper(currency)}
+		body.ExchangeRate = exchangeRateOf(txn.ExchangeRate)
 	}
 
 	total := decimal.Zero
@@ -240,6 +245,7 @@ func billPaymentBodyOf(requestID string, txn *BillPaymentTxn) (*billPaymentBody,
 	}
 	if currency := strings.TrimSpace(txn.CurrencyCode); currency != "" {
 		body.CurrencyRef = &refValue{Value: strings.ToUpper(currency)}
+		body.ExchangeRate = exchangeRateOf(txn.ExchangeRate)
 	}
 
 	return body, nil

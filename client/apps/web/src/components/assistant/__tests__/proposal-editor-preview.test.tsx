@@ -89,6 +89,78 @@ function callsWithModifications() {
   return fetchProposalPreview.mock.calls.filter(([request]) => request.modifications !== null);
 }
 
+const SHIPMENT_FIELDS: ProposalField[] = [
+  {
+    name: "shipment",
+    label: "Shipment",
+    description: "",
+    kind: "JSON",
+    required: true,
+    options: [],
+    minimum: null,
+    maximum: null,
+    maxLength: null,
+  },
+];
+
+describe("ProposalEditor focused on a value inside a field", () => {
+  it("edits the one value and sends the field back whole with it changed", async () => {
+    const user = userEvent.setup();
+    fetchProposalPreview.mockImplementation(async (request) => previewFor(request));
+    const { onConfirm } = renderEditor({
+      fields: SHIPMENT_FIELDS,
+      arguments: { shipment: { customerId: "cus_1", bol: "SEED-BOL-009" } },
+      focus: { param: "shipment.bol", label: "BOL" },
+    });
+
+    const bol = screen.getByLabelText("BOL");
+    expect(bol).toHaveFocus();
+    expect(bol).toHaveValue("SEED-BOL-009");
+    await user.clear(bol);
+    await user.type(bol, "BOL-2026-1");
+
+    await waitFor(() => expect(confirmButton()).toBeEnabled());
+    await user.click(confirmButton());
+
+    await waitFor(() =>
+      expect(onConfirm).toHaveBeenCalledWith(
+        { shipment: { customerId: "cus_1", bol: "BOL-2026-1" } },
+        "",
+        expect.any(String),
+      ),
+    );
+  });
+
+  it("clears the value from the field when the input is emptied", async () => {
+    const user = userEvent.setup();
+    fetchProposalPreview.mockImplementation(async (request) => previewFor(request));
+    const { onConfirm } = renderEditor({
+      fields: SHIPMENT_FIELDS,
+      arguments: { shipment: { customerId: "cus_1", bol: "SEED-BOL-009" } },
+      focus: { param: "shipment.bol", label: "BOL" },
+    });
+
+    await user.clear(screen.getByLabelText("BOL"));
+    await waitFor(() => expect(confirmButton()).toBeEnabled());
+    await user.click(confirmButton());
+
+    await waitFor(() =>
+      expect(onConfirm).toHaveBeenCalledWith(
+        { shipment: { customerId: "cus_1" } },
+        "",
+        expect.any(String),
+      ),
+    );
+  });
+
+  it("focuses a top-level parameter's own control", () => {
+    fetchProposalPreview.mockImplementation(async (request) => previewFor(request));
+    renderEditor({ focus: { param: "status", label: "Status" } });
+
+    expect(statusInput()).toHaveFocus();
+  });
+});
+
 describe("ProposalEditor preview", () => {
   // The record the change is about stays as proposed: a change may alter
   // what is done to it, never which record it is.

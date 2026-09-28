@@ -6,6 +6,7 @@ export type ModuleId =
   | "home"
   | "desk"
   | "inbox"
+  | "intake"
   | "dispatch"
   | "hr"
   | "fleet"

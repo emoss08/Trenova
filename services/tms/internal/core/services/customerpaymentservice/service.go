@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -38,6 +39,7 @@ type Params struct {
 	InvoiceRepo        repositories.InvoiceRepository
 	CustomerLedgerRepo repositories.CustomerLedgerProjectionRepository
 	AccountingRepo     repositories.AccountingControlRepository
+	Stamper            *exchangeratestamp.Stamper
 	JournalRepo        repositories.JournalPostingRepository
 	Generator          seqgen.Generator
 	Validator          *Validator
@@ -52,6 +54,7 @@ type Service struct {
 	invoiceRepo        repositories.InvoiceRepository
 	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
 	accountingRepo     repositories.AccountingControlRepository
+	stamper            *exchangeratestamp.Stamper
 	journalRepo        repositories.JournalPostingRepository
 	generator          seqgen.Generator
 	validator          *Validator
@@ -67,6 +70,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		invoiceRepo:        p.InvoiceRepo,
 		customerLedgerRepo: p.CustomerLedgerRepo,
 		accountingRepo:     p.AccountingRepo,
+		stamper:            p.Stamper,
 		journalRepo:        p.JournalRepo,
 		generator:          p.Generator,
 		validator:          p.Validator,

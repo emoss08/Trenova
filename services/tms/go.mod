@@ -7,6 +7,8 @@ require (
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/gen2brain/webp v0.6.4
 	github.com/hashicorp/golang-lru/v2 v2.0.7
+	github.com/makiuchi-d/gozxing v0.1.1
+	github.com/pdfcpu/pdfcpu v0.15.0
 	github.com/pgvector/pgvector-go v0.4.1
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
 	github.com/vikstrous/dataloadgen v0.0.10
@@ -101,12 +103,15 @@ require (
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
+	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/go-openapi/swag/pools v0.29.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.22 // indirect
+	github.com/hhrutter/tiff v1.0.6 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/mattn/go-runewidth v0.0.27 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nexus-rpc/nexus-proto-annotations v0.1.0 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
@@ -121,6 +126,7 @@ require (
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0 // indirect
+	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto v0.0.0-20260908043556-f8649ddbbfe6 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
 	modernc.org/libc v1.75.7 // indirect

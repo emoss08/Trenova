@@ -73,6 +73,132 @@ func TestValidate_AcceptsAnythingForAnEmptySchema(t *testing.T) {
 	assert.NoError(t, Validate(nil, map[string]any{"anything": true}))
 }
 
+// The compiled schema is kept by the tool's name: the second call under a
+// name is judged by the schema compiled for the first, whatever it passes.
+func TestValidator_KeepsTheCompiledSchemaPerToolName(t *testing.T) {
+	t.Parallel()
+
+	validator := NewValidator()
+	strict := map[string]any{
+		"type":                 "object",
+		"properties":           map[string]any{"n": map[string]any{"type": "integer"}},
+		"additionalProperties": false,
+	}
+	loose := map[string]any{"type": "object"}
+
+	require.Error(t, validator.ValidateFor("count", strict, map[string]any{"extra": 1}))
+	assert.Error(t, validator.ValidateFor("count", loose, map[string]any{"extra": 1}),
+		"the schema compiled first for this name is the one that judges")
+	assert.NoError(t, validator.ValidateFor("other", loose, map[string]any{"extra": 1}),
+		"another name compiles its own")
+	assert.NoError(t, validator.ValidateFor("count", strict, map[string]any{"n": 2}))
+
+	var none *Validator
+	assert.Error(t, none.ValidateFor("count", strict, map[string]any{"extra": 1}),
+		"a nil validator still validates, without keeping anything")
+	assert.NoError(t, validator.ValidateFor("empty", nil, map[string]any{"extra": 1}))
+}
+
+func TestValidator_FilesNestedProblemsUnderTheirPaths(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"shipment": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"moves": map[string]any{
+						"type": "array",
+						"items": map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"stops": map[string]any{
+									"type": "array",
+									"items": map[string]any{
+										"type": "object",
+										"properties": map[string]any{
+											"locationId": map[string]any{"type": "string"},
+											"type": map[string]any{
+												"type": "string",
+												"enum": []string{"Pickup", "Delivery"},
+											},
+											"sequence": map[string]any{"type": "integer"},
+										},
+										"required":             []string{"locationId", "type"},
+										"additionalProperties": false,
+									},
+								},
+							},
+							"required":             []string{"stops"},
+							"additionalProperties": false,
+						},
+					},
+				},
+				"required":             []string{"moves"},
+				"additionalProperties": false,
+			},
+		},
+		"required":             []string{"shipment"},
+		"additionalProperties": false,
+	}
+
+	errs := fieldErrors(t, NewValidator().ValidateFor("create_shipment", schema, map[string]any{
+		"shipment": map[string]any{
+			"moves": []any{map[string]any{
+				"type": "Linehaul",
+				"stops": []any{map[string]any{
+					"type":     "Pickup",
+					"sequence": "first",
+				}},
+			}},
+		},
+	}))
+
+	assert.Equal(t, "This tool does not take this value", errs["shipment.moves[0].type"])
+	assert.Equal(t, "This value is required", errs["shipment.moves[0].stops[0].locationId"])
+	assert.Contains(t, errs, "shipment.moves[0].stops[0].sequence")
+}
+
+// The source keyword is for people and tests; a strict model endpoint
+// refuses a keyword it does not know, at any depth.
+func TestForModel_StripsTheEnumSourceKeyword(t *testing.T) {
+	t.Parallel()
+
+	shown := ForModel(map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"priority": map[string]any{
+				"type":    "string",
+				"enum":    []string{"Low", "High"},
+				KeyEnumOf: "shipment.commentPriority",
+			},
+			"lines": map[string]any{
+				"type": "array",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"channel": map[string]any{
+							"type":    "string",
+							"enum":    []string{"Email"},
+							KeyEnumOf: "tender.channel",
+						},
+					},
+				},
+			},
+		},
+	})
+
+	priority, _ := shown["properties"].(map[string]any)["priority"].(map[string]any)
+	assert.NotContains(t, priority, KeyEnumOf)
+	assert.Equal(t, []string{"Low", "High"}, priority["enum"])
+
+	lines, _ := shown["properties"].(map[string]any)["lines"].(map[string]any)
+	items, _ := lines["items"].(map[string]any)
+	channel, _ := items["properties"].(map[string]any)["channel"].(map[string]any)
+	assert.NotContains(t, channel, KeyEnumOf)
+}
+
 func TestChanged_KeepsOnlyWhatDiffers(t *testing.T) {
 	t.Parallel()
 

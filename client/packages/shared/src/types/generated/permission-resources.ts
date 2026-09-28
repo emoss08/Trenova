@@ -207,6 +207,9 @@ export const Resource = {
   DocumentType: "document_type",
   DocumentControl: "document_control",
   DocumentParsingRule: "document_parsing_rule",
+  CaptureBatch: "capture_batch",
+  CaptureDevice: "capture_device",
+  CaptureProfile: "capture_profile",
 
   // Reference Data
   ShipmentType: "shipment_type",
