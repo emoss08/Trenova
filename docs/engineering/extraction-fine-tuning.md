@@ -536,8 +536,9 @@ provider whose draft it scored (`ai_corrections.extraction_provider_id`), so acc
 per week is read straight from them, and each provider is judged against its own recent weeks
 rather than against another model.
 
-- **Weeks.** Monday to Sunday in UTC (`timeutils.WeekStartUTC`, `date_trunc('week', …)` in
-  `AICorrectionRepository.WeeklyTotalsByProvider`). The window is the last 12 weeks including the
+- **Weeks.** Monday to Sunday in UTC (`timeutils.WeekStartUTC` in Go; in
+  `AICorrectionRepository.WeeklyTotalsByProvider` the same bucket is integer arithmetic from the
+  first Monday of 1970, so no dialect-specific epoch expression is needed). The window is the last 12 weeks including the
   one in progress, which is shown but never judged. Drafts read by rules alone have no provider
   and are left out.
 - **Drift.** `aicorrection.BuildProviderTrends` compares the last complete week with the four

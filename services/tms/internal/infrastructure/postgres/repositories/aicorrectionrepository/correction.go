@@ -285,6 +285,11 @@ func (r *repository) TotalsByProvider(
 	return totals, nil
 }
 
+const (
+	firstMondayEpoch = 4 * timeutils.SecondsPerDay
+	secondsPerWeek   = 7 * timeutils.SecondsPerDay
+)
+
 func (r *repository) WeeklyTotalsByProvider(
 	ctx context.Context,
 	req *repositories.WeeklyAICorrectionTotalsRequest,
@@ -295,9 +300,11 @@ func (r *repository) WeeklyTotalsByProvider(
 		NewSelect().
 		Model((*aicorrection.Correction)(nil)).
 		ColumnExpr(cols.ExtractionProviderID.Expr("{} AS provider_id")).
-		ColumnExpr(cols.CapturedAt.Expr(
-			"EXTRACT(EPOCH FROM date_trunc('week', to_timestamp({}) AT TIME ZONE 'UTC'))::bigint AS week_start",
-		)).
+		ColumnExpr(
+			cols.CapturedAt.Expr("{} - (({} - ?) % ?) AS week_start"),
+			firstMondayEpoch,
+			secondsPerWeek,
+		).
 		ColumnExpr(buncolgen.Count("corrections")).
 		ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
 		ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
