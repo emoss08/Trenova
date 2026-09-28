@@ -383,3 +383,30 @@ func TestOpenDelegate_HandsTheDelegateTheRecordsTheTurnIsAbout(t *testing.T) {
 	assert.Equal(t, f.request.Records, contexts.asked.DelegatorRecords)
 	assert.Equal(t, f.request.Records, opened.Request.Context.MemoryRecords())
 }
+
+// The records and results the asking turn handed over follow the task in the
+// delegate's question, fenced as data, while the task itself stays what the
+// asking agent wrote.
+func TestOpenDelegate_PutsWhatWasHandedOverAfterTheTask(t *testing.T) {
+	t.Parallel()
+
+	f := newDelegateFixture()
+	f.request.Call.Context = &agentruntime.DelegateContext{
+		Records: []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
+		Results: []agentruntime.SharedResult{{
+			CallID:   "call_read",
+			ToolName: "get_shipment",
+			Content:  `{"proNumber":"PRO-1001"}`,
+		}},
+	}
+
+	opened, err := f.svc.OpenDelegate(t.Context(), f.request)
+	require.NoError(t, err)
+
+	question := opened.Turn.Messages[len(opened.Turn.Messages)-1].Content
+	assert.True(t, strings.HasPrefix(question, f.request.Call.Task+"\n\n"))
+	assert.Contains(t, question, "shipment shp_1")
+	assert.Contains(t, question, "PRO-1001")
+	assert.Contains(t, question, "<untrusted_data>")
+	assert.Equal(t, question, opened.Request.Input)
+}

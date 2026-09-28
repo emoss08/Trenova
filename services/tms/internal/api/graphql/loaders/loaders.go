@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
@@ -67,6 +68,7 @@ type FactoryParams struct {
 	AgentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	AgentRunByID                              *AgentRunByIDLoaderFactory
 	AgentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
+	ThreadAgentByID                           *ThreadAgentByIDLoaderFactory
 	UsableAgentByID                           *UsableAgentByIDLoaderFactory
 	AccessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
 	AgentsByRoleID                            *AgentsByRoleIDLoaderFactory
@@ -125,6 +127,7 @@ type Factory struct {
 	agentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	agentRunByID                              *AgentRunByIDLoaderFactory
 	agentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
+	threadAgentByID                           *ThreadAgentByIDLoaderFactory
 	usableAgentByID                           *UsableAgentByIDLoaderFactory
 	accessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
 	agentsByRoleID                            *AgentsByRoleIDLoaderFactory
@@ -183,6 +186,7 @@ type Loaders struct {
 	AgentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
 	AgentRunByID                              *dataloadgen.Loader[string, *agent.AgentRun]
 	AgentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
+	ThreadAgentByID                           *dataloadgen.Loader[string, *conversation.Thread]
 	UsableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
 	AccessRolesByAgentID                      *dataloadgen.Loader[string, []*permission.Role]
 	AgentsByRoleID                            *dataloadgen.Loader[string, []*agentdefinition.Definition]
@@ -245,6 +249,7 @@ func NewFactory(p FactoryParams) *Factory {
 		agentDecisionsByProposalID:                p.AgentDecisionsByProposalID,
 		agentRunByID:                              p.AgentRunByID,
 		agentDefinitionByID:                       p.AgentDefinitionByID,
+		threadAgentByID:                           p.ThreadAgentByID,
 		usableAgentByID:                           p.UsableAgentByID,
 		accessRolesByAgentID:                      p.AccessRolesByAgentID,
 		agentsByRoleID:                            p.AgentsByRoleID,
@@ -337,6 +342,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		),
 		AgentRunByID:         f.agentRunByID.NewForTenant(tenantInfo),
 		AgentDefinitionByID:  f.agentDefinitionByID.NewForTenant(tenantInfo),
+		ThreadAgentByID:      f.threadAgentByID.NewForTenant(tenantInfo),
 		UsableAgentByID:      f.usableAgentByID.NewForTenant(tenantInfo),
 		AccessRolesByAgentID: f.accessRolesByAgentID.NewForTenant(tenantInfo),
 		AgentsByRoleID:       f.agentsByRoleID.NewForTenant(tenantInfo),

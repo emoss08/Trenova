@@ -2400,6 +2400,12 @@ type AgentRun {
   traceId: String!
   "The run's trace in the tracing backend, when one is configured and the run has a trace."
   traceUrl: String
+  "What handed the run its task: AssistantTurn for a task a conversation's agent handed to this one. Absent for a run nothing handed a task."
+  parentOwnerKind: AgentRunEventOwnerKind
+  "The turn or run that handed the run its task. Empty for a run nothing handed a task."
+  parentOwnerId: ID!
+  "The delegate_task call that handed the run its task. Empty for a run nothing handed a task."
+  delegateCallId: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -9104,6 +9110,8 @@ extend type AgentPlan {
 extend type AgentRun {
   "The agent definition behind the run; absent for runs of the retired built-in agents."
   definition: AgentDefinition
+  "The agent that handed the run its task, for the run of an agent a conversation's agent asked; absent otherwise, and for an agent deleted since."
+  handedBy: AgentDefinition
 }
 
 extend type Query {
@@ -30306,6 +30314,12 @@ func (ec *executionContext) childFields_AgentRun(ctx context.Context, field grap
 		return ec.fieldContext_AgentRun_traceId(ctx, field)
 	case "traceUrl":
 		return ec.fieldContext_AgentRun_traceUrl(ctx, field)
+	case "parentOwnerKind":
+		return ec.fieldContext_AgentRun_parentOwnerKind(ctx, field)
+	case "parentOwnerId":
+		return ec.fieldContext_AgentRun_parentOwnerId(ctx, field)
+	case "delegateCallId":
+		return ec.fieldContext_AgentRun_delegateCallId(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentRun_version(ctx, field)
 	case "createdAt":
@@ -30314,6 +30328,8 @@ func (ec *executionContext) childFields_AgentRun(ctx context.Context, field grap
 		return ec.fieldContext_AgentRun_updatedAt(ctx, field)
 	case "definition":
 		return ec.fieldContext_AgentRun_definition(ctx, field)
+	case "handedBy":
+		return ec.fieldContext_AgentRun_handedBy(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentRun", field.Name)
 }

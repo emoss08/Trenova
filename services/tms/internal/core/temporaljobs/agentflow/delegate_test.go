@@ -28,6 +28,7 @@ type scriptedOpener struct {
 
 	mu     sync.Mutex
 	opened int
+	calls  []agentruntime.DelegateCall
 }
 
 func (o *scriptedOpener) OpenDelegate(
@@ -37,6 +38,7 @@ func (o *scriptedOpener) OpenDelegate(
 ) (*DelegateOpening, error) {
 	o.mu.Lock()
 	o.opened++
+	o.calls = append(o.calls, call)
 	o.mu.Unlock()
 
 	if o.declined != "" {
@@ -302,4 +304,38 @@ func TestRunContext_CarriesTheRecordsTheTurnIsAboutAsData(t *testing.T) {
 	var older RunContext
 	assert.Empty(t, older.Records,
 		"a run context recorded before records were kept hands its delegates none")
+}
+
+/*
+What the asking turn hands over with a task reaches the activity that opens
+the delegate's turn: it rides the activity input, as data, through the same
+workflow.
+*/
+func TestRunHandsTheDelegateTheRecordsTheTaskIsAbout(t *testing.T) {
+	t.Parallel()
+
+	delegate := delegateDefinition()
+	opener := &scriptedOpener{definition: delegate}
+	h := newHarness(t, harnessParams{delegates: opener})
+	opener.runtime = h.runtime
+	ownScope := func(in *ModelCallInput) bool { return in.Scope.Empty() }
+	delegateScope := func(in *ModelCallInput) bool { return !in.Scope.Empty() }
+	h.scopedReplies(ownScope,
+		toolReply("delegate_task", map[string]any{
+			"agentId": delegate.ID.String(),
+			"task":    "Duplicate the shipment with next week's dates.",
+			"records": []any{map[string]any{"entityType": "shipment", "id": "shp_1"}},
+		}),
+		textReply("The Shipment Desk proposed the copy."),
+	)
+	h.scopedReplies(delegateScope, textReply("I proposed the copy."))
+
+	rc, state := h.delegatingRun(t, delegate)
+	result := h.execute(t, rc, state)
+
+	require.Empty(t, result.Err)
+	require.Len(t, opener.calls, 1)
+	require.NotNil(t, opener.calls[0].Context)
+	assert.Equal(t, []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
+		opener.calls[0].Context.Records)
 }

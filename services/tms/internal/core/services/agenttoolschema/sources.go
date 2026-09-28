@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/productguide"
 )
 
 // The sources more than one tool package spends, or that name a domain type
@@ -44,6 +45,8 @@ var (
 	)
 	Severities   = Source("agent.severity", agent.SeverityValues())
 	SubjectTypes = Source("agent.subjectType", agent.AllSubjectTypes())
+
+	RecordEntities = Derived("guide.entity", productguide.Default.RecordEntities())
 
 	AccountingSystems = Source(
 		"integration.accountingSystem",

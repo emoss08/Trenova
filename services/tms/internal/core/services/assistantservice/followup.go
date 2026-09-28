@@ -1,8 +1,10 @@
 package assistantservice
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -209,13 +211,78 @@ func (s *Service) planDecisionNote(ctx context.Context, p decisionNoteParams) (s
 		return "", multiErr
 	}
 
-	return fmt.Sprintf("%s\nDecision on plan %s (%d steps). %s",
-		planDecisionLine(plan), plan.ID, plan.StepCount, followUpInstruction), nil
+	steps, err := s.planSteps(ctx, &p, plan.ID)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s\nDecision on plan %s (%d steps). %s%s",
+		planDecisionLine(plan, steps), plan.ID, plan.StepCount, stepsProducedNote(steps),
+		followUpInstruction), nil
+}
+
+func (s *Service) planSteps(
+	ctx context.Context,
+	p *decisionNoteParams,
+	planID pulid.ID,
+) ([]*agent.AgentProposal, error) {
+	if s.proposals == nil {
+		return nil, nil
+	}
+
+	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+		ThreadID:   p.thread.ID,
+		TenantInfo: p.tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	steps := make([]*agent.AgentProposal, 0, len(stored))
+	for _, proposal := range stored {
+		if proposal != nil && proposal.PlanID != nil && *proposal.PlanID == planID {
+			steps = append(steps, proposal)
+		}
+	}
+	slices.SortStableFunc(steps, func(a, b *agent.AgentProposal) int {
+		return cmp.Compare(a.PlanStep, b.PlanStep)
+	})
+
+	return steps, nil
+}
+
+func stepsProducedNote(steps []*agent.AgentProposal) string {
+	var b strings.Builder
+	for _, step := range steps {
+		if note := producedNote(step); note != "" {
+			fmt.Fprintf(&b, "Step %d (%s): %s", step.PlanStep, step.ToolName, note)
+		}
+	}
+
+	return b.String()
+}
+
+func stepsMade(steps []*agent.AgentProposal) string {
+	var b strings.Builder
+	for _, step := range steps {
+		if step.Status != agent.ProposalStatusExecuted {
+			continue
+		}
+		if made := step.ExecutionResult.Describe(); made != "" {
+			fmt.Fprintf(&b, " Step %d: %s", step.PlanStep, made)
+		}
+	}
+
+	return b.String()
 }
 
 // planDecisionLine says in one line what was decided on a plan and how far
 // its steps got.
-func planDecisionLine(plan *agent.AgentPlan) string {
+func planDecisionLine(plan *agent.AgentPlan, steps []*agent.AgentProposal) string {
+	return planOutcomeLine(plan) + stepsMade(steps)
+}
+
+func planOutcomeLine(plan *agent.AgentPlan) string {
 	title := plan.Title
 	switch plan.Status {
 	case agent.PlanStatusCompleted:

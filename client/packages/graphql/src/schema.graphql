@@ -3753,11 +3753,27 @@ type AgentRun {
   The agent definition behind the run; absent for runs of the retired built-in agents.
   """
   definition: AgentDefinition
+  """
+  The delegate_task call that handed the run its task. Empty for a run nothing handed a task.
+  """
+  delegateCallId: String!
   errorMessage: String!
+  """
+  The agent that handed the run its task, for the run of an agent a conversation's agent asked; absent otherwise, and for an agent deleted since.
+  """
+  handedBy: AgentDefinition
   id: ID!
   inputContextHash: String!
   modelIdentifier: String!
   organizationId: ID!
+  """
+  The turn or run that handed the run its task. Empty for a run nothing handed a task.
+  """
+  parentOwnerId: ID!
+  """
+  What handed the run its task: AssistantTurn for a task a conversation's agent handed to this one. Absent for a run nothing handed a task.
+  """
+  parentOwnerKind: AgentRunEventOwnerKind
   promptVersion: String!
   startedAt: Timestamp
   status: AgentRunStatus!

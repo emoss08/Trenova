@@ -298,7 +298,7 @@ export function delegateView(step: ToolStep): DelegateView | null {
     agentName: delegateName(step),
     icon: mark.icon,
     accent: mark.accent,
-    task: task || stringArgument(step, "task"),
+    task: stringArgument(step, "task") || task,
     steps: savedSteps(messages),
     reply: savedAnswer(report, messages),
     phase: "reading",
