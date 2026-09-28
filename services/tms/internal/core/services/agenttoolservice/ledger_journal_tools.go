@@ -493,7 +493,7 @@ func manualJournalResult(action string, entity *manualjournal.Request) *agent.To
 		Kind:   manualJournalKind,
 		Name:   entity.RequestNumber,
 		IDs:    map[string]string{paramManualJournalID: entity.ID.String()},
-		Record: &agent.RecordRef{EntityType: manualJournalRecordEntity, ID: entity.ID.String()},
+		Record: recordOf(manualJournalRecordEntity, entity.ID),
 	}
 }
 
@@ -926,10 +926,7 @@ func newRequestJournalReversalTool(
 				Action: "requested",
 				Kind:   journalReversalKind,
 				IDs:    map[string]string{paramJournalReversalID: created.ID.String()},
-				Record: &agent.RecordRef{
-					EntityType: journalReversalRecordEntity,
-					ID:         created.ID.String(),
-				},
+				Record: recordOf(journalReversalRecordEntity, created.ID),
 			}, nil
 		},
 	})

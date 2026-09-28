@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,11 +28,10 @@ const (
 	maxSyncReleaseIDs     = 50
 )
 
-var backfillActions = []serviceports.AccountingBackfillAction{
-	serviceports.AccountingBackfillPause,
-	serviceports.AccountingBackfillResume,
-	serviceports.AccountingBackfillCancel,
-}
+var backfillActions = agenttoolschema.Source(
+	"accountingSync.backfillAction",
+	serviceports.AccountingBackfillActionValues(),
+)
 
 type accountingMappingReviewer interface {
 	PlanConfirm(
@@ -377,7 +377,7 @@ func backfillChangeRequest(
 	if _, err := accountingSystemFrom(params.Params); err != nil {
 		return nil, err
 	}
-	action, err := requireEnum(params.Params, paramBackfillAction, backfillActions)
+	action, err := requireEnum(params.Params, paramBackfillAction, backfillActions.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -460,8 +460,8 @@ func newChangeAccountingBackfillTool(sync accountingBackfillChanger) serviceport
 			"manages the integration approves it, and pausing or cancelling sends nothing.",
 		properties: map[string]any{
 			paramAccountingSystem: accountingSystemSchema(),
-			paramBackfillAction: enumProperty("Pause holds what is left, Resume carries on "+
-				"from where it stopped, Cancel ends it for good.", backfillActions),
+			paramBackfillAction: agenttoolschema.Enum("Pause holds what is left, Resume "+
+				"carries on from where it stopped, Cancel ends it for good.", backfillActions),
 		},
 		required: []string{paramAccountingSystem, paramBackfillAction},
 	}, receivablePlan[*serviceports.ChangeAccountingBackfillRequest, *backfillChange]{

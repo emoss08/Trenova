@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +26,10 @@ const (
 )
 
 var (
-	workItemMoves        = []workItemMove{workItemAssign, workItemStartReview}
+	workItemMoves = agenttoolschema.Source(
+		"bankReceiptWorkItem.agentMove",
+		[]workItemMove{workItemAssign, workItemStartReview},
+	)
 	errAssigneeForAssign = errors.New("assigneeUserId is required to assign a work item")
 	errAssigneeForReview = errors.New(
 		"assigneeUserId is only for Assign; StartReview marks the item under review as it is",
@@ -69,7 +73,7 @@ func workItemRouteFrom(params *serviceports.ToolExecuteParams) (*workItemRoute, 
 	if err != nil {
 		return nil, err
 	}
-	move, err := requireEnum(params.Params, paramWorkItemMove, workItemMoves)
+	move, err := requireEnum(params.Params, paramWorkItemMove, workItemMoves.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -147,8 +151,8 @@ func newTriageBankReceiptWorkItemTool(items workItemRouter) serviceports.AgentTo
 		properties: map[string]any{
 			paramWorkItemID: stringProperty("The work item's id, from get_bank_receipt or "+
 				"this run's subject. Never guess one.", 0),
-			paramWorkItemMove: enumProperty("Assign hands it to a person; StartReview marks "+
-				"it under review.", workItemMoves),
+			paramWorkItemMove: agenttoolschema.Enum("Assign hands it to a person; "+
+				"StartReview marks it under review.", workItemMoves),
 			paramAssigneeID: stringProperty("For Assign: the person's user id, the "+
 				"assignedToUserId get_bank_receipt shows on a work item, or the person who "+
 				"asked. Never guess one.", 0),
