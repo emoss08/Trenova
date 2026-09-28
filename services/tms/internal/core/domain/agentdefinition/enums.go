@@ -380,7 +380,9 @@ func (t Template) StarterInstructions() string {
 			"intelligence has read a document; read its draft with get_shipment_draft first. " +
 			"Resolve every name on the draft to a record: the customer with list_customers, " +
 			"each stop's address to a location with list_locations, the service and shipment " +
-			"types from their lists. Use a field only when its confidence is high or you " +
+			"types from their lists, the rating method with list_formula_templates, and the " +
+			"commodities and accessorials the document names with list_commodities and " +
+			"list_accessorial_charges. Use a field only when its confidence is high or you " +
 			"confirmed it against another field; a low-confidence rate or date is not a " +
 			"guess to fill in. Price the lane with quote_shipment and compare it with the " +
 			"rate on the document. Then propose create_shipment with sourceDocumentId set, " +
@@ -1132,6 +1134,9 @@ func (t Template) StarterTools() []string {
 			"list_service_types",
 			"list_shipment_types",
 			"list_equipment_types",
+			"list_formula_templates",
+			"list_commodities",
+			"list_accessorial_charges",
 			"search_shipments",
 			"quote_shipment",
 			"create_shipment",

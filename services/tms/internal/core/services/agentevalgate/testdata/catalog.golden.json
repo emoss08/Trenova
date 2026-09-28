@@ -4452,48 +4452,147 @@
     },
     {
       "name": "create_shipment",
-      "description": "Enter a new shipment. Give the customer, service type and shipment type by id, the BOL or reference, the freight (pieces, weight, temperature range when it matters), and one move with its stops in travel order: each stop has a location id from list_locations, a type, and a scheduled window. Rate fields are optional; a shipment with none is rated from the customer's agreements. When the shipment comes from an uploaded document, pass sourceDocumentId so the document is linked and its import conversation closed. The pro number is assigned by the system. A BOL must be unique among open shipments, so a copied shipment needs a new BOL or none; ask the person for it rather than reusing one.",
+      "description": "Enter a new shipment. To copy an existing shipment use duplicate_shipment instead, which carries its stops, commodities, charges and rating exactly. Give the customer, service type, shipment type and rating method (formulaTemplateId, from list_formula_templates) by id: the rating method is required, and a shipment nothing can price is refused. Add the freight (pieces, weight, commodities, temperature range when it matters), any accessorial charges, and one move with its stops in travel order: each stop has a location id from list_locations, a type, and a scheduled window in local time at the stop, such as 2026-10-01T08:00. Stops and moves count from 0. When the shipment comes from an uploaded document, pass sourceDocumentId so the document is linked and its import conversation closed. The pro number is assigned by the system. A BOL must be unique among open shipments, so never reuse one; ask the person for it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "shipment": {
             "additionalProperties": false,
-            "description": "The shipment, in the shape the shipment form sends.",
+            "description": "The shipment to enter.",
             "properties": {
+              "additionalCharges": {
+                "description": "Accessorial charges agreed for the shipment.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "accessorialChargeId": {
+                      "description": "The accessorial, from list_accessorial_charges.",
+                      "type": "string"
+                    },
+                    "amount": {
+                      "description": "The charge's amount in major units, as a decimal such as 125.00.",
+                      "type": "string"
+                    },
+                    "method": {
+                      "description": "How the amount is applied: Flat once, PerUnit times the unit, Percentage of the linehaul.",
+                      "enum": [
+                        "Flat",
+                        "PerUnit",
+                        "Percentage"
+                      ],
+                      "type": "string",
+                      "x-enumOf": "accessorialCharge.method"
+                    },
+                    "unit": {
+                      "description": "How many units the charge covers; 1 for a flat charge.",
+                      "maximum": 10000,
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "accessorialChargeId",
+                    "method",
+                    "unit",
+                    "amount"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "baseRate": {
+                "description": "The rate the rating method multiplies, as a decimal such as 2.45, only when the customer agreed one.",
+                "type": "string"
+              },
+              "billToCustomerId": {
+                "description": "Who is billed, when not the customer, from list_customers.",
+                "type": "string"
+              },
               "bol": {
                 "description": "The customer's BOL or reference. It must be unique among open shipments, so never reuse one from another shipment. Optional unless the customer's billing requires a BOL; leave it out when none is known.",
+                "maxLength": 100,
                 "type": "string"
+              },
+              "commodities": {
+                "description": "What is hauled, one line per commodity.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "commodityId": {
+                      "description": "The commodity, from list_commodities.",
+                      "type": "string"
+                    },
+                    "pieces": {
+                      "description": "Pieces of it. Defaults to 1.",
+                      "maximum": 1000000,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "weight": {
+                      "description": "Pounds of it.",
+                      "maximum": 10000000,
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "commodityId"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
               },
               "customerId": {
                 "description": "The customer, from list_customers.",
                 "type": "string"
               },
-              "freightChargeAmount": {
-                "description": "The agreed freight charge as a decimal string, only when the customer gave one.",
+              "formulaTemplateId": {
+                "description": "The rating method that prices the freight, from list_formula_templates. Required: a rate agreement covering the lane may replace it with its own when the shipment is saved.",
                 "type": "string"
               },
+              "freightTerms": {
+                "description": "Who pays the freight. Defaults to Prepaid.",
+                "enum": [
+                  "Prepaid",
+                  "Collect",
+                  "ThirdParty"
+                ],
+                "type": "string",
+                "x-enumOf": "shipment.freightTerms"
+              },
               "moves": {
-                "description": "Usually one move. Each has its stops in travel order.",
+                "description": "Usually one move, sequence 0. Each has its stops in travel order.",
                 "items": {
                   "additionalProperties": false,
                   "properties": {
                     "loaded": {
+                      "description": "False for a deadhead move. Defaults to true.",
                       "type": "boolean"
                     },
                     "sequence": {
+                      "description": "The move's place, counting from 0. Leave it out to take the order given.",
+                      "maximum": 50,
+                      "minimum": 0,
                       "type": "integer"
                     },
                     "stops": {
+                      "description": "The stops in travel order: a pickup first, a delivery last.",
                       "items": {
                         "additionalProperties": false,
                         "properties": {
                           "addressLine": {
+                            "description": "A dock or suite note for the stop.",
+                            "maxLength": 200,
                             "type": "string"
                           },
                           "locationId": {
+                            "description": "The stop's location, from list_locations.",
                             "type": "string"
                           },
                           "pieces": {
+                            "description": "Pieces handled at the stop.",
+                            "maximum": 1000000,
+                            "minimum": 0,
                             "type": "integer"
                           },
                           "scheduleType": {
@@ -4506,14 +4605,17 @@
                             "x-enumOf": "shipment.stopScheduleType"
                           },
                           "scheduledWindowEnd": {
-                            "description": "Unix seconds.",
-                            "type": "integer"
+                            "description": "When the stop's window closes, if it has one. A local date and time where it happens, without a UTC offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or the organization's when the location names none; never send Unix seconds.",
+                            "type": "string"
                           },
                           "scheduledWindowStart": {
-                            "description": "Unix seconds.",
-                            "type": "integer"
+                            "description": "When the stop's window opens. A local date and time where it happens, without a UTC offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or the organization's when the location names none; never send Unix seconds.",
+                            "type": "string"
                           },
                           "sequence": {
+                            "description": "The stop's place in the move, counting from 0. Leave it out to take the order given.",
+                            "maximum": 100,
+                            "minimum": 0,
                             "type": "integer"
                           },
                           "type": {
@@ -4528,17 +4630,20 @@
                             "x-enumOf": "shipment.stopType"
                           },
                           "weight": {
+                            "description": "Pounds handled at the stop.",
+                            "maximum": 10000000,
+                            "minimum": 0,
                             "type": "integer"
                           }
                         },
                         "required": [
                           "locationId",
                           "type",
-                          "sequence",
                           "scheduledWindowStart"
                         ],
                         "type": "object"
                       },
+                      "minItems": 2,
                       "type": "array"
                     }
                   },
@@ -4547,13 +4652,19 @@
                   ],
                   "type": "object"
                 },
+                "minItems": 1,
                 "type": "array"
               },
               "pieces": {
+                "description": "The total piece or handling-unit count.",
+                "maximum": 1000000,
+                "minimum": 0,
                 "type": "integer"
               },
               "ratingUnit": {
-                "description": "Defaults to 1.",
+                "description": "How many units the rating method prices. Defaults to 1.",
+                "maximum": 1000000,
+                "minimum": 1,
                 "type": "integer"
               },
               "serviceTypeId": {
@@ -4566,10 +4677,14 @@
               },
               "temperatureMax": {
                 "description": "Fahrenheit, for reefer freight.",
+                "maximum": 200,
+                "minimum": -100,
                 "type": "integer"
               },
               "temperatureMin": {
                 "description": "Fahrenheit, for reefer freight.",
+                "maximum": 200,
+                "minimum": -100,
                 "type": "integer"
               },
               "tractorTypeId": {
@@ -4582,12 +4697,16 @@
               },
               "weight": {
                 "description": "Pounds.",
+                "maximum": 10000000,
+                "minimum": 0,
                 "type": "integer"
               }
             },
             "required": [
               "customerId",
               "serviceTypeId",
+              "shipmentTypeId",
+              "formulaTemplateId",
               "moves"
             ],
             "type": "object"
@@ -4617,6 +4736,7 @@
         "personalRunsUnasked": false,
         "heldWhenTainted": false,
         "effect": "change",
+        "artifact": "shipment",
         "reversible": false,
         "idempotent": true,
         "readsExternal": "never",
@@ -5312,7 +5432,7 @@
     },
     {
       "name": "duplicate_shipment",
-      "description": "Copy an existing shipment into new ones on the server, carrying its customer, stops, commodities, charges, freight terms and rating method exactly as saved. Prefer it to create_shipment whenever the freight repeats one already booked, since nothing is retyped. Give firstPickupAt to move every stop window so the first pickup starts then; leave it out to keep the source's dates. Each copy gets its own pro number and order; they appear in search_shipments within a minute.",
+      "description": "Copy an existing shipment into new ones on the server, carrying its customer, stops, commodities, charges, freight terms and rating method exactly as saved. Prefer it to create_shipment whenever the freight repeats one already booked, since nothing is retyped. Give firstPickupAt to move every stop window so the first pickup starts then, in local time at that pickup; leave it out to keep the source's dates. A shipment nothing prices cannot be copied. Each copy gets its own pro number and order; they appear in search_shipments within a minute.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -5323,7 +5443,7 @@
             "type": "integer"
           },
           "firstPickupAt": {
-            "description": "When the copies' first pickup window starts; every other stop keeps its distance from it. Only from what the person asked for, never invented. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the copies' first pickup window starts; every other stop keeps its distance from it. Only from what the person asked for, never invented. A local date and time where it happens, without a UTC offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or the organization's when the location names none; never send Unix seconds.",
             "type": "string"
           },
           "shipmentId": {
@@ -17703,8 +17823,8 @@
             "type": "string"
           },
           "occurredAt": {
-            "description": "When it happened, in Unix seconds. Leave it out unless you were given a time — omitted means now, which is right when someone is reporting an event as it happens.",
-            "type": "integer"
+            "description": "When it happened. Leave it out unless you were given a time: omitted means now, which is right when someone is reporting an event as it happens. A local date and time where it happens, without a UTC offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or the organization's when the location names none; never send Unix seconds.",
+            "type": "string"
           },
           "stopId": {
             "description": "The stop that was arrived at or departed from, from the move's stops in get_shipment.",

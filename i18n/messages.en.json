@@ -3824,6 +3824,15 @@
       "template/notification.dash.load_unassigned"
     ]
   },
+  "A local date and time such as 2026-10-01T08:00 is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A loop cannot be its own parent": {
     "sites": 1,
     "scope": [
@@ -5946,6 +5955,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "A shipment needs a move with its stops in travel order": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "A short classification code for the reversal reason.": {
@@ -16756,6 +16774,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "An imported bank receipt could not be matched to a customer payment on its own and is waiting in the reconciliation queue.": {
@@ -34412,6 +34439,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Choose a rating method: no rate agreement covers this lane, so this shipment would be priced at zero": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
+  "Choose a rating method: this shipment has no rate agreement and no rating method, so it cannot be priced": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
     ]
   },
   "Choose a record for each document you want to file": {
@@ -113259,6 +113304,15 @@
       "routes/rate-matrix"
     ]
   },
+  "Nothing prices this shipment, so it would be saved at zero and flagged for review.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Nothing readable came attached. The desk can build the load from the text.": {
     "sites": 1,
     "scope": [
@@ -158411,6 +158465,15 @@
       "domain/permission"
     ]
   },
+  "Send a local date and time such as 2026-10-01T08:00, not a number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Send a message to a driver": {
     "sites": 1,
     "scope": [
@@ -159622,6 +159685,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Sequences count from 0 in travel order, so this one is {0}, not {1}; or leave sequence out": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Sequential": {
@@ -163047,6 +163119,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Shipment {0} has no rate agreement covering its lane and no rating method, so a copy would be priced at zero. Choose a rating method on it first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
     ]
   },
   "Shipment {0} is not on this run": {
@@ -180769,6 +180850,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "The rate needs review: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The rate that applies after free time, in words.": {
@@ -217099,6 +217189,15 @@
       "routes/admin"
     ]
   },
+  "{0} carries a UTC offset or is a Unix time; send the local time where it happens, such as 2026-10-01T08:00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} changed": {
     "sites": 1,
     "scope": [
@@ -217395,6 +217494,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "{0} does not exist in {1}: the clocks move forward past it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} does not have a plain-text body": {
@@ -218253,6 +218361,24 @@
       "apps/web/hooks"
     ]
   },
+  "{0} is not a decimal such as 1250.00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is not a local date and time such as 2026-10-01T08:00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} is not a mapping target": {
     "sites": 1,
     "scope": [
@@ -218342,6 +218468,15 @@
     ],
     "areas": [
       "service/accountingsyncservice"
+    ]
+  },
+  "{0} is not an id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} is not available": {
@@ -218437,6 +218572,15 @@
     ],
     "areas": [
       "service/accountingmappingservice",
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is not one of Prepaid, Collect or ThirdParty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "service/agenttoolservice"
     ]
   },

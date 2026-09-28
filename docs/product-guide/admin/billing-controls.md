@@ -17,6 +17,11 @@ posted automatically), **Exception policy** (how missing billing requirements an
 handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late
 charges** (whether the nightly late-charge run raises debit memos).
 
+Unless the unrated shipment disposition is to zero the rate and flag it for review, a shipment that
+nothing can price is refused wherever it is entered: the shipment form, the API, an agent, or a
+copy of another shipment. Choose a rating method on the shipment, or set a fallback formula
+template here.
+
 Billing managers and finance leads use it. A warning at the top of the page notes that these
 settings affect revenue processing and invoicing, and should change only after review.
 
@@ -62,10 +67,6 @@ Keywords: unrated shipments, fallback formula, margin floor, rate override reaso
 3. For the fallback, optionally pick a **Fallback formula template**.
 4. Turn on **Require rate override reason** and **Enforce margin floor** as needed.
 5. Select **Save changes**.
-
-Unless the disposition is **Zero the rate and flag for review**, a shipment that nothing can price
-is refused wherever it is entered: the shipment form, the API, an agent, or a copy of another
-shipment. Choose a rating method on the shipment, or set a fallback formula template here.
 
 ### Turn on automatic late charges
 Keywords: late fees, overdue invoices, debit memo, finance charges
