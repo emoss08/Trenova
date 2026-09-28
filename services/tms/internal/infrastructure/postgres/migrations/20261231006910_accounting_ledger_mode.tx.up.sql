@@ -51,7 +51,7 @@ ALTER TABLE "accounting_drift_findings"
 
 --bun:split
 ALTER TABLE "accounting_drift_findings"
-    ADD CONSTRAINT "ck_accounting_drift_findings_object_type" CHECK ("object_type" IN ('Customer', 'Invoice', 'CreditMemo', 'DebitMemo', 'CustomerPayment', 'CreditApplication', 'CarrierVendor', 'DriverVendor', 'CarrierBill', 'CarrierBillPayment', 'DriverBill', 'DriverBillPayment', 'GLAccount'));
+    ADD CONSTRAINT "ck_accounting_drift_findings_object_type" CHECK ("object_type" IN ('Customer', 'Invoice', 'CreditMemo', 'DebitMemo', 'CustomerPayment', 'CreditApplication', 'CarrierVendor', 'DriverVendor', 'CarrierBill', 'CarrierBillPayment', 'DriverBill', 'DriverBillPayment', 'JournalEntry', 'JournalSummary', 'GLAccount'));
 
 --bun:split
 ALTER TABLE "accounting_drift_findings"

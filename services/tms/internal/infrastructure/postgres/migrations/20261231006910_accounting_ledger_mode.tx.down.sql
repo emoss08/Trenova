@@ -1,7 +1,9 @@
 DROP INDEX IF EXISTS "idx_journal_entries_posted_accounting_date";
 
 --bun:split
-DELETE FROM "accounting_drift_findings" WHERE "kind" = 'TrialBalanceMismatch' OR "object_type" = 'GLAccount';
+DELETE FROM "accounting_drift_findings"
+WHERE "kind" = 'TrialBalanceMismatch'
+    OR "object_type" IN ('GLAccount', 'JournalEntry', 'JournalSummary');
 
 --bun:split
 ALTER TABLE "accounting_drift_findings"
