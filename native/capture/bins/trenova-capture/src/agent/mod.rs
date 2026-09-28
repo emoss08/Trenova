@@ -41,8 +41,8 @@ use self::prints::Imported;
 pub use self::updates::UpdateStarter;
 use crate::scanners::{ScanOutcome, ScanRun, ScanUpdate, ScannerHost};
 use crate::state::{
-    Command, Connection, Notice, PausedBatch, RECENT, RecentBatch, Severity, Shared, UpdateState,
-    UpdateStatus,
+    Command, Connection, Notice, PausedBatch, PrinterAttempt, RECENT, RecentBatch, Severity,
+    Shared, UpdateState, UpdateStatus,
 };
 
 /// Where the server address is kept.
@@ -85,6 +85,14 @@ pub struct Environment {
     pub windows_build: u32,
     /// Whether this computer's own policy lets Trenova Capture update itself.
     pub machine_auto_update: bool,
+    /// Whether the print service is installed without its printer.
+    pub printer: Arc<dyn PrinterCheck>,
+}
+
+/// Whether the Trenova printer needs adding on this computer.
+pub trait PrinterCheck: Send + Sync {
+    /// The print service is installed and its printer is not.
+    fn missing(&self) -> bool;
 }
 
 impl std::fmt::Debug for Environment {
@@ -230,6 +238,7 @@ pub async fn run(
     }
     let failed_dir = agent.spool.failed_dir();
     agent.shared.update(|s| s.failed_dir = Some(failed_dir));
+    agent.check_printer();
     let configured = agent.env.server_setting.load();
     agent.configure(configured.as_deref()).await;
 
@@ -517,7 +526,11 @@ impl Agent {
                     self.shared.update(|s| s.paused.retain(|p| p.key != key));
                 }
             }
-            Command::RefreshScanners => self.enumerate(),
+            Command::RefreshScanners => {
+                self.check_printer();
+                self.enumerate();
+            }
+            Command::PrinterSetUp(attempt) => self.printer_set_up(attempt),
             Command::Update => self.install_update(true),
             Command::Quit => {}
         }
@@ -1179,6 +1192,36 @@ impl Agent {
                 .send(Internal::Release(updates::check(&api, key.as_ref()).await))
                 .await;
         });
+    }
+
+    /// Whether the print service is here without its printer, for the menu.
+    fn check_printer(&self) -> bool {
+        let missing = self.env.printer.missing();
+        self.shared.update(|s| s.printer_missing = missing);
+        missing
+    }
+
+    /// The menu tried to add the printer; say how it went.
+    fn printer_set_up(&mut self, attempt: PrinterAttempt) {
+        let missing = self.check_printer();
+        if !missing {
+            self.notify(
+                Severity::Info,
+                "The Trenova printer is ready",
+                "Print to Trenova from any program to send the pages to Intake.",
+                None,
+            );
+            return;
+        }
+        if attempt == PrinterAttempt::Declined {
+            return;
+        }
+        self.notify(
+            Severity::Warning,
+            "The Trenova printer could not be added",
+            "Try again from the Trenova Capture menu, or ask your administrator to add it.",
+            None,
+        );
     }
 
     /// Whether the organization and this computer both let the companion

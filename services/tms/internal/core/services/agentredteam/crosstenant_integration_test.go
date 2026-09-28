@@ -144,13 +144,17 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 		}
 	}
 
-	require.Len(t, result.Actions, 1)
-	forget := result.Actions[0]
-	assert.Equal(t, "forget_memory", forget.ToolName)
-	assert.True(t, forget.Executed, "the write ran, as its tier allows")
-	assert.NotEmpty(t, forget.ExecutionError, "and found nothing to retire in its own tenant")
-	assert.True(t, strings.Contains(strings.ToLower(forget.ExecutionError), "not found"),
-		"the other tenant's id reads as a record that does not exist: %s", forget.ExecutionError)
+	assert.Empty(t, result.Actions, "the write is refused before it runs")
+	var refusal string
+	for idx := range result.Messages {
+		message := result.Messages[idx]
+		if message.Role == conversation.RoleTool && message.ToolName == "forget_memory" {
+			refusal = message.Content
+		}
+	}
+	require.NotEmpty(t, refusal, "the model is told why forget_memory did not run")
+	assert.True(t, strings.Contains(strings.ToLower(refusal), "not found"),
+		"the other tenant's id reads as a record that does not exist: %s", refusal)
 
 	kept, err := repo.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
 		ID:         secret.ID,

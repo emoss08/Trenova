@@ -17,9 +17,13 @@ use capture_protocol::release::{
 use serde_json::json;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
-use trenova_capture::agent::{self, Environment, Machine, ServerSetting, UpdateStarter};
+use trenova_capture::agent::{
+    self, Environment, Machine, PrinterCheck, ServerSetting, UpdateStarter,
+};
 use trenova_capture::scanners::{ScanOutcome, ScanRun, ScanUpdate, ScannerHost, SourcesFuture};
-use trenova_capture::state::{Command, Connection, Notice, Shared, Snapshot, Ui, UpdateStatus};
+use trenova_capture::state::{
+    Command, Connection, Notice, PrinterAttempt, Shared, Snapshot, Ui, UpdateStatus,
+};
 use wiremock::matchers::{body_partial_json, method, path};
 use wiremock::{Mock, MockServer, Request, Respond, ResponseTemplate};
 
@@ -61,6 +65,18 @@ impl Protector for Plain {
 }
 
 /// Records what the agent asked the updater to install from.
+/// A printer that is missing until a test adds it.
+#[derive(Default)]
+struct FakePrinter {
+    missing: std::sync::atomic::AtomicBool,
+}
+
+impl PrinterCheck for FakePrinter {
+    fn missing(&self) -> bool {
+        self.missing.load(std::sync::atomic::Ordering::SeqCst)
+    }
+}
+
 #[derive(Default)]
 struct FakeUpdater {
     started: Mutex<Vec<String>>,
@@ -330,10 +346,15 @@ struct Running {
     scanner: Arc<FakeScanner>,
     inbox: Inbox,
     updater: Arc<FakeUpdater>,
+    printer: Arc<FakePrinter>,
     _dir: tempfile::TempDir,
 }
 
 fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
+    start_with_printer(server, scripts, false)
+}
+
+fn start_with_printer(server: &MockServer, scripts: Vec<Script>, printer_missing: bool) -> Running {
     let dir = tempfile::tempdir().expect("dir");
     let store: Arc<dyn SecretStore> = Arc::new(MemoryStore::with(credential(&server.uri())));
     let scanner = Arc::new(FakeScanner {
@@ -341,6 +362,10 @@ fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
         jobs: Mutex::new(Vec::new()),
     });
     let updater = Arc::new(FakeUpdater::default());
+    let printer = Arc::new(FakePrinter::default());
+    printer
+        .missing
+        .store(printer_missing, std::sync::atomic::Ordering::SeqCst);
     let inbox_dir = dir.path().join("inbox");
     std::fs::create_dir_all(&inbox_dir).expect("inbox");
     let env = Environment {
@@ -364,6 +389,7 @@ fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
         release_key: Some(release_key()),
         windows_build: 22631,
         machine_auto_update: true,
+        printer: Arc::clone(&printer) as Arc<dyn PrinterCheck>,
     };
     let ui = Arc::new(TestUi::default());
     let shared = Shared::new(Arc::clone(&ui) as Arc<dyn Ui>);
@@ -382,6 +408,7 @@ fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
         scanner,
         inbox: Inbox::new(inbox_dir),
         updater,
+        printer,
         _dir: dir,
     }
 }
@@ -685,5 +712,45 @@ async fn where_the_organization_installs_updates_itself_the_release_is_only_anno
         format!("{menu:?}").contains("ask your administrator"),
         "{menu:?}"
     );
+    stop(running).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_missing_printer_is_offered_and_its_outcome_is_told() {
+    let server = server(json!([])).await;
+    let running = start_with_printer(&server, Vec::new(), true);
+
+    until(&running, "the printer to be offered", |s, _| {
+        s.printer_missing && format!("{:?}", s.menu()).contains("Add the Trenova printer")
+    })
+    .await;
+
+    running
+        .commands
+        .send(Command::PrinterSetUp(PrinterAttempt::Declined))
+        .expect("send");
+    running
+        .commands
+        .send(Command::PrinterSetUp(PrinterAttempt::Failed))
+        .expect("send");
+    until(&running, "the failure to be told", |s, titles| {
+        s.printer_missing && titles == ["The Trenova printer could not be added"]
+    })
+    .await;
+
+    running
+        .printer
+        .missing
+        .store(false, std::sync::atomic::Ordering::SeqCst);
+    running
+        .commands
+        .send(Command::PrinterSetUp(PrinterAttempt::Added))
+        .expect("send");
+    until(&running, "the printer to be ready", |s, titles| {
+        !s.printer_missing
+            && titles.last().map(String::as_str) == Some("The Trenova printer is ready")
+            && !format!("{:?}", s.menu()).contains("Add the Trenova printer")
+    })
+    .await;
     stop(running).await;
 }
