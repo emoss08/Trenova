@@ -20,7 +20,7 @@ const (
 	paramChecklistID       = "checklistId"
 	paramChecklistItemID   = "checklistItemId"
 	paramChecklistTemplate = "templateId"
-	paramStartedOn         = "startDate"
+	paramStartedOn         = wfFieldStartDate
 	paramItemMove          = "action"
 	paramEvidenceDocument  = "evidenceDocumentId"
 	kindChecklist          = "checklist"
@@ -47,7 +47,7 @@ var (
 		},
 	)
 	checklistItemFields = []string{
-		fieldStatus, "completedAt", "completedById", fieldNote, paramEvidenceDocument,
+		fieldStatus, wfFieldCompletedAt, "completedById", fieldNote, paramEvidenceDocument,
 	}
 )
 
@@ -187,7 +187,7 @@ func newStartWorkerChecklistTool(checklists checklistKeeper) serviceports.AgentT
 			change, err := toolpreview.Create(
 				wfRecord(permission.ResourceWorkerChecklist, pulid.Nil, plan.Checklist.Name, 0),
 				plan.Checklist, wfOptions(wfFieldWorkerID, paramChecklistTemplate, "name",
-					fieldKind, fieldStatus, "startedAt", "dueAt")...)
+					fieldKind, fieldStatus, wfFieldStartedAt, "dueAt")...)
 			if err != nil {
 				return nil, err
 			}
@@ -263,9 +263,10 @@ func (c *checklistItemChange) plan(
 		return checklists.PlanSkipItem(ctx, c.item)
 	case checklistItemNotApplicable:
 		return checklists.PlanMarkItemNotApplicable(ctx, c.item)
-	default:
+	case checklistItemReopen:
 		return checklists.PlanReopenItem(ctx, c.reopen)
 	}
+	return nil, errUnknownValue(paramItemMove, string(c.move), checklistItemMoves.Names())
 }
 
 func (c *checklistItemChange) run(
@@ -279,17 +280,18 @@ func (c *checklistItemChange) run(
 		return checklists.SkipItem(ctx, c.item)
 	case checklistItemNotApplicable:
 		return checklists.MarkItemNotApplicable(ctx, c.item)
-	default:
+	case checklistItemReopen:
 		return checklists.ReopenItem(ctx, c.reopen)
 	}
+	return nil, errUnknownValue(paramItemMove, string(c.move), checklistItemMoves.Names())
 }
 
 func newUpdateWorkerChecklistItemTool(checklists checklistKeeper) serviceports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"update_worker_checklist_item",
-		"Settle one item on an open checklist: Complete when it is done, with a document as "+
-			"evidence when there is one; Skip or NotApplicable with a note saying why; or "+
-			"Reopen a settled item. A checklist whose required items are all settled closes "+
+		"Settle or reopen one item on a worker's open checklist. Complete it when it is "+
+			"done, with a document as evidence when there is one; Skip or NotApplicable with "+
+			"a note saying why; or Reopen a settled item. A checklist whose required items are all settled closes "+
 			"on its own.",
 		"Settles or reopens a checklist item inside Trenova; nothing is sent, and a settled "+
 			"item is reopened the same way.",
@@ -326,10 +328,11 @@ func newUpdateWorkerChecklistItemTool(checklists checklistKeeper) serviceports.A
 			plan *workerchecklistservice.ItemPlan,
 		) (*agent.ToolPreview, error) {
 			item := plan.Item.Before
+			options := append(wfOptions(checklistItemFields...),
+				toolpreview.Volatile(wfFieldCompletedAt))
 			recorded, err := toolpreview.Changed(
 				wfRecord(permission.ResourceWorkerChecklist, item.ID, item.Label, item.Version),
-				plan.Item.Before, plan.Item.After,
-				append(wfOptions(checklistItemFields...), toolpreview.Volatile("completedAt"))...)
+				plan.Item.Before, plan.Item.After, options...)
 			if err != nil {
 				return nil, err
 			}
@@ -365,9 +368,10 @@ func checklistMoveVerb(move checklistItemMove) string {
 		return "skip"
 	case checklistItemNotApplicable:
 		return "mark not applicable"
-	default:
+	case checklistItemReopen:
 		return "reopen"
 	}
+	return string(move)
 }
 
 func checklistMovePast(move checklistItemMove) string {
@@ -378,9 +382,10 @@ func checklistMovePast(move checklistItemMove) string {
 		return "skipped"
 	case checklistItemNotApplicable:
 		return "marked not applicable"
-	default:
+	case checklistItemReopen:
 		return "reopened"
 	}
+	return string(move)
 }
 
 func newCancelWorkerChecklistTool(checklists checklistKeeper) serviceports.AgentTool {

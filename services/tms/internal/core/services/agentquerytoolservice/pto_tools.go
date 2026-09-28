@@ -77,7 +77,10 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 				"Requested means still awaiting a decision. Omit for every status.",
 				ptoStatuses,
 			),
-			"type": agenttoolschema.Enum("The kind of leave. Omit for every kind.", agenttoolschema.PTOTypes),
+			"type": agenttoolschema.Enum(
+				"The kind of leave. Omit for every kind.",
+				agenttoolschema.PTOTypes,
+			),
 			"workerId": map[string]any{
 				"type": "string",
 				"description": "Narrow to one worker, by id from list_workers or " +

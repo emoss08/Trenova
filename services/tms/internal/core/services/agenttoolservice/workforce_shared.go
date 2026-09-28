@@ -13,16 +13,26 @@ import (
 )
 
 const (
-	wfNoteChars      = 2000
-	wfShortChars     = 255
-	wfParamDocument  = "documentId"
-	wfParamOccurred  = "occurredAt"
-	wfParamDueDate   = "dueDate"
-	wfFieldStatus    = "status"
-	wfFieldNotes     = "notes"
-	wfFieldWorkerID  = "workerId"
-	wfFieldDocument  = "documentId"
-	wfFieldCreatedAt = "createdAt"
+	wfNoteChars            = 2000
+	wfShortChars           = 255
+	wfParamDocument        = "documentId"
+	wfParamOccurred        = "occurredAt"
+	wfParamDueDate         = "dueDate"
+	wfFieldStatus          = "status"
+	wfFieldNotes           = "notes"
+	wfFieldWorkerID        = "workerId"
+	wfFieldDocument        = "documentId"
+	wfFieldCreatedAt       = "createdAt"
+	wfFieldCompletedAt     = "completedAt"
+	wfFieldClosedAt        = "closedAt"
+	wfFieldRequestedAt     = "requestedAt"
+	wfFieldCertRequestedAt = "certificationRequestedAt"
+	wfFieldStartedAt       = "startedAt"
+	wfFieldApproverID      = "approverId"
+	wfFieldExpiresAt       = "expiresAt"
+	wfFieldResolvedByID    = "resolvedById"
+	wfFieldStartDate       = "startDate"
+	wfFieldEndDate         = "endDate"
 )
 
 func wfSpec(
@@ -142,68 +152,68 @@ func wfRecord(
 
 var (
 	wfRefs = map[string]permission.Resource{
-		wfFieldWorkerID:    permission.ResourceWorker,
-		"shipmentId":       permission.ResourceShipment,
-		wfFieldDocument:    permission.ResourceDocument,
-		"recordedById":     permission.ResourceUser,
-		"closedById":       permission.ResourceUser,
-		"awardedById":      permission.ResourceUser,
-		"orderedById":      permission.ResourceUser,
-		"assignedById":     permission.ResourceUser,
-		"reviewerId":       permission.ResourceUser,
-		"requestedById":    permission.ResourceUser,
-		"completedById":    permission.ResourceUser,
-		"archivedById":     permission.ResourceUser,
-		"verifiedById":     permission.ResourceUser,
-		"resolvedById":     permission.ResourceUser,
-		"reviewedById":     permission.ResourceUser,
-		"generatedById":    permission.ResourceUser,
-		"approverId":       permission.ResourceUser,
-		"drawnById":        permission.ResourceUser,
-		"safetyEventId":    permission.ResourceWorkerSafetyEvent,
-		"courseId":         permission.ResourceTrainingCourse,
-		"templateId":       permission.ResourceWorkerChecklistTemplate,
-		"credentialTypeId": permission.ResourceWorkerCredentialType,
+		wfFieldWorkerID:     permission.ResourceWorker,
+		paramShipmentID:     permission.ResourceShipment,
+		wfFieldDocument:     permission.ResourceDocument,
+		"recordedById":      permission.ResourceUser,
+		"closedById":        permission.ResourceUser,
+		"awardedById":       permission.ResourceUser,
+		"orderedById":       permission.ResourceUser,
+		"assignedById":      permission.ResourceUser,
+		"reviewerId":        permission.ResourceUser,
+		"requestedById":     permission.ResourceUser,
+		"completedById":     permission.ResourceUser,
+		"archivedById":      permission.ResourceUser,
+		"verifiedById":      permission.ResourceUser,
+		wfFieldResolvedByID: permission.ResourceUser,
+		"reviewedById":      permission.ResourceUser,
+		"generatedById":     permission.ResourceUser,
+		wfFieldApproverID:   permission.ResourceUser,
+		"drawnById":         permission.ResourceUser,
+		"safetyEventId":     permission.ResourceWorkerSafetyEvent,
+		"courseId":          permission.ResourceTrainingCourse,
+		"templateId":        permission.ResourceWorkerChecklistTemplate,
+		"credentialTypeId":  permission.ResourceWorkerCredentialType,
 	}
 	wfTimes = map[string]assistantartifact.DisplayType{
-		wfParamOccurred:            assistantartifact.DisplayDateTime,
-		"closedAt":                 assistantartifact.DisplayDateTime,
-		"scheduledAt":              assistantartifact.DisplayDateTime,
-		"collectedAt":              assistantartifact.DisplayDateTime,
-		"finalizedAt":              assistantartifact.DisplayDateTime,
-		"notifiedAt":               assistantartifact.DisplayDateTime,
-		"drawnAt":                  assistantartifact.DisplayDateTime,
-		"reportedAt":               assistantartifact.DisplayDateTime,
-		"completedAt":              assistantartifact.DisplayDate,
-		"assignedAt":               assistantartifact.DisplayDateTime,
-		"archivedAt":               assistantartifact.DisplayDateTime,
-		"verifiedAt":               assistantartifact.DisplayDateTime,
-		"requestedAt":              assistantartifact.DisplayDate,
-		"responseReceivedAt":       assistantartifact.DisplayDate,
-		"lastFollowUpAt":           assistantartifact.DisplayDateTime,
-		"certificationRequestedAt": assistantartifact.DisplayDateTime,
-		"certificationDueAt":       assistantartifact.DisplayDate,
-		"pointsExpireAt":           assistantartifact.DisplayDate,
-		"dueAt":                    assistantartifact.DisplayDate,
-		"expiresAt":                assistantartifact.DisplayDate,
-		"issuedAt":                 assistantartifact.DisplayDate,
-		"startsAt":                 assistantartifact.DisplayDate,
-		"endsAt":                   assistantartifact.DisplayDate,
-		"usedOn":                   assistantartifact.DisplayDate,
-		"startedAt":                assistantartifact.DisplayDate,
-		"employedFrom":             assistantartifact.DisplayDate,
-		"employedTo":               assistantartifact.DisplayDate,
-		"returnedToWorkAt":         assistantartifact.DisplayDate,
-		"claimFiledAt":             assistantartifact.DisplayDate,
-		"resolvedAt":               assistantartifact.DisplayDateTime,
-		"reviewedAt":               assistantartifact.DisplayDateTime,
-		"voidedAt":                 assistantartifact.DisplayDateTime,
-		"generatedAt":              assistantartifact.DisplayDateTime,
-		"effectiveAt":              assistantartifact.DisplayDate,
-		fieldPeriodStart:           assistantartifact.DisplayDate,
-		fieldPeriodEnd:             assistantartifact.DisplayDate,
-		"startDate":                assistantartifact.DisplayDate,
-		"endDate":                  assistantartifact.DisplayDate,
+		wfParamOccurred:        assistantartifact.DisplayDateTime,
+		wfFieldClosedAt:        assistantartifact.DisplayDateTime,
+		"scheduledAt":          assistantartifact.DisplayDateTime,
+		"collectedAt":          assistantartifact.DisplayDateTime,
+		"finalizedAt":          assistantartifact.DisplayDateTime,
+		"notifiedAt":           assistantartifact.DisplayDateTime,
+		"drawnAt":              assistantartifact.DisplayDateTime,
+		"reportedAt":           assistantartifact.DisplayDateTime,
+		wfFieldCompletedAt:     assistantartifact.DisplayDate,
+		"assignedAt":           assistantartifact.DisplayDateTime,
+		"archivedAt":           assistantartifact.DisplayDateTime,
+		"verifiedAt":           assistantartifact.DisplayDateTime,
+		wfFieldRequestedAt:     assistantartifact.DisplayDate,
+		"responseReceivedAt":   assistantartifact.DisplayDate,
+		"lastFollowUpAt":       assistantartifact.DisplayDateTime,
+		wfFieldCertRequestedAt: assistantartifact.DisplayDateTime,
+		"certificationDueAt":   assistantartifact.DisplayDate,
+		"pointsExpireAt":       assistantartifact.DisplayDate,
+		"dueAt":                assistantartifact.DisplayDate,
+		wfFieldExpiresAt:       assistantartifact.DisplayDate,
+		"issuedAt":             assistantartifact.DisplayDate,
+		"startsAt":             assistantartifact.DisplayDate,
+		"endsAt":               assistantartifact.DisplayDate,
+		"usedOn":               assistantartifact.DisplayDate,
+		wfFieldStartedAt:       assistantartifact.DisplayDate,
+		"employedFrom":         assistantartifact.DisplayDate,
+		"employedTo":           assistantartifact.DisplayDate,
+		"returnedToWorkAt":     assistantartifact.DisplayDate,
+		"claimFiledAt":         assistantartifact.DisplayDate,
+		fieldResolvedAt:        assistantartifact.DisplayDateTime,
+		fieldReviewedAt:        assistantartifact.DisplayDateTime,
+		fieldVoidedAt:          assistantartifact.DisplayDateTime,
+		"generatedAt":          assistantartifact.DisplayDateTime,
+		"effectiveAt":          assistantartifact.DisplayDate,
+		fieldPeriodStart:       assistantartifact.DisplayDate,
+		fieldPeriodEnd:         assistantartifact.DisplayDate,
+		wfFieldStartDate:       assistantartifact.DisplayDate,
+		wfFieldEndDate:         assistantartifact.DisplayDate,
 	}
 )
 

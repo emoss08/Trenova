@@ -19,7 +19,7 @@ const (
 	paramStateID      = "stateId"
 	paramPermitNumber = "permitNumber"
 	paramPermitIssued = "issuedAt"
-	paramPermitExpiry = "expiresAt"
+	paramPermitExpiry = wfFieldExpiresAt
 	paramPermitCost   = "cost"
 	kindPermit        = "permit"
 	maxPermitNumber   = 100
@@ -123,7 +123,10 @@ func permitResult(action string, entity *permit.Permit) *agent.ToolExecutionResu
 	}
 }
 
-func permitSpec(name, description, rationale string, operation permission.Operation) *receivableSpec {
+func permitSpec(
+	name, description, rationale string,
+	operation permission.Operation,
+) *receivableSpec {
 	spec := wfSpec(name, description, rationale, permission.ResourcePermit, operation)
 	spec.artifact = shipmentRecordEntity
 	spec.searchTerms = []string{"oversize", "overweight", "OS/OW", "state permit"}

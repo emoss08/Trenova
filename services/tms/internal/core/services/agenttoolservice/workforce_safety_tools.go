@@ -61,14 +61,21 @@ func (m safetyEventMove) done() string {
 		return "closed"
 	case safetyEventReview:
 		return "put under review"
-	default:
+	case safetyEventReopen:
 		return "reopened"
 	}
+	return string(m)
 }
 
 var (
-	safetyEventKinds  = agenttoolschema.Source("worker.safetyEventKind", worker.SafetyEventKindValues())
-	safetySeverities  = agenttoolschema.Source("worker.safetySeverity", worker.SafetySeverityValues())
+	safetyEventKinds = agenttoolschema.Source(
+		"worker.safetyEventKind",
+		worker.SafetyEventKindValues(),
+	)
+	safetySeverities = agenttoolschema.Source(
+		"worker.safetySeverity",
+		worker.SafetySeverityValues(),
+	)
 	inspectionResults = agenttoolschema.Source(
 		"worker.inspectionResult",
 		worker.InspectionResultValues(),
@@ -280,11 +287,13 @@ func applySafetyEventCore(
 	params map[string]any,
 	required safetyEventRequired,
 ) error {
-	if kind, given, err := optionalEnum(params, paramEventKind, safetyEventKinds.Values); err != nil {
-		return err
-	} else if given {
+	kind, kindGiven, kindErr := optionalEnum(params, paramEventKind, safetyEventKinds.Values)
+	switch {
+	case kindErr != nil:
+		return kindErr
+	case kindGiven:
 		entity.Kind = kind
-	} else if required.kind {
+	case required.kind:
 		return fmt.Errorf("missing required parameter %q", paramEventKind)
 	}
 	if severity, given, err := optionalEnum(
@@ -319,9 +328,11 @@ func applySafetyEventCore(
 
 func applySafetyEventDetail(entity *worker.WorkerSafetyEvent, params map[string]any) error {
 	var err error
-	if location, locErr := optionalBoundedText(params, paramEventLocation, wfShortChars); locErr != nil {
+	location, locErr := optionalBoundedText(params, paramEventLocation, wfShortChars)
+	if locErr != nil {
 		return locErr
-	} else if location != nil {
+	}
+	if location != nil {
 		entity.Location = *location
 	}
 	if reference, refErr := optionalBoundedText(
@@ -600,9 +611,10 @@ func (m *safetyEventStatusMove) plan(
 		return events.PlanCloseEvent(ctx, m.req)
 	case safetyEventReview:
 		return events.PlanReviewEvent(ctx, m.req)
-	default:
+	case safetyEventReopen:
 		return events.PlanReopenEvent(ctx, m.req)
 	}
+	return nil, errUnknownValue(paramEventMove, string(m.move), safetyEventMoves.Names())
 }
 
 func (m *safetyEventStatusMove) run(
@@ -614,17 +626,18 @@ func (m *safetyEventStatusMove) run(
 		return events.CloseEvent(ctx, m.req)
 	case safetyEventReview:
 		return events.ReviewEvent(ctx, m.req)
-	default:
+	case safetyEventReopen:
 		return events.ReopenEvent(ctx, m.req)
 	}
+	return nil, errUnknownValue(paramEventMove, string(m.move), safetyEventMoves.Names())
 }
 
 func newChangeWorkerSafetyEventStatusTool(events safetyKeeper) serviceports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"change_worker_safety_event_status",
-		"Move a safety event along: Review marks it under review while it is looked into, "+
-			"Close resolves it with the resolution kept on the record, and Reopen puts a closed "+
-			"or reviewed event back on the open list.",
+		"Move a safety event to under review, closed or back to open. Review marks it "+
+			"under review while it is looked into, Close resolves it with the resolution kept "+
+			"on the record, and Reopen puts a closed or reviewed event back on the open list.",
 		"Moves a safety event's status inside Trenova; nothing is sent, and the event is "+
 			"reopened or closed again the same way.",
 		permission.ResourceWorkerSafetyEvent,
@@ -657,12 +670,15 @@ func newChangeWorkerSafetyEventStatusTool(events safetyKeeper) serviceports.Agen
 					return nil, fmt.Errorf("parameter %q is required to close an event",
 						paramResolutionText)
 				}
-				return &safetyEventStatusMove{move: move, req: &workersafetyservice.EventStatusRequest{
-					ID:         id,
-					TenantInfo: tenantFrom(*params),
-					Resolution: resolution,
-					UserID:     params.Actor.UserID,
-				}}, nil
+				return &safetyEventStatusMove{
+					move: move,
+					req: &workersafetyservice.EventStatusRequest{
+						ID:         id,
+						TenantInfo: tenantFrom(*params),
+						Resolution: resolution,
+						UserID:     params.Actor.UserID,
+					},
+				}, nil
 			},
 			plan: func(
 				ctx context.Context,
@@ -681,7 +697,7 @@ func newChangeWorkerSafetyEventStatusTool(events safetyKeeper) serviceports.Agen
 			) (*agent.ToolPreview, error) {
 				recorded, err := toolpreview.Changed(safetyEventRecord(change.Before),
 					change.Before, change.After,
-					wfOptions(fieldStatus, "closedAt", "closedById", paramResolutionText)...)
+					wfOptions(fieldStatus, wfFieldClosedAt, "closedById", paramResolutionText)...)
 				if err != nil {
 					return nil, err
 				}

@@ -106,8 +106,8 @@ func reviewRecord(review *worker.PerformanceReview) toolpreview.Record {
 func newStartPerformanceReviewTool(reviews reviewKeeper) serviceports.AgentTool {
 	spec := withSchema(wfSpec(
 		"start_performance_review",
-		"Open a draft performance review for a worker from one of the organization's review "+
-			"templates, covering a period, with the person who approves it as the reviewer. "+
+		"Open a draft performance review for a worker from a review template. It covers "+
+			"a period, with the person who approves it as the reviewer. "+
 			"The template's items are copied on unrated; draft_performance_review fills them "+
 			"in. The worker sees nothing until the reviewer submits it.",
 		"Opens a draft review inside Trenova; the worker sees nothing, and "+
@@ -246,7 +246,10 @@ func (d *reviewDraft) request(
 	return req, applyReviewGoals(req, d.params.Params)
 }
 
-func applyReviewText(req *performancereviewservice.UpdateReviewRequest, params map[string]any) error {
+func applyReviewText(
+	req *performancereviewservice.UpdateReviewRequest,
+	params map[string]any,
+) error {
 	for _, field := range []struct {
 		key  string
 		dest *string

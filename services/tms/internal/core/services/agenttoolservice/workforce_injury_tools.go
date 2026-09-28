@@ -281,9 +281,9 @@ func newRecordWorkerInjuryTool(injuries injuryKeeper) serviceports.AgentTool {
 		"reported.", wfNoteChars)
 	spec := withSchema(wfSpec(
 		"record_worker_injury",
-		"Enter a work-related injury or illness on the injury log as a new case with the "+
-			"next case number for its year: when and how it happened, the treatment, the "+
-			"days away or restricted, and the workers' comp claim. Medical detail stays with "+
+		"Enter a work-related injury or illness on the OSHA injury log as a new case. It "+
+			"takes the next case number for its year and records when and how it happened, "+
+			"the treatment, the days away or restricted, and the workers' comp claim. Medical detail stays with "+
 			"people who hold the injury permission.",
 		"Adds a case to the organization's OSHA log inside Trenova; nothing is sent, and it "+
 			"is corrected with update_worker_injury.",

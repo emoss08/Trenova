@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	paramCredentialID     = "credentialId"
-	paramCredentialTypeID = "credentialTypeId"
+	paramCredentialID     = "credentialId"     //nolint:gosec // G101: a parameter name, not a credential
+	paramCredentialTypeID = "credentialTypeId" //nolint:gosec // G101: a parameter name, not a credential
 	paramCredentialNumber = "number"
 	paramIssuingAuthority = "issuingAuthority"
 	paramIssuedOn         = "issuedDate"
@@ -28,7 +28,7 @@ const (
 
 var credentialFields = []string{
 	wfFieldWorkerID, paramCredentialTypeID, fieldStatus, paramCredentialNumber,
-	paramIssuingAuthority, "issuedAt", "expiresAt", wfFieldDocument, wfFieldNotes,
+	paramIssuingAuthority, "issuedAt", wfFieldExpiresAt, wfFieldDocument, wfFieldNotes,
 	"verifiedById", "verifiedAt", "archivedAt", "archiveReason",
 }
 
@@ -150,6 +150,37 @@ func applyCredentialFacts(entity *worker.WorkerCredential, params map[string]any
 	return nil
 }
 
+func credentialCreateFrom(
+	params *serviceports.ToolExecuteParams,
+) (*workercredentialservice.CreateRequest, error) {
+	workerID, err := requirePulid(params.Params, paramWorkerID)
+	if err != nil {
+		return nil, err
+	}
+	typeID, err := requirePulid(params.Params, paramCredentialTypeID)
+	if err != nil {
+		return nil, err
+	}
+	renew, err := optionalBoolParam(params.Params, paramRenew, false)
+	if err != nil {
+		return nil, err
+	}
+	entity := &worker.WorkerCredential{
+		OrganizationID:   params.OrganizationID,
+		BusinessUnitID:   params.BusinessUnitID,
+		WorkerID:         workerID,
+		CredentialTypeID: typeID,
+	}
+	if err = applyCredentialFacts(entity, params.Params); err != nil {
+		return nil, err
+	}
+	return &workercredentialservice.CreateRequest{
+		Entity: entity,
+		Renew:  renew,
+		UserID: params.Actor.UserID,
+	}, nil
+}
+
 func newRecordWorkerCredentialTool(credentials credentialKeeper) serviceports.AgentTool {
 	properties := credentialFactProperties()
 	properties[paramWorkerID] = workerProperty()
@@ -174,36 +205,8 @@ func newRecordWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 	return newReportingReceivableTool(spec, receivablePlan[
 		*workercredentialservice.CreateRequest, *workercredentialservice.CreatePlan,
 	]{
-		request: func(
-			params *serviceports.ToolExecuteParams,
-		) (*workercredentialservice.CreateRequest, error) {
-			workerID, err := requirePulid(params.Params, paramWorkerID)
-			if err != nil {
-				return nil, err
-			}
-			typeID, err := requirePulid(params.Params, paramCredentialTypeID)
-			if err != nil {
-				return nil, err
-			}
-			renew, err := optionalBoolParam(params.Params, paramRenew, false)
-			if err != nil {
-				return nil, err
-			}
-			entity := &worker.WorkerCredential{
-				OrganizationID:   params.OrganizationID,
-				BusinessUnitID:   params.BusinessUnitID,
-				WorkerID:         workerID,
-				CredentialTypeID: typeID,
-			}
-			if err = applyCredentialFacts(entity, params.Params); err != nil {
-				return nil, err
-			}
-			return &workercredentialservice.CreateRequest{
-				Entity: entity,
-				Renew:  renew,
-				UserID: params.Actor.UserID,
-			}, nil
-		},
+		request: credentialCreateFrom,
+
 		plan: func(
 			ctx context.Context,
 			req *workercredentialservice.CreateRequest,

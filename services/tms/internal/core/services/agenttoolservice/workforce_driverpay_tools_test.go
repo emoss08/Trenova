@@ -250,7 +250,11 @@ func TestReviewDriverExpense_ARejectionSaysWhy(t *testing.T) {
 	preview := previewWithoutWrites(t, reviews.guard, func() (*agent.ToolPreview, error) {
 		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), executeParams(approve))
 	})
-	assert.Contains(t, preview.Summary, "Would reimburse the 42.50 USD expense on a new off-cycle settlement")
+	assert.Contains(
+		t,
+		preview.Summary,
+		"Would reimburse the 42.50 USD expense on a new off-cycle settlement",
+	)
 	require.Len(t, preview.Changes, 2)
 
 	reject := map[string]any{

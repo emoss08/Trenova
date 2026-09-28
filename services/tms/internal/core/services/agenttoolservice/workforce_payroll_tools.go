@@ -23,7 +23,7 @@ const (
 
 var payrollExportFields = []string{
 	fieldStatus, fieldPeriodStart, fieldPeriodEnd, "timesheetCount", "regularMinutes",
-	"overtimeMinutes", "paidLeaveMinutes", "generatedById", "generatedAt", "voidedAt",
+	"overtimeMinutes", "paidLeaveMinutes", "generatedById", "generatedAt", fieldVoidedAt,
 	"voidReason", fieldNote,
 }
 
@@ -79,9 +79,10 @@ func payrollSpec(name, description, rationale string) *receivableSpec {
 func newGeneratePayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
 	spec := withSchema(payrollSpec(
 		"generate_payroll_export",
-		"Draft a payroll run for a person to approve: every approved timesheet week "+
-			"starting between the first and last day given that has not gone to payroll yet "+
-			"is totalled and locked into the run. Refused when no approved week is waiting.",
+		"Draft a payroll run over a pay period for a person to approve. Every approved "+
+			"timesheet week starting between the first and last day given that has not gone "+
+			"to payroll yet is totalled and locked into the run. Refused when no approved week "+
+			"is waiting.",
 		"Locks approved hours into a payroll run that pays people, so a person approves it "+
 			"and it runs as them; void_payroll_export takes it back.",
 	), map[string]any{
@@ -212,7 +213,7 @@ func newVoidPayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
 		) (*agent.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(payrollExportRecord(change.Before),
 				change.Before, change.After,
-				append(wfOptions(payrollExportFields...), toolpreview.Volatile("voidedAt"))...)
+				append(wfOptions(payrollExportFields...), toolpreview.Volatile(fieldVoidedAt))...)
 			if err != nil {
 				return nil, err
 			}

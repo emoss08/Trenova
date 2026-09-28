@@ -65,7 +65,7 @@ var (
 	verificationFields = []string{
 		wfFieldWorkerID, paramEmployerName, paramEmployerDOT, paramEmployerMC, paramContactName,
 		paramContactPhone, paramContactEmail, paramEmployedFrom, paramEmployedTo,
-		paramWasDOTRegulated, fieldStatus, paramVerifyMethod, "requestedAt",
+		paramWasDOTRegulated, fieldStatus, paramVerifyMethod, wfFieldRequestedAt,
 		"responseReceivedAt", "drugAlcoholResponseReceivedAt", "followUpCount",
 		"lastFollowUpAt", paramHadAccidents, paramAccidentCount, paramHadDAViolations,
 		paramFindings, wfFieldNotes, wfFieldDocument,
@@ -382,9 +382,9 @@ func newUpdateEmploymentVerificationTool(dqf verificationKeeper) serviceports.Ag
 	properties[wfParamDocument] = wfDocumentProperty()
 	spec := targeting(withSchema(wfSpec(
 		"update_employment_verification",
-		"Correct a previous employer on the qualification file, or record their answer as "+
-			"it arrived: when it came back, the accidents and drug and alcohol violations it "+
-			"reports, the findings and the document. Give only what changes, from the answer "+
+		"Correct a previous employer on the qualification file, or record their answer. "+
+			"The answer is when it came back, the accidents and drug and alcohol violations "+
+			"it reports, the findings and the document. Give only what changes, from the answer "+
 			"itself.",
 		"Updates the previous employer's record in the qualification file inside Trenova; "+
 			"nothing is sent, and it is corrected again the same way.",
@@ -508,10 +508,12 @@ func newLogEmploymentVerificationRequestTool(dqf verificationKeeper) serviceport
 			log *verificationRequestLog,
 			change *workerdqfservice.VerificationChange,
 		) (*agent.ToolPreview, error) {
+			options := append(
+				wfOptions(fieldStatus, wfFieldRequestedAt, "followUpCount", "lastFollowUpAt"),
+				toolpreview.Volatile(wfFieldRequestedAt, "lastFollowUpAt"),
+			)
 			recorded, err := toolpreview.Changed(verificationRecord(change.Before),
-				change.Before, change.After,
-				append(wfOptions(fieldStatus, "requestedAt", "followUpCount", "lastFollowUpAt"),
-					toolpreview.Volatile("requestedAt", "lastFollowUpAt"))...)
+				change.Before, change.After, options...)
 			if err != nil {
 				return nil, err
 			}
@@ -560,36 +562,41 @@ func newDeleteEmploymentVerificationTool(dqf verificationKeeper) serviceports.Ag
 	spec.maxTier = agent.TierPropose
 	spec.reversible = false
 
-	return newReceivableTool(spec, receivablePlan[*recordDelete, *worker.WorkerEmploymentVerification]{
-		request: recordDeleteFrom(paramVerificationID),
-		plan: func(
-			ctx context.Context,
-			req *recordDelete,
-			_ *serviceports.ToolExecuteParams,
-		) (*worker.WorkerEmploymentVerification, error) {
-			return dqf.PlanDeleteVerification(ctx, req.tenant, req.id)
+	return newReceivableTool(
+		spec,
+		receivablePlan[*recordDelete, *worker.WorkerEmploymentVerification]{
+			request: recordDeleteFrom(paramVerificationID),
+			plan: func(
+				ctx context.Context,
+				req *recordDelete,
+				_ *serviceports.ToolExecuteParams,
+			) (*worker.WorkerEmploymentVerification, error) {
+				return dqf.PlanDeleteVerification(ctx, req.tenant, req.id)
+			},
+			refused: func(*recordDelete) string { return "Would remove a previous employer." },
+			render: func(
+				_ *recordDelete,
+				entity *worker.WorkerEmploymentVerification,
+			) (*agent.ToolPreview, error) {
+				change, err := toolpreview.Delete(verificationRecord(entity), entity,
+					wfOptions(verificationFields...)...)
+				if err != nil {
+					return nil, err
+				}
+				return toolpreview.Build(fmt.Sprintf(
+					"Would remove %s from the qualification file.",
+					entity.EmployerName,
+				), change), nil
+			},
+			run: func(
+				ctx context.Context,
+				req *recordDelete,
+				_ *serviceports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				return nil, dqf.DeleteVerification(ctx, req.tenant, req.id, req.userID)
+			},
 		},
-		refused: func(*recordDelete) string { return "Would remove a previous employer." },
-		render: func(
-			_ *recordDelete,
-			entity *worker.WorkerEmploymentVerification,
-		) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Delete(verificationRecord(entity), entity,
-				wfOptions(verificationFields...)...)
-			if err != nil {
-				return nil, err
-			}
-			return toolpreview.Build(fmt.Sprintf(
-				"Would remove %s from the qualification file.", entity.EmployerName), change), nil
-		},
-		run: func(
-			ctx context.Context,
-			req *recordDelete,
-			_ *serviceports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			return nil, dqf.DeleteVerification(ctx, req.tenant, req.id, req.userID)
-		},
-	})
+	)
 }
 
 func provideRecordEmploymentVerificationTool(s *workerdqfservice.Service) serviceports.AgentTool {

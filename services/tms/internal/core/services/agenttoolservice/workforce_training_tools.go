@@ -44,8 +44,8 @@ var (
 		[]trainingClose{trainingWaive, trainingCancel},
 	)
 	trainingFields = []string{
-		wfFieldWorkerID, paramCourseID, fieldStatus, "assignedAt", "dueAt", "completedAt",
-		"expiresAt", paramScore, "passed", wfFieldDocument, wfFieldNotes, "waivedReason",
+		wfFieldWorkerID, paramCourseID, fieldStatus, "assignedAt", "dueAt", wfFieldCompletedAt,
+		wfFieldExpiresAt, paramScore, "passed", wfFieldDocument, wfFieldNotes, "waivedReason",
 	}
 )
 
@@ -293,65 +293,68 @@ func newAssignRequiredWorkerTrainingTool(training trainingKeeper) serviceports.A
 	), map[string]any{paramWorkerID: workerProperty()}, paramWorkerID)
 	spec.egress = agent.EgressDriverVisible
 
-	return newReportingReceivableTool(spec, receivablePlan[*requiredTraining, []*worker.TrainingCourse]{
-		request: func(params *serviceports.ToolExecuteParams) (*requiredTraining, error) {
-			workerID, err := requirePulid(params.Params, paramWorkerID)
-			if err != nil {
-				return nil, err
-			}
-			return &requiredTraining{workerID: workerID, tenant: tenantFrom(*params),
-				userID: params.Actor.UserID}, nil
-		},
-		plan: func(
-			ctx context.Context,
-			req *requiredTraining,
-			_ *serviceports.ToolExecuteParams,
-		) ([]*worker.TrainingCourse, error) {
-			return training.PlanAssignRequired(ctx, req.tenant, req.workerID)
-		},
-		refused: func(*requiredTraining) string {
-			return "Would assign the worker their required training."
-		},
-		render: func(req *requiredTraining, courses []*worker.TrainingCourse) (*agent.ToolPreview, error) {
-			changes := make([]*agent.RecordChange, 0, len(courses))
-			for _, course := range courses {
-				change, err := toolpreview.Create(
-					wfRecord(permission.ResourceWorkerTraining, pulid.Nil, course.Name, 0),
-					&worker.WorkerTrainingRecord{
-						WorkerID: req.workerID,
-						CourseID: course.ID,
-						Status:   worker.TrainingStatusAssigned,
-					}, wfOptions(wfFieldWorkerID, paramCourseID, fieldStatus)...)
+	return newReportingReceivableTool(
+		spec,
+		receivablePlan[*requiredTraining, []*worker.TrainingCourse]{
+			request: func(params *serviceports.ToolExecuteParams) (*requiredTraining, error) {
+				workerID, err := requirePulid(params.Params, paramWorkerID)
 				if err != nil {
 					return nil, err
 				}
-				changes = append(changes, change)
-			}
-			if len(courses) == 0 {
-				return toolpreview.Build("The worker is missing no required course; " +
-					"nothing would be assigned."), nil
-			}
-			return toolpreview.Build(fmt.Sprintf(
-				"Would assign %d required course(s); the driver sees each in Dash.",
-				len(courses)), changes...), nil
+				return &requiredTraining{workerID: workerID, tenant: tenantFrom(*params),
+					userID: params.Actor.UserID}, nil
+			},
+			plan: func(
+				ctx context.Context,
+				req *requiredTraining,
+				_ *serviceports.ToolExecuteParams,
+			) ([]*worker.TrainingCourse, error) {
+				return training.PlanAssignRequired(ctx, req.tenant, req.workerID)
+			},
+			refused: func(*requiredTraining) string {
+				return "Would assign the worker their required training."
+			},
+			render: func(req *requiredTraining, courses []*worker.TrainingCourse) (*agent.ToolPreview, error) {
+				changes := make([]*agent.RecordChange, 0, len(courses))
+				for _, course := range courses {
+					change, err := toolpreview.Create(
+						wfRecord(permission.ResourceWorkerTraining, pulid.Nil, course.Name, 0),
+						&worker.WorkerTrainingRecord{
+							WorkerID: req.workerID,
+							CourseID: course.ID,
+							Status:   worker.TrainingStatusAssigned,
+						}, wfOptions(wfFieldWorkerID, paramCourseID, fieldStatus)...)
+					if err != nil {
+						return nil, err
+					}
+					changes = append(changes, change)
+				}
+				if len(courses) == 0 {
+					return toolpreview.Build("The worker is missing no required course; " +
+						"nothing would be assigned."), nil
+				}
+				return toolpreview.Build(fmt.Sprintf(
+					"Would assign %d required course(s); the driver sees each in Dash.",
+					len(courses)), changes...), nil
+			},
+			run: func(
+				ctx context.Context,
+				req *requiredTraining,
+				_ *serviceports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				if _, err := training.AssignRequired(ctx, req.tenant, req.workerID,
+					req.userID); err != nil {
+					return nil, err
+				}
+				return &agent.ToolExecutionResult{
+					Action: "assigned required training to",
+					Kind:   "worker",
+					IDs:    map[string]string{paramWorkerID: req.workerID.String()},
+					Record: recordOf(workerRecordEntity, req.workerID),
+				}, nil
+			},
 		},
-		run: func(
-			ctx context.Context,
-			req *requiredTraining,
-			_ *serviceports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			if _, err := training.AssignRequired(ctx, req.tenant, req.workerID,
-				req.userID); err != nil {
-				return nil, err
-			}
-			return &agent.ToolExecutionResult{
-				Action: "assigned required training to",
-				Kind:   "worker",
-				IDs:    map[string]string{paramWorkerID: req.workerID.String()},
-				Record: recordOf(workerRecordEntity, req.workerID),
-			}, nil
-		},
-	})
+	)
 }
 
 func completionFrom(
@@ -401,8 +404,8 @@ func completionFrom(
 func newRecordTrainingCompletionTool(training trainingKeeper) serviceports.AgentTool {
 	spec := withSchema(wfSpec(
 		"record_training_completion",
-		"Record that a worker finished a course: against an open assignment by its id, or "+
-			"for a worker and course directly, such as a classroom session recorded after the "+
+		"Record that a worker finished a training course. Give the open assignment's id, "+
+			"or the worker and course directly for a classroom session recorded after the "+
 			"fact. A scored course needs the score and fails below its passing mark; a pass sets "+
 			"when a recurring course next expires.",
 		"Records a completion on the worker's training record inside Trenova; nothing is "+

@@ -17,8 +17,8 @@ import (
 
 const (
 	paramPTOType      = "type"
-	paramPTOStart     = "startDate"
-	paramPTOEnd       = "endDate"
+	paramPTOStart     = wfFieldStartDate
+	paramPTOEnd       = wfFieldEndDate
 	paramAmountDays   = "amountDays"
 	paramEffectiveOn  = "effectiveDate"
 	kindTimeOff       = "time off request"
@@ -28,7 +28,7 @@ const (
 
 var ptoFields = []string{
 	wfFieldWorkerID, paramPTOType, fieldStatus, paramPTOStart, paramPTOEnd, fieldReason,
-	"days", "autoApproved", "approverId",
+	"days", "autoApproved", wfFieldApproverID,
 }
 
 type ptoRequester interface {
@@ -282,12 +282,53 @@ func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 	})
 }
 
+func ptoAdjustmentFrom(
+	params *serviceports.ToolExecuteParams,
+) (*ptoledgerservice.AdjustRequest, error) {
+	workerID, err := requirePulid(params.Params, paramWorkerID)
+	if err != nil {
+		return nil, err
+	}
+	kind, err := requireEnum(params.Params, paramPTOType, agenttoolschema.PTOTypes.Values)
+	if err != nil {
+		return nil, err
+	}
+	amount, present, err := optionalDecimal(params.Params, paramAmountDays)
+	if err != nil {
+		return nil, err
+	}
+	if !present || amount.IsZero() {
+		return nil, fmt.Errorf("parameter %q must be a number of days other than zero",
+			paramAmountDays)
+	}
+	note, err := requireBoundedText(params.Params, fieldNote, wfShortChars)
+	if err != nil {
+		return nil, err
+	}
+	effective, err := optionalScheduleDay(params.Params, paramEffectiveOn)
+	if err != nil {
+		return nil, err
+	}
+	req := &ptoledgerservice.AdjustRequest{
+		TenantInfo: tenantFrom(*params),
+		WorkerID:   workerID,
+		PTOType:    kind,
+		AmountDays: amount,
+		Note:       note,
+		UserID:     params.Actor.UserID,
+	}
+	if effective != nil {
+		req.EffectiveAt = *effective
+	}
+	return req, nil
+}
+
 func newAdjustWorkerPTOBalanceTool(ledger ptoBalanceAdjuster) serviceports.AgentTool {
 	spec := personOnly(withSchema(wfSpec(
 		"adjust_worker_pto_balance",
-		"Post a manual adjustment to a worker's time-off balance of one kind, in days, "+
-			"positive to add and negative to take away, with a note saying why, such as a "+
-			"balance carried over from a previous system. Only a person's approval runs it.",
+		"Draft a manual adjustment to a worker's time-off balance, in days, for a person to "+
+			"approve. Positive days add and negative days take away, with a note saying why, "+
+			"such as a balance carried over from a previous system.",
 		"Changes how many paid days a worker holds, which the organization owes and may pay "+
 			"out, so a person approves it and it runs as them.",
 		permission.ResourceWorkerPTO,
@@ -306,44 +347,8 @@ func newAdjustWorkerPTOBalanceTool(ledger ptoBalanceAdjuster) serviceports.Agent
 	return newReportingReceivableTool(spec, receivablePlan[
 		*ptoledgerservice.AdjustRequest, *ptoledgerservice.AdjustPlan,
 	]{
-		request: func(params *serviceports.ToolExecuteParams) (*ptoledgerservice.AdjustRequest, error) {
-			workerID, err := requirePulid(params.Params, paramWorkerID)
-			if err != nil {
-				return nil, err
-			}
-			kind, err := requireEnum(params.Params, paramPTOType, agenttoolschema.PTOTypes.Values)
-			if err != nil {
-				return nil, err
-			}
-			amount, present, err := optionalDecimal(params.Params, paramAmountDays)
-			if err != nil {
-				return nil, err
-			}
-			if !present || amount.IsZero() {
-				return nil, fmt.Errorf("parameter %q must be a number of days other than zero",
-					paramAmountDays)
-			}
-			note, err := requireBoundedText(params.Params, fieldNote, wfShortChars)
-			if err != nil {
-				return nil, err
-			}
-			effective, err := optionalScheduleDay(params.Params, paramEffectiveOn)
-			if err != nil {
-				return nil, err
-			}
-			req := &ptoledgerservice.AdjustRequest{
-				TenantInfo: tenantFrom(*params),
-				WorkerID:   workerID,
-				PTOType:    kind,
-				AmountDays: amount,
-				Note:       note,
-				UserID:     params.Actor.UserID,
-			}
-			if effective != nil {
-				req.EffectiveAt = *effective
-			}
-			return req, nil
-		},
+		request: ptoAdjustmentFrom,
+
 		plan: func(
 			ctx context.Context,
 			req *ptoledgerservice.AdjustRequest,

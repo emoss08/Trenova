@@ -22,8 +22,8 @@ const (
 	paramLeaveType         = "leaveType"
 	paramLeaveFrequency    = "frequency"
 	paramMilitaryCaregiver = "militaryCaregiver"
-	paramStartsOn          = "startDate"
-	paramEndsOn            = "endDate"
+	paramStartsOn          = wfFieldStartDate
+	paramEndsOn            = wfFieldEndDate
 	paramRequestedOn       = "requestedDate"
 	paramEligibilityHours  = "eligibilityHoursWorked"
 	paramUsedOn            = "date"
@@ -44,8 +44,8 @@ var (
 	)
 	leaveCaseFields = []string{
 		wfFieldWorkerID, paramLeaveType, fieldStatus, paramLeaveFrequency, fieldReason,
-		paramMilitaryCaregiver, "requestedAt", "startsAt", "endsAt", "closedAt",
-		"certificationStatus", "certificationRequestedAt", "certificationDueAt",
+		paramMilitaryCaregiver, wfFieldRequestedAt, "startsAt", "endsAt", wfFieldClosedAt,
+		"certificationStatus", wfFieldCertRequestedAt, "certificationDueAt",
 		paramEligibilityHours, wfFieldDocument, wfFieldNotes,
 	}
 	leaveDayFields = []string{
@@ -269,7 +269,7 @@ func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 				change, err := toolpreview.Create(
 					wfRecord(permission.ResourceWorkerLeave, pulid.Nil, "New leave case", 0),
 					planned, append(wfOptions(leaveCaseFields...),
-						toolpreview.Volatile("requestedAt"))...)
+						toolpreview.Volatile(wfFieldRequestedAt))...)
 				if err != nil {
 					return nil, err
 				}
@@ -426,42 +426,45 @@ func newCloseLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 	), map[string]any{paramLeaveCaseID: leaveCaseIDProperty()}, paramLeaveCaseID),
 		paramLeaveCaseID, permission.ResourceWorkerLeave))
 	render := renderLeaveCaseChange("Would close the leave case.",
-		[]string{"closedAt"}, fieldStatus, "closedAt", "endsAt")
+		[]string{wfFieldClosedAt}, fieldStatus, wfFieldClosedAt, "endsAt")
 
-	return newReportingReceivableTool(spec, receivablePlan[*recordDelete, *workerleaveservice.CaseChange]{
-		request: recordDeleteFrom(paramLeaveCaseID),
-		plan: func(
-			ctx context.Context,
-			req *recordDelete,
-			_ *serviceports.ToolExecuteParams,
-		) (*workerleaveservice.CaseChange, error) {
-			return cases.PlanCloseCase(ctx, req.tenant, req.id)
+	return newReportingReceivableTool(
+		spec,
+		receivablePlan[*recordDelete, *workerleaveservice.CaseChange]{
+			request: recordDeleteFrom(paramLeaveCaseID),
+			plan: func(
+				ctx context.Context,
+				req *recordDelete,
+				_ *serviceports.ToolExecuteParams,
+			) (*workerleaveservice.CaseChange, error) {
+				return cases.PlanCloseCase(ctx, req.tenant, req.id)
+			},
+			refused: func(*recordDelete) string { return "Would close a leave case." },
+			render: func(_ *recordDelete, change *workerleaveservice.CaseChange) (*agent.ToolPreview, error) {
+				return render(change)
+			},
+			run: func(
+				ctx context.Context,
+				req *recordDelete,
+				_ *serviceports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				closed, err := cases.CloseCase(ctx, req.tenant, req.id, req.userID)
+				if err != nil {
+					return nil, err
+				}
+				return wfResult("closed", kindLeaveCase, paramLeaveCaseID, closed.ID,
+					closed.WorkerID), nil
+			},
 		},
-		refused: func(*recordDelete) string { return "Would close a leave case." },
-		render: func(_ *recordDelete, change *workerleaveservice.CaseChange) (*agent.ToolPreview, error) {
-			return render(change)
-		},
-		run: func(
-			ctx context.Context,
-			req *recordDelete,
-			_ *serviceports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			closed, err := cases.CloseCase(ctx, req.tenant, req.id, req.userID)
-			if err != nil {
-				return nil, err
-			}
-			return wfResult("closed", kindLeaveCase, paramLeaveCaseID, closed.ID,
-				closed.WorkerID), nil
-		},
-	})
+	)
 }
 
 func newRequestLeaveCertificationTool(cases leaveKeeper) serviceports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"request_leave_certification",
 		"Record that medical certification was asked for on a leave case and start its "+
-			"clock: due in the organization's certification window, fifteen days by default, "+
-			"or on the day given. Asking the worker is done by the person; this keeps the date.",
+			"clock. It is due in the organization's certification window, fifteen days by "+
+			"default, or on the day given. Asking the worker is done by the person; this keeps the date.",
 		"Starts the certification clock on a leave case inside Trenova; nothing is sent to "+
 			"the worker, and a later request restarts it.",
 		permission.ResourceWorkerLeave,
@@ -471,8 +474,8 @@ func newRequestLeaveCertificationTool(cases leaveKeeper) serviceports.AgentTool 
 		paramCertificationDue: dayProperty("When it is due, when not the usual window."),
 	}, paramLeaveCaseID), paramLeaveCaseID, permission.ResourceWorkerLeave)
 	render := renderLeaveCaseChange("Would record that certification was requested.",
-		[]string{"certificationRequestedAt"}, "certificationStatus",
-		"certificationRequestedAt", "certificationDueAt")
+		[]string{wfFieldCertRequestedAt}, "certificationStatus",
+		wfFieldCertRequestedAt, "certificationDueAt")
 
 	return newReportingReceivableTool(spec, receivablePlan[
 		*workerleaveservice.RequestCertificationRequest, *workerleaveservice.CaseChange,

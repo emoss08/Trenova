@@ -35,10 +35,10 @@ const (
 
 var (
 	payDisputeFields = []string{
-		fieldStatus, "category", "resolutionNote", "resolvedById", "resolvedAt",
+		fieldStatus, fieldCategory, "resolutionNote", wfFieldResolvedByID, fieldResolvedAt,
 	}
 	expenseFields = []string{
-		fieldStatus, "description", "reviewNote", "reviewedById", "reviewedAt",
+		fieldStatus, fieldDescription, "reviewNote", "reviewedById", fieldReviewedAt,
 	}
 	disputeDecisions = agenttoolschema.Source("settlementDispute.decision",
 		[]string{decisionApprove, decisionDeny})
@@ -255,7 +255,7 @@ func resolvePayDisputeRequest(
 func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.AgentTool {
 	spec := targeting(personOnly(withSchema(wfSpec(
 		"resolve_settlement_dispute",
-		"Draft the decision on a driver's pay dispute for a person to approve: approve or "+
+		"Draft the decision on a driver's pay dispute for a person to approve. Approve or "+
 			"deny it with a resolution note the driver reads, and for an approval, an "+
 			"optional adjustment that pays the driver back on their open draft settlement, "+
 			"or on a new off-cycle one when they have none. A denial carries no adjustment.",
@@ -304,7 +304,7 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 		) (*agent.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(disputeRecord(plan.Dispute.Before),
 				plan.Dispute.Before, plan.Dispute.After,
-				append(wfOptions(payDisputeFields...), toolpreview.Volatile("resolvedAt"))...)
+				append(wfOptions(payDisputeFields...), toolpreview.Volatile(fieldResolvedAt))...)
 			if err != nil {
 				return nil, err
 			}
@@ -320,10 +320,13 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 						Resource: permission.ResourceDriverSettlement,
 						Label:    req.Adjustment.Description,
 					},
-					toolpreview.MoneyBlock(settlementCurrency(plan.AdjustmentTarget), agent.MoneyLine{
-						Label: "Dispute adjustment",
-						After: minorAmount(req.Adjustment.AmountMinor),
-					}),
+					toolpreview.MoneyBlock(
+						settlementCurrency(plan.AdjustmentTarget),
+						agent.MoneyLine{
+							Label: "Dispute adjustment",
+							After: minorAmount(req.Adjustment.AmountMinor),
+						},
+					),
 					toolpreview.SensitiveAs("amountMinor"),
 				)
 				adjustment.Operation = agent.PreviewOperationCreate
@@ -350,12 +353,35 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 	})
 }
 
+func reviewExpenseFrom(
+	params *serviceports.ToolExecuteParams,
+) (*driversettlementservice.ReviewExpenseRequest, error) {
+	id, err := requirePulid(params.Params, paramExpenseID)
+	if err != nil {
+		return nil, err
+	}
+	decision, err := requireEnum(params.Params, paramDecision, expenseDecisions.Values)
+	if err != nil {
+		return nil, err
+	}
+	note, err := boundedText(params.Params, fieldNote, maxDisputeResolution)
+	if err != nil {
+		return nil, err
+	}
+	return &driversettlementservice.ReviewExpenseRequest{
+		TenantInfo: tenantFrom(*params),
+		ExpenseID:  id,
+		Approve:    decision == decisionApprove,
+		Note:       note,
+	}, nil
+}
+
 func newReviewDriverExpenseTool(reviewer driverPayReviewer) serviceports.AgentTool {
 	spec := targeting(personOnly(withSchema(wfSpec(
 		"review_driver_expense",
-		"Draft the decision on an expense a driver submitted for reimbursement, for a "+
-			"person to approve: approve it to reimburse it on the driver's open draft "+
-			"settlement, or a new off-cycle one, or reject it with a note saying why. An "+
+		"Draft the decision on a driver's expense claim for a person to approve. Approve "+
+			"it to reimburse it on the driver's open draft settlement, or a new off-cycle one, "+
+			"or reject it with a note saying why. An "+
 			"organization that requires receipts refuses an approval without one.",
 		"Pays or refuses a driver's out-of-pocket expense and tells the driver, so a "+
 			"person approves it and it runs as them; a reviewed expense stays reviewed.",
@@ -378,28 +404,8 @@ func newReviewDriverExpenseTool(reviewer driverPayReviewer) serviceports.AgentTo
 	return newReportingReceivableTool(spec, receivablePlan[
 		*driversettlementservice.ReviewExpenseRequest, *driversettlementservice.ReviewExpensePlan,
 	]{
-		request: func(
-			params *serviceports.ToolExecuteParams,
-		) (*driversettlementservice.ReviewExpenseRequest, error) {
-			id, err := requirePulid(params.Params, paramExpenseID)
-			if err != nil {
-				return nil, err
-			}
-			decision, err := requireEnum(params.Params, paramDecision, expenseDecisions.Values)
-			if err != nil {
-				return nil, err
-			}
-			note, err := boundedText(params.Params, fieldNote, maxDisputeResolution)
-			if err != nil {
-				return nil, err
-			}
-			return &driversettlementservice.ReviewExpenseRequest{
-				TenantInfo: tenantFrom(*params),
-				ExpenseID:  id,
-				Approve:    decision == decisionApprove,
-				Note:       note,
-			}, nil
-		},
+		request: reviewExpenseFrom,
+
 		plan: func(
 			ctx context.Context,
 			req *driversettlementservice.ReviewExpenseRequest,
@@ -416,7 +422,7 @@ func newReviewDriverExpenseTool(reviewer driverPayReviewer) serviceports.AgentTo
 		) (*agent.ToolPreview, error) {
 			recorded, err := toolpreview.Changed(expenseRecord(plan.Before), plan.Before,
 				plan.After,
-				append(wfOptions(expenseFields...), toolpreview.Volatile("reviewedAt"))...)
+				append(wfOptions(expenseFields...), toolpreview.Volatile(fieldReviewedAt))...)
 			if err != nil {
 				return nil, err
 			}
@@ -464,7 +470,9 @@ func provideStartSettlementDisputeReviewTool(
 	return newStartSettlementDisputeReviewTool(s)
 }
 
-func provideResolveSettlementDisputeTool(s *driversettlementservice.Service) serviceports.AgentTool {
+func provideResolveSettlementDisputeTool(
+	s *driversettlementservice.Service,
+) serviceports.AgentTool {
 	return newResolveSettlementDisputeTool(s)
 }
 

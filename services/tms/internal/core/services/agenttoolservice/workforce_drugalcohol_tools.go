@@ -209,9 +209,9 @@ func scheduledTestFrom(params *serviceports.ToolExecuteParams) (*worker.WorkerDO
 func newScheduleDOTTestTool(tests drugAlcoholKeeper) serviceports.AgentTool {
 	spec := withSchema(wfSpec(
 		"schedule_dot_test",
-		"Schedule a drug or alcohol test for a driver: a random selection's collection, a "+
-			"post-accident or reasonable-suspicion test, pre-employment, return-to-duty or "+
-			"follow-up. A collection covering both substances is two calls. It records the "+
+		"Schedule a drug or alcohol test for a driver. It covers a random selection's "+
+			"collection, a post-accident or reasonable-suspicion test, pre-employment, "+
+			"return-to-duty or follow-up. A collection covering both substances is two calls. It records the "+
 			"order only; results are entered by the person who receives them from the lab or "+
 			"the medical review officer.",
 		"Files a scheduled collection inside Trenova. The driver is sent nothing, no result is "+
@@ -497,38 +497,41 @@ func newFinalizeDOTRandomDrawTool(draws drugAlcoholKeeper) serviceports.AgentToo
 	spec.artifact = ""
 	render := renderDrawChange("Would finalize round %s; its selections become the record.")
 
-	return newReceivableTool(spec, receivablePlan[*drawDecision, *workerdrugalcoholservice.DrawChange]{
-		request: func(params *serviceports.ToolExecuteParams) (*drawDecision, error) {
-			id, err := requirePulid(params.Params, paramDrawID)
-			if err != nil {
+	return newReceivableTool(
+		spec,
+		receivablePlan[*drawDecision, *workerdrugalcoholservice.DrawChange]{
+			request: func(params *serviceports.ToolExecuteParams) (*drawDecision, error) {
+				id, err := requirePulid(params.Params, paramDrawID)
+				if err != nil {
+					return nil, err
+				}
+				return &drawDecision{id: id, tenant: tenantFrom(*params),
+					userID: params.Actor.UserID}, nil
+			},
+			plan: func(
+				ctx context.Context,
+				req *drawDecision,
+				_ *serviceports.ToolExecuteParams,
+			) (*workerdrugalcoholservice.DrawChange, error) {
+				return draws.PlanFinalizeDraw(ctx, req.tenant, req.id)
+			},
+			refused: func(*drawDecision) string { return "Would finalize a random testing round." },
+			render: func(
+				req *drawDecision,
+				change *workerdrugalcoholservice.DrawChange,
+			) (*agent.ToolPreview, error) {
+				return render(req, change)
+			},
+			run: func(
+				ctx context.Context,
+				req *drawDecision,
+				_ *serviceports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				_, err := draws.FinalizeDraw(ctx, req.tenant, req.id, req.userID)
 				return nil, err
-			}
-			return &drawDecision{id: id, tenant: tenantFrom(*params),
-				userID: params.Actor.UserID}, nil
+			},
 		},
-		plan: func(
-			ctx context.Context,
-			req *drawDecision,
-			_ *serviceports.ToolExecuteParams,
-		) (*workerdrugalcoholservice.DrawChange, error) {
-			return draws.PlanFinalizeDraw(ctx, req.tenant, req.id)
-		},
-		refused: func(*drawDecision) string { return "Would finalize a random testing round." },
-		render: func(
-			req *drawDecision,
-			change *workerdrugalcoholservice.DrawChange,
-		) (*agent.ToolPreview, error) {
-			return render(req, change)
-		},
-		run: func(
-			ctx context.Context,
-			req *drawDecision,
-			_ *serviceports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			_, err := draws.FinalizeDraw(ctx, req.tenant, req.id, req.userID)
-			return nil, err
-		},
-	})
+	)
 }
 
 func newCancelDOTRandomDrawTool(draws drugAlcoholKeeper) serviceports.AgentTool {
@@ -581,8 +584,9 @@ func newCancelDOTRandomDrawTool(draws drugAlcoholKeeper) serviceports.AgentTool 
 func newUpdateDOTRandomSelectionTool(draws drugAlcoholKeeper) serviceports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"update_dot_random_selection",
-		"Record where one random selection stands: Notified once the driver has been told to "+
-			"report, Excused with the reason when they cannot be tested this period, or Missed. "+
+		"Record where one random testing selection stands. Notified once the driver has "+
+			"been told to report, Excused with the reason when they cannot be tested this "+
+			"period, or Missed. "+
 			"A selection completes on its own when its test is recorded.",
 		"Updates a selection on a round inside Trenova; nothing is sent to the driver, and "+
 			"the selection is updated again the same way.",
