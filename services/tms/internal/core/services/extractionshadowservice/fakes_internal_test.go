@@ -273,12 +273,16 @@ func (f *contentStore) GetByDocumentID(
 type providerStore struct {
 	repositories.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
+	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
 	req repositories.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
 	provider, ok := f.providers[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("provider not found")

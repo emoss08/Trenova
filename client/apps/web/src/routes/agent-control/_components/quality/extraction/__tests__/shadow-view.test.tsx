@@ -374,4 +374,26 @@ describe("ShadowView", () => {
     expect(cells[3]).toHaveTextContent("2500.00");
     expect(cells[3]).toHaveTextContent("Corrected");
   });
+
+  it("says so when a shadow result could not be loaded", async () => {
+    fetchSettings.mockResolvedValue(settings());
+    fetchReport.mockResolvedValue(report());
+    table.openRow = { id: "exsr_1", status: "Completed" };
+    fetchResult.mockRejectedValue(new Error("unavailable"));
+    renderView();
+
+    expect(
+      await screen.findByText("The shadow extraction could not be loaded."),
+    ).toBeInTheDocument();
+  });
+
+  it("says so when a shadow result no longer exists", async () => {
+    fetchSettings.mockResolvedValue(settings());
+    fetchReport.mockResolvedValue(report());
+    table.openRow = { id: "exsr_1", status: "Completed" };
+    fetchResult.mockResolvedValue(null);
+    renderView();
+
+    expect(await screen.findByText("This shadow extraction no longer exists.")).toBeInTheDocument();
+  });
 });

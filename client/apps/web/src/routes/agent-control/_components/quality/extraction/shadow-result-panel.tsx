@@ -111,8 +111,14 @@ export function ShadowResultPanel({
       }
       size="xl"
     >
-      {detail.isLoading || !result ? (
+      {detail.isError ? (
+        <Alert variant="destructive" size="sm">
+          <AlertDescription>{t("The shadow extraction could not be loaded.")}</AlertDescription>
+        </Alert>
+      ) : detail.isPending ? (
         <ComponentLoader />
+      ) : !result ? (
+        <SectionPanelQuiet>{t("This shadow extraction no longer exists.")}</SectionPanelQuiet>
       ) : (
         <div className="flex flex-col gap-4">
           {result.statusReason ? (

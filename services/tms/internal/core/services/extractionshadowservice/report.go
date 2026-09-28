@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
 )
 
 const (
@@ -233,6 +234,13 @@ func (s *Service) providerName(
 		TenantInfo: tenant,
 	})
 	if err != nil {
+		if !errortypes.IsNotFoundError(err) {
+			s.l.Warn(
+				"failed to read shadow provider name",
+				zap.String("providerId", providerID.String()),
+				zap.Error(err),
+			)
+		}
 		return ""
 	}
 

@@ -182371,6 +182371,15 @@
       "routes/agent-control"
     ]
   },
+  "The shadow extraction could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The shadow settings could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -187686,6 +187695,15 @@
     "areas": [
       "routes/carrier-settlement",
       "routes/driver-settlement"
+    ]
+  },
+  "This shadow extraction no longer exists.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "This sheet could not be imported": {

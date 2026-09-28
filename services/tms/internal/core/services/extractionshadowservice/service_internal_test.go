@@ -1,6 +1,7 @@
 package extractionshadowservice
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
@@ -15,6 +16,8 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 )
 
 const extractedAt = testNow - 600
@@ -559,6 +562,37 @@ func TestReportComparesBothSidesOnTheSameDocuments(t *testing.T) {
 	for _, field := range report.Fields {
 		assert.Equal(t, 2, field.CandidateScored, field.Key)
 		assert.Equal(t, 2, field.ProductionScored, field.Key)
+	}
+}
+
+func TestReportLogsAProviderLookupFailure(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		err    error
+		logged int
+	}{
+		{name: "database failure", err: errors.New("connection refused"), logged: 1},
+		{name: "provider removed", err: errortypes.NewNotFoundError("provider not found")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			w := newWorld()
+			w.enable(100)
+			core, logs := observer.New(zap.WarnLevel)
+			w.svc.l = zap.New(core)
+			w.providers.err = tc.err
+
+			report, err := w.svc.Report(
+				t.Context(),
+				&services.ExtractionShadowReportRequest{TenantInfo: testTenant()},
+			)
+			require.NoError(t, err)
+			assert.Empty(t, report.ProviderName)
+			assert.Equal(t, tc.logged, logs.FilterMessage("failed to read shadow provider name").Len())
+		})
 	}
 }
 
