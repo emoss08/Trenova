@@ -1,3 +1,5 @@
+//go:build integration
+
 package testutil
 
 import (
@@ -13,18 +15,6 @@ import (
 )
 
 const leasableRedisDatabases = 15
-
-func leaseTestRedisAddr(t *testing.T) string {
-	t.Helper()
-
-	if addr := strings.TrimSpace(os.Getenv(RedisAddrEnv)); addr != "" {
-		return addr
-	}
-	if testing.Short() {
-		t.Skip("needs a Redis server: set " + RedisAddrEnv + " or run without -short")
-	}
-	return SetupRedis(t).Address()
-}
 
 func leaseTestPrefix() string {
 	return "trenova:test:lease-test:" + ulid.Make().String() + ":"
@@ -42,8 +32,24 @@ func mustLease(t *testing.T, addr, prefix string) *redisDBLease {
 	return lease
 }
 
-func TestLeaseRedisDBGivesEveryHolderItsOwnDatabase(t *testing.T) {
-	addr := leaseTestRedisAddr(t)
+func TestLeaseRedisDB(t *testing.T) {
+	addr := strings.TrimSpace(os.Getenv(RedisAddrEnv))
+	if addr == "" {
+		addr = SetupRedis(t).Address()
+	}
+
+	t.Run("gives every holder its own database", func(t *testing.T) {
+		leaseGivesEveryHolderItsOwnDatabase(t, addr)
+	})
+	t.Run("waits while every database is held", func(t *testing.T) {
+		leaseWaitsWhileEveryDatabaseIsHeld(t, addr)
+	})
+	t.Run("reclaims the database of a holder that has gone", func(t *testing.T) {
+		leaseReclaimsTheDatabaseOfAHolderThatHasGone(t, addr)
+	})
+}
+
+func leaseGivesEveryHolderItsOwnDatabase(t *testing.T, addr string) {
 	prefix := leaseTestPrefix()
 
 	seen := make(map[int]struct{}, leasableRedisDatabases)
@@ -57,8 +63,7 @@ func TestLeaseRedisDBGivesEveryHolderItsOwnDatabase(t *testing.T) {
 	}
 }
 
-func TestLeaseRedisDBWaitsWhileEveryDatabaseIsHeld(t *testing.T) {
-	addr := leaseTestRedisAddr(t)
+func leaseWaitsWhileEveryDatabaseIsHeld(t *testing.T, addr string) {
 	prefix := leaseTestPrefix()
 
 	for range leasableRedisDatabases {
@@ -76,8 +81,7 @@ func TestLeaseRedisDBWaitsWhileEveryDatabaseIsHeld(t *testing.T) {
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
-func TestLeaseRedisDBReclaimsTheDatabaseOfAHolderThatHasGone(t *testing.T) {
-	addr := leaseTestRedisAddr(t)
+func leaseReclaimsTheDatabaseOfAHolderThatHasGone(t *testing.T, addr string) {
 	prefix := leaseTestPrefix()
 
 	leases := make([]*redisDBLease, 0, leasableRedisDatabases)
