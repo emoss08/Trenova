@@ -407,10 +407,14 @@ func snapshotMoveDistances(entity *shipment.Shipment) *shipment.Shipment {
 	return &before
 }
 
-func (s *Service) RecalculateMoveJurisdictionMiles(
+type MoveJurisdictionPlan struct {
+	Move *shipment.ShipmentMove
+}
+
+func (s *Service) jurisdictionMove(
 	ctx context.Context,
 	req services.RecalculateMoveJurisdictionMilesRequest,
-) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
+) (*shipment.ShipmentMove, error) {
 	if req.ShipmentMoveID.IsNil() {
 		return nil, errortypes.NewBusinessError("Shipment move is required")
 	}
@@ -426,6 +430,30 @@ func (s *Service) RecalculateMoveJurisdictionMiles(
 		return nil, errortypes.NewBusinessError(
 			"Jurisdiction miles need a move with at least two located stops",
 		).WithParam("moveId", move.ID.String())
+	}
+
+	return move, nil
+}
+
+func (s *Service) PlanMoveJurisdictionMiles(
+	ctx context.Context,
+	req services.RecalculateMoveJurisdictionMilesRequest,
+) (*MoveJurisdictionPlan, error) {
+	move, err := s.jurisdictionMove(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MoveJurisdictionPlan{Move: move}, nil
+}
+
+func (s *Service) RecalculateMoveJurisdictionMiles(
+	ctx context.Context,
+	req services.RecalculateMoveJurisdictionMilesRequest,
+) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
+	move, err := s.jurisdictionMove(ctx, req)
+	if err != nil {
+		return nil, err
 	}
 	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         move.ShipmentID,

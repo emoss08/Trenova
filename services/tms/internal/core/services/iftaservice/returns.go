@@ -53,6 +53,17 @@ type AmendReturnRequest struct {
 	UserID     pulid.ID
 }
 
+type ReturnChange struct {
+	Before *ifta.Return
+	After  *ifta.Return
+}
+
+type ReturnAmendment struct {
+	Filed  *ifta.Return
+	Draft  *ifta.Return
+	Reason string
+}
+
 type PeriodInfo struct {
 	Period   ifta.Period
 	Key      string
@@ -218,7 +229,7 @@ func (s *idSet) add(id pulid.ID) {
 	s.ids = append(s.ids, id)
 }
 
-func (s *Service) recompute(ctx context.Context, ret *ifta.Return) (*ifta.Return, error) {
+func (s *Service) compute(ctx context.Context, ret *ifta.Return) (*ComputeResult, error) {
 	tenantInfo := returnTenant(ret)
 	loc := s.returnLocation(ctx, ret)
 
@@ -283,9 +294,30 @@ func (s *Service) recompute(ctx context.Context, ret *ifta.Return) (*ifta.Return
 		Fuel:          fuel,
 		Rates:         rates,
 	})
-	applyComputation(ret, &result)
+
+	return &result, nil
+}
+
+func (s *Service) recompute(ctx context.Context, ret *ifta.Return) (*ifta.Return, error) {
+	result, err := s.compute(ctx, ret)
+	if err != nil {
+		return nil, err
+	}
+	applyComputation(ret, result)
 
 	return s.repo.ReplaceReturnLines(ctx, ret, result.Lines)
+}
+
+func (s *Service) project(ctx context.Context, ret *ifta.Return) (*ifta.Return, error) {
+	projected := *ret
+	result, err := s.compute(ctx, &projected)
+	if err != nil {
+		return nil, err
+	}
+	applyComputation(&projected, result)
+	projected.Lines = result.Lines
+
+	return &projected, nil
 }
 
 func applyComputation(ret *ifta.Return, result *ComputeResult) {
@@ -389,7 +421,7 @@ func (s *Service) createAndCompute(
 	return computed, nil
 }
 
-func (s *Service) Generate(
+func (s *Service) planDraft(
 	ctx context.Context,
 	req *GenerateReturnRequest,
 ) (*ifta.Return, error) {
@@ -411,7 +443,29 @@ func (s *Service) Generate(
 		)
 	}
 
-	draft, err := s.newDraft(ctx, req.TenantInfo, req.Period)
+	return s.newDraft(ctx, req.TenantInfo, req.Period)
+}
+
+func (s *Service) PlanGenerate(
+	ctx context.Context,
+	req *GenerateReturnRequest,
+) (*ifta.Return, error) {
+	draft, err := s.planDraft(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err = validReturn(draft); err != nil {
+		return nil, err
+	}
+
+	return s.project(ctx, draft)
+}
+
+func (s *Service) Generate(
+	ctx context.Context,
+	req *GenerateReturnRequest,
+) (*ifta.Return, error) {
+	draft, err := s.planDraft(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +478,18 @@ func (s *Service) Generate(
 	)
 }
 
-func (s *Service) Recompute(ctx context.Context, req *ReturnActionRequest) (*ifta.Return, error) {
+func validReturn(ret *ifta.Return) error {
+	ret.Normalize()
+	multiErr := errortypes.NewMultiError()
+	ret.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func (s *Service) recomputable(ctx context.Context, req *ReturnActionRequest) (*ifta.Return, error) {
 	ret, err := s.loadReturn(ctx, req.TenantInfo, req.ID, req.Version)
 	if err != nil {
 		return nil, err
@@ -434,6 +499,29 @@ func (s *Service) Recompute(ctx context.Context, req *ReturnActionRequest) (*ift
 			"status",
 			"Only a draft return can be recomputed; reopen or amend it first",
 		)
+	}
+
+	return ret, nil
+}
+
+func (s *Service) PlanRecompute(ctx context.Context, req *ReturnActionRequest) (*ReturnChange, error) {
+	ret, err := s.recomputable(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	after, err := s.project(ctx, ret)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ReturnChange{Before: ret, After: after}, nil
+}
+
+func (s *Service) Recompute(ctx context.Context, req *ReturnActionRequest) (*ifta.Return, error) {
+	ret, err := s.recomputable(ctx, req)
+	if err != nil {
+		return nil, err
 	}
 
 	previous := *ret
@@ -642,7 +730,7 @@ func (s *Service) MarkFiled(ctx context.Context, req *MarkFiledRequest) (*ifta.R
 	return filed, nil
 }
 
-func (s *Service) Amend(ctx context.Context, req *AmendReturnRequest) (*ifta.Return, error) {
+func (s *Service) amendment(ctx context.Context, req *AmendReturnRequest) (*ReturnAmendment, error) {
 	reason, err := requireReason(req.Reason)
 	if err != nil {
 		return nil, err
@@ -671,22 +759,55 @@ func (s *Service) Amend(ctx context.Context, req *AmendReturnRequest) (*ifta.Ret
 	draft.PeriodEnd = filed.PeriodEnd
 	draft.CurrencyCode = filed.CurrencyCode
 
+	return &ReturnAmendment{Filed: filed, Draft: draft, Reason: reason}, nil
+}
+
+func (s *Service) PlanAmend(ctx context.Context, req *AmendReturnRequest) (*ReturnAmendment, error) {
+	plan, err := s.amendment(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err = validReturn(plan.Draft); err != nil {
+		return nil, err
+	}
+	if plan.Draft, err = s.project(ctx, plan.Draft); err != nil {
+		return nil, err
+	}
+
+	return plan, nil
+}
+
+func (s *Service) Amend(ctx context.Context, req *AmendReturnRequest) (*ifta.Return, error) {
+	plan, err := s.amendment(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
 	return s.createAndCompute(
 		ctx,
-		draft,
+		plan.Draft,
 		req.UserID,
-		"Opened amendment "+strconv.Itoa(draft.AmendmentNumber)+" of the "+
-			filed.Period().Label()+" IFTA return: "+reason,
+		"Opened amendment "+strconv.Itoa(plan.Draft.AmendmentNumber)+" of the "+
+			plan.Filed.Period().Label()+" IFTA return: "+plan.Reason,
 	)
 }
 
-func (s *Service) Delete(ctx context.Context, req *ReturnActionRequest) error {
+func (s *Service) PlanDelete(ctx context.Context, req *ReturnActionRequest) (*ifta.Return, error) {
 	ret, err := s.loadReturn(ctx, req.TenantInfo, req.ID, req.Version)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !ret.CanDelete() {
-		return invalidOperation("status", "Only a draft return can be deleted")
+		return nil, invalidOperation("status", "Only a draft return can be deleted")
+	}
+
+	return ret, nil
+}
+
+func (s *Service) Delete(ctx context.Context, req *ReturnActionRequest) error {
+	ret, err := s.PlanDelete(ctx, req)
+	if err != nil {
+		return err
 	}
 
 	if err = s.repo.DeleteReturn(ctx, &repositories.DeleteReturnRequest{

@@ -86,21 +86,87 @@ func (s *Service) prepareMileageEntry(
 	return nil
 }
 
+type MileageEntryChange struct {
+	Before *ifta.JurisdictionMileageEntry
+	After  *ifta.JurisdictionMileageEntry
+}
+
+func (s *Service) PlanCreateMileageEntry(
+	ctx context.Context,
+	entity *ifta.JurisdictionMileageEntry,
+	userID pulid.ID,
+) (*ifta.JurisdictionMileageEntry, error) {
+	planned := *entity
+	planned.CreatedByID = userID
+	if planned.Source == "" {
+		planned.Source = ifta.MileageSourceManual
+	}
+	if err := s.prepareMileageEntry(ctx, &planned); err != nil {
+		return nil, err
+	}
+
+	return &planned, nil
+}
+
+func (s *Service) PlanUpdateMileageEntry(
+	ctx context.Context,
+	entity *ifta.JurisdictionMileageEntry,
+	_ pulid.ID,
+) (*MileageEntryChange, error) {
+	existing, err := s.repo.GetMileageEntryByID(ctx, &repositories.GetMileageEntryByIDRequest{
+		ID:         entity.ID,
+		TenantInfo: entryTenant(entity),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if existing.Version != entity.Version {
+		return nil, versionMismatch("mileage entry")
+	}
+
+	planned := *entity
+	planned.CreatedByID = existing.CreatedByID
+	planned.CreatedAt = existing.CreatedAt
+	if planned.Source == "" {
+		planned.Source = existing.Source
+	}
+	if err = s.prepareMileageEntry(ctx, &planned); err != nil {
+		return nil, err
+	}
+
+	return &MileageEntryChange{Before: existing, After: &planned}, nil
+}
+
+func (s *Service) PlanDeleteMileageEntry(
+	ctx context.Context,
+	req *DeleteMileageEntryRequest,
+) (*ifta.JurisdictionMileageEntry, error) {
+	existing, err := s.repo.GetMileageEntryByID(ctx, &repositories.GetMileageEntryByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if existing.Version != req.Version {
+		return nil, versionMismatch("mileage entry")
+	}
+
+	return existing, nil
+}
+
 func (s *Service) CreateMileageEntry(
 	ctx context.Context,
 	entity *ifta.JurisdictionMileageEntry,
 	userID pulid.ID,
 ) (*ifta.JurisdictionMileageEntry, error) {
 	tenantInfo := entryTenant(entity)
-	entity.CreatedByID = userID
-	if entity.Source == "" {
-		entity.Source = ifta.MileageSourceManual
-	}
-	if err := s.prepareMileageEntry(ctx, entity); err != nil {
+	planned, err := s.PlanCreateMileageEntry(ctx, entity, userID)
+	if err != nil {
 		return nil, err
 	}
 
-	created, err := s.repo.CreateMileageEntry(ctx, entity)
+	created, err := s.repo.CreateMileageEntry(ctx, planned)
 	if err != nil {
 		return nil, err
 	}
@@ -126,28 +192,13 @@ func (s *Service) UpdateMileageEntry(
 	userID pulid.ID,
 ) (*ifta.JurisdictionMileageEntry, error) {
 	tenantInfo := entryTenant(entity)
-	existing, err := s.repo.GetMileageEntryByID(ctx, &repositories.GetMileageEntryByIDRequest{
-		ID:         entity.ID,
-		TenantInfo: tenantInfo,
-	})
+	change, err := s.PlanUpdateMileageEntry(ctx, entity, userID)
 	if err != nil {
 		return nil, err
 	}
-	if existing.Version != entity.Version {
-		return nil, versionMismatch("mileage entry")
-	}
 
-	previous := *existing
-	entity.CreatedByID = existing.CreatedByID
-	entity.CreatedAt = existing.CreatedAt
-	if entity.Source == "" {
-		entity.Source = existing.Source
-	}
-	if err = s.prepareMileageEntry(ctx, entity); err != nil {
-		return nil, err
-	}
-
-	updated, err := s.repo.UpdateMileageEntry(ctx, entity)
+	previous := *change.Before
+	updated, err := s.repo.UpdateMileageEntry(ctx, change.After)
 	if err != nil {
 		return nil, err
 	}
@@ -168,15 +219,9 @@ func (s *Service) UpdateMileageEntry(
 }
 
 func (s *Service) DeleteMileageEntry(ctx context.Context, req *DeleteMileageEntryRequest) error {
-	existing, err := s.repo.GetMileageEntryByID(ctx, &repositories.GetMileageEntryByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	existing, err := s.PlanDeleteMileageEntry(ctx, req)
 	if err != nil {
 		return err
-	}
-	if existing.Version != req.Version {
-		return versionMismatch("mileage entry")
 	}
 
 	if err = s.repo.DeleteMileageEntry(ctx, &repositories.DeleteMileageEntryRequest{
