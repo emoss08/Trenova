@@ -214,8 +214,8 @@ describe("RolloutView", () => {
     });
   });
 
-  it("hides the controls from someone who cannot change them", async () => {
-    permissions.denied.add(`${Resource.AgentEvalSuite}:${Operation.Update}`);
+  it("hides the controls from someone who cannot change which provider serves", async () => {
+    permissions.denied.add(`${Resource.AIProvider}:${Operation.Update}`);
     fetchRollout.mockResolvedValue(rollout());
     fetchReport.mockResolvedValue(report());
     renderView();
@@ -223,6 +223,16 @@ describe("RolloutView", () => {
     await screen.findByText("Fine-tuned Qwen · trenova-extract");
     expect(screen.queryByRole("button", { name: "Stop rollout" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Edit settings" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the controls for someone who can change which provider serves", async () => {
+    permissions.denied.add(`${Resource.AgentEvalSuite}:${Operation.Update}`);
+    fetchRollout.mockResolvedValue(rollout());
+    fetchReport.mockResolvedValue(report());
+    renderView();
+
+    expect(await screen.findByRole("button", { name: "Stop rollout" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit settings" })).toBeInTheDocument();
   });
 
   it("asks for a candidate before there is anything to compare", async () => {

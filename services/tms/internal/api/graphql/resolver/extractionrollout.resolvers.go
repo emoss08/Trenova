@@ -29,7 +29,7 @@ func (r *extractionRolloutResolver) HaltReason(ctx context.Context, obj *extract
 }
 
 func (r *mutationResolver) UpdateExtractionRollout(ctx context.Context, input gqlmodel.UpdateExtractionRolloutInput) (*extractionrollout.ExtractionRollout, error) {
-	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpUpdate)
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAIProvider, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}

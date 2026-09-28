@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -271,6 +272,9 @@ func TestTooManyRejectedAnswersStopTheRollout(t *testing.T) {
 	assert.True(t, rollout.Enabled, "the setting stays on so the reason stays visible")
 
 	require.Len(t, w.notifier.sent, 1)
+	assert.Equal(t, permission.ResourceAIProvider, w.notifier.sent[0].Resource,
+		"the people told are the ones who can change which provider serves")
+	assert.Equal(t, permission.OpUpdate, w.notifier.sent[0].Operation)
 	notice := w.notifier.sent[0].Notification
 	assert.Equal(t, services.ExtractionRolloutHaltedEvent, notice.EventType)
 	assert.Contains(t, notice.Message, "33.3%")

@@ -64,7 +64,7 @@ func (s *Service) Update(
 	}
 
 	s.logAction(actor, &services.LogActionParams{
-		Resource:       permission.ResourceAgentEvalSuite,
+		Resource:       permission.ResourceAIProvider,
 		ResourceID:     saved.ID.String(),
 		Operation:      permission.OpUpdate,
 		CurrentState:   jsonutils.MustToJSON(auditable(saved)),

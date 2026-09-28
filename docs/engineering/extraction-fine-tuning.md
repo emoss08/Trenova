@@ -515,9 +515,12 @@ correction captured   →  ObserveCorrection →  accuracy guard
 
   Accuracy is split by the provider recorded on each correction, so it measures the model that
   actually read the document. A halt records the reason and both rates, is audited as a critical
-  change by the system actor, and notifies up to 25 people who may update evaluation settings. It
+  change by the system actor, and notifies up to 25 people who may update AI providers. It
   leaves `enabled` on so the reason stays visible; every document goes back to production at once.
   A save that races a person's own change stands down rather than overwriting it.
+- **Who may change it.** Reading the rollout needs the evaluation suite's read permission, but
+  changing it needs **AI provider · Update**: it decides which model serves real drafts, the same
+  authority as reordering provider priority.
 - **Stopping and starting.** *Stop rollout* in the view turns it off in one step. Saving the
   settings with the rollout on after a guard stopped it clears the halt and starts a new
   comparison. At 100% nothing is left on production to compare against, so the guards cannot act;

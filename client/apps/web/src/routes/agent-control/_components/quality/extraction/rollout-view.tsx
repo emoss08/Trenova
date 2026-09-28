@@ -172,7 +172,7 @@ export function RolloutView() {
   const t = useT();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const { allowed: canUpdate } = usePermission(Resource.AgentEvalSuite, Operation.Update);
+  const { allowed: canUpdate } = usePermission(Resource.AIProvider, Operation.Update);
 
   const rollout = useQuery({
     queryKey: [EXTRACTION_ROLLOUT_KEY],

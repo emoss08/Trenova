@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f6b5e43484a3b83bd0633bcf2043b998945cb18a0eb8d3367874124fca43f857",
+  "version": "sha256:daa86d0dea7c9b82b91d078e389c12a1dd6567d8a253b88b68277568f515b2be",
   "modules": [
     {
       "id": "home",
@@ -2623,11 +2623,11 @@
           ],
           "steps": [
             "Try the model first under **Shadow** (see above), and roll it out only once it reads at least as well as production there.",
-            "Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document extraction**, and choose **Rollout**.",
+            "Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document extraction**, and choose **Rollout**. Changing the rollout needs permission to update AI providers.",
             "Select **Edit settings**, turn on **Serve the candidate**, choose the **Candidate provider**, and set the **Share of documents (%)**. Start small, such as 5 percent. The two guard allowances say how far the candidate may fall behind production before the rollout stops on its own: **Stop below production's accuracy by (pts)** and **Stop above production's unusable answers by (pts)**. Select **Save**. From then on the candidate reads that share of documents and its answers fill their shipment drafts; when it cannot answer, production reads the document instead.",
             "Read the figures: **Candidate accuracy** on the documents it read against **Production accuracy** on the rest, how often its answers were **Unusable answers** beside production's, and how many documents were **Sent to the candidate** and **Kept on production**. **Guards** says how much evidence each guard still needs before it can act. **Accuracy by field** puts the candidate's biggest shortfall first.",
             "Raise the share in steps while the candidate holds up. The same documents stay with the candidate, so each step adds documents.",
-            "To stop at any time, select **Stop rollout**; every document goes back to production at once. If a guard stops the rollout, the page says which one and why, and the people who can change evaluation settings are notified. Save the settings with the rollout on to start a new comparison.",
+            "To stop at any time, select **Stop rollout**; every document goes back to production at once. If a guard stops the rollout, the page says which one and why, and the people who can change AI providers are notified. Save the settings with the rollout on to start a new comparison.",
             "Once the candidate has served a large share without a guard stopping it, give it the highest document extraction priority in **Providers** and turn the rollout off."
           ]
         },

@@ -293,7 +293,8 @@ Keywords: gradual rollout, canary, promote extraction model, serve new model, fi
 1. Try the model first under **Shadow** (see above), and roll it out only once it reads at least
    as well as production there.
 2. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
-   extraction**, and choose **Rollout**.
+   extraction**, and choose **Rollout**. Changing the rollout needs permission to update AI
+   providers.
 3. Select **Edit settings**, turn on **Serve the candidate**, choose the **Candidate provider**,
    and set the **Share of documents (%)**. Start small, such as 5 percent. The two guard
    allowances say how far the candidate may fall behind production before the rollout stops on
@@ -310,7 +311,7 @@ Keywords: gradual rollout, canary, promote extraction model, serve new model, fi
    candidate, so each step adds documents.
 6. To stop at any time, select **Stop rollout**; every document goes back to production at once.
    If a guard stops the rollout, the page says which one and why, and the people who can change
-   evaluation settings are notified. Save the settings with the rollout on to start a new
+   AI providers are notified. Save the settings with the rollout on to start a new
    comparison.
 7. Once the candidate has served a large share without a guard stopping it, give it the highest
    document extraction priority in **Providers** and turn the rollout off.

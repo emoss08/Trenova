@@ -172,7 +172,7 @@ func (s *Service) reportHalt(
 	)
 
 	s.logAction(nil, &services.LogActionParams{
-		Resource:       permission.ResourceAgentEvalSuite,
+		Resource:       permission.ResourceAIProvider,
 		ResourceID:     rollout.ID.String(),
 		Operation:      permission.OpUpdate,
 		CurrentState:   jsonutils.MustToJSON(auditable(rollout)),
@@ -193,7 +193,7 @@ func (s *Service) reportHalt(
 			OrgID: rollout.OrganizationID,
 			BuID:  rollout.BusinessUnitID,
 		},
-		Resource:    permission.ResourceAgentEvalSuite,
+		Resource:    permission.ResourceAIProvider,
 		Operation:   permission.OpUpdate,
 		Limit:       haltNoticeLimit,
 		Now:         s.now(),
