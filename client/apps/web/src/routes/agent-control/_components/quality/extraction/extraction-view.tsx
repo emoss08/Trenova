@@ -22,6 +22,7 @@ import { ExtractionFigures } from "./extraction-figures";
 import { EXTRACTION_STALE_MS, EXTRACTION_WINDOW_DAYS } from "./extraction-model";
 import { NewRunDialog } from "./new-run-dialog";
 import { RunsTable } from "./runs-table";
+import { ShadowView } from "./shadow-view";
 
 /**
  * How well documents are read into shipment drafts. Production accuracy comes
@@ -46,6 +47,7 @@ export default function ExtractionView() {
       { value: "corrections", label: t("Corrections") },
       { value: "cases", label: t("Evaluation set") },
       { value: "runs", label: t("Runs") },
+      { value: "shadow", label: t("Shadow") },
     ],
     [t],
   );
@@ -66,7 +68,7 @@ export default function ExtractionView() {
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full max-w-lg">
+        <div className="w-full max-w-xl">
           <SegmentedControl<string>
             fullWidth
             aria-label={t("Document extraction view")}
@@ -92,6 +94,7 @@ export default function ExtractionView() {
       {view === "corrections" && <CorrectionsTable />}
       {view === "cases" && <CasesTable />}
       {view === "runs" && <RunsTable />}
+      {view === "shadow" && <ShadowView />}
 
       <NewRunDialog
         open={newRunOpen}

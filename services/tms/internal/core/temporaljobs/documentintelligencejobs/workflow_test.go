@@ -2,6 +2,7 @@ package documentintelligencejobs
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	services "github.com/emoss08/trenova/internal/core/ports/services"
@@ -99,6 +100,75 @@ func TestProcessDocumentAIExtractionWorkflow_AppliesAnInlineAnswerAtOnce(t *test
 	env.ExecuteWorkflow(ProcessDocumentAIExtractionWorkflow, extractionPayload())
 
 	require.NoError(t, env.GetWorkflowError())
+	env.AssertExpectations(t)
+}
+
+func TestProcessDocumentAIExtractionWorkflow_ConsidersAShadowAfterApplying(t *testing.T) {
+	t.Parallel()
+
+	env := extractionEnv(t)
+	payload := extractionPayload()
+	var a *Activities
+	order := make([]string, 0, 2)
+	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
+		Return(&AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
+			Status: services.AIBackgroundExtractionStatusCompleted,
+		}}, nil).
+		Once()
+	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
+		Return(func(context.Context, *ApplyDocumentAIExtractionPayload) (*ProcessDocumentAIExtractionResult, error) {
+			order = append(order, "apply")
+			return &ProcessDocumentAIExtractionResult{AcceptanceState: "accepted"}, nil
+		}).
+		Once()
+
+	var considered *ConsiderDocumentAIExtractionShadowInput
+	env.OnActivity(a.ConsiderDocumentAIExtractionShadowActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, input *ConsiderDocumentAIExtractionShadowInput) (*services.ExtractionShadowDecision, error) {
+			order = append(order, "shadow")
+			considered = input
+			return &services.ExtractionShadowDecision{Sampled: true}, nil
+		}).
+		Once()
+
+	env.ExecuteWorkflow(ProcessDocumentAIExtractionWorkflow, payload)
+
+	require.NoError(t, env.GetWorkflowError())
+	assert.Equal(t, []string{"apply", "shadow"}, order)
+	require.NotNil(t, considered)
+	assert.Equal(t, payload.DocumentID, considered.DocumentID)
+	assert.Equal(t, payload.ExtractedAt, considered.ExtractedAt)
+	assert.Equal(t, payload.OrganizationID, considered.OrganizationID)
+	var result ProcessDocumentAIExtractionResult
+	require.NoError(t, env.GetWorkflowResult(&result))
+	assert.Equal(t, "accepted", result.AcceptanceState)
+	env.AssertExpectations(t)
+}
+
+func TestProcessDocumentAIExtractionWorkflow_AShadowThatFailsLeavesProductionAlone(t *testing.T) {
+	t.Parallel()
+
+	env := extractionEnv(t)
+	var a *Activities
+	env.OnActivity(a.SubmitDocumentAIExtractionActivity, mock.Anything, mock.Anything).
+		Return(&AIExtractionProgress{Completion: &AsyncAIExtractionCompletion{
+			Status: services.AIBackgroundExtractionStatusCompleted,
+		}}, nil).
+		Once()
+	env.OnActivity(a.ApplyDocumentAIExtractionResultActivity, mock.Anything, mock.Anything).
+		Return(&ProcessDocumentAIExtractionResult{AcceptanceState: "accepted"}, nil).
+		Once()
+	env.OnActivity(a.ConsiderDocumentAIExtractionShadowActivity, mock.Anything, mock.Anything).
+		Return(nil, errors.New("database unavailable")).
+		Times(3)
+
+	env.ExecuteWorkflow(ProcessDocumentAIExtractionWorkflow, extractionPayload())
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+	var result ProcessDocumentAIExtractionResult
+	require.NoError(t, env.GetWorkflowResult(&result))
+	assert.Equal(t, "accepted", result.AcceptanceState)
 	env.AssertExpectations(t)
 }
 

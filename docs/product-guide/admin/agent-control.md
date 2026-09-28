@@ -267,6 +267,27 @@ Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden
    **Regression threshold (points)**, and whether to **Have a judge read a sample**. Then select
    **Save settings**.
 
+### Try a new document extraction model on real documents
+Keywords: shadow traffic, shadow model, candidate model, fine-tuned model, compare extraction models, A/B test extraction, new extraction provider, model rollout
+1. Register the new model as an AI provider assigned to **Document extraction**, with a
+   priority after the provider that extracts documents today, so nothing is routed to it.
+2. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
+   extraction**, and choose **Shadow**.
+3. Select **Edit settings**, turn on **Shadow production extraction**, choose the **Candidate
+   provider**, and set the **Share of extractions (%)** and the **Most per 24 hours**. Select
+   **Save**. From then on that share of documents is also read by the candidate; its answer is
+   kept but never used, and the calls spend from the evaluation budget.
+4. When someone creates a shipment from a shadowed document's draft, both answers are scored
+   against what they confirmed. Read the figures: **Candidate accuracy** against **Production
+   accuracy** on the same documents, how often the candidate did **Better or worse**, how many
+   documents were **Shadowed**, and the **Cost**. **Accuracy by field** puts the candidate's
+   biggest shortfall first.
+5. Select a row in the table to read one document field by field: what a person confirmed,
+   what the candidate read, and what production read.
+6. To stop, select **Edit settings**, turn **Shadow production extraction** off and select
+   **Save**. Move the candidate ahead of the current provider only when it beats production
+   here and in an evaluation run.
+
 ### Read what agents did on the audit trail
 Keywords: AI audit trail, agent audit log, who approved, what did the agent do, AI compliance, tool calls, model calls, AI decisions, evaluations
 1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**.

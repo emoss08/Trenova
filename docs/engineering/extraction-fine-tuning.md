@@ -5,13 +5,14 @@ GPUs, checked against the production model, and put in front of customers. The d
 an [AI training export](ai-training-export.md); read that first.
 
 ```
-trenova ai training-export start            anonymized JSONL in object storage
-trenova ai training-export render           raw examples with the production prompt, on disk
-trenova-finetune run                        targets → SFT → merge → DPO → merge → predict (GPU)
-trenova ai fine-tune score                  model vs. production on the validation set
-trenova-finetune serve / bench              vLLM tuned and timed on production-shaped requests
-AI provider                                 the served model behind an OpenAIChat provider
-AI Control → Quality → Document extraction  evaluation run on the golden set
+trenova ai training-export start             anonymized JSONL in object storage
+trenova ai training-export render            raw examples with the production prompt, on disk
+trenova-finetune run                         targets → SFT → merge → DPO → merge → predict (GPU)
+trenova ai fine-tune score                   model vs. production on the validation set
+trenova-finetune serve / bench               vLLM tuned and timed on production-shaped requests
+AI provider                                  the served model behind an OpenAIChat provider
+AI Control → Quality → Document extraction   evaluation run on the golden set, then
+                                             shadow traffic scored beside production
 ```
 
 The Go side owns everything that must match production exactly: the prompt, the reply schema,
@@ -415,8 +416,56 @@ Give it a priority after the current extraction provider, so nothing routes to i
 
 Then start an evaluation run on the organization's golden set, from AI Control → Quality →
 Document extraction, pinned to the new provider. That scores it on real, unanonymized documents
-the model never trained on, since promoted corrections are never exported. Move it ahead of the
-current provider only when both the offline score and the evaluation run beat production.
+the model never trained on, since promoted corrections are never exported. Then shadow
+production with it (below). Move it ahead of the current provider only when the offline score,
+the evaluation run and the shadow comparison all beat production.
+
+## 6. Shadow production traffic
+
+The golden set is small and was chosen by people. Shadow traffic measures a candidate on the
+documents actually arriving: a share of production extractions is also sent to the candidate
+provider, its answer is kept and never applied, and when a person creates a shipment from the
+document's draft both answers are scored against what they confirmed.
+
+```
+production extraction applied  →  sampled?  →  ExtractionShadowWorkflow (candidate, pinned)
+                                                  ↓
+correction captured  ────────────────────→  scored beside production on the same document
+```
+
+- **Settings.** AI Control → Quality → Document extraction → Shadow, stored per organization in
+  `extraction_shadow_settings`: the candidate provider, the share of extractions (1–100%) and
+  the most started in any 24 hours (1–5000). The candidate must be enabled for
+  `DocumentExtraction`; give it a priority after the current provider so nothing routes to it.
+  An extraction production already served with the candidate is never shadowed.
+- **Sampling.** `extractionshadow.Sampled` hashes the document id and extraction time
+  (`hashutils.InPercentSample`), so a retry makes the same choice and raising the share adds
+  documents rather than swapping them.
+- **The trigger.** After `ApplyDocumentAIExtractionResultActivity`,
+  `ProcessDocumentAIExtractionWorkflow` runs `ConsiderDocumentAIExtractionShadowActivity`
+  behind `workflow.GetVersion("document-ai-extraction-shadow", …)`, so executions already in
+  flight replay unchanged. A failure there is logged and never fails the production extraction.
+  The sampler creates the `extraction_shadow_results` row (one per document and extraction
+  time) and starts `ExtractionShadowWorkflow` (`extraction-shadow:<result id>`) on the document
+  intelligence queue at evaluation priority.
+- **The same input and the same merge.** `ShadowPredictor` reads the document the way the apply
+  activity did (the same text limit and pages), calls `ExtractRateConfirmationForShadow` pinned
+  to the candidate, then runs production's `mergeAIAnalysis` against the rule-based reading
+  production was merged with (`aiDiagnostics.fallbackAnalysis`). The stored draft is the one a
+  person would have seen had the candidate served; an answer that fails the checks leaves the
+  rule-based draft, as it would have in production. A document extracted again before the
+  shadow runs is skipped.
+- **Cost.** Shadow calls are billed with the evaluation purpose, so they never count as live
+  usage, and each shadow checks the evaluation budget first; a spent budget skips it.
+- **Scoring.** `CaptureShipmentDraft` hands the saved correction to the `Scorer`, which scores the
+  shadow of the extraction the draft came from. A shadow that finishes after the person
+  confirmed is scored on completion, but only against a correction captured after that
+  extraction ran. The candidate's field results sit beside the correction's own
+  (`baseline_field_results`), and the verdict counts correct fields first, then mistakes. The
+  report pairs both sides over the same documents, per field, candidate's biggest shortfall
+  first.
+- **Retention.** Shadow results keep a draft of real document values, so they are purged with
+  corrections, on the organization's AI correction retention period.
 
 ## Handling the data
 

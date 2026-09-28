@@ -19,6 +19,7 @@ import (
 	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/boolutils"
@@ -640,6 +641,45 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 		ExtractedAt:     payload.ExtractedAt,
 		AcceptanceState: string(diagnostics.AcceptanceStatus),
 	}, nil
+}
+
+func (a *Activities) ConsiderDocumentAIExtractionShadowActivity(
+	ctx context.Context,
+	input *ConsiderDocumentAIExtractionShadowInput,
+) (*services.ExtractionShadowDecision, error) {
+	if a.shadowSampler == nil {
+		return &services.ExtractionShadowDecision{Reason: "unavailable"}, nil
+	}
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  input.OrganizationID,
+		BuID:   input.BusinessUnitID,
+		UserID: input.UserID,
+	}
+	req := &services.ConsiderExtractionShadowRequest{
+		TenantInfo:  tenantInfo,
+		DocumentID:  input.DocumentID,
+		ExtractedAt: input.ExtractedAt,
+	}
+	if a.aiExtractionRepo != nil {
+		row, err := a.aiExtractionRepo.GetByDocumentExtractedAt(
+			ctx,
+			repositories.GetDocumentAIExtractionRequest{
+				DocumentID:  input.DocumentID,
+				ExtractedAt: input.ExtractedAt,
+				TenantInfo:  tenantInfo,
+			},
+		)
+		switch {
+		case err == nil:
+			req.ProductionProviderID = row.ProviderID
+			req.ProductionModel = row.Model
+		case !errortypes.IsNotFoundError(err):
+			return nil, err
+		}
+	}
+
+	return a.shadowSampler.ConsiderExtraction(ctx, req)
 }
 
 func (a *Activities) markExtractionSkipped(

@@ -3138,6 +3138,17 @@ export type ExtractionEvalRunStatus =
   | 'Queued'
   | 'Running';
 
+export type ExtractionShadowResultStatus =
+  | 'Completed'
+  | 'Failed'
+  | 'Pending'
+  | 'Skipped';
+
+export type ExtractionShadowVerdict =
+  | 'Better'
+  | 'Same'
+  | 'Worse';
+
 export type FacilityType =
   | 'ColdStorage'
   | 'CrossDock'
@@ -6522,6 +6533,14 @@ export type UpdateExtractionEvalCaseInput = {
   notes?: string | null | undefined;
   status?: ExtractionEvalCaseStatus | null | undefined;
   title?: string | null | undefined;
+  version: number;
+};
+
+export type UpdateExtractionShadowSettingsInput = {
+  dailyLimit: number;
+  enabled: boolean;
+  providerId?: string | number | null | undefined;
+  samplePercent: number;
   version: number;
 };
 
@@ -10958,6 +10977,50 @@ export type CancelExtractionEvalRunMutationVariables = Exact<{
 
 
 export type CancelExtractionEvalRunMutation = { cancelExtractionEvalRun: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } };
+
+export type ExtractionShadowSettingsFieldsFragment = { enabled: boolean, providerId: string | null, samplePercent: number, dailyLimit: number, updatedById: string | null, version: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionShadowSettingsFieldsFragment' };
+
+export type ExtractionShadowResultTableRowFieldsFragment = { id: string, documentId: string, extractedAt: number, status: ExtractionShadowResultStatus, statusReason: string, providerId: string, providerName: string, servedModel: string, productionModel: string, accepted: boolean, rejectionReason: string, correctionId: string | null, scoredAt: number | null, verdict: ExtractionShadowVerdict | null, scoredCount: number, correctCount: number, correctedCount: number, missedCount: number, accuracy: number, baselineScoredCount: number, baselineCorrectCount: number, baselineCorrectedCount: number, baselineMissedCount: number, baselineAccuracy: number, latencyMs: number, costUsd: string, completedAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionShadowResultTableRowFieldsFragment' };
+
+export type ExtractionShadowResultDetailFieldsFragment = (
+  { predicted: { ' $fragmentRefs'?: { 'ExtractionSnapshotFieldsFragment': ExtractionSnapshotFieldsFragment } } | null, fieldResults: Array<{ ' $fragmentRefs'?: { 'AiCorrectionFieldResultFieldsFragment': AiCorrectionFieldResultFieldsFragment } }>, baselineFieldResults: Array<{ ' $fragmentRefs'?: { 'AiCorrectionFieldResultFieldsFragment': AiCorrectionFieldResultFieldsFragment } }> }
+  & { ' $fragmentRefs'?: { 'ExtractionShadowResultTableRowFieldsFragment': ExtractionShadowResultTableRowFieldsFragment } }
+) & { ' $fragmentName'?: 'ExtractionShadowResultDetailFieldsFragment' };
+
+export type ExtractionShadowSettingsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ExtractionShadowSettingsQuery = { extractionShadowSettings: { ' $fragmentRefs'?: { 'ExtractionShadowSettingsFieldsFragment': ExtractionShadowSettingsFieldsFragment } } };
+
+export type ExtractionShadowReportQueryVariables = Exact<{
+  windowDays?: number | null | undefined;
+  providerId?: string | number | null | undefined;
+}>;
+
+
+export type ExtractionShadowReportQuery = { extractionShadowReport: { windowDays: number, since: number, providerId: string | null, providerName: string, sampled: number, pending: number, completed: number, failed: number, skipped: number, scored: number, truncated: boolean, better: number, worse: number, same: number, costUsd: string, avgLatencyMs: number, candidate: { scored: number, correct: number, corrected: number, missed: number, accuracy: number }, production: { scored: number, correct: number, corrected: number, missed: number, accuracy: number }, fields: Array<{ key: string, candidateScored: number, candidateCorrect: number, candidateAccuracy: number, productionScored: number, productionCorrect: number, productionAccuracy: number }> } };
+
+export type ExtractionShadowResultTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type ExtractionShadowResultTableQuery = { extractionShadowResults: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionShadowResultTableRowFieldsFragment': ExtractionShadowResultTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ExtractionShadowResultDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ExtractionShadowResultDetailQuery = { extractionShadowResult: { ' $fragmentRefs'?: { 'ExtractionShadowResultDetailFieldsFragment': ExtractionShadowResultDetailFieldsFragment } } | null };
+
+export type UpdateExtractionShadowSettingsMutationVariables = Exact<{
+  input: UpdateExtractionShadowSettingsInput;
+}>;
+
+
+export type UpdateExtractionShadowSettingsMutation = { updateExtractionShadowSettings: { ' $fragmentRefs'?: { 'ExtractionShadowSettingsFieldsFragment': ExtractionShadowSettingsFieldsFragment } } };
 
 export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
 
@@ -18971,29 +19034,6 @@ fragment UsStateTableFields on UsState {
   name
   abbreviation
 }`, {"fragmentName":"TrailerTableRowFields"}) as unknown as TypedDocumentString<TrailerTableRowFieldsFragment, unknown>;
-export const ExtractionSnapshotFieldsFragmentDoc = new TypedDocumentString(`
-    fragment ExtractionSnapshotFields on ExtractionSnapshot {
-  fields {
-    key
-    value
-  }
-  stops {
-    role
-    sequence
-    name
-    addressLine1
-    addressLine2
-    city
-    state
-    postalCode
-    date
-    timeWindow
-    appointmentRequired
-    scheduledWindowStart
-    timezone
-  }
-}
-    `, {"fragmentName":"ExtractionSnapshotFields"}) as unknown as TypedDocumentString<ExtractionSnapshotFieldsFragment, unknown>;
 export const ExtractionEvalRunFieldsFragmentDoc = new TypedDocumentString(`
     fragment ExtractionEvalRunFields on ExtractionEvalRun {
   id
@@ -19194,6 +19234,146 @@ export const ExtractionEvalResultTableRowFieldsFragmentDoc = new TypedDocumentSt
   updatedAt
 }
     `, {"fragmentName":"ExtractionEvalResultTableRowFields"}) as unknown as TypedDocumentString<ExtractionEvalResultTableRowFieldsFragment, unknown>;
+export const ExtractionShadowSettingsFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionShadowSettingsFields on ExtractionShadowSettings {
+  enabled
+  providerId
+  samplePercent
+  dailyLimit
+  updatedById
+  version
+  updatedAt
+}
+    `, {"fragmentName":"ExtractionShadowSettingsFields"}) as unknown as TypedDocumentString<ExtractionShadowSettingsFieldsFragment, unknown>;
+export const ExtractionShadowResultTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionShadowResultTableRowFields on ExtractionShadowResult {
+  id
+  documentId
+  extractedAt
+  status
+  statusReason
+  providerId
+  providerName
+  servedModel
+  productionModel
+  accepted
+  rejectionReason
+  correctionId
+  scoredAt
+  verdict
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  accuracy
+  baselineScoredCount
+  baselineCorrectCount
+  baselineCorrectedCount
+  baselineMissedCount
+  baselineAccuracy
+  latencyMs
+  costUsd
+  completedAt
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ExtractionShadowResultTableRowFields"}) as unknown as TypedDocumentString<ExtractionShadowResultTableRowFieldsFragment, unknown>;
+export const ExtractionSnapshotFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionSnapshotFields on ExtractionSnapshot {
+  fields {
+    key
+    value
+  }
+  stops {
+    role
+    sequence
+    name
+    addressLine1
+    addressLine2
+    city
+    state
+    postalCode
+    date
+    timeWindow
+    appointmentRequired
+    scheduledWindowStart
+    timezone
+  }
+}
+    `, {"fragmentName":"ExtractionSnapshotFields"}) as unknown as TypedDocumentString<ExtractionSnapshotFieldsFragment, unknown>;
+export const ExtractionShadowResultDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionShadowResultDetailFields on ExtractionShadowResult {
+  ...ExtractionShadowResultTableRowFields
+  predicted {
+    ...ExtractionSnapshotFields
+  }
+  fieldResults {
+    ...AICorrectionFieldResultFields
+  }
+  baselineFieldResults {
+    ...AICorrectionFieldResultFields
+  }
+}
+    fragment ExtractionSnapshotFields on ExtractionSnapshot {
+  fields {
+    key
+    value
+  }
+  stops {
+    role
+    sequence
+    name
+    addressLine1
+    addressLine2
+    city
+    state
+    postalCode
+    date
+    timeWindow
+    appointmentRequired
+    scheduledWindowStart
+    timezone
+  }
+}
+fragment AICorrectionFieldResultFields on AICorrectionFieldResult {
+  key
+  predicted
+  confirmed
+  outcome
+  source
+  confidence
+}
+fragment ExtractionShadowResultTableRowFields on ExtractionShadowResult {
+  id
+  documentId
+  extractedAt
+  status
+  statusReason
+  providerId
+  providerName
+  servedModel
+  productionModel
+  accepted
+  rejectionReason
+  correctionId
+  scoredAt
+  verdict
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  accuracy
+  baselineScoredCount
+  baselineCorrectCount
+  baselineCorrectedCount
+  baselineMissedCount
+  baselineAccuracy
+  latencyMs
+  costUsd
+  completedAt
+  createdAt
+  updatedAt
+}`, {"fragmentName":"ExtractionShadowResultDetailFields"}) as unknown as TypedDocumentString<ExtractionShadowResultDetailFieldsFragment, unknown>;
 export const FiscalPeriodFieldsFragmentDoc = new TypedDocumentString(`
     fragment FiscalPeriodFields on FiscalPeriod {
   id
@@ -24191,6 +24371,11 @@ export const UpdateExtractionEvalCaseDocument = {"__meta__":{"kind":"mutation","
 export const DeleteExtractionEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"DeleteExtractionEvalCase","hash":"sha256:4c69388ebac0d5ef618839865cc3665156f2f9d625726a3c26caf1708a8e0fb1"}} as unknown as TypedDocumentString<DeleteExtractionEvalCaseMutation, DeleteExtractionEvalCaseMutationVariables>;
 export const StartExtractionEvalRunDocument = {"__meta__":{"kind":"mutation","name":"StartExtractionEvalRun","hash":"sha256:ea672f1a8f3e38c00676db1397816a9ea2fbe76a5984639646caae893a4df346"}} as unknown as TypedDocumentString<StartExtractionEvalRunMutation, StartExtractionEvalRunMutationVariables>;
 export const CancelExtractionEvalRunDocument = {"__meta__":{"kind":"mutation","name":"CancelExtractionEvalRun","hash":"sha256:a10fd933738a3fb17410e9299af3e277c6f8caf4344bab5eb8eef4427e44b24f"}} as unknown as TypedDocumentString<CancelExtractionEvalRunMutation, CancelExtractionEvalRunMutationVariables>;
+export const ExtractionShadowSettingsDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowSettings","hash":"sha256:22fc7769549c590a2c07a70514c2bd8ea4745375128885d9c755a3141294b157"}} as unknown as TypedDocumentString<ExtractionShadowSettingsQuery, ExtractionShadowSettingsQueryVariables>;
+export const ExtractionShadowReportDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowReport","hash":"sha256:b9c74d30bfd10797a2c86e94078488bd61f911ef62c4d5b6b4d1ac21ea723eb4"}} as unknown as TypedDocumentString<ExtractionShadowReportQuery, ExtractionShadowReportQueryVariables>;
+export const ExtractionShadowResultTableDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowResultTable","hash":"sha256:0f8c34e7b121c16ddc8ab00931306ec12ff556d65f7e01d96d8b3e4a9c713e06"}} as unknown as TypedDocumentString<ExtractionShadowResultTableQuery, ExtractionShadowResultTableQueryVariables>;
+export const ExtractionShadowResultDetailDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowResultDetail","hash":"sha256:f8ab396ade746603c58d63653a216371ce02b7632d660ff73ffee7a5059cbad3"}} as unknown as TypedDocumentString<ExtractionShadowResultDetailQuery, ExtractionShadowResultDetailQueryVariables>;
+export const UpdateExtractionShadowSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateExtractionShadowSettings","hash":"sha256:557a7473030ad51dbabe9d39f6b844ccd2f4d64917eda8cff73c2eb6c7de4f51"}} as unknown as TypedDocumentString<UpdateExtractionShadowSettingsMutation, UpdateExtractionShadowSettingsMutationVariables>;
 export const FiscalYearTableDocument = {"__meta__":{"kind":"query","name":"FiscalYearTable","hash":"sha256:b71efb13dab593e5639accbcbd43154e83864413588b315ef028c1029087a5b7"}} as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;
 export const FleetCodeTableDocument = {"__meta__":{"kind":"query","name":"FleetCodeTable","hash":"sha256:aa2917e7de6d4a5981909b298d418eeaa9d673b8eef470e6ed424667aa344b43"}} as unknown as TypedDocumentString<FleetCodeTableQuery, FleetCodeTableQueryVariables>;
 export const FleetSafetyDocument = {"__meta__":{"kind":"query","name":"FleetSafety","hash":"sha256:6e9a229e80256b02928afbbb05c93d141f6955ef63bf3b19a4bfb228954c1334"}} as unknown as TypedDocumentString<FleetSafetyQuery, FleetSafetyQueryVariables>;

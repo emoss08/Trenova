@@ -559,3 +559,54 @@ func TestPurgeExpired_DefaultsWhenNoRetentionIsSaved(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, h.store.purgeCalls)
 }
+
+type fakeShadowScorer struct {
+	scored []*aicorrection.Correction
+	err    error
+}
+
+func (f *fakeShadowScorer) ScoreCorrection(_ context.Context, correction *aicorrection.Correction) error {
+	f.scored = append(f.scored, correction)
+	return f.err
+}
+
+func TestCaptureShipmentDraft_ScoresShadowExtractionsOfTheDocument(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(confirmedShipment())
+	scorer := &fakeShadowScorer{}
+	h.svc.shadows = scorer
+
+	got := capture(t, h, rateConfirmationDraft())
+
+	require.Len(t, scorer.scored, 1)
+	assert.Same(t, got, scorer.scored[0], "the saved correction is what the shadow is scored against")
+}
+
+func TestCaptureShipmentDraft_AShadowThatCannotBeScoredDoesNotFailTheCapture(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(confirmedShipment())
+	h.svc.shadows = &fakeShadowScorer{err: errors.New("database unavailable")}
+
+	got := capture(t, h, rateConfirmationDraft())
+	assert.Same(t, got, h.store.saved)
+}
+
+func TestCaptureShipmentDraft_ShadowsAreNotScoredWhenTheCaptureFails(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(confirmedShipment())
+	scorer := &fakeShadowScorer{}
+	h.svc.shadows = scorer
+	h.store.upsertErr = errors.New("write failed")
+
+	_, err := h.svc.CaptureShipmentDraft(t.Context(), &services.CaptureShipmentDraftCorrectionRequest{
+		Draft:        rateConfirmationDraft(),
+		ShipmentID:   testShipment,
+		CapturedByID: testUser,
+		TenantInfo:   tenantInfo(),
+	})
+	require.Error(t, err)
+	assert.Empty(t, scorer.scored)
+}

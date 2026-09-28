@@ -19,6 +19,12 @@ type GetAICorrectionRequest struct {
 	ID         pulid.ID
 }
 
+type GetLatestAICorrectionByDocumentRequest struct {
+	TenantInfo pagination.TenantInfo
+	Task       aicorrection.Task
+	DocumentID pulid.ID
+}
+
 type ListAICorrectionConnectionRequest struct {
 	Filter  *pagination.QueryOptions
 	Cursor  pagination.CursorInfo
@@ -45,6 +51,10 @@ type ListAICorrectionsForTrainingRequest struct {
 type AICorrectionRepository interface {
 	Upsert(ctx context.Context, entity *aicorrection.Correction) (*aicorrection.Correction, error)
 	GetByID(ctx context.Context, req GetAICorrectionRequest) (*aicorrection.Correction, error)
+	GetLatestByDocument(
+		ctx context.Context,
+		req GetLatestAICorrectionByDocumentRequest,
+	) (*aicorrection.Correction, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAICorrectionConnectionRequest,

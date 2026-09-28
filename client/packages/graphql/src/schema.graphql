@@ -11391,6 +11391,165 @@ type ExtractionFieldAccuracy {
   unscored: Int!
 }
 
+type ExtractionShadowFieldComparison {
+  candidateAccuracy: Float!
+  candidateCorrect: Int!
+  candidateScored: Int!
+  """
+  A field key, with stop fields grouped across stops (stops.pickup.city).
+  """
+  key: String!
+  productionAccuracy: Float!
+  productionCorrect: Int!
+  productionScored: Int!
+}
+
+"""
+How a candidate provider did against production on the same documents over a window.
+"""
+type ExtractionShadowReport {
+  avgLatencyMs: Int!
+  better: Int!
+  candidate: ExtractionShadowSide!
+  completed: Int!
+  costUsd: Decimal!
+  failed: Int!
+  """Per field, the candidate's biggest shortfall against production first."""
+  fields: [ExtractionShadowFieldComparison!]!
+  pending: Int!
+  production: ExtractionShadowSide!
+  """The candidate reported on; empty when none has been chosen."""
+  providerId: ID
+  providerName: String!
+  same: Int!
+  """Shadow extractions started in the window, in every state."""
+  sampled: Int!
+  """Shadows scored against a confirmed shipment."""
+  scored: Int!
+  since: Timestamp!
+  skipped: Int!
+  """True when the window held more scored shadows than were read."""
+  truncated: Boolean!
+  windowDays: Int!
+  worse: Int!
+}
+
+"""
+A production extraction run again on the candidate provider, never applied, and scored beside production against the confirmed shipment.
+"""
+type ExtractionShadowResult {
+  """
+  Whether the candidate's answer passed the checks production's must pass to replace the rule-based reading.
+  """
+  accepted: Boolean!
+  accuracy: Float!
+  baselineAccuracy: Float!
+  baselineCorrectCount: Int!
+  baselineCorrectedCount: Int!
+  """
+  How production's draft for the same document scored against the same confirmed shipment.
+  """
+  baselineFieldResults: [AICorrectionFieldResult!]!
+  baselineMissedCount: Int!
+  baselineScoredCount: Int!
+  businessUnitId: ID!
+  completedAt: Timestamp
+  correctCount: Int!
+  correctedCount: Int!
+  """
+  The correction the shadow was scored against; empty until a person confirms the document.
+  """
+  correctionId: ID
+  costUsd: Decimal!
+  createdAt: Timestamp!
+  documentId: ID!
+  """When the production extraction this shadows was made."""
+  extractedAt: Timestamp!
+  fieldResults: [AICorrectionFieldResult!]!
+  id: ID!
+  inputTokens: Int!
+  latencyMs: Int!
+  missedCount: Int!
+  organizationId: ID!
+  outputTokens: Int!
+  """The draft the candidate would have produced."""
+  predicted: ExtractionSnapshot
+  productionModel: String!
+  productionProviderId: ID
+  providerId: ID!
+  providerName: String!
+  rejectionReason: String!
+  scoredAt: Timestamp
+  scoredCount: Int!
+  """The model the candidate reported serving."""
+  servedModel: String!
+  startedAt: Timestamp
+  status: ExtractionShadowResultStatus!
+  """Why the shadow was skipped or failed."""
+  statusReason: String!
+  updatedAt: Timestamp!
+  verdict: ExtractionShadowVerdict
+  version: Int!
+  workflowId: String!
+}
+
+type ExtractionShadowResultConnection {
+  edges: [ExtractionShadowResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ExtractionShadowResultEdge {
+  cursor: String!
+  node: ExtractionShadowResult!
+}
+
+enum ExtractionShadowResultStatus {
+  Completed
+  Failed
+  Pending
+  Skipped
+}
+
+"""
+How production document extraction is shadowed by a candidate AI provider.
+"""
+type ExtractionShadowSettings {
+  """The most shadow extractions started in any 24 hours."""
+  dailyLimit: Int!
+  enabled: Boolean!
+  """
+  The candidate AI provider; set even while the shadow is off, so turning it back on keeps the choice.
+  """
+  providerId: ID
+  """
+  The share of production extractions also sent to the candidate, 1 to 100.
+  """
+  samplePercent: Int!
+  """Zero until the settings are first saved."""
+  updatedAt: Timestamp!
+  updatedById: ID
+  version: Int!
+}
+
+"""
+One side of a shadow comparison, over the documents both sides were scored on.
+"""
+type ExtractionShadowSide {
+  """Correct divided by scored; zero when nothing was scored."""
+  accuracy: Float!
+  correct: Int!
+  corrected: Int!
+  missed: Int!
+  scored: Int!
+}
+
+enum ExtractionShadowVerdict {
+  Better
+  Same
+  Worse
+}
+
 """
 Field values and stops, either as an extraction predicted them or as a person confirmed them.
 """
@@ -15752,6 +15911,10 @@ type Mutation {
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateEscrowAccount(input: UpdateEscrowAccountInput!): EscrowAccount!
   updateExtractionEvalCase(id: ID!, input: UpdateExtractionEvalCaseInput!): ExtractionEvalCase!
+  """
+  Chooses the candidate provider that shadows production document extraction, and how much of it.
+  """
+  updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
   updateFuelCard(id: ID!, input: FuelCardInput!, version: Int!): FuelCard!
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
   updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
@@ -17931,6 +18094,10 @@ type Query {
   extractionEvalResults(input: DataTableConnectionInput!, runId: ID!): ExtractionEvalResultConnection!
   extractionEvalRun(id: ID!): ExtractionEvalRun
   extractionEvalRuns(input: DataTableConnectionInput!): ExtractionEvalRunConnection!
+  extractionShadowReport(providerId: ID, windowDays: Int): ExtractionShadowReport!
+  extractionShadowResult(id: ID!): ExtractionShadowResult
+  extractionShadowResults(input: DataTableConnectionInput!): ExtractionShadowResultConnection!
+  extractionShadowSettings: ExtractionShadowSettings!
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
@@ -23456,6 +23623,14 @@ input UpdateExtractionEvalCaseInput {
   notes: String
   status: ExtractionEvalCaseStatus
   title: String
+  version: Int!
+}
+
+input UpdateExtractionShadowSettingsInput {
+  dailyLimit: Int!
+  enabled: Boolean!
+  providerId: ID
+  samplePercent: Int!
   version: Int!
 }
 

@@ -65,7 +65,7 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 213 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 34 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 47 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 48 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 46 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 10 |
@@ -73,23 +73,23 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 ## Totals
 
-950 writes: 493 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
+951 writes: 494 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 167 |
-| Exempt | 475 |
+| Exempt | 476 |
 | — Security | 66 |
 | — Configuration | 213 |
 | — User preference | 23 |
 | — Infrastructure | 34 |
-| — Agent administration | 47 |
+| — Agent administration | 48 |
 | — Counterparty | 33 |
 | — Read-only | 46 |
 | — Attestation | 10 |
 | — Duplicate | 3 |
 | **Pending** | **308** |
-| Total | 950 |
+| Total | 951 |
 
 Of the 475 writes an agent should be able to make, 167 have a tool (35%).
 
@@ -474,6 +474,7 @@ The writes no tool performs yet, and what the tool would do.
 | equipmenttype | 4 | 0 | 4 | 0 |
 | exchangerate | 2 | 0 | 1 | 1 |
 | extractioneval | 5 | 0 | 5 | 0 |
+| extractionshadow | 1 | 0 | 1 | 0 |
 | fiscalperiod | 9 | 0 | 0 | 9 |
 | fiscalyear | 7 | 0 | 0 | 7 |
 | fleetcode | 3 | 0 | 3 | 0 |
@@ -1312,6 +1313,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation promoteAICorrection` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
 | `mutation startExtractionEvalRun` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
 | `mutation updateExtractionEvalCase` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+
+### extractionshadow
+
+| Write | Decision |
+| --- | --- |
+| `mutation updateExtractionShadowSettings` | Exempt, agent-administration: Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against. |
 
 ### fiscalperiod
 

@@ -47,6 +47,13 @@ func (noopAIDocumentService) ExtractRateConfirmationForEvaluation(
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
+func (noopAIDocumentService) ExtractRateConfirmationForShadow(
+	context.Context,
+	*services.AIShadowExtractRequest,
+) (*services.AIEvaluationExtractResult, error) {
+	return nil, nil //nolint:nilnil // intentional noop
+}
+
 type noopDocumentSearchProjectionService struct{}
 
 func (noopDocumentSearchProjectionService) Upsert(

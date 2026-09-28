@@ -172,6 +172,30 @@ func (r *repository) GetByID(
 	return entity, nil
 }
 
+func (r *repository) GetLatestByDocument(
+	ctx context.Context,
+	req repositories.GetLatestAICorrectionByDocumentRequest,
+) (*aicorrection.Correction, error) {
+	cols := buncolgen.CorrectionColumns
+	entity := new(aicorrection.Correction)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+				Where(cols.Task.Eq(), req.Task).
+				Where(cols.DocumentID.Eq(), req.DocumentID)
+		}).
+		Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderDesc()).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, correctionEntity)
+	}
+
+	return entity, nil
+}
+
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListAICorrectionConnectionRequest,

@@ -632,6 +632,49 @@ func TestExtractRateConfirmationForEvaluation_RequiresAProvider(t *testing.T) {
 	assert.Nil(t, completion.sawRequest)
 }
 
+func TestExtractRateConfirmationForShadow_SendsProductionsInputToThePinnedProvider(t *testing.T) {
+	t.Parallel()
+
+	providerID := pulid.MustNew("aiprv_")
+	completion := &stubCompletion{
+		structured: &serviceports.StructuredCompletionResult{
+			Text:            extractPayload,
+			ModelIdentifier: "tuned-extractor",
+			ProviderID:      providerID,
+			LatencyMs:       900,
+		},
+	}
+	service := newTestService(t, completion)
+	production := extractRequest()
+	production.Text = "RATE CONFIRMATION Load 4471 rate $1,850"
+
+	result, err := service.ExtractRateConfirmationForShadow(
+		t.Context(),
+		&serviceports.AIShadowExtractRequest{
+			TenantInfo: production.TenantInfo,
+			ProviderID: providerID,
+			DocumentID: production.DocumentID,
+			FileName:   production.FileName,
+			Text:       production.Text,
+			Pages:      production.Pages,
+		},
+	)
+	require.NoError(t, err)
+
+	request := completion.sawRequest
+	require.NotNil(t, request)
+	assert.Equal(t, providerID, request.PreferredProviderID)
+	assert.True(t, request.RequireProvider)
+	assert.Equal(t, serviceports.AIUsagePurposeEvaluation, request.Attribution.Purpose,
+		"shadow calls are billed to the evaluation budget, not live usage")
+	assert.Equal(t, aiusage.SubjectTypeDocument, request.Attribution.Subject.Type)
+	assert.Equal(t, production.DocumentID.String(), request.Attribution.Subject.ID)
+	assert.Equal(t, newExtractCall(production).context, request.Context,
+		"the candidate reads exactly what production read")
+	assert.Equal(t, "tuned-extractor", result.Model)
+	assert.Equal(t, int64(900), result.LatencyMs)
+}
+
 func TestExtractRateConfirmation_LiveCallsAreNotPinned(t *testing.T) {
 	t.Parallel()
 

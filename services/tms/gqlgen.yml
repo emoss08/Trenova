@@ -1972,6 +1972,30 @@ models:
   ExtractionEvalCaseCounts:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.ExtractionEvalCaseCounts
+  ExtractionShadowSettings:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractionshadow.ShadowSettings
+  ExtractionShadowResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractionshadow.ShadowResult
+    fields:
+      verdict:
+        resolver: true
+  ExtractionShadowResultStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractionshadow.ResultStatus
+  ExtractionShadowVerdict:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractionshadow.Verdict
+  ExtractionShadowReport:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionShadowReport
+  ExtractionShadowSide:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionShadowSide
+  ExtractionShadowFieldComparison:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionShadowFieldComparison
   AIFeedback:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aifeedback.Feedback

@@ -15,7 +15,8 @@ type ActivitiesParams struct {
 	fx.In
 
 	Corrections services.AICorrectionService
-	Evaluations services.ExtractionEvalRunner `optional:"true"`
+	Evaluations services.ExtractionEvalRunner   `optional:"true"`
+	Shadows     services.ExtractionShadowRunner `optional:"true"`
 	Tenants     repositories.TenantSyncRepository
 	Logger      *zap.Logger
 }
@@ -23,6 +24,7 @@ type ActivitiesParams struct {
 type Activities struct {
 	corrections services.AICorrectionService
 	evaluations services.ExtractionEvalRunner
+	shadows     services.ExtractionShadowRunner
 	tenants     repositories.TenantSyncRepository
 	l           *zap.Logger
 }
@@ -31,6 +33,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		corrections: p.Corrections,
 		evaluations: p.Evaluations,
+		shadows:     p.Shadows,
 		tenants:     p.Tenants,
 		l:           p.Logger.Named("job.aicorrection-retention"),
 	}
@@ -71,6 +74,17 @@ func (a *Activities) PurgeOrganizationAICorrectionsActivity(
 			return nil, fmt.Errorf("purge expired extraction evaluation runs: %w", runErr)
 		}
 		purged += runs
+	}
+
+	if a.shadows != nil {
+		shadows, shadowErr := a.shadows.PurgeExpiredShadows(ctx, services.PurgeExpiredAICorrectionsRequest{
+			TenantInfo: tenant,
+			Now:        input.Now,
+		})
+		if shadowErr != nil {
+			return nil, fmt.Errorf("purge expired extraction shadows: %w", shadowErr)
+		}
+		purged += shadows
 	}
 
 	a.l.Debug("ai corrections purged",

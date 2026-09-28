@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -107,22 +108,44 @@ func (s *Service) ExtractRateConfirmationForEvaluation(
 	ctx context.Context,
 	req *serviceports.AIEvaluationExtractRequest,
 ) (*serviceports.AIEvaluationExtractResult, error) {
+	return s.pinnedExtract(ctx, &serviceports.AIExtractRequest{
+		TenantInfo: req.TenantInfo,
+		FileName:   req.FileName,
+		Pages:      req.Pages,
+	}, req.ProviderID, "extract_evaluation")
+}
+
+func (s *Service) ExtractRateConfirmationForShadow(
+	ctx context.Context,
+	req *serviceports.AIShadowExtractRequest,
+) (*serviceports.AIEvaluationExtractResult, error) {
+	return s.pinnedExtract(ctx, &serviceports.AIExtractRequest{
+		TenantInfo: req.TenantInfo,
+		DocumentID: req.DocumentID,
+		FileName:   req.FileName,
+		Text:       req.Text,
+		Pages:      req.Pages,
+	}, req.ProviderID, "extract_shadow")
+}
+
+func (s *Service) pinnedExtract(
+	ctx context.Context,
+	req *serviceports.AIExtractRequest,
+	providerID pulid.ID,
+	metric string,
+) (*serviceports.AIEvaluationExtractResult, error) {
 	if !s.cfg.DocumentExtractionEnabled() {
 		return nil, errDisabled
 	}
-	if req.ProviderID.IsNil() {
+	if providerID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"providerId", errortypes.ErrRequired, "Choose the AI provider to evaluate",
 		)
 	}
 
-	call := s.extractCall(&serviceports.AIExtractRequest{
-		TenantInfo: req.TenantInfo,
-		FileName:   req.FileName,
-		Pages:      req.Pages,
-	})
-	call.metric = "extract_evaluation"
-	call.providerID = req.ProviderID
+	call := s.extractCall(req)
+	call.metric = metric
+	call.providerID = providerID
 	call.evaluation = true
 
 	parsed := new(extractResponse)

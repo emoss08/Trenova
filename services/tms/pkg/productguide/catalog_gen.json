@@ -1,5 +1,5 @@
 {
-  "version": "sha256:031767f23f07ded41fd5d9dde14a259a457acd5a34ffdbbcd676e276f88515b5",
+  "version": "sha256:1af3a40cbaf4cb9aa4f3d0c1e4a681685321f182d1763f5270a04d45f3eeb7d8",
   "modules": [
     {
       "id": "home",
@@ -2586,6 +2586,27 @@
             "**Worst-rated answers** lists the answers people rated down in the last 30 days, most disliked first. Select one to read the question, the answer and **Why**. Select **Open the conversation** to read one you were part of.",
             "Keep the cases the agents are scored against in **Golden set**: **Activate** a candidate captured from a decided proposal, **Add case** to write one by hand, or **Quarantine** a case that is no longer fair.",
             "In **Settings**, turn **Run the nightly sweep** on or off, choose the **Hour it starts**, set **Most cases per agent**, the **Nightly budget (USD)** and **Monthly budget (USD)**, the **Regression threshold (points)**, and whether to **Have a judge read a sample**. Then select **Save settings**."
+          ]
+        },
+        {
+          "title": "Try a new document extraction model on real documents",
+          "keywords": [
+            "shadow traffic",
+            "shadow model",
+            "candidate model",
+            "fine-tuned model",
+            "compare extraction models",
+            "A/B test extraction",
+            "new extraction provider",
+            "model rollout"
+          ],
+          "steps": [
+            "Register the new model as an AI provider assigned to **Document extraction**, with a priority after the provider that extracts documents today, so nothing is routed to it.",
+            "Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document extraction**, and choose **Shadow**.",
+            "Select **Edit settings**, turn on **Shadow production extraction**, choose the **Candidate provider**, and set the **Share of extractions (%)** and the **Most per 24 hours**. Select **Save**. From then on that share of documents is also read by the candidate; its answer is kept but never used, and the calls spend from the evaluation budget.",
+            "When someone creates a shipment from a shadowed document's draft, both answers are scored against what they confirmed. Read the figures: **Candidate accuracy** against **Production accuracy** on the same documents, how often the candidate did **Better or worse**, how many documents were **Shadowed**, and the **Cost**. **Accuracy by field** puts the candidate's biggest shortfall first.",
+            "Select a row in the table to read one document field by field: what a person confirmed, what the candidate read, and what production read.",
+            "To stop, select **Edit settings**, turn **Shadow production extraction** off and select **Save**. Move the candidate ahead of the current provider only when it beats production here and in an evaluation run."
           ]
         },
         {

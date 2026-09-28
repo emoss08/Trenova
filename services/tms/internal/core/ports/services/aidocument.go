@@ -169,6 +169,15 @@ type AIEvaluationExtractRequest struct {
 	Pages      []AIDocumentPage
 }
 
+type AIShadowExtractRequest struct {
+	TenantInfo pagination.TenantInfo
+	ProviderID pulid.ID
+	DocumentID pulid.ID
+	FileName   string
+	Text       string
+	Pages      []AIDocumentPage
+}
+
 type AIEvaluationExtractResult struct {
 	Extract      *AIExtractResult
 	Model        string
@@ -193,5 +202,9 @@ type AIDocumentService interface {
 	ExtractRateConfirmationForEvaluation(
 		ctx context.Context,
 		req *AIEvaluationExtractRequest,
+	) (*AIEvaluationExtractResult, error)
+	ExtractRateConfirmationForShadow(
+		ctx context.Context,
+		req *AIShadowExtractRequest,
 	) (*AIEvaluationExtractResult, error)
 }

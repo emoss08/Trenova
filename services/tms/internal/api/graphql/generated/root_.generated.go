@@ -141,6 +141,8 @@ type ResolverRoot interface {
 	ExtractionEvalCase() ExtractionEvalCaseResolver
 	ExtractionEvalResult() ExtractionEvalResultResolver
 	ExtractionEvalRun() ExtractionEvalRunResolver
+	ExtractionShadowReport() ExtractionShadowReportResolver
+	ExtractionShadowResult() ExtractionShadowResultResolver
 	ExtractionSnapshot() ExtractionSnapshotResolver
 	FiscalYear() FiscalYearResolver
 	FleetSafetyRank() FleetSafetyRankResolver
@@ -6342,6 +6344,110 @@ type ComplexityRoot struct {
 		Unscored    func(childComplexity int) int
 	}
 
+	ExtractionShadowFieldComparison struct {
+		CandidateAccuracy  func(childComplexity int) int
+		CandidateCorrect   func(childComplexity int) int
+		CandidateScored    func(childComplexity int) int
+		Key                func(childComplexity int) int
+		ProductionAccuracy func(childComplexity int) int
+		ProductionCorrect  func(childComplexity int) int
+		ProductionScored   func(childComplexity int) int
+	}
+
+	ExtractionShadowReport struct {
+		AvgLatencyMs func(childComplexity int) int
+		Better       func(childComplexity int) int
+		Candidate    func(childComplexity int) int
+		Completed    func(childComplexity int) int
+		CostUsd      func(childComplexity int) int
+		Failed       func(childComplexity int) int
+		Fields       func(childComplexity int) int
+		Pending      func(childComplexity int) int
+		Production   func(childComplexity int) int
+		ProviderID   func(childComplexity int) int
+		ProviderName func(childComplexity int) int
+		Same         func(childComplexity int) int
+		Sampled      func(childComplexity int) int
+		Scored       func(childComplexity int) int
+		Since        func(childComplexity int) int
+		Skipped      func(childComplexity int) int
+		Truncated    func(childComplexity int) int
+		WindowDays   func(childComplexity int) int
+		Worse        func(childComplexity int) int
+	}
+
+	ExtractionShadowResult struct {
+		Accepted               func(childComplexity int) int
+		Accuracy               func(childComplexity int) int
+		BaselineAccuracy       func(childComplexity int) int
+		BaselineCorrectCount   func(childComplexity int) int
+		BaselineCorrectedCount func(childComplexity int) int
+		BaselineFieldResults   func(childComplexity int) int
+		BaselineMissedCount    func(childComplexity int) int
+		BaselineScoredCount    func(childComplexity int) int
+		BusinessUnitID         func(childComplexity int) int
+		CompletedAt            func(childComplexity int) int
+		CorrectCount           func(childComplexity int) int
+		CorrectedCount         func(childComplexity int) int
+		CorrectionID           func(childComplexity int) int
+		CostUsd                func(childComplexity int) int
+		CreatedAt              func(childComplexity int) int
+		DocumentID             func(childComplexity int) int
+		ExtractedAt            func(childComplexity int) int
+		FieldResults           func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		InputTokens            func(childComplexity int) int
+		LatencyMs              func(childComplexity int) int
+		MissedCount            func(childComplexity int) int
+		OrganizationID         func(childComplexity int) int
+		OutputTokens           func(childComplexity int) int
+		Predicted              func(childComplexity int) int
+		ProductionModel        func(childComplexity int) int
+		ProductionProviderID   func(childComplexity int) int
+		ProviderID             func(childComplexity int) int
+		ProviderName           func(childComplexity int) int
+		RejectionReason        func(childComplexity int) int
+		ScoredAt               func(childComplexity int) int
+		ScoredCount            func(childComplexity int) int
+		ServedModel            func(childComplexity int) int
+		StartedAt              func(childComplexity int) int
+		Status                 func(childComplexity int) int
+		StatusReason           func(childComplexity int) int
+		UpdatedAt              func(childComplexity int) int
+		Verdict                func(childComplexity int) int
+		Version                func(childComplexity int) int
+		WorkflowID             func(childComplexity int) int
+	}
+
+	ExtractionShadowResultConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	ExtractionShadowResultEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	ExtractionShadowSettings struct {
+		DailyLimit    func(childComplexity int) int
+		Enabled       func(childComplexity int) int
+		ProviderID    func(childComplexity int) int
+		SamplePercent func(childComplexity int) int
+		UpdatedAt     func(childComplexity int) int
+		UpdatedByID   func(childComplexity int) int
+		Version       func(childComplexity int) int
+	}
+
+	ExtractionShadowSide struct {
+		Accuracy  func(childComplexity int) int
+		Correct   func(childComplexity int) int
+		Corrected func(childComplexity int) int
+		Missed    func(childComplexity int) int
+		Scored    func(childComplexity int) int
+	}
+
 	ExtractionSnapshot struct {
 		Fields func(childComplexity int) int
 		Stops  func(childComplexity int) int
@@ -8699,6 +8805,7 @@ type ComplexityRoot struct {
 		UpdateEquipmentType                   func(childComplexity int, id string, input gqlmodel.EquipmentTypeInput) int
 		UpdateEscrowAccount                   func(childComplexity int, input gqlmodel.UpdateEscrowAccountInput) int
 		UpdateExtractionEvalCase              func(childComplexity int, id string, input gqlmodel.UpdateExtractionEvalCaseInput) int
+		UpdateExtractionShadowSettings        func(childComplexity int, input gqlmodel.UpdateExtractionShadowSettingsInput) int
 		UpdateFuelCard                        func(childComplexity int, id string, version int, input gqlmodel.FuelCardInput) int
 		UpdateFuelIndex                       func(childComplexity int, id string, input gqlmodel.FuelIndexInput) int
 		UpdateFuelIndexPrice                  func(childComplexity int, input gqlmodel.UpdateFuelIndexPriceInput) int
@@ -9890,6 +9997,10 @@ type ComplexityRoot struct {
 		ExtractionEvalResults               func(childComplexity int, runID string, input gqlmodel.DataTableConnectionInput) int
 		ExtractionEvalRun                   func(childComplexity int, id string) int
 		ExtractionEvalRuns                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		ExtractionShadowReport              func(childComplexity int, windowDays *int, providerID *string) int
+		ExtractionShadowResult              func(childComplexity int, id string) int
+		ExtractionShadowResults             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		ExtractionShadowSettings            func(childComplexity int) int
 		FiscalYear                          func(childComplexity int, id string) int
 		FiscalYears                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		FleetCode                           func(childComplexity int, id string) int
@@ -42089,6 +42200,511 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ExtractionFieldAccuracy.Unscored(childComplexity), true
 
+	case "ExtractionShadowFieldComparison.candidateAccuracy":
+		if e.ComplexityRoot.ExtractionShadowFieldComparison.CandidateAccuracy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowFieldComparison.CandidateAccuracy(childComplexity), true
+	case "ExtractionShadowFieldComparison.candidateCorrect":
+		if e.ComplexityRoot.ExtractionShadowFieldComparison.CandidateCorrect == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowFieldComparison.CandidateCorrect(childComplexity), true
+	case "ExtractionShadowFieldComparison.candidateScored":
+		if e.ComplexityRoot.ExtractionShadowFieldComparison.CandidateScored == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowFieldComparison.CandidateScored(childComplexity), true
+	case "ExtractionShadowFieldComparison.key":
+		if e.ComplexityRoot.ExtractionShadowFieldComparison.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowFieldComparison.Key(childComplexity), true
+	case "ExtractionShadowFieldComparison.productionAccuracy":
+		if e.ComplexityRoot.ExtractionShadowFieldComparison.ProductionAccuracy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowFieldComparison.ProductionAccuracy(childComplexity), true
+	case "ExtractionShadowFieldComparison.productionCorrect":
+		if e.ComplexityRoot.ExtractionShadowFieldComparison.ProductionCorrect == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowFieldComparison.ProductionCorrect(childComplexity), true
+	case "ExtractionShadowFieldComparison.productionScored":
+		if e.ComplexityRoot.ExtractionShadowFieldComparison.ProductionScored == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowFieldComparison.ProductionScored(childComplexity), true
+
+	case "ExtractionShadowReport.avgLatencyMs":
+		if e.ComplexityRoot.ExtractionShadowReport.AvgLatencyMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.AvgLatencyMs(childComplexity), true
+	case "ExtractionShadowReport.better":
+		if e.ComplexityRoot.ExtractionShadowReport.Better == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Better(childComplexity), true
+	case "ExtractionShadowReport.candidate":
+		if e.ComplexityRoot.ExtractionShadowReport.Candidate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Candidate(childComplexity), true
+	case "ExtractionShadowReport.completed":
+		if e.ComplexityRoot.ExtractionShadowReport.Completed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Completed(childComplexity), true
+	case "ExtractionShadowReport.costUsd":
+		if e.ComplexityRoot.ExtractionShadowReport.CostUsd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.CostUsd(childComplexity), true
+	case "ExtractionShadowReport.failed":
+		if e.ComplexityRoot.ExtractionShadowReport.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Failed(childComplexity), true
+	case "ExtractionShadowReport.fields":
+		if e.ComplexityRoot.ExtractionShadowReport.Fields == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Fields(childComplexity), true
+	case "ExtractionShadowReport.pending":
+		if e.ComplexityRoot.ExtractionShadowReport.Pending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Pending(childComplexity), true
+	case "ExtractionShadowReport.production":
+		if e.ComplexityRoot.ExtractionShadowReport.Production == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Production(childComplexity), true
+	case "ExtractionShadowReport.providerId":
+		if e.ComplexityRoot.ExtractionShadowReport.ProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.ProviderID(childComplexity), true
+	case "ExtractionShadowReport.providerName":
+		if e.ComplexityRoot.ExtractionShadowReport.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.ProviderName(childComplexity), true
+	case "ExtractionShadowReport.same":
+		if e.ComplexityRoot.ExtractionShadowReport.Same == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Same(childComplexity), true
+	case "ExtractionShadowReport.sampled":
+		if e.ComplexityRoot.ExtractionShadowReport.Sampled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Sampled(childComplexity), true
+	case "ExtractionShadowReport.scored":
+		if e.ComplexityRoot.ExtractionShadowReport.Scored == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Scored(childComplexity), true
+	case "ExtractionShadowReport.since":
+		if e.ComplexityRoot.ExtractionShadowReport.Since == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Since(childComplexity), true
+	case "ExtractionShadowReport.skipped":
+		if e.ComplexityRoot.ExtractionShadowReport.Skipped == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Skipped(childComplexity), true
+	case "ExtractionShadowReport.truncated":
+		if e.ComplexityRoot.ExtractionShadowReport.Truncated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Truncated(childComplexity), true
+	case "ExtractionShadowReport.windowDays":
+		if e.ComplexityRoot.ExtractionShadowReport.WindowDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.WindowDays(childComplexity), true
+	case "ExtractionShadowReport.worse":
+		if e.ComplexityRoot.ExtractionShadowReport.Worse == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowReport.Worse(childComplexity), true
+
+	case "ExtractionShadowResult.accepted":
+		if e.ComplexityRoot.ExtractionShadowResult.Accepted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.Accepted(childComplexity), true
+	case "ExtractionShadowResult.accuracy":
+		if e.ComplexityRoot.ExtractionShadowResult.Accuracy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.Accuracy(childComplexity), true
+	case "ExtractionShadowResult.baselineAccuracy":
+		if e.ComplexityRoot.ExtractionShadowResult.BaselineAccuracy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.BaselineAccuracy(childComplexity), true
+	case "ExtractionShadowResult.baselineCorrectCount":
+		if e.ComplexityRoot.ExtractionShadowResult.BaselineCorrectCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.BaselineCorrectCount(childComplexity), true
+	case "ExtractionShadowResult.baselineCorrectedCount":
+		if e.ComplexityRoot.ExtractionShadowResult.BaselineCorrectedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.BaselineCorrectedCount(childComplexity), true
+	case "ExtractionShadowResult.baselineFieldResults":
+		if e.ComplexityRoot.ExtractionShadowResult.BaselineFieldResults == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.BaselineFieldResults(childComplexity), true
+	case "ExtractionShadowResult.baselineMissedCount":
+		if e.ComplexityRoot.ExtractionShadowResult.BaselineMissedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.BaselineMissedCount(childComplexity), true
+	case "ExtractionShadowResult.baselineScoredCount":
+		if e.ComplexityRoot.ExtractionShadowResult.BaselineScoredCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.BaselineScoredCount(childComplexity), true
+	case "ExtractionShadowResult.businessUnitId":
+		if e.ComplexityRoot.ExtractionShadowResult.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.BusinessUnitID(childComplexity), true
+	case "ExtractionShadowResult.completedAt":
+		if e.ComplexityRoot.ExtractionShadowResult.CompletedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.CompletedAt(childComplexity), true
+	case "ExtractionShadowResult.correctCount":
+		if e.ComplexityRoot.ExtractionShadowResult.CorrectCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.CorrectCount(childComplexity), true
+	case "ExtractionShadowResult.correctedCount":
+		if e.ComplexityRoot.ExtractionShadowResult.CorrectedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.CorrectedCount(childComplexity), true
+	case "ExtractionShadowResult.correctionId":
+		if e.ComplexityRoot.ExtractionShadowResult.CorrectionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.CorrectionID(childComplexity), true
+	case "ExtractionShadowResult.costUsd":
+		if e.ComplexityRoot.ExtractionShadowResult.CostUsd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.CostUsd(childComplexity), true
+	case "ExtractionShadowResult.createdAt":
+		if e.ComplexityRoot.ExtractionShadowResult.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.CreatedAt(childComplexity), true
+	case "ExtractionShadowResult.documentId":
+		if e.ComplexityRoot.ExtractionShadowResult.DocumentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.DocumentID(childComplexity), true
+	case "ExtractionShadowResult.extractedAt":
+		if e.ComplexityRoot.ExtractionShadowResult.ExtractedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.ExtractedAt(childComplexity), true
+	case "ExtractionShadowResult.fieldResults":
+		if e.ComplexityRoot.ExtractionShadowResult.FieldResults == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.FieldResults(childComplexity), true
+	case "ExtractionShadowResult.id":
+		if e.ComplexityRoot.ExtractionShadowResult.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.ID(childComplexity), true
+	case "ExtractionShadowResult.inputTokens":
+		if e.ComplexityRoot.ExtractionShadowResult.InputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.InputTokens(childComplexity), true
+	case "ExtractionShadowResult.latencyMs":
+		if e.ComplexityRoot.ExtractionShadowResult.LatencyMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.LatencyMs(childComplexity), true
+	case "ExtractionShadowResult.missedCount":
+		if e.ComplexityRoot.ExtractionShadowResult.MissedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.MissedCount(childComplexity), true
+	case "ExtractionShadowResult.organizationId":
+		if e.ComplexityRoot.ExtractionShadowResult.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.OrganizationID(childComplexity), true
+	case "ExtractionShadowResult.outputTokens":
+		if e.ComplexityRoot.ExtractionShadowResult.OutputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.OutputTokens(childComplexity), true
+	case "ExtractionShadowResult.predicted":
+		if e.ComplexityRoot.ExtractionShadowResult.Predicted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.Predicted(childComplexity), true
+	case "ExtractionShadowResult.productionModel":
+		if e.ComplexityRoot.ExtractionShadowResult.ProductionModel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.ProductionModel(childComplexity), true
+	case "ExtractionShadowResult.productionProviderId":
+		if e.ComplexityRoot.ExtractionShadowResult.ProductionProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.ProductionProviderID(childComplexity), true
+	case "ExtractionShadowResult.providerId":
+		if e.ComplexityRoot.ExtractionShadowResult.ProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.ProviderID(childComplexity), true
+	case "ExtractionShadowResult.providerName":
+		if e.ComplexityRoot.ExtractionShadowResult.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.ProviderName(childComplexity), true
+	case "ExtractionShadowResult.rejectionReason":
+		if e.ComplexityRoot.ExtractionShadowResult.RejectionReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.RejectionReason(childComplexity), true
+	case "ExtractionShadowResult.scoredAt":
+		if e.ComplexityRoot.ExtractionShadowResult.ScoredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.ScoredAt(childComplexity), true
+	case "ExtractionShadowResult.scoredCount":
+		if e.ComplexityRoot.ExtractionShadowResult.ScoredCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.ScoredCount(childComplexity), true
+	case "ExtractionShadowResult.servedModel":
+		if e.ComplexityRoot.ExtractionShadowResult.ServedModel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.ServedModel(childComplexity), true
+	case "ExtractionShadowResult.startedAt":
+		if e.ComplexityRoot.ExtractionShadowResult.StartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.StartedAt(childComplexity), true
+	case "ExtractionShadowResult.status":
+		if e.ComplexityRoot.ExtractionShadowResult.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.Status(childComplexity), true
+	case "ExtractionShadowResult.statusReason":
+		if e.ComplexityRoot.ExtractionShadowResult.StatusReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.StatusReason(childComplexity), true
+	case "ExtractionShadowResult.updatedAt":
+		if e.ComplexityRoot.ExtractionShadowResult.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.UpdatedAt(childComplexity), true
+	case "ExtractionShadowResult.verdict":
+		if e.ComplexityRoot.ExtractionShadowResult.Verdict == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.Verdict(childComplexity), true
+	case "ExtractionShadowResult.version":
+		if e.ComplexityRoot.ExtractionShadowResult.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.Version(childComplexity), true
+	case "ExtractionShadowResult.workflowId":
+		if e.ComplexityRoot.ExtractionShadowResult.WorkflowID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResult.WorkflowID(childComplexity), true
+
+	case "ExtractionShadowResultConnection.edges":
+		if e.ComplexityRoot.ExtractionShadowResultConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResultConnection.Edges(childComplexity), true
+	case "ExtractionShadowResultConnection.pageInfo":
+		if e.ComplexityRoot.ExtractionShadowResultConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResultConnection.PageInfo(childComplexity), true
+	case "ExtractionShadowResultConnection.totalCount":
+		if e.ComplexityRoot.ExtractionShadowResultConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResultConnection.TotalCount(childComplexity), true
+
+	case "ExtractionShadowResultEdge.cursor":
+		if e.ComplexityRoot.ExtractionShadowResultEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResultEdge.Cursor(childComplexity), true
+	case "ExtractionShadowResultEdge.node":
+		if e.ComplexityRoot.ExtractionShadowResultEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowResultEdge.Node(childComplexity), true
+
+	case "ExtractionShadowSettings.dailyLimit":
+		if e.ComplexityRoot.ExtractionShadowSettings.DailyLimit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSettings.DailyLimit(childComplexity), true
+	case "ExtractionShadowSettings.enabled":
+		if e.ComplexityRoot.ExtractionShadowSettings.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSettings.Enabled(childComplexity), true
+	case "ExtractionShadowSettings.providerId":
+		if e.ComplexityRoot.ExtractionShadowSettings.ProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSettings.ProviderID(childComplexity), true
+	case "ExtractionShadowSettings.samplePercent":
+		if e.ComplexityRoot.ExtractionShadowSettings.SamplePercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSettings.SamplePercent(childComplexity), true
+	case "ExtractionShadowSettings.updatedAt":
+		if e.ComplexityRoot.ExtractionShadowSettings.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSettings.UpdatedAt(childComplexity), true
+	case "ExtractionShadowSettings.updatedById":
+		if e.ComplexityRoot.ExtractionShadowSettings.UpdatedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSettings.UpdatedByID(childComplexity), true
+	case "ExtractionShadowSettings.version":
+		if e.ComplexityRoot.ExtractionShadowSettings.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSettings.Version(childComplexity), true
+
+	case "ExtractionShadowSide.accuracy":
+		if e.ComplexityRoot.ExtractionShadowSide.Accuracy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSide.Accuracy(childComplexity), true
+	case "ExtractionShadowSide.correct":
+		if e.ComplexityRoot.ExtractionShadowSide.Correct == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSide.Correct(childComplexity), true
+	case "ExtractionShadowSide.corrected":
+		if e.ComplexityRoot.ExtractionShadowSide.Corrected == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSide.Corrected(childComplexity), true
+	case "ExtractionShadowSide.missed":
+		if e.ComplexityRoot.ExtractionShadowSide.Missed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSide.Missed(childComplexity), true
+	case "ExtractionShadowSide.scored":
+		if e.ComplexityRoot.ExtractionShadowSide.Scored == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtractionShadowSide.Scored(childComplexity), true
+
 	case "ExtractionSnapshot.fields":
 		if e.ComplexityRoot.ExtractionSnapshot.Fields == nil {
 			break
@@ -55730,6 +56346,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateExtractionEvalCase(childComplexity, args["id"].(string), args["input"].(gqlmodel.UpdateExtractionEvalCaseInput)), true
+	case "Mutation.updateExtractionShadowSettings":
+		if e.ComplexityRoot.Mutation.UpdateExtractionShadowSettings == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateExtractionShadowSettings_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateExtractionShadowSettings(childComplexity, args["input"].(gqlmodel.UpdateExtractionShadowSettingsInput)), true
 	case "Mutation.updateFuelCard":
 		if e.ComplexityRoot.Mutation.UpdateFuelCard == nil {
 			break
@@ -62856,6 +63483,45 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ExtractionEvalRuns(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.extractionShadowReport":
+		if e.ComplexityRoot.Query.ExtractionShadowReport == nil {
+			break
+		}
+
+		args, err := ec.field_Query_extractionShadowReport_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ExtractionShadowReport(childComplexity, args["windowDays"].(*int), args["providerId"].(*string)), true
+	case "Query.extractionShadowResult":
+		if e.ComplexityRoot.Query.ExtractionShadowResult == nil {
+			break
+		}
+
+		args, err := ec.field_Query_extractionShadowResult_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ExtractionShadowResult(childComplexity, args["id"].(string)), true
+	case "Query.extractionShadowResults":
+		if e.ComplexityRoot.Query.ExtractionShadowResults == nil {
+			break
+		}
+
+		args, err := ec.field_Query_extractionShadowResults_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ExtractionShadowResults(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.extractionShadowSettings":
+		if e.ComplexityRoot.Query.ExtractionShadowSettings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.ExtractionShadowSettings(childComplexity), true
 	case "Query.fiscalYear":
 		if e.ComplexityRoot.Query.FiscalYear == nil {
 			break
@@ -84187,6 +84853,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateEmploymentVerificationInput,
 		ec.unmarshalInputUpdateEscrowAccountInput,
 		ec.unmarshalInputUpdateExtractionEvalCaseInput,
+		ec.unmarshalInputUpdateExtractionShadowSettingsInput,
 		ec.unmarshalInputUpdateFuelIndexPriceInput,
 		ec.unmarshalInputUpdateHomeLayoutPresetInput,
 		ec.unmarshalInputUpdateJobPositionInput,
@@ -97465,6 +98132,165 @@ extend type Mutation {
   "Runs one provider's model over the active cases, within the evaluation budget."
   startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
   cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
+}
+`, BuiltIn: false},
+	{Name: "../schema/extractionshadow.graphqls", Input: `enum ExtractionShadowResultStatus {
+  Pending
+  Completed
+  Failed
+  Skipped
+}
+
+enum ExtractionShadowVerdict {
+  Better
+  Worse
+  Same
+}
+
+"How production document extraction is shadowed by a candidate AI provider."
+type ExtractionShadowSettings {
+  enabled: Boolean!
+  "The candidate AI provider; set even while the shadow is off, so turning it back on keeps the choice."
+  providerId: ID
+  "The share of production extractions also sent to the candidate, 1 to 100."
+  samplePercent: Int!
+  "The most shadow extractions started in any 24 hours."
+  dailyLimit: Int!
+  updatedById: ID
+  version: Int!
+  "Zero until the settings are first saved."
+  updatedAt: Timestamp!
+}
+
+"A production extraction run again on the candidate provider, never applied, and scored beside production against the confirmed shipment."
+type ExtractionShadowResult {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  documentId: ID!
+  "When the production extraction this shadows was made."
+  extractedAt: Timestamp!
+  status: ExtractionShadowResultStatus!
+  "Why the shadow was skipped or failed."
+  statusReason: String!
+  providerId: ID!
+  providerName: String!
+  "The model the candidate reported serving."
+  servedModel: String!
+  productionProviderId: ID
+  productionModel: String!
+  "Whether the candidate's answer passed the checks production's must pass to replace the rule-based reading."
+  accepted: Boolean!
+  rejectionReason: String!
+  "The draft the candidate would have produced."
+  predicted: ExtractionSnapshot
+  "The correction the shadow was scored against; empty until a person confirms the document."
+  correctionId: ID
+  scoredAt: Timestamp
+  verdict: ExtractionShadowVerdict
+  fieldResults: [AICorrectionFieldResult!]!
+  scoredCount: Int!
+  correctCount: Int!
+  correctedCount: Int!
+  missedCount: Int!
+  accuracy: Float!
+  "How production's draft for the same document scored against the same confirmed shipment."
+  baselineFieldResults: [AICorrectionFieldResult!]!
+  baselineScoredCount: Int!
+  baselineCorrectCount: Int!
+  baselineCorrectedCount: Int!
+  baselineMissedCount: Int!
+  baselineAccuracy: Float!
+  latencyMs: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  costUsd: Decimal!
+  workflowId: String!
+  startedAt: Timestamp
+  completedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type ExtractionShadowResultEdge {
+  node: ExtractionShadowResult!
+  cursor: String!
+}
+
+type ExtractionShadowResultConnection {
+  edges: [ExtractionShadowResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One side of a shadow comparison, over the documents both sides were scored on."
+type ExtractionShadowSide {
+  scored: Int!
+  correct: Int!
+  corrected: Int!
+  missed: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+type ExtractionShadowFieldComparison {
+  "A field key, with stop fields grouped across stops (stops.pickup.city)."
+  key: String!
+  candidateScored: Int!
+  candidateCorrect: Int!
+  candidateAccuracy: Float!
+  productionScored: Int!
+  productionCorrect: Int!
+  productionAccuracy: Float!
+}
+
+"How a candidate provider did against production on the same documents over a window."
+type ExtractionShadowReport {
+  windowDays: Int!
+  since: Timestamp!
+  "The candidate reported on; empty when none has been chosen."
+  providerId: ID
+  providerName: String!
+  "Shadow extractions started in the window, in every state."
+  sampled: Int!
+  pending: Int!
+  completed: Int!
+  failed: Int!
+  skipped: Int!
+  "Shadows scored against a confirmed shipment."
+  scored: Int!
+  "True when the window held more scored shadows than were read."
+  truncated: Boolean!
+  better: Int!
+  worse: Int!
+  same: Int!
+  candidate: ExtractionShadowSide!
+  production: ExtractionShadowSide!
+  "Per field, the candidate's biggest shortfall against production first."
+  fields: [ExtractionShadowFieldComparison!]!
+  costUsd: Decimal!
+  avgLatencyMs: Int!
+}
+
+input UpdateExtractionShadowSettingsInput {
+  enabled: Boolean!
+  providerId: ID
+  samplePercent: Int!
+  dailyLimit: Int!
+  version: Int!
+}
+
+extend type Query {
+  extractionShadowSettings: ExtractionShadowSettings!
+  extractionShadowReport(windowDays: Int, providerId: ID): ExtractionShadowReport!
+  extractionShadowResults(input: DataTableConnectionInput!): ExtractionShadowResultConnection!
+  extractionShadowResult(id: ID!): ExtractionShadowResult
+}
+
+extend type Mutation {
+  "Chooses the candidate provider that shadows production document extraction, and how much of it."
+  updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
 }
 `, BuiltIn: false},
 	{Name: "../schema/fiscal_period.graphqls", Input: `enum PeriodType {
@@ -122287,6 +123113,214 @@ func (ec *executionContext) childFields_ExtractionFieldAccuracy(ctx context.Cont
 		return ec.fieldContext_ExtractionFieldAccuracy_accuracy(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ExtractionFieldAccuracy", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowFieldComparison(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_ExtractionShadowFieldComparison_key(ctx, field)
+	case "candidateScored":
+		return ec.fieldContext_ExtractionShadowFieldComparison_candidateScored(ctx, field)
+	case "candidateCorrect":
+		return ec.fieldContext_ExtractionShadowFieldComparison_candidateCorrect(ctx, field)
+	case "candidateAccuracy":
+		return ec.fieldContext_ExtractionShadowFieldComparison_candidateAccuracy(ctx, field)
+	case "productionScored":
+		return ec.fieldContext_ExtractionShadowFieldComparison_productionScored(ctx, field)
+	case "productionCorrect":
+		return ec.fieldContext_ExtractionShadowFieldComparison_productionCorrect(ctx, field)
+	case "productionAccuracy":
+		return ec.fieldContext_ExtractionShadowFieldComparison_productionAccuracy(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowFieldComparison", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowReport(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "windowDays":
+		return ec.fieldContext_ExtractionShadowReport_windowDays(ctx, field)
+	case "since":
+		return ec.fieldContext_ExtractionShadowReport_since(ctx, field)
+	case "providerId":
+		return ec.fieldContext_ExtractionShadowReport_providerId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_ExtractionShadowReport_providerName(ctx, field)
+	case "sampled":
+		return ec.fieldContext_ExtractionShadowReport_sampled(ctx, field)
+	case "pending":
+		return ec.fieldContext_ExtractionShadowReport_pending(ctx, field)
+	case "completed":
+		return ec.fieldContext_ExtractionShadowReport_completed(ctx, field)
+	case "failed":
+		return ec.fieldContext_ExtractionShadowReport_failed(ctx, field)
+	case "skipped":
+		return ec.fieldContext_ExtractionShadowReport_skipped(ctx, field)
+	case "scored":
+		return ec.fieldContext_ExtractionShadowReport_scored(ctx, field)
+	case "truncated":
+		return ec.fieldContext_ExtractionShadowReport_truncated(ctx, field)
+	case "better":
+		return ec.fieldContext_ExtractionShadowReport_better(ctx, field)
+	case "worse":
+		return ec.fieldContext_ExtractionShadowReport_worse(ctx, field)
+	case "same":
+		return ec.fieldContext_ExtractionShadowReport_same(ctx, field)
+	case "candidate":
+		return ec.fieldContext_ExtractionShadowReport_candidate(ctx, field)
+	case "production":
+		return ec.fieldContext_ExtractionShadowReport_production(ctx, field)
+	case "fields":
+		return ec.fieldContext_ExtractionShadowReport_fields(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_ExtractionShadowReport_costUsd(ctx, field)
+	case "avgLatencyMs":
+		return ec.fieldContext_ExtractionShadowReport_avgLatencyMs(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowReport", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_ExtractionShadowResult_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_ExtractionShadowResult_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_ExtractionShadowResult_businessUnitId(ctx, field)
+	case "documentId":
+		return ec.fieldContext_ExtractionShadowResult_documentId(ctx, field)
+	case "extractedAt":
+		return ec.fieldContext_ExtractionShadowResult_extractedAt(ctx, field)
+	case "status":
+		return ec.fieldContext_ExtractionShadowResult_status(ctx, field)
+	case "statusReason":
+		return ec.fieldContext_ExtractionShadowResult_statusReason(ctx, field)
+	case "providerId":
+		return ec.fieldContext_ExtractionShadowResult_providerId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_ExtractionShadowResult_providerName(ctx, field)
+	case "servedModel":
+		return ec.fieldContext_ExtractionShadowResult_servedModel(ctx, field)
+	case "productionProviderId":
+		return ec.fieldContext_ExtractionShadowResult_productionProviderId(ctx, field)
+	case "productionModel":
+		return ec.fieldContext_ExtractionShadowResult_productionModel(ctx, field)
+	case "accepted":
+		return ec.fieldContext_ExtractionShadowResult_accepted(ctx, field)
+	case "rejectionReason":
+		return ec.fieldContext_ExtractionShadowResult_rejectionReason(ctx, field)
+	case "predicted":
+		return ec.fieldContext_ExtractionShadowResult_predicted(ctx, field)
+	case "correctionId":
+		return ec.fieldContext_ExtractionShadowResult_correctionId(ctx, field)
+	case "scoredAt":
+		return ec.fieldContext_ExtractionShadowResult_scoredAt(ctx, field)
+	case "verdict":
+		return ec.fieldContext_ExtractionShadowResult_verdict(ctx, field)
+	case "fieldResults":
+		return ec.fieldContext_ExtractionShadowResult_fieldResults(ctx, field)
+	case "scoredCount":
+		return ec.fieldContext_ExtractionShadowResult_scoredCount(ctx, field)
+	case "correctCount":
+		return ec.fieldContext_ExtractionShadowResult_correctCount(ctx, field)
+	case "correctedCount":
+		return ec.fieldContext_ExtractionShadowResult_correctedCount(ctx, field)
+	case "missedCount":
+		return ec.fieldContext_ExtractionShadowResult_missedCount(ctx, field)
+	case "accuracy":
+		return ec.fieldContext_ExtractionShadowResult_accuracy(ctx, field)
+	case "baselineFieldResults":
+		return ec.fieldContext_ExtractionShadowResult_baselineFieldResults(ctx, field)
+	case "baselineScoredCount":
+		return ec.fieldContext_ExtractionShadowResult_baselineScoredCount(ctx, field)
+	case "baselineCorrectCount":
+		return ec.fieldContext_ExtractionShadowResult_baselineCorrectCount(ctx, field)
+	case "baselineCorrectedCount":
+		return ec.fieldContext_ExtractionShadowResult_baselineCorrectedCount(ctx, field)
+	case "baselineMissedCount":
+		return ec.fieldContext_ExtractionShadowResult_baselineMissedCount(ctx, field)
+	case "baselineAccuracy":
+		return ec.fieldContext_ExtractionShadowResult_baselineAccuracy(ctx, field)
+	case "latencyMs":
+		return ec.fieldContext_ExtractionShadowResult_latencyMs(ctx, field)
+	case "inputTokens":
+		return ec.fieldContext_ExtractionShadowResult_inputTokens(ctx, field)
+	case "outputTokens":
+		return ec.fieldContext_ExtractionShadowResult_outputTokens(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_ExtractionShadowResult_costUsd(ctx, field)
+	case "workflowId":
+		return ec.fieldContext_ExtractionShadowResult_workflowId(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_ExtractionShadowResult_startedAt(ctx, field)
+	case "completedAt":
+		return ec.fieldContext_ExtractionShadowResult_completedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_ExtractionShadowResult_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_ExtractionShadowResult_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_ExtractionShadowResult_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowResult", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowResultConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_ExtractionShadowResultConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_ExtractionShadowResultConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_ExtractionShadowResultConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowResultConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowResultEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_ExtractionShadowResultEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_ExtractionShadowResultEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowResultEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowSettings(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "enabled":
+		return ec.fieldContext_ExtractionShadowSettings_enabled(ctx, field)
+	case "providerId":
+		return ec.fieldContext_ExtractionShadowSettings_providerId(ctx, field)
+	case "samplePercent":
+		return ec.fieldContext_ExtractionShadowSettings_samplePercent(ctx, field)
+	case "dailyLimit":
+		return ec.fieldContext_ExtractionShadowSettings_dailyLimit(ctx, field)
+	case "updatedById":
+		return ec.fieldContext_ExtractionShadowSettings_updatedById(ctx, field)
+	case "version":
+		return ec.fieldContext_ExtractionShadowSettings_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_ExtractionShadowSettings_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowSettings", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowSide(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "scored":
+		return ec.fieldContext_ExtractionShadowSide_scored(ctx, field)
+	case "correct":
+		return ec.fieldContext_ExtractionShadowSide_correct(ctx, field)
+	case "corrected":
+		return ec.fieldContext_ExtractionShadowSide_corrected(ctx, field)
+	case "missed":
+		return ec.fieldContext_ExtractionShadowSide_missed(ctx, field)
+	case "accuracy":
+		return ec.fieldContext_ExtractionShadowSide_accuracy(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowSide", field.Name)
 }
 
 func (ec *executionContext) childFields_ExtractionSnapshot(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

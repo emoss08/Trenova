@@ -61,6 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/exchangeratejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/extractionevaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/extractionshadowjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/formulatemplatejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelcardjobs"
@@ -193,6 +194,7 @@ func Options() fx.Option {
 		briefingjobs.Module,
 		aicorrectionjobs.Module,
 		extractionevaljobs.Module,
+		extractionshadowjobs.Module,
 		aitrainingservice.Module,
 		aitrainingjobs.Module,
 		fx.Provide(aidocumentservice.NewContract),
