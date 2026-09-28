@@ -119330,6 +119330,15 @@
       "routes/desk"
     ]
   },
+  "Opening the desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Opening this period will:": {
     "sites": 1,
     "scope": [
