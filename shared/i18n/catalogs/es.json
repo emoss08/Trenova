@@ -1508,6 +1508,7 @@
   "Choose the report this widget shows": "Elija el informe que muestra este widget",
   "Choose what this filter applies to": "Elija a qué se aplica este filtro",
   "Choose whether payments recorded in {0} are ignored, proposed or applied": "Elija si los pagos registrados en {0} se ignoran, se proponen o se aplican",
+  "Choose whether to send documents or journal entries first": "Elija primero si se envían documentos o asientos contables",
   "Choose which accounting-system record matches a Trenova record when the name rules are unsure.": "Elige qué registro del sistema contable corresponde a un registro de Trenova cuando las reglas de nombre no están seguras.",
   "Choose which credential this item waits for": "Elija qué credencial espera este elemento",
   "Choose which document type this item waits for": "Elija qué tipo de documento espera este elemento",

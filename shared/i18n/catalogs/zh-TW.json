@@ -1508,6 +1508,7 @@
   "Choose the report this widget shows": "選擇此小工具顯示的報表",
   "Choose what this filter applies to": "選擇此篩選條件的適用對象",
   "Choose whether payments recorded in {0} are ignored, proposed or applied": "選擇在 {0} 中記錄的付款要忽略、提議或沖抵",
+  "Choose whether to send documents or journal entries first": "請先選擇要傳送單據還是日記帳分錄",
   "Choose which accounting-system record matches a Trenova record when the name rules are unsure.": "當名稱規則無法確定時，選擇與 Trenova 紀錄相符的會計系統紀錄。",
   "Choose which credential this item waits for": "選擇本項目所等待的證照",
   "Choose which document type this item waits for": "選擇本項目所等待的文件類型",
