@@ -9,7 +9,7 @@ import {
   type CaptureItem,
 } from "@/lib/graphql/capture";
 import { queries } from "@/lib/queries";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -156,22 +156,31 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
     resourceName: "Documents",
   });
 
-  const discardItemMutation = useApiMutation({
+  // The discards are confirmed in a dialog that stays open until they settle
+  // and says there why one failed, so they report nothing on their own.
+  const discardItemMutation = useMutation({
     mutationFn: (item: CaptureItem) => discardCaptureItem(item.id, item.version),
-    onSuccess: async () => {
-      toast.success(t("Document set aside"));
+    onSuccess: async (settled) => {
+      toast.success(t("Document discarded"), {
+        description:
+          settled.status === "Discarded"
+            ? t("It was the last document in the stack, so the stack is discarded too.")
+            : settled.status === "Filed"
+              ? t("It was the last document left to file, so the stack is done.")
+              : t("Its pages are under Set aside, where you can drag them into another document."),
+      });
       await refresh();
     },
-    resourceName: "Document",
   });
 
-  const discardBatchMutation = useApiMutation({
+  const discardBatchMutation = useMutation({
     mutationFn: () => discardCaptureBatch(batch.id, batch.version),
     onSuccess: async () => {
-      toast.success(t("Stack discarded"));
+      toast.success(t("Stack discarded"), {
+        description: t("Its unfiled pages are deleted. Filed documents stay on their records."),
+      });
       await refresh();
     },
-    resourceName: "Capture batch",
   });
 
   /** Every open document with a record chosen, as it would be filed now. */
@@ -203,10 +212,8 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
     filingOne: fileOneMutation.isPending ? fileOneMutation.variables?.item.id : undefined,
     fileAll: () => fileAllMutation.mutate(readyToFile),
     filingAll: fileAllMutation.isPending,
-    discardItem: discardItemMutation.mutate,
-    discardingItem: discardItemMutation.isPending ? discardItemMutation.variables?.id : undefined,
-    discardBatch: () => discardBatchMutation.mutate(undefined),
-    discardingBatch: discardBatchMutation.isPending,
+    discardItem: discardItemMutation.mutateAsync,
+    discardBatch: () => discardBatchMutation.mutateAsync(),
   };
 }
 

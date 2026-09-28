@@ -102,7 +102,7 @@ describe("ProfilesPanel", () => {
 
   it("keeps the delete confirmation open until the delete settles, and shows why it failed", async () => {
     grant(Operation.Read, Operation.Delete);
-    const pending = deferred<void>();
+    const pending = deferred<undefined>();
     mocks.deleteCaptureProfile.mockReturnValue(pending.promise);
     const user = userEvent.setup();
 

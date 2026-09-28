@@ -2,6 +2,7 @@ import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { windowsRequirement } from "@/lib/capture-release";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
+import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -31,6 +32,29 @@ export function CaptureDownloadPanel({ whenMissing }: CaptureDownloadPanelProps)
 
   if (releaseQuery.isLoading) {
     return <Skeleton className="h-24 w-full" aria-busy="true" />;
+  }
+  // A failed request says nothing about whether a release exists, so it must
+  // not read as "not published": that sends an administrator looking for a
+  // missing upload when the fault is the connection.
+  if (releaseQuery.isError && releaseQuery.data === undefined) {
+    return (
+      <Alert variant="destructive" size="sm">
+        <AlertDescription>
+          {t("The Trenova Capture download could not be loaded.")}
+        </AlertDescription>
+        <AlertAction>
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            onClick={() => void releaseQuery.refetch()}
+            isLoading={releaseQuery.isRefetching}
+          >
+            {t("Try again")}
+          </Button>
+        </AlertAction>
+      </Alert>
+    );
   }
   const release = releaseQuery.data;
   if (!release) {

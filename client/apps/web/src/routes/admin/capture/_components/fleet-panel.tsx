@@ -1,6 +1,5 @@
 import { CaptureDownloadPanel } from "@/components/capture/download-panel";
 import { DeviceList } from "@/components/capture/device-list";
-import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
   revokeCaptureDevice,
@@ -8,7 +7,7 @@ import {
   type CaptureDeviceStatus,
 } from "@/lib/graphql/capture";
 import { queries } from "@/lib/queries";
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -25,8 +24,6 @@ import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 type StatusFilter = "Active" | "Revoked" | "all";
-
-const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
 function FleetEmpty({
   status,
@@ -84,7 +81,9 @@ export function FleetPanel() {
     placeholderData: keepPreviousData,
   });
 
-  const revoke = useApiMutation({
+  // Failures are shown by the revoke dialog, which stays open until this
+  // settles; a toast as well would say the same thing twice.
+  const revoke = useMutation({
     mutationFn: ({ device, reason }: { device: CaptureDevice; reason: string }) =>
       revokeCaptureDevice(device.id, reason === "" ? null : reason),
     onSuccess: async (device) => {
@@ -94,7 +93,6 @@ export function FleetPanel() {
         queryClient.invalidateQueries({ queryKey: queries.capture.myDevices._def }),
       ]);
     },
-    resourceName: "Device",
   });
 
   const devices = devicesQuery.data ?? [];
@@ -170,10 +168,9 @@ export function FleetPanel() {
           >
             <DeviceList
               devices={devices}
-              now={nowInSeconds()}
               showOwner
               canRevoke={canRevoke}
-              onRevoke={(device, reason) => revoke.mutate({ device, reason })}
+              onRevoke={(device, reason) => revoke.mutateAsync({ device, reason })}
               revokingId={revoke.isPending ? revoke.variables?.device.id : undefined}
             />
           </div>

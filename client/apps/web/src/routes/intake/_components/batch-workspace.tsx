@@ -19,19 +19,10 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from "@trenova/shared/components/ui/alert-dialog";
+import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { EmptySheet, GhostBox, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,11 +33,13 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
+import { describeError } from "@trenova/shared/lib/error-presentation";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ArrowLeftIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { DocumentCard } from "./document-card";
+import { ConfirmDiscardDialog } from "./confirm-discard-dialog";
+import { DocumentCard, type DiscardEffect } from "./document-card";
 import { FiledDocuments } from "./filed-documents";
 import { LoosePages } from "./loose-pages";
 import {
@@ -56,6 +49,7 @@ import {
   mergeWithNext,
   movePage,
   newDocumentFrom,
+  pageNumber,
   rotate,
   splitAfter,
 } from "./page-layout";
@@ -76,7 +70,38 @@ export function BatchWorkspace({
   const t = useT();
   const query = useQuery(queries.capture.batch(batchId));
 
-  if (query.isLoading) {
+  if (query.isError) {
+    const back = (
+      <Button type="button" variant="outline" size="sm" onClick={onClose}>
+        <ArrowLeftIcon />
+        {t("Back to the queue")}
+      </Button>
+    );
+    if (describeError(query.error).kind === "not-found") {
+      return (
+        <EmptySheet
+          className="flex-1 justify-center"
+          title={t("This stack is gone")}
+          description={t(
+            "It was discarded or deleted when its retention ran out, or you can no longer see it.",
+          )}
+          action={back}
+          sketch={<DocumentSketch />}
+        />
+      );
+    }
+    return (
+      <div className="flex flex-1 flex-col justify-center p-4">
+        <ErrorState
+          error={query.error}
+          onRetry={() => void query.refetch()}
+          title={t("Could not load this stack")}
+          actions={back}
+        />
+      </div>
+    );
+  }
+  if (query.data === undefined) {
     return (
       <div className="flex flex-col gap-4 p-4" aria-busy="true">
         <Skeleton className="h-6 w-1/3" />
@@ -86,26 +111,33 @@ export function BatchWorkspace({
       </div>
     );
   }
-  if (query.isError || query.data === undefined) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-        <p className="text-sm font-medium">{t("This stack could not be opened")}</p>
-        <p className="text-foreground-subtle max-w-xs text-xs">
-          {t("It may have been discarded, or you may no longer be able to see it.")}
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            {t("Back to the queue")}
-          </Button>
-          <Button size="sm" onClick={() => void query.refetch()}>
-            {t("Try again")}
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return <OpenBatch batch={query.data} now={now} onClose={onClose} />;
+}
+
+/** A faint document card, for a stack with none to show. */
+function DocumentSketch() {
+  return (
+    <div className="border-border mx-auto flex w-full max-w-sm flex-col gap-3 rounded-lg border p-3">
+      <GhostLine className="w-1/3" />
+      <div className="flex gap-3">
+        {[0, 1, 2].map((index) => (
+          <GhostBox key={index} className="h-16 w-12 rounded-sm" />
+        ))}
+      </div>
+      <GhostLine className="w-2/3" />
+    </div>
+  );
+}
+
+function discardEffectFor(batch: CaptureBatchDetail): DiscardEffect {
+  const open = batch.items.filter((item) => item.status === "Proposed" || item.status === "Failed");
+  if (open.length > 1) {
+    return "set-aside";
+  }
+  return batch.items.some((item) => item.status === "Filed" || item.status === "Filing")
+    ? "closes-stack"
+    : "discards-stack";
 }
 
 function OpenBatch({
@@ -130,6 +162,7 @@ function OpenBatch({
   const statusAttrs = captureBatchStatusAttrs(t)[batch.status];
   const retention = captureRetention(batch.retainUntil, now);
   const settled = batch.items.filter((item) => item.status === "Filed" || item.status === "Filing");
+  const discardEffect = discardEffectFor(batch);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -162,6 +195,12 @@ function OpenBatch({
 
   const previewPage = previewId === null ? null : (pages.get(previewId) ?? null);
   const fileCount = editor.readyToFile.length;
+  const fileBlocker =
+    !canEdit || editor.dirty || fileCount > 0
+      ? null
+      : layout.groups.length === 0
+        ? t("Nothing to file: every page is set aside")
+        : t("Choose a record for each document you want to file");
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -195,6 +234,9 @@ function OpenBatch({
                 .filter(Boolean)
                 .join(" · ")}
             </p>
+            {fileBlocker !== null && (
+              <p className="text-foreground-subtle text-xs">{fileBlocker}</p>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {editor.dirty ? (
@@ -221,11 +263,6 @@ function OpenBatch({
                   disabled={fileCount === 0}
                   isLoading={editor.filingAll}
                   loadingText={t("Filing")}
-                  title={
-                    fileCount === 0
-                      ? t("Choose a record for each document you want to file")
-                      : undefined
-                  }
                 >
                   {fileCount === 0
                     ? t("File documents")
@@ -338,20 +375,22 @@ function OpenBatch({
                     }
                   }}
                   filing={item !== undefined && editor.filingOne === item.id}
-                  onSetAside={() => {
-                    if (item !== undefined) {
-                      editor.discardItem(item);
-                    }
-                  }}
-                  settingAside={item !== undefined && editor.discardingItem === item.id}
+                  discardEffect={discardEffect}
+                  onDiscard={() =>
+                    item === undefined ? Promise.resolve() : editor.discardItem(item)
+                  }
                 />
               );
             })}
 
             {layout.groups.length === 0 && batch.isEditable && (
-              <p className="text-foreground-subtle text-sm">
-                {t("Every page is set aside. Make a document from one to file it.")}
-              </p>
+              <EmptySheet
+                title={t("No documents to file")}
+                description={t(
+                  "Every page is set aside. Make a document from one, or drag pages into a new one, to file it.",
+                )}
+                sketch={<DocumentSketch />}
+              />
             )}
 
             {(batch.isEditable || layout.loose.length > 0) && (
@@ -359,6 +398,7 @@ function OpenBatch({
                 pageIds={layout.loose}
                 pages={pages}
                 rotations={layout.rotations}
+                sequence={layout.sequence}
                 moveTargets={moveTargets}
                 canEdit={canEdit}
                 pageActions={{
@@ -375,7 +415,7 @@ function OpenBatch({
 
       <PagePreviewDialog
         page={previewPage}
-        number={previewPage?.sequence ?? 0}
+        number={previewPage === null ? 0 : pageNumber(layout, previewPage)}
         rotation={previewPage ? (layout.rotations[previewPage.id] ?? 0) : 0}
         onOpenChange={(open) => {
           if (!open) {
@@ -384,37 +424,22 @@ function OpenBatch({
         }}
       />
 
-      <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogMedia className="bg-danger-subtle text-destructive">
-              <Trash2Icon />
-            </AlertDialogMedia>
-            <AlertDialogTitle>{t("Discard this stack?")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {settled.length > 0
-                ? t(
-                    "{0, plural, one {The # document already filed stays on its record.} other {The # documents already filed stay on their records.}} Every other page is deleted.",
-                    settled.length,
-                  )
-                : t("Every page in it is deleted. This cannot be undone.")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={editor.discardingBatch}>{t("Keep it")}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={editor.discardingBatch}
-              onClick={() => {
-                editor.discardBatch();
-                setConfirmDiscard(false);
-              }}
-            >
-              {t("Discard stack")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDiscardDialog
+        open={confirmDiscard}
+        onOpenChange={setConfirmDiscard}
+        title={t("Discard this stack?")}
+        description={
+          settled.length > 0
+            ? t(
+                "{0, plural, one {The # document already filed stays on its record.} other {The # documents already filed stay on their records.}} Every other page is deleted.",
+                settled.length,
+              )
+            : t("Every page in it is deleted. This cannot be undone.")
+        }
+        confirmLabel={t("Discard stack")}
+        failureTitle={t("The stack was not discarded")}
+        onConfirm={editor.discardBatch}
+      />
     </div>
   );
 }

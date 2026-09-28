@@ -13,9 +13,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { apiUrl } from "@trenova/shared/lib/api-url";
 import { cn } from "@trenova/shared/lib/utils";
+import type { BadgeTone } from "@trenova/shared/types/badge";
 import {
   ArrowRightToLineIcon,
   EyeIcon,
@@ -45,33 +46,50 @@ export type PageActions = {
   moveTo: (pageId: string, target: string) => void;
 };
 
-function PageMarks({ page }: { page: CapturePage }) {
-  const t = useT();
-
+function pageMark(
+  t: TranslateFn,
+  page: CapturePage,
+): { variant: BadgeTone; text: string; title?: string } | null {
   if (page.status === "Failed") {
-    return <Badge variant="danger">{t("Unreadable")}</Badge>;
+    return { variant: "danger", text: t("Unreadable") };
   }
   if (page.isCoverSheet) {
-    return <Badge variant="info">{t("Cover sheet")}</Badge>;
+    return { variant: "info", text: t("Cover sheet") };
   }
   if (page.unrecognizedCoverSheet) {
-    return (
-      <Badge
-        variant="warning"
-        title={t("A cover sheet this organization did not issue, or one that expired")}
-      >
-        {t("Unknown sheet")}
-      </Badge>
-    );
+    return {
+      variant: "warning",
+      text: t("Unknown sheet"),
+      title: t("A cover sheet this organization did not issue, or one that expired"),
+    };
   }
   if (page.patchCode !== "") {
-    return <Badge variant="neutral">{t("Patch {0}", page.patchCode)}</Badge>;
+    return { variant: "neutral", text: t("Patch {0}", page.patchCode) };
   }
   if (page.isBlank) {
-    return <Badge variant="neutral">{t("Blank")}</Badge>;
+    return { variant: "neutral", text: t("Blank") };
   }
 
   return null;
+}
+
+/** What the page is, when it is something other than a page of a document. */
+function PageMarks({ page }: { page: CapturePage }) {
+  const t = useT();
+  const mark = pageMark(t, page);
+  if (mark === null) {
+    return null;
+  }
+
+  return (
+    <Badge
+      variant={mark.variant}
+      title={mark.title ?? mark.text}
+      className="max-w-full min-w-0 shrink justify-start"
+    >
+      <span className="truncate">{mark.text}</span>
+    </Badge>
+  );
 }
 
 /**
@@ -143,7 +161,7 @@ export function PageThumbnail({
           )}
         </button>
 
-        <div className="absolute top-1 right-1 opacity-0 transition-opacity group-focus-within/page:opacity-100 group-hover/page:opacity-100">
+        <div className="absolute top-1 right-1 transition-opacity pointer-fine:opacity-0 pointer-fine:group-focus-within/page:opacity-100 pointer-fine:group-hover/page:opacity-100 pointer-fine:has-[[data-popup-open]]:opacity-100">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -222,7 +240,7 @@ export function PageThumbnail({
         </div>
       </div>
 
-      <div className="flex min-h-5 items-center justify-between gap-1">
+      <div className="flex min-w-0 flex-col items-start gap-1">
         <span className="text-foreground-subtle text-2xs tabular-nums">
           {t("Page {0}", number)}
         </span>

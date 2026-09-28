@@ -24,7 +24,7 @@ Keywords: scanner settings, DPI, color scanning, duplex, split stack
 1. Open [Scanning and printing](/admin/capture) and select **Scan profiles**.
 2. Select **New scan profile**.
 3. Fill in **Name**, choose the **Resolution** and **Color mode**, and tick what to **Split the stack on**.
-4. Turn on **Use when nobody picks one** to make it the default, then select **Create profile**.
+4. Turn on **Use when nobody picks one** to make it the default, then select **Save**.
 
 ### Roll out Trenova Capture to computers
 Keywords: install Trenova Capture, download installer, deploy MSI, silent install, Intune, group policy
