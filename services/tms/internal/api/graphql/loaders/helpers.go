@@ -30,8 +30,12 @@ func loaderOptions() []dataloadgen.Option {
 }
 
 func loaderOptionsWithCapacity(capacity int) []dataloadgen.Option {
+	return loaderOptionsWith(capacity, batchWait)
+}
+
+func loaderOptionsWith(capacity int, wait time.Duration) []dataloadgen.Option {
 	return []dataloadgen.Option{
-		dataloadgen.WithWait(batchWait),
+		dataloadgen.WithWait(wait),
 		dataloadgen.WithBatchCapacity(capacity),
 		dataloadgen.WithTracer(otel.Tracer(tracerName)),
 	}

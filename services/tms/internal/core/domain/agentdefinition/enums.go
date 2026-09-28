@@ -4,6 +4,8 @@ import "github.com/emoss08/trenova/internal/core/domain/agent"
 
 const insightAnalystDailyRuns = 20
 
+const toolSearchDocuments = "search_documents"
+
 type Template string
 
 const (
@@ -844,7 +846,7 @@ func (t Template) StarterTools() []string {
 			"void_invoice",
 			"create_invoice_memo",
 			"send_invoice_edi",
-			"search_documents",
+			toolSearchDocuments,
 			"list_invoice_adjustments",
 			"get_invoice_adjustment",
 			"save_invoice_adjustment_draft",
@@ -1023,7 +1025,7 @@ func (t Template) StarterTools() []string {
 			"get_customer",
 			"get_carrier",
 			"get_document_summary",
-			"search_documents",
+			toolSearchDocuments,
 			"get_shipment_draft",
 			"list_customers",
 			"list_carriers",
@@ -1276,7 +1278,7 @@ func receivablesTools() []string {
 		"list_invoices",
 		"get_invoice",
 		"get_shipment",
-		"search_documents",
+		toolSearchDocuments,
 		"get_document_summary",
 		"get_ar_aging",
 		"list_ar_open_items",

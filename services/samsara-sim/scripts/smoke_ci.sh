@@ -244,22 +244,37 @@ if ! jq -n \
 fi
 
 echo "[5/8] Validate route lifecycle progression"
-route_after_payload="$(get_json "/fleet/routes?ids=${route_id}")"
-echo "${route_after_payload}" | jq -e '.data | length == 1' >/dev/null
-echo "${route_after_payload}" | jq -e \
-  '.data[0].status as $s
-   | ($s == "planned" or $s == "assigned" or $s == "enRoute" or $s == "atStop" or $s == "completed" or $s == "canceled")
-   and (.data[0].progress.percentComplete != null)' >/dev/null
-route_progress_after="$(echo "${route_after_payload}" | jq -r '.data[0].progress.percentComplete // empty')"
-route_status_after="$(echo "${route_after_payload}" | jq -r '.data[0].status // empty')"
-if ! jq -n \
-  --argjson before "${route_progress_before}" \
-  --argjson after "${route_progress_after}" \
-  --arg status_before "${route_status_before}" \
-  --arg status_after "${route_status_after}" \
-  '($after != $before) or ($status_after != $status_before)' \
-  | grep -q true; then
-  echo "route ${route_id} progress/status did not change after time step" >&2
+# A route's lifecycle phase is measured from the simulator's start-up time, so
+# the pinned simulation time can land in the planned head of a trip, which
+# holds status and progress still for up to 6% of the trip period (43 minutes
+# at the 12-hour maximum). Step on in 15-minute increments until the route
+# moves, and fail only if it stays still for two hours.
+route_changed=0
+for attempt in $(seq 0 8); do
+  if (( attempt > 0 )); then
+    post_json "/_sim/time/step" '{"durationMs":900000}' | jq -e '.data.now != null' >/dev/null
+  fi
+  route_after_payload="$(get_json "/fleet/routes?ids=${route_id}")"
+  echo "${route_after_payload}" | jq -e '.data | length == 1' >/dev/null
+  echo "${route_after_payload}" | jq -e \
+    '.data[0].status as $s
+     | ($s == "planned" or $s == "assigned" or $s == "enRoute" or $s == "atStop" or $s == "completed" or $s == "canceled")
+     and (.data[0].progress.percentComplete != null)' >/dev/null
+  route_progress_after="$(echo "${route_after_payload}" | jq -r '.data[0].progress.percentComplete // empty')"
+  route_status_after="$(echo "${route_after_payload}" | jq -r '.data[0].status // empty')"
+  if jq -n \
+    --argjson before "${route_progress_before}" \
+    --argjson after "${route_progress_after}" \
+    --arg status_before "${route_status_before}" \
+    --arg status_after "${route_status_after}" \
+    '($after != $before) or ($status_after != $status_before)' \
+    | grep -q true; then
+    route_changed=1
+    break
+  fi
+done
+if (( route_changed == 0 )); then
+  echo "route ${route_id} progress/status did not change within two hours of simulated time" >&2
   exit 1
 fi
 

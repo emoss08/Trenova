@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
@@ -124,6 +125,8 @@ type choicesHarness struct {
 	other    pulid.ID
 }
 
+const choicesBatchWait = 250 * time.Millisecond
+
 func newChoicesHarness(t *testing.T, granted bool) *choicesHarness {
 	t.Helper()
 
@@ -155,7 +158,7 @@ func newChoicesHarness(t *testing.T, granted bool) *choicesHarness {
 	h.fields = &agentProposalFieldResolver{r}
 	factory := loaders.NewSubsetLabelsLoaderFactory(loaders.SubsetLabelsLoaderFactoryParams{
 		Labeler: h.labeler,
-	})
+	}).WithBatchWait(choicesBatchWait)
 	h.ctx = loaders.WithLoaders(gqlctx.WithAuthContext(t.Context(), auth), &loaders.Loaders{
 		SubsetLabels: factory.NewForTenant(pagination.TenantInfo{
 			OrgID: auth.OrganizationID,
