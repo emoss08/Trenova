@@ -8,10 +8,10 @@ import { isClosingPose, type DeskPose } from "./desk-pose";
 export const DESK_SETTLE_MS = 900;
 
 /** Where the lamp's head turns: its hinge, and the angle it rests at. */
-const HINGE = "translate(16.4 9.6) rotate(-22)";
+export const HINGE = "translate(16.4 9.6) rotate(-22)";
 
-const CONE = "M-3.4 3.4 L3.4 3.4 L10.5 19 L-10.5 19 Z";
-const SHADE = "M-2.1 -1.1 L2.1 -1.1 L3.9 3.3 L-3.9 3.3 Z";
+export const CONE = "M-3.4 3.4 L3.4 3.4 L10.5 19 L-10.5 19 Z";
+export const SHADE = "M-2.1 -1.1 L2.1 -1.1 L3.9 3.3 L-3.9 3.3 Z";
 
 const DASHES = [
   { x: 18.2, className: "animate-desk-dash-1" },

@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { DeskLoading } from "@/components/assistant/voice/desk-loading";
 import { Link, useParams } from "react-router";
 import { DeskConversation } from "./_components/desk-conversation";
 import { useDesk } from "./_components/desk-layout";
@@ -13,12 +13,7 @@ export function DeskConversationPage() {
   const thread = desk.activeThread?.id === threadId ? desk.activeThread : null;
 
   if (desk.isLoading) {
-    return (
-      <div className="flex flex-col gap-4 p-6">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-24 w-2/3" />
-      </div>
-    );
+    return <DeskLoading className="my-auto" label={t("Opening the conversation")} />;
   }
 
   if (thread === null) {
