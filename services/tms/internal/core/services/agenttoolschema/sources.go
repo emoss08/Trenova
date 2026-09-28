@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 )
 
@@ -42,6 +43,7 @@ var (
 		agent.AllExceptionCategories(),
 	)
 	Severities   = Source("agent.severity", agent.SeverityValues())
+	PTOTypes     = Source("worker.ptoType", worker.PTOTypeValues())
 	SubjectTypes = Source("agent.subjectType", agent.AllSubjectTypes())
 
 	AccountingSystems = Source(
