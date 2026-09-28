@@ -1,3 +1,5 @@
+import { LOCAL_DEV_API_BASE_URL } from "@trenova/shared/lib/constants";
+
 const reactScanScriptSource = "https://unpkg.com";
 const reactScanConnectSource = "https://www.react-grab.com";
 
@@ -198,10 +200,8 @@ async function fetchLocalDevelopmentAPI(request: Request): Promise<Response> {
 }
 
 function localDevelopmentAPIURL(request: Request): URL | null {
-  const configuredURL = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
-  if (!configuredURL) {
-    return null;
-  }
+  const configuredURL =
+    (import.meta.env.VITE_API_URL as string | undefined) || LOCAL_DEV_API_BASE_URL;
 
   try {
     const requestURL = new URL(request.url);

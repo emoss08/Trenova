@@ -171,6 +171,28 @@ describe("Cloudflare SPA worker", () => {
     expect(await forwardedRequest.text()).toBe(JSON.stringify({ query: "query Test { ok }" }));
   });
 
+  it("falls back to the local backend when VITE_API_URL is unset", async () => {
+    const env = createAssetEnv();
+    vi.stubEnv("VITE_API_URL", "");
+
+    const fetchMock = vi.fn(async (_request: Request) => new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await worker.fetch(
+      new Request("http://localhost:5173/api/v1/documents/uploads/dus_1/parts/1/", {
+        body: "file-bytes",
+        method: "PUT",
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0].url).toBe(
+      "http://localhost:8080/api/v1/documents/uploads/dus_1/parts/1/",
+    );
+  });
+
   it("returns 404 for local API paths when VITE_API_URL is not absolute", async () => {
     const env = createAssetEnv();
     vi.stubEnv("VITE_API_URL", "/api/v1");
