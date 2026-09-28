@@ -51,6 +51,10 @@ func (r *agentRunResolver) Definition(ctx context.Context, obj *agent.AgentRun) 
 	return definition, nil
 }
 
+func (r *agentRunResolver) HandedBy(ctx context.Context, obj *agent.AgentRun) (*agentdefinition.Definition, error) {
+	return agentRunHandedBy(ctx, obj)
+}
+
 func (r *mutationResolver) DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
 	if err != nil {

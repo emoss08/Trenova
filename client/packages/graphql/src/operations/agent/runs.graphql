@@ -17,6 +17,12 @@ fragment AgentRunTableRowFields on AgentRun {
   errorMessage
   traceId
   traceUrl
+  parentOwnerKind
+  delegateCallId
+  handedBy {
+    id
+    name
+  }
   version
   createdAt
   updatedAt

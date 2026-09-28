@@ -153,6 +153,10 @@ func (r *agentRunResolver) TraceURL(ctx context.Context, obj *agent.AgentRun) (*
 	return r.traceURLOf(obj.TraceID), nil
 }
 
+func (r *agentRunResolver) ParentOwnerKind(ctx context.Context, obj *agent.AgentRun) (*gqlmodel.AgentRunEventOwnerKind, error) {
+	return agentRunParentOwnerKind(obj)
+}
+
 func (r *mutationResolver) DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
 	if err != nil {

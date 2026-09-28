@@ -19,7 +19,14 @@ export function getRunColumns(t: TranslateFn): ColumnDef<AgentRunRow>[] {
       accessorKey: "agentType",
       header: t("Agent"),
       cell: ({ row }) => (
-        <span className="font-medium">{agentTypeLabel(row.original.agentType, t)}</span>
+        <div className="flex min-w-0 flex-col">
+          <span className="font-medium">{agentTypeLabel(row.original.agentType, t)}</span>
+          {row.original.handedBy && (
+            <span className="text-foreground-subtle truncate text-xs">
+              {t("Handed by {0}", row.original.handedBy.name)}
+            </span>
+          )}
+        </div>
       ),
       size: 170,
       meta: {

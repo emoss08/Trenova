@@ -135,6 +135,7 @@ virtuals:
     - run
   AgentRun:
     - definition
+    - handedBy
     - traceUrl
   AgentDecision:
     - traceUrl

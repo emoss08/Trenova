@@ -79315,6 +79315,15 @@
       "domain/permission"
     ]
   },
+  "Handed by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Handed out": {
     "sites": 1,
     "scope": [
