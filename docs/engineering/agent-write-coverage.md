@@ -62,13 +62,13 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 68 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 237 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 39 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 254 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 26 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 43 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 47 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 17 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 18 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
 
 ## Totals
@@ -77,21 +77,21 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 235 |
-| Exempt | 514 |
+| Covered by a tool | 273 |
+| Exempt | 539 |
 | — Security | 68 |
-| — Configuration | 237 |
-| — User preference | 23 |
-| — Infrastructure | 39 |
+| — Configuration | 254 |
+| — User preference | 26 |
+| — Infrastructure | 43 |
 | — Agent administration | 47 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
-| — Attestation | 17 |
+| — Attestation | 18 |
 | — Duplicate | 3 |
-| **Pending** | **201** |
+| **Pending** | **138** |
 | Total | 950 |
 
-Of the 436 writes an agent should be able to make, 235 have a tool (53%).
+Of the 411 writes an agent should be able to make, 273 have a tool (66%).
 
 ## Pending
 
@@ -121,10 +121,6 @@ The writes no tool performs yet, and what the tool would do.
 | customer | `POST /api/v1/customers/` | Create a customer. |
 | customer | `POST /api/v1/customers/bulk-update-status/` | Change the status of several customers at once. |
 | customer | `PUT /api/v1/customers/:customerID/` | Update a customer. |
-| distanceoverride | `DELETE /api/v1/distance-overrides/:distanceOverrideID/` | Delete a distance override. |
-| distanceoverride | `PATCH /api/v1/distance-overrides/:distanceOverrideID/` | Update some fields of a distance override. |
-| distanceoverride | `POST /api/v1/distance-overrides/` | Create a distance override. |
-| distanceoverride | `PUT /api/v1/distance-overrides/:distanceOverrideID/` | Update a distance override. |
 | document | `DELETE /api/v1/documents/:documentID/` | Delete a document. |
 | document | `POST /api/v1/documents/:documentID/restore/` | Restore an earlier version of a document. |
 | document | `POST /api/v1/documents/:documentID/shipment-draft/reextract/` | Run shipment extraction again on a document and replace the draft. |
@@ -135,38 +131,10 @@ The writes no tool performs yet, and what the tool would do.
 | fleetsafety | `mutation deleteSafetyViolation` | Delete safety violation. |
 | fleetsafety | `mutation recordSafetyViolation` | Record safety violation. |
 | fleetsafety | `mutation updateSafetyViolation` | Update safety violation. |
-| fuelpurchase | `mutation assignFuelCard` | Assign fuel card. |
-| fuelpurchase | `mutation cancelFuelCard` | Cancel fuel card. |
-| fuelpurchase | `mutation commitFuelPurchaseImport` | Commit fuel purchase import. |
-| fuelpurchase | `mutation createFuelCard` | Create fuel card. |
-| fuelpurchase | `mutation createFuelPurchase` | Create fuel purchase. |
-| fuelpurchase | `mutation createFuelPurchaseImport` | Create fuel purchase import. |
-| fuelpurchase | `mutation deleteFuelPurchase` | Delete fuel purchase. |
-| fuelpurchase | `mutation discardFuelPurchaseImport` | Discard fuel purchase import. |
-| fuelpurchase | `mutation resolveFuelPurchaseImportRows` | Resolve fuel purchase import rows. |
-| fuelpurchase | `mutation stageFuelPurchaseImport` | Stage fuel purchase import. |
-| fuelpurchase | `mutation syncFuelCardFeed` | Sync fuel card feed. |
-| fuelpurchase | `mutation updateFuelCard` | Update fuel card. |
-| fuelpurchase | `mutation updateFuelPurchase` | Update fuel purchase. |
-| fuelsurcharge | `mutation addFuelIndexPrice` | Add fuel index price. |
-| fuelsurcharge | `mutation deleteFuelIndexPrice` | Delete fuel index price. |
-| fuelsurcharge | `mutation updateFuelIndexPrice` | Update fuel index price. |
 | hazardousmaterial | `PATCH /api/v1/hazardous-materials/:hazardousMaterialID/` | Update some fields of a hazardous material. |
 | hazardousmaterial | `POST /api/v1/hazardous-materials/` | Create a hazardous material. |
 | hazardousmaterial | `POST /api/v1/hazardous-materials/bulk-update-status/` | Change the status of several hazardous materials at once. |
 | hazardousmaterial | `PUT /api/v1/hazardous-materials/:hazardousMaterialID/` | Update a hazardous material. |
-| ifta | `mutation amendIftaReturn` | Amend IFTA return. |
-| ifta | `mutation backfillJurisdictionMiles` | Backfill jurisdiction miles. |
-| ifta | `mutation createIftaMileageEntry` | Create IFTA mileage entry. |
-| ifta | `mutation deleteIftaMileageEntry` | Delete IFTA mileage entry. |
-| ifta | `mutation deleteIftaReturn` | Delete IFTA return. |
-| ifta | `mutation deleteIftaTaxRate` | Delete IFTA tax rate. |
-| ifta | `mutation generateIftaReturn` | Generate IFTA return. |
-| ifta | `mutation recalculateMoveJurisdictionMiles` | Recalculate move jurisdiction miles. |
-| ifta | `mutation recomputeIftaReturn` | Recompute IFTA return. |
-| ifta | `mutation reopenIftaReturn` | Reopen IFTA return. |
-| ifta | `mutation updateIftaMileageEntry` | Update IFTA mileage entry. |
-| ifta | `mutation upsertIftaTaxRates` | Upsert IFTA tax rates. |
 | insight | `POST /api/v1/insights/:insightID/restore/` | Restore an insight that was dismissed. |
 | location | `PATCH /api/v1/locations/:locationID/` | Update some fields of a location. |
 | location | `POST /api/v1/locations/bulk-update-status/` | Change the status of several locations at once. |
@@ -184,38 +152,7 @@ The writes no tool performs yet, and what the tool would do.
 | ptopolicy | `mutation assignWorkerPtoPolicy` | Assign worker PTO policy. |
 | ptopolicy | `mutation endWorkerPtoPolicyAssignment` | End worker PTO policy assignment. |
 | ptopolicy | `mutation runPtoAccrual` | Run PTO accrual. |
-| rateagreement | `POST /api/v1/rate-agreements/` | Create a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/approve/` | Approve a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/archive/` | Archive a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/` | Duplicate a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/reject/` | Reject a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/resume/` | Resume a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/` | Amend the rating rules of an active rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/submit/` | Submit a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/suspend/` | Suspend a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/rate-increase/apply/` | Apply rate increase (rate agreement). |
-| rateagreement | `PUT /api/v1/rate-agreements/:rateAgreementID/` | Update a rate agreement. |
-| rateimport | `POST /api/v1/rate-imports/:rateImportID/commit/` | Commit a rate import. |
-| rateimport | `POST /api/v1/rate-imports/:rateImportID/discard/` | Discard a rate import. |
-| ratematrix | `DELETE /api/v1/rate-matrices/:rateMatrixID/` | Delete a rate matrice. |
-| ratematrix | `POST /api/v1/rate-matrices/` | Create a rate matrice. |
-| ratematrix | `PUT /api/v1/rate-matrices/:rateMatrixID/` | Update a rate matrice. |
-| ratematrix | `PUT /api/v1/rate-matrices/:rateMatrixID/cells/` | Replace cells (rate matrice). |
-| ratesimulation | `POST /api/v1/rate-simulations/` | Run and save a rate simulation across past shipments. |
-| ratezone | `DELETE /api/v1/rate-zones/:rateZoneID/` | Delete a rate zone. |
-| ratezone | `POST /api/v1/rate-zones/` | Create a rate zone. |
-| ratezone | `PUT /api/v1/rate-zones/:rateZoneID/` | Update a rate zone. |
-| report | `mutation cancelReportRun` | Cancel report run. |
-| report | `mutation createReportView` | Create report view. |
-| report | `mutation deleteReportDashboard` | Delete report dashboard. |
-| report | `mutation deleteReportDefinition` | Delete report definition. |
-| report | `mutation deleteReportSchedule` | Delete report schedule. |
-| report | `mutation deleteReportView` | Delete report view. |
-| report | `mutation resetCannedFork` | Reset canned fork. |
-| report | `mutation updateReportSchedule` | Update report schedule. |
-| report | `mutation updateReportView` | Update report view. |
 | selfservice | `mutation decideProfileChange` | Decide profile change. |
-| storedmileage | `DELETE /api/v1/stored-mileages/:storedMileageID/` | Delete a stored mileage. |
 | tablechangealert | `DELETE /api/v1/tca/subscriptions/:id` | Delete subscription (table change alert). |
 | tablechangealert | `PATCH /api/v1/tca/subscriptions/:id/pause` | Pause subscription (table change alert). |
 | tablechangealert | `PATCH /api/v1/tca/subscriptions/:id/resume` | Resume subscription (table change alert). |
@@ -350,7 +287,7 @@ The writes no tool performs yet, and what the tool would do.
 | dispatchconsole | 5 | 4 | 1 | 0 |
 | dispatchcontrol | 1 | 0 | 1 | 0 |
 | distancecontrol | 2 | 0 | 2 | 0 |
-| distanceoverride | 4 | 0 | 0 | 4 |
+| distanceoverride | 4 | 0 | 4 | 0 |
 | distanceprofile | 5 | 0 | 5 | 0 |
 | document | 13 | 1 | 8 | 4 |
 | documentcontrol | 1 | 0 | 1 | 0 |
@@ -372,8 +309,8 @@ The writes no tool performs yet, and what the tool would do.
 | fleetcode | 3 | 0 | 3 | 0 |
 | fleetsafety | 3 | 0 | 0 | 3 |
 | formulatemplate | 24 | 0 | 24 | 0 |
-| fuelpurchase | 13 | 0 | 0 | 13 |
-| fuelsurcharge | 9 | 0 | 6 | 3 |
+| fuelpurchase | 13 | 7 | 6 | 0 |
+| fuelsurcharge | 9 | 2 | 7 | 0 |
 | glaccount | 5 | 0 | 5 | 0 |
 | googlemaps | 1 | 0 | 1 | 0 |
 | graphql | 1 | 0 | 1 | 0 |
@@ -382,7 +319,7 @@ The writes no tool performs yet, and what the tool would do.
 | holdreason | 3 | 0 | 3 | 0 |
 | homelayout | 5 | 1 | 4 | 0 |
 | iam | 14 | 0 | 14 | 0 |
-| ifta | 14 | 0 | 2 | 12 |
+| ifta | 14 | 9 | 5 | 0 |
 | inbound | 1 | 0 | 1 | 0 |
 | inboundmessage | 6 | 2 | 4 | 0 |
 | insight | 2 | 1 | 0 | 1 |
@@ -411,17 +348,17 @@ The writes no tool performs yet, and what the tool would do.
 | permit | 3 | 0 | 0 | 3 |
 | ptopolicy | 8 | 0 | 4 | 4 |
 | push | 2 | 0 | 2 | 0 |
-| rateagreement | 12 | 0 | 1 | 11 |
+| rateagreement | 12 | 11 | 1 | 0 |
 | rateconfirmation | 4 | 4 | 0 | 0 |
 | rateconfirmationpublic | 1 | 0 | 1 | 0 |
-| rateimport | 3 | 0 | 1 | 2 |
-| ratematrix | 4 | 0 | 0 | 4 |
+| rateimport | 3 | 2 | 1 | 0 |
+| ratematrix | 4 | 0 | 4 | 0 |
 | ratequote | 3 | 0 | 3 | 0 |
-| ratesimulation | 1 | 0 | 0 | 1 |
-| ratezone | 3 | 0 | 0 | 3 |
+| ratesimulation | 1 | 1 | 0 | 0 |
+| ratezone | 3 | 0 | 3 | 0 |
 | realtime | 3 | 0 | 3 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
-| report | 17 | 7 | 1 | 9 |
+| report | 17 | 13 | 4 | 0 |
 | role | 11 | 0 | 11 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
@@ -435,7 +372,7 @@ The writes no tool performs yet, and what the tool would do.
 | shipmentmove | 4 | 4 | 0 | 0 |
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
-| storedmileage | 1 | 0 | 0 | 1 |
+| storedmileage | 1 | 0 | 1 | 0 |
 | tablechangealert | 5 | 1 | 0 | 4 |
 | tableconfiguration | 6 | 1 | 5 | 0 |
 | tablequery | 1 | 0 | 1 | 0 |
@@ -927,10 +864,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.delete | Pending: Delete a distance override. |
-| `PATCH /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.patch | Pending: Update some fields of a distance override. |
-| `POST /api/v1/distance-overrides/`<br>distanceoverridehandler.create | Pending: Create a distance override. |
-| `PUT /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.update | Pending: Update a distance override. |
+| `DELETE /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.delete | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
+| `PATCH /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.patch | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
+| `POST /api/v1/distance-overrides/`<br>distanceoverridehandler.create | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
+| `PUT /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.update | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
 
 ### distanceprofile
 
@@ -1281,32 +1218,32 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignFuelCard` | Pending: Assign fuel card. |
-| `mutation cancelFuelCard` | Pending: Cancel fuel card. |
-| `mutation commitFuelPurchaseImport` | Pending: Commit fuel purchase import. |
-| `mutation createFuelCard` | Pending: Create fuel card. |
-| `mutation createFuelPurchase` | Pending: Create fuel purchase. |
-| `mutation createFuelPurchaseImport` | Pending: Create fuel purchase import. |
-| `mutation deleteFuelPurchase` | Pending: Delete fuel purchase. |
-| `mutation discardFuelPurchaseImport` | Pending: Discard fuel purchase import. |
-| `mutation resolveFuelPurchaseImportRows` | Pending: Resolve fuel purchase import rows. |
-| `mutation stageFuelPurchaseImport` | Pending: Stage fuel purchase import. |
-| `mutation syncFuelCardFeed` | Pending: Sync fuel card feed. |
-| `mutation updateFuelCard` | Pending: Update fuel card. |
-| `mutation updateFuelPurchase` | Pending: Update fuel purchase. |
+| `mutation assignFuelCard` | Tool: `assign_fuel_card` |
+| `mutation cancelFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card). |
+| `mutation commitFuelPurchaseImport` | Tool: `commit_fuel_purchase_import` |
+| `mutation createFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card). |
+| `mutation createFuelPurchase` | Tool: `record_fuel_purchase` |
+| `mutation createFuelPurchaseImport` | Exempt, infrastructure: Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import. |
+| `mutation deleteFuelPurchase` | Tool: `delete_fuel_purchase` |
+| `mutation discardFuelPurchaseImport` | Tool: `discard_fuel_purchase_import` |
+| `mutation resolveFuelPurchaseImportRows` | Tool: `resolve_fuel_purchase_import_rows` |
+| `mutation stageFuelPurchaseImport` | Exempt, infrastructure: Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import. |
+| `mutation syncFuelCardFeed` | Exempt, infrastructure: Reads the card provider's feed on the connection an administrator set up, which runs on its own schedule; resolve_fuel_purchase_import_rows works the rows a run held back. |
+| `mutation updateFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card). |
+| `mutation updateFuelPurchase` | Tool: `correct_fuel_purchase` |
 
 ### fuelsurcharge
 
 | Write | Decision |
 | --- | --- |
-| `mutation addFuelIndexPrice` | Pending: Add fuel index price. |
+| `mutation addFuelIndexPrice` | Tool: `record_fuel_index_price` |
 | `mutation createFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation createFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation deleteFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
-| `mutation deleteFuelIndexPrice` | Pending: Delete fuel index price. |
+| `mutation deleteFuelIndexPrice` | Exempt, configuration: Pruning an index's price history is curation an administrator does; a manual price entered wrong is fixed with correct_fuel_index_price. |
 | `mutation deleteFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation updateFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
-| `mutation updateFuelIndexPrice` | Pending: Update fuel index price. |
+| `mutation updateFuelIndexPrice` | Tool: `correct_fuel_index_price` |
 | `mutation updateFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 
 ### glaccount
@@ -1389,20 +1326,20 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation amendIftaReturn` | Pending: Amend IFTA return. |
-| `mutation backfillJurisdictionMiles` | Pending: Backfill jurisdiction miles. |
-| `mutation createIftaMileageEntry` | Pending: Create IFTA mileage entry. |
-| `mutation deleteIftaMileageEntry` | Pending: Delete IFTA mileage entry. |
-| `mutation deleteIftaReturn` | Pending: Delete IFTA return. |
-| `mutation deleteIftaTaxRate` | Pending: Delete IFTA tax rate. |
+| `mutation amendIftaReturn` | Tool: `amend_ifta_return` |
+| `mutation backfillJurisdictionMiles` | Tool: `backfill_jurisdiction_miles` |
+| `mutation createIftaMileageEntry` | Tool: `record_ifta_mileage_entry` |
+| `mutation deleteIftaMileageEntry` | Tool: `delete_ifta_mileage_entry` |
+| `mutation deleteIftaReturn` | Tool: `delete_ifta_return` |
+| `mutation deleteIftaTaxRate` | Exempt, configuration: IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them. |
 | `mutation finalizeIftaReturn` | Exempt, attestation: A fuel tax return is signed off by the person accountable for filing it. |
-| `mutation generateIftaReturn` | Pending: Generate IFTA return. |
+| `mutation generateIftaReturn` | Tool: `generate_ifta_return` |
 | `mutation markIftaReturnFiled` | Exempt, attestation: Records that a person filed the return with the jurisdiction. |
-| `mutation recalculateMoveJurisdictionMiles` | Pending: Recalculate move jurisdiction miles. |
-| `mutation recomputeIftaReturn` | Pending: Recompute IFTA return. |
-| `mutation reopenIftaReturn` | Pending: Reopen IFTA return. |
-| `mutation updateIftaMileageEntry` | Pending: Update IFTA mileage entry. |
-| `mutation upsertIftaTaxRates` | Pending: Upsert IFTA tax rates. |
+| `mutation recalculateMoveJurisdictionMiles` | Tool: `recalculate_move_jurisdiction_miles` |
+| `mutation recomputeIftaReturn` | Tool: `recompute_ifta_return` |
+| `mutation reopenIftaReturn` | Exempt, attestation: Reopening undoes the sign-off of the person accountable for filing the return, so that person decides. |
+| `mutation updateIftaMileageEntry` | Tool: `correct_ifta_mileage_entry` |
+| `mutation upsertIftaTaxRates` | Exempt, configuration: IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them. |
 
 ### inbound
 
@@ -1676,18 +1613,18 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-agreements/`<br>rateagreementhandler.create | Pending: Create a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/approve/`<br>rateagreementhandler.review | Pending: Approve a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/archive/`<br>rateagreementhandler.review | Pending: Archive a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/`<br>rateagreementhandler.duplicate | Pending: Duplicate a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/reject/`<br>rateagreementhandler.review | Pending: Reject a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/resume/`<br>rateagreementhandler.review | Pending: Resume a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/`<br>rateagreementhandler.amendRules | Pending: Amend the rating rules of an active rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/submit/`<br>rateagreementhandler.review | Pending: Submit a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/suspend/`<br>rateagreementhandler.review | Pending: Suspend a rate agreement. |
-| `POST /api/v1/rate-agreements/rate-increase/apply/`<br>rateagreementhandler.applyRateIncrease | Pending: Apply rate increase (rate agreement). |
+| `POST /api/v1/rate-agreements/`<br>rateagreementhandler.create | Tool: `draft_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/approve/`<br>rateagreementhandler.review | Tool: `approve_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/archive/`<br>rateagreementhandler.review | Tool: `archive_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/`<br>rateagreementhandler.duplicate | Tool: `duplicate_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/reject/`<br>rateagreementhandler.review | Tool: `reject_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/resume/`<br>rateagreementhandler.review | Tool: `resume_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/`<br>rateagreementhandler.amendRules | Tool: `amend_rate_agreement_rules` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/submit/`<br>rateagreementhandler.review | Tool: `submit_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/suspend/`<br>rateagreementhandler.review | Tool: `suspend_rate_agreement` |
+| `POST /api/v1/rate-agreements/rate-increase/apply/`<br>rateagreementhandler.applyRateIncrease | Tool: `apply_rate_increase` |
 | `POST /api/v1/rate-agreements/rate-increase/preview/`<br>rateagreementhandler.previewRateIncrease | Exempt, read-only: Plans a general rate increase for review and saves nothing. |
-| `PUT /api/v1/rate-agreements/:rateAgreementID/`<br>rateagreementhandler.update | Pending: Update a rate agreement. |
+| `PUT /api/v1/rate-agreements/:rateAgreementID/`<br>rateagreementhandler.update | Tool: `revise_rate_agreement_draft` |
 
 ### rateconfirmation
 
@@ -1709,17 +1646,17 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/rate-imports/`<br>rateimporthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/rate-imports/:rateImportID/commit/`<br>rateimporthandler.commit | Pending: Commit a rate import. |
-| `POST /api/v1/rate-imports/:rateImportID/discard/`<br>rateimporthandler.discard | Pending: Discard a rate import. |
+| `POST /api/v1/rate-imports/:rateImportID/commit/`<br>rateimporthandler.commit | Tool: `commit_rate_import` |
+| `POST /api/v1/rate-imports/:rateImportID/discard/`<br>rateimporthandler.discard | Tool: `discard_rate_import` |
 
 ### ratematrix
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.delete | Pending: Delete a rate matrice. |
-| `POST /api/v1/rate-matrices/`<br>ratematrixhandler.create | Pending: Create a rate matrice. |
-| `PUT /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.update | Pending: Update a rate matrice. |
-| `PUT /api/v1/rate-matrices/:rateMatrixID/cells/`<br>ratematrixhandler.replaceCells | Pending: Replace cells (rate matrice). |
+| `DELETE /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.delete | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `POST /api/v1/rate-matrices/`<br>ratematrixhandler.create | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `PUT /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.update | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `PUT /api/v1/rate-matrices/:rateMatrixID/cells/`<br>ratematrixhandler.replaceCells | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 
 ### ratequote
 
@@ -1733,15 +1670,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-simulations/`<br>ratesimulationhandler.create | Pending: Run and save a rate simulation across past shipments. |
+| `POST /api/v1/rate-simulations/`<br>ratesimulationhandler.create | Tool: `run_rate_simulation` |
 
 ### ratezone
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.delete | Pending: Delete a rate zone. |
-| `POST /api/v1/rate-zones/`<br>ratezonehandler.create | Pending: Create a rate zone. |
-| `PUT /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.update | Pending: Update a rate zone. |
+| `DELETE /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.delete | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
+| `POST /api/v1/rate-zones/`<br>ratezonehandler.create | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
+| `PUT /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.update | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
 
 ### realtime
 
@@ -1765,22 +1702,22 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation cancelReportRun` | Pending: Cancel report run. |
+| `mutation cancelReportRun` | Tool: `cancel_report_run` |
 | `mutation createReportDashboard` | Tool: `create_dashboard` |
 | `mutation createReportDefinition` | Tool: `create_report` |
 | `mutation createReportSchedule` | Tool: `schedule_report` |
-| `mutation createReportView` | Pending: Create report view. |
-| `mutation deleteReportDashboard` | Pending: Delete report dashboard. |
-| `mutation deleteReportDefinition` | Pending: Delete report definition. |
-| `mutation deleteReportSchedule` | Pending: Delete report schedule. |
-| `mutation deleteReportView` | Pending: Delete report view. |
+| `mutation createReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
+| `mutation deleteReportDashboard` | Tool: `delete_dashboard` |
+| `mutation deleteReportDefinition` | Tool: `delete_report` |
+| `mutation deleteReportSchedule` | Tool: `delete_report_schedule` |
+| `mutation deleteReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
 | `mutation forkCannedReport` | Tool: `fork_report` |
-| `mutation resetCannedFork` | Pending: Reset canned fork. |
+| `mutation resetCannedFork` | Tool: `reset_report_fork` |
 | `mutation runReport` | Tool: `run_report` |
 | `mutation updateReportDashboard` | Tool: `add_dashboard_tile` |
 | `mutation updateReportDefinition` | Tool: `update_report` |
-| `mutation updateReportSchedule` | Pending: Update report schedule. |
-| `mutation updateReportView` | Pending: Update report view. |
+| `mutation updateReportSchedule` | Tool: `update_report_schedule` |
+| `mutation updateReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
 | `POST /api/v1/reports/dashboards/:dashboardID/export/`<br>reporthandler.exportDashboard | Exempt, read-only: Renders a dashboard to a file for download. |
 
 ### role
@@ -1939,7 +1876,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/stored-mileages/:storedMileageID/`<br>storedmileagehandler.delete | Pending: Delete a stored mileage. |
+| `DELETE /api/v1/stored-mileages/:storedMileageID/`<br>storedmileagehandler.delete | Exempt, infrastructure: A stored mileage is a cached routing answer; clearing one only makes the next rating ask the routing provider again. |
 
 ### tablechangealert
 

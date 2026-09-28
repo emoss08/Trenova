@@ -48,6 +48,7 @@ var humanizeSpecialWords = map[string]string{
 	"hos":  "HOS",
 	"mc":   "MC",
 	"un":   "UN",
+	"ifta": "IFTA",
 }
 
 func HumanizeCamelCase(s string) string {
