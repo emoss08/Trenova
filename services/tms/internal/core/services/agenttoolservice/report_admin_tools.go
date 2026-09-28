@@ -533,7 +533,9 @@ func newUpdateReportScheduleTool(reports reportAdministrator) serviceports.Agent
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The email addresses it goes to, replacing the list.",
 				toolschema.KeyMaxItems:    maxScheduleRecipients,
-				toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
+				toolschema.KeyItems: map[string]any{
+					toolschema.KeyType: toolschema.TypeString,
+				},
 			},
 			paramEmailAttach: booleanProperty("Attach the file rather than only linking to it."),
 			paramEmailInline: booleanProperty("Put the rows in the email body."),

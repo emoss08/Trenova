@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -88,7 +89,10 @@ const (
 )
 
 var (
-	partyTypes     = agenttoolschema.Source("rateAgreement.partyType", rateagreement.PartyTypeValues())
+	partyTypes = agenttoolschema.Source(
+		"rateAgreement.partyType",
+		rateagreement.PartyTypeValues(),
+	)
 	agreementTypes = agenttoolschema.Source(
 		"rateAgreement.agreementType",
 		rateagreement.AgreementTypeValues(),
@@ -220,8 +224,10 @@ func laneProperty(forRevision bool) map[string]any {
 		paramLaneMaxCharge: stringProperty("The most the lane charges, as a decimal.", 0),
 		paramPriority: integerProperty("Which lane wins when two match equally; higher "+
 			"wins.", 0, maxAgreementPriority),
-		paramHazmatOnly:      booleanProperty("Only hazardous freight rates on this lane."),
-		paramTempControlOnly: booleanProperty("Only temperature-controlled freight rates on this lane."),
+		paramHazmatOnly: booleanProperty("Only hazardous freight rates on this lane."),
+		paramTempControlOnly: booleanProperty(
+			"Only temperature-controlled freight rates on this lane.",
+		),
 	}
 	description := "The lanes, each priced through a formula template or a rate matrix."
 	if forRevision {
@@ -331,7 +337,10 @@ func optionalLaneMoney(fields map[string]any, key string) (decimal.NullDecimal, 
 	return decimal.NullDecimal{Decimal: value, Valid: present}, true, nil
 }
 
-func (r laneReader) applyPricing(rule *rateagreement.RateAgreementRule, fields map[string]any) error {
+func (r laneReader) applyPricing(
+	rule *rateagreement.RateAgreementRule,
+	fields map[string]any,
+) error {
 	for key, target := range map[string]**pulid.ID{
 		paramFormulaTemplateID: &rule.FormulaTemplateID,
 		paramRateMatrixID:      &rule.RateMatrixID,
@@ -370,9 +379,11 @@ func (r laneReader) applyTerms(rule *rateagreement.RateAgreementRule, fields map
 		rule.Label = *label
 	}
 	if _, given := fields[paramDirection]; given {
-		if rule.Direction, err = requireEnum(fields, paramDirection, laneDirections.Values); err != nil {
-			return err
+		direction, enumErr := requireEnum(fields, paramDirection, laneDirections.Values)
+		if enumErr != nil {
+			return enumErr
 		}
+		rule.Direction = direction
 	}
 	if _, given := fields[paramPriority]; given {
 		priority, rangeErr := requireIntInRange(fields, paramPriority, 0, maxAgreementPriority)
@@ -536,8 +547,10 @@ func agreementHeaderProperties() map[string]any {
 		paramPriority: integerProperty("Which agreement wins when two price a shipment; "+
 			"higher wins.", 0, maxAgreementPriority),
 		paramEffectiveFrom: dateProperty("The first day the agreement prices shipments."),
-		paramEffectiveTo:   dateProperty("The last day it prices shipments. Leave it out for an open-ended agreement."),
-		paramAutoRenew:     booleanProperty("Whether it renews itself at its end."),
+		paramEffectiveTo: dateProperty(
+			"The last day it prices shipments. Leave it out for an open-ended agreement.",
+		),
+		paramAutoRenew: booleanProperty("Whether it renews itself at its end."),
 		paramRenewalNoticeDays: integerProperty("How many days before its end to warn about "+
 			"renewal.", 0, maxRenewalNotice),
 		paramAgreementCurrency: stringProperty("The ISO currency code it prices in. Defaults "+
@@ -667,7 +680,10 @@ func (h agreementHeader) apply(entity *rateagreement.RateAgreement) error {
 	return nil
 }
 
-func stampLaneWindows(entity *rateagreement.RateAgreement, rules []*rateagreement.RateAgreementRule) {
+func stampLaneWindows(
+	entity *rateagreement.RateAgreement,
+	rules []*rateagreement.RateAgreementRule,
+) {
 	for _, rule := range rules {
 		if rule.ID.IsNil() || rule.EffectiveFrom < entity.EffectiveFrom {
 			rule.EffectiveFrom = entity.EffectiveFrom
@@ -749,7 +765,10 @@ func agreementRecord(entity *rateagreement.RateAgreement) toolpreview.Record {
 	}
 }
 
-func agreementResult(action string, entity *rateagreement.RateAgreement) *agent.ToolExecutionResult {
+func agreementResult(
+	action string,
+	entity *rateagreement.RateAgreement,
+) *agent.ToolExecutionResult {
 	return &agent.ToolExecutionResult{
 		Action: action,
 		Kind:   rateAgreementKind,
@@ -881,7 +900,10 @@ func newDraftRateAgreementTool(
 		render: func(_ agreementDraft, planned *rateagreement.RateAgreement) (*agent.ToolPreview, error) {
 			record := agreementRecord(planned)
 			record.Version = nil
-			change, err := toolpreview.Create(record, agreementViewOf(planned), agreementOptions()...)
+			change, err := toolpreview.Create(
+				record,
+				agreementViewOf(planned),
+				agreementOptions()...)
 			if err != nil {
 				return nil, err
 			}
@@ -917,7 +939,7 @@ type agreementRevision struct {
 	values map[string]any
 }
 
-var errOnlyDraftsRevise = fmt.Errorf(
+var errOnlyDraftsRevise = errors.New(
 	"only a draft agreement is revised here; an agreement in review is rejected back to " +
 		"draft first, and an active one's lanes change with amend_rate_agreement_rules",
 )
@@ -985,7 +1007,7 @@ func newReviseRateAgreementDraftTool(
 				}
 			}
 			if len(values) == 0 {
-				return agreementRevision{}, fmt.Errorf("name at least one term to revise")
+				return agreementRevision{}, errors.New("name at least one term to revise")
 			}
 
 			return agreementRevision{id: id, values: values}, nil
@@ -1105,7 +1127,10 @@ func newDuplicateRateAgreementTool(agreements rateAgreementKeeper) serviceports.
 		) (*agent.ToolPreview, error) {
 			record := agreementRecord(plan.Copy)
 			record.Version = nil
-			change, err := toolpreview.Create(record, agreementViewOf(plan.Copy), agreementOptions()...)
+			change, err := toolpreview.Create(
+				record,
+				agreementViewOf(plan.Copy),
+				agreementOptions()...)
 			if err != nil {
 				return nil, err
 			}
@@ -1196,48 +1221,54 @@ func newAgreementReviewTool(
 	agreements rateAgreementKeeper,
 	step *agreementReviewStep,
 ) serviceports.AgentTool {
-	return newReceivableTool(step.spec(), receivablePlan[*rateagreementservice.ApprovalActionRequest, *rateagreementservice.AgreementChange]{
-		request: step.request,
-		plan: func(
-			ctx context.Context,
-			req *rateagreementservice.ApprovalActionRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*rateagreementservice.AgreementChange, error) {
-			return agreements.PlanReview(ctx, step.review, req)
-		},
-		refused: func(*rateagreementservice.ApprovalActionRequest) string {
-			return fmt.Sprintf("Would %s a rate agreement.", strings.ToLower(string(step.review)))
-		},
-		render: func(
-			_ *rateagreementservice.ApprovalActionRequest,
-			plan *rateagreementservice.AgreementChange,
-		) (*agent.ToolPreview, error) {
-			change, err := toolpreview.Changed(
-				agreementRecord(plan.Before),
-				agreementViewOf(plan.Before),
-				agreementViewOf(plan.After),
-				toolpreview.Only(fieldStatus, "reviewComment"),
-			)
-			if err != nil {
+	return newReceivableTool(
+		step.spec(),
+		receivablePlan[*rateagreementservice.ApprovalActionRequest, *rateagreementservice.AgreementChange]{
+			request: step.request,
+			plan: func(
+				ctx context.Context,
+				req *rateagreementservice.ApprovalActionRequest,
+				_ *serviceports.ToolExecuteParams,
+			) (*rateagreementservice.AgreementChange, error) {
+				return agreements.PlanReview(ctx, step.review, req)
+			},
+			refused: func(*rateagreementservice.ApprovalActionRequest) string {
+				return fmt.Sprintf(
+					"Would %s a rate agreement.",
+					strings.ToLower(string(step.review)),
+				)
+			},
+			render: func(
+				_ *rateagreementservice.ApprovalActionRequest,
+				plan *rateagreementservice.AgreementChange,
+			) (*agent.ToolPreview, error) {
+				change, err := toolpreview.Changed(
+					agreementRecord(plan.Before),
+					agreementViewOf(plan.Before),
+					agreementViewOf(plan.After),
+					toolpreview.Only(fieldStatus, "reviewComment"),
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				return toolpreview.Build(fmt.Sprintf(
+					"Would %s the rate agreement %s (now %s); %s.",
+					strings.ToLower(string(step.review)), plan.Before.Code, plan.Before.Status,
+					step.outcome,
+				), change), nil
+			},
+			run: func(
+				ctx context.Context,
+				req *rateagreementservice.ApprovalActionRequest,
+				_ *serviceports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				_, err := agreements.Review(ctx, step.review, req)
+
 				return nil, err
-			}
-
-			return toolpreview.Build(fmt.Sprintf(
-				"Would %s the rate agreement %s (now %s); %s.",
-				strings.ToLower(string(step.review)), plan.Before.Code, plan.Before.Status,
-				step.outcome,
-			), change), nil
+			},
 		},
-		run: func(
-			ctx context.Context,
-			req *rateagreementservice.ApprovalActionRequest,
-			_ *serviceports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			_, err := agreements.Review(ctx, step.review, req)
-
-			return nil, err
-		},
-	})
+	)
 }
 
 func agreementReviewSteps() []*agreementReviewStep {

@@ -20,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
+const tractorIDSource = "from list_tractors"
+
 const (
 	paramFuelIndexID       = "fuelIndexId"
 	paramReportScheduleDef = "definitionId"
@@ -114,7 +116,9 @@ func cursorOf(opts *pagination.QueryOptions) pagination.CursorInfo {
 	return pagination.CursorInfo{Limit: opts.Pagination.Limit}
 }
 
-func newListFuelPurchasesTool(repo repositories.FuelPurchaseRepository) serviceports.AgentQueryTool {
+func newListFuelPurchasesTool(
+	repo repositories.FuelPurchaseRepository,
+) serviceports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_fuel_purchases",
 		entityPlural: "fuel purchases",
@@ -141,7 +145,7 @@ func newListFuelPurchasesTool(repo repositories.FuelPurchaseRepository) servicep
 			{Name: "vendor", Kind: filterText},
 			{Name: "transactionReference", Kind: filterText},
 			{Name: "cardLastFour", Kind: filterText},
-			{Name: fieldTractorID, Kind: filterText, Note: "from list_tractors"},
+			{Name: fieldTractorID, Kind: filterText, Note: tractorIDSource},
 			{Name: "importBatchId", Kind: filterText, Note: "from list_fuel_purchase_imports"},
 			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
@@ -355,9 +359,11 @@ func (t *listFuelIndexPricesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramFuelIndexID: stringParam("The fuel index, from get_fuel_surcharge_rates. Never " +
 			"guess one."),
-		"from":  stringParam("The earliest price day to include, YYYY-MM-DD."),
-		"to":    stringParam("The latest price day to include, YYYY-MM-DD."),
-		"limit": intParam(fmt.Sprintf("How many prices to return, at most %d.", maxFuelIndexPrices)),
+		"from": stringParam("The earliest price day to include, YYYY-MM-DD."),
+		"to":   stringParam("The latest price day to include, YYYY-MM-DD."),
+		paramLimit: intParam(
+			fmt.Sprintf("How many prices to return, at most %d.", maxFuelIndexPrices),
+		),
 	}, paramFuelIndexID)
 }
 
@@ -472,8 +478,10 @@ func (t *listIFTAJurisdictionsTool) Query(
 
 	jurisdictions, err := t.repo.ListJurisdictions(ctx, &repositories.ListJurisdictionsRequest{
 		MembersOnly: optionalBool(params.Params, "membersOnly"),
-		CountryCode: strings.ToUpper(strings.TrimSpace(optionalString(params.Params, "countryCode"))),
-		Statuses:    []ifta.JurisdictionStatus{ifta.JurisdictionStatusActive},
+		CountryCode: strings.ToUpper(
+			strings.TrimSpace(optionalString(params.Params, "countryCode")),
+		),
+		Statuses: []ifta.JurisdictionStatus{ifta.JurisdictionStatusActive},
 	})
 	if err != nil {
 		return nil, err
@@ -594,7 +602,7 @@ func newListIFTAMileageEntriesTool(repo repositories.IFTARepository) serviceport
 			{Name: fieldYear, Kind: filterNumber, Sortable: true},
 			{Name: fieldQuarter, Kind: filterNumber, Sortable: true},
 			{Name: "traveledAt", Kind: filterDate, Sortable: true},
-			{Name: fieldTractorID, Kind: filterText, Note: "from list_tractors"},
+			{Name: fieldTractorID, Kind: filterText, Note: tractorIDSource},
 			{Name: fieldJurisdictionID, Kind: filterText, Note: "from list_ifta_jurisdictions"},
 			{Name: "loaded", Kind: filterBool},
 		},
@@ -675,7 +683,7 @@ func (t *listRateImportsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		"rateAgreementId": stringParam("Only the imports against this agreement, from " +
 			"list_rate_agreements."),
-		"limit": intParam(fmt.Sprintf("How many imports to return, at most %d.", maxListLimit)),
+		paramLimit: intParam(fmt.Sprintf("How many imports to return, at most %d.", maxListLimit)),
 	})
 }
 
@@ -785,7 +793,7 @@ func (t *listReportSchedulesTool) ParamSchema() map[string]any {
 		paramReportScheduleDef: stringParam("Only the schedules of this saved report, from " +
 			"list_reports."),
 		"enabledOnly": boolParam("Only schedules that are switched on."),
-		"limit": intParam(fmt.Sprintf("How many schedules to return, at most %d.",
+		paramLimit: intParam(fmt.Sprintf("How many schedules to return, at most %d.",
 			maxReportSchedules)),
 	})
 }

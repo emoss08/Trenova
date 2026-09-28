@@ -171,7 +171,7 @@ type DistanceCalculationService interface {
 	) (*ShipmentDistancePreview, error)
 	PlanMoveJurisdictionMiles(
 		ctx context.Context,
-		req RecalculateMoveJurisdictionMilesRequest,
+		req *RecalculateMoveJurisdictionMilesRequest,
 	) (*MoveJurisdictionMilesPlan, error)
 	RecalculateMoveJurisdictionMiles(
 		ctx context.Context,

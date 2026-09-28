@@ -409,7 +409,7 @@ func snapshotMoveDistances(entity *shipment.Shipment) *shipment.Shipment {
 
 func (s *Service) jurisdictionMove(
 	ctx context.Context,
-	req services.RecalculateMoveJurisdictionMilesRequest,
+	req *services.RecalculateMoveJurisdictionMilesRequest,
 ) (*shipment.ShipmentMove, error) {
 	if req.ShipmentMoveID.IsNil() {
 		return nil, errortypes.NewBusinessError("Shipment move is required")
@@ -433,7 +433,7 @@ func (s *Service) jurisdictionMove(
 
 func (s *Service) PlanMoveJurisdictionMiles(
 	ctx context.Context,
-	req services.RecalculateMoveJurisdictionMilesRequest,
+	req *services.RecalculateMoveJurisdictionMilesRequest,
 ) (*services.MoveJurisdictionMilesPlan, error) {
 	move, err := s.jurisdictionMove(ctx, req)
 	if err != nil {
@@ -443,28 +443,41 @@ func (s *Service) PlanMoveJurisdictionMiles(
 	return &services.MoveJurisdictionMilesPlan{Move: move}, nil
 }
 
-func (s *Service) RecalculateMoveJurisdictionMiles(
+func (s *Service) moveShipmentAndControl(
 	ctx context.Context,
-	req services.RecalculateMoveJurisdictionMilesRequest,
-) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
-	move, err := s.jurisdictionMove(ctx, req)
-	if err != nil {
-		return nil, err
-	}
+	move *shipment.ShipmentMove,
+	tenantInfo pagination.TenantInfo,
+) (*shipment.Shipment, *distancecontrol.DistanceControl, error) {
 	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         move.ShipmentID,
-		TenantInfo: req.TenantInfo,
+		TenantInfo: tenantInfo,
 		ShipmentOptions: repositories.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	control, err := s.distanceControlRepo.EnsureDefault(ctx, pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return entity, control, nil
+}
+
+func (s *Service) RecalculateMoveJurisdictionMiles(
+	ctx context.Context,
+	req services.RecalculateMoveJurisdictionMilesRequest, //nolint:gocritic // the DistanceCalculationService port passes the request by value
+) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
+	move, err := s.jurisdictionMove(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+	entity, control, err := s.moveShipmentAndControl(ctx, move, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}

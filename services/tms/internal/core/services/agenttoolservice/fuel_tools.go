@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -44,6 +45,8 @@ const (
 	paramAssignedWorkerID     = "assignedWorkerId"
 
 	fuelPurchaseRecordEntity = "fuel_purchase"
+	keepWhenLeftOut          = " Leave it out to keep it."
+	searchTermIFTA           = "ifta"
 	fuelPurchaseKind         = "fuel purchase"
 	maxFuelVendorText        = 150
 	maxFuelReferenceText     = 100
@@ -177,7 +180,7 @@ func fuelInternalSpec(spec *receivableSpec) *receivableSpec {
 func fuelPurchaseProperties(forCorrection bool) map[string]any {
 	keep := ""
 	if forCorrection {
-		keep = " Leave it out to keep it."
+		keep = keepWhenLeftOut
 	}
 
 	properties := map[string]any{
@@ -414,7 +417,10 @@ type fuelPurchaseView struct {
 	Notes                string `json:"notes,omitempty"`
 }
 
-func fuelPurchaseViewOf(purchase *fuelpurchase.FuelPurchase, jurisdiction string) *fuelPurchaseView {
+func fuelPurchaseViewOf(
+	purchase *fuelpurchase.FuelPurchase,
+	jurisdiction string,
+) *fuelPurchaseView {
 	view := &fuelPurchaseView{
 		TractorID:            purchase.TractorID.String(),
 		Jurisdiction:         jurisdiction,
@@ -475,7 +481,10 @@ func fuelPurchaseRecord(purchase *fuelpurchase.FuelPurchase) toolpreview.Record 
 	}
 }
 
-func fuelPurchaseResult(action string, purchase *fuelpurchase.FuelPurchase) *agent.ToolExecutionResult {
+func fuelPurchaseResult(
+	action string,
+	purchase *fuelpurchase.FuelPurchase,
+) *agent.ToolExecutionResult {
 	return &agent.ToolExecutionResult{
 		Action: action,
 		Kind:   fuelPurchaseKind,
@@ -520,7 +529,7 @@ func newRecordFuelPurchaseTool(
 			paramQuantity,
 			paramTotalAmount,
 		},
-		searchTerms: []string{"fuel", "receipt", "diesel", "gallons", "ifta", "pump"},
+		searchTerms: []string{"fuel", "receipt", "diesel", "gallons", searchTermIFTA, "pump"},
 	}), receivablePlan[*fuelpurchaseservice.CreatePurchaseRequest, *labelledPurchase]{
 		request: newFuelPurchaseDraft,
 		plan: func(
@@ -602,7 +611,7 @@ func fuelPurchaseCorrectionFrom(
 		}
 	}
 	if len(values) == 0 {
-		return nil, fmt.Errorf("name at least one field of the purchase to correct")
+		return nil, errors.New("name at least one field of the purchase to correct")
 	}
 
 	return &fuelPurchaseCorrection{id: id, values: values}, nil
@@ -636,11 +645,10 @@ func (c *fuelPurchaseCorrection) request(
 }
 
 type labelledPurchaseChange struct {
-	change       *fuelpurchaseservice.PurchaseChange
-	request      *fuelpurchaseservice.UpdatePurchaseRequest
-	before       string
-	after        string
-	jurisdiction string
+	change  *fuelpurchaseservice.PurchaseChange
+	request *fuelpurchaseservice.UpdatePurchaseRequest
+	before  string
+	after   string
 }
 
 func newCorrectFuelPurchaseTool(
@@ -848,7 +856,7 @@ func fuelCardAssignmentFrom(params *serviceports.ToolExecuteParams) (*fuelCardAs
 		return nil, err
 	}
 	if tractor == nil && worker == nil {
-		return nil, fmt.Errorf("name the tractor, the driver or both the card goes to")
+		return nil, errors.New("name the tractor, the driver or both the card goes to")
 	}
 
 	return &fuelCardAssignment{id: id, tractor: tractor, worker: worker}, nil
@@ -981,7 +989,9 @@ func newAssignFuelCardTool(cards fuelCardKeeper) serviceports.AgentTool {
 	})
 }
 
-func targetFuelImport(resource permission.Resource) func(map[string]any) (serviceports.ToolTarget, bool) {
+func targetFuelImport(
+	resource permission.Resource,
+) func(map[string]any) (serviceports.ToolTarget, bool) {
 	return func(params map[string]any) (serviceports.ToolTarget, bool) {
 		return targetOf(params, paramFuelImportID, resource)
 	}

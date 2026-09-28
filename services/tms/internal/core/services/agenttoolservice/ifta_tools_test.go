@@ -239,7 +239,7 @@ type fakeMileRouter struct {
 
 func (f *fakeMileRouter) PlanMoveJurisdictionMiles(
 	_ context.Context,
-	req serviceports.RecalculateMoveJurisdictionMilesRequest,
+	req *serviceports.RecalculateMoveJurisdictionMilesRequest,
 ) (*serviceports.MoveJurisdictionMilesPlan, error) {
 	return &serviceports.MoveJurisdictionMilesPlan{Move: &shipment.ShipmentMove{
 		ID:                req.ShipmentMoveID,

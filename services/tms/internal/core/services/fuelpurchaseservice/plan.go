@@ -261,7 +261,10 @@ func (s *Service) PlanCommit(ctx context.Context, req *CommitRequest) (*CommitPl
 	return plan, nil
 }
 
-func (s *Service) PlanDiscard(ctx context.Context, req *DiscardRequest) (*ImportBatchChange, error) {
+func (s *Service) PlanDiscard(
+	ctx context.Context,
+	req *DiscardRequest,
+) (*ImportBatchChange, error) {
 	batch, err := s.loadBatch(ctx, &repositories.GetImportBatchByIDRequest{
 		ID:         req.BatchID,
 		TenantInfo: req.TenantInfo,

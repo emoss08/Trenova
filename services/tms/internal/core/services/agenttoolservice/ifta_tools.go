@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -107,7 +108,7 @@ type iftaMileageKeeper interface {
 type jurisdictionMileRouter interface {
 	PlanMoveJurisdictionMiles(
 		ctx context.Context,
-		req serviceports.RecalculateMoveJurisdictionMilesRequest,
+		req *serviceports.RecalculateMoveJurisdictionMilesRequest,
 	) (*serviceports.MoveJurisdictionMilesPlan, error)
 	RecalculateMoveJurisdictionMiles(
 		ctx context.Context,
@@ -122,7 +123,7 @@ type jurisdictionMileRouter interface {
 var (
 	_ iftaReturnKeeper       = (*iftaservice.Service)(nil)
 	_ iftaMileageKeeper      = (*iftaservice.Service)(nil)
-	_ jurisdictionMileRouter = (serviceports.DistanceCalculationService)(nil)
+	_ jurisdictionMileRouter = serviceports.DistanceCalculationService(nil)
 )
 
 type iftaReturnView struct {
@@ -220,7 +221,7 @@ func newGenerateIFTAReturnTool(returns iftaReturnKeeper) serviceports.AgentTool 
 			"delete_ifta_return removes the draft.",
 		properties:  iftaPeriodProperties(),
 		required:    []string{paramYear, paramQuarter},
-		searchTerms: []string{"ifta", "fuel tax", "quarterly return", "quarter"},
+		searchTerms: []string{searchTermIFTA, "fuel tax", "quarterly return", "quarter"},
 	}), receivablePlan[*iftaservice.GenerateReturnRequest, *ifta.Return]{
 		request: func(params *serviceports.ToolExecuteParams) (*iftaservice.GenerateReturnRequest, error) {
 			period, err := iftaPeriodFrom(params)
@@ -499,7 +500,7 @@ func newDeleteIFTAReturnTool(returns iftaReturnKeeper) serviceports.AgentTool {
 func iftaMileageProperties(forCorrection bool) map[string]any {
 	keep := ""
 	if forCorrection {
-		keep = " Leave it out to keep it."
+		keep = keepWhenLeftOut
 	}
 
 	properties := map[string]any{
@@ -644,7 +645,7 @@ func newRecordIFTAMileageEntryTool(entries iftaMileageKeeper) serviceports.Agent
 			"nothing is sent, and delete_ifta_mileage_entry removes them.",
 		properties:  iftaMileageProperties(false),
 		required:    []string{paramTractorID, paramJurisdictionID, paramTraveledAt, paramMiles},
-		searchTerms: []string{"ifta", "miles", "trip sheet", "state miles", "jurisdiction"},
+		searchTerms: []string{searchTermIFTA, "miles", "trip sheet", "state miles", "jurisdiction"},
 	}), receivablePlan[*ifta.JurisdictionMileageEntry, *labelledMileage]{
 		request: func(params *serviceports.ToolExecuteParams) (*ifta.JurisdictionMileageEntry, error) {
 			entry := &ifta.JurisdictionMileageEntry{
@@ -774,7 +775,7 @@ func newCorrectIFTAMileageEntryTool(entries iftaMileageKeeper) serviceports.Agen
 				}
 			}
 			if len(values) == 0 {
-				return nil, fmt.Errorf("name at least one field of the entry to correct")
+				return nil, errors.New("name at least one field of the entry to correct")
 			}
 
 			return &mileageCorrection{id: id, values: values}, nil
@@ -972,7 +973,7 @@ func newRecalculateMoveJurisdictionMilesTool(router jurisdictionMileRouter) serv
 			req serviceports.RecalculateMoveJurisdictionMilesRequest,
 			_ *serviceports.ToolExecuteParams,
 		) (*serviceports.MoveJurisdictionMilesPlan, error) {
-			return router.PlanMoveJurisdictionMiles(ctx, req)
+			return router.PlanMoveJurisdictionMiles(ctx, &req)
 		},
 		refused: func(serviceports.RecalculateMoveJurisdictionMilesRequest) string {
 			return "Would ask for a move's jurisdiction miles again."

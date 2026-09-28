@@ -215,7 +215,9 @@ var simulationParties = agenttoolschema.Source(
 	rateagreement.PartyTypeValues(),
 )
 
-func rateSimulationFrom(params *serviceports.ToolExecuteParams) (*ratesimulation.RateSimulation, error) {
+func rateSimulationFrom(
+	params *serviceports.ToolExecuteParams,
+) (*ratesimulation.RateSimulation, error) {
 	agreementID, err := requirePulid(params.Params, paramRateAgreementID)
 	if err != nil {
 		return nil, err

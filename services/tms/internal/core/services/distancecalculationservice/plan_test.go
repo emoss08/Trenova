@@ -39,21 +39,21 @@ func TestPlanMoveJurisdictionMiles_NamesTheMoveWithoutRoutingIt(t *testing.T) {
 
 	svc := &Service{l: zap.NewNop(), shipmentMoveRepo: moves}
 
-	plan, err := svc.PlanMoveJurisdictionMiles(t.Context(), services.RecalculateMoveJurisdictionMilesRequest{
+	plan, err := svc.PlanMoveJurisdictionMiles(t.Context(), &services.RecalculateMoveJurisdictionMilesRequest{
 		TenantInfo:     tenant,
 		ShipmentMoveID: routable.ID,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, routable.ID, plan.Move.ID)
 
-	_, err = svc.PlanMoveJurisdictionMiles(t.Context(), services.RecalculateMoveJurisdictionMilesRequest{
+	_, err = svc.PlanMoveJurisdictionMiles(t.Context(), &services.RecalculateMoveJurisdictionMilesRequest{
 		TenantInfo:     tenant,
 		ShipmentMoveID: single.ID,
 	})
 	var business *errortypes.BusinessError
 	require.ErrorAs(t, err, &business)
 
-	_, err = svc.PlanMoveJurisdictionMiles(t.Context(), services.RecalculateMoveJurisdictionMilesRequest{
+	_, err = svc.PlanMoveJurisdictionMiles(t.Context(), &services.RecalculateMoveJurisdictionMilesRequest{
 		TenantInfo: tenant,
 	})
 	require.ErrorAs(t, err, &business)

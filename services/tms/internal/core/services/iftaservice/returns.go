@@ -489,7 +489,10 @@ func validReturn(ret *ifta.Return) error {
 	return nil
 }
 
-func (s *Service) recomputable(ctx context.Context, req *ReturnActionRequest) (*ifta.Return, error) {
+func (s *Service) recomputable(
+	ctx context.Context,
+	req *ReturnActionRequest,
+) (*ifta.Return, error) {
 	ret, err := s.loadReturn(ctx, req.TenantInfo, req.ID, req.Version)
 	if err != nil {
 		return nil, err
@@ -504,7 +507,10 @@ func (s *Service) recomputable(ctx context.Context, req *ReturnActionRequest) (*
 	return ret, nil
 }
 
-func (s *Service) PlanRecompute(ctx context.Context, req *ReturnActionRequest) (*ReturnChange, error) {
+func (s *Service) PlanRecompute(
+	ctx context.Context,
+	req *ReturnActionRequest,
+) (*ReturnChange, error) {
 	ret, err := s.recomputable(ctx, req)
 	if err != nil {
 		return nil, err
@@ -730,7 +736,10 @@ func (s *Service) MarkFiled(ctx context.Context, req *MarkFiledRequest) (*ifta.R
 	return filed, nil
 }
 
-func (s *Service) amendment(ctx context.Context, req *AmendReturnRequest) (*ReturnAmendment, error) {
+func (s *Service) amendment(
+	ctx context.Context,
+	req *AmendReturnRequest,
+) (*ReturnAmendment, error) {
 	reason, err := requireReason(req.Reason)
 	if err != nil {
 		return nil, err
@@ -762,7 +771,10 @@ func (s *Service) amendment(ctx context.Context, req *AmendReturnRequest) (*Retu
 	return &ReturnAmendment{Filed: filed, Draft: draft, Reason: reason}, nil
 }
 
-func (s *Service) PlanAmend(ctx context.Context, req *AmendReturnRequest) (*ReturnAmendment, error) {
+func (s *Service) PlanAmend(
+	ctx context.Context,
+	req *AmendReturnRequest,
+) (*ReturnAmendment, error) {
 	plan, err := s.amendment(ctx, req)
 	if err != nil {
 		return nil, err
