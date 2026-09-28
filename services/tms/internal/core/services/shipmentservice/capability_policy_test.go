@@ -581,6 +581,18 @@ func (s *stubPermitService) UpdatePermit(
 	return e, nil
 }
 
+func (s *stubPermitService) PlanCreatePermit(
+	_ context.Context, e *permit.Permit,
+) (*permit.Permit, error) {
+	return e, nil
+}
+
+func (s *stubPermitService) PlanUpdatePermit(
+	_ context.Context, e *permit.Permit,
+) (*services.RecordChange[permit.Permit], error) {
+	return &services.RecordChange[permit.Permit]{Before: e, After: e}, nil
+}
+
 func (s *stubPermitService) WaiveRequirement(
 	_ context.Context, _ *services.WaiveRequirementRequest,
 ) (*permit.Requirement, error) {

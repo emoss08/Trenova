@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -112,19 +113,7 @@ func (s *Service) CreateEvent(
 		zap.String("workerId", entity.WorkerID.String()),
 	)
 
-	if _, err := s.loadWorker(ctx, eventTenant(entity), entity.WorkerID); err != nil {
-		return nil, err
-	}
-	entity.RecordedByID = userID
-	if entity.Status == "" {
-		entity.Status = worker.SafetyEventStatusOpen
-	}
-	if entity.Status == worker.SafetyEventStatusClosed {
-		now := timeutils.NowUnix()
-		entity.ClosedAt = &now
-		entity.ClosedByID = userID
-	}
-	if err := s.prepareEvent(ctx, entity); err != nil {
+	if err := s.prepareCreateEvent(ctx, entity, userID); err != nil {
 		return nil, err
 	}
 
@@ -151,6 +140,26 @@ func (s *Service) CreateEvent(
 	return created, nil
 }
 
+func (s *Service) prepareCreateEvent(
+	ctx context.Context,
+	entity *worker.WorkerSafetyEvent,
+	userID pulid.ID,
+) error {
+	if _, err := s.loadWorker(ctx, eventTenant(entity), entity.WorkerID); err != nil {
+		return err
+	}
+	entity.RecordedByID = userID
+	if entity.Status == "" {
+		entity.Status = worker.SafetyEventStatusOpen
+	}
+	if entity.Status == worker.SafetyEventStatusClosed {
+		now := timeutils.NowUnix()
+		entity.ClosedAt = &now
+		entity.ClosedByID = userID
+	}
+	return s.prepareEvent(ctx, entity)
+}
+
 // UpdateEvent edits the narrative and the points; it never moves the status
 // (Close does that so the resolution is always captured).
 func (s *Service) UpdateEvent(
@@ -160,6 +169,38 @@ func (s *Service) UpdateEvent(
 ) (*worker.WorkerSafetyEvent, error) {
 	log := s.l.With(zap.String("operation", "UpdateEvent"), zap.String("id", entity.ID.String()))
 
+	change, err := s.planUpdateEvent(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := s.repo.UpdateEvent(ctx, change.After)
+	if err != nil {
+		log.Error("failed to update safety event", zap.Error(err))
+		return nil, err
+	}
+
+	s.audit(&auditParams{
+		resource: permission.ResourceWorkerSafetyEvent, resourceID: updated.GetResourceID(),
+		operation: permission.OpUpdate, userID: userID, tenant: eventTenant(updated),
+		current: updated, previous: change.Before, comment: "Safety event updated", log: log,
+	})
+	s.publish(
+		ctx,
+		eventTenant(updated),
+		realtimeSafetyEvent,
+		permission.OpUpdate,
+		updated.ID,
+		userID,
+	)
+	s.refreshRollupQuietly(ctx, eventTenant(updated), updated.WorkerID)
+	return updated, nil
+}
+
+func (s *Service) planUpdateEvent(
+	ctx context.Context,
+	entity *worker.WorkerSafetyEvent,
+) (*services.RecordChange[worker.WorkerSafetyEvent], error) {
 	original, err := s.repo.GetEventByID(ctx, &repositories.GetWorkerSafetyEventByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: eventTenant(entity),
@@ -187,28 +228,7 @@ func (s *Service) UpdateEvent(
 	if err = s.prepareEvent(ctx, entity); err != nil {
 		return nil, err
 	}
-
-	updated, err := s.repo.UpdateEvent(ctx, entity)
-	if err != nil {
-		log.Error("failed to update safety event", zap.Error(err))
-		return nil, err
-	}
-
-	s.audit(&auditParams{
-		resource: permission.ResourceWorkerSafetyEvent, resourceID: updated.GetResourceID(),
-		operation: permission.OpUpdate, userID: userID, tenant: eventTenant(updated),
-		current: updated, previous: original, comment: "Safety event updated", log: log,
-	})
-	s.publish(
-		ctx,
-		eventTenant(updated),
-		realtimeSafetyEvent,
-		permission.OpUpdate,
-		updated.ID,
-		userID,
-	)
-	s.refreshRollupQuietly(ctx, eventTenant(updated), updated.WorkerID)
-	return updated, nil
+	return &services.RecordChange[worker.WorkerSafetyEvent]{Before: original, After: entity}, nil
 }
 
 type EventStatusRequest struct {
@@ -270,6 +290,35 @@ func (s *Service) moveEvent(
 ) (*worker.WorkerSafetyEvent, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
+	change, err := s.planMoveEvent(ctx, req, target)
+	if err != nil {
+		return nil, err
+	}
+	if change.Before.Status == target {
+		return change.Before, nil
+	}
+
+	saved, err := s.repo.UpdateEvent(ctx, change.After)
+	if err != nil {
+		log.Error("failed to move safety event", zap.Error(err))
+		return nil, err
+	}
+
+	s.audit(&auditParams{
+		resource: permission.ResourceWorkerSafetyEvent, resourceID: saved.GetResourceID(),
+		operation: operation, userID: req.UserID, tenant: req.TenantInfo,
+		current: saved, previous: change.Before, comment: comment, log: log,
+	})
+	s.publish(ctx, req.TenantInfo, realtimeSafetyEvent, operation, saved.ID, req.UserID)
+	s.refreshRollupQuietly(ctx, req.TenantInfo, saved.WorkerID)
+	return saved, nil
+}
+
+func (s *Service) planMoveEvent(
+	ctx context.Context,
+	req *EventStatusRequest,
+	target worker.SafetyEventStatus,
+) (*services.RecordChange[worker.WorkerSafetyEvent], error) {
 	original, err := s.repo.GetEventByID(ctx, &repositories.GetWorkerSafetyEventByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
@@ -285,7 +334,11 @@ func (s *Service) moveEvent(
 		)
 	}
 	if original.Status == target {
-		return original, nil
+		unchanged := *original
+		return &services.RecordChange[worker.WorkerSafetyEvent]{
+			Before: original,
+			After:  &unchanged,
+		}, nil
 	}
 
 	updated := *original
@@ -307,21 +360,7 @@ func (s *Service) moveEvent(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-
-	saved, err := s.repo.UpdateEvent(ctx, &updated)
-	if err != nil {
-		log.Error("failed to move safety event", zap.Error(err))
-		return nil, err
-	}
-
-	s.audit(&auditParams{
-		resource: permission.ResourceWorkerSafetyEvent, resourceID: saved.GetResourceID(),
-		operation: operation, userID: req.UserID, tenant: req.TenantInfo,
-		current: saved, previous: original, comment: comment, log: log,
-	})
-	s.publish(ctx, req.TenantInfo, realtimeSafetyEvent, operation, saved.ID, req.UserID)
-	s.refreshRollupQuietly(ctx, req.TenantInfo, saved.WorkerID)
-	return saved, nil
+	return &services.RecordChange[worker.WorkerSafetyEvent]{Before: original, After: &updated}, nil
 }
 
 // DeleteEvent removes an event recorded in error. Closed events are history
@@ -334,19 +373,9 @@ func (s *Service) DeleteEvent(
 ) error {
 	log := s.l.With(zap.String("operation", "DeleteEvent"), zap.String("id", id.String()))
 
-	original, err := s.repo.GetEventByID(ctx, &repositories.GetWorkerSafetyEventByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	original, err := s.PlanDeleteEvent(ctx, tenantInfo, id)
 	if err != nil {
 		return err
-	}
-	if original.IsClosed() {
-		return errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Closed events are part of the record and cannot be deleted. Reopen it first",
-		)
 	}
 	if err = s.repo.DeleteEvent(ctx, &repositories.GetWorkerSafetyEventByIDRequest{
 		ID:         id,

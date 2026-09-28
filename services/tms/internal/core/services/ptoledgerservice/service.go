@@ -397,19 +397,8 @@ func (s *Service) Adjust(
 	ctx context.Context,
 	req *AdjustRequest,
 ) (*worker.WorkerPTOLedgerEntry, error) {
-	if req.AmountDays.IsZero() {
-		return nil, errortypes.NewValidationError(
-			"amountDays",
-			errortypes.ErrInvalid,
-			"Amount cannot be zero",
-		)
-	}
-	if req.Note == "" {
-		return nil, errortypes.NewValidationError(
-			"note",
-			errortypes.ErrRequired,
-			"A note is required for manual adjustments",
-		)
+	if err := validateAdjust(req); err != nil {
+		return nil, err
 	}
 
 	entry, err := s.post(ctx, postParams{

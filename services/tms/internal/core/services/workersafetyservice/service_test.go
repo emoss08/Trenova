@@ -26,6 +26,7 @@ type fakeRepo struct {
 	events       []*worker.WorkerSafetyEvent
 	actions      []*worker.WorkerDisciplinaryAction
 	recognitions []*worker.WorkerRecognition
+	violations   []*worker.WorkerSafetyViolation
 }
 
 func (f *fakeRepo) ListEvents(

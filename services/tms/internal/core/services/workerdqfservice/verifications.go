@@ -84,15 +84,7 @@ func (s *Service) RecordVerification(
 ) (*worker.WorkerEmploymentVerification, error) {
 	tenantInfo := verificationTenant(entity)
 
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
-		ID:         entity.WorkerID,
-		TenantInfo: tenantInfo,
-	}); err != nil {
-		return nil, err
-	}
-
-	entity.RequestedByID = userID
-	if err := s.prepare(entity); err != nil {
+	if err := s.prepareRecord(ctx, entity, userID); err != nil {
 		return nil, err
 	}
 
@@ -146,23 +138,11 @@ func (s *Service) UpdateVerification(
 	ctx context.Context,
 	req *UpdateVerificationRequest,
 ) (*worker.WorkerEmploymentVerification, error) {
-	entity, err := s.repo.GetVerificationByID(
-		ctx,
-		&repositories.GetEmploymentVerificationByIDRequest{
-			ID:         req.VerificationID,
-			TenantInfo: req.TenantInfo,
-		},
-	)
+	change, err := s.PlanUpdateVerification(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	previous := *entity
-	applyVerificationUpdate(entity, req)
-
-	if err = s.prepare(entity); err != nil {
-		return nil, err
-	}
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateVerification(ctx, entity)
 	if err != nil {
@@ -175,7 +155,7 @@ func (s *Service) UpdateVerification(
 		userID:     req.UserID,
 		tenant:     req.TenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    updated.EmployerName + " is now " + updated.Status.Label(),
 	})
 	s.publish(ctx, req.TenantInfo, permission.OpUpdate, updated.ID, req.UserID)
@@ -278,33 +258,11 @@ func (s *Service) RecordFollowUp(
 	id pulid.ID,
 	userID pulid.ID,
 ) (*worker.WorkerEmploymentVerification, error) {
-	entity, err := s.repo.GetVerificationByID(
-		ctx,
-		&repositories.GetEmploymentVerificationByIDRequest{
-			ID:         id,
-			TenantInfo: tenantInfo,
-		},
-	)
+	change, err := s.PlanRecordFollowUp(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
 	}
-
-	if entity.Status != worker.VerificationRequested {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"Only a request that is awaiting a response can be chased",
-		)
-	}
-
-	previous := *entity
-	now := timeutils.NowUnix()
-	entity.FollowUpCount++
-	entity.LastFollowUpAt = &now
-
-	if err = s.prepare(entity); err != nil {
-		return nil, err
-	}
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateVerification(ctx, entity)
 	if err != nil {
@@ -317,7 +275,7 @@ func (s *Service) RecordFollowUp(
 		userID:     userID,
 		tenant:     tenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    "Followed up with " + updated.EmployerName,
 	})
 	s.publish(ctx, tenantInfo, permission.OpUpdate, updated.ID, userID)
@@ -335,13 +293,7 @@ func (s *Service) DeleteVerification(
 	id pulid.ID,
 	userID pulid.ID,
 ) error {
-	entity, err := s.repo.GetVerificationByID(
-		ctx,
-		&repositories.GetEmploymentVerificationByIDRequest{
-			ID:         id,
-			TenantInfo: tenantInfo,
-		},
-	)
+	entity, err := s.PlanDeleteVerification(ctx, tenantInfo, id)
 	if err != nil {
 		return err
 	}

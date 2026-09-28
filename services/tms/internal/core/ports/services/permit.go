@@ -135,6 +135,16 @@ type PermitService interface {
 		actor *RequestActor,
 	) (*permit.Permit, error)
 
+	// PlanCreatePermit checks a permit as CreatePermit does, writing nothing.
+	PlanCreatePermit(ctx context.Context, entity *permit.Permit) (*permit.Permit, error)
+
+	// PlanUpdatePermit is the permit as it stands and as UpdatePermit would
+	// leave it, writing nothing.
+	PlanUpdatePermit(
+		ctx context.Context,
+		entity *permit.Permit,
+	) (*RecordChange[permit.Permit], error)
+
 	WaiveRequirement(
 		ctx context.Context,
 		req *WaiveRequirementRequest,

@@ -530,10 +530,8 @@ func (s *service) CreatePermit(
 	entity *permit.Permit,
 	actor *services.RequestActor,
 ) (*permit.Permit, error) {
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
+	if _, err := s.PlanCreatePermit(ctx, entity); err != nil {
+		return nil, err
 	}
 
 	created, err := s.permitRepo.Create(ctx, entity)
@@ -565,10 +563,8 @@ func (s *service) UpdatePermit(
 	entity *permit.Permit,
 	actor *services.RequestActor,
 ) (*permit.Permit, error) {
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
+	if err := validatePermit(entity); err != nil {
+		return nil, err
 	}
 
 	// Read the row before overwriting it so the audit entry carries a real diff.
