@@ -76666,11 +76666,12 @@
     ]
   },
   "Fuel purchase": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/fuel-purchase"
     ]
   },
@@ -136117,11 +136118,12 @@
     ]
   },
   "Rate agreement": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/rate-agreement"
     ]
   },
@@ -144570,6 +144572,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Report run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Report run canceled": {
@@ -185924,7 +185935,7 @@
     ]
   },
   "This import has already been {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -218675,6 +218686,15 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "{0} is not a step in a rate agreement's review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/rateagreementservice"
     ]
   },
   "{0} is not a supported telematics provider": {

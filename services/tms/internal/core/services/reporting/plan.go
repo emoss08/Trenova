@@ -127,16 +127,14 @@ func (s *Service) PlanDeleteDashboard(
 func (s *Service) ownedSchedule(
 	ctx context.Context,
 	req *GetScheduleRequest,
-	action string,
+	refusal *errortypes.AuthorizationError,
 ) (*report.ReportSchedule, error) {
 	existing, err := s.GetSchedule(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if existing.RunAsID != req.TenantInfo.UserID {
-		return nil, errortypes.NewAuthorizationError(
-			"Only the schedule owner can " + action + " this schedule",
-		)
+		return nil, refusal
 	}
 
 	return existing, nil
@@ -146,10 +144,11 @@ func (s *Service) PlanUpdateSchedule(
 	ctx context.Context,
 	req *SaveScheduleRequest,
 ) (*ScheduleChange, error) {
-	existing, err := s.ownedSchedule(ctx, &GetScheduleRequest{
-		Request:    req.Request,
-		ScheduleID: req.ScheduleID,
-	}, "modify")
+	existing, err := s.ownedSchedule(
+		ctx,
+		&GetScheduleRequest{Request: req.Request, ScheduleID: req.ScheduleID},
+		errortypes.NewAuthorizationError("Only the schedule owner can modify this schedule"),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -194,5 +193,9 @@ func (s *Service) PlanDeleteSchedule(
 	ctx context.Context,
 	req *GetScheduleRequest,
 ) (*report.ReportSchedule, error) {
-	return s.ownedSchedule(ctx, req, "delete")
+	return s.ownedSchedule(
+		ctx,
+		req,
+		errortypes.NewAuthorizationError("Only the schedule owner can delete this schedule"),
+	)
 }
