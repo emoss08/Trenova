@@ -97,13 +97,50 @@ The same context is what `PreviewPrompt` shows in AI Control.
 |---|---|
 | Name | `delegate_task` |
 | Effect | `delegate` (`agent.ToolEffectDelegate`) |
-| Arguments | `agentId` (one of the turn's delegates), `task` (what to do and what to hand back, at most 4 000 characters) |
+| Arguments | `agentId` (one of the turn's delegates), `task` (what to do and what to hand back, at most 4 000 characters), `records` (optional: the records the task is about, each `{entityType, id}`, at most 8), `shareResults` (optional: ids of calls this turn made whose results the delegate should work from, at most 4) |
 | Cost to the primary | one tool call of its own budget |
 | Limit | 3 per turn (`maxDelegationsPerTurn`); the fourth is refused and counted |
 
 The loop (`agentruntime.Service.delegate`, in `Drive`) checks the arguments,
 emits `delegate_started`, hands the task to `TurnEffects.Delegate`, folds what
-came back into the turn, and emits `delegate_finished`. A turn holds the tool
+came back into the turn, and emits `delegate_finished`. The call is held to its
+whole schema (`toolschema.Validate`), so an undeclared key, a record kind the
+registry does not have or too many entries is refused with each problem named,
+before anybody is asked and without counting as a task handed out.
+
+### What a task carries besides its words
+
+A delegate cannot see the conversation, and a task written in prose is a copy
+the delegate has to take on trust: the Dispatch desk once described a shipment
+to the Shipment Desk, which read it again and retyped it wrong. So the task
+names what it is about instead:
+
+- **`records`** are `{entityType, id}` pairs. `entityType` is a key of the
+  record-link registry (`agenttoolschema.RecordEntities`, the same source
+  `open_page` spends, `x-enumOf: guide.entity`); an id is letters, digits, `_`
+  and `-`, at most 100. Duplicates are dropped.
+- **`shareResults`** are ids of tool calls this turn made. Each is read from the
+  turn's own messages by `ToolCallID` (never a delegate's step), unfenced, and
+  handed over as the tool returned it. A call that failed has no result and is
+  refused. A result is handed over **whole or not at all**: one over 8 KiB, or
+  results over 24 KiB together, are refused with the advice to hand over the
+  record instead, because half a document read as data is worse than none.
+
+What was handed over rides `DelegateCall.Context` (`Records`, `Results`) to
+`OpenDelegateActivity` and `assistantservice.OpenDelegate`, which asks the
+delegate `agentruntime.DelegateInput(task, context)`: the task, a line saying
+what follows is data from the agent that asked, the records fenced in
+`<untrusted_data>`, and each result fenced as `Result from {tool} (call {id})`.
+The saved task step carries the same text; the thread shows the task as the
+asking agent wrote it (the call's `task` argument).
+
+Both prompts say how to use it. "Agents you can ask" tells the parent to hand
+over records and results rather than retype them, to ask for a record to be
+made with a tool rather than described (a copy with `duplicate_shipment` or the
+tool that copies it, naming the record), and to name each waiting proposal by
+its `proposalId`. A delegated turn's output section tells the delegate to work
+from what it was handed, open each record by its id, and copy a record with
+the tool that copies it. A turn holds the tool
 only when `RunRequest.MayDelegate()`: a person is reading, the turn has a
 conversation, it is not itself a delegate's turn, and at least one delegate
 survived the checks above.
@@ -196,7 +233,7 @@ note on how to read it. It is the same object the reader receives as
                        "ids": {"definitionId": "rd_…"},
                        "record": {"entityType": "report", "id": "rd_…"}}}],
   "awaiting": [{"toolName": "share_report", "callId": "call_…", "tier": "Propose",
-                "summary": "On-time this month"}],
+                "summary": "On-time this month", "proposalId": "ap_…"}],
   "published": [{"id": "aart_…", "kind": "document", "title": "Report notes"}],
   "toolCallsUsed": 2
 }
@@ -238,6 +275,10 @@ The client links a made write by `recordPath(record.entityType, record.id)` when
 `kind` as an entity and picking the id (`{entity}Id`, then `id`, then the only
 one).
 
+Each write carries `proposalId`, the proposal it was filed as (`PendingAction.ProposalID`),
+and the note after the account tells the parent to name each waiting proposal by it, so
+the person can find its card and the parent never searches for what was made.
+
 A delegate that failed or was stopped is a failed call whose writes are still
 named under `made`: they happened. Anything else it may have begun is
 **unconfirmed** — the same rule as `unsettledToolOutcome` — and the note says
@@ -277,17 +318,42 @@ so; nothing ever claims a write did not happen.
   the client shows the saved answer.
 - **Proposals.** The delegate's writes are recorded as its own:
   `RunResult.Delegations` carries each task's definition and actions, and
-  `FinishTurn` records them through `persistDelegatedProposals` as a run of the
+  `FinishTurn` records them with the turn's own in **one** `persistProposals`
+  call (`proposalrecorder.RecordRequest.Delegated`), as a run of the
   delegate's definition whose subject is the same conversation. Decisions shows
   "Report Builder proposed…", trust accrues to the Report Builder, a shadow
   switch on it holds its cards, and the cards appear in the same conversation.
   The follow-up after a decision goes to the conversation, whose agent is the
   primary.
+- **One plan per turn.** The recorder opens one run per agent that filed a
+  write (the turn's own first), counts what waits on the person across all of
+  them, and when two or more do, opens **one** plan whose steps are numbered in
+  conversation order (`RecordRequest.CallOrder`, the position of each call in
+  the saved messages). "Void and recreate", a void the primary proposed and a
+  copy the delegate proposed, is one two-step plan run in the order asked,
+  under one approval. The plan hangs on the run of the first agent with a
+  waiting step and takes its name; each step keeps the run of the agent that
+  filed it. Deciding it (`agentplanservice.Decide`) refuses a plan any of whose
+  steps' agents is behind a shadow switch; deciding one's own (`DecideOwn`,
+  `AssertOwnPlan`) also requires every step's run to be in the caller's
+  conversation and access to each of those agents, the plan's own first. A
+  thread's plan is served on hold when any step's agent is
+  (`ListThreadPlans`). The follow-up names what each executed step made, in
+  words on the line the thread shows and by id, step by step, on the agent's.
+- **Runs, even for a read.** A hand-off that filed nothing still opens a
+  completed run of the delegate (`RecordRequest.OpenEmptyRuns`), so AI Control
+  lists every task an agent was handed. `AgentRun` serves `parentOwnerKind`,
+  `parentOwnerId`, `delegateCallId` and `handedBy`, the agent of the
+  conversation whose agent handed the task over (read through the request's
+  `ThreadAgentByID` and `AgentDefinitionByID` loaders), and the run list reads
+  "Handed by {agent}".
 - **Artifacts.** What the delegate's tools produced, and the documents it
   published, are kept beside the conversation as usual; each is tied to the
   delegate's own saved message.
 - **Transcript.** The delegate's steps are one section, "Handed to {agent}",
-  quoted under the call.
+  quoted under the call. In the thread a settled hand-off is drawn open onto
+  its task, steps and answer, with its chevron always shown, so after a reload
+  the delegate's work is in view (#628).
 - **Trajectory.** Every event, tagged, is kept with the turn's events.
 - **The run's parent.** The delegate's run records where it came from:
   `turn_id` and `parent_owner_id` are the asking turn, `parent_owner_kind` is
@@ -368,6 +434,15 @@ model replies the workflow already holds, and the call id and definition version
 on the usage attribution come from the delegate's own request. None of it adds a
 command. See [agent-runtime.md](agent-runtime.md#waiting-on-in-flight-executions).
 
+Records and shared results took no gate. `DelegateCall.Context` is optional data on
+the activity input, built in workflow code only from the call's arguments and the
+turn's own messages, which the workflow already holds; replay does not compare
+activity inputs, and a call made before `records` and `shareResults` existed carries
+neither, so its context is nil and its input is what it was. The delegate's
+question is built inside `OpenDelegateActivity`. Recording the turn's and its
+delegates' writes in one call, the ordered plan and the run of a read-only hand-off
+all happen in `FinishTurnActivity`; no command is added, removed or reordered.
+
 A rolling deploy is the one exposure: a turn opened by a new worker and replayed
 by an old one would dispatch `delegate_task` as a tool. Finish rolling the
 chat-queue workers before an allowlist is configured.
@@ -380,7 +455,7 @@ each is enforced on the server.
 
 | What | Where |
 |---|---|
-| **Deciding a plan in your own conversation.** `decideMyPlan(id, input)` needs `assistant:update`, a plan whose run's subject is an assistant thread the caller owns (someone else's is *not found*), and access to the agent whose run raised it — for a delegate's plan, the delegate. It then goes through `agentplanservice.Decide`, so every step is decided by the decision service as the caller and each write is permission-checked against them when it runs. The in-thread plan card uses it; AI Control and the decisions queue keep `decideAgentPlan` (`agent_proposal:update`). | `agentplanservice.DecideOwn`, `resolver.DecideMyPlan`, `authzlint` (`TestAgentAccessResolversAreAuthorized`) |
+| **Deciding a plan in your own conversation.** `decideMyPlan(id, input)` needs `assistant:update`, a plan whose run's subject is an assistant thread the caller owns (someone else's is *not found*), and access to every agent with a step in it — the one whose run the plan hangs on, and each agent a step was filed by, such as a delegate. It then goes through `agentplanservice.Decide`, so every step is decided by the decision service as the caller and each write is permission-checked against them when it runs. The in-thread plan card uses it; AI Control and the decisions queue keep `decideAgentPlan` (`agent_proposal:update`). | `agentplanservice.DecideOwn`, `resolver.DecideMyPlan`, `authzlint` (`TestAgentAccessResolversAreAuthorized`) |
 | **Why a conversation cannot continue.** A thread is served with `canContinue` and, when it is false, `cannotContinueReason`: `AgentDeleted`, `NoAccess` (the reader may not use the agent, or the assistant at all), `AgentDisabled`, or `AgentNotConversational` (it now runs on a schedule, an event or continuously), in that order of precedence, so a reader is never told an agent they could not use anyway was merely turned off. Worked out when served, never stored. | `assistantservice.markContinuable`, `conversation.ContinueRefusal` |
 | **Saving an agent with who may use it.** `POST`/`PUT /agent-definitions/` take `accessMode` and `accessRoleIds` together (both absent keeps access; one without the other is refused). The save and the access are one transaction (`AgentAccessService.SaveWithAccess`), so a restricted agent is created restricted and enabled in one request. Changing access needs `role:update` as well, as `setAgentAccess` does; access that already reads as asked needs nothing more, and the client sends it only when it changed. | `agentdefinitionservice.save`, `agentaccessservice.SaveWithAccess` |
 | **The audience of an unsaved form.** `agentAccessPreview(input)` works each role's coverage and, while the form says Everyone, the sensitive tools out of the tools and access the form holds (for a saved agent, its other settings as saved), writing nothing. The form asks it debounced, keyed by the normalized request. | `agentaccessservice.PreviewAudience` |
