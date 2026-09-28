@@ -486,3 +486,53 @@ cases:
     expect: [change_accounting_backfill]
   - request: assign the bank receipt work item to Maria
     expect: [triage_bank_receipt_work_item]
+  - request: log the accident the driver had on I-80 this morning
+    expect: [open_worker_safety_event]
+  - request: add the roadside violation from the inspection report
+    expect: [record_safety_violation]
+  - request: close the safety event now that the brakes are fixed
+    expect: [change_worker_safety_event_status]
+  - request: show this driver's safety events and violations
+    expect: [list_worker_safety_events]
+  - request: give the driver recognition for a million safe miles
+    expect: [give_worker_recognition]
+  - request: schedule a post-accident drug test for the driver
+    expect: [schedule_dot_test]
+  - request: draw this quarter's random drug and alcohol testing round
+    expect: [run_dot_random_draw]
+  - request: which drivers were selected in the random testing draw
+    expect: [get_dot_random_draw]
+  - request: mark the random selection as notified
+    expect: [update_dot_random_selection]
+  - request: open an FMLA leave case for the driver
+    expect: [open_leave_case]
+  - request: record a day of leave taken against the leave case
+    expect: [record_leave_day]
+  - request: assign the hazmat training course to these drivers
+    expect: [assign_worker_training, assign_required_worker_training]
+  - request: record that the driver completed the training course
+    expect: [record_training_completion]
+  - request: record the driver's new medical card
+    expect: [record_worker_credential]
+  - request: archive the endorsement the driver surrendered
+    expect: [archive_worker_credential]
+  - request: file a previous employer on the driver qualification file
+    expect: [record_employment_verification]
+  - request: we followed up with the previous employer again today
+    expect: [log_employment_verification_request]
+  - request: mark the road test on the onboarding checklist complete
+    expect: [update_worker_checklist_item]
+  - request: enter the injury on the OSHA log
+    expect: [record_worker_injury]
+  - request: file a vacation time off request for the driver
+    expect: [request_worker_pto]
+  - request: record the oversize permit Indiana issued for this shipment
+    expect: [record_shipment_permit]
+  - request: resolve the driver's pay dispute and pay back the detention
+    expect: [resolve_settlement_dispute]
+  - request: approve the lumper expense the driver submitted for reimbursement
+    expect: [review_driver_expense]
+  - request: generate the payroll export for the last two weeks
+    expect: [generate_payroll_export]
+  - request: draft the performance review scores for the driver
+    expect: [draft_performance_review]
