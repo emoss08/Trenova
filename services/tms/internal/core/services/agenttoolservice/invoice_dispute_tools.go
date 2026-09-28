@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 )
 
 const (
@@ -21,22 +22,28 @@ const (
 )
 
 var (
-	disputeReasonCodes = []invoice.DisputeReasonCode{
-		invoice.DisputeReasonRateDiscrepancy,
-		invoice.DisputeReasonAccessorialDisputed,
-		invoice.DisputeReasonServiceFailure,
-		invoice.DisputeReasonDuplicateBilling,
-		invoice.DisputeReasonWrongBillTo,
-		invoice.DisputeReasonMissingDocumentation,
-		invoice.DisputeReasonOther,
-	}
-	disputeResolutions = []invoice.DisputeResolution{
-		invoice.DisputeResolutionCreditIssued,
-		invoice.DisputeResolutionInvoiceUpheld,
-		invoice.DisputeResolutionRebilled,
-		invoice.DisputeResolutionWrittenOff,
-		invoice.DisputeResolutionCustomerWithdrew,
-	}
+	disputeReasonCodes = agenttoolschema.Source(
+		"invoice.disputeReasonCode",
+		[]invoice.DisputeReasonCode{
+			invoice.DisputeReasonRateDiscrepancy,
+			invoice.DisputeReasonAccessorialDisputed,
+			invoice.DisputeReasonServiceFailure,
+			invoice.DisputeReasonDuplicateBilling,
+			invoice.DisputeReasonWrongBillTo,
+			invoice.DisputeReasonMissingDocumentation,
+			invoice.DisputeReasonOther,
+		},
+	)
+	disputeResolutions = agenttoolschema.Source(
+		"invoice.disputeResolution",
+		[]invoice.DisputeResolution{
+			invoice.DisputeResolutionCreditIssued,
+			invoice.DisputeResolutionInvoiceUpheld,
+			invoice.DisputeResolutionRebilled,
+			invoice.DisputeResolutionWrittenOff,
+			invoice.DisputeResolutionCustomerWithdrew,
+		},
+	)
 )
 
 type invoiceDisputer interface {
@@ -100,8 +107,8 @@ func newOpenInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool 
 		properties: map[string]any{
 			paramInvoiceID: stringProperty(
 				"The posted invoice, from list_invoices or get_invoice.", 0),
-			paramDisputeReasonCode: enumProperty(
-				"Why the customer is withholding payment.", enumNames(disputeReasonCodes)),
+			paramDisputeReasonCode: agenttoolschema.Enum(
+				"Why the customer is withholding payment.", disputeReasonCodes),
 			paramDisputedAmount: stringProperty(
 				"How much of the invoice the customer disputes, as a decimal such as 125.00.", 0),
 			paramDisputeNotes: stringProperty(
@@ -146,7 +153,7 @@ func openDisputeRequest(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := requireEnum(params.Params, paramDisputeReasonCode, disputeReasonCodes)
+	reason, err := requireEnum(params.Params, paramDisputeReasonCode, disputeReasonCodes.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -185,8 +192,8 @@ func newResolveInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTo
 			"to collections; the outcome is a biller's call, so the agent proposes it.",
 		properties: map[string]any{
 			paramDisputeID: disputeIDProperty(),
-			paramDisputeResolution: enumProperty(
-				"How the dispute ended.", enumNames(disputeResolutions)),
+			paramDisputeResolution: agenttoolschema.Enum(
+				"How the dispute ended.", disputeResolutions),
 			paramResolutionAdjustmentID: stringProperty(
 				"The executed adjustment that credited or wrote off the amount, from "+
 					"list_invoice_adjustments. Required for CreditIssued and WrittenOff.", 0),
@@ -232,7 +239,7 @@ func resolveDisputeRequest(
 	if err != nil {
 		return nil, err
 	}
-	resolution, err := requireEnum(params.Params, paramDisputeResolution, disputeResolutions)
+	resolution, err := requireEnum(params.Params, paramDisputeResolution, disputeResolutions.Values)
 	if err != nil {
 		return nil, err
 	}

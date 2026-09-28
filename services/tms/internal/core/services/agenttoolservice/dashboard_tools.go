@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,6 +29,13 @@ uses, so a described dashboard comes out looking like a built one. What a tile
 points at is checked against the reports that exist — a tile referencing a
 report nobody has is a tile that renders an error forever.
 */
+
+var dashboardTileKinds = agenttoolschema.Source("report.tileKind", []report.TileKind{
+	report.TileKindTable,
+	report.TileKindChart,
+	report.TileKindKPI,
+	report.TileKindText,
+})
 
 type dashboardWriter interface {
 	CreateDashboard(
@@ -112,16 +120,10 @@ func tileSchema() map[string]any {
 		"type":     "object",
 		"required": []string{"kind"},
 		"properties": map[string]any{
-			"kind": map[string]any{
-				"type":        "string",
-				"description": "table, chart or kpi draws a report; text shows words.",
-				"enum": []string{
-					string(report.TileKindTable),
-					string(report.TileKindChart),
-					string(report.TileKindKPI),
-					string(report.TileKindText),
-				},
-			},
+			"kind": agenttoolschema.Enum(
+				"table, chart or kpi draws a report; text shows words.",
+				dashboardTileKinds,
+			),
 			"title": map[string]any{
 				"type":        "string",
 				"description": "Heading shown on the tile. Defaults to the report's name.",

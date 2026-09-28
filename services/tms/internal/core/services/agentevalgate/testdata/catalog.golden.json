@@ -229,7 +229,8 @@
               "NoActionRequired",
               "FalsePositive"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "carrierIntel.findingResolution"
           }
         },
         "required": [
@@ -358,7 +359,8 @@
                   "kpi",
                   "text"
                 ],
-                "type": "string"
+                "type": "string",
+                "x-enumOf": "report.tileKind"
               },
               "text": {
                 "description": "The words a text tile shows.",
@@ -704,13 +706,15 @@
             "type": "string"
           },
           "priority": {
-            "description": "How urgently dispatch should read it. Defaults to Normal; use High only for something that changes what happens to the load today.",
+            "description": "How urgently dispatch should read it. Defaults to Normal; use High or Urgent only for something that changes what happens to the load today.",
             "enum": [
               "Low",
               "Normal",
-              "High"
+              "High",
+              "Urgent"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "shipment.commentPriority"
           },
           "shipmentId": {
             "description": "The shipment to comment on, from the page, list_shipments or search_shipments.",
@@ -725,7 +729,8 @@
               "Driver",
               "Accounting"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "shipment.commentVisibility"
           }
         },
         "required": [
@@ -1748,7 +1753,8 @@
               "Flat",
               "PerMile"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "shipment.carrierRateMethod"
           },
           "replace": {
             "description": "Replace the carrier already on the move, canceling their assignment and voiding their rate confirmation. Off by default.",
@@ -2533,7 +2539,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -2574,7 +2581,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -2631,7 +2639,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           },
           "targetType": {
             "description": "The kind of Trenova record or setting, when naming it by recordId or key.",
@@ -2647,7 +2656,8 @@
               "PaymentTerm",
               "PaymentMethod"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "accountingSync.mappingTargetType"
           }
         },
         "required": [
@@ -2900,7 +2910,8 @@
               "recurring shipments",
               "formula templates"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "tableView.entity"
           }
         },
         "required": [
@@ -2940,6 +2951,45 @@
           "additionalCharges": {
             "description": "The corrected additional charge set to apply to the item.",
             "items": {
+              "additionalProperties": false,
+              "properties": {
+                "accessorialChargeId": {
+                  "description": "The accessorial, from list_accessorial_charges.",
+                  "type": "string"
+                },
+                "amount": {
+                  "description": "The charge's amount in major units, as a decimal such as 125.00.",
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                },
+                "id": {
+                  "description": "The existing charge this line keeps or corrects, from the item's charges; leave it out for a charge that is new.",
+                  "type": "string"
+                },
+                "method": {
+                  "description": "How the amount is applied: Flat once, PerUnit times the unit, Percentage of the linehaul.",
+                  "enum": [
+                    "Flat",
+                    "PerUnit",
+                    "Percentage"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "accessorialCharge.method"
+                },
+                "unit": {
+                  "description": "How many units the charge covers; 1 for a flat charge.",
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "accessorialChargeId",
+                "method",
+                "unit",
+                "amount"
+              ],
               "type": "object"
             },
             "type": "array"
@@ -3004,7 +3054,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           },
           "targetType": {
             "description": "The kind of Trenova record or setting, when naming it by recordId or key.",
@@ -3020,7 +3071,8 @@
               "PaymentTerm",
               "PaymentMethod"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "accountingSync.mappingTargetType"
           }
         },
         "required": [
@@ -3163,7 +3215,8 @@
                     "kpi",
                     "text"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "report.tileKind"
                 },
                 "text": {
                   "description": "The words a text tile shows.",
@@ -3289,7 +3342,8 @@
               "CreditMemo",
               "DebitMemo"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "invoice.memoBillType"
           },
           "customerId": {
             "description": "The customer, from list_customers or get_invoice.",
@@ -3302,6 +3356,7 @@
           "lines": {
             "description": "The memo's lines, each a positive amount.",
             "items": {
+              "additionalProperties": false,
               "properties": {
                 "accessorialChargeId": {
                   "description": "The accessorial the line corrects, from get_invoice's lines.",
@@ -3553,7 +3608,8 @@
               "EverySettlement",
               "Monthly"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.deductionFrequency"
           },
           "payCodeId": {
             "description": "The deduction pay code it posts under, from list_pay_codes.",
@@ -3628,7 +3684,8 @@
               "EverySettlement",
               "Monthly"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.earningFrequency"
           },
           "payCodeId": {
             "description": "The earning pay code it posts under, from list_pay_codes.",
@@ -3798,12 +3855,13 @@
           "defaultFormat": {
             "description": "The file format a run produces unless one is asked for. Default csv.",
             "enum": [
-              "csv",
               "xlsx",
+              "csv",
               "pdf",
               "json"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "report.format"
           },
           "definition": {
             "additionalProperties": true,
@@ -4103,7 +4161,8 @@
               "private",
               "shared"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "report.visibility"
           }
         },
         "required": [
@@ -4154,7 +4213,7 @@
         "additionalProperties": false,
         "properties": {
           "shipment": {
-            "additionalProperties": true,
+            "additionalProperties": false,
             "description": "The shipment, in the shape the shipment form sends.",
             "properties": {
               "bol": {
@@ -4194,11 +4253,13 @@
                             "type": "integer"
                           },
                           "scheduleType": {
+                            "description": "Open for a window, Appointment for a fixed time. Defaults to Open.",
                             "enum": [
                               "Open",
                               "Appointment"
                             ],
-                            "type": "string"
+                            "type": "string",
+                            "x-enumOf": "shipment.stopScheduleType"
                           },
                           "scheduledWindowEnd": {
                             "description": "Unix seconds.",
@@ -4212,13 +4273,15 @@
                             "type": "integer"
                           },
                           "type": {
+                            "description": "What happens at the stop.",
                             "enum": [
                               "Pickup",
                               "Delivery",
                               "SplitPickup",
                               "SplitDelivery"
                             ],
-                            "type": "string"
+                            "type": "string",
+                            "x-enumOf": "shipment.stopType"
                           },
                           "weight": {
                             "type": "integer"
@@ -4329,7 +4392,8 @@
               "all",
               "any"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "tableChangeAlert.conditionMatch"
           },
           "conditions": {
             "description": "Narrow when it fires: each compares a column (field) to a value, e.g. status changed_to Delayed. is_null, is_not_null and changed take no value. Leave empty to fire on every matching event.",
@@ -4355,7 +4419,8 @@
                     "changed_from",
                     "changed"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "tableChangeAlert.conditionOperator"
                 },
                 "value": {
                   "type": "string"
@@ -4382,7 +4447,8 @@
                 "UPDATE",
                 "DELETE"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "tableChangeAlert.eventType"
             },
             "maxItems": 3,
             "type": "array"
@@ -5315,7 +5381,8 @@
               "Customer",
               "Carrier"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "rating.side"
           }
         },
         "required": [
@@ -5440,11 +5507,50 @@
           },
           "category": {
             "description": "What kind of problem it is, such as MissingDocumentation, IncorrectRates, WeightDiscrepancy, AccessorialDispute, DuplicateCharge or RateNotOnFile.",
-            "type": "string"
+            "enum": [
+              "MissingDocumentation",
+              "IncorrectRates",
+              "WeightDiscrepancy",
+              "AccessorialDispute",
+              "DuplicateCharge",
+              "MissingReferenceNumber",
+              "CustomerInformationError",
+              "ServiceFailure",
+              "RateNotOnFile",
+              "MissingBOL",
+              "RateMissingBasis",
+              "RateVarianceRequiresAction",
+              "UnresolvedServiceFailures",
+              "MissingRequiredDocument",
+              "ConfidenceBelowThreshold",
+              "UnableToDiagnose",
+              "Other"
+            ],
+            "type": "string",
+            "x-enumOf": "agent.exceptionCategory"
           },
           "evidence": {
             "description": "At least one record that shows the problem, each as {type, id, note}: a document, a charge, a rate, the shipment.",
             "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "description": "The record's id.",
+                  "type": "string"
+                },
+                "note": {
+                  "description": "What the record shows, in a sentence.",
+                  "type": "string"
+                },
+                "type": {
+                  "description": "What kind of record it is: document, charge, rate, shipment.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "id"
+              ],
               "type": "object"
             },
             "type": "array"
@@ -5454,8 +5560,15 @@
             "type": "string"
           },
           "severity": {
-            "description": "Low, Medium, High or Critical: how much it holds up billing.",
-            "type": "string"
+            "description": "How much it holds up billing.",
+            "enum": [
+              "Low",
+              "Medium",
+              "High",
+              "Critical"
+            ],
+            "type": "string",
+            "x-enumOf": "agent.severity"
           },
           "subjectId": {
             "description": "The billing queue item being flagged: this run's subject.",
@@ -5871,7 +5984,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           },
           "targetType": {
             "description": "The kind of Trenova record or setting, when naming it by recordId or key.",
@@ -5887,7 +6001,8 @@
               "PaymentTerm",
               "PaymentMethod"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "accountingSync.mappingTargetType"
           }
         },
         "required": [
@@ -5980,7 +6095,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -6440,7 +6556,8 @@
               "Leadership",
               "General"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "briefing.role"
           }
         },
         "type": "object"
@@ -7988,7 +8105,8 @@
               "FuelCard",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.advanceSource"
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
@@ -8146,7 +8264,8 @@
                     "amount",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_accessorial_charges.field"
                 },
                 "operator": {
                   "enum": [
@@ -8169,7 +8288,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_accessorial_charges.operator"
                 },
                 "value": {
                   "type": "string"
@@ -8209,7 +8329,8 @@
               "amount",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_accessorial_charges.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -8217,7 +8338,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -8265,7 +8387,8 @@
                 "VoidedInProvider",
                 "CustomerBalanceMismatch"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.driftKind"
             },
             "maxItems": 5,
             "type": "array"
@@ -8290,7 +8413,8 @@
                 "DriverBill",
                 "DriverBillPayment"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.driftObjectType"
             },
             "maxItems": 10,
             "type": "array"
@@ -8308,7 +8432,8 @@
                 "Resolved",
                 "Dismissed"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.driftStatus"
             },
             "maxItems": 3,
             "type": "array"
@@ -8318,7 +8443,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -8372,7 +8498,8 @@
                 "CustomerPayment",
                 "BillPayment"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.inboundChangeKind"
             },
             "maxItems": 2,
             "type": "array"
@@ -8399,7 +8526,8 @@
                 "SentFromTrenova",
                 "ApplyFailed"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.inboundChangeReason"
             },
             "maxItems": 12,
             "type": "array"
@@ -8419,7 +8547,8 @@
                 "Ignored",
                 "Superseded"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.inboundChangeStatus"
             },
             "maxItems": 5,
             "type": "array"
@@ -8429,7 +8558,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -8482,7 +8612,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           },
           "targetType": {
             "description": "Only gaps of this kind. Leave it out for every kind.",
@@ -8498,7 +8629,8 @@
               "PaymentTerm",
               "PaymentMethod"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "accountingSync.mappingTargetType"
           }
         },
         "required": [
@@ -8567,7 +8699,8 @@
                 "DriverBill",
                 "DriverBillPayment"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.syncObjectType"
             },
             "maxItems": 12,
             "type": "array"
@@ -8589,7 +8722,8 @@
                 "Conflict",
                 "Configuration"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.syncErrorCategory"
             },
             "maxItems": 11,
             "type": "array"
@@ -8617,7 +8751,8 @@
                 "Skipped",
                 "Superseded"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.syncStatus"
             },
             "maxItems": 9,
             "type": "array"
@@ -8627,7 +8762,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -8686,7 +8822,8 @@
                     "agentDefinitionId",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_agent_runs.field"
                 },
                 "operator": {
                   "enum": [
@@ -8709,7 +8846,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_agent_runs.operator"
                 },
                 "value": {
                   "type": "string"
@@ -8751,7 +8889,8 @@
             "enum": [
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_agent_runs.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -8759,7 +8898,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -8909,7 +9049,8 @@
                     "reviewStartedAt",
                     "allocatedTotalAmount"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_billing_queue_items.field"
                 },
                 "operator": {
                   "enum": [
@@ -8932,7 +9073,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_billing_queue_items.operator"
                 },
                 "value": {
                   "type": "string"
@@ -8973,7 +9115,8 @@
               "reviewStartedAt",
               "allocatedTotalAmount"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_billing_queue_items.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -8981,7 +9124,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -9048,7 +9192,8 @@
               "ReadyToInvoice",
               "Completed"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "billingTransfer.candidateStatus"
           }
         },
         "type": "object"
@@ -9102,7 +9247,8 @@
               "Resolved",
               "Rejected"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "carrierSettlement.invoiceMatchStatus"
           }
         },
         "type": "object"
@@ -9162,7 +9308,8 @@
               "Paid",
               "Voided"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "carrierSettlement.status"
           }
         },
         "type": "object"
@@ -9215,7 +9362,8 @@
                     "carrierType",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_carriers.field"
                 },
                 "operator": {
                   "enum": [
@@ -9238,7 +9386,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_carriers.operator"
                 },
                 "value": {
                   "type": "string"
@@ -9278,7 +9427,8 @@
               "name",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_carriers.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -9286,7 +9436,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -9334,7 +9485,8 @@
               "Warning",
               "Watch"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "accountingDrift.severity"
           }
         },
         "type": "object"
@@ -9386,7 +9538,8 @@
                     "hazardousMaterialId",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_commodities.field"
                 },
                 "operator": {
                   "enum": [
@@ -9409,7 +9562,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_commodities.operator"
                 },
                 "value": {
                   "type": "string"
@@ -9448,7 +9602,8 @@
               "name",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_commodities.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -9456,7 +9611,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -9550,7 +9706,8 @@
               "Posted",
               "Reversed"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "customerPayment.listStatus"
           }
         },
         "type": "object"
@@ -9601,7 +9758,8 @@
                     "mcNumber",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_customers.field"
                 },
                 "operator": {
                   "enum": [
@@ -9624,7 +9782,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_customers.operator"
                 },
                 "value": {
                   "type": "string"
@@ -9665,7 +9824,8 @@
               "city",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_customers.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -9673,7 +9833,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -9762,7 +9923,8 @@
               "NoticeDueSoon",
               "AwaitingApproval"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "detention.urgency"
           }
         },
         "type": "object"
@@ -9811,7 +9973,8 @@
                     "isSystem",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_document_types.field"
                 },
                 "operator": {
                   "enum": [
@@ -9834,7 +9997,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_document_types.operator"
                 },
                 "value": {
                   "type": "string"
@@ -9874,7 +10038,8 @@
               "name",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_document_types.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -9882,7 +10047,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -9934,7 +10100,8 @@
               "Settled",
               "Voided"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverSettlement.payEventStatus"
           },
           "workerId": {
             "description": "Only this driver's pay, by id from list_workers or search_worker.",
@@ -9997,7 +10164,8 @@
               "Paid",
               "Voided"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverSettlement.status"
           },
           "workerId": {
             "description": "Only this driver's settlements, by id from list_workers or search_worker.",
@@ -10050,7 +10218,8 @@
               "Matched",
               "Variance"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.carrierInvoiceReconciliationStatus"
           }
         },
         "type": "object"
@@ -10110,7 +10279,8 @@
               "Quarantined",
               "Duplicate"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.inboundFileStatus"
           }
         },
         "type": "object"
@@ -10157,7 +10327,8 @@
               "Failed",
               "DeadLettered"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.messageDeliveryStatus"
           },
           "direction": {
             "description": "Outbound for what this organization sent, Inbound for what partners sent.",
@@ -10165,7 +10336,8 @@
               "Inbound",
               "Outbound"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.documentDirection"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -10185,7 +10357,8 @@
               "997",
               "999"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.transactionSet"
           }
         },
         "type": "object"
@@ -10241,7 +10414,8 @@
               "Active",
               "Inactive"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.partnerStatus"
           }
         },
         "type": "object"
@@ -10298,7 +10472,8 @@
               "Ignored",
               "Superseded"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.tenderChangeStatus"
           }
         },
         "type": "object"
@@ -10353,7 +10528,8 @@
               "Failed",
               "Ignored"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.transferChangeStatus"
           }
         },
         "type": "object"
@@ -10397,7 +10573,8 @@
               "Inbound",
               "Outbound"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.transferDirection"
           },
           "inboundFileId": {
             "description": "Only the tenders one inbound file carried, by id from list_edi_inbound_files or this run's subject.",
@@ -10420,7 +10597,8 @@
               "Canceled",
               "Failed"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.transferStatus"
           }
         },
         "type": "object"
@@ -10505,7 +10683,8 @@
                     "createdAt",
                     "class"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_equipment_types.field"
                 },
                 "operator": {
                   "enum": [
@@ -10528,7 +10707,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_equipment_types.operator"
                 },
                 "value": {
                   "type": "string"
@@ -10567,7 +10747,8 @@
               "code",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_equipment_types.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -10575,7 +10756,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -10622,7 +10804,8 @@
               "Active",
               "Closed"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.escrowAccountStatus"
           },
           "workerId": {
             "description": "Only this driver's, by id from search_worker or list_workers.",
@@ -10728,7 +10911,8 @@
                     "endDate",
                     "isAdjusting"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_fiscal_periods.field"
                 },
                 "operator": {
                   "enum": [
@@ -10751,7 +10935,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_fiscal_periods.operator"
                 },
                 "value": {
                   "type": "string"
@@ -10792,7 +10977,8 @@
               "startDate",
               "endDate"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_fiscal_periods.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -10800,7 +10986,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -10848,7 +11035,8 @@
                     "description",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_fleet_codes.field"
                 },
                 "operator": {
                   "enum": [
@@ -10871,7 +11059,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_fleet_codes.operator"
                 },
                 "value": {
                   "type": "string"
@@ -10910,7 +11099,8 @@
               "code",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_fleet_codes.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -10918,7 +11108,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -10966,7 +11157,8 @@
                     "status",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_formula_templates.field"
                 },
                 "operator": {
                   "enum": [
@@ -10989,7 +11181,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_formula_templates.operator"
                 },
                 "value": {
                   "type": "string"
@@ -11028,7 +11221,8 @@
               "name",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_formula_templates.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -11036,7 +11230,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -11086,7 +11281,8 @@
                     "allowManualJe",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_gl_accounts.field"
                 },
                 "operator": {
                   "enum": [
@@ -11109,7 +11305,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_gl_accounts.operator"
                 },
                 "value": {
                   "type": "string"
@@ -11149,7 +11346,8 @@
               "name",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_gl_accounts.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -11157,7 +11355,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -11208,7 +11407,8 @@
                     "marinePollutant",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_hazardous_materials.field"
                 },
                 "operator": {
                   "enum": [
@@ -11231,7 +11431,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_hazardous_materials.operator"
                 },
                 "value": {
                   "type": "string"
@@ -11271,7 +11472,8 @@
               "name",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_hazardous_materials.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -11279,7 +11481,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -11329,7 +11532,8 @@
                     "defaultBlocksDispatch",
                     "defaultBlocksBilling"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_hold_reasons.field"
                 },
                 "operator": {
                   "enum": [
@@ -11343,7 +11547,8 @@
                     "startswith",
                     "endswith"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_hold_reasons.operator"
                 },
                 "value": {
                   "type": "string"
@@ -11382,7 +11587,8 @@
               "code",
               "label"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_hold_reasons.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -11390,7 +11596,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -11432,7 +11639,8 @@
               "orientation",
               "comms"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "homeLayout.category"
           }
         },
         "type": "object"
@@ -11484,7 +11692,8 @@
               "DetentionDispute",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "inboundMessage.classification"
           },
           "limit": {
             "description": "How many to return, newest first. Defaults to 10.",
@@ -11512,7 +11721,8 @@
               "Ignored",
               "Quarantined"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "inboundMessage.listStatus"
           }
         },
         "type": "object"
@@ -11554,7 +11764,8 @@
               "CostLeakage",
               "Compliance"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "insight.category"
           },
           "limit": {
             "description": "How many to return, at most 50.",
@@ -11567,7 +11778,8 @@
               "Warning",
               "Critical"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "insight.severity"
           },
           "status": {
             "description": "Which findings to list. Defaults to Active.",
@@ -11577,7 +11789,8 @@
               "Resolved",
               "Superseded"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "insight.status"
           }
         },
         "type": "object"
@@ -11707,7 +11920,8 @@
                     "periodEnd",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_invoice_runs.field"
                 },
                 "operator": {
                   "enum": [
@@ -11730,7 +11944,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_invoice_runs.operator"
                 },
                 "value": {
                   "type": "string"
@@ -11770,7 +11985,8 @@
               "periodEnd",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_invoice_runs.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -11778,7 +11994,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -11879,7 +12096,8 @@
                     "totalAmount",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_invoices.field"
                 },
                 "operator": {
                   "enum": [
@@ -11902,7 +12120,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_invoices.operator"
                 },
                 "value": {
                   "type": "string"
@@ -11944,7 +12163,8 @@
               "totalAmount",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_invoices.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -11952,7 +12172,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -12020,7 +12241,8 @@
               "Rejected",
               "Void"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "journalEntry.status"
           },
           "toDate": {
             "description": "The latest accounting date. A date as YYYY-MM-DD, or today.",
@@ -12075,7 +12297,8 @@
                     "hasRestroom",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_location_categories.field"
                 },
                 "operator": {
                   "enum": [
@@ -12098,7 +12321,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_location_categories.operator"
                 },
                 "value": {
                   "type": "string"
@@ -12137,7 +12361,8 @@
               "name",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_location_categories.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -12145,7 +12370,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -12195,7 +12421,8 @@
                     "postalCode",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_locations.field"
                 },
                 "operator": {
                   "enum": [
@@ -12218,7 +12445,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_locations.operator"
                 },
                 "value": {
                   "type": "string"
@@ -12259,7 +12487,8 @@
               "city",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_locations.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -12267,7 +12496,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -12352,7 +12582,8 @@
                     "totalAmount",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_orders.field"
                 },
                 "operator": {
                   "enum": [
@@ -12375,7 +12606,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_orders.operator"
                 },
                 "value": {
                   "type": "string"
@@ -12415,7 +12647,8 @@
               "totalAmount",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_orders.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -12423,7 +12656,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -12472,7 +12706,8 @@
               "Recovered",
               "WrittenOff"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.advanceStatus"
           },
           "workerId": {
             "description": "Only this driver's, by id from search_worker or list_workers.",
@@ -12553,7 +12788,8 @@
               "Earning",
               "Deduction"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.payCodeDirection"
           }
         },
         "type": "object"
@@ -12592,7 +12828,8 @@
               "CompanyDriver",
               "OwnerOperator"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.payeeClassification"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -12659,7 +12896,8 @@
               "Customer",
               "Carrier"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "rateAgreement.partyType"
           },
           "query": {
             "description": "Words to look for in the agreement's code or name.",
@@ -12675,7 +12913,8 @@
               "Expired",
               "Archived"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "rateAgreement.status"
           }
         },
         "type": "object"
@@ -12761,7 +13000,8 @@
               "Paused",
               "Completed"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.deductionStatus"
           },
           "workerId": {
             "description": "Only this driver's, by id from search_worker or list_workers.",
@@ -12813,7 +13053,8 @@
               "Paused",
               "Completed"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.earningStatus"
           },
           "workerId": {
             "description": "Only this driver's, by id from search_worker or list_workers.",
@@ -13113,7 +13354,8 @@
               "Pickup",
               "Delivery"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "accessorialCharge.appliesTo"
           },
           "query": {
             "description": "Optional text matched against the code and label.",
@@ -13168,7 +13410,8 @@
                     "detectedAt",
                     "shipmentId"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_service_failures.field"
                 },
                 "operator": {
                   "enum": [
@@ -13191,7 +13434,8 @@
                     "startswith",
                     "endswith"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_service_failures.operator"
                 },
                 "value": {
                   "type": "string"
@@ -13231,7 +13475,8 @@
               "lateMinutes",
               "detectedAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_service_failures.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -13239,7 +13484,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -13287,7 +13533,8 @@
                     "description",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_service_types.field"
                 },
                 "operator": {
                   "enum": [
@@ -13310,7 +13557,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_service_types.operator"
                 },
                 "value": {
                   "type": "string"
@@ -13349,7 +13597,8 @@
               "code",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_service_types.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -13357,7 +13606,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -13477,7 +13727,8 @@
                     "description",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_shipment_types.field"
                 },
                 "operator": {
                   "enum": [
@@ -13500,7 +13751,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_shipment_types.operator"
                 },
                 "value": {
                   "type": "string"
@@ -13539,7 +13791,8 @@
               "code",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_shipment_types.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -13547,7 +13800,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -13604,7 +13858,8 @@
                     "weight",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_shipments.field"
                 },
                 "operator": {
                   "enum": [
@@ -13627,7 +13882,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_shipments.operator"
                 },
                 "value": {
                   "type": "string"
@@ -13670,7 +13926,8 @@
               "totalChargeAmount",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_shipments.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -13678,7 +13935,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -13731,7 +13989,8 @@
               "Rejected",
               "Cancelled"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "worker.ptoStatus"
           },
           "type": {
             "description": "The kind of leave. Omit for every kind.",
@@ -13744,7 +14003,8 @@
               "Maternity",
               "Paternity"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "worker.ptoType"
           },
           "withinDays": {
             "description": "How far ahead to look from today, in days. Defaults to 14, at most 365. Ignored when startingFrom or startingBefore is given.",
@@ -13806,7 +14066,8 @@
                     "leaseEndDate",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_tractors.field"
                 },
                 "operator": {
                   "enum": [
@@ -13829,7 +14090,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_tractors.operator"
                 },
                 "value": {
                   "type": "string"
@@ -13871,7 +14133,8 @@
               "leaseEndDate",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_tractors.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -13879,7 +14142,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -13934,7 +14198,8 @@
                     "createdAt",
                     "lastInspectionDate"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_trailers.field"
                 },
                 "operator": {
                   "enum": [
@@ -13957,7 +14222,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_trailers.operator"
                 },
                 "value": {
                   "type": "string"
@@ -14000,7 +14266,8 @@
               "createdAt",
               "lastInspectionDate"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_trailers.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -14008,7 +14275,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -14113,7 +14381,8 @@
                 "AgentQualityRegression",
                 "AccountingSync"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "watchtower.sourceKind"
             },
             "type": "array"
           },
@@ -14129,7 +14398,8 @@
                 "Warning",
                 "Info"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "watchtower.severity"
             },
             "type": "array"
           },
@@ -14187,7 +14457,8 @@
               "Minor",
               "Unknown"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "weather.severity"
           }
         },
         "type": "object"
@@ -14248,7 +14519,8 @@
                     "profile.medicalCardExpiry",
                     "profile.twicExpiry"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_workers.field"
                 },
                 "operator": {
                   "enum": [
@@ -14271,7 +14543,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_workers.operator"
                 },
                 "value": {
                   "type": "string"
@@ -14315,7 +14588,8 @@
               "profile.medicalCardExpiry",
               "profile.twicExpiry"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_workers.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -14323,7 +14597,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -14464,7 +14739,8 @@
               "Actioned",
               "Ignored"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "inboundMessage.reviewStatus"
           }
         },
         "required": [
@@ -14564,7 +14840,8 @@
               "RateNotOnFile",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "billingQueue.exceptionReasonCode"
           },
           "notes": {
             "description": "What is wrong and what would clear it, with the figures you checked.",
@@ -14620,7 +14897,8 @@
               "high",
               "critical"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "notification.priority"
           },
           "shipmentId": {
             "description": "Optional: the shipment the message is about, so Dash can open it; from get_dispatch_board, get_shipment_tracking or search_shipments.",
@@ -14745,7 +15023,8 @@
               "MissingDocumentation",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "invoice.disputeReasonCode"
           }
         },
         "required": [
@@ -14789,7 +15068,8 @@
             "enum": [
               "create"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "guide.pageAction"
           },
           "entity": {
             "description": "The kind of record to open, with recordId, instead of a page.",
@@ -14822,7 +15102,8 @@
               "trailer",
               "worker"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "guide.entity"
           },
           "page": {
             "description": "A page's path, exactly as find_in_trenova returned it.",
@@ -14880,7 +15161,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -14945,7 +15227,8 @@
               "InstantPay",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverSettlement.paymentMethod"
           },
           "paymentReference": {
             "description": "The check number, ACH trace or batch reference the payment went out under, when the person gave one.",
@@ -15270,7 +15553,8 @@
               "Cash",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "customerPayment.method"
           },
           "referenceNumber": {
             "description": "The bank's reference, so the payment can be found again.",
@@ -15777,7 +16061,8 @@
                     "String",
                     "Boolean"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "formula.variableType"
                 }
               },
               "required": [
@@ -15958,7 +16243,8 @@
                     "SplitPickup",
                     "SplitDelivery"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "shipment.stopType"
                 }
               },
               "required": [
@@ -16038,7 +16324,8 @@
               "UnableToDiagnose",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "agent.exceptionCategory"
           },
           "severity": {
             "description": "How urgent it is for the person who takes over. Defaults to Medium.",
@@ -16048,7 +16335,8 @@
               "High",
               "Critical"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "agent.severity"
           },
           "subjectId": {
             "description": "The id of that record: usually this run's subject, or an id a tool such as get_shipment or list_shipments returned. Its prefix must match subjectType: a report's id starts rd_, a dashboard's rdb_, an insight's inst_.",
@@ -16078,7 +16366,8 @@
               "AccountingInboundChange",
               "AccountingDriftFinding"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "agent.subjectType"
           }
         },
         "required": [
@@ -16385,7 +16674,8 @@
               "Fact",
               "Correction"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "agent.memoryKind"
           },
           "limit": {
             "description": "How many to return; 10 when left out, at most 50.",
@@ -16407,7 +16697,8 @@
               "Worker",
               "Carrier"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "agent.memoryFilterSubjectType"
           },
           "toolName": {
             "description": "Only memories about one tool, such as corrections to assign_move.",
@@ -16452,7 +16743,8 @@
               "ACHManual",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "carrierSettlement.paymentMethod"
           },
           "paymentReference": {
             "description": "The check number, ACH trace or batch reference the payment went out under, when the person gave one.",
@@ -16506,7 +16798,8 @@
               "InstantPay",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverSettlement.paymentMethod"
           },
           "paymentReference": {
             "description": "The check number, ACH trace or batch reference the payment went out under, when the person gave one.",
@@ -16602,7 +16895,8 @@
               "Arrive",
               "Depart"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "shipmentMove.stopActualAction"
           },
           "moveId": {
             "description": "The move the stop belongs to, from get_shipment (its moves) or get_dispatch_board.",
@@ -16658,7 +16952,8 @@
               "Accept",
               "Decline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "tender.responseAction"
           },
           "declineReason": {
             "description": "Why the carrier declined, as they put it, in at most 500 characters, when they gave a reason. Only for a decline.",
@@ -16757,7 +17052,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -17161,7 +17457,8 @@
               "Instruction",
               "Fact"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "agent.rememberedMemoryKind"
           },
           "subjectId": {
             "description": "The record the memory is about: this run's subject, the page, or an id from list_customers, list_locations, list_workers or list_carriers. Never guessed.",
@@ -17175,7 +17472,8 @@
               "Worker",
               "Carrier"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "agent.memorySubjectType"
           }
         },
         "required": [
@@ -17544,7 +17842,8 @@
                 "DriverBill",
                 "DriverBillPayment"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.backfillObjectType"
             },
             "maxItems": 9,
             "type": "array"
@@ -17558,7 +17857,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           },
           "to": {
             "description": "The last document date to send, as YYYY-MM-DD. Defaults to the day sending began.",
@@ -17774,7 +18074,8 @@
               "PushTrenovaValue",
               "AdjustTrenova"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "accountingSync.driftDirection"
           },
           "findingId": {
             "description": "The finding's id, from list_accounting_drift_findings.",
@@ -17833,7 +18134,8 @@
               "RequiresExternalFollowUp",
               "MarkedFalsePositive"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "bankReceiptWorkItem.resolution"
           },
           "workItemId": {
             "description": "The work item's id, from get_bank_receipt.",
@@ -17891,7 +18193,8 @@
               "NoActionRequired",
               "FalsePositive"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "carrierIntel.findingResolution"
           }
         },
         "required": [
@@ -17942,7 +18245,8 @@
               "WrittenOff",
               "CustomerWithdrew"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "invoice.disputeResolution"
           },
           "resolutionAdjustmentId": {
             "description": "The executed adjustment that credited or wrote off the amount, from list_invoice_adjustments. Required for CreditIssued and WrittenOff.",
@@ -18088,7 +18392,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -18149,7 +18454,8 @@
                 "Conflict",
                 "Configuration"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "accountingSync.syncErrorCategory"
             },
             "maxItems": 11,
             "type": "array"
@@ -18167,7 +18473,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           }
         },
         "required": [
@@ -18316,7 +18623,8 @@
               "Apply",
               "Reject"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.changeReviewDecision"
           },
           "reason": {
             "description": "Why, in a sentence the other side reads with the change's outcome. Give one for every rejection.",
@@ -18368,7 +18676,8 @@
               "Apply",
               "Reject"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "edi.changeReviewDecision"
           },
           "reason": {
             "description": "Why, in a sentence the other side reads with the change's outcome. Give one for every rejection.",
@@ -18465,12 +18774,13 @@
           "format": {
             "description": "Optional output format. Defaults to the report's own.",
             "enum": [
-              "csv",
               "xlsx",
+              "csv",
               "pdf",
               "json"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "report.format"
           },
           "key": {
             "description": "Accepted as an alias of reportKey, from list_reports; prefer reportKey.",
@@ -18531,7 +18841,8 @@
               "FullReversal",
               "WriteOff"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "invoiceAdjustment.kind"
           },
           "lines": {
             "description": "The invoice lines to adjust. Leave out a line to leave it alone; leave out an amount to credit the whole of what is left on the line.",
@@ -18584,7 +18895,8 @@
               "Rerate",
               "Manual"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "invoiceAdjustment.rebillStrategy"
           },
           "supportingDocumentIds": {
             "description": "Documents on the invoice's shipments that support it, from search_documents or get_shipment.",
@@ -18663,7 +18975,8 @@
               "recurring shipments",
               "formula templates"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "tableView.entity"
           },
           "name": {
             "description": "What to call the view in the picker.",
@@ -18739,7 +19052,8 @@
                 "pdf",
                 "json"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "report.format"
             },
             "type": "array"
           },
@@ -18939,7 +19253,8 @@
               "Invoiced",
               "Canceled"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "shipment.status"
           }
         },
         "type": "object"
@@ -19029,7 +19344,8 @@
               "RateNotOnFile",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "billingQueue.exceptionReasonCode"
           },
           "notes": {
             "description": "What operations has to fix, in a sentence they can act on. Required when the reason is Other.",
@@ -19341,7 +19657,8 @@
             "enum": [
               "QuickBooksOnline"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
           },
           "targetType": {
             "description": "The kind of Trenova record or setting, when naming it by recordId or key.",
@@ -19357,7 +19674,8 @@
               "PaymentTerm",
               "PaymentMethod"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "accountingSync.mappingTargetType"
           }
         },
         "required": [
@@ -19646,7 +19964,8 @@
               "shipmentTypeId",
               "formulaTemplateId"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "importDraft.requiredField"
           },
           "recordId": {
             "description": "The record's id, from list_customers, list_service_types, list_shipment_types or list_formula_templates to match the field.",
@@ -19889,7 +20208,8 @@
               "documents",
               "activity"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "invoice.shareTab"
           },
           "userIds": {
             "description": "The teammates, from list_invoice_share_candidates.",
@@ -19958,7 +20278,8 @@
               "GuideRank",
               "FastestAccept"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "carrierShop.strategy"
           }
         },
         "required": [
@@ -20212,7 +20533,8 @@
                     "FullReversal",
                     "WriteOff"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "invoiceAdjustment.kind"
                 },
                 "lines": {
                   "description": "The invoice lines to adjust. Leave out a line to leave it alone; leave out an amount to credit the whole of what is left on the line.",
@@ -20265,7 +20587,8 @@
                     "Rerate",
                     "Manual"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "invoiceAdjustment.rebillStrategy"
                 },
                 "supportingDocumentIds": {
                   "description": "Documents on the invoice's shipments that support it, from search_documents or get_shipment.",
@@ -20335,11 +20658,13 @@
                   "type": "string"
                 },
                 "channel": {
+                  "description": "How the offer is sent.",
                   "enum": [
                     "Email",
                     "EDI"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "tender.channel"
                 },
                 "email": {
                   "description": "Where to send an email offer, when not the carrier's own address.",
@@ -20354,11 +20679,13 @@
                   "type": "string"
                 },
                 "rateMethod": {
+                  "description": "How the rate is measured. Defaults to Flat.",
                   "enum": [
                     "Flat",
                     "PerMile"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "shipment.carrierRateMethod"
                 }
               },
               "required": [
@@ -20375,7 +20702,8 @@
               "SpotBroadcast",
               "SpotSequential"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "tender.spotMode"
           },
           "overrideInsuranceWarnings": {
             "description": "Offer to a carrier whose insurance is flagged anyway. Off by default.",
@@ -20601,7 +20929,8 @@
               "CreditMemo",
               "DebitMemo"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "billingQueue.billType"
           },
           "markCompletedReadyToInvoice": {
             "description": "Mark Completed shipments ready to invoice first, as the dialog can. Defaults to false, which leaves a Completed shipment where it is.",
@@ -21014,7 +21343,8 @@
               "Completed",
               "Canceled"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "shipmentMove.settableStatus"
           }
         },
         "required": [
@@ -21234,7 +21564,8 @@
               "EverySettlement",
               "Monthly"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.deductionFrequency"
           },
           "payCodeId": {
             "description": "The deduction pay code it posts under, from list_pay_codes.",
@@ -21251,7 +21582,8 @@
               "Paused",
               "Completed"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.deductionStatus"
           },
           "totalCap": {
             "description": "The total after which it stops, when there is one.",
@@ -21314,7 +21646,8 @@
               "EverySettlement",
               "Monthly"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.earningFrequency"
           },
           "payCodeId": {
             "description": "The earning pay code it posts under, from list_pay_codes.",
@@ -21331,7 +21664,8 @@
               "Paused",
               "Completed"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "driverPay.earningStatus"
           },
           "totalCap": {
             "description": "The total after which it stops, when there is one.",
@@ -21482,12 +21816,13 @@
           "defaultFormat": {
             "description": "The file format a run produces unless one is asked for. Default csv.",
             "enum": [
-              "csv",
               "xlsx",
+              "csv",
               "pdf",
               "json"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "report.format"
           },
           "definition": {
             "additionalProperties": true,
@@ -21785,7 +22120,8 @@
               "active",
               "archived"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "report.definitionStatus"
           },
           "tags": {
             "description": "Optional short labels, at most ten.",
@@ -21800,7 +22136,8 @@
               "private",
               "shared"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "report.visibility"
           }
         },
         "required": [
@@ -22069,7 +22406,8 @@
               "AtMaintenance",
               "Sold"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "equipment.status"
           },
           "tractorIds": {
             "description": "The tractors to move, by id from list_tractors. One id is the normal case.",
@@ -22128,7 +22466,8 @@
               "AtMaintenance",
               "Sold"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "equipment.status"
           },
           "trailerIds": {
             "description": "The trailers to move, by id from list_trailers. One id is the normal case.",
@@ -22432,7 +22771,8 @@
               "Rebill",
               "DoNotRebill"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "invoice.voidDisposition"
           },
           "invoiceId": {
             "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
@@ -22589,7 +22929,8 @@
               "ForceMajeure",
               "Other"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "detention.waiverReason"
           }
         },
         "required": [

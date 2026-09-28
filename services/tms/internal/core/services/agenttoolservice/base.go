@@ -1,13 +1,16 @@
 package agenttoolservice
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/money"
@@ -311,6 +314,35 @@ func optionalDay(params map[string]any, key string) (day int64, ok bool, err err
 	}
 
 	return day, true, nil
+}
+
+// previewValidates is Validate for a tool whose Preview runs the service's
+// own plan: the preview is computed and, when it says the write would be
+// refused as it stands, that refusal is the validation error. A tool built
+// this way checks a call with exactly the code that decides its write.
+func previewValidates(
+	ctx context.Context,
+	previewer serviceports.ToolPreviewer,
+	params *serviceports.ToolExecuteParams,
+) error {
+	preview, err := previewer.Preview(ctx, *params)
+	if err != nil {
+		return err
+	}
+	if preview == nil {
+		return nil
+	}
+
+	for i := range preview.Warnings {
+		warning := &preview.Warnings[i]
+		if warning.Code != agent.PreviewWarningWouldFail {
+			continue
+		}
+
+		return errors.New(strings.TrimPrefix(warning.Message, toolpreview.WouldFailPrefix))
+	}
+
+	return nil
 }
 
 func optionalPulidParam(params map[string]any, key string) (*pulid.ID, error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -227,12 +228,10 @@ func (t *updateMoveStatusTool) ParamSchema() map[string]any {
 			jsonschemautils.String(0),
 			maxMovesPerDispatchChange,
 		),
-		fieldStatus: jsonschemautils.Enum(
+		fieldStatus: agenttoolschema.Enum(
 			"The status to set. Completed releases the move's equipment for the next load; "+
 				"Canceled is final.",
-			string(shipment.MoveStatusInTransit),
-			string(shipment.MoveStatusCompleted),
-			string(shipment.MoveStatusCanceled),
+			agenttoolschema.SettableMoveStatuses,
 		),
 	}, fieldMoveIDs, fieldStatus)
 }

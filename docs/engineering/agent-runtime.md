@@ -63,6 +63,23 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   A tool that fails after its retries is reported to the model as a failed
   call and the turn goes on. `run_report`, `compare_report_runs` and
   `plan_dispatch` run on the heavy queue whichever queue called them.
+- **Every call is held to its tool's whole schema** in the dispatch activity,
+  reads and writes alike, before the tool, a preview or a card sees it. A
+  misnamed required parameter is still renamed (`aliasedArguments`) and the
+  owner key of a self-scoped call is set aside and stamped from the actor;
+  anything else that does not fit (an undeclared key at any depth, a value
+  outside an enum, a wrong type, a missing nested value) is refused with one
+  `path: message` line per problem and "Fix the call and send it again". The
+  refusal is a failed call: it spends the tool budget and arms the repeat
+  guard. Schemas are compiled once per tool (`toolschema.Validator`); every
+  object in a tool's schema is closed and every enum names its source
+  (`agenttoolschema.Enum`, `x-enumOf`, stripped by `toolschema.ForModel`),
+  which `agenttoolpolicy/schema_contract_test.go` holds. A tool that
+  implements `ToolValidator` is then asked at every tier, automatic writes and
+  simulation included, and again by the executor where an approved proposal
+  runs; `TestEveryActionToolValidatesBeforeFiling` lists the few that cannot,
+  with the reason. All of it happens inside the activity, so no workflow
+  command changes and no version gate is needed.
 - `find_tools` and `publish_artifact` are activities of their own. Call ids
   are minted through `workflow.SideEffect`, so a replay reads back the same id.
   An id an adapter made up from the call's position (Ollama, and an

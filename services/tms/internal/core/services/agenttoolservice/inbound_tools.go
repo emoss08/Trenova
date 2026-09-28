@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,6 +46,11 @@ var (
 )
 
 // inboundMessageDesk is the slice of the inbox the desk's writes act through.
+var inboundReviewStatuses = agenttoolschema.Source(
+	"inboundMessage.reviewStatus",
+	[]inboundmessage.Status{inboundmessage.StatusActioned, inboundmessage.StatusIgnored},
+)
+
 type inboundMessageDesk interface {
 	GetByID(
 		ctx context.Context,
@@ -286,14 +292,10 @@ func (t *markInboundMessageTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The message, from the run's subject or list_inbound_messages.",
 			},
-			"status": map[string]any{
-				"type": "string",
-				"enum": []string{
-					string(inboundmessage.StatusActioned),
-					string(inboundmessage.StatusIgnored),
-				},
-				"description": "Actioned when it was dealt with, Ignored when there was nothing to do.",
-			},
+			fieldStatus: agenttoolschema.Enum(
+				"Actioned when it was dealt with, Ignored when there was nothing to do.",
+				inboundReviewStatuses,
+			),
 			"note": map[string]any{
 				"type":        "string",
 				"maxLength":   maxInboundReviewNote,

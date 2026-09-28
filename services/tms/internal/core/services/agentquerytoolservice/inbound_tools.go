@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -219,25 +220,16 @@ func (t *listInboundMessagesTool) Description() string {
 }
 
 func (t *listInboundMessagesTool) ParamSchema() map[string]any {
-	statuses := inboundStatusNames()
-	kinds := make([]string, 0, len(inboundmessage.AllClassifications()))
-	for _, kind := range inboundmessage.AllClassifications() {
-		kinds = append(kinds, string(kind))
-	}
-
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"status": map[string]any{
-				"type":        "string",
-				"enum":        statuses,
-				"description": "Optional: only messages in this state. waiting is in review or held back.",
-			},
-			"classification": map[string]any{
-				"type":        "string",
-				"enum":        kinds,
-				"description": "Optional: only messages read as this kind.",
-			},
+			paramStatus: agenttoolschema.Enum(
+				"Optional: only messages in this state. waiting is in review or held back.",
+				inboundListStatuses,
+			),
+			"classification": agenttoolschema.Enum(
+				"Optional: only messages read as this kind.", inboundClassifications,
+			),
 			"mailboxId": map[string]any{
 				"type": "string",
 				"description": "Optional: only messages to this mailbox, by id from the page " +

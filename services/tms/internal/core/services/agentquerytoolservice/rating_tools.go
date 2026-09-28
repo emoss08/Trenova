@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
 	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
@@ -30,18 +31,18 @@ const (
 )
 
 var (
-	rateAgreementStatuses = []string{
+	rateAgreementStatuses = agenttoolschema.Source("rateAgreement.status", []string{
 		string(rateagreement.StatusDraft),
 		string(rateagreement.StatusInReview),
 		string(rateagreement.StatusActive),
 		string(rateagreement.StatusSuspended),
 		string(rateagreement.StatusExpired),
 		string(rateagreement.StatusArchived),
-	}
-	rateAgreementParties = []string{
+	})
+	rateAgreementParties = agenttoolschema.Source("rateAgreement.partyType", []string{
 		string(rateagreement.PartyTypeCustomer),
 		string(rateagreement.PartyTypeCarrier),
-	}
+	})
 )
 
 func ratingToolProviders() []any {
