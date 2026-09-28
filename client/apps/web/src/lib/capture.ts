@@ -10,7 +10,6 @@ import type {
 import type { CaptureRequestFailureCode } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
-import type { DocumentCategory } from "@trenova/shared/types/document-type";
 
 /**
  * The records a captured document may be filed onto. The server holds the
@@ -46,24 +45,6 @@ export function captureRecordKindLabel(t: TranslateFn, kind: CaptureRecordKind):
       return t("Customer");
     case "carrier":
       return t("Carrier");
-  }
-}
-
-/**
- * The document types offered for a kind of record. Shipments and workers have
- * categories of their own; the rest take any type, as an upload does.
- */
-export function captureDocumentCategory(kind: CaptureRecordKind): DocumentCategory | null {
-  switch (kind) {
-    case "shipment":
-      return "Shipment";
-    case "worker":
-      return "Worker";
-    case "tractor":
-    case "trailer":
-    case "customer":
-    case "carrier":
-      return null;
   }
 }
 

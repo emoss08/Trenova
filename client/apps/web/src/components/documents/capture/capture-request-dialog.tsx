@@ -1,6 +1,6 @@
 import { ControlledDocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { captureDocumentCategory, type CaptureRecordKind } from "@/lib/capture";
+import type { CaptureRecordKind } from "@/lib/capture";
 import {
   createCaptureRequest,
   type CaptureDevice,
@@ -268,7 +268,6 @@ export function CaptureRequestDialog({
             <ControlledDocumentTypeAutocompleteField
               label={t("Document type")}
               placeholder={t("Optional")}
-              category={captureDocumentCategory(kind)}
               value={documentTypeId}
               onValueChange={setDocumentTypeId}
             />

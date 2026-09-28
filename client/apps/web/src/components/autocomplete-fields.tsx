@@ -15,7 +15,6 @@ import {
 import { formatRange } from "@trenova/shared/lib/date";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Document } from "@trenova/shared/types/document";
-import type { DocumentCategory } from "@trenova/shared/types/document-type";
 import type { SelectOption as StaticSelectOption } from "@trenova/shared/types/fields";
 import {
   TRAINING_DELIVERY_LABELS,
@@ -1403,19 +1402,15 @@ export function ControlledCaptureRecordAutocompleteField({
  * Picks a document type outside a form. A category narrows it to the types
  * kept for that kind of record, as the Documents tab does.
  */
-export function ControlledDocumentTypeAutocompleteField({
-  category,
-  ...props
-}: Omit<
-  ControlledAutocompleteFieldProps<GraphQLSelectOption>,
-  "link" | "graphql" | "renderOption" | "getOptionValue" | "getDisplayValue" | "extraSearchParams"
-> & {
-  category: DocumentCategory | null;
-}) {
+export function ControlledDocumentTypeAutocompleteField(
+  props: Omit<
+    ControlledAutocompleteFieldProps<GraphQLSelectOption>,
+    "link" | "graphql" | "renderOption" | "getOptionValue" | "getDisplayValue" | "extraSearchParams"
+  >,
+) {
   return (
     <ControlledAutocompleteField<GraphQLSelectOption>
-      link="/document-types/select-options/"
-      extraSearchParams={category === null ? undefined : { documentCategory: category }}
+      graphql={documentTypeSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
         <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />

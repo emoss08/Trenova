@@ -39,6 +39,8 @@ export const documentProcessingProfileSchema = z.enum([
   "none",
   "rate_confirmation_import",
   "assistant_attachment",
+  "inbound_attachment",
+  "capture",
 ]);
 
 export type DocumentProcessingProfile = z.infer<typeof documentProcessingProfileSchema>;
