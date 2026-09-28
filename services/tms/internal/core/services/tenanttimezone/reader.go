@@ -35,7 +35,6 @@ type Reader struct {
 	users         userReader
 }
 
-//nolint:gocritic // fx.In parameter structs are passed by value
 func New(p Params) services.TenantTimezoneReader {
 	return &Reader{organizations: p.Organizations, users: p.Users}
 }

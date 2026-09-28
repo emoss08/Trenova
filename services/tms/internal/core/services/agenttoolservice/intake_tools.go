@@ -92,12 +92,12 @@ func (t *createShipmentTool) Description() string {
 		"which carries its stops, commodities, charges and rating exactly. Give the customer, " +
 		"service type, shipment type and rating method (formulaTemplateId, from " +
 		"list_formula_templates) by id: the rating method is required, and a shipment nothing " +
-		"can price is refused. Add the freight (pieces, weight, commodities, temperature range " +
+		"can price is refused. Add the freight (pieces, weight, commodities, temperatures " +
 		"when it matters), any accessorial charges, and one move with its stops in travel order: " +
 		"each stop has a location id from list_locations, a type, and a scheduled window in " +
-		"local time at the stop, such as 2026-10-01T08:00. Stops and moves count from 0. When the " +
-		"shipment comes from an uploaded document, pass sourceDocumentId so the document is " +
-		"linked and its import conversation closed. The pro number is assigned by the system. A " +
+		"local time at the stop, such as 2026-10-01T08:00. Stops and moves count from 0. For a " +
+		"shipment read from an uploaded document, pass sourceDocumentId to link it and close " +
+		"its import conversation. The pro number is assigned by the system. A " +
 		"BOL must be unique among open shipments, so never reuse one; ask the person for it."
 }
 
@@ -115,16 +115,18 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
+const paramAdditionalCharges = "additionalCharges"
+
 func shipmentDraftSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType:        toolschema.TypeObject,
 		toolschema.KeyDescription: "The shipment to enter.",
 		toolschema.KeyProperties: map[string]any{
-			"customerId": idProperty("The customer, from list_customers."),
+			paramCustomerID: idProperty("The customer, from list_customers."),
 			"billToCustomerId": idProperty("Who is billed, when not the customer, from " +
 				"list_customers."),
-			"serviceTypeId":  idProperty("From list_service_types."),
-			"shipmentTypeId": idProperty("From list_shipment_types."),
+			fieldServiceTypeID:  idProperty("From list_service_types."),
+			fieldShipmentTypeID: idProperty("From list_shipment_types."),
 			"formulaTemplateId": idProperty("The rating method that prices the freight, from " +
 				"list_formula_templates. Required: a rate agreement covering the lane may " +
 				"replace it with its own when the shipment is saved."),
@@ -134,13 +136,21 @@ func shipmentDraftSchema() map[string]any {
 				"Who pays the freight. Defaults to Prepaid.",
 				agenttoolschema.FreightTerms,
 			),
-			"tractorTypeId": idProperty("A tractor equipment type, from list_equipment_types."),
-			"trailerTypeId": idProperty("A trailer equipment type, from list_equipment_types."),
+			previewFieldTractorTypeID: idProperty(
+				"A tractor equipment type, from list_equipment_types.",
+			),
+			previewFieldTrailerTypeID: idProperty(
+				"A trailer equipment type, from list_equipment_types.",
+			),
 			"bol": stringProperty("The customer's BOL or reference. It must be unique among "+
 				"open shipments, so never reuse one from another shipment. Optional unless the "+
 				"customer's billing requires a BOL; leave it out when none is known.", 100),
-			"pieces":         integerProperty("The total piece or handling-unit count.", 0, 1_000_000),
-			"weight":         integerProperty("Pounds.", 0, 10_000_000),
+			fieldPieces: integerProperty(
+				"The total piece or handling-unit count.",
+				0,
+				1_000_000,
+			),
+			fieldWeight:      integerProperty("Pounds.", 0, 10_000_000),
 			"temperatureMin": integerProperty("Fahrenheit, for reefer freight.", -100, 200),
 			"temperatureMax": integerProperty("Fahrenheit, for reefer freight.", -100, 200),
 			"ratingUnit": integerProperty("How many units the rating method prices. "+
@@ -157,14 +167,18 @@ func shipmentDraftSchema() map[string]any {
 				toolschema.KeyDescription: "What is hauled, one line per commodity.",
 				toolschema.KeyItems:       commodityDraftSchema(),
 			},
-			"additionalCharges": map[string]any{
+			paramAdditionalCharges: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "Accessorial charges agreed for the shipment.",
 				toolschema.KeyItems:       chargeLineDraftSchema(),
 			},
 		},
 		toolschema.KeyRequired: []string{
-			"customerId", "serviceTypeId", "shipmentTypeId", "formulaTemplateId", "moves",
+			paramCustomerID,
+			fieldServiceTypeID,
+			fieldShipmentTypeID,
+			fieldFormulaTemplateID,
+			"moves",
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -193,8 +207,8 @@ func stopDraftSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"locationId": idProperty("The stop's location, from list_locations."),
-			"type": agenttoolschema.Enum(
+			fieldLocationID: idProperty("The stop's location, from list_locations."),
+			fieldType: agenttoolschema.Enum(
 				"What happens at the stop.",
 				agenttoolschema.StopTypes,
 			),
@@ -205,12 +219,18 @@ func stopDraftSchema() map[string]any {
 			"sequence": integerProperty("The stop's place in the move, counting from 0. "+
 				"Leave it out to take the order given.", 0, 100),
 			"scheduledWindowStart": localTimeProperty("When the stop's window opens."),
-			"scheduledWindowEnd":   localTimeProperty("When the stop's window closes, if it has one."),
-			"pieces":               integerProperty("Pieces handled at the stop.", 0, 1_000_000),
-			"weight":               integerProperty("Pounds handled at the stop.", 0, 10_000_000),
-			"addressLine":          stringProperty("A dock or suite note for the stop.", 200),
+			"scheduledWindowEnd": localTimeProperty(
+				"When the stop's window closes, if it has one.",
+			),
+			fieldPieces:   integerProperty("Pieces handled at the stop.", 0, 1_000_000),
+			fieldWeight:   integerProperty("Pounds handled at the stop.", 0, 10_000_000),
+			"addressLine": stringProperty("A dock or suite note for the stop.", 200),
 		},
-		toolschema.KeyRequired:             []string{"locationId", "type", "scheduledWindowStart"},
+		toolschema.KeyRequired: []string{
+			fieldLocationID,
+			fieldType,
+			fieldScheduledWindowStart,
+		},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -220,8 +240,8 @@ func commodityDraftSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			"commodityId": idProperty("The commodity, from list_commodities."),
-			"pieces":      integerProperty("Pieces of it. Defaults to 1.", 0, 1_000_000),
-			"weight":      integerProperty("Pounds of it.", 0, 10_000_000),
+			fieldPieces:   integerProperty("Pieces of it. Defaults to 1.", 0, 1_000_000),
+			fieldWeight:   integerProperty("Pounds of it.", 0, 10_000_000),
 		},
 		toolschema.KeyRequired:             []string{"commodityId"},
 		toolschema.KeyAdditionalProperties: false,
@@ -240,11 +260,11 @@ func chargeLineDraftSchema() map[string]any {
 			),
 			"unit": integerProperty("How many units the charge covers; 1 for a flat charge.", 1,
 				10_000),
-			"amount": amountProperty("The charge's amount in major units, as a decimal such " +
+			paramAmount: amountProperty("The charge's amount in major units, as a decimal such " +
 				"as 125.00."),
 		},
 		toolschema.KeyRequired: []string{
-			"accessorialChargeId", "method", "unit", "amount",
+			"accessorialChargeId", "method", "unit", paramAmount,
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}

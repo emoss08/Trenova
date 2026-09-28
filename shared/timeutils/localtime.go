@@ -68,18 +68,18 @@ func FormatLocalDateTime(ts int64, loc *time.Location) string {
 	return at.Format(LocalDateTimeLayout)
 }
 
-func ResolveZone(candidates ...string) (*time.Location, string) {
+func ResolveZone(candidates ...string) (loc *time.Location, name string) {
 	for _, candidate := range candidates {
-		name := strings.TrimSpace(candidate)
-		if name == "" || name == "Local" {
+		trimmed := strings.TrimSpace(candidate)
+		if trimmed == "" || trimmed == "Local" {
 			continue
 		}
-		loc, err := time.LoadLocation(name)
+		resolved, err := time.LoadLocation(trimmed)
 		if err != nil {
 			continue
 		}
 
-		return loc, name
+		return resolved, trimmed
 	}
 
 	return time.UTC, time.UTC.String()

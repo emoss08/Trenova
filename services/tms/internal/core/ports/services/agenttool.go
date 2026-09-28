@@ -26,7 +26,7 @@ type ToolExecuteParams struct {
 	// Taint is the run's, handed only to a tool whose policy CarriesTaint.
 	Taint      *agent.RunTaint
 	ProposalID pulid.ID
-	Timezone string
+	Timezone   string
 }
 
 type TenantTimezoneReader interface {

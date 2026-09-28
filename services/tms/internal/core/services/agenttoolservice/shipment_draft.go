@@ -192,7 +192,11 @@ func (d *shipmentDraft) build(
 	return entity, nil
 }
 
-func (d *shipmentDraft) buildMoves(entity *shipment.Shipment, read draftReader, zones locationZones) {
+func (d *shipmentDraft) buildMoves(
+	entity *shipment.Shipment,
+	read draftReader,
+	zones locationZones,
+) {
 	if len(d.Moves) == 0 {
 		read.multiErr.Add("moves", errortypes.ErrRequired,
 			"A shipment needs a move with its stops in travel order")
@@ -315,11 +319,14 @@ func (d *shipmentDraft) buildCharges(entity *shipment.Shipment, read draftReader
 		draft := &d.AdditionalCharges[idx]
 		path := fmt.Sprintf("additionalCharges[%d]", idx)
 		charge := &shipment.AdditionalCharge{
-			OrganizationID:      entity.OrganizationID,
-			BusinessUnitID:      entity.BusinessUnitID,
-			AccessorialChargeID: read.requiredID(path+".accessorialChargeId", draft.AccessorialChargeID),
-			Method:              accessorialcharge.Method(strings.TrimSpace(draft.Method)),
-			Unit:                1,
+			OrganizationID: entity.OrganizationID,
+			BusinessUnitID: entity.BusinessUnitID,
+			AccessorialChargeID: read.requiredID(
+				path+".accessorialChargeId",
+				draft.AccessorialChargeID,
+			),
+			Method: accessorialcharge.Method(strings.TrimSpace(draft.Method)),
+			Unit:   1,
 		}
 		if draft.Unit != nil {
 			charge.Unit = *draft.Unit
