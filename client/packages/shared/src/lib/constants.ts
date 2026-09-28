@@ -1,4 +1,4 @@
-const LOCAL_DEV_API_BASE_URL = "http://localhost:8080/api/v1";
+export const LOCAL_DEV_API_BASE_URL = "http://localhost:8080/api/v1";
 
 function resolveApiBaseUrl(): string {
   const configuredUrl = import.meta.env.VITE_API_URL as string | undefined;

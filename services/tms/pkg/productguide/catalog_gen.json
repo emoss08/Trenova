@@ -1,5 +1,5 @@
 {
-  "version": "sha256:9e74688886f253e0e086a6b236e401c3c23298c8405021cbbd1237eca3d4bfff",
+  "version": "sha256:1f3bb32a1afa6cd9ed4e0db940c726d652781e1d7fa447505f5050c0caf7f574",
   "modules": [
     {
       "id": "home",
@@ -3046,7 +3046,7 @@
             "Open [Scanning and printing](/admin/capture) and select **Scan profiles**.",
             "Select **New scan profile**.",
             "Fill in **Name**, choose the **Resolution** and **Color mode**, and tick what to **Split the stack on**.",
-            "Turn on **Use when nobody picks one** to make it the default, then select **Create profile**."
+            "Turn on **Use when nobody picks one** to make it the default, then select **Save**."
           ]
         },
         {
@@ -7382,7 +7382,7 @@
           ],
           "steps": [
             "In any program on the paired computer, choose Print and pick the printer named Trenova.",
-            "Trenova Capture sends what you printed, and a notification says how many pages arrived. It goes to [Intake](/intake), or to the record where you first chose **Print into this record** from **More ways to capture** on its Documents tab.",
+            "Trenova Capture sends what you printed, and a notification says how many pages arrived. It goes to [Intake](/intake), or to the record where you first chose **Print into this record** from the menu beside **Scan** on its Documents tab.",
             "If you are signed out of Trenova Capture, the print waits on the computer and is sent when you sign in."
           ]
         },
@@ -15251,7 +15251,7 @@
             "Open the shipment and go to its **Documents** tab.",
             "Select **Scan**, choose the **Computer**, the **Scanner** and **Scan settings**, optionally a **Document type**, then **Start scan**. The pages are filed onto the shipment as they arrive; anything Trenova cannot place waits in [Intake](/intake).",
             "To file something you print from another program instead, open the menu beside **Scan**, choose **Print into this record**, select **Wait for my print**, and print to the Trenova printer within ten minutes.",
-            "To scan paperwork for this shipment later or on another scanner, choose **Print cover sheets**, pick how many **Sheets**, select **Print**, and put a sheet on top of the paper before it is scanned."
+            "To scan paperwork for this shipment later or on another scanner, choose **Print cover sheets** from the menu beside **Scan**, pick how many **Cover sheets**, select **Print cover sheets**, and put a sheet on top of the paper before it is scanned."
           ]
         },
         {

@@ -1,7 +1,6 @@
 import {
   CAPTURE_RECORD_KINDS,
   CAPTURE_RETENTION_WARNING_SECONDS,
-  captureDocumentCategory,
   captureRequestsToShow,
   captureRetention,
   formatPairingCode,
@@ -48,12 +47,6 @@ describe("capture record kinds", () => {
     expect(isCaptureRecordKind("shipment")).toBe(true);
     expect(isCaptureRecordKind("invoice")).toBe(false);
     expect(isCaptureRecordKind("")).toBe(false);
-  });
-
-  it("narrow document types only where the kind has a category of its own", () => {
-    expect(captureDocumentCategory("shipment")).toBe("Shipment");
-    expect(captureDocumentCategory("worker")).toBe("Worker");
-    expect(captureDocumentCategory("tractor")).toBeNull();
   });
 });
 

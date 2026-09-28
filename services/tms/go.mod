@@ -86,7 +86,7 @@ require (
 	golang.org/x/crypto v0.57.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/text v0.42.0
-	golang.org/x/tools v0.50.0
+	golang.org/x/tools v0.50.0 // indirect
 	google.golang.org/api v0.297.0
 	google.golang.org/protobuf v1.36.12
 	googlemaps.github.io/maps v1.7.0

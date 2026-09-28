@@ -5521,6 +5521,8 @@ export type SelectOptionResource =
   | 'ACCESSORIAL_CHARGE'
   | 'ACCOUNT_TYPE'
   | 'BENEFIT_PLAN'
+  | 'CAPTURE_DEVICE'
+  | 'CAPTURE_PROFILE'
   | 'CARRIER'
   | 'COMMODITY'
   | 'CUSTOMER'

@@ -3,15 +3,25 @@ import { queries } from "@/lib/queries";
 import { captureBatchesQuery } from "@/lib/queries/capture";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@trenova/shared/components/ui/sheet";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ScanLineIcon } from "lucide-react";
+import { ScanLineIcon, SlidersHorizontalIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { BatchList } from "./_components/batch-list";
 import { BatchWorkspace } from "./_components/batch-workspace";
 import { IntakeRail } from "./_components/intake-rail";
+import { useUrlSearch } from "./_components/use-url-search";
 import {
   INTAKE_VIEWS,
   batchFilter,
@@ -19,7 +29,6 @@ import {
   viewLabel,
   writeIntakeFilter,
   type IntakeFilter,
-  type IntakeView,
 } from "./_components/queue-filter";
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
@@ -73,20 +82,26 @@ export function IntakePage() {
 
   const filter = useMemo(() => parseIntakeFilter(searchParams), [searchParams]);
   const openId = searchParams.get("batch");
-  const [search, setSearch] = useState(filter.query);
-  const debouncedSearch = useDebounce(search, SEARCH_DEBOUNCE_MS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const setFilter = useCallback(
     (next: IntakeFilter, replace = false) =>
       setSearchParams((current) => writeIntakeFilter(current, next), { replace }),
     [setSearchParams],
   );
-
-  useEffect(() => {
-    if (debouncedSearch.trim() !== filter.query.trim()) {
-      setFilter({ ...filter, query: debouncedSearch }, true);
-    }
-  }, [debouncedSearch, filter, setFilter]);
+  const commitSearch = useCallback(
+    (query: string, replace: boolean) =>
+      setSearchParams(
+        (current) => writeIntakeFilter(current, { ...parseIntakeFilter(current), query }),
+        { replace },
+      ),
+    [setSearchParams],
+  );
+  const [search, setSearch] = useUrlSearch({
+    query: filter.query,
+    onCommit: commitSearch,
+    delay: SEARCH_DEBOUNCE_MS,
+  });
 
   const openBatch = useCallback(
     (id: string | null) =>
@@ -111,6 +126,9 @@ export function IntakePage() {
     [batchesQuery.data],
   );
   const title = viewLabel(t, filter.view);
+  const searching = filter.query.trim() !== "";
+  const narrowedBy = (filter.source === null ? 0 : 1) + (filter.mine ? 1 : 0);
+  const viewItems = INTAKE_VIEWS.map((view) => ({ value: view, label: viewLabel(t, view) }));
 
   return (
     <PageLayout
@@ -134,26 +152,30 @@ export function IntakePage() {
             openId === null ? "flex flex-1 lg:flex-none" : "hidden",
           )}
         >
-          <div className="border-border flex gap-1 overflow-x-auto border-b px-3 py-2 md:hidden">
-            {INTAKE_VIEWS.map((view: IntakeView) => {
-              const active = filter.view === view;
-              return (
-                <button
-                  key={view}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setFilter({ ...filter, view })}
-                  className={cn(
-                    "ui-focus-ring shrink-0 rounded-full px-2.5 py-1 text-xs transition-colors",
-                    active
-                      ? "bg-nav-active text-nav-active-foreground"
-                      : "text-foreground-muted ring-foreground/10 ring-1",
-                  )}
-                >
-                  {viewLabel(t, view)}
-                </button>
-              );
-            })}
+          <div className="border-border flex items-center gap-2 border-b px-3 py-2 md:hidden">
+            <div className="min-w-0 flex-1 overflow-x-auto">
+              <SegmentedControl
+                aria-label={t("Intake views")}
+                items={viewItems}
+                value={filter.view}
+                onValueChange={(view) => setFilter({ ...filter, view })}
+              />
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setFiltersOpen(true)}
+            >
+              <SlidersHorizontalIcon aria-hidden />
+              {t("Filters")}
+              {narrowedBy > 0 && (
+                <Badge variant="brand" className="tabular-nums">
+                  {narrowedBy}
+                </Badge>
+              )}
+            </Button>
           </div>
           <BatchList
             title={title}
@@ -162,6 +184,7 @@ export function IntakePage() {
               total: totalQuery.data,
               isLoading: batchesQuery.isLoading,
               isError: batchesQuery.isError,
+              error: batchesQuery.error,
               hasNextPage: batchesQuery.hasNextPage,
               isFetchingNextPage: batchesQuery.isFetchingNextPage,
               fetchNextPage: () => void batchesQuery.fetchNextPage(),
@@ -175,17 +198,34 @@ export function IntakePage() {
             onSortChange={(sort) => setFilter({ ...filter, sort })}
             onOpen={openBatch}
             empty={
-              filter.view === "waiting"
+              searching
                 ? {
-                    title: t("Nothing is waiting to be filed"),
+                    title: t("No stack matches “{0}”", filter.query.trim()),
                     description: t(
-                      "Scan from a record's Documents tab, or print into Trenova from any program, and the pages land here.",
+                      "Try other words, or clear the search to see every stack in this view.",
+                    ),
+                    action: (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setFilter({ ...filter, query: "" })}
+                      >
+                        {t("Clear the search")}
+                      </Button>
                     ),
                   }
-                : {
-                    title: t("Nothing here"),
-                    description: t("Stacks appear here as they are scanned or printed."),
-                  }
+                : filter.view === "waiting"
+                  ? {
+                      title: t("Nothing is waiting to be filed"),
+                      description: t(
+                        "Scan from a record's Documents tab, or print into Trenova from any program, and the pages land here.",
+                      ),
+                    }
+                  : {
+                      title: t("Nothing here"),
+                      description: t("Stacks appear here as they are scanned or printed."),
+                    }
             }
           />
         </div>
@@ -205,6 +245,27 @@ export function IntakePage() {
           )}
         </main>
       </div>
+
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent side="left" className="gap-0 p-0">
+          <SheetHeader className="border-border border-b">
+            <SheetTitle>{t("Views and filters")}</SheetTitle>
+            <SheetDescription>{t("Choose which stacks the queue shows.")}</SheetDescription>
+          </SheetHeader>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <IntakeRail
+              filter={filter}
+              waiting={waitingQuery.data}
+              onChange={(next) => {
+                setFilter(next);
+                if (next.mine === filter.mine) {
+                  setFiltersOpen(false);
+                }
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </PageLayout>
   );
 }

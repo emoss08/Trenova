@@ -138,3 +138,22 @@ export function profileInput(values: ProfileFormValues): CaptureProfileInput {
     fixedPageCount: byCount ? values.fixedPageCount : 0,
   };
 }
+
+/**
+ * What the edit panel loads: the form's values, plus what the save needs to
+ * name the record and the version it was read at.
+ */
+export type ProfileRecord = ProfileFormInput & {
+  id: string;
+  version: number;
+  updatedAt: number;
+};
+
+export function profileRecord(profile: CaptureProfile): ProfileRecord {
+  return {
+    ...profileFormValues(profile),
+    id: profile.id,
+    version: profile.version,
+    updatedAt: profile.updatedAt,
+  };
+}
