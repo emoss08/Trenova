@@ -234,9 +234,22 @@ func (s *Service) payableSettlement(
 
 type accountRefRequest struct {
 	accountID pulid.ID
-	lines     []repositories.PayableJournalLine
-	defaults  repositories.PayableDefaultAccounts
+	label     string
+	role      string
 	missing   string
+}
+
+func payableAccount(
+	accountID pulid.ID,
+	settlement *repositories.PayableSettlement,
+	missing string,
+) *accountRefRequest {
+	return &accountRefRequest{
+		accountID: accountID,
+		label:     accountLabel(accountID, settlement.Lines),
+		role:      roleForAccount(accountID, settlement.Defaults),
+		missing:   missing,
+	}
 }
 
 func (s *Service) accountRef(
@@ -255,7 +268,7 @@ func (s *Service) accountRef(
 	target := mappingTarget{
 		TargetType: accountingsync.TargetGLAccount,
 		ObjectID:   req.accountID,
-		Label:      accountLabel(req.accountID, req.lines),
+		Label:      req.label,
 	}
 	row, err := res.mapping(ctx, target)
 	if err != nil {
@@ -266,10 +279,10 @@ func (s *Service) accountRef(
 		return row.ExternalID, nil
 	}
 
-	if role := roleForAccount(req.accountID, req.defaults); role != "" {
+	if req.role != "" {
 		externalID, roleErr := res.optional(ctx, mappingTarget{
 			TargetType: accountingsync.TargetAccountRole,
-			Key:        role,
+			Key:        req.role,
 		})
 		if roleErr != nil {
 			return "", roleErr
@@ -359,12 +372,11 @@ func (s *Service) pushBill(
 	if err != nil {
 		return nil, err
 	}
-	apAccount, err := s.accountRef(ctx, res, &accountRefRequest{
-		accountID: settlement.PayableAccountID,
-		lines:     settlement.Lines,
-		defaults:  settlement.Defaults,
-		missing:   label + " has no payable account",
-	})
+	apAccount, err := s.accountRef(ctx, res, payableAccount(
+		settlement.PayableAccountID,
+		settlement,
+		label+" has no payable account",
+	))
 	if err != nil {
 		return nil, err
 	}
@@ -443,11 +455,7 @@ func (s *Service) billLines(
 		if line.AccountID == settlement.PayableAccountID || line.NetMinor() == 0 {
 			continue
 		}
-		account, err := s.accountRef(ctx, res, &accountRefRequest{
-			accountID: line.AccountID,
-			lines:     settlement.Lines,
-			defaults:  settlement.Defaults,
-		})
+		account, err := s.accountRef(ctx, res, payableAccount(line.AccountID, settlement, ""))
 		if err != nil {
 			return nil, err
 		}
@@ -592,12 +600,11 @@ func (s *Service) pushBillPayment(
 	if err != nil {
 		return nil, err
 	}
-	bank, err := s.accountRef(ctx, res, &accountRefRequest{
-		accountID: settlement.BankAccountID,
-		lines:     settlement.Lines,
-		defaults:  settlement.Defaults,
-		missing:   label + " has no cash account to pay from",
-	})
+	bank, err := s.accountRef(ctx, res, payableAccount(
+		settlement.BankAccountID,
+		settlement,
+		label+" has no cash account to pay from",
+	))
 	if err != nil {
 		return nil, err
 	}

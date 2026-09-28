@@ -52,6 +52,10 @@ type AccountingJournalWriter interface {
 		ctx context.Context,
 		doc *AccountingJournalDocument,
 	) (*AccountingDocumentResult, error)
+	DeleteJournalEntry(
+		ctx context.Context,
+		ref *AccountingDocumentRef,
+	) (*AccountingDocumentResult, error)
 }
 
 type ReadTrialBalanceRequest struct {

@@ -156,7 +156,12 @@ func (s *ledgerSource) SumLines(
 ) ([]repositories.LedgerAccountBalance, error) {
 	lines := buncolgen.JournalEntryLineColumns
 	entries := buncolgen.JournalEntryColumns
-	query := s.postedLines(ctx, req.TenantInfo, req.From, &req.Before).
+	query := s.postedLines(ctx, &postedLinesFilter{
+		tenantInfo:     req.TenantInfo,
+		from:           req.From,
+		before:         &req.Before,
+		includeClosing: req.IncludeClosing,
+	}).
 		ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
 		ColumnExpr(buncolgen.Sum(lines.DebitAmount, ledgerDebitLabel)).
 		ColumnExpr(buncolgen.Sum(lines.CreditAmount, ledgerCreditLabel))
@@ -267,7 +272,7 @@ func (s *ledgerSource) ListActiveAccounts(
 ) ([]repositories.LedgerAccount, error) {
 	lines := buncolgen.JournalEntryLineColumns
 	ids := make([]pulid.ID, 0, 64)
-	if err := s.postedLines(ctx, req.TenantInfo, req.Since, nil).
+	if err := s.postedLines(ctx, &postedLinesFilter{tenantInfo: req.TenantInfo, from: req.Since}).
 		Distinct().
 		ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
 		Scan(ctx, &ids); err != nil {
@@ -292,10 +297,16 @@ func (s *ledgerSource) ListActiveAccounts(
 	return out, nil
 }
 
+type postedLinesFilter struct {
+	tenantInfo     pagination.TenantInfo
+	from           *int64
+	before         *int64
+	includeClosing bool
+}
+
 func (s *ledgerSource) postedLines(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	from, before *int64,
+	filter *postedLinesFilter,
 ) *bun.SelectQuery {
 	lines := buncolgen.JournalEntryLineColumns
 	entries := buncolgen.JournalEntryColumns
@@ -309,14 +320,16 @@ func (s *ledgerSource) postedLines(
 			entries.OrganizationID.EqColumn(lines.OrganizationID),
 			entries.BusinessUnitID.EqColumn(lines.BusinessUnitID),
 		)).
-		Apply(buncolgen.JournalEntryLineApplyTenant(tenantInfo)).
-		Where(entries.IsPosted.IsTrue()).
-		Where(entries.EntryType.NotIn(), bun.List(unsentEntryTypes()))
-	if from != nil {
-		query = query.Where(entries.AccountingDate.Gte(), *from)
+		Apply(buncolgen.JournalEntryLineApplyTenant(filter.tenantInfo)).
+		Where(entries.IsPosted.IsTrue())
+	if !filter.includeClosing {
+		query = query.Where(entries.EntryType.NotIn(), bun.List(unsentEntryTypes()))
 	}
-	if before != nil {
-		query = query.Where(entries.AccountingDate.Lt(), *before)
+	if filter.from != nil {
+		query = query.Where(entries.AccountingDate.Gte(), *filter.from)
+	}
+	if filter.before != nil {
+		query = query.Where(entries.AccountingDate.Lt(), *filter.before)
 	}
 	return query
 }

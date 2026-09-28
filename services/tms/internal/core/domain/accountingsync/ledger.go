@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -65,9 +67,10 @@ var (
 )
 
 const (
-	journalDayPrefix     = "jday_"
-	journalOpeningPrefix = "jopen_"
+	JournalDayPrefix     = "jday_"
+	JournalOpeningPrefix = "jopen_"
 	journalDayLayout     = "20060102"
+	JournalDaySQLLayout  = "YYYYMMDD"
 )
 
 func (c *AccountingConnection) Mode() SyncMode {
@@ -99,7 +102,9 @@ func (c *AccountingConnection) Sends(objectType SyncObjectType) bool {
 	switch {
 	case objectType.IsParty():
 		return true
-	case objectType.IsLedger():
+	case objectType == SyncObjectJournalEntry:
+		return c.SendsLedger() && !c.SumsByDay()
+	case objectType == SyncObjectJournalSummary:
 		return c.SendsLedger()
 	default:
 		return !c.SendsLedger()
@@ -129,6 +134,15 @@ func (c *AccountingConnection) ChooseMode(mode SyncMode, granularity LedgerGranu
 	return nil
 }
 
+func JournalSendable(entryType journalentry.EntryType) bool {
+	switch entryType {
+	case journalentry.EntryTypeClosing, journalentry.EntryTypeOpening, "":
+		return false
+	default:
+		return true
+	}
+}
+
 func (c *AccountingConnection) SentOpeningBalances() bool {
 	return c.LedgerOpeningBalancesSentAt != nil
 }
@@ -149,11 +163,11 @@ func (c *AccountingConnection) FiscalYearStart(asOf int64, loc *time.Location) i
 }
 
 func JournalDayID(day int64, loc *time.Location) string {
-	return journalDayPrefix + dayKey(day, loc)
+	return JournalDayPrefix + dayKey(day, loc)
 }
 
 func JournalOpeningID(startDate int64, loc *time.Location) string {
-	return journalOpeningPrefix + dayKey(startDate, loc)
+	return JournalOpeningPrefix + dayKey(startDate, loc)
 }
 
 func JournalDayNumber(day int64, loc *time.Location) string {
@@ -165,4 +179,22 @@ func dayKey(day int64, loc *time.Location) string {
 		loc = time.UTC
 	}
 	return time.Unix(day, 0).In(loc).Format(journalDayLayout)
+}
+
+func (r *AccountingSyncRecord) DayUpdate(revision int64) *AccountingSyncRecord {
+	return NewAccountingSyncRecord(&NewSyncRecord{
+		TenantInfo:   pagination.TenantInfo{OrgID: r.OrganizationID, BuID: r.BusinessUnitID},
+		ConnectionID: r.ConnectionID,
+		Key: SyncRecordKey{
+			ObjectType: r.ObjectType,
+			ObjectID:   r.ObjectID,
+			Operation:  SyncOperationUpdate,
+			Revision:   revision,
+		},
+		ObjectNumber: r.ObjectNumber,
+		SourceEvent:  r.SourceEvent,
+		DocumentDate: r.DocumentDate,
+		AwaitRelease: r.Status == SyncStatusAwaitingApproval,
+		At:           r.QueuedAt,
+	})
 }

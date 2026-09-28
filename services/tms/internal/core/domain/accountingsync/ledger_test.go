@@ -97,6 +97,10 @@ func TestSendsKeepsTheTwoModesApart(t *testing.T) {
 			assert.False(t, ledger.Sends(objectType), objectType)
 		}
 	}
+	daily := &AccountingConnection{SyncMode: SyncModeLedger, LedgerGranularity: LedgerDailySummary}
+	assert.False(t, daily.Sends(SyncObjectJournalEntry))
+	assert.True(t, daily.Sends(SyncObjectJournalSummary))
+	assert.False(t, daily.Sends(SyncObjectInvoice))
 	assert.True(t, ledger.Sends(SyncObjectCustomer))
 	assert.True(t, ledger.Sends(SyncObjectJournalSummary))
 	assert.False(t, ledger.Sends(SyncObjectInvoice))

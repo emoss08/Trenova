@@ -248,3 +248,28 @@ func TestJournalLineNamesAVendorOnPayables(t *testing.T) {
 	}, detail["Entity"])
 	assert.NotContains(t, lines[0].(map[string]any)["JournalEntryLineDetail"], "Entity")
 }
+
+func TestDeleteJournalEntryReadsItThenDeletesIt(t *testing.T) {
+	t.Parallel()
+
+	var operation, path string
+	var body map[string]any
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			_, _ = w.Write(fixture(t, "read_journal_entry.json"))
+			return
+		}
+		operation = r.URL.Query().Get("operation")
+		path = r.URL.Path
+		body = readJSON(t, r)
+		_, _ = w.Write(fixture(t, "delete_journal_entry.json"))
+	})
+
+	result, err := client.DeleteJournalEntry(t.Context(), testRequestID, "310")
+	require.NoError(t, err)
+	assert.Equal(t, "delete", operation)
+	assert.Equal(t, "/v3/company/"+testRealm+"/journalentry", path)
+	assert.Equal(t, "310", body["Id"])
+	assert.NotEmpty(t, body["SyncToken"])
+	assert.Equal(t, "Deleted", result.Status)
+}

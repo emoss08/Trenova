@@ -64,3 +64,23 @@ func TestParseCalendarDateIsMidnightInTheLocation(t *testing.T) {
 	_, err = ParseCalendarDate("2026-02-30", time.UTC)
 	require.Error(t, err)
 }
+
+func TestDayBoundariesFollowTheZone(t *testing.T) {
+	t.Parallel()
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	evening := time.Date(2026, time.March, 7, 22, 30, 0, 0, chicago).Unix()
+
+	assert.Equal(t, time.Date(2026, time.March, 7, 0, 0, 0, 0, chicago).Unix(), DayStart(evening, chicago))
+	assert.Equal(t, time.Date(2026, time.March, 8, 0, 0, 0, 0, time.UTC).Unix(), DayStart(evening, nil))
+
+	next := NextDayStart(evening, chicago)
+	assert.Equal(t, time.Date(2026, time.March, 8, 0, 0, 0, 0, chicago).Unix(), next)
+	afterChange := NextDayStart(next, chicago)
+	assert.Equal(t, int64(23*3600), afterChange-next, "the day clocks spring forward is 23 hours long")
+
+	assert.Equal(t, time.Date(2026, time.March, 6, 0, 0, 0, 0, chicago).Unix(), PreviousDayStart(evening, chicago))
+	assert.Equal(t, time.Date(2026, time.February, 28, 0, 0, 0, 0, chicago).Unix(),
+		PreviousDayStart(time.Date(2026, time.March, 1, 9, 0, 0, 0, chicago).Unix(), chicago))
+}

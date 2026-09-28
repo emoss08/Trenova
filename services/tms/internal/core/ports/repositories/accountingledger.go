@@ -85,6 +85,7 @@ type SumLedgerRequest struct {
 	From            *int64
 	Before          int64
 	PartyAccountIDs []pulid.ID
+	IncludeClosing  bool
 }
 
 type ListLedgerAccountsRequest struct {

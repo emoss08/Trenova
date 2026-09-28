@@ -193,3 +193,7 @@ func (c *Client) UpdateJournalEntry(
 		&txnUpdate{requestID: requestID, kind: TxnJournalEntry, id: id, body: body},
 	)
 }
+
+func (c *Client) DeleteJournalEntry(ctx context.Context, requestID, id string) (*TxnResult, error) {
+	return c.retire(ctx, requestID, TxnJournalEntry, id, "delete", "")
+}

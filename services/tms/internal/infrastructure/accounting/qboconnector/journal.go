@@ -68,6 +68,27 @@ func (c *Connector) UpdateJournalEntry(
 	return c.journalResult(saved), nil
 }
 
+func (c *Connector) DeleteJournalEntry(
+	ctx context.Context,
+	ref *services.AccountingDocumentRef,
+) (*services.AccountingDocumentResult, error) {
+	if !ref.Kind.IsLedger() {
+		return nil, errDocumentKind
+	}
+	id := strings.TrimSpace(ref.ExternalID)
+	if id == "" {
+		return nil, errExternalIDRequired
+	}
+	client, err := c.client(ref.Auth)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = client.DeleteJournalEntry(ctx, ref.RequestID, id); err != nil {
+		return nil, err
+	}
+	return &services.AccountingDocumentResult{ExternalID: id}, nil
+}
+
 func (c *Connector) journalResult(saved *quickbooks.TxnResult) *services.AccountingDocumentResult {
 	return &services.AccountingDocumentResult{
 		ExternalID: saved.ID,

@@ -188,3 +188,40 @@ func TestReadTrialBalanceReadsEveryAccountRow(t *testing.T) {
 	assert.Equal(t, "79", rows[1].AccountExternalID)
 	assert.True(t, decimal.RequireFromString("-12480.50").Equal(rows[1].Net()))
 }
+
+func TestDeleteJournalEntryRetiresTheProviderEntry(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeQBO{respond: func(call recordedCall) (int, string) {
+		if call.Method == http.MethodGet {
+			return http.StatusOK, `{"JournalEntry":{"Id":"212","SyncToken":"5"}}`
+		}
+		return http.StatusOK, `{"JournalEntry":{"Id":"212","status":"Deleted"}}`
+	}}
+	conn := documentConnector(t, fake)
+
+	result, err := conn.DeleteJournalEntry(t.Context(), &services.AccountingDocumentRef{
+		Auth:       auth(),
+		RequestID:  docRequestID,
+		Kind:       accountingsync.SyncObjectJournalSummary,
+		ExternalID: " 212 ",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "212", result.ExternalID)
+
+	writes := fake.writes()
+	require.Len(t, writes, 1)
+	assert.Equal(t, "/journalentry", writes[0].Path)
+	assert.Equal(t, "delete", writes[0].Operation)
+	assert.Equal(t, "5", writes[0].Body["SyncToken"])
+
+	_, err = conn.DeleteJournalEntry(t.Context(), &services.AccountingDocumentRef{
+		Auth: auth(), RequestID: docRequestID, Kind: accountingsync.SyncObjectInvoice, ExternalID: "1",
+	})
+	require.ErrorIs(t, err, errDocumentKind)
+	_, err = conn.DeleteJournalEntry(t.Context(), &services.AccountingDocumentRef{
+		Auth: auth(), RequestID: docRequestID, Kind: accountingsync.SyncObjectJournalEntry,
+	})
+	require.ErrorIs(t, err, errExternalIDRequired)
+	assert.Len(t, fake.writes(), 1)
+}

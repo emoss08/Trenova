@@ -405,6 +405,15 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		assert.True(t, balances[0].Party.IsZero())
 		assert.Equal(t, int64(-800), balances[0].NetMinor())
 
+		balances, sumErr = source.SumLines(ctx, &repositories.SumLedgerRequest{
+			TenantInfo: tenant, From: &from, Before: next + 86_400, IncludeClosing: true,
+		})
+		require.NoError(t, sumErr)
+		require.Len(t, balances, 3)
+		assert.Equal(t, int64(-800), balances[0].NetMinor())
+		assert.Equal(t, int64(500-9_000), balances[1].NetMinor())
+		assert.Equal(t, int64(9_300), balances[2].NetMinor())
+
 		later := next
 		balances, sumErr = source.SumLines(ctx, &repositories.SumLedgerRequest{
 			TenantInfo: tenant, From: &later, Before: next + 86_400,
