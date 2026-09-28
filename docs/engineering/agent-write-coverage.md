@@ -57,6 +57,30 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
   job, an EDI message or an inbound webhook is not a write a person makes and is
   not listed.
 
+## Schema contract
+
+A tool that performs a GraphQL write takes what the mutation's input takes, and
+no more. `internal/api/toolcontract` holds each such tool to its input: a
+`Binding` in `bindings.go` names the tool, the input type, the parameter
+the input sits under (none for the top level) and the input each nested object
+parameter is held to (`moves.stops` to `ShipmentStopInput`).
+`TestEveryBoundToolFitsItsGraphQLInput` parses the schema with gqlparser and
+fails when
+
+- a non-null input field without a default is not a required parameter, unless
+  the binding's `Defaulted` says why (a patch asks only for what changes);
+- a parameter is not a field of its input, unless `Extra` says why (the
+  mutation takes the record's id as its own argument). This is the check a
+  made-up field such as `moves[].type` fails;
+- a parameter bound to a GraphQL enum does not offer exactly its values, unless
+  `Narrowed` says why the tool offers fewer.
+
+`TestEveryWriteToolWithAGraphQLInputIsBound` reads this ledger: every
+create or update tool listed against a mutation that takes an input object is
+bound, or named in `Unbound` with the reason. A tool whose writes are REST
+routes has no input to hold it to and needs neither. An excuse that no longer
+matches anything fails too, so the file cannot drift behind the tools.
+
 ## Exemption categories
 
 | Category | Means | Writes |

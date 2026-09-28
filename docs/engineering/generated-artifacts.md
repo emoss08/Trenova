@@ -113,6 +113,27 @@ same under `task test`. Pending writes are the backlog: they are counted, never 
 route that reaches exactly the service calls a mutation reaches is merged into it and needs no
 entry of its own; the failure says so when an entry for such a route is left behind.
 
+## Agent tool schema contract
+
+`internal/api/toolcontract` holds each agent tool that performs a GraphQL write to the
+mutation's input type, read from `internal/api/graphql/schema/*.graphqls` with gqlparser.
+Nothing is generated; the check is two Go tests that run under `task test`:
+
+```bash
+cd services/tms
+go test -tags nofitz ./internal/api/toolcontract/
+```
+
+`TestEveryBoundToolFitsItsGraphQLInput` fails when a bound tool stops requiring a non-null
+input field, takes a parameter the input has no field for (a made-up `moves[].type`), or
+offers enum values other than the input's. `TestEveryWriteToolWithAGraphQLInputIsBound` fails
+when a create or update tool that `writecoverage.yml` lists against a mutation with an input
+object is neither bound nor listed in `Unbound` with a reason. So **adding a create or update
+tool, changing a bound tool's schema, or changing a bound input type means updating
+`bindings.go`**: a new parameter the input lacks takes an `Extra` reason, a required field
+the tool leaves out a `Defaulted` one, a narrower enum a `Narrowed` one. See "Schema
+contract" in [agent-write-coverage.md](agent-write-coverage.md).
+
 ## Agent prompt and tool snapshots
 
 The `Deterministic` job of `.github/workflows/agent-evals.yml` compares what a model is shown
