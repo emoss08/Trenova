@@ -230,8 +230,8 @@ func (s *Service) RunDraw(
 		seed+":alcohol",
 		int(draw.AlcoholTarget),
 	)
-	draw.DrugSelected = int32(len(drugPicks))
-	draw.AlcoholSelected = int32(len(alcoholPicks))
+	draw.DrugSelected = int32(len(drugPicks))       //nolint:gosec // bounded by the pool size
+	draw.AlcoholSelected = int32(len(alcoholPicks)) //nolint:gosec // bounded by the pool size
 	draw.Seed = seed
 
 	multiErr := errortypes.NewMultiError()
@@ -327,9 +327,9 @@ func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan,
 			PeriodStart:    periodStart,
 			PeriodEnd:      periodEnd,
 			Status:         worker.RandomDrawStatusDraft,
-			PoolSize:       int32(len(candidates)),
-			DrugTarget:     int32(drugTarget),
-			AlcoholTarget:  int32(alcoholTarget),
+			PoolSize:       int32(len(candidates)), //nolint:gosec // a pool's drivers fit in int32
+			DrugTarget:     int32(drugTarget),      //nolint:gosec // bounded by the pool size
+			AlcoholTarget:  int32(alcoholTarget),   //nolint:gosec // bounded by the pool size
 			Method:         worker.RandomSelectionMethod,
 			Notes:          strings.TrimSpace(req.Notes),
 			DrawnAt:        at,

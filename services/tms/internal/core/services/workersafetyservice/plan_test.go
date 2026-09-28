@@ -87,7 +87,12 @@ func TestPlanMoveEvent_ShowsTheMoveAndLeavesTheEvent(t *testing.T) {
 
 	same, err := h.svc.PlanReopenEvent(t.Context(), req)
 	require.NoError(t, err)
-	assert.Equal(t, same.Before.Status, same.After.Status, "reopening an open event changes nothing")
+	assert.Equal(
+		t,
+		same.Before.Status,
+		same.After.Status,
+		"reopening an open event changes nothing",
+	)
 
 	_, err = h.svc.CloseEvent(t.Context(), req)
 	require.NoError(t, err)

@@ -375,6 +375,10 @@ func ApplyInjuryUpdate(entity *worker.WorkerInjury, req *UpdateInjuryRequest) {
 	if req.PrivacyCase != nil {
 		entity.PrivacyCase = *req.PrivacyCase
 	}
+	applyInjuryClaim(entity, req)
+}
+
+func applyInjuryClaim(entity *worker.WorkerInjury, req *UpdateInjuryRequest) {
 	if req.ClaimStatus != nil {
 		entity.ClaimStatus = *req.ClaimStatus
 	}

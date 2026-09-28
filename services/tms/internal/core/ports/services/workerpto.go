@@ -96,7 +96,10 @@ type WorkerPTOService interface {
 		entity *worker.WorkerPTO,
 		userID pulid.ID,
 	) (*worker.WorkerPTO, error)
-	PlanUpdate(ctx context.Context, entity *worker.WorkerPTO) (*RecordChange[worker.WorkerPTO], error)
+	PlanUpdate(
+		ctx context.Context,
+		entity *worker.WorkerPTO,
+	) (*RecordChange[worker.WorkerPTO], error)
 	Approve(
 		ctx context.Context,
 		req *repositories.UpdatePTOStatusRequest,

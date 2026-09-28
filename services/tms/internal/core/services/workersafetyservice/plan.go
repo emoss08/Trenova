@@ -37,7 +37,10 @@ func (s *Service) PlanUpdateEvent(
 	return s.planUpdateEvent(ctx, &planned)
 }
 
-func (s *Service) PlanCloseEvent(ctx context.Context, req *EventStatusRequest) (*EventChange, error) {
+func (s *Service) PlanCloseEvent(
+	ctx context.Context,
+	req *EventStatusRequest,
+) (*EventChange, error) {
 	return s.planMoveEvent(ctx, req, worker.SafetyEventStatusClosed)
 }
 

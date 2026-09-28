@@ -124,9 +124,10 @@ func settleNoteRequired(status worker.ChecklistItemStatus, note string) error {
 			errortypes.ErrRequired,
 			"Say why this item does not apply",
 		)
-	default:
+	case worker.ChecklistItemPending, worker.ChecklistItemDone:
 		return nil
 	}
+	return nil
 }
 
 func (s *Service) loadItem(

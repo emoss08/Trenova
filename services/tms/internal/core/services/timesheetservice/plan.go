@@ -69,7 +69,10 @@ func (s *Service) PlanGenerateExport(
 	return &ExportPlan{Export: export, TimesheetIDs: ids}, nil
 }
 
-func (s *Service) PlanVoidExport(ctx context.Context, req *VoidExportRequest) (*ExportChange, error) {
+func (s *Service) PlanVoidExport(
+	ctx context.Context,
+	req *VoidExportRequest,
+) (*ExportChange, error) {
 	original, err := s.repo.GetExportByID(ctx, &repositories.GetPayrollExportByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,

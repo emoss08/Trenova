@@ -50,8 +50,8 @@ func (s *Service) loadCase(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerLeaveCase, *worker.WorkerLeaveCase, error) {
-	original, err := s.repo.GetCaseByID(ctx, &repositories.GetLeaveCaseByIDRequest{
+) (original, leaveCase *worker.WorkerLeaveCase, err error) {
+	original, err = s.repo.GetCaseByID(ctx, &repositories.GetLeaveCaseByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
