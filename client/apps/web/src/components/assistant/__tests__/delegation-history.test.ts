@@ -252,6 +252,25 @@ describe("delegateView from a saved thread", () => {
     expect(handOffHeadline(view!, t)).toBe("Asked Report Builder");
   });
 
+  it("shows the task as asked, not the records handed over after it", () => {
+    const thread = handOffThread().map((message) =>
+      message.kind === "Delegated" && message.role === "User"
+        ? assistantMessageSchema.parse({
+            ...message,
+            content:
+              "Create a report of on-time deliveries\n\nThe agent that asked handed these " +
+              "over with the task.\n\nRecords the task is about:\n<untrusted_data>\n" +
+              "- report rd_1\n</untrusted_data>",
+          })
+        : message,
+    );
+    const [, turn] = groupThread(thread);
+    if (turn.kind !== "assistant") throw new Error("expected an assistant entry");
+    const [step] = stepsFromExchanges(turn.tools, turn.message.createdAt);
+
+    expect(delegateView(step)?.task).toBe("Create a report of on-time deliveries");
+  });
+
   it("reads a hand-off refused before it began as declined, with the reason", () => {
     const view = delegateView(
       savedStep('Tool "delegate_task" was not run: Report Builder is disabled.', true),
