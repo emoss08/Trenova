@@ -76,7 +76,6 @@ func (s *Service) transitionFor(
 	}
 }
 
-// PlanReview works out one review step without saving it.
 func (s *Service) PlanReview(
 	ctx context.Context,
 	review Review,
@@ -95,7 +94,6 @@ func (s *Service) PlanReview(
 	return &AgreementChange{Before: change.Before, After: change.After}, nil
 }
 
-// Review runs one review step, the one PlanReview works out.
 func (s *Service) Review(
 	ctx context.Context,
 	review Review,
@@ -109,8 +107,6 @@ func (s *Service) Review(
 	return s.approvals().Apply(ctx, req, transition)
 }
 
-// PlanCreate is Create without the save: the agreement as it would be stored,
-// in Draft whatever the payload says, checked by the same validator.
 func (s *Service) PlanCreate(
 	ctx context.Context,
 	entity *rateagreement.RateAgreement,
@@ -127,8 +123,6 @@ func (s *Service) PlanCreate(
 	return &planned, nil
 }
 
-// PlanUpdate is Update without the save: the header as it would be stored and
-// the lanes the save would supersede and insert.
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *rateagreement.RateAgreement,
@@ -177,8 +171,6 @@ func (s *Service) PlanUpdate(
 	return plan, nil
 }
 
-// PlanDuplicate is Duplicate without the save: the copy as Create would store
-// it, checked by the same validator.
 func (s *Service) PlanDuplicate(
 	ctx context.Context,
 	req *DuplicateRateAgreementRequest,
@@ -200,8 +192,6 @@ func (s *Service) PlanDuplicate(
 	return &DuplicatePlan{Original: original, Copy: planned}, nil
 }
 
-// PlanAmendRules checks a rule amendment as AmendRules does, and names the
-// lanes it would close out, without writing anything.
 func (s *Service) PlanAmendRules(
 	ctx context.Context,
 	req *repositories.AmendRateAgreementRulesRequest,
@@ -241,8 +231,6 @@ func (s *Service) PlanAmendRules(
 	return plan, nil
 }
 
-// PlanApplyRateIncrease is ApplyRateIncrease without the writes: the plan it
-// would apply, refused for the reasons it would refuse it.
 func (s *Service) PlanApplyRateIncrease(
 	ctx context.Context,
 	req *RateIncreaseRequest,

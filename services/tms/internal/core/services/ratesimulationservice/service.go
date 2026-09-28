@@ -113,15 +113,11 @@ func (s *Service) ListResults(
 //
 // It is deliberately not run here. A year of shipments takes minutes, and a
 // request that waits for it will time out long before the answer exists.
-// CreatePlan is a simulation as Create would queue it, with the agreement it
-// replays.
 type CreatePlan struct {
 	Simulation *ratesimulation.RateSimulation
 	Agreement  *rateagreement.RateAgreement
 }
 
-// PlanCreate checks a simulation as Create does, and finds the agreement it
-// replays, without saving or queueing anything.
 func (s *Service) PlanCreate(
 	ctx context.Context,
 	entity *ratesimulation.RateSimulation,

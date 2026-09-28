@@ -19,6 +19,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
@@ -29,7 +31,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/core/domain/rateimport"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
@@ -81,6 +85,15 @@ type lookup struct {
 }
 
 type versioned any
+
+var fuelImportLookup = lookup{
+	model: func() versioned { return new(fuelpurchase.ImportBatch) },
+	scope: buncolgen.ImportBatchScopeTenant,
+	idEq:  buncolgen.ImportBatchColumns.ID.Eq(),
+	version: versionOf(
+		func(entity *fuelpurchase.ImportBatch) int64 { return entity.Version },
+	),
+}
 
 var lookups = map[permission.Resource]lookup{
 	permission.ResourceOrder: {
@@ -209,12 +222,30 @@ var lookups = map[permission.Resource]lookup{
 			func(entity *servicefailure.ServiceFailure) int64 { return entity.Version },
 		),
 	},
-	permission.ResourceReport: {
-		model:   func() versioned { return new(report.ReportDefinition) },
-		scope:   buncolgen.ReportDefinitionScopeTenant,
-		idEq:    buncolgen.ReportDefinitionColumns.ID.Eq(),
-		version: versionOf(func(entity *report.ReportDefinition) int64 { return entity.Version }),
-	},
+	permission.ResourceReport: {kinds: map[string]lookup{
+		"rd_": {
+			model: func() versioned { return new(report.ReportDefinition) },
+			scope: buncolgen.ReportDefinitionScopeTenant,
+			idEq:  buncolgen.ReportDefinitionColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *report.ReportDefinition) int64 { return entity.Version },
+			),
+		},
+		"rsch_": {
+			model: func() versioned { return new(report.ReportSchedule) },
+			scope: buncolgen.ReportScheduleScopeTenant,
+			idEq:  buncolgen.ReportScheduleColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *report.ReportSchedule) int64 { return entity.Version },
+			),
+		},
+		"rrun_": {
+			model:   func() versioned { return new(report.ReportRun) },
+			scope:   buncolgen.ReportRunScopeTenant,
+			idEq:    buncolgen.ReportRunColumns.ID.Eq(),
+			version: versionOf(func(entity *report.ReportRun) int64 { return entity.Version }),
+		},
+	}},
 	// The detention tools act on an occurrence under the detention policy
 	// resource, which is the permission a person needs to act on one.
 	permission.ResourceDetentionPolicy: {
@@ -309,6 +340,56 @@ var lookups = map[permission.Resource]lookup{
 			scope:   buncolgen.EDIInboundFileScopeTenant,
 			idEq:    buncolgen.EDIInboundFileColumns.ID.Eq(),
 			version: versionOf(func(entity *edi.EDIInboundFile) int64 { return entity.Version }),
+		},
+	}},
+	permission.ResourceFuelPurchase: {kinds: map[string]lookup{
+		"fpur_": {
+			model: func() versioned { return new(fuelpurchase.FuelPurchase) },
+			scope: buncolgen.FuelPurchaseScopeTenant,
+			idEq:  buncolgen.FuelPurchaseColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *fuelpurchase.FuelPurchase) int64 { return entity.Version },
+			),
+		},
+		"fpib_": fuelImportLookup,
+	}},
+	permission.ResourceFuelPurchaseImport: fuelImportLookup,
+	permission.ResourceFuelCard: {
+		model:   func() versioned { return new(fuelpurchase.FuelCard) },
+		scope:   buncolgen.FuelCardScopeTenant,
+		idEq:    buncolgen.FuelCardColumns.ID.Eq(),
+		version: versionOf(func(entity *fuelpurchase.FuelCard) int64 { return entity.Version }),
+	},
+	permission.ResourceIFTAReturn: {
+		model:   func() versioned { return new(ifta.Return) },
+		scope:   buncolgen.ReturnScopeTenant,
+		idEq:    buncolgen.ReturnColumns.ID.Eq(),
+		version: versionOf(func(entity *ifta.Return) int64 { return entity.Version }),
+	},
+	permission.ResourceIFTAJurisdictionMileage: {
+		model: func() versioned { return new(ifta.JurisdictionMileageEntry) },
+		scope: buncolgen.JurisdictionMileageEntryScopeTenant,
+		idEq:  buncolgen.JurisdictionMileageEntryColumns.ID.Eq(),
+		version: versionOf(
+			func(entity *ifta.JurisdictionMileageEntry) int64 { return entity.Version },
+		),
+	},
+	permission.ResourceRateAgreement: {kinds: map[string]lookup{
+		"rag_": {
+			model: func() versioned { return new(rateagreement.RateAgreement) },
+			scope: buncolgen.RateAgreementScopeTenant,
+			idEq:  buncolgen.RateAgreementColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *rateagreement.RateAgreement) int64 { return entity.Version },
+			),
+		},
+		"rib_": {
+			model: func() versioned { return new(rateimport.RateImportBatch) },
+			scope: buncolgen.RateImportBatchScopeTenant,
+			idEq:  buncolgen.RateImportBatchColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *rateimport.RateImportBatch) int64 { return entity.Version },
+			),
 		},
 	}},
 	permission.ResourceInvoiceDispute: {

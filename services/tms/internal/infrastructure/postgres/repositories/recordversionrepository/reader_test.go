@@ -9,7 +9,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/core/domain/rateimport"
+	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -119,5 +124,52 @@ func TestEDIRecordsAToolTargetsAreToldApartByTheirIDs(t *testing.T) {
 		require.NotNil(t, entry.model, name)
 		require.NotNil(t, entry.scope, name)
 		require.NotEmpty(t, entry.idEq, name)
+	}
+}
+
+func TestRecordsSharingAResourceAreToldApartByTheirIDs(t *testing.T) {
+	t.Parallel()
+
+	insert := (*bun.InsertQuery)(nil)
+	purchase := new(fuelpurchase.FuelPurchase)
+	fuelBatch := new(fuelpurchase.ImportBatch)
+	card := new(fuelpurchase.FuelCard)
+	iftaReturn := new(ifta.Return)
+	entry := new(ifta.JurisdictionMileageEntry)
+	agreement := new(rateagreement.RateAgreement)
+	rateBatch := new(rateimport.RateImportBatch)
+	definition := new(report.ReportDefinition)
+	schedule := new(report.ReportSchedule)
+	run := new(report.ReportRun)
+	for _, record := range []bun.BeforeAppendModelHook{
+		purchase, fuelBatch, card, iftaReturn, entry, agreement, rateBatch,
+		definition, schedule, run,
+	} {
+		require.NoError(t, record.BeforeAppendModel(t.Context(), insert))
+	}
+
+	for name, target := range map[string]services.ToolTarget{
+		"fuel purchase":          {Resource: permission.ResourceFuelPurchase, ID: purchase.ID},
+		"fuel purchase import":   {Resource: permission.ResourceFuelPurchase, ID: fuelBatch.ID},
+		"fuel import to resolve": {Resource: permission.ResourceFuelPurchaseImport, ID: fuelBatch.ID},
+		"fuel card":              {Resource: permission.ResourceFuelCard, ID: card.ID},
+		"IFTA return":            {Resource: permission.ResourceIFTAReturn, ID: iftaReturn.ID},
+		"IFTA mileage entry":     {Resource: permission.ResourceIFTAJurisdictionMileage, ID: entry.ID},
+		"rate agreement":         {Resource: permission.ResourceRateAgreement, ID: agreement.ID},
+		"rate import":            {Resource: permission.ResourceRateAgreement, ID: rateBatch.ID},
+		"report":                 {Resource: permission.ResourceReport, ID: definition.ID},
+		"report schedule":        {Resource: permission.ResourceReport, ID: schedule.ID},
+		"report run":             {Resource: permission.ResourceReport, ID: run.ID},
+	} {
+		lookup, ok := lookups[target.Resource]
+		require.Truef(t, ok, "%s: %s has no version lookup", name, target.Resource)
+		if lookup.kinds != nil {
+			lookup, ok = lookup.kinds[target.ID.Prefix()]
+			require.Truef(t, ok, "the %s id %s has no version lookup", name, target.ID)
+		}
+		require.NotNil(t, lookup.model, name)
+		require.NotNil(t, lookup.scope, name)
+		require.NotEmpty(t, lookup.idEq, name)
+		require.NotNil(t, lookup.version, name)
 	}
 }

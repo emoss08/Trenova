@@ -409,14 +409,12 @@ func (s *Service) Discard(
 	return s.repo.Update(ctx, change.After)
 }
 
-// CommitPlan is the amendment a commit would apply to the agreement.
 type CommitPlan struct {
 	Batch         *rateimport.RateImportBatch
 	SupersededIDs []pulid.ID
 	Rules         []*rateagreement.RateAgreementRule
 }
 
-// BatchChange is an import before and after a change to its status.
 type BatchChange struct {
 	Before *rateimport.RateImportBatch
 	After  *rateimport.RateImportBatch
@@ -440,7 +438,6 @@ func (s *Service) openBatch(
 	return batch, nil
 }
 
-// PlanCommit works out the amendment Commit applies, without applying it.
 func (s *Service) PlanCommit(ctx context.Context, req *CommitRequest) (*CommitPlan, error) {
 	batch, err := s.openBatch(ctx, &repositories.GetRateImportBatchByIDRequest{
 		RateImportBatchID: req.RateImportBatchID,
@@ -483,7 +480,6 @@ func (s *Service) PlanCommit(ctx context.Context, req *CommitRequest) (*CommitPl
 	}, nil
 }
 
-// PlanDiscard works out the discard Discard saves, without saving it.
 func (s *Service) PlanDiscard(ctx context.Context, req *CommitRequest) (*BatchChange, error) {
 	batch, err := s.openBatch(ctx, &repositories.GetRateImportBatchByIDRequest{
 		RateImportBatchID: req.RateImportBatchID,

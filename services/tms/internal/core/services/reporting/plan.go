@@ -27,7 +27,6 @@ type ScheduleChange struct {
 	Definition *report.ReportDefinition
 }
 
-// PlanDeleteDefinition is DeleteDefinition without the delete.
 func (s *Service) PlanDeleteDefinition(
 	ctx context.Context,
 	req *GetDefinitionRequest,
@@ -46,7 +45,6 @@ func (s *Service) PlanDeleteDefinition(
 	return existing, nil
 }
 
-// PlanResetCannedFork is ResetCannedFork without the save.
 func (s *Service) PlanResetCannedFork(
 	ctx context.Context,
 	req *GetDefinitionRequest,
@@ -84,7 +82,6 @@ func (s *Service) PlanResetCannedFork(
 	return &DefinitionChange{Before: existing, After: &reset}, nil
 }
 
-// PlanCancelRun is CancelRun without the cancel.
 func (s *Service) PlanCancelRun(ctx context.Context, req *GetRunRequest) (*RunChange, error) {
 	run, err := s.GetRun(ctx, req)
 	if err != nil {
@@ -107,7 +104,6 @@ func (s *Service) PlanCancelRun(ctx context.Context, req *GetRunRequest) (*RunCh
 	return &RunChange{Before: run, After: &canceled}, nil
 }
 
-// PlanDeleteDashboard is DeleteDashboard without the delete.
 func (s *Service) PlanDeleteDashboard(
 	ctx context.Context,
 	req *GetDashboardRequest,
@@ -146,7 +142,6 @@ func (s *Service) ownedSchedule(
 	return existing, nil
 }
 
-// PlanUpdateSchedule is UpdateSchedule without the save.
 func (s *Service) PlanUpdateSchedule(
 	ctx context.Context,
 	req *SaveScheduleRequest,
@@ -195,7 +190,6 @@ func (s *Service) PlanUpdateSchedule(
 	return &ScheduleChange{Before: existing, After: &updated, Definition: definition}, nil
 }
 
-// PlanDeleteSchedule is DeleteSchedule without the delete.
 func (s *Service) PlanDeleteSchedule(
 	ctx context.Context,
 	req *GetScheduleRequest,

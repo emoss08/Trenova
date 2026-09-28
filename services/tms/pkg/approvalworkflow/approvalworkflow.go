@@ -87,16 +87,11 @@ type Engine[T any, S comparable] struct {
 	Now func() int64
 }
 
-// Change is a transition worked out and not yet saved: the entity as it was
-// loaded and the copy the transition stamped.
 type Change[T any] struct {
 	Before T
 	After  T
 }
 
-// Plan works out one transition without saving it, or explains why it cannot.
-// The stamping happens on a snapshot, so the loaded entity is left exactly as
-// it was whatever the outcome.
 func (e Engine[T, S]) Plan(
 	ctx context.Context,
 	req *Request,
@@ -113,8 +108,7 @@ func (e Engine[T, S]) Plan(
 	return Change[T]{Before: entity, After: after}, nil
 }
 
-// Apply runs one transition, or explains why it cannot. It makes the same
-// checks and the same stamps Plan does, then saves.
+// Apply runs one transition, or explains why it cannot.
 //
 // The order is deliberate: the status is checked before anything is written, so
 // an illegal move leaves the entity exactly as it was.
