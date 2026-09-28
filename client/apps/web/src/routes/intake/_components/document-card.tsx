@@ -4,7 +4,6 @@ import {
 } from "@/components/autocomplete-fields";
 import {
   CAPTURE_RECORD_KINDS,
-  captureDocumentCategory,
   captureItemStatusAttrs,
   captureRecordKindLabel,
   captureSuggestionSourceLabel,
@@ -237,7 +236,6 @@ export function DocumentCard({
           <ControlledDocumentTypeAutocompleteField
             label={t("Document type")}
             placeholder={t("Optional")}
-            category={captureDocumentCategory(destination.kind)}
             value={destination.documentTypeId}
             onValueChange={(documentTypeId) =>
               onDestinationChange({ ...destination, documentTypeId })

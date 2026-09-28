@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -57,9 +58,9 @@ func (t *checkAccountingConnectionTool) Description() string {
 
 func (t *checkAccountingConnectionTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		"system": jsonschemautils.Enum(
+		"system": agenttoolschema.Enum(
 			"The accounting system. Example: \"QuickBooksOnline\".",
-			string(integration.TypeQuickBooksOnline),
+			agenttoolschema.AccountingSystems,
 		),
 	}, "system")
 }

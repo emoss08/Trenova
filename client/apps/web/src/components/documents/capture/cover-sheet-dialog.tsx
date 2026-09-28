@@ -1,10 +1,6 @@
 import { ControlledDocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import {
-  captureDocumentCategory,
-  captureRecordKindLabel,
-  type CaptureRecordKind,
-} from "@/lib/capture";
+import { captureRecordKindLabel, type CaptureRecordKind } from "@/lib/capture";
 import { buildCoverSheetPdf, type CoverSheetPrint } from "@/lib/capture-cover-sheet";
 import { createCaptureCoverSheets, type IssuedCoverSheet } from "@/lib/graphql/capture";
 import { selectOptionMetaString } from "@/lib/select-option-meta";
@@ -151,7 +147,6 @@ export function CoverSheetDialog({
           <ControlledDocumentTypeAutocompleteField
             label={t("Document type")}
             placeholder={t("Optional")}
-            category={captureDocumentCategory(kind)}
             value={documentTypeId}
             onValueChange={setDocumentTypeId}
             onOptionChange={(option) =>

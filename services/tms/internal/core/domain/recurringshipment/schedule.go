@@ -138,3 +138,24 @@ func (rs *RecurringShipment) GenerationDueAt(occurrenceAt int64) int64 {
 func (rs *RecurringShipment) ReachedOccurrenceLimit() bool {
 	return rs.MaxOccurrences != nil && rs.GenerationCount >= int64(*rs.MaxOccurrences)
 }
+
+func (rs *RecurringShipment) ApplyStatus(status Status, now int64) error {
+	rs.Status = status
+	if status != StatusActive {
+		return nil
+	}
+
+	next, err := rs.NextOccurrence(now)
+	if err != nil {
+		return err
+	}
+	if next == nil {
+		rs.Status = StatusExpired
+		rs.NextOccurrenceAt = nil
+	} else {
+		rs.NextOccurrenceAt = &next.At
+	}
+	rs.ConsecutiveFailures = 0
+
+	return nil
+}

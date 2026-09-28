@@ -403,6 +403,20 @@ type ServiceFailureService interface {
 		req *ServiceFailureLifecycleRequest,
 		actor *RequestActor,
 	) (*servicefailure.ServiceFailure, error)
+	PreviewReview(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *RequestActor,
+	) (*ServiceFailureLifecyclePreview, error)
+	PreviewVoid(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *RequestActor,
+	) (*ServiceFailureLifecyclePreview, error)
+	PreviewUpdate(
+		ctx context.Context,
+		req *UpdateServiceFailureRequest,
+	) (*ServiceFailureLifecyclePreview, error)
 }
 
 type ServiceFailureReasonCodeService interface {

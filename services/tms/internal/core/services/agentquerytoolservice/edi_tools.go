@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -30,15 +31,15 @@ const (
 )
 
 var (
-	inboundFileStatuses = []string{
+	inboundFileStatuses = agenttoolschema.Source("edi.inboundFileStatus", []string{
 		string(edi.InboundFileStatusReceived),
 		string(edi.InboundFileStatusParsed),
 		string(edi.InboundFileStatusProcessed),
 		string(edi.InboundFileStatusPartiallyProcessed),
 		string(edi.InboundFileStatusQuarantined),
 		string(edi.InboundFileStatusDuplicate),
-	}
-	transferStatuses = []string{
+	})
+	transferStatuses = agenttoolschema.Source("edi.transferStatus", []string{
 		string(edi.TransferStatusSubmitted),
 		string(edi.TransferStatusMappingRequired),
 		string(edi.TransferStatusPendingApproval),
@@ -48,8 +49,11 @@ var (
 		string(edi.TransferStatusExpired),
 		string(edi.TransferStatusCanceled),
 		string(edi.TransferStatusFailed),
-	}
-	transferDirections = []string{transferInbound, transferOutbound}
+	})
+	transferDirections = agenttoolschema.Source(
+		"edi.transferDirection",
+		[]string{transferInbound, transferOutbound},
+	)
 )
 
 func ediReadToolProviders() []any {

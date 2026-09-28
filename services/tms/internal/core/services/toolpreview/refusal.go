@@ -28,6 +28,23 @@ func WouldFail(err error) agent.PreviewWarning {
 	}
 }
 
+// RefusalMessage is a would_fail warning's refusal as the write's own rules
+// worded it, without the prefix the preview adds for a person.
+func RefusalMessage(warning *agent.PreviewWarning) string {
+	return strings.TrimPrefix(strings.TrimSpace(warning.Message), WouldFailPrefix)
+}
+
+// Refused is the refusal a preview warns its write would meet, as an error,
+// or nil when the write would go through.
+func Refused(preview *agent.ToolPreview) error {
+	refusal := preview.Refusal()
+	if refusal == nil {
+		return nil
+	}
+
+	return errors.New(RefusalMessage(refusal))
+}
+
 // Reasons are the problems a refusal is made of: one per field a validation
 // error names, or the refusal itself when it names none.
 func Reasons(err error) []agent.PreviewReason {

@@ -444,11 +444,16 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 			postingParams = &copyParams
 			return nil
 		})
+	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&tenant.AccountingControl{FunctionalCurrencyCode: "USD"}, nil)
 	svc := &Service{
 		db:                  fakeReversalDB{},
 		journalEntryRepo:    entryRepo,
 		journalReversalRepo: reversalRepo,
 		journalPostingRepo:  postingRepo,
+		accountingRepo:      accountingRepo,
 		sequenceGenerator:   testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		auditService:        &mocks.NoopAuditService{},
 	}

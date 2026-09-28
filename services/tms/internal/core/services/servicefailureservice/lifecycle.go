@@ -24,58 +24,11 @@ func (s *service) Update(
 	req *services.UpdateServiceFailureRequest,
 	actor *services.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
-	}
-
-	original, err := s.repo.GetByShipment(ctx, &repositories.GetServiceFailureByShipmentRequest{
-		ID:         req.ID,
-		ShipmentID: req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-	})
+	original, planned, err := s.planUpdate(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if original.IsTerminal() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Terminal service failures cannot be updated",
-		)
-	}
-
-	updated := *original
-	updated.Version = req.Version
-	updated.Notes = strings.TrimSpace(req.Notes)
-	updated.InternalNotes = strings.TrimSpace(req.InternalNotes)
-	updated.X12StatusCodeOverride = strings.TrimSpace(req.X12StatusCodeOverride)
-	updated.X12ReasonCodeOverride = strings.TrimSpace(req.X12ReasonCodeOverride)
-	updated.X12ExceptionCode = strings.TrimSpace(req.X12ExceptionCode)
-	switch {
-	case req.ClearReasonCode:
-		if original.Status == servicefailure.StatusReviewed {
-			return nil, errortypes.NewValidationError(
-				"reasonCodeId",
-				errortypes.ErrInvalidOperation,
-				"Reviewed service failures must retain a reason code",
-			)
-		}
-		updated.ReasonCodeID = nil
-	case req.ReasonCodeID.IsNotNil():
-		reason, reasonErr := s.activeReasonCode(ctx, activeReasonCodeParams{
-			reasonCodeID: req.ReasonCodeID,
-			tenantInfo:   req.TenantInfo,
-			stop:         original.Stop,
-		})
-		if reasonErr != nil {
-			return nil, reasonErr
-		}
-		updated.ReasonCodeID = pulid.PtrOrNil(reason.ID)
-	}
-
-	if multiErr := validateServiceFailure(&updated); multiErr != nil {
-		return nil, multiErr
-	}
+	updated := *planned
 
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {
@@ -194,6 +147,68 @@ func (s *service) lifecycle(
 	})
 	s.projectToWatchtower(ctx, saved)
 	return saved, nil
+}
+
+func (s *service) planUpdate(
+	ctx context.Context,
+	req *services.UpdateServiceFailureRequest,
+) (original, updated *servicefailure.ServiceFailure, err error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, nil, multiErr
+	}
+
+	original, err = s.repo.GetByShipment(ctx, &repositories.GetServiceFailureByShipmentRequest{
+		ID:         req.ID,
+		ShipmentID: req.ShipmentID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if original.IsTerminal() {
+		return nil, nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Terminal service failures cannot be updated",
+		)
+	}
+
+	next := *original
+	next.Version = req.Version
+	next.Notes = strings.TrimSpace(req.Notes)
+	next.InternalNotes = strings.TrimSpace(req.InternalNotes)
+	next.X12StatusCodeOverride = strings.TrimSpace(req.X12StatusCodeOverride)
+	next.X12ReasonCodeOverride = strings.TrimSpace(req.X12ReasonCodeOverride)
+	next.X12ExceptionCode = strings.TrimSpace(req.X12ExceptionCode)
+	switch {
+	case req.ClearReasonCode:
+		if original.Status == servicefailure.StatusReviewed {
+			return nil, nil, errortypes.NewValidationError(
+				"reasonCodeId",
+				errortypes.ErrInvalidOperation,
+				"Reviewed service failures must retain a reason code",
+			)
+		}
+		next.ReasonCodeID = nil
+		next.ReasonCode = nil
+	case req.ReasonCodeID.IsNotNil():
+		reason, reasonErr := s.activeReasonCode(ctx, activeReasonCodeParams{
+			reasonCodeID: req.ReasonCodeID,
+			tenantInfo:   req.TenantInfo,
+			stop:         original.Stop,
+		})
+		if reasonErr != nil {
+			return nil, nil, reasonErr
+		}
+		next.ReasonCodeID = pulid.PtrOrNil(reason.ID)
+		next.ReasonCode = reason
+	}
+
+	if multiErr := validateServiceFailure(&next); multiErr != nil {
+		return nil, nil, multiErr
+	}
+
+	return original, &next, nil
 }
 
 func reasonRequiredError() error {

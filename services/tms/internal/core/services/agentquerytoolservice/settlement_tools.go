@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -28,34 +29,34 @@ const (
 )
 
 var (
-	settlementStatuses = []string{
+	settlementStatuses = agenttoolschema.Source("driverSettlement.status", []string{
 		string(driversettlement.StatusDraft),
 		string(driversettlement.StatusPendingApproval),
 		string(driversettlement.StatusApproved),
 		string(driversettlement.StatusPosted),
 		string(driversettlement.StatusPaid),
 		string(driversettlement.StatusVoided),
-	}
-	payEventStatuses = []string{
+	})
+	payEventStatuses = agenttoolschema.Source("driverSettlement.payEventStatus", []string{
 		string(driversettlement.PayEventStatusAccrued),
 		string(driversettlement.PayEventStatusSettled),
 		string(driversettlement.PayEventStatusVoided),
-	}
-	carrierSettlementStatuses = []string{
+	})
+	carrierSettlementStatuses = agenttoolschema.Source("carrierSettlement.status", []string{
 		string(carriersettlement.StatusDraft),
 		string(carriersettlement.StatusPendingApproval),
 		string(carriersettlement.StatusApproved),
 		string(carriersettlement.StatusPosted),
 		string(carriersettlement.StatusPaid),
 		string(carriersettlement.StatusVoided),
-	}
-	invoiceMatchStatuses = []string{
+	})
+	invoiceMatchStatuses = agenttoolschema.Source("carrierSettlement.invoiceMatchStatus", []string{
 		string(carriersettlement.InvoiceMatchStatusSuggested),
 		string(carriersettlement.InvoiceMatchStatusMatched),
 		string(carriersettlement.InvoiceMatchStatusVariance),
 		string(carriersettlement.InvoiceMatchStatusResolved),
 		string(carriersettlement.InvoiceMatchStatusRejected),
-	}
+	})
 	openDisputeStatuses = []driversettlement.DisputeStatus{
 		driversettlement.DisputeStatusOpen,
 		driversettlement.DisputeStatusInReview,
@@ -1304,12 +1305,15 @@ func (t *listCarrierInvoiceMatchesTool) Query(
 	return outcome.withTaint(tainted), nil
 }
 
-var ediCarrierInvoiceStatuses = []string{
-	string(edi.CarrierInvoiceReconciliationStatusUnmatched),
-	string(edi.CarrierInvoiceReconciliationStatusMappingRequired),
-	string(edi.CarrierInvoiceReconciliationStatusMatched),
-	string(edi.CarrierInvoiceReconciliationStatusVariance),
-}
+var ediCarrierInvoiceStatuses = agenttoolschema.Source(
+	"edi.carrierInvoiceReconciliationStatus",
+	[]string{
+		string(edi.CarrierInvoiceReconciliationStatusUnmatched),
+		string(edi.CarrierInvoiceReconciliationStatusMappingRequired),
+		string(edi.CarrierInvoiceReconciliationStatusMatched),
+		string(edi.CarrierInvoiceReconciliationStatusVariance),
+	},
+)
 
 func provideListEDICarrierInvoicesTool(
 	settlements *carriersettlementservice.Service,

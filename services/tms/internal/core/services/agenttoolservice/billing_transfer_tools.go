@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,11 +94,9 @@ func (t *transferToBillingTool) ParamSchema() map[string]any {
 						toolschema.KeyType: toolschema.TypeString,
 					},
 				}),
-			paramBillType: map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyEnum:        billTypeNames(),
-				toolschema.KeyDescription: "What the queue items bill. Defaults to Invoice.",
-			},
+			paramBillType: agenttoolschema.Enum(
+				"What the queue items bill. Defaults to Invoice.", transferBillTypes,
+			),
 			paramMarkCompletedReady: map[string]any{
 				toolschema.KeyType: toolschema.TypeBoolean,
 				toolschema.KeyDescription: "Mark Completed shipments ready to invoice first, as " +
@@ -130,13 +129,11 @@ func (t *transferToBillingTool) Policy() serviceports.ToolPolicy {
 	}
 }
 
-func billTypeNames() []string {
-	return []string{
-		string(billingqueue.BillTypeInvoice),
-		string(billingqueue.BillTypeCreditMemo),
-		string(billingqueue.BillTypeDebitMemo),
-	}
-}
+var transferBillTypes = agenttoolschema.Source("billingQueue.billType", []billingqueue.BillType{
+	billingqueue.BillTypeInvoice,
+	billingqueue.BillTypeCreditMemo,
+	billingqueue.BillTypeDebitMemo,
+})
 
 // transferRequest is what both the preview and the write act on: the
 // shipments, once each, and how to bill them.
@@ -171,7 +168,7 @@ func (t *transferToBillingTool) request(
 		billType = billingqueue.BillType(raw)
 		if !isBillType(billType) {
 			return transferRequest{}, fmt.Errorf(
-				"billType %q is not one of %s", raw, strings.Join(billTypeNames(), ", "),
+				"billType %q is not one of %s", raw, strings.Join(transferBillTypes.Names(), ", "),
 			)
 		}
 	}

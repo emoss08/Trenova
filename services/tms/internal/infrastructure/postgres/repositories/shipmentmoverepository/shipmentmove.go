@@ -483,15 +483,17 @@ func (r *repository) SplitMove(
 			return err
 		}
 
+		split := shipment.PlanMoveSplit(originalMove, req.Spec())
+
 		if err = r.shiftSubsequentMoveSequences(c, tx, originalMove); err != nil {
 			return err
 		}
 
-		if err = r.updateOriginalMoveForSplit(c, tx, originalMove); err != nil {
+		if err = r.updateOriginalMoveForSplit(c, tx, originalMove, split.RelayStop); err != nil {
 			return err
 		}
 
-		newMove, err := r.insertSplitMove(c, tx, originalMove, req)
+		newMove, err := r.insertSplitMove(c, tx, split.NewMove)
 		if err != nil {
 			return err
 		}
@@ -922,21 +924,20 @@ func (r *repository) updateOriginalMoveForSplit(
 	ctx context.Context,
 	tx bun.IDB,
 	originalMove *shipment.ShipmentMove,
+	relay *shipment.Stop,
 ) error {
 	stp := buncolgen.StopColumns
-	deliveryStop := originalMove.Stops[1]
-	deliveryStop.Type = shipment.StopTypeSplitDelivery
-	deliveryStop.Status = shipment.StopStatusNew
+	deliveryStop := *relay
 	deliveryStop.Version++
 
 	results, err := tx.NewUpdate().
-		Model(deliveryStop).
+		Model(&deliveryStop).
 		Column(stp.Status.String(), stp.Type.String(), stp.Version.String(), stp.UpdatedAt.String()).
 		Where(stp.ID.Eq(), deliveryStop.ID).
 		Where(stp.ShipmentMoveID.Eq(), originalMove.ID).
 		Where(stp.OrganizationID.Eq(), originalMove.OrganizationID).
 		Where(stp.BusinessUnitID.Eq(), originalMove.BusinessUnitID).
-		Where(stp.Version.Eq(), deliveryStop.Version-1).
+		Where(stp.Version.Eq(), relay.Version).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("update original split-delivery stop %s: %w", deliveryStop.ID, err)
@@ -948,59 +949,18 @@ func (r *repository) updateOriginalMoveForSplit(
 func (r *repository) insertSplitMove(
 	ctx context.Context,
 	tx bun.IDB,
-	originalMove *shipment.ShipmentMove,
-	req *repositories.SplitMoveRequest,
+	newMove *shipment.ShipmentMove,
 ) (*shipment.ShipmentMove, error) {
-	newMove := &shipment.ShipmentMove{
-		ID:             pulid.MustNew("sm_"),
-		BusinessUnitID: originalMove.BusinessUnitID,
-		OrganizationID: originalMove.OrganizationID,
-		ShipmentID:     originalMove.ShipmentID,
-		Status:         shipment.MoveStatusNew,
-		Loaded:         true,
-		Sequence:       originalMove.Sequence + 1,
-		Distance:       originalMove.Distance,
-	}
-
+	stops := newMove.Stops
+	newMove.Stops = nil
 	if _, err := tx.NewInsert().Model(newMove).Exec(ctx); err != nil {
 		return nil, fmt.Errorf("insert split move %s: %w", newMove.ID, err)
 	}
 
-	bridgeLocationID := originalMove.Stops[1].LocationID
-	newStops := []*shipment.Stop{
-		{
-			ID:                   pulid.MustNew("stp_"),
-			BusinessUnitID:       originalMove.BusinessUnitID,
-			OrganizationID:       originalMove.OrganizationID,
-			ShipmentMoveID:       newMove.ID,
-			LocationID:           bridgeLocationID,
-			Status:               shipment.StopStatusNew,
-			Type:                 shipment.StopTypeSplitPickup,
-			Sequence:             0,
-			Pieces:               req.Pieces,
-			Weight:               req.Weight,
-			ScheduledWindowStart: req.SplitPickupTimes.ScheduledWindowStart,
-			ScheduledWindowEnd:   req.SplitPickupTimes.ScheduledWindowEnd,
-		},
-		{
-			ID:                   pulid.MustNew("stp_"),
-			BusinessUnitID:       originalMove.BusinessUnitID,
-			OrganizationID:       originalMove.OrganizationID,
-			ShipmentMoveID:       newMove.ID,
-			LocationID:           req.NewDeliveryLocationID,
-			Status:               shipment.StopStatusNew,
-			Type:                 shipment.StopTypeDelivery,
-			Sequence:             1,
-			Pieces:               req.Pieces,
-			Weight:               req.Weight,
-			ScheduledWindowStart: req.NewDeliveryTimes.ScheduledWindowStart,
-			ScheduledWindowEnd:   req.NewDeliveryTimes.ScheduledWindowEnd,
-		},
-	}
-
-	if _, err := tx.NewInsert().Model(&newStops).Exec(ctx); err != nil {
+	if _, err := tx.NewInsert().Model(&stops).Exec(ctx); err != nil {
 		return nil, fmt.Errorf("insert split move stops for move %s: %w", newMove.ID, err)
 	}
+	newMove.Stops = stops
 
 	return newMove, nil
 }

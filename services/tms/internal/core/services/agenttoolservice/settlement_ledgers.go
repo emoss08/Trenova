@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 )
 
@@ -22,8 +23,14 @@ const (
 )
 
 var (
-	driverPaymentMethods  = []string{"ACH", paymentMethodCheck, "InstantPay", paymentMethodOther}
-	carrierPaymentMethods = []string{paymentMethodCheck, "ACHManual", paymentMethodOther}
+	driverPaymentMethods = agenttoolschema.Source(
+		"driverSettlement.paymentMethod",
+		[]string{"ACH", paymentMethodCheck, "InstantPay", paymentMethodOther},
+	)
+	carrierPaymentMethods = agenttoolschema.Source(
+		"carrierSettlement.paymentMethod",
+		[]string{paymentMethodCheck, "ACHManual", paymentMethodOther},
+	)
 )
 
 func driverSettlementLedger() settlementLedger[driversettlement.Settlement] {

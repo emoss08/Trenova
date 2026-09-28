@@ -109,6 +109,7 @@ name = "capture-platform"
 version = "1.0.0"
 dependencies = [
  "capture-client",
+ "capture-protocol",
  "serde_json",
  "tracing",
  "tracing-appender",

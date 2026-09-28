@@ -469,7 +469,7 @@ func (h *Handler) lock(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Lock(c.Request.Context(), repositories.LockFiscalPeriodRequest{
+	entity, err := h.service.Lock(c.Request.Context(), &repositories.LockFiscalPeriodRequest{
 		ID: fiscalPeriodID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,

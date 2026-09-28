@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,7 +40,7 @@ const (
 	bucketOver90  = "over 90"
 )
 
-var journalStatuses = []string{
+var journalStatuses = agenttoolschema.Source("journalEntry.status", []string{
 	string(journalentry.StatusDraft),
 	string(journalentry.StatusPending),
 	string(journalentry.StatusApproved),
@@ -47,7 +48,7 @@ var journalStatuses = []string{
 	string(journalentry.StatusReversed),
 	string(journalentry.StatusRejected),
 	string(journalentry.StatusVoid),
-}
+})
 
 func accountingToolProviders() []any {
 	return []any{
@@ -689,9 +690,8 @@ func (t *listCollectionsWorklistTool) Description() string {
 
 func (t *listCollectionsWorklistTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramAsOf: dateParam("The day to rank as of. Defaults to today."),
-		paramSeverity: enumParam("Only rows of this severity.",
-			[]string{"Critical", "Warning", "Watch"}),
+		paramAsOf:     dateParam("The day to rank as of. Defaults to today."),
+		paramSeverity: enumParam("Only rows of this severity.", accountingDriftSeverities),
 		paramLimit: intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
 			defaultAccountingRows, maxAccountingRows)),
 	})
@@ -920,10 +920,9 @@ func (t *listJournalEntriesTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	status := optionalString(params.Params, paramStatus)
-	if status != "" && !slices.Contains(journalStatuses, status) {
-		return nil, fmt.Errorf("status %q is not one of %s", status,
-			strings.Join(journalStatuses, ", "))
+	status, err := validEnum(params.Params, paramStatus, journalStatuses)
+	if err != nil {
+		return nil, err
 	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
@@ -1369,6 +1368,10 @@ func newGetFiscalCloseBlockersTool(periods closeBlockerReader) serviceports.Agen
 }
 
 func (t *getFiscalCloseBlockersTool) Name() string { return "get_fiscal_close_blockers" }
+
+func (t *getFiscalCloseBlockersTool) SearchTerms() []string {
+	return []string{"blocking", "blocked", "closing", "period", "ready"}
+}
 
 func (t *getFiscalCloseBlockersTool) Description() string {
 	return "Say whether a fiscal period can be closed and list every blocker in the way. " +

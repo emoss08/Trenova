@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -71,7 +72,9 @@ type listSpec struct {
 type listTool struct {
 	spec        listSpec
 	resource    filtercatalog.Resource
-	operators   []string
+	fields      agenttoolschema.EnumSource[string]
+	operators   agenttoolschema.EnumSource[string]
+	sortable    agenttoolschema.EnumSource[string]
 	description string
 }
 
@@ -92,10 +95,14 @@ func buildListTool(spec *listSpec) *listTool {
 		}
 	}
 
+	resource := catalogResource(*spec)
+
 	return &listTool{
 		spec:        *spec,
-		resource:    catalogResource(*spec),
-		operators:   operators,
+		resource:    resource,
+		fields:      agenttoolschema.Derived(spec.name+".field", resource.FieldNames()),
+		operators:   agenttoolschema.Derived(spec.name+".operator", operators),
+		sortable:    agenttoolschema.Derived(spec.name+".sortBy", resource.SortableNames()),
 		description: buildListDescription(*spec),
 	}
 }
@@ -206,11 +213,8 @@ func (t *listTool) ParamSchema() map[string]any {
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"field": map[string]any{
-							"type": "string",
-							"enum": t.resource.FieldNames(),
-						},
-						"operator": map[string]any{"type": "string", "enum": t.operators},
+						paramField: agenttoolschema.Enum("", t.fields),
+						"operator": agenttoolschema.Enum("", t.operators),
 						"value":    map[string]any{"type": "string"},
 						"values": map[string]any{
 							"type":  "array",
@@ -222,16 +226,13 @@ func (t *listTool) ParamSchema() map[string]any {
 					"additionalProperties": false,
 				},
 			},
-			"sortBy": map[string]any{
-				"type":        "string",
-				"enum":        t.resource.SortableNames(),
-				"description": "Field to order by. Defaults to most recently created.",
-			},
-			"sortDirection": map[string]any{
-				"type":        "string",
-				"enum":        []string{"asc", "desc"},
-				"description": "asc for oldest or smallest first, desc for newest or largest.",
-			},
+			"sortBy": agenttoolschema.Enum(
+				"Field to order by. Defaults to most recently created.", t.sortable,
+			),
+			"sortDirection": agenttoolschema.Enum(
+				"asc for oldest or smallest first, desc for newest or largest.",
+				listSortDirections,
+			),
 			"limit":  pageSchema(defaultListLimit, maxListLimit)["limit"],
 			"offset": pageSchema(defaultListLimit, maxListLimit)["offset"],
 		},

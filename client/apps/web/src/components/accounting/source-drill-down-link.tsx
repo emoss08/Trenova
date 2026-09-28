@@ -1,9 +1,10 @@
 import { ExternalLinkIcon } from "lucide-react";
 import { Link } from "react-router";
+import { recordPath } from "@/config/record-links";
 
 const SOURCE_ROUTE_MAP: Record<string, (id: string) => string> = {
-  manual_journal: (id) => `/accounting/manual-journals/${id}`,
-  journal_reversal: (id) => `/accounting/journal-reversals/${id}`,
+  manual_journal: (id) => recordPath("manual_journal", id),
+  journal_reversal: (id) => recordPath("journal_reversal", id),
   invoice: (id) => `/billing/invoices?item=${id}`,
   customer_payment: (id) => `/accounting/ar/payments?panelType=edit&panelEntityId=${id}`,
   CustomerPayment: (id) => `/accounting/ar/payments?panelType=edit&panelEntityId=${id}`,

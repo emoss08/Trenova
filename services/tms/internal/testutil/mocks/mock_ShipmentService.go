@@ -2522,3 +2522,361 @@ func (_c *MockShipmentService_ListBillingTransferCandidates_Call) RunAndReturn(r
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewAutoRate provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) PreviewAutoRate(ctx context.Context, req *services.AutoRateShipmentRequest, actor *services.RequestActor) (*services.ShipmentAutoRatePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewAutoRate")
+	}
+
+	var r0 *services.ShipmentAutoRatePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.AutoRateShipmentRequest, *services.RequestActor) (*services.ShipmentAutoRatePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.AutoRateShipmentRequest, *services.RequestActor) *services.ShipmentAutoRatePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentAutoRatePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.AutoRateShipmentRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_PreviewAutoRate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewAutoRate'
+type MockShipmentService_PreviewAutoRate_Call struct {
+	*mock.Call
+}
+
+// PreviewAutoRate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.AutoRateShipmentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentService_Expecter) PreviewAutoRate(ctx any, req any, actor any) *MockShipmentService_PreviewAutoRate_Call {
+	return &MockShipmentService_PreviewAutoRate_Call{Call: _e.mock.On("PreviewAutoRate", ctx, req, actor)}
+}
+
+func (_c *MockShipmentService_PreviewAutoRate_Call) Run(run func(ctx context.Context, req *services.AutoRateShipmentRequest, actor *services.RequestActor)) *MockShipmentService_PreviewAutoRate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.AutoRateShipmentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.AutoRateShipmentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewAutoRate_Call) Return(shipmentAutoRatePreview *services.ShipmentAutoRatePreview, err error) *MockShipmentService_PreviewAutoRate_Call {
+	_c.Call.Return(shipmentAutoRatePreview, err)
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewAutoRate_Call) RunAndReturn(run func(ctx context.Context, req *services.AutoRateShipmentRequest, actor *services.RequestActor) (*services.ShipmentAutoRatePreview, error)) *MockShipmentService_PreviewAutoRate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewUncancel provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) PreviewUncancel(ctx context.Context, req *repositories.UncancelShipmentRequest) (*services.ShipmentChangePreview, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewUncancel")
+	}
+
+	var r0 *services.ShipmentChangePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UncancelShipmentRequest) (*services.ShipmentChangePreview, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UncancelShipmentRequest) *services.ShipmentChangePreview); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentChangePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.UncancelShipmentRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_PreviewUncancel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewUncancel'
+type MockShipmentService_PreviewUncancel_Call struct {
+	*mock.Call
+}
+
+// PreviewUncancel is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UncancelShipmentRequest
+func (_e *MockShipmentService_Expecter) PreviewUncancel(ctx any, req any) *MockShipmentService_PreviewUncancel_Call {
+	return &MockShipmentService_PreviewUncancel_Call{Call: _e.mock.On("PreviewUncancel", ctx, req)}
+}
+
+func (_c *MockShipmentService_PreviewUncancel_Call) Run(run func(ctx context.Context, req *repositories.UncancelShipmentRequest)) *MockShipmentService_PreviewUncancel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UncancelShipmentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UncancelShipmentRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewUncancel_Call) Return(shipmentChangePreview *services.ShipmentChangePreview, err error) *MockShipmentService_PreviewUncancel_Call {
+	_c.Call.Return(shipmentChangePreview, err)
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewUncancel_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UncancelShipmentRequest) (*services.ShipmentChangePreview, error)) *MockShipmentService_PreviewUncancel_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewTransferOwnership provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) PreviewTransferOwnership(ctx context.Context, req *repositories.TransferOwnershipRequest, actor *services.RequestActor) (*services.ShipmentChangePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewTransferOwnership")
+	}
+
+	var r0 *services.ShipmentChangePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.TransferOwnershipRequest, *services.RequestActor) (*services.ShipmentChangePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.TransferOwnershipRequest, *services.RequestActor) *services.ShipmentChangePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentChangePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.TransferOwnershipRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_PreviewTransferOwnership_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewTransferOwnership'
+type MockShipmentService_PreviewTransferOwnership_Call struct {
+	*mock.Call
+}
+
+// PreviewTransferOwnership is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.TransferOwnershipRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentService_Expecter) PreviewTransferOwnership(ctx any, req any, actor any) *MockShipmentService_PreviewTransferOwnership_Call {
+	return &MockShipmentService_PreviewTransferOwnership_Call{Call: _e.mock.On("PreviewTransferOwnership", ctx, req, actor)}
+}
+
+func (_c *MockShipmentService_PreviewTransferOwnership_Call) Run(run func(ctx context.Context, req *repositories.TransferOwnershipRequest, actor *services.RequestActor)) *MockShipmentService_PreviewTransferOwnership_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.TransferOwnershipRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.TransferOwnershipRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewTransferOwnership_Call) Return(shipmentChangePreview *services.ShipmentChangePreview, err error) *MockShipmentService_PreviewTransferOwnership_Call {
+	_c.Call.Return(shipmentChangePreview, err)
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewTransferOwnership_Call) RunAndReturn(run func(ctx context.Context, req *repositories.TransferOwnershipRequest, actor *services.RequestActor) (*services.ShipmentChangePreview, error)) *MockShipmentService_PreviewTransferOwnership_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewDuplicate provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) PreviewDuplicate(ctx context.Context, req *repositories.BulkDuplicateShipmentRequest) (*services.ShipmentDuplicatePreview, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewDuplicate")
+	}
+
+	var r0 *services.ShipmentDuplicatePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.BulkDuplicateShipmentRequest) (*services.ShipmentDuplicatePreview, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.BulkDuplicateShipmentRequest) *services.ShipmentDuplicatePreview); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentDuplicatePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.BulkDuplicateShipmentRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_PreviewDuplicate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewDuplicate'
+type MockShipmentService_PreviewDuplicate_Call struct {
+	*mock.Call
+}
+
+// PreviewDuplicate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.BulkDuplicateShipmentRequest
+func (_e *MockShipmentService_Expecter) PreviewDuplicate(ctx any, req any) *MockShipmentService_PreviewDuplicate_Call {
+	return &MockShipmentService_PreviewDuplicate_Call{Call: _e.mock.On("PreviewDuplicate", ctx, req)}
+}
+
+func (_c *MockShipmentService_PreviewDuplicate_Call) Run(run func(ctx context.Context, req *repositories.BulkDuplicateShipmentRequest)) *MockShipmentService_PreviewDuplicate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.BulkDuplicateShipmentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.BulkDuplicateShipmentRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewDuplicate_Call) Return(shipmentDuplicatePreview *services.ShipmentDuplicatePreview, err error) *MockShipmentService_PreviewDuplicate_Call {
+	_c.Call.Return(shipmentDuplicatePreview, err)
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewDuplicate_Call) RunAndReturn(run func(ctx context.Context, req *repositories.BulkDuplicateShipmentRequest) (*services.ShipmentDuplicatePreview, error)) *MockShipmentService_PreviewDuplicate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewRecalculateDistance provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) PreviewRecalculateDistance(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.ShipmentDistancePreview, error) {
+	ret := _mock.Called(ctx, shipmentID, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewRecalculateDistance")
+	}
+
+	var r0 *services.ShipmentDistancePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*services.ShipmentDistancePreview, error)); ok {
+		return returnFunc(ctx, shipmentID, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *services.ShipmentDistancePreview); ok {
+		r0 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentDistancePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_PreviewRecalculateDistance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewRecalculateDistance'
+type MockShipmentService_PreviewRecalculateDistance_Call struct {
+	*mock.Call
+}
+
+// PreviewRecalculateDistance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - shipmentID pulid.ID
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockShipmentService_Expecter) PreviewRecalculateDistance(ctx any, shipmentID any, tenantInfo any) *MockShipmentService_PreviewRecalculateDistance_Call {
+	return &MockShipmentService_PreviewRecalculateDistance_Call{Call: _e.mock.On("PreviewRecalculateDistance", ctx, shipmentID, tenantInfo)}
+}
+
+func (_c *MockShipmentService_PreviewRecalculateDistance_Call) Run(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo)) *MockShipmentService_PreviewRecalculateDistance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 pagination.TenantInfo
+		if args[2] != nil {
+			arg2 = args[2].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewRecalculateDistance_Call) Return(shipmentDistancePreview *services.ShipmentDistancePreview, err error) *MockShipmentService_PreviewRecalculateDistance_Call {
+	_c.Call.Return(shipmentDistancePreview, err)
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewRecalculateDistance_Call) RunAndReturn(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.ShipmentDistancePreview, error)) *MockShipmentService_PreviewRecalculateDistance_Call {
+	_c.Call.Return(run)
+	return _c
+}

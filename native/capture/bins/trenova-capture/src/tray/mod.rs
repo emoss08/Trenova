@@ -15,7 +15,7 @@ use capture_platform::shell;
 use tokio::sync::mpsc::UnboundedSender;
 use trenova_capture::icon::{LOGO, best_for};
 use trenova_capture::menu::{MenuAction, MenuEntry};
-use trenova_capture::state::{Command, Notice, Severity, Shared, Ui};
+use trenova_capture::state::{Command, Notice, PrinterAttempt, Severity, Shared, Ui};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::Shell::{
@@ -302,6 +302,20 @@ fn perform(
                 tracing::warn!(error = %err, "could not open the folder");
             }
         }
+        MenuAction::AddPrinter => {
+            let commands = commands.clone();
+            let spawned = std::thread::Builder::new()
+                .name("trenova-capture-printer".into())
+                .spawn(move || {
+                    let attempt = add_printer();
+                    if commands.send(Command::PrinterSetUp(attempt)).is_err() {
+                        tracing::error!("the agent is not running");
+                    }
+                });
+            if let Err(err) = spawned {
+                tracing::error!(error = %err, "could not start adding the printer");
+            }
+        }
         MenuAction::SetServer => {
             let current = shared.and_then(|s| s.snapshot().server).unwrap_or_default();
             if let Some(url) = prompt::server_address(hwnd, &current) {
@@ -309,6 +323,24 @@ fn perform(
             }
         }
         MenuAction::Quit => send(Command::Quit),
+    }
+}
+
+/// Runs the print service's own `install-printer` with administrator
+/// rights: Windows adds an IPP printer for an administrator, not for the
+/// system account the installer runs its steps as.
+fn add_printer() -> PrinterAttempt {
+    match shell::run_elevated("trenova-capture-svc.exe", "install-printer") {
+        Ok(shell::Elevated::Exited(0)) => PrinterAttempt::Added,
+        Ok(shell::Elevated::Declined) => PrinterAttempt::Declined,
+        Ok(shell::Elevated::Exited(code)) => {
+            tracing::warn!(code, "adding the Trenova printer failed");
+            PrinterAttempt::Failed
+        }
+        Err(err) => {
+            tracing::warn!(error = %err, "could not add the Trenova printer");
+            PrinterAttempt::Failed
+        }
     }
 }
 

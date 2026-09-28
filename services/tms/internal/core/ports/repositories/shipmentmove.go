@@ -42,6 +42,10 @@ func (a StopActualAction) IsValid() bool {
 	return a == StopActualActionArrive || a == StopActualActionDepart
 }
 
+func StopActualActionValues() []StopActualAction {
+	return []StopActualAction{StopActualActionArrive, StopActualActionDepart}
+}
+
 const StopActualClockSkewSeconds = int64(300)
 
 type RecordStopActualRequest struct {
@@ -186,6 +190,18 @@ type SplitMoveRequest struct {
 	NewDeliveryTimes      SplitStopTimes        `json:"newDeliveryTimes"`
 	Pieces                *int64                `json:"pieces,omitempty"`
 	Weight                *int64                `json:"weight,omitempty"`
+}
+
+func (r *SplitMoveRequest) Spec() *shipment.MoveSplitSpec {
+	return &shipment.MoveSplitSpec{
+		NewDeliveryLocationID: r.NewDeliveryLocationID,
+		RelayPickupStart:      r.SplitPickupTimes.ScheduledWindowStart,
+		RelayPickupEnd:        r.SplitPickupTimes.ScheduledWindowEnd,
+		NewDeliveryStart:      r.NewDeliveryTimes.ScheduledWindowStart,
+		NewDeliveryEnd:        r.NewDeliveryTimes.ScheduledWindowEnd,
+		Pieces:                r.Pieces,
+		Weight:                r.Weight,
+	}
 }
 
 func (r *SplitMoveRequest) Validate() *errortypes.MultiError {

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/money"
@@ -171,26 +172,17 @@ func (t *listAccountingDriftFindingsTool) ParamSchema() map[string]any {
 		paramAccountingSystem: accountingSystemParam(),
 		paramDriftStatus: jsonschemautils.DescribedArray(
 			"Only findings in these statuses. Open ones wait for a fix or a dismissal.",
-			jsonschemautils.Enum(
-				"A status.",
-				sliceutils.Strings(accountingsync.AllDriftStatuses())...,
-			),
+			agenttoolschema.Enum("A status.", agenttoolschema.DriftStatuses),
 			len(accountingsync.AllDriftStatuses()),
 		),
 		paramDriftKind: jsonschemautils.DescribedArray(
 			"Only these kinds of difference.",
-			jsonschemautils.Enum("A kind.", sliceutils.Strings(accountingsync.AllDriftKinds())...),
+			agenttoolschema.Enum("A kind.", agenttoolschema.DriftKinds),
 			len(accountingsync.AllDriftKinds()),
 		),
 		paramDriftObjectType: jsonschemautils.DescribedArray(
 			"Only these document types. Customer means a customer's balance.",
-			jsonschemautils.Enum(
-				"A document type.",
-				sliceutils.Strings(append(
-					[]accountingsync.SyncObjectType{accountingsync.SyncObjectCustomer},
-					accountingsync.DriftObjectTypes()...,
-				))...,
-			),
+			agenttoolschema.Enum("A document type.", agenttoolschema.DriftObjectTypes),
 			len(accountingsync.DriftObjectTypes())+1,
 		),
 		paramDriftSearch: jsonschemautils.Text(

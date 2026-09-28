@@ -57,11 +57,11 @@ func (s *Service) Get(
 	)
 }
 
-func (s *Service) Assign(
+func (s *Service) PlanAssign(
 	ctx context.Context,
 	req *serviceports.AssignBankReceiptWorkItemRequest,
 	actor *serviceports.RequestActor,
-) (*bankreceiptworkitem.WorkItem, error) {
+) (*serviceports.BankReceiptWorkItemChange, error) {
 	userID, err := requireWorkItemUser(actor)
 	if err != nil {
 		return nil, err
@@ -81,25 +81,45 @@ func (s *Service) Assign(
 			"Only active bank receipt work items can be assigned",
 		)
 	}
-	original := *entity
+	after := *entity
 	now := timeutils.NowUnix()
-	entity.Status = bankreceiptworkitem.StatusAssigned
-	entity.AssignedToUserID = req.AssignedToUserID
-	entity.AssignedAt = &now
-	entity.UpdatedByID = userID
-	updated, err := s.repo.Update(ctx, entity)
+	after.Status = bankreceiptworkitem.StatusAssigned
+	after.AssignedToUserID = req.AssignedToUserID
+	after.AssignedAt = &now
+	after.UpdatedByID = userID
+	return &serviceports.BankReceiptWorkItemChange{Before: entity, After: &after}, nil
+}
+
+func (s *Service) Assign(
+	ctx context.Context,
+	req *serviceports.AssignBankReceiptWorkItemRequest,
+	actor *serviceports.RequestActor,
+) (*bankreceiptworkitem.WorkItem, error) {
+	change, err := s.PlanAssign(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(updated, &original, userID, "Bank receipt work item assigned")
+	return s.save(ctx, change, "Bank receipt work item assigned")
+}
+
+func (s *Service) save(
+	ctx context.Context,
+	change *serviceports.BankReceiptWorkItemChange,
+	comment string,
+) (*bankreceiptworkitem.WorkItem, error) {
+	updated, err := s.repo.Update(ctx, change.After)
+	if err != nil {
+		return nil, err
+	}
+	s.logAudit(updated, change.Before, change.After.UpdatedByID, comment)
 	return updated, nil
 }
 
-func (s *Service) StartReview(
+func (s *Service) PlanStartReview(
 	ctx context.Context,
 	req *serviceports.GetBankReceiptWorkItemRequest,
 	actor *serviceports.RequestActor,
-) (*bankreceiptworkitem.WorkItem, error) {
+) (*serviceports.BankReceiptWorkItemChange, error) {
 	userID, err := requireWorkItemUser(actor)
 	if err != nil {
 		return nil, err
@@ -119,20 +139,22 @@ func (s *Service) StartReview(
 			"Only active bank receipt work items can enter review",
 		)
 	}
-	original := *entity
-	entity.Status = bankreceiptworkitem.StatusInReview
-	entity.UpdatedByID = userID
-	updated, err := s.repo.Update(ctx, entity)
+	after := *entity
+	after.Status = bankreceiptworkitem.StatusInReview
+	after.UpdatedByID = userID
+	return &serviceports.BankReceiptWorkItemChange{Before: entity, After: &after}, nil
+}
+
+func (s *Service) StartReview(
+	ctx context.Context,
+	req *serviceports.GetBankReceiptWorkItemRequest,
+	actor *serviceports.RequestActor,
+) (*bankreceiptworkitem.WorkItem, error) {
+	change, err := s.PlanStartReview(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(
-		updated,
-		&original,
-		userID,
-		"Bank receipt work item moved to review",
-	)
-	return updated, nil
+	return s.save(ctx, change, "Bank receipt work item moved to review")
 }
 
 func (s *Service) Resolve(

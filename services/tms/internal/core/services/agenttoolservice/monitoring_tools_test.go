@@ -23,15 +23,41 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeFailureDecider struct {
-	existing  *servicefailure.ServiceFailure
-	evaluated *serviceports.EvaluateShipmentServiceFailuresRequest
-	resolved  *serviceports.ServiceFailureLifecycleRequest
-	actor     *serviceports.RequestActor
+	existing      *servicefailure.ServiceFailure
+	evaluated     *serviceports.EvaluateShipmentServiceFailuresRequest
+	evaluatedStop *serviceports.EvaluateStopServiceFailuresRequest
+	bulk          *serviceports.BulkEvaluateServiceFailuresRequest
+	resolved      *serviceports.ServiceFailureLifecycleRequest
+	actor         *serviceports.RequestActor
+	plans         map[pulid.ID]*serviceports.ServiceFailureDetectionPlan
+}
+
+func (f *fakeFailureDecider) EvaluateStop(
+	_ context.Context,
+	req *serviceports.EvaluateStopServiceFailuresRequest,
+	actor *serviceports.RequestActor,
+) (*serviceports.ServiceFailureEvaluationResult, error) {
+	f.evaluatedStop = req
+	f.actor = actor
+
+	return &serviceports.ServiceFailureEvaluationResult{}, nil
+}
+
+func (f *fakeFailureDecider) BulkEvaluate(
+	_ context.Context,
+	req *serviceports.BulkEvaluateServiceFailuresRequest,
+	actor *serviceports.RequestActor,
+) (*serviceports.ServiceFailureEvaluationResult, error) {
+	f.bulk = req
+	f.actor = actor
+
+	return &serviceports.ServiceFailureEvaluationResult{}, nil
 }
 
 func (f *fakeFailureDecider) EvaluateShipment(
@@ -68,9 +94,13 @@ func (f *fakeFailureDecider) Resolve(
 }
 
 func (f *fakeFailureDecider) PreviewEvaluateShipment(
-	context.Context,
-	*serviceports.EvaluateShipmentServiceFailuresRequest,
+	_ context.Context,
+	req *serviceports.EvaluateShipmentServiceFailuresRequest,
 ) (*serviceports.ServiceFailureDetectionPlan, error) {
+	if plan, ok := f.plans[req.ShipmentID]; ok {
+		return plan, nil
+	}
+
 	return &serviceports.ServiceFailureDetectionPlan{}, nil
 }
 
@@ -496,8 +526,10 @@ func (failingCommentWriter) CreateSystem(
 }
 
 type fakeDetention struct {
-	noticed *detentionservice.SendOccurrenceNoticeParams
-	waived  *detentionservice.WaiveParams
+	noticed  *detentionservice.SendOccurrenceNoticeParams
+	waived   *detentionservice.WaiveParams
+	disputed *detentionservice.DisputeParams
+	guard    *writeGuard
 
 	previewedNotice *detentionservice.SendOccurrenceNoticeParams
 	previewedWaive  *detentionservice.WaiveParams
@@ -530,6 +562,42 @@ func (f *fakeDetention) PreviewOccurrenceNotice(
 	f.previewedNotice = params
 
 	return f.notice, nil
+}
+
+func (f *fakeDetention) Dispute(
+	_ context.Context,
+	params detentionservice.DisputeParams,
+) (*detention.DetentionOccurrence, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
+	f.disputed = &params
+
+	return &detention.DetentionOccurrence{ID: params.OccurrenceID}, nil
+}
+
+func (f *fakeDetention) PreviewDispute(
+	_ context.Context,
+	params *detentionservice.DisputeParams,
+) (*detentionservice.OccurrenceChange, error) {
+	if f.change != nil {
+		return f.change, nil
+	}
+	before := &detention.DetentionOccurrence{
+		ID:                params.OccurrenceID,
+		ShipmentProNumber: "PRO-3001",
+		LocationName:      "Acme DC",
+		BillableAmount:    decimal.RequireFromString("150"),
+		Currency:          "USD",
+		Status:            detention.OccurrenceStatusPending,
+		Version:           2,
+	}
+	after := *before
+	if err := after.Dispute(params.Note, 1_700_000_000); err != nil {
+		return nil, err
+	}
+
+	return &detentionservice.OccurrenceChange{Before: before, After: &after, Now: 1_700_000_000}, nil
 }
 
 func (f *fakeDetention) PreviewWaive(

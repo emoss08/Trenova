@@ -1,8 +1,10 @@
 # What the runtime does to a tool call's arguments before the tool sees them.
 #
 # aliases: aliasedArguments alone, which every read and write goes through.
-# pipeline: what a write receives, aliasing then pruning to a closed schema,
-#   checked on the function and end to end through Run.
+# pipeline: what a tool receives, aliasing then holding the call to the whole
+#   schema, checked on the function and end to end through Run. A case with
+#   `want` reaches the tool with those arguments; one with `refused` never
+#   reaches it, and the refusal names each listed path.
 # malformed: calls whose argument text did not parse. The tool must not run.
 aliases:
   - name: snake case names the required parameter
@@ -74,15 +76,31 @@ aliases:
     want: {shipment_id: shp_1}
 
 pipeline:
-  - name: a closed schema drops what it never declared
+  - name: arguments that fit reach the tool as sent
+    schema:
+      type: object
+      properties: {subjectId: {type: string}, attemptSummary: {type: string}}
+      required: [subjectId]
+      additionalProperties: false
+    args: {subjectId: shp_1, attemptSummary: no BOL}
+    want: {subjectId: shp_1, attemptSummary: no BOL}
+  - name: aliasing runs before the schema is checked
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {shipment_id: shp_1}
+    want: {shipmentId: shp_1}
+  - name: an argument the tool never declared is refused by name
     schema:
       type: object
       properties: {subjectId: {type: string}, attemptSummary: {type: string}}
       required: [subjectId]
       additionalProperties: false
     args: {subjectId: shp_1, attemptSummary: no BOL, runId: ar_made_up}
-    want: {subjectId: shp_1, attemptSummary: no BOL}
-  - name: a closed schema drops a tenant the model names
+    refused: [runId]
+  - name: a tenant the model names is refused
     schema:
       type: object
       properties: {shipmentId: {type: string}}
@@ -92,23 +110,123 @@ pipeline:
       shipmentId: shp_1
       organizationId: org_01JOTHERTENANT000000000000
       businessUnitId: bu_01JOTHERTENANT0000000000000
-    want: {shipmentId: shp_1}
-  - name: a closed schema drops a tier or owner the model asks for
+    refused: [organizationId, businessUnitId]
+  - name: a tier the model asks for is refused
     schema:
       type: object
       properties: {shipmentId: {type: string}}
       required: [shipmentId]
       additionalProperties: false
-    args: {shipmentId: shp_1, autonomyTier: AutoExecute, heldBy: [], _owner: usr_other}
-    want: {shipmentId: shp_1}
-  - name: aliasing runs before pruning
+    args: {shipmentId: shp_1, autonomyTier: AutoExecute, heldBy: []}
+    refused: [autonomyTier, heldBy]
+  - name: the owner key is the runtime's and is set aside, never refused
     schema:
       type: object
       properties: {shipmentId: {type: string}}
       required: [shipmentId]
       additionalProperties: false
-    args: {shipment_id: shp_1, runId: ar_made_up}
+    args: {shipmentId: shp_1, _owner: usr_other}
     want: {shipmentId: shp_1}
+  - name: a missing required parameter is refused by name
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}, note: {type: string}}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {note: late}
+    refused: [shipmentId]
+  - name: a value outside the enum is refused
+    schema:
+      type: object
+      properties:
+        shipmentId: {type: string}
+        priority: {type: string, enum: [Low, Normal, High, Urgent]}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {shipmentId: shp_1, priority: Critical}
+    refused: [priority]
+  - name: a value of the wrong type is refused
+    schema:
+      type: object
+      properties:
+        shipmentId: {type: string}
+        occurredAt: {type: integer}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {shipmentId: shp_1, occurredAt: "2026-09-26T10:00:00Z"}
+    refused: [occurredAt]
+  - name: a nested key the tool never declared is refused at its path
+    schema:
+      type: object
+      properties:
+        shipment:
+          type: object
+          properties:
+            moves:
+              type: array
+              items:
+                type: object
+                properties:
+                  stops:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        locationId: {type: string}
+                        type: {type: string, enum: [Pickup, Delivery]}
+                        sequence: {type: integer}
+                      required: [locationId, type]
+                      additionalProperties: false
+                required: [stops]
+                additionalProperties: false
+          required: [moves]
+          additionalProperties: false
+      required: [shipment]
+      additionalProperties: false
+    args:
+      shipment:
+        moves:
+          - type: Linehaul
+            stops:
+              - {locationId: loc_1, type: Pickup, sequence: 0}
+    refused: ["shipment.moves[0].type"]
+  - name: a missing nested required value is refused at its path
+    schema:
+      type: object
+      properties:
+        shipment:
+          type: object
+          properties:
+            moves:
+              type: array
+              items:
+                type: object
+                properties:
+                  stops:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        locationId: {type: string}
+                        type: {type: string, enum: [Pickup, Delivery]}
+                        sequence: {type: integer}
+                      required: [locationId, type]
+                      additionalProperties: false
+                required: [stops]
+                additionalProperties: false
+          required: [moves]
+          additionalProperties: false
+      required: [shipment]
+      additionalProperties: false
+    args:
+      shipment:
+        moves:
+          - stops:
+              - {type: Drop, sequence: "first"}
+    refused:
+      - "shipment.moves[0].stops[0].locationId"
+      - "shipment.moves[0].stops[0].type"
+      - "shipment.moves[0].stops[0].sequence"
   - name: an open schema keeps what it did not declare
     schema:
       type: object
@@ -124,12 +242,12 @@ pipeline:
       required: [shipmentId]
     args: {shipmentId: shp_1, runId: ar_1}
     want: {shipmentId: shp_1, runId: ar_1}
-  - name: a closed schema that declares nothing cannot say what is undeclared
+  - name: a closed schema that declares nothing takes nothing
     schema:
       type: object
       additionalProperties: false
     args: {shipmentId: shp_1}
-    want: {shipmentId: shp_1}
+    refused: [shipmentId]
 
 malformed:
   - name: text cut off by the output limit

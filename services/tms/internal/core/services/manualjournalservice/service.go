@@ -25,6 +25,12 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	entryTypeStandard  = "Standard"
+	entryTypeAdjusting = "Adjusting"
+	entryStatusPosted  = "Posted"
+)
+
 type Params struct {
 	fx.In
 
@@ -47,6 +53,15 @@ type Service struct {
 	generator      seqgen.Generator
 	validator      *Validator
 	auditService   serviceports.AuditService
+}
+
+type postingPlan struct {
+	change      *serviceports.ManualJournalChange
+	control     *tenant.AccountingControl
+	period      *fiscalperiod.FiscalPeriod
+	postingDate int64
+	entryType   string
+	userID      pulid.ID
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -86,7 +101,7 @@ func (s *Service) Get(
 	)
 }
 
-func (s *Service) CreateDraft(
+func (s *Service) PlanCreateDraft(
 	ctx context.Context,
 	req *serviceports.CreateManualJournalRequest,
 	actor *serviceports.RequestActor,
@@ -114,6 +129,28 @@ func (s *Service) CreateDraft(
 		Lines:          mapLines(req.Lines),
 	}
 
+	if multiErr := s.validator.ValidateDraftUpsert(
+		ctx,
+		entity,
+		accountingControl,
+	); multiErr != nil {
+		return nil, multiErr
+	}
+	entity.SyncTotals()
+
+	return entity, nil
+}
+
+func (s *Service) CreateDraft(
+	ctx context.Context,
+	req *serviceports.CreateManualJournalRequest,
+	actor *serviceports.RequestActor,
+) (*manualjournal.Request, error) {
+	entity, err := s.PlanCreateDraft(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
 	if entity.RequestNumber, err = s.generator.GenerateManualJournalRequestNumber(
 		ctx,
 		req.TenantInfo.OrgID,
@@ -122,14 +159,6 @@ func (s *Service) CreateDraft(
 		"",
 	); err != nil {
 		return nil, err
-	}
-
-	if multiErr := s.validator.ValidateDraftUpsert(
-		ctx,
-		entity,
-		accountingControl,
-	); multiErr != nil {
-		return nil, multiErr
 	}
 
 	var created *manualjournal.Request
@@ -141,15 +170,21 @@ func (s *Service) CreateDraft(
 		return nil, err
 	}
 
-	s.logAudit(permission.OpCreate, created, nil, userID, "Manual journal draft created")
+	s.logAudit(
+		permission.OpCreate,
+		created,
+		nil,
+		entity.CreatedByID,
+		"Manual journal draft created",
+	)
 	return created, nil
 }
 
-func (s *Service) UpdateDraft(
+func (s *Service) PlanUpdateDraft(
 	ctx context.Context,
 	req *serviceports.UpdateManualJournalDraftRequest,
 	actor *serviceports.RequestActor,
-) (*manualjournal.Request, error) {
+) (*serviceports.ManualJournalChange, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
 		return nil, err
@@ -186,25 +221,45 @@ func (s *Service) UpdateDraft(
 	); multiErr != nil {
 		return nil, multiErr
 	}
+	updatedEntity.SyncTotals()
+
+	return &serviceports.ManualJournalChange{Before: original, After: updatedEntity}, nil
+}
+
+func (s *Service) UpdateDraft(
+	ctx context.Context,
+	req *serviceports.UpdateManualJournalDraftRequest,
+	actor *serviceports.RequestActor,
+) (*manualjournal.Request, error) {
+	change, err := s.PlanUpdateDraft(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
 
 	var updated *manualjournal.Request
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		updated, err = s.repo.Update(txCtx, updatedEntity)
+		updated, err = s.repo.Update(txCtx, change.After)
 		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	s.logAudit(permission.OpUpdate, updated, original, userID, "Manual journal draft updated")
+	s.logAudit(
+		permission.OpUpdate,
+		updated,
+		change.Before,
+		change.After.UpdatedByID,
+		"Manual journal draft updated",
+	)
 	return updated, nil
 }
 
-func (s *Service) Submit(
+func (s *Service) PlanSubmit(
 	ctx context.Context,
 	req *serviceports.GetManualJournalRequest,
 	actor *serviceports.RequestActor,
-) (*manualjournal.Request, error) {
+) (*serviceports.ManualJournalChange, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
 		return nil, err
@@ -222,31 +277,33 @@ func (s *Service) Submit(
 		return nil, multiErr
 	}
 
-	original := cloneRequest(entity)
-	entity.UpdatedByID = userID
+	after := cloneRequest(entity)
+	after.UpdatedByID = userID
 	if accountingControl.RequireManualJEApproval {
-		entity.Status = manualjournal.StatusPendingApproval
-		entity.ApprovedAt = nil
-		entity.ApprovedByID = pulid.Nil
+		after.Status = manualjournal.StatusPendingApproval
+		after.ApprovedAt = nil
+		after.ApprovedByID = pulid.Nil
 	} else {
 		now := timeutils.NowUnix()
-		entity.Status = manualjournal.StatusApproved
-		entity.ApprovedAt = &now
-		entity.ApprovedByID = userID
+		after.Status = manualjournal.StatusApproved
+		after.ApprovedAt = &now
+		after.ApprovedByID = userID
 	}
-	entity.Lines = nil
 
-	var updated *manualjournal.Request
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		updated, err = s.repo.Update(txCtx, entity)
-		return err
-	})
+	return &serviceports.ManualJournalChange{Before: entity, After: after}, nil
+}
+
+func (s *Service) Submit(
+	ctx context.Context,
+	req *serviceports.GetManualJournalRequest,
+	actor *serviceports.RequestActor,
+) (*manualjournal.Request, error) {
+	change, err := s.PlanSubmit(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	s.logAudit(permission.OpSubmit, updated, original, userID, "Manual journal submitted")
-	return updated, nil
+	return s.saveTransition(ctx, change, permission.OpSubmit, "Manual journal submitted")
 }
 
 func (s *Service) Approve(
@@ -270,33 +327,39 @@ func (s *Service) Approve(
 		return nil, multiErr
 	}
 
-	original := cloneRequest(entity)
+	after := cloneRequest(entity)
 	now := timeutils.NowUnix()
-	entity.Status = manualjournal.StatusApproved
-	entity.ApprovedAt = &now
-	entity.ApprovedByID = userID
-	entity.UpdatedByID = userID
-	entity.Lines = nil
+	after.Status = manualjournal.StatusApproved
+	after.ApprovedAt = &now
+	after.ApprovedByID = userID
+	after.UpdatedByID = userID
 
-	var updated *manualjournal.Request
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		updated, err = s.repo.Update(txCtx, entity)
-		return err
-	})
+	return s.saveTransition(
+		ctx,
+		&serviceports.ManualJournalChange{Before: entity, After: after},
+		permission.OpApprove,
+		"Manual journal approved",
+	)
+}
+
+func (s *Service) PlanPost(
+	ctx context.Context,
+	req *serviceports.GetManualJournalRequest,
+	actor *serviceports.RequestActor,
+) (*serviceports.ManualJournalChange, error) {
+	plan, err := s.planPost(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	s.logAudit(permission.OpApprove, updated, original, userID, "Manual journal approved")
-	return updated, nil
+	return plan.change, nil
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
-func (s *Service) Post(
+func (s *Service) planPost(
 	ctx context.Context,
 	req *serviceports.GetManualJournalRequest,
 	actor *serviceports.RequestActor,
-) (*manualjournal.Request, error) {
+) (*postingPlan, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
 		return nil, err
@@ -318,6 +381,41 @@ func (s *Service) Post(
 	if err != nil {
 		return nil, err
 	}
+
+	entryType := entryTypeStandard
+	if postingPeriod.PeriodType == fiscalperiod.PeriodTypeAdjusting {
+		entryType = entryTypeAdjusting
+	}
+
+	after := cloneRequest(entity)
+	after.Status = manualjournal.StatusPosted
+	after.UpdatedByID = userID
+
+	return &postingPlan{
+		change: &serviceports.ManualJournalChange{
+			Before:  entity,
+			After:   after,
+			Journal: journalPreview(entity, postingPeriod.ID, postingDate),
+		},
+		control:     accountingControl,
+		period:      postingPeriod,
+		postingDate: postingDate,
+		entryType:   entryType,
+		userID:      userID,
+	}, nil
+}
+
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
+func (s *Service) Post(
+	ctx context.Context,
+	req *serviceports.GetManualJournalRequest,
+	actor *serviceports.RequestActor,
+) (*manualjournal.Request, error) {
+	plan, err := s.planPost(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+	entity := plan.change.After
 
 	batchNumber, err := s.generator.GenerateJournalBatchNumber(
 		ctx,
@@ -343,11 +441,6 @@ func (s *Service) Post(
 	now := timeutils.NowUnix()
 	batchID := pulid.MustNew("jb_")
 	entryID := pulid.MustNew("je_")
-	original := cloneRequest(entity)
-	entryType := "Standard"
-	if postingPeriod.PeriodType == fiscalperiod.PeriodTypeAdjusting {
-		entryType = "Adjusting"
-	}
 
 	lines := make([]repositories.JournalPostingLine, 0, len(entity.Lines))
 	for idx, line := range entity.Lines {
@@ -373,19 +466,19 @@ func (s *Service) Post(
 			BusinessUnitID:       entity.BusinessUnitID,
 			BatchNumber:          batchNumber,
 			BatchType:            "Manual",
-			BatchStatus:          "Posted",
+			BatchStatus:          entryStatusPosted,
 			BatchDescription:     entity.Description,
-			FiscalYearID:         postingPeriod.FiscalYearID,
-			FiscalPeriodID:       postingPeriod.ID,
-			AccountingDate:       postingDate,
+			FiscalYearID:         plan.period.FiscalYearID,
+			FiscalPeriodID:       plan.period.ID,
+			AccountingDate:       plan.postingDate,
 			PostedAt:             &now,
-			PostedByID:           userID,
+			PostedByID:           plan.userID,
 			CreatedByID:          entity.CreatedByID,
-			UpdatedByID:          userID,
+			UpdatedByID:          plan.userID,
 			EntryID:              entryID,
 			EntryNumber:          entryNumber,
-			EntryType:            entryType,
-			EntryStatus:          "Posted",
+			EntryType:            plan.entryType,
+			EntryStatus:          entryStatusPosted,
 			ReferenceNumber:      entity.RequestNumber,
 			ReferenceType:        "ManualJournalRequest",
 			ReferenceID:          entity.ID.String(),
@@ -394,7 +487,7 @@ func (s *Service) Post(
 			TotalCredit:          entity.TotalCredit,
 			IsPosted:             true,
 			IsAutoGenerated:      false,
-			RequiresApproval:     accountingControl.RequireManualJEApproval,
+			RequiresApproval:     plan.control.RequireManualJEApproval,
 			IsApproved:           true,
 			ApprovedByID:         entity.ApprovedByID,
 			ApprovedAt:           entity.ApprovedAt,
@@ -402,7 +495,7 @@ func (s *Service) Post(
 			SourceObjectType:     "ManualJournalRequest",
 			SourceObjectID:       entity.ID.String(),
 			SourceEventType:      "ManualJournalPosted",
-			SourceStatus:         "Posted",
+			SourceStatus:         entryStatusPosted,
 			SourceDocumentNumber: entity.RequestNumber,
 			SourceIdempotencyKey: "manual-journal-posted:" + entity.ID.String(),
 			Lines:                lines,
@@ -410,9 +503,7 @@ func (s *Service) Post(
 			return err
 		}
 
-		entity.Status = manualjournal.StatusPosted
 		entity.PostedBatchID = batchID
-		entity.UpdatedByID = userID
 		entity.Lines = nil
 
 		updated, updateErr := s.repo.Update(txCtx, entity)
@@ -426,7 +517,13 @@ func (s *Service) Post(
 		return nil, err
 	}
 
-	s.logAudit(permission.OpApprove, entity, original, userID, "Manual journal posted")
+	s.logAudit(
+		permission.OpApprove,
+		entity,
+		plan.change.Before,
+		plan.userID,
+		"Manual journal posted",
+	)
 	return entity, nil
 }
 
@@ -451,33 +548,27 @@ func (s *Service) Reject(
 		return nil, multiErr
 	}
 
-	original := cloneRequest(entity)
+	after := cloneRequest(entity)
 	now := timeutils.NowUnix()
-	entity.Status = manualjournal.StatusRejected
-	entity.RejectedAt = &now
-	entity.RejectedByID = userID
-	entity.RejectionReason = req.Reason
-	entity.UpdatedByID = userID
-	entity.Lines = nil
+	after.Status = manualjournal.StatusRejected
+	after.RejectedAt = &now
+	after.RejectedByID = userID
+	after.RejectionReason = req.Reason
+	after.UpdatedByID = userID
 
-	var updated *manualjournal.Request
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		updated, err = s.repo.Update(txCtx, entity)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	s.logAudit(permission.OpReject, updated, original, userID, "Manual journal rejected")
-	return updated, nil
+	return s.saveTransition(
+		ctx,
+		&serviceports.ManualJournalChange{Before: entity, After: after},
+		permission.OpReject,
+		"Manual journal rejected",
+	)
 }
 
-func (s *Service) Cancel(
+func (s *Service) PlanCancel(
 	ctx context.Context,
 	req *serviceports.CancelManualJournalRequest,
 	actor *serviceports.RequestActor,
-) (*manualjournal.Request, error) {
+) (*serviceports.ManualJournalChange, error) {
 	userID, err := requireManualJournalUser(actor)
 	if err != nil {
 		return nil, err
@@ -494,16 +585,43 @@ func (s *Service) Cancel(
 		return nil, multiErr
 	}
 
-	original := cloneRequest(entity)
+	after := cloneRequest(entity)
 	now := timeutils.NowUnix()
-	entity.Status = manualjournal.StatusCancelled
-	entity.CancelledAt = &now
-	entity.CancelledByID = userID
-	entity.CancelReason = req.Reason
-	entity.UpdatedByID = userID
+	after.Status = manualjournal.StatusCancelled
+	after.CancelledAt = &now
+	after.CancelledByID = userID
+	after.CancelReason = req.Reason
+	after.UpdatedByID = userID
+
+	return &serviceports.ManualJournalChange{Before: entity, After: after}, nil
+}
+
+func (s *Service) Cancel(
+	ctx context.Context,
+	req *serviceports.CancelManualJournalRequest,
+	actor *serviceports.RequestActor,
+) (*manualjournal.Request, error) {
+	change, err := s.PlanCancel(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.saveTransition(ctx, change, permission.OpCancel, "Manual journal cancelled")
+}
+
+func (s *Service) saveTransition(
+	ctx context.Context,
+	change *serviceports.ManualJournalChange,
+	operation permission.Operation,
+	comment string,
+) (*manualjournal.Request, error) {
+	entity := cloneRequest(change.After)
 	entity.Lines = nil
 
-	var updated *manualjournal.Request
+	var (
+		updated *manualjournal.Request
+		err     error
+	)
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		updated, err = s.repo.Update(txCtx, entity)
 		return err
@@ -512,7 +630,7 @@ func (s *Service) Cancel(
 		return nil, err
 	}
 
-	s.logAudit(permission.OpCancel, updated, original, userID, "Manual journal cancelled")
+	s.logAudit(operation, updated, change.Before, entity.UpdatedByID, comment)
 	return updated, nil
 }
 
@@ -533,6 +651,32 @@ func (s *Service) loadRequestWithAccountingControl(
 		return nil, nil, err
 	}
 	return entity, accountingControl, nil
+}
+
+func journalPreview(
+	entity *manualjournal.Request,
+	periodID pulid.ID,
+	postingDate int64,
+) *serviceports.JournalPreview {
+	lines := make([]serviceports.JournalLinePreview, 0, len(entity.Lines))
+	for _, line := range entity.Lines {
+		if line == nil {
+			continue
+		}
+		lines = append(lines, serviceports.JournalLinePreview{
+			GLAccountID: line.GLAccountID,
+			Description: line.Description,
+			DebitMinor:  line.DebitAmount,
+			CreditMinor: line.CreditAmount,
+		})
+	}
+
+	return &serviceports.JournalPreview{
+		AccountingDate: postingDate,
+		FiscalPeriodID: periodID,
+		EntryStatus:    entryStatusPosted,
+		Lines:          lines,
+	}
 }
 
 func cloneRequest(src *manualjournal.Request) *manualjournal.Request {

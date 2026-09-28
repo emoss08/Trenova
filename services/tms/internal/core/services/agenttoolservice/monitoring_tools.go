@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,10 +28,42 @@ import (
 // monitoring writes need. Detection runs the same evaluator the stop actuals
 // run, so an agent asking for it cannot invent a failure; resolving one goes
 // through the same lifecycle a person's click does.
+var (
+	driverMessagePriorities = agenttoolschema.Source(
+		"notification.priority",
+		[]notification.Priority{
+			notification.PriorityLow,
+			notification.PriorityMedium,
+			notification.PriorityHigh,
+			notification.PriorityCritical,
+		},
+	)
+	waiverReasons = agenttoolschema.Source("detention.waiverReason", []detention.WaiverReason{
+		detention.WaiverReasonWeather,
+		detention.WaiverReasonFacilityClosure,
+		detention.WaiverReasonCarrierFault,
+		detention.WaiverReasonEquipmentIssue,
+		detention.WaiverReasonCustomerGoodwill,
+		detention.WaiverReasonDataCorrection,
+		detention.WaiverReasonForceMajeure,
+		detention.WaiverReasonOther,
+	})
+)
+
 type serviceFailureDecider interface {
 	EvaluateShipment(
 		ctx context.Context,
 		req *serviceports.EvaluateShipmentServiceFailuresRequest,
+		actor *serviceports.RequestActor,
+	) (*serviceports.ServiceFailureEvaluationResult, error)
+	EvaluateStop(
+		ctx context.Context,
+		req *serviceports.EvaluateStopServiceFailuresRequest,
+		actor *serviceports.RequestActor,
+	) (*serviceports.ServiceFailureEvaluationResult, error)
+	BulkEvaluate(
+		ctx context.Context,
+		req *serviceports.BulkEvaluateServiceFailuresRequest,
 		actor *serviceports.RequestActor,
 	) (*serviceports.ServiceFailureEvaluationResult, error)
 	GetByID(
@@ -59,9 +92,10 @@ func newEvaluateServiceFailuresTool(failures serviceFailureDecider) serviceports
 func (t *evaluateServiceFailuresTool) Name() string { return "evaluate_service_failures" }
 
 func (t *evaluateServiceFailuresTool) Description() string {
-	return "Run the service failure check on one shipment now, opening a failure for a " +
+	return "Run the service failure check on a shipment now, opening a failure for a " +
 		"late or missed stop that has none. Every stop is compared against its window " +
-		"and the grace period. Use it when get_shipment_tracking shows a stop " +
+		"and the grace period; send stopId to check one stop, or shipmentIds to check " +
+		"several shipments in one pass. Use it when get_shipment_tracking shows a stop " +
 		"late or overdue and list_service_failures shows nothing for it, so the " +
 		"failure is on record before anyone is told. It records what the stop " +
 		"actuals prove and nothing else; it cannot create a failure from a guess."
@@ -74,15 +108,22 @@ func (t *evaluateServiceFailuresTool) ParamSchema() map[string]any {
 			"shipmentId": map[string]any{
 				"type": "string",
 				"description": "The shipment to check, from get_shipment_tracking, " +
-					"list_shipments or this run's subject.",
+					"list_shipments or this run's subject. Send this or shipmentIds.",
 			},
+			paramStopID: map[string]any{
+				"type": "string",
+				"description": "One stop of that shipment to check on its own, from " +
+					"get_shipment_tracking or get_shipment. Needs shipmentId.",
+			},
+			"shipmentIds": idListProperty("Several shipments to check in one pass, from "+
+				"list_shipments or search_shipments. Send this or shipmentId.",
+				maxBulkEvaluationShipments),
 			"force": map[string]any{
 				"type": "boolean",
 				"description": "Re-check stops that were already evaluated. Default false; " +
 					"set it only when an actual arrival was corrected.",
 			},
 		},
-		"required":             []string{"shipmentId"},
 		"additionalProperties": false,
 	}
 }
@@ -119,29 +160,86 @@ func (t *evaluateServiceFailuresTool) Execute(
 		return err
 	}
 
-	request, err := t.request(&params)
+	scope, err := t.request(&params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.failures.EvaluateShipment(ctx, request, params.Actor)
+	switch {
+	case len(scope.shipmentIDs) > 0:
+		_, err = t.failures.BulkEvaluate(ctx, &serviceports.BulkEvaluateServiceFailuresRequest{
+			TenantInfo:  scope.tenant,
+			ShipmentIDs: scope.shipmentIDs,
+			Force:       scope.force,
+		}, params.Actor)
+	case scope.stopID.IsNotNil():
+		_, err = t.failures.EvaluateStop(ctx, &serviceports.EvaluateStopServiceFailuresRequest{
+			TenantInfo: scope.tenant,
+			ShipmentID: scope.shipmentID,
+			StopID:     scope.stopID,
+			Force:      scope.force,
+		}, params.Actor)
+	default:
+		_, err = t.failures.EvaluateShipment(ctx, scope.shipmentRequest(scope.shipmentID),
+			params.Actor)
+	}
 
 	return err
 }
 
+const maxBulkEvaluationShipments = 50
+
+type evaluationScope struct {
+	tenant      pagination.TenantInfo
+	shipmentID  pulid.ID
+	stopID      pulid.ID
+	shipmentIDs []pulid.ID
+	force       bool
+}
+
+func (s *evaluationScope) shipmentRequest(
+	shipmentID pulid.ID,
+) *serviceports.EvaluateShipmentServiceFailuresRequest {
+	return &serviceports.EvaluateShipmentServiceFailuresRequest{
+		TenantInfo: s.tenant,
+		ShipmentID: shipmentID,
+		Force:      s.force,
+	}
+}
+
 func (t *evaluateServiceFailuresTool) request(
 	params *serviceports.ToolExecuteParams,
-) (*serviceports.EvaluateShipmentServiceFailuresRequest, error) {
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
-	if err != nil {
-		return nil, err
+) (*evaluationScope, error) {
+	scope := &evaluationScope{
+		tenant: tenantFrom(*params),
+		force:  optionalBool(params.Params, "force"),
 	}
 
-	return &serviceports.EvaluateShipmentServiceFailuresRequest{
-		TenantInfo: tenantFrom(*params),
-		ShipmentID: shipmentID,
-		Force:      optionalBool(params.Params, "force"),
-	}, nil
+	var err error
+	if scope.shipmentID, _, err = optionalPulid(params.Params, "shipmentId"); err != nil {
+		return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", err)
+	}
+	if scope.stopID, _, err = optionalPulid(params.Params, paramStopID); err != nil {
+		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramStopID, err)
+	}
+	if _, given := params.Params["shipmentIds"]; given {
+		scope.shipmentIDs, err = requirePulidSlice(
+			params.Params, "shipmentIds", maxBulkEvaluationShipments)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	switch {
+	case len(scope.shipmentIDs) > 0 && scope.shipmentID.IsNotNil():
+		return nil, errors.New("send shipmentId or shipmentIds, not both")
+	case len(scope.shipmentIDs) > 0 && scope.stopID.IsNotNil():
+		return nil, errors.New("stopId checks one stop of one shipment; send it with shipmentId")
+	case len(scope.shipmentIDs) == 0 && scope.shipmentID.IsNil():
+		return nil, errors.New("parameter \"shipmentId\" is required unless shipmentIds is sent")
+	}
+
+	return scope, nil
 }
 
 type resolveServiceFailureTool struct {
@@ -333,11 +431,10 @@ func (t *notifyDriverTool) ParamSchema() map[string]any {
 					"The message, at most %d characters, in plain words.", maxDriverMessageChars,
 				),
 			},
-			"priority": map[string]any{
-				"type":        "string",
-				"enum":        []string{"low", "medium", "high", "critical"},
-				"description": "How urgently the phone should show it. Default medium.",
-			},
+			"priority": agenttoolschema.Enum(
+				"How urgently the phone should show it. Default medium.",
+				driverMessagePriorities,
+			),
 			"shipmentId": map[string]any{
 				"type": "string",
 				"description": "Optional: the shipment the message is about, so Dash can open " +
@@ -632,6 +729,7 @@ type detentionActor interface {
 		ctx context.Context,
 		params *detentionservice.WaiveParams,
 	) (*detentionservice.OccurrenceChange, error)
+	detentionDisputer
 }
 
 type sendDetentionNoticeTool struct {
@@ -741,14 +839,7 @@ func (t *waiveDetentionTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The occurrence id from list_detention_desk.",
 			},
-			"reason": map[string]any{
-				"type": "string",
-				"enum": []string{
-					"Weather", "FacilityClosure", "CarrierFault", "EquipmentIssue",
-					"CustomerGoodwill", "DataCorrection", "ForceMajeure", "Other",
-				},
-				"description": "The coded reason for the waiver.",
-			},
+			fieldReason: agenttoolschema.Enum("The coded reason for the waiver.", waiverReasons),
 			"note": map[string]any{
 				"type":        "string",
 				"description": "Why, in a sentence a person can read on the occurrence later.",

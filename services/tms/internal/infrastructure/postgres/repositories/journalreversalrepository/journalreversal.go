@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -68,15 +69,23 @@ func (r *repository) List(
 	req *repositories.ListJournalReversalsRequest,
 ) (*pagination.ListResult[*journalreversal.Reversal], error) {
 	records := make([]*reversalRecord, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DBForContext(ctx).
+	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&records).
-		Where("organization_id = ?", req.Filter.TenantInfo.OrgID).
-		Where("business_unit_id = ?", req.Filter.TenantInfo.BuID).
-		Order("created_at DESC").
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return querybuilder.ApplyFilters(
+				sq,
+				buncolgen.ReversalTable.Alias,
+				req.Filter,
+				(*journalreversal.Reversal)(nil),
+			)
+		}).
 		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
+		Offset(req.Filter.Pagination.SafeOffset())
+	if len(req.Filter.Sort) == 0 {
+		query = query.Order(buncolgen.ReversalColumns.CreatedAt.OrderDesc())
+	}
+	total, err := query.ScanAndCount(ctx)
 	if err != nil {
 		return nil, err
 	}

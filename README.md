@@ -90,6 +90,25 @@ task tms:run
 cd client && pnpm install && pnpm dev
 ```
 
+### Low-resource machines
+
+If a build uses all your RAM and CPU, turn on low-resource mode. Go then compiles one package at
+a time on one thread and runs its garbage collector harder, `golangci-lint` and the test runners
+are capped the same way, hot reload waits 2 s after the last save, and `docker-up` starts only
+PostgreSQL, Redis, MinIO and Temporal. Builds take longer, but the machine stays usable.
+
+```bash
+export LOW_RESOURCE=true               # every task from now on (add it to your shell profile)
+task tms:run-watch LOW_RESOURCE=true   # or a single command
+task tms:docker-up-minimal             # just the minimal containers, in any mode
+```
+
+On Windows, `setx LOW_RESOURCE true` sets it for every new terminal.
+
+`LOW_RESOURCE_JOBS=2` allows two packages at a time with two threads each; that is a sensible
+setting on a 16 GB machine. Run only the client app you are working on
+(`pnpm --filter @trenova/web dev`) rather than `pnpm dev`, which starts both.
+
 Run `task list` to see every available task. Engineering guides live in [`docs/engineering`](./docs/engineering) and operations runbooks in [`docs/operations-guides`](./docs/operations-guides).
 
 ## Self-hosting

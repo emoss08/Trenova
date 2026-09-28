@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -64,7 +65,7 @@ func (t *issuePayAdvanceTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
 		paramWorkerID:        workerProperty(),
 		paramDriverPayAmount: amountProperty("The amount advanced, as a decimal such as 300.00."),
-		paramAdvanceSource:   enumProperty("How it was given.", advanceSources),
+		paramAdvanceSource:   agenttoolschema.Enum("How it was given.", advanceSources),
 		paramAdvanceRef: stringProperty("The money code, card transaction or receipt "+
 			"number.", maxPayReferenceChars),
 		paramIssuedDate: dateProperty("The day it was given; leave it out for today."),
@@ -97,7 +98,7 @@ func (t *issuePayAdvanceTool) entity(
 	if err != nil {
 		return nil, err
 	}
-	source, ok, err := optionalEnum(params.Params, paramAdvanceSource, advanceSources)
+	source, ok, err := optionalEnum(params.Params, paramAdvanceSource, advanceSources.Values)
 	if err != nil {
 		return nil, err
 	}

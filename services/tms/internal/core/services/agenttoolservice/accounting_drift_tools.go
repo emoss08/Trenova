@@ -8,11 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -111,9 +111,9 @@ func (t *resolveAccountingDriftTool) Prerequisites() []string {
 func (t *resolveAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramDriftFindingID: jsonschemautils.Text(driftFindingHelp),
-		paramDriftDirection: jsonschemautils.Enum(
+		paramDriftDirection: agenttoolschema.Enum(
 			"Which side to change: PushTrenovaValue changes the accounting system, AdjustTrenova changes Trenova.",
-			sliceutils.Strings(accountingsync.AllDriftDirections())...,
+			agenttoolschema.DriftDirections,
 		),
 	}, paramDriftFindingID, paramDriftDirection)
 }

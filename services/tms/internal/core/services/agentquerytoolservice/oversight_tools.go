@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -147,24 +148,14 @@ func (t *listWatchtowerItemsTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			paramLimit: pageSchema(watchtowerDefaultLimit, watchtowerMaxLimit)[paramLimit],
 			paramKinds: map[string]any{
-				toolschema.KeyType: toolschema.TypeArray,
-				toolschema.KeyItems: map[string]any{
-					toolschema.KeyType: toolschema.TypeString,
-					toolschema.KeyEnum: watchtowerKindValues(),
-				},
+				toolschema.KeyType:  toolschema.TypeArray,
+				toolschema.KeyItems: agenttoolschema.Enum("", watchtowerKindSource),
 				toolschema.KeyDescription: "Only items of these kinds. Omit for every kind " +
 					"the caller may read.",
 			},
 			paramSeverities: map[string]any{
-				toolschema.KeyType: toolschema.TypeArray,
-				toolschema.KeyItems: map[string]any{
-					toolschema.KeyType: toolschema.TypeString,
-					toolschema.KeyEnum: []string{
-						watchtower.SeverityCritical.String(),
-						watchtower.SeverityWarning.String(),
-						watchtower.SeverityInfo.String(),
-					},
-				},
+				toolschema.KeyType:        toolschema.TypeArray,
+				toolschema.KeyItems:       agenttoolschema.Enum("", watchtowerSeveritySource),
 				toolschema.KeyDescription: "Only items of these severities.",
 			},
 			paramIncludeResolved: map[string]any{
@@ -695,12 +686,9 @@ func (t *getDailyBriefingTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramRole: map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyEnum: briefingRoleValues(),
-				toolschema.KeyDescription: "Whose morning to read. General is everyone's and " +
-					"the default.",
-			},
+			paramRole: agenttoolschema.Enum(
+				"Whose morning to read. General is everyone's and the default.", briefingRoles,
+			),
 			paramDate: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "An earlier day as YYYY-MM-DD, in the " +

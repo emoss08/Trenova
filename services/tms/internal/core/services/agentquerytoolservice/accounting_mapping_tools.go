@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
@@ -102,19 +103,10 @@ type accountingMappingDetail struct {
 }
 
 func accountingSystemParam() map[string]any {
-	return jsonschemautils.Enum(
+	return agenttoolschema.Enum(
 		"The accounting system. Example: \"QuickBooksOnline\".",
-		string(integration.TypeQuickBooksOnline),
+		agenttoolschema.AccountingSystems,
 	)
-}
-
-func targetTypeValues() []string {
-	types := accountingsync.AllMappingTargetTypes()
-	values := make([]string, 0, len(types))
-	for _, targetType := range types {
-		values = append(values, string(targetType))
-	}
-	return values
 }
 
 func requireAccountingSystem(params map[string]any) (integration.Type, error) {
@@ -220,9 +212,9 @@ func (t *listAccountingMappingGapsTool) SearchTerms() []string {
 func (t *listAccountingMappingGapsTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramAccountingSystem: accountingSystemParam(),
-		paramTargetType: jsonschemautils.Enum(
+		paramTargetType: agenttoolschema.Enum(
 			"Only gaps of this kind. Leave it out for every kind.",
-			targetTypeValues()...,
+			agenttoolschema.MappingTargetTypes,
 		),
 		"requiredOnly": jsonschemautils.Boolean("Only the mappings setup cannot finish without."),
 		paramLimit: jsonschemautils.Integer(
@@ -343,9 +335,9 @@ func (t *getAccountingMappingTool) ParamSchema() map[string]any {
 		paramMappingID: jsonschemautils.Text(
 			"The mapping's id from list_accounting_mapping_gaps.",
 		),
-		paramTargetType: jsonschemautils.Enum(
+		paramTargetType: agenttoolschema.Enum(
 			"The kind of Trenova record or setting, when naming it by recordId or key.",
-			targetTypeValues()...,
+			agenttoolschema.MappingTargetTypes,
 		),
 		paramRecordID: jsonschemautils.Text(
 			"The Trenova customer, carrier or accessorial charge id, from " +
