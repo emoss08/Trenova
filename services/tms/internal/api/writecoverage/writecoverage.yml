@@ -36,6 +36,9 @@ writes:
     tools: [check_accounting_drift]
   "mutation checkAccountingConnection":
     tools: [check_accounting_connection]
+  "mutation chooseAccountingSyncMode":
+    exempt: configuration
+    reason: "Chooses what the organization's accounting connection sends during setup; an administrator owns the connection and it is fixed once sync is enabled."
   "mutation clearAccountingMapping":
     tools: [clear_accounting_mapping]
   "mutation completeAccountingAuthorization":

@@ -62,7 +62,7 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 66 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 213 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 214 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 34 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 47 |
@@ -73,14 +73,14 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 ## Totals
 
-950 writes: 493 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
+951 writes: 494 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 167 |
-| Exempt | 475 |
+| Exempt | 476 |
 | — Security | 66 |
-| — Configuration | 213 |
+| — Configuration | 214 |
 | — User preference | 23 |
 | — Infrastructure | 34 |
 | — Agent administration | 47 |
@@ -89,7 +89,7 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | — Attestation | 10 |
 | — Duplicate | 3 |
 | **Pending** | **308** |
-| Total | 950 |
+| Total | 951 |
 
 Of the 475 writes an agent should be able to make, 167 have a tool (35%).
 
@@ -414,7 +414,7 @@ The writes no tool performs yet, and what the tool would do.
 | --- | --- | --- | --- | --- |
 | accessorialcharge | 3 | 0 | 3 | 0 |
 | accountingcontrol | 1 | 0 | 1 | 0 |
-| accountingsync | 28 | 16 | 8 | 4 |
+| accountingsync | 29 | 16 | 9 | 4 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 0 | 4 |
 | agent | 12 | 2 | 10 | 0 |
@@ -607,6 +607,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation changeAccountingBackfill` | Pending: Change the range or scope of an accounting backfill that has not finished. |
 | `mutation checkAccountingConnection` | Tool: `check_accounting_connection` |
 | `mutation checkAccountingDrift` | Tool: `check_accounting_drift` |
+| `mutation chooseAccountingSyncMode` | Exempt, configuration: Chooses what the organization's accounting connection sends during setup; an administrator owns the connection and it is fixed once sync is enabled. |
 | `mutation clearAccountingMapping` | Tool: `clear_accounting_mapping` |
 | `mutation completeAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation completeAccountingSetup` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |

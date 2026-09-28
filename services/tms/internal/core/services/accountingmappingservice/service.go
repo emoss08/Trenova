@@ -47,6 +47,7 @@ type Params struct {
 	Workers            repositories.WorkerRepository                   `optional:"true"`
 	SettlementControls repositories.CarrierSettlementControlRepository `optional:"true"`
 	PayCodes           repositories.PayCodeRepository                  `optional:"true"`
+	Ledger             repositories.AccountingLedgerSource             `optional:"true"`
 }
 
 type Service struct {
@@ -58,6 +59,7 @@ type Service struct {
 	connectionService  services.AccountingConnectionService
 	accountingControls repositories.AccountingControlRepository
 	glAccounts         repositories.GLAccountRepository
+	ledger             repositories.AccountingLedgerSource
 	customers          repositories.CustomerRepository
 	carriers           repositories.CarrierRepository
 	accessorials       repositories.AccessorialChargeRepository
@@ -97,6 +99,7 @@ func New(p Params) *Service {
 		workers:            p.Workers,
 		settlementControls: p.SettlementControls,
 		payCodes:           p.PayCodes,
+		ledger:             p.Ledger,
 	}
 }
 
@@ -132,6 +135,13 @@ func (s *Service) Summary(
 		return nil, err
 	}
 	summary.Groups = groupCounts(counts)
+
+	if conn.SendsLedger() && s.ledger != nil {
+		if err = s.ledgerRequirement(ctx, tenantInfo, conn, summary); err != nil {
+			return nil, err
+		}
+		return summary, nil
+	}
 
 	required, err := s.mappings.ListConnection(
 		ctx,

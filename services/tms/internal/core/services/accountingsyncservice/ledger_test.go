@@ -777,6 +777,8 @@ func TestChooseModeRecordsTheChoice(t *testing.T) {
 	assert.Equal(t, accountingsync.SyncModeLedger, conn.SyncMode)
 	assert.Equal(t, accountingsync.LedgerDailySummary, conn.LedgerGranularity)
 	assert.Equal(t, accountingsync.SetupStepMappings, conn.SetupStep)
+	assert.Equal(t, []pulid.ID{h.conn.ID}, h.mappings.rescored,
+		"the mappings are rebuilt so ledger mode asks for its GL accounts")
 	stored := h.connections.get(h.conn.ID)
 	assert.Equal(t, accountingsync.SyncModeLedger, stored.SyncMode)
 	assert.Equal(t, "Chose to send journal entries to QuickBooks Online, summed by day",

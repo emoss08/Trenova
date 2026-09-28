@@ -976,6 +976,10 @@ func (s *Service) ChooseMode(
 	if err != nil {
 		return nil, err
 	}
+	if _, rescoreErr := s.mappingService.Rescore(ctx, req.TenantInfo, updated.ID); rescoreErr != nil {
+		s.l.Warn("the mode was saved but its mappings were not rebuilt; the next refresh will",
+			zap.String("connectionId", updated.ID.String()), zap.Error(rescoreErr))
+	}
 
 	comment := "Chose to send documents to " + provider
 	if updated.SendsLedger() {

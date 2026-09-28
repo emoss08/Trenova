@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:fe3f733108d0a4efa010d00c6fa3719052020f735747fae12afdf224a8777f69"
+const Version = "sha256:36480d9f78b257f1e1d3926bc6599cafc3f70766c7fe11c1fe1b168f39f0a9c4"
 
 var Default = indexed(defaultCatalog)
 
@@ -351,6 +351,7 @@ var defaultCatalog = Catalog{
 					Label:  "Document Type",
 					Type:   FieldEnum,
 					EnumValues: []EnumValue{
+						{Value: "GLAccount", Label: "GL Account"},
 						{Value: "Customer", Label: "Customer"},
 						{Value: "Invoice", Label: "Invoice"},
 						{Value: "CreditMemo", Label: "Credit Memo"},
@@ -363,6 +364,8 @@ var defaultCatalog = Catalog{
 						{Value: "CarrierBillPayment", Label: "Carrier Bill Payment"},
 						{Value: "DriverBill", Label: "Driver Bill"},
 						{Value: "DriverBillPayment", Label: "Driver Bill Payment"},
+						{Value: "JournalEntry", Label: "Journal Entry"},
+						{Value: "JournalSummary", Label: "Journal Summary"},
 					},
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
@@ -438,6 +441,7 @@ var defaultCatalog = Catalog{
 						{Value: "DeletedInProvider", Label: "Deleted In Provider"},
 						{Value: "VoidedInProvider", Label: "Voided In Provider"},
 						{Value: "CustomerBalanceMismatch", Label: "Customer Balance Mismatch"},
+						{Value: "TrialBalanceMismatch", Label: "Trial Balance Mismatch"},
 					},
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
@@ -983,6 +987,7 @@ var defaultCatalog = Catalog{
 					Label:  "Document Type",
 					Type:   FieldEnum,
 					EnumValues: []EnumValue{
+						{Value: "GLAccount", Label: "GL Account"},
 						{Value: "Customer", Label: "Customer"},
 						{Value: "Invoice", Label: "Invoice"},
 						{Value: "CreditMemo", Label: "Credit Memo"},
@@ -995,6 +1000,8 @@ var defaultCatalog = Catalog{
 						{Value: "CarrierBillPayment", Label: "Carrier Bill Payment"},
 						{Value: "DriverBill", Label: "Driver Bill"},
 						{Value: "DriverBillPayment", Label: "Driver Bill Payment"},
+						{Value: "JournalEntry", Label: "Journal Entry"},
+						{Value: "JournalSummary", Label: "Journal Summary"},
 					},
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
@@ -1062,6 +1069,8 @@ var defaultCatalog = Catalog{
 						{Value: "SafetyNet", Label: "Safety Net"},
 						{Value: "Backfill", Label: "Backfill"},
 						{Value: "DriftResolved", Label: "Drift Resolved"},
+						{Value: "JournalPosted", Label: "Journal Posted"},
+						{Value: "OpeningBalances", Label: "Opening Balances"},
 					},
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,

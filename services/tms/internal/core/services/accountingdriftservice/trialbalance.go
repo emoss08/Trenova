@@ -109,21 +109,11 @@ func (s *Service) reconcileTrialBalance(
 	if sess.ledger == nil || sess.conn.SyncStartDate == nil {
 		return result, nil
 	}
-	control, err := s.controls.GetByOrgID(ctx, sess.tenant.OrgID)
+	control, currency, skip, err := s.trialBalanceGate(ctx, sess)
 	if err != nil {
 		return nil, err
 	}
-	functional := strings.ToUpper(strings.TrimSpace(control.FunctionalCurrencyCode))
-	home := strings.ToUpper(strings.TrimSpace(sess.conn.ExternalHomeCurrency))
-	if functional != "" && home != "" && functional != home {
-		result.Skipped = 1
-		return result, nil
-	}
-	pending, err := s.pendingLedgerRecords(ctx, sess)
-	if err != nil {
-		return nil, err
-	}
-	if pending {
+	if skip {
 		result.Skipped = 1
 		return result, nil
 	}
@@ -161,10 +151,6 @@ func (s *Service) reconcileTrialBalance(
 		provider[rows[idx].AccountExternalID] = rows[idx]
 	}
 
-	currency := functional
-	if currency == "" {
-		currency = home
-	}
 	compared := make([]pulid.ID, 0, len(accounts))
 	for _, group := range grouped {
 		for _, account := range group.accounts {
@@ -195,6 +181,32 @@ func (s *Service) reconcileTrialBalance(
 		s.publishInvalidation(ctx, sess.tenant, pulid.Nil, sess.conn.ID)
 	}
 	return result, nil
+}
+
+func (s *Service) trialBalanceGate(
+	ctx context.Context,
+	sess *readSession,
+) (control *tenant.AccountingControl, currency string, skip bool, err error) {
+	control, err = s.controls.GetByOrgID(ctx, sess.tenant.OrgID)
+	if err != nil {
+		return nil, "", false, err
+	}
+	functional := strings.ToUpper(strings.TrimSpace(control.FunctionalCurrencyCode))
+	home := strings.ToUpper(strings.TrimSpace(sess.conn.ExternalHomeCurrency))
+	if functional != "" && home != "" && functional != home {
+		return control, "", true, nil
+	}
+	pending, err := s.pendingLedgerRecords(ctx, sess)
+	if err != nil {
+		return nil, "", false, err
+	}
+	if pending {
+		return control, "", true, nil
+	}
+	if functional == "" {
+		return control, home, false, nil
+	}
+	return control, functional, false, nil
 }
 
 func (s *Service) trialWindow(
@@ -327,13 +339,11 @@ func (s *Service) groupByProviderAccount(
 		if mapping.State != accountingsync.MappingStateConfirmed || mapping.ExternalID == "" {
 			continue
 		}
-		switch mapping.TargetType {
-		case accountingsync.TargetGLAccount:
+		if mapping.TargetType == accountingsync.TargetGLAccount {
 			byAccount[mapping.TrenovaObjectID] = mapping
-		case accountingsync.TargetAccountRole:
-			byRole[mapping.TrenovaKey] = mapping
-		default:
+			continue
 		}
+		byRole[mapping.TrenovaKey] = mapping
 	}
 
 	known := make(map[pulid.ID]*trialAccount, len(accounts))

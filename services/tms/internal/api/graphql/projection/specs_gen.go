@@ -1726,6 +1726,22 @@ func init() {
 				FieldMapKey: "setupStep",
 			},
 			{
+				Name:        "syncMode",
+				FieldMapKey: "syncMode",
+			},
+			{
+				Name:        "ledgerGranularity",
+				FieldMapKey: "ledgerGranularity",
+			},
+			{
+				Name:        "ledgerOpeningBalancesSentAt",
+				FieldMapKey: "ledgerOpeningBalancesSentAt",
+			},
+			{
+				Name:        "externalFiscalYearStartMonth",
+				FieldMapKey: "externalFiscalYearStartMonth",
+			},
+			{
 				Name:        "syncStartDate",
 				FieldMapKey: "syncStartDate",
 			},

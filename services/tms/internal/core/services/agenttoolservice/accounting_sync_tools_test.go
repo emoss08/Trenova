@@ -603,7 +603,25 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	settlementsOn := int64(1_772_000_000)
 	operator.summary.Connection.DriverSettlementsEnabledAt = &settlementsOn
 	require.NoError(t, tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})))
-	assert.Equal(t, accountingsync.BackfillObjectTypes(), operator.backfilled.ObjectTypes)
+	assert.Equal(t, []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncObjectDebitMemo,
+		accountingsync.SyncObjectCreditMemo,
+		accountingsync.SyncObjectCustomerPayment,
+		accountingsync.SyncObjectCreditApplication,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncObjectDriverBill,
+		accountingsync.SyncObjectDriverBillPay,
+	}, operator.backfilled.ObjectTypes)
+
+	operator.summary.Connection.SyncMode = accountingsync.SyncModeLedger
+	operator.summary.Connection.LedgerGranularity = accountingsync.LedgerDailySummary
+	require.NoError(t, tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})))
+	assert.Equal(t, []accountingsync.SyncObjectType{accountingsync.SyncObjectJournalSummary},
+		operator.backfilled.ObjectTypes, "a ledger connection backfills journal days, never documents")
+	operator.summary.Connection.SyncMode = accountingsync.SyncModeDocument
+	operator.summary.Connection.LedgerGranularity = ""
 
 	err := tool.Execute(t.Context(), syncParams(map[string]any{
 		"system":        "QuickBooksOnline",

@@ -111,6 +111,7 @@ func mappingIdentity(m *accountingsync.AccountingMapping) string {
 func (s *Service) listTargets(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
+	ledger bool,
 ) ([]*target, error) {
 	targets := make([]*target, 0, 64)
 
@@ -145,7 +146,7 @@ func (s *Service) listTargets(
 	}
 	targets = append(targets, drivers...)
 
-	accounts, err := s.glAccountTargets(ctx, tenantInfo)
+	accounts, err := s.glAccountTargets(ctx, tenantInfo, ledger)
 	if err != nil {
 		return nil, err
 	}
@@ -396,23 +397,58 @@ func workerName(wrk *worker.Worker) string {
 func (s *Service) glAccountTargets(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
+	ledger bool,
 ) ([]*target, error) {
 	ids, err := s.payablesAccountIDs(ctx, tenantInfo)
-	if err != nil || len(ids) == 0 {
-		return nil, err
-	}
-	accounts, err := s.glAccounts.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
-		TenantInfo:   tenantInfo,
-		GLAccountIDs: ids,
-	})
 	if err != nil {
 		return nil, err
 	}
+	accounts := make([]*glaccount.GLAccount, 0, len(ids))
+	if len(ids) > 0 {
+		if accounts, err = s.glAccounts.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+			TenantInfo:   tenantInfo,
+			GLAccountIDs: ids,
+		}); err != nil {
+			return nil, err
+		}
+	}
+	if ledger {
+		active, activeErr := s.activeGLAccounts(ctx, tenantInfo)
+		if activeErr != nil {
+			return nil, activeErr
+		}
+		accounts = append(accounts, active...)
+	}
+
+	seen := make(map[pulid.ID]struct{}, len(accounts))
 	targets := make([]*target, 0, len(accounts))
 	for _, account := range accounts {
+		if _, dup := seen[account.ID]; dup {
+			continue
+		}
+		seen[account.ID] = struct{}{}
 		targets = append(targets, glAccountTarget(account))
 	}
 	return targets, nil
+}
+
+func (s *Service) activeGLAccounts(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*glaccount.GLAccount, error) {
+	accounts := make([]*glaccount.GLAccount, 0, targetPageSize)
+	for offset := 0; ; offset += targetPageSize {
+		page, err := s.glAccounts.List(ctx, &repositories.ListGLAccountsRequest{
+			Filter: activeFilter(tenantInfo, offset),
+		})
+		if err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, page.Items...)
+		if len(page.Items) < targetPageSize || offset+len(page.Items) >= page.Total {
+			return accounts, nil
+		}
+	}
 }
 
 func glAccountTarget(account *glaccount.GLAccount) *target {

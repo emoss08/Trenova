@@ -7252,11 +7252,12 @@
                 "StatusMismatch",
                 "DeletedInProvider",
                 "VoidedInProvider",
-                "CustomerBalanceMismatch"
+                "CustomerBalanceMismatch",
+                "TrialBalanceMismatch"
               ],
               "type": "string"
             },
-            "maxItems": 5,
+            "maxItems": 6,
             "type": "array"
           },
           "limit": {
@@ -7264,11 +7265,12 @@
             "type": "integer"
           },
           "objectType": {
-            "description": "Only these document types. Customer means a customer's balance.",
+            "description": "Only these document types. Customer means a customer's balance; GLAccount a trial balance account.",
             "items": {
               "description": "A document type.",
               "enum": [
                 "Customer",
+                "GLAccount",
                 "Invoice",
                 "CreditMemo",
                 "DebitMemo",
@@ -7281,7 +7283,7 @@
               ],
               "type": "string"
             },
-            "maxItems": 10,
+            "maxItems": 11,
             "type": "array"
           },
           "search": {
@@ -7554,11 +7556,13 @@
                 "CarrierBill",
                 "CarrierBillPayment",
                 "DriverBill",
-                "DriverBillPayment"
+                "DriverBillPayment",
+                "JournalEntry",
+                "JournalSummary"
               ],
               "type": "string"
             },
-            "maxItems": 12,
+            "maxItems": 14,
             "type": "array"
           },
           "errorCategory": {
@@ -15972,11 +15976,13 @@
                 "CarrierBill",
                 "CarrierBillPayment",
                 "DriverBill",
-                "DriverBillPayment"
+                "DriverBillPayment",
+                "JournalEntry",
+                "JournalSummary"
               ],
               "type": "string"
             },
-            "maxItems": 9,
+            "maxItems": 11,
             "type": "array"
           },
           "from": {
