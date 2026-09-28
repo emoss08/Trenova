@@ -107,7 +107,7 @@ func TestServerHOSViolationsDefaultsToLast24Hours(t *testing.T) {
 func mustFindViolationSimEvent(t *testing.T, srv *Server) *SimEvent {
 	t.Helper()
 
-	now := time.Now().UTC()
+	now := stopRichSimTime()
 	window := srv.live.EventsWindow(
 		now.Add(-36*time.Hour),
 		now.Add(36*time.Hour),
