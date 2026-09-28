@@ -256,6 +256,35 @@ func (r *repository) ListConnection(
 	return result, nil
 }
 
+func (r *repository) TotalsByProvider(
+	ctx context.Context,
+	req *repositories.TotalAICorrectionsByProviderRequest,
+) ([]repositories.AICorrectionProviderTotal, error) {
+	cols := buncolgen.CorrectionColumns
+	totals := make([]repositories.AICorrectionProviderTotal, 0, 2)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*aicorrection.Correction)(nil)).
+		ColumnExpr(cols.ExtractionProviderID.Expr("{} = ? AS candidate"), req.ProviderID).
+		ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
+		ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+				Where(cols.Task.Eq(), req.Task).
+				Where(cols.CapturedAt.Gte(), req.Since).
+				Where(cols.ExtractionProviderID.IsNotNull())
+		}).
+		GroupExpr("candidate").
+		Scan(ctx, &totals)
+	if err != nil {
+		r.l.Error("failed to total ai corrections by provider", zap.Error(err))
+
+		return nil, fmt.Errorf("total ai corrections by provider: %w", err)
+	}
+
+	return totals, nil
+}
+
 func (r *repository) ListForAccuracy(
 	ctx context.Context,
 	req repositories.ListAICorrectionsForAccuracyRequest,

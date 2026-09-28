@@ -11391,6 +11391,116 @@ type ExtractionFieldAccuracy {
   unscored: Int!
 }
 
+"""
+How a candidate AI provider serves a share of an organization's real document extractions.
+"""
+type ExtractionRollout {
+  enabled: Boolean!
+  """
+  Production's accuracy or rejection rate when a guard stopped the rollout.
+  """
+  haltBaselineRate: Float!
+  """
+  The candidate's accuracy or rejection rate when a guard stopped the rollout.
+  """
+  haltCandidateRate: Float!
+  haltReason: ExtractionRolloutHaltReason
+  """When a guard stopped the rollout; empty while it has not."""
+  haltedAt: Timestamp
+  """
+  How many points below production's accuracy the candidate may fall before the rollout stops.
+  """
+  maxAccuracyDropPoints: Int!
+  """
+  How many points above production's rejection rate the candidate may rise before the rollout stops.
+  """
+  maxRejectionIncreasePoints: Int!
+  """
+  The share of documents whose extraction asks the candidate first, 1 to 100.
+  """
+  percent: Int!
+  """
+  The candidate AI provider; kept while the rollout is off, so turning it back on keeps the choice.
+  """
+  providerId: ID
+  """
+  Whether documents are being sent to the candidate right now: on, with a candidate, and not stopped by a guard.
+  """
+  serving: Boolean!
+  """
+  When the current comparison began; the guards and the report count only what happened since.
+  """
+  startedAt: Timestamp
+  """Zero until the rollout is first saved."""
+  updatedAt: Timestamp!
+  updatedById: ID
+  version: Int!
+}
+
+"""Confirmed fields read by one side since the rollout started."""
+type ExtractionRolloutAccuracy {
+  """Correct divided by scored; zero when nothing was scored."""
+  accuracy: Float!
+  correct: Int!
+  scored: Int!
+}
+
+"""The extractions assigned to one side of the rollout since it started."""
+type ExtractionRolloutArm {
+  accepted: Int!
+  assigned: Int!
+  failed: Int!
+  """
+  Assigned to the candidate but served by production because the candidate could not answer.
+  """
+  fellBack: Int!
+  pending: Int!
+  rejected: Int!
+  """
+  Rejected and failed answers divided by settled ones, leaving out fallbacks.
+  """
+  rejectionRate: Float!
+  """
+  Extracted again before the answer was applied; not counted for either side.
+  """
+  superseded: Int!
+}
+
+enum ExtractionRolloutHaltReason {
+  """
+  The candidate read confirmed fields worse than production by more than the allowed points.
+  """
+  AccuracyDrop
+  """
+  The candidate's answers were unusable more often than production's by more than the allowed points.
+  """
+  Rejections
+}
+
+"""
+How the candidate is doing on the documents it serves, beside production on the rest.
+"""
+type ExtractionRolloutReport {
+  candidate: ExtractionRolloutArm!
+  candidateAccuracy: ExtractionRolloutAccuracy!
+  control: ExtractionRolloutArm!
+  """Per field, the candidate's biggest shortfall against production first."""
+  fields: [ExtractionShadowFieldComparison!]!
+  """
+  Settled extractions each side needs before the rejection guard can stop the rollout.
+  """
+  minGuardExtractions: Int!
+  """
+  Confirmed fields each side needs before the accuracy guard can stop the rollout.
+  """
+  minGuardScoredFields: Int!
+  productionAccuracy: ExtractionRolloutAccuracy!
+  providerName: String!
+  rollout: ExtractionRollout!
+  """True when there were more corrections than the field comparison read."""
+  truncated: Boolean!
+}
+
 type ExtractionShadowFieldComparison {
   candidateAccuracy: Float!
   candidateCorrect: Int!
@@ -15912,6 +16022,10 @@ type Mutation {
   updateEscrowAccount(input: UpdateEscrowAccountInput!): EscrowAccount!
   updateExtractionEvalCase(id: ID!, input: UpdateExtractionEvalCaseInput!): ExtractionEvalCase!
   """
+  Chooses the candidate provider that serves a share of real document extractions, how much of it, and when to stop.
+  """
+  updateExtractionRollout(input: UpdateExtractionRolloutInput!): ExtractionRollout!
+  """
   Chooses the candidate provider that shadows production document extraction, and how much of it.
   """
   updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
@@ -18094,6 +18208,8 @@ type Query {
   extractionEvalResults(input: DataTableConnectionInput!, runId: ID!): ExtractionEvalResultConnection!
   extractionEvalRun(id: ID!): ExtractionEvalRun
   extractionEvalRuns(input: DataTableConnectionInput!): ExtractionEvalRunConnection!
+  extractionRollout: ExtractionRollout!
+  extractionRolloutReport: ExtractionRolloutReport!
   extractionShadowReport(providerId: ID, windowDays: Int): ExtractionShadowReport!
   extractionShadowResult(id: ID!): ExtractionShadowResult
   extractionShadowResults(input: DataTableConnectionInput!): ExtractionShadowResultConnection!
@@ -23623,6 +23739,15 @@ input UpdateExtractionEvalCaseInput {
   notes: String
   status: ExtractionEvalCaseStatus
   title: String
+  version: Int!
+}
+
+input UpdateExtractionRolloutInput {
+  enabled: Boolean!
+  maxAccuracyDropPoints: Int!
+  maxRejectionIncreasePoints: Int!
+  percent: Int!
+  providerId: ID
   version: Int!
 }
 

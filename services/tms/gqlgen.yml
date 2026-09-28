@@ -1973,6 +1973,26 @@ models:
   ExtractionEvalCaseCounts:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.ExtractionEvalCaseCounts
+  ExtractionRollout:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractionrollout.ExtractionRollout
+    fields:
+      serving:
+        resolver: true
+      haltReason:
+        resolver: true
+  ExtractionRolloutHaltReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/extractionrollout.HaltReason
+  ExtractionRolloutArm:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionRolloutArmReport
+  ExtractionRolloutAccuracy:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionRolloutAccuracy
+  ExtractionRolloutReport:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionRolloutReport
   ExtractionShadowSettings:
     model:
       - github.com/emoss08/trenova/internal/core/domain/extractionshadow.ShadowSettings
@@ -1996,7 +2016,7 @@ models:
       - github.com/emoss08/trenova/internal/core/ports/services.ExtractionShadowSide
   ExtractionShadowFieldComparison:
     model:
-      - github.com/emoss08/trenova/internal/core/ports/services.ExtractionShadowFieldComparison
+      - github.com/emoss08/trenova/internal/core/domain/aicorrection.FieldComparison
   AIFeedback:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aifeedback.Feedback

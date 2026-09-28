@@ -111,6 +111,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/extractionevalservice"
+	"github.com/emoss08/trenova/internal/core/services/extractionrolloutservice"
 	"github.com/emoss08/trenova/internal/core/services/extractionshadowservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
@@ -364,6 +365,11 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	extractionevalservice.New,
 	extractionevalservice.AsService,
 	extractionevalservice.AsRunner,
+	extractionrolloutservice.New,
+	extractionrolloutservice.AsService,
+	extractionrolloutservice.AsRouter,
+	extractionrolloutservice.AsGuard,
+	extractionrolloutservice.AsRetention,
 	extractionshadowservice.NewScorer,
 	extractionshadowservice.New,
 	extractionshadowservice.AsService,

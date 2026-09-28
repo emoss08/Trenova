@@ -8508,6 +8508,15 @@ type UpdateExtractionEvalCaseInput struct {
 	Status  *extractioneval.CaseStatus `json:"status,omitempty"`
 }
 
+type UpdateExtractionRolloutInput struct {
+	Enabled                    bool    `json:"enabled"`
+	ProviderID                 *string `json:"providerId,omitempty"`
+	Percent                    int     `json:"percent"`
+	MaxAccuracyDropPoints      int     `json:"maxAccuracyDropPoints"`
+	MaxRejectionIncreasePoints int     `json:"maxRejectionIncreasePoints"`
+	Version                    int     `json:"version"`
+}
+
 type UpdateExtractionShadowSettingsInput struct {
 	Enabled       bool    `json:"enabled"`
 	ProviderID    *string `json:"providerId,omitempty"`

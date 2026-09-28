@@ -288,6 +288,33 @@ Keywords: shadow traffic, shadow model, candidate model, fine-tuned model, compa
    **Save**. Move the candidate ahead of the current provider only when it beats production
    here and in an evaluation run.
 
+### Roll out a new document extraction model gradually
+Keywords: gradual rollout, canary, promote extraction model, serve new model, fine-tuned model in production, stop rollout, rollout guard, rollback extraction model
+1. Try the model first under **Shadow** (see above), and roll it out only once it reads at least
+   as well as production there.
+2. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
+   extraction**, and choose **Rollout**.
+3. Select **Edit settings**, turn on **Serve the candidate**, choose the **Candidate provider**,
+   and set the **Share of documents (%)**. Start small, such as 5 percent. The two guard
+   allowances say how far the candidate may fall behind production before the rollout stops on
+   its own: **Stop below production's accuracy by (pts)** and **Stop above production's unusable
+   answers by (pts)**. Select **Save**. From then on the candidate reads that share of documents
+   and its answers fill their shipment drafts; when it cannot answer, production reads the
+   document instead.
+4. Read the figures: **Candidate accuracy** on the documents it read against **Production
+   accuracy** on the rest, how often its answers were **Unusable answers** beside production's,
+   and how many documents were **Sent to the candidate** and **Kept on production**. **Guards**
+   says how much evidence each guard still needs before it can act. **Accuracy by field** puts
+   the candidate's biggest shortfall first.
+5. Raise the share in steps while the candidate holds up. The same documents stay with the
+   candidate, so each step adds documents.
+6. To stop at any time, select **Stop rollout**; every document goes back to production at once.
+   If a guard stops the rollout, the page says which one and why, and the people who can change
+   evaluation settings are notified. Save the settings with the rollout on to start a new
+   comparison.
+7. Once the candidate has served a large share without a guard stopping it, give it the highest
+   document extraction priority in **Providers** and turn the rollout off.
+
 ### Read what agents did on the audit trail
 Keywords: AI audit trail, agent audit log, who approved, what did the agent do, AI compliance, tool calls, model calls, AI decisions, evaluations
 1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**.

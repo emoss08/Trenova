@@ -3617,6 +3617,33 @@
       "routes/customer"
     ]
   },
+  "A guard acts only once both sides have enough evidence, so a handful of hard documents cannot stop the rollout on their own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A guard stopped the rollout": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A guard stopped the rollout; every document is back on production": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A guardrail cannot be empty": {
     "sites": 1,
     "scope": [
@@ -5487,6 +5514,15 @@
       "domain/permission"
     ]
   },
+  "A rollout extraction settles with a final outcome": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/extractionrolloutservice"
+    ]
+  },
   "A rotated page is not part of this batch": {
     "sites": 1,
     "scope": [
@@ -5848,6 +5884,15 @@
     ]
   },
   "A share of production extractions is also sent to the candidate. Its answer is kept, never applied, and scored against the shipment a person confirms, beside production's answer for the same document. The calls spend from the evaluation budget.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A share of real documents is read by the candidate and its answer fills the shipment draft. When the candidate cannot answer, production reads the document instead. The guards stop the rollout and send every document back to production when the candidate does worse.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -9349,7 +9394,16 @@
     ]
   },
   "Accuracy by field": {
-    "sites": 3,
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Accuracy guard": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -20008,6 +20062,15 @@
       "apps/web/lib"
     ]
   },
+  "Arm is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/extractionrollout"
+    ]
+  },
   "Arrange": {
     "sites": 1,
     "scope": [
@@ -21572,6 +21635,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "At 100 percent no document is left on production to compare against, so the guards cannot stop the rollout.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "At a glance": {
@@ -28500,7 +28572,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 123,
+    "sites": 125,
     "scope": [
       "go"
     ],
@@ -28533,6 +28605,7 @@
       "domain/edi",
       "domain/email",
       "domain/extractioneval",
+      "domain/extractionrollout",
       "domain/extractionshadow",
       "domain/formulatemplate",
       "domain/fuelpurchase",
@@ -29346,7 +29419,7 @@
     ]
   },
   "Cancel": {
-    "sites": 273,
+    "sites": 274,
     "scope": [
       "ts"
     ],
@@ -30015,7 +30088,7 @@
     ]
   },
   "Candidate accuracy": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -30041,8 +30114,17 @@
       "routes/formula-template"
     ]
   },
+  "Candidate is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/extractionrollout"
+    ]
+  },
   "Candidate provider": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -34240,6 +34322,15 @@
       "routes/admin"
     ]
   },
+  "Choose a candidate and turn the rollout on to send it a share of real documents.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Choose a candidate provider to start shadowing production extraction.": {
     "sites": 1,
     "scope": [
@@ -34506,7 +34597,7 @@
     ]
   },
   "Choose a provider": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -34766,6 +34857,15 @@
       "domain/report"
     ]
   },
+  "Choose one that did better than production in shadow traffic. Changing it starts a new comparison.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Choose or create a SCIM directory before managing tokens and group mappings.": {
     "sites": 1,
     "scope": [
@@ -34802,6 +34902,17 @@
       "domain/extractioneval",
       "service/aidocumentservice",
       "service/extractionevalservice"
+    ]
+  },
+  "Choose the AI provider to roll out": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "domain/extractionrollout",
+      "routes/agent-control"
     ]
   },
   "Choose the AI provider to shadow production with": {
@@ -38822,8 +38933,17 @@
       "apps/web/components"
     ]
   },
+  "Comparing since": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Comparison": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -42960,6 +43080,15 @@
     ]
   },
   "Correct fields divided by fields a person confirmed: correct, corrected or missed. A field left as it was drafted counts as correct, so treat these as a ceiling.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Correct fields divided by fields a person confirmed: the candidate on the documents it read, production on the rest.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -56771,7 +56900,7 @@
     ]
   },
   "Document is required": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go"
     ],
@@ -56779,6 +56908,7 @@
       "domain/documentaiextraction",
       "domain/documentcontent",
       "domain/documentshipmentdraft",
+      "domain/extractionrollout",
       "domain/extractionshadow",
       "domain/invoice",
       "domain/invoiceadjustment",
@@ -61623,7 +61753,7 @@
     ]
   },
   "Edit settings": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -66409,6 +66539,15 @@
       "routes/accounting-sync"
     ]
   },
+  "Every document is back on production. Save the settings with the rollout on to start a new comparison.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Every document is filed": {
     "sites": 1,
     "scope": [
@@ -66416,6 +66555,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Every document is read by production": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Every document needs its pages": {
@@ -70292,11 +70440,12 @@
     ]
   },
   "Extraction time is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/extractionrollout",
       "domain/extractionshadow"
     ]
   },
@@ -78757,6 +78906,15 @@
       "go/other"
     ]
   },
+  "Gradual rollout": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Graduated tiers": {
     "sites": 1,
     "scope": [
@@ -79273,6 +79431,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Guards": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Guide #{0}": {
@@ -90203,6 +90370,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Kept on production": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Kept on the assignment record.": {
@@ -106924,6 +107100,15 @@
       "routes/detention-desk"
     ]
   },
+  "No candidate has been chosen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No cap": {
     "sites": 8,
     "scope": [
@@ -107753,6 +107938,15 @@
       "routes/edi"
     ]
   },
+  "No document read during the rollout has been confirmed yet. Scores appear once someone creates a shipment from one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No document selected": {
     "sites": 1,
     "scope": [
@@ -107970,7 +108164,7 @@
     ]
   },
   "No enabled provider is assigned to document extraction.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -112345,12 +112539,13 @@
     ]
   },
   "Not set up": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/worker"
     ]
   },
@@ -114828,7 +115023,7 @@
     ]
   },
   "Off": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -117923,6 +118118,15 @@
       "domain/driverpay"
     ]
   },
+  "Only the most recent corrections are counted in the field comparison.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Only the most recent scored shadows are counted in the comparison.": {
     "sites": 1,
     "scope": [
@@ -120953,7 +121157,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 122,
+    "sites": 124,
     "scope": [
       "go"
     ],
@@ -120986,6 +121190,7 @@
       "domain/edi",
       "domain/email",
       "domain/extractioneval",
+      "domain/extractionrollout",
       "domain/extractionshadow",
       "domain/formulatemplate",
       "domain/fuelpurchase",
@@ -132699,7 +132904,7 @@
     ]
   },
   "Production accuracy": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -149655,6 +149860,24 @@
       "routes/cost-control"
     ]
   },
+  "Rollout": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Rollout figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Rolls off": {
     "sites": 1,
     "scope": [
@@ -152598,7 +152821,7 @@
     ]
   },
   "Save": {
-    "sites": 40,
+    "sites": 41,
     "scope": [
       "ts"
     ],
@@ -153322,6 +153545,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Saving starts the rollout again and begins a new comparison; what happened before the guard stopped it is no longer counted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Saving the first mapping creates the partner's mapping profile.": {
@@ -158737,6 +158969,15 @@
       "routes/time-attendance"
     ]
   },
+  "Send between 1 and 100 percent of documents to the candidate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Send carrier settlements back to draft": {
     "sites": 1,
     "scope": [
@@ -159544,6 +159785,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Sent to the candidate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Sent to the driver in the notification and copied onto the timeline event for a suspension or termination.": {
     "sites": 1,
     "scope": [
@@ -159947,6 +160197,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "Serve the candidate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Served": {
@@ -160546,6 +160805,15 @@
       "routes/detention-policy",
       "routes/fuel-management",
       "routes/service-type"
+    ]
+  },
+  "Serving": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Session expired": {
@@ -161673,6 +161941,24 @@
     ]
   },
   "Share of cases the judge reads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Share of documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Share of documents (%)": {
     "sites": 1,
     "scope": [
       "ts"
@@ -165740,6 +166026,16 @@
       "routes/org-structure"
     ]
   },
+  "Someone else changed the rollout; reload it and try again": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other",
+      "service/extractionrolloutservice"
+    ]
+  },
   "Someone else changed the shadow settings; reload them and try again": {
     "sites": 2,
     "scope": [
@@ -168364,7 +168660,7 @@
     ]
   },
   "Status": {
-    "sites": 263,
+    "sites": 264,
     "scope": [
       "go",
       "ts"
@@ -169003,6 +169299,15 @@
       "service/edix12inspect"
     ]
   },
+  "Stop above production's unusable answers by (pts)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Stop after": {
     "sites": 2,
     "scope": [
@@ -169019,6 +169324,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Stop below production's accuracy by (pts)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Stop dictating": {
@@ -169165,6 +169479,15 @@
       "routes/admin"
     ]
   },
+  "Stop rollout": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Stop sequence duplicates moves[{0}].stops[{1}].sequence": {
     "sites": 1,
     "scope": [
@@ -169259,7 +169582,7 @@
     ]
   },
   "Stopped": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -169283,6 +169606,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Stopped by a guard": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Stopped by a person": {
@@ -169405,6 +169737,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Stops when the candidate is more than {0} points below production": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Stops when the candidate's answers are unusable more than {0} points more often than production's": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Storage path cannot be longer than 500 characters": {
@@ -174595,6 +174945,15 @@
       "routes/edi"
     ]
   },
+  "The accuracy guard must allow between 1 and 50 points": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The action this would run is no longer available.": {
     "sites": 1,
     "scope": [
@@ -175390,6 +175749,15 @@
       "routes/agent-control"
     ]
   },
+  "The candidate is serving its share": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The candidate read fewer fields right than production": {
     "sites": 1,
     "scope": [
@@ -175408,7 +175776,43 @@
       "routes/agent-control"
     ]
   },
+  "The candidate read {0} of confirmed fields correctly against {1} for production, more than {2} points below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The candidate reads its share of documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The candidate's answer failed the checks production's must pass ({0}), so its draft is the rule-based reading.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The candidate's answers are used for real on its share of documents and billed as production usage. Accuracy counts only documents a person confirmed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The candidate's answers were unusable on {0} of its documents against {1} for production, more than {2} points above.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -175931,11 +176335,12 @@
     ]
   },
   "The chosen AI provider no longer exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/extractionrolloutservice",
       "service/extractionshadowservice"
     ]
   },
@@ -181494,6 +181899,15 @@
       "service/invoiceservice"
     ]
   },
+  "The rejection guard must allow between 1 and 100 points": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The rejection reason is sent back to the trading partner on the outbound 990 response.": {
     "sites": 1,
     "scope": [
@@ -181991,6 +182405,42 @@
       "domain/edi"
     ]
   },
+  "The rollout comparison could not be loaded. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The rollout could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The rollout is off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The rollout is off; every document is read by production": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The rota is drawn from this pattern every time it is read, so changing the days, start or length redraws every week for everyone assigned, past weeks included.": {
     "sites": 1,
     "scope": [
@@ -182092,7 +182542,7 @@
     ]
   },
   "The same documents are chosen every time for a given share, so raising it adds documents rather than swapping them.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -195749,6 +196199,24 @@
       "routes/reports"
     ]
   },
+  "Unusable answer guard": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Unusable answers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Unverifiable": {
     "sites": 1,
     "scope": [
@@ -201470,6 +201938,15 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "Watching": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Watchlist": {
@@ -209897,7 +210374,7 @@
     ]
   },
   "against production": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -210089,7 +210566,7 @@
     ]
   },
   "biggest shortfall first": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -213030,7 +213507,7 @@
     ]
   },
   "level with production": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -216894,6 +217371,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {on # confirmed field} other {on # confirmed fields}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {permission} other {permissions}}": {
     "sites": 1,
     "scope": [
@@ -217662,12 +218148,13 @@
     ]
   },
   "{0} cannot run document extraction: {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "service/extractionevalservice",
+      "service/extractionrolloutservice",
       "service/extractionshadowservice"
     ]
   },
@@ -218217,6 +218704,15 @@
       "routes/shipment"
     ]
   },
+  "{0} fell back to production, {1} pending": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} fields": {
     "sites": 2,
     "scope": [
@@ -218269,6 +218765,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "{0} for production": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} for {1}": {
@@ -220012,6 +220517,15 @@
       "routes/home"
     ]
   },
+  "{0} of {1} confirmed fields on each side before it can act": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} of {1} days": {
     "sites": 1,
     "scope": [
@@ -220046,6 +220560,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "{0} of {1} finished extractions on each side before it can act": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} of {1} indexed under {2}. Searches use {3} until every source is done.": {
@@ -220563,7 +221086,7 @@
     ]
   },
   "{0} pts above production": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -220572,7 +221095,7 @@
     ]
   },
   "{0} pts below production": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -222073,6 +222596,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0}% of documents to the candidate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0}% of leakage": {

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/stretchr/testify/require"
 )
@@ -52,6 +53,18 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 	t.Parallel()
 
 	constraints := []enumConstraint{
+		{
+			name:   "ck_extraction_rollouts_halt_reason",
+			values: stringsOf(extractionrollout.AllHaltReasons()),
+		},
+		{
+			name:   "ck_extraction_rollout_assignments_arm",
+			values: stringsOf(extractionrollout.AllArms()),
+		},
+		{
+			name:   "ck_extraction_rollout_assignments_outcome",
+			values: stringsOf(extractionrollout.AllOutcomes()),
+		},
 		{
 			name:   "ck_extraction_shadow_results_status",
 			values: stringsOf(extractionshadow.AllResultStatuses()),

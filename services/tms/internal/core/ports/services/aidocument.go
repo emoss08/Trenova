@@ -95,11 +95,12 @@ type AIRouteResult struct {
 }
 
 type AIExtractRequest struct {
-	TenantInfo pagination.TenantInfo
-	DocumentID pulid.ID
-	FileName   string
-	Text       string
-	Pages      []AIDocumentPage
+	TenantInfo          pagination.TenantInfo
+	DocumentID          pulid.ID
+	FileName            string
+	Text                string
+	Pages               []AIDocumentPage
+	PreferredProviderID pulid.ID
 }
 
 type AIExtractResult struct {

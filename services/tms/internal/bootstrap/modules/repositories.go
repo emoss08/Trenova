@@ -121,6 +121,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/exchangeraterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/extractionevalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/extractionrolloutrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/extractionshadowrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
@@ -332,6 +333,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	extractionevalrepository.NewCases,
 	extractionevalrepository.NewRuns,
 	extractionevalrepository.NewResults,
+	extractionrolloutrepository.NewRollouts,
+	extractionrolloutrepository.NewAssignments,
 	extractionshadowrepository.NewSettings,
 	extractionshadowrepository.NewResults,
 	aifeedbackrepository.New,

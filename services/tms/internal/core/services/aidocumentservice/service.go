@@ -182,6 +182,7 @@ func newExtractCall(req *serviceports.AIExtractRequest) *structuredCall {
 		schemaName: schemaNameExtract,
 		context:    buildExtractContext(req),
 		schema:     buildExtractSchema(),
+		providerID: req.PreferredProviderID,
 	}
 }
 

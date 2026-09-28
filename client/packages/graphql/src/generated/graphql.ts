@@ -3138,6 +3138,12 @@ export type ExtractionEvalRunStatus =
   | 'Queued'
   | 'Running';
 
+export type ExtractionRolloutHaltReason =
+  /** The candidate read confirmed fields worse than production by more than the allowed points. */
+  | 'AccuracyDrop'
+  /** The candidate's answers were unusable more often than production's by more than the allowed points. */
+  | 'Rejections';
+
 export type ExtractionShadowResultStatus =
   | 'Completed'
   | 'Failed'
@@ -6533,6 +6539,15 @@ export type UpdateExtractionEvalCaseInput = {
   notes?: string | null | undefined;
   status?: ExtractionEvalCaseStatus | null | undefined;
   title?: string | null | undefined;
+  version: number;
+};
+
+export type UpdateExtractionRolloutInput = {
+  enabled: boolean;
+  maxAccuracyDropPoints: number;
+  maxRejectionIncreasePoints: number;
+  percent: number;
+  providerId?: string | number | null | undefined;
   version: number;
 };
 
@@ -10977,6 +10992,29 @@ export type CancelExtractionEvalRunMutationVariables = Exact<{
 
 
 export type CancelExtractionEvalRunMutation = { cancelExtractionEvalRun: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } };
+
+export type ExtractionRolloutFieldsFragment = { enabled: boolean, providerId: string | null, percent: number, maxAccuracyDropPoints: number, maxRejectionIncreasePoints: number, serving: boolean, startedAt: number | null, haltedAt: number | null, haltReason: ExtractionRolloutHaltReason | null, haltCandidateRate: number, haltBaselineRate: number, updatedById: string | null, version: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionRolloutFieldsFragment' };
+
+export type ExtractionRolloutArmFieldsFragment = { assigned: number, pending: number, accepted: number, rejected: number, failed: number, superseded: number, fellBack: number, rejectionRate: number } & { ' $fragmentName'?: 'ExtractionRolloutArmFieldsFragment' };
+
+export type ExtractionRolloutAccuracyFieldsFragment = { scored: number, correct: number, accuracy: number } & { ' $fragmentName'?: 'ExtractionRolloutAccuracyFieldsFragment' };
+
+export type ExtractionRolloutQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ExtractionRolloutQuery = { extractionRollout: { ' $fragmentRefs'?: { 'ExtractionRolloutFieldsFragment': ExtractionRolloutFieldsFragment } } };
+
+export type ExtractionRolloutReportQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ExtractionRolloutReportQuery = { extractionRolloutReport: { providerName: string, truncated: boolean, minGuardScoredFields: number, minGuardExtractions: number, rollout: { ' $fragmentRefs'?: { 'ExtractionRolloutFieldsFragment': ExtractionRolloutFieldsFragment } }, candidate: { ' $fragmentRefs'?: { 'ExtractionRolloutArmFieldsFragment': ExtractionRolloutArmFieldsFragment } }, control: { ' $fragmentRefs'?: { 'ExtractionRolloutArmFieldsFragment': ExtractionRolloutArmFieldsFragment } }, candidateAccuracy: { ' $fragmentRefs'?: { 'ExtractionRolloutAccuracyFieldsFragment': ExtractionRolloutAccuracyFieldsFragment } }, productionAccuracy: { ' $fragmentRefs'?: { 'ExtractionRolloutAccuracyFieldsFragment': ExtractionRolloutAccuracyFieldsFragment } }, fields: Array<{ key: string, candidateScored: number, candidateCorrect: number, candidateAccuracy: number, productionScored: number, productionCorrect: number, productionAccuracy: number }> } };
+
+export type UpdateExtractionRolloutMutationVariables = Exact<{
+  input: UpdateExtractionRolloutInput;
+}>;
+
+
+export type UpdateExtractionRolloutMutation = { updateExtractionRollout: { ' $fragmentRefs'?: { 'ExtractionRolloutFieldsFragment': ExtractionRolloutFieldsFragment } } };
 
 export type ExtractionShadowSettingsFieldsFragment = { enabled: boolean, providerId: string | null, samplePercent: number, dailyLimit: number, updatedById: string | null, version: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionShadowSettingsFieldsFragment' };
 
@@ -19234,6 +19272,43 @@ export const ExtractionEvalResultTableRowFieldsFragmentDoc = new TypedDocumentSt
   updatedAt
 }
     `, {"fragmentName":"ExtractionEvalResultTableRowFields"}) as unknown as TypedDocumentString<ExtractionEvalResultTableRowFieldsFragment, unknown>;
+export const ExtractionRolloutFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionRolloutFields on ExtractionRollout {
+  enabled
+  providerId
+  percent
+  maxAccuracyDropPoints
+  maxRejectionIncreasePoints
+  serving
+  startedAt
+  haltedAt
+  haltReason
+  haltCandidateRate
+  haltBaselineRate
+  updatedById
+  version
+  updatedAt
+}
+    `, {"fragmentName":"ExtractionRolloutFields"}) as unknown as TypedDocumentString<ExtractionRolloutFieldsFragment, unknown>;
+export const ExtractionRolloutArmFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionRolloutArmFields on ExtractionRolloutArm {
+  assigned
+  pending
+  accepted
+  rejected
+  failed
+  superseded
+  fellBack
+  rejectionRate
+}
+    `, {"fragmentName":"ExtractionRolloutArmFields"}) as unknown as TypedDocumentString<ExtractionRolloutArmFieldsFragment, unknown>;
+export const ExtractionRolloutAccuracyFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionRolloutAccuracyFields on ExtractionRolloutAccuracy {
+  scored
+  correct
+  accuracy
+}
+    `, {"fragmentName":"ExtractionRolloutAccuracyFields"}) as unknown as TypedDocumentString<ExtractionRolloutAccuracyFieldsFragment, unknown>;
 export const ExtractionShadowSettingsFieldsFragmentDoc = new TypedDocumentString(`
     fragment ExtractionShadowSettingsFields on ExtractionShadowSettings {
   enabled
@@ -24371,6 +24446,9 @@ export const UpdateExtractionEvalCaseDocument = {"__meta__":{"kind":"mutation","
 export const DeleteExtractionEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"DeleteExtractionEvalCase","hash":"sha256:4c69388ebac0d5ef618839865cc3665156f2f9d625726a3c26caf1708a8e0fb1"}} as unknown as TypedDocumentString<DeleteExtractionEvalCaseMutation, DeleteExtractionEvalCaseMutationVariables>;
 export const StartExtractionEvalRunDocument = {"__meta__":{"kind":"mutation","name":"StartExtractionEvalRun","hash":"sha256:ea672f1a8f3e38c00676db1397816a9ea2fbe76a5984639646caae893a4df346"}} as unknown as TypedDocumentString<StartExtractionEvalRunMutation, StartExtractionEvalRunMutationVariables>;
 export const CancelExtractionEvalRunDocument = {"__meta__":{"kind":"mutation","name":"CancelExtractionEvalRun","hash":"sha256:a10fd933738a3fb17410e9299af3e277c6f8caf4344bab5eb8eef4427e44b24f"}} as unknown as TypedDocumentString<CancelExtractionEvalRunMutation, CancelExtractionEvalRunMutationVariables>;
+export const ExtractionRolloutDocument = {"__meta__":{"kind":"query","name":"ExtractionRollout","hash":"sha256:52ed556373701746c9e09a6a6cbb6fd99c537a8154b970baa5edf1633c821f07"}} as unknown as TypedDocumentString<ExtractionRolloutQuery, ExtractionRolloutQueryVariables>;
+export const ExtractionRolloutReportDocument = {"__meta__":{"kind":"query","name":"ExtractionRolloutReport","hash":"sha256:e7fa1944e5394a8039715e9ccd53236be9afc632a39c10e398f9a8d432e478dd"}} as unknown as TypedDocumentString<ExtractionRolloutReportQuery, ExtractionRolloutReportQueryVariables>;
+export const UpdateExtractionRolloutDocument = {"__meta__":{"kind":"mutation","name":"UpdateExtractionRollout","hash":"sha256:703f2282aeb4eb6999e463d92396cdce12f0de857d5503138aaf7e74b2a3c6f2"}} as unknown as TypedDocumentString<UpdateExtractionRolloutMutation, UpdateExtractionRolloutMutationVariables>;
 export const ExtractionShadowSettingsDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowSettings","hash":"sha256:22fc7769549c590a2c07a70514c2bd8ea4745375128885d9c755a3141294b157"}} as unknown as TypedDocumentString<ExtractionShadowSettingsQuery, ExtractionShadowSettingsQueryVariables>;
 export const ExtractionShadowReportDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowReport","hash":"sha256:b9c74d30bfd10797a2c86e94078488bd61f911ef62c4d5b6b4d1ac21ea723eb4"}} as unknown as TypedDocumentString<ExtractionShadowReportQuery, ExtractionShadowReportQueryVariables>;
 export const ExtractionShadowResultTableDocument = {"__meta__":{"kind":"query","name":"ExtractionShadowResultTable","hash":"sha256:0f8c34e7b121c16ddc8ab00931306ec12ff556d65f7e01d96d8b3e4a9c713e06"}} as unknown as TypedDocumentString<ExtractionShadowResultTableQuery, ExtractionShadowResultTableQueryVariables>;

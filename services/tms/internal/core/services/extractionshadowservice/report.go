@@ -1,9 +1,7 @@
 package extractionshadowservice
 
 import (
-	"cmp"
 	"context"
-	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
@@ -166,7 +164,7 @@ func addScored(report *services.ExtractionShadowReport, scored []*extractionshad
 		report.Production.Correct,
 		report.Production.Scored,
 	)
-	report.Fields = compareFields(candidate.Fields(), production.Fields())
+	report.Fields = aicorrection.CompareFields(candidate.Fields(), production.Fields())
 }
 
 func addSide(side *services.ExtractionShadowSide, scored, correct, corrected, missed int) {
@@ -174,54 +172,6 @@ func addSide(side *services.ExtractionShadowSide, scored, correct, corrected, mi
 	side.Correct += correct
 	side.Corrected += corrected
 	side.Missed += missed
-}
-
-func compareFields(
-	candidate, production []aicorrection.FieldAccuracy,
-) []services.ExtractionShadowFieldComparison {
-	byKey := make(
-		map[string]*services.ExtractionShadowFieldComparison,
-		len(candidate)+len(production),
-	)
-	entry := func(key string) *services.ExtractionShadowFieldComparison {
-		row, ok := byKey[key]
-		if !ok {
-			row = &services.ExtractionShadowFieldComparison{Key: key}
-			byKey[key] = row
-		}
-		return row
-	}
-	for i := range candidate {
-		row := entry(candidate[i].Key)
-		row.CandidateScored = candidate[i].Scored
-		row.CandidateCorrect = candidate[i].Correct
-		row.CandidateAccuracy = candidate[i].Accuracy
-	}
-	for i := range production {
-		row := entry(production[i].Key)
-		row.ProductionScored = production[i].Scored
-		row.ProductionCorrect = production[i].Correct
-		row.ProductionAccuracy = production[i].Accuracy
-	}
-
-	out := make([]services.ExtractionShadowFieldComparison, 0, len(byKey))
-	for _, row := range byKey {
-		if row.CandidateScored == 0 && row.ProductionScored == 0 {
-			continue
-		}
-		out = append(out, *row)
-	}
-	slices.SortFunc(out, func(a, b services.ExtractionShadowFieldComparison) int {
-		if c := cmp.Compare(
-			a.CandidateAccuracy-a.ProductionAccuracy,
-			b.CandidateAccuracy-b.ProductionAccuracy,
-		); c != 0 {
-			return c
-		}
-		return cmp.Compare(a.Key, b.Key)
-	})
-
-	return out
 }
 
 func (s *Service) providerName(

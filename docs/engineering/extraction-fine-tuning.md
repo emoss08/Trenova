@@ -467,6 +467,64 @@ correction captured  ───────────────────�
 - **Retention.** Shadow results keep a draft of real document values, so they are purged with
   corrections, on the organization's AI correction retention period.
 
+## 7. Roll out gradually
+
+Shadow traffic proves a candidate reads well; a rollout proves it is safe to serve. The candidate
+reads a share of real documents and its answer fills their shipment drafts, while the rest stay
+on production. Both are measured on what people confirm, and two guards stop the rollout on their
+own when the candidate does worse.
+
+```
+extraction submitted  →  AssignExtraction  →  candidate side: PreferredProviderID = candidate
+                                              control side:   the usual priority order
+result applied        →  SettleExtraction  →  served provider, accepted / rejected / failed
+correction captured   →  ObserveCorrection →  accuracy guard
+                                              ↓ breach
+                         rollout halted, audited (critical), permitted people notified
+```
+
+- **Settings.** AI Control → Quality → Document extraction → Rollout, stored per organization in
+  `extraction_rollouts`: the candidate, the share of documents (1–100%), and the two guard
+  allowances. The candidate must be enabled for `DocumentExtraction`. Choosing a new candidate,
+  turning the rollout on, or starting it again after a guard stopped it sets `started_at`; the
+  guards and the report count only what happened since, so a widened share keeps its history but
+  a new comparison never inherits an old one.
+- **Assignment.** `ExtractionRollout.Assigns` hashes `rollout:` and the document id, so a document
+  keeps its side when it is extracted again, raising the share adds documents rather than swapping
+  them, and the choice is independent of which documents shadow traffic samples. Every extraction
+  while the rollout serves gets an `extraction_rollout_assignments` row (one per document and
+  extraction time), on either side, so both sides are compared over the same period.
+- **Serving.** `submitAIExtraction` asks `AssignExtraction` before it submits. A candidate-side
+  extraction passes the candidate as `AIExtractRequest.PreferredProviderID`; the completion router
+  tries it first and falls through to the usual priority order when it is disabled, busy or
+  failing, so a rollout can slow a document down but never strand it. The call is ordinary
+  production usage. A rollout that cannot be read is logged and the extraction goes to the usual
+  providers; nothing about a rollout can fail production. This is activity code only: no workflow
+  changed, so no `GetVersion` branch.
+- **Settling.** `ApplyDocumentAIExtractionResultActivity` records which provider served the
+  extraction and whether its answer was used (`Accepted`), failed the checks (`Rejected`), or never
+  came (`Failed`); an extraction superseded before it applied is `Superseded` and counts for
+  neither side. A candidate-side extraction the router served from production is a fallback: it
+  is shown, and it does not count against the candidate.
+- **Guards.** After a candidate-side extraction settles, and after every extraction correction is
+  captured, the rollout reads both sides since it started and stops when either guard is breached:
+  - *accuracy* — the candidate's share of confirmed fields read correctly is more than
+    `max_accuracy_drop_points` below production's, once each side has 200 scored fields;
+  - *unusable answers* — the candidate's rejected-or-failed share is more than
+    `max_rejection_increase_points` above production's, once each side has 30 settled extractions.
+
+  Accuracy is split by the provider recorded on each correction, so it measures the model that
+  actually read the document. A halt records the reason and both rates, is audited as a critical
+  change by the system actor, and notifies up to 25 people who may update evaluation settings. It
+  leaves `enabled` on so the reason stays visible; every document goes back to production at once.
+  A save that races a person's own change stands down rather than overwriting it.
+- **Stopping and starting.** *Stop rollout* in the view turns it off in one step. Saving the
+  settings with the rollout on after a guard stopped it clears the halt and starts a new
+  comparison. At 100% nothing is left on production to compare against, so the guards cannot act;
+  promote a proven candidate by giving it the highest extraction priority instead.
+- **Retention.** Assignments are purged with corrections, on the organization's AI correction
+  retention period.
+
 ## Handling the data
 
 A rendered dataset is anonymized, but it is still customer data. Keep it on the training machine:

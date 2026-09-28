@@ -124,6 +124,7 @@ type ResolverRoot interface {
 	ExtractionEvalCase() ExtractionEvalCaseResolver
 	ExtractionEvalResult() ExtractionEvalResultResolver
 	ExtractionEvalRun() ExtractionEvalRunResolver
+	ExtractionRollout() ExtractionRolloutResolver
 	ExtractionShadowReport() ExtractionShadowReportResolver
 	ExtractionShadowResult() ExtractionShadowResultResolver
 	ExtractionSnapshot() ExtractionSnapshotResolver
@@ -624,6 +625,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateEmploymentVerificationInput,
 		ec.unmarshalInputUpdateEscrowAccountInput,
 		ec.unmarshalInputUpdateExtractionEvalCaseInput,
+		ec.unmarshalInputUpdateExtractionRolloutInput,
 		ec.unmarshalInputUpdateExtractionShadowSettingsInput,
 		ec.unmarshalInputUpdateFuelIndexPriceInput,
 		ec.unmarshalInputUpdateHomeLayoutPresetInput,
@@ -13903,6 +13905,101 @@ extend type Mutation {
   "Runs one provider's model over the active cases, within the evaluation budget."
   startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
   cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
+}
+`, BuiltIn: false},
+	{Name: "../schema/extractionrollout.graphqls", Input: `enum ExtractionRolloutHaltReason {
+  "The candidate read confirmed fields worse than production by more than the allowed points."
+  AccuracyDrop
+  "The candidate's answers were unusable more often than production's by more than the allowed points."
+  Rejections
+}
+
+"How a candidate AI provider serves a share of an organization's real document extractions."
+type ExtractionRollout {
+  enabled: Boolean!
+  "The candidate AI provider; kept while the rollout is off, so turning it back on keeps the choice."
+  providerId: ID
+  "The share of documents whose extraction asks the candidate first, 1 to 100."
+  percent: Int!
+  "How many points below production's accuracy the candidate may fall before the rollout stops."
+  maxAccuracyDropPoints: Int!
+  "How many points above production's rejection rate the candidate may rise before the rollout stops."
+  maxRejectionIncreasePoints: Int!
+  "Whether documents are being sent to the candidate right now: on, with a candidate, and not stopped by a guard."
+  serving: Boolean!
+  "When the current comparison began; the guards and the report count only what happened since."
+  startedAt: Timestamp
+  "When a guard stopped the rollout; empty while it has not."
+  haltedAt: Timestamp
+  haltReason: ExtractionRolloutHaltReason
+  "The candidate's accuracy or rejection rate when a guard stopped the rollout."
+  haltCandidateRate: Float!
+  "Production's accuracy or rejection rate when a guard stopped the rollout."
+  haltBaselineRate: Float!
+  updatedById: ID
+  version: Int!
+  "Zero until the rollout is first saved."
+  updatedAt: Timestamp!
+}
+
+"The extractions assigned to one side of the rollout since it started."
+type ExtractionRolloutArm {
+  assigned: Int!
+  pending: Int!
+  accepted: Int!
+  rejected: Int!
+  failed: Int!
+  "Extracted again before the answer was applied; not counted for either side."
+  superseded: Int!
+  "Assigned to the candidate but served by production because the candidate could not answer."
+  fellBack: Int!
+  "Rejected and failed answers divided by settled ones, leaving out fallbacks."
+  rejectionRate: Float!
+}
+
+"Confirmed fields read by one side since the rollout started."
+type ExtractionRolloutAccuracy {
+  scored: Int!
+  correct: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+"How the candidate is doing on the documents it serves, beside production on the rest."
+type ExtractionRolloutReport {
+  rollout: ExtractionRollout!
+  providerName: String!
+  candidate: ExtractionRolloutArm!
+  control: ExtractionRolloutArm!
+  candidateAccuracy: ExtractionRolloutAccuracy!
+  productionAccuracy: ExtractionRolloutAccuracy!
+  "Per field, the candidate's biggest shortfall against production first."
+  fields: [ExtractionShadowFieldComparison!]!
+  "True when there were more corrections than the field comparison read."
+  truncated: Boolean!
+  "Confirmed fields each side needs before the accuracy guard can stop the rollout."
+  minGuardScoredFields: Int!
+  "Settled extractions each side needs before the rejection guard can stop the rollout."
+  minGuardExtractions: Int!
+}
+
+input UpdateExtractionRolloutInput {
+  enabled: Boolean!
+  providerId: ID
+  percent: Int!
+  maxAccuracyDropPoints: Int!
+  maxRejectionIncreasePoints: Int!
+  version: Int!
+}
+
+extend type Query {
+  extractionRollout: ExtractionRollout!
+  extractionRolloutReport: ExtractionRolloutReport!
+}
+
+extend type Mutation {
+  "Chooses the candidate provider that serves a share of real document extractions, how much of it, and when to stop."
+  updateExtractionRollout(input: UpdateExtractionRolloutInput!): ExtractionRollout!
 }
 `, BuiltIn: false},
 	{Name: "../schema/extractionshadow.graphqls", Input: `enum ExtractionShadowResultStatus {
@@ -38884,6 +38981,100 @@ func (ec *executionContext) childFields_ExtractionFieldAccuracy(ctx context.Cont
 		return ec.fieldContext_ExtractionFieldAccuracy_accuracy(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ExtractionFieldAccuracy", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionRollout(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "enabled":
+		return ec.fieldContext_ExtractionRollout_enabled(ctx, field)
+	case "providerId":
+		return ec.fieldContext_ExtractionRollout_providerId(ctx, field)
+	case "percent":
+		return ec.fieldContext_ExtractionRollout_percent(ctx, field)
+	case "maxAccuracyDropPoints":
+		return ec.fieldContext_ExtractionRollout_maxAccuracyDropPoints(ctx, field)
+	case "maxRejectionIncreasePoints":
+		return ec.fieldContext_ExtractionRollout_maxRejectionIncreasePoints(ctx, field)
+	case "serving":
+		return ec.fieldContext_ExtractionRollout_serving(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_ExtractionRollout_startedAt(ctx, field)
+	case "haltedAt":
+		return ec.fieldContext_ExtractionRollout_haltedAt(ctx, field)
+	case "haltReason":
+		return ec.fieldContext_ExtractionRollout_haltReason(ctx, field)
+	case "haltCandidateRate":
+		return ec.fieldContext_ExtractionRollout_haltCandidateRate(ctx, field)
+	case "haltBaselineRate":
+		return ec.fieldContext_ExtractionRollout_haltBaselineRate(ctx, field)
+	case "updatedById":
+		return ec.fieldContext_ExtractionRollout_updatedById(ctx, field)
+	case "version":
+		return ec.fieldContext_ExtractionRollout_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_ExtractionRollout_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionRollout", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionRolloutAccuracy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "scored":
+		return ec.fieldContext_ExtractionRolloutAccuracy_scored(ctx, field)
+	case "correct":
+		return ec.fieldContext_ExtractionRolloutAccuracy_correct(ctx, field)
+	case "accuracy":
+		return ec.fieldContext_ExtractionRolloutAccuracy_accuracy(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionRolloutAccuracy", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionRolloutArm(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "assigned":
+		return ec.fieldContext_ExtractionRolloutArm_assigned(ctx, field)
+	case "pending":
+		return ec.fieldContext_ExtractionRolloutArm_pending(ctx, field)
+	case "accepted":
+		return ec.fieldContext_ExtractionRolloutArm_accepted(ctx, field)
+	case "rejected":
+		return ec.fieldContext_ExtractionRolloutArm_rejected(ctx, field)
+	case "failed":
+		return ec.fieldContext_ExtractionRolloutArm_failed(ctx, field)
+	case "superseded":
+		return ec.fieldContext_ExtractionRolloutArm_superseded(ctx, field)
+	case "fellBack":
+		return ec.fieldContext_ExtractionRolloutArm_fellBack(ctx, field)
+	case "rejectionRate":
+		return ec.fieldContext_ExtractionRolloutArm_rejectionRate(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionRolloutArm", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionRolloutReport(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "rollout":
+		return ec.fieldContext_ExtractionRolloutReport_rollout(ctx, field)
+	case "providerName":
+		return ec.fieldContext_ExtractionRolloutReport_providerName(ctx, field)
+	case "candidate":
+		return ec.fieldContext_ExtractionRolloutReport_candidate(ctx, field)
+	case "control":
+		return ec.fieldContext_ExtractionRolloutReport_control(ctx, field)
+	case "candidateAccuracy":
+		return ec.fieldContext_ExtractionRolloutReport_candidateAccuracy(ctx, field)
+	case "productionAccuracy":
+		return ec.fieldContext_ExtractionRolloutReport_productionAccuracy(ctx, field)
+	case "fields":
+		return ec.fieldContext_ExtractionRolloutReport_fields(ctx, field)
+	case "truncated":
+		return ec.fieldContext_ExtractionRolloutReport_truncated(ctx, field)
+	case "minGuardScoredFields":
+		return ec.fieldContext_ExtractionRolloutReport_minGuardScoredFields(ctx, field)
+	case "minGuardExtractions":
+		return ec.fieldContext_ExtractionRolloutReport_minGuardExtractions(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionRolloutReport", field.Name)
 }
 
 func (ec *executionContext) childFields_ExtractionShadowFieldComparison(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

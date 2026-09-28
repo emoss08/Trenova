@@ -37,7 +37,7 @@ type ExtractionShadowResultResolver interface {
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _ExtractionShadowFieldComparison_key(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionShadowFieldComparison) (ret graphql.Marshaler) {
+func (ec *executionContext) _ExtractionShadowFieldComparison_key(ctx context.Context, field graphql.CollectedField, obj *aicorrection.FieldComparison) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -60,7 +60,7 @@ func (ec *executionContext) fieldContext_ExtractionShadowFieldComparison_key(_ c
 	return graphql.NewScalarFieldContext("ExtractionShadowFieldComparison", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _ExtractionShadowFieldComparison_candidateScored(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionShadowFieldComparison) (ret graphql.Marshaler) {
+func (ec *executionContext) _ExtractionShadowFieldComparison_candidateScored(ctx context.Context, field graphql.CollectedField, obj *aicorrection.FieldComparison) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -83,7 +83,7 @@ func (ec *executionContext) fieldContext_ExtractionShadowFieldComparison_candida
 	return graphql.NewScalarFieldContext("ExtractionShadowFieldComparison", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _ExtractionShadowFieldComparison_candidateCorrect(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionShadowFieldComparison) (ret graphql.Marshaler) {
+func (ec *executionContext) _ExtractionShadowFieldComparison_candidateCorrect(ctx context.Context, field graphql.CollectedField, obj *aicorrection.FieldComparison) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -106,7 +106,7 @@ func (ec *executionContext) fieldContext_ExtractionShadowFieldComparison_candida
 	return graphql.NewScalarFieldContext("ExtractionShadowFieldComparison", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _ExtractionShadowFieldComparison_candidateAccuracy(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionShadowFieldComparison) (ret graphql.Marshaler) {
+func (ec *executionContext) _ExtractionShadowFieldComparison_candidateAccuracy(ctx context.Context, field graphql.CollectedField, obj *aicorrection.FieldComparison) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -129,7 +129,7 @@ func (ec *executionContext) fieldContext_ExtractionShadowFieldComparison_candida
 	return graphql.NewScalarFieldContext("ExtractionShadowFieldComparison", field, false, false, errors.New("field of type Float does not have child fields"))
 }
 
-func (ec *executionContext) _ExtractionShadowFieldComparison_productionScored(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionShadowFieldComparison) (ret graphql.Marshaler) {
+func (ec *executionContext) _ExtractionShadowFieldComparison_productionScored(ctx context.Context, field graphql.CollectedField, obj *aicorrection.FieldComparison) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -152,7 +152,7 @@ func (ec *executionContext) fieldContext_ExtractionShadowFieldComparison_product
 	return graphql.NewScalarFieldContext("ExtractionShadowFieldComparison", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _ExtractionShadowFieldComparison_productionCorrect(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionShadowFieldComparison) (ret graphql.Marshaler) {
+func (ec *executionContext) _ExtractionShadowFieldComparison_productionCorrect(ctx context.Context, field graphql.CollectedField, obj *aicorrection.FieldComparison) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -175,7 +175,7 @@ func (ec *executionContext) fieldContext_ExtractionShadowFieldComparison_product
 	return graphql.NewScalarFieldContext("ExtractionShadowFieldComparison", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _ExtractionShadowFieldComparison_productionAccuracy(ctx context.Context, field graphql.CollectedField, obj *services.ExtractionShadowFieldComparison) (ret graphql.Marshaler) {
+func (ec *executionContext) _ExtractionShadowFieldComparison_productionAccuracy(ctx context.Context, field graphql.CollectedField, obj *aicorrection.FieldComparison) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -596,8 +596,8 @@ func (ec *executionContext) _ExtractionShadowReport_fields(ctx context.Context, 
 			return obj.Fields, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []services.ExtractionShadowFieldComparison) graphql.Marshaler {
-			return ec.marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowFieldComparisonᚄ(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v []aicorrection.FieldComparison) graphql.Marshaler {
+			return ec.marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparisonᚄ(ctx, selections, v)
 		},
 		true,
 		true,
@@ -2099,7 +2099,7 @@ func (ec *executionContext) unmarshalInputUpdateExtractionShadowSettingsInput(ct
 
 var extractionShadowFieldComparisonImplementors = []string{"ExtractionShadowFieldComparison"}
 
-func (ec *executionContext) _ExtractionShadowFieldComparison(ctx context.Context, sel ast.SelectionSet, obj *services.ExtractionShadowFieldComparison) graphql.Marshaler {
+func (ec *executionContext) _ExtractionShadowFieldComparison(ctx context.Context, sel ast.SelectionSet, obj *aicorrection.FieldComparison) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, extractionShadowFieldComparisonImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -2846,15 +2846,15 @@ func (ec *executionContext) _ExtractionShadowSide(ctx context.Context, sel ast.S
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowFieldComparison(ctx context.Context, sel ast.SelectionSet, v services.ExtractionShadowFieldComparison) graphql.Marshaler {
+func (ec *executionContext) marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparison(ctx context.Context, sel ast.SelectionSet, v aicorrection.FieldComparison) graphql.Marshaler {
 	return ec._ExtractionShadowFieldComparison(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowFieldComparisonᚄ(ctx context.Context, sel ast.SelectionSet, v []services.ExtractionShadowFieldComparison) graphql.Marshaler {
+func (ec *executionContext) marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparisonᚄ(ctx context.Context, sel ast.SelectionSet, v []aicorrection.FieldComparison) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
 		fc.Result = &v[i]
-		return ec.marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowFieldComparison(ctx, sel, v[i])
+		return ec.marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparison(ctx, sel, v[i])
 	})
 
 	for _, e := range ret {

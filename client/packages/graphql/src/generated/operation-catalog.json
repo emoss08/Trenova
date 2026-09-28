@@ -1,6 +1,6 @@
 {
-  "operationCount": 952,
-  "fragmentCount": 268,
+  "operationCount": 955,
+  "fragmentCount": 271,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -9786,6 +9786,40 @@
       "sdl": "query ExtractionEvalRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  extractionEvalRuns(input: $input) {\n    edges {\n      node {\n        ...ExtractionEvalRunFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "ExtractionRollout",
+      "kind": "query",
+      "domain": "extraction-rollout",
+      "sourceFile": "src/operations/extraction-rollout/extraction-rollout.graphql",
+      "hash": "sha256:52ed556373701746c9e09a6a6cbb6fd99c537a8154b970baa5edf1633c821f07",
+      "rootFields": [
+        "extractionRollout"
+      ],
+      "variables": [],
+      "fragments": [
+        "ExtractionRolloutFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionRollout {\n  extractionRollout {\n    ...ExtractionRolloutFields\n  }\n}\n\nfragment ExtractionRolloutFields on ExtractionRollout {\n  enabled\n  providerId\n  percent\n  maxAccuracyDropPoints\n  maxRejectionIncreasePoints\n  serving\n  startedAt\n  haltedAt\n  haltReason\n  haltCandidateRate\n  haltBaselineRate\n  updatedById\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "ExtractionRolloutReport",
+      "kind": "query",
+      "domain": "extraction-rollout",
+      "sourceFile": "src/operations/extraction-rollout/extraction-rollout.graphql",
+      "hash": "sha256:e7fa1944e5394a8039715e9ccd53236be9afc632a39c10e398f9a8d432e478dd",
+      "rootFields": [
+        "extractionRolloutReport"
+      ],
+      "variables": [],
+      "fragments": [
+        "ExtractionRolloutAccuracyFields",
+        "ExtractionRolloutArmFields",
+        "ExtractionRolloutFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionRolloutReport {\n  extractionRolloutReport {\n    rollout {\n      ...ExtractionRolloutFields\n    }\n    providerName\n    candidate {\n      ...ExtractionRolloutArmFields\n    }\n    control {\n      ...ExtractionRolloutArmFields\n    }\n    candidateAccuracy {\n      ...ExtractionRolloutAccuracyFields\n    }\n    productionAccuracy {\n      ...ExtractionRolloutAccuracyFields\n    }\n    fields {\n      key\n      candidateScored\n      candidateCorrect\n      candidateAccuracy\n      productionScored\n      productionCorrect\n      productionAccuracy\n    }\n    truncated\n    minGuardScoredFields\n    minGuardExtractions\n  }\n}\n\nfragment ExtractionRolloutAccuracyFields on ExtractionRolloutAccuracy {\n  scored\n  correct\n  accuracy\n}\n\nfragment ExtractionRolloutArmFields on ExtractionRolloutArm {\n  assigned\n  pending\n  accepted\n  rejected\n  failed\n  superseded\n  fellBack\n  rejectionRate\n}\n\nfragment ExtractionRolloutFields on ExtractionRollout {\n  enabled\n  providerId\n  percent\n  maxAccuracyDropPoints\n  maxRejectionIncreasePoints\n  serving\n  startedAt\n  haltedAt\n  haltReason\n  haltCandidateRate\n  haltBaselineRate\n  updatedById\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "ExtractionShadowReport",
       "kind": "query",
       "domain": "extraction-shadow",
@@ -19398,6 +19432,28 @@
       "sdl": "mutation UpdateExtractionEvalCase($id: ID!, $input: UpdateExtractionEvalCaseInput!) {\n  updateExtractionEvalCase(id: $id, input: $input) {\n    ...ExtractionEvalCaseTableRowFields\n  }\n}\n\nfragment ExtractionEvalCaseTableRowFields on ExtractionEvalCase {\n  id\n  status\n  title\n  documentKind\n  documentFingerprint\n  fileName\n  pageCount\n  expectedFieldCount\n  sourceCorrectionId\n  sourceDocumentId\n  notes\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "UpdateExtractionRollout",
+      "kind": "mutation",
+      "domain": "extraction-rollout",
+      "sourceFile": "src/operations/extraction-rollout/extraction-rollout.graphql",
+      "hash": "sha256:703f2282aeb4eb6999e463d92396cdce12f0de857d5503138aaf7e74b2a3c6f2",
+      "rootFields": [
+        "updateExtractionRollout"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateExtractionRolloutInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ExtractionRolloutFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateExtractionRollout($input: UpdateExtractionRolloutInput!) {\n  updateExtractionRollout(input: $input) {\n    ...ExtractionRolloutFields\n  }\n}\n\nfragment ExtractionRolloutFields on ExtractionRollout {\n  enabled\n  providerId\n  percent\n  maxAccuracyDropPoints\n  maxRejectionIncreasePoints\n  serving\n  startedAt\n  haltedAt\n  haltReason\n  haltCandidateRate\n  haltBaselineRate\n  updatedById\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "UpdateExtractionShadowSettings",
       "kind": "mutation",
       "domain": "extraction-shadow",
@@ -23874,6 +23930,44 @@
       ],
       "usages": [],
       "sdl": "fragment ExtractionFieldAccuracyFields on ExtractionFieldAccuracy {\n  key\n  scored\n  correct\n  corrected\n  missed\n  unconfirmed\n  unscored\n  accuracy\n}"
+    },
+    {
+      "name": "ExtractionRolloutAccuracyFields",
+      "typeCondition": "ExtractionRolloutAccuracy",
+      "domain": "extraction-rollout",
+      "sourceFile": "src/operations/extraction-rollout/extraction-rollout.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ExtractionRolloutReport"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionRolloutAccuracyFields on ExtractionRolloutAccuracy {\n  scored\n  correct\n  accuracy\n}"
+    },
+    {
+      "name": "ExtractionRolloutArmFields",
+      "typeCondition": "ExtractionRolloutArm",
+      "domain": "extraction-rollout",
+      "sourceFile": "src/operations/extraction-rollout/extraction-rollout.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ExtractionRolloutReport"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionRolloutArmFields on ExtractionRolloutArm {\n  assigned\n  pending\n  accepted\n  rejected\n  failed\n  superseded\n  fellBack\n  rejectionRate\n}"
+    },
+    {
+      "name": "ExtractionRolloutFields",
+      "typeCondition": "ExtractionRollout",
+      "domain": "extraction-rollout",
+      "sourceFile": "src/operations/extraction-rollout/extraction-rollout.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ExtractionRollout",
+        "ExtractionRolloutReport",
+        "UpdateExtractionRollout"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionRolloutFields on ExtractionRollout {\n  enabled\n  providerId\n  percent\n  maxAccuracyDropPoints\n  maxRejectionIncreasePoints\n  serving\n  startedAt\n  haltedAt\n  haltReason\n  haltCandidateRate\n  haltBaselineRate\n  updatedById\n  version\n  updatedAt\n}"
     },
     {
       "name": "ExtractionShadowResultDetailFields",
@@ -36177,6 +36271,42 @@
         }
       ],
       "sdl": "input UpdateExtractionEvalCaseInput {\n  notes: String\n  status: ExtractionEvalCaseStatus\n  title: String\n  version: Int!\n}"
+    },
+    "UpdateExtractionRolloutInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "maxAccuracyDropPoints",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "maxRejectionIncreasePoints",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "percent",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "providerId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateExtractionRolloutInput {\n  enabled: Boolean!\n  maxAccuracyDropPoints: Int!\n  maxRejectionIncreasePoints: Int!\n  percent: Int!\n  providerId: ID\n  version: Int!\n}"
     },
     "UpdateExtractionShadowSettingsInput": {
       "kind": "input",

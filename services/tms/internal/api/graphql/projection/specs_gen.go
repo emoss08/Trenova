@@ -252,6 +252,8 @@ var ExtractionEvalResultSpec TypeSpec
 
 var ExtractionEvalRunSpec TypeSpec
 
+var ExtractionRolloutSpec TypeSpec
+
 var ExtractionShadowResultSpec TypeSpec
 
 var ExtractionShadowSettingsSpec TypeSpec
@@ -12491,6 +12493,73 @@ func init() {
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	ExtractionRolloutSpec = TypeSpec{
+		TypeName: "ExtractionRollout",
+		FieldMap: buncolgen.ExtractionRolloutFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:        "providerId",
+				FieldMapKey: "providerId",
+			},
+			{
+				Name:        "percent",
+				FieldMapKey: "percent",
+			},
+			{
+				Name:        "maxAccuracyDropPoints",
+				FieldMapKey: "maxAccuracyDropPoints",
+			},
+			{
+				Name:        "maxRejectionIncreasePoints",
+				FieldMapKey: "maxRejectionIncreasePoints",
+			},
+			{
+				Name:    "serving",
+				Special: "serving",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "haltedAt",
+				FieldMapKey: "haltedAt",
+			},
+			{
+				Name:        "haltReason",
+				FieldMapKey: "haltReason",
+			},
+			{
+				Name:        "haltCandidateRate",
+				FieldMapKey: "haltCandidateRate",
+			},
+			{
+				Name:        "haltBaselineRate",
+				FieldMapKey: "haltBaselineRate",
+			},
+			{
+				Name:        "updatedById",
+				FieldMapKey: "updatedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
 			},
 			{
 				Name:        "updatedAt",

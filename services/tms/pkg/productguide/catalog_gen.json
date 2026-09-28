@@ -1,5 +1,5 @@
 {
-  "version": "sha256:95fe38bd507b58bb62000e3b4c04f1f86dd04af8f7f49b245fc243c1c74d8fed",
+  "version": "sha256:a289746b2b1f9d01e8ec7452c9a9b25111db828c1cec5234a281c07a16328624",
   "modules": [
     {
       "id": "home",
@@ -2607,6 +2607,28 @@
             "When someone creates a shipment from a shadowed document's draft, both answers are scored against what they confirmed. Read the figures: **Candidate accuracy** against **Production accuracy** on the same documents, how often the candidate did **Better or worse**, how many documents were **Shadowed**, and the **Cost**. **Accuracy by field** puts the candidate's biggest shortfall first.",
             "Select a row in the table to read one document field by field: what a person confirmed, what the candidate read, and what production read.",
             "To stop, select **Edit settings**, turn **Shadow production extraction** off and select **Save**. Move the candidate ahead of the current provider only when it beats production here and in an evaluation run."
+          ]
+        },
+        {
+          "title": "Roll out a new document extraction model gradually",
+          "keywords": [
+            "gradual rollout",
+            "canary",
+            "promote extraction model",
+            "serve new model",
+            "fine-tuned model in production",
+            "stop rollout",
+            "rollout guard",
+            "rollback extraction model"
+          ],
+          "steps": [
+            "Try the model first under **Shadow** (see above), and roll it out only once it reads at least as well as production there.",
+            "Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document extraction**, and choose **Rollout**.",
+            "Select **Edit settings**, turn on **Serve the candidate**, choose the **Candidate provider**, and set the **Share of documents (%)**. Start small, such as 5 percent. The two guard allowances say how far the candidate may fall behind production before the rollout stops on its own: **Stop below production's accuracy by (pts)** and **Stop above production's unusable answers by (pts)**. Select **Save**. From then on the candidate reads that share of documents and its answers fill their shipment drafts; when it cannot answer, production reads the document instead.",
+            "Read the figures: **Candidate accuracy** on the documents it read against **Production accuracy** on the rest, how often its answers were **Unusable answers** beside production's, and how many documents were **Sent to the candidate** and **Kept on production**. **Guards** says how much evidence each guard still needs before it can act. **Accuracy by field** puts the candidate's biggest shortfall first.",
+            "Raise the share in steps while the candidate holds up. The same documents stay with the candidate, so each step adds documents.",
+            "To stop at any time, select **Stop rollout**; every document goes back to production at once. If a guard stops the rollout, the page says which one and why, and the people who can change evaluation settings are notified. Save the settings with the rollout on to start a new comparison.",
+            "Once the candidate has served a large share without a guard stopping it, give it the highest document extraction priority in **Providers** and turn the rollout off."
           ]
         },
         {

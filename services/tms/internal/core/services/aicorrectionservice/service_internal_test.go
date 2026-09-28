@@ -610,3 +610,36 @@ func TestCaptureShipmentDraft_ShadowsAreNotScoredWhenTheCaptureFails(t *testing.
 	require.Error(t, err)
 	assert.Empty(t, scorer.scored)
 }
+
+type fakeRolloutGuard struct {
+	observed []*aicorrection.Correction
+	err      error
+}
+
+func (f *fakeRolloutGuard) ObserveCorrection(_ context.Context, correction *aicorrection.Correction) error {
+	f.observed = append(f.observed, correction)
+	return f.err
+}
+
+func TestCaptureShipmentDraft_ChecksTheExtractionRolloutGuards(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(confirmedShipment())
+	guard := &fakeRolloutGuard{}
+	h.svc.rollout = guard
+
+	got := capture(t, h, rateConfirmationDraft())
+
+	require.Len(t, guard.observed, 1)
+	assert.Same(t, got, guard.observed[0])
+}
+
+func TestCaptureShipmentDraft_ARolloutGuardFailureDoesNotFailTheCapture(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(confirmedShipment())
+	h.svc.rollout = &fakeRolloutGuard{err: errors.New("database unavailable")}
+
+	got := capture(t, h, rateConfirmationDraft())
+	assert.Same(t, got, h.store.saved)
+}

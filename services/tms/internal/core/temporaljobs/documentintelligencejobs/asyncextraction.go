@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	services "github.com/emoss08/trenova/internal/core/ports/services"
@@ -228,7 +229,8 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 					content.ContentText,
 					a.cfg.GetMaxInputChars(),
 				),
-				Pages: toAIDocumentPages(pages, a.cfg.GetMaxInputChars()),
+				Pages:               toAIDocumentPages(pages, a.cfg.GetMaxInputChars()),
+				PreferredProviderID: a.rolloutPreference(ctx, tenantInfo, payload),
 			},
 		)
 		if submitErr != nil {
@@ -587,7 +589,8 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 	}
 
 	if content.LastExtractedAt == nil || *content.LastExtractedAt != payload.ExtractedAt {
-		a.markExtractionSkipped(ctx, payload, tenantInfo)
+		skipped := a.markExtractionSkipped(ctx, payload, tenantInfo)
+		a.settleRollout(ctx, payload, tenantInfo, extractionrollout.OutcomeSuperseded, skipped)
 		return &ProcessDocumentAIExtractionResult{
 			DocumentID:      payload.DocumentID,
 			ExtractedAt:     payload.ExtractedAt,
@@ -634,7 +637,14 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 		indexedText = ""
 	}
 	a.syncSearchProjection(ctx, doc, indexedText)
-	a.markExtractionApplied(ctx, payload, tenantInfo)
+	applied := a.markExtractionApplied(ctx, payload, tenantInfo)
+	a.settleRollout(
+		ctx,
+		payload,
+		tenantInfo,
+		rolloutOutcome(payload.Completion, diagnostics.AcceptanceStatus),
+		applied,
+	)
 
 	return &ProcessDocumentAIExtractionResult{
 		DocumentID:      payload.DocumentID,
@@ -686,9 +696,9 @@ func (a *Activities) markExtractionSkipped(
 	ctx context.Context,
 	payload *ApplyDocumentAIExtractionPayload,
 	tenantInfo pagination.TenantInfo,
-) {
+) *documentaiextraction.Extraction {
 	if a.aiExtractionRepo == nil {
-		return
+		return nil
 	}
 	row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(
 		ctx,
@@ -699,7 +709,7 @@ func (a *Activities) markExtractionSkipped(
 		},
 	)
 	if repoErr != nil {
-		return
+		return nil
 	}
 	row.Status = documentaiextraction.StatusSkipped
 	row.FailureCode = "stale_extraction"
@@ -711,15 +721,17 @@ func (a *Activities) markExtractionSkipped(
 			zap.Error(repoErr),
 		)
 	}
+
+	return row
 }
 
 func (a *Activities) markExtractionApplied(
 	ctx context.Context,
 	payload *ApplyDocumentAIExtractionPayload,
 	tenantInfo pagination.TenantInfo,
-) {
+) *documentaiextraction.Extraction {
 	if a.aiExtractionRepo == nil {
-		return
+		return nil
 	}
 	row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(
 		ctx,
@@ -730,7 +742,7 @@ func (a *Activities) markExtractionApplied(
 		},
 	)
 	if repoErr != nil {
-		return
+		return nil
 	}
 	row.Status = documentaiextraction.StatusApplied
 	if _, repoErr = a.aiExtractionRepo.Update(ctx, row); repoErr != nil {
@@ -740,6 +752,8 @@ func (a *Activities) markExtractionApplied(
 			zap.Error(repoErr),
 		)
 	}
+
+	return row
 }
 
 func (a *Activities) mergeCompletionIntoIntelligence(

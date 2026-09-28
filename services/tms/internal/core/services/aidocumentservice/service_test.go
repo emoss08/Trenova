@@ -311,6 +311,49 @@ func TestSubmitBackgroundExtraction_AttributesTheCallToThePersonAndDocument(t *t
 	)
 }
 
+func TestSubmitBackgroundExtraction_AsksARolloutCandidateFirstWithoutRequiringIt(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		submission: &serviceports.BackgroundSubmission{
+			Handle:     "resp_123",
+			ProviderID: pulid.MustNew("aipr_"),
+		},
+	}
+	service := newTestService(t, completion)
+	request := extractRequest()
+	request.PreferredProviderID = pulid.MustNew("aipr_")
+
+	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), request)
+	require.NoError(t, err)
+
+	require.NotNil(t, completion.sawRequest)
+	assert.Equal(t, request.PreferredProviderID, completion.sawRequest.PreferredProviderID)
+	assert.False(t, completion.sawRequest.RequireProvider,
+		"production falls back to the usual providers when the candidate cannot answer")
+	assert.Empty(t, completion.sawRequest.Attribution.Purpose,
+		"a served extraction is production usage, not evaluation")
+}
+
+func TestSubmitBackgroundExtraction_LeavesTheOrderAloneWithoutAPreference(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		submission: &serviceports.BackgroundSubmission{
+			Handle:     "resp_123",
+			ProviderID: pulid.MustNew("aipr_"),
+		},
+	}
+	service := newTestService(t, completion)
+
+	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), extractRequest())
+	require.NoError(t, err)
+
+	require.NotNil(t, completion.sawRequest)
+	assert.True(t, completion.sawRequest.PreferredProviderID.IsNil())
+	assert.False(t, completion.sawRequest.RequireProvider)
+}
+
 func TestPollBackgroundExtraction_AttributesTheOutcomeToThePersonAndDocument(t *testing.T) {
 	t.Parallel()
 

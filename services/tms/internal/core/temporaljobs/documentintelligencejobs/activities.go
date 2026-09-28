@@ -62,6 +62,7 @@ type ActivitiesParams struct {
 	Encryption          *encryptionservice.Service
 	AgentEvents         services.AgentEventPublisher     `optional:"true"`
 	ShadowSampler       services.ExtractionShadowSampler `optional:"true"`
+	Rollout             services.ExtractionRolloutRouter `optional:"true"`
 }
 
 type Activities struct {
@@ -83,6 +84,7 @@ type Activities struct {
 	encryption          *encryptionservice.Service
 	agentEvents         services.AgentEventPublisher
 	shadowSampler       services.ExtractionShadowSampler
+	rollout             services.ExtractionRolloutRouter
 }
 
 //nolint:gocritic // dependency injection param
@@ -126,6 +128,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		encryption:          p.Encryption,
 		agentEvents:         p.AgentEvents,
 		shadowSampler:       p.ShadowSampler,
+		rollout:             p.Rollout,
 	}
 }
 

@@ -37,16 +37,6 @@ type ExtractionShadowSide struct {
 	Accuracy  float64
 }
 
-type ExtractionShadowFieldComparison struct {
-	Key                string
-	CandidateScored    int
-	CandidateCorrect   int
-	CandidateAccuracy  float64
-	ProductionScored   int
-	ProductionCorrect  int
-	ProductionAccuracy float64
-}
-
 type ExtractionShadowReport struct {
 	WindowDays   int
 	Since        int64
@@ -64,7 +54,7 @@ type ExtractionShadowReport struct {
 	Same         int
 	Candidate    ExtractionShadowSide
 	Production   ExtractionShadowSide
-	Fields       []ExtractionShadowFieldComparison
+	Fields       []aicorrection.FieldComparison
 	CostUSD      decimal.Decimal
 	AvgLatencyMs int64
 }

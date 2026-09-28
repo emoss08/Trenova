@@ -48,6 +48,19 @@ type ListAICorrectionsForTrainingRequest struct {
 	Limit           int
 }
 
+type TotalAICorrectionsByProviderRequest struct {
+	TenantInfo pagination.TenantInfo
+	Task       aicorrection.Task
+	ProviderID pulid.ID
+	Since      int64
+}
+
+type AICorrectionProviderTotal struct {
+	Candidate bool `bun:"candidate"`
+	Scored    int  `bun:"scored"`
+	Correct   int  `bun:"correct"`
+}
+
 type AICorrectionRepository interface {
 	Upsert(ctx context.Context, entity *aicorrection.Correction) (*aicorrection.Correction, error)
 	GetByID(ctx context.Context, req GetAICorrectionRequest) (*aicorrection.Correction, error)
@@ -67,5 +80,9 @@ type AICorrectionRepository interface {
 		ctx context.Context,
 		req *ListAICorrectionsForTrainingRequest,
 	) ([]*aicorrection.Correction, error)
+	TotalsByProvider(
+		ctx context.Context,
+		req *TotalAICorrectionsByProviderRequest,
+	) ([]AICorrectionProviderTotal, error)
 	PurgeBefore(ctx context.Context, req PurgeAICorrectionsRequest) (int64, error)
 }

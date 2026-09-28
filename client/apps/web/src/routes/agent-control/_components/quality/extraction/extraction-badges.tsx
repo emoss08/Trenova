@@ -10,6 +10,7 @@ import type {
   ExtractionShadowVerdict,
 } from "@trenova/graphql/generated/graphql";
 import { CASE_STATUS, OUTCOME, RESULT_STATUS, RUN_STATUS } from "./extraction-model";
+import { ROLLOUT_STATE, type RolloutState } from "./rollout-model";
 import { SHADOW_STATUS, SHADOW_VERDICT } from "./shadow-model";
 
 function PhaseBadge({ attrs, t }: { attrs: BadgeAttrProps; t: TranslateFn }) {
@@ -63,4 +64,8 @@ export function ShadowVerdictBadge({
   t: TranslateFn;
 }) {
   return <PhaseBadge attrs={SHADOW_VERDICT[value]} t={t} />;
+}
+
+export function RolloutStateBadge({ value, t }: { value: RolloutState; t: TranslateFn }) {
+  return <PhaseBadge attrs={ROLLOUT_STATE[value]} t={t} />;
 }

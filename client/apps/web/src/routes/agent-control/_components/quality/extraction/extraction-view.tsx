@@ -21,6 +21,7 @@ import { CorrectionsTable } from "./corrections-table";
 import { ExtractionFigures } from "./extraction-figures";
 import { EXTRACTION_STALE_MS, EXTRACTION_WINDOW_DAYS } from "./extraction-model";
 import { NewRunDialog } from "./new-run-dialog";
+import { RolloutView } from "./rollout-view";
 import { RunsTable } from "./runs-table";
 import { ShadowView } from "./shadow-view";
 
@@ -48,6 +49,7 @@ export default function ExtractionView() {
       { value: "cases", label: t("Evaluation set") },
       { value: "runs", label: t("Runs") },
       { value: "shadow", label: t("Shadow") },
+      { value: "rollout", label: t("Rollout") },
     ],
     [t],
   );
@@ -68,7 +70,7 @@ export default function ExtractionView() {
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full max-w-xl">
+        <div className="w-full max-w-2xl">
           <SegmentedControl<string>
             fullWidth
             aria-label={t("Document extraction view")}
@@ -95,6 +97,7 @@ export default function ExtractionView() {
       {view === "cases" && <CasesTable />}
       {view === "runs" && <RunsTable />}
       {view === "shadow" && <ShadowView />}
+      {view === "rollout" && <RolloutView />}
 
       <NewRunDialog
         open={newRunOpen}

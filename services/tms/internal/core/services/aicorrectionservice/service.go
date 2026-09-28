@@ -61,6 +61,7 @@ type Params struct {
 	Extractions repositories.DocumentAIExtractionRepository
 	Retention   repositories.DataRetentionRepository
 	Shadows     services.ExtractionShadowScorer `optional:"true"`
+	Rollout     services.ExtractionRolloutGuard `optional:"true"`
 }
 
 type Service struct {
@@ -71,6 +72,7 @@ type Service struct {
 	extractions extractionReader
 	retention   retentionReader
 	shadows     services.ExtractionShadowScorer
+	rollout     services.ExtractionRolloutGuard
 	now         func() int64
 }
 
@@ -83,6 +85,7 @@ func New(p Params) services.AICorrectionService {
 		extractions: p.Extractions,
 		retention:   p.Retention,
 		shadows:     p.Shadows,
+		rollout:     p.Rollout,
 		now:         timeutils.NowUnix,
 	}
 }
@@ -157,6 +160,7 @@ func (s *Service) CaptureShipmentDraft(
 		return nil, err
 	}
 	s.scoreShadows(ctx, saved)
+	s.guardRollout(ctx, saved)
 
 	return saved, nil
 }
@@ -167,6 +171,18 @@ func (s *Service) scoreShadows(ctx context.Context, correction *aicorrection.Cor
 	}
 	if err := s.shadows.ScoreCorrection(ctx, correction); err != nil {
 		s.l.Warn("failed to score shadow extractions for ai correction",
+			zap.String("correctionId", correction.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *Service) guardRollout(ctx context.Context, correction *aicorrection.Correction) {
+	if s.rollout == nil {
+		return
+	}
+	if err := s.rollout.ObserveCorrection(ctx, correction); err != nil {
+		s.l.Warn("failed to check the extraction rollout for ai correction",
 			zap.String("correctionId", correction.ID.String()),
 			zap.Error(err),
 		)
