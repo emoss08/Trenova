@@ -22,6 +22,8 @@ var selectOptionResourceOwners = map[string]FeatureKey{
 	"CUSTOMER":                     FeatureCoreTMS,
 	"DETENTION_POLICY":             FeatureDispatch,
 	"DISTANCE_PROFILE":             FeatureDispatch,
+	"CAPTURE_DEVICE":               FeatureDocumentManagement,
+	"CAPTURE_PROFILE":              FeatureDocumentManagement,
 	"DOCUMENT_TYPE":                FeatureDocumentManagement,
 	"EDI_COMMUNICATION_PROFILE":    FeatureEDIIntegration,
 	"EDI_CONNECTION":               FeatureEDIIntegration,

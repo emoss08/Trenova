@@ -211,6 +211,12 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceDocumentType: {
 			resolve: r.resolveDocumentTypeSelectOptions,
 		},
+		gqlmodel.SelectOptionResourceCaptureDevice: {
+			resolve: r.resolveCaptureDeviceSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceCaptureProfile: {
+			resolve: r.resolveCaptureProfileSelectOptions,
+		},
 		gqlmodel.SelectOptionResourceDetentionPolicy: {
 			resolve: r.resolveDetentionPolicySelectOptions,
 		},

@@ -1,0 +1,156 @@
+package resolver
+
+import (
+	"context"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/capture"
+	"github.com/emoss08/trenova/internal/core/services/captureservice"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+)
+
+func (r *Resolver) resolveCaptureDeviceSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	query := req.selectQuery.Query
+	if len(req.ids) > 0 {
+		query = ""
+	}
+
+	result, err := r.captureService.ListDevices(ctx, &captureservice.ListDevicesRequest{
+		TenantInfo: req.tenantInfo,
+		Filter: &pagination.QueryOptions{
+			TenantInfo: req.tenantInfo,
+			Pagination: pagination.Info{Limit: maxCaptureDevices},
+			Query:      query,
+		},
+		Mine:   true,
+		Status: capture.DeviceActive,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	now := timeutils.NowUnix()
+	items := make([]selectOptionConnectionItem, 0, len(result.Items))
+	for _, device := range withIDs(result.Items, req.ids, func(d *capture.CaptureDevice) pulid.ID {
+		return d.ID
+	}) {
+		items = append(items, captureDeviceSelectOptionItem(device, now))
+	}
+
+	return pageSelectOptionItems(items, req)
+}
+
+func captureDeviceSelectOptionItem(
+	device *capture.CaptureDevice,
+	now int64,
+) selectOptionConnectionItem {
+	sources := make([]map[string]any, 0, len(device.Sources))
+	for i := range device.Sources {
+		source := &device.Sources[i]
+		sources = append(sources, map[string]any{
+			"name":      source.Name,
+			"protocol":  source.Protocol,
+			"isDefault": source.IsDefault,
+		})
+	}
+
+	return selectOptionConnectionItemFor(
+		&gqlmodel.SelectOption{
+			ID:          device.ID.String(),
+			Label:       device.Name,
+			Description: stringPtr(device.MachineName),
+			Meta: map[string]any{
+				"isOnline":   device.IsOnline(now),
+				"lastSeenAt": device.LastSeenAt,
+				"sources":    sources,
+			},
+		},
+		device.CreatedAt,
+		device.ID,
+	)
+}
+
+func (r *Resolver) resolveCaptureProfileSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	profiles, err := r.captureService.AvailableProfiles(ctx, req.tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	matched := withIDs(profiles, req.ids, func(p *capture.CaptureProfile) pulid.ID {
+		return p.ID
+	})
+	query := strings.ToLower(strings.TrimSpace(req.selectQuery.Query))
+
+	items := make([]selectOptionConnectionItem, 0, len(matched))
+	for _, profile := range matched {
+		if len(req.ids) == 0 && query != "" &&
+			!strings.Contains(strings.ToLower(profile.Name), query) {
+			continue
+		}
+		items = append(items, captureProfileSelectOptionItem(profile))
+	}
+
+	return pageSelectOptionItems(items, req)
+}
+
+func captureProfileSelectOptionItem(profile *capture.CaptureProfile) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		&gqlmodel.SelectOption{
+			ID:          profile.ID.String(),
+			Label:       profile.Name,
+			Description: stringPtr(profile.Description),
+			Meta: map[string]any{
+				"isDefault": profile.IsDefault,
+				"dpi":       profile.DPI,
+				"pixelType": profile.PixelType,
+				"duplex":    profile.Duplex,
+			},
+		},
+		profile.CreatedAt,
+		profile.ID,
+	)
+}
+
+func withIDs[T any](entities []T, ids []pulid.ID, idOf func(T) pulid.ID) []T {
+	if len(ids) == 0 {
+		return entities
+	}
+
+	wanted := make(map[pulid.ID]struct{}, len(ids))
+	for _, id := range ids {
+		wanted[id] = struct{}{}
+	}
+
+	kept := make([]T, 0, len(ids))
+	for _, entity := range entities {
+		if _, ok := wanted[idOf(entity)]; ok {
+			kept = append(kept, entity)
+		}
+	}
+
+	return kept
+}
+
+func pageSelectOptionItems(
+	items []selectOptionConnectionItem,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	total := len(items)
+	offset := min(req.selectQuery.Pagination.SafeOffset(), total)
+	end := min(offset+req.selectQuery.Pagination.SafeLimit(), total)
+
+	return selectOptionConnection(items[offset:end], total, offset)
+}

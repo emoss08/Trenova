@@ -1,5 +1,9 @@
+import { ApiRequestError } from "@trenova/shared/lib/api";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
+import { apiProblem } from "@trenova/shared/types/errors";
 import type {
   CaptureBatchStatus,
+  CaptureDeviceStatus,
   CaptureItemStatus,
   CapturePixelType,
   CaptureRequestStatus,
@@ -182,6 +186,27 @@ export function captureSourceLabel(t: TranslateFn, source: CaptureSource): strin
   }
 }
 
+/**
+ * What the reader took a captured document to be, in words. `detectedKind` is
+ * a free string on the wire; the reader writes one of the kinds below
+ * (documentintelligencejobs), and "Other", an empty string or anything newer
+ * says nothing worth showing, so those come back null rather than raw.
+ */
+export function captureDetectedKindLabel(t: TranslateFn, kind: string): string | null {
+  switch (kind) {
+    case "RateConfirmation":
+      return t("Rate confirmation");
+    case "BillOfLading":
+      return t("Bill of lading");
+    case "ProofOfDelivery":
+      return t("Proof of delivery");
+    case "Invoice":
+      return t("Invoice");
+    default:
+      return null;
+  }
+}
+
 export function captureSuggestionSourceLabel(
   t: TranslateFn,
   source: CaptureSuggestionSource,
@@ -196,6 +221,13 @@ export function captureSuggestionSourceLabel(
     case "Person":
       return t("Set by a person");
   }
+}
+
+const CAPTURE_PIXEL_TYPES: readonly CapturePixelType[] = ["BlackWhite", "Grayscale", "Color"];
+
+/** Whether a value from a select option's meta is a pixel type this build knows. */
+export function isCapturePixelType(value: string): value is CapturePixelType {
+  return (CAPTURE_PIXEL_TYPES as readonly string[]).includes(value);
 }
 
 export function capturePixelTypeLabel(t: TranslateFn, pixelType: CapturePixelType): string {
@@ -296,4 +328,95 @@ export function normalizePairingCode(raw: string): string {
 export function formatPairingCode(raw: string): string {
   const code = normalizePairingCode(raw);
   return code.length > 4 ? `${code.slice(0, 4)}-${code.slice(4)}` : code;
+}
+
+/**
+ * Whether what was typed is a whole code: exactly eight letters once the dash
+ * and spaces are set aside. Anything else is a typo, not a shorter code, so it
+ * is refused rather than trimmed to fit.
+ */
+export function isCompletePairingCode(raw: string): boolean {
+  return /^[A-Za-z]{8}$/.test(raw.replace(/[\s-]/g, ""));
+}
+
+/** The longest name a paired computer takes; the server's `maxDeviceNameLength`. */
+export const CAPTURE_DEVICE_NAME_MAX_BYTES = 100;
+
+/** The longest revoke reason the server keeps; its `maxRevokeReason`. */
+export const CAPTURE_REVOKE_REASON_MAX_BYTES = 255;
+
+const utf8 = new TextEncoder();
+
+/**
+ * Whether text fits a capture limit. The server measures these limits with
+ * Go's `len`, which counts UTF-8 bytes, so "Bureau d'été" is longer to it than
+ * its twelve characters; counting characters here would let through a value
+ * the server then refuses.
+ */
+export function fitsCaptureLimit(value: string, maxBytes: number): boolean {
+  return utf8.encode(value).length <= maxBytes;
+}
+
+export type CaptureDevicePresence = "Online" | "Offline" | "Revoked";
+
+export function captureDevicePresence(device: {
+  status: CaptureDeviceStatus;
+  isOnline: boolean;
+}): CaptureDevicePresence {
+  if (device.status === "Revoked") {
+    return "Revoked";
+  }
+
+  return device.isOnline ? "Online" : "Offline";
+}
+
+/** Whether a paired computer is connected now, waiting, or stopped for good. */
+export function captureDevicePresenceAttrs(
+  t: TranslateFn,
+): Record<CaptureDevicePresence, BadgeAttrProps> {
+  return {
+    Online: {
+      phase: "active",
+      text: t("Online"),
+      description: t("Trenova Capture is running and connected"),
+    },
+    Offline: {
+      phase: "queued",
+      text: t("Offline"),
+      description: t("Paired, but Trenova Capture is not connected right now"),
+    },
+    Revoked: {
+      phase: "closed",
+      text: t("Revoked"),
+      description: t("It can no longer sign in; pair it again to use it"),
+    },
+  };
+}
+
+/**
+ * Why a capture request failed, in the terms a person can act on: the thing
+ * asked for is not there (or no longer is), they may not do it, what they
+ * sent was refused, or Trenova never gave an answer. Only a definite answer
+ * from a resolver says anything about the request itself; a dropped
+ * connection, a gateway error or a server fault says nothing, so it is
+ * `unreachable` and worth trying again.
+ */
+export type CaptureFailureKind = "not-found" | "forbidden" | "invalid" | "unreachable";
+
+export function captureFailureKind(error: unknown): CaptureFailureKind {
+  if (!(error instanceof GraphQLRequestError) && !(error instanceof ApiRequestError)) {
+    return "unreachable";
+  }
+  const problem = error.normalize();
+  if (apiProblem.isNotFoundError(problem)) {
+    return "not-found";
+  }
+  if (apiProblem.isAuthorizationError(problem) || problem.status === 403) {
+    return "forbidden";
+  }
+  if (apiProblem.isValidationError(problem) || apiProblem.isBusinessError(problem)) {
+    return "invalid";
+  }
+
+  return "unreachable";
 }

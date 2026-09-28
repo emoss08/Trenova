@@ -5,7 +5,8 @@ import type {
   SelectOption as GraphQLSelectOption,
   GraphQLSelectOptionsConfig,
 } from "@/lib/graphql/select-options";
-import type { CaptureRecordKind } from "@/lib/capture";
+import { capturePixelTypeLabel, isCapturePixelType, type CaptureRecordKind } from "@/lib/capture";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
 import {
   selectOptionMetaBoolean,
@@ -264,6 +265,14 @@ const commoditySelectOptionsGraphQL = {
 
 const documentTypeSelectOptionsGraphQL = {
   resource: "DOCUMENT_TYPE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const captureDeviceSelectOptionsGraphQL = {
+  resource: "CAPTURE_DEVICE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const captureProfileSelectOptionsGraphQL = {
+  resource: "CAPTURE_PROFILE",
 } satisfies GraphQLSelectOptionsConfig;
 
 const detentionPolicySelectOptionsGraphQL = {
@@ -2702,6 +2711,99 @@ export function IftaJurisdictionAutocompleteField<T extends FieldValues>({
             {selectOptionMetaString(option, "countryCode")}
             {selectOptionMetaBoolean(option, "isIftaMember") ? "" : " · Not an IFTA member"}
           </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+/**
+ * One of the person's own paired computers. Only their active computers are
+ * offered; the option says whether each is connected right now.
+ */
+export function CaptureDeviceAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+  const status = (option: GraphQLSelectOption) =>
+    selectOptionMetaBoolean(option, "isOnline") ? (
+      <Badge variant="success" appearance="outline">
+        {t("Online")}
+      </Badge>
+    ) : (
+      <Badge variant="neutral" appearance="outline">
+        {t("Offline")}
+      </Badge>
+    );
+
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={captureDeviceSelectOptionsGraphQL}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate">{option.label}</span>
+          {status(option)}
+        </span>
+      )}
+      renderOption={(option) => (
+        <div className="flex size-full min-w-0 flex-col items-start">
+          <span className="flex w-full min-w-0 items-center gap-2">
+            <span className="truncate">{option.label}</span>
+            {status(option)}
+          </span>
+          {option.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+/**
+ * A scan profile the person may scan with. An empty value means the
+ * organization's default profile.
+ */
+export function CaptureProfileAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  const t = useT();
+  const summary = (option: GraphQLSelectOption) => {
+    const dpi = selectOptionMetaNumber(option, "dpi");
+    const pixelType = selectOptionMetaString(option, "pixelType");
+    const parts = [
+      dpi === null ? null : t("{0} dpi", dpi),
+      isCapturePixelType(pixelType) ? capturePixelTypeLabel(t, pixelType) : null,
+      selectOptionMetaBoolean(option, "duplex") ? t("Both sides") : null,
+    ].filter((part): part is string => part !== null);
+    return parts.join(" · ");
+  };
+
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={captureProfileSelectOptionsGraphQL}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full min-w-0 flex-col items-start">
+          <span className="flex w-full min-w-0 items-center gap-2">
+            <span className="truncate">{option.label}</span>
+            {selectOptionMetaBoolean(option, "isDefault") && (
+              <Badge variant="neutral" appearance="outline">
+                {t("Default")}
+              </Badge>
+            )}
+          </span>
+          {summary(option) !== "" && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {summary(option)}
+            </span>
+          )}
         </div>
       )}
       {...props}

@@ -1,9 +1,21 @@
-import { ControlledDocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
+import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
+import { NumberField } from "@/components/fields/number-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { captureRecordKindLabel, type CaptureRecordKind } from "@/lib/capture";
-import { buildCoverSheetPdf, type CoverSheetPrint } from "@/lib/capture-cover-sheet";
+import {
+  buildCoverSheetPdf,
+  openCoverSheetsForPrinting,
+  type CoverSheetPrint,
+} from "@/lib/capture-cover-sheet";
+import {
+  MAX_COVER_SHEETS,
+  coverSheetFormSchema,
+  emptyToNull,
+  type CoverSheetFormValues,
+} from "@/lib/capture-forms";
 import { createCaptureCoverSheets, type IssuedCoverSheet } from "@/lib/graphql/capture";
 import { selectOptionMetaString } from "@/lib/select-option-meta";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -13,36 +25,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import {
-  NumberField,
-  NumberFieldDecrement,
-  NumberFieldGroup,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from "@trenova/shared/components/ui/number-field";
+import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { useState } from "react";
+import { useEffect, useRef } from "react";
+import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 
-/** The most sheets one print run asks for; the server refuses more than fifty. */
-const MAX_COPIES = 20;
-
-/**
- * Opens the finished sheets in a new tab to print. The browser's own viewer is
- * what prints them; a download is offered only if the tab was blocked.
- */
-function openForPrinting(bytes: Uint8Array, fileName: string) {
-  const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "application/pdf" }));
-  const tab = window.open(url, "_blank", "noopener");
-  if (tab === null) {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
-  }
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
+const DEFAULT_VALUES: CoverSheetFormValues = { copies: 1, documentTypeId: "" };
 
 /**
  * Prints cover sheets for this record. A sheet on top of a stack of paper
@@ -62,30 +52,40 @@ export function CoverSheetDialog({
   recordId: string;
 }) {
   const t = useT();
-  const [copies, setCopies] = useState(1);
-  const [documentTypeId, setDocumentTypeId] = useState("");
-  const [documentTypeName, setDocumentTypeName] = useState<string | null>(null);
+  const form = useForm<CoverSheetFormValues>({
+    resolver: zodResolver(coverSheetFormSchema) as Resolver<CoverSheetFormValues>,
+    defaultValues: DEFAULT_VALUES,
+  });
+  const { control, handleSubmit, reset } = form;
+  // The chosen type's name is printed on the sheet; only its id is in the form.
+  const documentTypeName = useRef<string | null>(null);
 
-  const print = useApiMutation({
-    mutationFn: async () => {
+  useEffect(() => {
+    if (open) {
+      reset(DEFAULT_VALUES);
+      documentTypeName.current = null;
+    }
+  }, [open, reset]);
+
+  const print = useApiMutation<Uint8Array, CoverSheetFormValues, unknown, CoverSheetFormValues>({
+    form,
+    resourceName: "Cover sheet",
+    mutationFn: async (values) => {
       const issued = await createCaptureCoverSheets(
-        Array.from({ length: copies }, () => ({
+        Array.from({ length: values.copies }, () => ({
           targetType: kind,
           targetId: recordId,
-          documentTypeId: documentTypeId === "" ? null : documentTypeId,
+          documentTypeId: emptyToNull(values.documentTypeId),
         })),
       );
+      const kindLabel = captureRecordKindLabel(t, kind);
       const sheets: CoverSheetPrint[] = issued.map((sheet: IssuedCoverSheet) => ({
         id: sheet.id,
         modules: sheet.qrCode.modules,
         record: sheet.target
-          ? {
-              kind: captureRecordKindLabel(t, kind),
-              title: sheet.target.title,
-              subtitle: sheet.target.subtitle,
-            }
-          : { kind: captureRecordKindLabel(t, kind), title: recordId, subtitle: "" },
-        documentType: documentTypeName,
+          ? { kind: kindLabel, title: sheet.target.title, subtitle: sheet.target.subtitle }
+          : { kind: kindLabel, title: recordId, subtitle: "" },
+        documentType: values.documentTypeId === "" ? null : documentTypeName.current,
         expiresOn: formatUnixDateMedium(sheet.expiresAt),
       }));
 
@@ -100,17 +100,21 @@ export function CoverSheetDialog({
         expires: (date) => t("Use by {0}", date),
       });
     },
-    onSuccess: (bytes) => {
-      openForPrinting(bytes, `cover-sheets-${kind}.pdf`);
+    onSuccess: (bytes, values) => {
+      const how = openCoverSheetsForPrinting(bytes, `cover-sheets-${kind}.pdf`);
       toast.success(
-        t(
-          "{0, plural, one {Cover sheet ready to print} other {# cover sheets ready to print}}",
-          copies,
-        ),
+        how === "opened"
+          ? t(
+              "{0, plural, one {Cover sheet ready to print} other {# cover sheets ready to print}}",
+              values.copies,
+            )
+          : t(
+              "{0, plural, one {Cover sheet downloaded; open it to print} other {# cover sheets downloaded; open them to print}}",
+              values.copies,
+            ),
       );
       onOpenChange(false);
     },
-    resourceName: "Cover sheet",
   });
 
   return (
@@ -120,55 +124,56 @@ export function CoverSheetDialog({
           <DialogTitle>{t("Print cover sheets")}</DialogTitle>
           <DialogDescription>
             {t(
-              "Put a sheet on top of the paper for this record. When the stack is scanned, anywhere, the pages after it are filed here.",
+              "Put a cover sheet on top of the paper for this record. Wherever the stack is scanned, the pages after it are filed here. A separator sheet comes with each one, to split one stack into documents.",
             )}
           </DialogDescription>
         </DialogHeader>
-
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <span className="text-foreground-subtle text-xs font-medium">{t("Sheets")}</span>
-            <NumberField
-              value={copies}
-              min={1}
-              max={MAX_COPIES}
-              step={1}
-              onValueChange={(value) =>
-                setCopies(Math.min(MAX_COPIES, Math.max(1, Math.trunc(value ?? 1))))
-              }
-            >
-              <NumberFieldGroup>
-                <NumberFieldDecrement />
-                <NumberFieldInput aria-label={t("Sheets")} />
-                <NumberFieldIncrement />
-              </NumberFieldGroup>
-            </NumberField>
-          </div>
-          <ControlledDocumentTypeAutocompleteField
-            label={t("Document type")}
-            placeholder={t("Optional")}
-            value={documentTypeId}
-            onValueChange={setDocumentTypeId}
-            onOptionChange={(option) =>
-              setDocumentTypeName(
-                option ? selectOptionMetaString(option, "name") || option.label : null,
-              )
-            }
-          />
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("Cancel")}
-          </Button>
-          <Button
-            onClick={() => print.mutate(undefined)}
-            isLoading={print.isPending}
-            loadingText={t("Preparing")}
+        <FormProvider {...form}>
+          <Form
+            className="flex flex-col gap-4"
+            onSubmit={(submitEvent) => {
+              submitEvent.preventDefault();
+              submitEvent.stopPropagation();
+              void handleSubmit((values) => print.mutateAsync(values))(submitEvent);
+            }}
           >
-            {t("Print")}
-          </Button>
-        </DialogFooter>
+            <FormGroup cols={1}>
+              <FormControl>
+                <NumberField<CoverSheetFormValues>
+                  control={control}
+                  name="copies"
+                  label={t("Cover sheets")}
+                  description={t("Up to {0} at a time.", MAX_COVER_SHEETS)}
+                  min={1}
+                  max={MAX_COVER_SHEETS}
+                  step={1}
+                  rules={{ required: true }}
+                />
+              </FormControl>
+              <FormControl>
+                <DocumentTypeAutocompleteField<CoverSheetFormValues>
+                  control={control}
+                  name="documentTypeId"
+                  label={t("Document type")}
+                  placeholder={t("Optional")}
+                  onOptionChange={(option) => {
+                    documentTypeName.current = option
+                      ? selectOptionMetaString(option, "name") || option.label
+                      : null;
+                  }}
+                />
+              </FormControl>
+            </FormGroup>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                {t("Cancel")}
+              </Button>
+              <Button type="submit" isLoading={print.isPending} loadingText={t("Preparing")}>
+                {t("Print cover sheets")}
+              </Button>
+            </DialogFooter>
+          </Form>
+        </FormProvider>
       </DialogContent>
     </Dialog>
   );

@@ -18,7 +18,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CapturePanel } from "./capture/capture-panel";
+import { CaptureButton, CaptureRequestsPanel, useCaptureKind } from "./capture/capture-panel";
 import { DocumentBulkActionDock } from "./document-bulk-action-dock";
 import { DocumentIntelligenceDialog } from "./document-intelligence-dialog";
 import { DocumentList } from "./document-list";
@@ -88,6 +88,7 @@ function sortDocuments(docs: Document[], field: SortField, direction: SortDirect
 }
 
 export function DocumentsTab({ resourceId, resourceType, disabled = false }: DocumentsTabProps) {
+  const captureKind = useCaptureKind(resourceType);
   const t = useT();
 
   const queryClient = useQueryClient();
@@ -488,8 +489,6 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         />
       )}
 
-      <CapturePanel resourceType={resourceType} resourceId={resourceId} disabled={disabled} />
-
       <DocumentToolbar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -505,8 +504,15 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
           setRequiredUploadTypeId(undefined);
           void setIsUploadOpen(true);
         }}
+        addActions={
+          captureKind !== null && (
+            <CaptureButton kind={captureKind} recordId={resourceId} disabled={disabled} />
+          )
+        }
         disabled={disabled}
       />
+
+      {captureKind !== null && <CaptureRequestsPanel kind={captureKind} recordId={resourceId} />}
 
       {isShipment && (
         <Autocomplete<DocumentType, Record<string, any>>

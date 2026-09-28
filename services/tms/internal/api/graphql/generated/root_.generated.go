@@ -19917,6 +19917,8 @@ extend type Query {
 	{Name: "../schema/select_options.graphqls", Input: `enum SelectOptionResource {
   ACCESSORIAL_CHARGE
   ACCOUNT_TYPE
+  CAPTURE_DEVICE
+  CAPTURE_PROFILE
   CARRIER
   COMMODITY
   CUSTOMER
