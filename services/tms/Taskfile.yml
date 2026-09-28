@@ -38,13 +38,43 @@ vars:
   # Commands that pass -tags on the command line override GOFLAGS rather than
   # merging with it, so they have to spell the base tags out themselves.
   GO_TAGS_INTEGRATION: '{{if .GO_TAGS}}{{.GO_TAGS}},{{end}}integration'
+  # Low-resource mode, for machines that swap or stall during a build. Turn it on
+  # per command (`task run-watch LOW_RESOURCE=true`) or for every command by
+  # exporting LOW_RESOURCE=true in your shell profile.
+  #
+  # The generated GraphQL executor is one ~20 MB package. Compiling it alone
+  # peaks at ~7.1 GB with four compiler threads, ~5.7 GB with one, and ~5.1 GB
+  # with one thread and GOGC=50, at roughly twice the wall time of the first.
+  # By default Go also compiles one package per core alongside it. The mode
+  # therefore compiles LOW_RESOURCE_JOBS packages at a time with that many
+  # threads each (-p and GOMAXPROCS), runs the GC harder (GOGC), caps
+  # golangci-lint and the test runners the same way, debounces air, and starts
+  # only the containers the API needs. Builds take longer; the machine stays
+  # usable. Raise LOW_RESOURCE_JOBS to 2 on a machine with 16 GB or more.
+  LOW_RESOURCE: '{{.LOW_RESOURCE | default "false"}}'
+  LOW_RESOURCE_JOBS: '{{.LOW_RESOURCE_JOBS | default "1"}}'
+  GO_JOBS: '{{if eq .LOW_RESOURCE "true"}}{{.LOW_RESOURCE_JOBS}}{{end}}'
+  GO_TEST_JOBS: '{{.GO_JOBS | default "4"}}'
+  AIR_FLAGS: '{{if .GO_JOBS}}--build.delay 2000{{end}}'
+  # Search is off by default, Gotenberg only renders PDFs, and Redis Insight and
+  # the Samsara simulator are debugging aids, so the API starts without them.
+  # Temporal stays: every AI feature and background job runs on it.
+  DOCKER_MINIMAL_SERVICES: '{{.DOCKER_MINIMAL_SERVICES | default "db redis minio temporal"}}'
+  DOCKER_SERVICES: '{{if .GO_JOBS}}{{.DOCKER_MINIMAL_SERVICES}}{{end}}'
 
 # 769 of 832 packages depend on gin, so a go command that misses the tag set
 # rebuilds and re-caches almost the whole tree under a second configuration.
 # Setting GOFLAGS here covers every go invocation in this file, including ones
 # added later.
+#
+# The low-resource values are empty unless the mode is on, and Go treats an
+# empty GOMAXPROCS or GOGC as unset. A value already exported in your shell
+# takes precedence over these. They also reach the API process that `run` and
+# `run-watch` start, which keeps a local server from competing with the build.
 env:
-  GOFLAGS: '{{if .GO_TAGS}}-tags={{.GO_TAGS}}{{end}}'
+  GOFLAGS: '{{if .GO_TAGS}}-tags={{.GO_TAGS}}{{end}}{{if .GO_JOBS}} -p={{.GO_JOBS}}{{end}}'
+  GOMAXPROCS: '{{.GO_JOBS}}'
+  GOGC: '{{if .GO_JOBS}}50{{end}}'
 
 tasks:
   default:
@@ -75,7 +105,7 @@ tasks:
   run-watch:
     desc: Run the API server with hot reload
     cmds:
-      - air api run
+      - air {{.AIR_FLAGS}} api run
 
   run-worker:
     desc: Run the worker service
@@ -111,7 +141,7 @@ tasks:
         set -euo pipefail
         packages=$(git grep -l 'go:build integration' -- '*_test.go' \
           | xargs -n1 dirname | sort -u | sed 's|^|./|')
-        go test -p 4 -tags={{.GO_TAGS_INTEGRATION}} $packages
+        go test -p {{.GO_TEST_JOBS}} -tags={{.GO_TAGS_INTEGRATION}} $packages
 
   test-all:
     desc: Run all tests (unit + integration)
@@ -120,7 +150,7 @@ tasks:
       TRENOVA_TEST_POSTGRES_DSN: "{{.TEST_POSTGRES_DSN}}"
       APP_ENV: test
     cmds:
-      - go test -p 4 -tags={{.GO_TAGS_INTEGRATION}} ./...
+      - go test -p {{.GO_TEST_JOBS}} -tags={{.GO_TAGS_INTEGRATION}} ./...
 
   test-db-up:
     desc: Start the shared Postgres the integration suite runs against
@@ -168,7 +198,7 @@ tasks:
       TRENOVA_TEST_POSTGRES_DSN: "{{.TEST_POSTGRES_DSN}}"
       APP_ENV: test
     cmds:
-      - go test -p 4 -tags={{.GO_TAGS_INTEGRATION}} -coverprofile=coverage.out ./...
+      - go test -p {{.GO_TEST_JOBS}} -tags={{.GO_TAGS_INTEGRATION}} -coverprofile=coverage.out ./...
       - go tool cover -html=coverage.out -o coverage.html
 
   test-short:
@@ -189,7 +219,7 @@ tasks:
   lint:
     desc: Run linter
     cmds:
-      - golangci-lint run ./...
+      - golangci-lint run{{if .GO_JOBS}} --concurrency={{.GO_JOBS}}{{end}} ./...
 
   fmt:
     desc: Format code
@@ -226,7 +256,7 @@ tasks:
   generate:
     desc: Run go generate with bounded Go concurrency
     env:
-      GO_GENERATE_CONCURRENCY: '{{.GO_GENERATE_CONCURRENCY | default "2"}}'
+      GO_GENERATE_CONCURRENCY: '{{.GO_GENERATE_CONCURRENCY | default (or .GO_JOBS "2")}}'
     cmds:
       - |
         case "$GO_GENERATE_CONCURRENCY" in
@@ -363,9 +393,16 @@ tasks:
         fi
 
   docker-up:
-    desc: Start all services with docker compose
+    desc: Start all services with docker compose (only the minimal set when LOW_RESOURCE=true)
     cmds:
-      - "{{.DOCKER_COMPOSE_LOCAL}} up -d"
+      - "{{.DOCKER_COMPOSE_LOCAL}} up -d {{.DOCKER_SERVICES}}"
+
+  docker-up-minimal:
+    desc: Start only the services the API needs (override with DOCKER_MINIMAL_SERVICES)
+    cmds:
+      - task: docker-up
+        vars:
+          DOCKER_SERVICES: "{{.DOCKER_MINIMAL_SERVICES}}"
 
   docker-down:
     desc: Stop all services
@@ -523,7 +560,7 @@ tasks:
   watch:
     desc: Run API with hot reload
     cmds:
-      - air api run
+      - air {{.AIR_FLAGS}} api run
 
   watch-ui:
     desc: Run frontend with hot reload
