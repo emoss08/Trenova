@@ -127,6 +127,10 @@ type RecalculateMoveJurisdictionMilesRequest struct {
 	UserID         pulid.ID              `json:"userId"`
 }
 
+type MoveJurisdictionMilesPlan struct {
+	Move *shipment.ShipmentMove
+}
+
 type BackfillJurisdictionMilesRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	Start      int64                 `json:"start"`
@@ -165,6 +169,10 @@ type DistanceCalculationService interface {
 		shipmentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
 	) (*ShipmentDistancePreview, error)
+	PlanMoveJurisdictionMiles(
+		ctx context.Context,
+		req RecalculateMoveJurisdictionMilesRequest,
+	) (*MoveJurisdictionMilesPlan, error)
 	RecalculateMoveJurisdictionMiles(
 		ctx context.Context,
 		req RecalculateMoveJurisdictionMilesRequest,

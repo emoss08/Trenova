@@ -71,6 +71,16 @@ export const RECORD_LINKS = {
     path: "/billing/configuration-files/rate-matrices",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  rate_agreement: {
+    label: "Rate agreement",
+    path: "/billing/rate-agreements",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
+  fuel_purchase: {
+    label: "Fuel purchase",
+    path: "/fuel/purchases",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   billing_queue_item: {
     label: "Billing queue item",
     path: "/billing/queue",

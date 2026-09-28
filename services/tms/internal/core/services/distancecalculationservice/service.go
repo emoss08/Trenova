@@ -407,10 +407,6 @@ func snapshotMoveDistances(entity *shipment.Shipment) *shipment.Shipment {
 	return &before
 }
 
-type MoveJurisdictionPlan struct {
-	Move *shipment.ShipmentMove
-}
-
 func (s *Service) jurisdictionMove(
 	ctx context.Context,
 	req services.RecalculateMoveJurisdictionMilesRequest,
@@ -438,13 +434,13 @@ func (s *Service) jurisdictionMove(
 func (s *Service) PlanMoveJurisdictionMiles(
 	ctx context.Context,
 	req services.RecalculateMoveJurisdictionMilesRequest,
-) (*MoveJurisdictionPlan, error) {
+) (*services.MoveJurisdictionMilesPlan, error) {
 	move, err := s.jurisdictionMove(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &MoveJurisdictionPlan{Move: move}, nil
+	return &services.MoveJurisdictionMilesPlan{Move: move}, nil
 }
 
 func (s *Service) RecalculateMoveJurisdictionMiles(
