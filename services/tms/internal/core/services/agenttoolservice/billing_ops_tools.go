@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,10 +24,13 @@ const (
 	paramRunAction          = "action"
 )
 
-var reassignableKinds = []shipment.ChargeAllocationKind{
-	shipment.ChargeAllocationKindFreight,
-	shipment.ChargeAllocationKindAccessorial,
-}
+var reassignableKinds = agenttoolschema.Source(
+	"shipment.reassignableChargeKind",
+	[]shipment.ChargeAllocationKind{
+		shipment.ChargeAllocationKindFreight,
+		shipment.ChargeAllocationKindAccessorial,
+	},
+)
 
 type chargeReassigner interface {
 	ReassignCharge(
@@ -61,8 +65,10 @@ func newReassignBillingChargeTool(billing chargeReassigner) serviceports.AgentTo
 		properties: map[string]any{
 			paramItemID: idProperty("The billing queue item, from list_billing_queue_items " +
 				"or get_billing_queue_item. Never guess one."),
-			paramChargeKind: enumProperty("Which charge: the freight, or one accessorial.",
-				reassignableKinds),
+			paramChargeKind: agenttoolschema.Enum(
+				"Which charge: the freight, or one accessorial.",
+				reassignableKinds,
+			),
 			paramAdditionalChargeID: idProperty("The accessorial charge, from the " +
 				"shipment's charges get_billing_queue_item lists. Needed for Accessorial."),
 			paramAllocations: allocationsProperty("The payers and their shares."),
@@ -119,7 +125,7 @@ func reassignRequest(
 	if err != nil {
 		return nil, err
 	}
-	kind, err := requireEnum(params.Params, paramChargeKind, reassignableKinds)
+	kind, err := requireEnum(params.Params, paramChargeKind, reassignableKinds.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +236,10 @@ const (
 	transferRunRetry = transferRunAction("Retry")
 )
 
-var transferRunActions = []transferRunAction{transferRunStop, transferRunRetry}
+var transferRunActions = agenttoolschema.Source(
+	"billingTransfer.runAction",
+	[]transferRunAction{transferRunStop, transferRunRetry},
+)
 
 type transferRunKeeper interface {
 	Cancel(
@@ -275,8 +284,10 @@ func newManageBillingTransferRunTool(runs transferRunKeeper) serviceports.AgentT
 		properties: map[string]any{
 			resultRunID: idProperty("The billing transfer run, from transfer_to_billing's " +
 				"result. Never guess one."),
-			paramRunAction: enumProperty("Stop a running transfer, or Retry a finished one.",
-				transferRunActions),
+			paramRunAction: agenttoolschema.Enum(
+				"Stop a running transfer, or Retry a finished one.",
+				transferRunActions,
+			),
 		},
 		required: []string{resultRunID, paramRunAction},
 	}, receivablePlan[*transferRunCall, *billingtransferservice.RunPreview]{
@@ -285,7 +296,7 @@ func newManageBillingTransferRunTool(runs transferRunKeeper) serviceports.AgentT
 			if err != nil {
 				return nil, err
 			}
-			action, err := requireEnum(params.Params, paramRunAction, transferRunActions)
+			action, err := requireEnum(params.Params, paramRunAction, transferRunActions.Values)
 			if err != nil {
 				return nil, err
 			}

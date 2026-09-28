@@ -110,7 +110,7 @@ func refusedBeforeFiling(toolName string, refusal *agent.PreviewWarning) toolOut
 
 	return refusedOutcome(
 		aitrace.OutcomeInvalid,
-		strings.TrimPrefix(strings.TrimSpace(refusal.Message), toolpreview.WouldFailPrefix),
+		toolpreview.RefusalMessage(refusal),
 		"%s",
 		b.String(),
 	)

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 )
 
@@ -24,11 +25,10 @@ const (
 	maxHoldNoteChars       = 2000
 )
 
-var holdSeverities = []holdreason.HoldSeverity{
-	holdreason.HoldSeverityInformational,
-	holdreason.HoldSeverityAdvisory,
-	holdreason.HoldSeverityBlocking,
-}
+var holdSeverities = agenttoolschema.Source(
+	"holdReason.severity",
+	holdreason.HoldSeverityValues(),
+)
 
 var updatedHoldFields = []string{
 	fieldSeverity, fieldNotes, paramBlocksDispatch, paramBlocksDelivery, paramBlocksBilling,
@@ -134,7 +134,7 @@ func readHoldPatch(params *serviceports.ToolExecuteParams) (*holdPatch, error) {
 		ShipmentID: shipmentID,
 		TenantInfo: tenantFrom(*params),
 	}}
-	severity, given, err := optionalEnum(params.Params, paramHoldSeverity, holdSeverities)
+	severity, given, err := optionalEnum(params.Params, paramHoldSeverity, holdSeverities.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func newUpdateShipmentHoldTool(holds holdUpdater) serviceports.AgentTool {
 			paramShipmentID: shipmentIDProperty("The shipment the hold is on"),
 			paramHoldID: idProperty("The hold to change, from the holds get_shipment lists or " +
 				"the page you are on. Never guess one."),
-			paramHoldSeverity: enumProperty("How strongly it applies.", holdSeverities),
+			paramHoldSeverity: agenttoolschema.Enum("How strongly it applies.", holdSeverities),
 			fieldNotes: stringProperty("What the hold waits on, replacing the notes on it.",
 				maxHoldNoteChars),
 			paramBlocksDispatch: booleanProperty(

@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -205,7 +207,10 @@ func (f *fakePermissionCheck) Check(
 	return &serviceports.PermissionCheckResult{Allowed: f.allowed}, nil
 }
 
-func commentParams(comments *fakeCommentModerator, extra map[string]any) serviceports.ToolExecuteParams {
+func commentParams(
+	comments *fakeCommentModerator,
+	extra map[string]any,
+) serviceports.ToolExecuteParams {
 	raw := map[string]any{
 		paramShipmentID: comments.comment().ShipmentID.String(),
 		paramCommentID:  comments.comment().ID.String(),
@@ -335,6 +340,34 @@ func TestEditShipmentComment_ChangesOnlyWhatIsSentAndKeepsMentions(t *testing.T)
 	assert.Equal(t, "Waiting on the lumper receipt", comments.updated.Entity.Comment)
 	assert.Len(t, comments.updated.Entity.MentionedUserIDs, 1)
 	assert.Equal(t, int64(2), comments.updated.Entity.Version)
+}
+
+func TestEditShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing.T) {
+	t.Parallel()
+
+	comments := &fakeCommentModerator{guard: &writeGuard{}}
+	tool := newEditShipmentCommentTool(comments, &fakePermissionCheck{})
+	property, ok := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)[fieldPriority].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, agenttoolschema.CommentPriorities.Name, property[toolschema.KeyEnumOf])
+	assert.Contains(t, property[toolschema.KeyEnum], string(shipment.CommentPriorityUrgent))
+
+	params := commentParams(comments, map[string]any{
+		fieldPriority: string(shipment.CommentPriorityUrgent),
+	})
+	params.Actor.UserID = comments.comment().UserID
+	require.NoError(t, tool.Execute(t.Context(), params))
+	require.NotNil(t, comments.updated)
+	assert.Equal(t, shipment.CommentPriorityUrgent, comments.updated.Entity.Priority)
+
+	comments = &fakeCommentModerator{guard: &writeGuard{}}
+	tool = newEditShipmentCommentTool(comments, &fakePermissionCheck{})
+	params = commentParams(comments, map[string]any{fieldPriority: "Critical"})
+	params.Actor.UserID = comments.comment().UserID
+	err := tool.Execute(t.Context(), params)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Critical")
+	assert.Nil(t, comments.updated)
 }
 
 func TestEditShipmentComment_AnotherPersonsCommentNeedsTheManagePermission(t *testing.T) {

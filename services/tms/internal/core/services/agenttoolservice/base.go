@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
@@ -329,20 +328,8 @@ func previewValidates(
 	if err != nil {
 		return err
 	}
-	if preview == nil {
-		return nil
-	}
 
-	for i := range preview.Warnings {
-		warning := &preview.Warnings[i]
-		if warning.Code != agent.PreviewWarningWouldFail {
-			continue
-		}
-
-		return errors.New(strings.TrimPrefix(warning.Message, toolpreview.WouldFailPrefix))
-	}
-
-	return nil
+	return toolpreview.Refused(preview)
 }
 
 func optionalPulidParam(params map[string]any, key string) (*pulid.ID, error) {

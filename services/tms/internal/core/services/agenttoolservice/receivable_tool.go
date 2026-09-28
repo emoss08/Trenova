@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -237,7 +238,7 @@ func requireEnum[T ~string](params map[string]any, key string, values []T) (T, e
 
 	value := T(strings.TrimSpace(raw))
 	if !slices.Contains(values, value) {
-		return "", errUnknownValue(key, raw, enumNames(values))
+		return "", errUnknownValue(key, raw, sliceutils.Strings(values))
 	}
 
 	return value, nil
@@ -256,15 +257,6 @@ func optionalEnum[T ~string](
 	}
 
 	return value, true, nil
-}
-
-func enumNames[T ~string](values []T) []string {
-	names := make([]string, 0, len(values))
-	for _, value := range values {
-		names = append(names, string(value))
-	}
-
-	return names
 }
 
 func requireAmount(params map[string]any, key string) (decimal.Decimal, error) {

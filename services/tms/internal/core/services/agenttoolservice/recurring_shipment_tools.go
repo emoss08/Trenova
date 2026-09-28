@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -39,16 +40,14 @@ const (
 )
 
 var (
-	seriesStatuses = []recurringshipment.Status{
-		recurringshipment.StatusActive,
-		recurringshipment.StatusPaused,
-		recurringshipment.StatusExpired,
-	}
-	seriesExceptionPolicies = []recurringshipment.ExceptionPolicy{
-		recurringshipment.ExceptionPolicySkip,
-		recurringshipment.ExceptionPolicyPreviousBusinessDay,
-		recurringshipment.ExceptionPolicyNextBusinessDay,
-	}
+	seriesStatuses = agenttoolschema.Source(
+		"recurringShipment.status",
+		recurringshipment.StatusValues(),
+	)
+	seriesExceptionPolicies = agenttoolschema.Source(
+		"recurringShipment.exceptionPolicy",
+		recurringshipment.ExceptionPolicyValues(),
+	)
 	seriesFields = []string{
 		paramSeriesName, fieldDescription, paramSourceShipmentID, fieldCustomerID,
 		paramCronExpression, paramTimezone, fieldRecurringStart, fieldRecurringEnd,
@@ -165,8 +164,8 @@ func seriesProperties() map[string]any {
 		paramLeadTimeDays: integerProperty("How many days before each pickup its shipment "+
 			"is created.", 0, recurringshipment.MaxLeadTimeDays),
 		paramSkipWeekends: booleanProperty("Treat Saturday and Sunday like blackout days."),
-		paramExceptionPolicy: enumProperty("What a shipment that falls on a blackout day or "+
-			"weekend does: Skip it, or move it to the business day before or after.",
+		paramExceptionPolicy: agenttoolschema.Enum("What a shipment that falls on a blackout "+
+			"day or weekend does: Skip it, or move it to the business day before or after.",
 			seriesExceptionPolicies),
 		paramBlackoutDates: map[string]any{
 			toolschema.KeyType:        toolschema.TypeArray,
@@ -246,7 +245,7 @@ func applySeriesFlags(series *recurringshipment.RecurringShipment, params map[st
 			*target = *value
 		}
 	}
-	policy, given, err := optionalEnum(params, paramExceptionPolicy, seriesExceptionPolicies)
+	policy, given, err := optionalEnum(params, paramExceptionPolicy, seriesExceptionPolicies.Values)
 	if err != nil {
 		return err
 	}
@@ -584,7 +583,7 @@ func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) servicepo
 			"status is set back the same way.",
 		properties: map[string]any{
 			paramRecurringShipmentID: recurringShipmentIDProperty("The series"),
-			fieldStatus:              enumProperty("The status to set.", seriesStatuses),
+			fieldStatus:              agenttoolschema.Enum("The status to set.", seriesStatuses),
 		},
 		required: []string{paramRecurringShipmentID, fieldStatus},
 		target:   targetRecurringShipment,
@@ -594,7 +593,7 @@ func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) servicepo
 			if err != nil {
 				return nil, err
 			}
-			status, err := requireEnum(params.Params, fieldStatus, seriesStatuses)
+			status, err := requireEnum(params.Params, fieldStatus, seriesStatuses.Values)
 			if err != nil {
 				return nil, err
 			}

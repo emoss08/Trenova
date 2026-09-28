@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -76,8 +77,8 @@ func allocationsProperty(description string) map[string]any {
 			toolschema.KeyProperties: map[string]any{
 				paramBillToCustomer: idProperty("The customer who pays this share, from " +
 					"list_customers. Never guess one."),
-				paramAllocMethod: enumProperty("Whether the share is a percent of the "+
-					"charge or a fixed amount.", allocationMethods),
+				paramAllocMethod: agenttoolschema.Enum("Whether the share is a percent of "+
+					"the charge or a fixed amount.", allocationMethods),
 				paramAllocPercent: amountProperty("The share as a percent such as 60, " +
 					"when method is Percent."),
 				paramAmount: amountProperty("The share as an amount such as 250.00, when " +
@@ -154,7 +155,7 @@ func allocationRow(
 		return nil, fmt.Errorf("%s.%s must be a customer id", path, paramBillToCustomer)
 	}
 	method, err := requireEnum(map[string]any{paramAllocMethod: arg.Method}, paramAllocMethod,
-		allocationMethods)
+		allocationMethods.Values)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}

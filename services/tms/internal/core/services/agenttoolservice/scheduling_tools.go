@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
 	"github.com/emoss08/trenova/internal/core/services/teamscope"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
@@ -36,11 +38,11 @@ const (
 )
 
 var (
-	availabilityPreferences = []worker.AvailabilityPreference{
-		worker.AvailabilityPreferred,
-		worker.AvailabilityAvailable,
-		worker.AvailabilityUnavailable,
-	}
+	availabilityPreferences = agenttoolschema.Source(
+		"worker.availabilityPreference",
+		worker.AvailabilityPreferenceValues(),
+	)
+	weekdays         = agenttoolschema.Source("time.weekday", weekdayNames())
 	scheduleUserRefs = map[string]permission.Resource{
 		paramWorkerID:             permission.ResourceWorker,
 		paramShiftTemplateID:      permission.ResourceShiftTemplate,
@@ -140,17 +142,12 @@ func weekdayNames() []string {
 }
 
 func requireWeekday(params map[string]any, key string) (int16, error) {
-	name, err := requireEnum(params, key, weekdayNames())
+	name, err := requireEnum(params, key, weekdays.Values)
 	if err != nil {
 		return 0, err
 	}
-	for day := time.Sunday; day <= time.Saturday; day++ {
-		if day.String() == name {
-			return int16(day), nil
-		}
-	}
 
-	return 0, fmt.Errorf("parameter %q must be a weekday", key)
+	return int16(slices.Index(weekdays.Values, name)), nil
 }
 
 func optionalScheduleDay(params map[string]any, key string) (*int64, error) {
@@ -476,10 +473,9 @@ func newSetWorkerAvailabilityPreferenceTool(
 			"it is set again the same way.",
 		permission.OpUpdate,
 		map[string]any{
-			paramWorkerID: workerProperty(),
-			paramDayOfWeek: enumProperty("The weekday it is about.",
-				weekdayNames()),
-			paramPreference: enumProperty("What the worker said about that day.",
+			paramWorkerID:  workerProperty(),
+			paramDayOfWeek: agenttoolschema.Enum("The weekday it is about.", weekdays),
+			paramPreference: agenttoolschema.Enum("What the worker said about that day.",
 				availabilityPreferences),
 			paramNote: stringProperty("Why, in the worker's words where you have them.",
 				maxScheduleNote),
@@ -899,7 +895,7 @@ func preferenceRequest(
 		return nil, err
 	}
 	preference, err := requireEnum(params.Params, paramPreference,
-		availabilityPreferences)
+		availabilityPreferences.Values)
 	if err != nil {
 		return nil, err
 	}

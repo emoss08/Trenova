@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -31,25 +32,11 @@ const (
 	fieldCommentVisib = "visibility"
 )
 
-var (
-	commentVisibilities = []shipment.CommentVisibility{
-		shipment.CommentVisibilityInternal,
-		shipment.CommentVisibilityOperations,
-		shipment.CommentVisibilityCustomer,
-		shipment.CommentVisibilityDriver,
-		shipment.CommentVisibilityAccounting,
-	}
-	commentPriorities = []shipment.CommentPriority{
-		shipment.CommentPriorityLow,
-		shipment.CommentPriorityNormal,
-		shipment.CommentPriorityHigh,
-	}
-	commentUserRefs = map[string]permission.Resource{
-		fieldPinnedByID:   permission.ResourceUser,
-		fieldResolvedByID: permission.ResourceUser,
-		fieldDeletedByID:  permission.ResourceUser,
-	}
-)
+var commentUserRefs = map[string]permission.Resource{
+	fieldPinnedByID:   permission.ResourceUser,
+	fieldResolvedByID: permission.ResourceUser,
+	fieldDeletedByID:  permission.ResourceUser,
+}
 
 type commentModerator interface {
 	GetByID(
@@ -369,14 +356,22 @@ func readCommentEdit(params *serviceports.ToolExecuteParams) (*commentEdit, erro
 		}
 		edit.text = &text
 	}
-	visibility, given, err := optionalEnum(params.Params, fieldCommentVisib, commentVisibilities)
+	visibility, given, err := optionalEnum(
+		params.Params,
+		fieldCommentVisib,
+		agenttoolschema.CommentVisibilities.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
 	if given {
 		edit.visibility = &visibility
 	}
-	priority, given, err := optionalEnum(params.Params, fieldPriority, commentPriorities)
+	priority, given, err := optionalEnum(
+		params.Params,
+		fieldPriority,
+		agenttoolschema.CommentPriorities.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -500,10 +495,10 @@ func newEditShipmentCommentTool(
 			paramShipmentID:  shipmentIDProperty("The shipment the comment is on"),
 			paramCommentID:   commentIDProperty(),
 			paramCommentText: stringProperty("The new text, in full.", maxCommentChars),
-			fieldCommentVisib: enumProperty("Who sees it. Only widen it to a customer or a "+
-				"driver when the person asked.", commentVisibilities),
-			fieldPriority: enumProperty("How urgently dispatch should read it.",
-				commentPriorities),
+			fieldCommentVisib: agenttoolschema.Enum("Who sees it. Only widen it to a customer "+
+				"or a driver when the person asked.", agenttoolschema.CommentVisibilities),
+			fieldPriority: agenttoolschema.Enum("How urgently dispatch should read it.",
+				agenttoolschema.CommentPriorities),
 			fieldRequiresAck: booleanProperty("Whether the people it mentions must " +
 				"acknowledge it."),
 		},

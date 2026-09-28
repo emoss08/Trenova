@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 // EnumSource is where a tool schema's enum values come from: a name a
@@ -18,12 +19,7 @@ type EnumSource[T ~string] struct {
 
 // Names is the source's values as the schema lists them.
 func (s EnumSource[T]) Names() []string {
-	names := make([]string, 0, len(s.Values))
-	for _, value := range s.Values {
-		names = append(names, string(value))
-	}
-
-	return names
+	return sliceutils.Strings(s.Values)
 }
 
 // AsStrings is the same source with its values untyped, for a tool that

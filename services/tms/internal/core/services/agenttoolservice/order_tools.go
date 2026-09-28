@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,10 +47,10 @@ var (
 		fieldCustomerID: permission.ResourceCustomer,
 		paramOwnerID:    permission.ResourceUser,
 	}
-	allocationMethods = []shipment.ChargeAllocationMethod{
-		shipment.ChargeAllocationMethodPercent,
-		shipment.ChargeAllocationMethodAmount,
-	}
+	allocationMethods = agenttoolschema.Source(
+		"shipment.chargeAllocationMethod",
+		shipment.ChargeAllocationMethodValues(),
+	)
 )
 
 type orderKeeper interface {

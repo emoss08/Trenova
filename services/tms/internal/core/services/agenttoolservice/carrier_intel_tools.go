@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,16 +47,12 @@ const (
 )
 
 var (
-	lookupDepths = []carrierintel.LookupDepth{
-		carrierintel.LookupDepthFMCSA,
-		carrierintel.LookupDepthLite,
-		carrierintel.LookupDepthFull,
-	}
-	unitTypes = []carrierintel.UnitType{
-		carrierintel.UnitTypeTractor,
-		carrierintel.UnitTypeTrailer,
-		carrierintel.UnitTypeStraight,
-	}
+	lookupDepths = agenttoolschema.Source(
+		"carrierIntel.lookupDepth",
+		carrierintel.LookupDepthValues(),
+	)
+	unitTypes       = agenttoolschema.Source("carrierIntel.unitType", carrierintel.UnitTypeValues())
+	syncFieldValues = agenttoolschema.Source("carrierIntel.syncField", carrierintel.AllSyncFields())
 )
 
 type carrierIntelOperator interface {
@@ -221,8 +218,8 @@ func newVetCarrierTool(intel carrierIntelOperator) serviceports.AgentTool {
 			"records the result; nothing is sent to the carrier.",
 		properties: map[string]any{
 			paramCarrierID: carrierIDProperty("The carrier"),
-			paramDepth: enumProperty("How deep a lookup: FMCSA is the public record, Lite and "+
-				"Full add the provider's profile. Defaults to Full.", lookupDepths),
+			paramDepth: agenttoolschema.Enum("How deep a lookup: FMCSA is the public record, "+
+				"Lite and Full add the provider's profile. Defaults to Full.", lookupDepths),
 			paramForceResend: booleanProperty("Look up again even when the last result is " +
 				"still current. It is charged; only when the person asks."),
 		},
@@ -236,7 +233,7 @@ func newVetCarrierTool(intel carrierIntelOperator) serviceports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			depth, _, err := optionalEnum(params.Params, paramDepth, lookupDepths)
+			depth, _, err := optionalEnum(params.Params, paramDepth, lookupDepths.Values)
 			if err != nil {
 				return nil, err
 			}
@@ -642,9 +639,11 @@ func newApplyCarrierIntelSuggestionsTool(
 			paramSuggestionFields: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The profile fields to correct.",
-				toolschema.KeyMaxItems:    len(carrierintel.AllSyncFields()),
-				toolschema.KeyItems: enumProperty("A profile field.",
-					carrierintel.AllSyncFields()),
+				toolschema.KeyMaxItems:    len(syncFieldValues.Values),
+				toolschema.KeyItems: agenttoolschema.Enum(
+					"A profile field.",
+					syncFieldValues,
+				),
 			},
 			paramPolicyIDs: idListProperty("The insurance policies to correct, by the policy "+
 				"id on the page you are on.", maxSuggestionPolicies),
@@ -723,7 +722,7 @@ func readSuggestionChoice(params *serviceports.ToolExecuteParams) (*suggestionCh
 		}
 		for _, name := range names {
 			field, fieldErr := requireEnum(map[string]any{paramSuggestionFields: name},
-				paramSuggestionFields, carrierintel.AllSyncFields())
+				paramSuggestionFields, syncFieldValues.Values)
 			if fieldErr != nil {
 				return nil, fieldErr
 			}
@@ -902,7 +901,7 @@ func newVerifyCarrierEquipmentTool(intel carrierIntelOperator) serviceports.Agen
 		properties: map[string]any{
 			paramCarrierAssignmentID: idProperty("The carrier assignment, from " +
 				"list_rate_confirmations or get_shipment. Never guess one."),
-			paramUnitType: enumProperty("What was checked.", unitTypes),
+			paramUnitType: agenttoolschema.Enum("What was checked.", unitTypes),
 			paramVIN:      stringProperty("The vehicle identification number.", maxVINChars),
 			paramPlateNumber: stringProperty("The license plate number.",
 				maxPlateChars),
@@ -986,7 +985,7 @@ func verifyEquipmentRequest(
 	if err != nil {
 		return nil, err
 	}
-	unitType, err := requireEnum(params.Params, paramUnitType, unitTypes)
+	unitType, err := requireEnum(params.Params, paramUnitType, unitTypes.Values)
 	if err != nil {
 		return nil, err
 	}
