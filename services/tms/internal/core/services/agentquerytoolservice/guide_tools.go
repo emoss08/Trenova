@@ -2,14 +2,12 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -193,18 +191,11 @@ func answerFrom(match *serviceports.ProductGuideMatch, withSteps bool) guideAnsw
 }
 
 type openPageTool struct {
-	guide    serviceports.ProductGuide
-	entities []string
+	guide serviceports.ProductGuide
 }
 
 func newOpenPageTool(guide serviceports.ProductGuide) serviceports.AgentQueryTool {
-	entities := make([]string, 0, len(productguide.Default.Records))
-	for _, record := range productguide.Default.Records {
-		entities = append(entities, record.Entity)
-	}
-	sort.Strings(entities)
-
-	return &openPageTool{guide: guide, entities: entities}
+	return &openPageTool{guide: guide}
 }
 
 func (t *openPageTool) Name() string { return "open_page" }
@@ -227,7 +218,7 @@ func (t *openPageTool) ParamSchema() map[string]any {
 			},
 			paramEntity: agenttoolschema.Enum(
 				"The kind of record to open, with recordId, instead of a page.",
-				agenttoolschema.Derived("guide.entity", t.entities),
+				agenttoolschema.RecordEntities,
 			),
 			"recordId": map[string]any{
 				"type": "string",

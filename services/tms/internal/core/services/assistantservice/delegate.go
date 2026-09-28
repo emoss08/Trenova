@@ -120,7 +120,7 @@ func (s *Service) OpenDelegate(
 		Definition: delegate,
 		Actor:      req.Actor,
 		Context:    s.delegateContext(ctx, parent, delegate, req),
-		Input:      req.Call.Task,
+		Input:      agentruntime.DelegateInput(req.Call.Task, req.Call.Context),
 		ThreadID:   req.ThreadID,
 		// Earlier proposals keep the delegate from proposing again a write
 		// that is already waiting on the person.

@@ -14,15 +14,16 @@ const (
 )
 
 func FenceToolResult(toolName, payload string) string {
-	truncated := truncateToolResult(payload)
+	return fenceUntrusted("Result from "+toolName+":", truncateToolResult(payload))
+}
 
+func fenceUntrusted(header, payload string) string {
 	var builder strings.Builder
-	builder.WriteString("Result from ")
-	builder.WriteString(toolName)
-	builder.WriteString(":\n")
+	builder.WriteString(header)
+	builder.WriteString("\n")
 	builder.WriteString(untrustedOpenTag)
 	builder.WriteString("\n")
-	builder.WriteString(stringutils.NeutralizeCloseTag(truncated, untrustedCloseTag))
+	builder.WriteString(stringutils.NeutralizeCloseTag(payload, untrustedCloseTag))
 	builder.WriteString("\n")
 	builder.WriteString(untrustedCloseTag)
 

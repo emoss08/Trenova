@@ -115,6 +115,11 @@ func TestBuildSystemPrompt_NamesTheAgentsItCanAskFenced(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(prompt, "</delegate_agents>"),
 		"a name cannot close the fence early")
 	assert.Contains(t, prompt, "Its tools include: create_report, run_report")
+	assert.Contains(t, prompt, "records", "the parent hands over ids, not a retyped copy")
+	assert.Contains(t, prompt, "shareResults")
+	assert.Contains(t, prompt, "duplicate_shipment",
+		"a copy of a record is made by the tool that copies it, never retyped")
+	assert.Contains(t, prompt, "proposalId")
 }
 
 // A turn working for another agent answers that agent, not the person, so
@@ -128,6 +133,8 @@ func TestBuildSystemPrompt_ADelegatedTurnReportsToTheAgentThatAsked(t *testing.T
 
 	assert.Contains(t, prompt, "The agent Homepage Widget Builder handed you this task")
 	assert.Contains(t, prompt, "the name and id of every record you created or changed")
+	assert.Contains(t, prompt, "handed over with the task",
+		"the delegate works from the records it was handed rather than retyping them")
 	assert.NotContains(t, prompt, "Dispatchers are busy")
 	assert.NotContains(t, prompt, "## Agents you can ask")
 }

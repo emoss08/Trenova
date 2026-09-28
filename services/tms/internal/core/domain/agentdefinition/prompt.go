@@ -281,9 +281,15 @@ func buildDelegateSection(delegates []RuntimeDelegate) string {
 			"its own, with its own tools and approvals, as the same person, and answers you " +
 			"with what it did: the ids of what it made, anything waiting on the person's " +
 			"approval, and any document it published. It does not see this conversation, so " +
-			"put everything it needs in the task and say what to hand back. Use your own " +
-			"tools when they can do the job, send one task per call, and tell the person " +
-			"plainly what the other agent did and what still waits on them.\n",
+			"put everything it needs in the task and say what to hand back. Hand over the " +
+			"records the task is about in records, by their kind and id, and the results of " +
+			"your own calls it should work from in shareResults, rather than retyping them " +
+			"into the task. Ask for a record to be made with a tool, never described in " +
+			"words: to copy one, ask for it to be copied with duplicate_shipment or the tool " +
+			"that copies it, naming the record in records. Use your own tools when they can " +
+			"do the job, send one task per call, and tell the person plainly what the other " +
+			"agent did and what still waits on them, naming each waiting proposal by its " +
+			"proposalId.\n",
 	)
 	builder.WriteString(delegatesOpenTag)
 	for _, delegate := range delegates {
@@ -325,7 +331,10 @@ func buildDelegatedOutputSection(delegator string) string {
 	return "## Output\nThe agent " + delegator + " handed you this task on behalf of the " +
 		"person it is talking to. You act as that person, with your own tools. Nobody reads " +
 		"your reply but that agent, and you cannot ask the person anything, so do the task " +
-		"with what you have. Finish with a short plain answer: what you did, the name and id " +
+		"with what you have. Work from the records and results handed over with the task: " +
+		"open each record by its id with your own tools, and copy a record with the tool " +
+		"that copies it, such as duplicate_shipment, rather than retyping it into a new one. " +
+		"Finish with a short plain answer: what you did, the name and id " +
 		"of every record you created or changed, what is waiting on the person's approval, " +
 		"and what you could not do and why. Never claim a change you did not make through a " +
 		"tool, and never hand another agent the task."
