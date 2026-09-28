@@ -243,6 +243,15 @@ type EnableAccountingSyncRequest struct {
 	AutoSync          bool
 	DriverSettlements bool
 	Backfill          bool
+	OpeningBalances   bool
+}
+
+type ChooseAccountingSyncModeRequest struct {
+	TenantInfo      pagination.TenantInfo
+	UserID          pulid.ID
+	IntegrationType integration.Type
+	Mode            accountingsync.SyncMode
+	Granularity     accountingsync.LedgerGranularity
 }
 
 type UpdateAccountingSyncSettingsRequest struct {
@@ -382,6 +391,10 @@ type AccountingSyncService interface {
 	EnableSync(
 		ctx context.Context,
 		req *EnableAccountingSyncRequest,
+	) (*accountingsync.AccountingConnection, error)
+	ChooseMode(
+		ctx context.Context,
+		req *ChooseAccountingSyncModeRequest,
 	) (*accountingsync.AccountingConnection, error)
 	UpdateSettings(
 		ctx context.Context,

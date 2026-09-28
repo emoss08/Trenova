@@ -101,3 +101,30 @@ const (
 	ItemTypeCategory = "Category"
 	ItemTypeGroup    = "Group"
 )
+
+const (
+	AccountTypeReceivable = "Accounts Receivable"
+	AccountTypePayable    = "Accounts Payable"
+)
+
+type LedgerPartyNeed string
+
+const (
+	LedgerPartyNone     = LedgerPartyNeed("")
+	LedgerPartyCustomer = LedgerPartyNeed("Customer")
+	LedgerPartyVendor   = LedgerPartyNeed("Vendor")
+)
+
+func (r *AccountingReferenceObject) LedgerParty() LedgerPartyNeed {
+	if r == nil || r.Kind != ReferenceKindAccount {
+		return LedgerPartyNone
+	}
+	switch r.AccountType {
+	case AccountTypeReceivable:
+		return LedgerPartyCustomer
+	case AccountTypePayable:
+		return LedgerPartyVendor
+	default:
+		return LedgerPartyNone
+	}
+}

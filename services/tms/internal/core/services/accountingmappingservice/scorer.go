@@ -147,11 +147,11 @@ var termSynonyms = map[string][]string{
 }
 
 var roleAccountTypes = map[string][]string{
-	accountingsync.AccountRoleAR:                      {"Accounts Receivable"},
+	accountingsync.AccountRoleAR:                      {accountingsync.AccountTypeReceivable},
 	accountingsync.AccountRoleRevenue:                 {"Income", "Other Income"},
 	accountingsync.AccountRoleDeposit:                 {"Bank"},
 	accountingsync.AccountRoleWriteOff:                {"Expense", "Other Expense"},
-	accountingsync.AccountRoleAP:                      {"Accounts Payable"},
+	accountingsync.AccountRoleAP:                      {accountingsync.AccountTypePayable},
 	accountingsync.AccountRolePurchasedTransportation: {"Cost of Goods Sold", "Expense"},
 }
 

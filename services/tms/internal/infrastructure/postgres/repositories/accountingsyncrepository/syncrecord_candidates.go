@@ -262,7 +262,6 @@ func journalSource(
 		) *bun.SelectQuery {
 			return q.
 				Where(cols.IsPosted.IsTrue()).
-				Where(cols.PostedAt.IsNotNull()).
 				Where(cols.EntryType.NotIn(), bun.List(unsentEntryTypes()))
 		},
 		queued: queued,

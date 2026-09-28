@@ -4,7 +4,9 @@ package accountingsyncrepository
 
 import (
 	"testing"
+	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
@@ -304,7 +306,7 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		number: "JE-LEDGER-5", entryType: journalentry.EntryTypeStandard, date: day, posted: false,
 		lines: []ledgerFixtureLine{{account: acctC, debit: 7_000}, {account: acctA, credit: 7_000}},
 	})
-	insert(&ledgerFixtureEntry{
+	driven := insert(&ledgerFixtureEntry{
 		number: "JE-LEDGER-6", entryType: journalentry.EntryTypeStandard, date: next, posted: true,
 		source: journalsource.ObjectDriverSettlement, sourceID: driverSettlement.ID.String(),
 		lines: []ledgerFixtureLine{{account: acctC, debit: 300}, {account: acctA, credit: 300}},
@@ -443,5 +445,64 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 			ids = append(ids, active[idx].ID)
 		}
 		assert.Subset(t, ids, []pulid.ID{acctA, acctB, acctC})
+	})
+
+	t.Run("posted journals without a record are candidates", func(t *testing.T) {
+		records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: zap.NewNop()})
+		connection, connErr := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()}).
+			Create(ctx, newConnection(tenant, userID, realm, 1_000))
+		require.NoError(t, connErr)
+		list := func(objectType accountingsync.SyncObjectType) []pulid.ID {
+			t.Helper()
+			found, listErr := records.ListCandidates(ctx, &repositories.ListAccountingSyncCandidatesRequest{
+				TenantInfo:   tenant,
+				ConnectionID: connection.ID,
+				ObjectType:   objectType,
+				Operation:    accountingsync.SyncOperationCreate,
+				DatedFrom:    day - 86_400,
+				Timezone:     "UTC",
+				Limit:        50,
+			})
+			require.NoError(t, listErr)
+			ids := make([]pulid.ID, 0, len(found))
+			for idx := range found {
+				ids = append(ids, found[idx].ObjectID)
+			}
+			return ids
+		}
+		queue := func(objectType accountingsync.SyncObjectType, objectID pulid.ID, at int64) {
+			t.Helper()
+			_, enqueueErr := records.Enqueue(ctx, []*accountingsync.AccountingSyncRecord{
+				accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
+					TenantInfo:   tenant,
+					ConnectionID: connection.ID,
+					Key: accountingsync.SyncRecordKey{
+						ObjectType: objectType,
+						ObjectID:   objectID,
+						Operation:  accountingsync.SyncOperationCreate,
+						Revision:   1,
+					},
+					SourceEvent: accountingsync.SyncSourceJournalPosted,
+					At:          at,
+				}),
+			})
+			require.NoError(t, enqueueErr)
+		}
+
+		assert.ElementsMatch(t, []pulid.ID{settled, paid, reversed, driven},
+			list(accountingsync.SyncObjectJournalEntry),
+			"closing and unposted entries are never candidates")
+		queue(accountingsync.SyncObjectJournalEntry, paid, posted)
+		assert.ElementsMatch(t, []pulid.ID{settled, reversed, driven},
+			list(accountingsync.SyncObjectJournalEntry))
+
+		assert.ElementsMatch(t, []pulid.ID{settled, paid, reversed, driven},
+			list(accountingsync.SyncObjectJournalSummary))
+		queue(accountingsync.SyncObjectJournalSummary,
+			pulid.ID(accountingsync.JournalDayID(day, time.UTC)), posted+1_000)
+		queue(accountingsync.SyncObjectJournalSummary,
+			pulid.ID(accountingsync.JournalDayID(next, time.UTC)), posted-1_000)
+		assert.Equal(t, []pulid.ID{driven}, list(accountingsync.SyncObjectJournalSummary),
+			"a day queued after its entries were posted covers them; one queued before does not")
 	})
 }

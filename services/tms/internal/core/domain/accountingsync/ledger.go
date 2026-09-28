@@ -2,6 +2,7 @@ package accountingsync
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
@@ -111,6 +112,13 @@ func (c *AccountingConnection) Sends(objectType SyncObjectType) bool {
 	}
 }
 
+func (c *AccountingConnection) Backfills(objectType SyncObjectType) bool {
+	if objectType == SyncObjectJournalSummary {
+		return c.SumsByDay()
+	}
+	return c.Sends(objectType)
+}
+
 func (c *AccountingConnection) ChooseMode(mode SyncMode, granularity LedgerGranularity) error {
 	if c.SyncEnabledAt != nil || c.SetupStep == SetupStepComplete {
 		return ErrModeFixed
@@ -135,12 +143,9 @@ func (c *AccountingConnection) ChooseMode(mode SyncMode, granularity LedgerGranu
 }
 
 func JournalSendable(entryType journalentry.EntryType) bool {
-	switch entryType {
-	case journalentry.EntryTypeClosing, journalentry.EntryTypeOpening, "":
-		return false
-	default:
-		return true
-	}
+	return entryType != "" &&
+		entryType != journalentry.EntryTypeClosing &&
+		entryType != journalentry.EntryTypeOpening
 }
 
 func (c *AccountingConnection) SentOpeningBalances() bool {
@@ -197,4 +202,9 @@ func (r *AccountingSyncRecord) DayUpdate(revision int64) *AccountingSyncRecord {
 		AwaitRelease: r.Status == SyncStatusAwaitingApproval,
 		At:           r.QueuedAt,
 	})
+}
+
+func (r *AccountingSyncRecord) IsOpeningBalances() bool {
+	return r.ObjectType == SyncObjectJournalSummary &&
+		strings.HasPrefix(r.ObjectID.String(), JournalOpeningPrefix)
 }

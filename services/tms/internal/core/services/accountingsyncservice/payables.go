@@ -312,18 +312,22 @@ func accountLabel(accountID pulid.ID, lines []repositories.PayableJournalLine) s
 		if lines[idx].AccountID != accountID {
 			continue
 		}
-		name := strings.TrimSpace(
-			strings.TrimSpace(
-				lines[idx].AccountCode,
-			) + " " + strings.TrimSpace(
-				lines[idx].AccountName,
-			),
-		)
-		if name != "" {
-			return "GL account " + name
+		if label := glAccountLabel(lines[idx].AccountCode, lines[idx].AccountName); label != "" {
+			return label
 		}
 	}
 	return ""
+}
+
+func glAccountLabel(code, name string) string {
+	if full := glAccountName(code, name); full != "" {
+		return "GL account " + full
+	}
+	return ""
+}
+
+func glAccountName(code, name string) string {
+	return strings.TrimSpace(strings.TrimSpace(code) + " " + strings.TrimSpace(name))
 }
 
 func (s *Service) pushBill(

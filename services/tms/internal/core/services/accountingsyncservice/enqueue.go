@@ -90,10 +90,25 @@ func (e *Enqueuer) Enqueue(ctx context.Context, req *services.AccountingSyncEnqu
 	return err
 }
 
-// EnqueueRecords inserts the records, queues a fresh update for a ledger day
-// that was already queued, retires the updates a newer one replaces, and wakes
-// the dispatcher once the transaction commits.
+// EnqueueRecords queues the records and wakes the dispatcher once the
+// transaction commits.
 func (e *Enqueuer) EnqueueRecords(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	records []*accountingsync.AccountingSyncRecord,
+) (*repositories.EnqueueAccountingSyncRecordsResult, error) {
+	result, err := e.QueueRecords(ctx, tenantInfo, records)
+	if err != nil {
+		return nil, err
+	}
+	e.kickAfterCommit(ctx, tenantInfo, result.Inserted)
+	return result, nil
+}
+
+// QueueRecords inserts the records, queues a fresh update for a ledger day
+// that was already queued, and retires the updates a newer one replaces. It
+// leaves waking the dispatcher to the caller.
+func (e *Enqueuer) QueueRecords(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	records []*accountingsync.AccountingSyncRecord,
@@ -134,8 +149,6 @@ func (e *Enqueuer) EnqueueRecords(
 			return nil, err
 		}
 	}
-
-	e.kickAfterCommit(ctx, tenantInfo, result.Inserted)
 	return result, nil
 }
 

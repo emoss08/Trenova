@@ -77,6 +77,14 @@ func safetyNetKinds() []candidateKind {
 			objectType: accountingsync.SyncObjectDriverBillPay,
 			operation:  accountingsync.SyncOperationCreate,
 		},
+		{
+			objectType: accountingsync.SyncObjectJournalEntry,
+			operation:  accountingsync.SyncOperationCreate,
+		},
+		{
+			objectType: accountingsync.SyncObjectJournalSummary,
+			operation:  accountingsync.SyncOperationCreate,
+		},
 	}
 }
 
@@ -84,6 +92,9 @@ func sweptSince(
 	conn *accountingsync.AccountingConnection,
 	objectType accountingsync.SyncObjectType,
 ) (*int64, bool) {
+	if !conn.Backfills(objectType) {
+		return nil, false
+	}
 	if !objectType.NeedsDriverSettlements() {
 		return conn.SyncEnabledAt, true
 	}
@@ -119,16 +130,24 @@ func (s *Service) enqueueCandidates(
 	conn *accountingsync.AccountingConnection,
 	candidates []repositories.AccountingSyncCandidate,
 	source accountingsync.SyncSourceEvent,
+	loc *time.Location,
 ) (*repositories.EnqueueAccountingSyncRecordsResult, error) {
 	now := timeutils.NowUnix()
 	records := make([]*accountingsync.AccountingSyncRecord, 0, len(candidates))
+	days := make(map[pulid.ID]struct{}, len(candidates))
 	for idx := range candidates {
-		records = append(
-			records,
-			NewRecordFor(conn, candidateRequest(conn, &candidates[idx], source), now),
-		)
+		req := candidateRequest(conn, &candidates[idx], source)
+		if candidates[idx].ObjectType == accountingsync.SyncObjectJournalSummary {
+			req = JournalDayRequest(tenantOf(conn), candidates[idx].DocumentDate, loc)
+			req.SourceEvent = source
+			if _, seen := days[req.ObjectID]; seen {
+				continue
+			}
+			days[req.ObjectID] = struct{}{}
+		}
+		records = append(records, NewRecordFor(conn, req, now))
 	}
-	return s.records.Enqueue(ctx, records)
+	return s.enqueuer.QueueRecords(ctx, tenantOf(conn), records)
 }
 
 func (s *Service) SafetyNet(
@@ -145,6 +164,10 @@ func (s *Service) SafetyNet(
 		return result, nil
 	}
 
+	loc, err := s.orgLocation(ctx, ref.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
 	for _, kind := range safetyNetKinds() {
 		postedFrom, swept := sweptSince(conn, kind.objectType)
 		if !swept {
@@ -164,6 +187,7 @@ func (s *Service) SafetyNet(
 					AfterAt:      afterAt,
 					AfterID:      afterID,
 					Limit:        safetyNetPage,
+					Timezone:     loc.String(),
 				},
 			)
 			if listErr != nil {
@@ -178,6 +202,7 @@ func (s *Service) SafetyNet(
 				conn,
 				candidates,
 				accountingsync.SyncSourceSafetyNet,
+				loc,
 			)
 			if enqueueErr != nil {
 				return result, enqueueErr
@@ -234,8 +259,13 @@ func (s *Service) BackfillStep(
 	}
 	backfill.Start(now)
 
-	if backfill.Cursor.ObjectType.NeedsDriverSettlements() && !conn.SyncsDriverSettlements() {
+	if !conn.Backfills(backfill.Cursor.ObjectType) ||
+		(backfill.Cursor.ObjectType.NeedsDriverSettlements() && !conn.SyncsDriverSettlements()) {
 		return s.skipBackfillType(ctx, backfill, result, now)
+	}
+	loc, err := s.orgLocation(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
 	}
 
 	undoneBefore := backfill.RangeEnd
@@ -252,6 +282,7 @@ func (s *Service) BackfillStep(
 			AfterAt:      backfill.Cursor.AfterAt,
 			AfterID:      backfill.Cursor.AfterID,
 			Limit:        backfillPage,
+			Timezone:     loc.String(),
 		},
 	)
 	if err != nil {
@@ -264,6 +295,7 @@ func (s *Service) BackfillStep(
 			conn,
 			candidates,
 			accountingsync.SyncSourceBackfill,
+			loc,
 		)
 		if enqueueErr != nil {
 			return nil, enqueueErr

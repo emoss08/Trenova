@@ -169,3 +169,35 @@ func TestJournalIDsNameTheLocalDay(t *testing.T) {
 	assert.Equal(t, "jopen_20260927", JournalOpeningID(lateEvening, chicago))
 	assert.NotEqual(t, JournalDayID(lateEvening, chicago), JournalOpeningID(lateEvening, chicago))
 }
+
+func TestLedgerPartyFollowsTheProviderAccountType(t *testing.T) {
+	cases := []struct {
+		name string
+		ref  *AccountingReferenceObject
+		want LedgerPartyNeed
+	}{
+		{name: "receivable", ref: &AccountingReferenceObject{Kind: ReferenceKindAccount, AccountType: AccountTypeReceivable}, want: LedgerPartyCustomer},
+		{name: "payable", ref: &AccountingReferenceObject{Kind: ReferenceKindAccount, AccountType: AccountTypePayable}, want: LedgerPartyVendor},
+		{name: "income", ref: &AccountingReferenceObject{Kind: ReferenceKindAccount, AccountType: "Income"}, want: LedgerPartyNone},
+		{name: "not an account", ref: &AccountingReferenceObject{Kind: ReferenceKindCustomer, AccountType: AccountTypeReceivable}, want: LedgerPartyNone},
+		{name: "unknown", want: LedgerPartyNone},
+	}
+	for _, tc := range cases {
+		assert.Equal(t, tc.want, tc.ref.LedgerParty(), tc.name)
+	}
+}
+
+func TestBackfillsOnlyWhatTheModeSendsAndDaysOnlyWhenSummed(t *testing.T) {
+	documents := &AccountingConnection{SyncMode: SyncModeDocument}
+	detailed := &AccountingConnection{SyncMode: SyncModeLedger, LedgerGranularity: LedgerDetailed}
+	daily := &AccountingConnection{SyncMode: SyncModeLedger, LedgerGranularity: LedgerDailySummary}
+
+	assert.True(t, documents.Backfills(SyncObjectInvoice))
+	assert.False(t, documents.Backfills(SyncObjectJournalEntry))
+	assert.False(t, documents.Backfills(SyncObjectJournalSummary))
+	assert.True(t, detailed.Backfills(SyncObjectJournalEntry))
+	assert.False(t, detailed.Backfills(SyncObjectJournalSummary))
+	assert.False(t, detailed.Backfills(SyncObjectCarrierBill))
+	assert.False(t, daily.Backfills(SyncObjectJournalEntry))
+	assert.True(t, daily.Backfills(SyncObjectJournalSummary))
+}
