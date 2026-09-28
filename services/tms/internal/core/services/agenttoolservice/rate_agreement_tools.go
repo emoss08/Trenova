@@ -858,7 +858,7 @@ func newDraftRateAgreementTool(
 		required: []string{
 			paramPartyType, paramAgreementCode, paramAgreementName, paramEffectiveFrom,
 		},
-		searchTerms: []string{"contract", "tariff", "rates", "lanes", "pricing", "rate sheet"},
+		searchTerms: []string{"tariff", "rate sheet", "quote", "pricing"},
 	}), receivablePlan[agreementDraft, *rateagreement.RateAgreement]{
 		request: func(params *serviceports.ToolExecuteParams) (agreementDraft, error) {
 			return agreementDraft{params: params}, nil

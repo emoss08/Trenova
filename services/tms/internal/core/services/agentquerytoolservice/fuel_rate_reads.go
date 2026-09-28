@@ -768,6 +768,10 @@ func provideListReportSchedulesTool(schedules *reporting.Service) serviceports.A
 
 func (t *listReportSchedulesTool) Name() string { return "list_report_schedules" }
 
+func (t *listReportSchedulesTool) SearchTerms() []string {
+	return []string{"scheduled", "emailed", "recurring", "subscription"}
+}
+
 func (t *listReportSchedulesTool) Description() string {
 	return "List reports on a schedule: when each runs, in what formats, who it is emailed " +
 		"to, whether it is on and when it runs next. Only the person who set a schedule up " +

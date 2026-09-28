@@ -99,8 +99,9 @@ func newCommitRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
 		properties: map[string]any{
 			paramRateImportID: stringProperty(rateImportSupplier, 0),
 		},
-		required: []string{paramRateImportID},
-		target:   targetRateImport,
+		required:    []string{paramRateImportID},
+		target:      targetRateImport,
+		searchTerms: []string{"rate sheet", "apply", "uploaded", "import"},
 	}), receivablePlan[*rateimportservice.CommitRequest, *rateimportservice.CommitPlan]{
 		request: rateImportRequestFrom,
 		plan: func(

@@ -539,8 +539,9 @@ func newUpdateReportScheduleTool(reports reportAdministrator) serviceports.Agent
 			paramEmailInline: booleanProperty("Put the rows in the email body."),
 			paramEnabled:     booleanProperty("Whether the schedule runs."),
 		},
-		required: []string{paramReportScheduleID},
-		target:   reportTarget(paramReportScheduleID),
+		required:    []string{paramReportScheduleID},
+		target:      reportTarget(paramReportScheduleID),
+		searchTerms: []string{"scheduled", "recipients", "emailed", "subscription"},
 	}, receivablePlan[scheduleEdit, *reporting.ScheduleChange]{
 		request: scheduleIDFrom,
 		plan: func(
@@ -607,8 +608,9 @@ func newDeleteReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		properties: map[string]any{
 			paramReportScheduleID: reportIDProperty(reportScheduleSupplier),
 		},
-		required: []string{paramReportScheduleID},
-		target:   reportTarget(paramReportScheduleID),
+		required:    []string{paramReportScheduleID},
+		target:      reportTarget(paramReportScheduleID),
+		searchTerms: []string{"scheduled", "unsubscribe", "emailing"},
 	}), receivablePlan[*reporting.GetScheduleRequest, *report.ReportSchedule]{
 		request: func(params *serviceports.ToolExecuteParams) (*reporting.GetScheduleRequest, error) {
 			id, err := requirePulid(params.Params, paramReportScheduleID)
