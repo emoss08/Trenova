@@ -3,7 +3,6 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -146,8 +145,13 @@ func requireWeekday(params map[string]any, key string) (int16, error) {
 	if err != nil {
 		return 0, err
 	}
+	for day := time.Sunday; day <= time.Saturday; day++ {
+		if day.String() == name {
+			return int16(day), nil
+		}
+	}
 
-	return int16(slices.Index(weekdays.Values, name)), nil
+	return 0, fmt.Errorf("parameter %q must be a weekday", key)
 }
 
 func optionalScheduleDay(params map[string]any, key string) (*int64, error) {
