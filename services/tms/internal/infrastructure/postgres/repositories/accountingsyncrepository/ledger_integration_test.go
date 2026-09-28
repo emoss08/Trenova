@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -504,5 +505,104 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 			pulid.ID(accountingsync.JournalDayID(next, time.UTC)), posted-1_000)
 		assert.Equal(t, []pulid.ID{driven}, list(accountingsync.SyncObjectJournalSummary),
 			"a day queued after its entries were posted covers them; one queued before does not")
+	})
+
+	t.Run("a fiscal close, its carried-forward entry and their reversals stay out", func(t *testing.T) {
+		closeDay := next + 3*86_400
+		opening := insert(&ledgerFixtureEntry{
+			number: "JE-FY-OPEN", entryType: journalentry.EntryTypeOpening, date: closeDay, posted: true,
+			lines: []ledgerFixtureLine{{account: acctA, debit: 4_000}, {account: acctB, credit: 4_000}},
+		})
+		closing := insert(&ledgerFixtureEntry{
+			number: "JE-FY-CLOSE", entryType: journalentry.EntryTypeClosing, date: closeDay, posted: true,
+			lines: []ledgerFixtureLine{{account: acctC, debit: 2_000}, {account: acctB, credit: 2_000}},
+		})
+		insert(&ledgerFixtureEntry{
+			number: "JE-FY-REOPEN-1", entryType: journalentry.EntryTypeReversal, date: closeDay + 86_400,
+			posted:     true,
+			reversalOf: opening,
+			lines:      []ledgerFixtureLine{{account: acctB, debit: 4_000}, {account: acctA, credit: 4_000}},
+		})
+		reopened := insert(&ledgerFixtureEntry{
+			number: "JE-FY-REOPEN-2", entryType: journalentry.EntryTypeReversal, date: closeDay, posted: true,
+			reversalOf: closing,
+			lines:      []ledgerFixtureLine{{account: acctB, debit: 2_000}, {account: acctC, credit: 2_000}},
+		})
+		undone := insert(&ledgerFixtureEntry{
+			number: "JE-FY-UNDO", entryType: journalentry.EntryTypeReversal, date: closeDay, posted: true,
+			reversalOf: paid,
+			lines:      []ledgerFixtureLine{{account: acctA, debit: 500}, {account: acctB, credit: 500}},
+		})
+
+		entryType, typeErr := source.GetEntryType(ctx, &repositories.GetLedgerJournalRequest{
+			TenantInfo: tenant, ID: closing,
+		})
+		require.NoError(t, typeErr)
+		assert.Equal(t, journalentry.EntryTypeClosing, entryType)
+		_, typeErr = source.GetEntryType(ctx, &repositories.GetLedgerJournalRequest{
+			TenantInfo: other, ID: closing,
+		})
+		assert.True(t, errortypes.IsNotFoundError(typeErr))
+		reopenedJournal, getErr := source.GetJournal(ctx, &repositories.GetLedgerJournalRequest{
+			TenantInfo: tenant, ID: reopened,
+		})
+		require.NoError(t, getErr)
+		assert.Equal(t, journalentry.EntryTypeClosing.String(), reopenedJournal.ReversesEntryType)
+		assert.Equal(t, "JE-FY-CLOSE", reopenedJournal.ReversalOfNumber)
+
+		journals, listErr := source.ListJournals(ctx, &repositories.ListLedgerJournalsRequest{
+			TenantInfo: tenant, From: closeDay, Before: closeDay + 86_400,
+		})
+		require.NoError(t, listErr)
+		require.Len(t, journals, 1)
+		assert.Equal(t, undone, journals[0].ID)
+		assert.Equal(t, journalentry.EntryTypeStandard.String(), journals[0].ReversesEntryType)
+
+		net := func(includeClosing bool, days int64) map[pulid.ID]int64 {
+			t.Helper()
+			from := closeDay
+			balances, sumErr := source.SumLines(ctx, &repositories.SumLedgerRequest{
+				TenantInfo: tenant, From: &from, Before: closeDay + days*86_400, IncludeClosing: includeClosing,
+			})
+			require.NoError(t, sumErr)
+			out := make(map[pulid.ID]int64, len(balances))
+			for idx := range balances {
+				out[balances[idx].AccountID] += balances[idx].NetMinor()
+			}
+			return out
+		}
+		assert.Equal(t, map[pulid.ID]int64{acctA: 500, acctB: -500}, net(false, 2),
+			"only the ordinary reversal is sent")
+		assert.Equal(t, map[pulid.ID]int64{acctA: 500, acctB: -500, acctC: 0}, net(true, 1),
+			"a close and its reversal cancel; the carried-forward entry would count the balance sheet twice")
+		assert.Equal(t, map[pulid.ID]int64{acctA: 500, acctB: -500, acctC: 0}, net(true, 2),
+			"undoing the carried-forward entry is left out with it")
+
+		connections := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
+		connection, connErr := connections.GetByType(ctx, repositories.GetAccountingConnectionRequest{
+			TenantInfo:      tenant,
+			IntegrationType: integration.TypeQuickBooksOnline,
+		})
+		if errortypes.IsNotFoundError(connErr) {
+			connection, connErr = connections.Create(ctx, newConnection(tenant, userID, realm, 1_000))
+		}
+		require.NoError(t, connErr)
+		connectionID := connection.ID
+		found, candErr := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: zap.NewNop()}).
+			ListCandidates(ctx, &repositories.ListAccountingSyncCandidatesRequest{
+				TenantInfo:   tenant,
+				ConnectionID: connectionID,
+				ObjectType:   accountingsync.SyncObjectJournalEntry,
+				Operation:    accountingsync.SyncOperationCreate,
+				DatedFrom:    closeDay,
+				Timezone:     "UTC",
+				Limit:        50,
+			})
+		require.NoError(t, candErr)
+		ids := make([]pulid.ID, 0, len(found))
+		for idx := range found {
+			ids = append(ids, found[idx].ObjectID)
+		}
+		assert.Equal(t, []pulid.ID{undone}, ids)
 	})
 }

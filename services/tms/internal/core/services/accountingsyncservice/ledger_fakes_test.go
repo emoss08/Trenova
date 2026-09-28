@@ -45,6 +45,26 @@ func (f *fakeLedger) GetJournal(
 	return nil, errortypes.NewNotFoundError("JournalEntry not found within your organization")
 }
 
+func (f *fakeLedger) GetEntryType(
+	ctx context.Context,
+	req *repositories.GetLedgerJournalRequest,
+) (journalentry.EntryType, error) {
+	journal, err := f.GetJournal(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	return journalentry.EntryType(journal.EntryType), nil
+}
+
+func counted(journal *repositories.LedgerJournal, includeClosing bool) bool {
+	entryType := journalentry.EntryType(journal.EntryType)
+	reverses := journalentry.EntryType(journal.ReversesEntryType)
+	if !includeClosing {
+		return accountingsync.JournalSendable(entryType, reverses)
+	}
+	return entryType != journalentry.EntryTypeOpening && reverses != journalentry.EntryTypeOpening
+}
+
 func (f *fakeLedger) ListJournals(
 	_ context.Context,
 	req *repositories.ListLedgerJournalsRequest,
@@ -54,7 +74,7 @@ func (f *fakeLedger) ListJournals(
 	out := []*repositories.LedgerJournal{}
 	for _, journal := range f.journals {
 		if journal.AccountingDate < req.From || journal.AccountingDate >= req.Before ||
-			!accountingsync.JournalSendable(journalentry.EntryType(journal.EntryType)) {
+			!counted(journal, false) {
 			continue
 		}
 		out = append(out, journal)
@@ -78,8 +98,7 @@ func (f *fakeLedger) SumLines(
 	for _, journal := range f.journals {
 		if journal.AccountingDate >= req.Before ||
 			(req.From != nil && journal.AccountingDate < *req.From) ||
-			(!req.IncludeClosing &&
-				!accountingsync.JournalSendable(journalentry.EntryType(journal.EntryType))) {
+			!counted(journal, req.IncludeClosing) {
 			continue
 		}
 		for _, line := range journal.Lines {

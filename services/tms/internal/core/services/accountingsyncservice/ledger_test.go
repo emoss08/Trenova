@@ -814,6 +814,203 @@ func TestChooseModeIsRefusedOnceSyncIsEnabled(t *testing.T) {
 		Granularity:     accountingsync.LedgerDetailed,
 	})
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "fixed once sync is enabled")
+	assert.Contains(t, err.Error(), "fixed for this connection once sending starts")
 	assert.Equal(t, accountingsync.SyncModeDocument, h.connections.get(h.conn.ID).Mode())
+}
+
+func (h *harness) postReversal(
+	t *testing.T,
+	reversal *repositories.LedgerJournal,
+	original *repositories.LedgerJournal,
+) {
+	t.Helper()
+	reversal.IsReversal = true
+	reversal.EntryType = journalentry.EntryTypeReversal.String()
+	reversal.ReversalOfNumber = original.EntryNumber
+	reversal.ReversesEntryType = original.EntryType
+	h.ledger.add(reversal)
+	require.NoError(t, h.enqueuer.EnqueueJournal(t.Context(), &services.AccountingJournalPosted{
+		TenantInfo:     h.tenant,
+		EntryID:        reversal.ID,
+		EntryNumber:    reversal.EntryNumber,
+		EntryType:      journalentry.EntryTypeReversal,
+		ReversalOfID:   original.ID,
+		AccountingDate: reversal.AccountingDate,
+	}))
+}
+
+func TestReopeningAFiscalYearIsNotSent(t *testing.T) {
+	t.Parallel()
+
+	accts := newLedgerAccounts()
+	for _, closeType := range []journalentry.EntryType{
+		journalentry.EntryTypeClosing,
+		journalentry.EntryTypeOpening,
+	} {
+		t.Run(closeType.String(), func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t)
+			h.ledgerMode(accountingsync.LedgerDetailed)
+			closing := invoiceJournal(accts, pulid.MustNew("cus_"), "JE-CL", aprilTenth, 900)
+			closing.EntryType = closeType.String()
+			h.ledger.add(closing)
+
+			h.postReversal(t, invoiceJournal(accts, pulid.MustNew("cus_"), "JE-RV", aprilTenth, 900), closing)
+
+			assert.Empty(t, h.records.all())
+		})
+	}
+}
+
+func TestReversalOfAnOrdinaryEntryIsSent(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.ledgerMode(accountingsync.LedgerDetailed)
+	accts := newLedgerAccounts()
+	customerID := pulid.MustNew("cus_")
+	h.mapLedger(accts, customerID)
+	original := invoiceJournal(accts, customerID, "JE-1", aprilTenth, 900)
+	h.ledger.add(original)
+	reversal := invoiceJournal(accts, customerID, "JE-2", aprilTenth, 900)
+	reversal.Lines = []repositories.LedgerJournalLine{arLine(accts, 0, 900), revenueLine(accts, 900, 0)}
+
+	h.postReversal(t, reversal, original)
+	record := h.only(t, accountingsync.SyncObjectJournalEntry, reversal.ID, accountingsync.SyncOperationCreate)
+	h.drain(t)
+
+	assert.Equal(t, accountingsync.SyncStatusSynced, h.records.get(record.ID).Status)
+	doc := onlyJournalDoc(t, h, "CreateJournalEntry")
+	assert.Contains(t, doc.PrivateNote, "reversing JE-1")
+}
+
+func TestAQueuedReversalOfAFiscalCloseIsNotSent(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.ledgerMode(accountingsync.LedgerDetailed)
+	accts := newLedgerAccounts()
+	customerID := pulid.MustNew("cus_")
+	h.mapLedger(accts, customerID)
+	original := invoiceJournal(accts, customerID, "JE-1", aprilTenth, 900)
+	h.ledger.add(original)
+	reversal := invoiceJournal(accts, customerID, "JE-2", aprilTenth, 900)
+	h.postReversal(t, reversal, original)
+	record := h.only(t, accountingsync.SyncObjectJournalEntry, reversal.ID, accountingsync.SyncOperationCreate)
+	reversal.ReversesEntryType = journalentry.EntryTypeClosing.String()
+
+	h.drain(t)
+
+	done := h.records.get(record.ID)
+	assert.Equal(t, accountingsync.SyncStatusSynced, done.Status)
+	assert.Empty(t, done.ExternalID)
+	assert.Contains(t, done.Resolution, "reopens a fiscal year")
+	assert.Empty(t, h.writer.methods())
+}
+
+func TestDailySummaryUpdateFollowsTheLatestSendNotTheHighestRevision(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.ledgerMode(accountingsync.LedgerDailySummary)
+	accts := newLedgerAccounts()
+	customerID := pulid.MustNew("cus_")
+	h.mapLedger(accts, customerID)
+	h.postJournal(t, invoiceJournal(accts, customerID, "JE-1", aprilTenth, 5_000))
+	h.drain(t)
+	dayID := pulid.ID("jday_20260410")
+	create := h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationCreate)
+
+	reversal := invoiceJournal(accts, customerID, "JE-2", aprilTenth+60, 5_000)
+	reversal.Lines = []repositories.LedgerJournalLine{arLine(accts, 0, 5_000), revenueLine(accts, 5_000, 0)}
+	h.postJournal(t, reversal)
+	h.drain(t)
+	require.Len(t, h.writer.callsTo("DeleteJournalEntry"), 1)
+
+	h.ledger.add(invoiceJournal(accts, customerID, "JE-3", aprilTenth+120, 700))
+	late := create.DayUpdate(create.Revision + 1)
+	h.records.put(late)
+
+	h.drain(t)
+
+	assert.Empty(t, h.writer.callsTo("UpdateJournalEntry"),
+		"the day's entry was deleted after the late update was taken")
+	require.Len(t, h.writer.callsTo("CreateJournalEntry"), 2)
+	assert.Equal(t, accountingsync.SyncStatusSynced, h.records.get(late.ID).Status)
+}
+
+func TestDailySummaryUpdateWaitsOnALaterUpdateInFlight(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.ledgerMode(accountingsync.LedgerDailySummary)
+	accts := newLedgerAccounts()
+	customerID := pulid.MustNew("cus_")
+	h.mapLedger(accts, customerID)
+	h.postJournal(t, invoiceJournal(accts, customerID, "JE-1", aprilTenth, 5_000))
+	h.drain(t)
+	dayID := pulid.ID("jday_20260410")
+	create := h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationCreate)
+	running := create.DayUpdate(create.Revision + 10)
+	running.Status = accountingsync.SyncStatusInFlight
+	h.records.put(running)
+	late := create.DayUpdate(create.Revision + 5)
+	h.records.put(late)
+
+	h.drain(t)
+
+	assert.Equal(t, running.ID, h.records.get(late.ID).DependsOnRecordID)
+	assert.Empty(t, h.writer.callsTo("UpdateJournalEntry"))
+}
+
+func TestDailySummaryUpdateKeepsTheDateTheDayWasSentOn(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.ledgerMode(accountingsync.LedgerDailySummary)
+	accts := newLedgerAccounts()
+	customerID := pulid.MustNew("cus_")
+	h.mapLedger(accts, customerID)
+	h.postJournal(t, invoiceJournal(accts, customerID, "JE-1", aprilTenth, 5_000))
+	h.drain(t)
+	dayID := pulid.ID("jday_20260410")
+	create := h.records.get(
+		h.only(t, accountingsync.SyncObjectJournalSummary, dayID, accountingsync.SyncOperationCreate).ID,
+	)
+	firstOpen := aprilTenth + 5*86_400
+	create.RedatedTo = &firstOpen
+	h.records.put(create)
+
+	h.postJournal(t, invoiceJournal(accts, customerID, "JE-2", aprilTenth+60, 700))
+	h.drain(t)
+
+	doc := onlyJournalDoc(t, h, "UpdateJournalEntry")
+	assert.Equal(t, "2026-04-15", doc.TxnDate)
+	assert.Contains(t, doc.PrivateNote, "2026-04-10")
+}
+
+func TestEnableSyncKeepsTheStartDateOnceOpeningBalancesAreSent(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.atStartDateStep()
+	h.ledgerMode(accountingsync.LedgerDetailed)
+	start := time.Date(2026, time.April, 1, 0, 0, 0, 0, time.UTC).Unix()
+	_, err := h.svc.EnableSync(t.Context(), &services.EnableAccountingSyncRequest{
+		TenantInfo:      h.tenant,
+		UserID:          h.userID,
+		IntegrationType: integration.TypeQuickBooksOnline,
+		StartDate:       start,
+		OpeningBalances: true,
+	})
+	require.NoError(t, err)
+
+	_, err = h.enableSync(t, start-30*86_400, false)
+	requireValidationField(t, err, "startDate")
+	current := h.connections.get(h.conn.ID)
+	require.NotNil(t, current.SyncStartDate)
+	assert.Equal(t, start, *current.SyncStartDate)
+
+	_, err = h.enableSync(t, start, false)
+	require.NoError(t, err, "the same start date can be saved again")
 }

@@ -73,6 +73,41 @@ func TestRescoreOffersEveryActiveGLAccountInLedgerMode(t *testing.T) {
 	h.object(t, accountingsync.TargetGLAccount, fuel.ID)
 }
 
+func TestRescoreOffersAnInactiveAccountThatCarriesEntries(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.ledgerMode(t)
+	cash := &glaccount.GLAccount{ID: pulid.MustNew("gla_"), AccountCode: "1000", Name: "Operating cash"}
+	retired := repositories.LedgerAccount{ID: pulid.MustNew("gla_"), Code: "1050", Name: "Old payroll"}
+	accounts := mocks.NewMockGLAccountRepository(t)
+	accounts.EXPECT().List(mock.Anything, mock.Anything).
+		Return(&pagination.ListResult[*glaccount.GLAccount]{
+			Items: []*glaccount.GLAccount{cash},
+			Total: 1,
+		}, nil).Once()
+	h.svc.glAccounts = accounts
+	ledger := &fakeLedgerAccounts{accounts: []repositories.LedgerAccount{
+		{ID: cash.ID, Code: "1000", Name: "Operating cash"},
+		retired,
+	}}
+	h.svc.ledger = ledger
+
+	h.rescore(t)
+
+	row := h.object(t, accountingsync.TargetGLAccount, retired.ID)
+	assert.Equal(t, "1050 (Old payroll)", row.TargetLabel)
+	cashRows := 0
+	for _, mapping := range h.mappings.rows {
+		if mapping.TargetType == accountingsync.TargetGLAccount && mapping.TrenovaObjectID == cash.ID {
+			cashRows++
+		}
+	}
+	assert.Equal(t, 1, cashRows, "an active account with entries is offered once")
+	require.NotEmpty(t, ledger.asked)
+	assert.Nil(t, ledger.asked[0].Since, "every account that ever carried an entry is offered")
+}
+
 func TestRescoreLeavesUnusedGLAccountsOutInDocumentMode(t *testing.T) {
 	t.Parallel()
 

@@ -6287,6 +6287,7 @@
   "The source of a purchase cannot be changed": "採購紀錄的來源無法變更",
   "The source version belongs to a different template": "來源版本屬於其他範本",
   "The start date cannot be in the future": "開始日期不得晚於今天",
+  "The start date cannot move once opening balances are sent, because they hold every balance up to it": "期初餘額傳送後即無法變更開始日期，因為其中包含截至該日的所有餘額",
   "The start of the range is required": "必須提供範圍的開始時間",
   "The start time is not a time of day": "開始時間不是一天中的有效時刻",
   "The stored provider payload could not be read": "無法讀取已儲存的供應商負載資料",

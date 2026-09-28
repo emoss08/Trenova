@@ -25,6 +25,7 @@ type EnqueuerParams struct {
 	Records     repositories.AccountingSyncRecordRepository
 	Mappings    repositories.AccountingMappingRepository
 	Orgs        repositories.OrganizationRepository
+	Ledger      repositories.AccountingLedgerSource
 	Dispatcher  services.AccountingSyncDispatcher `optional:"true"`
 }
 
@@ -34,6 +35,7 @@ type Enqueuer struct {
 	records     repositories.AccountingSyncRecordRepository
 	mappings    repositories.AccountingMappingRepository
 	orgs        repositories.OrganizationRepository
+	ledger      repositories.AccountingLedgerSource
 	dispatcher  services.AccountingSyncDispatcher
 }
 
@@ -50,6 +52,7 @@ func NewEnqueuer(p EnqueuerParams) *Enqueuer {
 		records:     p.Records,
 		mappings:    p.Mappings,
 		orgs:        p.Orgs,
+		ledger:      p.Ledger,
 		dispatcher:  p.Dispatcher,
 	}
 }
@@ -177,7 +180,7 @@ func (e *Enqueuer) EnqueueJournal(
 	posted *services.AccountingJournalPosted,
 ) error {
 	if posted == nil || posted.EntryID.IsNil() ||
-		!accountingsync.JournalSendable(posted.EntryType) {
+		!accountingsync.JournalSendable(posted.EntryType, "") {
 		return nil
 	}
 	conns, err := e.connections.ListByTenant(ctx, posted.TenantInfo)
@@ -213,9 +216,33 @@ func (e *Enqueuer) EnqueueJournal(
 		}
 		records = append(records, NewRecordFor(conn, req, now))
 	}
+	if len(records) == 0 {
+		return nil
+	}
+	sendable, err := e.reversalSendable(ctx, posted)
+	if err != nil || !sendable {
+		return err
+	}
 
 	_, err = e.EnqueueRecords(ctx, posted.TenantInfo, records)
 	return err
+}
+
+func (e *Enqueuer) reversalSendable(
+	ctx context.Context,
+	posted *services.AccountingJournalPosted,
+) (bool, error) {
+	if posted.ReversalOfID.IsNil() {
+		return true, nil
+	}
+	reverses, err := e.ledger.GetEntryType(ctx, &repositories.GetLedgerJournalRequest{
+		TenantInfo: posted.TenantInfo,
+		ID:         posted.ReversalOfID,
+	})
+	if err != nil {
+		return false, fmt.Errorf("accounting sync: load reversed journal: %w", err)
+	}
+	return accountingsync.JournalSendable(posted.EntryType, reverses), nil
 }
 
 func JournalDayRequest(

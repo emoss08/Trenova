@@ -3,6 +3,8 @@ package repositories
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
+
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -48,6 +50,7 @@ type LedgerJournal struct {
 	PostedAt             int64
 	IsReversal           bool
 	ReversalOfNumber     string
+	ReversesEntryType    string
 	SourceObjectType     string
 	SourceObjectID       string
 	SourceDocumentNumber string
@@ -102,6 +105,7 @@ type LedgerAccount struct {
 
 type AccountingLedgerSource interface {
 	GetJournal(ctx context.Context, req *GetLedgerJournalRequest) (*LedgerJournal, error)
+	GetEntryType(ctx context.Context, req *GetLedgerJournalRequest) (journalentry.EntryType, error)
 	ListJournals(ctx context.Context, req *ListLedgerJournalsRequest) ([]*LedgerJournal, error)
 	SumLines(ctx context.Context, req *SumLedgerRequest) ([]LedgerAccountBalance, error)
 	ListActiveAccounts(

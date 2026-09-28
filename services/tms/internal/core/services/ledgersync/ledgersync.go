@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
 
@@ -57,6 +58,7 @@ func (r *postingRepository) CreatePosting(
 		EntryID:        params.EntryID,
 		EntryNumber:    params.EntryNumber,
 		EntryType:      journalentry.EntryType(params.EntryType),
+		ReversalOfID:   reversalOf(params.IsReversal, params.ReversalOfID),
 		AccountingDate: params.AccountingDate,
 	})
 }
@@ -80,6 +82,14 @@ func (r *reviewRepository) PostEntry(
 		EntryID:        entry.ID,
 		EntryNumber:    entry.EntryNumber,
 		EntryType:      entry.EntryType,
+		ReversalOfID:   reversalOf(entry.IsReversal, entry.ReversalOfID),
 		AccountingDate: entry.AccountingDate,
 	})
+}
+
+func reversalOf(isReversal bool, id pulid.ID) pulid.ID {
+	if !isReversal {
+		return pulid.Nil
+	}
+	return id
 }

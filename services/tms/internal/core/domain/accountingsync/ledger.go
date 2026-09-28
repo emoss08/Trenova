@@ -58,7 +58,10 @@ func AllLedgerGranularities() []LedgerGranularity {
 
 var (
 	ErrModeFixed = errors.New(
-		"the mode is fixed once sync is enabled; disconnect and connect again to change it",
+		"what is sent is fixed for this connection once sending starts, because the books already hold what was sent",
+	)
+	ErrStartDateFixed = errors.New(
+		"the start date is fixed once opening balances are sent, because they hold every balance up to it",
 	)
 	ErrModeNotRecognized   = errors.New("the mode is not recognized")
 	ErrGranularityRequired = errors.New(
@@ -128,26 +131,37 @@ func (c *AccountingConnection) ChooseMode(mode SyncMode, granularity LedgerGranu
 	if !mode.IsValid() {
 		return ErrModeNotRecognized
 	}
+	if mode == SyncModeLedger && !granularity.IsValid() {
+		return ErrGranularityRequired
+	}
+	previousMode, previousGranularity := c.Mode(), c.Granularity()
 	switch mode {
 	case SyncModeLedger:
-		if !granularity.IsValid() {
-			return ErrGranularityRequired
-		}
 		c.LedgerGranularity = granularity
 	case SyncModeDocument:
 		c.LedgerGranularity = ""
 	}
 	c.SyncMode = mode
-	if c.SetupStep == SetupStepMode || c.SetupStep == "" {
+	changed := c.Mode() != previousMode || c.Granularity() != previousGranularity
+	if changed || c.SetupStep == SetupStepMode || c.SetupStep == "" {
 		c.SetupStep = SetupStepMappings
 	}
 	return nil
 }
 
-func JournalSendable(entryType journalentry.EntryType) bool {
-	return entryType != "" &&
-		entryType != journalentry.EntryTypeClosing &&
-		entryType != journalentry.EntryTypeOpening
+func (c *AccountingConnection) CanMoveStartDate(startDate int64) error {
+	if c.SentOpeningBalances() && c.SyncStartDate != nil && *c.SyncStartDate != startDate {
+		return ErrStartDateFixed
+	}
+	return nil
+}
+
+func JournalSendable(entryType, reversesType journalentry.EntryType) bool {
+	return entryType != "" && !ClosesFiscalYear(entryType) && !ClosesFiscalYear(reversesType)
+}
+
+func ClosesFiscalYear(entryType journalentry.EntryType) bool {
+	return entryType == journalentry.EntryTypeClosing || entryType == journalentry.EntryTypeOpening
 }
 
 func (c *AccountingConnection) SentOpeningBalances() bool {

@@ -111,7 +111,8 @@ Keywords: ledger mode, journal entry sync, general ledger to QuickBooks, daily s
 4. Select **Start sending**. Invoices, payments and bills stay in Trenova; QuickBooks receives their
    journal entries once they are posted, including entries posted by hand on
    [Journals to post](/accounting/journals-to-post). The connection shows **What is sent** and when
-   **Opening balances** were sent. To change the choice later, disconnect and connect again.
+   **Opening balances** were sent. The choice cannot be changed once sending starts, and the start
+   date cannot move once opening balances are sent.
 
 ### Change how documents are sent
 Keywords: automatic sync, hold documents, owner-operator settlements, 1099 drivers, driver bills

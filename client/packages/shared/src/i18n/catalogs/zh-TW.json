@@ -13853,7 +13853,7 @@
   "This changes what the template computes, so it returns to Draft and stops rating shipments until it is approved again. Name and description edits do not do this.": "此舉會變更範本的計算內容，因此範本會退回草稿狀態，並在重新核准前停止用於運單計價。僅修改名稱與說明不會造成此結果。",
   "This charge bills {0} detained stops. Open a claim file:": "此費用涵蓋 {0} 個滯留停靠點。開啟索賠檔案：",
   "This charge is over the policy approval threshold and cannot be billed until cleared.": "此費用已超過政策核准門檻，須經核准後才能開立帳單。",
-  "This choice is fixed once sending starts. Changing it later means disconnecting {0} and connecting again.": "開始傳送後即無法變更此選擇。之後若要變更，需中斷與 {0} 的連線並重新連線。",
+  "This choice is fixed once sending starts, because {0} will already hold what was sent.": "開始傳送後即無法變更此選擇，因為 {0} 已保有傳送的內容。",
   "This code is non-taxable — amounts post to the settlement as reimbursements, are excluded from guaranteed-minimum checks, and post to the code's GL account (or the driver reimbursement account) instead of wages expense.": "此代碼為免稅 — 金額以核銷方式計入結算，不納入保障下限檢核，並過帳至該代碼的總帳科目（或駕駛員核銷科目），而非薪資費用科目。",
   "This comment has replies, so it will be replaced with a deleted-comment placeholder. Its content and attachments are removed permanently.": "此留言有回覆，因此會改以「留言已刪除」的佔位內容顯示。其內容與附件將被永久移除。",
   "This comment was deleted": "此註解已刪除",

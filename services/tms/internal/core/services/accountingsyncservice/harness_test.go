@@ -119,6 +119,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Records:     h.records,
 		Mappings:    fakeMappingRepo{store: h.mappings},
 		Orgs:        fakeOrganizations{timezone: cfg.timezone},
+		Ledger:      h.ledger,
 		Dispatcher:  dispatcher,
 	})
 	h.svc = New(Params{

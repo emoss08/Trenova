@@ -373,6 +373,13 @@ func (s *Service) EnableSync(
 			"The start date cannot be in the future",
 		)
 	}
+	if err = conn.CanMoveStartDate(req.StartDate); err != nil {
+		return nil, errortypes.NewValidationError(
+			"startDate",
+			errortypes.ErrInvalid,
+			"The start date cannot move once opening balances are sent, because they hold every balance up to it",
+		)
+	}
 
 	before := jsonutils.MustToJSON(conn)
 	hadOpeningBalances := conn.SentOpeningBalances()
@@ -976,7 +983,11 @@ func (s *Service) ChooseMode(
 	if err != nil {
 		return nil, err
 	}
-	if _, rescoreErr := s.mappingService.Rescore(ctx, req.TenantInfo, updated.ID); rescoreErr != nil {
+	if _, rescoreErr := s.mappingService.Rescore(
+		ctx,
+		req.TenantInfo,
+		updated.ID,
+	); rescoreErr != nil {
 		s.l.Warn("the mode was saved but its mappings were not rebuilt; the next refresh will",
 			zap.String("connectionId", updated.ID.String()), zap.Error(rescoreErr))
 	}

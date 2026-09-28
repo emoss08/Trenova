@@ -455,6 +455,7 @@ type AccountingJournalPosted struct {
 	EntryID        pulid.ID
 	EntryNumber    string
 	EntryType      journalentry.EntryType
+	ReversalOfID   pulid.ID
 	AccountingDate int64
 }
 

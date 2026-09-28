@@ -182311,6 +182311,15 @@
       "service/accountingsyncservice"
     ]
   },
+  "The start date cannot move once opening balances are sent, because they hold every balance up to it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "The start of the range is required": {
     "sites": 2,
     "scope": [
@@ -184650,7 +184659,7 @@
       "service/workerchecklistservice"
     ]
   },
-  "This choice is fixed once sending starts. Changing it later means disconnecting {0} and connecting again.": {
+  "This choice is fixed once sending starts, because {0} will already hold what was sent.": {
     "sites": 1,
     "scope": [
       "ts"

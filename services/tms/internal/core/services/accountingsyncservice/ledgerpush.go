@@ -141,9 +141,12 @@ func (s *Service) pushJournalEntry(
 		return nil, err
 	}
 	label := documentLabel(record.ObjectType, journal.EntryNumber)
-	if !accountingsync.JournalSendable(journalentry.EntryType(journal.EntryType)) {
+	if !accountingsync.JournalSendable(
+		journalentry.EntryType(journal.EntryType),
+		journalentry.EntryType(journal.ReversesEntryType),
+	) {
 		return nil, &noopError{
-			reason: label + " closes or opens a fiscal year, which " + sess.providerName +
+			reason: label + " closes, opens or reopens a fiscal year, which " + sess.providerName +
 				" does on its own",
 		}
 	}
@@ -218,9 +221,22 @@ func (s *Service) pushJournalDay(
 	from := timeutils.DayStart(*record.DocumentDate, sess.loc)
 	before := timeutils.NextDayStart(from, sess.loc)
 
-	externalID, err := s.dayTarget(ctx, sess, record, label)
-	if err != nil {
-		return nil, err
+	var (
+		target *accountingsync.AccountingSyncRecord
+		err    error
+	)
+	if record.Operation == accountingsync.SyncOperationUpdate {
+		if target, err = s.dayTarget(ctx, sess, record, label); err != nil {
+			return nil, err
+		}
+	}
+	externalID := ""
+	dated := record
+	if target != nil {
+		externalID = target.ExternalID
+		if record.RedatedTo == nil && target.RedatedTo != nil {
+			dated = target
+		}
 	}
 
 	journals, err := s.ledger.ListJournals(ctx, &repositories.ListLedgerJournalsRequest{
@@ -237,7 +253,7 @@ func (s *Service) pushJournalDay(
 	}
 
 	currency := functionalCurrency(sess)
-	sentDate := record.SentDate(from)
+	sentDate := dated.SentDate(from)
 	if err = s.checkBooks(sess, currency, sentDate, label); err != nil {
 		return nil, err
 	}
@@ -276,7 +292,7 @@ func (s *Service) pushJournalDay(
 		CurrencyCode: currency,
 		ExchangeRate: rate,
 		PrivateNote: trenovaNotePrefix + "journal entries posted for " + day +
-			sentDateNote(record, from, sess.loc),
+			sentDateNote(dated, from, sess.loc),
 		Lines: docLines,
 	}
 	var written *services.AccountingDocumentResult
@@ -319,25 +335,23 @@ func (s *Service) dayTarget(
 	sess *pushSession,
 	record *accountingsync.AccountingSyncRecord,
 	label string,
-) (string, error) {
-	if record.Operation != accountingsync.SyncOperationUpdate {
-		return "", nil
-	}
+) (*accountingsync.AccountingSyncRecord, error) {
 	existing, err := s.objectRecords(ctx, sess, record.ObjectType, record.ObjectID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	var sent, inFlight *accountingsync.AccountingSyncRecord
 	for _, other := range existing {
-		if other.ID == record.ID || other.Revision >= record.Revision {
+		if other.ID == record.ID {
 			continue
 		}
 		switch {
 		case other.Status == accountingsync.SyncStatusSynced:
-			if sent == nil || other.Revision > sent.Revision {
+			if sent == nil || sentLater(other, sent) {
 				sent = other
 			}
-		case !other.Status.IsFinal():
+		case other.Revision < record.Revision && !other.Status.IsFinal(),
+			other.Status == accountingsync.SyncStatusInFlight:
 			if inFlight == nil || other.Revision < inFlight.Revision {
 				inFlight = other
 			}
@@ -345,12 +359,23 @@ func (s *Service) dayTarget(
 	}
 	if inFlight != nil {
 		s.kick(ctx, sess.tenant, sess.conn.ID)
-		return "", waitingOn(inFlight, label)
+		return nil, waitingOn(inFlight, label)
 	}
-	if sent == nil {
-		return "", nil
+	return sent, nil
+}
+
+func sentLater(a, b *accountingsync.AccountingSyncRecord) bool {
+	at, bt := int64(0), int64(0)
+	if a.SyncedAt != nil {
+		at = *a.SyncedAt
 	}
-	return sent.ExternalID, nil
+	if b.SyncedAt != nil {
+		bt = *b.SyncedAt
+	}
+	if at != bt {
+		return at > bt
+	}
+	return a.Revision > b.Revision
 }
 
 func (s *Service) pushOpeningBalances(

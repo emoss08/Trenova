@@ -166,3 +166,38 @@ func TestPostEntryQueuesNothingWhenPostingFails(t *testing.T) {
 	assert.Empty(t, entries.asked)
 	assert.Empty(t, ledger.posted)
 }
+
+func TestAReversalCarriesTheEntryItReverses(t *testing.T) {
+	t.Parallel()
+
+	ledger := &fakeLedger{}
+	params := postingParams(true)
+	params.EntryType = journalentry.EntryTypeReversal.String()
+	params.IsReversal = true
+	params.ReversalOfID = pulid.MustNew("je_")
+	require.NoError(t, DecoratePosting(&fakePosting{}, ledger).CreatePosting(t.Context(), params))
+
+	require.Len(t, ledger.posted, 1)
+	assert.Equal(t, params.ReversalOfID, ledger.posted[0].ReversalOfID)
+
+	stale := postingParams(true)
+	stale.ReversalOfID = pulid.MustNew("je_")
+	require.NoError(t, DecoratePosting(&fakePosting{}, ledger).CreatePosting(t.Context(), stale))
+	assert.True(t, ledger.posted[1].ReversalOfID.IsNil(), "only a reversal names what it reverses")
+
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	reviewed := &journalentry.JournalEntry{
+		ID:           pulid.MustNew("je_"),
+		EntryNumber:  "JE-3003",
+		EntryType:    journalentry.EntryTypeReversal,
+		IsReversal:   true,
+		ReversalOfID: pulid.MustNew("je_"),
+	}
+	repo := DecorateReview(&fakeReview{}, &fakeEntries{entry: reviewed}, ledger)
+	require.NoError(t, repo.PostEntry(t.Context(), &repositories.PostJournalEntryParams{
+		TenantInfo: tenantInfo,
+		EntryID:    reviewed.ID,
+	}))
+	require.Len(t, ledger.posted, 3)
+	assert.Equal(t, reviewed.ReversalOfID, ledger.posted[2].ReversalOfID)
+}

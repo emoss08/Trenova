@@ -429,6 +429,26 @@ func (s *Service) glAccountTargets(
 		seen[account.ID] = struct{}{}
 		targets = append(targets, glAccountTarget(account))
 	}
+	if !ledger || s.ledger == nil {
+		return targets, nil
+	}
+	posted, err := s.ledger.ListActiveAccounts(ctx, &repositories.ListLedgerAccountsRequest{
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for idx := range posted {
+		if _, dup := seen[posted[idx].ID]; dup {
+			continue
+		}
+		seen[posted[idx].ID] = struct{}{}
+		targets = append(targets, glAccountTarget(&glaccount.GLAccount{
+			ID:          posted[idx].ID,
+			AccountCode: posted[idx].Code,
+			Name:        posted[idx].Name,
+		}))
+	}
 	return targets, nil
 }
 

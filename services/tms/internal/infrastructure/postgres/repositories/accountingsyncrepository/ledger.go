@@ -98,8 +98,58 @@ func NewLedgerSource(p LedgerSourceParams) repositories.AccountingLedgerSource {
 	}
 }
 
+const reversedEntryAlias = "jerev"
+
 func unsentEntryTypes() []journalentry.EntryType {
 	return []journalentry.EntryType{journalentry.EntryTypeClosing, journalentry.EntryTypeOpening}
+}
+
+func carriedEntryTypes() []journalentry.EntryType {
+	return []journalentry.EntryType{journalentry.EntryTypeOpening}
+}
+
+func withoutEntryTypes(
+	excluded []journalentry.EntryType,
+) func(*bun.SelectQuery) *bun.SelectQuery {
+	entries := buncolgen.JournalEntryColumns
+	reversedID := entries.ID.WithAlias(reversedEntryAlias)
+	reversedType := entries.EntryType.WithAlias(reversedEntryAlias)
+	return func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.
+			Join("LEFT "+joinOn(
+				buncolgen.JournalEntryTable,
+				reversedEntryAlias,
+				reversedID.EqColumn(entries.ReversalOfID),
+				entries.OrganizationID.WithAlias(reversedEntryAlias).
+					EqColumn(entries.OrganizationID),
+				entries.BusinessUnitID.WithAlias(reversedEntryAlias).
+					EqColumn(entries.BusinessUnitID),
+			)).
+			Where(entries.EntryType.NotIn(), bun.List(excluded)).
+			WhereGroup(" AND ", func(g *bun.SelectQuery) *bun.SelectQuery {
+				return g.
+					Where(reversedType.IsNull()).
+					WhereOr(reversedType.NotIn(), bun.List(excluded))
+			})
+	}
+}
+
+func (s *ledgerSource) GetEntryType(
+	ctx context.Context,
+	req *repositories.GetLedgerJournalRequest,
+) (journalentry.EntryType, error) {
+	cols := buncolgen.JournalEntryColumns
+	entry := new(journalentry.JournalEntry)
+	if err := s.db.DBForContext(ctx).
+		NewSelect().
+		Model(entry).
+		Column(cols.EntryType.Bare()).
+		Apply(buncolgen.JournalEntryApplyTenant(req.TenantInfo)).
+		Where(cols.ID.Eq(), req.ID).
+		Scan(ctx); err != nil {
+		return "", dberror.HandleNotFoundError(err, journalEntryEntity)
+	}
+	return entry.EntryType, nil
 }
 
 func (s *ledgerSource) GetJournal(
@@ -136,7 +186,7 @@ func (s *ledgerSource) ListJournals(
 		Model(&entries).
 		Apply(buncolgen.JournalEntryApplyTenant(req.TenantInfo)).
 		Where(cols.IsPosted.IsTrue()).
-		Where(cols.EntryType.NotIn(), bun.List(unsentEntryTypes())).
+		Apply(withoutEntryTypes(unsentEntryTypes())).
 		Where(cols.AccountingDate.Gte(), req.From).
 		Where(cols.AccountingDate.Lt(), req.Before).
 		Order(cols.AccountingDate.OrderAsc(), cols.EntryNumber.OrderAsc(), cols.ID.OrderAsc()).
@@ -322,9 +372,11 @@ func (s *ledgerSource) postedLines(
 		)).
 		Apply(buncolgen.JournalEntryLineApplyTenant(filter.tenantInfo)).
 		Where(entries.IsPosted.IsTrue())
-	if !filter.includeClosing {
-		query = query.Where(entries.EntryType.NotIn(), bun.List(unsentEntryTypes()))
+	excluded := unsentEntryTypes()
+	if filter.includeClosing {
+		excluded = carriedEntryTypes()
 	}
+	query = query.Apply(withoutEntryTypes(excluded))
 	if filter.from != nil {
 		query = query.Where(entries.AccountingDate.Gte(), *filter.from)
 	}
@@ -354,7 +406,7 @@ func (s *ledgerSource) assemble(
 	if err != nil {
 		return nil, err
 	}
-	numbers, err := s.entryNumbers(ctx, tenantInfo, reversalOf)
+	reversed, err := s.reversedEntries(ctx, tenantInfo, reversalOf)
 	if err != nil {
 		return nil, err
 	}
@@ -382,8 +434,9 @@ func (s *ledgerSource) assemble(
 		if entry.PostedAt != nil {
 			journal.PostedAt = *entry.PostedAt
 		}
-		if entry.IsReversal {
-			journal.ReversalOfNumber = numbers[entry.ReversalOfID]
+		if original, ok := reversed[entry.ReversalOfID]; ok && entry.IsReversal {
+			journal.ReversalOfNumber = original.EntryNumber
+			journal.ReversesEntryType = original.EntryType.String()
 		}
 		names.want(origin.party)
 
@@ -457,20 +510,20 @@ func (s *ledgerSource) loadLines(
 	return out, nil
 }
 
-func (s *ledgerSource) entryNumbers(
+func (s *ledgerSource) reversedEntries(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	ids []pulid.ID,
-) (map[pulid.ID]string, error) {
+) (map[pulid.ID]*journalentry.JournalEntry, error) {
 	if len(ids) == 0 {
-		return map[pulid.ID]string{}, nil
+		return map[pulid.ID]*journalentry.JournalEntry{}, nil
 	}
 	cols := buncolgen.JournalEntryColumns
 	entries := make([]*journalentry.JournalEntry, 0, len(ids))
 	if err := s.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entries).
-		Column(cols.ID.Bare(), cols.EntryNumber.Bare()).
+		Column(cols.ID.Bare(), cols.EntryNumber.Bare(), cols.EntryType.Bare()).
 		Apply(buncolgen.JournalEntryApplyTenant(tenantInfo)).
 		Where(cols.ID.In(), bun.List(ids)).
 		Scan(ctx); err != nil {
@@ -478,9 +531,9 @@ func (s *ledgerSource) entryNumbers(
 		return nil, fmt.Errorf("load reversed journal numbers: %w", err)
 	}
 
-	out := make(map[pulid.ID]string, len(entries))
+	out := make(map[pulid.ID]*journalentry.JournalEntry, len(entries))
 	for _, entry := range entries {
-		out[entry.ID] = entry.EntryNumber
+		out[entry.ID] = entry
 	}
 	return out, nil
 }

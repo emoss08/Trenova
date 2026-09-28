@@ -6287,6 +6287,7 @@
   "The source of a purchase cannot be changed": "El origen de una compra no puede cambiarse",
   "The source version belongs to a different template": "La versión de origen pertenece a otra plantilla",
   "The start date cannot be in the future": "La fecha de inicio no puede ser futura",
+  "The start date cannot move once opening balances are sent, because they hold every balance up to it": "La fecha de inicio no se puede mover una vez enviados los saldos iniciales, porque contienen cada saldo hasta esa fecha",
   "The start of the range is required": "Se requiere el inicio del rango",
   "The start time is not a time of day": "La hora de inicio no es una hora del día",
   "The stored provider payload could not be read": "No se pudo leer la carga útil almacenada del proveedor",

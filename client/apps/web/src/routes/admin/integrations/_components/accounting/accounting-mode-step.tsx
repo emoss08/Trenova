@@ -115,7 +115,7 @@ export function AccountingModeStep({ vendor, connection, canManage }: Accounting
       <Alert size="sm" variant="warning">
         <AlertDescription>
           {t(
-            "This choice is fixed once sending starts. Changing it later means disconnecting {0} and connecting again.",
+            "This choice is fixed once sending starts, because {0} will already hold what was sent.",
             vendor.name,
           )}
         </AlertDescription>

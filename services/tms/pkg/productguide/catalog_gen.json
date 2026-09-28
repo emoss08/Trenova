@@ -1,5 +1,5 @@
 {
-  "version": "sha256:43a7f4ca137dd5a345f348c580933f3c7855018fef6d29b2ffee270d5078db72",
+  "version": "sha256:37c8b48961dac69f263a06dd6f544dccb61cc98d243dc7382bcd9fb58d9dabd5",
   "modules": [
     {
       "id": "home",
@@ -4780,7 +4780,7 @@
             "Open [Integrations](/admin/integrations) and connect QuickBooks Online.",
             "On **What is sent**, choose **Send journal entries**. Under **Journal entries**, choose **Detailed** to send each posted Trenova entry as its own QuickBooks entry, or **Daily summary** to send one entry per day summed per account and customer or vendor. A day is sent again when an entry is posted to it later.",
             "Select **Continue**, confirm a QuickBooks account for each GL account on **Match records**, then choose the **Start date**. Tick **Send opening balances** when QuickBooks does not already hold the balances up to that day.",
-            "Select **Start sending**. Invoices, payments and bills stay in Trenova; QuickBooks receives their journal entries once they are posted, including entries posted by hand on [Journals to post](/accounting/journals-to-post). The connection shows **What is sent** and when **Opening balances** were sent. To change the choice later, disconnect and connect again."
+            "Select **Start sending**. Invoices, payments and bills stay in Trenova; QuickBooks receives their journal entries once they are posted, including entries posted by hand on [Journals to post](/accounting/journals-to-post). The connection shows **What is sent** and when **Opening balances** were sent. The choice cannot be changed once sending starts, and the start date cannot move once opening balances are sent."
           ]
         },
         {

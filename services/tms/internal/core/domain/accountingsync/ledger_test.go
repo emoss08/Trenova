@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,11 +27,95 @@ func TestChooseModeMovesSetupOnAndRemembersGranularity(t *testing.T) {
 	assert.False(t, conn.SumsByDay())
 }
 
-func TestChooseModeLeavesALaterSetupStepAlone(t *testing.T) {
-	conn := &AccountingConnection{SetupStep: SetupStepStartDate}
+func TestChooseModeKeepsALaterStepOnlyWhenNothingChanges(t *testing.T) {
+	for _, step := range []SetupStep{SetupStepMappings, SetupStepStartDate} {
+		conn := &AccountingConnection{
+			SetupStep:         step,
+			SyncMode:          SyncModeLedger,
+			LedgerGranularity: LedgerDetailed,
+		}
+		require.NoError(t, conn.ChooseMode(SyncModeLedger, LedgerDetailed))
+		assert.Equal(t, step, conn.SetupStep, "same choice at %s", step)
+	}
 
-	require.NoError(t, conn.ChooseMode(SyncModeLedger, LedgerDetailed))
-	assert.Equal(t, SetupStepStartDate, conn.SetupStep)
+	document := &AccountingConnection{SetupStep: SetupStepStartDate}
+	require.NoError(t, document.ChooseMode(SyncModeDocument, LedgerDailySummary))
+	assert.Equal(t, SetupStepStartDate, document.SetupStep, "documents are the default")
+}
+
+func TestChooseModeReturnsToMappingsWhenTheChoiceChanges(t *testing.T) {
+	cases := []struct {
+		name        string
+		from        AccountingConnection
+		mode        SyncMode
+		granularity LedgerGranularity
+	}{
+		{
+			name: "documents to journal entries",
+			from: AccountingConnection{SetupStep: SetupStepStartDate},
+			mode: SyncModeLedger, granularity: LedgerDetailed,
+		},
+		{
+			name: "journal entries to documents",
+			from: AccountingConnection{
+				SetupStep: SetupStepStartDate, SyncMode: SyncModeLedger,
+				LedgerGranularity: LedgerDailySummary,
+			},
+			mode: SyncModeDocument,
+		},
+		{
+			name: "detailed to a daily summary",
+			from: AccountingConnection{
+				SetupStep: SetupStepStartDate, SyncMode: SyncModeLedger,
+				LedgerGranularity: LedgerDetailed,
+			},
+			mode: SyncModeLedger, granularity: LedgerDailySummary,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			conn := tc.from
+			require.NoError(t, conn.ChooseMode(tc.mode, tc.granularity))
+			assert.Equal(t, SetupStepMappings, conn.SetupStep)
+		})
+	}
+}
+
+func TestStartDateIsFixedOnceOpeningBalancesAreSent(t *testing.T) {
+	start := int64(1_782_864_000)
+	sent := int64(1_782_900_000)
+	conn := &AccountingConnection{
+		SyncMode:                    SyncModeLedger,
+		SyncStartDate:               &start,
+		LedgerOpeningBalancesSentAt: &sent,
+	}
+	require.ErrorIs(t, conn.CanMoveStartDate(start-86_400), ErrStartDateFixed)
+	require.ErrorIs(t, conn.CanMoveStartDate(start+86_400), ErrStartDateFixed)
+	require.NoError(t, conn.CanMoveStartDate(start))
+
+	withoutOpening := &AccountingConnection{SyncMode: SyncModeLedger, SyncStartDate: &start}
+	require.NoError(t, withoutOpening.CanMoveStartDate(start-86_400))
+	require.NoError(t, (&AccountingConnection{}).CanMoveStartDate(start))
+}
+
+func TestJournalSendableLeavesOutTheFiscalCloseAndItsReversal(t *testing.T) {
+	cases := []struct {
+		entryType journalentry.EntryType
+		reverses  journalentry.EntryType
+		want      bool
+	}{
+		{journalentry.EntryTypeStandard, "", true},
+		{journalentry.EntryTypeReversal, journalentry.EntryTypeStandard, true},
+		{journalentry.EntryTypeClosing, "", false},
+		{journalentry.EntryTypeOpening, "", false},
+		{journalentry.EntryTypeReversal, journalentry.EntryTypeClosing, false},
+		{journalentry.EntryTypeReversal, journalentry.EntryTypeOpening, false},
+		{"", "", false},
+	}
+	for _, tc := range cases {
+		assert.Equal(t, tc.want, JournalSendable(tc.entryType, tc.reverses), "%s reversing %q",
+			tc.entryType, tc.reverses)
+	}
 }
 
 func TestChooseModeRefusals(t *testing.T) {

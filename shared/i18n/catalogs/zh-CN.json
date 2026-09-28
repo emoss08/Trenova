@@ -6287,6 +6287,7 @@
   "The source of a purchase cannot be changed": "采购记录的来源无法变更",
   "The source version belongs to a different template": "来源版本属于其他模板",
   "The start date cannot be in the future": "开始日期不得晚于今天",
+  "The start date cannot move once opening balances are sent, because they hold every balance up to it": "期初余额发送后即无法更改开始日期，因为其中包含截至该日的所有余额",
   "The start of the range is required": "必须提供范围的开始时间",
   "The start time is not a time of day": "开始时间不是一天中的有效时刻",
   "The stored provider payload could not be read": "无法读取已存储的提供商负载数据",

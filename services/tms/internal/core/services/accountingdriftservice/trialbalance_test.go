@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -70,6 +71,13 @@ func (f *trialLedger) GetJournal(
 	*repositories.GetLedgerJournalRequest,
 ) (*repositories.LedgerJournal, error) {
 	return nil, nil
+}
+
+func (f *trialLedger) GetEntryType(
+	context.Context,
+	*repositories.GetLedgerJournalRequest,
+) (journalentry.EntryType, error) {
+	return "", nil
 }
 
 func (f *trialLedger) ListJournals(
