@@ -256,6 +256,9 @@ func (s *Service) Decide(
 	if err != nil {
 		return nil, err
 	}
+	if err = s.refuseShadowedSteps(ctx, req.TenantInfo, plan, steps); err != nil {
+		return nil, err
+	}
 
 	shown, err := s.settlePreview(ctx, req, plan, steps, actor)
 	if err != nil {
@@ -373,7 +376,96 @@ func (s *Service) AssertOwnPlan(
 		return err
 	}
 
-	return s.assertMayUseAgent(ctx, tenant, run, actor)
+	runs, err := s.stepRuns(ctx, tenant, plan, run)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return notYours
+		}
+
+		return err
+	}
+
+	checked := make(map[pulid.ID]struct{}, len(runs))
+	for _, stepRun := range runs {
+		if stepRun.SubjectType != run.SubjectType || stepRun.SubjectID != run.SubjectID {
+			return notYours
+		}
+		if _, seen := checked[stepRun.AgentDefinitionID]; seen {
+			continue
+		}
+		checked[stepRun.AgentDefinitionID] = struct{}{}
+		if err = s.assertMayUseAgent(ctx, tenant, stepRun, actor); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) stepRuns(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	plan *agent.AgentPlan,
+	planRun *agent.AgentRun,
+) ([]*agent.AgentRun, error) {
+	steps, err := s.proposals.ListByPlan(ctx, repositories.ListAgentProposalsByPlanRequest{
+		PlanID:     plan.ID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	runs := make([]*agent.AgentRun, 0, len(steps)+1)
+	runs = append(runs, planRun)
+	for _, runID := range otherStepRuns(plan, steps) {
+		stepRun, runErr := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+			ID:         runID,
+			TenantInfo: &tenant,
+		})
+		if runErr != nil {
+			return nil, runErr
+		}
+		runs = append(runs, stepRun)
+	}
+
+	return runs, nil
+}
+
+func otherStepRuns(plan *agent.AgentPlan, steps []*agent.AgentProposal) []pulid.ID {
+	seen := map[pulid.ID]struct{}{plan.RunID: {}}
+	runs := make([]pulid.ID, 0, len(steps))
+	for _, step := range steps {
+		if step == nil {
+			continue
+		}
+		if _, ok := seen[step.RunID]; ok {
+			continue
+		}
+		seen[step.RunID] = struct{}{}
+		runs = append(runs, step.RunID)
+	}
+
+	return runs
+}
+
+func (s *Service) refuseShadowedSteps(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	plan *agent.AgentPlan,
+	steps []*agent.AgentProposal,
+) error {
+	for _, runID := range otherStepRuns(plan, steps) {
+		verdict, err := s.shadow.ForRun(ctx, tenant, runID)
+		if err != nil {
+			return err
+		}
+		if verdict.Shadow() {
+			return shadowRefusal(verdict)
+		}
+	}
+
+	return nil
 }
 
 // assertMayUseAgent refuses a plan from an agent the actor may not use. An

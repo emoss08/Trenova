@@ -1,6 +1,7 @@
 package assistantservice
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"maps"
@@ -833,11 +834,18 @@ func planArtifact(
 	plan *agent.AgentPlan,
 	proposals []*agent.AgentProposal,
 ) *assistantartifact.Artifact {
-	steps := make([]map[string]any, 0, len(proposals))
+	ordered := make([]*agent.AgentProposal, 0, len(proposals))
 	for _, proposal := range proposals {
-		if proposal == nil || proposal.PlanID == nil || *proposal.PlanID != plan.ID {
-			continue
+		if proposal != nil && proposal.PlanID != nil && *proposal.PlanID == plan.ID {
+			ordered = append(ordered, proposal)
 		}
+	}
+	slices.SortStableFunc(ordered, func(a, b *agent.AgentProposal) int {
+		return cmp.Compare(a.PlanStep, b.PlanStep)
+	})
+
+	steps := make([]map[string]any, 0, len(ordered))
+	for _, proposal := range ordered {
 		steps = append(steps, map[string]any{
 			"step":       proposal.PlanStep,
 			"proposalId": proposal.ID.String(),

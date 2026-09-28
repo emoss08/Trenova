@@ -1,6 +1,7 @@
 package proposalrecorder
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -148,28 +149,96 @@ type RecordRequest struct {
 	Evidence         EvidenceFunc
 	// Taint is the outside content the run read. The run keeps it, and each
 	// proposal decided after the run had read some carries it.
-	Taint *agent.RunTaint
+	Taint         *agent.RunTaint
+	Delegated     []DelegatedActions
+	OpenEmptyRuns bool
+	CallOrder     map[string]int
+}
+
+type DelegatedActions struct {
+	Definition *agentdefinition.Definition
+	Open       *OpenRunRequest
+	Actions    []serviceports.PendingAction
+	Taint      *agent.RunTaint
 }
 
 type RecordResult struct {
 	Run       *agent.AgentRun
 	Proposals []*agent.AgentProposal
 	// Plan is set when the run's pending proposals were grouped into one.
-	Plan *agent.AgentPlan
+	Plan      *agent.AgentPlan
+	Delegated []DelegatedRecord
+}
+
+type DelegatedRecord struct {
+	Definition *agentdefinition.Definition
+	Run        *agent.AgentRun
+	Proposals  []*agent.AgentProposal
+}
+
+type runGroup struct {
+	definition *agentdefinition.Definition
+	run        *agent.AgentRun
+	open       *OpenRunRequest
+	actions    []serviceports.PendingAction
+	taint      *agent.RunTaint
+	delegated  bool
+	proposals  []*agent.AgentProposal
+}
+
+func (g *runGroup) records(openEmpty bool) bool {
+	return g.run != nil || len(g.actions) > 0 || (g.delegated && openEmpty)
+}
+
+func (req *RecordRequest) groups() []*runGroup {
+	groups := make([]*runGroup, 0, len(req.Delegated)+1)
+	groups = append(groups, &runGroup{
+		definition: req.Definition,
+		run:        req.Run,
+		open:       req.Open,
+		actions:    req.Actions,
+		taint:      req.Taint,
+	})
+	for idx := range req.Delegated {
+		delegated := &req.Delegated[idx]
+		groups = append(groups, &runGroup{
+			definition: delegated.Definition,
+			open:       delegated.Open,
+			actions:    delegated.Actions,
+			taint:      delegated.Taint,
+			delegated:  true,
+		})
+	}
+
+	return groups
+}
+
+func (req *RecordRequest) writes() bool {
+	if len(req.Actions) > 0 {
+		return true
+	}
+	for idx := range req.Delegated {
+		if len(req.Delegated[idx].Actions) > 0 || req.OpenEmptyRuns {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult, error) {
-	if len(req.Actions) == 0 {
+	if !req.writes() {
 		return &RecordResult{Run: req.Run}, nil
 	}
 
-	var result *RecordResult
+	groups := req.groups()
+	var plan *agent.AgentPlan
 	err := s.inTx(ctx, func(txCtx context.Context) error {
-		written, err := s.write(txCtx, req)
+		written, err := s.write(txCtx, req, groups)
 		if err != nil {
 			return err
 		}
-		result = written
+		plan = written
 
 		return nil
 	})
@@ -177,14 +246,56 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		return nil, err
 	}
 
-	for _, proposal := range result.Proposals {
-		s.recordAutomaticFailure(ctx, proposal)
+	all := make([]*agent.AgentProposal, 0, len(req.Actions))
+	for _, group := range groups {
+		for _, proposal := range group.proposals {
+			s.recordAutomaticFailure(ctx, proposal)
+		}
+		if len(group.proposals) > 0 {
+			s.notifyPending(ctx, group.definition, group.run, group.proposals)
+		}
+		all = append(all, group.proposals...)
 	}
-	s.notifyPending(ctx, req.Definition, result.Run, result.Proposals)
-	s.announce(ctx, req.Actor, result.Proposals, result.Plan)
-	s.project(ctx, req.Definition, result.Proposals, result.Plan)
+	s.announce(ctx, req.Actor, all, plan)
+	s.projectPlan(ctx, planDefinition(groups, plan), plan)
+	for _, group := range groups {
+		s.project(ctx, group.definition, group.proposals)
+	}
 
-	return result, nil
+	return recordResult(groups, plan), nil
+}
+
+func recordResult(groups []*runGroup, plan *agent.AgentPlan) *RecordResult {
+	own := groups[0]
+	result := &RecordResult{Run: own.run, Proposals: own.proposals, Plan: plan}
+	if result.Proposals == nil {
+		result.Proposals = []*agent.AgentProposal{}
+	}
+	for _, group := range groups[1:] {
+		if group.run == nil {
+			continue
+		}
+		result.Delegated = append(result.Delegated, DelegatedRecord{
+			Definition: group.definition,
+			Run:        group.run,
+			Proposals:  group.proposals,
+		})
+	}
+
+	return result
+}
+
+func planDefinition(groups []*runGroup, plan *agent.AgentPlan) *agentdefinition.Definition {
+	if plan == nil {
+		return nil
+	}
+	for _, group := range groups {
+		if group.run != nil && group.run.ID == plan.RunID {
+			return group.definition
+		}
+	}
+
+	return nil
 }
 
 // inTx runs fn in the recorder's transaction. The run, the plan and every
@@ -200,118 +311,175 @@ func (s *Service) inTx(ctx context.Context, fn func(context.Context) error) erro
 	})
 }
 
-// write stores the run, the plan and the proposals. Nothing here announces
+// write stores the runs, the plan and the proposals. Nothing here announces
 // what it wrote: that waits until the transaction has committed.
-func (s *Service) write(ctx context.Context, req *RecordRequest) (*RecordResult, error) {
-	run := req.Run
-	if run == nil {
-		opened, err := s.openRun(ctx, req)
-		if err != nil {
-			return nil, err
+func (s *Service) write(
+	ctx context.Context,
+	req *RecordRequest,
+	groups []*runGroup,
+) (*agent.AgentPlan, error) {
+	now := timeutils.NowUnix()
+	steps := make([]planStep, 0, len(req.Actions))
+	for _, group := range groups {
+		if !group.records(req.OpenEmptyRuns) {
+			continue
 		}
-		run = opened
+		if group.run == nil {
+			opened, err := s.openRun(ctx, req.Actor, group)
+			if err != nil {
+				return nil, err
+			}
+			group.run = opened
+		}
+
+		group.proposals = make([]*agent.AgentProposal, 0, len(group.actions))
+		for idx := range group.actions {
+			proposal := s.proposalFor(req, group, &group.actions[idx], now)
+			group.proposals = append(group.proposals, proposal)
+			if proposal.Status == agent.ProposalStatusPending {
+				steps = append(steps, planStep{
+					proposal: proposal,
+					callID:   group.actions[idx].ToolCallID,
+					position: len(steps),
+				})
+			}
+		}
 	}
 
-	now := timeutils.NowUnix()
-	proposals := make([]*agent.AgentProposal, 0, len(req.Actions))
-
-	plan, err := s.openPlan(ctx, req, run, now)
+	orderSteps(steps, req.CallOrder)
+	plan, err := s.openPlan(ctx, req.Actor, groups, steps, now)
 	if err != nil {
 		return nil, err
 	}
-
-	step := 0
-	for _, action := range req.Actions {
-		sourceMessageID := req.SourceMessageIDs[action.ToolCallID]
-
-		proposal := &agent.AgentProposal{
-			ID:              action.ProposalID,
-			OrganizationID:  req.Actor.OrganizationID,
-			BusinessUnitID:  req.Actor.BusinessUnitID,
-			RunID:           run.ID,
-			TraceID:         action.TraceID,
-			SpanID:          action.SpanID,
-			StepKey:         action.StepKey,
-			ToolName:        action.ToolName,
-			ToolParams:      nonNilParams(action.Arguments),
-			Rationale:       action.Rationale,
-			AutonomyTier:    proposalTier(action.Tier),
-			Status:          agent.ProposalStatusPending,
-			SourceMessageID: sourceMessageID,
-		}
-		if req.Evidence != nil {
-			proposal.Evidence = req.Evidence(action, sourceMessageID)
-		}
-		if action.Target != nil {
-			proposal.TargetResource = string(action.Target.Resource)
-			proposal.TargetID = action.Target.ID
-			proposal.TargetVersion = action.Target.Version
-		}
-		applyTaint(proposal, action, req.Taint)
-		applyExecution(proposal, action, now)
-		applyExecutor(proposal, &action, req.Actor)
-		if plan != nil && proposal.Status == agent.ProposalStatusPending {
-			step++
+	if plan != nil {
+		for idx, step := range steps {
 			planID := plan.ID
-			proposal.PlanID = &planID
-			proposal.PlanStep = step
-			proposal.ExpiresAt = plan.ExpiresAt
+			step.proposal.PlanID = &planID
+			step.proposal.PlanStep = idx + 1
+			step.proposal.ExpiresAt = plan.ExpiresAt
 		}
-
-		multiErr := errortypes.NewMultiError()
-		proposal.Validate(multiErr)
-		if multiErr.HasErrors() {
-			return nil, multiErr
-		}
-
-		created, err := s.proposals.Create(ctx, proposal)
-		if err != nil {
-			return nil, err
-		}
-
-		proposals = append(proposals, created)
 	}
 
-	return &RecordResult{Run: run, Proposals: proposals, Plan: plan}, nil
+	for _, group := range groups {
+		for idx, proposal := range group.proposals {
+			multiErr := errortypes.NewMultiError()
+			proposal.Validate(multiErr)
+			if multiErr.HasErrors() {
+				return nil, multiErr
+			}
+
+			created, err := s.proposals.Create(ctx, proposal)
+			if err != nil {
+				return nil, err
+			}
+			group.proposals[idx] = created
+		}
+	}
+
+	return plan, nil
 }
 
-// openPlan groups a run's pending actions into one decision when there are
-// at least two of them. One pending action is a proposal, as before; two or
-// more in one run are the agent asking for a sequence, and the order it asked
-// in is the order the plan will run them.
+func (s *Service) proposalFor(
+	req *RecordRequest,
+	group *runGroup,
+	action *serviceports.PendingAction,
+	now int64,
+) *agent.AgentProposal {
+	sourceMessageID := req.SourceMessageIDs[action.ToolCallID]
+
+	proposal := &agent.AgentProposal{
+		ID:              action.ProposalID,
+		OrganizationID:  req.Actor.OrganizationID,
+		BusinessUnitID:  req.Actor.BusinessUnitID,
+		RunID:           group.run.ID,
+		TraceID:         action.TraceID,
+		SpanID:          action.SpanID,
+		StepKey:         action.StepKey,
+		ToolName:        action.ToolName,
+		ToolParams:      nonNilParams(action.Arguments),
+		Rationale:       action.Rationale,
+		AutonomyTier:    proposalTier(action.Tier),
+		Status:          agent.ProposalStatusPending,
+		SourceMessageID: sourceMessageID,
+	}
+	if req.Evidence != nil {
+		proposal.Evidence = req.Evidence(*action, sourceMessageID)
+	}
+	if action.Target != nil {
+		proposal.TargetResource = string(action.Target.Resource)
+		proposal.TargetID = action.Target.ID
+		proposal.TargetVersion = action.Target.Version
+	}
+	applyTaint(proposal, *action, group.taint)
+	applyExecution(proposal, *action, now)
+	applyExecutor(proposal, action, req.Actor)
+
+	return proposal
+}
+
+type planStep struct {
+	proposal *agent.AgentProposal
+	callID   string
+	position int
+}
+
+func orderSteps(steps []planStep, callOrder map[string]int) {
+	if len(callOrder) == 0 {
+		return
+	}
+
+	slices.SortStableFunc(steps, func(a, b planStep) int {
+		return cmp.Compare(a.at(callOrder), b.at(callOrder))
+	})
+}
+
+func (s planStep) at(callOrder map[string]int) int {
+	if position, ok := callOrder[s.callID]; ok {
+		return position
+	}
+
+	return len(callOrder) + s.position
+}
+
+// openPlan groups a turn's pending actions into one decision when there are
+// at least two of them, whichever agent filed each. One pending action is a
+// proposal, as before; two or more are a sequence, run in the order the
+// conversation asked for them.
 func (s *Service) openPlan(
 	ctx context.Context,
-	req *RecordRequest,
-	run *agent.AgentRun,
+	actor *serviceports.RequestActor,
+	groups []*runGroup,
+	steps []planStep,
 	now int64,
 ) (*agent.AgentPlan, error) {
-	if s.plans == nil {
+	if s.plans == nil || len(steps) < 2 {
 		return nil, nil
 	}
 
-	pending := 0
-	rationale := ""
-	for _, action := range req.Actions {
-		if action.Executed || action.Simulated {
-			continue
-		}
-		pending++
-		if rationale == "" {
-			rationale = strings.TrimSpace(action.Rationale)
+	owner := groups[0]
+	for _, group := range groups {
+		if slices.ContainsFunc(group.proposals, func(p *agent.AgentProposal) bool {
+			return p.Status == agent.ProposalStatusPending
+		}) {
+			owner = group
+			break
 		}
 	}
-	if pending < 2 {
-		return nil, nil
+	rationale := ""
+	for _, step := range steps {
+		if rationale = strings.TrimSpace(step.proposal.Rationale); rationale != "" {
+			break
+		}
 	}
 
 	plan := &agent.AgentPlan{
-		OrganizationID: req.Actor.OrganizationID,
-		BusinessUnitID: req.Actor.BusinessUnitID,
-		RunID:          run.ID,
-		Title:          planTitle(req.Definition, pending),
-		Summary:        planSummary(run, rationale),
+		OrganizationID: actor.OrganizationID,
+		BusinessUnitID: actor.BusinessUnitID,
+		RunID:          owner.run.ID,
+		Title:          planTitle(owner.definition, len(steps)),
+		Summary:        planSummary(owner.run, rationale),
 		Status:         agent.PlanStatusPending,
-		StepCount:      pending,
+		StepCount:      len(steps),
 		ExpiresAt:      now + int64(agent.DefaultProposalTTL.Seconds()),
 	}
 
@@ -365,8 +533,12 @@ func (s *Service) notifyPending(
 	}
 }
 
-func (s *Service) openRun(ctx context.Context, req *RecordRequest) (*agent.AgentRun, error) {
-	open := req.Open
+func (s *Service) openRun(
+	ctx context.Context,
+	actor *serviceports.RequestActor,
+	group *runGroup,
+) (*agent.AgentRun, error) {
+	open := group.open
 	if open == nil {
 		open = &OpenRunRequest{}
 	}
@@ -378,8 +550,8 @@ func (s *Service) openRun(ctx context.Context, req *RecordRequest) (*agent.Agent
 	}
 
 	run := &agent.AgentRun{
-		OrganizationID:   req.Actor.OrganizationID,
-		BusinessUnitID:   req.Actor.BusinessUnitID,
+		OrganizationID:   actor.OrganizationID,
+		BusinessUnitID:   actor.BusinessUnitID,
 		AgentType:        open.AgentType,
 		SubjectType:      open.SubjectType,
 		SubjectID:        open.SubjectID,
@@ -398,13 +570,13 @@ func (s *Service) openRun(ctx context.Context, req *RecordRequest) (*agent.Agent
 		ParentOwnerID:    open.ParentOwnerID,
 		DelegateCallID:   open.DelegateCallID,
 	}
-	if req.Definition != nil {
-		run.AgentDefinitionID = req.Definition.ID
+	if group.definition != nil {
+		run.AgentDefinitionID = group.definition.ID
 	}
 	if run.Trigger == "" {
 		run.Trigger = agent.RunTriggerManual
 	}
-	run.RecordTaint(req.Taint, now)
+	run.RecordTaint(group.taint, now)
 
 	multiErr := errortypes.NewMultiError()
 	run.Validate(multiErr)
@@ -536,25 +708,30 @@ func (s *Service) announce(
 	}
 }
 
+func (s *Service) projectPlan(
+	ctx context.Context,
+	definition *agentdefinition.Definition,
+	plan *agent.AgentPlan,
+) {
+	if s.watchtower == nil || plan == nil {
+		return
+	}
+
+	s.watchtower.Upsert(ctx, watchtowersources.DescribePlan(plan, definitionName(definition)))
+}
+
 // project puts what is now waiting on a person onto the watchtower. A step
 // of a plan is not projected on its own: the plan is the decision.
 func (s *Service) project(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
 	proposals []*agent.AgentProposal,
-	plan *agent.AgentPlan,
 ) {
 	if s.watchtower == nil {
 		return
 	}
 
-	name := ""
-	if definition != nil {
-		name = definition.Name
-	}
-	if plan != nil {
-		s.watchtower.Upsert(ctx, watchtowersources.DescribePlan(plan, name))
-	}
+	name := definitionName(definition)
 	for _, proposal := range proposals {
 		if proposal == nil || proposal.Status != agent.ProposalStatusPending ||
 			proposal.PlanID != nil {
@@ -562,4 +739,12 @@ func (s *Service) project(
 		}
 		s.watchtower.Upsert(ctx, watchtowersources.DescribeProposal(proposal, name))
 	}
+}
+
+func definitionName(definition *agentdefinition.Definition) string {
+	if definition == nil {
+		return ""
+	}
+
+	return definition.Name
 }
