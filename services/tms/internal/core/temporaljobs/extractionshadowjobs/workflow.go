@@ -55,13 +55,14 @@ func shadowPriority(orgID pulid.ID) temporal.Priority {
 	}
 }
 
-func withPriority(options workflow.ActivityOptions, orgID pulid.ID) workflow.ActivityOptions {
-	options.Priority = shadowPriority(orgID)
-	return options
+func withPriority(options *workflow.ActivityOptions, orgID pulid.ID) workflow.ActivityOptions {
+	prioritized := *options
+	prioritized.Priority = shadowPriority(orgID)
+	return prioritized
 }
 
 func ExtractionShadowWorkflow(ctx workflow.Context, payload *ShadowPayload) error {
-	runCtx := workflow.WithActivityOptions(ctx, withPriority(runOptions, payload.OrganizationID))
+	runCtx := workflow.WithActivityOptions(ctx, withPriority(&runOptions, payload.OrganizationID))
 
 	var a *Activities
 	err := workflow.ExecuteActivity(runCtx, a.RunExtractionShadowActivity, payload).Get(runCtx, nil)
@@ -69,7 +70,7 @@ func ExtractionShadowWorkflow(ctx workflow.Context, payload *ShadowPayload) erro
 		return nil
 	}
 
-	failCtx := workflow.WithActivityOptions(ctx, withPriority(failOptions, payload.OrganizationID))
+	failCtx := workflow.WithActivityOptions(ctx, withPriority(&failOptions, payload.OrganizationID))
 	if failErr := workflow.ExecuteActivity(failCtx, a.FailExtractionShadowActivity, &FailInput{
 		ShadowPayload: *payload,
 		Message:       unfinishedMessage,

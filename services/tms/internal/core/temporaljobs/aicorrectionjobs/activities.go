@@ -66,10 +66,13 @@ func (a *Activities) PurgeOrganizationAICorrectionsActivity(
 	}
 
 	if a.evaluations != nil {
-		runs, runErr := a.evaluations.PurgeExpiredRuns(ctx, services.PurgeExpiredAICorrectionsRequest{
-			TenantInfo: tenant,
-			Now:        input.Now,
-		})
+		runs, runErr := a.evaluations.PurgeExpiredRuns(
+			ctx,
+			services.PurgeExpiredAICorrectionsRequest{
+				TenantInfo: tenant,
+				Now:        input.Now,
+			},
+		)
 		if runErr != nil {
 			return nil, fmt.Errorf("purge expired extraction evaluation runs: %w", runErr)
 		}
@@ -77,10 +80,13 @@ func (a *Activities) PurgeOrganizationAICorrectionsActivity(
 	}
 
 	if a.shadows != nil {
-		shadows, shadowErr := a.shadows.PurgeExpiredShadows(ctx, services.PurgeExpiredAICorrectionsRequest{
-			TenantInfo: tenant,
-			Now:        input.Now,
-		})
+		shadows, shadowErr := a.shadows.PurgeExpiredShadows(
+			ctx,
+			services.PurgeExpiredAICorrectionsRequest{
+				TenantInfo: tenant,
+				Now:        input.Now,
+			},
+		)
 		if shadowErr != nil {
 			return nil, fmt.Errorf("purge expired extraction shadows: %w", shadowErr)
 		}

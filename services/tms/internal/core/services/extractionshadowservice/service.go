@@ -60,6 +60,7 @@ type Service struct {
 	now       func() int64
 }
 
+//nolint:gocritic // dependency injection param
 func New(p Params) *Service {
 	return &Service{
 		l:         p.Logger.Named("service.extractionshadow"),

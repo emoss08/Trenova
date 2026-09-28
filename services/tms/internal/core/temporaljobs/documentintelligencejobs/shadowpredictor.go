@@ -64,14 +64,17 @@ func (p *ShadowPredictor) PredictShadowDraft(
 
 	maxChars := p.cfg.GetMaxInputChars()
 	aiPages := toAIDocumentPages(pages, maxChars)
-	result, err := p.extractor.ExtractRateConfirmationForShadow(ctx, &services.AIShadowExtractRequest{
-		TenantInfo: req.TenantInfo,
-		ProviderID: req.ProviderID,
-		DocumentID: doc.ID,
-		FileName:   doc.OriginalName,
-		Text:       stringutils.TruncateAndTrim(content.ContentText, maxChars),
-		Pages:      aiPages,
-	})
+	result, err := p.extractor.ExtractRateConfirmationForShadow(
+		ctx,
+		&services.AIShadowExtractRequest{
+			TenantInfo: req.TenantInfo,
+			ProviderID: req.ProviderID,
+			DocumentID: doc.ID,
+			FileName:   doc.OriginalName,
+			Text:       stringutils.TruncateAndTrim(content.ContentText, maxChars),
+			Pages:      aiPages,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

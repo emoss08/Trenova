@@ -57,7 +57,12 @@ func (s *Service) UpdateSettings(
 		return nil, multiErr
 	}
 	if current.ProviderID != nil {
-		if err = s.checkCandidate(ctx, req.TenantInfo, *current.ProviderID, current.Enabled); err != nil {
+		if err = s.checkCandidate(
+			ctx,
+			req.TenantInfo,
+			*current.ProviderID,
+			current.Enabled,
+		); err != nil {
 			return nil, err
 		}
 	}

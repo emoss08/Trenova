@@ -129,7 +129,11 @@ type RunExtractionShadowRequest struct {
 
 type ExtractionShadowRunner interface {
 	RunShadow(ctx context.Context, req *RunExtractionShadowRequest) error
-	FailShadow(ctx context.Context, req repositories.GetExtractionShadowResultRequest, message string) error
+	FailShadow(
+		ctx context.Context,
+		req repositories.GetExtractionShadowResultRequest,
+		message string,
+	) error
 	PurgeExpiredShadows(ctx context.Context, req PurgeExpiredAICorrectionsRequest) (int64, error)
 }
 
@@ -157,5 +161,8 @@ type ShadowDraftPrediction struct {
 }
 
 type ExtractionShadowPredictor interface {
-	PredictShadowDraft(ctx context.Context, req *PredictShadowDraftRequest) (*ShadowDraftPrediction, error)
+	PredictShadowDraft(
+		ctx context.Context,
+		req *PredictShadowDraftRequest,
+	) (*ShadowDraftPrediction, error)
 }

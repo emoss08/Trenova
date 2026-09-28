@@ -11,7 +11,10 @@ import (
 
 type ExtractionShadowSettingsRepository interface {
 	Get(ctx context.Context, tenant pagination.TenantInfo) (*extractionshadow.ShadowSettings, error)
-	Save(ctx context.Context, entity *extractionshadow.ShadowSettings) (*extractionshadow.ShadowSettings, error)
+	Save(
+		ctx context.Context,
+		entity *extractionshadow.ShadowSettings,
+	) (*extractionshadow.ShadowSettings, error)
 }
 
 type GetExtractionShadowResultRequest struct {
@@ -71,11 +74,14 @@ type ExtractionShadowResultRepository interface {
 		ctx context.Context,
 		req GetExtractionShadowResultByExtractionRequest,
 	) (*extractionshadow.ShadowResult, error)
-	Save(ctx context.Context, entity *extractionshadow.ShadowResult) (*extractionshadow.ShadowResult, error)
+	Save(
+		ctx context.Context,
+		entity *extractionshadow.ShadowResult,
+	) (*extractionshadow.ShadowResult, error)
 	CountCreatedSince(ctx context.Context, tenant pagination.TenantInfo, since int64) (int, error)
 	ListScored(
 		ctx context.Context,
-		req ListScoredExtractionShadowResultsRequest,
+		req *ListScoredExtractionShadowResultsRequest,
 	) ([]*extractionshadow.ShadowResult, error)
 	TotalsByStatus(
 		ctx context.Context,

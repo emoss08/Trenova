@@ -165,7 +165,7 @@ func (f *resultStore) CountCreatedSince(
 
 func (f *resultStore) ListScored(
 	_ context.Context,
-	req repositories.ListScoredExtractionShadowResultsRequest,
+	req *repositories.ListScoredExtractionShadowResultsRequest,
 ) ([]*extractionshadow.ShadowResult, error) {
 	out := make([]*extractionshadow.ShadowResult, 0, len(f.items))
 	for _, item := range f.items {
@@ -237,7 +237,7 @@ type correctionStore struct {
 
 func (f *correctionStore) GetLatestByDocument(
 	_ context.Context,
-	req repositories.GetLatestAICorrectionByDocumentRequest,
+	req *repositories.GetLatestAICorrectionByDocumentRequest,
 ) (*aicorrection.Correction, error) {
 	var latest *aicorrection.Correction
 	for _, item := range f.items {

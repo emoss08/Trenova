@@ -26,8 +26,6 @@ const (
 	startFailedReason = "The shadow extraction could not be started"
 )
 
-var errStarterUnavailable = errors.New("extraction shadow starter is not configured")
-
 func (s *Service) ConsiderExtraction(
 	ctx context.Context,
 	req *services.ConsiderExtractionShadowRequest,
@@ -83,14 +81,20 @@ func (s *Service) ConsiderExtraction(
 	}
 
 	entity := &extractionshadow.ShadowResult{
-		OrganizationID:       req.TenantInfo.OrgID,
-		BusinessUnitID:       req.TenantInfo.BuID,
-		DocumentID:           req.DocumentID,
-		ExtractedAt:          req.ExtractedAt,
-		Status:               extractionshadow.ResultStatusPending,
-		ProviderID:           provider.ID,
-		ProviderName:         stringutils.TruncateRunes(provider.Name, extractionshadow.MaxProviderNameRunes),
-		ProductionModel:      stringutils.TruncateRunes(req.ProductionModel, extractionshadow.MaxModelRunes),
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		DocumentID:     req.DocumentID,
+		ExtractedAt:    req.ExtractedAt,
+		Status:         extractionshadow.ResultStatusPending,
+		ProviderID:     provider.ID,
+		ProviderName: stringutils.TruncateRunes(
+			provider.Name,
+			extractionshadow.MaxProviderNameRunes,
+		),
+		ProductionModel: stringutils.TruncateRunes(
+			req.ProductionModel,
+			extractionshadow.MaxModelRunes,
+		),
 		ProductionProviderID: pulid.PtrOrNil(req.ProductionProviderID),
 	}
 	multiErr := errortypes.NewMultiError()

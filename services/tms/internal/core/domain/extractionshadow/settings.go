@@ -84,7 +84,11 @@ func (s *ShadowSettings) Validate(multiErr *errortypes.MultiError) {
 	))
 
 	if s.Enabled && (s.ProviderID == nil || s.ProviderID.IsNil()) {
-		multiErr.Add("providerId", errortypes.ErrRequired, "Choose the AI provider to shadow production with")
+		multiErr.Add(
+			"providerId",
+			errortypes.ErrRequired,
+			"Choose the AI provider to shadow production with",
+		)
 	}
 }
 

@@ -53,7 +53,7 @@ type AICorrectionRepository interface {
 	GetByID(ctx context.Context, req GetAICorrectionRequest) (*aicorrection.Correction, error)
 	GetLatestByDocument(
 		ctx context.Context,
-		req GetLatestAICorrectionByDocumentRequest,
+		req *GetLatestAICorrectionByDocumentRequest,
 	) (*aicorrection.Correction, error)
 	ListConnection(
 		ctx context.Context,

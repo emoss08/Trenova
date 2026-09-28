@@ -75,14 +75,17 @@ func (r *resultRepository) Create(
 		return entity, true, nil
 	}
 
-	existing, err := r.GetByExtraction(ctx, repositories.GetExtractionShadowResultByExtractionRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	existing, err := r.GetByExtraction(
+		ctx,
+		repositories.GetExtractionShadowResultByExtractionRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			DocumentID:  entity.DocumentID,
+			ExtractedAt: entity.ExtractedAt,
 		},
-		DocumentID:  entity.DocumentID,
-		ExtractedAt: entity.ExtractedAt,
-	})
+	)
 	if err != nil {
 		return nil, false, err
 	}
@@ -198,7 +201,7 @@ func (r *resultRepository) CountCreatedSince(
 
 func (r *resultRepository) ListScored(
 	ctx context.Context,
-	req repositories.ListScoredExtractionShadowResultsRequest,
+	req *repositories.ListScoredExtractionShadowResultsRequest,
 ) ([]*extractionshadow.ShadowResult, error) {
 	cols := buncolgen.ShadowResultColumns
 	limit := req.Limit
@@ -256,7 +259,11 @@ func (r *resultRepository) TotalsByStatus(
 	req repositories.TotalExtractionShadowResultsRequest,
 ) ([]repositories.ExtractionShadowStatusTotal, error) {
 	cols := buncolgen.ShadowResultColumns
-	totals := make([]repositories.ExtractionShadowStatusTotal, 0, len(extractionshadow.AllResultStatuses()))
+	totals := make(
+		[]repositories.ExtractionShadowStatusTotal,
+		0,
+		len(extractionshadow.AllResultStatuses()),
+	)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*extractionshadow.ShadowResult)(nil)).
@@ -314,28 +321,31 @@ func (r *resultRepository) ListConnection(
 		totalCount = &total
 	}
 
-	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*extractionshadow.ShadowResult]{
-		Filter:     req.Filter,
-		Cursor:     req.Cursor,
-		TotalCount: totalCount,
-		Query: func(entities *[]*extractionshadow.ShadowResult) *bun.SelectQuery {
-			q := dba.NewSelect().Model(entities)
-			if len(req.Columns) > 0 {
-				q = q.Column(req.Columns...)
-			}
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*extractionshadow.ShadowResult]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: totalCount,
+			Query: func(entities *[]*extractionshadow.ShadowResult) *bun.SelectQuery {
+				q := dba.NewSelect().Model(entities)
+				if len(req.Columns) > 0 {
+					q = q.Column(req.Columns...)
+				}
 
-			return q
+				return q
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return querybuilder.ApplyCursorFilters(
+					sq,
+					buncolgen.ShadowResultTable.Alias,
+					req.Filter,
+					req.Cursor,
+					(*extractionshadow.ShadowResult)(nil),
+				)
+			},
 		},
-		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-			return querybuilder.ApplyCursorFilters(
-				sq,
-				buncolgen.ShadowResultTable.Alias,
-				req.Filter,
-				req.Cursor,
-				(*extractionshadow.ShadowResult)(nil),
-			)
-		},
-	})
+	)
 	if err != nil {
 		r.l.Error("failed to list extraction shadow results", zap.Error(err))
 

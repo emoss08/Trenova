@@ -74,7 +74,12 @@ func (s *Service) RunShadow(
 			zap.String("resultId", result.ID.String()),
 			zap.Error(err),
 		)
-		return s.settle(ctx, result, extractionshadow.ResultStatusFailed, extractionfailure.Message(err))
+		return s.settle(
+			ctx,
+			result,
+			extractionshadow.ResultStatusFailed,
+			extractionfailure.Message(err),
+		)
 	}
 
 	s.recordPrediction(result, prediction)
@@ -113,7 +118,7 @@ func (s *Service) FailShadow(
 func (s *Service) budgetSpent(
 	ctx context.Context,
 	result *extractionshadow.ShadowResult,
-) (bool, string, error) {
+) (stop bool, reason string, err error) {
 	if s.budget == nil {
 		return false, "", nil
 	}

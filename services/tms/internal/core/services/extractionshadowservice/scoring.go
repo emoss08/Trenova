@@ -52,18 +52,24 @@ func (s *Scorer) ScoreCorrection(ctx context.Context, correction *aicorrection.C
 		return nil
 	}
 
-	tenant := pagination.TenantInfo{OrgID: correction.OrganizationID, BuID: correction.BusinessUnitID}
+	tenant := pagination.TenantInfo{
+		OrgID: correction.OrganizationID,
+		BuID:  correction.BusinessUnitID,
+	}
 	extractedAt, ok, err := s.currentExtraction(ctx, tenant, *correction.DocumentID)
 	if err != nil || !ok {
 		return err
 	}
 
 	for range scoreAttempts {
-		result, getErr := s.results.GetByExtraction(ctx, repositories.GetExtractionShadowResultByExtractionRequest{
-			TenantInfo:  tenant,
-			DocumentID:  *correction.DocumentID,
-			ExtractedAt: extractedAt,
-		})
+		result, getErr := s.results.GetByExtraction(
+			ctx,
+			repositories.GetExtractionShadowResultByExtractionRequest{
+				TenantInfo:  tenant,
+				DocumentID:  *correction.DocumentID,
+				ExtractedAt: extractedAt,
+			},
+		)
 		if getErr != nil {
 			if errortypes.IsNotFoundError(getErr) {
 				return nil
@@ -87,11 +93,14 @@ func (s *Scorer) scoreAgainstCorrection(
 	ctx context.Context,
 	result *extractionshadow.ShadowResult,
 ) error {
-	correction, err := s.corrections.GetLatestByDocument(ctx, repositories.GetLatestAICorrectionByDocumentRequest{
-		TenantInfo: tenantOf(result),
-		Task:       aicorrection.TaskShipmentDraftExtraction,
-		DocumentID: result.DocumentID,
-	})
+	correction, err := s.corrections.GetLatestByDocument(
+		ctx,
+		&repositories.GetLatestAICorrectionByDocumentRequest{
+			TenantInfo: tenantOf(result),
+			Task:       aicorrection.TaskShipmentDraftExtraction,
+			DocumentID: result.DocumentID,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil
@@ -131,7 +140,7 @@ func (s *Scorer) currentExtraction(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	documentID pulid.ID,
-) (int64, bool, error) {
+) (extractedAt int64, ok bool, err error) {
 	content, err := s.contents.GetByDocumentID(ctx, documentID, tenant)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {

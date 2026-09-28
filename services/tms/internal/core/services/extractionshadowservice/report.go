@@ -64,7 +64,7 @@ func (s *Service) Report(
 		return nil, err
 	}
 
-	scored, err := s.results.ListScored(ctx, repositories.ListScoredExtractionShadowResultsRequest{
+	scored, err := s.results.ListScored(ctx, &repositories.ListScoredExtractionShadowResultsRequest{
 		TenantInfo: req.TenantInfo,
 		ProviderID: providerID,
 		Since:      since,
@@ -139,7 +139,13 @@ func addScored(report *services.ExtractionShadowReport, scored []*extractionshad
 		case extractionshadow.VerdictSame:
 			report.Same++
 		}
-		addSide(&report.Candidate, result.ScoredCount, result.CorrectCount, result.CorrectedCount, result.MissedCount)
+		addSide(
+			&report.Candidate,
+			result.ScoredCount,
+			result.CorrectCount,
+			result.CorrectedCount,
+			result.MissedCount,
+		)
 		addSide(
 			&report.Production,
 			result.BaselineScoredCount,
@@ -151,8 +157,14 @@ func addScored(report *services.ExtractionShadowReport, scored []*extractionshad
 		production.Add(result.BaselineFieldResults)
 	}
 
-	report.Candidate.Accuracy = aicorrection.Accuracy(report.Candidate.Correct, report.Candidate.Scored)
-	report.Production.Accuracy = aicorrection.Accuracy(report.Production.Correct, report.Production.Scored)
+	report.Candidate.Accuracy = aicorrection.Accuracy(
+		report.Candidate.Correct,
+		report.Candidate.Scored,
+	)
+	report.Production.Accuracy = aicorrection.Accuracy(
+		report.Production.Correct,
+		report.Production.Scored,
+	)
 	report.Fields = compareFields(candidate.Fields(), production.Fields())
 }
 
@@ -166,7 +178,10 @@ func addSide(side *services.ExtractionShadowSide, scored, correct, corrected, mi
 func compareFields(
 	candidate, production []aicorrection.FieldAccuracy,
 ) []services.ExtractionShadowFieldComparison {
-	byKey := make(map[string]*services.ExtractionShadowFieldComparison, len(candidate)+len(production))
+	byKey := make(
+		map[string]*services.ExtractionShadowFieldComparison,
+		len(candidate)+len(production),
+	)
 	entry := func(key string) *services.ExtractionShadowFieldComparison {
 		row, ok := byKey[key]
 		if !ok {
@@ -196,7 +211,10 @@ func compareFields(
 		out = append(out, *row)
 	}
 	slices.SortFunc(out, func(a, b services.ExtractionShadowFieldComparison) int {
-		if c := cmp.Compare(a.CandidateAccuracy-a.ProductionAccuracy, b.CandidateAccuracy-b.ProductionAccuracy); c != 0 {
+		if c := cmp.Compare(
+			a.CandidateAccuracy-a.ProductionAccuracy,
+			b.CandidateAccuracy-b.ProductionAccuracy,
+		); c != 0 {
 			return c
 		}
 		return cmp.Compare(a.Key, b.Key)

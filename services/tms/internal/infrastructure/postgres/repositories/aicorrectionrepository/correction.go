@@ -174,7 +174,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetLatestByDocument(
 	ctx context.Context,
-	req repositories.GetLatestAICorrectionByDocumentRequest,
+	req *repositories.GetLatestAICorrectionByDocumentRequest,
 ) (*aicorrection.Correction, error) {
 	cols := buncolgen.CorrectionColumns
 	entity := new(aicorrection.Correction)
