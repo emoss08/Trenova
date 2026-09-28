@@ -32,6 +32,7 @@ export function useAccountingDriftLabels(): AccountingDriftLabels {
         DeletedInProvider: t("Deleted in the books"),
         VoidedInProvider: t("Voided in the books"),
         CustomerBalanceMismatch: t("Different customer balance"),
+        TrialBalanceMismatch: t("Different account balance"),
       },
       resolution: {
         PushedTrenovaValue: t("Trenova's value sent"),

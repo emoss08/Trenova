@@ -9,7 +9,10 @@ related:
 Accounting mappings say which QuickBooks Online account, item, customer and vendor each Trenova
 record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off,
 accounts payable and purchased transportation), invoice line types, accessorial charges, the
-short-pay write-off item, customers, carriers, payment terms and payment methods.
+short-pay write-off item, customers, carriers, payment terms and payment methods. When the
+connection sends journal entries, every active GL account can be mapped, and each account that
+carries posted entries needs a QuickBooks account before its entries are sent; an account without
+its own mapping falls back to the account role it plays.
 
 Trenova reads the QuickBooks company's records and proposes a match where it is sure enough.
 A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The

@@ -1,6 +1,7 @@
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { CheckboxField } from "@/components/fields/checkbox-field";
 import { SwitchField } from "@/components/fields/switch-field";
+import { sendsLedger } from "@/lib/accounting-sync";
 import type { AccountingConnection } from "@/lib/graphql/accounting-sync";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -38,8 +39,10 @@ export function AccountingStartDateStep({
       autoSync: connection.autoSync,
       driverSettlements: connection.syncsDriverSettlements,
       backfill: false,
+      openingBalances: false,
     },
   });
+  const ledger = sendsLedger(connection);
   const { control, handleSubmit } = form;
   const { enable } = useAccountingSyncSetupActions(vendor, form);
   const startDate = useWatch({ control, name: "startDate" });
@@ -52,10 +55,15 @@ export function AccountingStartDateStep({
       <div className="space-y-2">
         <h3 className="text-base font-semibold">{t("Choose when sending starts")}</h3>
         <p className="text-foreground-muted text-sm">
-          {t(
-            "Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments to {0} as they are posted. Documents dated before the start date are never sent, so anything you already entered in {0} by hand is not duplicated.",
-            vendor.name,
-          )}
+          {ledger
+            ? t(
+                "Trenova sends {0} each journal entry as it is posted. Entries dated before the start date are never sent; send opening balances instead so {0} starts from Trenova's balances.",
+                vendor.name,
+              )
+            : t(
+                "Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments to {0} as they are posted. Documents dated before the start date are never sent, so anything you already entered in {0} by hand is not duplicated.",
+                vendor.name,
+              )}
         </p>
       </div>
       <FormGroup cols={1}>
@@ -81,28 +89,54 @@ export function AccountingStartDateStep({
             disabled={!canManage}
           />
         </FormControl>
-        <FormControl>
-          <SwitchField
-            name="driverSettlements"
-            control={control}
-            label={t("Send owner-operator settlements")}
-            description={t(
-              "Sends owner-operator settlements to {0} as bills to a vendor for each driver. Company driver pay is never sent; it belongs to your payroll system.",
-              vendor.name,
-            )}
-            disabled={!canManage}
-          />
-        </FormControl>
+        {ledger ? (
+          <FormControl>
+            <CheckboxField
+              name="openingBalances"
+              control={control}
+              label={t("Send opening balances")}
+              description={t(
+                "Sends one journal entry, dated the day before the start date, with every account's balance up to then. Leave this off when {0} already holds those balances.",
+                vendor.name,
+              )}
+              disabled={!canManage}
+            />
+          </FormControl>
+        ) : (
+          <FormControl>
+            <SwitchField
+              name="driverSettlements"
+              control={control}
+              label={t("Send owner-operator settlements")}
+              description={t(
+                "Sends owner-operator settlements to {0} as bills to a vendor for each driver. Company driver pay is never sent; it belongs to your payroll system.",
+                vendor.name,
+              )}
+              disabled={!canManage}
+            />
+          </FormControl>
+        )}
         {beforeToday ? (
           <FormControl>
             <CheckboxField
               name="backfill"
               control={control}
-              label={t("Also send documents already posted since the start date")}
-              description={t(
-                "Queues the documents dated from the start date up to today. Leave this off if they are already in {0}.",
-                vendor.name,
-              )}
+              label={
+                ledger
+                  ? t("Also send journal entries already posted since the start date")
+                  : t("Also send documents already posted since the start date")
+              }
+              description={
+                ledger
+                  ? t(
+                      "Queues the journal entries dated from the start date up to today. Leave this off if they are already in {0}.",
+                      vendor.name,
+                    )
+                  : t(
+                      "Queues the documents dated from the start date up to today. Leave this off if they are already in {0}.",
+                      vendor.name,
+                    )
+              }
               disabled={!canManage}
             />
           </FormControl>

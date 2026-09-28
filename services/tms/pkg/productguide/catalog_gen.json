@@ -1,5 +1,5 @@
 {
-  "version": "sha256:031767f23f07ded41fd5d9dde14a259a457acd5a34ffdbbcd676e276f88515b5",
+  "version": "sha256:43a7f4ca137dd5a345f348c580933f3c7855018fef6d29b2ffee270d5078db72",
   "modules": [
     {
       "id": "home",
@@ -1685,7 +1685,7 @@
         "Sync ledger"
       ],
       "description": "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.",
-      "summary": "The sync ledger lists every document Trenova sends to QuickBooks Online and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.",
+      "summary": "The sync ledger lists every document Trenova sends to QuickBooks Online and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.\n\nWhen the connection sends journal entries instead of documents, the ledger lists one record for each posted journal entry, or one **Daily summary** per day, and the **Opening balances** entry when it was sent. A day's summary is sent again whenever an entry is posted to that day later, and a day whose entries net to nothing removes its summary from QuickBooks.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1706,7 +1706,10 @@
         "settlement not in QuickBooks",
         "carrier bill",
         "bill payment",
-        "vendor credit"
+        "vendor credit",
+        "journal entry not in QuickBooks",
+        "daily summary",
+        "opening balances entry"
       ],
       "tasks": [
         {
@@ -1736,6 +1739,20 @@
             "Open [Sync ledger](/accounting/sync) and open the settlement's record.",
             "When its reason names a GL account, map that account to a QuickBooks account on the [Mappings](/accounting/sync/mappings) page (filter by **GL accounts**). When it names a carrier or an owner-operator, map them to the existing QuickBooks vendor, or let Trenova create one.",
             "Select **Retry now**. A settlement's payment waits for its bill and follows once the bill is in QuickBooks."
+          ]
+        },
+        {
+          "title": "Fix a journal entry that did not reach QuickBooks",
+          "keywords": [
+            "journal entry held",
+            "daily summary held",
+            "GL account not mapped",
+            "customer or vendor needed"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and open the journal entry or daily summary record.",
+            "When its reason names a GL account, map that account to a QuickBooks account on the [Mappings](/accounting/sync/mappings) page (filter by **GL accounts**). A receivable or payable account needs the customer or vendor too; map it, or let Trenova create one.",
+            "Select **Retry now**. Entries unbalanced by rounding are not sent; the reason says by how much."
           ]
         },
         {
@@ -1812,7 +1829,7 @@
           ],
           "steps": [
             "Open [Sync ledger](/accounting/sync) and select **Backfill**.",
-            "Choose the range and, optionally, the kinds of documents, then select **Start backfill**. Documents already queued are left alone, and one backfill runs at a time."
+            "Choose the range and, optionally, the kinds of documents, then select **Start backfill**. Documents already queued are left alone, and one backfill runs at a time. A connection that sends journal entries backfills journal entries or daily summaries instead."
           ]
         }
       ],
@@ -1837,7 +1854,7 @@
         "Drift findings"
       ],
       "description": "Drift findings lists the documents Trenova sent to QuickBooks Online that differ there now: a total someone edited, a document deleted or voided in QuickBooks, a document voided in Trenova but still live in QuickBooks, or a customer's open balance that no longer adds up to the same figure on both sides.",
-      "summary": "Drift findings lists the documents Trenova sent to QuickBooks Online that differ there now: a total someone edited, a document deleted or voided in QuickBooks, a document voided in Trenova but still live in QuickBooks, or a customer's open balance that no longer adds up to the same figure on both sides. Each finding shows both values, who changed the document in QuickBooks and when, and whether an amount difference is within the reconciliation tolerance.\n\nTrenova compares every synced document dated in an open or locked period each night, and compares a document again within minutes when QuickBooks reports it changed. A finding closes on its own once both sides agree again. A document with a change still on its way to QuickBooks is left out until that change is sent.\n\nThe strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the table to it.",
+      "summary": "Drift findings lists the documents Trenova sent to QuickBooks Online that differ there now: a total someone edited, a document deleted or voided in QuickBooks, a document voided in Trenova but still live in QuickBooks, or a customer's open balance that no longer adds up to the same figure on both sides. Each finding shows both values, who changed the document in QuickBooks and when, and whether an amount difference is within the reconciliation tolerance.\n\nTrenova compares every synced document dated in an open or locked period each night, and compares a document again within minutes when QuickBooks reports it changed. A finding closes on its own once both sides agree again. A document with a change still on its way to QuickBooks is left out until that change is sent.\n\nWhen the connection sends journal entries, the check also compares each QuickBooks account's balance with the Trenova accounts mapped to it. A **Different account balance** finding lists those Trenova accounts and their balances. It cannot be pushed or adjusted as a whole: find the entry made in QuickBooks by hand, or the one missing from it, and correct that entry. Accounts are not compared while journal entries are still waiting to be sent, or when Trenova and QuickBooks keep different home currencies.\n\nThe strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the table to it.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1855,7 +1872,9 @@
         "QuickBooks does not match",
         "fix QuickBooks mismatch",
         "customer balance differs",
-        "sync mismatch"
+        "sync mismatch",
+        "account balance differs",
+        "trial balance does not match QuickBooks"
       ],
       "tasks": [
         {
@@ -1912,7 +1931,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to accounting sync; fixing and dismissing need update access. Adjusting Trenova also needs permission to change invoices, or customer payments for a reversal. Adjust Trenova is offered for invoices and debit memos, and for customer payments voided or deleted in QuickBooks; settlements, credit memos and customer balances offer only Push Trenova's value or Dismiss. An invoice with payments or credits applied cannot be voided to match until they are unapplied. Agents may dismiss only an amount difference within the reconciliation tolerance.",
+      "notes": "Viewing the page needs read access to accounting sync; fixing and dismissing need update access. Adjusting Trenova also needs permission to change invoices, or customer payments for a reversal. Adjust Trenova is offered for invoices and debit memos, and for customer payments voided or deleted in QuickBooks; settlements, credit memos and customer balances offer only Push Trenova's value or Dismiss, and account balances offer only Dismiss. An invoice with payments or credits applied cannot be voided to match until they are unapplied. Agents may dismiss only an amount difference within the reconciliation tolerance.",
       "related": [
         "/accounting/sync",
         "/accounting/sync/inbound",
@@ -2014,7 +2033,7 @@
         "Mappings"
       ],
       "description": "Accounting mappings say which QuickBooks Online account, item, customer and vendor each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods.",
-      "summary": "Accounting mappings say which QuickBooks Online account, item, customer and vendor each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods.\n\nTrenova reads the QuickBooks company's records and proposes a match where it is sure enough. A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed** mappings; selecting a figure filters the list to it.",
+      "summary": "Accounting mappings say which QuickBooks Online account, item, customer and vendor each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods. When the connection sends journal entries, every active GL account can be mapped, and each account that carries posted entries needs a QuickBooks account before its entries are sent; an account without its own mapping falls back to the account role it plays.\n\nTrenova reads the QuickBooks company's records and proposes a match where it is sure enough. A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed** mappings; selecting a figure filters the list to it.",
       "requires": [
         {
           "resource": "accounting_integration",
@@ -4661,7 +4680,10 @@
         "QuickBooks",
         "QuickBooks Online",
         "accounting sync",
-        "Intuit"
+        "Intuit",
+        "ledger mode",
+        "send journal entries",
+        "opening balances"
       ],
       "tasks": [
         {
@@ -4737,10 +4759,28 @@
             "Open [Integrations](/admin/integrations) and open the QuickBooks Online card.",
             "Select the connect button. Trenova sends you to Intuit's own page; sign in there and choose the company to connect. Trenova never sees the QuickBooks password.",
             "Intuit sends you back to Trenova, which finishes the connection and shows the company it connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books closed through**. Check it is the right company, then select **Continue**.",
-            "On **Match records**, Trenova reads the company's accounts, items, customers and vendors and proposes a match for each Trenova record. Tick the proposals that are right and select the confirm button, which names how many are ticked, or select a row to choose another record.",
+            "On **What is sent**, choose **Send documents** to send invoices, payments and bills and let QuickBooks keep the ledger, or **Send journal entries** to keep the ledger in Trenova and send QuickBooks every journal entry it posts. With journal entries, choose **Detailed** for one entry per Trenova entry or **Daily summary** for one entry per day, then select **Continue**. The choice is fixed once sending starts.",
+            "On **Match records**, Trenova reads the company's accounts, items, customers and vendors and proposes a match for each Trenova record. Tick the proposals that are right and select the confirm button, which names how many are ticked, or select a row to choose another record. When journal entries are sent, every GL account that carries posted entries needs a QuickBooks account.",
             "When every required mapping is confirmed, select **Finish setup**. The rest can be done later on [Mappings](/accounting/sync/mappings) (**Open all mappings**).",
-            "Choose the **Start date**: documents dated before it are never sent. Leave **Send posted documents automatically** on to send each document as it is posted, or turn it off to hold each one in the [Sync ledger](/accounting/sync) until someone releases it. When the start date is in the past, tick **Also send documents already posted since the start date** to queue those too. Turn on **Send owner-operator settlements** to also send owner-operator settlements as bills; it is off unless you turn it on, and company driver pay is never sent.",
+            "Choose the **Start date**: documents dated before it are never sent. Leave **Send posted documents automatically** on to send each document as it is posted, or turn it off to hold each one in the [Sync ledger](/accounting/sync) until someone releases it. When the start date is in the past, tick **Also send documents already posted since the start date** to queue those too. Turn on **Send owner-operator settlements** to also send owner-operator settlements as bills; it is off unless you turn it on, and company driver pay is never sent. When journal entries are sent, tick **Send opening balances** instead to send one entry, dated the day before the start date, with every account's balance up to then.",
             "Select **Start sending**. From then on Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments as they are posted, and checks the connection every fifteen minutes."
+          ]
+        },
+        {
+          "title": "Send journal entries instead of documents",
+          "keywords": [
+            "ledger mode",
+            "journal entry sync",
+            "general ledger to QuickBooks",
+            "daily summary",
+            "detailed journal entries",
+            "opening balances"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and connect QuickBooks Online.",
+            "On **What is sent**, choose **Send journal entries**. Under **Journal entries**, choose **Detailed** to send each posted Trenova entry as its own QuickBooks entry, or **Daily summary** to send one entry per day summed per account and customer or vendor. A day is sent again when an entry is posted to it later.",
+            "Select **Continue**, confirm a QuickBooks account for each GL account on **Match records**, then choose the **Start date**. Tick **Send opening balances** when QuickBooks does not already hold the balances up to that day.",
+            "Select **Start sending**. Invoices, payments and bills stay in Trenova; QuickBooks receives their journal entries once they are posted, including entries posted by hand on [Journals to post](/accounting/journals-to-post). The connection shows **What is sent** and when **Opening balances** were sent. To change the choice later, disconnect and connect again."
           ]
         },
         {
@@ -4754,7 +4794,7 @@
           ],
           "steps": [
             "Open [Integrations](/admin/integrations) and open the QuickBooks Online card.",
-            "Under **Sync settings**, turn **Send posted documents automatically** on or off. When it is off, each new document waits in the [Sync ledger](/accounting/sync) until someone releases it; documents already held stay held.",
+            "Under **Sync settings**, turn **Send posted documents automatically** on or off. When it is off, each new document waits in the [Sync ledger](/accounting/sync) until someone releases it; documents already held stay held. When journal entries are sent, only this setting is shown; the rest apply to documents.",
             "Turn **Send owner-operator settlements** on to send owner-operator settlements to QuickBooks as bills, with a 1099 vendor for each driver. Settlements posted from then on are sent; request a backfill from the [Sync ledger](/accounting/sync) to send earlier ones.",
             "Choose what happens to payments recorded in QuickBooks Online: **Wait for someone to apply them** lists each one on [Payments from the books](/accounting/sync/inbound), **Apply them automatically** brings in those that match, and **Leave them out of Trenova** stops reading them.",
             "Select **Save**."
@@ -4794,7 +4834,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing the start date and changing the sync settings. A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
+      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent, choosing the start date and changing the sync settings. A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
       "related": [
         "/accounting/sync",
         "/admin/inbound-mailboxes",

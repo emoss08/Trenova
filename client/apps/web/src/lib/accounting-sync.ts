@@ -8,6 +8,8 @@ import type {
   AccountingInboundChangeReason,
   AccountingInboundChangeStatus,
   AccountingInboundPaymentPolicy,
+  AccountingLedgerGranularity,
+  AccountingSyncMode,
   AccountingSyncObjectType,
   AccountingSyncRecordStatus,
   AccountingMappingFilterInput,
@@ -50,12 +52,33 @@ export const ACCOUNTING_DRIFT_KINDS: readonly AccountingDriftKind[] = [
   "DeletedInProvider",
   "VoidedInProvider",
   "CustomerBalanceMismatch",
+  "TrialBalanceMismatch",
 ];
 
 const MONEY_DRIFT_KINDS = new Set<AccountingDriftKind>([
   "AmountMismatch",
   "CustomerBalanceMismatch",
+  "TrialBalanceMismatch",
 ]);
+
+export function accountingDriftExplainedOnly(kind: AccountingDriftKind): boolean {
+  return kind === "TrialBalanceMismatch";
+}
+
+export const ACCOUNTING_SYNC_MODES: readonly AccountingSyncMode[] = ["Document", "Ledger"];
+
+export const ACCOUNTING_LEDGER_GRANULARITIES: readonly AccountingLedgerGranularity[] = [
+  "Detailed",
+  "DailySummary",
+];
+
+export function isLedgerObjectType(objectType: AccountingSyncObjectType): boolean {
+  return objectType === "JournalEntry" || objectType === "JournalSummary";
+}
+
+export function sendsLedger(connection: { syncMode: AccountingSyncMode } | null | undefined) {
+  return connection?.syncMode === "Ledger";
+}
 
 export function accountingDriftWithinTolerance(
   finding: { kind: AccountingDriftKind; differenceMinor?: number | null },
@@ -140,8 +163,12 @@ export function accountingSyncObjectPath(
       return recordPath("carrier", objectId);
     case "DriverVendor":
       return recordPath("worker", objectId);
+    case "JournalEntry":
+      return recordPath("journal_entry", objectId);
     case "CustomerPayment":
     case "CreditApplication":
+    case "JournalSummary":
+    case "GLAccount":
       return null;
   }
 }
@@ -310,6 +337,15 @@ export function referenceRefreshRunning(
 ): boolean {
   const startedAt = connection?.referenceRefreshStartedAt;
   return startedAt != null && nowSeconds - startedAt <= REFERENCE_REFRESH_STALE_SECONDS;
+}
+
+export function needsAccountingMode(
+  connection:
+    | { status: AccountingConnectionStatus; setupStep: AccountingSetupStep }
+    | null
+    | undefined,
+): boolean {
+  return hasLiveAccountingConnection(connection) && connection?.setupStep === "Mode";
 }
 
 export function needsAccountingMappings(

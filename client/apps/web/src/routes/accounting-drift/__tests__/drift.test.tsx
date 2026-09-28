@@ -375,6 +375,62 @@ describe("DriftFindingPanel", () => {
     ).toBeInTheDocument();
   });
 
+  it("explains an account balance difference and offers only to dismiss it", () => {
+    renderPanel(
+      finding({
+        objectType: "GLAccount",
+        objectId: "gla_1",
+        objectNumber: "Freight revenue",
+        kind: "TrialBalanceMismatch",
+        directions: [],
+        trenovaMinor: 90_000,
+        providerMinor: 60_000,
+        differenceMinor: -30_000,
+        detail: [
+          {
+            objectType: "GLAccount",
+            objectId: "gla_1",
+            objectNumber: "4000 (Freight revenue)",
+            trenovaMinor: 50_000,
+            providerMinor: 0,
+          },
+          {
+            objectType: "GLAccount",
+            objectId: "gla_2",
+            objectNumber: "4010 (Fuel surcharge revenue)",
+            trenovaMinor: 40_000,
+            providerMinor: 0,
+          },
+        ],
+      }),
+    );
+
+    expect(screen.getByText("Find the entry that differs")).toBeInTheDocument();
+    expect(screen.getByText("Trenova accounts in this balance")).toBeInTheDocument();
+    expect(screen.queryByText("Documents that differ")).not.toBeInTheDocument();
+    expect(screen.getByText("4000 (Freight revenue)")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "4000 (Freight revenue)" })).not.toBeInTheDocument();
+    expect(screen.getByText("$500.00")).toBeInTheDocument();
+    expect(screen.getByText("$400.00")).toBeInTheDocument();
+    expect(screen.queryByText(/ in Trenova, /)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dismiss" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Push Trenova's value" })).not.toBeInTheDocument();
+  });
+
+  it("does not explain a balance difference that is already settled", () => {
+    renderPanel(
+      finding({
+        objectType: "GLAccount",
+        objectId: "gla_1",
+        kind: "TrialBalanceMismatch",
+        status: "Resolved",
+        directions: [],
+      }),
+    );
+
+    expect(screen.queryByText("Find the entry that differs")).not.toBeInTheDocument();
+  });
+
   it("loads the finding a link opens", async () => {
     mocks.fetchAccountingDriftFinding.mockResolvedValue(finding());
     renderPanel(null, "?panelType=edit&panelEntityId=acctdf_1");

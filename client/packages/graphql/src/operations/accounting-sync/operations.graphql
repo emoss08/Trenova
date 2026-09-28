@@ -21,6 +21,10 @@ fragment AccountingConnectionFields on AccountingConnection {
   connectedAt
   disconnectedAt
   setupStep
+  syncMode
+  ledgerGranularity
+  ledgerOpeningBalancesSentAt
+  externalFiscalYearStartMonth
   syncStartDate
   syncEnabledAt
   autoSync
@@ -398,6 +402,12 @@ query AccountingSyncObjectStates($objectIds: [ID!]!) {
 query AccountingBackfills($integrationType: AccountingSystem!) {
   accountingBackfills(integrationType: $integrationType) {
     ...AccountingBackfillFields
+  }
+}
+
+mutation ChooseAccountingSyncMode($input: ChooseAccountingSyncModeInput!) {
+  chooseAccountingSyncMode(input: $input) {
+    ...AccountingConnectionFields
   }
 }
 

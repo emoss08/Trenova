@@ -5,6 +5,7 @@ import { useAccountingMappingSummary } from "@/hooks/use-accounting-mapping-summ
 import {
   hasLiveAccountingConnection,
   needsAccountingMappings,
+  needsAccountingMode,
   needsAccountingStartDate,
 } from "@/lib/accounting-sync";
 import type { IntegrationSetupStep } from "@/lib/integration-setup";
@@ -28,6 +29,7 @@ import { AccountingCompanyFacts } from "./accounting-company-facts";
 import { AccountingConnectStep } from "./accounting-connect-step";
 import { AccountingConnectionPanel } from "./accounting-connection-panel";
 import { AccountingMapStep } from "./accounting-map-step";
+import { AccountingModeStep } from "./accounting-mode-step";
 import { AccountingStartDateStep } from "./accounting-start-date-step";
 import { quickBooksVendor, type AccountingVendor } from "./accounting-vendors";
 import { useAccountingConnectionActions } from "./use-accounting-connection";
@@ -118,6 +120,7 @@ function AccountingIntegrationBody({
   const steps: IntegrationSetupStep[] = [
     { id: "connect", label: t("Connect"), detail: t("Sign in to {0}", vendor.name) },
     { id: "review", label: t("Review company"), detail: t("Confirm what was connected") },
+    { id: "mode", label: t("What is sent"), detail: t("Documents or journal entries") },
     { id: "map", label: t("Match records"), detail: t("Confirm what each record is sent as") },
     { id: "start", label: t("Start date"), detail: t("Choose the first day sent") },
   ];
@@ -204,11 +207,21 @@ function AccountingIntegrationBody({
         <AccountingCompanyFacts connection={connection} />
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button type="button" onClick={onReviewed}>
-            {needsAccountingMappings(connection) || needsAccountingStartDate(connection)
+            {needsAccountingMode(connection) ||
+            needsAccountingMappings(connection) ||
+            needsAccountingStartDate(connection)
               ? t("Continue")
               : t("Done")}
           </Button>
         </div>
+      </IntegrationSetupWizard>
+    );
+  }
+
+  if (needsAccountingMode(connection)) {
+    return (
+      <IntegrationSetupWizard steps={steps} activeStepId="mode" label={t("{0} setup", vendor.name)}>
+        <AccountingModeStep vendor={vendor} connection={connection} canManage={canManage} />
       </IntegrationSetupWizard>
     );
   }

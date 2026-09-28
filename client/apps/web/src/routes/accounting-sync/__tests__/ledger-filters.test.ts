@@ -69,15 +69,18 @@ describe("ledger schemas", () => {
   });
 });
 
+const documents = { syncMode: "Document" as const, ledgerGranularity: null };
+
 describe("backfillObjectTypes", () => {
   it("never offers customers or vendors, which are not backfilled", () => {
-    expect(backfillObjectTypes(true)).not.toContain("Customer");
-    expect(backfillObjectTypes(true)).not.toContain("CarrierVendor");
-    expect(backfillObjectTypes(true)).not.toContain("DriverVendor");
+    const types = backfillObjectTypes({ ...documents, syncsDriverSettlements: true });
+    expect(types).not.toContain("Customer");
+    expect(types).not.toContain("CarrierVendor");
+    expect(types).not.toContain("DriverVendor");
   });
 
   it("offers owner-operator settlements only while they are sent", () => {
-    expect(backfillObjectTypes(false)).toEqual([
+    expect(backfillObjectTypes({ ...documents, syncsDriverSettlements: false })).toEqual([
       "Invoice",
       "DebitMemo",
       "CreditMemo",
@@ -86,8 +89,31 @@ describe("backfillObjectTypes", () => {
       "CarrierBill",
       "CarrierBillPayment",
     ]);
-    expect(backfillObjectTypes(true)).toEqual(
+    expect(backfillObjectTypes({ ...documents, syncsDriverSettlements: true })).toEqual(
       expect.arrayContaining(["DriverBill", "DriverBillPayment"]),
     );
+  });
+
+  it("offers a document connection documents and never journals", () => {
+    const types = backfillObjectTypes({ ...documents, syncsDriverSettlements: true });
+    expect(types).not.toContain("JournalEntry");
+    expect(types).not.toContain("JournalSummary");
+  });
+
+  it("offers a ledger connection only the journal records it sends", () => {
+    expect(
+      backfillObjectTypes({
+        syncMode: "Ledger",
+        ledgerGranularity: "Detailed",
+        syncsDriverSettlements: true,
+      }),
+    ).toEqual(["JournalEntry"]);
+    expect(
+      backfillObjectTypes({
+        syncMode: "Ledger",
+        ledgerGranularity: "DailySummary",
+        syncsDriverSettlements: false,
+      }),
+    ).toEqual(["JournalSummary"]);
   });
 });

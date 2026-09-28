@@ -45,6 +45,9 @@ export function useAccountingSyncLabels(): AccountingSyncLabels {
         CarrierBillPayment: t("Carrier settlement payment"),
         DriverBill: t("Owner-operator settlement"),
         DriverBillPayment: t("Owner-operator settlement payment"),
+        JournalEntry: t("Journal entry"),
+        JournalSummary: t("Daily summary"),
+        GLAccount: t("GL account"),
       },
       operation: {
         Create: t("Create"),
@@ -86,6 +89,8 @@ export function useAccountingSyncLabels(): AccountingSyncLabels {
         DependencyOf: t("Needed by another document"),
         SafetyNet: t("Found by the hourly check"),
         Backfill: t("Backfill"),
+        JournalPosted: t("Journal entry posted"),
+        OpeningBalances: t("Opening balances"),
       },
     }),
     [t],
