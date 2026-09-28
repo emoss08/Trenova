@@ -2356,6 +2356,98 @@
       }
     },
     {
+      "name": "cancel_journal_reversal",
+      "description": "Cancel a journal reversal that has not been posted, with the reason, when the entry should stand after all. The original entry is left as it is.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "journalReversalId": {
+            "description": "The journal reversal, from list_journal_reversals or the result of request_journal_reversal. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the entry should stand, in a sentence the requester can act on.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "journalReversalId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "journal_reversal",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "The reason is what the reversal's requester reads next, so a run that has read outside text proposes it.",
+        "effect": "change",
+        "artifact": "journal_reversal",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Withdraws a reversal before it reaches the ledger; nothing is booked, and it is requested again if it was needed after all."
+      }
+    },
+    {
+      "name": "cancel_manual_journal",
+      "description": "Cancel a manual journal that is a draft, waiting for approval or approved but not posted, with the reason. It is kept, cancelled, and never posted. A posted journal is undone with request_journal_reversal instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "manualJournalId": {
+            "description": "The manual journal, from list_manual_journals or get_manual_journal. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it must not be posted, in a sentence its author can act on.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "manualJournalId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "manual_journal",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "The reason is what the journal's author reads next, so a run that has read outside text proposes it.",
+        "effect": "change",
+        "artifact": "manual_journal",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Withdraws a journal before it reaches the ledger; nothing is booked, and the entry is drafted again if it was needed after all."
+      }
+    },
+    {
       "name": "cancel_order",
       "description": "Cancel an order and every shipment on it that is not already canceled, with the reason the customer gave. An order with an invoiced shipment cannot be canceled; credit the invoice first. Canceling a shipment tells its carrier and trading partner as cancel_shipment would.",
       "parameters": {
@@ -2528,6 +2620,59 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "The worker is sent the cancellation reason by push notice and text message."
+      }
+    },
+    {
+      "name": "change_accounting_backfill",
+      "description": "Pause, resume or cancel the accounting backfill in progress when a person asks, such as pausing it while the books are closed. Documents already sent stay in the books; a cancelled backfill is requested again with request_accounting_backfill.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "description": "Pause holds what is left, Resume carries on from where it stopped, Cancel ends it for good.",
+            "enum": [
+              "Pause",
+              "Resume",
+              "Cancel"
+            ],
+            "type": "string",
+            "x-enumOf": "accountingSync.backfillAction"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
+          }
+        },
+        "required": [
+          "system",
+          "action"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_integration",
+        "operation": "manage",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes how much history reaches the organization's books; a person who manages the integration approves it, and pausing or cancelling sends nothing."
       }
     },
     {
@@ -2737,6 +2882,44 @@
       }
     },
     {
+      "name": "close_fiscal_period",
+      "description": "Propose closing a fiscal period once get_fiscal_close_blockers shows nothing in the way, so nothing more posts in it. Earlier periods must be closed first. A person always decides, and reopening it takes a reason.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fiscalPeriodId": {
+            "description": "The fiscal period, from list_fiscal_periods. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fiscalPeriodId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fiscal_period",
+        "operation": "close",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Ends posting to a period of the books a person signs off; only a person closes one."
+      }
+    },
+    {
       "name": "close_order",
       "description": "Close a Billed order once nothing more will be billed on it. Closing is final: a Closed order takes no more shipments or charges.",
       "parameters": {
@@ -2942,6 +3125,64 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "confirm_accounting_mapping_proposals",
+      "description": "Confirm Trenova's proposed accounting system matches exactly as list_accounting_mapping_gaps shows them, several at once, so sync can use them. A proposal that changed since it was read is refused; to choose a different record, use set_accounting_mapping.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "proposals": {
+            "description": "The proposals to confirm, each as it was shown: the mapping and the record Trenova proposed for it.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "externalId": {
+                  "description": "The proposed record's externalId, as list_accounting_mapping_gaps shows it under mappedTo.",
+                  "type": "string"
+                },
+                "mappingId": {
+                  "description": "The mapping's id, from list_accounting_mapping_gaps or get_accounting_mapping.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "mappingId",
+                "externalId"
+              ],
+              "type": "object"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "proposals"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_integration",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Decides which accounts and records Trenova's documents post to in the books, so a person approves it; clearing or changing a mapping undoes it."
       }
     },
     {
@@ -4972,6 +5213,104 @@
       }
     },
     {
+      "name": "draft_manual_journal",
+      "description": "Draft a manual journal entry for the general ledger: its lines, the accounts they post to and the day it is booked. It is saved as a draft and books nothing; submit_manual_journal sends it for approval. Take accounts from list_gl_accounts and make the debits equal the credits.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "accountingDate": {
+            "description": "The day it is booked to the ledger; it must fall in a fiscal period that takes manual journals. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "The ISO currency code, such as USD. Leave it out for the organization's functional currency.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "description": {
+            "description": "What the journal records, as the approver will read it.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "lines": {
+            "description": "The journal's lines, at least two, whose debits and credits must balance before it can be submitted.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "credit": {
+                  "description": "The credit as a decimal such as 125.00. Give a debit or a credit, never both.",
+                  "type": "string"
+                },
+                "customerId": {
+                  "description": "The customer the line is for, from list_customers or get_customer, when it concerns one.",
+                  "type": "string"
+                },
+                "debit": {
+                  "description": "The debit as a decimal such as 125.00. Give a debit or a credit, never both.",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "What the line is for.",
+                  "maxLength": 255,
+                  "type": "string"
+                },
+                "glAccountId": {
+                  "description": "The account the line posts to, from list_gl_accounts; it must be active and allow manual journals.",
+                  "type": "string"
+                },
+                "locationId": {
+                  "description": "The location the line is for, from list_locations, when it concerns one.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "glAccountId",
+                "description"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 2,
+            "type": "array"
+          },
+          "reason": {
+            "description": "Why the entry is needed: the evidence or the correction it makes.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "accountingDate",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "manual_journal",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A journal drafted from what someone outside wrote is proposed, since its lines are what an approver books.",
+        "effect": "change",
+        "artifact": "manual_journal",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Saves a draft journal inside Trenova; nothing reaches the ledger until a person submits, approves and posts it, and a draft is cancelled the same way."
+      }
+    },
+    {
       "name": "duplicate_shipment",
       "description": "Copy an existing shipment into new ones on the server, carrying its customer, stops, commodities, charges, freight terms and rating method exactly as saved. Prefer it to create_shipment whenever the freight repeats one already booked, since nothing is retyped. Give firstPickupAt to move every stop window so the first pickup starts then; leave it out to keep the source's dates. Each copy gets its own pro number and order; they appear in search_shipments within a minute.",
       "parameters": {
@@ -6898,6 +7237,13 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "blocking",
+        "blocked",
+        "closing",
+        "period",
+        "ready"
+      ],
       "policy": {
         "kind": "query",
         "resource": "fiscal_period",
@@ -7165,6 +7511,44 @@
       "policy": {
         "kind": "query",
         "resource": "journal_entry",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_manual_journal",
+      "description": "Retrieve one manual journal request by id with its lines, the account each posts to and its debit or credit. It also says who approved, rejected or cancelled it and why. Use list_manual_journals first when you have a number.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "manualJournalId": {
+            "description": "The manual journal's id, from list_manual_journals or the page you are on.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "manualJournalId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "manual_journal",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -12280,6 +12664,129 @@
       }
     },
     {
+      "name": "list_journal_reversals",
+      "description": "List requests to reverse posted journal entries, newest first, with the entry each reverses, its status, the day it books and why. Narrow by status to find reversals awaiting approval or approved ones still to post. Filters: status (Requested|PendingApproval|Approved|Rejected|Cancelled|Posted): Approved reversals are waiting to be posted; text: reasonCode, originalJournalEntryId; date: requestedAccountingDate, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "reasonCode",
+                    "originalJournalEntryId",
+                    "requestedAccountingDate",
+                    "createdAt"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_journal_reversals.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_journal_reversals.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "requestedAccountingDate",
+              "createdAt"
+            ],
+            "type": "string",
+            "x-enumOf": "list_journal_reversals.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "journal_reversal",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_location_categories",
       "description": "List location categories — how facilities are grouped, and what each offers: secure parking, overnight, a restroom, whether an appointment is required. Use it for questions about where a driver can stop. Filters: text: name, description; boolean: hasSecureParking, requiresAppointment, allowsOvernight, hasRestroom; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
@@ -12511,6 +13018,130 @@
       "policy": {
         "kind": "query",
         "resource": "location",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_manual_journals",
+      "description": "List manual journal requests, newest first, with their number, status, accounting day and totals, and whether they balance. Narrow by status to find drafts to finish, journals awaiting approval, or approved ones still to post. get_manual_journal opens one with its lines. Filters: status (Draft|PendingApproval|Approved|Rejected|Cancelled|Posted): Approved journals are waiting to be posted; text: requestNumber, description; date: accountingDate, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "requestNumber",
+                    "description",
+                    "accountingDate",
+                    "createdAt"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_manual_journals.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_manual_journals.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "requestNumber",
+              "accountingDate",
+              "createdAt"
+            ],
+            "type": "string",
+            "x-enumOf": "list_manual_journals.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "manual_journal",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -14636,6 +15267,44 @@
       }
     },
     {
+      "name": "lock_fiscal_period",
+      "description": "Propose locking an open fiscal period while its books are reviewed for close, the step before close_fiscal_period. unlock_fiscal_period undoes it. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fiscalPeriodId": {
+            "description": "The fiscal period, from list_fiscal_periods. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fiscalPeriodId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fiscal_period",
+        "operation": "lock",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes which dates the ledger takes postings for; only a person locks a period."
+      }
+    },
+    {
       "name": "manage_billing_transfer_run",
       "description": "Stop a background transfer to billing that is still running, or Retry the shipments a finished one could not transfer. Take the run id from transfer_to_billing's result. Only the person who started a transfer can stop it; shipments already transferred stay in the queue.",
       "parameters": {
@@ -15005,6 +15674,44 @@
       }
     },
     {
+      "name": "open_fiscal_period",
+      "description": "Propose opening an inactive fiscal period so postings dated in it are accepted. Periods open in order, never in a closed fiscal year. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fiscalPeriodId": {
+            "description": "The fiscal period, from list_fiscal_periods. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fiscalPeriodId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fiscal_period",
+        "operation": "activate",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes which dates the ledger takes postings for; only a person opens a period."
+      }
+    },
+    {
       "name": "open_invoice_dispute",
       "description": "Open a dispute on a posted invoice the customer is withholding payment on. The invoice is marked Disputed until the case is resolved or withdrawn. The disputed amount cannot exceed the open balance, and an invoice holds one open case at a time. Record the customer's reason as they gave it; read get_invoice first.",
       "parameters": {
@@ -15103,7 +15810,9 @@
               "edi_message",
               "invoice",
               "journal_entry",
+              "journal_reversal",
               "location",
+              "manual_journal",
               "order",
               "rate_matrix",
               "report",
@@ -15676,6 +16385,84 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting."
+      }
+    },
+    {
+      "name": "post_journal_reversal",
+      "description": "Propose posting an approved journal reversal: it books the original entry's lines with debits and credits swapped and marks the original reversed. It changes account balances for good, so a person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "journalReversalId": {
+            "description": "The journal reversal, from list_journal_reversals or the result of request_journal_reversal. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "journalReversalId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "journal_reversal",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "journal_reversal",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books the reversing entry to the general ledger; only a person posts a reversal."
+      }
+    },
+    {
+      "name": "post_manual_journal",
+      "description": "Propose posting an approved manual journal to the general ledger, in its fiscal period or the next open one the closed period policy allows. It changes account balances and is undone only by a reversal, so a person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "manualJournalId": {
+            "description": "The manual journal, from list_manual_journals or get_manual_journal. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "manualJournalId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "manual_journal",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "manual_journal",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books the journal's lines to the general ledger; only a person posts a manual journal."
       }
     },
     {
@@ -17104,6 +17891,44 @@
       }
     },
     {
+      "name": "reject_accounting_mapping_proposal",
+      "description": "Turn down the wrong record Trenova proposed for an accounting mapping, leaving it unmatched. That record is never proposed for it again. Use set_accounting_mapping when the right record is known.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "mappingId": {
+            "description": "The mapping's id, from list_accounting_mapping_gaps or get_accounting_mapping. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mappingId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_integration",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Unmatches a proposal so it is not used; choosing a record for the mapping undoes it."
+      }
+    },
+    {
       "name": "reject_carrier_invoice_match",
       "description": "Reject a carrier's invoice match that is wrong, such as an invoice for another load or a duplicate, with a note saying why. Nothing is paid on it; the carrier can send a corrected invoice.",
       "parameters": {
@@ -17367,6 +18192,59 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "The worker is sent the rejection reason by push notice and text message."
+      }
+    },
+    {
+      "name": "release_accounting_sync",
+      "description": "Propose releasing documents the organization holds for approval before they go to the accounting system, so they are sent. Name each by its sync record; the person approving may untick some. What is sent cannot be called back, so a person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "syncRecordIds": {
+            "description": "Up to 50 sync records awaiting approval, from list_accounting_sync_records or get_accounting_sync_record.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "accounting_sync"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string",
+            "x-enumOf": "integration.accountingSystem"
+          }
+        },
+        "required": [
+          "system",
+          "syncRecordIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Sends documents a review policy held for a person to the organization's books; only a person releases them."
       }
     },
     {
@@ -17702,6 +18580,50 @@
       }
     },
     {
+      "name": "reopen_fiscal_period",
+      "description": "Propose reopening a closed fiscal period, with the reason, so a correction can post in it. Later periods must be reopened first and a closed fiscal year never is. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fiscalPeriodId": {
+            "description": "The fiscal period, from list_fiscal_periods. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the period must take postings again: the correction and the evidence for it.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fiscalPeriodId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fiscal_period",
+        "operation": "reopen",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Lets postings land again in books a person closed; only a person reopens a period."
+      }
+    },
+    {
       "name": "replay_edi_message",
       "description": "Propose sending an outbound EDI document its trading partner already received once more, exactly as it was generated. Use it only when the partner says they lost or never processed it; the partner gets it twice otherwise. A failed delivery is retry_edi_message_delivery's. A person always decides.",
       "parameters": {
@@ -17963,6 +18885,69 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Sends a driver a renewal request the model wrote."
+      }
+    },
+    {
+      "name": "request_journal_reversal",
+      "description": "Propose reversing a posted journal entry that was booked in error, with every debit and credit swapped. It is dated the day you name, or the next open period's first day, waits for approval where the organization requires it, and post_journal_reversal books it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "accountingDate": {
+            "description": "The day the reversal is booked; a day in a closed period moves to the next open one where policy allows. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "journalEntryId": {
+            "description": "The posted journal entry to reverse, from list_journal_entries or get_journal_entry. Never guess one.",
+            "type": "string"
+          },
+          "reasonCode": {
+            "description": "A short code for the kind of error, such as WrongAccount or Duplicate.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "reasonText": {
+            "description": "What was wrong with the entry, as the approver and the auditor will read it.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "journalEntryId",
+          "accountingDate",
+          "reasonCode",
+          "reasonText"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "reverse",
+        "undo",
+        "wrong",
+        "entry",
+        "error"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "journal_reversal",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "journal_reversal",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Commits the organization to taking a posted entry back out of the ledger, approved at once where approval is off; only a person requests a reversal."
       }
     },
     {
@@ -18772,6 +19757,106 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reviewing a failure is a person's attestation and may send an EDI 214 to the customer's trading partner; only a person approves it."
+      }
+    },
+    {
+      "name": "revise_manual_journal_draft",
+      "description": "Rewrite a draft manual journal before it is submitted: its description, reason, day, currency or lines. Fields left out keep their value; lines, when given, replace every line. Only a draft can be revised; a journal sent back by its approver is drafted again with draft_manual_journal.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "accountingDate": {
+            "description": "The day it is booked to the ledger; it must fall in a fiscal period that takes manual journals. Leave it out to keep it. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "The ISO currency code, such as USD. Leave it out for the organization's functional currency.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "description": {
+            "description": "What the journal records, as the approver will read it. Leave it out to keep it.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "lines": {
+            "description": "Every line of the rewritten journal, replacing the draft's lines. Leave it out to keep the lines as they are.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "credit": {
+                  "description": "The credit as a decimal such as 125.00. Give a debit or a credit, never both.",
+                  "type": "string"
+                },
+                "customerId": {
+                  "description": "The customer the line is for, from list_customers or get_customer, when it concerns one.",
+                  "type": "string"
+                },
+                "debit": {
+                  "description": "The debit as a decimal such as 125.00. Give a debit or a credit, never both.",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "What the line is for.",
+                  "maxLength": 255,
+                  "type": "string"
+                },
+                "glAccountId": {
+                  "description": "The account the line posts to, from list_gl_accounts; it must be active and allow manual journals.",
+                  "type": "string"
+                },
+                "locationId": {
+                  "description": "The location the line is for, from list_locations, when it concerns one.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "glAccountId",
+                "description"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 2,
+            "type": "array"
+          },
+          "manualJournalId": {
+            "description": "The manual journal, from list_manual_journals or get_manual_journal. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the entry is needed: the evidence or the correction it makes.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "manualJournalId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "manual_journal",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A journal rewritten from what someone outside wrote is proposed, since its lines are what an approver books.",
+        "effect": "change",
+        "artifact": "manual_journal",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a draft journal inside Trenova; nothing reaches the ledger until a person submits, approves and posts it, and a later revision changes it back."
       }
     },
     {
@@ -20660,6 +21745,45 @@
       }
     },
     {
+      "name": "submit_manual_journal",
+      "description": "Submit a balanced draft manual journal for approval. It waits for an approver; where the organization has manual journal approval turned off, submitting approves it, so only a person does that. Read it with get_manual_journal first.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "manualJournalId": {
+            "description": "The manual journal, from list_manual_journals or get_manual_journal. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "manualJournalId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "manual_journal",
+        "operation": "submit",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "manual_journal",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves a draft journal into the approval queue inside Trenova; an approver decides and it books nothing until a person posts it."
+      }
+    },
+    {
       "name": "tender_move_to_carriers",
       "description": "Offer an uncovered move to specific carriers at specific rates: broadcast to all of them at once, or sequentially in the order given. Each line names the carrier, the rate and how it is measured (flat or per mile), how long the carrier has to accept, and how the offer is sent. Read shop_carriers first so the rates come from contracts rather than guesses; a rate you cannot source is a reason to raise an exception, not to invent one.",
       "parameters": {
@@ -21032,6 +22156,58 @@
       }
     },
     {
+      "name": "triage_bank_receipt_work_item",
+      "description": "Assign a bank receipt's reconciliation work item to a person who will work it, or mark it under review while it is being looked into. Nothing is matched or closed; match_bank_receipt and resolve_bank_receipt_work_item do that.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "description": "Assign hands it to a person; StartReview marks it under review.",
+            "enum": [
+              "Assign",
+              "StartReview"
+            ],
+            "type": "string",
+            "x-enumOf": "bankReceiptWorkItem.agentMove"
+          },
+          "assigneeUserId": {
+            "description": "For Assign: the person's user id, the assignedToUserId get_bank_receipt shows on a work item, or the person who asked. Never guess one.",
+            "type": "string"
+          },
+          "workItemId": {
+            "description": "The work item's id, from get_bank_receipt or this run's subject. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workItemId",
+          "action"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "bank_receipt_work_item",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes who works a reconciliation item and says it is being looked into; it moves no money and the item is reassigned the same way."
+      }
+    },
+    {
       "name": "unapply_credit_memo",
       "description": "Propose taking back one credit memo application: the invoice it settled is reopened by that amount and the credit is available again. Use it when credit went to the wrong invoice. A person always decides; say why.",
       "parameters": {
@@ -21155,6 +22331,44 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Puts a canceled shipment back to New inside Trenova; nothing is sent, and canceling it again undoes it."
+      }
+    },
+    {
+      "name": "unlock_fiscal_period",
+      "description": "Propose unlocking a locked fiscal period so it is open again, when postings must still land in it before it closes. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fiscalPeriodId": {
+            "description": "The fiscal period, from list_fiscal_periods. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fiscalPeriodId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fiscal_period",
+        "operation": "unlock",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes which dates the ledger takes postings for; only a person unlocks a period."
       }
     },
     {
