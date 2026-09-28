@@ -236,8 +236,8 @@ func newResetReportForkTool(reports reportAdministrator) serviceports.AgentTool 
 	return newReceivableTool(reportInternalSpec(&receivableSpec{
 		name: "reset_report_fork",
 		description: "Put a report copied from a built-in one with fork_report back to the " +
-			"built-in's current columns, filters and parameters, dropping the person's " +
-			"changes, for example when the built-in was improved.",
+			"built-in's current definition, dropping the person's changes. Its columns, " +
+			"filters and parameters become the built-in's again, as when the built-in improved.",
 		operation: permission.OpUpdate,
 		rationale: "Rewrites a report the person owns from the built-in catalog; nothing is " +
 			"sent, but the person's changes to it are lost.",

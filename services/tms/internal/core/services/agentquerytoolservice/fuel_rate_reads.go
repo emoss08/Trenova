@@ -118,8 +118,8 @@ func newListFuelPurchasesTool(repo repositories.FuelPurchaseRepository) servicep
 	return newListTool(listSpec{
 		name:         "list_fuel_purchases",
 		entityPlural: "fuel purchases",
-		summary: "List fuel bought for tractors, newest first, with the tractor, where it " +
-			"was bought for IFTA, the fuel type, the gallons, the amount and whether tax was " +
+		summary: "List fuel bought for tractors, newest first, with where it was bought for " +
+			"IFTA, the fuel type, the gallons and the amount. Each also says whether tax was " +
 			"paid at the pump. Use it to find a purchase to correct with " +
 			"correct_fuel_purchase or delete_fuel_purchase, or to check a receipt was " +
 			"already recorded before record_fuel_purchase.",
@@ -445,9 +445,10 @@ func newListIFTAJurisdictionsTool(repo repositories.IFTARepository) serviceports
 func (t *listIFTAJurisdictionsTool) Name() string { return "list_ifta_jurisdictions" }
 
 func (t *listIFTAJurisdictionsTool) Description() string {
-	return "List the active states and provinces fuel tax is reported by, with the id " +
-		"record_fuel_purchase and record_ifta_mileage_entry take, the two-letter code and " +
-		"whether each is an IFTA member. Narrow by country code, US, CA or MX."
+	return "List the active states and provinces fuel tax is reported by, with each " +
+		"one's two-letter code and whether it is an IFTA member. Its id is what " +
+		"record_fuel_purchase and record_ifta_mileage_entry take. Narrow by country code, " +
+		"US, CA or MX."
 }
 
 func (t *listIFTAJurisdictionsTool) ParamSchema() map[string]any {
@@ -579,8 +580,8 @@ func newListIFTAMileageEntriesTool(repo repositories.IFTARepository) serviceport
 		name:         "list_ifta_mileage_entries",
 		entityPlural: "IFTA mileage entries",
 		summary: "List the jurisdiction miles entered by hand or from telematics rather than " +
-			"routed from moves, with the tractor, the state or province, the day and the " +
-			"quarter they count in. correct_ifta_mileage_entry and delete_ifta_mileage_entry " +
+			"routed from moves. Each has the tractor, the state or province, the day and the " +
+			"quarter it counts in. correct_ifta_mileage_entry and delete_ifta_mileage_entry " +
 			"take their ids.",
 		resource: permission.ResourceIFTAJurisdictionMileage,
 		config:   querybuilder.GetFieldConfiguration((*ifta.JurisdictionMileageEntry)(nil)),
@@ -665,8 +666,8 @@ func (t *listRateImportsTool) Name() string { return "list_rate_imports" }
 
 func (t *listRateImportsTool) Description() string {
 	return "List rate sheets uploaded against rate agreements, newest first, with the " +
-		"agreement, the day the new rates take effect, and how many lanes the sheet adds, " +
-		"changes and removes. A Parsed import waits for commit_rate_import or " +
+		"agreement and the day the new rates take effect. Each says how many lanes the " +
+		"sheet adds, changes and removes. A Parsed import waits for commit_rate_import or " +
 		"discard_rate_import."
 }
 

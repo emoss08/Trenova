@@ -634,8 +634,8 @@ func newRecordIFTAMileageEntryTool(entries iftaMileageKeeper) serviceports.Agent
 	return newReceivableTool(iftaInternalSpec(&receivableSpec{
 		name: "record_ifta_mileage_entry",
 		description: "Record miles a tractor drove in one state or province that no routed " +
-			"move carries, such as a trip sheet or a telematics report, or that correct a " +
-			"move's routed miles. The quarter's IFTA return counts them.",
+			"move carries, or that correct a move's routed miles. They come from a trip " +
+			"sheet or a telematics report, and the quarter's IFTA return counts them.",
 		resource:   permission.ResourceIFTAJurisdictionMileage,
 		operation:  permission.OpCreate,
 		reversible: true,
@@ -948,8 +948,8 @@ func newRecalculateMoveJurisdictionMilesTool(router jurisdictionMileRouter) serv
 	return newReceivableTool(iftaInternalSpec(&receivableSpec{
 		name: "recalculate_move_jurisdiction_miles",
 		description: "Ask the routing provider again for one move's state-by-state miles and " +
-			"replace its jurisdiction rows, when the move's stops changed or the IFTA return " +
-			"shows it unattributed. The move's distance is left as it was. Each run is one " +
+			"replace its jurisdiction rows. Use it when the move's stops changed or the IFTA " +
+			"return shows it unattributed. The move's distance is left as it was. Each run is one " +
 			"billable distance request.",
 		resource:   permission.ResourceShipmentMove,
 		operation:  permission.OpUpdate,
@@ -1036,9 +1036,9 @@ func newBackfillJurisdictionMilesTool(
 
 	return newReceivableTool(iftaInternalSpec(&receivableSpec{
 		name: "backfill_jurisdiction_miles",
-		description: "Start a background job that asks the routing provider for the " +
-			"state-by-state miles of every completed move in a quarter that has none, so the " +
-			"IFTA return stops showing them unattributed. The preview counts the moves and " +
+		description: "Start a background job that routes every completed move in a quarter " +
+			"that has no state-by-state miles. The IFTA return then stops showing them " +
+			"unattributed. The preview counts the moves and " +
 			"miles first; each move is a billable distance request.",
 		resource:  permission.ResourceIFTAReturn,
 		operation: permission.OpManage,

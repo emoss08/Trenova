@@ -1050,8 +1050,8 @@ func newDuplicateRateAgreementTool(agreements rateAgreementKeeper) serviceports.
 	return newReportingReceivableTool(rateDraftSpec(&receivableSpec{
 		name: "duplicate_rate_agreement",
 		description: "Copy a rate agreement with its lanes, weight breaks, accessorials and " +
-			"fuel terms into a new draft with none of the original's history or approvals, to " +
-			"start a renewal. revise_rate_agreement_draft then changes the copy.",
+			"fuel terms into a new draft, to start a renewal. The copy has none of the " +
+			"original's history or approvals; revise_rate_agreement_draft then changes it.",
 		operation:  permission.OpDuplicate,
 		reversible: true,
 		rationale: "Saves a draft copy of an agreement inside Trenova that prices nothing " +
@@ -1554,10 +1554,10 @@ func renderRateIncrease(
 func newApplyRateIncreaseTool(agreements rateAgreementKeeper) serviceports.AgentTool {
 	return newReceivableTool(rateMoneySpec(&receivableSpec{
 		name: "apply_rate_increase",
-		description: "Propose a general rate increase or decrease: move every lane rate on " +
-			"the named agreements, one customer's or carrier's, or every active agreement of " +
-			"a party type, by a percent or a flat amount, from a day. The old rates stay in " +
-			"history. A person always decides.",
+		description: "Propose a general rate increase or decrease on agreements' lane rates, " +
+			"by a percent or a flat amount, from a day. It moves every lane rate on the named " +
+			"agreements, one customer's or carrier's, or every active agreement of a party " +
+			"type. The old rates stay in history. A person always decides.",
 		operation: permission.OpUpdate,
 		rationale: "Changes the rates many agreements charge customers or pay carriers; " +
 			"only a person applies a rate increase.",

@@ -1372,7 +1372,7 @@
     },
     {
       "name": "apply_rate_increase",
-      "description": "Propose a general rate increase or decrease: move every lane rate on the named agreements, one customer's or carrier's, or every active agreement of a party type, by a percent or a flat amount, from a day. The old rates stay in history. A person always decides.",
+      "description": "Propose a general rate increase or decrease on agreements' lane rates, by a percent or a flat amount, from a day. It moves every lane rate on the named agreements, one customer's or carrier's, or every active agreement of a party type. The old rates stay in history. A person always decides.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -2477,7 +2477,7 @@
     },
     {
       "name": "backfill_jurisdiction_miles",
-      "description": "Start a background job that asks the routing provider for the state-by-state miles of every completed move in a quarter that has none, so the IFTA return stops showing them unattributed. The preview counts the moves and miles first; each move is a billable distance request.",
+      "description": "Start a background job that routes every completed move in a quarter that has no state-by-state miles. The IFTA return then stops showing them unattributed. The preview counts the moves and miles first; each move is a billable distance request.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -3542,7 +3542,7 @@
     },
     {
       "name": "commit_rate_import",
-      "description": "Propose applying a reviewed rate sheet to its agreement: the lanes it changes and drops are closed out and its new rates take effect on the import's day, keeping the old rates in history. Read it with list_rate_imports first. It changes what shipments are charged, so a person always decides.",
+      "description": "Propose applying a reviewed rate sheet to its agreement from the import's day. The lanes it changes and drops are closed out, its new rates take effect, and the old rates stay in history. Read it with list_rate_imports first. It changes what shipments are charged, so a person always decides.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -6715,7 +6715,7 @@
     },
     {
       "name": "duplicate_rate_agreement",
-      "description": "Copy a rate agreement with its lanes, weight breaks, accessorials and fuel terms into a new draft with none of the original's history or approvals, to start a renewal. revise_rate_agreement_draft then changes the copy.",
+      "description": "Copy a rate agreement with its lanes, weight breaks, accessorials and fuel terms into a new draft, to start a renewal. The copy has none of the original's history or approvals; revise_rate_agreement_draft then changes it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13454,7 +13454,7 @@
     },
     {
       "name": "list_fuel_purchases",
-      "description": "List fuel bought for tractors, newest first, with the tractor, where it was bought for IFTA, the fuel type, the gallons, the amount and whether tax was paid at the pump. Use it to find a purchase to correct with correct_fuel_purchase or delete_fuel_purchase, or to check a receipt was already recorded before record_fuel_purchase. Filters: fuelType (Diesel|Gasoline|Gasohol|Propane|CNG|LNG|Ethanol|Methanol|E85|M85|A55|Biodiesel|Electricity|Hydrogen|DEF|Reefer|Other); source (Manual|CardImport); tractorId (text): from list_tractors; importBatchId (text): from list_fuel_purchase_imports; boolean: taxPaid; date: purchasedAt, createdAt; text: vendor, transactionReference, cardLastFour. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List fuel bought for tractors, newest first, with where it was bought for IFTA, the fuel type, the gallons and the amount. Each also says whether tax was paid at the pump. Use it to find a purchase to correct with correct_fuel_purchase or delete_fuel_purchase, or to check a receipt was already recorded before record_fuel_purchase. Filters: fuelType (Diesel|Gasoline|Gasohol|Propane|CNG|LNG|Ethanol|Methanol|E85|M85|A55|Biodiesel|Electricity|Hydrogen|DEF|Reefer|Other); source (Manual|CardImport); tractorId (text): from list_tractors; importBatchId (text): from list_fuel_purchase_imports; boolean: taxPaid; date: purchasedAt, createdAt; text: vendor, transactionReference, cardLastFour. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13999,7 +13999,7 @@
     },
     {
       "name": "list_ifta_jurisdictions",
-      "description": "List the active states and provinces fuel tax is reported by, with the id record_fuel_purchase and record_ifta_mileage_entry take, the two-letter code and whether each is an IFTA member. Narrow by country code, US, CA or MX.",
+      "description": "List the active states and provinces fuel tax is reported by, with each one's two-letter code and whether it is an IFTA member. Its id is what record_fuel_purchase and record_ifta_mileage_entry take. Narrow by country code, US, CA or MX.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -14038,7 +14038,7 @@
     },
     {
       "name": "list_ifta_mileage_entries",
-      "description": "List the jurisdiction miles entered by hand or from telematics rather than routed from moves, with the tractor, the state or province, the day and the quarter they count in. correct_ifta_mileage_entry and delete_ifta_mileage_entry take their ids. Filters: source (Manual|RouteCalculation|Telematics); tractorId (text): from list_tractors; jurisdictionId (text): from list_ifta_jurisdictions; number: year, quarter; date: traveledAt; boolean: loaded. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List the jurisdiction miles entered by hand or from telematics rather than routed from moves. Each has the tractor, the state or province, the day and the quarter it counts in. correct_ifta_mileage_entry and delete_ifta_mileage_entry take their ids. Filters: source (Manual|RouteCalculation|Telematics); tractorId (text): from list_tractors; jurisdictionId (text): from list_ifta_jurisdictions; number: year, quarter; date: traveledAt; boolean: loaded. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -15835,7 +15835,7 @@
     },
     {
       "name": "list_rate_imports",
-      "description": "List rate sheets uploaded against rate agreements, newest first, with the agreement, the day the new rates take effect, and how many lanes the sheet adds, changes and removes. A Parsed import waits for commit_rate_import or discard_rate_import.",
+      "description": "List rate sheets uploaded against rate agreements, newest first, with the agreement and the day the new rates take effect. Each says how many lanes the sheet adds, changes and removes. A Parsed import waits for commit_rate_import or discard_rate_import.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -19727,7 +19727,7 @@
     },
     {
       "name": "recalculate_move_jurisdiction_miles",
-      "description": "Ask the routing provider again for one move's state-by-state miles and replace its jurisdiction rows, when the move's stops changed or the IFTA return shows it unattributed. The move's distance is left as it was. Each run is one billable distance request.",
+      "description": "Ask the routing provider again for one move's state-by-state miles and replace its jurisdiction rows. Use it when the move's stops changed or the IFTA return shows it unattributed. The move's distance is left as it was. Each run is one billable distance request.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -20235,7 +20235,7 @@
     },
     {
       "name": "record_ifta_mileage_entry",
-      "description": "Record miles a tractor drove in one state or province that no routed move carries, such as a trip sheet or a telematics report, or that correct a move's routed miles. The quarter's IFTA return counts them.",
+      "description": "Record miles a tractor drove in one state or province that no routed move carries, or that correct a move's routed miles. They come from a trip sheet or a telematics report, and the quarter's IFTA return counts them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -21773,7 +21773,7 @@
     },
     {
       "name": "reset_report_fork",
-      "description": "Put a report copied from a built-in one with fork_report back to the built-in's current columns, filters and parameters, dropping the person's changes, for example when the built-in was improved.",
+      "description": "Put a report copied from a built-in one with fork_report back to the built-in's current definition, dropping the person's changes. Its columns, filters and parameters become the built-in's again, as when the built-in improved.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

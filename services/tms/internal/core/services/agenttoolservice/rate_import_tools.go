@@ -89,9 +89,9 @@ func targetRateImport(params map[string]any) (serviceports.ToolTarget, bool) {
 func newCommitRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
 	return newReceivableTool(rateMoneySpec(&receivableSpec{
 		name: "commit_rate_import",
-		description: "Propose applying a reviewed rate sheet to its agreement: the lanes it " +
-			"changes and drops are closed out and its new rates take effect on the import's " +
-			"day, keeping the old rates in history. Read it with list_rate_imports first. It " +
+		description: "Propose applying a reviewed rate sheet to its agreement from the " +
+			"import's day. The lanes it changes and drops are closed out, its new rates take " +
+			"effect, and the old rates stay in history. Read it with list_rate_imports first. It " +
 			"changes what shipments are charged, so a person always decides.",
 		operation: permission.OpUpdate,
 		rationale: "Changes the rates an agreement prices shipments at; only a person applies " +
