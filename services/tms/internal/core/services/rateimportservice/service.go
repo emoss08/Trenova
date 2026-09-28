@@ -333,53 +333,18 @@ func (s *Service) Commit(
 	ctx context.Context,
 	req *CommitRequest,
 ) (*rateimport.RateImportBatch, error) {
-	batch, err := s.repo.GetByID(ctx, &repositories.GetRateImportBatchByIDRequest{
-		RateImportBatchID: req.RateImportBatchID,
-		TenantInfo:        req.TenantInfo,
-		IncludeRows:       true,
-	})
+	plan, err := s.PlanCommit(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	if !batch.Status.CanCommit() {
-		return nil, errortypes.NewBusinessError(
-			"This import has already been {0}", strings.ToLower(batch.Status.String()),
-		)
-	}
-
-	staged := &stagedBatch{
-		Rows:           batch.Rows,
-		ErrorCount:     batch.ErrorCount,
-		Changes:        batch.Changes,
-		existingByLane: make(map[string]*rateagreement.RateAgreementRule),
-	}
-
-	existing, err := s.rulesOf(ctx, batch)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, rule := range existing {
-		if rule != nil {
-			staged.existingByLane[rule.LaneKey] = rule
-		}
-	}
-
-	amendment := commitPlan(staged)
-
-	if len(amendment.Rules) == 0 && len(amendment.SupersededIDs) == 0 {
-		return nil, errortypes.NewBusinessError(errNothingToCommit.Error())
-	}
-
-	s.stampRules(batch, amendment.Rules)
+	batch := plan.Batch
 
 	if err = s.agreementRepo.AmendRules(ctx, &repositories.AmendRateAgreementRulesRequest{
 		TenantInfo:      req.TenantInfo,
 		RateAgreementID: batch.RateAgreementID,
 		EffectiveFrom:   batch.EffectiveFrom,
-		SupersededIDs:   amendment.SupersededIDs,
-		Rules:           amendment.Rules,
+		SupersededIDs:   plan.SupersededIDs,
+		Rules:           plan.Rules,
 	}); err != nil {
 		s.l.Error("failed to apply a rate import", zap.Error(err))
 		return nil, err
@@ -436,10 +401,32 @@ func (s *Service) Discard(
 	ctx context.Context,
 	req *CommitRequest,
 ) (*rateimport.RateImportBatch, error) {
-	batch, err := s.repo.GetByID(ctx, &repositories.GetRateImportBatchByIDRequest{
-		RateImportBatchID: req.RateImportBatchID,
-		TenantInfo:        req.TenantInfo,
-	})
+	change, err := s.PlanDiscard(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.Update(ctx, change.After)
+}
+
+// CommitPlan is the amendment a commit would apply to the agreement.
+type CommitPlan struct {
+	Batch         *rateimport.RateImportBatch
+	SupersededIDs []pulid.ID
+	Rules         []*rateagreement.RateAgreementRule
+}
+
+// BatchChange is an import before and after a change to its status.
+type BatchChange struct {
+	Before *rateimport.RateImportBatch
+	After  *rateimport.RateImportBatch
+}
+
+func (s *Service) openBatch(
+	ctx context.Context,
+	req *repositories.GetRateImportBatchByIDRequest,
+) (*rateimport.RateImportBatch, error) {
+	batch, err := s.repo.GetByID(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +437,64 @@ func (s *Service) Discard(
 		)
 	}
 
-	batch.Status = rateimport.StatusDiscarded
+	return batch, nil
+}
 
-	return s.repo.Update(ctx, batch)
+// PlanCommit works out the amendment Commit applies, without applying it.
+func (s *Service) PlanCommit(ctx context.Context, req *CommitRequest) (*CommitPlan, error) {
+	batch, err := s.openBatch(ctx, &repositories.GetRateImportBatchByIDRequest{
+		RateImportBatchID: req.RateImportBatchID,
+		TenantInfo:        req.TenantInfo,
+		IncludeRows:       true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	staged := &stagedBatch{
+		Rows:           batch.Rows,
+		ErrorCount:     batch.ErrorCount,
+		Changes:        batch.Changes,
+		existingByLane: make(map[string]*rateagreement.RateAgreementRule),
+	}
+
+	existing, err := s.rulesOf(ctx, batch)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, rule := range existing {
+		if rule != nil {
+			staged.existingByLane[rule.LaneKey] = rule
+		}
+	}
+
+	amendment := commitPlan(staged)
+	if len(amendment.Rules) == 0 && len(amendment.SupersededIDs) == 0 {
+		return nil, errortypes.NewBusinessError(errNothingToCommit.Error())
+	}
+
+	s.stampRules(batch, amendment.Rules)
+
+	return &CommitPlan{
+		Batch:         batch,
+		SupersededIDs: amendment.SupersededIDs,
+		Rules:         amendment.Rules,
+	}, nil
+}
+
+// PlanDiscard works out the discard Discard saves, without saving it.
+func (s *Service) PlanDiscard(ctx context.Context, req *CommitRequest) (*BatchChange, error) {
+	batch, err := s.openBatch(ctx, &repositories.GetRateImportBatchByIDRequest{
+		RateImportBatchID: req.RateImportBatchID,
+		TenantInfo:        req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	after := *batch
+	after.Status = rateimport.StatusDiscarded
+
+	return &BatchChange{Before: batch, After: &after}, nil
 }

@@ -113,24 +113,58 @@ func (s *Service) ListResults(
 //
 // It is deliberately not run here. A year of shipments takes minutes, and a
 // request that waits for it will time out long before the answer exists.
+// CreatePlan is a simulation as Create would queue it, with the agreement it
+// replays.
+type CreatePlan struct {
+	Simulation *ratesimulation.RateSimulation
+	Agreement  *rateagreement.RateAgreement
+}
+
+// PlanCreate checks a simulation as Create does, and finds the agreement it
+// replays, without saving or queueing anything.
+func (s *Service) PlanCreate(
+	ctx context.Context,
+	entity *ratesimulation.RateSimulation,
+) (*CreatePlan, error) {
+	planned := *entity
+	planned.Status = ratesimulation.StatusPending
+
+	multiErr := errortypes.NewMultiError()
+	planned.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	agreement, err := s.agreementRepo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+		RateAgreementID: planned.RateAgreementID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: planned.OrganizationID,
+			BuID:  planned.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &CreatePlan{Simulation: &planned, Agreement: agreement}, nil
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	entity *ratesimulation.RateSimulation,
 	userID pulid.ID,
 ) (*ratesimulation.RateSimulation, error) {
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-
-	if multiErr.HasErrors() {
-		return nil, multiErr
+	plan, err := s.PlanCreate(ctx, entity)
+	if err != nil {
+		return nil, err
 	}
 
-	entity.Status = ratesimulation.StatusPending
+	planned := plan.Simulation
 	if !userID.IsNil() {
-		entity.RequestedBy = &userID
+		planned.RequestedBy = &userID
 	}
 
-	created, err := s.repo.Create(ctx, entity)
+	created, err := s.repo.Create(ctx, planned)
 	if err != nil {
 		return nil, err
 	}

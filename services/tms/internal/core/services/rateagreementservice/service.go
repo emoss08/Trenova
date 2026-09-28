@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -81,15 +80,12 @@ func (s *Service) Create(
 
 	// A new agreement starts in Draft whatever the payload says. Creating one
 	// already active would route around the review the organization asked for.
-	entity.Status = rateagreement.StatusDraft
-	entity.CurrentVersionNumber = 1
-	entity.StampRules()
-
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
-		return nil, multiErr
+	planned, err := s.PlanCreate(ctx, entity)
+	if err != nil {
+		return nil, err
 	}
 
-	created, err := s.repo.Create(ctx, entity)
+	created, err := s.repo.Create(ctx, planned)
 	if err != nil {
 		log.Error("failed to create rate agreement", zap.Error(err))
 		return nil, err
@@ -116,55 +112,24 @@ func (s *Service) Update(
 		zap.String("userId", userID.String()),
 	)
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
-		RateAgreementID: entity.ID,
-		TenantInfo:      tenantOf(entity),
-		IncludeChildren: true,
-	})
+	plan, err := s.PlanUpdate(ctx, entity)
 	if err != nil {
-		log.Error("failed to load rate agreement for update", zap.Error(err))
 		return nil, err
 	}
 
-	// The status moves only through the review actions, never through a plain
-	// save. Otherwise an editor could activate an agreement by resending it.
-	entity.Status = original.Status
-	entity.StampRules()
-
-	// The version number is the service's to manage: it advances exactly when
-	// the negotiated header terms change, whatever number the payload carries.
-	changeSummary, termsChanged := headerTermsChanged(original, entity)
-	entity.CurrentVersionNumber = original.CurrentVersionNumber
-	if termsChanged {
-		entity.CurrentVersionNumber = original.CurrentVersionNumber + 1
-	}
-
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	// A save's lane edits become an amendment: changed lanes are superseded by
-	// successors effective from this moment, dropped lanes are closed out, and
-	// restated lanes are left untouched. The moment can never precede the
-	// agreement itself, or a successor would be reachable on dates the
-	// contract does not cover.
-	amendAt := max(timeutils.NowUnix(), original.EffectiveFrom)
-
-	plan, planErr := planRuleAmendment(original.Rules, entity.Rules, amendAt)
-	if planErr != nil {
-		return nil, planErr
-	}
-
-	if _, err = s.repo.Update(ctx, entity); err != nil {
+	if _, err = s.repo.Update(ctx, plan.After); err != nil {
 		log.Error("failed to update rate agreement", zap.Error(err))
 		return nil, err
 	}
 
-	if plan != nil {
+	// A save's lane edits become an amendment: changed lanes are superseded by
+	// successors effective from this moment, dropped lanes are closed out, and
+	// restated lanes are left untouched.
+	if len(plan.SupersededIDs) > 0 || len(plan.Inserts) > 0 {
 		if err = s.repo.AmendRules(ctx, &repositories.AmendRateAgreementRulesRequest{
-			TenantInfo:      tenantOf(entity),
-			RateAgreementID: entity.ID,
-			EffectiveFrom:   amendAt,
+			TenantInfo:      tenantOf(plan.After),
+			RateAgreementID: plan.After.ID,
+			EffectiveFrom:   plan.AmendAt,
 			SupersededIDs:   plan.SupersededIDs,
 			Rules:           plan.Inserts,
 		}); err != nil {
@@ -173,8 +138,8 @@ func (s *Service) Update(
 		}
 	}
 
-	if termsChanged {
-		s.recordVersion(ctx, log, entity, amendAt, userID, "", changeSummary)
+	if plan.TermsChanged {
+		s.recordVersion(ctx, log, plan.After, plan.AmendAt, userID, "", plan.ChangeSummary)
 	}
 
 	// The caller gets what the database now holds rather than an echo of what
@@ -190,7 +155,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.audit(log, updated, original, permission.OpUpdate, userID, "Rate agreement updated")
+	s.audit(log, updated, plan.Before, permission.OpUpdate, userID, "Rate agreement updated")
 
 	return updated, nil
 }
@@ -212,18 +177,11 @@ func (s *Service) AmendRules(
 		zap.String("agreementId", req.RateAgreementID.String()),
 	)
 
-	agreement, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
-		RateAgreementID: req.RateAgreementID,
-		TenantInfo:      req.TenantInfo,
-	})
+	plan, err := s.PlanAmendRules(ctx, req)
 	if err != nil {
-		log.Error("failed to load rate agreement for amendment", zap.Error(err))
 		return nil, err
 	}
-
-	if multiErr := s.validator.ValidateAmendment(ctx, agreement, req); multiErr != nil {
-		return nil, multiErr
-	}
+	agreement := plan.Agreement
 
 	if err = s.repo.AmendRules(ctx, req); err != nil {
 		log.Error("failed to amend rate agreement rules", zap.Error(err))

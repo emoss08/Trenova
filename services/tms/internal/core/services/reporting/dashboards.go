@@ -132,17 +132,8 @@ func (s *Service) ListDashboards(
 }
 
 func (s *Service) DeleteDashboard(ctx context.Context, req *GetDashboardRequest) error {
-	existing, err := s.dashboardRepo.GetByID(ctx, &repositories.GetReportDashboardRequest{
-		TenantInfo:  req.TenantInfo,
-		DashboardID: req.DashboardID,
-	})
-	if err != nil {
+	if _, err := s.PlanDeleteDashboard(ctx, req); err != nil {
 		return err
-	}
-	if existing.OwnerID != req.TenantInfo.UserID {
-		return errortypes.NewAuthorizationError(
-			"Only the dashboard owner can delete this dashboard",
-		)
 	}
 
 	return s.dashboardRepo.Delete(ctx, &repositories.GetReportDashboardRequest{

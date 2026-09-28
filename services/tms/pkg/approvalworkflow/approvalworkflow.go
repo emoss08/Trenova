@@ -87,11 +87,71 @@ type Engine[T any, S comparable] struct {
 	Now func() int64
 }
 
-// Apply runs one transition, or explains why it cannot.
+// Change is a transition worked out and not yet saved: the entity as it was
+// loaded and the copy the transition stamped.
+type Change[T any] struct {
+	Before T
+	After  T
+}
+
+// Plan works out one transition without saving it, or explains why it cannot.
+// The stamping happens on a snapshot, so the loaded entity is left exactly as
+// it was whatever the outcome.
+func (e Engine[T, S]) Plan(
+	ctx context.Context,
+	req *Request,
+	transition Transition[T, S],
+) (Change[T], error) {
+	entity, err := e.admit(ctx, req, transition)
+	if err != nil {
+		return Change[T]{}, err
+	}
+
+	after := e.Snapshot(entity)
+	e.stamp(after, req, transition)
+
+	return Change[T]{Before: entity, After: after}, nil
+}
+
+// Apply runs one transition, or explains why it cannot. It makes the same
+// checks and the same stamps Plan does, then saves.
 //
 // The order is deliberate: the status is checked before anything is written, so
 // an illegal move leaves the entity exactly as it was.
 func (e Engine[T, S]) Apply(
+	ctx context.Context,
+	req *Request,
+	transition Transition[T, S],
+) (T, error) {
+	var zero T
+
+	entity, err := e.admit(ctx, req, transition)
+	if err != nil {
+		return zero, err
+	}
+
+	original := e.Snapshot(entity)
+	e.stamp(entity, req, transition)
+
+	updated, err := e.Save(ctx, entity)
+	if err != nil {
+		return zero, err
+	}
+
+	if transition.AfterSave != nil {
+		if err = transition.AfterSave(ctx, updated, req); err != nil {
+			return zero, err
+		}
+	}
+
+	if e.Audit != nil {
+		e.Audit(updated, original, transition.PermissionOp, req, transition.AuditComment)
+	}
+
+	return updated, nil
+}
+
+func (e Engine[T, S]) admit(
 	ctx context.Context,
 	req *Request,
 	transition Transition[T, S],
@@ -118,27 +178,12 @@ func (e Engine[T, S]) Apply(
 		}
 	}
 
-	original := e.Snapshot(entity)
+	return entity, nil
+}
 
+func (e Engine[T, S]) stamp(entity T, req *Request, transition Transition[T, S]) {
 	e.SetStatus(entity, transition.To)
 	transition.Apply(entity, req, e.now())
-
-	updated, err := e.Save(ctx, entity)
-	if err != nil {
-		return zero, err
-	}
-
-	if transition.AfterSave != nil {
-		if err = transition.AfterSave(ctx, updated, req); err != nil {
-			return zero, err
-		}
-	}
-
-	if e.Audit != nil {
-		e.Audit(updated, original, transition.PermissionOp, req, transition.AuditComment)
-	}
-
-	return updated, nil
 }
 
 func (t Transition[T, S]) startsFrom(status S) bool {

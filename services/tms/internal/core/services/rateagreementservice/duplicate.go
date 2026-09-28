@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -38,17 +37,14 @@ func (s *Service) Duplicate(
 		zap.String("userId", userID.String()),
 	)
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
-		RateAgreementID: req.RateAgreementID,
-		TenantInfo:      req.TenantInfo,
-		IncludeChildren: true,
-	})
+	plan, err := s.PlanDuplicate(ctx, req)
 	if err != nil {
-		log.Error("failed to load rate agreement to duplicate", zap.Error(err))
+		log.Error("failed to plan the rate agreement copy", zap.Error(err))
 		return nil, err
 	}
+	original := plan.Original
 
-	copied, err := s.Create(ctx, copyAgreement(original, req), userID)
+	copied, err := s.Create(ctx, plan.Copy, userID)
 	if err != nil {
 		return nil, err
 	}
