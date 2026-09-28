@@ -33,6 +33,8 @@ pub mod machine;
 #[cfg(windows)]
 pub mod paths;
 #[cfg(windows)]
+pub mod printer;
+#[cfg(windows)]
 pub mod settings;
 #[cfg(windows)]
 pub mod shell;

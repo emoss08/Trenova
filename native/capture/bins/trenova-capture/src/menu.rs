@@ -17,6 +17,8 @@ pub enum MenuAction {
     Open(String),
     /// Open a folder on this computer.
     OpenFolder(PathBuf),
+    /// Add the Trenova printer, with administrator rights.
+    AddPrinter,
     /// Ask for the server address.
     SetServer,
     Quit,
@@ -235,6 +237,9 @@ impl Snapshot {
                 "Look for scanners again",
                 MenuAction::Command(Command::RefreshScanners),
             ));
+        }
+        if self.printer_missing {
+            menu.push(item("Add the Trenova printer", MenuAction::AddPrinter));
         }
         if self.failed > 0
             && let Some(dir) = &self.failed_dir

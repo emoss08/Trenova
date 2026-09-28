@@ -14,7 +14,9 @@ use capture_platform::{
 use capture_protocol::release::pinned_public_key;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
-use trenova_capture::agent::{self, Environment, Machine, ServerSetting, UpdateStarter};
+use trenova_capture::agent::{
+    self, Environment, Machine, PrinterCheck, ServerSetting, UpdateStarter,
+};
 use trenova_capture::scanners::HelperHost;
 use trenova_capture::state::{Command, Shared, Ui};
 use windows::Win32::UI::HiDpi::{
@@ -131,6 +133,16 @@ fn environment(data_dir: &Path) -> Environment {
         release_key: pinned_public_key(),
         windows_build: machine::windows_build(),
         machine_auto_update: settings::auto_update_allowed(),
+        printer: Arc::new(InstalledPrinter),
+    }
+}
+
+/// The Trenova printer, as the registry records it.
+struct InstalledPrinter;
+
+impl PrinterCheck for InstalledPrinter {
+    fn missing(&self) -> bool {
+        capture_platform::printer::printer_missing()
     }
 }
 

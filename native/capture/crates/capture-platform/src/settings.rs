@@ -8,8 +8,8 @@
 
 use windows::Win32::Foundation::ERROR_SUCCESS;
 use windows::Win32::System::Registry::{
-    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, REG_SZ, RRF_RT_REG_DWORD, RRF_RT_REG_SZ,
-    RegGetValueW, RegSetKeyValueW,
+    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, REG_SZ, RRF_RT_REG_DWORD, RRF_RT_REG_SZ,
+    RegCloseKey, RegGetValueW, RegOpenKeyExW, RegSetKeyValueW,
 };
 use windows_core::PCWSTR;
 
@@ -22,6 +22,28 @@ const PRINT_PORT: &str = "PrintPort";
 const AUTO_UPDATE: &str = "AutoUpdate";
 const CRYPTOGRAPHY_KEY: &str = "SOFTWARE\\Microsoft\\Cryptography";
 const MACHINE_GUID: &str = "MachineGuid";
+
+/// Whether a key under `HKEY_LOCAL_MACHINE` exists and this user can read it.
+pub(crate) fn machine_key_exists(key: &str) -> bool {
+    let key = wide(key);
+    let mut opened = HKEY::default();
+    // SAFETY: a NUL-terminated key name and a handle closed below.
+    let status = unsafe {
+        RegOpenKeyExW(
+            HKEY_LOCAL_MACHINE,
+            PCWSTR(key.as_ptr()),
+            None,
+            KEY_READ,
+            &raw mut opened,
+        )
+    };
+    if status != ERROR_SUCCESS {
+        return false;
+    }
+    // SAFETY: the handle was opened above and is closed once.
+    let _ = unsafe { RegCloseKey(opened) };
+    true
+}
 
 fn read_string(root: HKEY, key: &str, value: &str) -> Option<String> {
     let key = wide(key);

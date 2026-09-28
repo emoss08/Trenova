@@ -129,6 +129,11 @@ wix extension add -g WixToolset.Util.wixext
 ./installer/build.ps1 -Sign      # also signs the executables and the MSI; see sign.ps1
 ```
 
+The installer adds the **Trenova** printer as the person installing. Windows refuses an IPP
+printer to the system account, so a deployment tool that installs as the system account, or an
+install without administrator rights, completes without the printer. The tray then offers
+**Add the Trenova printer**, which asks for administrator rights once and adds it.
+
 A silent install takes the server address, whether computers update themselves, and the
 printer's port:
 

@@ -22,6 +22,10 @@ use crate::manifest::page_checksum;
 
 /// The description format this build writes and reads.
 pub const VERSION: u32 = 1;
+/// The print service's Windows service name.
+pub const PRINT_SERVICE_NAME: &str = "TrenovaCaptureSvc";
+/// The printer people choose in the print dialog.
+pub const PRINTER_NAME: &str = "Trenova";
 const PART: &str = "part";
 const REJECTED: &str = "rejected";
 const DESCRIPTION: &str = "json";
