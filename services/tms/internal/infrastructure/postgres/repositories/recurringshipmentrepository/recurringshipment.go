@@ -284,26 +284,10 @@ func (r *repository) UpdateStatus(
 		return nil, err
 	}
 
-	entity.Status = req.Status
 	entity.Version = req.Version
-
-	if req.Status == recurringshipment.StatusActive {
-		// Resuming a series never backfills paused occurrences — the schedule
-		// restarts from the next future slot.
-		next, occErr := entity.NextOccurrence(timeutils.NowUnix())
-		if occErr != nil {
-			log.Error("failed to compute next occurrence on resume", zap.Error(occErr))
-			return nil, occErr
-		}
-
-		if next == nil {
-			entity.Status = recurringshipment.StatusExpired
-			entity.NextOccurrenceAt = nil
-		} else {
-			entity.NextOccurrenceAt = &next.At
-		}
-
-		entity.ConsecutiveFailures = 0
+	if err = entity.ApplyStatus(req.Status, timeutils.NowUnix()); err != nil {
+		log.Error("failed to compute next occurrence on resume", zap.Error(err))
+		return nil, err
 	}
 
 	rsh := buncolgen.RecurringShipmentColumns

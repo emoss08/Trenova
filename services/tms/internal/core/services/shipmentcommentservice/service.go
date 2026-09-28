@@ -351,52 +351,14 @@ func (s *service) Update(
 	req *services.UpdateShipmentCommentRequest,
 	actor *services.RequestActor,
 ) (*shipment.ShipmentComment, error) {
-	if req == nil || req.Entity == nil {
-		return nil, errortypes.NewValidationError(
-			"comment",
-			errortypes.ErrRequired,
-			"Shipment comment is required",
-		)
-	}
-	entity := req.Entity
-
-	userID, err := requireCommentUser(actor)
+	original, entity, err := s.planUpdate(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-
-	if entity.ID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"commentId",
-			errortypes.ErrRequired,
-			"Comment ID is required",
-		)
-	}
-
+	userID := actor.UserID
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
-	}
-
-	original, err := s.getEditableComment(ctx, &repositories.GetShipmentCommentByIDRequest{
-		CommentID:  entity.ID,
-		ShipmentID: entity.ShipmentID,
-		TenantInfo: tenantInfo,
-	}, userID, req.AsModerator)
-	if err != nil {
-		return nil, err
-	}
-
-	if original.IsDeleted() {
-		return nil, errortypes.NewValidationError(
-			"commentId",
-			errortypes.ErrInvalid,
-			"Deleted comments cannot be edited",
-		)
-	}
-
-	if multiErr := s.prepareCommentUpdate(entity, original); multiErr != nil {
-		return nil, multiErr
 	}
 
 	shp, err := s.getShipment(ctx, entity.ShipmentID, tenantInfo)
@@ -452,56 +414,15 @@ func (s *service) Delete(
 	req *services.DeleteShipmentCommentRequest,
 	actor *services.RequestActor,
 ) error {
-	if req == nil {
-		return errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Delete comment request is required",
-		)
+	original, replyCount, err := s.planDelete(ctx, req, actor)
+	if err != nil {
+		return err
 	}
-
+	userID := actor.UserID
 	repoReq := &repositories.DeleteShipmentCommentRequest{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
-	}
-	if multiErr := repoReq.Validate(); multiErr != nil {
-		return multiErr
-	}
-
-	userID, err := requireCommentUser(actor)
-	if err != nil {
-		return err
-	}
-
-	original, err := s.getEditableComment(ctx, &repositories.GetShipmentCommentByIDRequest{
-		CommentID:  req.CommentID,
-		ShipmentID: req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-	}, userID, req.AsModerator)
-	if err != nil {
-		return err
-	}
-
-	if original.IsDeleted() {
-		return errortypes.NewValidationError(
-			"commentId",
-			errortypes.ErrInvalid,
-			"This comment has already been deleted",
-		)
-	}
-
-	if err = s.ensureShipmentExists(ctx, req.ShipmentID, req.TenantInfo); err != nil {
-		return err
-	}
-
-	replyCount, err := s.repo.CountReplies(ctx, &repositories.GetShipmentCommentByIDRequest{
-		CommentID:  req.CommentID,
-		ShipmentID: req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return err
 	}
 
 	if err = s.deleteAllAttachments(ctx, req.TenantInfo, original, userID); err != nil {

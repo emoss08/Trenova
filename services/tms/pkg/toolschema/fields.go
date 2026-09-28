@@ -3,6 +3,7 @@ package toolschema
 import (
 	"fmt"
 	"sort"
+	"strconv"
 
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -248,4 +249,96 @@ func intOf(raw any) int {
 	}
 
 	return 0
+}
+
+// Walk visits every subschema of a tool's schema, the root first and then
+// each child in name order, so a check over "every object at any depth" or
+// "every enum anywhere" reads one function rather than each caller's own
+// recursion. The path is written the way a validation error names a value:
+// properties joined by dots, an array's items as "[]", any other keyword
+// that holds schemas by its name and, for a list, its index.
+func Walk(schema map[string]any, visit func(path string, node map[string]any)) {
+	if schema == nil {
+		return
+	}
+
+	walk("", schema, visit)
+}
+
+var (
+	namedChildren = []string{
+		KeyProperties, "patternProperties", "$defs", "definitions", "dependentSchemas",
+	}
+	singleChildren = []string{
+		KeyItems, KeyAdditionalProperties, "contains", "not", "if", "then", "else",
+		"propertyNames",
+	}
+	listChildren = []string{"allOf", "anyOf", "oneOf", "prefixItems"}
+)
+
+func walk(path string, node map[string]any, visit func(string, map[string]any)) {
+	visit(path, node)
+
+	for _, keyword := range namedChildren {
+		children, ok := node[keyword].(map[string]any)
+		if !ok {
+			continue
+		}
+		names := make([]string, 0, len(children))
+		for name := range children {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			if child, isSchema := children[name].(map[string]any); isSchema {
+				walk(childPath(path, keyword, name), child, visit)
+			}
+		}
+	}
+
+	for _, keyword := range singleChildren {
+		if child, ok := node[keyword].(map[string]any); ok {
+			walk(childPath(path, keyword, ""), child, visit)
+		}
+	}
+
+	for _, keyword := range listChildren {
+		for index, raw := range listOf(node[keyword]) {
+			if child, ok := raw.(map[string]any); ok {
+				walk(childPath(path, keyword, strconv.Itoa(index)), child, visit)
+			}
+		}
+	}
+}
+
+func childPath(path, keyword, name string) string {
+	switch keyword {
+	case KeyProperties:
+		return join(path, name)
+	case KeyItems:
+		return path + "[]"
+	default:
+		suffix := keyword
+		if name != "" {
+			suffix += "[" + name + "]"
+		}
+
+		return join(path, suffix)
+	}
+}
+
+func listOf(raw any) []any {
+	switch values := raw.(type) {
+	case []any:
+		return values
+	case []map[string]any:
+		out := make([]any, 0, len(values))
+		for _, value := range values {
+			out = append(out, value)
+		}
+
+		return out
+	default:
+		return nil
+	}
 }

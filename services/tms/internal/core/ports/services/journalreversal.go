@@ -1,9 +1,19 @@
 package services
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
+	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+type JournalReversalChange struct {
+	Before        *journalreversal.Reversal
+	After         *journalreversal.Reversal
+	OriginalEntry *journalentry.JournalEntry
+	Journal       *JournalPreview
+	CurrencyCode  string
+}
 
 type CreateJournalReversalRequest struct {
 	OriginalJournalEntryID  pulid.ID              `json:"originalJournalEntryId"`

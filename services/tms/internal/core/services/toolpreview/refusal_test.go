@@ -96,6 +96,23 @@ func TestWouldFail_ABusinessRefusalIsOneReasonWithoutAField(t *testing.T) {
 		warning.Reasons[0])
 }
 
+func TestRefused_IsTheRefusalAPreviewWarnsOfWithoutItsPrefix(t *testing.T) {
+	t.Parallel()
+
+	assert.NoError(t, Refused(nil))
+	assert.NoError(t, Refused(&agent.ToolPreview{
+		Warnings: []agent.PreviewWarning{{Code: agent.PreviewWarningDependsOnStep}},
+	}))
+
+	preview := &agent.ToolPreview{}
+	preview.AddWarning(WouldFail(errortypes.NewBusinessError("The invoice is already posted")))
+	err := Refused(preview)
+	require.Error(t, err)
+	assert.Equal(t, "The invoice is already posted", err.Error())
+
+	assert.Equal(t, "The invoice is already posted", RefusalMessage(preview.Refusal()))
+}
+
 func TestLocateReasons_NamesTheParameterThatCarriesEachField(t *testing.T) {
 	t.Parallel()
 

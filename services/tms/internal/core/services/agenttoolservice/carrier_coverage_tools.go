@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -84,11 +85,10 @@ func (t *assignMoveToCarrierTool) ParamSchema() map[string]any {
 			"The move to cover, from get_dispatch_board (moveId) or get_shipment (its moves).",
 		),
 		fieldCarrierID: jsonschemautils.Text("The carrier, from shop_carriers or list_carriers."),
-		fieldRateMethod: jsonschemautils.Enum(
+		fieldRateMethod: agenttoolschema.Enum(
 			"Flat pays baseRate for the move; PerMile pays baseRate for each mile of the "+
 				"move's computed distance.",
-			string(shipment.CarrierRateMethodFlat),
-			string(shipment.CarrierRateMethodPerMile),
+			agenttoolschema.CarrierRateMethods,
 		),
 		fieldBaseRate: jsonschemautils.Text(
 			"The agreed linehaul rate as a decimal string, such as \"1850.00\", greater than zero.",

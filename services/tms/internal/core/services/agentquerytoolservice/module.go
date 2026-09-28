@@ -23,6 +23,7 @@ func ToolProviders() []any {
 	groups := [][]any{
 		coreToolProviders(),
 		accountingToolProviders(),
+		ledgerToolProviders(),
 		settlementToolProviders(),
 		receivableToolProviders(),
 		driverPayToolProviders(),
@@ -33,6 +34,7 @@ func ToolProviders() []any {
 		importDraftToolProviders(),
 		formulaToolProviders(),
 		tenderingToolProviders(),
+		operationsQueryToolProviders(),
 	}
 
 	size := 0

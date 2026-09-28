@@ -318,3 +318,77 @@ func (_c *MockDistanceCalculationService_BackfillJurisdictionMiles_Call) RunAndR
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewRecalculateShipment provides a mock function for the type MockDistanceCalculationService
+func (_mock *MockDistanceCalculationService) PreviewRecalculateShipment(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.ShipmentDistancePreview, error) {
+	ret := _mock.Called(ctx, shipmentID, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewRecalculateShipment")
+	}
+
+	var r0 *services.ShipmentDistancePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*services.ShipmentDistancePreview, error)); ok {
+		return returnFunc(ctx, shipmentID, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *services.ShipmentDistancePreview); ok {
+		r0 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentDistancePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDistanceCalculationService_PreviewRecalculateShipment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewRecalculateShipment'
+type MockDistanceCalculationService_PreviewRecalculateShipment_Call struct {
+	*mock.Call
+}
+
+// PreviewRecalculateShipment is a helper method to define mock.On call
+//   - ctx context.Context
+//   - shipmentID pulid.ID
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockDistanceCalculationService_Expecter) PreviewRecalculateShipment(ctx any, shipmentID any, tenantInfo any) *MockDistanceCalculationService_PreviewRecalculateShipment_Call {
+	return &MockDistanceCalculationService_PreviewRecalculateShipment_Call{Call: _e.mock.On("PreviewRecalculateShipment", ctx, shipmentID, tenantInfo)}
+}
+
+func (_c *MockDistanceCalculationService_PreviewRecalculateShipment_Call) Run(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo)) *MockDistanceCalculationService_PreviewRecalculateShipment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 pagination.TenantInfo
+		if args[2] != nil {
+			arg2 = args[2].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDistanceCalculationService_PreviewRecalculateShipment_Call) Return(shipmentDistancePreview *services.ShipmentDistancePreview, err error) *MockDistanceCalculationService_PreviewRecalculateShipment_Call {
+	_c.Call.Return(shipmentDistancePreview, err)
+	return _c
+}
+
+func (_c *MockDistanceCalculationService_PreviewRecalculateShipment_Call) RunAndReturn(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.ShipmentDistancePreview, error)) *MockDistanceCalculationService_PreviewRecalculateShipment_Call {
+	_c.Call.Return(run)
+	return _c
+}

@@ -69,6 +69,7 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 		ShipmentID:    payload.ShipmentID,
 		Count:         payload.Count,
 		OverrideDates: payload.OverrideDates,
+		FirstPickupAt: payload.FirstPickupAt,
 	})
 	if err != nil {
 		a.logger.Error("Shipment bulk duplication failed", zap.Error(err))

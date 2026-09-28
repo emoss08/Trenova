@@ -422,10 +422,32 @@ func (c *Calculator) AdoptAndRecordContractRate(
 	control *tenant.ShipmentControl,
 	userID pulid.ID,
 ) error {
+	if err := c.AdoptAndRecalculateContractRate(ctx, entity, rated, control, userID); err != nil {
+		return err
+	}
+
+	return c.RecordContractQuote(ctx, entity, rated)
+}
+
+func (c *Calculator) AdoptAndRecalculateContractRate(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	rated *services.RatedShipment,
+	control *tenant.ShipmentControl,
+	userID pulid.ID,
+) error {
 	c.AdoptContractRate(ctx, entity, rated)
 
-	if err := c.Recalculate(ctx, entity, control, userID); err != nil {
-		return err
+	return c.Recalculate(ctx, entity, control, userID)
+}
+
+func (c *Calculator) RecordContractQuote(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	rated *services.RatedShipment,
+) error {
+	if rated == nil {
+		return nil
 	}
 
 	return c.recordQuote(ctx, entity, rated.Quote)

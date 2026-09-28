@@ -59,6 +59,16 @@ type AccountingMappingConfirmation struct {
 	ExternalID string
 }
 
+type AccountingMappingChange struct {
+	Before *accountingsync.AccountingMapping
+	After  *accountingsync.AccountingMapping
+}
+
+type AccountingMappingConfirmPlan struct {
+	Changes   []*AccountingMappingChange
+	Confirmed []*accountingsync.AccountingMapping
+}
+
 type ConfirmAccountingMappingsRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID

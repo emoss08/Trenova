@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 type correctChargeCodeTool struct {
@@ -39,13 +41,55 @@ func (t *correctChargeCodeTool) ParamSchema() map[string]any {
 					"guess one.",
 			},
 			"additionalCharges": map[string]any{
-				"type":        "array",
-				"description": "The corrected additional charge set to apply to the item.",
-				"items":       map[string]any{"type": "object"},
+				toolschema.KeyType:        toolschema.TypeArray,
+				toolschema.KeyDescription: "The corrected additional charge set to apply to the item.",
+				toolschema.KeyItems:       chargeLineSchema(),
 			},
 		},
 		"required":             []string{"billingQueueItemId", "additionalCharges"},
 		"additionalProperties": false,
+	}
+}
+
+const (
+	chargeLineID          = "id"
+	chargeLineAccessorial = "accessorialChargeId"
+	chargeLineMethod      = "method"
+	chargeLineUnit        = "unit"
+)
+
+// chargeLineSchema is one additional charge as the charge plan reads it:
+// the fields shipment.AdditionalCharge takes from a caller, and nothing the
+// system owns.
+func chargeLineSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			chargeLineID: stringProperty("The existing charge this line keeps or corrects, "+
+				"from the item's charges; leave it out for a charge that is new.", 0),
+			chargeLineAccessorial: stringProperty(
+				"The accessorial, from list_accessorial_charges.", 0,
+			),
+			chargeLineMethod: agenttoolschema.Enum(
+				"How the amount is applied: Flat once, PerUnit times the unit, "+
+					"Percentage of the linehaul.",
+				agenttoolschema.AccessorialMethods,
+			),
+			chargeLineUnit: map[string]any{
+				toolschema.KeyType:        toolschema.TypeInteger,
+				toolschema.KeyMinimum:     1,
+				toolschema.KeyDescription: "How many units the charge covers; 1 for a flat charge.",
+			},
+			paramAmount: map[string]any{
+				toolschema.KeyType: []string{toolschema.TypeString, "number"},
+				toolschema.KeyDescription: "The charge's amount in major units, as a decimal " +
+					"such as 125.00.",
+			},
+		},
+		toolschema.KeyRequired: []string{
+			chargeLineAccessorial, chargeLineMethod, chargeLineUnit, paramAmount,
+		},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -79,6 +123,16 @@ func (t *correctChargeCodeTool) Execute(
 	_, err = t.billing.UpdateCharges(ctx, request, params.Actor)
 
 	return err
+}
+
+// Validate runs the charge plan the preview runs, so an item that is not in
+// review, or a set of charges the service would refuse, is refused to the
+// model before it is proposed.
+func (t *correctChargeCodeTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	return previewValidates(ctx, t, &params)
 }
 
 // request is the charge edit the preview and the write both make: the

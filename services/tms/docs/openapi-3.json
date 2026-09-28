@@ -16566,6 +16566,9 @@
                     "count": {
                         "type": "integer"
                     },
+                    "firstPickupAt": {
+                        "type": "integer"
+                    },
                     "overrideDates": {
                         "type": "boolean"
                     },

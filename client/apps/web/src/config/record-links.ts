@@ -137,6 +137,16 @@ export const RECORD_LINKS = {
     label: "Journal entry",
     path: "/accounting/journal-entries/{id}",
   },
+  manual_journal: {
+    label: "Manual journal",
+    path: "/accounting/manual-journals",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
+  journal_reversal: {
+    label: "Journal reversal",
+    path: "/accounting/journal-reversals",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   agent_run: {
     label: "Agent run",
     path: "/admin/agent-control",

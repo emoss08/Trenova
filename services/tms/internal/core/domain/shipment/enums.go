@@ -127,12 +127,20 @@ func DeliveryStopTypes() []StopType {
 	return []StopType{StopTypeDelivery, StopTypeSplitDelivery}
 }
 
+func StopTypeValues() []StopType {
+	return []StopType{StopTypePickup, StopTypeDelivery, StopTypeSplitPickup, StopTypeSplitDelivery}
+}
+
 type StopScheduleType string
 
 const (
 	StopScheduleTypeOpen        = StopScheduleType("Open")
 	StopScheduleTypeAppointment = StopScheduleType("Appointment")
 )
+
+func StopScheduleTypeValues() []StopScheduleType {
+	return []StopScheduleType{StopScheduleTypeOpen, StopScheduleTypeAppointment}
+}
 
 type CommentType string
 
@@ -161,6 +169,16 @@ const (
 	CommentVisibilityAccounting = CommentVisibility("Accounting")
 )
 
+func CommentVisibilityValues() []CommentVisibility {
+	return []CommentVisibility{
+		CommentVisibilityInternal,
+		CommentVisibilityOperations,
+		CommentVisibilityCustomer,
+		CommentVisibilityDriver,
+		CommentVisibilityAccounting,
+	}
+}
+
 type CommentPriority string
 
 const (
@@ -169,6 +187,15 @@ const (
 	CommentPriorityHigh   = CommentPriority("High")
 	CommentPriorityUrgent = CommentPriority("Urgent")
 )
+
+func CommentPriorityValues() []CommentPriority {
+	return []CommentPriority{
+		CommentPriorityLow,
+		CommentPriorityNormal,
+		CommentPriorityHigh,
+		CommentPriorityUrgent,
+	}
+}
 
 type CommentSource string
 
@@ -444,4 +471,8 @@ func (m CarrierRateMethod) IsValid() bool {
 		return true
 	}
 	return false
+}
+
+func CarrierRateMethodValues() []CarrierRateMethod {
+	return []CarrierRateMethod{CarrierRateMethodFlat, CarrierRateMethodPerMile}
 }

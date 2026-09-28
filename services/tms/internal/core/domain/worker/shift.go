@@ -33,6 +33,14 @@ const (
 	AvailabilityUnavailable = AvailabilityPreference("Unavailable")
 )
 
+func AvailabilityPreferenceValues() []AvailabilityPreference {
+	return []AvailabilityPreference{
+		AvailabilityPreferred,
+		AvailabilityAvailable,
+		AvailabilityUnavailable,
+	}
+}
+
 func (p AvailabilityPreference) String() string { return string(p) }
 
 func (p AvailabilityPreference) IsValid() bool {

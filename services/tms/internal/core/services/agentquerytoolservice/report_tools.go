@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -399,11 +400,9 @@ func (t *runReportTool) ParamSchema() map[string]any {
 					"{\"item\":[\"A\"]} and never a comma-separated string. Supply " +
 					"every parameter marked required.",
 			},
-			"format": map[string]any{
-				"type":        "string",
-				"enum":        []string{"csv", "xlsx", "pdf", "json"},
-				"description": "Optional output format. Defaults to the report's own.",
-			},
+			"format": agenttoolschema.Enum(
+				"Optional output format. Defaults to the report's own.", reportRunFormats,
+			),
 		},
 		"additionalProperties": false,
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,14 +60,14 @@ var (
 		"name the freight to invoice: an orderId, shipmentIds, or an orderId with the " +
 			"shipmentIds of it to bill",
 	)
-	memoBillTypes = []billingqueue.BillType{
+	memoBillTypes = agenttoolschema.Source("invoice.memoBillType", []billingqueue.BillType{
 		billingqueue.BillTypeCreditMemo,
 		billingqueue.BillTypeDebitMemo,
-	}
-	voidDispositions = []invoice.VoidDisposition{
+	})
+	voidDispositions = agenttoolschema.Source("invoice.voidDisposition", []invoice.VoidDisposition{
 		invoice.VoidDispositionRebill,
 		invoice.VoidDispositionDoNotRebill,
-	}
+	})
 	recipientParams = []string{paramEmailTo, paramEmailCc, paramEmailBcc}
 )
 
@@ -592,8 +593,8 @@ func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) serviceports.AgentTool
 		properties: map[string]any{
 			paramCustomerID: stringProperty("The customer, from list_customers or "+
 				"get_invoice.", 0),
-			paramBillType: enumProperty("CreditMemo lowers what the customer owes; "+
-				"DebitMemo raises it.", enumNames(memoBillTypes)),
+			paramBillType: agenttoolschema.Enum("CreditMemo lowers what the customer owes; "+
+				"DebitMemo raises it.", memoBillTypes),
 			paramReason: stringProperty("Why the memo is raised; the customer sees it.",
 				maxInvoiceReasonChars),
 			paramAdjustmentLines: map[string]any{
@@ -612,7 +613,8 @@ func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) serviceports.AgentTool
 						paramAccessorialChargeID: stringProperty("The accessorial the line "+
 							"corrects, from get_invoice's lines.", 0),
 					},
-					toolschema.KeyRequired: []string{paramLineDescription, paramAmount},
+					toolschema.KeyRequired:             []string{paramLineDescription, paramAmount},
+					toolschema.KeyAdditionalProperties: false,
 				},
 			},
 			paramReferenceInvoiceID: stringProperty("The posted invoice this memo relates to, "+
@@ -653,7 +655,7 @@ func memoRequest(params *serviceports.ToolExecuteParams) (*serviceports.CreateMe
 	if err != nil {
 		return nil, err
 	}
-	billType, err := requireEnum(params.Params, paramBillType, memoBillTypes)
+	billType, err := requireEnum(params.Params, paramBillType, memoBillTypes.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -763,8 +765,8 @@ func newVoidInvoiceTool(invoices invoiceVoider) serviceports.AgentTool {
 			paramInvoiceID: invoiceIDProperty(),
 			paramReason: stringProperty("Why it is voided; kept on the invoice.",
 				maxInvoiceReasonChars),
-			paramVoidDisposition: enumProperty("Rebill puts its freight back on the billing "+
-				"queue to be billed again; DoNotRebill cancels it.", enumNames(voidDispositions)),
+			paramVoidDisposition: agenttoolschema.Enum("Rebill puts its freight back on the "+
+				"billing queue to be billed again; DoNotRebill cancels it.", voidDispositions),
 		},
 		required: []string{paramInvoiceID, paramReason, paramVoidDisposition},
 		target:   targetInvoice,
@@ -808,7 +810,7 @@ func voidRequest(params *serviceports.ToolExecuteParams) (*serviceports.VoidInvo
 	if err != nil {
 		return nil, err
 	}
-	disposition, err := requireEnum(params.Params, paramVoidDisposition, voidDispositions)
+	disposition, err := requireEnum(params.Params, paramVoidDisposition, voidDispositions.Values)
 	if err != nil {
 		return nil, err
 	}

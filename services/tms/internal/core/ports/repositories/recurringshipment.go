@@ -131,6 +131,13 @@ type GenerateRecurringShipmentResult struct {
 	Shipment *shipment.Shipment                      `json:"shipment,omitempty"`
 }
 
+type RecurringShipmentGenerationPlan struct {
+	Series           *recurringshipment.RecurringShipment
+	Occurrence       *recurringshipment.Occurrence
+	Shipment         *shipment.Shipment
+	AlreadyGenerated bool
+}
+
 type UpdateRecurringShipmentStatusRequest struct {
 	TenantInfo          pagination.TenantInfo    `json:"-"`
 	RecurringShipmentID pulid.ID                 `json:"recurringShipmentId"`
@@ -197,6 +204,11 @@ type RecurringShipmentRepository interface {
 		ctx context.Context,
 		req *ListDueRecurringShipmentsRequest,
 	) ([]*recurringshipment.RecurringShipment, error)
+	Derive(ctx context.Context, entity *recurringshipment.RecurringShipment) error
+	PlanGenerate(
+		ctx context.Context,
+		req *GenerateRecurringShipmentRequest,
+	) (*RecurringShipmentGenerationPlan, error)
 	Generate(
 		ctx context.Context,
 		req *GenerateRecurringShipmentRequest,

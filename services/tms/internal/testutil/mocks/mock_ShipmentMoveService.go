@@ -447,3 +447,71 @@ func (_c *MockShipmentMoveService_PreviewUpdateStatus_Call) RunAndReturn(run fun
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewSplitMove provides a mock function for the type MockShipmentMoveService
+func (_mock *MockShipmentMoveService) PreviewSplitMove(ctx context.Context, req *repositories.SplitMoveRequest) (*services.MoveSplitPlan, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewSplitMove")
+	}
+
+	var r0 *services.MoveSplitPlan
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SplitMoveRequest) (*services.MoveSplitPlan, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SplitMoveRequest) *services.MoveSplitPlan); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.MoveSplitPlan)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.SplitMoveRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentMoveService_PreviewSplitMove_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewSplitMove'
+type MockShipmentMoveService_PreviewSplitMove_Call struct {
+	*mock.Call
+}
+
+// PreviewSplitMove is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.SplitMoveRequest
+func (_e *MockShipmentMoveService_Expecter) PreviewSplitMove(ctx any, req any) *MockShipmentMoveService_PreviewSplitMove_Call {
+	return &MockShipmentMoveService_PreviewSplitMove_Call{Call: _e.mock.On("PreviewSplitMove", ctx, req)}
+}
+
+func (_c *MockShipmentMoveService_PreviewSplitMove_Call) Run(run func(ctx context.Context, req *repositories.SplitMoveRequest)) *MockShipmentMoveService_PreviewSplitMove_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.SplitMoveRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.SplitMoveRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentMoveService_PreviewSplitMove_Call) Return(moveSplitPlan *services.MoveSplitPlan, err error) *MockShipmentMoveService_PreviewSplitMove_Call {
+	_c.Call.Return(moveSplitPlan, err)
+	return _c
+}
+
+func (_c *MockShipmentMoveService_PreviewSplitMove_Call) RunAndReturn(run func(ctx context.Context, req *repositories.SplitMoveRequest) (*services.MoveSplitPlan, error)) *MockShipmentMoveService_PreviewSplitMove_Call {
+	_c.Call.Return(run)
+	return _c
+}

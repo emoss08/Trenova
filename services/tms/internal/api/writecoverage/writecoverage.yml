@@ -31,7 +31,7 @@ writes:
   "mutation applyAccountingInboundChange":
     tools: [apply_accounting_inbound_change]
   "mutation changeAccountingBackfill":
-    pending: "Change the range or scope of an accounting backfill that has not finished."
+    tools: [change_accounting_backfill]
   "mutation checkAccountingDrift":
     tools: [check_accounting_drift]
   "mutation checkAccountingConnection":
@@ -45,7 +45,7 @@ writes:
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
   "mutation confirmAccountingMappings":
-    pending: "Confirm the suggested accounting mappings so sync can use them."
+    tools: [confirm_accounting_mapping_proposals]
   "mutation createAccountingReferenceRecord":
     tools: [create_accounting_reference_record]
   "mutation disconnectAccountingSystem":
@@ -65,9 +65,9 @@ writes:
   "mutation refreshAccountingReferenceData":
     tools: [refresh_accounting_reference_data]
   "mutation rejectAccountingMapping":
-    pending: "Reject a suggested accounting mapping."
+    tools: [reject_accounting_mapping_proposal]
   "mutation releaseAccountingSync":
-    pending: "Release accounting sync records held for review so they post."
+    tools: [release_accounting_sync]
   "mutation removeAccountingApp":
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
@@ -100,13 +100,17 @@ writes:
 
   # accounttype
   "PATCH /api/v1/account-types/:accountTypeID/":
-    pending: "Update some fields of an account type."
+    exempt: configuration
+    reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
   "POST /api/v1/account-types/":
-    pending: "Create an account type."
+    exempt: configuration
+    reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
   "POST /api/v1/account-types/bulk-update-status/":
-    pending: "Change the status of several account types at once."
+    exempt: configuration
+    reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
   "PUT /api/v1/account-types/:accountTypeID/":
-    pending: "Update an account type."
+    exempt: configuration
+    reason: "The account types the chart of accounts is classified by for the financial statements; an accountant sets them up once and every account depends on them."
 
   # agent
   "mutation approveAgentMemorySuggestion":
@@ -305,23 +309,25 @@ writes:
 
   # bankreceipt
   "POST /api/v1/accounting/bank-receipts/":
-    pending: "Import a bank receipt line so it can be matched to open invoices."
+    exempt: infrastructure
+    reason: "Records a line as the bank reported it, from its file or feed; a receipt is the bank's own record of cash that arrived, which an agent only ever matches and never writes."
   "POST /api/v1/accounting/bank-receipts/:receiptID/match/":
     tools: [match_bank_receipt]
 
   # bankreceiptbatch
   "POST /api/v1/accounting/bank-receipt-batches/":
-    pending: "Import a batch of bank receipts from a bank file."
+    exempt: infrastructure
+    reason: "Loads a bank file's receipts as the bank reported them; the bank's record of cash that arrived is imported, never written by an agent."
 
   # bankreceiptworkitem
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/assign/":
-    pending: "Assign a bank receipt work item to a person."
+    tools: [triage_bank_receipt_work_item]
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/dismiss/":
     tools: [resolve_bank_receipt_work_item]
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/resolve/":
     tools: [resolve_bank_receipt_work_item]
   "POST /api/v1/accounting/bank-receipt-work-items/:workItemID/start-review/":
-    pending: "Mark a bank receipt work item as under review."
+    tools: [triage_bank_receipt_work_item]
 
   # benefits
   "mutation createBenefitPlan":
@@ -345,7 +351,7 @@ writes:
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
   "POST /api/v1/billing-queue/:itemID/reassign-charge/":
-    pending: "Move a charge from one billing queue item to another."
+    tools: [reassign_billing_charge]
   "POST /api/v1/billing-queue/filter-presets/":
     exempt: user-preference
     reason: "A saved filter on the billing queue screen."
@@ -363,9 +369,9 @@ writes:
 
   # billingtransfer
   "mutation cancelBillingTransferRun":
-    pending: "Cancel billing transfer run."
+    tools: [manage_billing_transfer_run]
   "mutation retryBillingTransferRun":
-    pending: "Retry billing transfer run."
+    tools: [manage_billing_transfer_run]
   "mutation startBillingTransferRun":
     tools: [transfer_to_billing]
 
@@ -460,26 +466,27 @@ writes:
   "mutation acknowledgeCarrierIntelEvents":
     tools: [acknowledge_carrier_intel_event]
   "mutation applyCarrierIntelSuggestions":
-    pending: "Apply the carrier profile corrections carrier intelligence suggested."
+    tools: [apply_carrier_intel_suggestions]
   "mutation grantCarrierIntelOverride":
     exempt: attestation
     reason: "A person accepts accountability for using a carrier or equipment that failed vetting."
   "mutation importSourcedCarrier":
-    pending: "Import sourced carrier."
+    tools: [import_sourced_carrier]
   "mutation markCarrierIntelReviewed":
-    pending: "Mark carrier intel reviewed."
+    tools: [mark_carrier_intel_reviewed]
   "mutation overrideCarrierEquipmentVerification":
     exempt: attestation
     reason: "A person accepts accountability for using a carrier or equipment that failed vetting."
   "mutation resolveCarrierIntelEvent":
     tools: [resolve_carrier_intel_event]
   "mutation resumeCarrierIntelMonitoring":
-    pending: "Resume carrier intel monitoring."
+    exempt: configuration
+    reason: "Turns the organization-wide carrier intelligence feed back on after it was paused; an administrator sets it once and every later lookup depends on it."
   "mutation revokeCarrierIntelOverride":
     exempt: attestation
     reason: "A person accepts accountability for using a carrier or equipment that failed vetting."
   "mutation setCarrierMonitoring":
-    pending: "Set carrier monitoring."
+    tools: [set_carrier_monitoring]
   "mutation switchCarrierIntelProvider":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -487,11 +494,11 @@ writes:
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
   "mutation verifyCarrierEquipment":
-    pending: "Verify carrier equipment."
+    tools: [verify_carrier_equipment]
   "mutation vetCarrier":
-    pending: "Vet carrier."
+    tools: [vet_carrier]
   "mutation vetCustomerBroker":
-    pending: "Vet customer broker."
+    tools: [vet_customer_broker]
 
   # carriersettlement
   "mutation acceptCarrierInvoiceMatch":
@@ -620,7 +627,7 @@ writes:
     exempt: read-only
     reason: "Replays a detention policy against past stops and saves nothing."
   "mutation disputeDetentionOccurrence":
-    pending: "Dispute detention occurrence."
+    tools: [dispute_detention]
   "mutation sendDetentionNotice":
     tools: [send_detention_notice]
   "mutation updateDetentionPolicy":
@@ -1213,7 +1220,8 @@ writes:
     exempt: infrastructure
     reason: "Fetches exchange rates from the provider now; the scheduler refreshes them on its own."
   "POST /api/v1/exchange-rates/settlement-quotes":
-    pending: "Lock an exchange rate quote for settling a foreign-currency payment."
+    exempt: infrastructure
+    reason: "Fetches a live rate from the rate provider and keeps a short-lived quote for the screen that asked; it books nothing, and nothing uses the quote unless a person settles a payment with it."
 
   # extractioneval
   "mutation cancelExtractionEvalRun":
@@ -1237,39 +1245,50 @@ writes:
 
   # fiscalperiod
   "DELETE /api/v1/fiscal-periods/:fiscalPeriodID/":
-    pending: "Delete a fiscal period."
+    exempt: configuration
+    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "PATCH /api/v1/fiscal-periods/:fiscalPeriodID/":
-    pending: "Update some fields of a fiscal period."
+    exempt: configuration
+    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "POST /api/v1/fiscal-periods/":
-    pending: "Create a fiscal period."
+    exempt: configuration
+    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/":
-    pending: "Update a fiscal period."
+    exempt: configuration
+    reason: "The fiscal calendar every posting resolves its period from; an accounting administrator lays its periods out with the fiscal year, and they change with the calendar, not with the work."
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/activate/":
-    pending: "Activate a fiscal period."
+    tools: [open_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/close/":
-    pending: "Close a fiscal period."
+    tools: [close_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/lock/":
-    pending: "Lock a fiscal period."
+    tools: [lock_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/reopen/":
-    pending: "Reopen a fiscal period."
+    tools: [reopen_fiscal_period]
   "PUT /api/v1/fiscal-periods/:fiscalPeriodID/unlock/":
-    pending: "Unlock a fiscal period."
+    tools: [unlock_fiscal_period]
 
   # fiscalyear
   "DELETE /api/v1/fiscal-years/:fiscalYearID/":
-    pending: "Delete a fiscal year."
+    exempt: configuration
+    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
   "PATCH /api/v1/fiscal-years/:fiscalYearID/":
-    pending: "Update some fields of a fiscal year."
+    exempt: configuration
+    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
   "POST /api/v1/fiscal-years/":
-    pending: "Create a fiscal year."
+    exempt: configuration
+    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
   "PUT /api/v1/fiscal-years/:fiscalYearID/":
-    pending: "Update a fiscal year."
+    exempt: configuration
+    reason: "The fiscal years the calendar is laid out in, which an accounting administrator sets up once a year and every posting's period hangs from."
   "PUT /api/v1/fiscal-years/:fiscalYearID/activate/":
-    pending: "Activate a fiscal year."
+    exempt: configuration
+    reason: "Makes a fiscal year the one the calendar runs on, part of setting up the year that an accounting administrator does once."
   "PUT /api/v1/fiscal-years/:fiscalYearID/close/":
-    pending: "Close a fiscal year."
+    exempt: attestation
+    reason: "Closing the year books its closing entries into retained earnings and is the year-end sign-off the person accountable for the books makes."
   "PUT /api/v1/fiscal-years/:fiscalYearID/reopen/":
-    pending: "Reopen a fiscal year."
+    exempt: attestation
+    reason: "Reverses the year's closing entries and withdraws the year-end sign-off, which only the person accountable for the books does."
 
   # fleetcode
   "PATCH /api/v1/fleet-codes/:fleetCodeID":
@@ -1420,15 +1439,20 @@ writes:
 
   # glaccount
   "DELETE /api/v1/gl-accounts/:glAccountID/":
-    pending: "Delete a gl account."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
   "PATCH /api/v1/gl-accounts/:glAccountID/":
-    pending: "Update some fields of a gl account."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
   "POST /api/v1/gl-accounts/":
-    pending: "Create a gl account."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
   "POST /api/v1/gl-accounts/bulk-update-status/":
-    pending: "Change the status of several gl accounts at once."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
   "PUT /api/v1/gl-accounts/:glAccountID/":
-    pending: "Update a gl account."
+    exempt: configuration
+    reason: "The chart of accounts every posting and accounting mapping depends on; an accountant shapes it, and an agent reshaping it would change what every later entry means."
 
   # googlemaps
   "POST /api/v1/google-maps/autocomplete/":
@@ -1598,12 +1622,14 @@ writes:
     exempt: configuration
     reason: "Tests an integration's credentials and records the connection status on its configuration."
   "POST /api/v1/integrations/samsara/workers/sync/":
-    pending: "Sync workers from the telematics provider now."
+    exempt: configuration
+    reason: "Creates and links drivers' accounts in the telematics provider from the integration's setup page; connecting that integration and the accounts it holds is an administrator's."
   "POST /api/v1/integrations/samsara/workers/sync/drift/detect/":
     exempt: read-only
     reason: "Compares workers with the telematics provider and reports the drift."
   "POST /api/v1/integrations/samsara/workers/sync/drift/repair/":
-    pending: "Repair the drift found between workers and the telematics provider."
+    exempt: configuration
+    reason: "Rewrites drivers' accounts in the telematics provider to match Trenova from the integration's setup page; an administrator owns that connection and the accounts it holds."
   "PUT /api/v1/integrations/:type/config/":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -1699,15 +1725,17 @@ writes:
 
   # journalreversal
   "POST /api/v1/accounting/journal-reversals/":
-    pending: "Create a journal reversal."
+    tools: [request_journal_reversal]
   "POST /api/v1/accounting/journal-reversals/:reversalID/approve/":
-    pending: "Approve a journal reversal."
+    exempt: attestation
+    reason: "Approving a reversal is the second person's sign-off on taking a posted entry back out of the ledger; an agent requests reversals and never stands in as their approver."
   "POST /api/v1/accounting/journal-reversals/:reversalID/cancel/":
-    pending: "Cancel a journal reversal."
+    tools: [cancel_journal_reversal]
   "POST /api/v1/accounting/journal-reversals/:reversalID/post/":
-    pending: "Post a journal reversal."
+    tools: [post_journal_reversal]
   "POST /api/v1/accounting/journal-reversals/:reversalID/reject/":
-    pending: "Reject a journal reversal."
+    exempt: attestation
+    reason: "Turning a reversal down is the approver's half of the same sign-off, made by the accountable person reviewing it."
 
   # jurisdictionrule
   "DELETE /api/v1/jurisdiction-rule-overrides/:overrideID/":
@@ -1756,19 +1784,21 @@ writes:
 
   # manualjournal
   "POST /api/v1/accounting/manual-journals/:requestID/approve/":
-    pending: "Approve a manual journal."
+    exempt: attestation
+    reason: "Approving a manual journal is the second person's sign-off on an entry someone else prepared; an agent prepares journals and never stands in as their approver."
   "POST /api/v1/accounting/manual-journals/:requestID/cancel/":
-    pending: "Cancel a manual journal."
+    tools: [cancel_manual_journal]
   "POST /api/v1/accounting/manual-journals/:requestID/post/":
-    pending: "Post a manual journal."
+    tools: [post_manual_journal]
   "POST /api/v1/accounting/manual-journals/:requestID/reject/":
-    pending: "Reject a manual journal."
+    exempt: attestation
+    reason: "Sending a manual journal back is the approver's half of the same sign-off, made by the accountable person reviewing it."
   "POST /api/v1/accounting/manual-journals/:requestID/submit/":
-    pending: "Submit a manual journal."
+    tools: [submit_manual_journal]
   "POST /api/v1/accounting/manual-journals/drafts/":
-    pending: "Create draft (manual journal)."
+    tools: [draft_manual_journal]
   "PUT /api/v1/accounting/manual-journals/drafts/:requestID/":
-    pending: "Update draft (manual journal)."
+    tools: [revise_manual_journal_draft]
 
   # notification
   "mutation dismissNotifications":
@@ -1789,25 +1819,25 @@ writes:
 
   # order
   "mutation addOrderCharge":
-    pending: "Add order charge."
+    tools: [add_order_charge]
   "mutation attachOrderShipments":
-    pending: "Attach order shipments."
+    tools: [attach_order_shipments]
   "mutation cancelOrder":
-    pending: "Cancel order."
+    tools: [cancel_order]
   "mutation closeOrder":
-    pending: "Close order."
+    tools: [close_order]
   "mutation createOrder":
-    pending: "Create order."
+    tools: [create_order]
   "mutation detachOrderShipment":
-    pending: "Detach order shipment."
+    tools: [detach_order_shipment]
   "mutation removeOrderCharge":
-    pending: "Remove order charge."
+    tools: [remove_order_charge]
   "mutation setOrderChargeAllocations":
-    pending: "Set order charge allocations."
+    tools: [set_order_charge_allocations]
   "mutation updateOrder":
-    pending: "Update order."
+    tools: [update_order]
   "mutation updateOrderCharge":
-    pending: "Update order charge."
+    tools: [update_order_charge]
 
   # organization
   "DELETE /api/v1/organizations/:id/logo":
@@ -1836,9 +1866,11 @@ writes:
 
   # orgstructure
   "mutation assignUserPosition":
-    pending: "Assign user position."
+    exempt: security
+    reason: "Places a person in the reporting line that time-off and expense approvals route through, which decides whose requests they may approve."
   "mutation assignWorkerPosition":
-    pending: "Assign worker position."
+    exempt: security
+    reason: "Places a driver in the reporting line their time-off and expense approvals route through, which decides who may approve their requests."
   "mutation createJobPosition":
     exempt: configuration
     reason: "The organization chart that approvals and scoping follow."
@@ -2026,16 +2058,16 @@ writes:
 
   # recurringshipment
   "POST /api/v1/recurring-shipments/":
-    pending: "Create a recurring shipment."
+    tools: [create_recurring_shipment]
   "POST /api/v1/recurring-shipments/:recurringShipmentID/generate/":
-    pending: "Generate a recurring shipment."
+    tools: [generate_recurring_shipment]
   "POST /api/v1/recurring-shipments/match/":
     exempt: read-only
     reason: "Finds the recurring shipment a new shipment matches and saves nothing."
   "PUT /api/v1/recurring-shipments/:recurringShipmentID/":
-    pending: "Update a recurring shipment."
+    tools: [update_recurring_shipment]
   "PUT /api/v1/recurring-shipments/:recurringShipmentID/status/":
-    pending: "Update status (recurring shipment)."
+    tools: [set_recurring_shipment_status]
 
   # report
   "POST /api/v1/reports/dashboards/:dashboardID/export/":
@@ -2111,26 +2143,29 @@ writes:
 
   # routingguide
   "DELETE /api/v1/routing-guides/:guideID/":
-    pending: "Delete a routing guide."
+    exempt: configuration
+    reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it."
   "POST /api/v1/routing-guides/":
-    pending: "Create a routing guide."
+    exempt: configuration
+    reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it."
   "PUT /api/v1/routing-guides/:guideID/":
-    pending: "Update a routing guide."
+    exempt: configuration
+    reason: "A routing guide is the lane-by-lane carrier waterfall an administrator maintains; tender_move_to_routing_guide uses it."
 
   # scheduling
   "mutation assignWorkerShift":
-    pending: "Assign worker shift."
+    tools: [assign_worker_shift]
   "mutation createShiftTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation endWorkerShiftAssignment":
-    pending: "End worker shift assignment."
+    tools: [end_worker_shift_assignment]
   "mutation proposeShiftSwap":
-    pending: "Propose shift swap."
+    tools: [propose_shift_swap]
   "mutation setWorkerAvailabilityPreference":
-    pending: "Set worker availability preference."
+    tools: [set_worker_availability_preference]
   "mutation transitionShiftSwap":
-    pending: "Transition shift swap."
+    tools: [approve_shift_swap, reject_shift_swap, withdraw_shift_swap]
   "mutation updateShiftTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -2152,24 +2187,25 @@ writes:
 
   # servicefailure
   "PATCH /api/v1/service-failures/:serviceFailureID/":
-    pending: "Update a service failure."
+    tools: [update_service_failure]
   "POST /api/v1/service-failures/":
-    pending: "Create manual (service failure)."
+    exempt: read-only
+    reason: "The service refuses every manual service failure: failures are opened only by evaluation against stop actuals, which evaluate_service_failures runs, so the route changes nothing."
   "POST /api/v1/service-failures/:serviceFailureID/edi-214-payload/":
     exempt: read-only
     reason: "Builds the EDI 214 a service failure would send and returns it."
   "POST /api/v1/service-failures/:serviceFailureID/resolve/":
     tools: [resolve_service_failure]
   "POST /api/v1/service-failures/:serviceFailureID/review/":
-    pending: "Review a service failure."
+    tools: [review_service_failure]
   "POST /api/v1/service-failures/:serviceFailureID/void/":
-    pending: "Void a service failure."
+    tools: [void_service_failure]
   "POST /api/v1/service-failures/bulk-evaluate/":
-    pending: "Evaluate several shipments for service failures at once."
+    tools: [evaluate_service_failures]
   "POST /api/v1/service-failures/evaluate-shipment/:shipmentID/":
     tools: [evaluate_service_failures]
   "POST /api/v1/service-failures/evaluate-stop/:shipmentID/:stopID/":
-    pending: "Evaluate one stop for a service failure."
+    tools: [evaluate_service_failures]
 
   # servicefailurereasoncode
   "PATCH /api/v1/service-failure-reason-codes/:reasonCodeID/":
@@ -2211,7 +2247,8 @@ writes:
   "POST /api/v1/shipments/:shipmentID/holds/:holdID/release/":
     tools: [release_shipment_hold]
   "POST /api/v1/shipments/auto-cancel/":
-    pending: "Cancel shipments that passed the auto-cancel threshold."
+    exempt: infrastructure
+    reason: "The sweep the Temporal schedule runs over every organization to cancel shipments past the auto-cancel threshold; a person does not decide which shipments it takes, and cancel_shipment cancels one."
   "POST /api/v1/shipments/check-for-duplicate-bols/":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
@@ -2219,16 +2256,18 @@ writes:
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "POST /api/v1/shipments/delay/":
-    pending: "Mark shipments as delayed."
+    exempt: infrastructure
+    reason: "The sweep the Temporal schedule runs to mark late shipments delayed from their stop windows; evaluate_service_failures records a late stop for one shipment."
   "POST /api/v1/shipments/previous-rates/":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "PUT /api/v1/shipments/:shipmentID/holds/:holdID/":
-    pending: "Update hold (shipment)."
+    tools: [update_shipment_hold]
   "mutation acknowledgeShipmentComment":
-    pending: "Acknowledge shipment comment."
+    exempt: attestation
+    reason: "Acknowledging a comment says that the person it was addressed to has read it; only that person can say so."
   "mutation autoRateShipment":
-    pending: "Auto rate shipment."
+    tools: [rerate_shipment]
   "mutation bulkTransferShipmentsToBilling":
     tools: [transfer_to_billing]
   "mutation calculateShipmentDistance":
@@ -2253,34 +2292,34 @@ writes:
   "mutation createShipmentComment":
     tools: [add_shipment_comment]
   "mutation deleteShipmentComment":
-    pending: "Delete shipment comment."
+    tools: [delete_shipment_comment]
   "mutation duplicateShipment":
-    pending: "Duplicate shipment."
+    tools: [duplicate_shipment]
   "mutation pinShipmentComment":
-    pending: "Pin shipment comment."
+    tools: [pin_shipment_comment]
   "mutation previewShipmentContractRate":
     exempt: read-only
     reason: "Computes a figure or a check for the shipment form and saves nothing."
   "mutation recalculateShipmentDistance":
-    pending: "Recalculate shipment distance."
+    tools: [recalculate_shipment_distance]
   "mutation resolveShipmentComment":
-    pending: "Resolve shipment comment."
+    tools: [resolve_shipment_comment]
   "mutation transferShipmentOwnership":
-    pending: "Transfer shipment ownership."
+    tools: [transfer_shipment_ownership]
   "mutation transferShipmentToBilling":
     tools: [transfer_to_billing]
   "mutation transferShipmentToBillingItems":
-    pending: "Transfer chosen shipment charges to billing as separate items."
+    tools: [transfer_to_billing]
   "mutation uncancelShipment":
-    pending: "Uncancel shipment."
+    tools: [uncancel_shipment]
   "mutation unpinShipmentComment":
-    pending: "Unpin shipment comment."
+    tools: [unpin_shipment_comment]
   "mutation unresolveShipmentComment":
-    pending: "Unresolve shipment comment."
+    tools: [resolve_shipment_comment]
   "mutation updateShipment":
     tools: [update_shipment]
   "mutation updateShipmentComment":
-    pending: "Update shipment comment."
+    tools: [edit_shipment_comment]
 
   # shipmentcontrol
   "PUT /api/v1/shipment-controls/":
@@ -2289,7 +2328,7 @@ writes:
 
   # shipmentmove
   "POST /api/v1/shipment-moves/:moveID/split/":
-    pending: "Split a two-stop move at a relay point into two moves. Left without a tool: the split needs a relay location and two new scheduled windows the system holds nowhere, so a model would have to invent the times, and the service checks only their order."
+    tools: [split_move_at_relay]
   "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/":
     tools: [record_stop_actual]
   "POST /api/v1/shipment-moves/:moveID/update-status/":

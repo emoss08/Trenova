@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -21,6 +22,13 @@ import (
 // that misreads "all the reefers" as every trailer on the property should hit a
 // refusal rather than a completed write.
 const maxEquipmentPerStatusChange = 25
+
+var equipmentStatuses = agenttoolschema.Source("equipment.status", []domaintypes.EquipmentStatus{
+	domaintypes.EquipmentStatusAvailable,
+	domaintypes.EquipmentStatusOOS,
+	domaintypes.EquipmentStatusAtMaintenance,
+	domaintypes.EquipmentStatusSold,
+})
 
 const equipmentStatusNote = "Available means it can be dispatched. " +
 	"OutOfService means it cannot, for any reason other than scheduled work. " +
@@ -58,6 +66,10 @@ func newUpdateTractorStatusTool(tractors tractorStatusUpdater) serviceports.Agen
 }
 
 func (t *updateTractorStatusTool) Name() string { return "update_tractor_status" }
+
+func (t *updateTractorStatusTool) SearchTerms() []string {
+	return []string{"out of service", "maintenance", "available"}
+}
 
 func (t *updateTractorStatusTool) Description() string {
 	return "Change the status of one or more tractors, which is what makes a truck " +
@@ -184,16 +196,9 @@ func equipmentStatusSchema(idsKey, idsDescription string) map[string]any {
 				"maxItems":    maxEquipmentPerStatusChange,
 				"description": idsDescription,
 			},
-			"status": map[string]any{
-				"type": "string",
-				"enum": []string{
-					string(domaintypes.EquipmentStatusAvailable),
-					string(domaintypes.EquipmentStatusOOS),
-					string(domaintypes.EquipmentStatusAtMaintenance),
-					string(domaintypes.EquipmentStatusSold),
-				},
-				"description": "The status to set. " + equipmentStatusNote,
-			},
+			fieldStatus: agenttoolschema.Enum(
+				"The status to set. "+equipmentStatusNote, equipmentStatuses,
+			),
 		},
 		"required":             []string{idsKey, "status"},
 		"additionalProperties": false,

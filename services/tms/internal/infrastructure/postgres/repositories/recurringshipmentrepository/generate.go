@@ -33,6 +33,13 @@ const (
 	maxShipmentBOLLength = 100
 )
 
+func (r *repository) Derive(
+	ctx context.Context,
+	entity *recurringshipment.RecurringShipment,
+) error {
+	return r.applyDerivedFields(ctx, entity)
+}
+
 func (r *repository) applyDerivedFields(
 	ctx context.Context,
 	entity *recurringshipment.RecurringShipment,
@@ -238,6 +245,68 @@ func (r *repository) Generate(
 	}
 
 	return result, nil
+}
+
+func (r *repository) PlanGenerate(
+	ctx context.Context,
+	req *repositories.GenerateRecurringShipmentRequest,
+) (*repositories.RecurringShipmentGenerationPlan, error) {
+	db := r.db.DBForContext(ctx)
+	series, err := r.GetByID(ctx, &repositories.GetRecurringShipmentByIDRequest{
+		ID:         req.RecurringShipmentID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	trigger := req.Trigger
+	if trigger == "" {
+		trigger = recurringshipment.RunTriggerManual
+	}
+	if err = validateGenerationEligibility(series, trigger); err != nil {
+		return nil, err
+	}
+
+	occurrence, err := resolveOccurrence(series, req)
+	if err != nil {
+		return nil, err
+	}
+
+	alreadyGenerated, err := r.occurrenceAlreadyGenerated(ctx, db, series, occurrence.At)
+	if err != nil {
+		return nil, err
+	}
+
+	source, err := shipmentrepository.LoadShipmentGraphSource(
+		ctx,
+		db,
+		pagination.TenantInfo{
+			OrgID: series.OrganizationID,
+			BuID:  series.BusinessUnitID,
+		},
+		series.SourceShipmentID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	requestedBy := req.RequestedBy
+	if requestedBy.IsNil() {
+		requestedBy = series.EnteredByID
+	}
+	generated := shipmentrepository.CopyShipmentGraph(source, shipmentrepository.ShipmentCopySpec{
+		BOL:         deriveRecurringBOL(source.BOL, occurrence.At, series.Timezone),
+		RequestedBy: requestedBy,
+		DateAnchor:  &occurrence.At,
+	})
+
+	return &repositories.RecurringShipmentGenerationPlan{
+		Series:           series,
+		Occurrence:       occurrence,
+		Shipment:         generated,
+		AlreadyGenerated: alreadyGenerated,
+	}, nil
 }
 
 func (r *repository) RecordGenerationFailure(
@@ -509,7 +578,7 @@ func (r *repository) advanceSeriesOnly(
 
 func (r *repository) occurrenceAlreadyGenerated(
 	ctx context.Context,
-	tx bun.Tx,
+	tx bun.IDB,
 	series *recurringshipment.RecurringShipment,
 	occurrenceAt int64,
 ) (bool, error) {

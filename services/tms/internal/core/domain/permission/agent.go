@@ -59,6 +59,10 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpCreate: {},
 		OpUpdate: {},
+		// The service failure desk may propose voiding a failure it finds was
+		// opened in error; void_service_failure never runs until a person
+		// approves the proposal.
+		OpArchive: {},
 	},
 	// The three surfaces an agent builds rather than reads: a saved view of a
 	// table, a dashboard, and an alert that watches for a change. All three
@@ -254,8 +258,14 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	ResourceGeneralLedgerAccount: {
 		OpRead: {},
 	},
+	// The books keeper proposes locking and then closing a period whose
+	// blockers are clear. Both tools stop at a proposal and run only as the
+	// person who approves it; reopening, unlocking and opening a period are
+	// offered to no desk.
 	ResourceFiscalPeriod: {
-		OpRead: {},
+		OpRead:  {},
+		OpLock:  {},
+		OpClose: {},
 	},
 	ResourceDriverSettlement: {
 		OpRead: {},

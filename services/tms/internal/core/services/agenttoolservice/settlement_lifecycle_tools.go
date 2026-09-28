@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
@@ -35,7 +36,7 @@ type lifecycleText struct {
 	noun        string
 	payee       string
 	getTool     string
-	methods     []string
+	methods     agenttoolschema.EnumSource[string]
 	postEgress  []agent.EgressClass
 	paidEgress  []agent.EgressClass
 	paidMeaning string

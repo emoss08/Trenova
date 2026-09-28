@@ -45,6 +45,7 @@ go_initialisms:
     - OOS
     - USDOT
 
+omit_complexity: true
 omit_gqlgen_version_in_file_notice: true
 skip_mod_tidy: true
 use_buffer_pooling: true

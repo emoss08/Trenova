@@ -8,6 +8,10 @@ const (
 	StatusExpired = Status("Expired")
 )
 
+func StatusValues() []Status {
+	return []Status{StatusActive, StatusPaused, StatusExpired}
+}
+
 func (s Status) IsValid() bool {
 	switch s {
 	case StatusActive, StatusPaused, StatusExpired:
@@ -24,6 +28,14 @@ const (
 	ExceptionPolicyPreviousBusinessDay = ExceptionPolicy("PreviousBusinessDay")
 	ExceptionPolicyNextBusinessDay     = ExceptionPolicy("NextBusinessDay")
 )
+
+func ExceptionPolicyValues() []ExceptionPolicy {
+	return []ExceptionPolicy{
+		ExceptionPolicySkip,
+		ExceptionPolicyPreviousBusinessDay,
+		ExceptionPolicyNextBusinessDay,
+	}
+}
 
 func (p ExceptionPolicy) IsValid() bool {
 	switch p {

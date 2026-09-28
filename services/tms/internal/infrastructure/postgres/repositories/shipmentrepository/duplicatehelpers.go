@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
@@ -40,7 +39,7 @@ type duplicatedShipmentGraph struct {
 func buildDuplicatedShipmentGraph(
 	source *shipment.Shipment,
 	proNumbers []string,
-	overrideDates bool,
+	dateAnchor *int64,
 	requestedBy pulid.ID,
 ) *duplicatedShipmentGraph {
 	graph := &duplicatedShipmentGraph{
@@ -57,12 +56,6 @@ func buildDuplicatedShipmentGraph(
 			0,
 			len(source.Commodities)*len(proNumbers),
 		),
-	}
-
-	var dateAnchor *int64
-	if overrideDates {
-		now := timeutils.NowUnix()
-		dateAnchor = &now
 	}
 
 	for idx, proNumber := range proNumbers {

@@ -2,12 +2,12 @@ package agenttoolservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 )
 
 type recordStopActualTool struct {
@@ -42,11 +42,10 @@ func (t *recordStopActualTool) ParamSchema() map[string]any {
 				"description": "The stop that was arrived at or departed from, from the move's " +
 					"stops in get_shipment.",
 			},
-			"action": map[string]any{
-				"type":        "string",
-				"enum":        []string{"Arrive", "Depart"},
-				"description": "Which event happened.",
-			},
+			"action": agenttoolschema.Enum(
+				"Which event happened.",
+				agenttoolschema.StopActualActions,
+			),
 			"occurredAt": map[string]any{
 				"type": "integer",
 				"description": "When it happened, in Unix seconds. Leave it out unless " +
@@ -94,6 +93,15 @@ func (t *recordStopActualTool) Execute(
 	return err
 }
 
+// Validate runs the stop plan the preview runs, so an arrival the move's
+// state does not admit is refused to the model before it is proposed.
+func (t *recordStopActualTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	return previewValidates(ctx, t, &params)
+}
+
 func (t *recordStopActualTool) request(
 	params *serviceports.ToolExecuteParams,
 ) (*repositories.RecordStopActualRequest, error) {
@@ -107,7 +115,9 @@ func (t *recordStopActualTool) request(
 		return nil, err
 	}
 
-	action, err := stopActualAction(optionalString(params.Params, "action"))
+	// "Arrived" is not "Arrive", and coercing it would record an event that
+	// did not happen.
+	action, err := requireEnum(params.Params, "action", agenttoolschema.StopActualActions.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -127,21 +137,6 @@ func (t *recordStopActualTool) request(
 	}
 
 	return request, nil
-}
-
-// stopActualAction refuses anything it does not recognise. "Arrived" is not
-// "Arrive", and coercing it would record an event that did not happen.
-func stopActualAction(raw string) (repositories.StopActualAction, error) {
-	switch repositories.StopActualAction(raw) {
-	case repositories.StopActualActionArrive:
-		return repositories.StopActualActionArrive, nil
-	case repositories.StopActualActionDepart:
-		return repositories.StopActualActionDepart, nil
-	default:
-		return "", fmt.Errorf(
-			"parameter %q must be exactly \"Arrive\" or \"Depart\", not %q", "action", raw,
-		)
-	}
 }
 
 // Target names the record this call would change, so a proposal to change it

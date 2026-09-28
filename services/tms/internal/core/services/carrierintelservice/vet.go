@@ -2,7 +2,6 @@ package carrierintelservice
 
 import (
 	"context"
-	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -256,71 +255,12 @@ func (s *Service) ApplySuggestions(
 	ctx context.Context,
 	req *ApplySuggestionsRequest,
 ) (int, error) {
-	if len(req.Fields) == 0 && len(req.PolicyIDs) == 0 {
-		return 0, errortypes.NewValidationError("fields", errortypes.ErrRequired,
-			"Select at least one suggestion to apply")
-	}
-	for _, field := range req.Fields {
-		if !field.IsValid() {
-			return 0, errortypes.NewValidationError("fields", errortypes.ErrInvalid,
-				"Suggestion field is invalid")
-		}
-	}
-
-	snapshot, err := s.snapshotRepo.GetCurrent(
-		ctx,
-		req.TenantInfo,
-		repositories.CarrierIntelSubjectRef{
-			SubjectType: carrierintel.SubjectTypeCarrier,
-			SubjectID:   req.CarrierID.String(),
-		},
-	)
+	plan, err := s.PlanApplySuggestions(ctx, req)
 	if err != nil {
 		return 0, err
 	}
-	if snapshot == nil || snapshot.NotFound {
-		return 0, errortypes.NewBusinessError("Run carrier intelligence for this carrier first")
-	}
+	entity := plan.After
 
-	entity, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
-		ID:         req.CarrierID,
-		TenantInfo: req.TenantInfo,
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
-			IncludeContacts:          true,
-			IncludeInsurancePolicies: true,
-			IncludeEDIChannels:       true,
-		},
-	})
-	if err != nil {
-		return 0, err
-	}
-
-	plan := carrierintel.PlanCarrierSync(
-		entity,
-		snapshot.Profile,
-		carrierintel.SyncSettings{},
-		s.now(),
-	)
-	selected := make([]carrierintel.FieldUpdate, 0, len(req.Fields))
-	for _, suggestion := range plan.Suggestions {
-		if slices.Contains(req.Fields, suggestion.Field) {
-			selected = append(selected, suggestion)
-		}
-	}
-	selectedInsurance := make([]carrierintel.InsuranceChange, 0, len(req.PolicyIDs))
-	for _, change := range plan.InsuranceSuggestions {
-		if change.PolicyID.IsNotNil() && slices.Contains(req.PolicyIDs, change.PolicyID) {
-			selectedInsurance = append(selectedInsurance, change)
-		}
-	}
-	if len(selected) == 0 && len(selectedInsurance) == 0 {
-		return 0, errortypes.NewBusinessError(
-			"The selected suggestions no longer apply. Refresh the carrier and try again",
-		)
-	}
-
-	applied := len(carrierintel.ApplyFieldUpdates(entity, selected))
-	applied += carrierintel.ApplyInsuranceChanges(entity, selectedInsurance)
 	if _, err = s.carrierService.Update(ctx, entity, &services.RequestActor{
 		PrincipalType:  services.PrincipalTypeUser,
 		PrincipalID:    req.TenantInfo.UserID,
@@ -339,13 +279,13 @@ func (s *Service) ApplySuggestions(
 		PrincipalType: services.PrincipalTypeUser,
 		PrincipalID:   req.TenantInfo.UserID,
 		CurrentState: jsonutils.MustToJSON(map[string]any{
-			"fields":    selected,
-			"insurance": selectedInsurance,
+			"fields":    plan.Fields,
+			"insurance": plan.Insurance,
 		}),
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 	}, auditservice.WithComment("Carrier intelligence suggestions applied")); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
-	return applied, nil
+	return plan.Applied, nil
 }

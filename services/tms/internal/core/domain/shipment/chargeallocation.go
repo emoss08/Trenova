@@ -40,6 +40,10 @@ const (
 	ChargeAllocationMethodAmount  = ChargeAllocationMethod("Amount")
 )
 
+func ChargeAllocationMethodValues() []ChargeAllocationMethod {
+	return []ChargeAllocationMethod{ChargeAllocationMethodPercent, ChargeAllocationMethodAmount}
+}
+
 func (m ChargeAllocationMethod) IsValid() bool {
 	switch m {
 	case ChargeAllocationMethodPercent, ChargeAllocationMethodAmount:

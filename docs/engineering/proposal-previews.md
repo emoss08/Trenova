@@ -231,7 +231,9 @@ array-of-ids parameter as a subset of one permission resource's records with
   preview, the digest and the write all follow the narrowed list.
 - **The model never sees the keyword.** Every model adapter sends tools through
   `toolschema.ForModel`, which strips `x-` keywords at any depth (a strict endpoint refuses
-  a keyword it does not know) and keeps parameter names that merely look like one.
+  a keyword it does not know) and keeps parameter names that merely look like one. The
+  same goes for `x-enumOf`, the source an enum's values were taken from
+  (`agenttoolschema.Enum`).
 
 A preview still shows at most 20 records, so a subset of more is shown in part; the
 parameter's value is the whole list, and the field's choices list it all. The approval form

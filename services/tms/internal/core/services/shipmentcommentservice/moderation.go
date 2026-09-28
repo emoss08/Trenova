@@ -33,39 +33,13 @@ func (s *service) setPinned(
 	actor *services.RequestActor,
 	pinned bool,
 ) (*shipment.ShipmentComment, error) {
-	comment, userID, err := s.getToggleTarget(ctx, req, actor)
+	comment, userID, err := s.planPin(ctx, req, actor, pinned)
 	if err != nil {
 		return nil, err
 	}
 
-	if comment.IsReply() {
-		return nil, errortypes.NewValidationError(
-			"commentId",
-			errortypes.ErrInvalid,
-			"Replies cannot be pinned",
-		)
-	}
-
 	if comment.IsPinned() == pinned {
 		return comment, nil
-	}
-
-	if pinned {
-		pinnedCount, countErr := s.repo.CountPinnedByShipmentID(
-			ctx,
-			&repositories.GetShipmentCommentCountRequest{
-				TenantInfo: req.TenantInfo,
-				ShipmentID: req.ShipmentID,
-			},
-		)
-		if countErr != nil {
-			return nil, countErr
-		}
-		if pinnedCount >= shipment.MaxPinnedComments {
-			return nil, errortypes.NewConflictError(
-				"This shipment already has the maximum number of pinned comments",
-			)
-		}
 	}
 
 	updated, err := s.repo.SetPinned(ctx, &repositories.SetShipmentCommentPinnedRequest{

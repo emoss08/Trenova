@@ -412,17 +412,7 @@ func (s *Service) DetachShipment(
 
 		// Every shipment keeps a commercial parent: the detached leg moves onto a
 		// fresh single-leg order seeded from the leg itself.
-		replacement := &order.Order{
-			OrganizationID: leg.OrganizationID,
-			BusinessUnitID: leg.BusinessUnitID,
-			CustomerID:     leg.CustomerID,
-			OwnerID:        ord.OwnerID,
-			EnteredByID:    ord.EnteredByID,
-			Status:         order.StatusConfirmed,
-			OrderNumber:    replacementNumber,
-			CurrencyCode:   ord.CurrencyCode,
-			TotalAmount:    leg.TotalChargeAmount,
-		}
+		replacement := replacementOrder(ord, leg, replacementNumber)
 		if _, txErr = s.repo.Create(txCtx, replacement); txErr != nil {
 			return txErr
 		}
@@ -606,7 +596,12 @@ func (s *Service) AddChargeWithAllocations(
 		if multiErr.HasErrors() {
 			return multiErr
 		}
-		if multiErr = s.validateChargeAllocations(txCtx, tenantInfo, charge, req.Allocations); multiErr != nil {
+		if multiErr = s.validateChargeAllocations(
+			txCtx,
+			tenantInfo,
+			charge,
+			req.Allocations,
+		); multiErr != nil {
 			return multiErr
 		}
 
@@ -615,7 +610,13 @@ func (s *Service) AddChargeWithAllocations(
 			return txErr
 		}
 
-		if txErr = s.syncChargeAllocations(txCtx, tx, tenantInfo, charge, req.Allocations); txErr != nil {
+		if txErr = s.syncChargeAllocations(
+			txCtx,
+			tx,
+			tenantInfo,
+			charge,
+			req.Allocations,
+		); txErr != nil {
 			return txErr
 		}
 
@@ -724,7 +725,12 @@ func (s *Service) UpdateCharge(
 		if multiErr.HasErrors() {
 			return multiErr
 		}
-		if multiErr = s.validateChargeAllocations(txCtx, req.TenantInfo, charge, req.Allocations); multiErr != nil {
+		if multiErr = s.validateChargeAllocations(
+			txCtx,
+			req.TenantInfo,
+			charge,
+			req.Allocations,
+		); multiErr != nil {
 			return multiErr
 		}
 
@@ -741,7 +747,13 @@ func (s *Service) UpdateCharge(
 			)
 		}
 
-		if txErr = s.syncChargeAllocations(txCtx, tx, req.TenantInfo, charge, req.Allocations); txErr != nil {
+		if txErr = s.syncChargeAllocations(
+			txCtx,
+			tx,
+			req.TenantInfo,
+			charge,
+			req.Allocations,
+		); txErr != nil {
 			return txErr
 		}
 
@@ -833,10 +845,21 @@ func (s *Service) SetChargeAllocations(
 			)
 		}
 
-		if multiErr := s.validateChargeAllocations(txCtx, req.TenantInfo, charge, allocations); multiErr != nil {
+		if multiErr := s.validateChargeAllocations(
+			txCtx,
+			req.TenantInfo,
+			charge,
+			allocations,
+		); multiErr != nil {
 			return multiErr
 		}
-		if txErr = s.syncChargeAllocations(txCtx, tx, req.TenantInfo, charge, allocations); txErr != nil {
+		if txErr = s.syncChargeAllocations(
+			txCtx,
+			tx,
+			req.TenantInfo,
+			charge,
+			allocations,
+		); txErr != nil {
 			return txErr
 		}
 
@@ -952,7 +975,9 @@ func (s *Service) validateChargeAllocations(
 	}
 
 	if _, err := shipment.ResolveOrderChargeShares(
-		[]shipment.OrderChargeRef{{ID: chargeID, Description: charge.Description, Amount: charge.Amount}},
+		[]shipment.OrderChargeRef{
+			{ID: chargeID, Description: charge.Description, Amount: charge.Amount},
+		},
 		allocations,
 		pulid.Nil,
 	); err != nil {
@@ -1015,20 +1040,11 @@ func (s *Service) Close(
 	orderID pulid.ID,
 	actor *services.RequestActor,
 ) (*order.Order, error) {
-	ord, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
-		ID:         orderID,
-		TenantInfo: tenantInfo,
-	})
+	plan, err := s.PlanClose(ctx, tenantInfo, orderID)
 	if err != nil {
 		return nil, err
 	}
-	if ord.Status != order.StatusBilled {
-		return nil, errortypes.NewValidationError(
-			"orderId",
-			errortypes.ErrInvalidOperation,
-			"Only a Billed order can be closed; this order is {0}", ord.Status,
-		)
-	}
+	ord := plan.Before
 
 	updated, err := s.repo.UpdateStatus(ctx, &repositories.UpdateOrderStatusRequest{
 		TenantInfo: tenantInfo,
@@ -1058,36 +1074,13 @@ func (s *Service) Cancel(
 	cancelReason string,
 	actor *services.RequestActor,
 ) (*order.Order, error) {
-	ord, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
-		ID:              orderID,
-		TenantInfo:      tenantInfo,
-		IncludeShipment: true,
-	})
+	plan, err := s.PlanCancel(ctx, tenantInfo, orderID)
 	if err != nil {
 		return nil, err
 	}
-	if !ord.Status.AllowsMembershipChange() {
-		return nil, errortypes.NewValidationError(
-			"orderId",
-			errortypes.ErrInvalidOperation,
-			"A {0} order cannot be canceled", ord.Status,
-		)
-	}
-	for _, leg := range ord.Shipments {
-		if leg != nil && leg.Status == shipment.StatusInvoiced {
-			return nil, errortypes.NewValidationError(
-				"orderId",
-				errortypes.ErrInvalidOperation,
-				"The order has invoiced legs; adjust or credit the invoice before canceling",
-			)
-		}
-	}
 
 	now := timeutils.NowUnix()
-	for _, leg := range ord.Shipments {
-		if leg == nil || leg.Status == shipment.StatusCanceled {
-			continue
-		}
+	for _, leg := range plan.Legs {
 		if _, err = s.shipmentService.Cancel(ctx, &repositories.CancelShipmentRequest{
 			TenantInfo:   tenantInfo,
 			ShipmentID:   leg.ID,
@@ -1123,47 +1116,10 @@ func (s *Service) Update(
 ) (*order.Order, error) {
 	auditActor := actor.AuditActor()
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	original, err := s.repo.GetByID(ctx, repositories.GetOrderByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
-		},
-	})
+	original, err := s.planUpdate(ctx, entity)
 	if err != nil {
-		s.l.Error("failed to get original order", zap.Error(err))
+		s.l.Error("failed to plan order update", zap.Error(err))
 		return nil, err
-	}
-
-	// Status and total are derived; order number is immutable. Whatever the transport
-	// bound onto the entity is discarded here.
-	entity.Status = original.Status
-	entity.TotalAmount = original.TotalAmount
-	entity.OrderNumber = original.OrderNumber
-
-	if entity.CustomerID != original.CustomerID {
-		statuses, legErr := s.repo.GetShipmentStatuses(
-			ctx,
-			pagination.TenantInfo{
-				OrgID: entity.GetOrganizationID(),
-				BuID:  entity.GetBusinessUnitID(),
-			},
-			entity.ID,
-		)
-		if legErr != nil {
-			return nil, legErr
-		}
-		if len(statuses) > 0 {
-			return nil, errortypes.NewValidationError(
-				"customerId",
-				errortypes.ErrInvalid,
-				"The customer cannot be changed while the order has legs; detach them first",
-			)
-		}
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)

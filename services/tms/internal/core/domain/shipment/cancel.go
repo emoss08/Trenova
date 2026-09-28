@@ -10,3 +10,10 @@ func (s *Shipment) ApplyCancel(canceledByID pulid.ID, canceledAt int64, reason s
 	s.CanceledAt = &canceledAt
 	s.CancelReason = reason
 }
+
+func (s *Shipment) ApplyUncancel() {
+	s.Status = StatusNew
+	s.CanceledByID = pulid.Nil
+	s.CanceledAt = nil
+	s.CancelReason = ""
+}

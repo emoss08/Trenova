@@ -52,20 +52,48 @@ Loaded now:
 - list_customers
 - list_invoices
 - add_shipment_comment
-- get_insight
-- get_edi_transfer
 - accept_edi_tender
-- decline_edi_tender
+- list_orders
+- list_recurring_shipments
+- list_service_failures
 
 Callable after find_tools:
-- get_shipment — Retrieve one shipment by its id, including its stops, moves, and assignments.
+- get_shipment — Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments.
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
 - list_insights — List insight detector findings: service slipping for a customer, cash tied up in unbilled work, cost leaking at a location, compliance about to lapse.
+- get_insight — Read one insight in full: the finding with its numbers and records, its earlier runs, and the rule behind it.
 - list_edi_partners — List this organization's EDI trading partners with their code, name and the customer each stands for.
 - list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
+- get_edi_transfer — Retrieve one EDI load tender by id, with its stops, freight and rate and the mappings it still lacks.
+- decline_edi_tender — Propose declining a load tender a trading partner sent over EDI, with the reason they are given.
 - list_edi_tender_changes — List changes another Trenova organization made to loads it tendered to this one over EDI, and changes this organization made to loads it tendered, newest first.
 - review_edi_tender_change — Propose applying or rejecting a change another Trenova organization made to a load it tendered to this one over EDI, after this organization received it.
 - send_edi_status_update — Propose sending a trading partner an EDI 214 shipment status built from a shipment or a service failure.
+- get_order — Retrieve one customer order by id with the shipments it groups and its order-level charges, including which charges are already invoiced.
+- create_order — Open a customer order: the commercial record that groups a customer's shipments and order-level charges under their PO or BOL.
+- update_order — Change an order's customer, owner, PO number, BOL, currency, quoted amount or base amount.
+- attach_order_shipments — Put shipments on an order so they are billed and tracked together.
+- detach_order_shipment — Take one shipment off an order onto an order of its own, so it is billed on its own.
+- add_order_charge — Add an order-level charge, one billed once for the whole order rather than on a shipment: a consolidation fee, a quoted flat rate.
+- update_order_charge — Change an order charge's description, amount or payer split.
+- set_order_charge_allocations — Replace how one order charge is split among payers without touching the charge itself.
+- remove_order_charge — Take a charge off an order before it is invoiced.
+- close_order — Close a Billed order once nothing more will be billed on it.
+- cancel_order — Cancel an order and every shipment on it that is not already canceled, with the reason the customer gave.
+- create_recurring_shipment — Start a recurring shipment: a series that copies one saved shipment on a schedule, for a customer's standing lane.
+- update_recurring_shipment — Change a recurring shipment's name, schedule, timezone, dates, limits, blackout days or whether it generates on its own.
+- set_recurring_shipment_status — Pause a recurring shipment so it creates nothing, resume it (Active) from its next future slot without back-filling what it missed, or end it (Expired).
+- generate_recurring_shipment — Create the shipment for a recurring shipment's next slot now, or for the slot at occurrenceAt, instead of waiting for the schedule.
+- rerate_shipment — Price a saved shipment again from its customer's rate agreement, replacing its rating method, base rate and contract accessorials.
+- edit_shipment_comment — Change the text, visibility, priority or acknowledgment request of a comment on a shipment.
+- unpin_shipment_comment — Take a pinned comment off the top of a shipment's thread once what it said no longer applies.
+- delete_shipment_comment — Delete a comment from a shipment's thread: your own, or another person's when the person you act for may moderate comments.
+- get_service_failure — Retrieve one service failure by id: the late or missed stop, how late, the reason code, the notes, and who reviewed, resolved or voided it.
+- update_service_failure — Change the reason code, notes or EDI 214 code overrides on an open or reviewed service failure.
+- review_service_failure — Mark an open service failure reviewed, with the reason code that explains it, once a person has looked into what happened.
+- void_service_failure — Void a service failure that should never have been opened, with the reason why: a wrong appointment window, a corrected arrival, a stop that was not late.
+- dispute_detention — Record that the customer disputes a detention charge, with what they said.
+- vet_customer_broker — Check a customer that is a freight broker against the public FMCSA record by its DOT number: broker authority and bond.
 
 ## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.

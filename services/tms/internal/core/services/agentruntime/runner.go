@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -65,10 +66,14 @@ type Service struct {
 	vectorizer  serviceports.QueryVectorizer
 	vectors     serviceports.CatalogVectorIndex
 	previews    serviceports.ProposalPreviewService
+	// arguments holds each tool's compiled schema, against which every
+	// call's arguments are checked before the tool sees them.
+	arguments *toolschema.Validator
 }
 
 func New(p Params) *Service {
 	return &Service{
+		arguments:   toolschema.NewValidator(),
 		logger:      p.Logger.Named("service.agentruntime"),
 		completion:  p.Completion,
 		queryTools:  p.QueryTools,

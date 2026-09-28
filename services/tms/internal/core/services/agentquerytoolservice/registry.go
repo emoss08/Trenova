@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -288,8 +289,8 @@ func stringParam(description string) map[string]any {
 	return map[string]any{"type": "string", "description": description}
 }
 
-func enumParam(description string, values []string) map[string]any {
-	return map[string]any{"type": "string", "enum": values, "description": description}
+func enumParam(description string, source agenttoolschema.EnumSource[string]) map[string]any {
+	return agenttoolschema.Enum(description, source)
 }
 
 func objectSchema(properties map[string]any, required ...string) map[string]any {
@@ -311,13 +312,19 @@ func optionalID(params map[string]any, key string) (pulid.ID, error) {
 	return id, err
 }
 
-func validEnum(params map[string]any, key string, values []string) (string, error) {
+func validEnum(
+	params map[string]any,
+	key string,
+	source agenttoolschema.EnumSource[string],
+) (string, error) {
 	value := optionalString(params, key)
-	if value == "" || slices.Contains(values, value) {
+	if value == "" || slices.Contains(source.Values, value) {
 		return value, nil
 	}
 
-	return "", fmt.Errorf("%s %q is not one of %s", key, value, strings.Join(values, ", "))
+	return "", fmt.Errorf(
+		"%s %q is not one of %s", key, value, strings.Join(source.Values, ", "),
+	)
 }
 
 // optionalEnums reads a list of enum values the caller may leave out and

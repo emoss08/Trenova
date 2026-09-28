@@ -155,4 +155,18 @@ type BillingQueueService interface {
 		req *ReassignChargeRequest,
 		actor *RequestActor,
 	) (*ReassignChargeResult, error)
+	PreviewReassignCharge(
+		ctx context.Context,
+		req *ReassignChargeRequest,
+		actor *RequestActor,
+	) (*ReassignChargePreview, error)
+}
+
+type ReassignChargePreview struct {
+	Item        *billingqueue.BillingQueueItem
+	Shipment    *shipment.Shipment
+	Description string
+	Shares      []*shipment.PayerShare
+	ToCreate    []*shipment.PayerShare
+	ToCancel    []*billingqueue.BillingQueueItem
 }

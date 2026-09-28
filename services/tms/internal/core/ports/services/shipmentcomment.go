@@ -37,7 +37,21 @@ type ToggleShipmentCommentRequest struct {
 	CommentID  pulid.ID
 }
 
+type ShipmentCommentChange struct {
+	Before *shipment.ShipmentComment
+	After  *shipment.ShipmentComment
+}
+
+type ShipmentCommentDeletion struct {
+	Comment    *shipment.ShipmentComment
+	Tombstoned bool
+}
+
 type ShipmentCommentService interface {
+	GetByID(
+		ctx context.Context,
+		req *repositories.GetShipmentCommentByIDRequest,
+	) (*shipment.ShipmentComment, error)
 	ListByShipmentID(
 		ctx context.Context,
 		req *repositories.ListShipmentCommentsRequest,
@@ -90,4 +104,26 @@ type ShipmentCommentService interface {
 		req *ToggleShipmentCommentRequest,
 		actor *RequestActor,
 	) (*shipment.ShipmentComment, error)
+	PreviewPin(
+		ctx context.Context,
+		req *ToggleShipmentCommentRequest,
+		actor *RequestActor,
+		pinned bool,
+	) (*ShipmentCommentChange, error)
+	PreviewResolve(
+		ctx context.Context,
+		req *ToggleShipmentCommentRequest,
+		actor *RequestActor,
+		resolved bool,
+	) (*ShipmentCommentChange, error)
+	PreviewUpdate(
+		ctx context.Context,
+		req *UpdateShipmentCommentRequest,
+		actor *RequestActor,
+	) (*ShipmentCommentChange, error)
+	PreviewDelete(
+		ctx context.Context,
+		req *DeleteShipmentCommentRequest,
+		actor *RequestActor,
+	) (*ShipmentCommentDeletion, error)
 }

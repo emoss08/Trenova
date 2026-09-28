@@ -1333,7 +1333,7 @@
     ]
   },
   "A DOT number is required to import a carrier": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -1497,6 +1497,15 @@
     ]
   },
   "A backfill is already {0} for {1}; it must finish or be cancelled first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "A backfill is changed by a person who manages the accounting integration": {
     "sites": 1,
     "scope": [
       "go"
@@ -1886,7 +1895,7 @@
     ]
   },
   "A carrier with DOT {0} already exists": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -3405,6 +3414,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "A fiscal period is closed, reopened, locked, unlocked or opened": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
     ]
   },
   "A fixed class rule needs a freight class": {
@@ -7096,12 +7114,13 @@
     ]
   },
   "A {0} backfill cannot be changed that way": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/accountingsyncservice"
+      "service/accountingsyncservice",
+      "service/agenttoolservice"
     ]
   },
   "A {0} chart plots exactly one measure": {
@@ -11854,7 +11873,7 @@
     ]
   },
   "Add the customer's DOT number before vetting them as a broker": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -16946,8 +16965,17 @@
       "service/invoicerunservice"
     ]
   },
-  "An invoiced order charge cannot be re-allocated": {
+  "An invoiced order charge cannot be changed": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/orderservice"
+    ]
+  },
+  "An invoiced order charge cannot be re-allocated": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -27047,6 +27075,24 @@
     ],
     "areas": [
       "routes/organization"
+    ]
+  },
+  "Billing transfer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "Billing transfer retry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Billing warnings": {
@@ -38299,7 +38345,7 @@
     ]
   },
   "Comment request is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -59875,15 +59921,6 @@
       "routes/service-failure"
     ]
   },
-  "EDI 214 service failure resolved": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/agenttoolservice"
-    ]
-  },
   "EDI 214 shipment status": {
     "sites": 1,
     "scope": [
@@ -63139,7 +63176,25 @@
       "routes/admin"
     ]
   },
+  "Enable a carrier intelligence provider before importing carriers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carrierintelservice"
+    ]
+  },
   "Enable a carrier intelligence provider before monitoring carriers": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carrierintelservice"
+    ]
+  },
+  "Enable a carrier intelligence provider before vetting carriers": {
     "sites": 1,
     "scope": [
       "go"
@@ -89291,11 +89346,12 @@
     ]
   },
   "Journal reversal": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/journal-reversal"
     ]
   },
@@ -97209,6 +97265,15 @@
     "areas": [
       "domain/fuelpurchase",
       "domain/ifta"
+    ]
+  },
+  "Manual journal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Manual journal actions require an authenticated user": {
@@ -105615,6 +105680,24 @@
       "apps/web/config"
     ]
   },
+  "New shift assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "New shift swap": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "New shipment": {
     "sites": 2,
     "scope": [
@@ -106722,6 +106805,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "No backfill is in progress for {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "No backtest results yet": {
@@ -111342,7 +111434,7 @@
     ]
   },
   "None of the selected carriers have a DOT number to monitor": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -112457,7 +112549,7 @@
     ]
   },
   "Note cannot exceed 2000 characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -120491,7 +120583,7 @@
     ]
   },
   "Order charge not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -120500,7 +120592,7 @@
     ]
   },
   "Order charge not found or already carried on an invoice": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -139708,6 +139800,15 @@
       "routes/invoice-reconciliation"
     ]
   },
+  "Reconciliation item": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Reconciliation mode": {
     "sites": 1,
     "scope": [
@@ -140585,7 +140686,7 @@
     ]
   },
   "Record what was reviewed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -144848,7 +144949,7 @@
     ]
   },
   "Request is required": {
-    "sites": 45,
+    "sites": 47,
     "scope": [
       "go"
     ],
@@ -150860,7 +150961,7 @@
     ]
   },
   "Run carrier intelligence for this carrier first": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -156862,7 +156963,7 @@
     ]
   },
   "Select at least one carrier": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -161870,6 +161971,15 @@
       "routes/worker"
     ]
   },
+  "Shift assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Shift driving violation cannot be negative": {
     "sites": 1,
     "scope": [
@@ -162733,7 +162843,7 @@
     ]
   },
   "Shipment hold request is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -210280,7 +210390,7 @@
     ]
   },
   "distance calculation service is not configured": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -217887,7 +217997,7 @@
     ]
   },
   "{0} does not support carrier monitoring": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -219194,6 +219304,15 @@
     ]
   },
   "{0} is {1}; only Blocked, DeadLettered and Retrying records are retried": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is {1}; only a document awaiting approval is released": {
     "sites": 1,
     "scope": [
       "go"

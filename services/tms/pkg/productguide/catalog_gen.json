@@ -1,5 +1,5 @@
 {
-  "version": "sha256:1af3a40cbaf4cb9aa4f3d0c1e4a681685321f182d1763f5270a04d45f3eeb7d8",
+  "version": "sha256:95fe38bd507b58bb62000e3b4c04f1f86dd04af8f7f49b245fc243c1c74d8fed",
   "modules": [
     {
       "id": "home",
@@ -15543,9 +15543,27 @@
       "params": {}
     },
     {
+      "entity": "journal_reversal",
+      "label": "Journal reversal",
+      "path": "/accounting/journal-reversals",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
       "entity": "location",
       "label": "Location",
       "path": "/dispatch/locations",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
+      "entity": "manual_journal",
+      "label": "Manual journal",
+      "path": "/accounting/manual-journals",
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"

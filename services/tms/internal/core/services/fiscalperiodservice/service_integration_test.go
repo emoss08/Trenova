@@ -411,7 +411,7 @@ func TestLockSucceedsFromOpenStatus(t *testing.T) {
 
 	locked, err := svc.Lock(
 		ctx,
-		repositories.LockFiscalPeriodRequest{
+		&repositories.LockFiscalPeriodRequest{
 			ID: period.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: data.Organization.ID,

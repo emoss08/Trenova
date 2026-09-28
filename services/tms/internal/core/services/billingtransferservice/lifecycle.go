@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -26,22 +27,9 @@ func (s *Service) Cancel(
 	ctx context.Context,
 	req *RunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
-	run, err := s.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
-		TenantInfo: req.TenantInfo,
-		RunID:      req.RunID,
-	})
+	run, err := s.planCancel(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-
-	if run.RequestedByID != req.TenantInfo.UserID {
-		return nil, errortypes.NewAuthorizationError(
-			"Only the person who started a transfer can stop it",
-		)
-	}
-
-	if run.Status.IsTerminal() {
-		return nil, errortypes.NewBusinessError("This transfer has already finished")
 	}
 
 	canceled, err := s.runRepo.RequestCancel(
@@ -86,51 +74,9 @@ func (s *Service) Retry(
 ) (*billingtransfer.BillingTransferRun, error) {
 	log := s.l.With(zap.String("operation", "RetryRun"))
 
-	if !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Transferring to billing is temporarily unavailable — the background worker is not connected",
-		)
-	}
-
-	source, err := s.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
-		TenantInfo: req.TenantInfo,
-		RunID:      req.RunID,
-	})
+	source, run, err := s.planRetry(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-
-	if !source.Status.IsTerminal() {
-		return nil, errortypes.NewBusinessError(
-			"Wait for this transfer to finish before retrying it",
-		)
-	}
-
-	if source.RetryableCount == 0 && source.SkippedCount == 0 {
-		return nil, errortypes.NewBusinessError(
-			"Nothing in this transfer can be retried",
-		)
-	}
-
-	run := &billingtransfer.BillingTransferRun{
-		BusinessUnitID:              req.TenantInfo.BuID,
-		OrganizationID:              req.TenantInfo.OrgID,
-		RequestedByID:               req.TenantInfo.UserID,
-		SourceRunID:                 source.ID,
-		Status:                      billingtransfer.RunStatusQueued,
-		Scope:                       billingtransfer.RunScopeRetry,
-		SearchQuery:                 source.SearchQuery,
-		ShipmentStatus:              source.ShipmentStatus,
-		BillType:                    source.BillType,
-		MarkCompletedReadyToInvoice: source.MarkCompletedReadyToInvoice,
-		TotalCount:                  source.TotalCount,
-		UnmatchedCount:              source.UnmatchedCount,
-	}
-
-	multiErr := errortypes.NewMultiError()
-	run.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	created, err := s.runRepo.Create(ctx, run)
@@ -174,4 +120,114 @@ func (s *Service) Retry(
 	}
 
 	return created, nil
+}
+
+// RunPreview is a run as stopping or retrying it would leave things: the run
+// acted on before and after, and the run a retry would create.
+type RunPreview struct {
+	Before  *billingtransfer.BillingTransferRun
+	After   *billingtransfer.BillingTransferRun
+	Created *billingtransfer.BillingTransferRun
+}
+
+func (s *Service) PreviewCancel(ctx context.Context, req *RunRequest) (*RunPreview, error) {
+	run, err := s.planCancel(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	after := *run
+	now := timeutils.NowUnix()
+	after.CancelRequestedAt = &now
+	after.CancelRequestedByID = req.TenantInfo.UserID
+
+	return &RunPreview{Before: run, After: &after}, nil
+}
+
+func (s *Service) PreviewRetry(ctx context.Context, req *RunRequest) (*RunPreview, error) {
+	source, run, err := s.planRetry(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RunPreview{Before: source, After: source, Created: run}, nil
+}
+
+func (s *Service) planCancel(
+	ctx context.Context,
+	req *RunRequest,
+) (*billingtransfer.BillingTransferRun, error) {
+	run, err := s.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
+		TenantInfo: req.TenantInfo,
+		RunID:      req.RunID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if run.RequestedByID != req.TenantInfo.UserID {
+		return nil, errortypes.NewAuthorizationError(
+			"Only the person who started a transfer can stop it",
+		)
+	}
+
+	if run.Status.IsTerminal() {
+		return nil, errortypes.NewBusinessError("This transfer has already finished")
+	}
+
+	return run, nil
+}
+
+func (s *Service) planRetry(
+	ctx context.Context,
+	req *RunRequest,
+) (source, run *billingtransfer.BillingTransferRun, err error) {
+	if !s.workflows.Enabled() {
+		return nil, nil, errortypes.NewBusinessError(
+			"Transferring to billing is temporarily unavailable — the background worker is not connected",
+		)
+	}
+
+	source, err = s.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
+		TenantInfo: req.TenantInfo,
+		RunID:      req.RunID,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !source.Status.IsTerminal() {
+		return nil, nil, errortypes.NewBusinessError(
+			"Wait for this transfer to finish before retrying it",
+		)
+	}
+
+	if source.RetryableCount == 0 && source.SkippedCount == 0 {
+		return nil, nil, errortypes.NewBusinessError(
+			"Nothing in this transfer can be retried",
+		)
+	}
+
+	run = &billingtransfer.BillingTransferRun{
+		BusinessUnitID:              req.TenantInfo.BuID,
+		OrganizationID:              req.TenantInfo.OrgID,
+		RequestedByID:               req.TenantInfo.UserID,
+		SourceRunID:                 source.ID,
+		Status:                      billingtransfer.RunStatusQueued,
+		Scope:                       billingtransfer.RunScopeRetry,
+		SearchQuery:                 source.SearchQuery,
+		ShipmentStatus:              source.ShipmentStatus,
+		BillType:                    source.BillType,
+		MarkCompletedReadyToInvoice: source.MarkCompletedReadyToInvoice,
+		TotalCount:                  source.TotalCount,
+		UnmatchedCount:              source.UnmatchedCount,
+	}
+
+	multiErr := errortypes.NewMultiError()
+	run.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, nil, multiErr
+	}
+
+	return source, run, nil
 }
