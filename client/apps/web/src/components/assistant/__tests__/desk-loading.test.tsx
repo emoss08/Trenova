@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskLoading, DeskLoadingMark } from "../voice/desk-loading";
+import { REACH_ANGLE, REACH_LEAN } from "../voice/desk-visitor-motion";
 
 const motion = vi.hoisted(() => ({ reduce: false }));
 
@@ -11,8 +12,26 @@ vi.mock("motion/react", async (importOriginal) => {
 
 const MOVING = '[class*="animate-desk-"]';
 
+const PARTS = [
+  "walk",
+  "fade",
+  "turn",
+  "bob",
+  "lean",
+  "leg-front",
+  "leg-back",
+  "arm-front",
+  "arm-back",
+  "sheet-x",
+  "sheet-y",
+  "sheet-fade",
+  "pile",
+  "pool",
+  "cone",
+] as const;
+
 function part(container: HTMLElement, name: string) {
-  return container.querySelector(`[data-part="${name}"]`);
+  return container.querySelector<SVGElement>(`[data-part="${name}"]`);
 }
 
 beforeEach(() => {
@@ -20,54 +39,61 @@ beforeEach(() => {
 });
 
 describe("DeskLoadingMark", () => {
-  it("opens the drawer, files a sheet and settles the stack while it moves", () => {
+  it("moves every part of the visitor on its own fitted animation", () => {
     const { container } = render(<DeskLoadingMark />);
 
-    expect(part(container, "drawer")).toHaveClass("animate-desk-drawer");
-    expect(part(container, "sheet")).toHaveClass("animate-desk-file");
-    expect(part(container, "stack")).toHaveClass("animate-desk-file-stack");
+    for (const name of PARTS) {
+      expect(part(container, name), name).toHaveClass(`animate-desk-visitor-${name}`);
+    }
+  });
+
+  it("keeps the desk and the lamp's body still", () => {
+    const { container } = render(<DeskLoadingMark />);
+
+    expect(part(container, "desk")?.querySelector(MOVING)).toBeNull();
     expect(part(container, "desk")?.getAttribute("class") ?? "").not.toContain("animate-");
   });
 
-  it("draws one still frame, the drawer open and a sheet half in, without motion", () => {
+  it("carries the sheet in the clip that stops at the desk top, with the pile", () => {
+    const { container } = render(<DeskLoadingMark />);
+    const clip = container.querySelector("clipPath");
+    const pile = part(container, "pile");
+    const sheet = part(container, "sheet");
+
+    expect(pile?.closest("[clip-path]")?.getAttribute("clip-path")).toBe(`url(#${clip?.id})`);
+    expect(sheet?.closest("[clip-path]")).toBe(pile?.closest("[clip-path]"));
+    expect(pile?.querySelectorAll("rect")).toHaveLength(3);
+  });
+
+  it("draws the sheet touching down, and nothing moving, without motion", () => {
     const { container } = render(<DeskLoadingMark animate={false} />);
 
     expect(container.querySelector(MOVING)).toBeNull();
-    expect(part(container, "drawer")).toHaveClass("translate-x-[7.6px]");
-    expect(part(container, "sheet")).toHaveClass("-translate-y-[3.2px]");
+    expect(part(container, "arm-front")?.style.transform).toBe(`rotate(${REACH_ANGLE}deg)`);
+    expect(part(container, "lean")?.style.transform).toContain(`rotate(${REACH_LEAN}deg)`);
+    expect(part(container, "walk")?.getAttribute("style")).toBeNull();
     expect(container.querySelector("svg")).toHaveAttribute("data-motion", "still");
   });
 
-  it("files the sheet behind the drawer's side, clipped at the drawer floor", () => {
-    const { container } = render(<DeskLoadingMark />);
-    const drawer = part(container, "drawer");
-    const clip = container.querySelector("clipPath");
-    const clipped = drawer?.querySelector("[clip-path]");
-
-    expect(clip).not.toBeNull();
-    expect(clipped?.getAttribute("clip-path")).toBe(`url(#${clip?.id})`);
-    expect(clipped?.contains(part(container, "sheet"))).toBe(true);
-    expect(drawer?.lastElementChild?.contains(part(container, "sheet"))).toBe(false);
-  });
-
-  it("gives each drawing its own clip and mask so two on a page never share one", () => {
+  it("gives each drawing its own clip so two on a page never share one", () => {
     const { container } = render(
       <>
         <DeskLoadingMark />
         <DeskLoadingMark />
       </>,
     );
-    const ids = Array.from(container.querySelectorAll("clipPath, mask"), (node) => node.id);
+    const ids = Array.from(container.querySelectorAll("clipPath"), (node) => node.id);
 
-    expect(new Set(ids).size).toBe(4);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
   });
 
-  it("is hidden from assistive technology and takes the desk's light", () => {
+  it("is hidden from assistive technology, takes the desk's light and clips at its edges", () => {
     const { container } = render(<DeskLoadingMark className="h-10" />);
     const svg = container.querySelector("svg");
 
     expect(svg).toHaveAttribute("aria-hidden", "true");
-    expect(svg).toHaveClass("ui-desk-mark", "h-10");
+    expect(svg).toHaveClass("ui-desk-mark", "overflow-hidden", "h-10");
   });
 });
 

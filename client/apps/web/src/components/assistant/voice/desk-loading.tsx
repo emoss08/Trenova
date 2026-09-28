@@ -1,35 +1,55 @@
 import { cn } from "@trenova/shared/lib/utils";
 import { useReducedMotion } from "motion/react";
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
+import { CONE, HINGE, SHADE } from "./desk-thinking";
+import {
+  GROUND_Y,
+  HIP_Y,
+  LAMP_X,
+  PILE,
+  REACH_ANGLE,
+  REACH_LEAN,
+  SHOULDER_Y,
+  VISITOR_X,
+} from "./desk-visitor-motion";
+import "./desk-visitor.css";
+
+/** The desk's lamp: the working-line lamp at half size, moved over the pile. */
+const LAMP = `translate(${LAMP_X} 0.9) scale(0.5)`;
+
+const LIMB = "origin-top [transform-box:fill-box]";
+
+type VisitorPart =
+  | "walk"
+  | "fade"
+  | "turn"
+  | "bob"
+  | "lean"
+  | "leg-front"
+  | "leg-back"
+  | "arm-front"
+  | "arm-back"
+  | "sheet-x"
+  | "sheet-y"
+  | "sheet-fade"
+  | "pile"
+  | "pool"
+  | "cone";
 
 /**
- * How one part looks: `always` in both modes, `still` as the one frame
- * reduced motion draws, `move` while it may animate. The still frame is the
- * moment the motion is about, a sheet halfway into the open drawer.
+ * The one frame reduced motion draws, the sheet touching down on the pile:
+ * the visitor at the desk leaning into the reach, every other part at rest.
  */
-type PartStyle = { always?: string; still: string; move: string };
-
-type FilingPart = "drawer" | "stack" | "sheet";
-
-const PARTS: Record<FilingPart, PartStyle> = {
-  drawer: { still: "translate-x-[7.6px]", move: "animate-desk-drawer" },
-  stack: { still: "", move: "animate-desk-file-stack" },
-  sheet: {
-    always: "origin-bottom [transform-box:fill-box]",
-    still: "-translate-y-[3.2px]",
-    move: "animate-desk-file",
+const STILL: Partial<Record<VisitorPart, CSSProperties>> = {
+  lean: {
+    transform: `translate(${VISITOR_X}px, ${GROUND_Y}px) rotate(${REACH_LEAN}deg) translate(-${VISITOR_X}px, -${GROUND_Y}px)`,
   },
+  "arm-front": { transform: `rotate(${REACH_ANGLE}deg)` },
 };
-
-function partClass(part: FilingPart, animate: boolean): string {
-  const style = PARTS[part];
-
-  return cn(style.always, animate ? style.move : style.still);
-}
 
 export type DeskLoadingMarkProps = {
   /**
-   * Whether the desk may move. Off, it is one still frame of the same
+   * Whether the visitor may move. Off, it is one still frame of the same
    * moment, which is what reduced motion wants.
    */
   animate?: boolean;
@@ -37,65 +57,157 @@ export type DeskLoadingMarkProps = {
 };
 
 /**
- * The desk being set out: an ink desk seen side on, whose drawer slides out,
- * takes a sheet of the agent's light and closes again.
+ * The Desk being set out: someone carries a sheet to the desk, lays it on
+ * the pile under the lamp and walks off, and the pile sinks by a sheet as
+ * they go so the loop meets itself.
  *
- * It is the lamp's companion and is drawn to the same rules, on the same
- * 28 by 22.4 grid in solid shapes, so the two sit together at the height of
- * a line of text. The desk never moves; its drawer does, and the sheet that
- * drops into it. Sheets already filed stand in the drawer, and the new one
- * joins them before the drawer closes, which is where every loop starts and
- * ends.
+ * It is the lamp's companion and is drawn to the same rules, in solid ink
+ * shapes with the agent's light, and the lamp itself stands on the desk.
+ * Every part moves on one clock (see `desk-visitor-motion.ts`): the sheet
+ * rides in the hand, the steps follow the distance covered, and the lamp's
+ * pool brightens as the sheet lands. The drawing clips at its edges, so the
+ * visitor walks in and out of frame.
  *
  * The drawing never announces anything; the component around it does.
  */
 export function DeskLoadingMark({ animate = true, className }: DeskLoadingMarkProps) {
-  const id = useId().replace(/[^\w-]/g, "");
-  const clipId = `desk-drawer-${id}`;
-  const seamId = `desk-seam-${id}`;
+  const clipId = `desk-visitor-${useId().replace(/[^\w-]/g, "")}`;
+  const clip = `url(#${clipId})`;
+  const part = (name: VisitorPart, base?: string) => ({
+    "data-part": name,
+    className: cn(base, animate && `animate-desk-visitor-${name}`),
+    style: animate ? undefined : STILL[name],
+  });
 
   return (
     <svg
-      viewBox="2 6 28 22.4"
+      viewBox="5 0 40 24"
       aria-hidden
       focusable="false"
       data-slot="desk-loading-mark"
       data-motion={animate ? "moving" : "still"}
-      className={cn("ui-desk-mark h-4 w-5 shrink-0 overflow-visible", className)}
+      className={cn("ui-desk-mark h-6 w-10 shrink-0 overflow-hidden", className)}
     >
       <defs>
         <clipPath id={clipId}>
-          <rect x="2" y="-10" width="30" height="32.2" />
+          <rect x="-10" y="-10" width="70" height="24" />
         </clipPath>
-        <mask id={seamId} maskUnits="userSpaceOnUse" x="2" y="6" width="28" height="23">
-          <rect x="2" y="6" width="28" height="23" fill="white" />
-          <rect x="10" y="22.9" width="12" height="0.7" fill="black" />
-        </mask>
       </defs>
 
-      <g data-part="drawer" className={partClass("drawer", animate)}>
-        <g clipPath={`url(#${clipId})`}>
-          <g data-part="stack" className={cn("fill-desk-accent", partClass("stack", animate))}>
-            <rect x="12.2" y="17.8" width="5" height="5" rx="0.7" className="opacity-30" />
-            <rect x="13.2" y="17.6" width="5" height="5" rx="0.7" className="opacity-45" />
-          </g>
-          <g data-part="sheet" className={partClass("sheet", animate)}>
-            <rect x="12.8" y="17.2" width="5.2" height="6.6" rx="0.7" className="fill-desk-light" />
-            <g className="fill-desk-rule">
-              <rect x="13.8" y="18.7" width="3.2" height="0.8" rx="0.4" />
-              <rect x="13.8" y="20.2" width="2.2" height="0.8" rx="0.4" />
+      <g data-part="desk" className="fill-desk-lamp">
+        <rect x="6.4" y="14" width="16.2" height="1.6" rx="0.8" />
+        <rect x="7.8" y="15" width="1.4" height="8" rx="0.7" />
+        <rect x="13.4" y="15" width="7.6" height="8" rx="0.9" />
+        <g className="fill-desk-drawer">
+          <rect x="14.2" y="16" width="6" height="3" rx="0.5" />
+          <rect x="14.2" y="19.8" width="6" height="2.4" rx="0.5" />
+        </g>
+        <rect x="16.4" y="17.2" width="1.6" height="0.6" rx="0.3" />
+        <rect x="16.4" y="20.7" width="1.6" height="0.6" rx="0.3" />
+      </g>
+
+      <g data-part="lamp">
+        <g clipPath={clip}>
+          <g transform={LAMP}>
+            <g transform={HINGE}>
+              <path d={CONE} opacity="0.2" {...part("cone", "fill-desk-accent")} />
             </g>
           </g>
         </g>
-        <rect x="11.2" y="18.4" width="8" height="3.8" rx="0.8" className="fill-desk-drawer" />
-        <rect x="18.6" y="19.4" width="2" height="1.8" rx="0.9" className="fill-desk-lamp" />
+        <ellipse
+          cx={PILE.centre}
+          cy="14.25"
+          rx="3.6"
+          ry="0.45"
+          opacity="0.8"
+          {...part("pool", "fill-desk-light origin-center [transform-box:fill-box]")}
+        />
+        <g transform={LAMP} className="fill-desk-lamp">
+          <rect x="5.4" y="23.4" width="8" height="2.8" rx="1.4" />
+          <path
+            d="M9.4 23.6 L7.8 14.6 L15.6 9.4"
+            fill="none"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="stroke-desk-lamp"
+          />
+          <circle cx="7.8" cy="14.6" r="1.7" />
+          <g transform={HINGE}>
+            <path d={SHADE} strokeWidth="1" strokeLinejoin="round" className="stroke-desk-lamp" />
+            <circle cx="0" cy="-1.3" r="1.3" />
+            <ellipse cx="0" cy="3.7" rx="2.3" ry="0.95" className="fill-desk-light" />
+          </g>
+        </g>
       </g>
 
-      <g data-part="desk" className="fill-desk-lamp">
-        <rect x="11" y="16.4" width="8.6" height="11.6" rx="1.2" mask={`url(#${seamId})`} />
-        <rect x="19.2" y="24.6" width="1.4" height="1.8" rx="0.7" />
-        <rect x="4.4" y="15.6" width="2" height="12.4" rx="1" />
-        <rect x="3" y="14.6" width="17.8" height="2.2" rx="1.1" />
+      <g clipPath={clip} className="fill-desk-light">
+        <g {...part("pile")}>
+          {PILE.rows.map((y) => (
+            <rect key={y} x={PILE.x} y={y} width={PILE.width} height="0.8" rx="0.4" />
+          ))}
+        </g>
+        <g {...part("sheet-fade")}>
+          <g {...part("sheet-x")}>
+            <g {...part("sheet-y")}>
+              <rect
+                data-part="sheet"
+                x={PILE.x}
+                y={PILE.sheetY}
+                width={PILE.width}
+                height="0.8"
+                rx="0.4"
+              />
+            </g>
+          </g>
+        </g>
+      </g>
+
+      <g {...part("fade")}>
+        <g {...part("walk")}>
+          <g {...part("turn")}>
+            <g {...part("bob")}>
+              <g {...part("lean")}>
+                <rect
+                  x={VISITOR_X - 0.75}
+                  y={HIP_Y}
+                  width="1.5"
+                  height="6.4"
+                  rx="0.75"
+                  {...part("leg-back", cn(LIMB, "fill-desk-drawer"))}
+                />
+                <rect
+                  x={VISITOR_X - 0.6}
+                  y={SHOULDER_Y}
+                  width="1.2"
+                  height="5"
+                  rx="0.6"
+                  {...part("arm-back", cn(LIMB, "fill-desk-drawer"))}
+                />
+                <g className="fill-desk-lamp">
+                  <rect x={VISITOR_X - 1.7} y="10.4" width="3.4" height="7" rx="1.7" />
+                  <circle cx={VISITOR_X - 0.3} cy="8.1" r="1.75" />
+                </g>
+                <rect
+                  x={VISITOR_X - 0.75}
+                  y={HIP_Y}
+                  width="1.5"
+                  height="6.4"
+                  rx="0.75"
+                  {...part("leg-front", cn(LIMB, "fill-desk-lamp"))}
+                />
+                <rect
+                  x={VISITOR_X - 0.6}
+                  y={SHOULDER_Y}
+                  width="1.2"
+                  height="5"
+                  rx="0.6"
+                  {...part("arm-front", cn(LIMB, "fill-desk-lamp"))}
+                />
+              </g>
+            </g>
+          </g>
+        </g>
       </g>
     </svg>
   );
@@ -109,8 +221,8 @@ export type DeskLoadingProps = {
 };
 
 /**
- * The Desk while a surface is being set out: the filing desk above the words
- * that say what is on its way.
+ * The Desk while a surface is being set out: the visitor at the desk above
+ * the words that say what is on its way.
  *
  * It stands in for a whole surface, never a row or a card; a list keeps its
  * skeleton rows, because those hold the shape of what is coming and this
@@ -126,7 +238,7 @@ export function DeskLoading({ label, className, markClassName }: DeskLoadingProp
       data-slot="desk-loading"
       className={cn("flex flex-col items-center justify-center gap-3 px-4 py-8", className)}
     >
-      <DeskLoadingMark animate={!reduceMotion} className={cn("h-10 w-12.5", markClassName)} />
+      <DeskLoadingMark animate={!reduceMotion} className={cn("h-15 w-25", markClassName)} />
       <p className="text-muted-foreground text-sm">{label}</p>
     </div>
   );
