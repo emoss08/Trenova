@@ -154,8 +154,14 @@
       What Windows Installer cannot declare, the binaries do for it, elevated
       and without a window:
         - the print service marks its own SID unrestricted (so the ACLs below can
-          name it), creates %ProgramData%\Trenova\Capture\{logs,spool} with
-          their ACLs, and the "Trenova" printer on the IPP Class Driver;
+          name it) and creates %ProgramData%\Trenova\Capture\{logs,spool} with
+          their ACLs;
+        - the "Trenova" printer is added as the person installing, not as the
+          system account: Windows builds an IPP printer's port through a
+          service that needs a signed-in session, and refuses the system
+          account. Where no one is signed in to do it (a deployment tool, an
+          install without administrator rights) the install still completes,
+          and the tray offers "Add the Trenova printer" with a Windows prompt;
         - the updater lets signed-in users start it (its service DACL), and at the
           end starts the tray agent for everyone signed in.
       Each is safe to run again, so a repair or an upgrade repeats them.
@@ -168,12 +174,18 @@
     <SetProperty Id="InstallPrinter" Value="&quot;[#PrintServiceExe]&quot; install-printer"
                  Before="InstallPrinter" Sequence="execute" />
     <CustomAction Id="InstallPrinter" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
-                  DllEntry="WixQuietExec" Execute="deferred" Impersonate="no" Return="check" />
+                  DllEntry="WixQuietExec" Execute="deferred" Impersonate="yes" Return="ignore" />
 
     <SetProperty Id="UninstallPrinter" Value="&quot;[#PrintServiceExe]&quot; uninstall-printer"
                  Before="UninstallPrinter" Sequence="execute" />
     <CustomAction Id="UninstallPrinter" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
                   DllEntry="WixQuietExec" Execute="deferred" Impersonate="no" Return="ignore" />
+
+    <!-- The same removal as the person uninstalling, for a printer the system account may not remove. -->
+    <SetProperty Id="UninstallPrinterAsUser" Value="&quot;[#PrintServiceExe]&quot; uninstall-printer"
+                 Before="UninstallPrinterAsUser" Sequence="execute" />
+    <CustomAction Id="UninstallPrinterAsUser" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)"
+                  DllEntry="WixQuietExec" Execute="deferred" Impersonate="yes" Return="ignore" />
 
     <SetProperty Id="ConfigureUpdater" Value="&quot;[#UpdaterExe]&quot; configure"
                  Before="ConfigureUpdater" Sequence="execute" />
@@ -187,6 +199,7 @@
 
     <InstallExecuteSequence>
       <!-- The printer goes before the service is removed, while the binary that removes it is still there. -->
+      <Custom Action="UninstallPrinterAsUser" Before="UninstallPrinter" Condition="REMOVE=&quot;ALL&quot;" />
       <Custom Action="UninstallPrinter" Before="StopServices" Condition="REMOVE=&quot;ALL&quot;" />
       <!-- Directories and the updater's DACL exist before the services start. -->
       <Custom Action="ConfigurePrintService" After="InstallServices" Condition="NOT REMOVE" />

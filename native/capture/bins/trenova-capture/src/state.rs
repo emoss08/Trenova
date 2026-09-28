@@ -102,6 +102,8 @@ pub struct Snapshot {
     pub update_required: Option<String>,
     /// A newer release, once one is known.
     pub update: Option<UpdateState>,
+    /// The print service is installed but its printer is not.
+    pub printer_missing: bool,
 }
 
 impl Snapshot {
@@ -156,6 +158,15 @@ pub struct Notice {
     pub link: Option<String>,
 }
 
+/// How an attempt to add the Trenova printer ended.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PrinterAttempt {
+    Added,
+    /// The person said no at the Windows prompt.
+    Declined,
+    Failed,
+}
+
 /// What the tray asks the agent to do.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Command {
@@ -174,6 +185,8 @@ pub enum Command {
     /// Send a stopped batch as it is.
     Finish(String),
     RefreshScanners,
+    /// How adding the Trenova printer from the menu went.
+    PrinterSetUp(PrinterAttempt),
     /// Install the release the menu offers.
     Update,
     Quit,

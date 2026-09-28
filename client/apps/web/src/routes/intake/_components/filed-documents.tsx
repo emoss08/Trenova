@@ -1,3 +1,4 @@
+import { SectionPanel } from "@/components/section-panel";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
 import { captureItemStatusAttrs, captureRecordKindLabel, isCaptureRecordKind } from "@/lib/capture";
 import type { CaptureItem } from "@/lib/graphql/capture";
@@ -11,8 +12,11 @@ import { Link } from "react-router";
 function RecordLink({ item }: { item: CaptureItem }) {
   const t = useT();
   const kind = item.filedType;
-  if (item.filedId === null || !isCaptureRecordKind(kind)) {
-    return <span className="text-foreground-subtle">{t("A record")}</span>;
+  if (!isCaptureRecordKind(kind)) {
+    return <span className="text-foreground-subtle">{t("Record not known")}</span>;
+  }
+  if (item.filedId === null) {
+    return <span>{captureRecordKindLabel(t, kind)}</span>;
   }
 
   const label = item.filedRecord
@@ -48,9 +52,8 @@ export function FiledDocuments({ items }: { items: CaptureItem[] }) {
   const attrs = captureItemStatusAttrs(t);
 
   return (
-    <section aria-label={t("Filed")} className="flex flex-col gap-2">
-      <h3 className="text-sm font-semibold">{t("Filed from this stack")}</h3>
-      <ul className="border-border divide-border-subtle bg-card divide-y rounded-lg border">
+    <SectionPanel title={t("Filed from this stack")} count={items.length}>
+      <ul className="divide-border-subtle divide-y">
         {items.map((item) => (
           <li
             key={item.id}
@@ -69,6 +72,6 @@ export function FiledDocuments({ items }: { items: CaptureItem[] }) {
           </li>
         ))}
       </ul>
-    </section>
+    </SectionPanel>
   );
 }

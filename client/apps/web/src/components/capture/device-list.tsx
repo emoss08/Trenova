@@ -1,42 +1,114 @@
-import type { CaptureDevice, CaptureFleetDevice } from "@/lib/graphql/capture";
+import { useNowSeconds } from "@/hooks/use-now-seconds";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from "@trenova/shared/components/ui/alert-dialog";
+  captureDevicePresence,
+  captureDevicePresenceAttrs,
+  type CaptureDevicePresence,
+} from "@/lib/capture";
+import type { CaptureDevice, CaptureFleetDevice } from "@/lib/graphql/capture";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Input } from "@trenova/shared/components/ui/input";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo, formatUnixDateTime } from "@trenova/shared/lib/date";
+import { phaseTone, type BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
-import { MonitorIcon, UnplugIcon } from "lucide-react";
-import { useId, useState } from "react";
+import { UnplugIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { RevokeDeviceDialog } from "./revoke-device-dialog";
 
 type AnyDevice = CaptureDevice | (Partial<Pick<CaptureFleetDevice, "user">> & CaptureDevice);
 
-function Presence({ device, now }: { device: CaptureDevice; now: number }) {
+/** How often "Last seen" moves on while the list stays open. */
+const PRESENCE_TICK_MS = 30_000;
+
+export type DeviceListProps = {
+  devices: AnyDevice[];
+  /**
+   * The time the caller last rendered at. The list keeps its own clock as
+   * well and shows whichever is later, so a caller that computes this once
+   * per render still gets a "Last seen" that moves on.
+   */
+  now?: number;
+  showOwner: boolean;
+  canRevoke: boolean;
+  /**
+   * Revokes a computer. Return the request's promise and the dialog stays
+   * open until it settles, showing why it failed if it does; return nothing
+   * and the dialog closes as soon as it is confirmed.
+   */
+  onRevoke: (device: CaptureDevice, reason: string) => unknown;
+  revokingId: string | undefined;
+  /** Drop the list's own border when it sits inside a panel that has one. */
+  bordered?: boolean;
+};
+
+function Presence({
+  device,
+  now,
+  attrs,
+}: {
+  device: CaptureDevice;
+  now: number;
+  attrs: Record<CaptureDevicePresence, BadgeAttrProps>;
+}) {
+  const t = useT();
+  const presence = attrs[captureDevicePresence(device)];
+
+  return (
+    <>
+      <Badge variant={phaseTone(presence.phase)} title={presence.description}>
+        {presence.text}
+      </Badge>
+      {device.status !== "Revoked" && !device.isOnline && (
+        <span className="text-foreground-subtle text-xs">
+          {device.lastSeenAt === null
+            ? t("Never connected")
+            : t("Last seen {0}", formatSecondsAgo(Math.max(0, now - device.lastSeenAt)))}
+        </span>
+      )}
+    </>
+  );
+}
+
+function DeviceDetail({ device, showOwner }: { device: AnyDevice; showOwner: boolean }) {
+  const t = useT();
+
+  return (
+    <p className="text-foreground-muted text-xs">
+      {[
+        showOwner && "user" in device && device.user ? device.user.name : null,
+        device.machineName,
+        device.windowsUser === "" ? null : device.windowsUser,
+        t("Trenova Capture {0}", device.agentVersion),
+        device.osVersion === "" ? null : device.osVersion,
+      ]
+        .filter(Boolean)
+        .join(" · ")}
+    </p>
+  );
+}
+
+function DeviceReach({ device }: { device: CaptureDevice }) {
   const t = useT();
 
   if (device.status === "Revoked") {
-    return <Badge variant="neutral">{t("Revoked")}</Badge>;
-  }
-  if (device.isOnline) {
-    return <Badge variant="success">{t("Online")}</Badge>;
+    return (
+      <p className="text-foreground-subtle text-xs">
+        {[
+          device.revokedAt === null ? null : t("Revoked {0}", formatUnixDateTime(device.revokedAt)),
+          device.revokedReason === "" ? null : device.revokedReason,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
+    );
   }
 
   return (
-    <span className="text-foreground-subtle text-xs">
-      {device.lastSeenAt === null
-        ? t("Never connected")
-        : t("Last seen {0}", formatSecondsAgo(Math.max(0, now - device.lastSeenAt)))}
-    </span>
+    <p className="text-foreground-subtle text-xs">
+      {device.sources.length > 0
+        ? t("Scanners: {0}", device.sources.map((source) => source.name).join(", "))
+        : t("No scanner reported yet")}
+    </p>
   );
 }
 
@@ -52,59 +124,38 @@ export function DeviceList({
   canRevoke,
   onRevoke,
   revokingId,
-}: {
-  devices: AnyDevice[];
-  now: number;
-  showOwner: boolean;
-  canRevoke: boolean;
-  onRevoke: (device: CaptureDevice, reason: string) => void;
-  revokingId: string | undefined;
-}) {
+  bordered = true,
+}: DeviceListProps) {
   const t = useT();
+  const clock = useNowSeconds(PRESENCE_TICK_MS);
+  const current = Math.max(now ?? 0, clock);
+  const attrs = useMemo(() => captureDevicePresenceAttrs(t), [t]);
   const [revoking, setRevoking] = useState<CaptureDevice | null>(null);
 
   return (
     <>
-      <ul className="border-border divide-border-subtle bg-card divide-y rounded-lg border">
+      <ul
+        className={cn(
+          "divide-border-subtle bg-card divide-y",
+          bordered && "border-border rounded-lg border",
+        )}
+      >
         {devices.map((device) => (
           <li key={device.id} className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-start">
-            <span
-              className={cn(
-                "bg-sunken flex size-8 shrink-0 items-center justify-center rounded-md",
-                device.status === "Revoked" ? "text-foreground-subtle" : "text-foreground-muted",
-              )}
-            >
-              <MonitorIcon className="size-4" aria-hidden />
-            </span>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium">{device.name}</span>
-                <Presence device={device} now={now} />
+                <span
+                  className={cn(
+                    "truncate text-sm",
+                    device.status === "Revoked" && "text-foreground-muted",
+                  )}
+                >
+                  {device.name}
+                </span>
+                <Presence device={device} now={current} attrs={attrs} />
               </div>
-              <p className="text-foreground-muted text-xs">
-                {[
-                  showOwner && "user" in device && device.user ? device.user.name : null,
-                  device.machineName,
-                  device.windowsUser === "" ? null : device.windowsUser,
-                  t("Trenova Capture {0}", device.agentVersion),
-                  device.osVersion === "" ? null : device.osVersion,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-              {device.status === "Revoked" ? (
-                <p className="text-foreground-subtle text-xs">
-                  {device.revokedAt !== null &&
-                    t("Revoked {0}", formatUnixDateTime(device.revokedAt))}
-                  {device.revokedReason !== "" && ` · ${device.revokedReason}`}
-                </p>
-              ) : device.sources.length > 0 ? (
-                <p className="text-foreground-subtle text-xs">
-                  {t("Scanners: {0}", device.sources.map((source) => source.name).join(", "))}
-                </p>
-              ) : (
-                <p className="text-foreground-subtle text-xs">{t("No scanner reported yet")}</p>
-              )}
+              <DeviceDetail device={device} showOwner={showOwner} />
+              <DeviceReach device={device} />
             </div>
             {canRevoke && device.status === "Active" && (
               <Button
@@ -113,8 +164,9 @@ export function DeviceList({
                 variant="outline"
                 onClick={() => setRevoking(device)}
                 isLoading={revokingId === device.id}
+                loadingText={t("Revoking")}
               >
-                <UnplugIcon className="size-3.5" />
+                <UnplugIcon className="size-3.5" aria-hidden />
                 {t("Revoke")}
               </Button>
             )}
@@ -124,78 +176,9 @@ export function DeviceList({
 
       <RevokeDeviceDialog
         device={revoking}
-        onCancel={() => setRevoking(null)}
-        onConfirm={(reason) => {
-          if (revoking !== null) {
-            onRevoke(revoking, reason);
-          }
-          setRevoking(null);
-        }}
+        onClose={() => setRevoking(null)}
+        onConfirm={(reason) => (revoking === null ? undefined : onRevoke(revoking, reason))}
       />
     </>
-  );
-}
-
-function RevokeDeviceDialog({
-  device,
-  onCancel,
-  onConfirm,
-}: {
-  device: CaptureDevice | null;
-  onCancel: () => void;
-  onConfirm: (reason: string) => void;
-}) {
-  const t = useT();
-  const reasonId = useId();
-  const [reason, setReason] = useState("");
-
-  return (
-    <AlertDialog
-      open={device !== null}
-      onOpenChange={(open) => {
-        if (!open) {
-          setReason("");
-          onCancel();
-        }
-      }}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogMedia className="bg-danger-subtle text-destructive">
-            <UnplugIcon />
-          </AlertDialogMedia>
-          <AlertDialogTitle>{t("Revoke {0}?", device?.name ?? "")}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t(
-              "It stops working at once, including a scan it is in the middle of. Pages it already uploaded stay in Intake. To use it again, pair it again.",
-            )}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="flex flex-col gap-1">
-          <label htmlFor={reasonId} className="text-foreground-subtle text-xs font-medium">
-            {t("Why")}
-          </label>
-          <Input
-            id={reasonId}
-            value={reason}
-            maxLength={255}
-            placeholder={t("Optional, for the audit trail")}
-            onChange={(event) => setReason(event.target.value)}
-          />
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel>{t("Keep it")}</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            onClick={() => {
-              onConfirm(reason.trim());
-              setReason("");
-            }}
-          >
-            {t("Revoke")}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }

@@ -5079,15 +5079,6 @@
       "service/iftaservice"
     ]
   },
-  "A record": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/intake"
-    ]
-  },
   "A record hidden by your data access": {
     "sites": 1,
     "scope": [
@@ -5467,6 +5458,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "A revoked computer stops scanning and stays listed here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "A revoked connection must record when it was revoked": {
@@ -7329,6 +7329,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "ABCD-EFGH": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "ACCT-0001": {
@@ -26169,7 +26178,7 @@
     ]
   },
   "Bill of lading": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -27853,11 +27862,12 @@
     ]
   },
   "Both sides": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin"
     ]
   },
@@ -29419,7 +29429,7 @@
     ]
   },
   "Cancel": {
-    "sites": 274,
+    "sites": 273,
     "scope": [
       "ts"
     ],
@@ -34066,6 +34076,15 @@
       "routes/fuel-management"
     ]
   },
+  "Check the spelling, or clear the search to see every computer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Check this customer's broker authority, surety bond and insurance with the connected carrier intelligence provider, and flag it when something lapses.": {
     "sites": 1,
     "scope": [
@@ -35427,6 +35446,15 @@
       "routes/edi"
     ]
   },
+  "Choose which stacks the queue shows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Choose who it binds": {
     "sites": 1,
     "scope": [
@@ -36571,7 +36599,7 @@
     ]
   },
   "Clear the search": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -39535,7 +39563,7 @@
     ]
   },
   "Computer": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -39545,7 +39573,7 @@
     ]
   },
   "Computers": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -43715,6 +43743,15 @@
       "routes/bank-receipt-batch"
     ]
   },
+  "Could not load this stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Could not move it": {
     "sites": 1,
     "scope": [
@@ -44607,6 +44644,15 @@
       "routes/intake"
     ]
   },
+  "Cover sheets": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Cover that has been arranged but has not begun, soonest first.": {
     "sites": 1,
     "scope": [
@@ -45423,15 +45469,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Create profile": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Create program": {
@@ -50416,7 +50453,7 @@
     ]
   },
   "Default": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -52946,6 +52983,15 @@
       "routes/settlement-dispute"
     ]
   },
+  "Denying": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "Depart": {
     "sites": 2,
     "scope": [
@@ -54951,7 +54997,7 @@
     ]
   },
   "Discard": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -54959,6 +55005,7 @@
       "routes/admin",
       "routes/fuel-purchase",
       "routes/home",
+      "routes/intake",
       "routes/rate-agreement",
       "routes/shipment"
     ]
@@ -55015,6 +55062,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Discard document": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Discard document {0}?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Discard import": {
@@ -55093,6 +55158,15 @@
     ]
   },
   "Discarded and expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Discarding": {
     "sites": 1,
     "scope": [
       "ts"
@@ -56781,6 +56855,15 @@
       "domain/permission"
     ]
   },
+  "Document discarded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Document does not belong to this worker": {
     "sites": 6,
     "scope": [
@@ -57162,15 +57245,6 @@
       "service/invoiceservice"
     ]
   },
-  "Document set aside": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/intake"
-    ]
-  },
   "Document sorting": {
     "sites": 1,
     "scope": [
@@ -57392,7 +57466,7 @@
     ]
   },
   "Document {0}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -61843,7 +61917,7 @@
     ]
   },
   "Edit {0}": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -64355,6 +64429,15 @@
       "routes/admin"
     ]
   },
+  "Enter all eight letters of the code, like ABCD-EFGH": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Enter an amount with up to two decimals": {
     "sites": 1,
     "scope": [
@@ -66827,7 +66910,7 @@
       "routes/intake"
     ]
   },
-  "Every page is set aside. Make a document from one to file it.": {
+  "Every page is set aside. Make a document from one, or drag pages into a new one, to file it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -73353,7 +73436,7 @@
     ]
   },
   "Filed": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -73716,12 +73799,13 @@
     ]
   },
   "Filters": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/billing-queue",
+      "routes/intake",
       "routes/reports"
     ]
   },
@@ -81745,6 +81829,15 @@
       "routes/customer"
     ]
   },
+  "How it appears in My scanners. Leave it blank to use the computer's own name.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "How it got here": {
     "sites": 1,
     "scope": [
@@ -85691,7 +85784,7 @@
     ]
   },
   "Intake views": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -87249,7 +87342,7 @@
     ]
   },
   "Invoice": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -88765,6 +88858,15 @@
       "routes/worker"
     ]
   },
+  "It can no longer sign in; pair it again to use it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "It cannot be applied yet": {
     "sites": 1,
     "scope": [
@@ -88855,6 +88957,24 @@
       "routes/org-structure"
     ]
   },
+  "It is the last document left to file, so the stack is done once it goes. Its pages are not filed and are deleted with the stack's other unfiled pages.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "It is the only document left in the stack, so the whole stack is discarded and every page in it is deleted. This cannot be undone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "It may have been deleted by another administrator.": {
     "sites": 2,
     "scope": [
@@ -88880,15 +89000,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "It may have been discarded, or you may no longer be able to see it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/intake"
     ]
   },
   "It may have been removed by the retention sweep, or it belongs to another organization.": {
@@ -88988,6 +89099,33 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "It was discarded or deleted when its retention ran out, or you can no longer see it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "It was the last document in the stack, so the stack is discarded too.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "It was the last document left to file, so the stack is done.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "It will come back if the condition is still there in a month.": {
@@ -89229,6 +89367,15 @@
       "routes/agent-control"
     ]
   },
+  "Its pages are under Set aside, where you can drag them into another document.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Its suite runs": {
     "sites": 2,
     "scope": [
@@ -89245,6 +89392,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "Its unfiled pages are deleted. Filed documents stay on their records.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Its worst-rated answers": {
@@ -89331,7 +89487,7 @@
     ]
   },
   "Join with next": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -90726,13 +90882,12 @@
     ]
   },
   "Kind of record": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control",
-      "routes/intake"
+      "routes/agent-control"
     ]
   },
   "Known Host Key": {
@@ -102641,7 +102796,7 @@
       "apps/web/hooks"
     ]
   },
-  "More ways to capture": {
+  "More ways to add paper": {
     "sites": 1,
     "scope": [
       "ts"
@@ -103890,7 +104045,7 @@
     ]
   },
   "Name it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -105821,7 +105976,7 @@
     ]
   },
   "New scan profile": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -107972,6 +108127,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No documents to file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "No documents yet": {
@@ -110220,6 +110384,15 @@
       "apps/dash/_components"
     ]
   },
+  "No revoked computers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "No risk decisions found.": {
     "sites": 1,
     "scope": [
@@ -110742,6 +110915,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No stack matches “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "No standards exist for this template type yet.": {
@@ -113857,6 +114039,15 @@
       "apps/web/components"
     ]
   },
+  "Nothing to file: every page is set aside": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Nothing to jump back into yet.": {
     "sites": 1,
     "scope": [
@@ -115294,12 +115485,13 @@
     ]
   },
   "Offline": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "routes/shipment"
     ]
   },
@@ -116275,7 +116467,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "apps/web/lib"
     ]
   },
   "Online courses need a link the driver can open": {
@@ -119738,6 +119931,15 @@
       "routes/fiscal-year"
     ]
   },
+  "Opening the conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Opening this period will:": {
     "sites": 1,
     "scope": [
@@ -120568,7 +120770,7 @@
       "routes/worker"
     ]
   },
-  "Optional, for the audit trail": {
+  "Optional. Kept in the audit trail.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -121118,7 +121320,7 @@
     ]
   },
   "Organization default": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -124008,8 +124210,35 @@
       "domain/permission"
     ]
   },
+  "Paired computers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "Paired, but Trenova Capture is not connected right now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Pairing": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "Pairing code": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -132400,7 +132629,7 @@
     ]
   },
   "Print": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -132420,7 +132649,7 @@
     ]
   },
   "Print cover sheets": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -132974,15 +133203,6 @@
       "routes/worker"
     ]
   },
-  "Profile created": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Profile deleted": {
     "sites": 1,
     "scope": [
@@ -132993,7 +133213,7 @@
     ]
   },
   "Profile details": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -133099,15 +133319,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Profile saved": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Profile self-Service": {
@@ -133339,7 +133550,7 @@
     ]
   },
   "Proof of delivery": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -134932,7 +135143,7 @@
       "routes/agent-control"
     ]
   },
-  "Put a sheet on top of the paper for this record. When the stack is scanned, anywhere, the pages after it are filed here.": {
+  "Put a cover sheet on top of the paper for this record. Wherever the stack is scanned, the pages after it are filed here. A separator sheet comes with each one, to split one stack into documents.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -136406,7 +136617,7 @@
     ]
   },
   "Rate confirmation": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -138552,7 +138763,7 @@
     ]
   },
   "Reason": {
-    "sites": 54,
+    "sites": 56,
     "scope": [
       "ts"
     ],
@@ -140619,6 +140830,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Record not known": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Record payment": {
@@ -149443,6 +149663,7 @@
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "routes/admin",
       "routes/carrier"
     ]
@@ -149458,6 +149679,15 @@
   },
   "Revoked {0}": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Revoking": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -152931,7 +153161,7 @@
     ]
   },
   "Save changes": {
-    "sites": 46,
+    "sites": 44,
     "scope": [
       "ts"
     ],
@@ -153295,7 +153525,7 @@
     ]
   },
   "Save the split before filing": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -153593,7 +153823,7 @@
     ]
   },
   "Saving…": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -153978,7 +154208,7 @@
     ]
   },
   "Scan into this record": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -153995,8 +154225,17 @@
       "domain/permission"
     ]
   },
+  "Scan profile": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Scan profiles": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -154019,7 +154258,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Scan the back of every page as well as the front.": {
@@ -154077,7 +154317,7 @@
     ]
   },
   "Scanner": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -154150,15 +154390,16 @@
     ]
   },
   "Scans and prints": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/intake"
     ]
   },
-  "Scans and prints for this record": {
+  "Scans and prints for this record could not be loaded.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -160899,7 +161140,7 @@
     ]
   },
   "Set aside": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -162226,15 +162467,6 @@
     ],
     "areas": [
       "template/invoice.share.email"
-    ]
-  },
-  "Sheets": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Shield": {
@@ -166137,12 +166369,13 @@
     ]
   },
   "Something went wrong. Try again in a moment.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Soonest clock to run out first": {
@@ -167822,6 +168055,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Start a scan on one of your computers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Start a scheduled or continuous agent's run on the slot its schedule fired for": {
@@ -174386,6 +174628,15 @@
       "service/timesheetservice"
     ]
   },
+  "That name is too long. Keep it to {0} characters.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "That plan has not been decided yet": {
     "sites": 1,
     "scope": [
@@ -174501,6 +174752,15 @@
     ],
     "areas": [
       "service/agentdecisionservice"
+    ]
+  },
+  "That reason is too long. Keep it to {0} characters.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "That record is not in the accounting system's data Trenova has. Refresh it and try again.": {
@@ -174853,6 +175113,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "The Trenova Capture download could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The U.S. state where the tractor is licensed.": {
@@ -176651,7 +176920,7 @@
     ]
   },
   "The computer's default scanner": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -177703,6 +177972,15 @@
       "routes/document-packet-rule"
     ]
   },
+  "The document was not discarded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "The download expires {0}.": {
     "sites": 2,
     "scope": [
@@ -178018,7 +178296,7 @@
       "apps/web/types"
     ]
   },
-  "The eight letters the computer shows": {
+  "The eight letters Trenova Capture shows, like ABCD-EFGH": {
     "sites": 1,
     "scope": [
       "ts"
@@ -183191,6 +183469,15 @@
       "routes/intake"
     ]
   },
+  "The stack was not discarded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "The stage is read off what has been recorded, so it can never drift from the file underneath it.": {
     "sites": 1,
     "scope": [
@@ -185601,6 +185888,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This computer is no longer paired. Reload the list to see where it stands.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This connection request expired or was already used. Start the connection again.": {
@@ -188246,7 +188542,7 @@
       "apps/web/components"
     ]
   },
-  "This stack could not be opened": {
+  "This stack is gone": {
     "sites": 1,
     "scope": [
       "ts"
@@ -192777,6 +193073,15 @@
       "apps/web/lib"
     ]
   },
+  "Trenova Capture is running and connected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Trenova Capture never picked the request up": {
     "sites": 1,
     "scope": [
@@ -192885,6 +193190,15 @@
       "routes/accounting-drift"
     ]
   },
+  "Trenova could not look the code up. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "Trenova could not read the latest changes from {0}": {
     "sites": 1,
     "scope": [
@@ -192892,6 +193206,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Trenova could not revoke it just now. Try again in a moment.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Trenova cover sheet": {
@@ -193428,7 +193751,7 @@
     ]
   },
   "Try again": {
-    "sites": 41,
+    "sites": 46,
     "scope": [
       "ts"
     ],
@@ -193439,6 +193762,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
+      "routes/capture",
       "routes/desk",
       "routes/detention-desk",
       "routes/detention-intelligence",
@@ -193496,6 +193820,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Try other words, or clear the search to see every stack in this view.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Try the download again": {
@@ -196298,6 +196631,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Up to {0} at a time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Up to {0} files per message": {
@@ -200673,6 +201015,15 @@
       "apps/web/components"
     ]
   },
+  "Views and filters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Violates hazmat segregation rule \"{0}\" ({1}) — conflicts with \"{2}\"": {
     "sites": 2,
     "scope": [
@@ -201282,15 +201633,6 @@
     ]
   },
   "Waiting for a confirming refresh": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Waiting for a print to Trenova": {
     "sites": 1,
     "scope": [
       "ts"
@@ -202803,6 +203145,15 @@
       "routes/agent-control"
     ]
   },
+  "What Trenova read this document as": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "What a good answer does": {
     "sites": 1,
     "scope": [
@@ -203356,7 +203707,7 @@
     ]
   },
   "What people pick from when they start a scan. The default is used when nobody picks one.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -206108,7 +206459,7 @@
     ]
   },
   "Why": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -208650,7 +209001,7 @@
     ]
   },
   "You can view these settings but not change them.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -208777,6 +209128,15 @@
       "service/assistantservice"
     ]
   },
+  "You do not have permission to pair computers. Ask an administrator for scanning access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "You do not have permission to read insights.": {
     "sites": 1,
     "scope": [
@@ -208795,7 +209155,25 @@
       "service/aifeedbackservice"
     ]
   },
+  "You do not have permission to revoke this computer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "You do not have permission to scan into Trenova. Ask an administrator.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "You do not have permission to scan into Trenova. Your paired computers cannot upload until an administrator gives it to you.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -209422,11 +209800,12 @@
     ]
   },
   "Your computers could not be loaded.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/capture"
     ]
   },
@@ -217128,15 +217507,6 @@
       "apps/web/components"
     ]
   },
-  "{0, plural, one {(# minute left)} other {(# minutes left)}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "{0, plural, one {A plan of # step} other {A plan of # steps}}, decided as one": {
     "sites": 1,
     "scope": [
@@ -217144,6 +217514,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {Cover sheet downloaded; open it to print} other {# cover sheets downloaded; open them to print}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {Cover sheet ready to print} other {# cover sheets ready to print}}": {
@@ -217216,6 +217595,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {Its page moves} other {Its # pages move}} to Set aside. From there you can drag them into another document, or leave them to be deleted with the stack's other unfiled pages.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "{0, plural, one {Looked up # record} other {Looked up # records}}": {
@@ -217324,6 +217712,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "{0, plural, one {Waiting for a print to Trenova, # minute left} other {Waiting for a print to Trenova, # minutes left}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {and one more agent} other {and # more agents}}": {
@@ -218546,6 +218943,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} dpi": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} draft · {1} pending · {2} approved": {
     "sites": 2,
     "scope": [
@@ -218992,6 +219398,15 @@
       "api/graphql",
       "service/accountingconnlookup",
       "service/accountingmappingservice"
+    ]
+  },
+  "{0} has not reported its scanners yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} has set up a Dash account for you. Dash is where you will see your assigned loads, submit expenses, and check your pay.": {

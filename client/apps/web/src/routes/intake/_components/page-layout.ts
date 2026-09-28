@@ -1,4 +1,4 @@
-import type { CaptureBatchDetail, EditCaptureItemsInput } from "@/lib/graphql/capture";
+import type { CaptureBatchDetail, CapturePage, EditCaptureItemsInput } from "@/lib/graphql/capture";
 
 /** Where the pages a person left out of every document collect. */
 export const LOOSE = "loose";
@@ -60,6 +60,14 @@ export function layoutFromBatch(batch: CaptureBatchDetail): PageLayout {
     .map((page) => page.id);
 
   return { groups, loose, rotations, sequence };
+}
+
+/**
+ * The number a page goes by everywhere it is drawn: its place in the stack as
+ * scanned, which is what a person counts by, whichever document it is in now.
+ */
+export function pageNumber(layout: Pick<PageLayout, "sequence">, page: CapturePage): number {
+  return layout.sequence[page.id] ?? page.sequence;
 }
 
 export function normalizeRotation(degrees: number): number {

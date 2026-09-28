@@ -319,6 +319,11 @@
   --desk-light-lift: 24%;
   --desk-await: var(--warning);
   --desk-failed: var(--danger);
+  /* The second ink of the Desk's loading drawing: the drawer panels set
+     into the pedestal and the visitor's far arm and leg. It is ink set back
+     toward the Desk's canvas, and opaque, because each sits against full
+     ink and must read as a separate face of it rather than a hole. */
+  --desk-drawer: color-mix(in oklch, var(--ink) 58%, var(--desk-canvas));
 
   /* The sky over the Desk's greeting: a wash of the part of the day behind
      the first line of the front page. It is weather, not decoration, so it is
@@ -670,6 +675,7 @@
   --desk-light-lift: 14%;
   --desk-await: var(--warning);
   --desk-failed: var(--danger);
+  --desk-drawer: color-mix(in oklch, var(--ink) 52%, var(--desk-canvas));
 
   /* Colour on a near-black ground reads weaker at the same mix, so the sky
      takes a little more of it. */
@@ -1062,7 +1068,12 @@
 
      Every loop starts and ends at rest, so a change of moment never has to
      undo a pose, and every one is transform or opacity. All of them stop
-     the instant the turn does. */
+     the instant the turn does.
+
+     The lamp's companion, the desk visitor that stands in for a whole Desk
+     surface while it loads, is fitted from one pose over time rather than
+     written by hand; its keyframes are generated into the web app's
+     desk-visitor.css beside the component that draws it. */
   --animate-desk-light-on: desk-light-on 1.1s linear both;
   --animate-desk-breathe-cone: desk-breathe-cone 2.2s ease-in-out infinite;
   --animate-desk-breathe-pool: desk-breathe-pool 2.2s ease-in-out infinite;
@@ -1117,6 +1128,7 @@
   --color-desk-light: var(--desk-light);
   --color-desk-await: var(--desk-await);
   --color-desk-failed: var(--desk-failed);
+  --color-desk-drawer: var(--desk-drawer);
   --color-daylight-sun: var(--daylight-sun);
   --color-daylight-moon: var(--daylight-moon);
 }

@@ -20,13 +20,10 @@ pub mod security;
 use capture_ipp::PrinterConfig;
 use sha2::{Digest, Sha256};
 
-/// The Windows service's name.
-pub const SERVICE_NAME: &str = "TrenovaCaptureSvc";
+pub use capture_protocol::handoff::{PRINT_SERVICE_NAME as SERVICE_NAME, PRINTER_NAME};
 pub const SERVICE_DISPLAY_NAME: &str = "Trenova Capture print service";
 pub const SERVICE_DESCRIPTION: &str =
     "Receives what is printed to the Trenova printer and hands it to Trenova Capture for upload.";
-/// The printer people choose in the print dialog.
-pub const PRINTER_NAME: &str = "Trenova";
 /// The loopback port when neither policy nor the installer chose one.
 pub const DEFAULT_PORT: u16 = 8631;
 

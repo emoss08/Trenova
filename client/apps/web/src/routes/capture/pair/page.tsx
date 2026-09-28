@@ -1,30 +1,81 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { SectionPanel } from "@/components/section-panel";
-import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   CAPTURE_PAIRING_CODE_LENGTH,
+  captureFailureKind,
   formatPairingCode,
   normalizePairingCode,
 } from "@/lib/capture";
-import { approveCapturePairing, denyCapturePairing } from "@/lib/graphql/capture";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Button } from "@trenova/shared/components/ui/button";
 import {
-  DescriptionEmpty,
-  DescriptionItem,
-  DescriptionList,
-} from "@trenova/shared/components/ui/description-list";
-import { Input } from "@trenova/shared/components/ui/input";
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixTime } from "@trenova/shared/lib/date";
-import { CheckCircle2Icon, ShieldAlertIcon, XCircleIcon } from "lucide-react";
-import { useId, useState, type FormEvent } from "react";
+import { CheckCircle2Icon, XCircleIcon } from "lucide-react";
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
+import { PairingCodeForm } from "./_components/pairing-code-form";
+import { PairingReview, type PairingOutcome } from "./_components/pairing-review";
 
-type Outcome = { decision: "approved"; name: string } | { decision: "denied" };
+function LookupFailure({
+  error,
+  retrying,
+  onRetry,
+}: {
+  error: unknown;
+  retrying: boolean;
+  onRetry: () => void;
+}) {
+  const t = useT();
+
+  switch (captureFailureKind(error)) {
+    case "forbidden":
+      return (
+        <Alert variant="warning" size="sm">
+          <AlertDescription>
+            {t(
+              "You do not have permission to pair computers. Ask an administrator for scanning access.",
+            )}
+          </AlertDescription>
+        </Alert>
+      );
+    case "unreachable":
+      return (
+        <Alert variant="destructive" size="sm">
+          <AlertDescription>
+            {t("Trenova could not look the code up. Try again in a moment.")}
+          </AlertDescription>
+          <AlertAction>
+            <Button
+              type="button"
+              size="xs"
+              variant="outline"
+              onClick={onRetry}
+              isLoading={retrying}
+            >
+              {t("Try again")}
+            </Button>
+          </AlertAction>
+        </Alert>
+      );
+    case "not-found":
+    case "invalid":
+      return (
+        <Alert variant="destructive" size="sm">
+          <AlertDescription>
+            {t(
+              "That code is not valid or has expired. Codes last ten minutes; start again from Trenova Capture's tray icon for a new one.",
+            )}
+          </AlertDescription>
+        </Alert>
+      );
+  }
+}
 
 /**
  * Where a person approves a computer running Trenova Capture.
@@ -39,16 +90,13 @@ type Outcome = { decision: "approved"; name: string } | { decision: "denied" };
 export function CapturePairPage() {
   const t = useT();
   const [searchParams] = useSearchParams();
-  const inputId = useId();
-  const nameId = useId();
+  const linkedCode = searchParams.get("code") ?? "";
 
-  const [typed, setTyped] = useState(() => formatPairingCode(searchParams.get("code") ?? ""));
   const [submitted, setSubmitted] = useState(() => {
-    const code = normalizePairingCode(searchParams.get("code") ?? "");
+    const code = normalizePairingCode(linkedCode);
     return code.length === CAPTURE_PAIRING_CODE_LENGTH ? code : null;
   });
-  const [deviceName, setDeviceName] = useState<string | null>(null);
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [outcome, setOutcome] = useState<PairingOutcome | null>(null);
 
   const accessQuery = useQuery(queries.capture.access());
   const previewQuery = useQuery({
@@ -57,32 +105,17 @@ export function CapturePairPage() {
     retry: false,
   });
   const preview = previewQuery.data;
-  const name = deviceName ?? preview?.machineName ?? "";
-
-  const approve = useApiMutation({
-    mutationFn: () =>
-      approveCapturePairing(submitted ?? "", name.trim() === "" ? null : name.trim()),
-    onSuccess: () =>
-      setOutcome({ decision: "approved", name: name.trim() || (preview?.machineName ?? "") }),
-    resourceName: "Pairing",
-  });
-  const deny = useApiMutation({
-    mutationFn: () => denyCapturePairing(submitted ?? ""),
-    onSuccess: () => setOutcome({ decision: "denied" }),
-    resourceName: "Pairing",
-  });
-
-  const onSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    const code = normalizePairingCode(typed);
-    if (code.length === CAPTURE_PAIRING_CODE_LENGTH) {
-      setDeviceName(null);
-      setSubmitted(code);
-    }
-  };
 
   const disabled =
     accessQuery.data !== undefined && (!accessQuery.data.enabled || !accessQuery.data.canCapture);
+
+  const lookUp = (code: string) => {
+    if (code === submitted) {
+      void previewQuery.refetch();
+      return;
+    }
+    setSubmitted(code);
+  };
 
   return (
     <PageLayout
@@ -127,33 +160,12 @@ export function CapturePairPage() {
               </Alert>
             )}
 
-            <SectionPanel title={t("Code from Trenova Capture")}>
-              <form onSubmit={onSubmit} className="flex items-end gap-2 p-3">
-                <div className="flex flex-1 flex-col gap-1">
-                  <label htmlFor={inputId} className="text-foreground-subtle text-xs font-medium">
-                    {t("The eight letters the computer shows")}
-                  </label>
-                  <Input
-                    id={inputId}
-                    value={typed}
-                    onChange={(event) => setTyped(formatPairingCode(event.target.value))}
-                    placeholder="XXXX-XXXX"
-                    autoComplete="off"
-                    spellCheck={false}
-                    className="font-mono uppercase"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  variant="outline"
-                  disabled={
-                    normalizePairingCode(typed).length !== CAPTURE_PAIRING_CODE_LENGTH || disabled
-                  }
-                >
-                  {t("Look up")}
-                </Button>
-              </form>
-            </SectionPanel>
+            <PairingCodeForm
+              initialCode={formatPairingCode(linkedCode)}
+              disabled={disabled}
+              prominent={preview === undefined}
+              onLookUp={lookUp}
+            />
 
             {submitted !== null && previewQuery.isLoading && (
               <div className="flex flex-col gap-2" aria-busy="true">
@@ -163,78 +175,20 @@ export function CapturePairPage() {
             )}
 
             {submitted !== null && previewQuery.isError && (
-              <Alert variant="destructive" size="sm">
-                <AlertDescription>
-                  {t(
-                    "That code is not valid or has expired. Codes last ten minutes; start again from Trenova Capture's tray icon for a new one.",
-                  )}
-                </AlertDescription>
-              </Alert>
+              <LookupFailure
+                error={previewQuery.error}
+                retrying={previewQuery.isRefetching}
+                onRetry={() => void previewQuery.refetch()}
+              />
             )}
 
-            {preview !== undefined && (
-              <SectionPanel title={t("The computer asking")}>
-                <div className="flex flex-col gap-4 p-3">
-                  <DescriptionList columns={2}>
-                    <DescriptionItem label={t("Computer")}>{preview.machineName}</DescriptionItem>
-                    <DescriptionItem label={t("Windows user")}>
-                      {preview.windowsUser === "" ? <DescriptionEmpty /> : preview.windowsUser}
-                    </DescriptionItem>
-                    <DescriptionItem label={t("Trenova Capture")} numeric>
-                      {preview.agentVersion}
-                    </DescriptionItem>
-                    <DescriptionItem label={t("Windows")}>
-                      {preview.osVersion === "" ? <DescriptionEmpty /> : preview.osVersion}
-                    </DescriptionItem>
-                    <DescriptionItem label={t("Asked from")} numeric>
-                      {preview.clientIp === "" ? <DescriptionEmpty /> : preview.clientIp}
-                    </DescriptionItem>
-                    <DescriptionItem label={t("Code expires")} numeric>
-                      {formatUnixTime(preview.expiresAt)}
-                    </DescriptionItem>
-                  </DescriptionList>
-
-                  <Alert variant="warning" size="sm">
-                    <ShieldAlertIcon />
-                    <AlertDescription>
-                      {t(
-                        "Approve only a computer you are using now. Once paired it uploads documents as you, with your permissions, until it is revoked.",
-                      )}
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor={nameId} className="text-foreground-subtle text-xs font-medium">
-                      {t("Name it")}
-                    </label>
-                    <Input
-                      id={nameId}
-                      value={name}
-                      maxLength={100}
-                      onChange={(event) => setDeviceName(event.target.value)}
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => deny.mutate(undefined)}
-                      isLoading={deny.isPending}
-                      disabled={approve.isPending}
-                    >
-                      {t("Deny")}
-                    </Button>
-                    <Button
-                      onClick={() => approve.mutate(undefined)}
-                      isLoading={approve.isPending}
-                      loadingText={t("Pairing")}
-                      disabled={deny.isPending || disabled}
-                    >
-                      {t("Approve")}
-                    </Button>
-                  </div>
-                </div>
-              </SectionPanel>
+            {submitted !== null && preview !== undefined && !previewQuery.isError && (
+              <PairingReview
+                code={submitted}
+                preview={preview}
+                disabled={disabled}
+                onDecided={setOutcome}
+              />
             )}
           </>
         )}

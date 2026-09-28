@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import type { ReactNode } from "react";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ButtonGroup } from "@trenova/shared/components/ui/button-group";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -36,6 +37,8 @@ interface DocumentToolbarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onUploadClick?: () => void;
+  /** Other ways to add a document, shown just before Upload (Scan, for one). */
+  addActions?: ReactNode;
   disabled?: boolean;
   className?: string;
 }
@@ -66,6 +69,7 @@ export function DocumentToolbar({
   viewMode,
   onViewModeChange,
   onUploadClick,
+  addActions,
   disabled,
   className,
 }: DocumentToolbarProps) {
@@ -156,6 +160,7 @@ export function DocumentToolbar({
         </Button>
       </ButtonGroup>
 
+      {addActions}
       {onUploadClick && (
         <Button variant="secondary" size="sm" onClick={onUploadClick} disabled={disabled}>
           <UploadIcon className="size-4" />

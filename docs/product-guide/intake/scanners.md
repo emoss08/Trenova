@@ -29,7 +29,7 @@ Keywords: scan to intake, tray menu, scan from the computer, quick scan
 ### Print a document into Trenova
 Keywords: print to Trenova, virtual printer, print from any program, print a PDF, print into a shipment, print into a record
 1. In any program on the paired computer, choose Print and pick the printer named Trenova.
-2. Trenova Capture sends what you printed, and a notification says how many pages arrived. It goes to [Intake](/intake), or to the record where you first chose **Print into this record** from **More ways to capture** on its Documents tab.
+2. Trenova Capture sends what you printed, and a notification says how many pages arrived. It goes to [Intake](/intake), or to the record where you first chose **Print into this record** from the menu beside **Scan** on its Documents tab.
 3. If you are signed out of Trenova Capture, the print waits on the computer and is sent when you sign in.
 
 ### Carry on after a paper jam
