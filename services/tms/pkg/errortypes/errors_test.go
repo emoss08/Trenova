@@ -82,7 +82,10 @@ func TestMultiError(t *testing.T) {
 		me.Add("email", errortypes.ErrInvalidFormat, "invalid email")
 		me.Add("password", errortypes.ErrRequired, "required")
 
-		expected := "validation failed:\n- invalid email\n- required"
+		me.Add("", errortypes.ErrInvalid, "the whole record is wrong")
+
+		expected := "validation failed:\n- email: invalid email\n- password: required\n" +
+			"- the whole record is wrong"
 		assert.Equal(t, expected, me.Error())
 	})
 

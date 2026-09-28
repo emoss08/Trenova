@@ -67,8 +67,8 @@ func TestWouldFail_CarriesEachProblemOfAValidationRefusal(t *testing.T) {
 	assert.Equal(t, agent.PreviewWarningWouldFail, warning.Code)
 	assert.Equal(t,
 		"This would be refused as it stands: create shipment: validation failed:\n"+
-			"- BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009\n"+
-			"- Location is required",
+			"- bol: BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009\n"+
+			"- moves.stops[1].locationId: Location is required",
 		warning.Message,
 		"the message keeps the whole refusal as it was worded",
 	)

@@ -191,7 +191,7 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 	require.NotNil(t, refusal)
 	assert.Equal(t,
 		"This would be refused as it stands: validation failed:\n"+
-			"- BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",
+			"- bol: BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",
 		refusal.Message,
 	)
 	require.Len(t, refusal.Reasons, 1)

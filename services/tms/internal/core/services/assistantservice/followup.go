@@ -15,10 +15,15 @@ import (
 )
 
 // maxFollowUpErrorChars bounds how much of an execution error the note
-// carries. The reason a write failed is its first line; the rest is a stack of
-// wrapped causes the person will not read. A sentence split is no good here:
-// "tiles[0].definitionId" would end at its first dot.
-const maxFollowUpErrorChars = 400
+// carries. The reason a write failed is its first line and the problems it
+// lists under it; the rest is a stack of wrapped causes the person will not
+// read. A sentence split is no good here: "tiles[0].definitionId" would end at
+// its first dot.
+const (
+	maxFollowUpErrorChars  = 800
+	maxFollowUpDetailLines = 5
+	followUpDetailPrefix   = "- "
+)
 
 // followUpInstruction is what the agent is asked to do with a decision.
 const followUpInstruction = "Tell the person in one or two sentences what happened and the " +
@@ -114,8 +119,7 @@ func decisionLine(proposal *agent.AgentProposal) string {
 		}
 		return fmt.Sprintf("Approved %s, and it ran.", tool)
 	case agent.ProposalStatusExecutionFailed:
-		reason, _, _ := strings.Cut(strings.TrimSpace(proposal.ExecutionError), "\n")
-		reason = stringutils.TruncateRunes(reason, maxFollowUpErrorChars)
+		reason := executionFailureReason(proposal.ExecutionError)
 		if reason == "" {
 			return fmt.Sprintf("Approved %s, but it failed when it ran.", tool)
 		}
@@ -133,6 +137,38 @@ func decisionLine(proposal *agent.AgentProposal) string {
 	default:
 		return fmt.Sprintf("%s is now %s.", tool, proposal.Status)
 	}
+}
+
+func executionFailureReason(text string) string {
+	lines := strings.Split(strings.TrimSpace(text), "\n")
+	header := strings.TrimSpace(lines[0])
+	if header == "" {
+		return ""
+	}
+
+	details := make([]string, 0, maxFollowUpDetailLines)
+	more := 0
+	for _, line := range lines[1:] {
+		detail, listed := strings.CutPrefix(strings.TrimSpace(line), followUpDetailPrefix)
+		if !listed {
+			break
+		}
+		if len(details) == maxFollowUpDetailLines {
+			more++
+			continue
+		}
+		details = append(details, strings.TrimSpace(detail))
+	}
+
+	reason := header
+	if len(details) > 0 {
+		reason += " " + strings.Join(details, "; ")
+	}
+	if more > 0 {
+		reason += fmt.Sprintf("; and %d more", more)
+	}
+
+	return stringutils.TruncateRunes(reason, maxFollowUpErrorChars)
 }
 
 // planDecisionNote writes the input of the turn that follows a decision on
@@ -185,8 +221,7 @@ func planDecisionLine(plan *agent.AgentPlan) string {
 	case agent.PlanStatusCompleted:
 		return fmt.Sprintf("Approved the plan %q, and all %d steps ran.", title, plan.StepCount)
 	case agent.PlanStatusFailed:
-		reason, _, _ := strings.Cut(strings.TrimSpace(plan.FailureError), "\n")
-		reason = stringutils.TruncateRunes(reason, maxFollowUpErrorChars)
+		reason := executionFailureReason(plan.FailureError)
 		step := plan.CompletedSteps + 1
 		if plan.FailedStep != nil {
 			step = *plan.FailedStep
