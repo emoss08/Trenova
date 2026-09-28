@@ -25,6 +25,8 @@ type receivableSpec struct {
 	resource    permission.Resource
 	operation   permission.Operation
 	egress      agent.EgressClass
+	alsoEgress  []agent.EgressClass
+	classify    func(serviceports.ToolExecuteParams) serviceports.CallPolicy
 	defaultTier agent.AutonomyTier
 	maxTier     agent.AutonomyTier
 	personOnly  bool
@@ -108,7 +110,7 @@ func (t *receivableTool[R, P]) Policy() serviceports.ToolPolicy {
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   t.spec.defaultTier,
 		MaxTier:       t.spec.maxTier,
-		Egress:        []agent.EgressClass{t.spec.egress},
+		Egress:        append([]agent.EgressClass{t.spec.egress}, t.spec.alsoEgress...),
 		Effect:        agent.ToolEffectChange,
 		Reversible:    t.spec.reversible,
 		Idempotent:    t.spec.idempotent,
@@ -116,6 +118,7 @@ func (t *receivableTool[R, P]) Policy() serviceports.ToolPolicy {
 		Artifact:      t.spec.artifact,
 		Rationale:     t.spec.rationale,
 		Condition:     t.spec.condition,
+		Classify:      t.spec.classify,
 	}
 	if t.spec.taintHold != "" {
 		policy.TaintHold = &serviceports.TaintHold{

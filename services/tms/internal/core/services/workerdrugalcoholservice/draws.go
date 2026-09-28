@@ -209,6 +209,67 @@ func (s *Service) RunDraw(
 	ctx context.Context,
 	req *RunDrawRequest,
 ) (*worker.DOTRandomDraw, error) {
+	plan, err := s.planDraw(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	seed, err := newSeed()
+	if err != nil {
+		return nil, err
+	}
+
+	draw := plan.draw
+	// The two substances draw independently: being picked for a drug test does
+	// not exclude anybody from the alcohol draw, and the rates are separate
+	// obligations. Salting the seed per substance keeps the two orders from
+	// being the same list twice.
+	drugPicks := worker.SelectRandom(plan.candidates, seed+":drug", int(draw.DrugTarget))
+	alcoholPicks := worker.SelectRandom(
+		plan.candidates,
+		seed+":alcohol",
+		int(draw.AlcoholTarget),
+	)
+	draw.DrugSelected = int32(len(drugPicks))       //nolint:gosec // bounded by the pool size
+	draw.AlcoholSelected = int32(len(alcoholPicks)) //nolint:gosec // bounded by the pool size
+	draw.Seed = seed
+
+	multiErr := errortypes.NewMultiError()
+	draw.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	entries := buildEntries(drugPicks, worker.DOTSubstanceDrug)
+	entries = append(entries, buildEntries(alcoholPicks, worker.DOTSubstanceAlcohol)...)
+
+	created, err := s.repo.CreateDrawWithEntries(ctx, draw, entries)
+	if err != nil {
+		return nil, err
+	}
+
+	s.audit(&auditParams{
+		resource:   permission.ResourceDOTRandomPool,
+		resourceID: created.ID.String(),
+		operation:  permission.OpManage,
+		userID:     req.UserID,
+		tenant:     req.TenantInfo,
+		current:    created,
+		comment: "Drew " + draw.PeriodKey + " from " + plan.pool.Code +
+			" over " + strconv.Itoa(len(plan.candidates)) + " drivers",
+	})
+	s.publish(ctx, req.TenantInfo, realtimeDraw, permission.OpCreate, created.ID, req.UserID)
+
+	return created, nil
+}
+
+type drawPlan struct {
+	pool       *worker.DOTRandomPool
+	candidates []pulid.ID
+	draw       *worker.DOTRandomDraw
+}
+
+func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan, error) {
 	pool, err := s.resolvePool(ctx, req.TenantInfo, req.PoolID)
 	if err != nil {
 		return nil, err
@@ -253,66 +314,28 @@ func (s *Service) RunDraw(
 		)
 	}
 
-	seed, err := newSeed()
-	if err != nil {
-		return nil, err
-	}
-
 	drugTarget, alcoholTarget := pool.TargetsFor(len(candidates))
-	// The two substances draw independently: being picked for a drug test does
-	// not exclude anybody from the alcohol draw, and the rates are separate
-	// obligations. Salting the seed per substance keeps the two orders from
-	// being the same list twice.
-	drugPicks := worker.SelectRandom(candidates, seed+":drug", drugTarget)
-	alcoholPicks := worker.SelectRandom(candidates, seed+":alcohol", alcoholTarget)
 
-	draw := &worker.DOTRandomDraw{
-		OrganizationID:  req.TenantInfo.OrgID,
-		BusinessUnitID:  req.TenantInfo.BuID,
-		PoolID:          pool.ID,
-		PeriodKey:       periodKey,
-		PeriodStart:     periodStart,
-		PeriodEnd:       periodEnd,
-		Status:          worker.RandomDrawStatusDraft,
-		PoolSize:        int32(len(candidates)),
-		DrugTarget:      int32(drugTarget),
-		AlcoholTarget:   int32(alcoholTarget),
-		DrugSelected:    int32(len(drugPicks)),
-		AlcoholSelected: int32(len(alcoholPicks)),
-		Seed:            seed,
-		Method:          worker.RandomSelectionMethod,
-		Notes:           strings.TrimSpace(req.Notes),
-		DrawnAt:         at,
-		DrawnByID:       req.UserID,
-	}
-
-	multiErr := errortypes.NewMultiError()
-	draw.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	entries := buildEntries(drugPicks, worker.DOTSubstanceDrug)
-	entries = append(entries, buildEntries(alcoholPicks, worker.DOTSubstanceAlcohol)...)
-
-	created, err := s.repo.CreateDrawWithEntries(ctx, draw, entries)
-	if err != nil {
-		return nil, err
-	}
-
-	s.audit(&auditParams{
-		resource:   permission.ResourceDOTRandomPool,
-		resourceID: created.ID.String(),
-		operation:  permission.OpManage,
-		userID:     req.UserID,
-		tenant:     req.TenantInfo,
-		current:    created,
-		comment: "Drew " + periodKey + " from " + pool.Code +
-			" over " + strconv.Itoa(len(candidates)) + " drivers",
-	})
-	s.publish(ctx, req.TenantInfo, realtimeDraw, permission.OpCreate, created.ID, req.UserID)
-
-	return created, nil
+	return &drawPlan{
+		pool:       pool,
+		candidates: candidates,
+		draw: &worker.DOTRandomDraw{
+			OrganizationID: req.TenantInfo.OrgID,
+			BusinessUnitID: req.TenantInfo.BuID,
+			PoolID:         pool.ID,
+			PeriodKey:      periodKey,
+			PeriodStart:    periodStart,
+			PeriodEnd:      periodEnd,
+			Status:         worker.RandomDrawStatusDraft,
+			PoolSize:       int32(len(candidates)), //nolint:gosec // a pool's drivers fit in int32
+			DrugTarget:     int32(drugTarget),      //nolint:gosec // bounded by the pool size
+			AlcoholTarget:  int32(alcoholTarget),   //nolint:gosec // bounded by the pool size
+			Method:         worker.RandomSelectionMethod,
+			Notes:          strings.TrimSpace(req.Notes),
+			DrawnAt:        at,
+			DrawnByID:      req.UserID,
+		},
+	}, nil
 }
 
 // FinalizeDraw locks a round. Until it is final the office can re-draw; once it
@@ -324,25 +347,11 @@ func (s *Service) FinalizeDraw(
 	id pulid.ID,
 	userID pulid.ID,
 ) (*worker.DOTRandomDraw, error) {
-	entity, err := s.repo.GetDrawByID(ctx, &repositories.GetDOTRandomDrawByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	change, err := s.PlanFinalizeDraw(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
 	}
-	if entity.Status != worker.RandomDrawStatusDraft {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"Only a draft round can be finalised",
-		)
-	}
-
-	previous := *entity
-	finalizedAt := timeutils.NowUnix()
-	entity.Status = worker.RandomDrawStatusFinal
-	entity.FinalizedAt = &finalizedAt
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateDraw(ctx, entity)
 	if err != nil {
@@ -356,7 +365,7 @@ func (s *Service) FinalizeDraw(
 		userID:     userID,
 		tenant:     tenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    "Finalised round " + updated.PeriodKey,
 	})
 	s.publish(ctx, tenantInfo, realtimeDraw, permission.OpUpdate, updated.ID, userID)
@@ -373,30 +382,15 @@ func (s *Service) CancelDraw(
 	reason string,
 	userID pulid.ID,
 ) (*worker.DOTRandomDraw, error) {
-	reason = strings.TrimSpace(reason)
-	if reason == "" {
-		return nil, errortypes.NewValidationError(
-			"reason",
-			errortypes.ErrRequired,
-			"Cancelling a round needs a reason on the record",
-		)
-	}
-
-	entity, err := s.repo.GetDrawByID(ctx, &repositories.GetDOTRandomDrawByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	change, err := s.PlanCancelDraw(ctx, tenantInfo, id, reason)
 	if err != nil {
 		return nil, err
 	}
-	if entity.Status == worker.RandomDrawStatusCancelled {
-		return entity, nil
+	if change.Before.Status == worker.RandomDrawStatusCancelled {
+		return change.Before, nil
 	}
-
-	previous := *entity
-	entity.Status = worker.RandomDrawStatusCancelled
-	entity.FinalizedAt = nil
-	entity.Notes = strings.TrimSpace(entity.Notes + "\nCancelled: " + reason)
+	reason = strings.TrimSpace(reason)
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateDraw(ctx, entity)
 	if err != nil {
@@ -410,7 +404,7 @@ func (s *Service) CancelDraw(
 		userID:     userID,
 		tenant:     tenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    reason,
 	})
 	s.publish(ctx, tenantInfo, realtimeDraw, permission.OpUpdate, updated.ID, userID)
@@ -439,38 +433,11 @@ func (s *Service) UpdateDrawEntry(
 	ctx context.Context,
 	req *UpdateEntryRequest,
 ) (*worker.DOTRandomDrawEntry, error) {
-	entity, err := s.repo.GetDrawEntryByID(ctx, &repositories.GetDOTRandomDrawEntryByIDRequest{
-		ID:         req.EntryID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanUpdateDrawEntry(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	// Completion is not a status somebody sets by hand: it is what recording
-	// the collection against the selection means, so leaving it to the test
-	// keeps the entry and the test from ever disagreeing.
-	if req.Status == worker.RandomEntryCompleted {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"A selection completes when its test is recorded, not on its own",
-		)
-	}
-
-	previous := *entity
-	entity.Status = req.Status
-	entity.ExcuseReason = strings.TrimSpace(req.ExcuseReason)
-	if req.Status == worker.RandomEntryNotified && entity.NotifiedAt == nil {
-		notifiedAt := timeutils.NowUnix()
-		entity.NotifiedAt = &notifiedAt
-	}
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateDrawEntry(ctx, entity)
 	if err != nil {
@@ -484,7 +451,7 @@ func (s *Service) UpdateDrawEntry(
 		userID:     req.UserID,
 		tenant:     req.TenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    "Selection is now " + string(updated.Status),
 	})
 	s.publish(ctx, req.TenantInfo, realtimeDraw, permission.OpUpdate, updated.DrawID, req.UserID)

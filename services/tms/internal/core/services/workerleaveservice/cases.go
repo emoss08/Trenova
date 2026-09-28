@@ -89,15 +89,7 @@ func (s *Service) OpenCase(
 ) (*worker.WorkerLeaveCase, error) {
 	tenantInfo := caseTenant(entity)
 
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
-		ID:         entity.WorkerID,
-		TenantInfo: tenantInfo,
-	}); err != nil {
-		return nil, err
-	}
-
-	entity.RecordedByID = userID
-	if err := s.prepareCase(entity); err != nil {
+	if err := s.prepareOpenCase(ctx, entity, userID); err != nil {
 		return nil, err
 	}
 
@@ -140,20 +132,11 @@ func (s *Service) UpdateCase(
 	ctx context.Context,
 	req *UpdateCaseRequest,
 ) (*worker.WorkerLeaveCase, error) {
-	entity, err := s.repo.GetCaseByID(ctx, &repositories.GetLeaveCaseByIDRequest{
-		ID:         req.CaseID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanUpdateCase(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	previous := *entity
-	applyCaseUpdate(entity, req)
-
-	if err = s.prepareCase(entity); err != nil {
-		return nil, err
-	}
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateCase(ctx, entity)
 	if err != nil {
@@ -166,7 +149,7 @@ func (s *Service) UpdateCase(
 		userID:     req.UserID,
 		tenant:     req.TenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    "Updated the leave case",
 	})
 	s.publish(ctx, req.TenantInfo, realtimeCase, permission.OpUpdate, updated.ID, req.UserID)
@@ -285,35 +268,14 @@ func (s *Service) CloseCase(
 	id pulid.ID,
 	userID pulid.ID,
 ) (*worker.WorkerLeaveCase, error) {
-	entity, err := s.repo.GetCaseByID(ctx, &repositories.GetLeaveCaseByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	change, err := s.PlanCloseCase(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
 	}
-	if entity.Status == worker.LeaveCaseClosed {
-		return entity, nil
+	if change.Before.Status == worker.LeaveCaseClosed {
+		return change.Before, nil
 	}
-	if entity.Status == worker.LeaveCasePending {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"Decide the case before closing it",
-		)
-	}
-
-	previous := *entity
-	now := timeutils.NowUnix()
-	entity.Status = worker.LeaveCaseClosed
-	entity.ClosedAt = &now
-	if entity.EndsAt == nil {
-		entity.EndsAt = &now
-	}
-
-	if err = s.prepareCase(entity); err != nil {
-		return nil, err
-	}
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateCase(ctx, entity)
 	if err != nil {
@@ -326,7 +288,7 @@ func (s *Service) CloseCase(
 		userID:     userID,
 		tenant:     tenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    "Closed the leave case",
 	})
 	s.publish(ctx, tenantInfo, realtimeCase, permission.OpApprove, updated.ID, userID)
@@ -348,34 +310,11 @@ func (s *Service) RequestCertification(
 	ctx context.Context,
 	req *RequestCertificationRequest,
 ) (*worker.WorkerLeaveCase, error) {
-	entity, err := s.repo.GetCaseByID(ctx, &repositories.GetLeaveCaseByIDRequest{
-		ID:         req.CaseID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanRequestCertification(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	control, err := s.repo.GetControl(ctx, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	previous := *entity
-	now := timeutils.NowUnix()
-	due := now + int64(control.CertificationDueDays)*secondsPerDay
-	if req.DueAt != nil && *req.DueAt > 0 {
-		due = *req.DueAt
-	}
-
-	entity.CertificationStatus = worker.CertificationRequested
-	entity.CertificationRequestedAt = &now
-	entity.CertificationDueAt = &due
-	entity.CertificationReceivedAt = nil
-
-	if err = s.prepareCase(entity); err != nil {
-		return nil, err
-	}
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateCase(ctx, entity)
 	if err != nil {
@@ -388,7 +327,7 @@ func (s *Service) RequestCertification(
 		userID:     req.UserID,
 		tenant:     req.TenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    "Requested medical certification",
 	})
 	s.publish(ctx, req.TenantInfo, realtimeCase, permission.OpUpdate, updated.ID, req.UserID)
@@ -492,40 +431,9 @@ func (s *Service) RecordDay(
 	ctx context.Context,
 	req *RecordDayRequest,
 ) (*worker.WorkerLeaveEntry, error) {
-	leaveCase, err := s.repo.GetCaseByID(ctx, &repositories.GetLeaveCaseByIDRequest{
-		ID:         req.CaseID,
-		TenantInfo: req.TenantInfo,
-	})
+	entity, err := s.PlanRecordDay(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-
-	if !leaveCase.IsOpen() {
-		return nil, errortypes.NewValidationError(
-			"leaveCaseId",
-			errortypes.ErrInvalid,
-			"Leave cannot be recorded against a {0} case",
-			strings.ToLower(leaveCase.Status.Label()),
-		)
-	}
-
-	entity := &worker.WorkerLeaveEntry{
-		OrganizationID:           leaveCase.OrganizationID,
-		BusinessUnitID:           leaveCase.BusinessUnitID,
-		WorkerID:                 leaveCase.WorkerID,
-		LeaveCaseID:              leaveCase.ID,
-		UsedOn:                   req.UsedOn,
-		Hours:                    req.Hours,
-		CountsAgainstEntitlement: leaveCase.CountsAgainstEntitlement(),
-		PTOID:                    req.PTOID,
-		Notes:                    strings.TrimSpace(req.Notes),
-		RecordedByID:             req.UserID,
-	}
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	created, err := s.repo.CreateEntry(ctx, entity)
@@ -563,33 +471,11 @@ func (s *Service) UpdateDay(
 	ctx context.Context,
 	req *UpdateDayRequest,
 ) (*worker.WorkerLeaveEntry, error) {
-	entity, err := s.repo.GetEntryByID(ctx, &repositories.GetLeaveEntryByIDRequest{
-		ID:         req.EntryID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanUpdateDay(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	previous := *entity
-	if req.Hours != nil {
-		entity.Hours = *req.Hours
-	}
-	if req.Counts != nil {
-		entity.CountsAgainstEntitlement = *req.Counts
-	}
-	if req.Notes != nil {
-		entity.Notes = strings.TrimSpace(*req.Notes)
-	}
-	if !req.PTOID.IsNil() {
-		entity.PTOID = req.PTOID
-	}
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateEntry(ctx, entity)
 	if err != nil {
@@ -602,7 +488,7 @@ func (s *Service) UpdateDay(
 		userID:     req.UserID,
 		tenant:     req.TenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    "Corrected a day of leave",
 	})
 	s.publish(ctx, req.TenantInfo, realtimeEntry, permission.OpUpdate, updated.ID, req.UserID)
@@ -618,10 +504,7 @@ func (s *Service) DeleteDay(
 	id pulid.ID,
 	userID pulid.ID,
 ) error {
-	entity, err := s.repo.GetEntryByID(ctx, &repositories.GetLeaveEntryByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	entity, err := s.PlanDeleteDay(ctx, tenantInfo, id)
 	if err != nil {
 		return err
 	}

@@ -135,6 +135,13 @@ type PermitService interface {
 		actor *RequestActor,
 	) (*permit.Permit, error)
 
+	PlanCreatePermit(ctx context.Context, entity *permit.Permit) (*permit.Permit, error)
+
+	PlanUpdatePermit(
+		ctx context.Context,
+		entity *permit.Permit,
+	) (*RecordChange[permit.Permit], error)
+
 	WaiveRequirement(
 		ctx context.Context,
 		req *WaiveRequirementRequest,

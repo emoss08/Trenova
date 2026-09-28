@@ -217,33 +217,19 @@ func (s *Service) StartDisputeReview(
 	disputeID pulid.ID,
 	actor *serviceports.RequestActor,
 ) (*driversettlement.Dispute, error) {
-	if err := requireActor(actor, "Dispute review"); err != nil {
-		return nil, err
-	}
-	dispute, err := s.disputeRepo.GetByID(ctx, repositories.GetSettlementDisputeByIDRequest{
-		ID:         disputeID,
-		TenantInfo: tenantInfo,
-	})
+	change, err := s.PlanStartDisputeReview(ctx, tenantInfo, disputeID, actor)
 	if err != nil {
 		return nil, err
 	}
-	if dispute.Status != driversettlement.DisputeStatusOpen {
-		return nil, errortypes.NewValidationError(
-			"id",
-			errortypes.ErrInvalidOperation,
-			"Only open disputes can be moved to review",
-		)
-	}
+	previous, dispute := change.Before, change.After
 
-	previous := *dispute
-	dispute.Status = driversettlement.DisputeStatusInReview
 	updated, err := s.disputeRepo.Update(ctx, dispute)
 	if err != nil {
 		return nil, err
 	}
 	s.logDisputeAudit(
 		ctx,
-		updated, &previous, actor.UserID, permission.OpUpdate, "Dispute under review")
+		updated, previous, actor.UserID, permission.OpUpdate, "Dispute under review")
 	return updated, nil
 }
 
@@ -252,41 +238,11 @@ func (s *Service) ResolveDispute(
 	req *ResolveDisputeRequest,
 	actor *serviceports.RequestActor,
 ) (*driversettlement.Dispute, error) {
-	if err := requireActor(actor, "Dispute resolution"); err != nil {
-		return nil, err
-	}
-	if req.ResolutionNote == "" {
-		return nil, errortypes.NewValidationError(
-			"resolutionNote",
-			errortypes.ErrRequired,
-			"A resolution note is required",
-		)
-	}
-	if !req.Approve && req.Adjustment != nil {
-		return nil, errortypes.NewValidationError(
-			"adjustment",
-			errortypes.ErrInvalid,
-			"A denied dispute cannot include an adjustment",
-		)
-	}
-
-	dispute, err := s.disputeRepo.GetByID(ctx, repositories.GetSettlementDisputeByIDRequest{
-		ID:         req.DisputeID,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, err := s.PlanResolveDispute(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	if dispute.Status.IsTerminal() {
-		return nil, errortypes.NewValidationError(
-			"id",
-			errortypes.ErrInvalidOperation,
-			"This dispute has already been resolved",
-		)
-	}
-
-	previous := *dispute
-	now := timeutils.NowUnix()
+	previous, dispute := plan.Dispute.Before, plan.Dispute.After
 
 	if req.Adjustment != nil {
 		lineID, adjErr := s.applyDisputeAdjustment(ctx, req, dispute, actor)
@@ -298,15 +254,6 @@ func (s *Service) ResolveDispute(
 		}
 	}
 
-	if req.Approve {
-		dispute.Status = driversettlement.DisputeStatusResolved
-	} else {
-		dispute.Status = driversettlement.DisputeStatusDenied
-	}
-	dispute.ResolutionNote = req.ResolutionNote
-	dispute.ResolvedByID = &actor.UserID
-	dispute.ResolvedAt = &now
-
 	updated, err := s.disputeRepo.Update(ctx, dispute)
 	if err != nil {
 		return nil, err
@@ -317,7 +264,7 @@ func (s *Service) ResolveDispute(
 	}
 	s.logDisputeAudit(
 		ctx,
-		updated, &previous, actor.UserID, permission.OpApprove, comment)
+		updated, previous, actor.UserID, permission.OpApprove, comment)
 	if s.driverNotify != nil {
 		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
 			TenantInfo: req.TenantInfo,

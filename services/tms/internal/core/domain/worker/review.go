@@ -215,6 +215,14 @@ const (
 	ReviewGoalStatusDropped = ReviewGoalStatus("Dropped")
 )
 
+func ReviewGoalStatusValues() []ReviewGoalStatus {
+	return []ReviewGoalStatus{
+		ReviewGoalStatusOpen,
+		ReviewGoalStatusDone,
+		ReviewGoalStatusDropped,
+	}
+}
+
 func (s ReviewGoalStatus) String() string { return string(s) }
 
 func (s ReviewGoalStatus) IsValid() bool {

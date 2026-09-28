@@ -72,6 +72,14 @@ const (
 
 func (f LeaveFrequency) String() string { return string(f) }
 
+func LeaveFrequencyValues() []LeaveFrequency {
+	return []LeaveFrequency{
+		LeaveContinuous,
+		LeaveIntermittent,
+		LeaveReducedSchedule,
+	}
+}
+
 func (f LeaveFrequency) IsValid() bool {
 	switch f {
 	case LeaveContinuous, LeaveIntermittent, LeaveReducedSchedule:

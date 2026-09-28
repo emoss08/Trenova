@@ -233,50 +233,14 @@ func (s *Service) ReviewExpense(
 	req *ReviewExpenseRequest,
 	actor *serviceports.RequestActor,
 ) (*driverpay.Expense, error) {
-	if err := requireActor(actor, "Expense review"); err != nil {
-		return nil, err
-	}
-	if !req.Approve && strings.TrimSpace(req.Note) == "" {
-		return nil, errortypes.NewValidationError(
-			"note",
-			errortypes.ErrRequired,
-			"A note is required when rejecting an expense so the driver knows why",
-		)
-	}
-
-	expense, err := s.expenseRepo.GetByID(ctx, repositories.GetDriverExpenseByIDRequest{
-		ID:         req.ExpenseID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanReviewExpense(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	if expense.Status != driverpay.ExpenseStatusPending {
-		return nil, errortypes.NewValidationError(
-			"id",
-			errortypes.ErrInvalidOperation,
-			"Only pending expenses can be reviewed",
-		)
-	}
-
-	if req.Approve && expense.ReceiptDocumentID == nil {
-		control, controlErr := s.dashControlRepo.GetOrCreate(ctx, req.TenantInfo)
-		if controlErr != nil {
-			return nil, controlErr
-		}
-		if control.RequireExpenseReceipt {
-			return nil, errortypes.NewValidationError(
-				"receiptDocumentId",
-				errortypes.ErrRequired,
-				"This organization requires a receipt before an expense can be approved",
-			)
-		}
-	}
-
-	now := timeutils.NowUnix()
-	expense.ReviewNote = strings.TrimSpace(req.Note)
-	expense.ReviewedByID = &actor.UserID
-	expense.ReviewedAt = &now
+	expense := change.Before
+	expense.ReviewNote = change.After.ReviewNote
+	expense.ReviewedByID = change.After.ReviewedByID
+	expense.ReviewedAt = change.After.ReviewedAt
 
 	if req.Approve {
 		if err = s.applyExpenseReimbursement(ctx, req.TenantInfo, expense, actor); err != nil {

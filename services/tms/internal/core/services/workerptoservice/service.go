@@ -103,44 +103,9 @@ func (s *Service) Create(
 		zap.String("ptoID", entity.GetResourceID()),
 	)
 
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	overlaps, err := s.repo.HasOverlap(ctx, &repositories.PTOOverlapRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-		WorkerID:  entity.WorkerID,
-		StartDate: entity.StartDate,
-		EndDate:   entity.EndDate,
-	})
-	if err != nil {
-		log.Error("failed to check PTO overlap", zap.Error(err))
-		return nil, err
-	}
-	if overlaps {
-		return nil, errortypes.NewValidationError(
-			"startDate",
-			errortypes.ErrInvalid,
-			"This worker already has pending or approved time off that overlaps these dates",
-		)
-	}
-
-	availability, err := s.prepareLedgerFields(ctx, entity, pulid.Nil)
+	autoApprove, err := s.prepareCreate(ctx, entity, userID)
 	if err != nil {
 		return nil, err
-	}
-
-	autoApprove := availability != nil && availability.Policy != nil &&
-		!availability.Policy.Policy.RequiresApproval
-	if autoApprove {
-		entity.Status = worker.PTOStatusApproved
-		entity.ApproverID = userID
-		entity.AutoApproved = true
 	}
 
 	var createdEntity *worker.WorkerPTO
@@ -196,61 +161,8 @@ func (s *Service) Update(
 		zap.String("ptoID", entity.GetResourceID()),
 	)
 
-	current, err := s.repo.GetByID(ctx, &repositories.GetPTOByIDRequest{
-		ID: entity.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	})
+	current, err := s.prepareUpdate(ctx, entity)
 	if err != nil {
-		return nil, err
-	}
-
-	if current.Status != worker.PTOStatusRequested {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"PTO is {0} and can no longer be edited", strings.ToLower(string(current.Status)),
-		)
-	}
-
-	entity.WorkerID = current.WorkerID
-	entity.Status = current.Status
-	entity.ApproverID = current.ApproverID
-	entity.RejectorID = current.RejectorID
-	entity.CancelledByID = current.CancelledByID
-	entity.CreatedAt = current.CreatedAt
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	overlaps, err := s.repo.HasOverlap(ctx, &repositories.PTOOverlapRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-		WorkerID:  entity.WorkerID,
-		StartDate: entity.StartDate,
-		EndDate:   entity.EndDate,
-		ExcludeID: entity.ID,
-	})
-	if err != nil {
-		log.Error("failed to check PTO overlap", zap.Error(err))
-		return nil, err
-	}
-	if overlaps {
-		return nil, errortypes.NewValidationError(
-			"startDate",
-			errortypes.ErrInvalid,
-			"This worker already has pending or approved time off that overlaps these dates",
-		)
-	}
-
-	if _, err = s.prepareLedgerFields(ctx, entity, entity.ID); err != nil {
 		return nil, err
 	}
 
