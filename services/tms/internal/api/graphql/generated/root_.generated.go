@@ -86831,7 +86831,7 @@ Something the person deciding should know. The code is translated by the
 client; the message is the English fallback, with its arguments in order.
 """
 type AgentPreviewWarning {
-  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused or unpinned."
+  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned or rate_coverage."
   code: String!
   args: [String!]!
   message: String!

@@ -15,6 +15,7 @@ import (
 var (
 	StopTypes         = Source("shipment.stopType", shipment.StopTypeValues())
 	StopScheduleTypes = Source("shipment.stopScheduleType", shipment.StopScheduleTypeValues())
+	FreightTerms      = Source("shipment.freightTerms", shipment.FreightTermsValues())
 	StopActualActions = Source(
 		"shipmentMove.stopActualAction",
 		repositories.StopActualActionValues(),

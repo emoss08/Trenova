@@ -364,7 +364,19 @@ func newRecalculateShipmentDistanceTool(shipments shipmentOperator) serviceports
 	})
 }
 
-func newDuplicateShipmentTool(shipments shipmentOperator) serviceports.AgentTool {
+type shipmentSourceReader interface {
+	Get(ctx context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error)
+}
+
+type duplicateShipmentDeps struct {
+	Shipments shipmentOperator
+	Sources   shipmentSourceReader
+	Locations locationZoneReader
+}
+
+func newDuplicateShipmentTool(deps duplicateShipmentDeps) serviceports.AgentTool {
+	shipments := deps.Shipments
+
 	return newReportingReceivableTool(&receivableSpec{
 		name:     "duplicate_shipment",
 		artifact: shipmentRecordEntity,
@@ -372,7 +384,8 @@ func newDuplicateShipmentTool(shipments shipmentOperator) serviceports.AgentTool
 			"customer, stops, commodities, charges, freight terms and rating method exactly " +
 			"as saved. Prefer it to create_shipment whenever the freight repeats one already " +
 			"booked, since nothing is retyped. Give firstPickupAt to move every stop window " +
-			"so the first pickup starts then; leave it out to keep the source's dates. Each " +
+			"so the first pickup starts then, in local time at that pickup; leave it out to " +
+			"keep the source's dates. A shipment nothing prices cannot be copied. Each " +
 			"copy gets its own pro number and order; they appear in search_shipments within " +
 			"a minute.",
 		resource:    permission.ResourceShipment,
@@ -388,14 +401,21 @@ func newDuplicateShipmentTool(shipments shipmentOperator) serviceports.AgentTool
 			paramCopyCount: integerProperty(
 				"How many copies to make, 1 to 20. Defaults to 1.", 1, maxDuplicateCopies,
 			),
-			paramFirstPickupAt: dateTimeProperty("When the copies' first pickup window starts; " +
-				"every other stop keeps its distance from it. Only from what the person asked " +
-				"for, never invented."),
+			paramFirstPickupAt: localTimeProperty("When the copies' first pickup window " +
+				"starts; every other stop keeps its distance from it. Only from what the " +
+				"person asked for, never invented."),
 		},
 		required: []string{paramShipmentID},
 		target:   targetShipment,
 	}, receivablePlan[*repositories.BulkDuplicateShipmentRequest, *serviceports.ShipmentDuplicatePreview]{
 		request: duplicateRequest,
+		settle: func(
+			ctx context.Context,
+			req *repositories.BulkDuplicateShipmentRequest,
+			params *serviceports.ToolExecuteParams,
+		) error {
+			return settleFirstPickup(ctx, &deps, req, params)
+		},
 		plan: func(
 			ctx context.Context,
 			req *repositories.BulkDuplicateShipmentRequest,
@@ -451,15 +471,72 @@ func duplicateRequest(
 		}
 	}
 
-	firstPickup, err := optionalDateTime(params.Params, paramFirstPickupAt)
-	if err != nil {
-		return nil, err
+	return &repositories.BulkDuplicateShipmentRequest{
+		TenantInfo: tenantFrom(*params),
+		ShipmentID: shipmentID,
+		Count:      count,
+	}, nil
+}
+
+func settleFirstPickup(
+	ctx context.Context,
+	deps *duplicateShipmentDeps,
+	req *repositories.BulkDuplicateShipmentRequest,
+	params *serviceports.ToolExecuteParams,
+) error {
+	if _, given := params.Params[paramFirstPickupAt]; !given {
+		return nil
 	}
 
-	return &repositories.BulkDuplicateShipmentRequest{
-		TenantInfo:    tenantFrom(*params),
-		ShipmentID:    shipmentID,
-		Count:         count,
-		FirstPickupAt: firstPickup,
-	}, nil
+	zones := locationZones{fallback: params.Timezone}
+	pickup := pulid.Nil
+	if deps.Sources != nil {
+		source, err := deps.Sources.Get(ctx, &repositories.GetShipmentByIDRequest{
+			ID:              req.ShipmentID,
+			TenantInfo:      req.TenantInfo,
+			ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
+		})
+		if err != nil {
+			return err
+		}
+		if pickup = firstStopLocation(source); pickup.IsNotNil() {
+			if zones, err = readLocationZones(
+				ctx, deps.Locations, req.TenantInfo, params.Timezone, []pulid.ID{pickup},
+			); err != nil {
+				return err
+			}
+		}
+	}
+
+	firstPickup, err := optionalLocalTime(params.Params, paramFirstPickupAt, zones.at(pickup))
+	if err != nil {
+		return err
+	}
+	req.FirstPickupAt = firstPickup
+
+	return nil
+}
+
+func firstStopLocation(source *shipment.Shipment) pulid.ID {
+	var first *shipment.Stop
+	firstMove := int64(-1)
+	for _, move := range source.Moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop == nil {
+				continue
+			}
+			if first == nil || move.Sequence < firstMove ||
+				(move.Sequence == firstMove && stop.Sequence < first.Sequence) {
+				first, firstMove = stop, move.Sequence
+			}
+		}
+	}
+	if first == nil {
+		return pulid.Nil
+	}
+
+	return first.LocationID
 }

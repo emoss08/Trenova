@@ -46,6 +46,7 @@ func (f *fakeShipmentWriter) Create(
 	f.created = entity
 	f.actor = actor
 	entity.ID = pulid.MustNew("shp_")
+	entity.ProNumber = "S-10001"
 
 	return entity, nil
 }
@@ -92,19 +93,27 @@ func (f *fakeImportCompleter) CompleteHistory(
 
 func shipmentPayload(customerID, serviceTypeID, originID, destID pulid.ID) map[string]any {
 	return map[string]any{
-		"customerId":    customerID.String(),
-		"serviceTypeId": serviceTypeID.String(),
-		"bol":           "BOL-778",
-		"pieces":        12,
-		"weight":        18000,
+		"customerId":        customerID.String(),
+		"serviceTypeId":     serviceTypeID.String(),
+		"shipmentTypeId":    pulid.MustNew("sht_").String(),
+		"formulaTemplateId": pulid.MustNew("fmt_").String(),
+		"bol":               "BOL-778",
+		"pieces":            12,
+		"weight":            18000,
 		"moves": []any{map[string]any{
 			"loaded": true,
 			"stops": []any{
 				map[string]any{
-					"locationId": originID.String(), "type": "Pickup", "sequence": 0, "scheduledWindowStart": 1_790_000_000,
+					"locationId":           originID.String(),
+					"type":                 "Pickup",
+					"sequence":             0,
+					"scheduledWindowStart": "2026-10-01T08:00",
 				},
 				map[string]any{
-					"locationId": destID.String(), "type": "Delivery", "sequence": 1, "scheduledWindowStart": 1_790_086_400,
+					"locationId":           destID.String(),
+					"type":                 "Delivery",
+					"sequence":             1,
+					"scheduledWindowStart": "2026-10-02T08:00",
 				},
 			},
 		}},
@@ -116,7 +125,7 @@ func TestCreateShipment_EntersTheShipmentUnderTheActorTenant(t *testing.T) {
 
 	writer := &fakeShipmentWriter{}
 	imports := &fakeImportCompleter{}
-	tool := newCreateShipmentTool(writer, imports, nil)
+	tool := newCreateShipmentTool(createShipmentDeps{Shipments: writer, Imports: imports})
 	assert.Equal(t, permission.ResourceShipment, tool.Policy().Resource)
 	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
 	assert.Equal(t, agent.TierActWithApproval, tool.Policy().DefaultTier)
@@ -165,7 +174,7 @@ func TestCreateShipment_RefusesAWriteWithoutAnIdempotencyKeyOrAMismatchedActor(t
 	t.Parallel()
 
 	writer := &fakeShipmentWriter{}
-	tool := newCreateShipmentTool(writer, nil, nil)
+	tool := newCreateShipmentTool(createShipmentDeps{Shipments: writer})
 	payload := shipmentPayload(
 		pulid.MustNew("cust_"),
 		pulid.MustNew("st_"),
@@ -196,7 +205,10 @@ func TestCreateShipment_ValidateRefusesWhatTheServiceWould(t *testing.T) {
 	writer := &fakeShipmentWriter{previewErr: errortypes.NewValidationError(
 		"bol", errortypes.ErrDuplicate, "A shipment with this BOL already exists",
 	)}
-	tool := newCreateShipmentTool(writer, &fakeImportCompleter{}, nil)
+	tool := newCreateShipmentTool(createShipmentDeps{
+		Shipments: writer,
+		Imports:   &fakeImportCompleter{},
+	})
 	validator, ok := tool.(serviceports.ToolValidator)
 	require.True(t, ok, "create_shipment checks a call before it is filed")
 

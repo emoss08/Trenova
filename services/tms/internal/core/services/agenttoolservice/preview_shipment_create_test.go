@@ -98,7 +98,7 @@ func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 		AgreementName: "Acme 2026 lanes",
 		Explanation:   "Priced by the Acme 2026 lanes agreement.",
 	}}
-	tool := newCreateShipmentTool(shipments, nil, nil).(*createShipmentTool)
+	tool := newCreateShipmentTool(createShipmentDeps{Shipments: shipments}).(*createShipmentTool)
 	params := createShipmentParams()
 
 	preview := previewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
@@ -143,7 +143,7 @@ func TestCreateShipment_PreviewNamesADepartureFromTheContract(t *testing.T) {
 		Amount:   decimal.NewFromInt(1_700),
 		Currency: "USD",
 	}}
-	tool := newCreateShipmentTool(shipments, nil, nil).(*createShipmentTool)
+	tool := newCreateShipmentTool(createShipmentDeps{Shipments: shipments}).(*createShipmentTool)
 
 	preview := previewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), createShipmentParams())
@@ -156,7 +156,7 @@ func TestCreateShipment_PreviewWarnsWhenTheShipmentWouldBeRefused(t *testing.T) 
 	t.Parallel()
 
 	shipments := &pricingShipments{duplicate: true}
-	tool := newCreateShipmentTool(shipments, nil, nil).(*createShipmentTool)
+	tool := newCreateShipmentTool(createShipmentDeps{Shipments: shipments}).(*createShipmentTool)
 
 	preview := previewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), createShipmentParams())
@@ -180,7 +180,7 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 		"SEED-DET-009",
 	)
 	shipments := &pricingShipments{refusal: duplicate}
-	tool := newCreateShipmentTool(shipments, nil, nil).(*createShipmentTool)
+	tool := newCreateShipmentTool(createShipmentDeps{Shipments: shipments}).(*createShipmentTool)
 
 	preview := previewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), createShipmentParams())
@@ -206,7 +206,7 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 func TestCreateShipment_SaysABOLMustBeUniqueAndIsOptional(t *testing.T) {
 	t.Parallel()
 
-	tool := newCreateShipmentTool(&pricingShipments{}, nil, nil)
+	tool := newCreateShipmentTool(createShipmentDeps{Shipments: &pricingShipments{}})
 	properties := tool.ParamSchema()["properties"].(map[string]any)
 	shipmentSchema := properties["shipment"].(map[string]any)
 	bol := shipmentSchema["properties"].(map[string]any)["bol"].(map[string]any)

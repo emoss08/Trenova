@@ -22,6 +22,7 @@ export const PREVIEW_WARNING_CODES = [
   "sensitive_content",
   "retarget_refused",
   "unpinned",
+  "rate_coverage",
 ] as const;
 
 export type PreviewWarningCode = (typeof PREVIEW_WARNING_CODES)[number];
@@ -43,6 +44,7 @@ const TONES: Record<PreviewWarningCode, PreviewWarningTone> = {
   target_changed: "warning",
   preview_failed: "warning",
   sensitive_content: "warning",
+  rate_coverage: "warning",
   depends_on_step: "info",
   withheld: "info",
   unpinned: "info",
@@ -236,6 +238,10 @@ export function previewWarningText(warning: PreviewWarning, t: TranslateFn): str
       return t(
         "This was proposed without noting the record's version, so later edits to it can't be detected.",
       );
+    case "rate_coverage":
+      return arg !== ""
+        ? t("The rate needs review: {0}", arg)
+        : t("Nothing prices this shipment, so it would be saved at zero and flagged for review.");
     default:
       return warning.message;
   }

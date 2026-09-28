@@ -1,6 +1,7 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
@@ -82,8 +83,15 @@ func provideRecalculateShipmentDistanceTool(
 	return newRecalculateShipmentDistanceTool(shipments)
 }
 
-func provideDuplicateShipmentTool(shipments serviceports.ShipmentService) serviceports.AgentTool {
-	return newDuplicateShipmentTool(shipments)
+func provideDuplicateShipmentTool(
+	shipments serviceports.ShipmentService,
+	locations repositories.LocationRepository,
+) serviceports.AgentTool {
+	return newDuplicateShipmentTool(duplicateShipmentDeps{
+		Shipments: shipments,
+		Sources:   shipments,
+		Locations: locations,
+	})
 }
 
 func provideUpdateShipmentHoldTool(holds serviceports.ShipmentHoldService) serviceports.AgentTool {

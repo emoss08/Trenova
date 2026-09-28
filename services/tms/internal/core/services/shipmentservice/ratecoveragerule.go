@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	rateCoverageRuleKey       = "rate_coverage"
+	rateCoverageRuleKey       = shipment.RateCoverageRuleKey
 	rateCoverageField         = "formulaTemplateId"
 	rateCoverageAdvisoryField = "freightChargeAmount"
 )
