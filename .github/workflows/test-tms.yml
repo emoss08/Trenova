@@ -172,6 +172,12 @@ jobs:
           go test -p 4 -tags=integration,nomsgpack -coverprofile=coverage-integration.out \
             -covermode=atomic "${packages[@]}"
 
+      - name: Run shared test utility integration tests
+        working-directory: ./shared
+        # After the service packages, because these tests hold every leasable
+        # Redis database for a moment.
+        run: go test -tags=integration ./testutil/...
+
       - name: Upload integration coverage artifact
         uses: actions/upload-artifact@v4
         with:
