@@ -30,6 +30,20 @@ func (st ScopeType) String() string {
 	return string(st)
 }
 
+func ScopeTypeValues() []ScopeType {
+	return []ScopeType{
+		ScopeTypeAny,
+		ScopeTypeCountry,
+		ScopeTypeState,
+		ScopeTypeZone,
+		ScopeTypeRadius,
+		ScopeTypeCityState,
+		ScopeTypeZip3,
+		ScopeTypeZip5,
+		ScopeTypeLocation,
+	}
+}
+
 func (st ScopeType) IsValid() bool {
 	switch st {
 	case ScopeTypeAny,

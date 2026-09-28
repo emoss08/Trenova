@@ -102,6 +102,10 @@ var litresPerGallon = decimal.RequireFromString("3.785411784")
 
 func (u QuantityUnit) String() string { return string(u) }
 
+func QuantityUnitValues() []QuantityUnit {
+	return []QuantityUnit{QuantityUnitGallon, QuantityUnitLitre}
+}
+
 func (u QuantityUnit) IsValid() bool {
 	return u == QuantityUnitGallon || u == QuantityUnitLitre
 }
