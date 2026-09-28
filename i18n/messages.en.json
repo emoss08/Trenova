@@ -5197,6 +5197,15 @@
       "domain/ifta"
     ]
   },
+  "A reopened item takes no note or evidence": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A repeated field must name its repeat path": {
     "sites": 1,
     "scope": [
@@ -34039,7 +34048,7 @@
     ]
   },
   "Checklist item was changed by someone else. Reload and try again": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -55501,6 +55510,15 @@
     ],
     "areas": [
       "routes/invoice-register"
+    ]
+  },
+  "Dispute adjustment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Dispute cases raised against posted invoices": {
@@ -111346,6 +111364,15 @@
       "apps/web/lib"
     ]
   },
+  "None of these courses could be assigned: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "None of these rows are carriers": {
     "sites": 1,
     "scope": [
@@ -116705,25 +116732,7 @@
       "domain/documenttemplate"
     ]
   },
-  "Only an assigned or in-progress course can be cancelled": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/workertrainingservice"
-    ]
-  },
   "Only an assigned or in-progress course can be completed. Assign it again to record a renewal": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/workertrainingservice"
-    ]
-  },
-  "Only an assigned or in-progress course can be waived": {
     "sites": 1,
     "scope": [
       "go"
@@ -141940,12 +141949,14 @@
     ]
   },
   "Reimbursement": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/pay-code"
+      "routes/pay-code",
+      "service/agenttoolservice"
     ]
   },
   "Reimbursements": {
@@ -186515,6 +186526,15 @@
       "routes/fiscal-year"
     ]
   },
+  "This permit belongs to another shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/permitservice"
+    ]
+  },
   "This place is already part of the zone": {
     "sites": 1,
     "scope": [
@@ -187016,6 +187036,15 @@
       "domain/invoice"
     ]
   },
+  "This review has no item {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "This review is not waiting for your sign-off": {
     "sites": 1,
     "scope": [
@@ -187241,6 +187270,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This shipment has no permit {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "This shipment is currently being reviewed by the billing team and cannot be modified. If changes are needed, contact your billing department to have it returned to operations.": {
@@ -187759,7 +187797,7 @@
     ]
   },
   "This worker already has pending or approved time off that overlaps these dates": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -187792,6 +187830,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This worker already holds an active credential of this type; renew it instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/workercredentialservice"
     ]
   },
   "This worker is already inactive": {
