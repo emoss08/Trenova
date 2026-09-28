@@ -70,6 +70,10 @@ tray itself, and the print service's host, spooler queries, ACLs and installatio
 
 ## Running a development build
 
+Against a development server, which publishes no release, My scanners (`/capture/devices`) and
+the admin Computers tab show how to install the `trenova-capture-msi` build artifact, with the
+install command already pointed at that server.
+
 ```powershell
 trenova-capture.exe --server http://localhost:8080 --sign-in
 ```

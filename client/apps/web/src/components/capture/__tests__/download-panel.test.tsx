@@ -1,6 +1,7 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { serverBaseUrl } from "@trenova/shared/lib/api-url";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { CaptureDownloadPanel } from "../download-panel";
 import { json, renderWithClient, resetGraphQL, stubGraphQL } from "./capture-graphql-server";
 
@@ -53,5 +54,46 @@ describe("CaptureDownloadPanel", () => {
 
     expect(await screen.findByText("No installer is published")).toBeInTheDocument();
     expect(screen.queryByText("The Trenova Capture download could not be loaded.")).toBeNull();
+  });
+
+  it("in development, with no release, says how to install a development build for this server", async () => {
+    stubGraphQL({ CaptureAgentRelease: () => json({ data: { captureAgentRelease: null } }) });
+
+    renderWithClient(<CaptureDownloadPanel whenMissing={MISSING} development />);
+
+    const panel = await screen.findByRole("region", { name: "Install a development build" });
+    expect(screen.queryByText("No installer is published")).toBeNull();
+    expect(within(panel).getByRole("link", { name: /Trenova Capture builds/ })).toHaveAttribute(
+      "href",
+      expect.stringContaining("actions/workflows/native-capture.yml"),
+    );
+    expect(within(panel).getByText("trenova-capture-msi")).toBeInTheDocument();
+    expect(within(panel).getByText(/msiexec \/i \$msi/)).toHaveTextContent(
+      `TRENOVAURL=${serverBaseUrl()} AUTOUPDATE=0`,
+    );
+  });
+
+  it("copies the install commands", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    stubGraphQL({ CaptureAgentRelease: () => json({ data: { captureAgentRelease: null } }) });
+
+    renderWithClient(<CaptureDownloadPanel development />);
+
+    await user.click(await screen.findByRole("button", { name: "Copy the install commands" }));
+
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining(`TRENOVAURL=${serverBaseUrl()} AUTOUPDATE=0`),
+    );
+    writeText.mockRestore();
+  });
+
+  it("shows a published release rather than the development steps, even in development", async () => {
+    stubGraphQL({ CaptureAgentRelease: () => json({ data: { captureAgentRelease: RELEASE } }) });
+
+    renderWithClient(<CaptureDownloadPanel development />);
+
+    expect(await screen.findByRole("button", { name: /Download Trenova Capture/ })).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Install a development build" })).toBeNull();
   });
 });
