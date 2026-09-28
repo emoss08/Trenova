@@ -1087,7 +1087,7 @@ func (s *service) Duplicate(
 	ctx context.Context,
 	req *repositories.BulkDuplicateShipmentRequest,
 ) (*repositories.ShipmentDuplicateWorkflowResponse, error) {
-	if err := s.guardDuplicate(req); err != nil {
+	if _, err := s.planDuplicate(ctx, req); err != nil {
 		return nil, err
 	}
 

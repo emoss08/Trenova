@@ -144,6 +144,18 @@ func (s *service) PreviewDuplicate(
 	ctx context.Context,
 	req *repositories.BulkDuplicateShipmentRequest,
 ) (*services.ShipmentDuplicatePreview, error) {
+	plan, err := s.planDuplicate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.ShipmentDuplicatePreview{Source: plan.Source, Copies: plan.Copies}, nil
+}
+
+func (s *service) planDuplicate(
+	ctx context.Context,
+	req *repositories.BulkDuplicateShipmentRequest,
+) (*repositories.ShipmentDuplicatePlan, error) {
 	if err := s.guardDuplicate(req); err != nil {
 		return nil, err
 	}
@@ -153,7 +165,11 @@ func (s *service) PreviewDuplicate(
 		return nil, err
 	}
 
-	return &services.ShipmentDuplicatePreview{Source: plan.Source, Copies: plan.Copies}, nil
+	if err = (rateCoverage{billing: s.billingRepo}).refuseUnratedCopies(ctx, plan); err != nil {
+		return nil, err
+	}
+
+	return plan, nil
 }
 
 func (s *service) guardDuplicate(req *repositories.BulkDuplicateShipmentRequest) error {

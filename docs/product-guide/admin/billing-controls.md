@@ -63,6 +63,10 @@ Keywords: unrated shipments, fallback formula, margin floor, rate override reaso
 4. Turn on **Require rate override reason** and **Enforce margin floor** as needed.
 5. Select **Save changes**.
 
+Unless the disposition is **Zero the rate and flag for review**, a shipment that nothing can price
+is refused wherever it is entered: the shipment form, the API, an agent, or a copy of another
+shipment. Choose a rating method on the shipment, or set a fallback formula template here.
+
 ### Turn on automatic late charges
 Keywords: late fees, overdue invoices, debit memo, finance charges
 1. Open [Billing controls](/admin/billing-controls).
