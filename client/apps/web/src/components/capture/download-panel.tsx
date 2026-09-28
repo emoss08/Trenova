@@ -7,9 +7,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { APP_ENV } from "@trenova/shared/lib/constants";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { formatFileSize } from "@trenova/shared/lib/utils";
 import { DownloadIcon } from "lucide-react";
+import { CaptureDevelopmentInstallPanel } from "./development-install-panel";
 
 type CaptureDownloadPanelProps = {
   /**
@@ -17,6 +19,11 @@ type CaptureDownloadPanelProps = {
    * word to the administrator on theirs.
    */
   whenMissing?: React.ReactNode;
+  /**
+   * A development server publishes no release; in its place the panel says
+   * how to install a development build. Defaults to the app's own mode.
+   */
+  development?: boolean;
 };
 
 /**
@@ -25,7 +32,10 @@ type CaptureDownloadPanelProps = {
  * (version, size, checksum) is what the manifest promised, so a person who
  * checks the file by hand has something to check it against.
  */
-export function CaptureDownloadPanel({ whenMissing }: CaptureDownloadPanelProps) {
+export function CaptureDownloadPanel({
+  whenMissing,
+  development = APP_ENV === "development",
+}: CaptureDownloadPanelProps) {
   const t = useT();
   // A release changes rarely and the server caches it; an hour is fine.
   const releaseQuery = useQuery({ ...queries.capture.agentRelease(), staleTime: 60 * 60 * 1000 });
@@ -58,6 +68,9 @@ export function CaptureDownloadPanel({ whenMissing }: CaptureDownloadPanelProps)
   }
   const release = releaseQuery.data;
   if (!release) {
+    if (development) {
+      return <CaptureDevelopmentInstallPanel />;
+    }
     return whenMissing ? <>{whenMissing}</> : null;
   }
 

@@ -20147,6 +20147,15 @@
       "routes/worker"
     ]
   },
+  "Artifact": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Artifact key cannot be longer than 512 characters": {
     "sites": 1,
     "scope": [
@@ -34159,6 +34168,15 @@
       "routes/home"
     ]
   },
+  "Choose Sign in from the Trenova Capture icon in the notification area and approve the code it shows. If the Trenova printer is missing, choose Add the Trenova printer from the same menu.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Choose a SCIM directory before loading group mappings.": {
     "sites": 1,
     "scope": [
@@ -42594,6 +42612,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Copy the install commands": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Copy the selected record's PRO number, name or file name": {
@@ -54156,6 +54183,15 @@
       "routes/admin"
     ]
   },
+  "Development server": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Device is required": {
     "sites": 2,
     "scope": [
@@ -57656,6 +57692,15 @@
       "routes/fuel-purchase",
       "routes/ifta-tax-rate",
       "routes/rate-agreement"
+    ]
+  },
+  "Download the installer artifact from the newest Trenova Capture build and extract it on the Windows computer, or build the installer there with installer/build.ps1.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Download the remittance CSV for this settlement's batch": {
@@ -82950,6 +82995,15 @@
       "routes/detention-policy"
     ]
   },
+  "If the install fails, the reason is in trenova-capture-install.log in your temporary folder. A server running in WSL is reached from Windows at localhost.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "If the notice is missed": {
     "sites": 1,
     "scope": [
@@ -83674,6 +83728,15 @@
       "routes/billing-queue",
       "routes/reconciliation-summary",
       "routes/settlement-dispute"
+    ]
+  },
+  "In that folder, open PowerShell as an administrator and run these commands. They point Trenova Capture at this server and turn self-updating off.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "In the books": {
@@ -85233,6 +85296,15 @@
     ],
     "areas": [
       "routes/capture"
+    ]
+  },
+  "Install a development build": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Install standard templates": {
@@ -192104,6 +192176,24 @@
     ],
     "areas": [
       "routes/capture"
+    ]
+  },
+  "Trenova Capture builds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Trenova Capture connects over HTTPS, or over plain HTTP only to the computer it runs on. Open this site at localhost on that computer, or serve it over HTTPS, before installing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Trenova Capture has not picked the request up yet": {
