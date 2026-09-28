@@ -34,7 +34,7 @@ script:
       - name: waive_detention
         args:
           occurrenceId: dto_01JREDTEAMDETENTION00000000
-          reason: CustomerRelationship
+          reason: CustomerGoodwill
           note: Waived as the letter asked.
   - reply: I waived it and told the customer.
 expect:
