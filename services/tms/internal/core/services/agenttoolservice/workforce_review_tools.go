@@ -29,7 +29,7 @@ const (
 	paramImprovements   = "improvements"
 	paramGoals          = "goals"
 	paramGoalTitle      = "title"
-	paramGoalDue        = "dueDate"
+	paramGoalDueAt      = "dueAt"
 	paramGoalStatus     = "status"
 	kindReview          = "performance review"
 	maxReviewRatings    = 30
@@ -205,9 +205,9 @@ type reviewRatingParam struct {
 }
 
 type reviewGoalParam struct {
-	Title   string `json:"title"`
-	DueDate string `json:"dueDate"`
-	Status  string `json:"status"`
+	Title  string `json:"title"`
+	DueAt  string `json:"dueAt"`
+	Status string `json:"status"`
 }
 
 type reviewDraft struct {
@@ -326,8 +326,9 @@ func applyReviewGoals(
 			}
 			entry.Status = status
 		}
-		if goal.DueDate != "" {
-			due, err := requireScheduleDay(map[string]any{paramGoalDue: goal.DueDate}, paramGoalDue)
+		if goal.DueAt != "" {
+			due, err := requireScheduleDay(map[string]any{paramGoalDueAt: goal.DueAt},
+				paramGoalDueAt)
 			if err != nil {
 				return fmt.Errorf("%s[%d]: %w", paramGoals, i, err)
 			}
@@ -372,7 +373,7 @@ func reviewDraftProperties() map[string]any {
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
 					paramGoalTitle: stringProperty("The goal.", wfShortChars),
-					paramGoalDue:   dayProperty("When it is due."),
+					paramGoalDueAt: dayProperty("When it is due."),
 					paramGoalStatus: agenttoolschema.Enum("Open, Done or Dropped. Defaults "+
 						"to Open.", reviewGoalStatuses),
 				},

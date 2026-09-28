@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -169,7 +170,7 @@ func TestStartWorkerChecklist_SaysWhenOneIsAlreadyOpen(t *testing.T) {
 	params := executeParams(map[string]any{
 		paramWorkerID:          checklists.checklist.WorkerID.String(),
 		paramChecklistTemplate: pulid.MustNew("wclt_").String(),
-		paramStartedOn:         "2026-09-28",
+		"startedAt":            "2026-09-21",
 	})
 
 	preview := previewWithoutWrites(t, checklists.guard, func() (*agent.ToolPreview, error) {
@@ -178,7 +179,8 @@ func TestStartWorkerChecklist_SaysWhenOneIsAlreadyOpen(t *testing.T) {
 	assert.Contains(t, preview.Summary, "with 1 item(s)")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, checklists.started)
-	assert.NotZero(t, checklists.started.StartedAt)
+	assert.Equal(t, time.Date(2026, time.September, 21, 0, 0, 0, 0, time.UTC).Unix(),
+		checklists.started.StartedAt)
 
 	checklists.existing = true
 	preview = previewWithoutWrites(t, checklists.guard, func() (*agent.ToolPreview, error) {

@@ -6304,7 +6304,7 @@
             "items": {
               "additionalProperties": false,
               "properties": {
-                "dueDate": {
+                "dueAt": {
                   "description": "When it is due. YYYY-MM-DD, a UTC day.",
                   "type": "string"
                 },
@@ -17703,7 +17703,7 @@
             "minimum": 0,
             "type": "integer"
           },
-          "endDate": {
+          "endsAt": {
             "description": "The last day of leave, when it is known. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -17744,11 +17744,11 @@
             "maxLength": 255,
             "type": "string"
           },
-          "requestedDate": {
+          "requestedAt": {
             "description": "The day the worker asked. Defaults to today. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
-          "startDate": {
+          "startsAt": {
             "description": "The first day of leave. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -17759,7 +17759,7 @@
         },
         "required": [
           "workerId",
-          "startDate"
+          "startsAt"
         ],
         "type": "object"
       },
@@ -19906,10 +19906,6 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "date": {
-            "description": "The day the leave was taken. YYYY-MM-DD, a UTC day.",
-            "type": "string"
-          },
           "hours": {
             "description": "Hours taken that day, such as 8 or 4.5.",
             "type": "string"
@@ -19926,11 +19922,15 @@
           "ptoId": {
             "description": "Paid time off booked for the same day, from list_time_off, when the leave runs concurrently.",
             "type": "string"
+          },
+          "usedOn": {
+            "description": "The day the leave was taken. YYYY-MM-DD, a UTC day.",
+            "type": "string"
           }
         },
         "required": [
           "leaveCaseId",
-          "date",
+          "usedOn",
           "hours"
         ],
         "type": "object"
@@ -20276,7 +20276,7 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "completedDate": {
+          "completedAt": {
             "description": "The day it was finished. Defaults to today; never a day to come. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -20346,11 +20346,11 @@
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
             "type": "string"
           },
-          "expiresDate": {
+          "expiresAt": {
             "description": "When it expires. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
-          "issuedDate": {
+          "issuedAt": {
             "description": "When it was issued. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -20430,7 +20430,7 @@
             "maxLength": 150,
             "type": "string"
           },
-          "claimFiledDate": {
+          "claimFiledAt": {
             "description": "When the claim was filed. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -20521,11 +20521,11 @@
             "description": "Whether the worker's name is withheld from the log as a privacy case.",
             "type": "boolean"
           },
-          "reportedDate": {
+          "reportedAt": {
             "description": "When the worker reported it. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
-          "returnedToWorkDate": {
+          "returnedToWorkAt": {
             "description": "When the worker came back to work. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -24843,7 +24843,7 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "startDate": {
+          "startedAt": {
             "description": "The day it starts, which its items fall due from. Defaults to today. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -25850,7 +25850,7 @@
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
             "type": "string"
           },
-          "drugAlcoholResponseReceivedDate": {
+          "drugAlcoholResponseReceivedAt": {
             "description": "When their drug and alcohol answer came back. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -25908,7 +25908,7 @@
             "maxLength": 2000,
             "type": "string"
           },
-          "responseReceivedDate": {
+          "responseReceivedAt": {
             "description": "When the employer's answer came back. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -26115,7 +26115,7 @@
             "minimum": 0,
             "type": "integer"
           },
-          "endDate": {
+          "endsAt": {
             "description": "The last day of leave, when it is known. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -26160,7 +26160,7 @@
             "maxLength": 255,
             "type": "string"
           },
-          "startDate": {
+          "startsAt": {
             "description": "The first day of leave. YYYY-MM-DD, a UTC day.",
             "type": "string"
           }
@@ -27671,11 +27671,11 @@
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
             "type": "string"
           },
-          "expiresDate": {
+          "expiresAt": {
             "description": "When it expires. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
-          "issuedDate": {
+          "issuedAt": {
             "description": "When it was issued. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -27739,11 +27739,11 @@
             "maxLength": 150,
             "type": "string"
           },
-          "claimClosedDate": {
+          "claimClosedAt": {
             "description": "When the claim closed. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
-          "claimFiledDate": {
+          "claimFiledAt": {
             "description": "When the claim was filed. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
@@ -27838,11 +27838,11 @@
             "description": "Whether the worker's name is withheld from the log as a privacy case.",
             "type": "boolean"
           },
-          "reportedDate": {
+          "reportedAt": {
             "description": "When the worker reported it. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },
-          "returnedToWorkDate": {
+          "returnedToWorkAt": {
             "description": "When the worker came back to work. YYYY-MM-DD, a UTC day.",
             "type": "string"
           },

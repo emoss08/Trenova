@@ -28,8 +28,8 @@ const (
 	paramWasDOTRegulated  = "wasDotRegulated"
 	paramVerifyMethod     = "method"
 	paramVerifyStatus     = "status"
-	paramResponseOn       = "responseReceivedDate"
-	paramDAResponseOn     = "drugAlcoholResponseReceivedDate"
+	paramResponseAt       = "responseReceivedAt"
+	paramDAResponseAt     = "drugAlcoholResponseReceivedAt"
 	paramHadAccidents     = "hadAccidents"
 	paramAccidentCount    = "accidentCount"
 	paramHadDAViolations  = "hadDrugAlcoholViolations"
@@ -333,11 +333,11 @@ func applyVerificationResponse(
 	} else if given {
 		req.Status = &status
 	}
-	if req.ResponseReceivedAt, err = optionalScheduleDay(params, paramResponseOn); err != nil {
+	if req.ResponseReceivedAt, err = optionalScheduleDay(params, paramResponseAt); err != nil {
 		return err
 	}
 	if req.DrugAlcoholResponseReceivedAt, err = optionalScheduleDay(params,
-		paramDAResponseOn); err != nil {
+		paramDAResponseAt); err != nil {
 		return err
 	}
 	if req.HadAccidents, err = optionalBoolPointer(params, paramHadAccidents); err != nil {
@@ -369,8 +369,8 @@ func newUpdateEmploymentVerificationTool(dqf verificationKeeper) serviceports.Ag
 	properties[paramVerificationID] = verificationIDProperty()
 	properties[paramVerifyStatus] = agenttoolschema.Enum("Where the request stands.",
 		verificationStatuses)
-	properties[paramResponseOn] = dayProperty("When the employer's answer came back.")
-	properties[paramDAResponseOn] = dayProperty("When their drug and alcohol answer came " +
+	properties[paramResponseAt] = dayProperty("When the employer's answer came back.")
+	properties[paramDAResponseAt] = dayProperty("When their drug and alcohol answer came " +
 		"back.")
 	properties[paramHadAccidents] = booleanProperty("Whether they reported accidents.")
 	properties[paramAccidentCount] = integerProperty("How many accidents they reported.", 0,

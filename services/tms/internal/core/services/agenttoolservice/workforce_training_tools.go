@@ -23,7 +23,7 @@ const (
 	paramCourseID        = "courseId"
 	paramCourseIDs       = "courseIds"
 	paramTrainingWorkers = "workerIds"
-	paramCompletedOn     = "completedDate"
+	paramCompletedAt     = wfFieldCompletedAt
 	paramScore           = "score"
 	paramTrainingClose   = "action"
 	kindTraining         = "training assignment"
@@ -378,7 +378,7 @@ func completionFrom(
 		return nil, fmt.Errorf("name either %q, or %q with %q", paramTrainingID,
 			paramWorkerID, paramCourseID)
 	}
-	completed, err := optionalScheduleDay(params.Params, paramCompletedOn)
+	completed, err := optionalScheduleDay(params.Params, paramCompletedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +416,7 @@ func newRecordTrainingCompletionTool(training trainingKeeper) serviceports.Agent
 		paramTrainingID: trainingIDProperty(),
 		paramWorkerID:   workerProperty(),
 		paramCourseID:   idProperty("The course, from list_training_courses."),
-		paramCompletedOn: dayProperty("The day it was finished. Defaults to today; never a " +
+		paramCompletedAt: dayProperty("The day it was finished. Defaults to today; never a " +
 			"day to come."),
 		paramScore:      amountProperty("The score, such as 92, for a scored course."),
 		wfParamDocument: wfDocumentProperty(),

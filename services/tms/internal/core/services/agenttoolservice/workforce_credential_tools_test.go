@@ -156,7 +156,7 @@ func TestRecordWorkerCredential_RenewalShowsWhatItSupersedes(t *testing.T) {
 		paramWorkerID:         credentials.credential.WorkerID.String(),
 		paramCredentialTypeID: credentials.credential.CredentialTypeID.String(),
 		paramCredentialNumber: "MC-2002",
-		paramExpiresOn:        "2028-09-30",
+		"expiresAt":           "2028-09-30",
 	}
 
 	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(raw)),

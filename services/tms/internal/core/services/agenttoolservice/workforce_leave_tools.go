@@ -22,11 +22,11 @@ const (
 	paramLeaveType         = "leaveType"
 	paramLeaveFrequency    = "frequency"
 	paramMilitaryCaregiver = "militaryCaregiver"
-	paramStartsOn          = wfFieldStartDate
-	paramEndsOn            = wfFieldEndDate
-	paramRequestedOn       = "requestedDate"
+	paramStartsAt          = "startsAt"
+	paramEndsAt            = "endsAt"
+	paramRequestedAt       = wfFieldRequestedAt
 	paramEligibilityHours  = "eligibilityHoursWorked"
-	paramUsedOn            = "date"
+	paramUsedOn            = "usedOn"
 	paramLeaveHours        = "hours"
 	paramCounts            = "countsAgainstEntitlement"
 	paramPTOLink           = "ptoId"
@@ -44,12 +44,12 @@ var (
 	)
 	leaveCaseFields = []string{
 		wfFieldWorkerID, paramLeaveType, fieldStatus, paramLeaveFrequency, fieldReason,
-		paramMilitaryCaregiver, wfFieldRequestedAt, "startsAt", "endsAt", wfFieldClosedAt,
+		paramMilitaryCaregiver, wfFieldRequestedAt, paramStartsAt, paramEndsAt, wfFieldClosedAt,
 		"certificationStatus", wfFieldCertRequestedAt, "certificationDueAt",
 		paramEligibilityHours, wfFieldDocument, wfFieldNotes,
 	}
 	leaveDayFields = []string{
-		wfFieldWorkerID, "leaveCaseId", "usedOn", paramLeaveHours, paramCounts, paramPTOLink,
+		wfFieldWorkerID, paramLeaveCaseID, paramUsedOn, paramLeaveHours, paramCounts, paramPTOLink,
 		wfFieldNotes,
 	}
 )
@@ -162,7 +162,7 @@ func leaveCaseProperties() map[string]any {
 			"the certification carries that.", wfShortChars),
 		paramMilitaryCaregiver: booleanProperty("Whether it is leave to care for a covered " +
 			"servicemember."),
-		paramEndsOn: dayProperty("The last day of leave, when it is known."),
+		paramEndsAt: dayProperty("The last day of leave, when it is known."),
 		paramEligibilityHours: integerProperty("Hours worked in the twelve months before, "+
 			"for eligibility.", 0, maxEligibilityHours),
 		wfParamDocument: wfDocumentProperty(),
@@ -191,7 +191,7 @@ func applyLeaveCaseOpen(entity *worker.WorkerLeaveCase, params map[string]any) e
 		false); err != nil {
 		return err
 	}
-	if entity.EndsAt, err = optionalScheduleDay(params, paramEndsOn); err != nil {
+	if entity.EndsAt, err = optionalScheduleDay(params, paramEndsAt); err != nil {
 		return err
 	}
 	if entity.DocumentID, err = optionalID(params, wfParamDocument); err != nil {
@@ -214,8 +214,8 @@ func applyLeaveCaseOpen(entity *worker.WorkerLeaveCase, params map[string]any) e
 func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 	properties := leaveCaseProperties()
 	properties[paramWorkerID] = workerProperty()
-	properties[paramStartsOn] = dayProperty("The first day of leave.")
-	properties[paramRequestedOn] = dayProperty("The day the worker asked. Defaults to today.")
+	properties[paramStartsAt] = dayProperty("The first day of leave.")
+	properties[paramRequestedAt] = dayProperty("The day the worker asked. Defaults to today.")
 	spec := withSchema(wfSpec(
 		"open_leave_case",
 		"Open a leave case for a worker who asked for FMLA, medical, military, parental or "+
@@ -225,7 +225,7 @@ func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 			"case is corrected with update_leave_case.",
 		permission.ResourceWorkerLeave,
 		permission.OpCreate,
-	), properties, paramWorkerID, paramStartsOn)
+	), properties, paramWorkerID, paramStartsAt)
 	spec.searchTerms = []string{"FMLA", "leave of absence", "medical leave"}
 
 	return newReportingReceivableTool(spec,
@@ -235,11 +235,11 @@ func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 				if err != nil {
 					return nil, err
 				}
-				starts, err := requireScheduleDay(params.Params, paramStartsOn)
+				starts, err := requireScheduleDay(params.Params, paramStartsAt)
 				if err != nil {
 					return nil, err
 				}
-				requested, err := optionalScheduleDay(params.Params, paramRequestedOn)
+				requested, err := optionalScheduleDay(params.Params, paramRequestedAt)
 				if err != nil {
 					return nil, err
 				}
@@ -326,10 +326,10 @@ func leaveCaseUpdateFrom(
 		paramMilitaryCaregiver); err != nil {
 		return nil, err
 	}
-	if req.StartsAt, err = optionalScheduleDay(params.Params, paramStartsOn); err != nil {
+	if req.StartsAt, err = optionalScheduleDay(params.Params, paramStartsAt); err != nil {
 		return nil, err
 	}
-	if req.EndsAt, err = optionalScheduleDay(params.Params, paramEndsOn); err != nil {
+	if req.EndsAt, err = optionalScheduleDay(params.Params, paramEndsAt); err != nil {
 		return nil, err
 	}
 	if req.DocumentID, err = optionalID(params.Params, wfParamDocument); err != nil {
@@ -365,7 +365,7 @@ func renderLeaveCaseChange(
 func newUpdateLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 	properties := leaveCaseProperties()
 	properties[paramLeaveCaseID] = leaveCaseIDProperty()
-	properties[paramStartsOn] = dayProperty("The first day of leave.")
+	properties[paramStartsAt] = dayProperty("The first day of leave.")
 	spec := targeting(withSchema(wfSpec(
 		"update_leave_case",
 		"Correct or fill in a leave case as it goes: the kind, how it is taken, the dates, "+

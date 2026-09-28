@@ -20,7 +20,7 @@ const (
 	paramChecklistID       = "checklistId"
 	paramChecklistItemID   = "checklistItemId"
 	paramChecklistTemplate = "templateId"
-	paramStartedOn         = wfFieldStartDate
+	paramStartedAt         = wfFieldStartedAt
 	paramItemMove          = "action"
 	paramEvidenceDocument  = "evidenceDocumentId"
 	kindChecklist          = "checklist"
@@ -132,7 +132,7 @@ func newStartWorkerChecklistTool(checklists checklistKeeper) serviceports.AgentT
 		paramWorkerID: workerProperty(),
 		paramChecklistTemplate: idProperty("The template, from list_worker_checklists. Never " +
 			"guess one."),
-		paramStartedOn: dayProperty("The day it starts, which its items fall due from. " +
+		paramStartedAt: dayProperty("The day it starts, which its items fall due from. " +
 			"Defaults to today."),
 	}, paramWorkerID, paramChecklistTemplate)
 
@@ -150,7 +150,7 @@ func newStartWorkerChecklistTool(checklists checklistKeeper) serviceports.AgentT
 			if err != nil {
 				return nil, err
 			}
-			started, err := optionalScheduleDay(params.Params, paramStartedOn)
+			started, err := optionalScheduleDay(params.Params, paramStartedAt)
 			if err != nil {
 				return nil, err
 			}

@@ -19,8 +19,8 @@ const (
 	paramCredentialTypeID = "credentialTypeId" //nolint:gosec // G101: a parameter name, not a credential
 	paramCredentialNumber = "number"
 	paramIssuingAuthority = "issuingAuthority"
-	paramIssuedOn         = "issuedDate"
-	paramExpiresOn        = "expiresDate"
+	paramIssuedAt         = "issuedAt"
+	paramExpiresAt        = wfFieldExpiresAt
 	paramRenew            = "renew"
 	kindCredential        = "credential"
 	maxCredentialField    = 100
@@ -28,7 +28,7 @@ const (
 
 var credentialFields = []string{
 	wfFieldWorkerID, paramCredentialTypeID, fieldStatus, paramCredentialNumber,
-	paramIssuingAuthority, "issuedAt", wfFieldExpiresAt, wfFieldDocument, wfFieldNotes,
+	paramIssuingAuthority, paramIssuedAt, paramExpiresAt, wfFieldDocument, wfFieldNotes,
 	"verifiedById", "verifiedAt", "archivedAt", "archiveReason",
 }
 
@@ -104,8 +104,8 @@ func credentialFactProperties() map[string]any {
 			"exactly as printed.", maxCredentialField),
 		paramIssuingAuthority: stringProperty("Who issued it, such as the state.",
 			maxCredentialField),
-		paramIssuedOn:   dayProperty("When it was issued."),
-		paramExpiresOn:  dayProperty("When it expires."),
+		paramIssuedAt:   dayProperty("When it was issued."),
+		paramExpiresAt:  dayProperty("When it expires."),
 		wfParamDocument: wfDocumentProperty(),
 		fieldNotes:      wfNoteProperty("Anything the credential should say."),
 	}
@@ -130,12 +130,12 @@ func applyCredentialFacts(entity *worker.WorkerCredential, params map[string]any
 	} else if notes != nil {
 		entity.Notes = *notes
 	}
-	if issued, dayErr := optionalScheduleDay(params, paramIssuedOn); dayErr != nil {
+	if issued, dayErr := optionalScheduleDay(params, paramIssuedAt); dayErr != nil {
 		return dayErr
 	} else if issued != nil {
 		entity.IssuedAt = issued
 	}
-	if expires, dayErr := optionalScheduleDay(params, paramExpiresOn); dayErr != nil {
+	if expires, dayErr := optionalScheduleDay(params, paramExpiresAt); dayErr != nil {
 		return dayErr
 	} else if expires != nil {
 		entity.ExpiresAt = expires

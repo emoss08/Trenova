@@ -204,10 +204,10 @@ func TestUpdateEmploymentVerification_RecordsTheAnswer(t *testing.T) {
 	dqf := newFakeDQF()
 	tool := newUpdateEmploymentVerificationTool(dqf)
 	params := executeParams(map[string]any{
-		paramVerificationID: dqf.verification.ID.String(),
-		paramResponseOn:     "2026-09-24",
-		paramHadAccidents:   true,
-		paramAccidentCount:  float64(1),
+		paramVerificationID:  dqf.verification.ID.String(),
+		"responseReceivedAt": "2026-09-24",
+		paramHadAccidents:    true,
+		paramAccidentCount:   float64(1),
 	})
 
 	preview := previewWithoutWrites(t, dqf.guard, func() (*agent.ToolPreview, error) {

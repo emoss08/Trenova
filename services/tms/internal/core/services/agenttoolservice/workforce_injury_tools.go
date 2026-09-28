@@ -21,8 +21,8 @@ const (
 	paramIllnessType    = "illnessType"
 	paramTreatment      = "treatment"
 	paramInjuryStatus   = "status"
-	paramReportedOn     = "reportedDate"
-	paramReturnedOn     = "returnedToWorkDate"
+	paramReportedAt     = "reportedAt"
+	paramReturnedAt     = "returnedToWorkAt"
 	paramBodyPart       = "bodyPart"
 	paramHarmfulAgent   = "harmfulAgent"
 	paramDaysAway       = "daysAway"
@@ -31,8 +31,8 @@ const (
 	paramClaimStatus    = "claimStatus"
 	paramClaimNumber    = "claimNumber"
 	paramClaimCarrier   = "claimCarrier"
-	paramClaimFiledOn   = "claimFiledDate"
-	paramClaimClosedOn  = "claimClosedDate"
+	paramClaimFiledAt   = "claimFiledAt"
+	paramClaimClosedAt  = "claimClosedAt"
 	kindInjury          = "injury case"
 	maxInjuryDays       = 180
 	maxClaimField       = 150
@@ -131,8 +131,8 @@ func injuryDetailProperties() map[string]any {
 			oshaIllnessTypes,
 		),
 		paramTreatment:     agenttoolschema.Enum("The most care it took.", injuryTreatments),
-		paramReportedOn:    dayProperty("When the worker reported it."),
-		paramReturnedOn:    dayProperty("When the worker came back to work."),
+		paramReportedAt:    dayProperty("When the worker reported it."),
+		paramReturnedAt:    dayProperty("When the worker came back to work."),
 		paramEventLocation: stringProperty("Where it happened.", wfShortChars),
 		paramBodyPart:      stringProperty("The part of the body affected.", maxCredentialField),
 		paramHarmfulAgent: stringProperty("What harmed the worker, such as a load strap.",
@@ -149,7 +149,7 @@ func injuryDetailProperties() map[string]any {
 		),
 		paramClaimNumber:  stringProperty("The claim number.", maxCredentialField),
 		paramClaimCarrier: stringProperty("The workers' comp carrier.", maxClaimField),
-		paramClaimFiledOn: dayProperty("When the claim was filed."),
+		paramClaimFiledAt: dayProperty("When the claim was filed."),
 		paramSafetyEventID: idProperty(
 			"The accident it came from, from list_worker_safety_events.",
 		),
@@ -245,10 +245,10 @@ func injuryDaysFrom(params map[string]any, req *workerinjuryservice.UpdateInjury
 		key  string
 		dest **int64
 	}{
-		{paramReportedOn, &req.ReportedAt},
-		{paramReturnedOn, &req.ReturnedToWorkAt},
-		{paramClaimFiledOn, &req.ClaimFiledAt},
-		{paramClaimClosedOn, &req.ClaimClosedAt},
+		{paramReportedAt, &req.ReportedAt},
+		{paramReturnedAt, &req.ReturnedToWorkAt},
+		{paramClaimFiledAt, &req.ClaimFiledAt},
+		{paramClaimClosedAt, &req.ClaimClosedAt},
 	} {
 		if *field.dest, err = optionalScheduleDay(params, field.key); err != nil {
 			return err
@@ -362,7 +362,7 @@ func newUpdateWorkerInjuryTool(injuries injuryKeeper) serviceports.AgentTool {
 	properties := injuryDetailProperties()
 	properties[paramInjuryID] = injuryIDProperty()
 	properties[paramInjuryStatus] = agenttoolschema.Enum("Open or Closed.", injuryStatuses)
-	properties[paramClaimClosedOn] = dayProperty("When the claim closed.")
+	properties[paramClaimClosedAt] = dayProperty("When the claim closed.")
 	properties[wfParamOccurred] = dateTimeProperty("When it happened.")
 	properties[fieldDescription] = stringProperty("What happened and the injury.", wfNoteChars)
 	spec := targeting(withSchema(wfSpec(

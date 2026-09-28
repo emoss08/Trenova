@@ -13,7 +13,15 @@ type Binding struct {
 const (
 	patchLeavesIt = "a patch leaves the saved value alone, so the tool asks only for what changes"
 	shipmentIDArg = "the mutation takes the shipment as its own argument, beside the input"
+	versionField  = "version"
+	readVersion   = "the tool sends the version of the record it reads, which the approved " +
+		"preview pins"
 )
+
+func namedID(param string) string {
+	return "one id under two names: the input's, and " + param + ", the name the read " +
+		"tools hand it out under and the tool takes"
+}
 
 var Bindings = []Binding{
 	{
@@ -57,6 +65,160 @@ var Bindings = []Binding{
 		Tool:  "correct_charge_code",
 		Input: "ShipmentAdditionalChargeInput",
 		Param: "additionalCharges",
+	},
+	{
+		Tool:      "attach_worker_credential_document",
+		Input:     "AttachWorkerCredentialDocumentInput",
+		Defaulted: map[string]string{"id": namedID("credentialId")},
+		Extra:     map[string]string{"credentialId": namedID("credentialId")},
+	},
+	{
+		Tool:      "attach_worker_training_document",
+		Input:     "AttachWorkerTrainingDocumentInput",
+		Defaulted: map[string]string{"id": namedID("trainingRecordId")},
+		Extra:     map[string]string{"trainingRecordId": namedID("trainingRecordId")},
+	},
+	{
+		Tool:   "draft_performance_review",
+		Input:  "UpdatePerformanceReviewInput",
+		Nested: map[string]string{"ratings": "ReviewRatingInput", "goals": "ReviewGoalInput"},
+		Defaulted: map[string]string{
+			"id": namedID("reviewId"),
+			"ratings": "the tool merges the scores it is given into the review's current " +
+				"ratings and sends every item, so an item left out keeps what it has",
+			versionField: readVersion,
+		},
+		Extra: map[string]string{"reviewId": namedID("reviewId")},
+	},
+	{
+		Tool:  "give_worker_recognition",
+		Input: "WorkerRecognitionInput",
+	},
+	{
+		Tool:  "open_leave_case",
+		Input: "OpenLeaveCaseInput",
+	},
+	{
+		Tool:  "open_worker_safety_event",
+		Input: "WorkerSafetyEventInput",
+	},
+	{
+		Tool:  "record_employment_verification",
+		Input: "RecordEmploymentVerificationInput",
+	},
+	{
+		Tool:      "record_leave_day",
+		Input:     "RecordLeaveDayInput",
+		Defaulted: map[string]string{"caseId": namedID("leaveCaseId")},
+		Extra:     map[string]string{"leaveCaseId": namedID("leaveCaseId")},
+	},
+	{
+		Tool:  "record_safety_violation",
+		Input: "RecordSafetyViolationInput",
+	},
+	{
+		Tool:  "record_training_completion",
+		Input: "CompleteWorkerTrainingInput",
+		Extra: map[string]string{"trainingRecordId": namedID("trainingRecordId")},
+	},
+	{
+		Tool:  "record_worker_credential",
+		Input: "WorkerCredentialInput",
+	},
+	{
+		Tool:  "record_worker_injury",
+		Input: "RecordWorkerInjuryInput",
+	},
+	{
+		Tool:  "request_worker_pto",
+		Input: "CreateWorkerPTOInput",
+	},
+	{
+		Tool:  "schedule_dot_test",
+		Input: "RecordDOTTestInput",
+	},
+	{
+		Tool:  "start_performance_review",
+		Input: "CreatePerformanceReviewInput",
+	},
+	{
+		Tool:  "start_worker_checklist",
+		Input: "StartWorkerChecklistInput",
+	},
+	{
+		Tool:  "update_employment_verification",
+		Input: "UpdateEmploymentVerificationInput",
+	},
+	{
+		Tool:      "update_leave_case",
+		Input:     "UpdateLeaveCaseInput",
+		Defaulted: map[string]string{"caseId": namedID("leaveCaseId")},
+		Extra:     map[string]string{"leaveCaseId": namedID("leaveCaseId")},
+	},
+	{
+		Tool:      "update_leave_day",
+		Input:     "UpdateLeaveDayInput",
+		Defaulted: map[string]string{"entryId": namedID("leaveDayId")},
+		Extra:     map[string]string{"leaveDayId": namedID("leaveDayId")},
+	},
+	{
+		Tool:  "update_safety_violation",
+		Input: "UpdateSafetyViolationInput",
+		Defaulted: map[string]string{
+			"id":          namedID("violationId"),
+			"description": patchLeavesIt,
+		},
+		Extra: map[string]string{"violationId": namedID("violationId")},
+	},
+	{
+		Tool:      "update_worker_checklist_item",
+		Input:     "WorkerChecklistItemActionInput",
+		Defaulted: map[string]string{"id": namedID("checklistItemId")},
+		Extra: map[string]string{
+			"checklistItemId": namedID("checklistItemId"),
+			"action": "picks which item mutation runs: complete, skip and not applicable " +
+				"take this input, and reopen takes the item's id",
+		},
+	},
+	{
+		Tool:  "update_worker_credential",
+		Input: "UpdateWorkerCredentialInput",
+		Defaulted: map[string]string{
+			"id":         namedID("credentialId"),
+			versionField: readVersion,
+		},
+		Extra: map[string]string{"credentialId": namedID("credentialId")},
+	},
+	{
+		Tool:  "update_worker_injury",
+		Input: "UpdateWorkerInjuryInput",
+	},
+	{
+		Tool:  "update_worker_pto",
+		Input: "UpdateWorkerPTOInput",
+		Defaulted: map[string]string{
+			"id":         namedID("ptoId"),
+			versionField: readVersion,
+			"type":       patchLeavesIt,
+			"startDate":  patchLeavesIt,
+			"endDate":    patchLeavesIt,
+			"reason":     patchLeavesIt,
+		},
+		Extra: map[string]string{"ptoId": namedID("ptoId")},
+	},
+	{
+		Tool:  "update_worker_safety_event",
+		Input: "UpdateWorkerSafetyEventInput",
+		Defaulted: map[string]string{
+			"id":          namedID("safetyEventId"),
+			versionField:  readVersion,
+			"kind":        patchLeavesIt,
+			"severity":    patchLeavesIt,
+			"occurredAt":  patchLeavesIt,
+			"description": patchLeavesIt,
+			"points":      patchLeavesIt,
+		},
+		Extra: map[string]string{"safetyEventId": namedID("safetyEventId")},
 	},
 	{
 		Tool:   "create_invoice_memo",

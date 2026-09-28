@@ -168,7 +168,7 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 		}},
 		paramGoals: []any{map[string]any{
 			paramGoalTitle: "Finish hazmat training",
-			paramGoalDue:   "2027-03-31",
+			"dueAt":        "2027-03-31",
 		}},
 	})
 
@@ -186,6 +186,7 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 	assert.Equal(t, "Steady year", reviews.saved.Summary)
 	require.Len(t, reviews.saved.Goals, 1)
 	assert.Equal(t, worker.ReviewGoalStatusOpen, reviews.saved.Goals[0].Status)
+	require.NotNil(t, reviews.saved.Goals[0].DueAt)
 	assert.Equal(t, reviews.review.Version, reviews.saved.Version)
 
 	for name, raw := range map[string]map[string]any{

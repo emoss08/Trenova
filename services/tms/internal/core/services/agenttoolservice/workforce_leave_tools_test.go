@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -189,8 +190,9 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	params := executeParams(map[string]any{
 		paramWorkerID:         cases.lcase.WorkerID.String(),
 		paramLeaveType:        "Parental",
-		paramStartsOn:         "2026-10-05",
-		paramEndsOn:           "2026-11-13",
+		"startsAt":            "2026-10-05",
+		"endsAt":              "2026-11-13",
+		"requestedAt":         "2026-09-30",
 		paramEligibilityHours: float64(1800),
 	})
 
@@ -202,6 +204,8 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	require.NotNil(t, cases.opened)
 	assert.Equal(t, worker.LeaveTypeParental, cases.opened.LeaveType)
 	require.NotNil(t, cases.opened.EndsAt)
+	assert.Equal(t, time.Date(2026, time.September, 30, 0, 0, 0, 0, time.UTC).Unix(),
+		cases.opened.RequestedAt)
 	require.NotNil(t, cases.opened.EligibilityHoursWorked)
 	assert.Equal(t, int32(1800), *cases.opened.EligibilityHoursWorked)
 	assert.Equal(t, permission.ResourceWorkerLeave, tool.Policy().Resource)
@@ -209,13 +213,13 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramWorkerID: cases.lcase.WorkerID.String(),
-			paramStartsOn: "2026-10-05",
+			"startsAt":    "2026-10-05",
 		})), "validation runs the plan, which needs a leave type")
 	require.Error(t, tool.(serviceports.ToolValidator).Validate(t.Context(),
 		executeParams(map[string]any{
 			paramWorkerID:  cases.lcase.WorkerID.String(),
 			paramLeaveType: "FMLA",
-			paramStartsOn:  "10/05/2026",
+			"startsAt":     "10/05/2026",
 		})))
 }
 
@@ -226,7 +230,7 @@ func TestUpdateLeaveCase_KeepsWhatIsNotNamed(t *testing.T) {
 	tool := newUpdateLeaveCaseTool(cases)
 	params := executeParams(map[string]any{
 		paramLeaveCaseID: cases.lcase.ID.String(),
-		paramEndsOn:      "2026-10-30",
+		"endsAt":         "2026-10-30",
 	})
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -263,7 +267,7 @@ func TestRecordLeaveDay_SaysWhetherItCounts(t *testing.T) {
 	tool := newRecordLeaveDayTool(cases)
 	params := executeParams(map[string]any{
 		paramLeaveCaseID: cases.lcase.ID.String(),
-		paramUsedOn:      "2026-10-06",
+		"usedOn":         "2026-10-06",
 		paramLeaveHours:  "4.5",
 	})
 

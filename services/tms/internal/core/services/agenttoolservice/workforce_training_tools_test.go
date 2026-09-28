@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -269,9 +270,9 @@ func TestRecordTrainingCompletion_SaysWhetherItPassed(t *testing.T) {
 	training := newFakeTraining()
 	tool := newRecordTrainingCompletionTool(training)
 	params := executeParams(map[string]any{
-		paramTrainingID:  training.record.ID.String(),
-		paramCompletedOn: "2026-09-18",
-		paramScore:       "72",
+		paramTrainingID: training.record.ID.String(),
+		"completedAt":   "2026-09-18",
+		paramScore:      "72",
 	})
 
 	preview := previewWithoutWrites(t, training.guard, func() (*agent.ToolPreview, error) {
@@ -281,6 +282,8 @@ func TestRecordTrainingCompletion_SaysWhetherItPassed(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, training.completed)
 	assert.True(t, training.completed.Score.Valid)
+	assert.Equal(t, time.Date(2026, time.September, 18, 0, 0, 0, 0, time.UTC).Unix(),
+		training.completed.CompletedAt)
 
 	direct := executeParams(map[string]any{
 		paramWorkerID: training.record.WorkerID.String(),

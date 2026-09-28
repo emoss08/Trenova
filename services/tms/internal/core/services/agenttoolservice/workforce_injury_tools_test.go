@@ -164,8 +164,8 @@ func TestUpdateWorkerInjury_ChangesOnlyWhatIsNamed(t *testing.T) {
 	injuries := newFakeInjuries()
 	tool := newUpdateWorkerInjuryTool(injuries)
 	params := executeParams(map[string]any{
-		paramInjuryID:   injuries.injury.ID.String(),
-		paramReturnedOn: "2026-09-29",
+		paramInjuryID:      injuries.injury.ID.String(),
+		"returnedToWorkAt": "2026-09-29",
 	})
 
 	preview := previewWithoutWrites(t, injuries.guard, func() (*agent.ToolPreview, error) {
