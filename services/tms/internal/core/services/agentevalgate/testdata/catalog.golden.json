@@ -635,7 +635,8 @@
                     "Percent",
                     "Amount"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "shipment.chargeAllocationMethod"
                 },
                 "percent": {
                   "description": "The share as a percent such as 60, when method is Percent.",
@@ -980,7 +981,8 @@
                 "phone",
                 "email"
               ],
-              "type": "string"
+              "type": "string",
+              "x-enumOf": "carrierIntel.syncField"
             },
             "maxItems": 9,
             "type": "array"
@@ -3775,7 +3777,8 @@
               "PreviousBusinessDay",
               "NextBusinessDay"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "recurringShipment.exceptionPolicy"
           },
           "leadTimeDays": {
             "description": "How many days before each pickup its shipment is created.",
@@ -5037,9 +5040,11 @@
             "enum": [
               "Low",
               "Normal",
-              "High"
+              "High",
+              "Urgent"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "shipment.commentPriority"
           },
           "requiresAcknowledgment": {
             "description": "Whether the people it mentions must acknowledge it.",
@@ -5058,7 +5063,8 @@
               "Driver",
               "Accounting"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "shipment.commentVisibility"
           }
         },
         "required": [
@@ -13107,7 +13113,8 @@
                     "nextOccurrenceAt",
                     "createdAt"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_recurring_shipments.field"
                 },
                 "operator": {
                   "enum": [
@@ -13130,7 +13137,8 @@
                     "yesterday",
                     "tomorrow"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "list_recurring_shipments.operator"
                 },
                 "value": {
                   "type": "string"
@@ -13170,7 +13178,8 @@
               "nextOccurrenceAt",
               "createdAt"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list_recurring_shipments.sortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -13178,7 +13187,8 @@
               "asc",
               "desc"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
           }
         },
         "type": "object"
@@ -14637,7 +14647,8 @@
               "Stop",
               "Retry"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "billingTransfer.runAction"
           },
           "billingTransferRunId": {
             "description": "The billing transfer run, from transfer_to_billing's result. Never guess one.",
@@ -16483,7 +16494,8 @@
                     "Percent",
                     "Amount"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "shipment.chargeAllocationMethod"
                 },
                 "percent": {
                   "description": "The share as a percent such as 60, when method is Percent.",
@@ -16505,7 +16517,8 @@
               "Freight",
               "Accessorial"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "shipment.reassignableChargeKind"
           },
           "itemId": {
             "description": "The billing queue item, from list_billing_queue_items or get_billing_queue_item. Never guess one.",
@@ -19847,7 +19860,8 @@
                     "Percent",
                     "Amount"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "shipment.chargeAllocationMethod"
                 },
                 "percent": {
                   "description": "The share as a percent such as 60, when method is Percent.",
@@ -19919,7 +19933,8 @@
               "Paused",
               "Expired"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "recurringShipment.status"
           }
         },
         "required": [
@@ -20133,7 +20148,8 @@
               "Friday",
               "Saturday"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "time.weekday"
           },
           "note": {
             "description": "Why, in the worker's words where you have them.",
@@ -20147,7 +20163,8 @@
               "Available",
               "Unavailable"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "worker.availabilityPreference"
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
@@ -21472,7 +21489,8 @@
                     "Percent",
                     "Amount"
                   ],
-                  "type": "string"
+                  "type": "string",
+                  "x-enumOf": "shipment.chargeAllocationMethod"
                 },
                 "percent": {
                   "description": "The share as a percent such as 60, when method is Percent.",
@@ -21739,7 +21757,8 @@
               "PreviousBusinessDay",
               "NextBusinessDay"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "recurringShipment.exceptionPolicy"
           },
           "leadTimeDays": {
             "description": "How many days before each pickup its shipment is created.",
@@ -22351,7 +22370,8 @@
               "Advisory",
               "Blocking"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "holdReason.severity"
           },
           "shipmentId": {
             "description": "The shipment the hold is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
@@ -22539,7 +22559,8 @@
               "Trailer",
               "Straight"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "carrierIntel.unitType"
           },
           "vin": {
             "description": "The vehicle identification number.",
@@ -22593,7 +22614,8 @@
               "Lite",
               "Full"
             ],
-            "type": "string"
+            "type": "string",
+            "x-enumOf": "carrierIntel.lookupDepth"
           },
           "force": {
             "description": "Look up again even when the last result is still current. It is charged; only when the person asks.",
