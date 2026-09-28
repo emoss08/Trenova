@@ -86,6 +86,11 @@ func TestDriftFinding_OffersTheFixesTrenovaCanMake(t *testing.T) {
 			accountingsync.DriftCustomerBalanceMismatch,
 			[]accountingsync.DriftDirection{},
 		},
+		{
+			accountingsync.DriftObjectGLAccount,
+			accountingsync.DriftTrialBalanceMismatch,
+			[]accountingsync.DriftDirection{},
+		},
 	}
 	for _, tc := range cases {
 		finding := accountingsync.NewAccountingDriftFinding(driftObservation(tc.objectType, tc.kind))
@@ -224,4 +229,17 @@ func TestDriftFinding_DetailIsCapped(t *testing.T) {
 	}
 	finding := accountingsync.NewAccountingDriftFinding(obs)
 	assert.Len(t, finding.Detail, 50)
+}
+
+func TestTrialBalanceFindingsAreExplainedNotFixed(t *testing.T) {
+	t.Parallel()
+
+	finding := accountingsync.NewAccountingDriftFinding(
+		driftObservation(accountingsync.DriftObjectGLAccount, accountingsync.DriftTrialBalanceMismatch),
+	)
+	for _, direction := range accountingsync.AllDriftDirections() {
+		require.ErrorIs(t, finding.CanFix(direction), accountingsync.ErrDriftExplainOnly)
+	}
+	assert.True(t, finding.Kind.IsMoney())
+	assert.True(t, finding.Kind.IsBalance())
 }

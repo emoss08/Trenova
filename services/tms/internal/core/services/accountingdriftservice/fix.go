@@ -88,7 +88,8 @@ func fixError(err error) error {
 	switch {
 	case errors.Is(err, accountingsync.ErrDriftClosed):
 		return errortypes.NewValidationError("status", errortypes.ErrInvalidOperation, err.Error())
-	case errors.Is(err, accountingsync.ErrDriftFixUnavailable):
+	case errors.Is(err, accountingsync.ErrDriftFixUnavailable),
+		errors.Is(err, accountingsync.ErrDriftExplainOnly):
 		return errortypes.NewValidationError("direction", errortypes.ErrInvalid, err.Error())
 	case errors.Is(err, accountingsync.ErrDriftNoteRequired):
 		return errortypes.NewValidationError("note", errortypes.ErrRequired, err.Error())

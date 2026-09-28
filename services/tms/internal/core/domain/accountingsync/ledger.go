@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -207,4 +209,26 @@ func (r *AccountingSyncRecord) DayUpdate(revision int64) *AccountingSyncRecord {
 func (r *AccountingSyncRecord) IsOpeningBalances() bool {
 	return r.ObjectType == SyncObjectJournalSummary &&
 		strings.HasPrefix(r.ObjectID.String(), JournalOpeningPrefix)
+}
+
+func LedgerAccountRole(accountID pulid.ID, control *tenant.AccountingControl) string {
+	if control == nil || accountID.IsNil() {
+		return ""
+	}
+	switch accountID {
+	case control.DefaultARAccountID:
+		return AccountRoleAR
+	case control.DefaultRevenueAccountID:
+		return AccountRoleRevenue
+	case control.DefaultCashAccountID:
+		return AccountRoleDeposit
+	case control.DefaultWriteOffAccountID:
+		return AccountRoleWriteOff
+	case control.DefaultAPAccountID, control.DefaultSettlementsPayableAccountID:
+		return AccountRoleAP
+	case control.DefaultPurchasedTransportationAccountID:
+		return AccountRolePurchasedTransportation
+	default:
+		return ""
+	}
 }

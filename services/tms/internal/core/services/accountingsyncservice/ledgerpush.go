@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -82,28 +81,6 @@ func functionalCurrency(sess *pushSession) string {
 		}
 	}
 	return strings.ToUpper(strings.TrimSpace(sess.conn.ExternalHomeCurrency))
-}
-
-func ledgerRoleFor(accountID pulid.ID, control *tenant.AccountingControl) string {
-	if control == nil || accountID.IsNil() {
-		return ""
-	}
-	switch accountID {
-	case control.DefaultARAccountID:
-		return accountingsync.AccountRoleAR
-	case control.DefaultRevenueAccountID:
-		return accountingsync.AccountRoleRevenue
-	case control.DefaultCashAccountID:
-		return accountingsync.AccountRoleDeposit
-	case control.DefaultWriteOffAccountID:
-		return accountingsync.AccountRoleWriteOff
-	case control.DefaultAPAccountID, control.DefaultSettlementsPayableAccountID:
-		return accountingsync.AccountRoleAP
-	case control.DefaultPurchasedTransportationAccountID:
-		return accountingsync.AccountRolePurchasedTransportation
-	default:
-		return ""
-	}
 }
 
 func journalLines(journal *repositories.LedgerJournal) []ledgerLine {
@@ -526,7 +503,7 @@ func (s *Service) ledgerAccounts(
 		externalID, err := s.accountRef(ctx, res, &accountRefRequest{
 			accountID: line.accountID,
 			label:     line.accountLabel,
-			role:      ledgerRoleFor(line.accountID, sess.control),
+			role:      accountingsync.LedgerAccountRole(line.accountID, sess.control),
 			missing:   "A journal line has no GL account",
 		})
 		if err != nil {

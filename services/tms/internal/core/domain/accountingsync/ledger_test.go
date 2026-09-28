@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -200,4 +202,28 @@ func TestBackfillsOnlyWhatTheModeSendsAndDaysOnlyWhenSummed(t *testing.T) {
 	assert.False(t, detailed.Backfills(SyncObjectCarrierBill))
 	assert.False(t, daily.Backfills(SyncObjectJournalEntry))
 	assert.True(t, daily.Backfills(SyncObjectJournalSummary))
+}
+
+func TestLedgerAccountRoleFollowsTheDefaultAccounts(t *testing.T) {
+	control := &tenant.AccountingControl{
+		DefaultARAccountID:                      pulid.MustNew("gla_"),
+		DefaultRevenueAccountID:                 pulid.MustNew("gla_"),
+		DefaultCashAccountID:                    pulid.MustNew("gla_"),
+		DefaultWriteOffAccountID:                pulid.MustNew("gla_"),
+		DefaultAPAccountID:                      pulid.MustNew("gla_"),
+		DefaultSettlementsPayableAccountID:      pulid.MustNew("gla_"),
+		DefaultPurchasedTransportationAccountID: pulid.MustNew("gla_"),
+	}
+	assert.Equal(t, AccountRoleAR, LedgerAccountRole(control.DefaultARAccountID, control))
+	assert.Equal(t, AccountRoleRevenue, LedgerAccountRole(control.DefaultRevenueAccountID, control))
+	assert.Equal(t, AccountRoleDeposit, LedgerAccountRole(control.DefaultCashAccountID, control))
+	assert.Equal(t, AccountRoleWriteOff, LedgerAccountRole(control.DefaultWriteOffAccountID, control))
+	assert.Equal(t, AccountRoleAP, LedgerAccountRole(control.DefaultAPAccountID, control))
+	assert.Equal(t, AccountRoleAP, LedgerAccountRole(control.DefaultSettlementsPayableAccountID, control))
+	assert.Equal(t, AccountRolePurchasedTransportation,
+		LedgerAccountRole(control.DefaultPurchasedTransportationAccountID, control))
+	assert.Empty(t, LedgerAccountRole(pulid.MustNew("gla_"), control))
+	assert.Empty(t, LedgerAccountRole(pulid.Nil, &tenant.AccountingControl{}),
+		"an unset default does not match an unset account")
+	assert.Empty(t, LedgerAccountRole(control.DefaultARAccountID, nil))
 }

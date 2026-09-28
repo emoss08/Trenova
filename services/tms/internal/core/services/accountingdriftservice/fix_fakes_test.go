@@ -278,12 +278,16 @@ func (f *fakePayments) ApplyCreditMemo(
 
 type fakeControls struct {
 	repositories.AccountingControlRepository
-	tolerance string
+	tolerance  string
+	functional string
+	cash       pulid.ID
 }
 
 func (f *fakeControls) GetByOrgID(context.Context, pulid.ID) (*tenant.AccountingControl, error) {
 	return &tenant.AccountingControl{
 		ReconciliationToleranceAmount: decimal.RequireFromString(f.tolerance),
+		FunctionalCurrencyCode:        f.functional,
+		DefaultCashAccountID:          f.cash,
 	}, nil
 }
 
