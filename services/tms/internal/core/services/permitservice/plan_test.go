@@ -52,3 +52,25 @@ func TestPlanPermit_ChecksWithoutWriting(t *testing.T) {
 	_, err = svc.PlanUpdatePermit(t.Context(), &elsewhere)
 	require.Error(t, err, "a permit is updated on the shipment it belongs to")
 }
+
+func TestUpdatePermit_RefusesAPermitFromAnotherShipment(t *testing.T) {
+	stored := activePermit()
+	svc := &service{
+		permitRepo: &permitRepoStub{
+			getByID: func(*repositories.GetPermitByIDRequest) (*permit.Permit, error) {
+				copied := *stored
+				return &copied, nil
+			},
+			update: func(*permit.Permit) (*permit.Permit, error) {
+				t.Fatal("a permit from another shipment must not be updated")
+				return nil, nil
+			},
+		},
+		l: zap.NewNop(),
+	}
+
+	elsewhere := *stored
+	elsewhere.ShipmentID = pulid.MustNew("shp_")
+	_, err := svc.UpdatePermit(t.Context(), &elsewhere, nil)
+	require.Error(t, err)
+}

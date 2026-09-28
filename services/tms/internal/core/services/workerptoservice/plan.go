@@ -42,9 +42,6 @@ func (s *Service) requireNoOverlap(
 	return nil
 }
 
-// prepareCreate checks a new request and fills its days. It reports whether
-// the worker's policy approves it on the spot, which is when it is booked and
-// the driver told at once.
 func (s *Service) prepareCreate(
 	ctx context.Context,
 	entity *worker.WorkerPTO,
@@ -74,8 +71,6 @@ func (s *Service) prepareCreate(
 	return autoApprove, nil
 }
 
-// PlanCreate is the request Create would file, with its days counted and its
-// status as the worker's policy leaves it, without filing it.
 func (s *Service) PlanCreate(
 	ctx context.Context,
 	entity *worker.WorkerPTO,
@@ -132,8 +127,6 @@ func (s *Service) prepareUpdate(
 	return current, nil
 }
 
-// PlanUpdate is what Update would leave a request that still awaits a
-// decision as.
 func (s *Service) PlanUpdate(ctx context.Context, entity *worker.WorkerPTO) (*PTOChange, error) {
 	planned := *entity
 	current, err := s.prepareUpdate(ctx, &planned)

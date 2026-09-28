@@ -19,8 +19,6 @@ type (
 	EntryChange = services.RecordChange[worker.DOTRandomDrawEntry]
 )
 
-// PlanRecordTest is the test RecordTest would file, checked and filled in the
-// same way, without writing it.
 func (s *Service) PlanRecordTest(
 	ctx context.Context,
 	entity *worker.WorkerDOTTest,
@@ -71,9 +69,6 @@ func (s *Service) PlanCancelTest(
 	return &TestChange{Before: original, After: &entity}, nil
 }
 
-// PlanRunDraw is the round RunDraw would draw: the pool, the period, the pool
-// size and each substance's target. Nobody is selected until the round is
-// drawn, so the plan names no one and carries no seed.
 func (s *Service) PlanRunDraw(
 	ctx context.Context,
 	req *RunDrawRequest,
@@ -161,9 +156,6 @@ func (s *Service) PlanUpdateDrawEntry(
 		return nil, err
 	}
 
-	// Completion is not a status somebody sets by hand: it is what recording
-	// the collection against the selection means, so leaving it to the test
-	// keeps the entry and the test from ever disagreeing.
 	if req.Status == worker.RandomEntryCompleted {
 		return nil, errortypes.NewValidationError(
 			"status",

@@ -17,15 +17,12 @@ type (
 	ItemChange      = services.RecordChange[worker.WorkerChecklistItem]
 )
 
-// StartPlan is what Start would do: open a checklist from the template, or
-// hand back the one already open (Existing).
 type StartPlan struct {
 	Checklist *worker.WorkerChecklist
 	Template  *worker.WorkerChecklistTemplate
 	Existing  bool
 }
 
-// ItemPlan is a change to one item and the checklist it sits on.
 type ItemPlan struct {
 	Item      ItemChange
 	Checklist *worker.WorkerChecklist
@@ -222,8 +219,6 @@ func (s *Service) planSettleItem(
 	}, nil
 }
 
-// PlanReopenItem is what ReopenItem would leave the item as. An item that is
-// still pending is left alone.
 func (s *Service) PlanReopenItem(ctx context.Context, req *ReopenItemRequest) (*ItemPlan, error) {
 	original, checklist, err := s.loadItem(ctx, req)
 	if err != nil {
@@ -243,8 +238,6 @@ func (s *Service) PlanReopenItem(ctx context.Context, req *ReopenItemRequest) (*
 	}, nil
 }
 
-// PlanCancel is what Cancel would leave the checklist as. A checklist already
-// closed is left alone.
 func (s *Service) PlanCancel(ctx context.Context, req *CancelRequest) (*ChecklistChange, error) {
 	original, err := s.repo.GetByID(ctx, &repositories.GetWorkerChecklistByIDRequest{
 		ID:           req.ID,

@@ -28,16 +28,12 @@ func validateAdjust(req *AdjustRequest) error {
 	return nil
 }
 
-// AdjustPlan is the entry Adjust would post and the balance on either side of
-// it, as the ledger stands now.
 type AdjustPlan struct {
 	Entry         *worker.WorkerPTOLedgerEntry
 	BalanceBefore decimal.Decimal
 	BalanceAfter  decimal.Decimal
 }
 
-// PlanAdjust checks an adjustment as Adjust does and projects it onto the
-// worker's current balance of that type, posting nothing.
 func (s *Service) PlanAdjust(ctx context.Context, req *AdjustRequest) (*AdjustPlan, error) {
 	if err := validateAdjust(req); err != nil {
 		return nil, err

@@ -16,8 +16,6 @@ import (
 
 type ReviewChange = services.RecordChange[worker.PerformanceReview]
 
-// PlanCreateReview is the draft CreateReview would open, with its template,
-// without opening it.
 func (s *Service) PlanCreateReview(
 	ctx context.Context,
 	req *CreateReviewRequest,
@@ -65,7 +63,6 @@ func (s *Service) PlanCreateReview(
 	return entity, nil
 }
 
-// PlanUpdateReview is what UpdateReview would save on the draft.
 func (s *Service) PlanUpdateReview(
 	ctx context.Context,
 	req *UpdateReviewRequest,
@@ -106,8 +103,6 @@ func (s *Service) PlanUpdateReview(
 	return &ReviewChange{Before: original, After: &updated}, nil
 }
 
-// PlanDeleteReview is the draft DeleteReview would remove; anything past a
-// draft is refused.
 func (s *Service) PlanDeleteReview(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

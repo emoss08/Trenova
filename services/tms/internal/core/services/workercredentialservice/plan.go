@@ -14,8 +14,6 @@ import (
 
 type CredentialChange = services.RecordChange[worker.WorkerCredential]
 
-// CreatePlan is what Create would file: the credential with its type, and the
-// active credential of the same type a renewal would archive.
 type CreatePlan struct {
 	Credential *worker.WorkerCredential
 	Superseded *worker.WorkerCredential
@@ -35,9 +33,6 @@ func (s *Service) prepareCreate(
 	return credentialType, nil
 }
 
-// PlanCreate checks and fills the credential as Create does, without filing it.
-// A worker already holding an active credential of the type is refused unless
-// the call renews it, which is what the database would refuse.
 func (s *Service) PlanCreate(ctx context.Context, req *CreateRequest) (*CreatePlan, error) {
 	entity := *req.Entity
 	credentialType, err := s.prepareCreate(ctx, &entity)
@@ -115,8 +110,6 @@ func (s *Service) planUpdate(
 	return &CredentialChange{Before: original, After: entity}, credentialType, nil
 }
 
-// PlanUpdate is what Update would leave the credential as; changing a fact a
-// verifier vouched for clears the verification.
 func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *worker.WorkerCredential,
@@ -130,8 +123,6 @@ func (s *Service) PlanUpdate(
 	return change, nil
 }
 
-// PlanArchive is what Archive would leave the credential as. One already
-// archived is left alone.
 func (s *Service) PlanArchive(ctx context.Context, req *StatusRequest) (*CredentialChange, error) {
 	original, err := s.loadForChange(ctx, req)
 	if err != nil {
@@ -148,8 +139,6 @@ func (s *Service) PlanArchive(ctx context.Context, req *StatusRequest) (*Credent
 	return &CredentialChange{Before: original, After: &updated}, nil
 }
 
-// PlanAttachDocument is what AttachDocument would leave the credential as,
-// with the document on After.
 func (s *Service) PlanAttachDocument(
 	ctx context.Context,
 	req *AttachDocumentRequest,

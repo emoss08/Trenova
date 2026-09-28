@@ -269,9 +269,6 @@ type drawPlan struct {
 	draw       *worker.DOTRandomDraw
 }
 
-// planDraw settles everything about a round except who is picked: the pool,
-// the period, who is eligible and how many each substance needs. The names
-// are chosen only when the round is drawn, under a seed nobody sees first.
 func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan, error) {
 	pool, err := s.resolvePool(ctx, req.TenantInfo, req.PoolID)
 	if err != nil {

@@ -34,7 +34,6 @@ func (s *Service) prepareOpenCase(
 	return s.prepareCase(entity)
 }
 
-// PlanOpenCase is the case OpenCase would file, without filing it.
 func (s *Service) PlanOpenCase(
 	ctx context.Context,
 	entity *worker.WorkerLeaveCase,
@@ -75,8 +74,6 @@ func (s *Service) PlanUpdateCase(ctx context.Context, req *UpdateCaseRequest) (*
 	return &CaseChange{Before: original, After: entity}, nil
 }
 
-// PlanCloseCase is what CloseCase would leave the case as. A case already
-// closed is left alone.
 func (s *Service) PlanCloseCase(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -140,7 +137,6 @@ func (s *Service) PlanRequestCertification(
 	return &CaseChange{Before: original, After: entity}, nil
 }
 
-// PlanRecordDay is the day RecordDay would add to the case.
 func (s *Service) PlanRecordDay(
 	ctx context.Context,
 	req *RecordDayRequest,

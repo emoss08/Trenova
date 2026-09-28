@@ -13,15 +13,11 @@ import (
 
 type ExportChange = services.RecordChange[worker.PayrollExport]
 
-// ExportPlan is the payroll run GenerateExport would make and the approved
-// weeks it would lock into it.
 type ExportPlan struct {
 	Export       *worker.PayrollExport
 	TimesheetIDs []pulid.ID
 }
 
-// PlanGenerateExport totals the approved weeks in the period that have not
-// gone to payroll, as GenerateExport would, locking nothing.
 func (s *Service) PlanGenerateExport(
 	ctx context.Context,
 	req *GenerateExportRequest,
@@ -73,8 +69,6 @@ func (s *Service) PlanGenerateExport(
 	return &ExportPlan{Export: export, TimesheetIDs: ids}, nil
 }
 
-// PlanVoidExport is what VoidExport would leave the run as; a run already
-// voided is refused.
 func (s *Service) PlanVoidExport(ctx context.Context, req *VoidExportRequest) (*ExportChange, error) {
 	original, err := s.repo.GetExportByID(ctx, &repositories.GetPayrollExportByIDRequest{
 		ID:         req.ID,

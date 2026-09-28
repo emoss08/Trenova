@@ -30,8 +30,6 @@ func (s *Service) prepareRecord(
 	return s.prepare(entity)
 }
 
-// PlanRecordVerification is the previous employer RecordVerification would
-// file, without filing it.
 func (s *Service) PlanRecordVerification(
 	ctx context.Context,
 	entity *worker.WorkerEmploymentVerification,
@@ -71,8 +69,6 @@ func (s *Service) PlanUpdateVerification(
 	return &VerificationChange{Before: original, After: &entity}, nil
 }
 
-// PlanMarkRequested is what MarkRequested would record: the request went out
-// now.
 func (s *Service) PlanMarkRequested(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

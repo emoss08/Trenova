@@ -16,8 +16,6 @@ import (
 
 type RecordChange = services.RecordChange[worker.WorkerTrainingRecord]
 
-// PlanAssign is the record Assign would open, with its course, without
-// opening it.
 func (s *Service) PlanAssign(
 	ctx context.Context,
 	req *AssignRequest,
@@ -67,8 +65,6 @@ func (s *Service) PlanAssign(
 	return entity, nil
 }
 
-// BulkAssignPlan is what BulkAssign would do with each worker and course:
-// open a record, leave one already open, or refuse the pair.
 type BulkAssignPlan struct {
 	Records []*worker.WorkerTrainingRecord
 	Skipped []BulkAssignOutcome
@@ -120,8 +116,6 @@ func (s *Service) PlanBulkAssign(
 	return plan, nil
 }
 
-// PlanAssignRequired is the required courses AssignRequired would open for
-// the worker: every one they are missing, have failed or have let lapse.
 func (s *Service) PlanAssignRequired(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -138,8 +132,6 @@ func (s *Service) PlanAssignRequired(
 	return summary.RequiredGaps(), nil
 }
 
-// PlanComplete is the record Complete would leave, graded the same way. Before
-// is nil when the completion would file a new record.
 func (s *Service) PlanComplete(ctx context.Context, req *CompleteRequest) (*RecordChange, error) {
 	record, original, err := s.openRecordFor(ctx, req)
 	if err != nil {

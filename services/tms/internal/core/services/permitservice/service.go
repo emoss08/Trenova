@@ -563,29 +563,12 @@ func (s *service) UpdatePermit(
 	entity *permit.Permit,
 	actor *services.RequestActor,
 ) (*permit.Permit, error) {
-	if err := validatePermit(entity); err != nil {
+	change, err := s.PlanUpdatePermit(ctx, entity)
+	if err != nil {
 		return nil, err
 	}
 
-	// Read the row before overwriting it so the audit entry carries a real diff.
-	// "Permit updated" without a before-state is close to useless when the
-	// question months later is whether an expiry was extended after the fact.
-	// A read failure loses the diff, not the write or the audit entry.
-	var previous *permit.Permit
-	if existing, readErr := s.permitRepo.GetByID(ctx, &repositories.GetPermitByIDRequest{
-		PermitID: entity.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	}); readErr != nil {
-		s.l.Warn("failed to read permit before update; audit entry will carry no diff",
-			zap.String("permitId", entity.ID.String()), zap.Error(readErr))
-	} else {
-		previous = existing
-	}
-
-	updated, err := s.permitRepo.Update(ctx, entity)
+	updated, err := s.permitRepo.Update(ctx, change.After)
 	if err != nil {
 		return nil, err
 	}
@@ -597,7 +580,7 @@ func (s *service) UpdatePermit(
 		BusinessUnitID: updated.BusinessUnitID,
 		Operation:      permission.OpUpdate,
 		Actor:          actor.AuditActorOrSystem(),
-		Previous:       previous,
+		Previous:       change.Before,
 		Current:        updated,
 		Comment:        "Permit updated",
 	})

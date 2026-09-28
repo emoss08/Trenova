@@ -332,7 +332,7 @@ func (s *Service) DeleteInjury(
 	return nil
 }
 
-func applyInjuryUpdate(entity *worker.WorkerInjury, req *UpdateInjuryRequest) {
+func ApplyInjuryUpdate(entity *worker.WorkerInjury, req *UpdateInjuryRequest) {
 	if req.Classification != nil {
 		entity.Classification = *req.Classification
 	}

@@ -17,8 +17,6 @@ type (
 	ViolationChange = services.RecordChange[worker.WorkerSafetyViolation]
 )
 
-// PlanCreateEvent is the event CreateEvent would record, checked and filled
-// in the same way, without writing it.
 func (s *Service) PlanCreateEvent(
 	ctx context.Context,
 	entity *worker.WorkerSafetyEvent,
@@ -31,7 +29,6 @@ func (s *Service) PlanCreateEvent(
 	return &planned, nil
 }
 
-// PlanUpdateEvent is what UpdateEvent would leave the event as.
 func (s *Service) PlanUpdateEvent(
 	ctx context.Context,
 	entity *worker.WorkerSafetyEvent,
@@ -58,8 +55,6 @@ func (s *Service) PlanReopenEvent(
 	return s.planMoveEvent(ctx, req, worker.SafetyEventStatusOpen)
 }
 
-// PlanDeleteEvent is the event DeleteEvent would remove, refused as the
-// delete refuses it.
 func (s *Service) PlanDeleteEvent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -82,7 +77,6 @@ func (s *Service) PlanDeleteEvent(
 	return original, nil
 }
 
-// PlanGiveRecognition is the recognition GiveRecognition would record.
 func (s *Service) PlanGiveRecognition(
 	ctx context.Context,
 	entity *worker.WorkerRecognition,
@@ -106,8 +100,6 @@ func (s *Service) PlanDeleteRecognition(
 	})
 }
 
-// PlanRecordViolation is the violation RecordViolation would cite, with the
-// worker taken from the event and the BASIC filled in.
 func (s *Service) PlanRecordViolation(
 	ctx context.Context,
 	req *RecordViolationRequest,
@@ -184,7 +176,7 @@ func (s *Service) PlanUpdateViolation(
 	return &ViolationChange{Before: original, After: &entity}, nil
 }
 
-func (s *Service) PlanDeleteViolation(
+func (s *Service) GetViolation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
@@ -193,4 +185,12 @@ func (s *Service) PlanDeleteViolation(
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
+}
+
+func (s *Service) PlanDeleteViolation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+) (*worker.WorkerSafetyViolation, error) {
+	return s.GetViolation(ctx, tenantInfo, id)
 }

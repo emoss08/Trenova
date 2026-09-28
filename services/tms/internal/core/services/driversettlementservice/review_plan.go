@@ -19,16 +19,11 @@ type (
 	ExpenseChange = serviceports.RecordChange[driverpay.Expense]
 )
 
-// ResolveDisputePlan is what ResolveDispute would decide, and the settlement
-// an approving adjustment would land on: the driver's open draft, or a new
-// off-cycle settlement when AdjustmentTarget is nil.
 type ResolveDisputePlan struct {
 	Dispute          DisputeChange
 	AdjustmentTarget *driversettlement.Settlement
 }
 
-// ReviewExpensePlan is what ReviewExpense would decide, and the settlement an
-// approved reimbursement would land on, as ResolveDisputePlan does.
 type ReviewExpensePlan struct {
 	ExpenseChange
 

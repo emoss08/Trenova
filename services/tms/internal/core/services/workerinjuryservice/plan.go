@@ -42,8 +42,6 @@ func (s *Service) prepareRecord(
 	return s.prepare(entity)
 }
 
-// PlanRecordInjury is the case RecordInjury would enter on the log, with the
-// case number it would take, without entering it.
 func (s *Service) PlanRecordInjury(
 	ctx context.Context,
 	entity *worker.WorkerInjury,
@@ -68,7 +66,7 @@ func (s *Service) PlanUpdateInjury(
 		return nil, err
 	}
 	entity := *original
-	applyInjuryUpdate(&entity, req)
+	ApplyInjuryUpdate(&entity, req)
 	if err = s.prepare(&entity); err != nil {
 		return nil, err
 	}
