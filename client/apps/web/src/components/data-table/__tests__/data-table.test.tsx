@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
@@ -80,6 +80,24 @@ vi.mock("@/lib/data-table", async (importOriginal) => ({
   initializeFilterItemsFromFilterGroups: () => [],
   updateSortField: (_sort: unknown, field: string, direction: unknown) => [{ field, direction }],
 }));
+
+// The toolbar lazy-loads its panels, and nothing here waits for them, so
+// each module graph finished loading in the background of whichever test
+// happened to be running and held its event loop for seconds. On a loaded
+// CI runner that pushed an unrelated cursor test past its timeout. Loading
+// them once, up front, keeps that cost out of every test.
+beforeAll(async () => {
+  await Promise.all([
+    import("@/components/data-table/data-table-search"),
+    import("@/components/data-table/data-table-filter-builder"),
+    import("@/components/data-table/data-table-sort-builder"),
+    import("@/components/data-table/data-table-format-builder"),
+    import("@/components/data-table/data-table-display-menu"),
+    import("@/components/data-table/data-table-config-manager"),
+    import("@/components/data-table/data-table-export-dialog"),
+    import("@/components/data-table/data-table-ask"),
+  ]);
+}, 60_000);
 
 function createQueryClient() {
   return new QueryClient({
