@@ -68,15 +68,15 @@ Callable after find_tools:
 - get_rate_matrix — Retrieve one rate matrix by id: the grid of rates a lane rule prices from.
 - get_fuel_surcharge_rates — Read this week's fuel surcharge rate for every active fuel program.
 - explain_rate — Explain how a saved shipment's rate was arrived at: the agreement and rule that priced it and every charge with its arithmetic.
-- list_rate_imports — List rate sheets uploaded against rate agreements, newest first, with the agreement, the day the new rates take effect, and how many lanes the sheet adds, changes and removes.
+- list_rate_imports — List rate sheets uploaded against rate agreements, newest first, with the agreement and the day the new rates take effect.
 - list_fuel_index_prices — List the prices on file for one fuel index, newest first, with the day each applies to and whether a person entered it or it was fetched.
 - draft_rate_agreement — Draft a rate agreement with a customer or a carrier from a rate sheet or a quote the person agreed: its code, name, dates, currency and lanes.
 - revise_rate_agreement_draft — Rewrite a draft rate agreement before it is submitted: its header terms or its lanes.
-- duplicate_rate_agreement — Copy a rate agreement with its lanes, weight breaks, accessorials and fuel terms into a new draft with none of the original's history or approvals, to start a renewal.
+- duplicate_rate_agreement — Copy a rate agreement with its lanes, weight breaks, accessorials and fuel terms into a new draft, to start a renewal.
 - submit_rate_agreement — Submit a draft rate agreement for review.
 - suspend_rate_agreement — Propose suspending an active rate agreement, such as for a customer on credit hold, with the reason.
 - resume_rate_agreement — Propose putting a suspended rate agreement back in service without another approval round.
-- commit_rate_import — Propose applying a reviewed rate sheet to its agreement: the lanes it changes and drops are closed out and its new rates take effect on the import's day, keeping the old rates in history.
+- commit_rate_import — Propose applying a reviewed rate sheet to its agreement from the import's day.
 - discard_rate_import — Discard a rate sheet that was read and should not be applied, such as last month's file uploaded again.
 - run_rate_simulation — Replay past shipments against a rate agreement, usually a draft, to see what it would have charged or paid next to what they actually were.
 - record_fuel_index_price — Propose recording a published price on a custom fuel index, such as a customer's own index or a rack price the organization tracks.

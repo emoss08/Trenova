@@ -63,10 +63,10 @@ Callable after find_tools:
 - explain_rate — Explain how a saved shipment's rate was arrived at: the agreement and rule that priced it and every charge with its arithmetic.
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - list_locations — List locations (facilities, terminals, yards) narrowed by status, code, name or city.
-- list_rate_imports — List rate sheets uploaded against rate agreements, newest first, with the agreement, the day the new rates take effect, and how many lanes the sheet adds, changes and removes.
+- list_rate_imports — List rate sheets uploaded against rate agreements, newest first, with the agreement and the day the new rates take effect.
 - list_fuel_index_prices — List the prices on file for one fuel index, newest first, with the day each applies to and whether a person entered it or it was fetched.
 - revise_rate_agreement_draft — Rewrite a draft rate agreement before it is submitted: its header terms or its lanes.
-- duplicate_rate_agreement — Copy a rate agreement with its lanes, weight breaks, accessorials and fuel terms into a new draft with none of the original's history or approvals, to start a renewal.
+- duplicate_rate_agreement — Copy a rate agreement with its lanes, weight breaks, accessorials and fuel terms into a new draft, to start a renewal.
 - submit_rate_agreement — Submit a draft rate agreement for review.
 - resume_rate_agreement — Propose putting a suspended rate agreement back in service without another approval round.
 - archive_rate_agreement — Propose retiring a rate agreement for good.
