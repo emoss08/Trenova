@@ -58,7 +58,7 @@ Loaded now:
 - adjust_invoice_run_membership
 
 Callable after find_tools:
-- get_shipment — Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments.
+- get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
 - list_billing_transfer_candidates — List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers.
 - transfer_to_billing — Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews.
@@ -76,7 +76,7 @@ Callable after find_tools:
 - list_reports — List the reports this organization can run and what each takes: built-in ones with a reportKey, and ones saved in the report builder with a definitionId.
 - describe_report — Show what a report contains: its dataset, columns, filters, sort, parameters and the full definition as the report builder saves it.
 - preview_report — Run a report definition now and see its first rows, without saving it or producing a file.
-- run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId.
+- run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads.
 - get_report_run — Check on a report started by run_report, when the person asks a question about the run that its own progress display does not answer.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - add_shipment_comment — Leave a note on a shipment's comment thread, where dispatch will read it.

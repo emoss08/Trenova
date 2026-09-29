@@ -201,11 +201,11 @@ func newOpenPageTool(guide serviceports.ProductGuide) serviceports.AgentQueryToo
 func (t *openPageTool) Name() string { return "open_page" }
 
 func (t *openPageTool) Description() string {
-	return "Take the person to a page or a record in Trenova: the app moves there as soon as " +
-		"you call it. Use it only when they ask to be taken, opened or shown somewhere. Pass " +
-		"a page's path from find_in_trenova, or a record's entity and id from the tool that " +
-		"found it; action create opens the page's create form. It refuses a page they may " +
-		"not open."
+	return "Take the person to a page or a record in Trenova, such as the shipments page or " +
+		"one customer: the app moves there as soon as you call it. Use it only when they " +
+		"ask to be taken, opened or shown somewhere. Pass a page's path from " +
+		"find_in_trenova, or a record's entity and id from the tool that found it; action " +
+		"create opens the page's create form. It refuses a page they may not open."
 }
 
 func (t *openPageTool) ParamSchema() map[string]any {

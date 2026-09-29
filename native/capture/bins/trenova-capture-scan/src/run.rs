@@ -6,11 +6,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use capture_imaging::scan::{ScanEnd, ScanSettings, ScannedPage};
-use capture_imaging::{PixelFormat, binarize, encode_page};
+use capture_imaging::{PagePreview, PixelFormat, binarize, encode_page, preview};
 use capture_protocol::api::{PixelType, RequestFailureCode, Settings, SourceInfo, SourceProtocol};
 use capture_protocol::helper::{
-    Frame, HelperCommand, HelperEvent, PageMeta, ScanCondition, ScanJob, read_frame, write_bytes,
-    write_message,
+    Frame, HelperCommand, HelperEvent, MAX_PREVIEW_BYTES, PageMeta, ScanCondition, ScanJob,
+    read_frame, write_bytes, write_message,
 };
 use capture_twain::win::{Canceller, LibraryDsm, WindowPump};
 use capture_twain::{AppIdentity, Manager, TwainError};
@@ -32,10 +32,20 @@ impl Pipe {
         write_message(&mut *out, event).map_err(|e| e.to_string())
     }
 
-    fn send_page(&self, meta: PageMeta, pdf: &[u8]) -> Result<(), String> {
+    fn send_page(
+        &self,
+        mut meta: PageMeta,
+        pdf: &[u8],
+        pictures: Option<&PagePreview>,
+    ) -> Result<(), String> {
+        meta.preview = pictures.is_some();
         let mut out = self.0.lock().unwrap_or_else(PoisonError::into_inner);
         write_message(&mut *out, &HelperEvent::Page(meta)).map_err(|e| e.to_string())?;
         write_bytes(&mut *out, pdf).map_err(|e| e.to_string())?;
+        if let Some(pictures) = pictures {
+            write_bytes(&mut *out, &pictures.thumb).map_err(|e| e.to_string())?;
+            write_bytes(&mut *out, &pictures.view).map_err(|e| e.to_string())?;
+        }
         out.flush().map_err(|e| e.to_string())
     }
 
@@ -84,6 +94,10 @@ pub fn run() -> ExitCode {
 fn enumerate(pipe: &Pipe) {
     let mut sources = match twain_sources() {
         Ok(sources) => sources,
+        Err(err @ TwainError::Load(_)) => {
+            tracing::info!(reason = %err, "no TWAIN drivers on this computer; WIA scanners are still listed");
+            Vec::new()
+        }
         Err(err) => {
             tracing::warn!(error = %err, "no TWAIN sources");
             Vec::new()
@@ -178,8 +192,15 @@ fn deliver(
         },
         patch_code: page.patch_code.map(str::to_owned),
         barcodes: page.barcodes,
+        preview: false,
     };
-    pipe.send_page(meta, &encoded.pdf)
+    // A page is worth sending without its pictures; the person sees it in
+    // Intake instead.
+    let pictures = preview(&view)
+        .inspect_err(|err| tracing::warn!(error = %err, "could not make the page's pictures"))
+        .ok()
+        .filter(|p| p.thumb.len() <= MAX_PREVIEW_BYTES && p.view.len() <= MAX_PREVIEW_BYTES);
+    pipe.send_page(meta, &encoded.pdf, pictures.as_ref())
 }
 
 fn condition_message(condition: ScanCondition) -> &'static str {

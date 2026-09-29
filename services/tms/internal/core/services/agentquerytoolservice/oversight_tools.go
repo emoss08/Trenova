@@ -136,10 +136,14 @@ func newListWatchtowerItemsTool(
 func (t *listWatchtowerItemsTool) Name() string { return "list_watchtower_items" }
 
 func (t *listWatchtowerItemsTool) Description() string {
-	return "List the watchtower feed of open items that need attention, newest first: " +
+	return "List the watchtower feed of open items that need attention now, newest first: " +
 		"failed agent runs, proposals awaiting a decision, exceptions and service failures. " +
 		"It also carries weather, quarantined EDI files, inbound email to review and " +
 		"coverage at risk. Narrow it by kind or severity. It never marks anything seen."
+}
+
+func (t *listWatchtowerItemsTool) SearchTerms() []string {
+	return []string{"watchtower feed", "critical items", "needs attention"}
 }
 
 func (t *listWatchtowerItemsTool) ParamSchema() map[string]any {

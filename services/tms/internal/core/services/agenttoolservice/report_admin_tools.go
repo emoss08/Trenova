@@ -293,7 +293,8 @@ func newResetReportForkTool(reports reportAdministrator) serviceports.AgentTool 
 
 func newDeleteDashboardTool(reports reportAdministrator) serviceports.AgentTool {
 	return newReceivableTool(reportInternalSpec(&receivableSpec{
-		name: "delete_dashboard",
+		name:        "delete_dashboard",
+		searchTerms: []string{"remove dashboard", "delete dashboard and its tiles"},
 		description: "Propose deleting a dashboard the person owns. The reports its tiles " +
 			"show are kept.",
 		operation: permission.OpDelete,

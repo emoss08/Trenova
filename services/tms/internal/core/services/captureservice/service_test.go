@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -84,6 +85,23 @@ func TestPairingBindsTheDeviceToTheApprover(t *testing.T) {
 	require.NotNil(t, device)
 	assert.NotEqual(t, tokens.AccessToken, device.AccessTokenHash, "tokens are stored hashed")
 	assert.NotEqual(t, tokens.RefreshToken, device.RefreshTokenHash)
+}
+
+func TestPairingNeedsTheWebAddress(t *testing.T) {
+	t.Parallel()
+
+	s := newWorld().service()
+	s.cfg = &config.Config{}
+
+	grant, err := s.StartPairing(t.Context(), &StartPairingRequest{
+		MachineName:  "DISPATCH-07",
+		AgentVersion: "1.0.0",
+		Architecture: capture.ArchitectureX64,
+	})
+	require.Error(t, err)
+	assert.Nil(t, grant)
+	assert.True(t, errortypes.IsBusinessError(err))
+	assert.Contains(t, err.Error(), "app.webBaseUrl")
 }
 
 func TestPairingIsExchangedExactlyOnce(t *testing.T) {
@@ -309,6 +327,31 @@ func TestPageUploadIsIdempotentAndRefusesAnotherPage(t *testing.T) {
 
 	stored := w.objects[first.StoragePath]
 	assert.True(t, bytes.HasPrefix(stored, []byte("sealed|capture_page|")), "pages are sealed at rest")
+}
+
+func TestPageUploadKeepsTheTurnMadeOnTheDevice(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	s := w.service()
+	principal := principalFor(t, s, pair(t, w, s))
+
+	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k1", Source: capture.SourceScan})
+	require.NoError(t, err)
+
+	page, err := s.PutPage(t.Context(), principal, &PutPageInput{
+		BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(pdfPage(t, 200)), Rotation: 90,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 90, page.Rotation)
+
+	for _, degrees := range []int{45, 360, -90, 200} {
+		_, err = s.PutPage(t.Context(), principal, &PutPageInput{
+			BatchID: batch.ID, Sequence: 2, Body: bytes.NewReader(pdfPage(t, 100)), Rotation: degrees,
+		})
+		var validation *errortypes.Error
+		assert.ErrorAs(t, err, &validation, "rotation %d", degrees)
+	}
 }
 
 func TestPageUploadRejectsWhatIsNotAOnePagePDF(t *testing.T) {

@@ -87,6 +87,7 @@ fn busy() -> Snapshot {
             created_at: millis_ago(30),
             refused_at: millis_ago(12),
             readable: true,
+            pictures: Vec::new(),
         },
         RefusedBatch {
             key: "cap-broken".into(),
@@ -97,6 +98,7 @@ fn busy() -> Snapshot {
             created_at: millis_ago(4000),
             refused_at: millis_ago(4000),
             readable: false,
+            pictures: Vec::new(),
         },
     ];
     snapshot.waiting = vec![WaitingBatch {
@@ -106,6 +108,11 @@ fn busy() -> Snapshot {
         pages: 3,
         created_at: millis_ago(2),
         complete: true,
+        held: false,
+        requested: false,
+        printed: true,
+        editable: false,
+        pictures: Vec::new(),
     }];
     snapshot.pages_waiting = 3;
     snapshot.recent.push_front(RecentBatch {
@@ -128,6 +135,7 @@ fn busy() -> Snapshot {
             body: "fi-8170: The batch was ended before its pages arrived. Its pages are kept on this computer; open Trenova Capture to send them again, save them, or discard them.".into(),
             severity: Severity::Error,
             link: None,
+            routine: false,
         },
         at: SystemTime::now() - Duration::from_secs(720),
     });

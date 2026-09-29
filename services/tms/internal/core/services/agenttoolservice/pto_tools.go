@@ -48,6 +48,10 @@ func (t *approveWorkerPTOTool) Description() string {
 		"awaiting a decision can be approved."
 }
 
+func (t *approveWorkerPTOTool) SearchTerms() []string {
+	return []string{"approve time off", "approve vacation", "approve pto request"}
+}
+
 func (t *approveWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
@@ -114,6 +118,10 @@ func (t *rejectWorkerPTOTool) Description() string {
 	return "Decline a worker's time-off request. A rejection is final — the request " +
 		"cannot be reopened, and the worker is told why — so the reason must be the " +
 		"one you were actually given, not one you composed."
+}
+
+func (t *rejectWorkerPTOTool) SearchTerms() []string {
+	return []string{"reject time off", "deny vacation", "decline pto request"}
 }
 
 func (t *rejectWorkerPTOTool) ParamSchema() map[string]any {

@@ -404,9 +404,14 @@ func newNotifyDriverTool(drivers driverNotifier) serviceports.AgentTool {
 
 func (t *notifyDriverTool) Name() string { return "notify_driver" }
 
+func (t *notifyDriverTool) SearchTerms() []string {
+	return []string{"text the driver", "message the driver", "sms", "driver app"}
+}
+
 func (t *notifyDriverTool) Description() string {
-	return "Send a driver a message in the Dash app, such as a changed appointment, " +
-		"a weather warning on their route, or a request to call dispatch. Keep it " +
+	return "Send a driver a message in the Dash app, such as a moved pickup, a new " +
+		"delivery window, a weather warning on their route, or a request to call " +
+		"dispatch. Keep it " +
 		"to what the driver needs to do; it goes to their phone. A driver without " +
 		"portal access cannot be reached this way, and the message is not " +
 		"delivered; say so if a reply matters. It is a message, not a record: put " +

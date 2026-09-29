@@ -206,7 +206,7 @@ func (t *listAccountingMappingGapsTool) Description() string {
 }
 
 func (t *listAccountingMappingGapsTool) SearchTerms() []string {
-	return []string{"mapping", "unmapped", "setup", "match", "gaps"}
+	return []string{"mapping", "unmapped", "setup", "match", "gaps", "still needs mapping"}
 }
 
 func (t *listAccountingMappingGapsTool) ParamSchema() map[string]any {

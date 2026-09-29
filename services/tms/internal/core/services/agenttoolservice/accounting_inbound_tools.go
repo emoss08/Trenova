@@ -98,7 +98,7 @@ func (t *applyAccountingInboundChangeTool) Description() string {
 }
 
 func (t *applyAccountingInboundChangeTool) SearchTerms() []string {
-	return []string{"accept inbound change"}
+	return []string{"accept inbound change", "customer payment from accounting"}
 }
 
 func (t *applyAccountingInboundChangeTool) Prerequisites() []string {

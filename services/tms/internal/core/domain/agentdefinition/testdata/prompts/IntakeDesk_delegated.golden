@@ -45,9 +45,9 @@ Loaded now:
 - get_shipment_tracking
 - get_shipment_draft
 - list_customers
+- reply_to_inbound_message
 - attach_document_to_shipment
 - add_shipment_comment
-- quote_shipment
 
 Callable after find_tools:
 - get_inbound_message — Read one message that arrived on a monitored address: sender, subject, body, what it was read as and how sure, and what it was matched to and why.
@@ -61,10 +61,10 @@ Callable after find_tools:
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - link_inbound_message — Say which shipment, customer or carrier a message that arrived on a monitored address is about, when the automatic match missed it or got it wrong.
 - mark_inbound_message — Settle a message that arrived on a monitored address as Actioned or Ignored.
-- reply_to_inbound_message — Answer a message that arrived on a monitored address, in the same thread: a status question, a request for a missing detail.
 - get_edi_inbound_file — Retrieve one inbound EDI file by id: its partner, status and failure reason, and each transaction set parsed from it with its control numbers.
 - list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
 - get_edi_transfer — Retrieve one EDI load tender by id, with its stops, freight and rate and the mappings it still lacks.
+- quote_shipment — Price a shipment that has not been saved, from the customer's rate agreements and the organization's rating rules.
 - accept_edi_tender — Propose accepting a load tender a trading partner sent over EDI, which creates the shipment from it and tells the partner.
 - decline_edi_tender — Propose declining a load tender a trading partner sent over EDI, with the reason they are given.
 

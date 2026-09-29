@@ -18939,6 +18939,10 @@ paths:
                   in: header
                   name: X-Capture-Barcode
                   type: string
+                - description: 'Degrees clockwise the page was turned before sending: 0, 90, 180 or 270'
+                  in: header
+                  name: X-Capture-Rotation
+                  type: integer
             produces:
                 - application/json
             responses:

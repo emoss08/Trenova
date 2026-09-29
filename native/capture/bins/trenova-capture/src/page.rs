@@ -50,18 +50,28 @@ mod tests {
             1,
             "the stylesheet cannot end early"
         );
+        let addresses_removed = ADDRESSES
+            .iter()
+            .fold(page.clone(), |page, address| page.replace(address, ""));
         for outside in ["http://", "https://", "src=\"//", "@import", "url("] {
             assert!(
-                !page.contains(outside) || outside == "https://" && only_placeholder(&page),
+                !addresses_removed.contains(outside),
                 "the page reaches outside itself: {outside}"
             );
         }
+        for address in ADDRESSES {
+            assert_eq!(page.matches(address).count(), 1, "{address} appears once");
+        }
     }
 
-    /// The only address in the page is the example in the server field.
-    fn only_placeholder(page: &str) -> bool {
-        page.matches("https://").count() == 1 && page.contains("https://tms.example.com")
-    }
+    /// The only addresses in the page: the ones the server field suggests,
+    /// and the SVG namespace the icons are created in, which is a name, not
+    /// something fetched.
+    const ADDRESSES: [&str; 3] = [
+        "\"https://cloud.trenova.app\"",
+        "\"http://localhost:5173\"",
+        "\"http://www.w3.org/2000/svg\"",
+    ];
 
     #[test]
     fn the_script_draws_text_never_markup() {

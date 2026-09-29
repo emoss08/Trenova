@@ -182,7 +182,7 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 		name:         "list_shipments",
 		entityPlural: "shipments",
 		summary: "List shipments by status, billing state, dates or charges: anything with " +
-			"a date or threshold, such as delivered yesterday or not yet billed. " +
+			"a date or threshold, such as picking up today or delivered yesterday. " +
 			"search_shipments matches text like a pro number.",
 		resource: permission.ResourceShipment,
 		config:   querybuilder.GetFieldConfiguration((*shipment.Shipment)(nil)),

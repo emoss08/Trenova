@@ -14,10 +14,19 @@ use capture_protocol::api::{BatchSource, PixelType, ProfileStatus, SourceProtoco
 use capture_protocol::helper::ScanCondition;
 use serde::{Deserialize, Serialize};
 
-use crate::state::{Command, Connection, Severity, Snapshot, UpdateStatus};
+use capture_client::spool::{PictureRef, PictureSize};
+
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
+
+use crate::state::{
+    Command, Connection, Pictures, PicturesRequest, Severity, Snapshot, UpdateStatus, WaitingBatch,
+};
 
 /// The longest server address the page may send.
 const MAX_ADDRESS: usize = 2048;
+/// The most pictures the page may ask for at once.
+const MAX_PICTURES_ASKED: usize = 24;
 
 /// How a line is coloured, from the design system's tones.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -60,9 +69,28 @@ pub enum Stage {
     Blocked,
 }
 
+/// A page that has pictures, and how far it was turned.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PictureView {
+    pub page: u32,
+    pub rotation: u16,
+}
+
+fn picture_views(refs: &[PictureRef]) -> Vec<PictureView> {
+    refs.iter()
+        .map(|picture| PictureView {
+            page: picture.page,
+            rotation: picture.rotation,
+        })
+        .collect()
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScanView {
+    /// The batch it scans into, whose pages' pictures the page may ask for.
+    pub key: String,
     pub label: String,
     pub pages: u32,
     pub requested: bool,
@@ -122,6 +150,22 @@ pub struct RefusedView {
     pub reason: String,
     pub refused_at: i64,
     pub readable: bool,
+    pub pictures: Vec<PictureView>,
+}
+
+/// A scan or print held for the person to look over before it is sent.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HeldView {
+    pub key: String,
+    pub label: String,
+    pub kind: Kind,
+    pub pages: u32,
+    pub created_at: i64,
+    pub requested: bool,
+    /// Its pages can be turned and taken out, and more scanned onto it.
+    pub editable: bool,
+    pub pictures: Vec<PictureView>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -134,6 +178,7 @@ pub struct WaitingView {
     pub created_at: i64,
     /// Why it has not reached Trenova yet.
     pub state: String,
+    pub pictures: Vec<PictureView>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -179,10 +224,19 @@ pub struct View {
     pub scanners: Vec<ScannerView>,
     pub profiles: Vec<ProfileView>,
     pub refused: Vec<RefusedView>,
+    pub held: Vec<HeldView>,
     pub waiting: Vec<WaitingView>,
     pub recent: Vec<RecentView>,
     pub messages: Vec<MessageView>,
     pub printer_missing: bool,
+    /// Printing into Trenova is installed on this computer.
+    pub printing: bool,
+    /// Routine notifications (something sent, the connection back) are shown.
+    pub routine_notifications: bool,
+    /// Scans and prints wait to be looked over before they are sent.
+    pub review_before_sending: bool,
+    /// An administrator decides that, not the person.
+    pub review_locked: bool,
     pub update: Option<UpdateView>,
     pub update_required: Option<String>,
     pub can_open_intake: bool,
@@ -309,6 +363,11 @@ impl Snapshot {
                     "A scan is waiting for you",
                     "The scanner stopped partway. Continue or finish it below.".into(),
                 ),
+                None if self.waiting.iter().any(|b| b.held && b.complete) => status(
+                    Tone::Info,
+                    "Ready for you to look over",
+                    "Nothing is sent until you choose Send.".into(),
+                ),
                 None => status(Tone::Success, "Ready", who),
             },
             Connection::Offline { .. } => status(
@@ -391,19 +450,53 @@ impl Snapshot {
                 },
                 refused_at: batch.refused_at,
                 readable: batch.readable,
+                pictures: picture_views(&batch.pictures),
             })
             .collect()
+    }
+
+    /// The batch being scanned into now, which is shown as the scan.
+    fn scanning_key(&self) -> Option<&str> {
+        self.scan.as_ref().map(|scan| scan.key.as_str())
+    }
+
+    fn held_batches(&self) -> impl Iterator<Item = &WaitingBatch> {
+        let scanning = self.scanning_key();
+        self.waiting.iter().filter(move |batch| {
+            batch.held && batch.complete && Some(batch.key.as_str()) != scanning
+        })
+    }
+
+    fn held_views(&self) -> Vec<HeldView> {
+        let mut held: Vec<HeldView> = self
+            .held_batches()
+            .map(|batch| HeldView {
+                key: batch.key.clone(),
+                label: batch.label.clone(),
+                kind: batch.source.into(),
+                pages: batch.pages,
+                created_at: batch.created_at,
+                requested: batch.requested,
+                editable: batch.editable && !batch.printed,
+                pictures: picture_views(&batch.pictures),
+            })
+            .collect();
+        held.sort_by_key(|batch| std::cmp::Reverse(batch.created_at));
+        held
     }
 
     /// Batches that have finished scanning and wait to be sent; the one
     /// scanning now is shown as the scan.
     fn waiting_views(&self) -> Vec<WaitingView> {
-        let scanning_key = self.scan.as_ref().map(|scan| scan.key.as_str());
+        let scanning_key = self.scanning_key();
         let state = self.waiting_state();
         self.waiting
             .iter()
             .filter(|batch| {
-                batch.complete && Some(batch.key.as_str()) != scanning_key && batch.pages > 0
+                batch.complete
+                    && !batch.held
+                    && Some(batch.key.as_str()) != scanning_key
+                    && batch.pages > 0
             })
             .map(|batch| WaitingView {
                 key: batch.key.clone(),
@@ -412,6 +505,7 @@ impl Snapshot {
                 pages: batch.pages,
                 created_at: batch.created_at,
                 state: state.to_owned(),
+                pictures: picture_views(&batch.pictures),
             })
             .collect()
     }
@@ -465,6 +559,7 @@ impl Snapshot {
                 _ => None,
             },
             scan: self.scan.as_ref().map(|scan| ScanView {
+                key: scan.key.clone(),
                 label: scan.label.clone(),
                 pages: scan.pages,
                 requested: scan.requested,
@@ -484,10 +579,15 @@ impl Snapshot {
             scanners: self.scanner_views(),
             profiles: self.profile_views(),
             refused: self.refused_views(),
+            held: self.held_views(),
             waiting: self.waiting_views(),
             recent: self.recent_views(),
             messages: self.message_views(),
             printer_missing: self.printer_missing,
+            printing: self.printing,
+            routine_notifications: !self.routine_muted,
+            review_before_sending: self.review_before_sending,
+            review_locked: self.review_locked,
             update: self.update.as_ref().map(|update| UpdateView {
                 version: update.version.clone(),
                 status: match update.status {
@@ -511,6 +611,109 @@ impl Snapshot {
                     .messages
                     .iter()
                     .any(|message| message.notice.link.as_deref() == Some(link)))
+    }
+
+    /// A scanner and profile the page chose, checked against those listed.
+    fn chosen_scan(
+        &self,
+        scanner: &str,
+        protocol: &str,
+        profile: Option<&str>,
+    ) -> Option<(
+        String,
+        capture_protocol::api::SourceProtocol,
+        Option<capture_protocol::api::Id>,
+    )> {
+        let source = self
+            .sources
+            .iter()
+            .find(|source| source.name == scanner && protocol_name(source.protocol) == protocol)?;
+        let profile = match profile {
+            Some(id) => Some(
+                self.profiles
+                    .iter()
+                    .find(|p| p.id.as_str() == id && p.status != ProfileStatus::Inactive)?
+                    .id
+                    .clone(),
+            ),
+            None => None,
+        };
+        Some((source.name.clone(), source.protocol, profile))
+    }
+
+    /// Whether the window shows this batch with pictures: being scanned,
+    /// held, waiting or refused.
+    fn shows_batch(&self, key: &str) -> bool {
+        self.scanning_key() == Some(key)
+            || self.waiting.iter().any(|batch| batch.key == key)
+            || self.refused.iter().any(|batch| batch.key == key)
+    }
+
+    /// Whether `page` of a held batch can be turned or taken out.
+    fn editable_page(&self, key: &str, page: u32) -> bool {
+        self.held_batches().any(|batch| {
+            batch.key == key && batch.editable && !batch.printed && page >= 1 && page <= batch.pages
+        })
+    }
+
+    /// What a message about pictures or a held batch asks for.
+    fn resolve_review(&self, message: PageMessage) -> Option<WindowAction> {
+        match message {
+            PageMessage::Pictures { key, size, pages } => {
+                let size = match size.as_str() {
+                    "thumb" => PictureSize::Thumb,
+                    "view" => PictureSize::View,
+                    _ => return None,
+                };
+                (!pages.is_empty() && pages.len() <= MAX_PICTURES_ASKED && self.shows_batch(&key))
+                    .then_some(WindowAction::Command(Command::Pictures(PicturesRequest {
+                        key,
+                        size,
+                        pages,
+                    })))
+            }
+            PageMessage::RotatePage { key, page, degrees } => {
+                let editable = self.editable_page(&key, page) && matches!(degrees, -90 | 90 | 180);
+                editable.then_some(WindowAction::Command(Command::RotatePage {
+                    key,
+                    page,
+                    degrees,
+                }))
+            }
+            PageMessage::DeletePage { key, page } => self
+                .editable_page(&key, page)
+                .then_some(WindowAction::Command(Command::DeletePage { key, page })),
+            PageMessage::SendHeld { key } => self
+                .held_batches()
+                .any(|batch| batch.key == key)
+                .then_some(WindowAction::Command(Command::SendHeld(key))),
+            PageMessage::DiscardHeld { key } => self
+                .held_batches()
+                .any(|batch| batch.key == key)
+                .then_some(WindowAction::Command(Command::DiscardHeld(key))),
+            PageMessage::ScanMore {
+                key,
+                scanner,
+                protocol,
+                profile,
+            } => {
+                let held = self
+                    .held_batches()
+                    .any(|batch| batch.key == key && batch.editable && !batch.printed);
+                if !held || self.scan.is_some() {
+                    return None;
+                }
+                let (source, protocol, profile) =
+                    self.chosen_scan(&scanner, &protocol, profile.as_deref())?;
+                Some(WindowAction::Command(Command::ScanMore {
+                    key,
+                    source,
+                    protocol,
+                    profile,
+                }))
+            }
+            _ => None,
+        }
     }
 
     /// What a message from the page asks for, checked against what the
@@ -551,24 +754,22 @@ impl Snapshot {
                 protocol,
                 profile,
             } => {
-                let source = self.sources.iter().find(|source| {
-                    source.name == scanner && protocol_name(source.protocol) == protocol
-                })?;
-                let profile = match profile {
-                    Some(id) => Some(
-                        self.profiles
-                            .iter()
-                            .find(|p| p.id.as_str() == id && p.status != ProfileStatus::Inactive)?
-                            .id
-                            .clone(),
-                    ),
-                    None => None,
-                };
+                let (source, protocol, profile) =
+                    self.chosen_scan(&scanner, &protocol, profile.as_deref())?;
                 command(Command::Scan {
-                    source: source.name.clone(),
-                    protocol: source.protocol,
+                    source,
+                    protocol,
                     profile,
                 })
+            }
+            message @ (PageMessage::Pictures { .. }
+            | PageMessage::RotatePage { .. }
+            | PageMessage::DeletePage { .. }
+            | PageMessage::SendHeld { .. }
+            | PageMessage::DiscardHeld { .. }
+            | PageMessage::ScanMore { .. }) => self.resolve_review(message),
+            PageMessage::SetReview { on } => {
+                (!self.review_locked).then_some(WindowAction::SetReviewBeforeSending(on))
             }
             PageMessage::StopScan {} => self.scan.as_ref().and(command(Command::StopScan)),
             PageMessage::Continue { key } => {
@@ -596,6 +797,9 @@ impl Snapshot {
                 .as_ref()
                 .map(|update| WindowAction::Open(update.download_url.clone())),
             PageMessage::OpenLogs {} => Some(WindowAction::OpenLogs),
+            PageMessage::SetNotifications { routine } => {
+                Some(WindowAction::SetRoutineNotifications(routine))
+            }
             PageMessage::Quit {} => Some(WindowAction::Quit),
         }
     }
@@ -649,6 +853,41 @@ pub enum PageMessage {
     Update {},
     OpenDownload {},
     OpenLogs {},
+    /// Whether routine notifications are shown.
+    SetNotifications {
+        routine: bool,
+    },
+    /// Pictures of a batch's pages: `size` is `thumb` or `view`.
+    Pictures {
+        key: String,
+        size: String,
+        pages: Vec<u32>,
+    },
+    RotatePage {
+        key: String,
+        page: u32,
+        degrees: i32,
+    },
+    DeletePage {
+        key: String,
+        page: u32,
+    },
+    SendHeld {
+        key: String,
+    },
+    DiscardHeld {
+        key: String,
+    },
+    ScanMore {
+        key: String,
+        scanner: String,
+        protocol: String,
+        profile: Option<String>,
+    },
+    /// Whether scans and prints wait to be looked over before sending.
+    SetReview {
+        on: bool,
+    },
     Quit {},
 }
 
@@ -672,7 +911,47 @@ pub enum WindowAction {
     Save(String),
     AddPrinter,
     OpenLogs,
+    /// Show routine notifications, or not, and remember the choice.
+    SetRoutineNotifications(bool),
+    /// Hold scans and prints for review, or not, and remember the choice.
+    SetReviewBeforeSending(bool),
     Quit,
+}
+
+/// A picture as the page shows it.
+#[derive(Serialize)]
+struct PictureData {
+    page: u32,
+    src: String,
+}
+
+#[derive(Serialize)]
+struct PicturesData<'a> {
+    key: &'a str,
+    size: &'static str,
+    pictures: Vec<PictureData>,
+}
+
+/// The script that hands the page pictures it asked for, as JPEG data URIs,
+/// which its content security policy allows and nothing else.
+pub fn pictures_script(pictures: &Pictures) -> String {
+    let data = PicturesData {
+        key: &pictures.key,
+        size: match pictures.size {
+            PictureSize::Thumb => "thumb",
+            PictureSize::View => "view",
+        },
+        pictures: pictures
+            .pictures
+            .iter()
+            .map(|(page, jpeg)| PictureData {
+                page: *page,
+                src: format!("data:image/jpeg;base64,{}", STANDARD.encode(jpeg)),
+            })
+            .collect(),
+    };
+    let json = serde_json::to_string(&data).unwrap_or_else(|_| "null".to_owned());
+    format!("window.trenova && window.trenova.pictures({json});")
 }
 
 /// The script that hands a view to the page. JSON is a JavaScript
@@ -722,6 +1001,7 @@ mod tests {
             created_at: 1,
             refused_at: 2,
             readable,
+            pictures: Vec::new(),
         }
     }
 
@@ -733,6 +1013,11 @@ mod tests {
             pages: 4,
             created_at: 10,
             complete,
+            held: false,
+            requested: false,
+            printed: false,
+            editable: true,
+            pictures: Vec::new(),
         }
     }
 
@@ -761,6 +1046,145 @@ mod tests {
             profiles: vec![colour, inactive, default],
             ..Snapshot::default()
         }
+    }
+
+    fn held(key: &str, printed: bool) -> WaitingBatch {
+        WaitingBatch {
+            held: true,
+            printed,
+            editable: !printed,
+            pages: 3,
+            pictures: vec![
+                PictureRef {
+                    page: 1,
+                    rotation: 0,
+                },
+                PictureRef {
+                    page: 2,
+                    rotation: 90,
+                },
+            ],
+            ..waiting(key, true)
+        }
+    }
+
+    #[test]
+    fn pictures_reach_the_page_as_jpeg_data_uris_in_a_literal() {
+        let script = pictures_script(&Pictures {
+            key: "cap-1".into(),
+            size: PictureSize::Thumb,
+            pictures: vec![(2, vec![0xFF, 0xD8, 0xFF])],
+        });
+        assert!(script.starts_with("window.trenova && window.trenova.pictures({"));
+        assert!(script.contains(r#""src":"data:image/jpeg;base64,/9j/""#));
+        assert!(script.contains(r#""size":"thumb""#));
+        assert!(script.contains(r#""page":2"#));
+    }
+
+    #[test]
+    fn a_held_batch_is_shown_to_be_looked_over_not_as_waiting() {
+        let mut snapshot = online();
+        snapshot.waiting = vec![held("cap-held", false), waiting("cap-sending", true)];
+        let view = snapshot.view("1.0.0");
+        assert_eq!(view.status.title, "Ready for you to look over");
+        assert_eq!(view.held.len(), 1);
+        assert_eq!(view.held[0].key, "cap-held");
+        assert!(view.held[0].editable);
+        assert_eq!(
+            view.held[0].pictures[1],
+            PictureView {
+                page: 2,
+                rotation: 90
+            }
+        );
+        assert_eq!(view.waiting.len(), 1);
+        assert_eq!(view.waiting[0].key, "cap-sending");
+    }
+
+    #[test]
+    fn a_page_can_only_change_what_is_held_and_editable() {
+        let mut snapshot = online();
+        snapshot.waiting = vec![
+            held("cap-held", false),
+            held("prt-held", true),
+            waiting("cap-sending", true),
+        ];
+        let resolve = |json: &str| snapshot.resolve(parse(json));
+        assert_eq!(
+            resolve(r#"{"type":"rotatePage","key":"cap-held","page":2,"degrees":90}"#),
+            Some(WindowAction::Command(Command::RotatePage {
+                key: "cap-held".into(),
+                page: 2,
+                degrees: 90
+            }))
+        );
+        for refused in [
+            r#"{"type":"rotatePage","key":"cap-held","page":2,"degrees":45}"#,
+            r#"{"type":"rotatePage","key":"cap-held","page":4,"degrees":90}"#,
+            r#"{"type":"rotatePage","key":"cap-held","page":0,"degrees":90}"#,
+            r#"{"type":"rotatePage","key":"prt-held","page":1,"degrees":90}"#,
+            r#"{"type":"rotatePage","key":"cap-sending","page":1,"degrees":90}"#,
+            r#"{"type":"deletePage","key":"prt-held","page":1}"#,
+            r#"{"type":"sendHeld","key":"cap-sending"}"#,
+            r#"{"type":"discardHeld","key":"cap-nope"}"#,
+            r#"{"type":"pictures","key":"cap-nope","size":"thumb","pages":[1]}"#,
+            r#"{"type":"pictures","key":"cap-held","size":"huge","pages":[1]}"#,
+            r#"{"type":"pictures","key":"cap-held","size":"thumb","pages":[]}"#,
+            r#"{"type":"scanMore","key":"prt-held","scanner":"fi-8170","protocol":"twain","profile":null}"#,
+            r#"{"type":"scanMore","key":"cap-held","scanner":"gone","protocol":"twain","profile":null}"#,
+        ] {
+            assert_eq!(resolve(refused), None, "{refused} should be refused");
+        }
+        let many: Vec<u32> = (1..=25).collect();
+        assert_eq!(
+            snapshot.resolve(PageMessage::Pictures {
+                key: "cap-held".into(),
+                size: "thumb".into(),
+                pages: many,
+            }),
+            None,
+            "a bounded number of pictures at once"
+        );
+        assert_eq!(
+            resolve(r#"{"type":"deletePage","key":"cap-held","page":3}"#),
+            Some(WindowAction::Command(Command::DeletePage {
+                key: "cap-held".into(),
+                page: 3
+            }))
+        );
+        assert_eq!(
+            resolve(r#"{"type":"sendHeld","key":"prt-held"}"#),
+            Some(WindowAction::Command(Command::SendHeld("prt-held".into())))
+        );
+        assert_eq!(
+            resolve(r#"{"type":"pictures","key":"cap-sending","size":"view","pages":[1,2]}"#),
+            Some(WindowAction::Command(Command::Pictures(PicturesRequest {
+                key: "cap-sending".into(),
+                size: PictureSize::View,
+                pages: vec![1, 2]
+            })))
+        );
+        assert_eq!(
+            resolve(
+                r#"{"type":"scanMore","key":"cap-held","scanner":"fi-8170","protocol":"twain","profile":"cprf_colour"}"#
+            ),
+            Some(WindowAction::Command(Command::ScanMore {
+                key: "cap-held".into(),
+                source: "fi-8170".into(),
+                protocol: SourceProtocol::Twain,
+                profile: Some(Id::from("cprf_colour"))
+            }))
+        );
+        assert_eq!(
+            resolve(r#"{"type":"setReview","on":true}"#),
+            Some(WindowAction::SetReviewBeforeSending(true))
+        );
+        snapshot.review_locked = true;
+        assert_eq!(
+            snapshot.resolve(parse(r#"{"type":"setReview","on":false}"#)),
+            None,
+            "an administrator's choice stands"
+        );
     }
 
     #[test]
@@ -898,6 +1322,7 @@ mod tests {
                 body: "fi-8170: invalid".into(),
                 severity: Severity::Error,
                 link: None,
+                routine: false,
             },
             at,
         });
@@ -934,6 +1359,22 @@ mod tests {
         ] {
             assert_eq!(PageMessage::parse(bad), None, "{bad} should be refused");
         }
+    }
+
+    #[test]
+    fn the_notification_choice_round_trips() {
+        let mut snapshot = online();
+        assert!(snapshot.view("1.0.0").routine_notifications);
+        snapshot.routine_muted = true;
+        assert!(!snapshot.view("1.0.0").routine_notifications);
+        assert_eq!(
+            snapshot.resolve(parse(r#"{"type":"setNotifications","routine":true}"#)),
+            Some(WindowAction::SetRoutineNotifications(true))
+        );
+        assert_eq!(
+            PageMessage::parse(r#"{"type":"setNotifications","routine":"yes"}"#),
+            None
+        );
     }
 
     #[test]

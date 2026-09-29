@@ -656,7 +656,8 @@ func newCorrectFuelPurchaseTool(
 	jurisdictions jurisdictionLabeler,
 ) serviceports.AgentTool {
 	return newReportingReceivableTool(fuelInternalSpec(&receivableSpec{
-		name: "correct_fuel_purchase",
+		name:        "correct_fuel_purchase",
+		searchTerms: []string{"fix fuel purchase", "keyed wrong", "wrong gallons"},
 		description: "Correct a recorded fuel purchase: the tractor, jurisdiction, day, " +
 			"fuel type, quantity, amount or any other field that was keyed wrong. Fields left " +
 			"out keep their value. A finalized IFTA return keeps its figures until it is " +
@@ -903,7 +904,8 @@ func fuelCardViewOf(card *fuelpurchase.FuelCard) *fuelCardView {
 
 func newAssignFuelCardTool(cards fuelCardKeeper) serviceports.AgentTool {
 	return newReceivableTool(fuelInternalSpec(&receivableSpec{
-		name: "assign_fuel_card",
+		name:        "assign_fuel_card",
+		searchTerms: []string{"issue new fuel card", "fuel card to tractor", "hand out fuel card"},
 		description: "Assign a fuel card to the tractor or driver that carries it, most " +
 			"often a card a feed discovered. Assigning a suspended card also activates it, " +
 			"and once assigned, resolve_fuel_purchase_import_rows posts the purchases that " +

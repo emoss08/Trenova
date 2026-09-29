@@ -19469,6 +19469,11 @@ paths:
                   name: X-Capture-Barcode
                   schema:
                     type: string
+                - description: 'Degrees clockwise the page was turned before sending: 0, 90, 180 or 270'
+                  in: header
+                  name: X-Capture-Rotation
+                  schema:
+                    type: integer
             responses:
                 "200":
                     content:

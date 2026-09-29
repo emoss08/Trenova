@@ -103,6 +103,7 @@ func newListOrdersTool(
 	return newListTool(listSpec{
 		name:         "list_orders",
 		entityPlural: "orders",
+		searchTerms:  []string{"po number", "order number"},
 		summary: "List customer orders, the commercial record that groups one or more " +
 			"shipments and their charges under a customer's order number, PO or BOL. " +
 			"get_order opens one with its shipments and charges.",

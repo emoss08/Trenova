@@ -7,7 +7,9 @@
 //! ```text
 //! <root>/batches/<client key>/manifest.json
 //! <root>/batches/<client key>/page-0001.bin
+//! <root>/batches/<client key>/page-0001.thumb, page-0001.view  (its pictures)
 //! <root>/batches/<client key>/document.bin  (a printed job, sent whole)
+//! <root>/batches/<client key>/document-0001.thumb, ...  (its pages' pictures)
 //! <root>/failed/<client key>/...           (the server refused it)
 //! ```
 //!
@@ -16,6 +18,10 @@
 //! it stopped. It carries no page content and no credential. Every file is
 //! written to a temporary name, flushed and renamed over the old one, so a
 //! crash leaves either the old version or the new one, never half of one.
+//!
+//! A batch held for review is not sent until the person releases it; until
+//! then its pages can be turned or taken out. Pictures are encrypted like
+//! the pages, and are only ever shown, never sent.
 
 use std::fs;
 use std::io::{self, Write};
@@ -34,6 +40,8 @@ use crate::api::PageMarkers;
 const MANIFEST: &str = "manifest.json";
 const FAILURE: &str = "failure.txt";
 const DOCUMENT: &str = "document.bin";
+const THUMB: &str = "thumb";
+const VIEW: &str = "view";
 const MANIFEST_VERSION: u32 = 1;
 
 /// Encrypts page files at rest. On Windows this is DPAPI, scoped to the
@@ -57,6 +65,13 @@ pub struct SpooledPage {
     #[serde(default)]
     pub barcodes: Vec<String>,
     pub uploaded: bool,
+    /// Degrees clockwise the person turned it before sending: 0, 90, 180
+    /// or 270. The page itself is sent as scanned, with this beside it.
+    #[serde(default)]
+    pub rotation: u16,
+    /// Its pictures are on disk.
+    #[serde(default)]
+    pub pictures: bool,
 }
 
 impl SpooledPage {
@@ -65,8 +80,46 @@ impl SpooledPage {
             dpi: self.dpi,
             patch_code: self.patch_code.clone(),
             barcodes: self.barcodes.clone(),
+            rotation: self.rotation,
         }
     }
+}
+
+/// A page that has pictures.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PictureRef {
+    pub page: u32,
+    /// Degrees clockwise it was turned.
+    pub rotation: u16,
+}
+
+/// A page's two pictures, as JPEG.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PagePictures {
+    pub thumb: Vec<u8>,
+    pub view: Vec<u8>,
+}
+
+/// Which of a page's pictures.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PictureSize {
+    Thumb,
+    View,
+}
+
+impl PictureSize {
+    fn extension(self) -> &'static str {
+        match self {
+            Self::Thumb => THUMB,
+            Self::View => VIEW,
+        }
+    }
+}
+
+/// Keeps a rotation to the four a page can have.
+pub fn normalize_rotation(degrees: i32) -> u16 {
+    let quarter = (degrees.rem_euclid(360) + 45) / 90 % 4;
+    u16::try_from(quarter * 90).unwrap_or(0)
 }
 
 /// A printed job as the manifest records it. The server splits it into
@@ -80,6 +133,9 @@ pub struct SpooledDocument {
     /// Pages, when the print service counted them.
     #[serde(default)]
     pub pages: Option<u32>,
+    /// Pictures of its pages on disk, when the print service made them.
+    #[serde(default)]
+    pub pictures: u32,
 }
 
 /// A batch waiting to reach the server.
@@ -100,11 +156,34 @@ pub struct SpooledBatch {
     pub document: Option<SpooledDocument>,
     /// Acquisition has ended; the batch can be sealed once uploaded.
     pub complete: bool,
+    /// Waiting for the person to look it over; nothing is sent until they
+    /// release it.
+    #[serde(default)]
+    pub held: bool,
 }
 
 impl SpooledBatch {
     pub fn key(&self) -> &str {
         &self.input.client_key
+    }
+
+    /// The pages with pictures, and how each is turned: a scanned page by
+    /// its sequence, a printed job's by its number.
+    pub fn picture_refs(&self) -> Vec<PictureRef> {
+        match &self.document {
+            Some(document) => (1..=document.pictures)
+                .map(|page| PictureRef { page, rotation: 0 })
+                .collect(),
+            None => self
+                .pages
+                .iter()
+                .filter(|page| page.pictures)
+                .map(|page| PictureRef {
+                    page: page.sequence,
+                    rotation: page.rotation,
+                })
+                .collect(),
+        }
     }
 
     pub fn pages_waiting(&self) -> u32 {
@@ -140,6 +219,8 @@ pub struct RefusedBatch {
     /// Whether its manifest could be read, and so whether it can be sent
     /// again or saved.
     pub readable: bool,
+    /// Its pages that have pictures.
+    pub pictures: Vec<PictureRef>,
 }
 
 /// What saving a refused batch wrote.
@@ -172,7 +253,17 @@ pub enum SpoolError {
     Manifest(String),
     #[error("{0} already exists")]
     Exists(PathBuf),
+    #[error("only a batch held for review can be changed")]
+    NotHeld,
+    #[error("page {0} is not in the batch")]
+    NoPage(u32),
+    #[error("that picture is too large")]
+    PictureTooLarge,
 }
+
+/// The largest picture kept. A 1100-pixel JPEG of a busy colour page is a
+/// few hundred kilobytes.
+pub const MAX_PICTURE_BYTES: usize = 2 << 20;
 
 pub struct Spool {
     root: PathBuf,
@@ -253,6 +344,7 @@ fn describe_refused(dir: &Path, key: String) -> RefusedBatch {
             created_at: batch.created_at,
             refused_at,
             readable: true,
+            pictures: batch.picture_refs(),
             key,
         },
         Err(err) => RefusedBatch {
@@ -267,9 +359,30 @@ fn describe_refused(dir: &Path, key: String) -> RefusedBatch {
             created_at: refused_at,
             refused_at,
             readable: false,
+            pictures: Vec::new(),
             key,
         },
     }
+}
+
+fn remove_if_present(path: &Path) -> io::Result<()> {
+    match fs::remove_file(path) {
+        Err(err) if err.kind() != io::ErrorKind::NotFound => Err(err),
+        _ => Ok(()),
+    }
+}
+
+/// A printed job to spool.
+#[derive(Debug)]
+pub struct NewPrint<'a> {
+    pub input: OpenBatchInput,
+    pub label: &'a str,
+    pub pdf: &'a [u8],
+    /// Pages, when the print service counted them.
+    pub pages: Option<u32>,
+    /// Pictures of its pages, in order, when the print service made them.
+    pub pictures: &'a [PagePictures],
+    pub held: bool,
 }
 
 fn unix_millis(at: SystemTime) -> i64 {
@@ -344,11 +457,38 @@ impl Spool {
         dir.join(format!("page-{sequence:04}.bin"))
     }
 
+    fn page_picture_path(dir: &Path, sequence: u32, size: PictureSize) -> PathBuf {
+        dir.join(format!("page-{sequence:04}.{}", size.extension()))
+    }
+
+    fn document_picture_path(dir: &Path, page: u32, size: PictureSize) -> PathBuf {
+        dir.join(format!("document-{page:04}.{}", size.extension()))
+    }
+
     /// Starts a batch. Its key is `input.client_key`, from [`Spool::new_key`].
     pub fn create(
         &self,
         input: OpenBatchInput,
         label: impl Into<String>,
+    ) -> Result<SpooledBatch, SpoolError> {
+        self.create_batch(input, label.into(), false)
+    }
+
+    /// Starts a batch held for review: nothing of it is sent until
+    /// [`Spool::release`].
+    pub fn create_held(
+        &self,
+        input: OpenBatchInput,
+        label: impl Into<String>,
+    ) -> Result<SpooledBatch, SpoolError> {
+        self.create_batch(input, label.into(), true)
+    }
+
+    fn create_batch(
+        &self,
+        input: OpenBatchInput,
+        label: String,
+        held: bool,
     ) -> Result<SpooledBatch, SpoolError> {
         let _guard = self.guard();
         let dir = self.dir(&input.client_key)?;
@@ -356,31 +496,39 @@ impl Spool {
         let batch = SpooledBatch {
             version: MANIFEST_VERSION,
             created_at: now_unix_millis(),
-            label: label.into(),
+            label,
             input,
             batch_id: None,
             pages: Vec::new(),
             document: None,
             complete: false,
+            held,
         };
         self.write_manifest(&batch)?;
         Ok(batch)
     }
 
-    /// Spools a printed job, complete, under `input.client_key`. Spooling
-    /// the same key again returns the batch already there, so a job taken
-    /// from the print inbox twice is sent once.
-    pub fn create_print(
-        &self,
-        input: OpenBatchInput,
-        label: impl Into<String>,
-        pdf: &[u8],
-        pages: Option<u32>,
-    ) -> Result<SpooledBatch, SpoolError> {
+    /// Spools a printed job, complete, under `input.client_key`, with the
+    /// pictures of its pages when there are any, held for review when
+    /// `held`. Spooling the same key again returns the batch already there,
+    /// so a job taken from the print inbox twice is sent once.
+    pub fn create_print(&self, print: NewPrint<'_>) -> Result<SpooledBatch, SpoolError> {
+        let NewPrint {
+            input,
+            label,
+            pdf,
+            pages,
+            pictures,
+            held,
+        } = print;
         if pdf.len() > MAX_PRINT_JOB_BYTES {
             return Err(SpoolError::DocumentTooLarge(pdf.len()));
         }
         let sealed = self.protector.protect(pdf)?;
+        let sealed_pictures = pictures
+            .iter()
+            .map(|picture| self.seal_pictures(picture))
+            .collect::<Result<Vec<_>, _>>()?;
         let _guard = self.guard();
         match self.read_manifest(&input.client_key) {
             Ok(existing) => return Ok(existing),
@@ -390,10 +538,21 @@ impl Spool {
         let dir = self.dir(&input.client_key)?;
         fs::create_dir_all(&dir)?;
         write_atomic(&dir.join(DOCUMENT), &sealed)?;
+        for (index, (thumb, view)) in sealed_pictures.iter().enumerate() {
+            let page = u32::try_from(index + 1).unwrap_or(u32::MAX);
+            write_atomic(
+                &Self::document_picture_path(&dir, page, PictureSize::Thumb),
+                thumb,
+            )?;
+            write_atomic(
+                &Self::document_picture_path(&dir, page, PictureSize::View),
+                view,
+            )?;
+        }
         let batch = SpooledBatch {
             version: MANIFEST_VERSION,
             created_at: now_unix_millis(),
-            label: label.into(),
+            label: label.to_owned(),
             input,
             batch_id: None,
             pages: Vec::new(),
@@ -401,8 +560,10 @@ impl Spool {
                 checksum: page_checksum(pdf),
                 byte_size: u64::try_from(pdf.len()).unwrap_or(u64::MAX),
                 pages,
+                pictures: u32::try_from(sealed_pictures.len()).unwrap_or(u32::MAX),
             }),
             complete: true,
+            held,
         };
         self.write_manifest(&batch)?;
         Ok(batch)
@@ -447,9 +608,178 @@ impl Spool {
                 patch_code: markers.patch_code.clone(),
                 barcodes: markers.barcodes.clone(),
                 uploaded: false,
+                rotation: normalize_rotation(i32::from(markers.rotation)),
+                pictures: false,
             });
             Ok(sequence)
         })
+    }
+
+    fn seal_pictures(&self, pictures: &PagePictures) -> Result<(Vec<u8>, Vec<u8>), SpoolError> {
+        if pictures.thumb.len() > MAX_PICTURE_BYTES || pictures.view.len() > MAX_PICTURE_BYTES {
+            return Err(SpoolError::PictureTooLarge);
+        }
+        Ok((
+            self.protector.protect(&pictures.thumb)?,
+            self.protector.protect(&pictures.view)?,
+        ))
+    }
+
+    /// Keeps a spooled page's pictures beside it.
+    pub fn store_pictures(
+        &self,
+        key: &str,
+        sequence: u32,
+        pictures: &PagePictures,
+    ) -> Result<(), SpoolError> {
+        let (thumb, view) = self.seal_pictures(pictures)?;
+        self.update(key, |batch| {
+            let dir = self.dir(key)?;
+            let page = batch
+                .pages
+                .iter_mut()
+                .find(|p| p.sequence == sequence)
+                .ok_or(SpoolError::NoPage(sequence))?;
+            write_atomic(
+                &Self::page_picture_path(&dir, sequence, PictureSize::Thumb),
+                &thumb,
+            )?;
+            write_atomic(
+                &Self::page_picture_path(&dir, sequence, PictureSize::View),
+                &view,
+            )?;
+            page.pictures = true;
+            Ok(())
+        })
+    }
+
+    /// One picture of a page, of a batch waiting or refused: a scanned page
+    /// by its sequence, or a printed job's page by its number.
+    pub fn picture(&self, key: &str, page: u32, size: PictureSize) -> Result<Vec<u8>, SpoolError> {
+        let _guard = self.guard();
+        let dir = match self.read_manifest(key) {
+            Ok(_) => self.dir(key)?,
+            Err(SpoolError::Missing(_)) => self.refused_dir(key)?,
+            Err(err) => return Err(err),
+        };
+        let batch = read_manifest_in(&dir, key)?;
+        let path = match &batch.document {
+            Some(document) if page >= 1 && page <= document.pictures => {
+                Self::document_picture_path(&dir, page, size)
+            }
+            None if batch.pages.iter().any(|p| p.sequence == page && p.pictures) => {
+                Self::page_picture_path(&dir, page, size)
+            }
+            Some(_) | None => return Err(SpoolError::NoPage(page)),
+        };
+        let sealed = fs::read(path)?;
+        let picture = self.protector.unprotect(&sealed)?;
+        if picture.len() > MAX_PICTURE_BYTES {
+            return Err(SpoolError::PictureTooLarge);
+        }
+        Ok(picture)
+    }
+
+    /// Holds a batch for review; nothing more of it is sent until released.
+    pub fn hold(&self, key: &str) -> Result<(), SpoolError> {
+        self.update(key, |batch| {
+            batch.held = true;
+            Ok(())
+        })
+    }
+
+    /// Lets a held batch be sent.
+    pub fn release(&self, key: &str) -> Result<(), SpoolError> {
+        self.update(key, |batch| {
+            batch.held = false;
+            Ok(())
+        })
+    }
+
+    /// Opens a held batch for more pages, as scanning more into it does.
+    pub fn reopen(&self, key: &str) -> Result<(), SpoolError> {
+        self.update(key, |batch| {
+            if !batch.held || batch.document.is_some() {
+                return Err(SpoolError::NotHeld);
+            }
+            batch.complete = false;
+            Ok(())
+        })
+    }
+
+    /// Turns a page of a held batch by `degrees` clockwise, returning where
+    /// it now stands.
+    pub fn rotate(&self, key: &str, sequence: u32, degrees: i32) -> Result<u16, SpoolError> {
+        self.update(key, |batch| {
+            if !batch.held {
+                return Err(SpoolError::NotHeld);
+            }
+            let page = batch
+                .pages
+                .iter_mut()
+                .find(|p| p.sequence == sequence && !p.uploaded)
+                .ok_or(SpoolError::NoPage(sequence))?;
+            page.rotation = normalize_rotation(i32::from(page.rotation) + degrees);
+            Ok(page.rotation)
+        })
+    }
+
+    /// Takes a page out of a held batch, moving the pages after it up so the
+    /// sequence stays unbroken, and returns how many pages are left. The
+    /// manifest is written before any file moves, and a crash part way
+    /// leaves pages whose checksums no longer match, which reading reports
+    /// rather than sends.
+    pub fn delete_page(&self, key: &str, sequence: u32) -> Result<u32, SpoolError> {
+        let _guard = self.guard();
+        let dir = self.dir(key)?;
+        let mut batch = self.read_manifest(key)?;
+        if !batch.held || batch.document.is_some() {
+            return Err(SpoolError::NotHeld);
+        }
+        if batch.pages.iter().any(|p| p.uploaded) {
+            return Err(SpoolError::NotHeld);
+        }
+        let index = batch
+            .pages
+            .iter()
+            .position(|p| p.sequence == sequence)
+            .ok_or(SpoolError::NoPage(sequence))?;
+        let removed = batch.pages.remove(index);
+        let moved: Vec<(u32, u32)> = batch.pages[index..]
+            .iter_mut()
+            .map(|page| {
+                let from = page.sequence;
+                page.sequence -= 1;
+                (from, page.sequence)
+            })
+            .collect();
+        self.write_manifest(&batch)?;
+
+        remove_if_present(&Self::page_path(&dir, removed.sequence))?;
+        for size in [PictureSize::Thumb, PictureSize::View] {
+            remove_if_present(&Self::page_picture_path(&dir, removed.sequence, size))?;
+        }
+        for (from, to) in moved {
+            fs::rename(Self::page_path(&dir, from), Self::page_path(&dir, to))?;
+            for size in [PictureSize::Thumb, PictureSize::View] {
+                let old = Self::page_picture_path(&dir, from, size);
+                if old.exists() {
+                    fs::rename(old, Self::page_picture_path(&dir, to, size))?;
+                }
+            }
+        }
+        Ok(u32::try_from(batch.pages.len()).unwrap_or(u32::MAX))
+    }
+
+    /// Deletes a batch held for review, and its pages, for good.
+    pub fn discard_held(&self, key: &str) -> Result<(), SpoolError> {
+        {
+            let _guard = self.guard();
+            if !self.read_manifest(key)?.held {
+                return Err(SpoolError::NotHeld);
+            }
+        }
+        self.remove(key)
     }
 
     /// Ends acquisition. A batch with no pages has nothing to send and is
@@ -463,6 +793,14 @@ impl Spool {
             self.remove(key)?;
         }
         Ok(has_pages)
+    }
+
+    /// Every batch waiting to be sent, oldest first, leaving out those held
+    /// for review.
+    pub fn sendable(&self) -> Result<Vec<SpooledBatch>, SpoolError> {
+        let mut batches = self.pending()?;
+        batches.retain(|batch| !batch.held);
+        Ok(batches)
     }
 
     /// Every batch waiting, oldest first.
@@ -739,7 +1077,228 @@ pub(crate) mod tests {
             dpi: 300,
             patch_code: Some("T".into()),
             barcodes: vec!["PRO 1042".into()],
+            rotation: 0,
         }
+    }
+
+    fn print<'a>(key: &str, pictures: &'a [PagePictures], held: bool) -> NewPrint<'a> {
+        let mut input = input(key);
+        input.source = BatchSource::Print;
+        NewPrint {
+            input,
+            label: "Invoice.docx",
+            pdf: b"%PDF printed",
+            pages: Some(3),
+            pictures,
+            held,
+        }
+    }
+
+    fn pictures(n: u8) -> PagePictures {
+        PagePictures {
+            thumb: vec![0xFF, 0xD8, n, 1],
+            view: vec![0xFF, 0xD8, n, 2],
+        }
+    }
+
+    #[test]
+    fn a_held_batch_is_not_sendable_until_released() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = Spool::new_key();
+        spool.create_held(input(&key), "fi-8170").expect("create");
+        spool
+            .append_page(&key, b"%PDF one", &markers())
+            .expect("page");
+        spool.complete(&key).expect("complete");
+        assert!(spool.sendable().expect("sendable").is_empty());
+        assert_eq!(spool.pending().expect("pending").len(), 1);
+
+        spool.release(&key).expect("release");
+        assert_eq!(spool.sendable().expect("sendable").len(), 1);
+    }
+
+    #[test]
+    fn a_held_page_turns_and_is_sent_turned() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = Spool::new_key();
+        spool.create(input(&key), "fi-8170").expect("create");
+        spool
+            .append_page(&key, b"%PDF one", &markers())
+            .expect("page");
+        assert!(matches!(
+            spool.rotate(&key, 1, 90),
+            Err(SpoolError::NotHeld)
+        ));
+
+        spool.hold(&key).expect("hold");
+        assert_eq!(spool.rotate(&key, 1, 90).expect("turn"), 90);
+        assert_eq!(spool.rotate(&key, 1, -180).expect("turn"), 270);
+        assert_eq!(spool.rotate(&key, 1, 90).expect("turn"), 0);
+        assert_eq!(spool.rotate(&key, 1, 180).expect("turn"), 180);
+        let batch = spool.get(&key).expect("batch");
+        assert_eq!(batch.pages[0].markers().rotation, 180);
+        assert!(matches!(
+            spool.rotate(&key, 2, 90),
+            Err(SpoolError::NoPage(2))
+        ));
+    }
+
+    #[test]
+    fn rotations_are_kept_to_quarter_turns() {
+        assert_eq!(normalize_rotation(0), 0);
+        assert_eq!(normalize_rotation(-90), 270);
+        assert_eq!(normalize_rotation(450), 90);
+        assert_eq!(normalize_rotation(200), 180);
+        assert_eq!(normalize_rotation(359), 0);
+    }
+
+    #[test]
+    fn taking_a_page_out_keeps_the_rest_in_order_with_their_pictures() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = Spool::new_key();
+        spool.create_held(input(&key), "fi-8170").expect("create");
+        for (n, pdf) in [b"%PDF one".as_slice(), b"%PDF two", b"%PDF three"]
+            .into_iter()
+            .enumerate()
+        {
+            let sequence = spool.append_page(&key, pdf, &markers()).expect("page");
+            let n = u8::try_from(n).expect("n");
+            spool
+                .store_pictures(&key, sequence, &pictures(n))
+                .expect("pictures");
+        }
+        spool.rotate(&key, 3, 90).expect("turn");
+
+        assert_eq!(spool.delete_page(&key, 2).expect("delete"), 2);
+        let batch = spool.get(&key).expect("batch");
+        let sequences: Vec<u32> = batch.pages.iter().map(|p| p.sequence).collect();
+        assert_eq!(sequences, [1, 2]);
+        assert_eq!(
+            spool.read_page(&key, &batch.pages[0]).expect("one"),
+            b"%PDF one"
+        );
+        assert_eq!(
+            spool.read_page(&key, &batch.pages[1]).expect("three"),
+            b"%PDF three"
+        );
+        assert_eq!(batch.pages[1].rotation, 90, "the turn moves with the page");
+        assert_eq!(
+            spool.picture(&key, 2, PictureSize::Thumb).expect("thumb"),
+            pictures(2).thumb
+        );
+        assert_eq!(
+            spool.picture(&key, 2, PictureSize::View).expect("view"),
+            pictures(2).view
+        );
+        assert!(matches!(
+            spool.picture(&key, 3, PictureSize::Thumb),
+            Err(SpoolError::NoPage(3))
+        ));
+        assert!(
+            !dir.path()
+                .join("batches")
+                .join(&key)
+                .join("page-0003.bin")
+                .exists()
+        );
+    }
+
+    #[test]
+    fn a_page_already_sent_keeps_the_batch_as_it_is() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = Spool::new_key();
+        spool.create(input(&key), "fi-8170").expect("create");
+        spool
+            .append_page(&key, b"%PDF one", &markers())
+            .expect("page");
+        spool
+            .append_page(&key, b"%PDF two", &markers())
+            .expect("page");
+        spool.mark_uploaded(&key, 1).expect("uploaded");
+        spool.hold(&key).expect("hold");
+        assert!(matches!(
+            spool.delete_page(&key, 2),
+            Err(SpoolError::NotHeld)
+        ));
+        assert!(matches!(
+            spool.rotate(&key, 1, 90),
+            Err(SpoolError::NoPage(1))
+        ));
+    }
+
+    #[test]
+    fn pictures_are_kept_encrypted_and_read_from_refused_batches_too() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = Spool::new_key();
+        spool.create(input(&key), "fi-8170").expect("create");
+        spool
+            .append_page(&key, b"%PDF one", &markers())
+            .expect("page");
+        assert!(matches!(
+            spool.picture(&key, 1, PictureSize::Thumb),
+            Err(SpoolError::NoPage(1))
+        ));
+        spool
+            .store_pictures(&key, 1, &pictures(7))
+            .expect("pictures");
+        let on_disk = fs::read(
+            dir.path()
+                .join("batches")
+                .join(&key)
+                .join("page-0001.thumb"),
+        )
+        .expect("disk");
+        assert_ne!(on_disk, pictures(7).thumb, "sealed at rest");
+
+        spool.fail(&key, "refused").expect("fail");
+        assert_eq!(
+            spool.picture(&key, 1, PictureSize::Thumb).expect("thumb"),
+            pictures(7).thumb
+        );
+        let too_big = PagePictures {
+            thumb: vec![0; MAX_PICTURE_BYTES + 1],
+            view: Vec::new(),
+        };
+        let other = Spool::new_key();
+        spool.create(input(&other), "fi-8170").expect("create");
+        spool
+            .append_page(&other, b"%PDF one", &markers())
+            .expect("page");
+        assert!(matches!(
+            spool.store_pictures(&other, 1, &too_big),
+            Err(SpoolError::PictureTooLarge)
+        ));
+    }
+
+    #[test]
+    fn a_printed_job_keeps_the_pictures_of_its_pages() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = Spool::new_key();
+        let batch = spool
+            .create_print(print(&key, &[pictures(1), pictures(2)], true))
+            .expect("print");
+        assert!(batch.held);
+        assert_eq!(batch.document.as_ref().map(|d| d.pictures), Some(2));
+        assert_eq!(
+            spool.picture(&key, 2, PictureSize::View).expect("view"),
+            pictures(2).view
+        );
+        assert!(matches!(
+            spool.picture(&key, 3, PictureSize::View),
+            Err(SpoolError::NoPage(3))
+        ));
+        assert!(matches!(
+            spool.delete_page(&key, 1),
+            Err(SpoolError::NotHeld)
+        ));
+        spool.discard_held(&key).expect("discard");
+        assert!(spool.pending().expect("pending").is_empty());
     }
 
     #[test]
@@ -991,11 +1550,7 @@ pub(crate) mod tests {
         let dir = tempfile::tempdir().expect("dir");
         let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
         let key = Spool::new_key();
-        let mut print = input(&key);
-        print.source = BatchSource::Print;
-        spool
-            .create_print(print, "Invoice.docx", b"%PDF printed", Some(3))
-            .expect("print");
+        spool.create_print(print(&key, &[], false)).expect("print");
         spool.fail(&key, "ended").expect("fail");
 
         let refused = spool.refused().expect("refused");

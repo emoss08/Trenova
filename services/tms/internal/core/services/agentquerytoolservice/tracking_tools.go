@@ -348,10 +348,14 @@ func newListVehiclePositionsTool(
 
 func (t *listVehiclePositionsTool) Name() string { return "list_vehicle_positions" }
 
+func (t *listVehiclePositionsTool) SearchTerms() []string {
+	return []string{"truck location", "tractor position", "gps", "telematics", "live position"}
+}
+
 func (t *listVehiclePositionsTool) Description() string {
-	return "The last known position of every tractor the telematics feed reports: " +
-		"coordinates, the nearest place name, speed, engine state and how old the " +
-		"reading is. Use it for \"where is truck 104\" or \"which trucks are near " +
+	return "Where every tractor is right now, from the telematics feed: its last known " +
+		"position, the nearest place name, speed, engine state and how old the reading " +
+		"is. Use it for \"where is truck 104\" or \"which trucks are near " +
 		"Dallas\". A reading older than an hour is where the truck was, not where " +
 		"it is. Drivers have no position of their own; a driver is where the " +
 		"tractor they are logged into is."
@@ -497,6 +501,10 @@ func (t *getWorkerHOSTool) Description() string {
 		"the drive, shift, cycle and break time remaining, in minutes. Use it before " +
 		"promising a delivery time or proposing an assignment. A reading older than " +
 		"twelve hours is marked stale and should not be planned on."
+}
+
+func (t *getWorkerHOSTool) SearchTerms() []string {
+	return []string{"hours of service", "hos", "hours left", "drive time", "duty status"}
 }
 
 func (t *getWorkerHOSTool) ParamSchema() map[string]any {

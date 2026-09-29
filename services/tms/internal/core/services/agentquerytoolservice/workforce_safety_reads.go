@@ -425,7 +425,8 @@ func newGetDOTRandomDrawTool(
 	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
 	return &workforceRead{
-		name: "get_dot_random_draw",
+		name:        "get_dot_random_draw",
+		searchTerms: []string{"who was selected", "selected drivers", "draw results"},
 		description: "Retrieve one random testing round with every driver it selected. " +
 			"Each selection has its substance, rank and where it stands: selected, " +
 			"notified, completed with its test, excused or missed. It yields the drawEntryId " +

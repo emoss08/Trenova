@@ -327,6 +327,7 @@ mod tests {
             created_at: 0,
             refused_at: 0,
             readable: true,
+            pictures: Vec::new(),
         }
     }
 

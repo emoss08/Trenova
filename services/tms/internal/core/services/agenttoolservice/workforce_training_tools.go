@@ -427,6 +427,10 @@ func newRecordTrainingCompletionTool(training trainingKeeper) serviceports.Agent
 	}
 	spec.reversible = false
 
+	spec.searchTerms = []string{
+		"completed training", "course completed", "driver finished training",
+	}
+
 	return newReportingReceivableTool(spec, receivablePlan[
 		*workertrainingservice.CompleteRequest, *workertrainingservice.RecordChange,
 	]{

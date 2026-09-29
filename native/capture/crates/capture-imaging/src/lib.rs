@@ -7,12 +7,14 @@
 
 pub mod dib;
 pub mod page;
+pub mod preview;
 pub mod pwg;
 pub mod raster;
 pub mod scan;
 
 pub use dib::{Bitmap, decode_bmp};
 pub use page::{EncodedPage, PdfDocument, Resolution, encode_page};
+pub use preview::{PagePreview, preview};
 pub use pwg::{ConvertLimits, PrintedDocument, PwgError, PwgPage, PwgReader, pwg_to_pdf};
 pub use raster::{OwnedRaster, PixelFormat, Raster, binarize};
 

@@ -49,6 +49,10 @@ func (t *requestMissingDocsTool) Description() string {
 		"greeting, letterhead and sign-off. The email is sent and cannot be recalled."
 }
 
+func (t *requestMissingDocsTool) SearchTerms() []string {
+	return []string{"missing pod", "missing proof of delivery", "ask for paperwork", "missing bol"}
+}
+
 func (t *requestMissingDocsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",

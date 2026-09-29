@@ -85,6 +85,9 @@
     <SetProperty Action="KeepServerUrl" Id="TRENOVAURL" Value="[SAVEDTRENOVAURL]"
                  After="AppSearch" Sequence="both"
                  Condition="NOT TRENOVAURL AND SAVEDTRENOVAURL" />
+    <SetProperty Action="SuggestServerUrl" Id="TRENOVAURL" Value="https://cloud.trenova.app"
+                 After="KeepServerUrl" Sequence="ui"
+                 Condition="NOT TRENOVAURL" />
     <SetProperty Action="KeepAutoUpdateOff" Id="AUTOUPDATE" Value="0"
                  After="KeepServerUrl" Sequence="both"
                  Condition="NOT AUTOUPDATE AND SAVEDAUTOUPDATE = &quot;#0&quot;" />

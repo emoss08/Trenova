@@ -249,6 +249,9 @@ type PutPageInput struct {
 	DPI            int      `json:"dpi"`
 	PatchCode      string   `json:"patchCode"`
 	DeviceBarcodes []string `json:"deviceBarcodes"`
+	// Rotation is how far, in degrees clockwise, the person turned the page
+	// on the device before sending it: 0, 90, 180 or 270.
+	Rotation int `json:"rotation"`
 }
 
 // PutPage stores one scanned page. It is idempotent on the page's sequence:
@@ -271,6 +274,11 @@ func (s *Service) PutPage(
 	if in.Sequence < 1 || in.Sequence > capture.MaxBatchPages {
 		return nil, errortypes.NewValidationError("sequence", errortypes.ErrInvalid,
 			"Page sequence must be between 1 and {0}", capture.MaxBatchPages)
+	}
+
+	if !validRotation(in.Rotation) {
+		return nil, errortypes.NewValidationError("rotation", errortypes.ErrInvalid,
+			"Rotation must be 0, 90, 180 or 270")
 	}
 
 	markers, err := deviceMarkers(in.PatchCode, in.DeviceBarcodes)
@@ -309,6 +317,7 @@ func (s *Service) PutPage(
 		data:     data,
 		checksum: checksum,
 		dpi:      in.DPI,
+		rotation: in.Rotation,
 		markers:  markers,
 	})
 	if err != nil {
@@ -334,7 +343,12 @@ type storePageInput struct {
 	data     []byte
 	checksum string
 	dpi      int
+	rotation int
 	markers  capture.PageMarkers
+}
+
+func validRotation(degrees int) bool {
+	return degrees == capture.NormalizeRotation(degrees)
 }
 
 // storePage writes a page's bytes and its row, counting it on the batch when
@@ -361,6 +375,7 @@ func (s *Service) storePage(
 		ByteSize:       int64(len(in.data)),
 		ContentType:    capture.PageContentType,
 		DPI:            in.dpi,
+		Rotation:       in.rotation,
 		Markers:        in.markers,
 	})
 	if err != nil {

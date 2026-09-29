@@ -461,6 +461,10 @@ func newReplyToInboundMessageTool(p replyToInboundMessageParams) serviceports.Ag
 
 func (t *replyToInboundMessageTool) Name() string { return "reply_to_inbound_message" }
 
+func (t *replyToInboundMessageTool) SearchTerms() []string {
+	return []string{"reply to email", "answer the sender", "write back", "respond"}
+}
+
 func (t *replyToInboundMessageTool) Description() string {
 	return "Answer a message that arrived on a monitored address, in the same thread: a " +
 		"status question, a request for a missing detail. It goes to the sender and nobody " +

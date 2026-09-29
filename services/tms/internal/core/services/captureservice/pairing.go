@@ -86,6 +86,11 @@ func (s *Service) StartPairing(
 		return nil, err
 	}
 
+	webBase := s.cfg.App.GetWebBaseURL()
+	if webBase == "" {
+		return nil, errortypes.NewBusinessError(ErrNoWebAddress.Error())
+	}
+
 	deviceCode, deviceCodeHash, err := tokenutils.New()
 	if err != nil {
 		return nil, err
@@ -112,7 +117,7 @@ func (s *Service) StartPairing(
 		})
 		if err == nil {
 			display := FormatUserCode(userCode)
-			verify := s.cfg.App.GetWebBaseURL() + pairingVerifyPath
+			verify := webBase + pairingVerifyPath
 
 			return &PairingGrant{
 				DeviceCode:              deviceCode,

@@ -22,7 +22,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime};
 
 use capture_client::pairing::{PairingOutcome, pair};
-use capture_client::spool::{Export, RefusedBatch};
+use capture_client::spool::{Export, PagePictures, RefusedBatch};
 use capture_client::stream::{self, DeviceEvent};
 use capture_client::uploader::{UploadEvent, Uploader};
 use capture_client::{
@@ -45,9 +45,12 @@ use self::prints::Imported;
 pub use self::updates::UpdateStarter;
 use crate::scanners::{ScanOutcome, ScanRun, ScanUpdate, ScannerHost};
 use crate::state::{
-    ActiveScan, Attention, Command, Connection, Notice, PausedBatch, PrinterAttempt, RECENT,
-    RecentBatch, Severity, Shared, UpdateState, UpdateStatus, WaitingBatch,
+    ActiveScan, Attention, Command, Connection, Notice, PausedBatch, Pictures, PicturesRequest,
+    PrinterAttempt, RECENT, RecentBatch, Severity, Shared, UpdateState, UpdateStatus, WaitingBatch,
 };
+
+/// The most pictures one ask from the window reads.
+const MAX_PICTURES_PER_ASK: usize = 24;
 
 /// Where the server address is kept.
 pub trait ServerSetting: Send + Sync {
@@ -94,6 +97,8 @@ pub struct Environment {
     pub machine_auto_update: bool,
     /// Whether the print service is installed without its printer.
     pub printer: Arc<dyn PrinterCheck>,
+    /// How long the connection stays lost before the person is told.
+    pub offline_notice_after: Duration,
 }
 
 /// Whether the Trenova printer needs adding on this computer.
@@ -122,6 +127,8 @@ enum Internal {
     Reported(Result<(), ApiError>),
     Release(Result<Option<Release>, ApiError>),
     Recheck,
+    /// The connection lost in this outage has not come back yet.
+    StillOffline(u64),
 }
 
 /// A scan waiting its turn, or paused to be continued.
@@ -183,6 +190,11 @@ struct Agent {
     fetching: bool,
     fetch_again: bool,
     blocked: bool,
+    /// Counts connection losses, so a late check for one that ended is
+    /// ignored.
+    outage: u64,
+    /// The person was told about the loss that is going on now.
+    outage_announced: bool,
     /// Counts spool reads, so a slow one never overwrites a newer one.
     spool_reads: Arc<AtomicU64>,
 }
@@ -234,20 +246,28 @@ pub async fn run(
         fetching: false,
         fetch_again: false,
         blocked: false,
+        outage: 0,
+        outage_announced: false,
         spool_reads: Arc::new(AtomicU64::new(0)),
     };
     if let Some(dir) = agent.env.print_inbox.clone() {
         let (tx, rx) = mpsc::channel(16);
+        let shared = Arc::clone(&agent.shared);
         tokio::spawn(prints::watch(
             Inbox::new(dir),
             Arc::clone(&agent.spool),
             tx,
+            Arc::new(move || shared.snapshot().review_before_sending),
             cancel.child_token(),
         ));
         agent.prints_rx = Some(rx);
     }
     let locked = agent.env.server_setting.locked();
-    agent.shared.update(|s| s.server_locked = locked);
+    let printing = agent.env.print_inbox.is_some();
+    agent.shared.update(|s| {
+        s.server_locked = locked;
+        s.printing = printing;
+    });
     agent.refresh_spool();
     agent.check_printer();
     let configured = agent.env.server_setting.load();
@@ -366,6 +386,24 @@ impl Agent {
             body: body.into(),
             severity,
             link,
+            routine: false,
+        });
+    }
+
+    /// Tells the person something that needs nothing from them, unless they
+    /// chose not to hear about such things.
+    fn notify_routine(
+        &self,
+        title: impl Into<String>,
+        body: impl Into<String>,
+        link: Option<String>,
+    ) {
+        self.shared.notify(Notice {
+            title: title.into(),
+            body: body.into(),
+            severity: Severity::Info,
+            link,
+            routine: true,
         });
     }
 
@@ -473,7 +511,31 @@ impl Agent {
         self.enumerate();
     }
 
+    /// Tells the person the connection has been lost for a while, once per
+    /// outage.
+    fn still_offline(&mut self, outage: u64) {
+        let snapshot = self.shared.snapshot();
+        if outage != self.outage
+            || self.outage_announced
+            || !matches!(snapshot.connection, Connection::Offline { .. })
+        {
+            return;
+        }
+        self.outage_announced = true;
+        let body = if snapshot.pages_waiting > 0 {
+            format!(
+                "It keeps trying to reconnect. The {} not yet sent are kept on this computer and sent when it does.",
+                plural(snapshot.pages_waiting, "page", "pages")
+            )
+        } else {
+            "It keeps trying to reconnect. Anything scanned or printed meanwhile is kept on this computer and sent when it does.".to_owned()
+        };
+        self.notify(Severity::Warning, "Trenova Capture is offline", body, None);
+    }
+
     fn stop_session(&mut self) {
+        self.outage += 1;
+        self.outage_announced = false;
         if let Some(token) = self.session.take() {
             token.cancel();
         }
@@ -588,6 +650,56 @@ impl Agent {
             Command::Retry(key) => self.retry(key).await,
             Command::Discard(key) => self.discard(key).await,
             Command::Save { key, into } => self.save(key, into).await,
+            Command::RotatePage { key, page, degrees } => {
+                if let Err(err) = self
+                    .change_spool(move |spool| spool.rotate(&key, page, degrees))
+                    .await
+                {
+                    self.notify(
+                        Severity::Error,
+                        "The page could not be turned",
+                        err.to_string(),
+                        None,
+                    );
+                }
+            }
+            Command::DeletePage { key, page } => self.delete_page(key, page).await,
+            Command::SendHeld(key) => {
+                match self.change_spool(move |spool| spool.release(&key)).await {
+                    Ok(()) => self.wake_uploader(),
+                    Err(err) => {
+                        self.notify(
+                            Severity::Error,
+                            "It could not be sent",
+                            err.to_string(),
+                            None,
+                        );
+                    }
+                }
+            }
+            Command::DiscardHeld(key) => {
+                if let Err(err) = self
+                    .change_spool(move |spool| spool.discard_held(&key))
+                    .await
+                {
+                    self.notify(
+                        Severity::Error,
+                        "It could not be discarded",
+                        err.to_string(),
+                        None,
+                    );
+                }
+            }
+            Command::ScanMore {
+                key,
+                source,
+                protocol,
+                profile,
+            } => {
+                self.scan_more(key, &source, protocol, profile.as_ref())
+                    .await;
+            }
+            Command::Pictures(request) => self.read_pictures(request),
             Command::Quit => {}
         }
     }
@@ -641,6 +753,11 @@ impl Agent {
                     pages: batch.pages_waiting(),
                     created_at: batch.created_at,
                     complete: batch.complete,
+                    held: batch.held,
+                    requested: batch.input.request_id.is_some(),
+                    printed: batch.document.is_some(),
+                    editable: batch.document.is_none() && batch.pages.iter().all(|p| !p.uploaded),
+                    pictures: batch.picture_refs(),
                 })
                 .collect();
             shared.update(|s| {
@@ -835,6 +952,7 @@ impl Agent {
                         .into(),
                     severity: Severity::Info,
                     link: Some(grant.verification_uri_complete.clone()),
+                    routine: false,
                 });
             };
             let result = pair(&api, &machine, show, &token).await;
@@ -862,7 +980,9 @@ impl Agent {
         });
     }
 
-    fn scan_to_intake(&mut self, name: &str, protocol: SourceProtocol, profile: Option<&Id>) {
+    /// The scanner a person chose, when this computer is signed in and the
+    /// scanner is here; says why not otherwise.
+    fn chosen_source(&self, name: &str, protocol: SourceProtocol) -> Option<SourceInfo> {
         if !self.signed_in() {
             self.notify(
                 Severity::Warning,
@@ -870,15 +990,21 @@ impl Agent {
                 "Choose Sign in in the Trenova Capture menu.",
                 None,
             );
-            return;
+            return None;
         }
-        let Some(source) = self
+        let source = self
             .sources
             .iter()
             .find(|s| s.name == name && s.protocol == protocol)
-            .cloned()
-        else {
+            .cloned();
+        if source.is_none() {
             self.notify(Severity::Error, "That scanner is not connected", name, None);
+        }
+        source
+    }
+
+    fn scan_to_intake(&mut self, name: &str, protocol: SourceProtocol, profile: Option<&Id>) {
+        let Some(source) = self.chosen_source(name, protocol) else {
             return;
         };
         let profile = plan::choose_profile(None, profile, &self.profiles);
@@ -890,6 +1016,102 @@ impl Agent {
             pages: 0,
         });
         self.start_next();
+    }
+
+    /// Scans more pages onto the end of a batch held for review.
+    async fn scan_more(
+        &mut self,
+        key: String,
+        name: &str,
+        protocol: SourceProtocol,
+        profile: Option<&Id>,
+    ) {
+        let Some(source) = self.chosen_source(name, protocol) else {
+            return;
+        };
+        let profile = plan::choose_profile(None, profile, &self.profiles);
+        let reopen = key.clone();
+        let reopened = self
+            .change_spool(move |spool| {
+                spool.reopen(&reopen)?;
+                Ok(spool.get(&reopen)?.pages.len())
+            })
+            .await;
+        match reopened {
+            Ok(pages) => {
+                self.queue.push_back(Order {
+                    request: None,
+                    source,
+                    profile,
+                    resume: Some(key),
+                    pages: u32::try_from(pages).unwrap_or(u32::MAX),
+                });
+                self.start_next();
+            }
+            Err(err) => self.notify(
+                Severity::Error,
+                "More pages could not be scanned",
+                err.to_string(),
+                None,
+            ),
+        }
+    }
+
+    /// Takes a page out of a held batch; taking out the last one discards
+    /// the batch.
+    async fn delete_page(&mut self, key: String, page: u32) {
+        let result = self
+            .change_spool(move |spool| {
+                let left = spool.delete_page(&key, page)?;
+                if left == 0 {
+                    spool.discard_held(&key)?;
+                }
+                Ok(left)
+            })
+            .await;
+        if let Err(err) = result {
+            self.notify(
+                Severity::Error,
+                "The page could not be taken out",
+                err.to_string(),
+                None,
+            );
+        }
+    }
+
+    /// Reads pages' pictures for the window, off this task. A page whose
+    /// picture cannot be read is left out, and the window shows it without.
+    fn read_pictures(&self, request: PicturesRequest) {
+        let spool = Arc::clone(&self.spool);
+        let shared = Arc::clone(&self.shared);
+        tokio::spawn(async move {
+            let key = request.key.clone();
+            let size = request.size;
+            let read = tokio::task::spawn_blocking(move || {
+                request
+                    .pages
+                    .iter()
+                    .take(MAX_PICTURES_PER_ASK)
+                    .filter_map(|&page| {
+                        spool
+                            .picture(&request.key, page, request.size)
+                            .inspect_err(|err| {
+                                tracing::debug!(page, error = %err, "a picture could not be read");
+                            })
+                            .ok()
+                            .map(|picture| (page, picture))
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .await;
+            if let Ok(pictures) = read {
+                shared.pictures(Pictures {
+                    key,
+                    size,
+                    pictures,
+                });
+            }
+        });
     }
 
     async fn internal(&mut self, message: Internal) {
@@ -936,6 +1158,7 @@ impl Agent {
                     self.start_session().await;
                 }
             }
+            Internal::StillOffline(outage) => self.still_offline(outage),
         }
     }
 
@@ -1086,7 +1309,12 @@ impl Agent {
             let key = Spool::new_key();
             let input =
                 plan::batch_input(&key, &order.source, &order.profile, order.request.as_ref());
-            if let Err(err) = self.spool.create(input, label.clone()) {
+            let created = if self.shared.snapshot().review_before_sending {
+                self.spool.create_held(input, label.clone())
+            } else {
+                self.spool.create(input, label.clone())
+            };
+            if let Err(err) = created {
                 self.notify(
                     Severity::Error,
                     "A scan could not start",
@@ -1134,7 +1362,11 @@ impl Agent {
                     tracing::warn!(error = %err, "could not record the scan settings");
                 }
             }
-            ScanUpdate::Page { meta, pdf } => self.page(meta, &pdf),
+            ScanUpdate::Page {
+                meta,
+                pdf,
+                pictures,
+            } => self.page(meta, &pdf, pictures.as_ref()),
             ScanUpdate::End(outcome) => self.scan_ended(outcome),
         }
     }
@@ -1158,7 +1390,12 @@ impl Agent {
         self.report_sources();
     }
 
-    fn page(&mut self, meta: capture_protocol::helper::PageMeta, pdf: &[u8]) {
+    fn page(
+        &mut self,
+        meta: capture_protocol::helper::PageMeta,
+        pdf: &[u8],
+        pictures: Option<&PagePictures>,
+    ) {
         let Some(active) = &mut self.active else {
             return;
         };
@@ -1166,9 +1403,15 @@ impl Agent {
             dpi: meta.dpi,
             patch_code: meta.patch_code,
             barcodes: meta.barcodes,
+            rotation: 0,
         };
         match self.spool.append_page(&active.key, pdf, &markers) {
-            Ok(_) => {
+            Ok(sequence) => {
+                if let Some(pictures) = pictures
+                    && let Err(err) = self.spool.store_pictures(&active.key, sequence, pictures)
+                {
+                    tracing::warn!(sequence, error = %err, "could not keep a page's pictures");
+                }
                 active.pages += 1;
                 let pages = active.pages;
                 self.shared.update(|s| {
@@ -1193,9 +1436,33 @@ impl Agent {
 
     fn complete(&self, key: &str) {
         match self.spool.complete(key) {
-            Ok(_) => self.wake_uploader(),
+            Ok(true) => match self.spool.get(key) {
+                Ok(batch) if batch.held => {
+                    self.refresh_spool();
+                    self.review_ready(
+                        "Look over the scan before it is sent",
+                        format!(
+                            "{} from {} wait for you in Trenova Capture.",
+                            plural(
+                                u32::try_from(batch.pages.len()).unwrap_or(u32::MAX),
+                                "page",
+                                "pages"
+                            ),
+                            batch.label
+                        ),
+                    );
+                }
+                _ => self.wake_uploader(),
+            },
+            Ok(false) => self.refresh_spool(),
             Err(err) => tracing::error!(key, error = %err, "could not finish a batch"),
         }
+    }
+
+    /// Something is held for the person to look over.
+    fn review_ready(&self, title: &str, body: String) {
+        self.shared.attention(Attention::Review);
+        self.notify(Severity::Info, title, body, None);
     }
 
     fn scan_ended(&mut self, outcome: ScanOutcome) {
@@ -1288,11 +1555,40 @@ impl Agent {
         match event {
             DeviceEvent::Connected => {
                 self.blocked = false;
+                self.outage += 1;
                 self.shared.update(|s| s.connection = Connection::Online);
+                if std::mem::take(&mut self.outage_announced) {
+                    let waiting = self.shared.snapshot().pages_waiting;
+                    let body = if waiting > 0 {
+                        format!(
+                            "The {} kept on this computer are being sent.",
+                            plural(waiting, "page", "pages")
+                        )
+                    } else {
+                        "Scans and prints reach Trenova again.".to_owned()
+                    };
+                    self.notify_routine("Connected to Trenova again", body, None);
+                }
             }
             DeviceEvent::Disconnected { reason, .. } => {
+                let already = matches!(
+                    self.shared.snapshot().connection,
+                    Connection::Offline { .. }
+                );
                 self.shared
                     .update(|s| s.connection = Connection::Offline { reason });
+                if !already {
+                    self.outage += 1;
+                    let (tx, wait, outage) = (
+                        self.internal_tx.clone(),
+                        self.env.offline_notice_after,
+                        self.outage,
+                    );
+                    tokio::spawn(async move {
+                        tokio::time::sleep(wait).await;
+                        let _ = tx.send(Internal::StillOffline(outage)).await;
+                    });
+                }
             }
             DeviceEvent::FetchRequests => self.fetch_requests(),
             DeviceEvent::Revoked => {
@@ -1341,8 +1637,7 @@ impl Agent {
                 } else {
                     "They are waiting in Intake."
                 };
-                self.notify(
-                    Severity::Info,
+                self.notify_routine(
                     format!("{} sent to Trenova", plural(pages, "page", "pages")),
                     body,
                     link,
@@ -1378,6 +1673,16 @@ impl Agent {
     /// A printed job reached the spool, or could not be read.
     fn printed(&mut self, imported: Imported) {
         match imported {
+            Imported::Spooled {
+                name, held: true, ..
+            } => {
+                tracing::info!(name, "took a print from the print inbox to be looked over");
+                self.refresh_spool();
+                self.review_ready(
+                    "Look over the print before it is sent",
+                    format!("{name} waits for you in Trenova Capture."),
+                );
+            }
             Imported::Spooled { name, .. } => {
                 tracing::info!(name, "took a print from the print inbox");
                 if self.signed_in() {
