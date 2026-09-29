@@ -27,6 +27,10 @@ export const agentTemplateKindSchema = z.enum([
   "BooksKeeper",
   "SettlementsClerk",
   "Receivables",
+  "MasterDataSteward",
+  "WorkforceCoordinator",
+  "FuelTaxClerk",
+  "ReportAnalyst",
 ]);
 
 export const autonomyTierSchema = z.enum(["Propose", "ActWithApproval", "AutoExecute"]);

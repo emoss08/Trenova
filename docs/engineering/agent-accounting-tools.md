@@ -118,12 +118,16 @@ for the books keeper; both tools stop at a proposal and run as the approver. Map
 releasing sync use grants the books keeper already had.
 
 The manual journal and reversal tools, `open_fiscal_period`, `unlock_fiscal_period`,
-`reopen_fiscal_period` and `change_accounting_backfill` are registered and on no template.
-Each starts from a person's request, and none belongs to an unattended desk: posting and
-approving are refused to an agent principal outright, and drafting a journal on its own
-judgement is not the books keeper's job. The billing assistant, the one chat template with
+`reopen_fiscal_period`, `change_accounting_backfill`, `request_accounting_backfill`,
+`clear_accounting_mapping` and `redate_accounting_sync` are deliberately on no template, and a
+template test keeps them off every one. Each is privileged: it starts from a person's request,
+and none belongs to an unattended desk, since posting and approving are refused to an agent
+principal outright and drafting a journal on its own judgement is not the books keeper's job.
+No chat template takes them either. The billing assistant, the one chat template with
 accounting work, has no room left under the eight-tool headroom; the receivables assistant
-works customer cash. An organization adds them to an agent it builds in AI control.
+works customer cash; and the fuel and IFTA clerk, the master data steward and the workforce
+coordinator keep tax, master and worker records, never the ledger. An organization adds them
+to an agent it builds in AI control.
 
 ## Known limits
 

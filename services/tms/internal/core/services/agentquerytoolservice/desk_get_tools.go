@@ -24,8 +24,9 @@ so the model can read the record rather than the page title.
 
 func newGetDetentionOccurrenceTool(
 	repo repositories.DetentionOccurrenceRepository,
+	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
+	return newGetTool(&getSpec{
 		name:     "get_detention_occurrence",
 		entity:   "detention occurrence",
 		resource: permission.ResourceDetentionPolicy,
@@ -42,13 +43,14 @@ func newGetDetentionOccurrenceTool(
 				IncludeNotices:  true,
 			})
 		},
-	})
+	}, permissions)
 }
 
 func newGetCarrierIntelEventTool(
 	repo repositories.CarrierIntelEventRepository,
+	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
+	return newGetTool(&getSpec{
 		name:     "get_carrier_intel_event",
 		entity:   "carrier intelligence event",
 		resource: permission.ResourceCarrierIntelligence,
@@ -70,13 +72,14 @@ func newGetCarrierIntelEventTool(
 
 			return events[0], nil
 		},
-	})
+	}, permissions)
 }
 
 func newGetServiceFailureTool(
 	repo repositories.ServiceFailureRepository,
+	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
+	return newGetTool(&getSpec{
 		name:     "get_service_failure",
 		entity:   "service failure",
 		resource: permission.ResourceServiceFailure,
@@ -91,7 +94,7 @@ func newGetServiceFailureTool(
 				TenantInfo: tenant,
 			})
 		},
-	})
+	}, permissions)
 }
 
 // getWorkerCredentialTool reads one credential under the person's field
@@ -248,8 +251,9 @@ func workerCredentialDetailFrom(
 // for status updates.
 func newGetCustomerUpdatePreferencesTool(
 	repo repositories.CustomerRepository,
+	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
+	return newGetTool(&getSpec{
 		name:     "get_customer_update_preferences",
 		entity:   "customer",
 		resource: permission.ResourceCustomer,
@@ -289,5 +293,5 @@ func newGetCustomerUpdatePreferencesTool(
 
 			return out, nil
 		},
-	})
+	}, permissions)
 }

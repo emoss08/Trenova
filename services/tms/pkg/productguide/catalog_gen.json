@@ -1,5 +1,5 @@
 {
-  "version": "sha256:9e7aab40af9b966d35e2578e52973e8a6b365dc9c355e14b370f61c58f92fd1f",
+  "version": "sha256:9cd7820c07f56161c6840f09414bdd06b05465d73968fe8214a31128741d2416",
   "modules": [
     {
       "id": "home",
@@ -2492,6 +2492,38 @@
             "In **Start from**, choose the settlements clerk to draft driver and carrier settlements, sort out pay that is missing or held, match carrier invoices and propose each payment, or the receivables assistant to apply payments and credit, handle disputes and late charges, and say which overdue invoices to chase first. Both are chat agents that act as the person talking to them, and anything that moves money waits for that person to approve it. The settlements clerk reads each driver's pay setup but never changes it: a pay rate, a standing deduction or escrow terms stay with the people who set up driver pay.",
             "Leave **Data access** at **Restricted**, since both work with amounts and pay.",
             "Select **Save**. To let the billing assistant and the receivables assistant pass work to each other, add each to the other's **Can ask** list as described below."
+          ]
+        },
+        {
+          "title": "Set up an agent for master data, workforce records, fuel tax or reports",
+          "keywords": [
+            "master data agent",
+            "carrier setup agent",
+            "customer setup agent",
+            "equipment agent",
+            "document filing agent",
+            "capture filing agent",
+            "HR agent",
+            "time off agent",
+            "leave agent",
+            "injury log agent",
+            "random drug test agent",
+            "permit agent",
+            "fuel agent",
+            "IFTA agent",
+            "fuel tax agent",
+            "fuel card agent",
+            "report agent",
+            "report builder agent",
+            "dashboard agent",
+            "scheduled report agent"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Agents** in the rail.",
+            "Select **New agent**.",
+            "In **Start from**, choose the master data steward to keep carriers, customers, commodities, hazardous materials, locations, tractors and trailers right, file scanned paperwork and clear the watchtower feed; the workforce coordinator to handle time off, leave, injuries, reviews, safety records, random testing rounds, checklists and shipment permits; or the fuel and IFTA clerk to record fuel purchases and card statements, fill in state miles and draft the quarter's IFTA return; or the report analyst to find, run, build and compare reports, keep dashboards and set up the schedules that email a report. All four are chat agents that only propose: every change waits for the person talking to them to approve it.",
+            "Leave **Data access** as the starter set it: **Restricted** for the workforce coordinator, **Internal** for the others. None of them changes pay, rate agreements or payroll.",
+            "Select **Save**."
           ]
         },
         {
@@ -7521,7 +7553,9 @@
         "tray icon",
         "paper jam",
         "Trenova printer",
-        "print to Trenova"
+        "print to Trenova",
+        "not sent",
+        "failed upload"
       ],
       "tasks": [
         {
@@ -7533,7 +7567,7 @@
             "approve code"
           ],
           "steps": [
-            "On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** and run the installer (it needs administrator rights). Then choose Sign in from the Trenova Capture icon in the notification area. It shows an eight-letter code and opens the pairing page.",
+            "On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** and run the installer (it needs administrator rights). Then open Trenova Capture from the Start menu, or select its icon in the notification area, and choose Sign in. It shows an eight-letter code and opens the pairing page.",
             "If the page did not open, open [My scanners](/capture/devices), select **Enter a pairing code**, type the code and select **Look up**.",
             "Check that **The computer asking** is the one in front of you, change **Name it** if you like, and select **Approve**."
           ]
@@ -7544,12 +7578,13 @@
             "scan to intake",
             "tray menu",
             "scan from the computer",
-            "quick scan"
+            "quick scan",
+            "stop a scan"
           ],
           "steps": [
-            "On the paired computer, select the Trenova Capture icon in the notification area.",
-            "Choose Scan to intake, then the scanner, then the scan profile (the organization's default is marked).",
-            "When the scan finishes, a notification says how many pages were sent; select it to open them in [Intake](/intake)."
+            "On the paired computer, open Trenova Capture: select its icon in the notification area, or find it in the Start menu.",
+            "Under Scan to Intake, pick the scanner and its settings (the organization's default is marked), and choose Scan.",
+            "The window counts the pages as they arrive; Stop ends the scan early and sends what was scanned. A notification says how many pages were sent; select it to open them in [Intake](/intake)."
           ]
         },
         {
@@ -7578,8 +7613,24 @@
             "continue scanning"
           ],
           "steps": [
-            "Clear the scanner. The pages scanned before it stopped are kept on the computer.",
-            "From the Trenova Capture icon, choose Continue scanning to add the rest to the same stack, or Finish to send what was scanned as it is."
+            "Trenova Capture opens and says what stopped the scanner. The pages scanned before it stopped are kept on the computer.",
+            "Clear the scanner, then choose Continue scanning to add the rest to the same stack, or Finish and send to send what was scanned as it is."
+          ]
+        },
+        {
+          "title": "Deal with something that was not sent",
+          "keywords": [
+            "not sent",
+            "refused upload",
+            "failed upload",
+            "send again",
+            "save a copy",
+            "discard scan"
+          ],
+          "steps": [
+            "Open Trenova Capture. What Trenova refused is listed under Not sent, with the reason.",
+            "Choose Send again to send it to [Intake](/intake) as a new stack, or Save a copy to write its pages as PDFs to your Downloads folder, so you can upload them another way.",
+            "When you no longer need it, choose Discard and confirm. Its pages are deleted from the computer for good."
           ]
         },
         {
@@ -7596,7 +7647,7 @@
           ]
         }
       ],
-      "notes": "Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the icon's menu shows how many are waiting. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.",
+      "notes": "Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the Trenova Capture window shows what is waiting and why. A notification you missed is kept under Messages in the window. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.",
       "related": [
         "/intake"
       ],

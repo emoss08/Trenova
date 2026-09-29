@@ -492,6 +492,96 @@ var templateStarters = map[Template][]starterQuestion{
 			"list_customer_payments",
 		),
 	},
+	TemplateMasterDataSteward: {
+		ask(
+			"Is this carrier already on file?",
+			"Is this carrier already on file under its DOT or MC number, and is it active?",
+			"list_carriers",
+		),
+		ask(
+			"What paperwork needs filing?",
+			"Which scanned documents are waiting to be filed, and which record does each "+
+				"belong on?",
+			"list_capture_batches",
+		),
+		ask(
+			"What is on the attention feed?",
+			"Which watchtower items are open, and which are already dealt with?",
+			"list_watchtower_items",
+		),
+		ask(
+			"Add a hazardous material",
+			"Add a hazardous material from its UN number and safety data sheet.",
+			"create_hazardous_material",
+		),
+	},
+	TemplateWorkforceCoordinator: {
+		ask(
+			"Who is asking for time off?",
+			"Which time-off requests are waiting for a decision, and what is each worker "+
+				"covering on those days?",
+			"list_time_off",
+		),
+		ask(
+			"Which leave cases are open?",
+			"Which leave cases are open, and what does each one still need?",
+			"list_worker_leave_cases",
+		),
+		ask(
+			"Draw a random testing round",
+			"Draw this period's random drug and alcohol testing round from our pool.",
+			"run_dot_random_draw",
+		),
+		ask(
+			"Which permits are missing?",
+			"Which permit requirements on this shipment are not covered by an active permit?",
+			"list_shipment_permits",
+		),
+	},
+	TemplateFuelTaxClerk: {
+		ask(
+			"Is the IFTA return ready?",
+			"Is last quarter's IFTA return drafted, and what still blocks finalizing it?",
+			"list_ifta_returns",
+		),
+		ask(
+			"Which fuel imports are held?",
+			"Which fuel card statements have rows held back, and why?",
+			"list_fuel_purchase_imports",
+		),
+		ask(
+			"Which fuel cards are unassigned?",
+			"Which fuel cards are not assigned to a tractor or a driver?",
+			"list_fuel_cards",
+		),
+		ask(
+			"Record a fuel receipt",
+			"Record this fuel receipt against the tractor that bought it.",
+			"record_fuel_purchase",
+		),
+	},
+	TemplateReportAnalyst: {
+		ask(
+			"Which report answers this?",
+			"Which of our reports shows on-time delivery by customer, and what does it contain?",
+			"list_reports",
+		),
+		ask(
+			"What changed since last week?",
+			"Run this report again and tell me what moved since last week's run.",
+			"compare_report_runs",
+		),
+		ask(
+			"Build a report",
+			"Build a report of delivered shipments by customer for last month.",
+			"create_report",
+		),
+		ask(
+			"Email a report every week",
+			"Email this report to the operations team every Monday morning.",
+			"schedule_report",
+		),
+	},
 	TemplateFormulaAssistant: {
 		ask(
 			"Write a formula",

@@ -18,10 +18,14 @@ use trenova_capture::agent::{
     self, Environment, Machine, PrinterCheck, ServerSetting, UpdateStarter,
 };
 use trenova_capture::scanners::HelperHost;
-use trenova_capture::state::{Command, Shared, Ui};
+use trenova_capture::state::{Command, Notice, Severity, Shared, Ui};
+use windows::Win32::System::Recovery::{
+    RESTART_NO_CRASH, RESTART_NO_HANG, RESTART_NO_REBOOT, RegisterApplicationRestart,
+};
 use windows::Win32::UI::HiDpi::{
     DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext,
 };
+use windows_core::w;
 use windows_service::service::ServiceAccess;
 use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 
@@ -29,6 +33,9 @@ use crate::tray::Tray;
 
 /// How long to wait before trying again after capture is paused.
 const RECHECK_AFTER: Duration = Duration::from_secs(600);
+/// How long the connection stays lost before the person is told: long
+/// enough that a network blip, or the server restarting, passes unremarked.
+const OFFLINE_NOTICE_AFTER: Duration = Duration::from_secs(90);
 
 /// What was asked for on the command line.
 #[derive(Debug, Default)]
@@ -38,6 +45,9 @@ struct Arguments {
     /// `--sign-in`: start pairing at once, as the installer's "sign in now"
     /// does.
     sign_in: bool,
+    /// `--show`: open the window, as the Start menu shortcut does; in the
+    /// Trenova Capture already running, when there is one.
+    show: bool,
 }
 
 fn arguments() -> Arguments {
@@ -47,6 +57,7 @@ fn arguments() -> Arguments {
         match arg.as_str() {
             "--server" => parsed.server = args.next(),
             "--sign-in" => parsed.sign_in = true,
+            "--show" => parsed.show = true,
             other => tracing::warn!(argument = other, "ignoring an unknown argument"),
         }
     }
@@ -128,12 +139,54 @@ fn environment(data_dir: &Path) -> Environment {
                 tracing::warn!(error = %err, "could not open the browser");
             }
         }),
+        reveal: Arc::new(|folder: &Path| {
+            if let Err(err) = shell::open_folder(folder) {
+                tracing::warn!(error = %err, "could not open the folder");
+            }
+        }),
         recheck_after: RECHECK_AFTER,
         updater: Arc::new(ServiceUpdater),
         release_key: pinned_public_key(),
         windows_build: machine::windows_build(),
         machine_auto_update: settings::auto_update_allowed(),
         printer: Arc::new(InstalledPrinter),
+        offline_notice_after: OFFLINE_NOTICE_AFTER,
+    }
+}
+
+/// What this Windows user, or their administrator, chose: routine
+/// notifications, and looking things over before they are sent.
+fn apply_preferences(shared: &Shared) {
+    let routine = settings::routine_notifications();
+    let review = settings::review_before_sending();
+    let review_locked = settings::review_before_sending_locked();
+    shared.update(|s| {
+        s.routine_muted = !routine;
+        s.review_before_sending = review;
+        s.review_locked = review_locked;
+    });
+}
+
+/// Tells the person when this start is the first since Trenova Capture was
+/// updated, and remembers the version for next time.
+fn announce_update(shared: &Shared) {
+    let version = env!("CARGO_PKG_VERSION");
+    let previous = settings::last_version();
+    if previous.as_deref() == Some(version) {
+        return;
+    }
+    if let Err(err) = settings::set_last_version(version) {
+        tracing::warn!(error = %err, "could not record this version");
+    }
+    if let Some(previous) = previous {
+        tracing::info!(from = %previous, to = version, "Trenova Capture was updated");
+        shared.notify(Notice {
+            title: format!("Trenova Capture was updated to {version}"),
+            body: format!("It was {previous}. Everything waiting to be sent was kept."),
+            severity: Severity::Info,
+            link: None,
+            routine: true,
+        });
     }
 }
 
@@ -171,6 +224,9 @@ pub fn run() -> ExitCode {
         Ok(Some(instance)) => instance,
         Ok(None) => {
             tracing::info!("Trenova Capture is already running in this session");
+            if arguments.show && !crate::tray::show_running_window() {
+                tracing::warn!("the running Trenova Capture could not be asked to show itself");
+            }
             return ExitCode::SUCCESS;
         }
         Err(err) => {
@@ -188,7 +244,21 @@ pub fn run() -> ExitCode {
         }
     };
     let shared = Shared::new(Arc::clone(&ui) as Arc<dyn Ui>);
+    apply_preferences(&shared);
     tray.attach(Arc::clone(&shared));
+    announce_update(&shared);
+    // An installer that closes Trenova Capture to replace it (through Restart
+    // Manager) starts it again afterwards. Not after a crash, a hang or a
+    // reboot: sign-in starts it then.
+    // SAFETY: registers this process with a static, NUL-terminated command line.
+    if let Err(err) = unsafe {
+        RegisterApplicationRestart(
+            w!(""),
+            RESTART_NO_CRASH | RESTART_NO_HANG | RESTART_NO_REBOOT,
+        )
+    } {
+        tracing::warn!(error = %err, "could not register to be restarted after an update");
+    }
 
     let cancel = CancellationToken::new();
     let env = environment(&data_dir);
@@ -224,6 +294,9 @@ pub fn run() -> ExitCode {
 
     if arguments.sign_in {
         let _ = commands.send(Command::SignIn);
+    }
+    if arguments.show {
+        ui.show_window();
     }
     tray.run();
 

@@ -1721,6 +1721,10 @@ func (r *Registry) registerOperationsResources() {
 			{Operation: OpExport, DisplayName: "Export", Description: "Export shipment move data"},
 		},
 		DefaultSensitivity: SensitivityInternal,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"externalDriverName":  SensitivityInternal,
+			"externalDriverPhone": SensitivityRestricted,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

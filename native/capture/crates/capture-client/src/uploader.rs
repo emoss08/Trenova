@@ -86,7 +86,11 @@ impl From<SpoolError> for Step {
             | SpoolError::Complete
             | SpoolError::Corrupt { .. }
             | SpoolError::CorruptDocument
-            | SpoolError::Manifest(_) => Self::Refused(err.to_string()),
+            | SpoolError::Manifest(_)
+            | SpoolError::Exists(_)
+            | SpoolError::NotHeld
+            | SpoolError::NoPage(_)
+            | SpoolError::PictureTooLarge => Self::Refused(err.to_string()),
         }
     }
 }
@@ -175,7 +179,7 @@ impl Uploader {
 
     /// One pass over the spool. Returns why it stopped early, if it did.
     async fn pass(&self) -> Option<Step> {
-        let batches = match blocking(&self.spool, Spool::pending).await {
+        let batches = match blocking(&self.spool, Spool::sendable).await {
             Ok(batches) => batches,
             Err(err) => return Some(Step::Retry(err.to_string(), None)),
         };

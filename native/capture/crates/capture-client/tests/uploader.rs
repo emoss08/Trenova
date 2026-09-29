@@ -6,7 +6,7 @@ use std::io;
 use std::sync::Arc;
 use std::time::Duration;
 
-use capture_client::spool::Spool;
+use capture_client::spool::{NewPrint, Spool};
 use capture_client::uploader::{UploadEvent, Uploader};
 use capture_client::{PageMarkers, Protector};
 use capture_protocol::api::{BatchSource, Id, OpenBatchInput, Settings};
@@ -60,6 +60,7 @@ fn spooled(dir: &std::path::Path, request: Option<&str>) -> (Arc<Spool>, String)
                 dpi: 300,
                 patch_code: Some("T".into()),
                 barcodes: vec!["PRO 1042".into(), "bad\u{7}code".into()],
+                rotation: 90,
             },
         )
         .expect("page");
@@ -138,6 +139,7 @@ async fn a_batch_is_opened_uploaded_page_by_page_and_sealed_with_its_digest() {
         .and(header("x-capture-dpi", "300"))
         .and(header("x-capture-patch-code", "T"))
         .and(header("x-capture-barcode", "PRO 1042"))
+        .and(header("x-capture-rotation", "90"))
         .and(body_bytes(PAGE_ONE))
         .respond_with(StorePage)
         .expect(1)
@@ -381,11 +383,19 @@ fn printed(dir: &std::path::Path) -> (Arc<Spool>, String) {
         job_name: "Rate confirmation".into(),
         settings: Settings::default(),
     };
+    let new_print = |input: OpenBatchInput, pdf: &'static [u8]| NewPrint {
+        input,
+        label: "Rate confirmation",
+        pdf,
+        pages: None,
+        pictures: &[],
+        held: false,
+    };
     spool
-        .create_print(print.clone(), "Rate confirmation", PRINTED, None)
+        .create_print(new_print(print.clone(), PRINTED))
         .expect("spooled");
     let again = spool
-        .create_print(print, "Rate confirmation", b"%PDF-1.7 different", None)
+        .create_print(new_print(print, b"%PDF-1.7 different"))
         .expect("spooled again");
     assert_eq!(
         again.document.expect("document").checksum,
@@ -496,4 +506,43 @@ async fn a_print_the_server_ended_is_set_aside_and_an_opened_one_is_not_reopened
             .all(|r| r.url.path() != "/api/v1/capture/device/batches/"),
         "a batch already opened is not opened again"
     );
+}
+
+#[tokio::test]
+async fn a_batch_held_for_review_waits_until_it_is_released() {
+    let server = MockServer::start().await;
+    let dir = tempfile::tempdir().expect("dir");
+    let spool = Arc::new(Spool::open(dir.path(), Arc::new(Xor)).expect("spool"));
+    let key = Spool::new_key();
+    spool
+        .create_held(input(&key, None), "fi-8170")
+        .expect("create");
+    spool
+        .append_page(&key, PAGE_ONE, &PageMarkers::default())
+        .expect("page");
+    spool.complete(&key).expect("complete");
+
+    let (tx, mut events) = mpsc::channel(32);
+    let device = device(&server, 900);
+    let uploader = Uploader::new(device.api, Arc::clone(&spool), tx);
+    let cancel = CancellationToken::new();
+    let task = tokio::spawn(uploader.run(cancel.clone()));
+    let first = tokio::time::timeout(Duration::from_secs(10), events.recv())
+        .await
+        .expect("an event")
+        .expect("progress");
+    assert!(
+        matches!(first, UploadEvent::Progress(summary) if summary.batches == 1),
+        "the held batch waits: {first:?}"
+    );
+    assert!(
+        server
+            .received_requests()
+            .await
+            .unwrap_or_default()
+            .is_empty(),
+        "nothing of a held batch reaches the server"
+    );
+    cancel.cancel();
+    task.await.expect("uploader");
 }

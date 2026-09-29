@@ -1,19 +1,25 @@
-//! What the agent knows, as the tray shows it, and what the tray asks of it.
+//! What the agent knows, as the tray and the window show it, and what they
+//! ask of it.
 //!
-//! The agent owns the state and changes it; the tray only reads a copy when
-//! it redraws. Every change calls [`Ui::refresh`], and anything a person
-//! should hear about right away goes through [`Ui::notify`].
+//! The agent owns the state and changes it; the tray and the window only
+//! read a copy when they redraw. Every change calls [`Ui::refresh`], anything
+//! a person should hear about right away goes through [`Ui::notify`] (and is
+//! kept, so a notification missed is not lost), and the moments the window
+//! should come forward for go through [`Ui::attention`].
 
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::SystemTime;
 
-use capture_protocol::api::{CaptureProfile, Id, SourceInfo, SourceProtocol};
+use capture_client::spool::{PictureRef, PictureSize, RefusedBatch};
+use capture_protocol::api::{BatchSource, CaptureProfile, Id, SourceInfo, SourceProtocol};
 use capture_protocol::helper::ScanCondition;
 
 /// How many sent batches the tray lists.
 pub const RECENT: usize = 5;
+/// How many past notices the window keeps.
+pub const MESSAGES: usize = 20;
 
 /// Where the agent stands with the server.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -82,6 +88,52 @@ pub struct PausedBatch {
     pub condition: ScanCondition,
 }
 
+/// The scan running now.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ActiveScan {
+    /// The spooled batch it scans into.
+    pub key: String,
+    /// The scanner's name.
+    pub label: String,
+    pub pages: u32,
+    /// Asked for from the web app, to file onto a record.
+    pub requested: bool,
+    /// The person asked it to stop; it ends at the next page.
+    pub stopping: bool,
+}
+
+/// A batch on this computer the server does not have in full yet.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct WaitingBatch {
+    pub key: String,
+    pub label: String,
+    pub source: BatchSource,
+    /// Pages not yet sent.
+    pub pages: u32,
+    /// When it was spooled, in Unix milliseconds.
+    pub created_at: i64,
+    /// Scanning has ended, so it can be sent in full.
+    pub complete: bool,
+    /// Held for the person to look over before it is sent.
+    pub held: bool,
+    /// For a record the person chose in Trenova, rather than intake.
+    pub requested: bool,
+    /// A printed job, sent whole.
+    pub printed: bool,
+    /// None of its pages has reached the server, so they can still be
+    /// turned or taken out while it is held.
+    pub editable: bool,
+    /// Its pages that have pictures.
+    pub pictures: Vec<PictureRef>,
+}
+
+/// Something the person was told, kept for the window.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Message {
+    pub notice: Notice,
+    pub at: SystemTime,
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Snapshot {
     pub server: Option<String>,
@@ -92,18 +144,34 @@ pub struct Snapshot {
     pub sources: Vec<SourceInfo>,
     pub profiles: Vec<CaptureProfile>,
     /// What is being scanned right now.
-    pub scanning: Option<String>,
+    pub scan: Option<ActiveScan>,
     pub paused: Vec<PausedBatch>,
     pub pages_waiting: u32,
-    pub failed: u32,
-    pub failed_dir: Option<PathBuf>,
+    /// Batches waiting to be sent, oldest first.
+    pub waiting: Vec<WaitingBatch>,
+    /// Batches the server refused, kept for the person to decide on, most
+    /// recent first.
+    pub refused: Vec<RefusedBatch>,
     pub recent: VecDeque<RecentBatch>,
+    /// What the person was told, newest first.
+    pub messages: VecDeque<Message>,
+    /// The server address is set by policy and cannot be changed here.
+    pub server_locked: bool,
     /// The newest version the organization requires, when this one is older.
     pub update_required: Option<String>,
     /// A newer release, once one is known.
     pub update: Option<UpdateState>,
     /// The print service is installed but its printer is not.
     pub printer_missing: bool,
+    /// The print service is installed, so printing into Trenova is offered.
+    pub printing: bool,
+    /// The person chose not to be shown routine notifications.
+    pub routine_muted: bool,
+    /// Scans and prints wait for the person to look them over before they
+    /// are sent.
+    pub review_before_sending: bool,
+    /// An administrator set review before sending, so the person cannot.
+    pub review_locked: bool,
 }
 
 impl Snapshot {
@@ -156,6 +224,26 @@ pub struct Notice {
     pub severity: Severity,
     /// Opened when the notification is clicked.
     pub link: Option<String>,
+    /// News that nothing needs doing about (something sent, the connection
+    /// back), which a person can choose not to be shown.
+    pub routine: bool,
+}
+
+/// A moment the window comes forward for, if it is not already showing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Attention {
+    /// No server address yet: nothing works until one is entered.
+    SetUp,
+    /// This computer is waiting to be approved; the code is shown.
+    SignIn,
+    ScanStarted,
+    /// The scanner stopped partway and needs the person.
+    ScanPaused,
+    ScanEnded,
+    /// The server refused a batch.
+    Refused,
+    /// A scan or a print is held for the person to look over.
+    Review,
 }
 
 /// How an attempt to add the Trenova printer ended.
@@ -184,20 +272,81 @@ pub enum Command {
     Continue(String),
     /// Send a stopped batch as it is.
     Finish(String),
+    /// Stop the scan running now at the next page; what was scanned is sent.
+    StopScan,
+    /// Send a refused batch again, to intake.
+    Retry(String),
+    /// Delete a refused batch and its pages.
+    Discard(String),
+    /// Write a refused batch's pages as PDFs into a new folder under
+    /// `into`, and show it.
+    Save {
+        key: String,
+        into: PathBuf,
+    },
     RefreshScanners,
     /// How adding the Trenova printer from the menu went.
     PrinterSetUp(PrinterAttempt),
     /// Install the release the menu offers.
     Update,
+    /// Turn a page of a held batch by `degrees` clockwise.
+    RotatePage {
+        key: String,
+        page: u32,
+        degrees: i32,
+    },
+    /// Take a page out of a held batch.
+    DeletePage {
+        key: String,
+        page: u32,
+    },
+    /// Send a held batch as it now is.
+    SendHeld(String),
+    /// Delete a held batch and its pages.
+    DiscardHeld(String),
+    /// Scan more pages onto the end of a held batch.
+    ScanMore {
+        key: String,
+        source: String,
+        protocol: SourceProtocol,
+        profile: Option<Id>,
+    },
+    /// Read pages' pictures for the window.
+    Pictures(PicturesRequest),
     Quit,
 }
 
-/// The tray, as the agent sees it.
+/// Pages' pictures the window asked for.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PicturesRequest {
+    pub key: String,
+    pub size: PictureSize,
+    pub pages: Vec<u32>,
+}
+
+/// Pictures read for the window, JPEG, by page; a page whose picture could
+/// not be read is left out.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Pictures {
+    pub key: String,
+    pub size: PictureSize,
+    pub pictures: Vec<(u32, Vec<u8>)>,
+}
+
+/// The tray and the window, as the agent sees them.
 pub trait Ui: Send + Sync {
     /// The snapshot changed; redraw.
     fn refresh(&self);
     /// Tell the person something now.
     fn notify(&self, notice: Notice);
+    /// Something happened the window should come forward for.
+    fn attention(&self, attention: Attention) {
+        let _ = attention;
+    }
+    /// Pictures the window asked for are ready.
+    fn pictures(&self, pictures: Pictures) {
+        let _ = pictures;
+    }
 }
 
 /// The state and the tray it is shown in.
@@ -236,8 +385,25 @@ impl Shared {
         self.ui.refresh();
     }
 
+    /// Tells the person now, and keeps it for the window.
     pub fn notify(&self, notice: Notice) {
+        let message = Message {
+            notice: notice.clone(),
+            at: SystemTime::now(),
+        };
+        self.update(|s| {
+            s.messages.push_front(message);
+            s.messages.truncate(MESSAGES);
+        });
         self.ui.notify(notice);
+    }
+
+    pub fn attention(&self, attention: Attention) {
+        self.ui.attention(attention);
+    }
+
+    pub fn pictures(&self, pictures: Pictures) {
+        self.ui.pictures(pictures);
     }
 }
 

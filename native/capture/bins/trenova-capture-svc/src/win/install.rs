@@ -107,6 +107,9 @@ pub fn configure_service() -> io::Result<()> {
     let service = manager
         .open_service(SERVICE_NAME, ServiceAccess::CHANGE_CONFIG)
         .map_err(service_error)?;
+    super::say(&format!(
+        "Giving {SERVICE_NAME} its own security identifier, so its folders can be locked to it"
+    ));
     mark_sid_unrestricted(&service)?;
     create_directories()
 }
@@ -124,14 +127,25 @@ fn create_directories() -> io::Result<()> {
     let service_sid = acl::service_sid()?;
     let shared = paths::shared_dir()?;
     std::fs::create_dir_all(&shared)?;
+    let logs = shared.join("logs");
     acl::create_secured(
-        &shared.join("logs"),
+        &logs,
         &trenova_capture_svc::security::logs_sddl(&service_sid),
     )?;
+    super::say(&format!(
+        "Service logs: {} (the service and administrators)",
+        logs.display()
+    ));
+    let spool = paths::print_spool_dir()?;
     acl::create_secured(
-        &paths::print_spool_dir()?,
+        &spool,
         &trenova_capture_svc::security::spool_sddl(&service_sid),
-    )
+    )?;
+    super::say(&format!(
+        "Print inboxes: {} (one per person, readable only by them)",
+        spool.display()
+    ));
+    Ok(())
 }
 
 /// Stops and deletes the service. What people printed and have not yet
@@ -190,6 +204,12 @@ fn run_powershell(script: &str) -> io::Result<()> {
             script,
         ])
         .output()?;
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        let line = line.trim();
+        if !line.is_empty() {
+            super::say(line);
+        }
+    }
     if output.status.success() {
         return Ok(());
     }
@@ -206,17 +226,26 @@ fn run_powershell(script: &str) -> io::Result<()> {
 /// service. An existing Trenova printer is replaced, so a changed port takes
 /// effect.
 pub fn install_printer(port: u16) -> io::Result<()> {
+    let url = printer_url(port);
+    super::say(&format!(
+        "Adding the {PRINTER_NAME} printer as {} on the IPP Class Driver, at {url}",
+        capture_platform::machine::windows_user()
+    ));
     run_powershell(&format!(
         "$ErrorActionPreference = 'Stop'; \
-         if (Get-Printer -Name '{PRINTER_NAME}' -ErrorAction SilentlyContinue) {{ Remove-Printer -Name '{PRINTER_NAME}' }}; \
-         Add-Printer -Name '{PRINTER_NAME}' -IppURL '{}'",
-        printer_url(port)
+         if (Get-Printer -Name '{PRINTER_NAME}' -ErrorAction SilentlyContinue) {{ \
+           Write-Output 'Replacing the {PRINTER_NAME} printer already there'; \
+           Remove-Printer -Name '{PRINTER_NAME}' }}; \
+         Add-Printer -Name '{PRINTER_NAME}' -IppURL '{url}'; \
+         Write-Output ('Printer ready: ' + (Get-Printer -Name '{PRINTER_NAME}').DriverName)"
     ))
 }
 
 pub fn uninstall_printer() -> io::Result<()> {
     run_powershell(&format!(
         "$ErrorActionPreference = 'Stop'; \
-         if (Get-Printer -Name '{PRINTER_NAME}' -ErrorAction SilentlyContinue) {{ Remove-Printer -Name '{PRINTER_NAME}' }}"
+         if (Get-Printer -Name '{PRINTER_NAME}' -ErrorAction SilentlyContinue) {{ \
+           Remove-Printer -Name '{PRINTER_NAME}'; Write-Output 'Removed the {PRINTER_NAME} printer' \
+         }} else {{ Write-Output 'No {PRINTER_NAME} printer to remove' }}"
     ))
 }

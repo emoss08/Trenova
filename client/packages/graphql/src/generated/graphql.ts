@@ -1061,16 +1061,20 @@ export type AgentTemplate =
   | 'DispatchAssistant'
   | 'EDIDesk'
   | 'FormulaAssistant'
+  | 'FuelTaxClerk'
   | 'GeneralAssistant'
   | 'ImportAssistant'
   | 'InsightAnalyst'
   | 'IntakeDesk'
   | 'LoadEntryCheck'
   | 'LoadMonitor'
+  | 'MasterDataSteward'
   | 'Receivables'
+  | 'ReportAnalyst'
   | 'ServiceFailureDesk'
   | 'SettlementsClerk'
-  | 'ShipmentIntake';
+  | 'ShipmentIntake'
+  | 'WorkforceCoordinator';
 
 export type AgentToolEffect =
   | 'Ask'

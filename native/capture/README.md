@@ -19,7 +19,7 @@ to their agent. The design, and why it is Rust, is in
 | `crates/capture-update` | The release decision and the verified installer download | anywhere |
 | `crates/capture-platform` | DPAPI, Credential Manager, accounts and SIDs, registry, paths, logging, shell | Windows |
 | `bins/trenova-capture-scan` | The per-scan helper, built x64 and x86 | Windows |
-| `bins/trenova-capture` | The tray agent; its core is a library that runs anywhere | Windows |
+| `bins/trenova-capture` | The tray agent and its window; its core, the window's view and its page are a library that runs anywhere | Windows |
 | `bins/trenova-capture-svc` | The print service; its listener, attribution and hand-off are a library that runs anywhere | Windows |
 | `bins/trenova-capture-update` | The updater service; its flow is a library that runs anywhere | Windows |
 | `bins/trenova-capture-release` | The release build's tool: key pair, signed manifest, verification | anywhere |
@@ -75,18 +75,67 @@ the admin Computers tab show how to install the `trenova-capture-msi` build arti
 install command already pointed at that server.
 
 ```powershell
-trenova-capture.exe --server http://localhost:8080 --sign-in
+trenova-capture.exe --server http://localhost:5173 --sign-in --show
 ```
+
+`http://localhost:5173` is the web app's Vite server, which passes `/api` on to the API at
+`:8080`; pointing at `:8080` directly works too. Approving the computer opens
+`app.webBaseUrl` + `/capture/pair`, so the API's `app.webBaseUrl` must be the web app's address
+(`http://localhost:5173` in development, `https://cloud.trenova.app` in production); pairing is
+refused while it is unset.
 
 `--server` saves the address for this Windows user (`HKCU\SOFTWARE\Trenova\Capture\ServerUrl`);
 an address under `HKLM\SOFTWARE\Policies\Trenova\Capture` overrides it, and the installer
-writes one to `HKLM\SOFTWARE\Trenova\Capture`. `--sign-in` starts pairing at once. Plain HTTP
-is accepted only for `localhost`.
+writes one to `HKLM\SOFTWARE\Trenova\Capture`. `--sign-in` starts pairing at once, and `--show`
+opens the window (in the copy already running, when there is one; the Start menu shortcut passes
+it). Plain HTTP is accepted only for `localhost`.
+
+The agent loads Microsoft's `WebView2Loader.dll` when it starts, so a build run from `target\`
+needs a copy beside it; the installer puts one there. From `native\capture`:
+
+```powershell
+$loader = Get-ChildItem target\x86_64-pc-windows-msvc\release\build\webview2-com-sys-*\out\x64\WebView2Loader.dll | Sort-Object LastWriteTime | Select-Object -Last 1
+Copy-Item $loader target\x86_64-pc-windows-msvc\release\
+```
+
+The window is a local page (`bins/trenova-capture/ui/`) drawn from a view the agent builds. To
+look at it without Windows, write it and views of it in several states, then open `page.html`
+in a browser and call `window.trenova.render(<a view>)`:
+
+```bash
+TRENOVA_CAPTURE_PREVIEW=/tmp/preview cargo test -p trenova-capture --test preview -- --ignored
+```
+
+Closing or minimizing the window leaves Trenova Capture running in the notification area; the
+first time each run, a notification says so. While the window is in front, notifications show
+in it instead of from the icon.
+
+### Looking things over before sending
+
+With "Let me look things over before they are sent" on (Settings in the window), a scan or a
+print is held on the computer when it ends, and nothing of it reaches the server until the
+person chooses Send. Until then they see every page, can turn one (the turn travels as
+`X-Capture-Rotation` with the page, which is sent as scanned), take one out, scan more onto the
+end, or discard the lot. A print's pages are only looked at; they are turned or split in Intake.
+
+The pictures come from where the raster exists: the scan helper sends a small (240-pixel) and a
+large (1100-pixel) JPEG after each page's PDF, and the print service writes them beside a job
+it converted from PWG raster (not a job printed as PDF), for its first 200 pages. They are kept
+encrypted in the spool beside the pages and are never sent. The window asks for them as it
+shows pages, and the agent answers only for batches the window lists.
+
+Per-user choices are under `HKCU\SOFTWARE\Trenova\Capture` as DWORDs:
+`RoutineNotifications` (0 hides notifications about things that went well; problems always
+show), and `ReviewBeforeSending` (1 holds scans and prints for review), which
+`ReviewBeforeSending` under `HKLM\SOFTWARE\Policies\Trenova\Capture` decides for everyone on
+the computer. `LastVersion` records the version last run, so the first start after an update
+says so.
 
 The agent keeps its files in `%LOCALAPPDATA%\Trenova\Capture`: `logs\agent.<date>.log` (fourteen
 days; `TRENOVA_CAPTURE_LOG=debug` for more), and `spool\`, where every page waits, encrypted
 with DPAPI, until the server has it. Batches the server refused are kept in `spool\failed\`
-with the reason. The device credential is in Credential Manager as
+with the reason, and listed in the window to send again, save as PDFs, or discard. The window's
+`WebView2` profile is in `WebView2\`. The device credential is in Credential Manager as
 `Trenova Capture/<server host>`.
 
 ## Regenerating the TWAIN bindings
@@ -129,9 +178,19 @@ that upgrades in place. Build it on Windows after both release builds above:
 ```powershell
 dotnet tool install --global wix
 wix extension add -g WixToolset.Util.wixext
+wix extension add -g WixToolset.UI.wixext
 ./installer/build.ps1            # installer\out\TrenovaCapture-<version>-x64.msi
 ./installer/build.ps1 -Sign      # also signs the executables and the MSI; see sign.ps1
 ```
+
+Run by hand, the installer (`installer/Ui.wxs`, words in `installer/Package.en-us.wxl`) asks
+for the Trenova address and whether to update automatically, lists everything it will install
+and where, names each step while it runs, and ends with what to do next and an option to open
+Trenova Capture. Every install writes a verbose log to `%TEMP%` (`MsiLogging`); the ready,
+finish and error pages show its path, and the print service and updater record each thing they
+did in it. An upgrade keeps the server address and update choice an earlier install recorded,
+unless new ones are given; a non-default `PRINTPORT` must be given again. The banner and side
+images are drawn from the web app's logo by `installer/assets/make-bitmaps.py`.
 
 The installer adds the **Trenova** printer as the person installing. Windows refuses an IPP
 printer to the system account, so a deployment tool that installs as the system account, or an
@@ -142,7 +201,7 @@ A silent install takes the server address, whether computers update themselves, 
 printer's port:
 
 ```powershell
-msiexec /i TrenovaCapture-1.0.0-x64.msi /qn TRENOVAURL=https://app.example.com AUTOUPDATE=0 PRINTPORT=8631
+msiexec /i TrenovaCapture-1.0.0-x64.msi /qn TRENOVAURL=https://cloud.trenova.app AUTOUPDATE=0 PRINTPORT=8631
 ```
 
 ## Releases and updates

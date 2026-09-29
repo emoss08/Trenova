@@ -62717,6 +62717,15 @@
       "apps/web/config"
     ]
   },
+  "Email a report weekly": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Email address": {
     "sites": 3,
     "scope": [
@@ -77166,6 +77175,15 @@
       "domain/aicorrection"
     ]
   },
+  "Fuel and IFTA clerk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Fuel billing": {
     "sites": 1,
     "scope": [
@@ -80779,6 +80797,15 @@
     ]
   },
   "Held from {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Held fuel imports": {
     "sites": 1,
     "scope": [
       "ts"
@@ -88972,6 +88999,15 @@
       "apps/web/lib"
     ]
   },
+  "Is a carrier on file?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Is a driver available?": {
     "sites": 1,
     "scope": [
@@ -89035,6 +89071,15 @@
     ],
     "areas": [
       "routes/journal-entry"
+    ]
+  },
+  "Is the IFTA return ready?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Issue a credit memo without rebilling": {
@@ -99134,6 +99179,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Master data steward": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Master switch for OCR, document classification, extraction, and indexing workflows.": {
@@ -119866,6 +119920,15 @@
       "routes/admin"
     ]
   },
+  "Open leave cases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Open mappings": {
     "sites": 1,
     "scope": [
@@ -120276,6 +120339,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Open watchtower items": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Open worker": {
@@ -124904,6 +124976,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Paperwork to file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Param: {0}": {
@@ -136943,6 +137024,15 @@
       "routes/random-testing"
     ]
   },
+  "Random testing round": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Range": {
     "sites": 4,
     "scope": [
@@ -145540,6 +145630,15 @@
       "routes/reports"
     ]
   },
+  "Report analyst": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Report canceled": {
     "sites": 1,
     "scope": [
@@ -150931,6 +151030,16 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Rotation must be 0, 90, 180 or 270": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers",
+      "service/captureservice"
     ]
   },
   "Rotation offset (weeks)": {
@@ -190825,6 +190934,15 @@
       "api/graphql"
     ]
   },
+  "Time off to decide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Time on site": {
     "sites": 1,
     "scope": [
@@ -196086,6 +196204,15 @@
     "areas": [
       "apps/web/config",
       "routes/fuel-card"
+    ]
+  },
+  "Unassigned fuel cards": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Unassignment failed": {
@@ -204938,6 +205065,15 @@
       "routes/shipment"
     ]
   },
+  "What moved since last week?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What needs attention?": {
     "sites": 1,
     "scope": [
@@ -207221,6 +207357,15 @@
       "routes/agent-control"
     ]
   },
+  "Which report answers this?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Which resource type and document type does this rule apply to?": {
     "sites": 1,
     "scope": [
@@ -209118,6 +209263,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Workforce coordinator": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Working": {

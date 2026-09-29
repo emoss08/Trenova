@@ -7,8 +7,11 @@
 //! run of them. Everything in a header comes from whoever printed, so each
 //! field is checked before it sizes anything.
 
+use capture_protocol::handoff::MAX_PICTURED_PAGES;
+
 use crate::ImagingError;
 use crate::page::{PdfDocument, Resolution};
+use crate::preview::{PagePreview, preview};
 use crate::raster::{MAX_SIDE, OwnedRaster, PixelFormat};
 
 const SYNC: &[u8; 4] = b"RaS2";
@@ -326,6 +329,10 @@ fn to_gray(raster: &OwnedRaster) -> OwnedRaster {
 pub struct PrintedDocument {
     pub pdf: Vec<u8>,
     pub pages: u32,
+    /// Pictures of the first pages, for the person to look at before the
+    /// job is sent; at most [`MAX_PICTURED_PAGES`], and stopping at the
+    /// first page one could not be made of.
+    pub pictures: Vec<PagePreview>,
 }
 
 /// Limits on a converted document.
@@ -341,6 +348,8 @@ pub struct ConvertLimits {
 pub fn pwg_to_pdf(data: &[u8], limits: ConvertLimits) -> Result<PrintedDocument, PwgError> {
     let mut reader = PwgReader::new(data)?;
     let mut document = PdfDocument::new();
+    let mut pictures = Vec::new();
+    let mut picturing = true;
     while let Some(page) = reader.next_page()? {
         if document.len() >= limits.max_pages as usize {
             return Err(PwgError::TooManyPages {
@@ -352,7 +361,14 @@ pub fn pwg_to_pdf(data: &[u8], limits: ConvertLimits) -> Result<PrintedDocument,
         } else {
             page.raster
         };
-        document.push(&raster.as_raster()?, page.resolution, limits.jpeg_quality)?;
+        let view = raster.as_raster()?;
+        if picturing && pictures.len() < MAX_PICTURED_PAGES as usize {
+            match preview(&view) {
+                Ok(picture) => pictures.push(picture),
+                Err(_) => picturing = false,
+            }
+        }
+        document.push(&view, page.resolution, limits.jpeg_quality)?;
         if document.encoded_bytes() > limits.max_bytes {
             return Err(PwgError::TooLarge {
                 max: limits.max_bytes,
@@ -369,7 +385,11 @@ pub fn pwg_to_pdf(data: &[u8], limits: ConvertLimits) -> Result<PrintedDocument,
             max: limits.max_bytes,
         });
     }
-    Ok(PrintedDocument { pdf, pages })
+    Ok(PrintedDocument {
+        pdf,
+        pages,
+        pictures,
+    })
 }
 
 /// Writes a PWG raster stream, as the class driver does, for tests and the
@@ -709,6 +729,7 @@ mod tests {
         ]);
         let document = pwg_to_pdf(&data, limits()).expect("converts");
         assert_eq!(document.pages, 2);
+        assert_eq!(document.pictures.len(), 2, "each page is pictured");
         let pdf = String::from_utf8_lossy(&document.pdf);
         assert!(pdf.contains("/Count 2"));
         assert!(pdf.contains("/CCITTFaxDecode"));

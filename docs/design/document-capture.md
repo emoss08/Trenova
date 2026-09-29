@@ -84,9 +84,9 @@ credential.
 - **Why not C#/.NET.** NTwain makes .NET the common choice for TWAIN applications, but it
   brings a runtime dependency and a larger attack surface for no gain.
 
-The cost is that the tray UI is written against Win32 directly. That is acceptable because the
-companion's UI is deliberately tiny (§5.5): all real work (filing, review, splitting) happens
-in the web app.
+The cost is that the tray is written against Win32 directly, and the window (§5.5) is a local
+page in `WebView2` rather than a native toolkit. That is acceptable because the companion's UI is
+deliberately small: all real work (filing, review, splitting) happens in the web app.
 
 ## 5. The companion
 
@@ -228,18 +228,52 @@ if loopback is refused, is a **Print Support App virtual printer** (Windows 11 2
 MSIX-packaged component Windows sanctions for exactly this. It needs a packaged WinRT
 background task, which would be the only non-Rust piece.
 
-### 5.5 Tray UI
+### 5.5 Tray and window
 
 The tray icon is the Trenova logo, `client/apps/web/public/logo.ico` (it already carries the 16,
 24 and 32 px sizes a tray needs). The agent's build script embeds that file as its Win32 icon
 resource, so there is one source for the mark rather than a copy that drifts.
 
-- Sign in / sign out (pairing, §6.1), connection state, pending uploads, the last few batches
-  with "Open in Trenova".
-- "Scan to intake…": pick source and profile, then scan. This is the no-browser path.
-- Toasts for completed batches, jams, and failed uploads.
-- Nothing else. Destination choice, splitting and filing live in the web app, so there is one
-  implementation of each and it is the one that gets the design system.
+The tray menu stays for quick use: sign in and out, scan to intake by scanner and profile,
+continue or finish a stopped scan, the last few batches, and **Open Trenova Capture**. A left
+click on the icon, the Start menu shortcut (`--show`) and a notification with no link open the
+window.
+
+The window exists because a tray alone lost people at the moments that matter. A refused batch
+sat unseen in `spool\failed\`; the pairing code, a jam and a failure arrived only as
+notifications, which Focus Assist hides; and a jam was answered from a menu while the person
+stood at the scanner. It shows, from one snapshot of the agent's state:
+
+- where things stand (connection, who is signed in, what is waiting and why), with the fix
+  beside it: the server address, **Sign in**, the pairing code in large type, **Add the
+  printer**, an update;
+- the scan running now with its page count and **Stop** (the pages so far are sent), and a
+  stopped scan's **Continue scanning** / **Finish and send**;
+- **Not sent**: each refused batch with the server's reason, and **Send again** (a new batch
+  under a new key, to intake, every page re-sent), **Save a copy** (its pages as PDFs in the
+  person's Downloads folder) and **Discard** (after asking);
+- scan to intake, waiting batches, recently sent batches, and the last twenty notices, so a
+  missed notification is not lost.
+
+It opens by itself, without taking the keyboard, for a jam, a refusal and a scan starting (and
+closes again eight seconds after a scan it opened for, unless it was touched), and in front for
+a pairing code or a computer with no server address.
+
+The page (`bins/trenova-capture/ui/`) is one self-contained document: style, script and logo
+inlined, a content security policy of `default-src 'none'`, only its first navigation allowed,
+no new windows, downloads or dropped files. It draws every string with `textContent`. What it
+draws is a `View` built in Rust (`src/view.rs`) and handed over as a JSON literal; what it sends
+back is a closed set of messages, parsed strictly and checked against the same snapshot. A
+message names a batch by its key, a scanner by its name, and a link only by one the view already
+holds; nothing the page sends is used as an address to open or a path to write. The window is
+created when first shown and destroyed when closed, so a computer that never opens it never
+runs a browser engine for it, and its `WebView2` profile lives in `%LOCALAPPDATA%`. The agent
+loads `WebView2Loader.dll` at start, so the MSI installs it beside `trenova-capture.exe`; the
+`WebView2` runtime itself is part of Windows 10 and 11, and without it the window says so and
+the tray carries on.
+
+Destination choice, splitting and filing still live only in the web app, so there is one
+implementation of each and it is the one that gets the design system.
 
 ### 5.6 Repository layout
 
@@ -255,7 +289,7 @@ native/capture/                  Cargo workspace
 │   ├── capture-update/          release decision and the verified download, for the agent and the updater
 │   └── capture-platform/        DPAPI, Credential Manager, accounts and SIDs, ACLs, settings, paths, logging, shell
 ├── bins/
-│   ├── trenova-capture/         per-user agent + tray
+│   ├── trenova-capture/         per-user agent, tray and window (ui/: the window's page)
 │   ├── trenova-capture-svc/     print service: listener, attribution, inboxes, install
 │   ├── trenova-capture-update/  updater service: verify, download, WinVerifyTrust, msiexec, relaunch
 │   ├── trenova-capture-release/ the release build's signing tool (keygen, sign, verify)

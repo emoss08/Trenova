@@ -7,11 +7,14 @@ import {
   BookCheckIcon,
   BellIcon,
   BotIcon,
+  ChartColumnIcon,
   ClipboardCheckIcon,
   ClipboardListIcon,
   CompassIcon,
+  DatabaseIcon,
   FileInputIcon,
   FileWarningIcon,
+  FuelIcon,
   GaugeIcon,
   HandCoinsIcon,
   HeadsetIcon,
@@ -21,6 +24,7 @@ import {
   RouteIcon,
   ShieldCheckIcon,
   TruckIcon,
+  UsersIcon,
   WalletCardsIcon,
   RadarIcon,
   PackagePlusIcon,
@@ -58,6 +62,10 @@ export const TEMPLATE_ICONS: Record<AgentTemplateKind, LucideIcon> = {
   BooksKeeper: BookCheckIcon,
   SettlementsClerk: BanknoteIcon,
   Receivables: HandCoinsIcon,
+  MasterDataSteward: DatabaseIcon,
+  WorkforceCoordinator: UsersIcon,
+  FuelTaxClerk: FuelIcon,
+  ReportAnalyst: ChartColumnIcon,
 };
 
 type TemplatePickerProps = {

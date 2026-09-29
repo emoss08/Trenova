@@ -169,20 +169,32 @@ record and are attestation; bulk PTO decisions duplicate the single-request tool
 
 | Template | Holds |
 | --- | --- |
+| Workforce coordinator (chat, Propose, Restricted data access) | `list_time_off`, `request_worker_pto`, `update_worker_pto`, `approve_worker_pto`, `reject_worker_pto`, `cancel_worker_pto`, `adjust_worker_pto_balance`, `list_worker_leave_cases`, `open_leave_case`, `update_leave_case`, `request_leave_certification`, `record_leave_day`, `update_leave_day`, `delete_leave_day`, `close_leave_case`, `list_worker_injuries`, `record_worker_injury`, `update_worker_injury`, `delete_worker_injury`, `list_performance_reviews`, `start_performance_review`, `draft_performance_review`, `delete_performance_review`, `give_worker_recognition`, `delete_worker_recognition`, `list_worker_safety_events`, `update_worker_safety_event`, `delete_worker_safety_event`, `update_safety_violation`, `delete_safety_violation`, `list_dot_tests`, `cancel_dot_test`, `list_dot_random_draws`, `get_dot_random_draw`, `run_dot_random_draw`, `finalize_dot_random_draw`, `cancel_dot_random_draw`, `list_worker_checklists`, `start_worker_checklist`, `update_worker_checklist_item`, `cancel_worker_checklist`, `list_worker_training`, `attach_worker_training_document`, `close_worker_training`, `list_worker_credentials`, `archive_worker_credential`, `list_employment_verifications`, `delete_employment_verification`, `list_shipment_permits`, `record_shipment_permit`, `update_shipment_permit` |
 | Compliance assistant (chat, Ask first) | `list_worker_credentials`, `record_worker_credential`, `update_worker_credential`, `attach_worker_credential_document`, `list_worker_training`, `list_training_courses`, `assign_worker_training`, `assign_required_worker_training`, `record_training_completion`, `list_employment_verifications`, `record_employment_verification`, `update_employment_verification`, `log_employment_verification_request`, `list_worker_checklists`, `update_worker_checklist_item`, `list_worker_safety_events`, `open_worker_safety_event`, `record_safety_violation`, `change_worker_safety_event_status`, `list_dot_tests`, `get_dot_random_draw`, `schedule_dot_test`, `update_dot_random_selection`, `list_worker_leave_cases` |
 | Settlements clerk (chat, Ask first) | `start_settlement_dispute_review`, `resolve_settlement_dispute` |
 
-The Compliance assistant is now at 55 tools, one under the eight-tool headroom limit, and the
-settlements clerk has no room left. Every other tool on this page is registered and on no template: an
-organization adds it to an agent it builds in AI control. Deletions, injuries, leave days,
-payroll runs, PTO balances and time-off requests start from a person's request and belong to
-HR or payroll desks the shipped templates do not cover. No template is unattended, so the
-agent permission ceiling (`permission/agent.go`) is unchanged.
+The workforce coordinator is the HR and safety desk the shipped templates lacked. It holds 55
+of its 56 tools: every workforce write the compliance assistant does not, with `search_worker`,
+`list_workers`, `get_worker` and `search_shipments` to find the worker or load. It runs at a
+Propose ceiling, so every write waits for a person; `adjust_worker_pto_balance`,
+`finalize_dot_random_draw` and `close_leave_case` still run only from that person's approval.
+Its data access is Restricted, so it reads the Restricted detail on injury, leave and time-off
+records, never past the role of the person talking to it, and Confidential fields never reach
+it. Its prompt names the compliance assistant as
+the holder of credential, training, test and safety event recording, and payroll and the
+settlements clerk as the holders of pay.
+
+`generate_payroll_export`, `void_payroll_export` and `review_driver_expense` stay on no
+template. Each moves pay, which the workforce coordinator never touches, and the settlements
+clerk, where they would belong, holds all 56 of its tools. An organization adds them to an
+agent it builds in AI control. No template is unattended, so the agent permission ceiling
+(`permission/agent.go`) is unchanged.
 
 ## Known limits
 
 - An agent made from the Compliance assistant or settlements clerk template before these tools
-  existed keeps the tools it was saved with; an administrator adds them in AI control.
+  existed keeps the tools it was saved with; an administrator adds them in AI control. An
+  organization that wants the workforce coordinator creates it from its starter.
 - `list_dot_random_draws` returns the 24 newest rounds and the active pools;
   `list_payroll_exports` the 26 newest runs.
 - `assign_worker_training` takes at most 50 workers and 10 courses per proposal.

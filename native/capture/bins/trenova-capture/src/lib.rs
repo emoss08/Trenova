@@ -8,5 +8,7 @@
 pub mod agent;
 pub mod icon;
 pub mod menu;
+pub mod page;
 pub mod scanners;
 pub mod state;
+pub mod view;

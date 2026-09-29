@@ -87,6 +87,20 @@ Every dropped statement is reported by reason rather than silently discarded.
 | `ALTER TABLE ... DROP COLUMN` | only when an index or constraint still pins the column; otherwise it is emitted, dropping blocking indexes first |
 | `CREATE STATISTICS`, publications, RLS policies | no planner statistics or replication objects |
 
+A `CHECK` swap — `DROP CONSTRAINT` followed by `ADD CONSTRAINT` to widen the
+values a column accepts, such as a new agent template or a new artifact kind —
+is dropped with the rest, so the SQLite table keeps the narrower check it was
+created with and refuses the new value at runtime. **Every such swap needs a
+hand-written SQLite twin under the same migration number** that rebuilds the
+table with the wider check and copies its rows across. Start the file with a
+`-- Hand-written:` header naming why and the source migration, copy an existing
+rebuild (`20261231006990_*` for `agent_definitions`, whose four child tables
+must be set aside so the drop does not cascade into them, and `20261231006950_*`
+for `assistant_artifacts`), and add a test in `database/migrator` that inserts
+the new value and a value outside the check. Re-running the converter rewrites
+every file in the target directory and discards hand-written twins, so restore
+them from git before committing its output.
+
 The practical consequence: **a SQLite database has weaker integrity guarantees
 than the Postgres one.** Constraints that arrived through later `ALTER`
 statements are absent, so SQLite will accept some rows Postgres rejects. Test

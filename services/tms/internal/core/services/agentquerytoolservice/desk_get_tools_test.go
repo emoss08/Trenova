@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -42,12 +44,12 @@ func TestGetCarrierIntelEvent_ReadsOneThroughTheBatchReader(t *testing.T) {
 	repo := &stubCarrierIntelEvents{
 		events: []*carrierintel.CarrierIntelEvent{{ID: id, Summary: "Insurance lapsed"}},
 	}
-	tool := newGetCarrierIntelEventTool(repo)
+	tool := newGetCarrierIntelEventTool(repo, &fakePermissions{})
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"eventId": id.String()}))
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{id}, repo.asked)
-	assert.Equal(t, "Insurance lapsed", result.(*carrierintel.CarrierIntelEvent).Summary)
+	assert.Equal(t, "Insurance lapsed", encodedDocument(t, result)["summary"])
 
 	repo.events = nil
 	_, err = tool.Query(t.Context(), testParams(map[string]any{"eventId": id.String()}))
@@ -135,17 +137,77 @@ func TestDeskGetTools_AreGatedOnTheirRecordsResource(t *testing.T) {
 	assert.Equal(
 		t,
 		permission.ResourceDetentionPolicy,
-		newGetDetentionOccurrenceTool(nil).Policy().Resource,
+		newGetDetentionOccurrenceTool(nil, nil).Policy().Resource,
 	)
 	assert.Equal(
 		t,
 		permission.ResourceCarrierIntelligence,
-		newGetCarrierIntelEventTool(nil).Policy().Resource,
+		newGetCarrierIntelEventTool(nil, nil).Policy().Resource,
 	)
-	assert.Equal(t, permission.ResourceAgentRun, newGetAgentRunTool(getAgentRunParams{}, nil).Policy().Resource)
+	assert.Equal(
+		t,
+		permission.ResourceAgentRun,
+		newGetAgentRunTool(getAgentRunParams{}, nil).Policy().Resource,
+	)
 	assert.Equal(
 		t,
 		permission.ResourceServiceFailure,
-		newGetServiceFailureTool(nil).Policy().Resource,
+		newGetServiceFailureTool(nil, nil).Policy().Resource,
 	)
+}
+
+type stubServiceFailures struct {
+	repositories.ServiceFailureRepository
+
+	entity *servicefailure.ServiceFailure
+}
+
+func (s *stubServiceFailures) GetByID(
+	_ context.Context,
+	_ *repositories.GetServiceFailureByIDRequest,
+) (*servicefailure.ServiceFailure, error) {
+	return s.entity, nil
+}
+
+func TestGetServiceFailure_NamesThePeopleWithoutReachingThem(t *testing.T) {
+	t.Parallel()
+
+	person := func(name, email string) *tenant.User {
+		return &tenant.User{
+			ID:           pulid.MustNew(tenant.UserIDPrefix),
+			Name:         name,
+			Username:     email[:5],
+			EmailAddress: email,
+			Timezone:     "America/Chicago",
+		}
+	}
+	entity := &servicefailure.ServiceFailure{
+		ID:         pulid.MustNew("sf_"),
+		Notes:      "Consignee closed early",
+		CreatedBy:  person("Avery Chen", "avery.chen@example.com"),
+		ReviewedBy: person("Morgan Reyes", "morgan.reyes@example.com"),
+		ResolvedBy: person("Jordan Blake", "jordan.blake@example.com"),
+		VoidedBy:   person("Riley Stone", "riley.stone@example.com"),
+	}
+	tool := newGetServiceFailureTool(&stubServiceFailures{entity: entity}, &fakePermissions{})
+
+	result, err := tool.Query(t.Context(), agentParams(
+		map[string]any{"serviceFailureId": entity.ID.String()},
+		permission.SensitivityRestricted,
+	))
+	require.NoError(t, err)
+	document := encodedDocument(t, result)
+
+	assert.Equal(t, "Consignee closed early", document["notes"])
+	for key, user := range map[string]*tenant.User{
+		"createdBy":  entity.CreatedBy,
+		"reviewedBy": entity.ReviewedBy,
+		"resolvedBy": entity.ResolvedBy,
+		"voidedBy":   entity.VoidedBy,
+	} {
+		assert.Equal(t, map[string]any{"id": user.ID.String(), "name": user.Name},
+			document[key], key)
+	}
+	assert.NotContains(t, document, "withheldByAccess",
+		"a user reduced to a name is not a withheld field")
 }

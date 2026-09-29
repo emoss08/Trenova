@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -243,6 +244,8 @@ type shipmentFixture struct {
 	pickup    *shipment.Stop
 	delivery  *shipment.Stop
 	move      *shipment.ShipmentMove
+	owner     *tenant.User
+	canceler  *tenant.User
 }
 
 func realisticShipment() shipmentFixture {
@@ -362,7 +365,10 @@ func realisticShipment() shipmentFixture {
 			Status:              shipment.CarrierAssignmentStatusConfirmed,
 			ExternalDriverName:  "Pat Carrier",
 			ExternalDriverPhone: "312-555-0111",
-			Carrier:             &carrier.Carrier{ID: pulid.MustNew("car_"), Name: "Lakeshore Freight"},
+			Carrier: &carrier.Carrier{
+				ID:   pulid.MustNew("car_"),
+				Name: "Lakeshore Freight",
+			},
 		},
 	}
 	move.CarrierAssignment.CarrierID = move.CarrierAssignment.Carrier.ID
@@ -433,8 +439,28 @@ func realisticShipment() shipmentFixture {
 		}},
 	}
 	move.ShipmentID = entity.ID
+	owner := &tenant.User{
+		ID:           pulid.MustNew(tenant.UserIDPrefix),
+		Name:         "Avery Chen",
+		Username:     "achen",
+		EmailAddress: "avery.chen@example.com",
+		Timezone:     "America/Chicago",
+	}
+	canceler := &tenant.User{
+		ID:           pulid.MustNew(tenant.UserIDPrefix),
+		Name:         "Riley Stone",
+		Username:     "rstone",
+		EmailAddress: "riley.stone@example.com",
+		Timezone:     "America/New_York",
+	}
+	entity.OwnerID = owner.ID
+	entity.Owner = owner
+	entity.CanceledByID = canceler.ID
+	entity.CanceledBy = canceler
 
 	return shipmentFixture{
+		owner:     owner,
+		canceler:  canceler,
 		entity:    entity,
 		primary:   primary,
 		secondary: secondary,
@@ -577,7 +603,12 @@ func TestGetShipment_SummaryIsTheDefault(t *testing.T) {
 		"dana.whitfield@example.com", "815-555-0142", "18 Maple Row", "W123-4567-8901",
 		"312-555-0111",
 	} {
-		assert.NotContains(t, string(encoded), contact, "the summary names people, never reaches them")
+		assert.NotContains(
+			t,
+			string(encoded),
+			contact,
+			"the summary names people, never reaches them",
+		)
 	}
 }
 
@@ -659,13 +690,20 @@ func TestGetShipment_WorkerContactFollowsTheCeiling(t *testing.T) {
 			for _, contact := range []string{
 				"dana.whitfield@example.com", "815-555-0142", "luis.ortega@example.com",
 				"815-555-0178", "18 Maple Row", "Sam Whitfield", "W123-4567-8901",
+				"312-555-0111",
 			} {
 				assert.NotContains(t, string(encoded), contact)
 			}
 			assert.Contains(t, string(encoded), "Dana")
 			if detail == "full" {
-				assert.Subset(t, document["withheldByAccess"],
-					[]any{"worker.email", "worker.phoneNumber", "worker.addressLine1"})
+				assert.Subset(t, document["withheldByAccess"], []any{
+					"worker.email", "worker.phoneNumber", "worker.addressLine1",
+					"shipmentMove.externalDriverPhone",
+				})
+				carrier := objectAt(t, document, "moves", 0, "carrierAssignment")
+				assert.NotContains(t, carrier, "externalDriverPhone")
+				assert.Equal(t, "Pat Carrier", carrier["externalDriverName"],
+					"the external driver's name is Internal, like a worker's")
 				assert.NotContains(t, document["withheldByAccess"], "worker.licenseNumber",
 					"a confidential field is never named")
 			}
@@ -676,7 +714,8 @@ func TestGetShipment_WorkerContactFollowsTheCeiling(t *testing.T) {
 
 			fixture := realisticShipment()
 			document := queryShipment(t, fixture,
-				personReaching(permission.ResourceWorker, permission.SensitivityRestricted),
+				personReachingEach(permission.SensitivityRestricted,
+					permission.ResourceWorker, permission.ResourceShipmentMove),
 				chatParams(shipmentArgs(fixture, detail), ""))
 
 			encoded, err := sonic.Marshal(document)
@@ -689,6 +728,8 @@ func TestGetShipment_WorkerContactFollowsTheCeiling(t *testing.T) {
 				assert.Equal(t, "dana.whitfield@example.com", primary["email"])
 				assert.Equal(t, "815-555-0142", primary["phoneNumber"])
 				assert.NotContains(t, objectAt(t, primary, "profile"), "dob")
+				carrier := objectAt(t, document, "moves", 0, "carrierAssignment")
+				assert.Equal(t, "312-555-0111", carrier["externalDriverPhone"])
 			}
 		})
 	}
@@ -725,4 +766,40 @@ func TestGetShipmentSchema_RefusesAnUnknownDetail(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "summary")
 	assert.Zero(t, getter.reads, "nothing is read on a refused argument")
+}
+
+func TestGetShipment_FullReducesTheUsersOnTheRecord(t *testing.T) {
+	t.Parallel()
+
+	fixture := realisticShipment()
+	document := queryShipment(t, fixture, &fakePermissions{allowed: true},
+		agentParams(shipmentArgs(fixture, "full"), permission.SensitivityRestricted))
+
+	assert.Equal(t, map[string]any{
+		"id": fixture.owner.ID.String(), "name": "Avery Chen",
+	}, document["owner"])
+	assert.Equal(t, map[string]any{
+		"id": fixture.canceler.ID.String(), "name": "Riley Stone",
+	}, document["canceledBy"])
+	assert.Equal(t, fixture.owner.ID.String(), document["ownerId"])
+
+	encoded, err := sonic.Marshal(document)
+	require.NoError(t, err)
+	for _, contact := range []string{"avery.chen@example.com", "riley.stone@example.com"} {
+		assert.NotContains(t, string(encoded), contact, "no user's email reaches a model")
+	}
+}
+
+func TestGetShipment_SummaryIsUnchangedByTheUsersOnTheRecord(t *testing.T) {
+	t.Parallel()
+
+	fixture := realisticShipment()
+	document := queryShipment(t, fixture, &fakePermissions{allowed: true},
+		agentParams(shipmentArgs(fixture, ""), permission.SensitivityInternal))
+
+	assert.Equal(t, fixture.owner.ID.String(), document["ownerId"])
+	assert.NotContains(t, document, "owner")
+	assert.Equal(t, "Lakeshore Freight", objectAt(t, document, "moves", 0, "carrier")["carrier"])
+	assert.NotContains(t, document, "withheldByAccess",
+		"the summary names people and withholds nothing it did not name")
 }

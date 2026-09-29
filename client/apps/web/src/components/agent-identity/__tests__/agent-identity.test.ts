@@ -201,5 +201,9 @@ describe("agent icons", () => {
     expect(TEMPLATE_ICON).toEqual(server);
     expect(TEMPLATE_ICON.SettlementsClerk).toBe("banknote");
     expect(TEMPLATE_ICON.Receivables).toBe("coins");
+    expect(TEMPLATE_ICON.MasterDataSteward).toBe("file");
+    expect(TEMPLATE_ICON.WorkforceCoordinator).toBe("clipboard");
+    expect(TEMPLATE_ICON.FuelTaxClerk).toBe("gauge");
+    expect(TEMPLATE_ICON.ReportAnalyst).toBe("compass");
   });
 });

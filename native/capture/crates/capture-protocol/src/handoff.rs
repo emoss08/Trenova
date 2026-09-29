@@ -8,6 +8,11 @@
 //! user's agent reads the directory, takes each job into its own encrypted
 //! spool and deletes both files. A job printed while the agent is not running
 //! waits here until it is.
+//!
+//! A job the service converted from raster also carries pictures of its
+//! pages, for the person to look at before it is sent: a third file, written
+//! before the description like the document, holding each page's small and
+//! large JPEG as length-prefixed pairs.
 
 use std::fs;
 use std::io::{self, Write};
@@ -18,6 +23,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 
 use crate::api::MAX_PRINT_JOB_BYTES;
+use crate::helper::MAX_PREVIEW_BYTES;
 use crate::manifest::page_checksum;
 
 /// The description format this build writes and reads.
@@ -30,6 +36,10 @@ const PART: &str = "part";
 const REJECTED: &str = "rejected";
 const DESCRIPTION: &str = "json";
 const DOCUMENT: &str = "pdf";
+const PICTURES: &str = "pictures";
+/// The most pages a job carries pictures of; a longer job is looked at in
+/// Intake.
+pub const MAX_PICTURED_PAGES: u32 = 200;
 /// The most a description may be; anything larger was not written by the
 /// service.
 const MAX_DESCRIPTION_BYTES: u64 = 16 << 10;
@@ -46,6 +56,25 @@ pub enum HandoffError {
     InvalidId(String),
     #[error("the printed document for {0} does not match its description")]
     Mismatch(String),
+    #[error("the pictures of {0} do not match its description")]
+    PicturesMismatch(String),
+}
+
+/// A printed page's small and large pictures, as JPEG.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PrintedPicture {
+    pub thumb: Vec<u8>,
+    pub view: Vec<u8>,
+}
+
+/// The pictures file, as a description records it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PicturesFile {
+    /// Pages pictured, from the first.
+    pub pages: u32,
+    pub bytes: u64,
+    pub sha256: String,
 }
 
 /// A printed job waiting for its owner's agent.
@@ -65,6 +94,45 @@ pub struct PrintedJob {
     pub sha256: String,
     /// Unix seconds.
     pub received_at: i64,
+    /// Pictures of its pages, when the service made them.
+    #[serde(default)]
+    pub pictures: Option<PicturesFile>,
+}
+
+fn encode_pictures(pictures: &[PrintedPicture]) -> Vec<u8> {
+    let total: usize = pictures
+        .iter()
+        .map(|p| 8 + p.thumb.len() + p.view.len())
+        .sum();
+    let mut out = Vec::with_capacity(total);
+    for picture in pictures {
+        for part in [&picture.thumb, &picture.view] {
+            let len = u32::try_from(part.len()).unwrap_or(u32::MAX);
+            out.extend_from_slice(&len.to_le_bytes());
+            out.extend_from_slice(part);
+        }
+    }
+    out
+}
+
+fn decode_pictures(mut bytes: &[u8], pages: u32) -> Option<Vec<PrintedPicture>> {
+    let mut take = || -> Option<Vec<u8>> {
+        let (len, rest) = bytes.split_first_chunk::<4>()?;
+        let len = u32::from_le_bytes(*len) as usize;
+        if len > MAX_PREVIEW_BYTES || len > rest.len() {
+            return None;
+        }
+        let (part, rest) = rest.split_at(len);
+        bytes = rest;
+        Some(part.to_vec())
+    };
+    let mut pictures = Vec::with_capacity(pages.min(MAX_PICTURED_PAGES) as usize);
+    for _ in 0..pages {
+        let thumb = take()?;
+        let view = take()?;
+        pictures.push(PrintedPicture { thumb, view });
+    }
+    bytes.is_empty().then_some(pictures)
 }
 
 /// A job id is the file stem, so only what is safe in a file name is taken.
@@ -121,13 +189,22 @@ impl Inbox {
         self.dir.join(format!("{id}.{extension}"))
     }
 
-    /// Writes a printed document and its description. The service's half.
+    /// Writes a printed document, the pictures of its pages when there are
+    /// any, and its description. The service's half.
     pub fn deliver(
         &self,
         name: &str,
         pages: Option<u32>,
         pdf: &[u8],
+        pictures: &[PrintedPicture],
     ) -> Result<PrintedJob, HandoffError> {
+        let kept = pictures
+            .iter()
+            .take(MAX_PICTURED_PAGES as usize)
+            .take_while(|p| p.thumb.len() <= MAX_PREVIEW_BYTES && p.view.len() <= MAX_PREVIEW_BYTES)
+            .count();
+        let pictures = &pictures[..kept];
+        let encoded = (!pictures.is_empty()).then(|| encode_pictures(pictures));
         let job = PrintedJob {
             version: VERSION,
             id: next_id(),
@@ -136,14 +213,47 @@ impl Inbox {
             bytes: pdf.len() as u64,
             sha256: page_checksum(pdf),
             received_at: unix_seconds(SystemTime::now()),
+            pictures: encoded.as_ref().map(|bytes| PicturesFile {
+                pages: u32::try_from(pictures.len()).unwrap_or(MAX_PICTURED_PAGES),
+                bytes: bytes.len() as u64,
+                sha256: page_checksum(bytes),
+            }),
         };
         let description = serde_json::to_vec(&job).map_err(io::Error::other)?;
         write_then_rename(&self.dir, &job.id, DOCUMENT, pdf)?;
-        if let Err(err) = write_then_rename(&self.dir, &job.id, DESCRIPTION, &description) {
+        let written = match &encoded {
+            Some(bytes) => write_then_rename(&self.dir, &job.id, PICTURES, bytes)
+                .and_then(|()| write_then_rename(&self.dir, &job.id, DESCRIPTION, &description)),
+            None => write_then_rename(&self.dir, &job.id, DESCRIPTION, &description),
+        };
+        if let Err(err) = written {
             let _ = fs::remove_file(self.path(&job.id, DOCUMENT));
+            let _ = fs::remove_file(self.path(&job.id, PICTURES));
             return Err(err.into());
         }
         Ok(job)
+    }
+
+    /// The pictures of a job's pages, checked against its description;
+    /// none when it has none.
+    pub fn read_pictures(&self, job: &PrintedJob) -> Result<Vec<PrintedPicture>, HandoffError> {
+        let Some(file) = &job.pictures else {
+            return Ok(Vec::new());
+        };
+        let mismatch = || HandoffError::PicturesMismatch(job.id.clone());
+        let most = u64::from(MAX_PICTURED_PAGES) * 2 * (MAX_PREVIEW_BYTES as u64 + 4);
+        if !valid_id(&job.id) || file.pages > MAX_PICTURED_PAGES || file.bytes > most {
+            return Err(mismatch());
+        }
+        let path = self.path(&job.id, PICTURES);
+        if fs::metadata(&path)?.len() != file.bytes {
+            return Err(mismatch());
+        }
+        let bytes = fs::read(&path)?;
+        if page_checksum(&bytes) != file.sha256 {
+            return Err(mismatch());
+        }
+        decode_pictures(&bytes, file.pages).ok_or_else(mismatch)
     }
 
     /// The jobs waiting, oldest first. A description that cannot be read is
@@ -208,7 +318,7 @@ impl Inbox {
         if !valid_id(id) {
             return Err(HandoffError::InvalidId(id.to_owned()));
         }
-        for extension in [DESCRIPTION, DOCUMENT] {
+        for extension in [DESCRIPTION, DOCUMENT, PICTURES] {
             match fs::remove_file(self.path(id, extension)) {
                 Err(err) if err.kind() != io::ErrorKind::NotFound => return Err(err.into()),
                 _ => {}
@@ -223,7 +333,7 @@ impl Inbox {
         if !valid_id(id) {
             return Err(HandoffError::InvalidId(id.to_owned()));
         }
-        for extension in [DESCRIPTION, DOCUMENT] {
+        for extension in [DESCRIPTION, DOCUMENT, PICTURES] {
             let from = self.path(id, extension);
             let to = self.dir.join(format!("{id}.{extension}.{REJECTED}"));
             match fs::rename(&from, &to) {
@@ -251,7 +361,7 @@ impl Inbox {
             let extension = path.extension().and_then(|e| e.to_str());
             let orphan = match extension {
                 Some(PART) => true,
-                Some(DOCUMENT) => !path.with_extension(DESCRIPTION).exists(),
+                Some(DOCUMENT | PICTURES) => !path.with_extension(DESCRIPTION).exists(),
                 _ => false,
             };
             let old = entry
@@ -286,10 +396,10 @@ mod tests {
     fn a_delivered_job_is_listed_read_and_removed() {
         let (_dir, inbox) = inbox();
         let first = inbox
-            .deliver("Rate confirmation", Some(2), b"%PDF-1.7 one")
+            .deliver("Rate confirmation", Some(2), b"%PDF-1.7 one", &[])
             .expect("delivers");
         let second = inbox
-            .deliver("BOL", None, b"%PDF-1.7 two")
+            .deliver("BOL", None, b"%PDF-1.7 two", &[])
             .expect("delivers");
         let waiting: Vec<PrintedJob> = inbox
             .waiting()
@@ -310,7 +420,7 @@ mod tests {
     fn a_document_that_changed_after_delivery_is_refused() {
         let (dir, inbox) = inbox();
         let job = inbox
-            .deliver("Invoice", None, b"%PDF-1.7 a")
+            .deliver("Invoice", None, b"%PDF-1.7 a", &[])
             .expect("delivers");
         fs::write(dir.path().join(format!("{}.pdf", job.id)), b"%PDF-1.7 b").expect("writes");
         assert!(matches!(inbox.read(&job), Err(HandoffError::Mismatch(_))));
@@ -346,10 +456,64 @@ mod tests {
         assert!(matches!(waiting[0], Err(HandoffError::Description(_))));
     }
 
+    fn picture(n: u8) -> PrintedPicture {
+        PrintedPicture {
+            thumb: vec![0xFF, 0xD8, n],
+            view: vec![0xFF, 0xD8, n, n],
+        }
+    }
+
+    #[test]
+    fn a_job_carries_the_pictures_of_its_pages() {
+        let (dir, inbox) = inbox();
+        let job = inbox
+            .deliver(
+                "Rate confirmation",
+                Some(2),
+                b"%PDF-1.7",
+                &[picture(1), picture(2)],
+            )
+            .expect("delivers");
+        assert_eq!(job.pictures.as_ref().map(|p| p.pages), Some(2));
+        assert_eq!(
+            inbox.read_pictures(&job).expect("reads"),
+            [picture(1), picture(2)]
+        );
+
+        let plain = inbox
+            .deliver("BOL", None, b"%PDF-1.7", &[])
+            .expect("delivers");
+        assert_eq!(plain.pictures, None);
+        assert!(inbox.read_pictures(&plain).expect("reads").is_empty());
+
+        fs::write(dir.path().join(format!("{}.pictures", job.id)), b"tampered").expect("writes");
+        assert!(matches!(
+            inbox.read_pictures(&job),
+            Err(HandoffError::PicturesMismatch(_))
+        ));
+        inbox.remove(&job.id).expect("removes");
+        assert!(!dir.path().join(format!("{}.pictures", job.id)).exists());
+    }
+
+    #[test]
+    fn pictures_that_do_not_add_up_are_refused() {
+        let good = encode_pictures(&[picture(1)]);
+        assert_eq!(decode_pictures(&good, 1), Some(vec![picture(1)]));
+        assert_eq!(decode_pictures(&good, 2), None, "fewer than described");
+        let mut extra = good.clone();
+        extra.push(0);
+        assert_eq!(decode_pictures(&extra, 1), None, "more than described");
+        let mut huge = u32::MAX.to_le_bytes().to_vec();
+        huge.extend_from_slice(b"x");
+        assert_eq!(decode_pictures(&huge, 1), None);
+    }
+
     #[test]
     fn the_sweep_removes_only_old_leftovers() {
         let (dir, inbox) = inbox();
-        let job = inbox.deliver("Kept", None, b"%PDF-1.7").expect("delivers");
+        let job = inbox
+            .deliver("Kept", None, b"%PDF-1.7", &[])
+            .expect("delivers");
         fs::write(dir.path().join("0000000000002-1-0.pdf.part"), b"half").expect("writes");
         fs::write(dir.path().join("0000000000003-1-0.pdf"), b"orphan").expect("writes");
         assert_eq!(inbox.sweep(Duration::from_secs(3600)).expect("sweeps"), 0);

@@ -9,30 +9,34 @@ const toolSearchDocuments = "search_documents"
 type Template string
 
 const (
-	TemplateDispatchAssistant   = Template("DispatchAssistant")
-	TemplateBillingAssistant    = Template("BillingAssistant")
-	TemplateComplianceAssistant = Template("ComplianceAssistant")
-	TemplateCustomerAssistant   = Template("CustomerAssistant")
-	TemplateGeneralAssistant    = Template("GeneralAssistant")
-	TemplateBillingException    = Template("BillingException")
-	TemplateDispatchAssignment  = Template("DispatchAssignment")
-	TemplateImportAssistant     = Template("ImportAssistant")
-	TemplateLoadMonitor         = Template("LoadMonitor")
-	TemplateShipmentIntake      = Template("ShipmentIntake")
-	TemplateCashApplication     = Template("CashApplication")
-	TemplateDetentionDesk       = Template("DetentionDesk")
-	TemplateCredentialDesk      = Template("CredentialDesk")
-	TemplateCustomerUpdateDesk  = Template("CustomerUpdateDesk")
-	TemplateCarrierRiskDesk     = Template("CarrierRiskDesk")
-	TemplateIntakeDesk          = Template("IntakeDesk")
-	TemplateLoadEntryCheck      = Template("LoadEntryCheck")
-	TemplateServiceFailureDesk  = Template("ServiceFailureDesk")
-	TemplateInsightAnalyst      = Template("InsightAnalyst")
-	TemplateEDIDesk             = Template("EDIDesk")
-	TemplateFormulaAssistant    = Template("FormulaAssistant")
-	TemplateBooksKeeper         = Template("BooksKeeper")
-	TemplateSettlementsClerk    = Template("SettlementsClerk")
-	TemplateReceivables         = Template("Receivables")
+	TemplateDispatchAssistant    = Template("DispatchAssistant")
+	TemplateBillingAssistant     = Template("BillingAssistant")
+	TemplateComplianceAssistant  = Template("ComplianceAssistant")
+	TemplateCustomerAssistant    = Template("CustomerAssistant")
+	TemplateGeneralAssistant     = Template("GeneralAssistant")
+	TemplateBillingException     = Template("BillingException")
+	TemplateDispatchAssignment   = Template("DispatchAssignment")
+	TemplateImportAssistant      = Template("ImportAssistant")
+	TemplateLoadMonitor          = Template("LoadMonitor")
+	TemplateShipmentIntake       = Template("ShipmentIntake")
+	TemplateCashApplication      = Template("CashApplication")
+	TemplateDetentionDesk        = Template("DetentionDesk")
+	TemplateCredentialDesk       = Template("CredentialDesk")
+	TemplateCustomerUpdateDesk   = Template("CustomerUpdateDesk")
+	TemplateCarrierRiskDesk      = Template("CarrierRiskDesk")
+	TemplateIntakeDesk           = Template("IntakeDesk")
+	TemplateLoadEntryCheck       = Template("LoadEntryCheck")
+	TemplateServiceFailureDesk   = Template("ServiceFailureDesk")
+	TemplateInsightAnalyst       = Template("InsightAnalyst")
+	TemplateEDIDesk              = Template("EDIDesk")
+	TemplateFormulaAssistant     = Template("FormulaAssistant")
+	TemplateBooksKeeper          = Template("BooksKeeper")
+	TemplateSettlementsClerk     = Template("SettlementsClerk")
+	TemplateReceivables          = Template("Receivables")
+	TemplateMasterDataSteward    = Template("MasterDataSteward")
+	TemplateWorkforceCoordinator = Template("WorkforceCoordinator")
+	TemplateFuelTaxClerk         = Template("FuelTaxClerk")
+	TemplateReportAnalyst        = Template("ReportAnalyst")
 )
 
 func (t Template) IsValid() bool {
@@ -60,7 +64,11 @@ func (t Template) IsValid() bool {
 		TemplateFormulaAssistant,
 		TemplateBooksKeeper,
 		TemplateSettlementsClerk,
-		TemplateReceivables:
+		TemplateReceivables,
+		TemplateMasterDataSteward,
+		TemplateWorkforceCoordinator,
+		TemplateFuelTaxClerk,
+		TemplateReportAnalyst:
 		return true
 	default:
 		return false
@@ -93,6 +101,10 @@ func AllTemplates() []Template {
 		TemplateBooksKeeper,
 		TemplateSettlementsClerk,
 		TemplateReceivables,
+		TemplateMasterDataSteward,
+		TemplateWorkforceCoordinator,
+		TemplateFuelTaxClerk,
+		TemplateReportAnalyst,
 	}
 }
 
@@ -146,6 +158,14 @@ func (t Template) Label() string {
 		return "Settlements clerk"
 	case TemplateReceivables:
 		return "Receivables assistant"
+	case TemplateMasterDataSteward:
+		return "Master data steward"
+	case TemplateWorkforceCoordinator:
+		return "Workforce coordinator"
+	case TemplateFuelTaxClerk:
+		return "Fuel and IFTA clerk"
+	case TemplateReportAnalyst:
+		return "Report analyst"
 	default:
 		return string(t)
 	}
@@ -224,6 +244,21 @@ func (t Template) Description() string {
 	case TemplateReceivables:
 		return "Works what customers owe once an invoice is out: applies payments and credit, " +
 			"handles disputes and late charges, and says who to chase first."
+	case TemplateMasterDataSteward:
+		return "Keeps carriers, customers, commodities, hazardous materials, locations and " +
+			"equipment right, files scanned paperwork and clears the attention feed, " +
+			"proposing every change for a person to approve."
+	case TemplateWorkforceCoordinator:
+		return "Handles time off, leave, injuries, reviews, safety records, random testing " +
+			"rounds, checklists and shipment permits, and proposes each change for a person " +
+			"to approve."
+	case TemplateFuelTaxClerk:
+		return "Keeps the fuel tax record: records and corrects fuel purchases and card " +
+			"statements, fills in state miles, and drafts the quarter's IFTA return for a " +
+			"person to file."
+	case TemplateReportAnalyst:
+		return "Builds, runs and explains reports and dashboards, compares runs to say what " +
+			"moved, and proposes schedules that email a report for a person to approve."
 	default:
 		return ""
 	}
@@ -235,7 +270,10 @@ func (t Template) StarterInstructions() string {
 		return "You support the dispatch desk. Prioritise keeping freight moving: when a driver is " +
 			"asked about, check hours of service and current assignment before anything else. Cite " +
 			"pro numbers and driver names in every answer. When a change to a move is needed, propose " +
-			"it with the reason and let a dispatcher confirm. A New shipment goes to another " +
+			"it with the reason and let a dispatcher confirm. A shipment's own details — its " +
+			"customer, service or shipment type, equipment, BOL, pieces, weight or temperature " +
+			"range — are changed with update_shipment, sending only what changes. A New shipment " +
+			"goes to another " +
 			"organization on Trenova with send_edi_tender; list_edi_transfers shows what " +
 			"they answered, and a tender left unanswered is withdrawn with " +
 			"cancel_edi_tender or closed with expire_edi_tender. A status the other " +
@@ -379,7 +417,10 @@ func (t Template) StarterInstructions() string {
 			"gets evaluate_service_failures. A delivery that will miss its window gets the " +
 			"customer told with email_customer and the driver told with notify_driver, each " +
 			"with the new expected time and nothing internal. A detention notice that is due " +
-			"gets sent. Anything you cannot resolve — an uncovered move, a truck with no " +
+			"gets sent. A stop the tracking shows the truck reached or left, with no arrival or " +
+			"departure recorded, gets record_stop_actual with the time the tracking shows and " +
+			"that evidence; never infer an arrival from a departure or the reverse. Anything " +
+			"you cannot resolve — an uncovered move, a truck with no " +
 			"position for hours, a weather alert on the route — gets flag_for_manual_review " +
 			"with the evidence. Never estimate an arrival as a promise; say it is an estimate. " +
 			"Do not repeat an action the shipment's comments show was taken in the last hour. " +
@@ -694,6 +735,14 @@ func (t Template) StarterInstructions() string {
 		return settlementsClerkInstructions
 	case TemplateReceivables:
 		return receivablesInstructions
+	case TemplateMasterDataSteward:
+		return masterDataStewardInstructions
+	case TemplateWorkforceCoordinator:
+		return workforceCoordinatorInstructions
+	case TemplateFuelTaxClerk:
+		return fuelTaxClerkInstructions
+	case TemplateReportAnalyst:
+		return reportAnalystInstructions
 	default:
 		return ""
 	}
@@ -853,6 +902,7 @@ func (t Template) StarterTools() []string {
 			"resolve_shipment_comment",
 			"list_recurring_shipments",
 			"generate_recurring_shipment",
+			"update_shipment",
 		}
 	case TemplateBillingAssistant:
 		return []string{
@@ -1044,6 +1094,7 @@ func (t Template) StarterTools() []string {
 			"list_email_profiles",
 			"email_customer",
 			"send_detention_notice",
+			"record_stop_actual",
 		}
 	case TemplateGeneralAssistant:
 		return nil
@@ -1317,6 +1368,14 @@ func (t Template) StarterTools() []string {
 		return settlementsClerkTools()
 	case TemplateReceivables:
 		return receivablesTools()
+	case TemplateMasterDataSteward:
+		return masterDataStewardTools()
+	case TemplateWorkforceCoordinator:
+		return workforceCoordinatorTools()
+	case TemplateFuelTaxClerk:
+		return fuelTaxClerkTools()
+	case TemplateReportAnalyst:
+		return reportAnalystTools()
 	default:
 		return nil
 	}
@@ -1527,7 +1586,11 @@ func (t Template) StarterCeiling() agent.AutonomyTier {
 		TemplateLoadEntryCheck,
 		TemplateInsightAnalyst,
 		TemplateEDIDesk,
-		TemplateFormulaAssistant:
+		TemplateFormulaAssistant,
+		TemplateMasterDataSteward,
+		TemplateWorkforceCoordinator,
+		TemplateFuelTaxClerk,
+		TemplateReportAnalyst:
 		return agent.TierPropose
 	default:
 		return agent.TierActWithApproval

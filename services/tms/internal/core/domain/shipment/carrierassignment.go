@@ -35,6 +35,8 @@ func CarrierBaseAmount(
 
 var _ bun.BeforeAppendModelHook = (*CarrierAssignment)(nil)
 
+const CarrierAssignmentIDPrefix = "casn_"
+
 type CarrierAssignment struct {
 	bun.BaseModel `bun:"table:carrier_assignments,alias:casn" json:"-"`
 
@@ -213,7 +215,7 @@ func (ca *CarrierAssignment) BeforeAppendModel(_ context.Context, query bun.Quer
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if ca.ID.IsNil() {
-			ca.ID = pulid.MustNew("casn_")
+			ca.ID = pulid.MustNew(CarrierAssignmentIDPrefix)
 		}
 		ca.CreatedAt = now
 	case *bun.UpdateQuery:

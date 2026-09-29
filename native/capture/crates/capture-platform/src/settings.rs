@@ -8,8 +8,8 @@
 
 use windows::Win32::Foundation::ERROR_SUCCESS;
 use windows::Win32::System::Registry::{
-    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, REG_SZ, RRF_RT_REG_DWORD, RRF_RT_REG_SZ,
-    RegCloseKey, RegGetValueW, RegOpenKeyExW, RegSetKeyValueW,
+    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, REG_DWORD, REG_SZ, REG_VALUE_TYPE,
+    RRF_RT_REG_DWORD, RRF_RT_REG_SZ, RegCloseKey, RegGetValueW, RegOpenKeyExW, RegSetKeyValueW,
 };
 use windows_core::PCWSTR;
 
@@ -20,6 +20,9 @@ const KEY: &str = "SOFTWARE\\Trenova\\Capture";
 const SERVER_URL: &str = "ServerUrl";
 const PRINT_PORT: &str = "PrintPort";
 const AUTO_UPDATE: &str = "AutoUpdate";
+const ROUTINE_NOTIFICATIONS: &str = "RoutineNotifications";
+const LAST_VERSION: &str = "LastVersion";
+const REVIEW_BEFORE_SENDING: &str = "ReviewBeforeSending";
 const CRYPTOGRAPHY_KEY: &str = "SOFTWARE\\Microsoft\\Cryptography";
 const MACHINE_GUID: &str = "MachineGuid";
 
@@ -154,17 +157,72 @@ pub fn server_url() -> Option<(String, ServerSource)> {
 
 /// Saves the address a person typed, for this Windows user.
 pub fn set_server_url(url: &str) -> std::io::Result<()> {
+    set_user_value(SERVER_URL, REG_SZ, &as_bytes(&wide(url)))
+}
+
+/// Whether this Windows user wants to hear about routine events (something
+/// sent, the connection back) as well as problems. Unset means yes.
+pub fn routine_notifications() -> bool {
+    read_dword(HKEY_CURRENT_USER, KEY, ROUTINE_NOTIFICATIONS).is_none_or(|value| value != 0)
+}
+
+/// Saves whether this Windows user wants routine notifications.
+pub fn set_routine_notifications(on: bool) -> std::io::Result<()> {
+    set_user_value(
+        ROUTINE_NOTIFICATIONS,
+        REG_DWORD,
+        &u32::from(on).to_le_bytes(),
+    )
+}
+
+/// Whether scans and prints wait for this Windows user to look them over
+/// before they are sent: set by policy (`ReviewBeforeSending` under the
+/// policy key) or by the person. Unset means no.
+pub fn review_before_sending() -> bool {
+    read_dword(HKEY_LOCAL_MACHINE, POLICY_KEY, REVIEW_BEFORE_SENDING)
+        .or_else(|| read_dword(HKEY_CURRENT_USER, KEY, REVIEW_BEFORE_SENDING))
+        .is_some_and(|value| value != 0)
+}
+
+/// Whether an administrator decided review before sending for everyone.
+pub fn review_before_sending_locked() -> bool {
+    read_dword(HKEY_LOCAL_MACHINE, POLICY_KEY, REVIEW_BEFORE_SENDING).is_some()
+}
+
+/// Saves whether this Windows user wants to look things over first.
+pub fn set_review_before_sending(on: bool) -> std::io::Result<()> {
+    set_user_value(
+        REVIEW_BEFORE_SENDING,
+        REG_DWORD,
+        &u32::from(on).to_le_bytes(),
+    )
+}
+
+/// The version of Trenova Capture this Windows user last ran.
+pub fn last_version() -> Option<String> {
+    read_string(HKEY_CURRENT_USER, KEY, LAST_VERSION)
+}
+
+/// Records the version of Trenova Capture this Windows user is running.
+pub fn set_last_version(version: &str) -> std::io::Result<()> {
+    set_user_value(LAST_VERSION, REG_SZ, &as_bytes(&wide(version)))
+}
+
+fn as_bytes(units: &[u16]) -> Vec<u8> {
+    units.iter().flat_map(|unit| unit.to_le_bytes()).collect()
+}
+
+fn set_user_value(value: &str, kind: REG_VALUE_TYPE, data: &[u8]) -> std::io::Result<()> {
     let key = wide(KEY);
-    let value = wide(SERVER_URL);
-    let data = wide(url);
-    let bytes = u32::try_from(data.len() * 2).map_err(std::io::Error::other)?;
-    // SAFETY: NUL-terminated names and a NUL-terminated REG_SZ of `bytes`.
+    let value = wide(value);
+    let bytes = u32::try_from(data.len()).map_err(std::io::Error::other)?;
+    // SAFETY: NUL-terminated names and `bytes` bytes of data of `kind`.
     let status = unsafe {
         RegSetKeyValueW(
             HKEY_CURRENT_USER,
             PCWSTR(key.as_ptr()),
             PCWSTR(value.as_ptr()),
-            REG_SZ.0,
+            kind.0,
             Some(data.as_ptr().cast()),
             bytes,
         )

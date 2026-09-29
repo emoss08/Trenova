@@ -35,6 +35,10 @@ import (
 // pages and tells the person why.
 var ErrCaptureDisabled = errors.New("document capture is turned off for this organization")
 
+var ErrNoWebAddress = errors.New(
+	"this Trenova server has no web address configured (app.webBaseUrl), so a computer cannot be approved",
+)
+
 // DisabledReasonParam and DisabledReason tag ErrCaptureDisabled in the problem
 // body, so the companion can tell "hold the pages until capture is turned
 // back on" from a refusal of the upload itself without reading its text.

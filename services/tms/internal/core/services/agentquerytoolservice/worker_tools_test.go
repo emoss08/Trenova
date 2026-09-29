@@ -2,9 +2,10 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"strings"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -72,7 +73,7 @@ func TestSearchWorker_ListsWithoutAQuery(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeWorkerRepo{items: []*worker.Worker{{ID: pulid.MustNew("wrk_")}}}
-	tool := newSearchWorkerTool(repo)
+	tool := newSearchWorkerTool(repo, &fakePermissions{})
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
@@ -86,7 +87,7 @@ func TestSearchWorker_PassesAQueryThrough(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeWorkerRepo{}
-	tool := newSearchWorkerTool(repo)
+	tool := newSearchWorkerTool(repo, &fakePermissions{})
 
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"query": "  Ortiz  "}))
 	require.NoError(t, err)
@@ -104,13 +105,14 @@ func TestSearchWorker_EmptyResultSaysWhatItSearched(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeWorkerRepo{items: nil}
-	tool := newSearchWorkerTool(repo)
+	tool := newSearchWorkerTool(repo, &fakePermissions{})
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"query": "Ortiz"}))
 	require.NoError(t, err)
 
-	outcome, ok := result.(searchOutcome)
+	gated, ok := result.(*gatedOutcome)
 	require.True(t, ok, "an empty result must carry its terms, not be a bare slice")
+	outcome := gated.searchOutcome
 	assert.Zero(t, outcome.Count)
 	assert.Contains(t, strings.Join(outcome.SearchedFor, " "), "Ortiz")
 	assert.NotEmpty(t, outcome.Note, "an empty result explains itself")
@@ -120,7 +122,7 @@ func TestSearchWorker_RejectsAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeWorkerRepo{}
-	tool := newSearchWorkerTool(repo)
+	tool := newSearchWorkerTool(repo, &fakePermissions{})
 
 	params := testParams(map[string]any{})
 	params.Actor.OrganizationID = pulid.MustNew("org_")
@@ -133,7 +135,11 @@ func TestSearchWorker_RejectsAMismatchedActor(t *testing.T) {
 func TestSearchWorker_IsNamedForOneWorker(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "search_worker", newSearchWorkerTool(&fakeWorkerRepo{}).Name())
+	assert.Equal(
+		t,
+		"search_worker",
+		newSearchWorkerTool(&fakeWorkerRepo{}, &fakePermissions{}).Name(),
+	)
 }
 
 /*
@@ -147,7 +153,9 @@ func TestRegistry_ResolvesTheLegacyWorkerSearchName(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry(RegistryParams{
-		Tools: []serviceports.AgentQueryTool{newSearchWorkerTool(&fakeWorkerRepo{})},
+		Tools: []serviceports.AgentQueryTool{
+			newSearchWorkerTool(&fakeWorkerRepo{}, &fakePermissions{}),
+		},
 	})
 
 	tool, ok := reg.Get("search_workers")
@@ -159,7 +167,9 @@ func TestRegistry_DoesNotAdvertiseTheLegacyName(t *testing.T) {
 	t.Parallel()
 
 	reg := NewRegistry(RegistryParams{
-		Tools: []serviceports.AgentQueryTool{newSearchWorkerTool(&fakeWorkerRepo{})},
+		Tools: []serviceports.AgentQueryTool{
+			newSearchWorkerTool(&fakeWorkerRepo{}, &fakePermissions{}),
+		},
 	})
 
 	for _, descriptor := range reg.Descriptors() {
@@ -194,12 +204,15 @@ func TestSearchWorker_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 		Profile:   &worker.WorkerProfile{MedicalCardExpiry: &expiry},
 	}}}
 
-	result, err := newSearchWorkerTool(repo).Query(t.Context(), testParams(map[string]any{}))
+	result, err := newSearchWorkerTool(
+		repo,
+		&fakePermissions{},
+	).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
-	outcome, ok := result.(searchOutcome)
+	gated, ok := result.(*gatedOutcome)
 	require.True(t, ok)
-	rows, ok := outcome.Items.([]workerRow)
+	rows, ok := gated.Items.([]workerRow)
 	require.True(t, ok, "search must return the curated row, not the entity")
 	require.Len(t, rows, 1)
 
@@ -224,11 +237,15 @@ func TestSearchWorker_SaysWhenACredentialIsNotOnFile(t *testing.T) {
 		Profile: &worker.WorkerProfile{},
 	}}}
 
-	result, err := newSearchWorkerTool(repo).Query(t.Context(), testParams(map[string]any{}))
+	result, err := newSearchWorkerTool(
+		repo,
+		&fakePermissions{},
+	).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
-	outcome, _ := result.(searchOutcome)
-	encoded, err := sonic.Marshal(outcome.Items)
+	gated, ok := result.(*gatedOutcome)
+	require.True(t, ok)
+	encoded, err := sonic.Marshal(gated.Items)
 	require.NoError(t, err)
 
 	assert.Contains(t, string(encoded), "none on file")

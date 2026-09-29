@@ -147,6 +147,22 @@ Keywords: settlements agent, driver pay agent, payroll agent, carrier settlement
 5. Select **Save**. To let the billing assistant and the receivables assistant pass work to each
    other, add each to the other's **Can ask** list as described below.
 
+### Set up an agent for master data, workforce records, fuel tax or reports
+Keywords: master data agent, carrier setup agent, customer setup agent, equipment agent, document filing agent, capture filing agent, HR agent, time off agent, leave agent, injury log agent, random drug test agent, permit agent, fuel agent, IFTA agent, fuel tax agent, fuel card agent, report agent, report builder agent, dashboard agent, scheduled report agent
+1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
+2. Select **New agent**.
+3. In **Start from**, choose the master data steward to keep carriers, customers, commodities,
+   hazardous materials, locations, tractors and trailers right, file scanned paperwork and clear
+   the watchtower feed; the workforce coordinator to handle time off, leave, injuries, reviews,
+   safety records, random testing rounds, checklists and shipment permits; or the fuel and IFTA
+   clerk to record fuel purchases and card statements, fill in state miles and draft the
+   quarter's IFTA return; or the report analyst to find, run, build and compare reports, keep
+   dashboards and set up the schedules that email a report. All four are chat agents that only
+   propose: every change waits for the person talking to them to approve it.
+4. Leave **Data access** as the starter set it: **Restricted** for the workforce coordinator,
+   **Internal** for the others. None of them changes pay, rate agreements or payroll.
+5. Select **Save**.
+
 ### Let an agent hand work to another agent
 Keywords: sub-agent, delegate, deploy a sub agent, ask another agent, report builder agent, agent can't reach another agent
 1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.

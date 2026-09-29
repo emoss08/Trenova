@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -423,42 +425,83 @@ func (o *gatedOutcome) withTaint(refs []agent.RecordRef) *gatedOutcome {
 
 func (o *gatedOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
 
-type nestedRecords struct {
+type nestedRule struct {
+	idPrefix string
 	resource permission.Resource
-	idPrefix string
+	label    string
 }
 
-var workerRecords = nestedRecords{
-	resource: permission.ResourceWorker,
-	idPrefix: agent.SubjectWorker.IDPrefix(),
+func (r nestedRule) reduces() bool { return r.resource == "" }
+
+func (r nestedRule) fieldName(field string) string { return r.label + "." + field }
+
+var nestedRules = []nestedRule{
+	{idPrefix: tenant.UserIDPrefix},
+	{idPrefix: tenant.OrganizationIDPrefix},
+	{idPrefix: tenant.BusinessUnitIDPrefix},
+	{
+		idPrefix: agent.SubjectWorker.IDPrefix(),
+		resource: permission.ResourceWorker,
+		label:    permission.ResourceWorker.String(),
+	},
+	{
+		idPrefix: shipment.CarrierAssignmentIDPrefix,
+		resource: permission.ResourceShipmentMove,
+		label:    "shipmentMove",
+	},
 }
 
-type recordGate struct {
-	gate     *fieldGate
-	idPrefix string
+var nestedRulesByPrefix = func() map[string]nestedRule {
+	out := make(map[string]nestedRule, len(nestedRules))
+	for _, rule := range nestedRules {
+		out[rule.idPrefix] = rule
+	}
+
+	return out
+}()
+
+const (
+	nestedIDKey   = "id"
+	nestedNameKey = "name"
+)
+
+var workerRule = nestedRulesByPrefix[agent.SubjectWorker.IDPrefix()]
+
+func nestedRuleOf(record map[string]any) (nestedRule, bool) {
+	id, ok := record[nestedIDKey].(string)
+	if !ok {
+		return nestedRule{}, false
+	}
+	rule, found := nestedRulesByPrefix[pulid.ID(id).Prefix()]
+
+	return rule, found
 }
 
-func (a fieldAccess) recordGate(
+type nestedRedactor struct {
+	gates map[permission.Resource]*fieldGate
+}
+
+func (a fieldAccess) redactor(
 	ctx context.Context,
 	params *serviceports.QueryToolParams,
-	records nestedRecords,
-) *recordGate {
-	return &recordGate{
-		gate:     a.deferredGate(ctx, params, records.resource),
-		idPrefix: records.idPrefix,
+) *nestedRedactor {
+	gates := make(map[permission.Resource]*fieldGate, len(nestedRules))
+	for _, rule := range nestedRules {
+		if !rule.reduces() {
+			gates[rule.resource] = a.deferredGate(ctx, params, rule.resource)
+		}
 	}
+
+	return &nestedRedactor{gates: gates}
 }
 
-func (g *recordGate) showField(field string) bool {
-	return g.gate.show(field, g.gate.resource.String()+"."+field)
-}
-
-func (g *recordGate) workerName(w *worker.Worker) string {
+func (r *nestedRedactor) workerName(w *worker.Worker) string {
 	if w == nil {
 		return ""
 	}
-	first := g.showField("firstName")
-	last := g.showField("lastName")
+	gate := r.gates[workerRule.resource]
+	first := gate.show("firstName", workerRule.fieldName("firstName"))
+	last := gate.show("lastName", workerRule.fieldName("lastName"))
 	if !first || !last {
 		return ""
 	}
@@ -466,15 +509,24 @@ func (g *recordGate) workerName(w *worker.Worker) string {
 	return workerName(w)
 }
 
-func (g *recordGate) withhold(result any) (*gatedDocument, error) {
+func (r *nestedRedactor) withhold(result any) (*gatedDocument, error) {
+	return r.document(result, true)
+}
+
+func (r *nestedRedactor) annotate(result any) (*gatedDocument, error) {
+	return r.document(result, false)
+}
+
+func (r *nestedRedactor) document(result any, walk bool) (*gatedDocument, error) {
 	tree, err := jsonutils.ToJSON(result)
 	if err != nil {
 		return nil, fmt.Errorf("encode the result to withhold what access does not reach: %w", err)
 	}
 
-	g.withholdRecords(tree)
-	if withheld := g.gate.Withheld(); len(withheld) > 0 {
-		slices.Sort(withheld)
+	if walk {
+		r.walk(tree)
+	}
+	if withheld := r.withheld(); len(withheld) > 0 {
 		tree[withheldByAccessKey] = withheld
 	}
 
@@ -486,38 +538,81 @@ func (g *recordGate) withhold(result any) (*gatedDocument, error) {
 	return gated, nil
 }
 
-func (g *recordGate) withholdRecords(node any) {
+func (r *nestedRedactor) withheld() []string {
+	size := 0
+	for _, gate := range r.gates {
+		size += len(gate.withheld)
+	}
+	if size == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, size)
+	for _, gate := range r.gates {
+		out = append(out, gate.withheld...)
+	}
+	slices.Sort(out)
+
+	return slices.Compact(out)
+}
+
+func (r *nestedRedactor) walk(node any) {
 	switch typed := node.(type) {
 	case map[string]any:
-		if id, ok := typed["id"].(string); ok && pulid.ID(id).Prefix() == g.idPrefix {
-			g.withholdFields(typed)
+		if rule, ok := nestedRuleOf(typed); ok {
+			r.apply(rule, typed)
 			return
 		}
 		for _, child := range typed {
-			g.withholdRecords(child)
+			r.walk(child)
 		}
 	case []any:
 		for _, child := range typed {
-			g.withholdRecords(child)
+			r.walk(child)
 		}
 	}
 }
 
-func (g *recordGate) withholdFields(node any) {
+func (r *nestedRedactor) apply(rule nestedRule, record map[string]any) {
+	if rule.reduces() {
+		for key := range record {
+			if key != nestedIDKey && key != nestedNameKey {
+				delete(record, key)
+			}
+		}
+		return
+	}
+
+	r.gateFields(rule, record)
+}
+
+func (r *nestedRedactor) gateFields(rule nestedRule, node any) {
+	gate := r.gates[rule.resource]
 	switch typed := node.(type) {
 	case map[string]any:
 		for key, child := range typed {
-			if !g.showField(key) {
+			if !gate.show(key, rule.fieldName(key)) {
 				delete(typed, key)
 				continue
 			}
-			g.withholdFields(child)
+			r.gateChild(rule, child)
 		}
 	case []any:
 		for _, child := range typed {
-			g.withholdFields(child)
+			r.gateChild(rule, child)
 		}
 	}
+}
+
+func (r *nestedRedactor) gateChild(rule nestedRule, child any) {
+	if record, ok := child.(map[string]any); ok {
+		if nested, found := nestedRuleOf(record); found {
+			r.apply(nested, record)
+			return
+		}
+	}
+
+	r.gateFields(rule, child)
 }
 
 const withheldByAccessKey = "withheldByAccess"
