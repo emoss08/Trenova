@@ -420,14 +420,17 @@ writes:
     exempt: security
     reason: "Approving a pairing grants a computer the person's access; only that person may do it."
   "mutation cancelCaptureRequest":
-    pending: "Cancel a scan or print request that has not started."
+    exempt: security
+    reason: "Withdraws an instruction the caller gave one of their own paired computers; those instructions are the person's, given under the access they granted the machine, and an agent never acts through a device pairing."
   "mutation createCaptureCoverSheets":
-    pending: "Print cover sheets that route scanned paperwork to a record and document type."
+    exempt: infrastructure
+    reason: "Issues printable routing codes that exist only to be printed and laid on paper at a scanner, returned once to the person who prints them; an agent has no printer, and file_capture_items files what the sheets route."
   "mutation createCaptureProfile":
     exempt: configuration
     reason: "Scan profiles are presets an administrator maintains for the organization's scanners."
   "mutation createCaptureRequest":
-    pending: "Ask a person's paired computer to scan paperwork into a record, or send their next print there."
+    exempt: security
+    reason: "Drives one of the caller's own paired computers, starting its scanner or catching its next print, under the access the person granted that machine; a scan also needs the person at the scanner with the paper. An agent never acts through a device pairing."
   "mutation deleteCaptureProfile":
     exempt: configuration
     reason: "Scan profiles are presets an administrator maintains for the organization's scanners."
@@ -435,15 +438,16 @@ writes:
     exempt: security
     reason: "Denying a pairing is the person's answer to a request for their access."
   "mutation discardCaptureBatch":
-    pending: "Discard a scanned stack that holds nothing worth filing."
+    tools: [discard_capture_batch]
   "mutation discardCaptureItem":
-    pending: "Discard one scanned document that is not needed."
+    tools: [discard_capture_item]
   "mutation editCaptureItems":
-    pending: "Split, merge, reorder, rotate or leave out pages of a scanned stack to form its documents."
+    exempt: user-preference
+    reason: "The person arranging a scanned stack in the intake editor, looking at the page images, replaces the whole layout of the version they were looking at; pages carry no text an agent can read, so an agent would split documents blind. Filing and discarding what the split proposes are file_capture_items and discard_capture_item."
   "mutation fileCaptureItem":
-    pending: "File a scanned document onto the record it belongs to, as the document type it is."
+    tools: [file_capture_items]
   "mutation fileCaptureItems":
-    pending: "File every document of a scanned stack onto its record at once."
+    tools: [file_capture_items]
   "mutation revokeCaptureDevice":
     exempt: security
     reason: "Revoking a paired computer removes a person's access."
@@ -456,13 +460,13 @@ writes:
 
   # carrier
   "PATCH /api/v1/carriers/:carrierID/":
-    pending: "Update some fields of a carrier."
+    tools: [update_carrier]
   "POST /api/v1/carriers/":
-    pending: "Create a carrier."
+    tools: [create_carrier]
   "POST /api/v1/carriers/bulk-update-status/":
-    pending: "Change the status of several carriers at once."
+    tools: [update_carrier_status]
   "PUT /api/v1/carriers/:carrierID/":
-    pending: "Update a carrier."
+    tools: [update_carrier]
 
   # carrierintelligence
   "mutation acknowledgeCarrierIntelEvents":
@@ -539,13 +543,13 @@ writes:
 
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":
-    pending: "Update some fields of a commodity."
+    tools: [update_commodity]
   "POST /api/v1/commodities/":
-    pending: "Create a commodity."
+    tools: [create_commodity]
   "POST /api/v1/commodities/bulk-update-status/":
-    pending: "Change the status of several commodities at once."
+    tools: [update_commodity_status]
   "PUT /api/v1/commodities/:commodityID/":
-    pending: "Update a commodity."
+    tools: [update_commodity]
 
   # controlplaneprovisioning
   "POST /api/v1/control-plane/tenants/provision":
@@ -562,13 +566,13 @@ writes:
 
   # customer
   "PATCH /api/v1/customers/:customerID/":
-    pending: "Update some fields of a customer."
+    tools: [update_customer]
   "POST /api/v1/customers/":
-    pending: "Create a customer."
+    tools: [create_customer]
   "POST /api/v1/customers/bulk-update-status/":
-    pending: "Change the status of several customers at once."
+    tools: [update_customer_status]
   "PUT /api/v1/customers/:customerID/":
-    pending: "Update a customer."
+    tools: [update_customer]
 
   # customerpayment
   "mutation applyCreditMemo":
@@ -702,18 +706,19 @@ writes:
 
   # document
   "DELETE /api/v1/documents/:documentID/":
-    pending: "Delete a document."
+    tools: [delete_documents]
   "POST /api/v1/documents/:documentID/attach-to-shipment/":
     tools: [attach_document_to_shipment]
   "POST /api/v1/documents/:documentID/import-assistant/thread/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/documents/:documentID/restore/":
-    pending: "Restore an earlier version of a document."
+    tools: [restore_document_version]
   "POST /api/v1/documents/:documentID/shipment-draft/reextract/":
-    pending: "Run shipment extraction again on a document and replace the draft."
+    exempt: infrastructure
+    reason: "A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it."
   "POST /api/v1/documents/bulk-delete/":
-    pending: "Delete several documents at once."
+    tools: [delete_documents]
   "POST /api/v1/documents/upload-bulk/":
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
@@ -1476,13 +1481,13 @@ writes:
 
   # hazardousmaterial
   "PATCH /api/v1/hazardous-materials/:hazardousMaterialID/":
-    pending: "Update some fields of a hazardous material."
+    tools: [update_hazardous_material]
   "POST /api/v1/hazardous-materials/":
-    pending: "Create a hazardous material."
+    tools: [create_hazardous_material]
   "POST /api/v1/hazardous-materials/bulk-update-status/":
-    pending: "Change the status of several hazardous materials at once."
+    tools: [update_hazardous_material_status]
   "PUT /api/v1/hazardous-materials/:hazardousMaterialID/":
-    pending: "Update a hazardous material."
+    tools: [update_hazardous_material]
 
   # hazmatsegregationrule
   "PATCH /api/v1/hazmat-segregation-rules/:hazmatSegregationRuleID/":
@@ -1628,7 +1633,7 @@ writes:
   "POST /api/v1/insights/:insightID/dismiss/":
     tools: [dismiss_insight]
   "POST /api/v1/insights/:insightID/restore/":
-    pending: "Restore an insight that was dismissed."
+    tools: [restore_insight]
 
   # integration
   "POST /api/v1/integrations/:type/test-connection/":
@@ -1776,13 +1781,13 @@ writes:
 
   # location
   "PATCH /api/v1/locations/:locationID/":
-    pending: "Update some fields of a location."
+    tools: [update_location]
   "POST /api/v1/locations/":
     tools: [create_location]
   "POST /api/v1/locations/bulk-update-status/":
-    pending: "Change the status of several locations at once."
+    tools: [update_location_status]
   "PUT /api/v1/locations/:locationID/":
-    pending: "Update a location."
+    tools: [update_location]
 
   # locationcategory
   "PATCH /api/v1/location-categories/:locationCategoryID/":
@@ -2393,15 +2398,15 @@ writes:
 
   # tablechangealert
   "DELETE /api/v1/tca/subscriptions/:id":
-    pending: "Delete subscription (table change alert)."
+    tools: [delete_table_change_alert]
   "PATCH /api/v1/tca/subscriptions/:id/pause":
-    pending: "Pause subscription (table change alert)."
+    tools: [set_table_change_alert_status]
   "PATCH /api/v1/tca/subscriptions/:id/resume":
-    pending: "Resume subscription (table change alert)."
+    tools: [set_table_change_alert_status]
   "POST /api/v1/tca/subscriptions/":
     tools: [create_table_change_alert]
   "PUT /api/v1/tca/subscriptions/:id":
-    pending: "Update subscription (table change alert)."
+    tools: [update_table_change_alert]
 
   # tableconfiguration
   "mutation createTableConfiguration":
@@ -2489,25 +2494,25 @@ writes:
   "mutation bulkUpdateTractorStatus":
     tools: [update_tractor_status]
   "mutation createTractor":
-    pending: "Create tractor."
+    tools: [create_tractor]
   "mutation locateTractor":
-    pending: "Locate tractor."
+    tools: [locate_tractor]
   "mutation patchTractor":
-    pending: "Update some fields of a tractor."
+    tools: [update_tractor]
   "mutation updateTractor":
-    pending: "Update tractor."
+    tools: [update_tractor]
 
   # trailer
   "mutation bulkUpdateTrailerStatus":
     tools: [update_trailer_status]
   "mutation createTrailer":
-    pending: "Create trailer."
+    tools: [create_trailer]
   "mutation locateTrailer":
-    pending: "Locate trailer."
+    tools: [locate_trailer]
   "mutation patchTrailer":
-    pending: "Update some fields of a trailer."
+    tools: [update_trailer]
   "mutation updateTrailer":
-    pending: "Update trailer."
+    tools: [update_trailer]
 
   # user
   "DELETE /api/v1/users/me/profile-picture/":
@@ -2551,9 +2556,10 @@ writes:
 
   # watchtower
   "mutation dismissWatchtowerItem":
-    pending: "Dismiss watchtower item."
+    tools: [dismiss_watchtower_item]
   "mutation handOffWatchtowerItem":
-    pending: "Hand off watchtower item."
+    exempt: agent-administration
+    reason: "Starts an agent on the item's subject, or publishes its event to the agents that subscribe; agents hand work to one another through delegate_task instead."
   "mutation markWatchtowerSeen":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
