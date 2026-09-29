@@ -19,10 +19,20 @@
 //! written to a temporary name, flushed and renamed over the old one, so a
 //! crash leaves either the old version or the new one, never half of one.
 //!
+//! What changes once per page (a page added, its pictures kept, the server
+//! taking it) is appended to a journal beside the manifest instead of
+//! rewriting it, so the thousandth page of a stack costs what the first did.
+//! The manifest names the journal that continues it; writing a new manifest
+//! starts a new journal, so a crash between the two leaves an old journal
+//! that is never read again. A line cut short by a crash is the last one and
+//! is dropped, and the change it carried is made again. Each batch is kept
+//! in memory once read, so nothing is parsed twice.
+//!
 //! A batch held for review is not sent until the person releases it; until
 //! then its pages can be turned or taken out. Pictures are encrypted like
 //! the pages, and are only ever shown, never sent.
 
+use std::collections::HashMap;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -43,6 +53,9 @@ const DOCUMENT: &str = "document.bin";
 const THUMB: &str = "thumb";
 const VIEW: &str = "view";
 const MANIFEST_VERSION: u32 = 1;
+/// Journal lines kept before the manifest is written afresh, so reading a
+/// batch after a restart replays at most this many.
+const JOURNAL_COMPACT_AFTER: usize = 512;
 
 /// Encrypts page files at rest. On Windows this is DPAPI, scoped to the
 /// signed-in user, so another account on the machine cannot read them.
@@ -265,12 +278,22 @@ pub enum SpoolError {
 /// few hundred kilobytes.
 pub const MAX_PICTURE_BYTES: usize = 2 << 20;
 
+/// A batch kept in memory, as its manifest and journal leave it.
+struct Cached {
+    batch: SpooledBatch,
+    journal: u64,
+    entries: usize,
+}
+
 pub struct Spool {
     root: PathBuf,
     protector: Arc<dyn Protector>,
     /// Serialises manifest read-modify-writes between the scan and upload
     /// threads.
     lock: Mutex<()>,
+    /// Batches waiting, as last read or written. Only this process writes
+    /// the spool, and only while holding `lock`.
+    cache: Mutex<HashMap<String, Cached>>,
 }
 
 impl std::fmt::Debug for Spool {
@@ -315,12 +338,131 @@ fn write_new(path: &Path, bytes: &[u8]) -> io::Result<()> {
     file.sync_all()
 }
 
-fn read_manifest_in(dir: &Path, key: &str) -> Result<SpooledBatch, SpoolError> {
+/// The manifest as it is written: the batch, and which journal continues it.
+#[derive(Deserialize)]
+struct Snapshot {
+    #[serde(flatten)]
+    batch: SpooledBatch,
+    #[serde(default)]
+    journal: u64,
+}
+
+#[derive(Serialize)]
+struct SnapshotRef<'a> {
+    #[serde(flatten)]
+    batch: &'a SpooledBatch,
+    journal: u64,
+}
+
+/// One change to a batch, as a journal line.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "op", rename_all = "camelCase")]
+enum Change {
+    Page { page: SpooledPage },
+    Pictures { sequence: u32 },
+    Uploaded { sequence: u32 },
+}
+
+impl Change {
+    /// Makes the change. Each is safe to make twice, as replaying a journal
+    /// over a manifest written after it does.
+    fn apply(self, batch: &mut SpooledBatch) {
+        match self {
+            Self::Page { page } => {
+                let next = u32::try_from(batch.pages.len())
+                    .unwrap_or(u32::MAX)
+                    .saturating_add(1);
+                if page.sequence == next {
+                    batch.pages.push(page);
+                }
+            }
+            Self::Pictures { sequence } => {
+                if let Some(page) = batch.pages.iter_mut().find(|p| p.sequence == sequence) {
+                    page.pictures = true;
+                }
+            }
+            Self::Uploaded { sequence } => {
+                if let Some(page) = batch.pages.iter_mut().find(|p| p.sequence == sequence) {
+                    page.uploaded = true;
+                }
+            }
+        }
+    }
+}
+
+/// A batch as read from disk.
+struct Loaded {
+    batch: SpooledBatch,
+    journal: u64,
+    entries: usize,
+    /// The journal ends in a line a crash cut short.
+    torn: bool,
+}
+
+fn journal_path(dir: &Path, journal: u64) -> PathBuf {
+    dir.join(format!("journal-{journal:08}.jsonl"))
+}
+
+fn load(dir: &Path, key: &str) -> Result<Loaded, SpoolError> {
     let bytes = fs::read(dir.join(MANIFEST)).map_err(|err| match err.kind() {
         io::ErrorKind::NotFound => SpoolError::Missing(key.to_owned()),
         _ => SpoolError::Io(err),
     })?;
-    serde_json::from_slice(&bytes).map_err(|e| SpoolError::Manifest(e.to_string()))
+    let Snapshot { mut batch, journal } =
+        serde_json::from_slice(&bytes).map_err(|e| SpoolError::Manifest(e.to_string()))?;
+    let lines = match fs::read(journal_path(dir, journal)) {
+        Ok(lines) => lines,
+        Err(err) if err.kind() == io::ErrorKind::NotFound => Vec::new(),
+        Err(err) => return Err(err.into()),
+    };
+    let mut entries = 0;
+    let mut rest = lines.as_slice();
+    while let Some(end) = rest.iter().position(|&b| b == b'\n') {
+        let change: Change = serde_json::from_slice(&rest[..end])
+            .map_err(|e| SpoolError::Manifest(format!("journal line {}: {e}", entries + 1)))?;
+        change.apply(&mut batch);
+        entries += 1;
+        rest = &rest[end + 1..];
+    }
+    Ok(Loaded {
+        batch,
+        journal,
+        entries,
+        torn: !rest.is_empty(),
+    })
+}
+
+fn read_manifest_in(dir: &Path, key: &str) -> Result<SpooledBatch, SpoolError> {
+    load(dir, key).map(|loaded| loaded.batch)
+}
+
+/// Writes a manifest continued by an empty journal numbered `journal`, and
+/// removes the journal the previous manifest named.
+fn write_snapshot(
+    dir: &Path,
+    batch: &SpooledBatch,
+    previous: Option<u64>,
+    journal: u64,
+) -> Result<(), SpoolError> {
+    let bytes = serde_json::to_vec_pretty(&SnapshotRef { batch, journal })
+        .map_err(|e| SpoolError::Manifest(e.to_string()))?;
+    write_atomic(&dir.join(MANIFEST), &bytes)?;
+    if let Some(previous) = previous {
+        remove_if_present(&journal_path(dir, previous))?;
+    }
+    Ok(())
+}
+
+fn append_line(path: &Path, change: &Change) -> Result<(), SpoolError> {
+    let mut line = serde_json::to_vec(change).map_err(|e| SpoolError::Manifest(e.to_string()))?;
+    line.push(b'\n');
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)?;
+    file.write_all(&line)?;
+    file.sync_data()?;
+    Ok(())
 }
 
 fn describe_refused(dir: &Path, key: String) -> RefusedBatch {
@@ -403,6 +545,7 @@ impl Spool {
             root,
             protector,
             lock: Mutex::new(()),
+            cache: Mutex::new(HashMap::new()),
         })
     }
 
@@ -430,15 +573,101 @@ impl Spool {
         Ok(self.failed_dir().join(key))
     }
 
+    fn cache(&self) -> std::sync::MutexGuard<'_, HashMap<String, Cached>> {
+        self.cache.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Runs `read` over a waiting batch, reading it from disk the first time.
+    /// The caller holds `lock`.
+    fn with_batch<R>(
+        &self,
+        key: &str,
+        read: impl FnOnce(&mut Cached) -> Result<R, SpoolError>,
+    ) -> Result<R, SpoolError> {
+        let dir = self.dir(key)?;
+        let mut cache = self.cache();
+        if !cache.contains_key(key) {
+            let loaded = load(&dir, key)?;
+            let mut cached = Cached {
+                batch: loaded.batch,
+                journal: loaded.journal,
+                entries: loaded.entries,
+            };
+            if loaded.torn {
+                let next = cached.journal.wrapping_add(1);
+                write_snapshot(&dir, &cached.batch, Some(cached.journal), next)?;
+                cached.journal = next;
+                cached.entries = 0;
+            }
+            cache.insert(key.to_owned(), cached);
+        }
+        let cached = cache
+            .get_mut(key)
+            .ok_or_else(|| SpoolError::Missing(key.to_owned()))?;
+        read(cached)
+    }
+
     fn read_manifest(&self, key: &str) -> Result<SpooledBatch, SpoolError> {
-        read_manifest_in(&self.dir(key)?, key)
+        self.with_batch(key, |cached| Ok(cached.batch.clone()))
     }
 
     fn write_manifest(&self, batch: &SpooledBatch) -> Result<(), SpoolError> {
-        let bytes =
-            serde_json::to_vec_pretty(batch).map_err(|e| SpoolError::Manifest(e.to_string()))?;
-        write_atomic(&self.dir(batch.key())?.join(MANIFEST), &bytes)?;
+        let key = batch.key();
+        let dir = self.dir(key)?;
+        let mut cache = self.cache();
+        let previous = cache.get(key).map(|cached| cached.journal);
+        let journal = previous.map_or(0, |journal| journal.wrapping_add(1));
+        cache.remove(key);
+        write_snapshot(&dir, batch, previous, journal)?;
+        cache.insert(
+            key.to_owned(),
+            Cached {
+                batch: batch.clone(),
+                journal,
+                entries: 0,
+            },
+        );
         Ok(())
+    }
+
+    /// Records one change to a waiting batch by appending it to the journal.
+    /// `decide` sees the batch as it stands and returns what to record, or
+    /// nothing to leave it as it is.
+    fn record<R>(
+        &self,
+        key: &str,
+        decide: impl FnOnce(&SpooledBatch) -> Result<(R, Option<Change>), SpoolError>,
+    ) -> Result<R, SpoolError> {
+        let _guard = self.guard();
+        let dir = self.dir(key)?;
+        let mut unsure = false;
+        let recorded = self.with_batch(key, |cached| {
+            let (result, change) = decide(&cached.batch)?;
+            let Some(change) = change else {
+                return Ok(result);
+            };
+            if let Err(err) = append_line(&journal_path(&dir, cached.journal), &change) {
+                unsure = true;
+                return Err(err);
+            }
+            change.apply(&mut cached.batch);
+            cached.entries += 1;
+            if cached.entries >= JOURNAL_COMPACT_AFTER {
+                let next = cached.journal.wrapping_add(1);
+                write_snapshot(&dir, &cached.batch, Some(cached.journal), next)?;
+                cached.journal = next;
+                cached.entries = 0;
+            }
+            Ok(result)
+        });
+        if unsure {
+            self.forget(key);
+        }
+        recorded
+    }
+
+    fn forget(&self, key: &str) {
+        self.cache().remove(key);
     }
 
     fn update<R>(
@@ -589,7 +818,7 @@ impl Spool {
         }
         let sealed = self.protector.protect(pdf)?;
         let checksum = page_checksum(pdf);
-        self.update(key, |batch| {
+        self.record(key, |batch| {
             if batch.complete {
                 return Err(SpoolError::Complete);
             }
@@ -600,7 +829,7 @@ impl Spool {
                 return Err(SpoolError::Full);
             }
             write_atomic(&Self::page_path(&self.dir(key)?, sequence), &sealed)?;
-            batch.pages.push(SpooledPage {
+            let page = SpooledPage {
                 sequence,
                 checksum,
                 byte_size: u64::try_from(pdf.len()).unwrap_or(u64::MAX),
@@ -610,8 +839,8 @@ impl Spool {
                 uploaded: false,
                 rotation: normalize_rotation(i32::from(markers.rotation)),
                 pictures: false,
-            });
-            Ok(sequence)
+            };
+            Ok((sequence, Some(Change::Page { page })))
         })
     }
 
@@ -633,13 +862,11 @@ impl Spool {
         pictures: &PagePictures,
     ) -> Result<(), SpoolError> {
         let (thumb, view) = self.seal_pictures(pictures)?;
-        self.update(key, |batch| {
+        self.record(key, |batch| {
             let dir = self.dir(key)?;
-            let page = batch
-                .pages
-                .iter_mut()
-                .find(|p| p.sequence == sequence)
-                .ok_or(SpoolError::NoPage(sequence))?;
+            if !batch.pages.iter().any(|p| p.sequence == sequence) {
+                return Err(SpoolError::NoPage(sequence));
+            }
             write_atomic(
                 &Self::page_picture_path(&dir, sequence, PictureSize::Thumb),
                 &thumb,
@@ -648,29 +875,24 @@ impl Spool {
                 &Self::page_picture_path(&dir, sequence, PictureSize::View),
                 &view,
             )?;
-            page.pictures = true;
-            Ok(())
+            Ok(((), Some(Change::Pictures { sequence })))
         })
     }
 
     /// One picture of a page, of a batch waiting or refused: a scanned page
     /// by its sequence, or a printed job's page by its number.
     pub fn picture(&self, key: &str, page: u32, size: PictureSize) -> Result<Vec<u8>, SpoolError> {
-        let _guard = self.guard();
-        let dir = match self.read_manifest(key) {
-            Ok(_) => self.dir(key)?,
-            Err(SpoolError::Missing(_)) => self.refused_dir(key)?,
-            Err(err) => return Err(err),
-        };
-        let batch = read_manifest_in(&dir, key)?;
-        let path = match &batch.document {
-            Some(document) if page >= 1 && page <= document.pictures => {
-                Self::document_picture_path(&dir, page, size)
-            }
-            None if batch.pages.iter().any(|p| p.sequence == page && p.pictures) => {
-                Self::page_picture_path(&dir, page, size)
-            }
-            Some(_) | None => return Err(SpoolError::NoPage(page)),
+        let path = {
+            let _guard = self.guard();
+            match self.with_batch(key, |cached| {
+                Self::picture_path(&self.dir(key)?, &cached.batch, page, size)
+            }) {
+                Err(SpoolError::Missing(_)) => {
+                    let dir = self.refused_dir(key)?;
+                    Self::picture_path(&dir, &read_manifest_in(&dir, key)?, page, size)
+                }
+                other => other,
+            }?
         };
         let sealed = fs::read(path)?;
         let picture = self.protector.unprotect(&sealed)?;
@@ -678,6 +900,23 @@ impl Spool {
             return Err(SpoolError::PictureTooLarge);
         }
         Ok(picture)
+    }
+
+    fn picture_path(
+        dir: &Path,
+        batch: &SpooledBatch,
+        page: u32,
+        size: PictureSize,
+    ) -> Result<PathBuf, SpoolError> {
+        match &batch.document {
+            Some(document) if page >= 1 && page <= document.pictures => {
+                Ok(Self::document_picture_path(dir, page, size))
+            }
+            None if batch.pages.iter().any(|p| p.sequence == page && p.pictures) => {
+                Ok(Self::page_picture_path(dir, page, size))
+            }
+            Some(_) | None => Err(SpoolError::NoPage(page)),
+        }
     }
 
     /// Holds a batch for review; nothing more of it is sent until released.
@@ -885,17 +1124,19 @@ impl Spool {
     }
 
     pub fn mark_uploaded(&self, key: &str, sequence: u32) -> Result<(), SpoolError> {
-        self.update(key, |batch| {
-            if let Some(page) = batch.pages.iter_mut().find(|p| p.sequence == sequence) {
-                page.uploaded = true;
-            }
-            Ok(())
+        self.record(key, |batch| {
+            let waiting = batch
+                .pages
+                .iter()
+                .any(|p| p.sequence == sequence && !p.uploaded);
+            Ok(((), waiting.then_some(Change::Uploaded { sequence })))
         })
     }
 
     /// Deletes a batch the server has in full.
     pub fn remove(&self, key: &str) -> Result<(), SpoolError> {
         let dir = self.dir(key)?;
+        self.forget(key);
         match fs::remove_dir_all(&dir) {
             Err(err) if err.kind() != io::ErrorKind::NotFound => Err(err.into()),
             _ => Ok(()),
@@ -908,6 +1149,7 @@ impl Spool {
         let _guard = self.guard();
         let from = self.dir(key)?;
         let to = self.root.join("failed").join(key);
+        self.forget(key);
         fs::rename(&from, &to)?;
         write_atomic(&to.join(FAILURE), reason.as_bytes())?;
         Ok(())
@@ -962,7 +1204,9 @@ impl Spool {
     pub fn retry(&self, key: &str) -> Result<String, SpoolError> {
         let _guard = self.guard();
         let from = self.refused_dir(key)?;
-        let mut batch = read_manifest_in(&from, key)?;
+        let Loaded {
+            mut batch, journal, ..
+        } = load(&from, key)?;
         let new_key = Self::new_key();
         batch.input.client_key.clone_from(&new_key);
         batch.input.request_id = None;
@@ -971,9 +1215,7 @@ impl Spool {
         for page in &mut batch.pages {
             page.uploaded = false;
         }
-        let bytes =
-            serde_json::to_vec_pretty(&batch).map_err(|e| SpoolError::Manifest(e.to_string()))?;
-        write_atomic(&from.join(MANIFEST), &bytes)?;
+        write_snapshot(&from, &batch, Some(journal), journal.wrapping_add(1))?;
         match fs::remove_file(from.join(FAILURE)) {
             Err(err) if err.kind() != io::ErrorKind::NotFound => return Err(err.into()),
             _ => {}
@@ -1339,6 +1581,179 @@ pub(crate) mod tests {
             b"%PDF two"
         );
         assert_eq!(spool.summary().expect("summary").pages_waiting, 2);
+    }
+
+    fn batch_dir(dir: &Path, key: &str) -> PathBuf {
+        dir.join("batches").join(key)
+    }
+
+    fn journals(dir: &Path, key: &str) -> Vec<String> {
+        let mut names: Vec<String> = fs::read_dir(batch_dir(dir, key))
+            .expect("dir")
+            .filter_map(Result::ok)
+            .filter_map(|e| e.file_name().to_str().map(str::to_owned))
+            .filter(|name| name.starts_with("journal-"))
+            .collect();
+        names.sort();
+        names
+    }
+
+    #[test]
+    fn pages_are_journaled_and_replayed_after_a_restart() {
+        let dir = tempfile::tempdir().expect("dir");
+        let key = Spool::new_key();
+        {
+            let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+            spool.create(input(&key), "fi-8170").expect("create");
+            for n in 0..3u8 {
+                spool
+                    .append_page(&key, &[b'%', n], &markers())
+                    .expect("page");
+            }
+            spool
+                .store_pictures(&key, 2, &pictures(2))
+                .expect("pictures");
+            spool.mark_uploaded(&key, 1).expect("uploaded");
+            spool.mark_uploaded(&key, 1).expect("uploaded twice");
+            let manifest =
+                fs::read_to_string(batch_dir(dir.path(), &key).join(MANIFEST)).expect("manifest");
+            assert!(
+                manifest.contains("\"pages\": []"),
+                "adding a page does not rewrite the manifest"
+            );
+        }
+
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("reopen");
+        let batch = spool.get(&key).expect("get");
+        assert_eq!(batch.pages.len(), 3);
+        assert!(batch.pages[0].uploaded);
+        assert!(!batch.pages[1].uploaded);
+        assert!(batch.pages[1].pictures);
+        assert_eq!(
+            spool.read_page(&key, &batch.pages[2]).expect("read"),
+            [b'%', 2]
+        );
+    }
+
+    #[test]
+    fn a_line_cut_short_by_a_crash_is_dropped_and_the_journal_goes_on() {
+        let dir = tempfile::tempdir().expect("dir");
+        let key = Spool::new_key();
+        {
+            let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+            spool.create(input(&key), "fi-8170").expect("create");
+            spool
+                .append_page(&key, b"%PDF one", &markers())
+                .expect("page");
+        }
+        let journal = batch_dir(dir.path(), &key).join(&journals(dir.path(), &key)[0]);
+        let mut file = fs::OpenOptions::new()
+            .append(true)
+            .open(&journal)
+            .expect("open");
+        file.write_all(b"{\"op\":\"uploaded\",\"seq").expect("torn");
+        drop(file);
+
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("reopen");
+        let batch = spool.get(&key).expect("get");
+        assert_eq!(batch.pages.len(), 1);
+        assert!(!batch.pages[0].uploaded, "the cut line is not applied");
+        spool
+            .append_page(&key, b"%PDF two", &markers())
+            .expect("page");
+        drop(spool);
+
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("again");
+        assert_eq!(spool.get(&key).expect("get").pages.len(), 2);
+        assert_eq!(
+            journals(dir.path(), &key).len(),
+            1,
+            "the torn journal was replaced"
+        );
+    }
+
+    #[test]
+    fn a_journal_the_manifest_does_not_name_is_never_read() {
+        let dir = tempfile::tempdir().expect("dir");
+        let key = Spool::new_key();
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        spool.create_held(input(&key), "fi-8170").expect("create");
+        spool
+            .append_page(&key, b"%PDF one", &markers())
+            .expect("page");
+        spool.release(&key).expect("release");
+        drop(spool);
+
+        fs::write(
+            journal_path(&batch_dir(dir.path(), &key), 0),
+            b"{\"op\":\"uploaded\",\"sequence\":1}\n",
+        )
+        .expect("stale");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("reopen");
+        assert!(!spool.get(&key).expect("get").pages[0].uploaded);
+    }
+
+    #[test]
+    fn a_manifest_written_before_the_journal_is_read_as_it_was() {
+        let dir = tempfile::tempdir().expect("dir");
+        let key = Spool::new_key();
+        let batch_path = batch_dir(dir.path(), &key);
+        fs::create_dir_all(&batch_path).expect("dir");
+        let old = SpooledBatch {
+            version: MANIFEST_VERSION,
+            created_at: 1,
+            label: "fi-8170".to_owned(),
+            input: input(&key),
+            batch_id: None,
+            pages: Vec::new(),
+            document: None,
+            complete: false,
+            held: false,
+        };
+        fs::write(
+            batch_path.join(MANIFEST),
+            serde_json::to_vec(&old).expect("json"),
+        )
+        .expect("write");
+
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        assert_eq!(spool.get(&key).expect("get"), old);
+        spool
+            .append_page(&key, b"%PDF one", &markers())
+            .expect("page");
+        assert_eq!(spool.get(&key).expect("get").pages.len(), 1);
+    }
+
+    #[test]
+    fn a_long_journal_is_folded_into_the_manifest() {
+        let dir = tempfile::tempdir().expect("dir");
+        let key = Spool::new_key();
+        let pages = u32::try_from(JOURNAL_COMPACT_AFTER).expect("fits") + 5;
+        {
+            let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+            spool.create(input(&key), "fi-8170").expect("create");
+            for n in 0..pages {
+                spool
+                    .append_page(&key, n.to_le_bytes().as_slice(), &PageMarkers::default())
+                    .expect("page");
+            }
+            assert_eq!(
+                journals(dir.path(), &key).len(),
+                1,
+                "the folded journal is removed"
+            );
+        }
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("reopen");
+        let batch = spool.get(&key).expect("get");
+        assert_eq!(batch.pages.len(), usize::try_from(pages).expect("fits"));
+        assert!(
+            batch
+                .pages
+                .iter()
+                .enumerate()
+                .all(|(i, p)| p.sequence as usize == i + 1),
+            "in order"
+        );
     }
 
     #[test]

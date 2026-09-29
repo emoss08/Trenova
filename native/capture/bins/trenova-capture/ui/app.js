@@ -24,6 +24,11 @@
   const PICTURES_PER_ASK = 24;
   // How long before a picture asked for and not received is asked again.
   const ASK_AGAIN_MS = 20000;
+  // Full-size pictures kept for going back and forth in the viewer; each is
+  // a few hundred kilobytes, so older ones are let go and asked for again.
+  const VIEWS_KEPT = 12;
+  // The shape of the batch being scanned, which only grows.
+  const LIVE_SHAPE = "live";
 
   // What belongs to this window alone and survives a redraw: the tab shown,
   // choices made, text being typed, a question being asked, and buttons
@@ -46,8 +51,18 @@
   };
 
   // Pictures the agent sent, by batch, size and page, and when each was
-  // last asked for. A batch whose pages change (one taken out) is dropped.
+  // last asked for. A batch whose pages change (one taken out) is dropped,
+  // and so is one that has gone. Each picture keeps one <img>, moved from
+  // one drawing to the next, so a redraw never decodes a picture again.
   const pictures = new Map();
+  const images = new Map();
+  // Pictures placed in the drawing under way; one shown twice gets a copy.
+  const placed = new Set();
+  // A held page's tile, kept while nothing it shows changes, so redrawing a
+  // long batch moves the tiles already made instead of making them again.
+  // Tiles not drawn are let go.
+  const tiles = new Map();
+  const tilesDrawn = new Set();
   const asked = new Map();
   let shapes = new Map();
 
@@ -56,7 +71,7 @@
   }
 
   function forgetBatch(key) {
-    for (const store of [pictures, asked]) {
+    for (const store of [pictures, images, asked, tiles]) {
       for (const id of [...store.keys()]) {
         if (id.startsWith(`${key}|`)) {
           store.delete(id);
@@ -70,12 +85,32 @@
     for (const batch of [...v.held, ...v.waiting, ...v.refused]) {
       next.set(batch.key, batch.pictures.map((p) => p.page).join(","));
     }
+    if (v.scan) {
+      next.set(v.scan.key, LIVE_SHAPE);
+    }
     for (const [key, shape] of shapes) {
-      if (next.get(key) !== shape) {
+      const now = next.get(key);
+      const grew = shape === LIVE_SHAPE && now !== undefined;
+      if (now !== shape && !grew) {
         forgetBatch(key);
       }
     }
     shapes = next;
+  }
+
+  function keep(id, src) {
+    pictures.delete(id);
+    images.delete(id);
+    pictures.set(id, src);
+    if (!id.includes("|view|")) {
+      return;
+    }
+    const views = [...pictures.keys()].filter((kept) => kept.includes("|view|"));
+    for (const old of views.slice(0, Math.max(0, views.length - VIEWS_KEPT))) {
+      pictures.delete(old);
+      images.delete(old);
+      asked.delete(old);
+    }
   }
 
   // Asks the agent for the pictures of `pages` not already here or asked
@@ -97,6 +132,27 @@
 
   function pictureOf(key, size, page) {
     return pictures.get(pictureId(key, size, page)) || null;
+  }
+
+  // The one <img> of a picture, made the first time it is shown.
+  function imageOf(key, size, page, label) {
+    const id = pictureId(key, size, page);
+    const src = pictures.get(id);
+    if (!src) {
+      return null;
+    }
+    let image = images.get(id);
+    if (!image) {
+      image = el("img", { src, alt: label, draggable: "false", decoding: "async" });
+      images.set(id, image);
+    } else if (image.alt !== label) {
+      image.alt = label;
+    }
+    if (placed.has(id)) {
+      return image.cloneNode(false);
+    }
+    placed.add(id);
+    return image;
   }
   let view = null;
 
@@ -975,13 +1031,10 @@
   // A page's picture, turned as the person turned it; its number stands in
   // until the picture arrives, or for a page that has none.
   function pagePicture(key, page, rotation, size, label) {
-    const src = pictureOf(key, size, page);
     return el(
       "span",
       { class: `sheet rot-${rotation || 0}` },
-      src
-        ? el("img", { src, alt: label, draggable: "false" })
-        : el("span", { class: "sheet-empty", text: String(page) }),
+      imageOf(key, size, page, label) || el("span", { class: "sheet-empty", text: String(page) }),
     );
   }
 
@@ -1026,6 +1079,18 @@
 
   function pageTile(batch, picture, editable) {
     const busy = pressed(`delete:${batch.key}`) || pressed(`rotate:${batch.key}:${picture.page}`);
+    const pictured = pictures.has(pictureId(batch.key, "thumb", picture.page));
+    const id = [batch.key, picture.page, picture.rotation, editable, busy, pictured].join("|");
+    let tile = tiles.get(id);
+    if (!tile) {
+      tile = makeTile(batch, picture, editable, busy);
+      tiles.set(id, tile);
+    }
+    tilesDrawn.add(id);
+    return tile;
+  }
+
+  function makeTile(batch, picture, editable, busy) {
     const label = `Page ${picture.page}`;
     return el(
       "li",
@@ -1927,6 +1992,8 @@
       return;
     }
     const v = view;
+    placed.clear();
+    tilesDrawn.clear();
     trackShapes(v);
     prunePending();
     const focus = captureFocus();
@@ -1952,6 +2019,11 @@
       app.removeAttribute("aria-labelledby");
     }
     app.replaceChildren(...[content].flat(3).filter(Boolean));
+    for (const id of tiles.keys()) {
+      if (!tilesDrawn.has(id)) {
+        tiles.delete(id);
+      }
+    }
     drawViewer(v);
     restoreFocus(focus);
   }
@@ -1992,11 +2064,25 @@
     }
   });
 
+  // Draws once for everything that arrived since the last frame: a scan
+  // reports every page, and pictures arrive a few dozen at a time.
+  let drawQueued = false;
+  function drawSoon() {
+    if (drawQueued) {
+      return;
+    }
+    drawQueued = true;
+    requestAnimationFrame(() => {
+      drawQueued = false;
+      draw();
+    });
+  }
+
   window.trenova = {
     render(next) {
       view = next;
       toastNew(next);
-      draw();
+      drawSoon();
     },
     pictures(delivered) {
       if (!delivered || typeof delivered.key !== "string" || !Array.isArray(delivered.pictures)) {
@@ -2004,10 +2090,10 @@
       }
       for (const picture of delivered.pictures) {
         if (typeof picture.src === "string" && picture.src.startsWith("data:image/jpeg;base64,")) {
-          pictures.set(pictureId(delivered.key, delivered.size, picture.page), picture.src);
+          keep(pictureId(delivered.key, delivered.size, picture.page), picture.src);
         }
       }
-      draw();
+      drawSoon();
     },
   };
 

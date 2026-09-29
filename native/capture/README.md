@@ -155,7 +155,11 @@ says so.
 
 The agent keeps its files in `%LOCALAPPDATA%\Trenova\Capture`: `logs\agent.<date>.log` (fourteen
 days; `TRENOVA_CAPTURE_LOG=debug` for more), and `spool\`, where every page waits, encrypted
-with DPAPI, until the server has it. Batches the server refused are kept in `spool\failed\`
+with DPAPI, until the server has it. Each batch there is a manifest, continued by a journal
+of the changes made since it was written (a page added, its pictures kept, the server taking
+it), so spooling costs the same for the thousandth page of a stack as for the first; the
+journal is folded back into the manifest every 512 changes. Pages of a batch are uploaded four
+at a time. Batches the server refused are kept in `spool\failed\`
 with the reason, and listed in the window to send again, save as PDFs, or discard. The window's
 `WebView2` profile is in `WebView2\`. The device credential is in Credential Manager as
 `Trenova Capture/<server host>`.
