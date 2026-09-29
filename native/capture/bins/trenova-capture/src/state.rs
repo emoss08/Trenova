@@ -152,6 +152,10 @@ pub struct Snapshot {
     pub update: Option<UpdateState>,
     /// The print service is installed but its printer is not.
     pub printer_missing: bool,
+    /// The print service is installed, so printing into Trenova is offered.
+    pub printing: bool,
+    /// The person chose not to be shown routine notifications.
+    pub routine_muted: bool,
 }
 
 impl Snapshot {
@@ -204,6 +208,9 @@ pub struct Notice {
     pub severity: Severity,
     /// Opened when the notification is clicked.
     pub link: Option<String>,
+    /// News that nothing needs doing about (something sent, the connection
+    /// back), which a person can choose not to be shown.
+    pub routine: bool,
 }
 
 /// A moment the window comes forward for, if it is not already showing.

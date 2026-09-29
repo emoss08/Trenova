@@ -84,6 +84,10 @@ pub fn run() -> ExitCode {
 fn enumerate(pipe: &Pipe) {
     let mut sources = match twain_sources() {
         Ok(sources) => sources,
+        Err(err @ TwainError::Load(_)) => {
+            tracing::info!(reason = %err, "no TWAIN drivers on this computer; WIA scanners are still listed");
+            Vec::new()
+        }
         Err(err) => {
             tracing::warn!(error = %err, "no TWAIN sources");
             Vec::new()

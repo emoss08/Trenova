@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -84,6 +85,23 @@ func TestPairingBindsTheDeviceToTheApprover(t *testing.T) {
 	require.NotNil(t, device)
 	assert.NotEqual(t, tokens.AccessToken, device.AccessTokenHash, "tokens are stored hashed")
 	assert.NotEqual(t, tokens.RefreshToken, device.RefreshTokenHash)
+}
+
+func TestPairingNeedsTheWebAddress(t *testing.T) {
+	t.Parallel()
+
+	s := newWorld().service()
+	s.cfg = &config.Config{}
+
+	grant, err := s.StartPairing(t.Context(), &StartPairingRequest{
+		MachineName:  "DISPATCH-07",
+		AgentVersion: "1.0.0",
+		Architecture: capture.ArchitectureX64,
+	})
+	require.Error(t, err)
+	assert.Nil(t, grant)
+	assert.True(t, errortypes.IsBusinessError(err))
+	assert.Contains(t, err.Error(), "app.webBaseUrl")
 }
 
 func TestPairingIsExchangedExactlyOnce(t *testing.T) {

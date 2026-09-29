@@ -8,7 +8,7 @@ app:
   debug: true # Enable debug mode
   version: 1.0.0 # Application version
   problemTypeBaseUri: https://api.trenova.app/problems/ # RFC 9457 problem type base URI
-  webBaseUrl: https://app.example.com # Origin of the web app, used for links in user emails such as invoice shares. Leave empty and those emails are not sent.
+  webBaseUrl: http://localhost:5173 # Origin of the web app (the Vite dev server in development, https://cloud.trenova.app in production), used for links in user emails such as invoice shares and for approving Trenova Capture computers. Leave empty and those emails are not sent and computers cannot be paired.
 
 platform:
   mode: self_hosted # community/self_hosted/development/cloud/enterprise
@@ -235,7 +235,7 @@ security:
     tenant: { requestsPerMinute: 6000, burstSize: 600 } # Shared ceiling for one organization
     publicToken: { requestsPerMinute: 10, burstSize: 5 } # Token-addressed public pages, keyed by token hash
   passwordReset:
-    baseUrl: https://app.example.com # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
+    baseUrl: http://localhost:5173 # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
     maxRequestsPerHour: 5 # Reset links one account can be sent per hour, so the endpoint cannot flood an inbox.
   graphql:

@@ -128,6 +128,7 @@ fn busy() -> Snapshot {
             body: "fi-8170: The batch was ended before its pages arrived. Its pages are kept on this computer; open Trenova Capture to send them again, save them, or discard them.".into(),
             severity: Severity::Error,
             link: None,
+            routine: false,
         },
         at: SystemTime::now() - Duration::from_secs(720),
     });

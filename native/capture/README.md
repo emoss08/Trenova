@@ -170,7 +170,7 @@ A silent install takes the server address, whether computers update themselves, 
 printer's port:
 
 ```powershell
-msiexec /i TrenovaCapture-1.0.0-x64.msi /qn TRENOVAURL=https://app.example.com AUTOUPDATE=0 PRINTPORT=8631
+msiexec /i TrenovaCapture-1.0.0-x64.msi /qn TRENOVAURL=https://cloud.trenova.app AUTOUPDATE=0 PRINTPORT=8631
 ```
 
 ## Releases and updates
