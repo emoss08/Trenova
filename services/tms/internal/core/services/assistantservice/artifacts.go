@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -74,15 +75,16 @@ var draftSpecs = map[string]draftSpec{
 // as the tool that made it finishes, so the pane can open it while the reply
 // is still arriving, and ties them to their messages once the turn is saved.
 type artifactRecorder struct {
-	repo     repositories.AssistantArtifactRepository
-	activity services.AgentActivityPublisher
-	logger   *zap.Logger
-	ctx      context.Context
-	thread   *conversation.Thread
-	tenant   pagination.TenantInfo
-	actor    services.AuditActor
-	emit     services.AssistantStreamEmitter
-	recorded []*assistantartifact.Artifact
+	repo      repositories.AssistantArtifactRepository
+	proposals chatProposalStore
+	activity  services.AgentActivityPublisher
+	logger    *zap.Logger
+	ctx       context.Context
+	thread    *conversation.Thread
+	tenant    pagination.TenantInfo
+	actor     services.AuditActor
+	emit      services.AssistantStreamEmitter
+	recorded  []*assistantartifact.Artifact
 }
 
 // newArtifactRecorder returns nil when there is nowhere to keep artifacts,
@@ -103,14 +105,15 @@ func (s *Service) newArtifactRecorder(
 	}
 
 	return &artifactRecorder{
-		repo:     s.artifacts,
-		activity: s.activity,
-		logger:   s.logger,
-		ctx:      ctx,
-		thread:   thread,
-		tenant:   tenant,
-		actor:    actor.AuditActorOrSystem(),
-		emit:     emit,
+		repo:      s.artifacts,
+		proposals: s.proposals,
+		activity:  s.activity,
+		logger:    s.logger,
+		ctx:       ctx,
+		thread:    thread,
+		tenant:    tenant,
+		actor:     actor.AuditActorOrSystem(),
+		emit:      emit,
 	}
 }
 
@@ -129,6 +132,9 @@ func (r *artifactRecorder) observe(
 ) (*services.ShownArtifact, error) {
 	if document, ok := observation.Data.(services.PublishedDocument); ok {
 		return r.publish(observation.Call.ID, document)
+	}
+	if request, ok := observation.Data.(services.DecisionRequest); ok {
+		return r.requestDecision(observation.Call.ID, request)
 	}
 
 	artifact := artifactFromObservation(observation)
@@ -315,6 +321,84 @@ func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact
 		Title: artifact.Title,
 	}
 }
+
+func (r *artifactRecorder) requestDecision(
+	callID string,
+	request services.DecisionRequest,
+) (*services.ShownArtifact, error) {
+	if r.proposals == nil {
+		return nil, errDecisionUnavailable
+	}
+
+	stored, err := r.proposals.ListByThread(r.ctx, repositories.ListAgentProposalsByThreadRequest{
+		ThreadID:   r.thread.ID,
+		TenantInfo: r.tenant,
+	})
+	if err != nil {
+		r.logger.Warn("the proposal a decision was asked for could not be read",
+			zap.String("thread", r.thread.ID.String()),
+			zap.String("proposal", request.ProposalID.String()),
+			zap.Error(err),
+		)
+
+		return nil, errDecisionUnavailable
+	}
+
+	var proposal *agent.AgentProposal
+	for _, candidate := range stored {
+		if candidate != nil && candidate.ID == request.ProposalID {
+			proposal = candidate
+			break
+		}
+	}
+	switch {
+	case proposal == nil:
+		return nil, errUnknownProposal
+	case proposal.Status != agent.ProposalStatusPending:
+		return nil, fmt.Errorf("%w: it is %s", errProposalDecided,
+			strings.ToLower(string(proposal.Status)))
+	}
+
+	saved, err := r.save(decisionRequestArtifact(callID, proposal))
+	if err != nil {
+		return nil, errDecisionNotShown
+	}
+
+	return shownArtifact(saved), nil
+}
+
+func decisionRequestArtifact(
+	callID string,
+	proposal *agent.AgentProposal,
+) *assistantartifact.Artifact {
+	artifact := &assistantartifact.Artifact{
+		Kind:   assistantartifact.KindDecisionRequest,
+		Status: decisionStatus(proposal.Status),
+		Title: artifactTitle(
+			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(proposal.ToolName)),
+		),
+		Payload: map[string]any{
+			"proposalId": proposal.ID.String(),
+			"toolName":   proposal.ToolName,
+			"rationale":  proposal.Rationale,
+		},
+		ProposalID:       proposal.ID,
+		RunID:            proposal.RunID,
+		SourceToolCallID: callID,
+	}
+	if proposal.PlanID != nil {
+		artifact.PlanID = *proposal.PlanID
+	}
+
+	return artifact
+}
+
+var (
+	errDecisionUnavailable = errors.New("its proposal could not be read")
+	errUnknownProposal     = errors.New("there is no proposal with that id in this conversation")
+	errProposalDecided     = errors.New("that proposal is no longer waiting on the person")
+	errDecisionNotShown    = errors.New("its card could not be saved")
+)
 
 var (
 	errUnknownDocument = errors.New(
@@ -886,6 +970,21 @@ func draftStatus(status agent.ProposalStatus) assistantartifact.Status {
 	}
 }
 
+func decisionStatus(status agent.ProposalStatus) assistantartifact.Status {
+	switch status {
+	case agent.ProposalStatusExecuted, agent.ProposalStatusSimulated:
+		return assistantartifact.StatusReady
+	case agent.ProposalStatusRejected, agent.ProposalStatusExpired,
+		agent.ProposalStatusSuperseded, agent.ProposalStatusExecutionFailed,
+		agent.ProposalStatusSkipped:
+		return assistantartifact.StatusFailed
+	case agent.ProposalStatusPending, agent.ProposalStatusAccepted, agent.ProposalStatusModified:
+		return assistantartifact.StatusPending
+	default:
+		return assistantartifact.StatusPending
+	}
+}
+
 func planStatus(status agent.PlanStatus) assistantartifact.Status {
 	switch status {
 	case agent.PlanStatusCompleted:
@@ -1064,8 +1163,13 @@ func (s *Service) followDecisions(
 				byID[proposal.ID] = proposal.Status
 			}
 			for _, artifact := range artifacts {
-				if status, ok := byID[artifact.ProposalID]; ok && artifact.Kind == assistantartifact.KindEmailDraft {
+				status, ok := byID[artifact.ProposalID]
+				switch {
+				case !ok:
+				case artifact.Kind == assistantartifact.KindEmailDraft:
 					artifact.Status = draftStatus(status)
+				case artifact.Kind == assistantartifact.KindDecisionRequest:
+					artifact.Status = decisionStatus(status)
 				}
 			}
 		}

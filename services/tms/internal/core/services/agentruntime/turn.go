@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -42,6 +43,7 @@ type Turn struct {
 	repeats   *repeatGuard
 	counts    *ordinals
 	questions map[string]struct{}
+	decisions map[pulid.ID]struct{}
 	// callIDs is every tool call id the conversation holds, so a provider
 	// that reuses one is given a fresh id rather than a clash.
 	callIDs map[string]struct{}
@@ -306,6 +308,7 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		repeats:     &repeatGuard{failures: failures},
 		counts:      &ordinals{seen: seen},
 		questions:   questions,
+		decisions:   make(map[pulid.ID]struct{}, 1),
 		callIDs:     callIDs,
 		result:      &result,
 		delegates:   state.Delegates,
@@ -397,9 +400,11 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		delegated:  req.Delegation != nil,
 		publishes:  req.KeepsDocuments(),
 		delegates:  delegates,
+		decisions:  pendingDecisions(req.Proposals),
 	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
 	runtimeContext.Artifacts = tools.offers(publishArtifactName)
+	runtimeContext.DecisionRequests = tools.offers(requestDecisionName)
 	// The prompt describes the set the person may use, not the agent's whole
 	// configuration: a tool named there and refused when called reads as
 	// the system refusing rather than the person lacking the right.
@@ -440,6 +445,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		repeats:   repeats,
 		counts:    counts,
 		questions: askedQuestions(history),
+		decisions: make(map[pulid.ID]struct{}, 1),
 		callIDs:   usedCallIDs(req.History),
 		result: &serviceports.RunResult{
 			Messages: []conversation.Message{{
@@ -687,6 +693,10 @@ func (s *Service) PublishStep(
 	observe serviceports.ToolObserver,
 	call *serviceports.ToolCall,
 ) ToolOutcome {
+	if call.Name == requestDecisionName {
+		return s.observe(observe, *call, decisionStepOutcome(call.Arguments)).exported()
+	}
+
 	return s.observe(observe, *call, publishOutcome(call.Arguments)).exported()
 }
 

@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 462.
+Tools listed: 463.
 
 ## The model
 
@@ -52,7 +52,7 @@ and Confidential fields never reach a model at all.
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
 | Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 176 |
-| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 6 |
+| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 7 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 162 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 22 |
@@ -252,6 +252,7 @@ Changes only the records of the person using the agent.
 | Arrange home layout (`arrange_home_layout`) | The caller's own records | Automatic | — | — | Changes only the caller's own home page. |
 | Publish artifact (`publish_artifact`) | The caller's own records | Automatic | — | — | Publishes a document into the caller's own conversation, where only they read it. |
 | Remove home widget (`remove_home_widget`) | The caller's own records | Automatic | — | — | Changes only the caller's own home page. |
+| Request decision (`request_decision`) | The caller's own records | Automatic | — | — | Shows the person, in their own conversation, the card of a proposal already waiting on them; it decides nothing and changes no record. |
 
 ## Inside the organization
 

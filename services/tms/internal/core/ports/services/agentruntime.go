@@ -189,6 +189,8 @@ func (r *RunRequest) StepScope() string {
 
 // ProposalOutcome is the current state of a proposal an earlier turn raised.
 type ProposalOutcome struct {
+	ProposalID      pulid.ID
+	PlanID          pulid.ID
 	SourceMessageID pulid.ID
 	ToolName        string
 	ToolParams      map[string]any
@@ -227,6 +229,11 @@ type ToolObservation struct {
 // beside the conversation is ready to keep it.
 func (r *RunRequest) KeepsDocuments() bool {
 	return r.ToolObserver != nil || r.Publishes
+}
+
+type DecisionRequest struct {
+	ProposalID pulid.ID
+	ToolName   string
 }
 
 // ShownArtifact is what the person now sees for a tool call, so the model can

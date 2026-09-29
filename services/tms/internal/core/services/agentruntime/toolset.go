@@ -97,6 +97,7 @@ type toolSetRequest struct {
 	publishes bool
 	// delegates are the agents the turn may hand a task to.
 	delegates []agentdefinition.RuntimeDelegate
+	decisions bool
 }
 
 // toolSet is the live set of tools a turn may call. It starts from the agent's
@@ -193,6 +194,9 @@ func (t *toolSet) addConversational(req toolSetRequest) {
 	if len(req.delegates) > 0 && !req.delegated {
 		t.add(delegateTaskSpec(req.delegates))
 	}
+	if req.decisions && req.publishes && !req.delegated {
+		t.add(requestDecisionSpec())
+	}
 }
 
 func (t *toolSet) add(spec serviceports.ToolSpec) bool {
@@ -256,7 +260,7 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 		}
 		for _, call := range message.ToolCalls {
 			switch call.Name {
-			case askUserName, publishArtifactName, delegateTaskName:
+			case askUserName, publishArtifactName, delegateTaskName, requestDecisionName:
 			case findToolsName:
 				if names, stored := found[call.ID]; stored {
 					for _, name := range names {

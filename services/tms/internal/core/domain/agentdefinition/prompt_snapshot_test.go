@@ -312,3 +312,32 @@ func TestPromptSnapshots_AgentsItCanAsk(t *testing.T) {
 			"./internal/core/domain/agentdefinition/ -update",
 	)
 }
+
+func TestPromptSnapshots_ProposalsAwaitingADecision(t *testing.T) {
+	t.Parallel()
+
+	rt := snapshotRuntime(t)
+	proposalID := pulid.ID("aprop_01JSNAPSHOTWAITING000000000")
+	req := promptContexts()[0].request(snapshotDefinition(agentdefinition.TemplateDispatchAssistant))
+	req.Proposals = []serviceports.ProposalOutcome{{
+		ProposalID: proposalID,
+		ToolName:   "assign_move",
+		Rationale:  "Cover move 1 of S-1001 with Maria Ortiz and tractor 42.",
+		Status:     agent.ProposalStatusPending,
+	}}
+	req.Context.PendingProposals = []agentdefinition.PendingProposal{{
+		ProposalID: proposalID,
+		ToolName:   "assign_move",
+		Rationale:  "Cover move 1 of S-1001 with Maria Ortiz and tractor 42.",
+	}}
+
+	system := rt.OpenTurn(t.Context(), req).State().System + "\n"
+
+	agentevalgate.Golden(t,
+		filepath.Join(promptSnapshotDir, "DispatchAssistant_chat_awaiting_decision.golden"),
+		[]byte(system),
+		*updatePrompts,
+		"go test -tags nofitz -run TestPromptSnapshots "+
+			"./internal/core/domain/agentdefinition/ -update",
+	)
+}

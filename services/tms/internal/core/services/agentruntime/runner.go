@@ -313,6 +313,16 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				continue
 			}
 
+			if call.Name == requestDecisionName {
+				outcome := failedOutcome("%s", unofferedDecisionRefusal)
+				if tools.offers(requestDecisionName) {
+					outcome = t.requestDecision(call.Arguments)
+				}
+				result.ToolCallsUsed++
+				s.recordToolResult(t, fx, call, outcome)
+				continue
+			}
+
 			if call.Name == publishArtifactName {
 				outcome := publishOutcome(call.Arguments)
 				if !tools.offers(publishArtifactName) {
@@ -502,6 +512,10 @@ func (s *Service) observe(
 	call serviceports.ToolCall,
 	outcome toolOutcome,
 ) toolOutcome {
+	if request, requested := outcome.data.(serviceports.DecisionRequest); requested &&
+		outcome.publishes {
+		return decisionRequested(observe, call, request)
+	}
 	if observe == nil {
 		if outcome.publishes {
 			return failedOutcome("%s", unpublishableRefusal)
