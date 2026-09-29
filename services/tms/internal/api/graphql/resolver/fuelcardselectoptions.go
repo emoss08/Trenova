@@ -11,7 +11,7 @@ import (
 
 func (r *Resolver) resolveFuelCardSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.fuelPurchaseService.GetCardsByIDs(
