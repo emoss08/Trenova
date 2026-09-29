@@ -24,7 +24,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use capture_protocol::api::{
-    Id, MAX_BATCH_PAGES, MAX_PAGE_BYTES, MAX_PRINT_JOB_BYTES, OpenBatchInput, Settings,
+    BatchSource, Id, MAX_BATCH_PAGES, MAX_PAGE_BYTES, MAX_PRINT_JOB_BYTES, OpenBatchInput, Settings,
 };
 use capture_protocol::page_checksum;
 use serde::{Deserialize, Serialize};
@@ -123,6 +123,33 @@ pub struct SpoolSummary {
     pub failed: u32,
 }
 
+/// A batch the server refused, as it is kept aside for a person to decide.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RefusedBatch {
+    pub key: String,
+    pub label: String,
+    pub source: BatchSource,
+    /// Pages held, or the printed job's pages when they were counted.
+    pub pages: u32,
+    /// What the server said, or why the batch could not be read.
+    pub reason: String,
+    /// When it was spooled, in Unix milliseconds.
+    pub created_at: i64,
+    /// When it was set aside, in Unix milliseconds.
+    pub refused_at: i64,
+    /// Whether its manifest could be read, and so whether it can be sent
+    /// again or saved.
+    pub readable: bool,
+}
+
+/// What saving a refused batch wrote.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Export {
+    pub written: Vec<PathBuf>,
+    /// Pages whose file no longer matched what was scanned, left out.
+    pub unreadable: Vec<u32>,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum SpoolError {
     #[error("the spool: {0}")]
@@ -143,6 +170,8 @@ pub enum SpoolError {
     CorruptDocument,
     #[error("the manifest is unreadable: {0}")]
     Manifest(String),
+    #[error("{0} already exists")]
+    Exists(PathBuf),
 }
 
 pub struct Spool {
@@ -162,9 +191,7 @@ impl std::fmt::Debug for Spool {
 }
 
 fn now_unix_millis() -> i64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |d| i64::try_from(d.as_millis()).unwrap_or(i64::MAX))
+    unix_millis(SystemTime::now())
 }
 
 /// Only keys this module made are accepted as directory names.
@@ -185,6 +212,69 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
         file.sync_all()?;
     }
     fs::rename(&temp, path)
+}
+
+/// Writes a file that must not exist yet.
+fn write_new(path: &Path, bytes: &[u8]) -> io::Result<()> {
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)?;
+    file.write_all(bytes)?;
+    file.sync_all()
+}
+
+fn read_manifest_in(dir: &Path, key: &str) -> Result<SpooledBatch, SpoolError> {
+    let bytes = fs::read(dir.join(MANIFEST)).map_err(|err| match err.kind() {
+        io::ErrorKind::NotFound => SpoolError::Missing(key.to_owned()),
+        _ => SpoolError::Io(err),
+    })?;
+    serde_json::from_slice(&bytes).map_err(|e| SpoolError::Manifest(e.to_string()))
+}
+
+fn describe_refused(dir: &Path, key: String) -> RefusedBatch {
+    let failure = dir.join(FAILURE);
+    let refused_at = fs::metadata(&failure)
+        .or_else(|_| fs::metadata(dir))
+        .and_then(|meta| meta.modified())
+        .map_or(0, unix_millis);
+    let recorded = fs::read_to_string(&failure)
+        .map(|reason| reason.trim().to_owned())
+        .unwrap_or_default();
+    match read_manifest_in(dir, &key) {
+        Ok(batch) => RefusedBatch {
+            label: batch.label.clone(),
+            source: batch.input.source,
+            pages: batch.document.as_ref().map_or_else(
+                || u32::try_from(batch.pages.len()).unwrap_or(u32::MAX),
+                |document| document.pages.unwrap_or(1),
+            ),
+            reason: recorded,
+            created_at: batch.created_at,
+            refused_at,
+            readable: true,
+            key,
+        },
+        Err(err) => RefusedBatch {
+            label: String::new(),
+            source: BatchSource::Scan,
+            pages: 0,
+            reason: if recorded.is_empty() {
+                err.to_string()
+            } else {
+                recorded
+            },
+            created_at: refused_at,
+            refused_at,
+            readable: false,
+            key,
+        },
+    }
+}
+
+fn unix_millis(at: SystemTime) -> i64 {
+    at.duration_since(UNIX_EPOCH)
+        .map_or(0, |d| i64::try_from(d.as_millis()).unwrap_or(i64::MAX))
 }
 
 impl Spool {
@@ -220,13 +310,15 @@ impl Spool {
         self.lock.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
+    fn refused_dir(&self, key: &str) -> Result<PathBuf, SpoolError> {
+        if !valid_key(key) {
+            return Err(SpoolError::Missing(key.to_owned()));
+        }
+        Ok(self.failed_dir().join(key))
+    }
+
     fn read_manifest(&self, key: &str) -> Result<SpooledBatch, SpoolError> {
-        let path = self.dir(key)?.join(MANIFEST);
-        let bytes = fs::read(&path).map_err(|err| match err.kind() {
-            io::ErrorKind::NotFound => SpoolError::Missing(key.to_owned()),
-            _ => SpoolError::Io(err),
-        })?;
-        serde_json::from_slice(&bytes).map_err(|e| SpoolError::Manifest(e.to_string()))
+        read_manifest_in(&self.dir(key)?, key)
     }
 
     fn write_manifest(&self, batch: &SpooledBatch) -> Result<(), SpoolError> {
@@ -402,7 +494,11 @@ impl Spool {
 
     /// A page's PDF, decrypted and checked against what was scanned.
     pub fn read_page(&self, key: &str, page: &SpooledPage) -> Result<Vec<u8>, SpoolError> {
-        let sealed = fs::read(Self::page_path(&self.dir(key)?, page.sequence))?;
+        self.read_page_in(&self.dir(key)?, page)
+    }
+
+    fn read_page_in(&self, dir: &Path, page: &SpooledPage) -> Result<Vec<u8>, SpoolError> {
+        let sealed = fs::read(Self::page_path(dir, page.sequence))?;
         let pdf = self.protector.unprotect(&sealed)?;
         if page_checksum(&pdf) != page.checksum {
             return Err(SpoolError::Corrupt {
@@ -418,7 +514,15 @@ impl Spool {
         key: &str,
         document: &SpooledDocument,
     ) -> Result<Vec<u8>, SpoolError> {
-        let sealed = fs::read(self.dir(key)?.join(DOCUMENT))?;
+        self.read_document_in(&self.dir(key)?, document)
+    }
+
+    fn read_document_in(
+        &self,
+        dir: &Path,
+        document: &SpooledDocument,
+    ) -> Result<Vec<u8>, SpoolError> {
+        let sealed = fs::read(dir.join(DOCUMENT))?;
         let pdf = self.protector.unprotect(&sealed)?;
         if page_checksum(&pdf) != document.checksum {
             return Err(SpoolError::CorruptDocument);
@@ -487,6 +591,114 @@ impl Spool {
             pages_waiting: pending.iter().map(SpooledBatch::pages_waiting).sum(),
             failed: u32::try_from(failed).unwrap_or(u32::MAX),
         })
+    }
+
+    /// Every batch the server refused, most recently refused first.
+    pub fn refused(&self) -> Result<Vec<RefusedBatch>, SpoolError> {
+        let _guard = self.guard();
+        let mut refused = Vec::new();
+        for entry in fs::read_dir(self.failed_dir())? {
+            let entry = entry?;
+            let Some(key) = entry.file_name().to_str().map(str::to_owned) else {
+                continue;
+            };
+            if !valid_key(&key) || !entry.file_type()?.is_dir() {
+                continue;
+            }
+            refused.push(describe_refused(&entry.path(), key));
+        }
+        refused.sort_by(|a, b| {
+            b.refused_at
+                .cmp(&a.refused_at)
+                .then_with(|| a.key.cmp(&b.key))
+        });
+        Ok(refused)
+    }
+
+    /// Sends a refused batch again as a new batch, to intake: the server's
+    /// batch for the old key is closed, and the request it was for may be
+    /// too. Every page is sent afresh. Returns the new key.
+    ///
+    /// The manifest is rewritten in place before the directory moves, so a
+    /// crash in between leaves a refused batch that can be retried again.
+    pub fn retry(&self, key: &str) -> Result<String, SpoolError> {
+        let _guard = self.guard();
+        let from = self.refused_dir(key)?;
+        let mut batch = read_manifest_in(&from, key)?;
+        let new_key = Self::new_key();
+        batch.input.client_key.clone_from(&new_key);
+        batch.input.request_id = None;
+        batch.batch_id = None;
+        batch.complete = true;
+        for page in &mut batch.pages {
+            page.uploaded = false;
+        }
+        let bytes =
+            serde_json::to_vec_pretty(&batch).map_err(|e| SpoolError::Manifest(e.to_string()))?;
+        write_atomic(&from.join(MANIFEST), &bytes)?;
+        match fs::remove_file(from.join(FAILURE)) {
+            Err(err) if err.kind() != io::ErrorKind::NotFound => return Err(err.into()),
+            _ => {}
+        }
+        fs::rename(&from, self.dir(&new_key)?)?;
+        Ok(new_key)
+    }
+
+    /// Deletes a refused batch and its pages for good.
+    pub fn discard(&self, key: &str) -> Result<(), SpoolError> {
+        let _guard = self.guard();
+        let dir = self.refused_dir(key)?;
+        match fs::remove_dir_all(&dir) {
+            Err(err) if err.kind() == io::ErrorKind::NotFound => {
+                Err(SpoolError::Missing(key.to_owned()))
+            }
+            Err(err) => Err(err.into()),
+            Ok(()) => Ok(()),
+        }
+    }
+
+    /// Writes a refused batch's pages, decrypted, into `into` as PDFs, so a
+    /// person can send them another way. `into` must not exist yet; nothing
+    /// already on disk is overwritten. A page that no longer matches what
+    /// was scanned is left out and reported.
+    pub fn export(&self, key: &str, into: &Path) -> Result<Export, SpoolError> {
+        let _guard = self.guard();
+        let dir = self.refused_dir(key)?;
+        let batch = read_manifest_in(&dir, key)?;
+        match fs::create_dir(into) {
+            Err(err) if err.kind() == io::ErrorKind::AlreadyExists => {
+                return Err(SpoolError::Exists(into.to_path_buf()));
+            }
+            other => other?,
+        }
+        let mut export = Export::default();
+        if let Some(document) = &batch.document {
+            match self.read_document_in(&dir, document) {
+                Ok(pdf) => {
+                    let path = into.join("document.pdf");
+                    write_new(&path, &pdf)?;
+                    export.written.push(path);
+                }
+                Err(SpoolError::CorruptDocument | SpoolError::Io(_)) => export.unreadable.push(1),
+                Err(err) => return Err(err),
+            }
+            return Ok(export);
+        }
+        for page in &batch.pages {
+            match self.read_page_in(&dir, page) {
+                Ok(pdf) => {
+                    let path = into.join(format!("page-{:04}.pdf", page.sequence));
+                    write_new(&path, &pdf)?;
+                    export.written.push(path);
+                }
+                Err(SpoolError::Corrupt { sequence }) => export.unreadable.push(sequence),
+                Err(SpoolError::Io(err)) if err.kind() == io::ErrorKind::NotFound => {
+                    export.unreadable.push(page.sequence);
+                }
+                Err(err) => return Err(err),
+            }
+        }
+        Ok(export)
     }
 }
 
@@ -631,6 +843,209 @@ pub(crate) mod tests {
             .expect("reason");
         assert_eq!(reason, "not a PDF");
         assert_eq!(spool.summary().expect("summary").failed, 1);
+    }
+
+    fn refuse(spool: &Spool, dir: &Path, label: &str, pages: &[&[u8]], at_secs: u64) -> String {
+        let key = Spool::new_key();
+        spool.create(input(&key), label).expect("create");
+        for page in pages {
+            spool.append_page(&key, page, &markers()).expect("page");
+        }
+        spool.set_batch_id(&key, Id::from("cbat_old")).expect("id");
+        spool.mark_uploaded(&key, 1).expect("uploaded");
+        spool.complete(&key).expect("complete");
+        spool.fail(&key, "the batch was ended\n").expect("fail");
+        let failure = fs::File::options()
+            .write(true)
+            .open(dir.join("failed").join(&key).join("failure.txt"))
+            .expect("failure file");
+        failure
+            .set_modified(UNIX_EPOCH + std::time::Duration::from_secs(at_secs))
+            .expect("mtime");
+        key
+    }
+
+    #[test]
+    fn refused_batches_are_listed_most_recent_first_with_their_reason() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let older = refuse(&spool, dir.path(), "fi-8170", &[b"%PDF 1"], 1_000);
+        let newer = refuse(
+            &spool,
+            dir.path(),
+            "ScanSnap",
+            &[b"%PDF 1", b"%PDF 2"],
+            2_000,
+        );
+
+        let refused = spool.refused().expect("refused");
+        assert_eq!(
+            refused.iter().map(|r| r.key.as_str()).collect::<Vec<_>>(),
+            [newer.as_str(), older.as_str()]
+        );
+        assert_eq!(refused[0].label, "ScanSnap");
+        assert_eq!(refused[0].pages, 2);
+        assert_eq!(refused[0].reason, "the batch was ended");
+        assert_eq!(refused[0].refused_at, 2_000_000);
+        assert_eq!(refused[0].source, BatchSource::Scan);
+        assert!(refused[0].readable);
+        assert!(spool.pending().expect("pending").is_empty());
+    }
+
+    #[test]
+    fn a_retried_batch_goes_back_to_intake_as_a_new_batch_with_every_page_to_send() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = refuse(
+            &spool,
+            dir.path(),
+            "fi-8170",
+            &[b"%PDF 1", b"%PDF 2"],
+            1_000,
+        );
+
+        let new_key = spool.retry(&key).expect("retry");
+
+        assert_ne!(new_key, key, "the old key names a batch the server closed");
+        assert!(spool.refused().expect("refused").is_empty());
+        let pending = spool.pending().expect("pending");
+        assert_eq!(pending.len(), 1);
+        let batch = &pending[0];
+        assert_eq!(batch.key(), new_key);
+        assert_eq!(batch.batch_id, None);
+        assert_eq!(
+            batch.input.request_id, None,
+            "a retried batch goes to intake"
+        );
+        assert!(batch.complete);
+        assert_eq!(batch.pages_waiting(), 2);
+        assert_eq!(
+            spool.read_page(&new_key, &batch.pages[1]).expect("page"),
+            b"%PDF 2"
+        );
+        assert!(
+            !dir.path()
+                .join("batches")
+                .join(&new_key)
+                .join("failure.txt")
+                .exists(),
+            "the old reason does not travel with it"
+        );
+    }
+
+    #[test]
+    fn a_discarded_batch_is_gone_for_good() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = refuse(&spool, dir.path(), "fi-8170", &[b"%PDF 1"], 1_000);
+
+        spool.discard(&key).expect("discard");
+
+        assert!(spool.refused().expect("refused").is_empty());
+        assert!(!dir.path().join("failed").join(&key).exists());
+        assert!(matches!(spool.discard(&key), Err(SpoolError::Missing(_))));
+    }
+
+    #[test]
+    fn saving_a_refused_batch_writes_its_pages_and_leaves_out_one_that_changed() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = refuse(
+            &spool,
+            dir.path(),
+            "fi-8170",
+            &[b"%PDF 1", b"%PDF 2", b"%PDF 3"],
+            1_000,
+        );
+        fs::write(
+            dir.path().join("failed").join(&key).join("page-0002.bin"),
+            b"tampered",
+        )
+        .expect("tamper");
+        let out = tempfile::tempdir().expect("out");
+        let into = out.path().join("fi-8170 scan");
+
+        let export = spool.export(&key, &into).expect("export");
+
+        assert_eq!(
+            export.written,
+            [into.join("page-0001.pdf"), into.join("page-0003.pdf")]
+        );
+        assert_eq!(export.unreadable, [2]);
+        assert_eq!(
+            fs::read(into.join("page-0003.pdf")).expect("page"),
+            b"%PDF 3"
+        );
+        assert!(
+            spool.refused().expect("refused").len() == 1,
+            "saving a copy keeps the batch until it is discarded"
+        );
+        assert!(matches!(
+            spool.export(&key, &into),
+            Err(SpoolError::Exists(_))
+        ));
+    }
+
+    #[test]
+    fn a_saved_print_is_its_document() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = Spool::new_key();
+        let mut print = input(&key);
+        print.source = BatchSource::Print;
+        spool
+            .create_print(print, "Invoice.docx", b"%PDF printed", Some(3))
+            .expect("print");
+        spool.fail(&key, "ended").expect("fail");
+
+        let refused = spool.refused().expect("refused");
+        assert_eq!(refused[0].source, BatchSource::Print);
+        assert_eq!(refused[0].pages, 3);
+
+        let out = tempfile::tempdir().expect("out");
+        let into = out.path().join("print");
+        let export = spool.export(&key, &into).expect("export");
+        assert_eq!(export.written, [into.join("document.pdf")]);
+        assert_eq!(
+            fs::read(into.join("document.pdf")).expect("doc"),
+            b"%PDF printed"
+        );
+    }
+
+    #[test]
+    fn a_refused_batch_whose_manifest_is_unreadable_is_listed_but_cannot_be_sent_or_saved() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        let key = refuse(&spool, dir.path(), "fi-8170", &[b"%PDF 1"], 1_000);
+        fs::write(
+            dir.path().join("failed").join(&key).join("manifest.json"),
+            b"{",
+        )
+        .expect("break");
+
+        let refused = spool.refused().expect("refused");
+        assert_eq!(refused.len(), 1);
+        assert!(!refused[0].readable);
+        assert_eq!(refused[0].reason, "the batch was ended");
+        assert!(matches!(spool.retry(&key), Err(SpoolError::Manifest(_))));
+        let out = tempfile::tempdir().expect("out");
+        assert!(matches!(
+            spool.export(&key, &out.path().join("x")),
+            Err(SpoolError::Manifest(_))
+        ));
+        spool
+            .discard(&key)
+            .expect("an unreadable batch can still be discarded");
+    }
+
+    #[test]
+    fn refused_keys_cannot_escape_the_spool() {
+        let dir = tempfile::tempdir().expect("dir");
+        let spool = Spool::open(dir.path(), Arc::new(Reverse)).expect("spool");
+        for key in ["../batches", "..", "C:\\Windows"] {
+            assert!(matches!(spool.retry(key), Err(SpoolError::Missing(_))));
+            assert!(matches!(spool.discard(key), Err(SpoolError::Missing(_))));
+        }
     }
 
     #[test]

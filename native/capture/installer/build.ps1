@@ -64,6 +64,21 @@ foreach ($binary in $binaries) {
     Copy-Item $from (Join-Path $stage $binary.To)
 }
 
+# The agent's window runs in WebView2, and the agent loads Microsoft's
+# WebView2Loader.dll when it starts: without it beside trenova-capture.exe,
+# the agent does not start at all. The WebView2 bindings' build copies the
+# loader into their build output; the newest copy is the one this build used.
+$loader = Get-ChildItem (Join-Path $root 'target\x86_64-pc-windows-msvc\release\build') -Directory -Filter 'webview2-com-sys-*' -ErrorAction SilentlyContinue |
+    ForEach-Object { Join-Path $_.FullName 'out\x64\WebView2Loader.dll' } |
+    Where-Object { Test-Path $_ } |
+    Get-Item |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+if (-not $loader) {
+    throw 'Missing WebView2Loader.dll in the x64 release build. Build trenova-capture for x86_64-pc-windows-msvc first.'
+}
+Copy-Item $loader.FullName (Join-Path $stage 'WebView2Loader.dll')
+
 if ($Sign) {
     & (Join-Path $PSScriptRoot 'sign.ps1') -Path (Get-ChildItem $stage -Filter *.exe | ForEach-Object FullName)
 }
