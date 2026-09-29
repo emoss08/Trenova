@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/base64"
 	"fmt"
 	"testing"
 	"time"
@@ -112,7 +113,10 @@ func TestValidateConfig_BoundsTheRetrainingPolicy(t *testing.T) {
 	assert.Contains(t, err.Error(), "lookbackdays must be at least 30")
 }
 
-const validAlertSecret = "whsec_MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
+var (
+	alertSecretKey   = base64.StdEncoding.EncodeToString([]byte("0123456789abcdef0123456789abcdef"))
+	validAlertSecret = aiRetrainingAlertSecretPrefix + alertSecretKey
+)
 
 func TestValidateAIRetrainingAlerts(t *testing.T) {
 	t.Parallel()
@@ -140,7 +144,7 @@ func TestValidateAIRetrainingAlerts(t *testing.T) {
 		},
 		{
 			name:   "secret without prefix",
-			alerts: AIRetrainingAlertsConfig{Secret: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="},
+			alerts: AIRetrainingAlertsConfig{Secret: alertSecretKey},
 			want:   ErrAIRetrainingAlertSecret,
 		},
 		{
@@ -200,8 +204,8 @@ func TestAIRetrainingAlertsNeverPrintTheirSecret(t *testing.T) {
 	t.Parallel()
 
 	alerts := AIRetrainingAlertsConfig{WebhookURL: "https://alerts.example.com/in", Secret: validAlertSecret}
-	assert.NotContains(t, alerts.String(), "MDEy")
-	assert.NotContains(t, fmt.Sprintf("%v %+v %#v", alerts, alerts, alerts), "MDEy")
+	assert.NotContains(t, alerts.String(), alertSecretKey)
+	assert.NotContains(t, fmt.Sprintf("%v %+v %#v", alerts, alerts, alerts), alertSecretKey)
 	assert.Contains(t, alerts.String(), redactedValue)
 	assert.Equal(t, 10*time.Second, alerts.GetTimeout())
 	assert.True(t, alerts.Enabled())
