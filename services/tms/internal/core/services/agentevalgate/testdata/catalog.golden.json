@@ -13563,7 +13563,7 @@
     },
     {
       "name": "list_billing_transfer_candidates",
-      "description": "List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers. Each row says what a transfer would do with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or ReturnToOperations), the documents it still lacks and its rate or validation issues, decided by the checks the transfer itself makes. To transfer, propose one transfer_to_billing covering the rows that can go, rather than one call per shipment.",
+      "description": "List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers. Each row says what a transfer would do with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or ReturnToOperations), the documents it still lacks and its rate or validation issues, decided by the checks the transfer itself makes. totals counts and sums the charges of each outcome per currency, so quote them rather than adding rows yourself. To transfer, propose one transfer_to_billing: allTransferable with these same filters when every row that can go should go, or shipmentIds for a hand-picked set, rather than one call per shipment.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -30372,10 +30372,14 @@
     },
     {
       "name": "transfer_to_billing",
-      "description": "Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews. Take the ids from list_billing_transfer_candidates and cover every shipment that can go in one call rather than one call per shipment; a shipment the checks refuse is reported, not transferred, and the rest still go. The person approving may untick shipments. Up to 100 transfer at once; more run as a background transfer.",
+      "description": "Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews. When the person means every shipment that can go (all of them, everything ready), set allTransferable to true, with the same filters list_billing_transfer_candidates takes, instead of copying ids: the proposal lists each shipment it resolves to. For a hand-picked set, give shipmentIds from list_billing_transfer_candidates. Cover every shipment in one call rather than one call per shipment; a shipment the checks refuse is reported, not transferred, and the rest still go. The person approving may untick shipments. Up to 100 transfer at once; more run as a background transfer.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "allTransferable": {
+            "description": "True to transfer every shipment list_billing_transfer_candidates says would transfer, narrowed by query, status, customerId, deliveredFrom and deliveredTo. Use it instead of shipmentIds, never with them.",
+            "type": "boolean"
+          },
           "billType": {
             "description": "What the queue items bill. Defaults to Invoice.",
             "enum": [
@@ -30386,12 +30390,28 @@
             "type": "string",
             "x-enumOf": "billingQueue.billType"
           },
+          "customerId": {
+            "description": "Only this customer's shipments, by id from list_customers.",
+            "type": "string"
+          },
+          "deliveredFrom": {
+            "description": "Only shipments delivered on or after this day. A date as YYYY-MM-DD, or today.",
+            "type": "string"
+          },
+          "deliveredTo": {
+            "description": "Only shipments delivered on or before this day. A date as YYYY-MM-DD, or today.",
+            "type": "string"
+          },
           "markCompletedReadyToInvoice": {
             "description": "Mark Completed shipments ready to invoice first, as the dialog can. Defaults to false, which leaves a Completed shipment where it is.",
             "type": "boolean"
           },
+          "query": {
+            "description": "Words matched against pro number, BOL and the other searchable columns, as the dialog's search box does.",
+            "type": "string"
+          },
           "shipmentIds": {
-            "description": "The shipments to transfer, by id from list_billing_transfer_candidates. Never guess one.",
+            "description": "The shipments to transfer, by id from list_billing_transfer_candidates, when not allTransferable. Never guess one.",
             "items": {
               "type": "string"
             },
@@ -30399,11 +30419,17 @@
             "minItems": 1,
             "type": "array",
             "x-subsetOf": "shipment"
+          },
+          "status": {
+            "description": "Only shipments in this status. Completed shipments transfer only when markCompletedReadyToInvoice is true.",
+            "enum": [
+              "ReadyToInvoice",
+              "Completed"
+            ],
+            "type": "string",
+            "x-enumOf": "billingTransfer.candidateStatus"
           }
         },
-        "required": [
-          "shipmentIds"
-        ],
         "type": "object"
       },
       "policy": {
