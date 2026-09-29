@@ -444,3 +444,11 @@ func TestEmbeddingNeverWritesToTheLedger(t *testing.T) {
 	assert.False(t, aiprovider.TaskEmbedding.WritesToLedger())
 	assert.False(t, aiprovider.TaskEmbedding.Generates())
 }
+
+func TestClampMaxTokens_KeepsAValueInTheSupportedRange(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, 256, aiprovider.ClampMaxTokens(10))
+	assert.Equal(t, 2048, aiprovider.ClampMaxTokens(2048))
+	assert.Equal(t, 200000, aiprovider.ClampMaxTokens(400000))
+}

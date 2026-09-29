@@ -251,6 +251,10 @@ func (p *Provider) CostForTask(t Task, inputTokens, outputTokens int) *decimal.D
 	return p.CostFor(inputTokens, outputTokens)
 }
 
+func ClampMaxTokens(tokens int) int {
+	return min(max(tokens, minMaxTokens), maxMaxTokens)
+}
+
 // ResolvedMaxTokens clamps the configured ceiling into the supported range.
 func (p *Provider) ResolvedMaxTokens() int {
 	if p.MaxTokens <= 0 {
