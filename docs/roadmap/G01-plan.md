@@ -374,7 +374,7 @@ Each milestone is a vertical slice with schema, services, API, UI, tools, events
 | M4 | **Payables out** | Carrier settlements as Bills to carrier vendors, voids, and `MarkPaid` as BillPayments. Vendor mapping and creation. Driver settlements per decision D5. |
 | M5 | **Changes in and drift** | CDC poller and webhook trigger, inbound payments per policy, nightly drift reconcile, drift page, `resolve_accounting_drift`/`dismiss_accounting_drift` with Simulate, `drift_detected` event, **Open drift by customer**, Books Keeper weekly note. Meets the brief's drift acceptance criterion. |
 | M6 | **Ledger mode** | "Trenova is the ledger": detailed or daily-summary journal entries for every posted journal, account mapping for all accounts with activity, mode step in the wizard, trial-balance drift per account. Depends on decision D4 for Manual-mode tenants. |
-| M7 | **Xero** | Adapter on the same ports (OAuth2 with PKCE, tenant id instead of realm, Xero webhooks with intent-to-receive), catalog card, wizard reuse, fixture contract tests. |
+| M7 | **Xero** | Adapter on the same ports (confidential-client OAuth2, tenant id instead of realm, Xero webhooks with intent-to-receive), catalog card, wizard reuse, fixture contract tests. Document mode only; see §9.8. |
 | M8 | **Business Central** | Adapter (Entra ID OAuth, company selection step, API v2.0, webhooks subscriptions with renewal job). |
 | M9 | **NetSuite** | Adapter (token-based auth with per-tenant consumer and token keys stored encrypted, SuiteTalk REST, saved-search-based change polling since NetSuite has no CDC equivalent). |
 
@@ -924,6 +924,147 @@ The mode and granularity are chosen before mappings, so the mapping step knows w
 - **Mappings page** gains the **GL accounts** group for every active account in ledger mode.
 - **Drift page** shows trial balance findings with both balances and the Trenova accounts behind them.
 - **Product guide:** a task on the integrations page for choosing the mode, and one on the sync-ledger page for journal entries.
+
+### 9.8 M7 design, pinned to the code
+
+M7 adds Xero as the second accounting system. The rule from §2 point 8 is tested for the first time: a new provider should be an adapter, a connect flow and a catalog card. The survey found that the ports and the registry already are provider-neutral, but the mapping model, the payload builder, the connect flow and the webhook still assume QuickBooks. M7 moves each of those assumptions into data the adapter declares, then adds the Xero adapter. Nothing above the adapter names Xero.
+
+**What the survey found in the code.**
+- **Invoice lines require an Item.** `payload.go` requires a mapping for every line's target, and `MappingTargetType.ProviderKind()` (`mapping_enums.go`) hard-binds line types, accessorial charges and item roles to `Item`. `IsRequiredTarget` (`mapping.go`) requires the Freight line type. Xero lines carry an account code; an item is optional.
+- **Payments require a payment method.** `payload.go` requires a `PaymentMethod` mapping. Xero has no payment-method list, and terms are settings on the contact, not list objects.
+- **Short pay is a credit memo line with an Item** (`ShortPayItemExternalID`, `ItemRole` `ShortPayWriteOff`).
+- **Account classification is QuickBooks strings.** The scorer's role table (`scorer.go`) and `LedgerParty()` (`reference.go`) compare QuickBooks account types (`"Income"`, `"Accounts Receivable"`, subtype `"UndepositedFunds"`). Xero types (`REVENUE`, `SALES`, `BANK`, `CURRLIAB`, …) would never qualify for a role.
+- **`sentAsCredit` compares a QuickBooks literal** (`payables.go`, `ExternalRefs["documentType"] == "VendorCredit"`).
+- **The connect flow requires a realm id in the callback** (`realmIDPattern`, `completeAccountingAuthorization(realmId: String!)`, the client's `readAccountingCallback`). Xero's callback has none: the organisation comes from `GET /connections` after the exchange, and one consent can authorise several organisations.
+- **The webhook returns 200 when no connection holds the named companies, before verifying anything** (`ReceiveWebhook`). Xero's intent-to-receive posts an empty event list and requires 401 for a bad signature, so the current order would fail Xero's check. A webhook key belongs to one app, and tenants can bring their own app (§9.4), so the key to verify with depends on which app the URL belongs to.
+- **Token lifetimes are QuickBooks constants** (`RefreshTokenAbsoluteLifetime` 5 years, `defaultRefreshTokenLifetime` 100 days). The app-credential form offers Sandbox and Production.
+- **Declared limits are not read.** `DocumentLimits` flags other than `MaxDocNumberLength`, and all of `ChangeFeedLimits`, are set by the QuickBooks adapter and read by nothing.
+- **Hardcoded provider lists:** `SupportsAccountingSync`, `ProviderName`, `WebhookPath` (twice), the webhook handler's map, the `integration_type` CHECK constraints on `accounting_connections` and `accounting_app_credentials`, the GraphQL `AccountingSystem` enum, the agent tools' `AccountingSystems` source and four "system must be" messages, and four client pages pinned to `SYSTEM = "QuickBooksOnline"`.
+- **A tenant can hold connections of several types, and the enqueuer fans out to every syncing one** (`coveringConnections`). With QuickBooks and Xero both connected, every document would go to both books and payments would come back from both.
+
+**What Xero is (checked 2026-09-29 against developer.xero.com; sources in the M7 PR).**
+- **OAuth:** authorize at `login.xero.com/identity/connect/authorize`, token and revocation at `identity.xero.com`. Web apps are confidential clients with Basic auth on the token call. PKCE is documented only for the public "Auth Code with PKCE" app type. Access tokens last 30 minutes. Refresh tokens rotate on every refresh (the old one stays valid for a 30-minute grace period) and last 60 days, with no absolute cap. Revoking the refresh token removes the user's connections for the app.
+- **Scopes:** apps created on or after 2026-03-02 get granular scopes only (`accounting.invoices`, `accounting.payments`, `accounting.contacts`, `accounting.settings`, `accounting.manualjournals`, `accounting.reports.*.read`). The broad `accounting.transactions` is retired on 2027-09-13. A missing scope returns 401 with `insufficent_scope`.
+- **Tenants:** `GET /connections?authEventId=` returns the organisations this consent authorised. Every call carries `xero-tenant-id`. `DELETE /connections/{id}` removes one organisation.
+- **Limits:** per tenant, 60 calls a minute, 5 concurrent, and 5,000 a day (1,000 on the starter tier). App-wide, 10,000 a minute. 429 comes with `Retry-After` and `X-Rate-Limit-Problem`.
+- **Idempotency:** the `Idempotency-Key` header (at most 128 characters) on POST, PUT and PATCH. It is remembered for **6 minutes**, and a replay returns the original response, errors included.
+- **Documents:**
+  - Invoices are `ACCREC` (sales) and `ACCPAY` (bills); credit notes are `ACCRECCREDIT` and `ACCPAYCREDIT`. An `ACCREC` number is unique; an `ACCPAY` number is not.
+  - An `AUTHORISED` document can be voided (`Status: VOIDED`), not deleted.
+  - Lines carry `AccountCode` and an optional `ItemCode`.
+  - A payment applies to **one** invoice or credit note, cannot be edited, and is removed with `Status: DELETED`. Several applications go through `BatchPayments`.
+  - A credit note is applied with `PUT /CreditNotes/{id}/Allocations`, and an allocation is removed with `DELETE`.
+  - Contacts are one entity; customer and supplier are derived, read-only flags.
+- **Manual journals cannot name a contact and reject AR, AP and bank accounts.** Trenova's ledger journals post receivables and payables with a party, so ledger mode cannot be expressed in Xero without clearing accounts that would hide every AR and AP balance.
+- **Closed periods:** `GET /Organisation` returns `PeriodLockDate` and `EndOfYearLockDate`. Multicurrency is `UseMulticurrency = ALLOWED` in `GET /Organisation/Actions`. The financial year end is `FinancialYearEndMonth` and `Day`.
+- **Changes:** there is no change-data-capture feed. Instead, list endpoints accept `If-Modified-Since` (to the second) and page with `page` and `pageSize` up to 1000. Webhooks exist for contacts, invoices, credit notes, prepayments and overpayments; there are none for payments or journals.
+- **Webhook signing:** `x-xero-signature`, base64 HMAC-SHA256 of the raw body with the app's webhook key. Answer within 5 seconds, with no cookies.
+- **No sandbox host:** development uses the Demo Company on `api.xero.com`. Responses are XML unless `Accept: application/json`, and dates come back as `/Date(ms+0000)/`.
+- **Unconfirmed on Xero's own pages, with a handling path for each:**
+  - Whether voiding an invoice with payments applied is refused. Handling: the adapter deletes the payments first, which it must do anyway because a Trenova void unapplies them.
+  - The exact lock-date message. Handling: classify any 400 whose validation text mentions a lock date, or a document date inside `PeriodLockDate`/`EndOfYearLockDate`, as `ClosedPeriod`.
+  - Whether a modified-since list returns deleted payments. Handling: the payment poll asks for `Statuses=AUTHORISED,DELETED` explicitly.
+
+**Decisions.**
+1. **Xero is document mode only in M7.** A Xero manual journal cannot carry a receivable or payable line with a party, and routing them through clearing accounts would leave Xero's AR and AP ageing empty. The adapter declares `Ledger: false`. The mode step shows ledger mode as unavailable for Xero with that reason, and `chooseAccountingSyncMode` refuses it. The capability exists so a later provider (Business Central, NetSuite) can declare it.
+2. **One syncing accounting connection per tenant.** Connecting a second system while another is connected (in any status but `Disconnected`) is refused: "Disconnect QuickBooks Online before connecting Xero". Two books receiving the same documents is the D7 problem in another form. The four client pages resolve the tenant's one connection instead of a constant.
+3. **Providers declare their shape as data: `AccountingProviderProfile`**, returned by `AccountingProvider.Profile()`:
+   - `LineTarget`: `Item` for QuickBooks, `Account` for Xero.
+   - `ReferenceKinds`: the kinds the provider has. Xero lists Account, Item, Customer and Vendor, and has no Term or PaymentMethod.
+   - `Environments`: QuickBooks has Sandbox and Production; Xero has Production only.
+   - `RefreshTokenLifetime` and `RefreshTokenAbsoluteLifetime` (zero means none).
+   - `Ledger`.
+   - `CallbackCarriesCompany`: QuickBooks sends a realm id; Xero does not.
+
+   `MappingTargetType.ProviderKind()` becomes `profile.KindFor(target)`. For Xero, line types, accessorial charges and item roles map to Accounts, and payment-method and term targets are not generated. `IsRequiredTarget` asks the profile, so Xero requires the Freight line's revenue account and the deposit account, and no payment method. The stored `provider_kind` column already allows this per row.
+4. **Account classification is neutral.** The adapter sets `AccountClass` on each account reference: Receivable, Payable, Bank, Income, OtherIncome, CostOfSales, Expense, OtherExpense, Asset, Liability, Equity or UndepositedFunds. A new column, `account_class`, is backfilled for QuickBooks rows by the same mapping the adapter now applies. The scorer's role table and `LedgerParty()` read the class, never a provider string.
+5. **Lines name an account or an item.** `AccountingDocumentLine` gains `AccountExternalID`, and the builder fills whichever the mapped reference kind is. Short pay becomes `ShortPay{ItemExternalID, AccountExternalID}`. For Xero, the adapter writes the short pay as an `ACCRECCREDIT` credit note to the write-off account, allocated to the invoice. The payment method is optional in the payload when the provider has no such kind.
+6. **The document-type ref is neutral.** `sentAsCredit` reads the ref key `creditDocument` = `true`, which both adapters write. The QuickBooks adapter keeps writing its old key as well, so records already stored still read correctly.
+7. **The connect flow resolves the company after the exchange.**
+   - The connector gains `Companies(ctx, grant) ([]AccountingCompany, error)`. QuickBooks returns the callback's realm; Xero returns the `/connections` for the consent's `authEventId`, taken from the access token's claims.
+   - `realmId` becomes optional in `completeAccountingAuthorization`, and required only when the profile says the callback carries it.
+   - With exactly one company, completion proceeds as today.
+   - With several, completion seals the token grant into the Redis state (AES-GCM through the existing secret codec, purpose `AccountingOAuthGrant`, TTL unchanged at 10 minutes) and returns the list. A second mutation, `chooseAccountingCompany(state, companyId)`, finishes the connection and deletes the other organisations' Xero connections, so the token reaches only the chosen one.
+   - PKCE is not added. Xero documents it only for public clients, the web-app flow authenticates the code exchange with the client secret, and QuickBooks made the same choice in §9.1.
+8. **The webhook verifies first, against the app its URL names.**
+   - Paths become `/webhooks/accounting/{provider}/` for the instance app and `/webhooks/accounting/{provider}/{appId}/` for a tenant's own app. The app-keys panel shows the path for that app, and `WebhookPath` lives in one place.
+   - `ReceiveWebhook` resolves the app from the path and verifies the signature. It returns 401 on a mismatch; this is Xero's intent-to-receive answer, and it applies to every provider. Only then does it read the companies from the body and signal the connections that use that app.
+   - An empty verified body returns 200.
+   - The existing QuickBooks path without an app id keeps verifying against the instance app, and falls back to the holders' apps as today, so live QuickBooks subscriptions do not need re-registering.
+9. **A retry after Xero forgets its idempotency key finds the document before creating it.**
+   - `AccountingDocumentLimits.IdempotencyWindow` is 6 minutes for Xero and zero (unbounded) for QuickBooks.
+   - When a create's previous attempt ended without a known outcome (transport error, lease expiry) and began longer ago than the window, the dispatcher first calls a new `FindDocument(kind, match)`. Sales documents match by number. Bills and vendor credits match by contact, reference, date and total, because an `ACCPAY` number is not unique. Payments match by the invoice, date, amount and the reference, which carries the request id. A match is adopted and the record is marked synced with `adopted` in its attempt; no match creates as normal.
+   - The same path handles a sales document whose create returns Duplicate (a unique `ACCREC` number): if the total matches, the record adopts it; otherwise it blocks as today.
+10. **The declared limits are read.**
+    - `ChangeFeedLimits.MaxLookback`: zero for Xero, so the cursor never expires; QuickBooks keeps 30 days.
+    - `ReportsDeletes`: true for Xero, whose voided and deleted documents come back with their status.
+    - `MaxPerRead` sizes the poll.
+    - `DocumentLimits.CanVoidCreditMemo` and `CanVoidPurchaseDocument` gate the void paths, which block with a reason instead of failing at the provider.
+11. **Rate limits are declared, not guessed.**
+    - The Xero client sets a per-tenant `restx.Limiter` bucket of 50 a minute (headroom for the poll) and caps concurrency at 4 with a per-tenant semaphore in the adapter.
+    - `Retry-After` is honoured by `restx`.
+    - A 429 whose `X-Rate-Limit-Problem` is `day` classifies as `RateLimited`, with the retry time set to the header's delay, so the dispatcher waits instead of hammering.
+
+**Xero adapter (`S/infrastructure/accounting/xeroconnector/`, client `shared/xero`).**
+
+| Port | Xero |
+|---|---|
+| OAuth | Authorize with scopes `openid profile email offline_access accounting.contacts accounting.settings accounting.invoices accounting.payments accounting.reports.aged.read`. Exchange and refresh with Basic auth. Revoke the refresh token. `invalid_grant` means revoked. |
+| Companies | `GET /connections?authEventId=`, filtered to `tenantType = ORGANISATION` |
+| CompanyFacts | `GET /Organisation`: name, legal name, country, base currency, lock dates (books closed through the later of the two), financial year start month (the month after `FinancialYearEndMonth`). `GET /Organisation/Actions`: multicurrency. |
+| VerifyApp | A refresh with a dummy token must answer `invalid_grant`, not `invalid_client` (the QuickBooks pattern) |
+| Reference read | `GET /Accounts` (active and archived, with `AccountClass` from `Type`, and `SystemAccount` for AR/AP), `GET /Items`, `GET /Contacts` paged 1000 at a time, split into Customer and Vendor rows by `IsCustomer` and `IsSupplier` (a contact that is neither is offered as both) |
+| Reference create | Items (`PUT /Items`, code from the charge code, sales account), Contacts (one contact per customer or vendor; duplicate names are classified `Duplicate`) |
+| Sales documents | Invoice and debit memo → `ACCREC` invoice; credit memo → `ACCRECCREDIT`, allocated when it names an invoice. Always `AUTHORISED`, `LineAmountTypes = NoTax` (Trenova's lines are tax-free today), `Reference` from the private note (255 characters), currency and rate when multicurrency. Void → delete the document's payments and allocations, then `Status: VOIDED`. Update → `POST /Invoices/{id}` with the same body. |
+| Payments | One application → `PUT /Payments`; several → `PUT /BatchPayments`, the batch id stored as the external id with its payment ids in refs. Update → delete and recreate (payments are immutable), under one request id per step. Void → `Status: DELETED`. Short pay → credit note to the write-off account, allocated. |
+| Credit applications | `PUT /CreditNotes/{id}/Allocations`; void → `DELETE` the allocation |
+| Purchases | Bill → `ACCPAY` invoice with account-coded lines; vendor credit → `ACCPAYCREDIT`; bill payment → `PUT /Payments` against the bill from the mapped bank account |
+| Document reader | `GET /Invoices?IDs=` and `GET /CreditNotes?IDs=` (up to 100 ids), total, `AmountDue` as balance, `UpdatedDateUTC`. Xero names no editor, so `ModifiedBy` is empty. |
+| Change reader | Cursor = RFC 3339 instant. `If-Modified-Since` on Payments (`Statuses=AUTHORISED,DELETED`), Invoices, CreditNotes, Contacts, Accounts and Items. The next cursor is the latest `UpdatedDateUTC` seen, less one second (Xero's precision), and a page of 1000 sets `More`. |
+| Webhook | `x-xero-signature` HMAC-SHA256 base64 over the raw body with the app's webhook key, compared in constant time. Companies from `events[].tenantId`. |
+| Document links | `https://go.xero.com/app/{shortCode}/invoicing/view/{id}` and `…/bills/view/{id}`. `ShortCode` is stored on the connection from `GET /Organisation`, and `DocumentURL` gains the connection's company facts. |
+| Errors | 400 `ValidationException` → Validation, with each `ValidationErrors[].Message`. Unique-number text → Duplicate. Lock-date text or a date inside the lock → ClosedPeriod. 401 → Auth. 403 `AuthenticationUnsuccessful` → Auth (organisation disconnected). 404 → NotFound. 429 → RateLimited. 503 "Organisation is offline" → Transient with a 5-minute retry. 5xx → Transient. |
+
+**Configuration.**
+- `accounting.xero.clientId`, `clientSecret` and `webhookKey`, and `redirectUrl` (default `app.webBaseUrl + /admin/integrations/xero/callback`).
+- Environment variables `TRENOVA_XERO_*`.
+- A tenant's own Xero app reuses `accounting_app_credentials`: the environment is always Production, and the webhook key is sealed in the existing verifier column.
+
+**Schema** (one migration):
+- The `integration_type` enum gains `Xero`.
+- The CHECK constraints on `accounting_connections.integration_type` and `accounting_app_credentials.integration_type` accept it.
+- `accounting_reference_objects.account_class` is added, with a CHECK and a backfill from the QuickBooks account type.
+- `accounting_connections.external_short_code`, `varchar(20)` null, is added.
+
+**API and agents.**
+- The GraphQL `AccountingSystem` enum gains `Xero`. This is dangerous rather than breaking in the schema diff.
+- New fields and inputs:
+  - `CompleteAccountingAuthorizationPayload.companies` (for the choice)
+  - `chooseAccountingCompany`
+  - `AccountingIntegration.profile` (ledger availability, environments, whether the callback needs a company)
+- `agenttoolschema.AccountingSystems` reads the registry's types. The "system must be" messages list them.
+- Write coverage: `chooseAccountingCompany` is exempt, as configuration, like the other connect mutations.
+- The tool catalog golden, docs and translations are regenerated.
+
+**Client.**
+- `xeroVendor` (logos, docs, "Xero app", portal `developer.xero.com/app/manage`). A catalog card and a modal mount, reusing `AccountingIntegrationModal`.
+- A `/admin/integrations/xero/callback` route. `login.xero.com` is added to the allowed authorize hosts. `realmId` is optional in the callback reader.
+- A choose-organisation step in the callback page when completion returns several companies.
+- The app-keys form hides the environment when the profile has one, and labels the key from the vendor ("Webhook key" for Xero).
+- The mode step shows ledger mode as unavailable with the provider's reason.
+- The four accounting pages read the connected system.
+- Product-guide sections for Xero sit next to QuickBooks' in `admin/integrations.md`, and the four accounting guides say "the accounting system" where they meant QuickBooks generally. The guide catalog is regenerated. es, zh-TW and zh-CN are translated.
+
+**Tests.**
+- `shared/xero` contract tests against recorded fixtures served by `httptest`, one per endpoint and fault, as in `shared/quickbooks`.
+- Adapter tests for every port method.
+- The webhook: a correctly signed empty body gets 200, a wrongly signed one gets 401, and an unknown app id gets 401.
+- `chooseAccountingCompany`: single use, same user, removes the other connections.
+- The second-system refusal.
+- Profile-driven mapping: Xero generates no payment-method or term targets, and its Freight line maps to an account.
+- The late-retry adoption: a stale unknown outcome finds and adopts the document, while a fresh one creates.
+- Ledger mode refused for Xero.
+- A client test for the callback's choose step.
 
 ## 10. Testing
 
