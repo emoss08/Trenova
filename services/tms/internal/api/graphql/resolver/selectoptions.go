@@ -44,7 +44,7 @@ import (
 )
 
 type selectOptionRegistryEntry struct {
-	resolve  func(context.Context, selectOptionsRequest) (*gqlmodel.SelectOptionConnection, error)
+	resolve  func(context.Context, *selectOptionsRequest) (*gqlmodel.SelectOptionConnection, error)
 	parseIDs func([]string) ([]pulid.ID, error)
 }
 
@@ -295,10 +295,10 @@ func selectOptionsRequestFromInput(
 	input gqlmodel.SelectOptionsInput,
 	authCtx *authctx.AuthContext,
 	entry selectOptionRegistryEntry,
-) (selectOptionsRequest, error) {
+) (*selectOptionsRequest, error) {
 	ids, err := entry.ids(input.Ids)
 	if err != nil {
-		return selectOptionsRequest{}, err
+		return nil, err
 	}
 
 	first := pagination.DefaultLimit
@@ -312,7 +312,7 @@ func selectOptionsRequestFromInput(
 	}
 
 	tenant := tenantInfo(authCtx)
-	return selectOptionsRequest{
+	return &selectOptionsRequest{
 		tenantInfo: tenant,
 		ids:        ids,
 		filters:    selectOptionFilters(input.Filters),
@@ -337,7 +337,7 @@ func selectOptionFilters(filters map[string]any) map[string]any {
 
 func (r *Resolver) resolveEquipmentTypeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -378,7 +378,7 @@ func (r *Resolver) resolveEquipmentTypeSelectOptions(
 
 func (r *Resolver) resolveEquipmentManufacturerSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.equipmentManufacturerService.GetByIDs(
@@ -415,7 +415,7 @@ func (r *Resolver) resolveEquipmentManufacturerSelectOptions(
 
 func (r *Resolver) resolveTrailerSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.trailerService.GetByIDs(
@@ -447,7 +447,7 @@ func (r *Resolver) resolveTrailerSelectOptions(
 
 func (r *Resolver) resolveTractorSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.tractorService.GetByIDs(
@@ -484,7 +484,7 @@ func (r *Resolver) resolveTractorSelectOptions(
 
 func (r *Resolver) resolveWorkerSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -525,7 +525,7 @@ func (r *Resolver) resolveWorkerSelectOptions(
 
 func (r *Resolver) resolveUSStateSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -557,7 +557,7 @@ func (r *Resolver) resolveUSStateSelectOptions(
 
 func (r *Resolver) resolveLocationSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.locationService.GetByIDs(
@@ -594,7 +594,7 @@ func (r *Resolver) resolveLocationSelectOptions(
 
 func (r *Resolver) resolveRateZoneSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -629,7 +629,7 @@ func (r *Resolver) resolveRateZoneSelectOptions(
 
 func (r *Resolver) resolveFleetCodeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -664,7 +664,7 @@ func (r *Resolver) resolveFleetCodeSelectOptions(
 
 func (r *Resolver) resolveShipmentTypeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -704,7 +704,7 @@ func (r *Resolver) resolveShipmentTypeSelectOptions(
 
 func (r *Resolver) resolveServiceTypeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -744,7 +744,7 @@ func (r *Resolver) resolveServiceTypeSelectOptions(
 
 func (r *Resolver) resolveLocationCategorySelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -779,7 +779,7 @@ func (r *Resolver) resolveLocationCategorySelectOptions(
 
 func (r *Resolver) resolveDistanceProfileSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -819,7 +819,7 @@ func (r *Resolver) resolveDistanceProfileSelectOptions(
 
 func (r *Resolver) resolveOrganizationSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.organizationService.GetByIDs(
@@ -863,7 +863,7 @@ func (r *Resolver) resolveOrganizationSelectOptions(
 
 func (r *Resolver) resolveUserSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -898,7 +898,7 @@ func (r *Resolver) resolveUserSelectOptions(
 
 func (r *Resolver) resolveRoleSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -933,7 +933,7 @@ func (r *Resolver) resolveRoleSelectOptions(
 
 func (r *Resolver) resolveRateMatrixSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -968,7 +968,7 @@ func (r *Resolver) resolveRateMatrixSelectOptions(
 
 func (r *Resolver) resolveRateAgreementSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1003,7 +1003,7 @@ func (r *Resolver) resolveRateAgreementSelectOptions(
 
 func (r *Resolver) resolveAccessorialChargeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1041,7 +1041,7 @@ func (r *Resolver) resolveAccessorialChargeSelectOptions(
 
 func (r *Resolver) resolveAccountTypeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1081,7 +1081,7 @@ func (r *Resolver) resolveAccountTypeSelectOptions(
 
 func (r *Resolver) resolveCommoditySelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1121,7 +1121,7 @@ func (r *Resolver) resolveCommoditySelectOptions(
 
 func (r *Resolver) resolveDocumentTypeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1159,7 +1159,7 @@ func (r *Resolver) resolveDocumentTypeSelectOptions(
 
 func (r *Resolver) resolveDetentionPolicySelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1199,7 +1199,7 @@ func (r *Resolver) resolveDetentionPolicySelectOptions(
 
 func (r *Resolver) resolveFormulaTemplateSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1239,7 +1239,7 @@ func (r *Resolver) resolveFormulaTemplateSelectOptions(
 
 func (r *Resolver) resolveHazardousMaterialSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1279,7 +1279,7 @@ func (r *Resolver) resolveHazardousMaterialSelectOptions(
 
 func (r *Resolver) resolveServiceFailureReasonCodeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1319,7 +1319,7 @@ func (r *Resolver) resolveServiceFailureReasonCodeSelectOptions(
 
 func (r *Resolver) resolveEDICommunicationProfileSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1359,7 +1359,7 @@ func (r *Resolver) resolveEDICommunicationProfileSelectOptions(
 
 func (r *Resolver) resolveEDIDocumentTypeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		result, err := r.ediService.SelectDocumentTypeOptions(
@@ -1399,7 +1399,7 @@ func (r *Resolver) resolveEDIDocumentTypeSelectOptions(
 
 func (r *Resolver) resolveEDITransactionSetSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	selectQuery := req.selectQuery
 	if len(req.ids) > 0 {
@@ -1440,7 +1440,7 @@ func (r *Resolver) resolveEDITransactionSetSelectOptions(
 
 func (r *Resolver) resolveEDIMappingProfileSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1480,7 +1480,7 @@ func (r *Resolver) resolveEDIMappingProfileSelectOptions(
 
 func (r *Resolver) resolveEDIPartnerSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1520,7 +1520,7 @@ func (r *Resolver) resolveEDIPartnerSelectOptions(
 
 func (r *Resolver) resolveEDIPartnerDocumentProfileSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1567,7 +1567,7 @@ func (r *Resolver) resolveEDIPartnerDocumentProfileSelectOptions(
 
 func (r *Resolver) resolveEDITemplateSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1613,7 +1613,7 @@ func (r *Resolver) resolveEDITemplateSelectOptions(
 
 func (r *Resolver) resolveEmailProfileSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -1653,7 +1653,7 @@ func (r *Resolver) resolveEmailProfileSelectOptions(
 
 func (r *Resolver) resolveOrderSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.orderService.GetByIDs(
@@ -1716,7 +1716,7 @@ func orderID(entity *order.Order) pulid.ID {
 
 func (r *Resolver) resolveShipmentSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.shipmentService.GetByIDs(
@@ -1828,7 +1828,7 @@ func selectOptionStringFilter(filters map[string]any, key string) string {
 
 func (r *Resolver) resolveEDIConnectionSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.ediService.GetConnectionsByIDs(
@@ -1870,7 +1870,7 @@ func (r *Resolver) resolveEDIConnectionSelectOptions(
 
 func (r *Resolver) resolveEDITransferSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		entities, err := r.ediService.GetTransfersByIDs(

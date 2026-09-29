@@ -16,7 +16,7 @@ import (
 
 func (r *Resolver) resolveShiftTemplateSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -74,7 +74,7 @@ func shiftTemplateSelectOptionItem(entity *worker.ShiftTemplate) selectOptionCon
 
 func (r *Resolver) resolveWorkerPolicySelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -135,7 +135,7 @@ func workerPolicySelectOptionItem(entity *worker.WorkerPolicy) selectOptionConne
 // user's membership. Offering both would put somebody on the wrong roster.
 func (r *Resolver) resolveJobPositionSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))

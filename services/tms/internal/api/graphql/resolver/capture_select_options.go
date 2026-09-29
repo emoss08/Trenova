@@ -12,9 +12,14 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
+const (
+	captureMetaName      = "name"
+	captureMetaIsDefault = "isDefault"
+)
+
 func (r *Resolver) resolveCaptureDeviceSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	query := req.selectQuery.Query
 	if len(req.ids) > 0 {
@@ -54,9 +59,9 @@ func captureDeviceSelectOptionItem(
 	for i := range device.Sources {
 		source := &device.Sources[i]
 		sources = append(sources, map[string]any{
-			"name":      source.Name,
-			"protocol":  source.Protocol,
-			"isDefault": source.IsDefault,
+			captureMetaName:      source.Name,
+			"protocol":           source.Protocol,
+			captureMetaIsDefault: source.IsDefault,
 		})
 	}
 
@@ -78,7 +83,7 @@ func captureDeviceSelectOptionItem(
 
 func (r *Resolver) resolveCaptureProfileSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	profiles, err := r.captureService.AvailableProfiles(ctx, req.tenantInfo)
 	if err != nil {
@@ -109,10 +114,10 @@ func captureProfileSelectOptionItem(profile *capture.CaptureProfile) selectOptio
 			Label:       profile.Name,
 			Description: stringPtr(profile.Description),
 			Meta: map[string]any{
-				"isDefault": profile.IsDefault,
-				"dpi":       profile.DPI,
-				"pixelType": profile.PixelType,
-				"duplex":    profile.Duplex,
+				captureMetaIsDefault: profile.IsDefault,
+				"dpi":                profile.DPI,
+				"pixelType":          profile.PixelType,
+				"duplex":             profile.Duplex,
 			},
 		},
 		profile.CreatedAt,
@@ -142,7 +147,7 @@ func withIDs[T any](entities []T, ids []pulid.ID, idOf func(T) pulid.ID) []T {
 
 func pageSelectOptionItems(
 	items []selectOptionConnectionItem,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		return selectOptionConnection(items, len(items), 0)

@@ -11,7 +11,7 @@ import (
 
 func (r *Resolver) resolveCarrierSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))

@@ -11,7 +11,7 @@ import (
 
 func (r *Resolver) resolveWorkerCredentialTypeSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -72,7 +72,7 @@ func workerCredentialTypeSelectOptionItem(
 
 func (r *Resolver) resolveTrainingCourseSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -136,7 +136,7 @@ func trainingCourseSelectOptionItem(entity *worker.TrainingCourse) selectOptionC
 
 func (r *Resolver) resolvePerformanceReviewTemplateSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -194,7 +194,7 @@ func performanceReviewTemplateSelectOptionItem(
 
 func (r *Resolver) resolvePTOPolicySelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -249,7 +249,7 @@ func ptoPolicySelectOptionItem(entity *worker.PTOPolicy) selectOptionConnectionI
 
 func (r *Resolver) resolveBenefitPlanSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
