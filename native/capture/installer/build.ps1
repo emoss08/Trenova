@@ -89,9 +89,14 @@ wix build `
     -d "Version=$Version" `
     -d "StageDir=$stage" `
     -d "LogoPath=$((Resolve-Path $logo).Path)" `
+    -d "AssetsDir=$(Join-Path $PSScriptRoot 'assets')" `
     -ext WixToolset.Util.wixext `
+    -ext WixToolset.UI.wixext `
+    -culture en-US `
+    -loc (Join-Path $PSScriptRoot 'Package.en-us.wxl') `
     -o $msi `
-    (Join-Path $PSScriptRoot 'Package.wxs')
+    (Join-Path $PSScriptRoot 'Package.wxs') `
+    (Join-Path $PSScriptRoot 'Ui.wxs')
 if ($LASTEXITCODE -ne 0) { throw "wix build failed with $LASTEXITCODE." }
 
 if ($Sign) {

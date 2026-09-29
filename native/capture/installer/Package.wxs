@@ -18,8 +18,15 @@
                  that to whoever deploys this MSI
     PRINTPORT    the loopback port the printer uses (default 8631)
 
+  Run by hand, it walks through its pages (Ui.wxs): where your Trenova is and
+  whether to update automatically, everything it will install and where, then
+  each step by name while it runs, and what to do next. Every install writes a
+  verbose log (MsiLogging) and every page that can go wrong names it; the
+  print service and updater write what they did into that log.
+
   Upgrades are major upgrades: a newer MSI replaces an older install in place,
-  keeping what people have not yet uploaded. A downgrade is refused.
+  keeping what people have not yet uploaded, the server address and the
+  update choice. A downgrade is refused.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
@@ -46,9 +53,49 @@
 
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
-    <Property Id="AUTOUPDATE" Value="1" Secure="yes" />
+    <Property Id="AUTOUPDATE" Secure="yes" />
     <Property Id="PRINTPORT" Value="8631" Secure="yes" />
     <Property Id="TRENOVAURL" Secure="yes" />
+
+    <!-- Every install writes a verbose log; the pages show where. -->
+    <Property Id="MsiLogging" Value="voicewarmupx" />
+
+    <!--
+      What an earlier install recorded. Removing it during an upgrade deletes
+      its values, so they are read first and carried forward unless the
+      command line gives new ones.
+    -->
+    <Property Id="SAVEDTRENOVAURL">
+      <RegistrySearch Id="SavedServerUrl" Root="HKLM" Key="SOFTWARE\Trenova\Capture"
+                      Name="ServerUrl" Type="raw" Bitness="always64" />
+    </Property>
+    <Property Id="SAVEDAUTOUPDATE">
+      <RegistrySearch Id="SavedAutoUpdate" Root="HKLM" Key="SOFTWARE\Trenova\Capture"
+                      Name="AutoUpdate" Type="raw" Bitness="always64" />
+    </Property>
+    <SetProperty Action="KeepServerUrl" Id="TRENOVAURL" Value="[SAVEDTRENOVAURL]"
+                 After="AppSearch" Sequence="both"
+                 Condition="NOT TRENOVAURL AND SAVEDTRENOVAURL" />
+    <SetProperty Action="KeepAutoUpdateOff" Id="AUTOUPDATE" Value="0"
+                 After="KeepServerUrl" Sequence="both"
+                 Condition="NOT AUTOUPDATE AND SAVEDAUTOUPDATE = &quot;#0&quot;" />
+    <SetProperty Action="DefaultAutoUpdate" Id="AUTOUPDATE" Value="1"
+                 After="KeepAutoUpdateOff" Sequence="both"
+                 Condition="AUTOUPDATE &lt;&gt; &quot;0&quot;" />
+    <SetProperty Action="ShowAutoUpdateChoice" Id="AUTOUPDATECHOICE" Value="1"
+                 After="DefaultAutoUpdate" Sequence="ui"
+                 Condition="AUTOUPDATE = &quot;1&quot;" />
+
+    <UIRef Id="TrenovaCaptureUI" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.AssetsDir)\banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.AssetsDir)\dialog.bmp" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="!(loc.ExitDialogOpen)" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <SetProperty Action="SetExitText" Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="!(loc.ExitDialogNextSteps)"
+                 Before="ExecuteAction" Sequence="ui" />
+    <!-- From the finish page, as the person installing: the window of the Trenova Capture just started. -->
+    <CustomAction Id="LaunchCapture" FileRef="AgentExe" ExeCommand="--show"
+                  Execute="immediate" Impersonate="yes" Return="asyncNoWait" />
     <Property Id="ARPPRODUCTICON" Value="TrenovaIcon" />
     <Property Id="ARPHELPLINK" Value="https://trenova.app" />
     <Property Id="ARPNOMODIFY" Value="1" />

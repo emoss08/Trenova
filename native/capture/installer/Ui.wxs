@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The installer's pages. WiX's standard dialogs (welcome, ready, progress,
+  finish, errors, maintenance) with two of Trenova Capture's own between
+  them:
+
+    Welcome -> Your Trenova -> What will be installed -> Ready -> Progress -> Finish
+
+  "Your Trenova" asks for the server address (TRENOVAURL, kept from an
+  earlier install when there is one) and whether Trenova Capture may update
+  itself (AUTOUPDATE). "What will be installed" lists every piece, where it
+  goes, and where the log of this installation is written. The finish page
+  says what to do next and can open Trenova Capture. A silent install
+  (msiexec /qn) shows none of this and takes the same properties.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <UI Id="TrenovaCaptureUI">
+      <TextStyle Id="WixUI_Font_Normal" FaceName="Segoe UI" Size="9" />
+      <TextStyle Id="WixUI_Font_Bigger" FaceName="Segoe UI" Size="12" />
+      <TextStyle Id="WixUI_Font_Title" FaceName="Segoe UI" Size="9" Bold="yes" />
+      <TextStyle Id="Trenova_Font_Heading" FaceName="Segoe UI" Size="9" Bold="yes" />
+
+      <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+
+      <DialogRef Id="ErrorDlg" />
+      <DialogRef Id="FatalError" />
+      <DialogRef Id="FilesInUse" />
+      <DialogRef Id="MsiRMFilesInUse" />
+      <DialogRef Id="PrepareDlg" />
+      <DialogRef Id="ProgressDlg" />
+      <DialogRef Id="ResumeDlg" />
+      <DialogRef Id="UserExit" />
+
+      <!-- Each step the binaries run, named on the progress page. -->
+      <ProgressText Action="ConfigurePrintService" Message="Setting up the print service and its folders" />
+      <ProgressText Action="ConfigureUpdater" Message="Letting Trenova Capture keep itself up to date" />
+      <ProgressText Action="InstallPrinter" Message="Adding the Trenova printer" />
+      <ProgressText Action="RelaunchAgents" Message="Starting Trenova Capture for everyone signed in" />
+      <ProgressText Action="UninstallPrinter" Message="Removing the Trenova printer" />
+      <ProgressText Action="UninstallPrinterAsUser" Message="Removing the Trenova printer" />
+
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="ServerDlg" Condition="NOT Installed" />
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="Installed AND PATCH" />
+
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="DetailsDlg" Order="1" Condition="NOT Installed" />
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2" Condition="Installed AND NOT PATCH" />
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" Condition="Installed AND PATCH" />
+
+      <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg" />
+      <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg" />
+      <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg" />
+      <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg" />
+
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchCapture" Order="1"
+               Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
+      <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999" />
+
+      <Dialog Id="ServerDlg" Width="370" Height="270" Title="!(loc.ServerDlg_Title)">
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.ServerDlgTitle)" />
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.ServerDlgDescription)" />
+
+        <Control Id="AddressLabel" Type="Text" X="20" Y="58" Width="330" Height="12" NoPrefix="yes" Text="!(loc.ServerDlgAddressLabel)" />
+        <Control Id="Address" Type="Edit" X="20" Y="72" Width="330" Height="18" Property="TRENOVAURL" Text="{2048}" />
+        <Control Id="AddressHelp" Type="Text" X="20" Y="94" Width="330" Height="36" NoPrefix="yes" Text="!(loc.ServerDlgAddressHelp)" />
+
+        <Control Id="Updates" Type="CheckBox" X="20" Y="138" Width="330" Height="16" Property="AUTOUPDATECHOICE" CheckBoxValue="1" Text="!(loc.ServerDlgUpdates)" />
+        <Control Id="UpdatesHelp" Type="Text" X="34" Y="156" Width="316" Height="36" NoPrefix="yes" Text="!(loc.ServerDlgUpdatesHelp)" />
+
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
+          <Publish Event="NewDialog" Value="WelcomeDlg" />
+        </Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+          <Publish Property="AUTOUPDATE" Value="1" Order="1" Condition="AUTOUPDATECHOICE = &quot;1&quot;" />
+          <Publish Property="AUTOUPDATE" Value="0" Order="2" Condition="NOT AUTOUPDATECHOICE" />
+          <Publish Property="SERVERSUMMARY" Value="[TRENOVAURL]" Order="3" Condition="TRENOVAURL" />
+          <Publish Property="SERVERSUMMARY" Value="!(loc.DetailsDlgNoServer)" Order="4" Condition="NOT TRENOVAURL" />
+          <Publish Property="UPDATESSUMMARY" Value="!(loc.DetailsDlgUpdatesOn)" Order="5" Condition="AUTOUPDATECHOICE = &quot;1&quot;" />
+          <Publish Property="UPDATESSUMMARY" Value="!(loc.DetailsDlgUpdatesOff)" Order="6" Condition="NOT AUTOUPDATECHOICE" />
+          <Publish Event="SpawnDialog" Value="InvalidServerDlg" Order="7" Condition="NOT (NOT TRENOVAURL OR TRENOVAURL ~&lt;&lt; &quot;https://&quot; OR TRENOVAURL ~&lt;&lt; &quot;http://localhost&quot; OR TRENOVAURL ~&lt;&lt; &quot;http://127.0.0.1&quot; OR TRENOVAURL ~&lt;&lt; &quot;http://[::1]&quot;)" />
+          <Publish Event="NewDialog" Value="DetailsDlg" Order="8" Condition="NOT TRENOVAURL OR TRENOVAURL ~&lt;&lt; &quot;https://&quot; OR TRENOVAURL ~&lt;&lt; &quot;http://localhost&quot; OR TRENOVAURL ~&lt;&lt; &quot;http://127.0.0.1&quot; OR TRENOVAURL ~&lt;&lt; &quot;http://[::1]&quot;" />
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg" />
+        </Control>
+      </Dialog>
+
+      <Dialog Id="InvalidServerDlg" Width="260" Height="95" Title="!(loc.ServerDlg_Title)">
+        <Control Id="Text" Type="Text" X="15" Y="15" Width="230" Height="50" NoPrefix="yes" Text="!(loc.InvalidServerDlgText)" />
+        <Control Id="OK" Type="PushButton" X="189" Y="70" Width="56" Height="17" Default="yes" Cancel="yes" Text="!(loc.WixUIOK)">
+          <Publish Event="EndDialog" Value="Return" />
+        </Control>
+      </Dialog>
+
+      <Dialog Id="DetailsDlg" Width="370" Height="270" Title="!(loc.DetailsDlg_Title)">
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.DetailsDlgTitle)" />
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.DetailsDlgDescription)" />
+
+        <Control Id="FolderLabel" Type="Text" X="20" Y="52" Width="330" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgFolderLabel)" />
+        <Control Id="Folder" Type="Text" X="20" Y="64" Width="330" Height="12" NoPrefix="yes" Text="[INSTALLFOLDER]" />
+
+        <Control Id="PiecesLabel" Type="Text" X="20" Y="82" Width="330" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgPiecesLabel)" />
+        <Control Id="Pieces" Type="Text" X="20" Y="94" Width="330" Height="74" NoPrefix="yes" Text="!(loc.DetailsDlgPieces)" />
+
+        <Control Id="ServerLabel" Type="Text" X="20" Y="172" Width="80" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgServerLabel)" />
+        <Control Id="Server" Type="Text" X="100" Y="172" Width="250" Height="12" NoPrefix="yes" Text="[SERVERSUMMARY]" />
+        <Control Id="UpdatesLabel" Type="Text" X="20" Y="186" Width="80" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgUpdatesLabel)" />
+        <Control Id="Updates" Type="Text" X="100" Y="186" Width="250" Height="12" NoPrefix="yes" Text="[UPDATESSUMMARY]" />
+        <Control Id="LogLabel" Type="Text" X="20" Y="200" Width="80" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgLogLabel)" />
+        <Control Id="Log" Type="Text" X="100" Y="200" Width="250" Height="28" NoPrefix="yes" Text="[MsiLogFileLocation]" />
+
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
+          <Publish Event="NewDialog" Value="ServerDlg" />
+        </Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+          <Publish Event="NewDialog" Value="VerifyReadyDlg" />
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg" />
+        </Control>
+      </Dialog>
+    </UI>
+
+    <UIRef Id="WixUI_Common" />
+  </Fragment>
+</Wix>

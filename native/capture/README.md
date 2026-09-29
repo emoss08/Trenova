@@ -147,9 +147,19 @@ that upgrades in place. Build it on Windows after both release builds above:
 ```powershell
 dotnet tool install --global wix
 wix extension add -g WixToolset.Util.wixext
+wix extension add -g WixToolset.UI.wixext
 ./installer/build.ps1            # installer\out\TrenovaCapture-<version>-x64.msi
 ./installer/build.ps1 -Sign      # also signs the executables and the MSI; see sign.ps1
 ```
+
+Run by hand, the installer (`installer/Ui.wxs`, words in `installer/Package.en-us.wxl`) asks
+for the Trenova address and whether to update automatically, lists everything it will install
+and where, names each step while it runs, and ends with what to do next and an option to open
+Trenova Capture. Every install writes a verbose log to `%TEMP%` (`MsiLogging`); the ready,
+finish and error pages show its path, and the print service and updater record each thing they
+did in it. An upgrade keeps the server address and update choice an earlier install recorded,
+unless new ones are given; a non-default `PRINTPORT` must be given again. The banner and side
+images are drawn from the web app's logo by `installer/assets/make-bitmaps.py`.
 
 The installer adds the **Trenova** printer as the person installing. Windows refuses an IPP
 printer to the system account, so a deployment tool that installs as the system account, or an

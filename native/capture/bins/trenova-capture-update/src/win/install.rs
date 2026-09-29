@@ -82,6 +82,9 @@ pub fn configure_service() -> Result<(), UpdaterError> {
     let service = manager
         .open_service(SERVICE_NAME, ServiceAccess::WRITE_DAC)
         .map_err(service_error)?;
+    super::say(&format!(
+        "Letting signed-in people start {SERVICE_NAME}, and nothing more, so updates can install"
+    ));
     allow_users_to_start(&service)
 }
 
