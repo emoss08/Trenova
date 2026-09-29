@@ -2993,6 +2993,9 @@ extend type Mutation {
   BooksKeeper
   SettlementsClerk
   Receivables
+  MasterDataSteward
+  WorkforceCoordinator
+  FuelTaxClerk
 }
 
 enum AgentTriggerMode {

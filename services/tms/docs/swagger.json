@@ -318,7 +318,10 @@
                 "FormulaAssistant",
                 "BooksKeeper",
                 "SettlementsClerk",
-                "Receivables"
+                "Receivables",
+                "MasterDataSteward",
+                "WorkforceCoordinator",
+                "FuelTaxClerk"
             ],
             "type": "string",
             "x-enum-varnames": [
@@ -345,7 +348,10 @@
                 "TemplateFormulaAssistant",
                 "TemplateBooksKeeper",
                 "TemplateSettlementsClerk",
-                "TemplateReceivables"
+                "TemplateReceivables",
+                "TemplateMasterDataSteward",
+                "TemplateWorkforceCoordinator",
+                "TemplateFuelTaxClerk"
             ]
         },
         "apikeyservice.AllowedResourceCategory": {

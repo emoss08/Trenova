@@ -23,6 +23,10 @@ const (
 
 	SeedAgentSettlementsName = "Settlements clerk"
 	SeedAgentReceivablesName = "Receivables"
+
+	SeedAgentMasterDataName = "Master data steward"
+	SeedAgentWorkforceName  = "Workforce coordinator"
+	SeedAgentFuelTaxName    = "Fuel and IFTA clerk"
 )
 
 type AgentDefinitionSeed struct {
@@ -276,6 +280,51 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			ToolNames:         agentdefinition.TemplateReceivables.StarterTools(),
 			AutonomyCeiling:   agentdefinition.TemplateReceivables.StarterCeiling(),
 			DataAccessCeiling: agentdefinition.TemplateReceivables.StarterDataAccess(),
+			TriggerMode:       agentdefinition.TriggerChat,
+			Enabled:           true,
+		},
+		{
+			OrganizationID:    orgID,
+			BusinessUnitID:    buID,
+			Name:              SeedAgentMasterDataName,
+			Icon:              agentdefinition.IconFile,
+			Accent:            agentdefinition.AccentSlate,
+			Description:       agentdefinition.TemplateMasterDataSteward.Description(),
+			Template:          agentdefinition.TemplateMasterDataSteward,
+			Instructions:      agentdefinition.TemplateMasterDataSteward.StarterInstructions(),
+			ToolNames:         agentdefinition.TemplateMasterDataSteward.StarterTools(),
+			AutonomyCeiling:   agentdefinition.TemplateMasterDataSteward.StarterCeiling(),
+			DataAccessCeiling: agentdefinition.TemplateMasterDataSteward.StarterDataAccess(),
+			TriggerMode:       agentdefinition.TriggerChat,
+			Enabled:           true,
+		},
+		{
+			OrganizationID:    orgID,
+			BusinessUnitID:    buID,
+			Name:              SeedAgentWorkforceName,
+			Icon:              agentdefinition.IconClipboard,
+			Accent:            agentdefinition.AccentViolet,
+			Description:       agentdefinition.TemplateWorkforceCoordinator.Description(),
+			Template:          agentdefinition.TemplateWorkforceCoordinator,
+			Instructions:      agentdefinition.TemplateWorkforceCoordinator.StarterInstructions(),
+			ToolNames:         agentdefinition.TemplateWorkforceCoordinator.StarterTools(),
+			AutonomyCeiling:   agentdefinition.TemplateWorkforceCoordinator.StarterCeiling(),
+			DataAccessCeiling: agentdefinition.TemplateWorkforceCoordinator.StarterDataAccess(),
+			TriggerMode:       agentdefinition.TriggerChat,
+			Enabled:           true,
+		},
+		{
+			OrganizationID:    orgID,
+			BusinessUnitID:    buID,
+			Name:              SeedAgentFuelTaxName,
+			Icon:              agentdefinition.IconGauge,
+			Accent:            agentdefinition.AccentAmber,
+			Description:       agentdefinition.TemplateFuelTaxClerk.Description(),
+			Template:          agentdefinition.TemplateFuelTaxClerk,
+			Instructions:      agentdefinition.TemplateFuelTaxClerk.StarterInstructions(),
+			ToolNames:         agentdefinition.TemplateFuelTaxClerk.StarterTools(),
+			AutonomyCeiling:   agentdefinition.TemplateFuelTaxClerk.StarterCeiling(),
+			DataAccessCeiling: agentdefinition.TemplateFuelTaxClerk.StarterDataAccess(),
 			TriggerMode:       agentdefinition.TriggerChat,
 			Enabled:           true,
 		},

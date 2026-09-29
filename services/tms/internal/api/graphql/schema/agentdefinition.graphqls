@@ -23,6 +23,9 @@ enum AgentTemplate {
   BooksKeeper
   SettlementsClerk
   Receivables
+  MasterDataSteward
+  WorkforceCoordinator
+  FuelTaxClerk
 }
 
 enum AgentTriggerMode {

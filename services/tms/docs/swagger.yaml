@@ -246,6 +246,9 @@ definitions:
             - BooksKeeper
             - SettlementsClerk
             - Receivables
+            - MasterDataSteward
+            - WorkforceCoordinator
+            - FuelTaxClerk
         type: string
         x-enum-varnames:
             - TemplateDispatchAssistant
@@ -272,6 +275,9 @@ definitions:
             - TemplateBooksKeeper
             - TemplateSettlementsClerk
             - TemplateReceivables
+            - TemplateMasterDataSteward
+            - TemplateWorkforceCoordinator
+            - TemplateFuelTaxClerk
     apikeyservice.AllowedResourceCategory:
         properties:
             category:
