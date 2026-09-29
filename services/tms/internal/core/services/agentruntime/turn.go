@@ -455,6 +455,10 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	}
 }
 
+func (t *Turn) localNow(fx TurnEffects) time.Time {
+	return time.Unix(fx.Now(), 0).In(timeutils.LoadLocation(t.req.Context.Timezone))
+}
+
 func clockLine(now int64, timezone string) string {
 	loc, name := timeutils.ResolveZone(timezone)
 

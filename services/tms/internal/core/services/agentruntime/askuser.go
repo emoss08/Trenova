@@ -2,11 +2,15 @@ package agentruntime
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
@@ -179,7 +183,7 @@ type askRequest struct {
 // find_tools is answered here: its effect is on the conversation, not on data.
 // Nothing is read, nothing is written, and no tenant is touched — which is also
 // why it needs no permission of its own.
-func resolveAsk(arguments map[string]any) string {
+func resolveAsk(now time.Time, arguments map[string]any) string {
 	question := strings.TrimSpace(stringArg(arguments, "question"))
 	if question == "" {
 		return "ask_user needs a question. Say what you need in one sentence, " +
@@ -187,6 +191,7 @@ func resolveAsk(arguments map[string]any) string {
 	}
 
 	options := askOptionsFrom(arguments)
+	past := datedOptionLabels(options, now)
 	allowOther := boolArg(arguments, "allowOther", true)
 
 	if len(options) == 0 && !allowOther {
@@ -201,6 +206,9 @@ func resolveAsk(arguments map[string]any) string {
 		OtherHint:  strings.TrimSpace(stringArg(arguments, "otherHint")),
 	}
 	request.Note = askNote(len(options), allowOther)
+	if len(past) > 0 && schedulingQuestion(question) {
+		request.Note += pastDateNote(past)
+	}
 
 	encoded, err := encodeToolResult(request, 0, "")
 	if err != nil {
@@ -310,4 +318,88 @@ func truncateRunes(value string, limit int) string {
 	}
 
 	return strings.TrimSpace(string(runes[:limit])) + "…"
+}
+
+const (
+	optionDayLayout      = "Mon Jan 2"
+	optionDayYearLayout  = "Mon Jan 2, 2006"
+	optionClockSeparator = ", "
+)
+
+var (
+	relativeDayPattern = regexp.MustCompile(
+		`(?i)\b(today|tomorrow|yesterday|in \d+ days?|\d+ days? ago)\b`,
+	)
+	leadingWeekdayPattern = regexp.MustCompile(
+		`(?i)\b(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(?:day|nesday|rsday|urday)?\.?,?\s*$`,
+	)
+	schedulingWords = []string{
+		"schedul", "appointment", "appt", "pickup", "pick up", "pick-up", "deliver",
+		"arriv", "depart", "dispatch", "book", "when should", "when will", "when do",
+		"when can", "ship date", "load date",
+	}
+)
+
+func datedOptionLabels(options []askOption, now time.Time) []string {
+	var past []string
+	for idx := range options {
+		label, days, dated := humanizeDateLabel(options[idx].Label, now)
+		if !dated {
+			continue
+		}
+		options[idx].Label = truncateRunes(label, maxAskLabelChars)
+		if days < 0 {
+			past = append(past, label)
+		}
+	}
+
+	return past
+}
+
+func humanizeDateLabel(label string, now time.Time) (string, int64, bool) {
+	written, found := timeutils.FindWrittenDate(label)
+	if !found {
+		return label, 0, false
+	}
+
+	day := written.Day.On(now)
+	days := timeutils.CalendarDaysBetween(now, day)
+	if relativeDayPattern.MatchString(label) {
+		return label, days, true
+	}
+
+	layout := optionDayLayout
+	if day.Year() != now.Year() {
+		layout = optionDayYearLayout
+	}
+	formatted := day.Format(layout)
+	if written.Clock != "" {
+		formatted += optionClockSeparator + written.Clock
+	}
+
+	start := written.Start
+	if weekday := leadingWeekdayPattern.FindStringIndex(label[:start]); weekday != nil {
+		start = weekday[0]
+	}
+
+	humanized := strings.TrimSpace(label[:start] + formatted + label[written.End:])
+
+	return humanized + " (" + timeutils.RelativeDays(days) + ")", days, true
+}
+
+func schedulingQuestion(question string) bool {
+	lowered := strings.ToLower(question)
+	for _, word := range schedulingWords {
+		if strings.Contains(lowered, word) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func pastDateNote(past []string) string {
+	return fmt.Sprintf(" %s %s in the past. If that is not what you meant, say so in your "+
+		"one line and ask again with the right date; do not schedule anything for a day "+
+		"that has already gone.", strings.Join(past, ", "), stringutils.Pluralize("is", "are", len(past)))
 }

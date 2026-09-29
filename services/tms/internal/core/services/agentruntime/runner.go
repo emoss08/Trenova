@@ -290,7 +290,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			if call.Name == askUserName {
 				question := comparableQuestion(stringArg(call.Arguments, "question"))
 				_, repeated := t.questions[question]
-				outcome := toolOutcome{content: resolveAsk(call.Arguments)}
+				outcome := toolOutcome{content: resolveAsk(t.localNow(fx), call.Arguments)}
 				switch {
 				case !tools.offers(askUserName) && t.req.Delegation != nil:
 					outcome = failedOutcome("%s", delegatedAskRefusal)
