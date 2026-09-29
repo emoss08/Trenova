@@ -97,14 +97,11 @@ func (s *Service) BulkUpdateStatus(
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetLocationsByIDsRequest{
-		TenantInfo:  req.TenantInfo,
-		LocationIDs: req.LocationIDs,
-	})
+	changes, err := s.PlanBulkUpdateStatus(ctx, req)
 	if err != nil {
-		log.Error("failed to get original locations", zap.Error(err))
 		return nil, err
 	}
+	originalEntities := services.Befores(changes)
 
 	entities, err := s.repo.BulkUpdateStatus(ctx, req)
 	if err != nil {
@@ -292,38 +289,11 @@ func (s *Service) Update(
 		zap.String("principalID", auditActor.PrincipalID.String()),
 	)
 
-	if err := s.transformer.TransformLocation(ctx, entity); err != nil {
-		log.Error("failed to transform location", zap.Error(err))
-		return nil, err
-	}
-	entity.NormalizeGeofence()
-
-	original, err := s.repo.GetByID(ctx, repositories.GetLocationByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
-		},
-	})
+	change, err := s.PlanUpdate(ctx, entity)
 	if err != nil {
-		log.Error("failed to get original location", zap.Error(err))
 		return nil, err
 	}
-
-	if strings.TrimSpace(entity.Code) == "" {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("code", errortypes.ErrRequired, "Code is required")
-		return nil, multiErr
-	}
-	if !strings.EqualFold(strings.TrimSpace(entity.Code), original.Code) {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("code", errortypes.ErrInvalid, "Location code cannot be changed")
-		return nil, multiErr
-	}
-	entity.Code = original.Code
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
+	original := change.Before
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {

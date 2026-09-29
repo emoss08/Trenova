@@ -1235,7 +1235,7 @@ func TestUnit_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 		Return(nil)
 
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
-		IDs:        []pulid.ID{pulid.MustNew("doc_")},
+		IDs:        []pulid.ID{docs[0].ID},
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		UserID:     pulid.MustNew("usr_"),
 	})
@@ -1277,7 +1277,7 @@ func TestUnit_BulkDelete_StorageDeleteErrors(t *testing.T) {
 		Return(nil)
 
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
-		IDs:        []pulid.ID{pulid.MustNew("doc_")},
+		IDs:        []pulid.ID{docs[0].ID},
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		UserID:     pulid.MustNew("usr_"),
 	})
@@ -1588,4 +1588,49 @@ func TestUnit_BulkDelete_WithPreviewPaths(t *testing.T) {
 	assert.Equal(t, 1, result.DeletedCount)
 	assert.Contains(t, deletedPaths, "path/a.pdf")
 	assert.Contains(t, deletedPaths, "path/a_thumb.jpg")
+}
+
+func TestUnit_PlanDelete_RefusesADocumentThatIsNotHere(t *testing.T) {
+	t.Parallel()
+
+	known := &document.Document{ID: pulid.MustNew("doc_"), StoragePath: "path/a.pdf"}
+	repo := &mockDocRepo{
+		GetByIDsFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+			return []*document.Document{known}, nil
+		},
+	}
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+
+	_, err := deps.svc.PlanDelete(t.Context(), &documentservice.BulkDeleteRequest{
+		IDs:        []pulid.ID{known.ID, pulid.MustNew("doc_")},
+		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not documents of this organization")
+}
+
+func TestUnit_PlanDelete_CountsEveryVersionOfALineage(t *testing.T) {
+	t.Parallel()
+
+	lineage := pulid.MustNew("doc_")
+	current := &document.Document{ID: pulid.MustNew("doc_"), LineageID: lineage}
+	repo := &mockDocRepo{
+		GetByIDsFn: func(_ context.Context, _ repositories.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+			return []*document.Document{current}, nil
+		},
+		ListVersionsFn: func(
+			_ context.Context,
+			_ repositories.ListDocumentVersionsRequest,
+		) ([]*document.Document, error) {
+			return []*document.Document{current, {ID: pulid.MustNew("doc_"), LineageID: lineage}}, nil
+		},
+	}
+	deps := newUnitTestService(t, repo, &mockStorageClient{})
+
+	plan, err := deps.svc.PlanDelete(t.Context(), &documentservice.BulkDeleteRequest{
+		IDs:        []pulid.ID{current.ID},
+		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 2, plan.FileCount())
 }

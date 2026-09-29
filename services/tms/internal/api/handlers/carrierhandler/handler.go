@@ -353,6 +353,7 @@ func (h *Handler) patch(c *gin.Context) {
 			CarrierFilterOptions: repositories.CarrierFilterOptions{
 				IncludeContacts:          true,
 				IncludeInsurancePolicies: true,
+				IncludeEDIChannels:       true,
 			},
 		},
 	)

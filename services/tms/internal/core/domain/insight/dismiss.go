@@ -22,3 +22,19 @@ func (i *Insight) Dismiss(userID pulid.ID, reason string, now int64) error {
 
 	return nil
 }
+
+func (i *Insight) Restore() error {
+	if i.Status != StatusDismissed {
+		return errortypes.NewBusinessError(
+			"This insight is {0}, and only a dismissed one can be restored",
+			strings.ToLower(string(i.Status)),
+		)
+	}
+
+	i.Status = StatusActive
+	i.DismissedAt = nil
+	i.DismissedByID = pulid.Nil
+	i.DismissReason = ""
+
+	return nil
+}

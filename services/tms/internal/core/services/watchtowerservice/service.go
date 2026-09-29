@@ -308,18 +308,12 @@ func (s *Service) Dismiss(
 	id pulid.ID,
 	actor *services.RequestActor,
 ) (*watchtower.Item, error) {
-	item, err := s.repo.GetByID(
-		ctx,
-		repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
-	)
+	change, err := s.PlanDismiss(ctx, tenant, id, actor)
 	if err != nil {
 		return nil, err
 	}
-	if err = s.assertMaySee(ctx, actor, item); err != nil {
-		return nil, err
-	}
-	if item.IsResolved() {
-		return item, nil
+	if change.Before.IsResolved() {
+		return change.Before, nil
 	}
 
 	resolved, err := s.repo.ResolveByID(
@@ -333,6 +327,32 @@ func (s *Service) Dismiss(
 	s.projector.publish(ctx, resolved, "resolved")
 
 	return resolved, nil
+}
+
+func (s *Service) PlanDismiss(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	id pulid.ID,
+	actor *services.RequestActor,
+) (*services.RecordChange[watchtower.Item], error) {
+	item, err := s.repo.GetByID(
+		ctx,
+		repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.assertMaySee(ctx, actor, item); err != nil {
+		return nil, err
+	}
+
+	dismissed := *item
+	if !dismissed.IsResolved() {
+		now := s.now()
+		dismissed.ResolvedAt = &now
+	}
+
+	return &services.RecordChange[watchtower.Item]{Before: item, After: &dismissed}, nil
 }
 
 func (s *Service) assertMaySee(

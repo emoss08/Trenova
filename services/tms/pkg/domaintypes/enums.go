@@ -18,6 +18,14 @@ func (s Status) String() string {
 	return string(s)
 }
 
+func StatusValues() []Status {
+	return []Status{StatusActive, StatusInactive}
+}
+
+func (s Status) IsValid() bool {
+	return s == StatusActive || s == StatusInactive
+}
+
 func StatusFromString(s string) (Status, error) {
 	switch s {
 	case "Active":
