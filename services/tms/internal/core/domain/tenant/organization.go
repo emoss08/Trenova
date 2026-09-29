@@ -20,6 +20,8 @@ type Metadata struct {
 
 var _ bun.BeforeAppendModelHook = (*Organization)(nil)
 
+const OrganizationIDPrefix = "org_"
+
 type Organization struct {
 	bun.BaseModel `bun:"table:organizations,alias:org" json:"-"`
 
@@ -101,7 +103,7 @@ func (o *Organization) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	switch q.(type) {
 	case *bun.InsertQuery:
 		if o.ID.IsNil() {
-			o.ID = pulid.MustNew("org_")
+			o.ID = pulid.MustNew(OrganizationIDPrefix)
 		}
 
 		o.CreatedAt = now

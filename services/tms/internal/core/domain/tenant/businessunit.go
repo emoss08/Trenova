@@ -13,6 +13,8 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*BusinessUnit)(nil)
 
+const BusinessUnitIDPrefix = "bu_"
+
 type BusinessUnit struct {
 	bun.BaseModel `bun:"table:business_units,alias:bu" json:"-"`
 
@@ -51,7 +53,7 @@ func (bu *BusinessUnit) BeforeAppendModel(_ context.Context, q bun.Query) error 
 	switch q.(type) {
 	case *bun.InsertQuery:
 		if bu.ID.IsNil() {
-			bu.ID = pulid.MustNew("bu_")
+			bu.ID = pulid.MustNew(BusinessUnitIDPrefix)
 		}
 
 		bu.CreatedAt = now

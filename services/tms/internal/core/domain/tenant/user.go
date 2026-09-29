@@ -62,6 +62,8 @@ var (
 	_ validationframework.TenantedEntity = (*User)(nil)
 )
 
+const UserIDPrefix = "usr_"
+
 type User struct {
 	bun.BaseModel `bun:"table:users,alias:usr" json:"-"`
 
@@ -152,7 +154,7 @@ func (u *User) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	switch q.(type) {
 	case *bun.InsertQuery:
 		if u.ID.IsNil() {
-			u.ID = pulid.MustNew("usr_")
+			u.ID = pulid.MustNew(UserIDPrefix)
 		}
 
 		u.CreatedAt = now
