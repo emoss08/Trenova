@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/etagutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -177,27 +178,33 @@ const (
 
 // PageContent is one page's bytes, for showing it. Pages are encrypted at
 // rest, so they are served through the API rather than by presigned link.
+// A page never changes once stored, so its tag names it for good; when the
+// reader already holds that tag, NotModified is set and Data is left empty.
 type PageContent struct {
 	ContentType string
 	Data        []byte
+	ETag        string
+	NotModified bool
 }
 
-func (s *Service) PageContent(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	pageID pulid.ID,
-	kind PageContentKind,
-) (*PageContent, error) {
+type PageContentRequest struct {
+	TenantInfo  pagination.TenantInfo
+	PageID      pulid.ID
+	Kind        PageContentKind
+	IfNoneMatch string
+}
+
+func (s *Service) PageContent(ctx context.Context, req *PageContentRequest) (*PageContent, error) {
 	page, err := s.pages.GetByID(
 		ctx,
-		repositories.GetCapturePageByIDRequest{ID: pageID, TenantInfo: tenantInfo},
+		repositories.GetCapturePageByIDRequest{ID: req.PageID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
 	}
 	if _, err = s.visibleBatch(
 		ctx,
-		tenantInfo,
+		req.TenantInfo,
 		permission.OpRead,
 		&repositories.GetCaptureBatchByIDRequest{
 			ID: page.BatchID,
@@ -207,19 +214,24 @@ func (s *Service) PageContent(
 	}
 
 	key, contentType := page.StoragePath, capture.PageContentType
-	if kind == PageContentThumbnail {
+	if req.Kind == PageContentThumbnail {
 		if page.ThumbnailPath == "" {
 			return nil, errortypes.NewNotFoundError("This page has no thumbnail yet")
 		}
 		key, contentType = page.ThumbnailPath, thumbnailContentType
 	}
 
-	data, err := s.getObject(ctx, tenantInfo, key)
+	etag := etagutils.Strong(page.ChecksumSHA256 + "-" + string(req.Kind))
+	if etagutils.Matches(req.IfNoneMatch, etag) {
+		return &PageContent{ContentType: contentType, ETag: etag, NotModified: true}, nil
+	}
+
+	data, err := s.getObject(ctx, req.TenantInfo, key)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PageContent{ContentType: contentType, Data: data}, nil
+	return &PageContent{ContentType: contentType, Data: data, ETag: etag}, nil
 }
 
 // ItemLayout is one document in a person's edit of a batch.

@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import {
   CORE_QUERY_KEYS,
   RESOURCE_EVENT_NAME,
-  RESOURCE_QUERY_KEY_MAP,
+  invalidationFor,
   isBulkAction,
   parseInvalidationEvent,
   patchEntityInListRows,
@@ -45,7 +45,9 @@ export function useRealtimeConnection() {
   // Keyed by the root's identity rather than the root itself, because a root
   // is now either a string or a key prefix and two equal prefixes are two
   // different arrays.
-  const pendingKeysRef = useRef<Map<string, QueryKeyRoot>>(new Map());
+  const pendingKeysRef = useRef<Map<string, { root: QueryKeyRoot; activeOnly: boolean }>>(
+    new Map(),
+  );
   // Held in a ref so a new navigate identity never tears down and rebuilds the
   // realtime subscription.
   const navigate = useNavigate();
@@ -72,8 +74,14 @@ export function useRealtimeConnection() {
     const pendingKeys = pendingKeysRef.current;
     let disposed = false;
 
-    const enqueueInvalidation = (roots: readonly QueryKeyRoot[]) => {
-      roots.forEach((root) => pendingKeys.set(queryKeyRootId(root), root));
+    // A root asked for by any event in the window refetches everywhere
+    // unless every one of those events wanted only what is on screen.
+    const enqueueInvalidation = (roots: readonly QueryKeyRoot[], activeOnly = false) => {
+      roots.forEach((root) => {
+        const id = queryKeyRootId(root);
+        const pending = pendingKeys.get(id);
+        pendingKeys.set(id, { root, activeOnly: activeOnly && (pending?.activeOnly ?? true) });
+      });
       if (flushTimeoutRef.current !== null) return;
 
       flushTimeoutRef.current = window.setTimeout(() => {
@@ -82,10 +90,10 @@ export function useRealtimeConnection() {
         flushTimeoutRef.current = null;
 
         void Promise.all(
-          rootsToInvalidate.map((root) =>
+          rootsToInvalidate.map(({ root, activeOnly: onScreen }) =>
             queryClient.invalidateQueries({
               queryKey: queryKeyPrefix(root),
-              refetchType: "all",
+              refetchType: onScreen ? "active" : "all",
             }),
           ),
         );
@@ -246,8 +254,12 @@ export function useRealtimeConnection() {
         return;
       }
 
-      const queryKeys = RESOURCE_QUERY_KEY_MAP[evt.resource] ?? [];
+      const { roots: queryKeys, activeOnly } = invalidationFor(evt);
       if (queryKeys.length === 0) return;
+      if (activeOnly) {
+        enqueueInvalidation(queryKeys, true);
+        return;
+      }
 
       const action = evt.action ?? "";
       if (isBulkAction(action)) {

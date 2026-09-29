@@ -138980,6 +138980,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Reading page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Reading the lineage…": {
     "sites": 1,
     "scope": [
@@ -150895,6 +150904,16 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Rotation must be 0, 90, 180 or 270": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers",
+      "service/captureservice"
     ]
   },
   "Rotation offset (weeks)": {

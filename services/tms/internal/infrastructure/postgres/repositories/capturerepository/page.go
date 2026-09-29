@@ -3,12 +3,16 @@ package capturerepository
 import (
 	"context"
 
+	"github.com/bytedance/sonic"
+
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -82,6 +86,46 @@ func (r *pageRepository) Update(
 	}
 
 	return entity, nil
+}
+
+func (r *pageRepository) RecordInspection(
+	ctx context.Context,
+	entity *capture.CapturePage,
+) (bool, error) {
+	cols := buncolgen.CapturePageColumns
+	ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
+	markers, err := sonic.Marshal(entity.Markers)
+	if err != nil {
+		return false, err
+	}
+
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*capture.CapturePage)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.CapturePageScopeTenantUpdate(uq, ti).
+				Where(cols.ID.Eq(), entity.ID).
+				Where(cols.Status.Eq(), capture.PageReceived)
+		}).
+		Set(cols.Status.Set(), entity.Status).
+		Set(cols.WidthPx.Set(), entity.WidthPx).
+		Set(cols.HeightPx.Set(), entity.HeightPx).
+		Set(cols.ThumbnailPath.Set(), bun.NullZero(entity.ThumbnailPath)).
+		Set(cols.BlankScore.Set(), entity.BlankScore).
+		Set(cols.Markers.String()+" = ?::jsonb", string(markers)).
+		Set(cols.FailureMessage.Set(), bun.NullZero(entity.FailureMessage)).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Exec(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	affected, err := results.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return affected == 1, nil
 }
 
 func (r *pageRepository) GetByID(

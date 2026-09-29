@@ -5217,6 +5217,7 @@
   "Roll up provider usage, purge expired payloads and prune snapshot history": "Consolidar el uso de proveedores, purgar las cargas vencidas y depurar el historial de instantáneas",
   "Rolling twelve months looking back": "Doce meses móviles hacia atrás",
   "Root invoice is required": "La factura raíz es obligatoria",
+  "Rotation must be 0, 90, 180 or 270": "La rotación debe ser 0, 90, 180 o 270",
   "Round is invalid": "La ronda no es válida",
   "Round starts at one": "La ronda empieza en uno",
   "Rounded minutes cannot be negative": "Los minutos redondeados no pueden ser negativos",

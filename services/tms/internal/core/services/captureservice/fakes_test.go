@@ -61,6 +61,7 @@ type world struct {
 	denied      map[string]bool
 	ownScope    bool
 	inspections map[string]*services.CapturePageInspection
+	inspected   int
 	sessions    map[pulid.ID]*documentupload.DocumentUploadSession
 	uploaded    map[pulid.ID][]byte
 	published   []string
@@ -694,6 +695,26 @@ func (f *fakePages) Update(_ context.Context, e *capture.CapturePage) (*capture.
 	return e, nil
 }
 
+func (f *fakePages) RecordInspection(_ context.Context, e *capture.CapturePage) (bool, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	stored, ok := f.w.pages[e.ID]
+	if !ok || stored.Status != capture.PageReceived {
+		return false, nil
+	}
+	updated := clone(stored)
+	updated.Status = e.Status
+	updated.WidthPx = e.WidthPx
+	updated.HeightPx = e.HeightPx
+	updated.ThumbnailPath = e.ThumbnailPath
+	updated.BlankScore = e.BlankScore
+	updated.Markers = e.Markers
+	updated.FailureMessage = e.FailureMessage
+	f.w.pages[e.ID] = updated
+
+	return true, nil
+}
+
 func (f *fakePages) GetByID(_ context.Context, req repositories.GetCapturePageByIDRequest) (*capture.CapturePage, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
@@ -993,6 +1014,7 @@ type fakeInspector struct{ w *world }
 func (f *fakeInspector) Inspect(_ context.Context, pdf []byte) (*services.CapturePageInspection, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
+	f.w.inspected++
 	if inspection, ok := f.w.inspections[string(pdf)]; ok {
 		return inspection, nil
 	}

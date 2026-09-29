@@ -19797,6 +19797,8 @@ paths:
                                 format: binary
                                 type: string
                     description: OK
+                "304":
+                    description: The reader already holds this page
                 "403":
                     content:
                         application/pdf:

@@ -114,7 +114,8 @@ export function PageThumbnail({
   disabled?: boolean;
 }) {
   const t = useT();
-  const [broken, setBroken] = useState(false);
+  const [brokenPath, setBrokenPath] = useState<string | null>(null);
+  const showImage = page.thumbnailPath !== "" && brokenPath !== page.thumbnailPath;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: page.id,
     disabled,
@@ -142,9 +143,9 @@ export function PageThumbnail({
             disabled ? "cursor-default" : "cursor-grab active:cursor-grabbing",
           )}
         >
-          {broken || page.thumbnailPath === "" ? (
+          {!showImage ? (
             <span className="text-foreground-subtle text-2xs px-2 text-center">
-              {t("No preview")}
+              {page.status === "Received" ? t("Reading page") : t("No preview")}
             </span>
           ) : (
             <img
@@ -152,7 +153,7 @@ export function PageThumbnail({
               alt=""
               loading="lazy"
               draggable={false}
-              onError={() => setBroken(true)}
+              onError={() => setBrokenPath(page.thumbnailPath)}
               className="max-h-full max-w-full object-contain transition-transform"
               style={{
                 transform: `rotate(${rotation}deg) scale(${sideways ? Math.min(aspect, 1 / aspect) : 1})`,
