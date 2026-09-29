@@ -246,6 +246,24 @@ array-of-ids parameter as a subset of one permission resource's records with
   same goes for `x-enumOf`, the source an enum's values were taken from
   (`agenttoolschema.Enum`).
 
+- **Selecting by criteria.** A subset tool that also takes criteria (`transfer_to_billing`'s
+  `allTransferable` with the candidates filters) implements `ToolSelectionResolver`. The
+  dispatch activity resolves the call to concrete ids after the argument contract and
+  before the tier, validation, baseline and filing, so `PendingAction.Arguments` holds the
+  ids, never the criteria: the card, the preview digest and the choices a person may untick
+  pin exactly those records, and execution never evaluates the criteria again. The model's
+  own call stays in the thread as it sent it, and the ledger key is taken from it. A
+  selection that cannot be resolved is refused to the model with the reason.
+
+  The other record-subset tools keep ids only: `attach_order_shipments` (its records come
+  from `search_shipments`, a general search, and the order's own rules decide membership),
+  `release_accounting_sync` (a person-only send to the books from a general list; releasing
+  "everything awaiting approval" unseen is what the tool exists to prevent),
+  `set_carrier_monitoring` (billed per carrier from `list_carriers`, a general list), and
+  `retry_edi_message_delivery` and `reprocess_edi_inbound_files` (general lists of messages
+  and files, capped at `ediservice.MaxBulkEDIActionItems`). None of them has a candidates
+  read that decides each record the way the write would.
+
 A preview still shows at most 20 records, so a subset of more is shown in part; the
 parameter's value is the whole list, and the field's choices list it all. The approval form
 shows each preview record's outcome on its row and the rest by label.

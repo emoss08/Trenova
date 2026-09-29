@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,13 +12,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/core/services/billingtransfercriteria"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 const (
+	paramAllTransferable    = "allTransferable"
 	paramShipmentIDs        = "shipmentIds"
 	paramBillType           = "billType"
 	paramMarkCompletedReady = "markCompletedReadyToInvoice"
@@ -38,7 +43,16 @@ type billingTransferPlanner interface {
 		req *serviceports.BulkTransferShipmentToBillingRequest,
 		actor *serviceports.RequestActor,
 	) (*serviceports.BulkTransferToBillingResponse, error)
+	ListBillingTransferCandidateIDs(
+		ctx context.Context,
+		req *serviceports.ListBillingTransferCandidateIDsRequest,
+	) (*serviceports.BillingTransferCandidateIDsResponse, error)
 }
+
+var errUnapprovedTransferSelection = errors.New(
+	"transfer_to_billing runs only on the shipments a person approved, and this call names " +
+		"none; propose it again so the shipments it resolves to are listed",
+)
 
 type billingTransferRunStarter interface {
 	Start(
@@ -48,9 +62,10 @@ type billingTransferRunStarter interface {
 }
 
 var (
-	_ serviceports.ToolPreviewer      = (*transferToBillingTool)(nil)
-	_ serviceports.ToolValidator      = (*transferToBillingTool)(nil)
-	_ serviceports.ToolResultReporter = (*transferToBillingTool)(nil)
+	_ serviceports.ToolPreviewer         = (*transferToBillingTool)(nil)
+	_ serviceports.ToolValidator         = (*transferToBillingTool)(nil)
+	_ serviceports.ToolResultReporter    = (*transferToBillingTool)(nil)
+	_ serviceports.ToolSelectionResolver = (*transferToBillingTool)(nil)
 )
 
 // transferToBillingTool queues delivered shipments for billing. A set the
@@ -72,39 +87,49 @@ func (t *transferToBillingTool) Name() string { return "transfer_to_billing" }
 
 func (t *transferToBillingTool) Description() string {
 	return "Transfer delivered shipments to the billing queue, as the transfer-to-billing " +
-		"dialog does: each becomes a queue item a biller reviews. Take the ids from " +
-		"list_billing_transfer_candidates and cover every shipment that can go in one call " +
+		"dialog does: each becomes a queue item a biller reviews. When the person means every " +
+		"shipment that can go (all of them, everything ready), set allTransferable to true, " +
+		"with the same filters list_billing_transfer_candidates takes, instead of copying ids: " +
+		"the proposal lists each shipment it resolves to. For a hand-picked set, give " +
+		"shipmentIds from list_billing_transfer_candidates. Cover every shipment in one call " +
 		"rather than one call per shipment; a shipment the checks refuse is reported, not " +
 		"transferred, and the rest still go. The person approving may untick shipments. " +
 		"Up to 100 transfer at once; more run as a background transfer."
 }
 
 func (t *transferToBillingTool) ParamSchema() map[string]any {
-	return map[string]any{
-		toolschema.KeyType: toolschema.TypeObject,
-		toolschema.KeyProperties: map[string]any{
-			paramShipmentIDs: toolschema.RecordSubset(permission.ResourceShipment.String(),
-				map[string]any{
-					toolschema.KeyType: toolschema.TypeArray,
-					toolschema.KeyDescription: "The shipments to transfer, by id from " +
-						"list_billing_transfer_candidates. Never guess one.",
-					toolschema.KeyMinItems: 1,
-					toolschema.KeyMaxItems: serviceports.MaxBillingTransferCandidateIDs,
-					toolschema.KeyItems: map[string]any{
-						toolschema.KeyType: toolschema.TypeString,
-					},
-				}),
-			paramBillType: agenttoolschema.Enum(
-				"What the queue items bill. Defaults to Invoice.", transferBillTypes,
-			),
-			paramMarkCompletedReady: map[string]any{
-				toolschema.KeyType: toolschema.TypeBoolean,
-				toolschema.KeyDescription: "Mark Completed shipments ready to invoice first, as " +
-					"the dialog can. Defaults to false, which leaves a Completed shipment where " +
-					"it is.",
+	properties := billingtransfercriteria.Properties()
+	properties[paramAllTransferable] = map[string]any{
+		toolschema.KeyType: toolschema.TypeBoolean,
+		toolschema.KeyDescription: "True to transfer every shipment " +
+			"list_billing_transfer_candidates says would transfer, narrowed by query, status, " +
+			"customerId, deliveredFrom and deliveredTo. Use it instead of shipmentIds, never " +
+			"with them.",
+	}
+	properties[paramShipmentIDs] = toolschema.RecordSubset(permission.ResourceShipment.String(),
+		map[string]any{
+			toolschema.KeyType: toolschema.TypeArray,
+			toolschema.KeyDescription: "The shipments to transfer, by id from " +
+				"list_billing_transfer_candidates, when not allTransferable. Never guess one.",
+			toolschema.KeyMinItems: 1,
+			toolschema.KeyMaxItems: serviceports.MaxBillingTransferCandidateIDs,
+			toolschema.KeyItems: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
 			},
-		},
-		toolschema.KeyRequired:             []string{paramShipmentIDs},
+		})
+	properties[paramBillType] = agenttoolschema.Enum(
+		"What the queue items bill. Defaults to Invoice.", transferBillTypes,
+	)
+	properties[paramMarkCompletedReady] = map[string]any{
+		toolschema.KeyType: toolschema.TypeBoolean,
+		toolschema.KeyDescription: "Mark Completed shipments ready to invoice first, as " +
+			"the dialog can. Defaults to false, which leaves a Completed shipment where " +
+			"it is.",
+	}
+
+	return map[string]any{
+		toolschema.KeyType:                 toolschema.TypeObject,
+		toolschema.KeyProperties:           properties,
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -135,12 +160,12 @@ var transferBillTypes = agenttoolschema.Source("billingQueue.billType", []billin
 	billingqueue.BillTypeDebitMemo,
 })
 
-// transferRequest is what both the preview and the write act on: the
-// shipments, once each, and how to bill them.
 type transferRequest struct {
 	shipmentIDs []pulid.ID
 	billType    billingqueue.BillType
 	markReady   bool
+	all         bool
+	criteria    billingtransfercriteria.Criteria
 }
 
 func (r transferRequest) background() bool {
@@ -154,6 +179,51 @@ func (t *transferToBillingTool) request(
 		return transferRequest{}, err
 	}
 
+	request := transferRequest{
+		billType:  billingqueue.BillTypeInvoice,
+		markReady: optionalBool(params.Params, paramMarkCompletedReady),
+		all:       optionalBool(params.Params, paramAllTransferable),
+	}
+	if raw := optionalString(params.Params, paramBillType); raw != "" {
+		request.billType = billingqueue.BillType(raw)
+		if !isBillType(request.billType) {
+			return transferRequest{}, fmt.Errorf(
+				"billType %q is not one of %s", raw, strings.Join(transferBillTypes.Names(), ", "),
+			)
+		}
+	}
+
+	named := params.Params[paramShipmentIDs] != nil
+	filters := billingtransfercriteria.Given(params.Params)
+	switch {
+	case named && request.all:
+		return transferRequest{}, errors.New(
+			"give shipmentIds or allTransferable, not both",
+		)
+	case !named && !request.all:
+		return transferRequest{}, errors.New(
+			"name the shipments in shipmentIds, or set allTransferable to true to transfer " +
+				"every shipment list_billing_transfer_candidates says would transfer",
+		)
+	case named && len(filters) > 0:
+		return transferRequest{}, fmt.Errorf(
+			"%s only narrow allTransferable; leave them out when naming shipmentIds",
+			strings.Join(filters, ", "),
+		)
+	}
+
+	if request.all {
+		criteria, err := billingtransfercriteria.Read(
+			params.Params, filtercatalog.NewClock(params.Timezone),
+		)
+		if err != nil {
+			return transferRequest{}, err
+		}
+		request.criteria = criteria
+
+		return request, nil
+	}
+
 	ids, err := requirePulidSlice(
 		params.Params,
 		paramShipmentIDs,
@@ -162,22 +232,106 @@ func (t *transferToBillingTool) request(
 	if err != nil {
 		return transferRequest{}, err
 	}
+	request.shipmentIDs = sliceutils.Dedupe(ids)
 
-	billType := billingqueue.BillTypeInvoice
-	if raw := optionalString(params.Params, paramBillType); raw != "" {
-		billType = billingqueue.BillType(raw)
-		if !isBillType(billType) {
-			return transferRequest{}, fmt.Errorf(
-				"billType %q is not one of %s", raw, strings.Join(transferBillTypes.Names(), ", "),
-			)
-		}
+	return request, nil
+}
+
+func (t *transferToBillingTool) ResolveSelection(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+) (map[string]any, error) {
+	request, err := t.request(&params)
+	if err != nil {
+		return nil, err
+	}
+	if !request.all {
+		return params.Params, nil
 	}
 
-	return transferRequest{
-		shipmentIDs: sliceutils.Dedupe(ids),
-		billType:    billType,
-		markReady:   optionalBool(params.Params, paramMarkCompletedReady),
-	}, nil
+	ids, _, err := t.transferable(ctx, &params, &request)
+	if err != nil {
+		return nil, err
+	}
+
+	resolved := make(map[string]any, len(params.Params)+1)
+	for key, value := range params.Params {
+		if key == paramAllTransferable || billingtransfercriteria.IsParam(key) {
+			continue
+		}
+		resolved[key] = value
+	}
+	named := make([]any, 0, len(ids))
+	for _, id := range ids {
+		named = append(named, id.String())
+	}
+	resolved[paramShipmentIDs] = named
+
+	return resolved, nil
+}
+
+func (t *transferToBillingTool) transferable(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+	request *transferRequest,
+) ([]pulid.ID, *serviceports.BillingTransferPlan, error) {
+	tenant := tenantFrom(*params)
+	candidates, err := t.shipments.ListBillingTransferCandidateIDs(
+		ctx,
+		&serviceports.ListBillingTransferCandidateIDsRequest{
+			Filter: request.criteria.QueryOptions(tenant, pagination.Info{}),
+			Status: request.criteria.Status,
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if candidates.Truncated {
+		return nil, nil, fmt.Errorf(
+			"%d shipments match, more than one transfer takes (%d); narrow the selection "+
+				"with status, customerId, query or a delivery window",
+			candidates.TotalCount, serviceports.MaxBillingTransferCandidateIDs,
+		)
+	}
+	if len(candidates.IDs) == 0 {
+		return nil, nil, errors.New(
+			"no shipment outside the billing queue matches; list_billing_transfer_candidates " +
+				"with the same filters shows what is waiting",
+		)
+	}
+
+	plan, err := t.shipments.PlanBillingTransfers(ctx, &serviceports.PlanBillingTransfersRequest{
+		TenantInfo:                  tenant,
+		ShipmentIDs:                 candidates.IDs,
+		MarkCompletedReadyToInvoice: request.markReady,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	going := &serviceports.BillingTransferPlan{
+		Decisions: make([]serviceports.BillingTransferDecision, 0, plan.Transfer),
+	}
+	ids := make([]pulid.ID, 0, plan.Transfer)
+	for idx := range plan.Decisions {
+		decision := &plan.Decisions[idx]
+		if !decision.Outcome.Transfers() {
+			continue
+		}
+		ids = append(ids, decision.ShipmentID)
+		going.Decisions = append(going.Decisions, *decision)
+	}
+	going.Transfer = len(ids)
+	if len(ids) == 0 {
+		return nil, nil, fmt.Errorf(
+			"none of the %d shipments these filters select would transfer as it stands "+
+				"(%d refused, %d left with operations); list_billing_transfer_candidates says "+
+				"why each one is held",
+			len(plan.Decisions), plan.Refused, plan.Returned,
+		)
+	}
+
+	return ids, going, nil
 }
 
 func isBillType(billType billingqueue.BillType) bool {
@@ -221,6 +375,9 @@ func (t *transferToBillingTool) ExecuteWithResult(
 	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
+	}
+	if request.all {
+		return nil, errUnapprovedTransferSelection
 	}
 
 	if request.background() {

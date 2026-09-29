@@ -924,6 +924,11 @@ commands changed. An evaluation keeps no baseline, a retried activity's orphan i
 by the expiry sweep inside its activity, and a settled step replayed from the ledger
 never previews again. See [proposal-previews.md](proposal-previews.md).
 
+Resolving a criteria selection to records (`ToolSelectionResolver`, `transfer_to_billing`'s
+`allTransferable`) took no gate: it happens inside the dispatch activity, the ledger key is
+still derived from the model's own arguments, and only the activity's result changes. See
+[proposal-previews.md](proposal-previews.md#record-subsets).
+
 Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an
 execution opened before it never takes the new branch. Keeping the hand-off's

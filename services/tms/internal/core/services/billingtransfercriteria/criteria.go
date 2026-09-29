@@ -69,6 +69,10 @@ func Properties() map[string]any {
 	}
 }
 
+func IsParam(name string) bool {
+	return slices.Contains(paramNames, name)
+}
+
 func Given(params map[string]any) []string {
 	given := make([]string, 0, len(paramNames))
 	for _, name := range paramNames {
