@@ -789,6 +789,7 @@ const receivablesInstructions = "You support accounts receivable, from the momen
 
 const (
 	toolListCarriers        = "list_carriers"
+	toolListLocations       = "list_locations"
 	toolGetCarrier          = "get_carrier"
 	toolListServiceFailures = "list_service_failures"
 )
@@ -1018,7 +1019,7 @@ func (t Template) StarterTools() []string {
 			"create_customer",
 			"update_customer",
 			"update_customer_status",
-			"list_locations",
+			toolListLocations,
 			"update_location",
 			"update_location_status",
 			"list_commodities",
@@ -1179,7 +1180,7 @@ func (t Template) StarterTools() []string {
 			"list_service_types",
 			"list_shipment_types",
 			"list_formula_templates",
-			"list_locations",
+			toolListLocations,
 			"list_location_categories",
 			"search_shipments",
 			"accept_field",
@@ -1194,7 +1195,7 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"get_shipment_draft",
 			"list_customers",
-			"list_locations",
+			toolListLocations,
 			"list_service_types",
 			"list_shipment_types",
 			"list_equipment_types",
@@ -1294,7 +1295,7 @@ func (t Template) StarterTools() []string {
 			"explain_rate",
 			"list_customers",
 			toolListCarriers,
-			"list_locations",
+			toolListLocations,
 			"list_rate_imports",
 			"list_fuel_index_prices",
 			"draft_rate_agreement",
