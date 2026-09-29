@@ -290,15 +290,8 @@ func (s *Service) ListDefinitions(
 }
 
 func (s *Service) DeleteDefinition(ctx context.Context, req *GetDefinitionRequest) error {
-	existing, err := s.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
-		TenantInfo:   req.TenantInfo,
-		DefinitionID: req.DefinitionID,
-	})
-	if err != nil {
+	if _, err := s.PlanDeleteDefinition(ctx, req); err != nil {
 		return err
-	}
-	if existing.OwnerID != req.TenantInfo.UserID {
-		return errortypes.NewAuthorizationError("Only the report owner can delete this report")
 	}
 
 	return s.defRepo.Delete(ctx, &repositories.DeleteReportDefinitionRequest{

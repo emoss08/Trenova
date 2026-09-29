@@ -319,6 +319,74 @@ func (_c *MockDistanceCalculationService_BackfillJurisdictionMiles_Call) RunAndR
 	return _c
 }
 
+// PlanMoveJurisdictionMiles provides a mock function for the type MockDistanceCalculationService
+func (_mock *MockDistanceCalculationService) PlanMoveJurisdictionMiles(ctx context.Context, req *services.RecalculateMoveJurisdictionMilesRequest) (*services.MoveJurisdictionMilesPlan, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PlanMoveJurisdictionMiles")
+	}
+
+	var r0 *services.MoveJurisdictionMilesPlan
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RecalculateMoveJurisdictionMilesRequest) (*services.MoveJurisdictionMilesPlan, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RecalculateMoveJurisdictionMilesRequest) *services.MoveJurisdictionMilesPlan); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.MoveJurisdictionMilesPlan)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.RecalculateMoveJurisdictionMilesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PlanMoveJurisdictionMiles'
+type MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call struct {
+	*mock.Call
+}
+
+// PlanMoveJurisdictionMiles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.RecalculateMoveJurisdictionMilesRequest
+func (_e *MockDistanceCalculationService_Expecter) PlanMoveJurisdictionMiles(ctx any, req any) *MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call {
+	return &MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call{Call: _e.mock.On("PlanMoveJurisdictionMiles", ctx, req)}
+}
+
+func (_c *MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call) Run(run func(ctx context.Context, req *services.RecalculateMoveJurisdictionMilesRequest)) *MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.RecalculateMoveJurisdictionMilesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.RecalculateMoveJurisdictionMilesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call) Return(moveJurisdictionMilesPlan *services.MoveJurisdictionMilesPlan, err error) *MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call {
+	_c.Call.Return(moveJurisdictionMilesPlan, err)
+	return _c
+}
+
+func (_c *MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call) RunAndReturn(run func(ctx context.Context, req *services.RecalculateMoveJurisdictionMilesRequest) (*services.MoveJurisdictionMilesPlan, error)) *MockDistanceCalculationService_PlanMoveJurisdictionMiles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PreviewRecalculateShipment provides a mock function for the type MockDistanceCalculationService
 func (_mock *MockDistanceCalculationService) PreviewRecalculateShipment(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.ShipmentDistancePreview, error) {
 	ret := _mock.Called(ctx, shipmentID, tenantInfo)

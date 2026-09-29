@@ -171,6 +171,12 @@ type AgentRun {
   traceId: String!
   "The run's trace in the tracing backend, when one is configured and the run has a trace."
   traceUrl: String
+  "What handed the run its task: AssistantTurn for a task a conversation's agent handed to this one. Absent for a run nothing handed a task."
+  parentOwnerKind: AgentRunEventOwnerKind
+  "The turn or run that handed the run its task. Empty for a run nothing handed a task."
+  parentOwnerId: ID!
+  "The delegate_task call that handed the run its task. Empty for a run nothing handed a task."
+  delegateCallId: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

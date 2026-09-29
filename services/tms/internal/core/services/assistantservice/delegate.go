@@ -120,7 +120,7 @@ func (s *Service) OpenDelegate(
 		Definition: delegate,
 		Actor:      req.Actor,
 		Context:    s.delegateContext(ctx, parent, delegate, req),
-		Input:      req.Call.Task,
+		Input:      agentruntime.DelegateInput(req.Call.Task, req.Call.Context),
 		ThreadID:   req.ThreadID,
 		// Earlier proposals keep the delegate from proposing again a write
 		// that is already waiting on the person.
@@ -195,47 +195,4 @@ func IsDelegateDeclined(err error) (*DelegateDeclinedError, bool) {
 	}
 
 	return nil, false
-}
-
-// persistDelegatedProposals records the writes each agent the turn handed a
-// task to proposed or made, as that agent's own: a run of its definition in
-// this conversation, so a decision on one is a decision on it, and its trust
-// is what the decision teaches. The follow-up after a decision still comes to
-// this conversation, whose agent is the one the person is talking to.
-func (s *Service) persistDelegatedProposals(
-	ctx context.Context,
-	params persistProposalsParams,
-	delegations []services.DelegatedRun,
-) ([]services.AssistantProposal, error) {
-	proposals := make([]services.AssistantProposal, 0, len(delegations))
-	var failures []error
-	for idx := range delegations {
-		delegation := &delegations[idx]
-		if delegation.Definition == nil || len(delegation.Actions) == 0 {
-			continue
-		}
-
-		recorded, err := s.persistProposals(ctx, persistProposalsParams{
-			TurnID:         params.TurnID,
-			DelegateCallID: delegation.CallID,
-			Failed:         params.Failed || delegation.Failed,
-			Definition:     delegation.Definition,
-			Thread:         params.Thread,
-			Actor:          params.Actor,
-			Saved:          params.Saved,
-			Actions:        delegation.Actions,
-			Model:          delegation.Model,
-			Input:          delegation.Input,
-			Artifacts:      params.Artifacts,
-			Taint:          delegation.Taint,
-		})
-		if err != nil {
-			failures = append(failures, fmt.Errorf("record %s's proposals: %w",
-				delegation.Definition.Name, err))
-			continue
-		}
-		proposals = append(proposals, recorded...)
-	}
-
-	return proposals, errors.Join(failures...)
 }

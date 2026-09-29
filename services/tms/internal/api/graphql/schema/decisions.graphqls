@@ -75,6 +75,8 @@ extend type AgentPlan {
 extend type AgentRun {
   "The agent definition behind the run; absent for runs of the retired built-in agents."
   definition: AgentDefinition
+  "The agent that handed the run its task, for the run of an agent a conversation's agent asked; absent otherwise, and for an agent deleted since."
+  handedBy: AgentDefinition
 }
 
 extend type Query {

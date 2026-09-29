@@ -72,11 +72,16 @@ func TestSendMessageStream_AnswersADecision(t *testing.T) {
 func TestSendMessageStream_SaysWhyAnApprovedChangeFailed(t *testing.T) {
 	t.Parallel()
 
+	refused := errortypes.NewMultiError()
+	refused.Add("bol", errortypes.ErrDuplicate,
+		"BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009")
+	refused.Add("formulaTemplateId", errortypes.ErrRequired,
+		"Choose a rating method: no rate agreement covers this lane")
 	proposal := &agent.AgentProposal{
 		ID:             pulid.MustNew("ap_"),
-		ToolName:       "create_dashboard",
+		ToolName:       "create_shipment",
 		Status:         agent.ProposalStatusExecutionFailed,
-		ExecutionError: "tiles[0].definitionId: This report is not available.\nwrapped: cause",
+		ExecutionError: refused.Error(),
 	}
 	svc, conversations, _ := followUpService(t, proposal)
 	actor := testActor()
@@ -88,8 +93,56 @@ func TestSendMessageStream_SaysWhyAnApprovedChangeFailed(t *testing.T) {
 	}, actor, nil)
 	require.NoError(t, err)
 
-	assert.Contains(t, conversations.appended[0].Content,
-		"but it failed when it ran: tiles[0].definitionId: This report is not available.")
+	headline := decisionHeadline(conversations.appended[0].Content)
+	assert.Equal(t,
+		"Approved create_shipment, but it failed when it ran: validation failed: "+
+			"bol: BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009; "+
+			"formulaTemplateId: Choose a rating method: no rate agreement covers this lane",
+		headline,
+		"the person reads why, not a bare \"validation failed:\"")
+}
+
+func TestExecutionFailureReason_KeepsTheListedProblems(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		text string
+		want string
+	}{
+		{
+			name: "one line with wrapped causes after it",
+			text: "tiles[0].definitionId: This report is not available.\nwrapped: cause",
+			want: "tiles[0].definitionId: This report is not available.",
+		},
+		{
+			name: "a header and its problems",
+			text: "validation failed:\n- bol: taken\n- weight: too heavy",
+			want: "validation failed: bol: taken; weight: too heavy",
+		},
+		{
+			name: "no more than five problems",
+			text: "validation failed:\n- a: 1\n- b: 2\n- c: 3\n- d: 4\n- e: 5\n- f: 6\n- g: 7",
+			want: "validation failed: a: 1; b: 2; c: 3; d: 4; e: 5; and 2 more",
+		},
+		{
+			name: "problems end at the first line that is not one",
+			text: "validation failed:\n- a: 1\ncaused by: x\n- b: 2",
+			want: "validation failed: a: 1",
+		},
+		{
+			name: "nothing",
+			text: "  ",
+			want: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, executionFailureReason(tt.text))
+		})
+	}
 }
 
 func TestSendMessageStream_RefusesAFollowUpThatCannotBeAnswered(t *testing.T) {

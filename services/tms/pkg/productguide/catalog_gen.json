@@ -1,5 +1,5 @@
 {
-  "version": "sha256:613be625bc096c3484441fbb6f156a7928135467aeaff8f91ece6d27907d34d4",
+  "version": "sha256:cdd873e59fb176b741e99553ba24e77cda514d988cd3462ed025d6b076d255cb",
   "modules": [
     {
       "id": "home",
@@ -2944,7 +2944,7 @@
         "Billing controls"
       ],
       "description": "Configure and manage your billing control settings",
-      "summary": "Billing control holds the organization-wide rules for billing. The page is one settings form in five cards: **Invoice defaults** (what invoices show and the fallback payment term, terms and footer), **Automation policy** (how shipments move into billing and whether invoices are drafted and posted automatically), **Exception policy** (how missing billing requirements and rate variances are handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late charges** (whether the nightly late-charge run raises debit memos).\n\nBilling managers and finance leads use it. A warning at the top of the page notes that these settings affect revenue processing and invoicing, and should change only after review.",
+      "summary": "Billing control holds the organization-wide rules for billing. The page is one settings form in five cards: **Invoice defaults** (what invoices show and the fallback payment term, terms and footer), **Automation policy** (how shipments move into billing and whether invoices are drafted and posted automatically), **Exception policy** (how missing billing requirements and rate variances are handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late charges** (whether the nightly late-charge run raises debit memos).\n\nUnless the unrated shipment disposition is to zero the rate and flag it for review, a shipment that nothing can price is refused wherever it is entered: the shipment form, the API, an agent, or a copy of another shipment. Choose a rating method on the shipment, or set a fallback formula template here.\n\nBilling managers and finance leads use it. A warning at the top of the page notes that these settings affect revenue processing and invoicing, and should change only after review.",
       "requires": [
         {
           "resource": "billing_control",
@@ -15569,6 +15569,15 @@
       }
     },
     {
+      "entity": "fuel_purchase",
+      "label": "Fuel purchase",
+      "path": "/fuel/purchases",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
       "entity": "invoice",
       "label": "Invoice",
       "path": "/billing/invoices",
@@ -15613,6 +15622,15 @@
       "entity": "order",
       "label": "Order",
       "path": "/shipment-management/orders",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
+      "entity": "rate_agreement",
+      "label": "Rate agreement",
+      "path": "/billing/rate-agreements",
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"

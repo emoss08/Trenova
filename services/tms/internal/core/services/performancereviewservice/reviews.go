@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -65,45 +64,12 @@ func (s *Service) CreateReview(
 		zap.String("workerId", req.WorkerID.String()),
 	)
 
-	if _, err := s.loadWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
-		return nil, err
-	}
-	template, err := s.repo.GetTemplateByID(ctx, &repositories.GetReviewTemplateByIDRequest{
-		ID:         req.TemplateID,
-		TenantInfo: req.TenantInfo,
-	})
+	entity, err := s.PlanCreateReview(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if template.Status != domaintypes.StatusActive {
-		return nil, errortypes.NewValidationError(
-			"templateId",
-			errortypes.ErrInvalidOperation,
-			"Inactive templates cannot be used for a new review",
-		)
-	}
-
-	entity := &worker.PerformanceReview{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		WorkerID:       req.WorkerID,
-		TemplateID:     req.TemplateID,
-		ReviewerID:     req.UserID,
-		Status:         worker.ReviewStatusDraft,
-		Title:          strings.TrimSpace(req.Title),
-		PeriodStart:    req.PeriodStart,
-		PeriodEnd:      req.PeriodEnd,
-		Ratings:        worker.RatingsFromTemplate(template),
-		Goals:          []worker.ReviewGoal{},
-	}
-	if entity.Title == "" {
-		entity.Title = template.Name + " — " + timeutils.FormatUnixDateIn(req.PeriodEnd, "")
-	}
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	template := entity.Template
+	entity.Template = nil
 
 	created, err := s.repo.CreateReview(ctx, entity)
 	if err != nil {
@@ -144,39 +110,11 @@ func (s *Service) UpdateReview(
 ) (*worker.PerformanceReview, error) {
 	log := s.l.With(zap.String("operation", "UpdateReview"), zap.String("id", req.ID.String()))
 
-	original, err := s.loadReview(ctx, req.TenantInfo, req.ID, req.Version)
+	change, err := s.PlanUpdateReview(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != worker.ReviewStatusDraft {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only a draft can be edited. Reopen the review or start a new one",
-		)
-	}
-
-	updated := *original
-	if title := strings.TrimSpace(req.Title); title != "" {
-		updated.Title = title
-	}
-	if req.PeriodStart > 0 {
-		updated.PeriodStart = req.PeriodStart
-	}
-	if req.PeriodEnd > 0 {
-		updated.PeriodEnd = req.PeriodEnd
-	}
-	updated.Ratings = mergeRatings(original.Ratings, req.Ratings)
-	updated.OverallScore = worker.ComputeOverallScore(updated.Ratings)
-	updated.Summary = strings.TrimSpace(req.Summary)
-	updated.Strengths = strings.TrimSpace(req.Strengths)
-	updated.Improvements = strings.TrimSpace(req.Improvements)
-	updated.Goals = normalizeGoals(req.Goals)
-	multiErr := errortypes.NewMultiError()
-	updated.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	original, updated := change.Before, *change.After
 
 	saved, err := s.repo.UpdateReview(ctx, &updated)
 	if err != nil {
@@ -439,16 +377,9 @@ func (s *Service) DeleteReview(
 ) error {
 	log := s.l.With(zap.String("operation", "DeleteReview"), zap.String("id", id.String()))
 
-	original, err := s.loadReview(ctx, tenantInfo, id, 0)
+	original, err := s.PlanDeleteReview(ctx, tenantInfo, id)
 	if err != nil {
 		return err
-	}
-	if original.Status != worker.ReviewStatusDraft {
-		return errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only drafts can be deleted",
-		)
 	}
 	if err = s.repo.DeleteReview(ctx, &repositories.GetPerformanceReviewByIDRequest{
 		ID:         id,

@@ -23,7 +23,57 @@ func (s *Service) Submit(
 	ctx context.Context,
 	req *ApprovalActionRequest,
 ) (*rateagreement.RateAgreement, error) {
-	return s.approvals().Apply(ctx, req, agreementTransition{
+	return s.Review(ctx, ReviewSubmit, req)
+}
+
+// Approve activates an agreement, which is the moment it starts pricing
+// shipments. Nothing else in the system turns rating on for a contract.
+func (s *Service) Approve(
+	ctx context.Context,
+	req *ApprovalActionRequest,
+) (*rateagreement.RateAgreement, error) {
+	return s.Review(ctx, ReviewApprove, req)
+}
+
+// Reject sends an agreement back to draft, and insists on a reason.
+func (s *Service) Reject(
+	ctx context.Context,
+	req *ApprovalActionRequest,
+) (*rateagreement.RateAgreement, error) {
+	return s.Review(ctx, ReviewReject, req)
+}
+
+// Suspend takes an active agreement out of service without ending it.
+//
+// This is the lever for a customer on credit hold or a carrier who has let
+// their insurance lapse: shipments stop rating against the contract
+// immediately, and resuming does not require another approval round.
+func (s *Service) Suspend(
+	ctx context.Context,
+	req *ApprovalActionRequest,
+) (*rateagreement.RateAgreement, error) {
+	return s.Review(ctx, ReviewSuspend, req)
+}
+
+// Resume puts a suspended agreement back in service.
+func (s *Service) Resume(
+	ctx context.Context,
+	req *ApprovalActionRequest,
+) (*rateagreement.RateAgreement, error) {
+	return s.Review(ctx, ReviewResume, req)
+}
+
+// Archive retires an agreement permanently. It is kept rather than deleted
+// because every quote it ever produced points at it.
+func (s *Service) Archive(
+	ctx context.Context,
+	req *ApprovalActionRequest,
+) (*rateagreement.RateAgreement, error) {
+	return s.Review(ctx, ReviewArchive, req)
+}
+
+func submitTransition() agreementTransition {
+	return agreementTransition{
 		Operation:    "Submit",
 		From:         rateagreement.StatusDraft,
 		To:           rateagreement.StatusInReview,
@@ -39,16 +89,11 @@ func (s *Service) Submit(
 			agreement.SubmittedAt = &now
 			agreement.ReviewComment = r.Comment
 		},
-	})
+	}
 }
 
-// Approve activates an agreement, which is the moment it starts pricing
-// shipments. Nothing else in the system turns rating on for a contract.
-func (s *Service) Approve(
-	ctx context.Context,
-	req *ApprovalActionRequest,
-) (*rateagreement.RateAgreement, error) {
-	return s.approvals().Apply(ctx, req, agreementTransition{
+func approveTransition() agreementTransition {
+	return agreementTransition{
 		Operation:    "Approve",
 		From:         rateagreement.StatusInReview,
 		To:           rateagreement.StatusActive,
@@ -64,19 +109,15 @@ func (s *Service) Approve(
 			agreement.ApprovedAt = &now
 			agreement.ReviewComment = r.Comment
 		},
-	})
+	}
 }
 
-// Reject sends an agreement back to draft, and insists on a reason.
-func (s *Service) Reject(
-	ctx context.Context,
-	req *ApprovalActionRequest,
-) (*rateagreement.RateAgreement, error) {
+func rejectTransition(req *ApprovalActionRequest) (agreementTransition, error) {
 	if err := approvalworkflow.RequireComment(req, "rejecting a rate agreement"); err != nil {
-		return nil, err
+		return agreementTransition{}, err
 	}
 
-	return s.approvals().Apply(ctx, req, agreementTransition{
+	return agreementTransition{
 		Operation:    "Reject",
 		From:         rateagreement.StatusInReview,
 		To:           rateagreement.StatusDraft,
@@ -91,87 +132,63 @@ func (s *Service) Reject(
 			agreement.SubmittedAt = nil
 			agreement.ReviewComment = r.Comment
 		},
-	})
+	}, nil
 }
 
-// Suspend takes an active agreement out of service without ending it.
-//
-// This is the lever for a customer on credit hold or a carrier who has let
-// their insurance lapse: shipments stop rating against the contract
-// immediately, and resuming does not require another approval round.
-func (s *Service) Suspend(
-	ctx context.Context,
-	req *ApprovalActionRequest,
-) (*rateagreement.RateAgreement, error) {
+func suspendTransition(req *ApprovalActionRequest) (agreementTransition, error) {
 	if err := approvalworkflow.RequireComment(req, "suspending a rate agreement"); err != nil {
-		return nil, err
+		return agreementTransition{}, err
 	}
 
-	return s.approvals().Apply(ctx, req, agreementTransition{
+	return agreementTransition{
 		Operation:    "Suspend",
 		From:         rateagreement.StatusActive,
 		To:           rateagreement.StatusSuspended,
 		PermissionOp: permission.OpUpdate,
 		AuditComment: "Rate agreement suspended",
-		Apply: func(
-			agreement *rateagreement.RateAgreement,
-			r *ApprovalActionRequest,
-			_ int64,
-		) {
-			agreement.ReviewComment = r.Comment
-		},
-	})
+		Apply:        stampReviewComment,
+	}, nil
 }
 
-// Resume puts a suspended agreement back in service.
-func (s *Service) Resume(
-	ctx context.Context,
-	req *ApprovalActionRequest,
-) (*rateagreement.RateAgreement, error) {
-	return s.approvals().Apply(ctx, req, agreementTransition{
+func resumeTransition() agreementTransition {
+	return agreementTransition{
 		Operation:    "Resume",
 		From:         rateagreement.StatusSuspended,
 		To:           rateagreement.StatusActive,
 		PermissionOp: permission.OpUpdate,
 		AuditComment: "Rate agreement resumed",
-		Apply: func(
-			agreement *rateagreement.RateAgreement,
-			r *ApprovalActionRequest,
-			_ int64,
-		) {
-			agreement.ReviewComment = r.Comment
-		},
-	})
+		Apply:        stampReviewComment,
+	}
 }
 
-// Archive retires an agreement permanently. It is kept rather than deleted
-// because every quote it ever produced points at it.
-func (s *Service) Archive(
+func (s *Service) archiveTransition(
 	ctx context.Context,
 	req *ApprovalActionRequest,
-) (*rateagreement.RateAgreement, error) {
+) (agreementTransition, error) {
 	agreement, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
 		RateAgreementID: req.EntityID,
 		TenantInfo:      req.TenantInfo,
 	})
 	if err != nil {
-		return nil, err
+		return agreementTransition{}, err
 	}
 
-	return s.approvals().Apply(ctx, req, agreementTransition{
+	return agreementTransition{
 		Operation:    "Archive",
 		From:         agreement.Status,
 		To:           rateagreement.StatusArchived,
 		PermissionOp: permission.OpArchive,
 		AuditComment: "Rate agreement archived",
-		Apply: func(
-			a *rateagreement.RateAgreement,
-			r *ApprovalActionRequest,
-			_ int64,
-		) {
-			a.ReviewComment = r.Comment
-		},
-	})
+		Apply:        stampReviewComment,
+	}, nil
+}
+
+func stampReviewComment(
+	agreement *rateagreement.RateAgreement,
+	r *ApprovalActionRequest,
+	_ int64,
+) {
+	agreement.ReviewComment = r.Comment
 }
 
 // approvals binds the shared review cycle to this service.

@@ -100,6 +100,37 @@ func (r *repository) GetThreadOwned(
 	return entity, nil
 }
 
+func (r *repository) ListThreadAgentsByIDs(
+	ctx context.Context,
+	req repositories.ListThreadAgentsByIDsRequest,
+) ([]*conversation.Thread, error) {
+	if len(req.IDs) == 0 {
+		return []*conversation.Thread{}, nil
+	}
+
+	cols := buncolgen.ThreadColumns
+	threads := make([]*conversation.Thread, 0, len(req.IDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&threads).
+		Column(
+			cols.ID.Bare(),
+			cols.OrganizationID.Bare(),
+			cols.BusinessUnitID.Bare(),
+			cols.AgentDefinitionID.Bare(),
+		).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.List(req.IDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list thread agents by ids: %w", err)
+	}
+
+	return threads, nil
+}
+
 func (r *repository) ListThreads(
 	ctx context.Context,
 	req repositories.ListThreadsRequest,

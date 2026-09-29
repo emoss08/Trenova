@@ -189,7 +189,10 @@ digest per proposal: a mismatch fails that proposal alone, and a proposal withou
 approved unreviewed. Withheld parts do not block an approval; the count is recorded in the
 decision's preview.
 
-A plan (`agentplanservice.Decide`) previews its steps once, refuses a stale plan and a plan
+A plan's steps may be filed by several agents of one turn (the conversation's agent and
+an agent it handed a task to); each step keeps the run of the agent that filed it, and
+the plan is refused while any of those agents is behind a shadow switch. A plan
+(`agentplanservice.Decide`) previews its steps once, refuses a stale plan and a plan
 digest that no longer matches, and hands each step the preview it was approved on
 (`StepPreview`, `StepPreviewReviewed`, server-only fields). A later step on a record an
 earlier step changed runs against the version that step left

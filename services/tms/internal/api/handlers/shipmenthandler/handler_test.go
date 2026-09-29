@@ -127,6 +127,20 @@ func (s *permitServiceStub) UpdatePermit(
 	panic("unexpected UpdatePermit call")
 }
 
+func (s *permitServiceStub) PlanCreatePermit(
+	context.Context,
+	*permit.Permit,
+) (*permit.Permit, error) {
+	panic("unexpected PlanCreatePermit call")
+}
+
+func (s *permitServiceStub) PlanUpdatePermit(
+	context.Context,
+	*permit.Permit,
+) (*servicesport.RecordChange[permit.Permit], error) {
+	panic("unexpected PlanUpdatePermit call")
+}
+
 func (s *permitServiceStub) WaiveRequirement(
 	context.Context,
 	*servicesport.WaiveRequirementRequest,

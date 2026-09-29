@@ -2,12 +2,10 @@ package workersafetyservice
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -47,38 +45,9 @@ func (s *Service) RecordViolation(
 		zap.String("eventId", req.SafetyEventID.String()),
 	)
 
-	event, err := s.repo.GetEventByID(ctx, &repositories.GetWorkerSafetyEventByIDRequest{
-		ID:         req.SafetyEventID,
-		TenantInfo: req.TenantInfo,
-	})
+	entity, err := s.PlanRecordViolation(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-
-	entity := &worker.WorkerSafetyViolation{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		SafetyEventID:  event.ID,
-		WorkerID:       event.WorkerID,
-		Basic:          req.Basic,
-		Code:           strings.TrimSpace(req.Code),
-		Description:    strings.TrimSpace(req.Description),
-		SeverityWeight: req.SeverityWeight,
-		OutOfService:   req.OutOfService,
-	}
-	if entity.SeverityWeight <= 0 {
-		entity.SeverityWeight = 1
-	}
-	// An unstated BASIC falls back to what the event itself implies, so a clerk
-	// keying an inspection does not have to classify every line to record one.
-	if entity.Basic == "" {
-		entity.Basic = worker.SuggestedBasic(event.Kind, event.InspectionResult)
-	}
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	created, err := s.repo.CreateViolation(ctx, entity)
@@ -118,40 +87,12 @@ func (s *Service) UpdateViolation(
 ) (*worker.WorkerSafetyViolation, error) {
 	log := s.l.With(zap.String("operation", "UpdateViolation"), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetViolationByID(ctx, &repositories.GetWorkerSafetyViolationByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanUpdateViolation(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if req.Version > 0 && original.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
-			"Violation was changed by someone else. Reload and try again",
-		)
-	}
 
-	previous := *original
-	entity := *original
-	if req.Basic != "" {
-		entity.Basic = req.Basic
-	}
-	entity.Code = strings.TrimSpace(req.Code)
-	entity.Description = strings.TrimSpace(req.Description)
-	if req.SeverityWeight > 0 {
-		entity.SeverityWeight = req.SeverityWeight
-	}
-	entity.OutOfService = req.OutOfService
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	updated, err := s.repo.UpdateViolation(ctx, &entity)
+	updated, err := s.repo.UpdateViolation(ctx, change.After)
 	if err != nil {
 		log.Error("failed to update safety violation", zap.Error(err))
 		return nil, err
@@ -160,7 +101,7 @@ func (s *Service) UpdateViolation(
 	s.audit(&auditParams{
 		resource: permission.ResourceWorkerSafetyEvent, resourceID: updated.GetResourceID(),
 		operation: permission.OpUpdate, userID: req.UserID, tenant: req.TenantInfo,
-		current: updated, previous: &previous, comment: "Violation corrected", log: log,
+		current: updated, previous: change.Before, comment: "Violation corrected", log: log,
 	})
 	s.publish(ctx, req.TenantInfo, realtimeViolation, permission.OpUpdate, updated.ID, req.UserID)
 
@@ -175,10 +116,7 @@ func (s *Service) DeleteViolation(
 ) error {
 	log := s.l.With(zap.String("operation", "DeleteViolation"), zap.String("id", id.String()))
 
-	original, err := s.repo.GetViolationByID(ctx, &repositories.GetWorkerSafetyViolationByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	original, err := s.PlanDeleteViolation(ctx, tenantInfo, id)
 	if err != nil {
 		return err
 	}

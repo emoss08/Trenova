@@ -516,6 +516,8 @@ export const delegateWriteSchema = z.object({
   result: toolExecutionResultSchema.nullish(),
   error: z.string().optional().default(""),
   simulated: z.boolean().optional().default(false),
+  /** The proposal the write was filed as, which names its card. */
+  proposalId: z.string().optional().default(""),
 });
 
 /** Something the other agent kept beside the conversation. */

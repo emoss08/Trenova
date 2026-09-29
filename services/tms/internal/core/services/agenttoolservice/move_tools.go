@@ -2,20 +2,41 @@ package agenttoolservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type recordStopActualTool struct {
-	moves serviceports.ShipmentMoveService
+type moveStopReader interface {
+	GetByID(
+		ctx context.Context,
+		req *repositories.GetMoveByIDRequest,
+	) (*shipment.ShipmentMove, error)
 }
 
-func newRecordStopActualTool(moves serviceports.ShipmentMoveService) serviceports.AgentTool {
-	return &recordStopActualTool{moves: moves}
+type recordStopActualTool struct {
+	moves     serviceports.ShipmentMoveService
+	moveStops moveStopReader
+}
+
+func newRecordStopActualTool(
+	moves serviceports.ShipmentMoveService,
+	moveStops moveStopReader,
+) serviceports.AgentTool {
+	return &recordStopActualTool{moves: moves, moveStops: moveStops}
+}
+
+func provideRecordStopActualTool(
+	moves serviceports.ShipmentMoveService,
+	moveStops repositories.ShipmentMoveRepository,
+) serviceports.AgentTool {
+	return newRecordStopActualTool(moves, moveStops)
 }
 
 func (t *recordStopActualTool) Name() string { return "record_stop_actual" }
@@ -46,12 +67,9 @@ func (t *recordStopActualTool) ParamSchema() map[string]any {
 				"Which event happened.",
 				agenttoolschema.StopActualActions,
 			),
-			"occurredAt": map[string]any{
-				"type": "integer",
-				"description": "When it happened, in Unix seconds. Leave it out unless " +
-					"you were given a time — omitted means now, which is right when " +
-					"someone is reporting an event as it happens.",
-			},
+			"occurredAt": localTimeProperty("When it happened. Leave it out unless you " +
+				"were given a time: omitted means now, which is right when someone is " +
+				"reporting an event as it happens."),
 		},
 		"required":             []string{"moveId", "stopId", "action"},
 		"additionalProperties": false,
@@ -83,7 +101,7 @@ func (t *recordStopActualTool) Execute(
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -103,6 +121,7 @@ func (t *recordStopActualTool) Validate(
 }
 
 func (t *recordStopActualTool) request(
+	ctx context.Context,
 	params *serviceports.ToolExecuteParams,
 ) (*repositories.RecordStopActualRequest, error) {
 	moveID, err := requirePulid(params.Params, "moveId")
@@ -132,11 +151,48 @@ func (t *recordStopActualTool) request(
 	// Only sent when the caller supplied one. A model inventing a timestamp for
 	// an event it heard about after the fact would put a precise-looking lie on
 	// the record; leaving it unset lets the service stamp it now.
-	if occurredAt := optionalInt64(params.Params, "occurredAt"); occurredAt > 0 {
-		request.OccurredAt = &occurredAt
+	if _, given := params.Params["occurredAt"]; !given {
+		return request, nil
+	}
+
+	zone, err := t.stopZone(ctx, request, params.Timezone)
+	if err != nil {
+		return nil, err
+	}
+	if request.OccurredAt, err = optionalLocalTime(params.Params, "occurredAt", zone); err != nil {
+		return nil, err
 	}
 
 	return request, nil
+}
+
+func (t *recordStopActualTool) stopZone(
+	ctx context.Context,
+	request *repositories.RecordStopActualRequest,
+	fallback string,
+) (*time.Location, error) {
+	if t.moveStops == nil {
+		zone, _ := timeutils.ResolveZone(fallback)
+
+		return zone, nil
+	}
+
+	move, err := t.moveStops.GetByID(ctx, &repositories.GetMoveByIDRequest{
+		MoveID:            request.MoveID,
+		TenantInfo:        request.TenantInfo,
+		ExpandMoveDetails: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	stopZone := ""
+	if stop := findStop(move, request.StopID); stop != nil && stop.Location != nil {
+		stopZone = stop.Location.Timezone
+	}
+	zone, _ := timeutils.ResolveZone(stopZone, fallback)
+
+	return zone, nil
 }
 
 // Target names the record this call would change, so a proposal to change it

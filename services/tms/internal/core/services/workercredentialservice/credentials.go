@@ -67,13 +67,9 @@ func (s *Service) Create(
 		zap.String("operation", "Create"),
 		zap.String("workerId", entity.WorkerID.String()),
 	)
-	tenantInfo := credentialTenant(entity)
 
-	credentialType, err := s.prepare(ctx, entity)
+	credentialType, err := s.prepareCreate(ctx, entity)
 	if err != nil {
-		return nil, err
-	}
-	if _, err = s.loadWorker(ctx, tenantInfo, entity.WorkerID); err != nil {
 		return nil, err
 	}
 
@@ -105,45 +101,12 @@ func (s *Service) Update(
 	userID pulid.ID,
 ) (*worker.WorkerCredential, error) {
 	log := s.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
-	tenantInfo := credentialTenant(entity)
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetWorkerCredentialByIDRequest{
-		ID:         entity.ID,
-		TenantInfo: tenantInfo,
-	})
+	change, credentialType, err := s.planUpdate(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
-	if !original.IsActive() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Archived credentials are read-only. Add a new credential instead",
-		)
-	}
-
-	entity.WorkerID = original.WorkerID
-	entity.CredentialTypeID = original.CredentialTypeID
-	entity.Status = original.Status
-	entity.VerifiedByID = original.VerifiedByID
-	entity.VerifiedAt = original.VerifiedAt
-	entity.ArchivedByID = original.ArchivedByID
-	entity.ArchivedAt = original.ArchivedAt
-	entity.ArchiveReason = original.ArchiveReason
-	entity.CreatedAt = original.CreatedAt
-	if entity.DocumentID.IsNil() {
-		entity.DocumentID = original.DocumentID
-	}
-
-	credentialType, err := s.prepare(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-
-	if s.factsChanged(original, entity) && original.IsVerified() {
-		entity.VerifiedByID = pulid.Nil
-		entity.VerifiedAt = nil
-	}
+	original, entity := change.Before, change.After
 
 	updated, err := s.repo.Update(ctx, entity)
 	if err != nil {
@@ -240,20 +203,14 @@ func (s *Service) Archive(
 ) (*worker.WorkerCredential, error) {
 	log := s.l.With(zap.String("operation", "Archive"), zap.String("id", req.ID.String()))
 
-	original, err := s.loadForChange(ctx, req)
+	change, err := s.PlanArchive(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if !original.IsActive() {
-		return original, nil
+	if !change.Before.IsActive() {
+		return change.Before, nil
 	}
-
-	now := timeutils.NowUnix()
-	updated := *original
-	updated.Status = worker.CredentialStatusArchived
-	updated.ArchivedAt = &now
-	updated.ArchivedByID = req.UserID
-	updated.ArchiveReason = strings.TrimSpace(req.Reason)
+	original, updated := change.Before, *change.After
 
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {
@@ -285,43 +242,12 @@ func (s *Service) AttachDocument(
 ) (*worker.WorkerCredential, error) {
 	log := s.l.With(zap.String("operation", "AttachDocument"), zap.String("id", req.ID.String()))
 
-	original, err := s.loadForChange(ctx, &StatusRequest{ID: req.ID, TenantInfo: req.TenantInfo})
+	change, err := s.PlanAttachDocument(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if !original.IsActive() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Archived credentials cannot take new documents",
-		)
-	}
-
-	doc, err := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
-		ID:         req.DocumentID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	ownedByCredential := doc.ResourceType == credentialResourceID &&
-		doc.ResourceID == original.ID.String()
-	ownedByWorker := doc.ResourceType == workerResourceType &&
-		doc.ResourceID == original.WorkerID.String()
-	if !ownedByCredential && !ownedByWorker {
-		return nil, errortypes.NewValidationError(
-			"documentId",
-			errortypes.ErrInvalid,
-			"Document does not belong to this worker",
-		)
-	}
-
-	updated := *original
-	updated.DocumentID = doc.ID
-	if original.DocumentID != doc.ID && original.IsVerified() {
-		updated.VerifiedByID = pulid.Nil
-		updated.VerifiedAt = nil
-	}
+	original, updated, doc := change.Before, *change.After, change.After.Document
+	updated.Document = nil
 
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {

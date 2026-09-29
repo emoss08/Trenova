@@ -203,6 +203,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/tablequeryservice"
 	"github.com/emoss08/trenova/internal/core/services/tenantprovisioningservice"
+	"github.com/emoss08/trenova/internal/core/services/tenanttimezone"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
@@ -337,6 +338,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentexceptionservice.New,
 	proposalexecutor.New,
 	proposalpreviewservice.New,
+	tenanttimezone.New,
 	narrator.New,
 	newDetectorRegistry,
 	insightservice.New,

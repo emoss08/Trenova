@@ -51,6 +51,41 @@ func (r *agentRunResolver) Definition(ctx context.Context, obj *agent.AgentRun) 
 	return definition, nil
 }
 
+func (r *agentRunResolver) HandedBy(ctx context.Context, obj *agent.AgentRun) (*agentdefinition.Definition, error) {
+	if obj.ParentOwnerKind != agent.RunOwnerAssistantTurn ||
+		obj.SubjectType != agent.SubjectAssistantThread || obj.SubjectID.IsNil() {
+		return nil, nil
+	}
+
+	l, ok := loaders.FromContext(ctx)
+	if !ok {
+		return nil, nil
+	}
+
+	thread, err := l.ThreadAgentByID.Load(ctx, obj.SubjectID.String())
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+	if thread.AgentDefinitionID.IsNil() || thread.AgentDefinitionID == obj.AgentDefinitionID {
+		return nil, nil
+	}
+
+	definition, err := l.AgentDefinitionByID.Load(ctx, thread.AgentDefinitionID.String())
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return definition, nil
+}
+
 func (r *mutationResolver) DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
 	if err != nil {

@@ -236,19 +236,11 @@ func (s *Service) ListRuns(
 }
 
 func (s *Service) CancelRun(ctx context.Context, req *GetRunRequest) (*report.ReportRun, error) {
-	run, err := s.GetRun(ctx, req)
+	change, err := s.PlanCancelRun(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	if run.RequestedByID != req.TenantInfo.UserID {
-		return nil, errortypes.NewAuthorizationError(
-			"Only the user who requested a report run can cancel it",
-		)
-	}
-	if run.Status.IsTerminal() {
-		return nil, errortypes.NewBusinessError("This report run has already finished")
-	}
+	run := change.Before
 
 	if run.TemporalWorkflowID != "" && s.workflows.Enabled() {
 		if err = s.workflows.CancelWorkflow(
@@ -260,7 +252,5 @@ func (s *Service) CancelRun(ctx context.Context, req *GetRunRequest) (*report.Re
 		return run, nil
 	}
 
-	run.Status = report.RunStatusCanceled
-	run.Error = &report.RunError{Code: "CANCELED", Message: "The run was canceled"}
-	return s.runRepo.Update(ctx, run)
+	return s.runRepo.Update(ctx, change.After)
 }

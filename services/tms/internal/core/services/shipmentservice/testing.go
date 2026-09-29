@@ -20,14 +20,7 @@ func NewTestValidatorWithAssignmentRepo(
 ) *Validator {
 	t.Helper()
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
-	controlRepo.EXPECT().
-		Get(mock.Anything, mock.Anything).
-		Return(&tenant.ShipmentControl{
-			AllowMoveRemovals:      true,
-			MaxShipmentWeightLimit: 1000000,
-		}, nil).
-		Maybe()
+	controlRepo := testShipmentControlRepo(t)
 	customerRepo := NewTestCustomerRepository(t)
 	if assignmentRepo == nil {
 		mockAssignmentRepo := mocks.NewMockAssignmentRepository(t)
@@ -67,19 +60,30 @@ func NewTestValidatorWithAssignmentRepo(
 	}
 
 	return &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			customerRepo,
-			mocks.NewMockCommodityRepository(t),
-			mocks.NewMockHazmatSegregationRuleRepository(t),
-			mocks.NewMockShipmentRepository(t),
-			nil,
-			nil,
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   customerRepo,
+			CommodityRepo:  mocks.NewMockCommodityRepository(t),
+			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
+			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+		}).Build(),
 		assignmentRepo: assignmentRepo,
 	}
+}
+
+func testShipmentControlRepo(t testing.TB) *mocks.MockShipmentControlRepository {
+	t.Helper()
+
+	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo.EXPECT().
+		Get(mock.Anything, mock.Anything).
+		Return(&tenant.ShipmentControl{
+			AllowMoveRemovals:      true,
+			MaxShipmentWeightLimit: 1000000,
+		}, nil).
+		Maybe()
+
+	return controlRepo
 }
 
 func NewTestCustomerRepository(t testing.TB) *mocks.MockCustomerRepository {

@@ -58,7 +58,7 @@ const TONE_TEXT: Record<HandOffTone, string> = {
  * at the foot of the reply. When it finishes, the hand-off settles into what
  * came of it — how it ended, what it made, what waits on the person and what
  * it published — and opens onto the whole task, every step it took and its
- * answer. The agent is told apart by its mark and nothing else: no colour of
+ * answer, open until the person closes it. The agent is told apart by its mark and nothing else: no colour of
  * its own, no bar.
  */
 export function DelegateStep({
@@ -73,7 +73,7 @@ export function DelegateStep({
   running: boolean;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const [chosen, setOpen] = useState<boolean | null>(null);
   const view = useMemo(() => delegateView(step), [step]);
   const fallback = useMemo(
     () => ({
@@ -94,6 +94,7 @@ export function DelegateStep({
 
   const expandable = handOffHasDetail(view);
   const settled = !running;
+  const open = expandable && (chosen ?? settled);
   const answerId =
     settled && step.delegate?.kind === "saved" ? delegatedAnswerId(step.delegate.messages) : null;
 
@@ -132,8 +133,8 @@ export function DelegateStep({
             <ChevronRightIcon
               aria-hidden
               className={cn(
-                "text-foreground-subtle size-3 shrink-0 opacity-0 transition-[opacity,rotate] group-hover/handoff:opacity-100 group-focus-visible/handoff:opacity-100",
-                open && "rotate-90 opacity-100",
+                "text-foreground-subtle size-3 shrink-0 transition-[rotate]",
+                open && "rotate-90",
               )}
             />
           )}

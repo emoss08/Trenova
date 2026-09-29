@@ -195,7 +195,7 @@ was sampled, so the audit trail can always name it.
 | Column | Written by | When |
 |---|---|---|
 | `agent_runs.trace_id` | `agentrunservice.StartForDefinition` (the run's anchor); `StartInline` (the trace it ran in); the recorder for a chat run (the turn's anchor) and a delegate's run (the delegate's anchor) | when the row is created |
-| `agent_runs.turn_id` | `proposalrecorder` from `persistProposals` | when a turn's or a delegate's proposals open their run |
+| `agent_runs.turn_id` | `proposalrecorder` from `persistProposals` | when a turn's or a delegate's proposals open their run, or a hand-off that filed nothing opens the delegate's |
 | `agent_runs.parent_owner_kind`, `.parent_owner_id`, `.delegate_call_id` | the same, for a delegate's run: `AssistantTurn`, the turn, the `delegate_task` call | same |
 | `assistant_turns.trace_id` | `assistantturnservice.Start`, which mints the turn's id before the insert | when the turn is recorded |
 | `agent_run_steps.trace_id`, `.span_id` | `runstepledger.Claim`, from the `execute_tool` span | when the call is claimed |

@@ -407,10 +407,10 @@ func snapshotMoveDistances(entity *shipment.Shipment) *shipment.Shipment {
 	return &before
 }
 
-func (s *Service) RecalculateMoveJurisdictionMiles(
+func (s *Service) jurisdictionMove(
 	ctx context.Context,
-	req services.RecalculateMoveJurisdictionMilesRequest,
-) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
+	req *services.RecalculateMoveJurisdictionMilesRequest,
+) (*shipment.ShipmentMove, error) {
 	if req.ShipmentMoveID.IsNil() {
 		return nil, errortypes.NewBusinessError("Shipment move is required")
 	}
@@ -427,20 +427,57 @@ func (s *Service) RecalculateMoveJurisdictionMiles(
 			"Jurisdiction miles need a move with at least two located stops",
 		).WithParam("moveId", move.ID.String())
 	}
+
+	return move, nil
+}
+
+func (s *Service) PlanMoveJurisdictionMiles(
+	ctx context.Context,
+	req *services.RecalculateMoveJurisdictionMilesRequest,
+) (*services.MoveJurisdictionMilesPlan, error) {
+	move, err := s.jurisdictionMove(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.MoveJurisdictionMilesPlan{Move: move}, nil
+}
+
+func (s *Service) moveShipmentAndControl(
+	ctx context.Context,
+	move *shipment.ShipmentMove,
+	tenantInfo pagination.TenantInfo,
+) (*shipment.Shipment, *distancecontrol.DistanceControl, error) {
 	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         move.ShipmentID,
-		TenantInfo: req.TenantInfo,
+		TenantInfo: tenantInfo,
 		ShipmentOptions: repositories.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	control, err := s.distanceControlRepo.EnsureDefault(ctx, pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return entity, control, nil
+}
+
+func (s *Service) RecalculateMoveJurisdictionMiles(
+	ctx context.Context,
+	req services.RecalculateMoveJurisdictionMilesRequest, //nolint:gocritic // the DistanceCalculationService port passes the request by value
+) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
+	move, err := s.jurisdictionMove(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+	entity, control, err := s.moveShipmentAndControl(ctx, move, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}

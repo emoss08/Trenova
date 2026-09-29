@@ -2,7 +2,6 @@ package assistantservice
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -385,12 +384,10 @@ func (s *Service) FinishTurn(
 		Taint:       taint,
 		Fingerprint: TurnFingerprint(plan, req.Run),
 	}
-	proposals, err := s.persistProposals(ctx, own)
-	if req.Run != nil && len(req.Run.Delegations) > 0 {
-		delegated, delegatedErr := s.persistDelegatedProposals(ctx, own, req.Run.Delegations)
-		proposals = append(proposals, delegated...)
-		err = errors.Join(err, delegatedErr)
+	if req.Run != nil {
+		own.Delegations = req.Run.Delegations
 	}
+	proposals, err := s.persistProposals(ctx, own)
 	if err != nil {
 		s.logProposalPersistFailure(thread, err)
 	}

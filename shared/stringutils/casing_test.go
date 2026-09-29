@@ -21,6 +21,7 @@ func TestHumanizeCamelCaseSentence(t *testing.T) {
 		"cdlClass":           "CDL class",
 		"mcNumber":           "MC number",
 		"unNumber":           "UN number",
+		"iftaReturnId":       "IFTA return ID",
 	}
 	for in, want := range cases {
 		assert.Equal(t, want, HumanizeCamelCaseSentence(in), in)

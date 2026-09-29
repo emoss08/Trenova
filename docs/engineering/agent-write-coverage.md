@@ -57,19 +57,43 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
   job, an EDI message or an inbound webhook is not a write a person makes and is
   not listed.
 
+## Schema contract
+
+A tool that performs a GraphQL write takes what the mutation's input takes, and
+no more. `internal/api/toolcontract` holds each such tool to its input: a
+`Binding` in `bindings.go` names the tool, the input type, the parameter
+the input sits under (none for the top level) and the input each nested object
+parameter is held to (`moves.stops` to `ShipmentStopInput`).
+`TestEveryBoundToolFitsItsGraphQLInput` parses the schema with gqlparser and
+fails when
+
+- a non-null input field without a default is not a required parameter, unless
+  the binding's `Defaulted` says why (a patch asks only for what changes);
+- a parameter is not a field of its input, unless `Extra` says why (the
+  mutation takes the record's id as its own argument). This is the check a
+  made-up field such as `moves[].type` fails;
+- a parameter bound to a GraphQL enum does not offer exactly its values, unless
+  `Narrowed` says why the tool offers fewer.
+
+`TestEveryWriteToolWithAGraphQLInputIsBound` reads this ledger: every
+create or update tool listed against a mutation that takes an input object is
+bound, or named in `Unbound` with the reason. A tool whose writes are REST
+routes has no input to hold it to and needs neither. An excuse that no longer
+matches anything fails too, so the file cannot drift behind the tools.
+
 ## Exemption categories
 
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 68 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 237 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 39 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 258 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 26 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 44 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 49 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 17 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 42 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 4 |
 
 ## Totals
 
@@ -77,21 +101,21 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 235 |
-| Exempt | 516 |
+| Covered by a tool | 335 |
+| Exempt | 571 |
 | — Security | 68 |
-| — Configuration | 237 |
-| — User preference | 23 |
-| — Infrastructure | 39 |
+| — Configuration | 258 |
+| — User preference | 26 |
+| — Infrastructure | 44 |
 | — Agent administration | 49 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
-| — Attestation | 17 |
-| — Duplicate | 3 |
-| **Pending** | **201** |
+| — Attestation | 42 |
+| — Duplicate | 4 |
+| **Pending** | **46** |
 | Total | 952 |
 
-Of the 436 writes an agent should be able to make, 235 have a tool (53%).
+Of the 381 writes an agent should be able to make, 335 have a tool (87%).
 
 ## Pending
 
@@ -99,8 +123,6 @@ The writes no tool performs yet, and what the tool would do.
 
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
-| benefits | `mutation endBenefitEnrollment` | End benefit enrollment. |
-| benefits | `mutation enrollBenefit` | Enroll benefit. |
 | capture | `mutation cancelCaptureRequest` | Cancel a scan or print request that has not started. |
 | capture | `mutation createCaptureCoverSheets` | Print cover sheets that route scanned paperwork to a record and document type. |
 | capture | `mutation createCaptureRequest` | Ask a person's paired computer to scan paperwork into a record, or send their next print there. |
@@ -121,109 +143,22 @@ The writes no tool performs yet, and what the tool would do.
 | customer | `POST /api/v1/customers/` | Create a customer. |
 | customer | `POST /api/v1/customers/bulk-update-status/` | Change the status of several customers at once. |
 | customer | `PUT /api/v1/customers/:customerID/` | Update a customer. |
-| distanceoverride | `DELETE /api/v1/distance-overrides/:distanceOverrideID/` | Delete a distance override. |
-| distanceoverride | `PATCH /api/v1/distance-overrides/:distanceOverrideID/` | Update some fields of a distance override. |
-| distanceoverride | `POST /api/v1/distance-overrides/` | Create a distance override. |
-| distanceoverride | `PUT /api/v1/distance-overrides/:distanceOverrideID/` | Update a distance override. |
 | document | `DELETE /api/v1/documents/:documentID/` | Delete a document. |
 | document | `POST /api/v1/documents/:documentID/restore/` | Restore an earlier version of a document. |
 | document | `POST /api/v1/documents/:documentID/shipment-draft/reextract/` | Run shipment extraction again on a document and replace the draft. |
 | document | `POST /api/v1/documents/bulk-delete/` | Delete several documents at once. |
-| driverportal | `mutation resolveSettlementDispute` | Resolve settlement dispute. |
-| driverportal | `mutation reviewDriverExpense` | Review driver expense. |
-| driverportal | `mutation startSettlementDisputeReview` | Start settlement dispute review. |
-| fleetsafety | `mutation deleteSafetyViolation` | Delete safety violation. |
-| fleetsafety | `mutation recordSafetyViolation` | Record safety violation. |
-| fleetsafety | `mutation updateSafetyViolation` | Update safety violation. |
-| fuelpurchase | `mutation assignFuelCard` | Assign fuel card. |
-| fuelpurchase | `mutation cancelFuelCard` | Cancel fuel card. |
-| fuelpurchase | `mutation commitFuelPurchaseImport` | Commit fuel purchase import. |
-| fuelpurchase | `mutation createFuelCard` | Create fuel card. |
-| fuelpurchase | `mutation createFuelPurchase` | Create fuel purchase. |
-| fuelpurchase | `mutation createFuelPurchaseImport` | Create fuel purchase import. |
-| fuelpurchase | `mutation deleteFuelPurchase` | Delete fuel purchase. |
-| fuelpurchase | `mutation discardFuelPurchaseImport` | Discard fuel purchase import. |
-| fuelpurchase | `mutation resolveFuelPurchaseImportRows` | Resolve fuel purchase import rows. |
-| fuelpurchase | `mutation stageFuelPurchaseImport` | Stage fuel purchase import. |
-| fuelpurchase | `mutation syncFuelCardFeed` | Sync fuel card feed. |
-| fuelpurchase | `mutation updateFuelCard` | Update fuel card. |
-| fuelpurchase | `mutation updateFuelPurchase` | Update fuel purchase. |
-| fuelsurcharge | `mutation addFuelIndexPrice` | Add fuel index price. |
-| fuelsurcharge | `mutation deleteFuelIndexPrice` | Delete fuel index price. |
-| fuelsurcharge | `mutation updateFuelIndexPrice` | Update fuel index price. |
 | hazardousmaterial | `PATCH /api/v1/hazardous-materials/:hazardousMaterialID/` | Update some fields of a hazardous material. |
 | hazardousmaterial | `POST /api/v1/hazardous-materials/` | Create a hazardous material. |
 | hazardousmaterial | `POST /api/v1/hazardous-materials/bulk-update-status/` | Change the status of several hazardous materials at once. |
 | hazardousmaterial | `PUT /api/v1/hazardous-materials/:hazardousMaterialID/` | Update a hazardous material. |
-| ifta | `mutation amendIftaReturn` | Amend IFTA return. |
-| ifta | `mutation backfillJurisdictionMiles` | Backfill jurisdiction miles. |
-| ifta | `mutation createIftaMileageEntry` | Create IFTA mileage entry. |
-| ifta | `mutation deleteIftaMileageEntry` | Delete IFTA mileage entry. |
-| ifta | `mutation deleteIftaReturn` | Delete IFTA return. |
-| ifta | `mutation deleteIftaTaxRate` | Delete IFTA tax rate. |
-| ifta | `mutation generateIftaReturn` | Generate IFTA return. |
-| ifta | `mutation recalculateMoveJurisdictionMiles` | Recalculate move jurisdiction miles. |
-| ifta | `mutation recomputeIftaReturn` | Recompute IFTA return. |
-| ifta | `mutation reopenIftaReturn` | Reopen IFTA return. |
-| ifta | `mutation updateIftaMileageEntry` | Update IFTA mileage entry. |
-| ifta | `mutation upsertIftaTaxRates` | Upsert IFTA tax rates. |
 | insight | `POST /api/v1/insights/:insightID/restore/` | Restore an insight that was dismissed. |
 | location | `PATCH /api/v1/locations/:locationID/` | Update some fields of a location. |
 | location | `POST /api/v1/locations/bulk-update-status/` | Change the status of several locations at once. |
 | location | `PUT /api/v1/locations/:locationID/` | Update a location. |
-| performancereview | `mutation closePerformanceReview` | Close performance review. |
-| performancereview | `mutation createPerformanceReview` | Create performance review. |
-| performancereview | `mutation deletePerformanceReview` | Delete performance review. |
-| performancereview | `mutation reopenPerformanceReview` | Reopen performance review. |
-| performancereview | `mutation submitPerformanceReview` | Submit performance review. |
-| performancereview | `mutation updatePerformanceReview` | Update performance review. |
-| permit | `POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/` | Waive requirement (shipment). |
-| permit | `POST /api/v1/shipments/:shipmentID/permits/` | Create permit (shipment). |
-| permit | `PUT /api/v1/shipments/:shipmentID/permits/:permitID/` | Update permit (shipment). |
-| ptopolicy | `mutation adjustWorkerPtoBalance` | Adjust worker PTO balance. |
-| ptopolicy | `mutation assignWorkerPtoPolicy` | Assign worker PTO policy. |
-| ptopolicy | `mutation endWorkerPtoPolicyAssignment` | End worker PTO policy assignment. |
-| ptopolicy | `mutation runPtoAccrual` | Run PTO accrual. |
-| rateagreement | `POST /api/v1/rate-agreements/` | Create a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/approve/` | Approve a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/archive/` | Archive a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/` | Duplicate a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/reject/` | Reject a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/resume/` | Resume a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/` | Amend the rating rules of an active rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/submit/` | Submit a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/suspend/` | Suspend a rate agreement. |
-| rateagreement | `POST /api/v1/rate-agreements/rate-increase/apply/` | Apply rate increase (rate agreement). |
-| rateagreement | `PUT /api/v1/rate-agreements/:rateAgreementID/` | Update a rate agreement. |
-| rateimport | `POST /api/v1/rate-imports/:rateImportID/commit/` | Commit a rate import. |
-| rateimport | `POST /api/v1/rate-imports/:rateImportID/discard/` | Discard a rate import. |
-| ratematrix | `DELETE /api/v1/rate-matrices/:rateMatrixID/` | Delete a rate matrice. |
-| ratematrix | `POST /api/v1/rate-matrices/` | Create a rate matrice. |
-| ratematrix | `PUT /api/v1/rate-matrices/:rateMatrixID/` | Update a rate matrice. |
-| ratematrix | `PUT /api/v1/rate-matrices/:rateMatrixID/cells/` | Replace cells (rate matrice). |
-| ratesimulation | `POST /api/v1/rate-simulations/` | Run and save a rate simulation across past shipments. |
-| ratezone | `DELETE /api/v1/rate-zones/:rateZoneID/` | Delete a rate zone. |
-| ratezone | `POST /api/v1/rate-zones/` | Create a rate zone. |
-| ratezone | `PUT /api/v1/rate-zones/:rateZoneID/` | Update a rate zone. |
-| report | `mutation cancelReportRun` | Cancel report run. |
-| report | `mutation createReportView` | Create report view. |
-| report | `mutation deleteReportDashboard` | Delete report dashboard. |
-| report | `mutation deleteReportDefinition` | Delete report definition. |
-| report | `mutation deleteReportSchedule` | Delete report schedule. |
-| report | `mutation deleteReportView` | Delete report view. |
-| report | `mutation resetCannedFork` | Reset canned fork. |
-| report | `mutation updateReportSchedule` | Update report schedule. |
-| report | `mutation updateReportView` | Update report view. |
-| selfservice | `mutation decideProfileChange` | Decide profile change. |
-| storedmileage | `DELETE /api/v1/stored-mileages/:storedMileageID/` | Delete a stored mileage. |
 | tablechangealert | `DELETE /api/v1/tca/subscriptions/:id` | Delete subscription (table change alert). |
 | tablechangealert | `PATCH /api/v1/tca/subscriptions/:id/pause` | Pause subscription (table change alert). |
 | tablechangealert | `PATCH /api/v1/tca/subscriptions/:id/resume` | Resume subscription (table change alert). |
 | tablechangealert | `PUT /api/v1/tca/subscriptions/:id` | Update subscription (table change alert). |
-| timesheet | `mutation deleteTimeEntry` | Delete time entry. |
-| timesheet | `mutation generatePayrollExport` | Generate payroll export. |
-| timesheet | `mutation recordTimeEntry` | Record time entry. |
-| timesheet | `mutation voidPayrollExport` | Void payroll export. |
 | tractor | `mutation createTractor` | Create tractor. |
 | tractor | `mutation locateTractor` | Locate tractor. |
 | tractor | `mutation patchTractor` | Update some fields of a tractor. |
@@ -234,72 +169,6 @@ The writes no tool performs yet, and what the tool would do.
 | trailer | `mutation updateTrailer` | Update trailer. |
 | watchtower | `mutation dismissWatchtowerItem` | Dismiss watchtower item. |
 | watchtower | `mutation handOffWatchtowerItem` | Hand off watchtower item. |
-| worker | `mutation bulkWorkerPTOAction` | Approve, reject or cancel several PTO requests at once. |
-| worker | `mutation createWorkerPTO` | Create worker PTO. |
-| worker | `mutation patchWorker` | Update some fields of a worker. |
-| worker | `mutation updateWorkerPTO` | Update worker PTO. |
-| worker | `POST /api/v1/workers/` | Create a worker. |
-| workerchecklist | `mutation cancelWorkerChecklist` | Cancel worker checklist. |
-| workerchecklist | `mutation completeWorkerChecklistItem` | Complete worker checklist item. |
-| workerchecklist | `mutation markWorkerChecklistItemNotApplicable` | Mark worker checklist item not applicable. |
-| workerchecklist | `mutation reopenWorkerChecklistItem` | Reopen worker checklist item. |
-| workerchecklist | `mutation skipWorkerChecklistItem` | Skip worker checklist item. |
-| workerchecklist | `mutation startWorkerChecklist` | Start worker checklist. |
-| workercredential | `mutation archiveWorkerCredential` | Archive worker credential. |
-| workercredential | `mutation attachWorkerCredentialDocument` | Attach worker credential document. |
-| workercredential | `mutation createWorkerCredential` | Create worker credential. |
-| workercredential | `mutation updateWorkerCredential` | Update worker credential. |
-| workercredential | `mutation verifyWorkerCredential` | Verify worker credential. |
-| workerdqf | `mutation deleteEmploymentVerification` | Delete employment verification. |
-| workerdqf | `mutation markEmploymentVerificationRequested` | Mark employment verification requested. |
-| workerdqf | `mutation recordEmploymentVerification` | Record employment verification. |
-| workerdqf | `mutation recordEmploymentVerificationFollowUp` | Record a follow-up on an employment verification request. |
-| workerdqf | `mutation updateEmploymentVerification` | Update employment verification. |
-| workerdrugalcohol | `mutation cancelDotRandomDraw` | Cancel DOT random draw. |
-| workerdrugalcohol | `mutation cancelDotTest` | Cancel DOT test. |
-| workerdrugalcohol | `mutation completeClearinghouseQuery` | Complete clearinghouse query. |
-| workerdrugalcohol | `mutation createDotRandomPool` | Create DOT random pool. |
-| workerdrugalcohol | `mutation finalizeDotRandomDraw` | Finalize DOT random draw. |
-| workerdrugalcohol | `mutation recordClearinghouseQuery` | Record clearinghouse query. |
-| workerdrugalcohol | `mutation recordDotTest` | Record DOT test. |
-| workerdrugalcohol | `mutation recordDotTestResult` | Record DOT test result. |
-| workerdrugalcohol | `mutation recordDotViolation` | Record DOT violation. |
-| workerdrugalcohol | `mutation runDotRandomDraw` | Run DOT random draw. |
-| workerdrugalcohol | `mutation updateDotRandomDrawEntry` | Update DOT random draw entry. |
-| workerdrugalcohol | `mutation updateDotRandomPool` | Update DOT random pool. |
-| workerdrugalcohol | `mutation updateDotViolation` | Update DOT violation. |
-| workeremployment | `mutation amendWorkerEmploymentEvent` | Amend worker employment event. |
-| workeremployment | `mutation recordWorkerEmploymentEvent` | Record worker employment event. |
-| workerinjury | `mutation deleteWorkerInjury` | Delete worker injury. |
-| workerinjury | `mutation recordWorkerInjury` | Record worker injury. |
-| workerinjury | `mutation saveOshaSummary` | Save OSHA summary. |
-| workerinjury | `mutation updateWorkerInjury` | Update worker injury. |
-| workerleave | `mutation closeLeaveCase` | Close leave case. |
-| workerleave | `mutation decideLeaveCase` | Decide leave case. |
-| workerleave | `mutation deleteLeaveDay` | Delete leave day. |
-| workerleave | `mutation openLeaveCase` | Open leave case. |
-| workerleave | `mutation recordLeaveCertification` | Record leave certification. |
-| workerleave | `mutation recordLeaveDay` | Record leave day. |
-| workerleave | `mutation requestLeaveCertification` | Request leave certification. |
-| workerleave | `mutation updateLeaveCase` | Update leave case. |
-| workerleave | `mutation updateLeaveDay` | Update leave day. |
-| workersafety | `mutation closeWorkerSafetyEvent` | Close worker safety event. |
-| workersafety | `mutation createWorkerSafetyEvent` | Create worker safety event. |
-| workersafety | `mutation deleteWorkerRecognition` | Delete worker recognition. |
-| workersafety | `mutation deleteWorkerSafetyEvent` | Delete worker safety event. |
-| workersafety | `mutation giveWorkerRecognition` | Give worker recognition. |
-| workersafety | `mutation issueDisciplinaryAction` | Issue disciplinary action. |
-| workersafety | `mutation reopenWorkerSafetyEvent` | Reopen worker safety event. |
-| workersafety | `mutation rescindDisciplinaryAction` | Rescind disciplinary action. |
-| workersafety | `mutation reviewWorkerSafetyEvent` | Review worker safety event. |
-| workersafety | `mutation updateWorkerSafetyEvent` | Update worker safety event. |
-| workertraining | `mutation assignRequiredWorkerTraining` | Assign required worker training. |
-| workertraining | `mutation assignWorkerTraining` | Assign worker training. |
-| workertraining | `mutation attachWorkerTrainingDocument` | Attach worker training document. |
-| workertraining | `mutation bulkAssignTraining` | Bulk assign training. |
-| workertraining | `mutation cancelWorkerTraining` | Cancel worker training. |
-| workertraining | `mutation completeWorkerTraining` | Complete worker training. |
-| workertraining | `mutation waiveWorkerTraining` | Waive worker training. |
 
 ## By domain
 
@@ -326,7 +195,7 @@ The writes no tool performs yet, and what the tool would do.
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
 | bankreceiptworkitem | 4 | 4 | 0 | 0 |
-| benefits | 4 | 0 | 2 | 2 |
+| benefits | 4 | 0 | 4 | 0 |
 | billingcontrol | 1 | 0 | 1 | 0 |
 | billingqueue | 8 | 5 | 3 | 0 |
 | billingtransfer | 3 | 3 | 0 | 0 |
@@ -350,7 +219,7 @@ The writes no tool performs yet, and what the tool would do.
 | dispatchconsole | 5 | 4 | 1 | 0 |
 | dispatchcontrol | 1 | 0 | 1 | 0 |
 | distancecontrol | 2 | 0 | 2 | 0 |
-| distanceoverride | 4 | 0 | 0 | 4 |
+| distanceoverride | 4 | 0 | 4 | 0 |
 | distanceprofile | 5 | 0 | 5 | 0 |
 | document | 13 | 1 | 8 | 4 |
 | documentcontrol | 1 | 0 | 1 | 0 |
@@ -359,7 +228,7 @@ The writes no tool performs yet, and what the tool would do.
 | documentparsingrule | 9 | 0 | 9 | 0 |
 | documenttemplate | 12 | 0 | 12 | 0 |
 | documenttype | 3 | 0 | 3 | 0 |
-| driverportal | 31 | 0 | 28 | 3 |
+| driverportal | 31 | 3 | 28 | 0 |
 | driversettlement | 34 | 28 | 6 | 0 |
 | edi | 56 | 15 | 41 | 0 |
 | email | 9 | 0 | 9 | 0 |
@@ -372,10 +241,10 @@ The writes no tool performs yet, and what the tool would do.
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
 | fleetcode | 3 | 0 | 3 | 0 |
-| fleetsafety | 3 | 0 | 0 | 3 |
+| fleetsafety | 3 | 3 | 0 | 0 |
 | formulatemplate | 24 | 0 | 24 | 0 |
-| fuelpurchase | 13 | 0 | 0 | 13 |
-| fuelsurcharge | 9 | 0 | 6 | 3 |
+| fuelpurchase | 13 | 7 | 6 | 0 |
+| fuelsurcharge | 9 | 2 | 7 | 0 |
 | glaccount | 5 | 0 | 5 | 0 |
 | googlemaps | 1 | 0 | 1 | 0 |
 | graphql | 1 | 0 | 1 | 0 |
@@ -384,7 +253,7 @@ The writes no tool performs yet, and what the tool would do.
 | holdreason | 3 | 0 | 3 | 0 |
 | homelayout | 5 | 1 | 4 | 0 |
 | iam | 14 | 0 | 14 | 0 |
-| ifta | 14 | 0 | 2 | 12 |
+| ifta | 14 | 9 | 5 | 0 |
 | inbound | 1 | 0 | 1 | 0 |
 | inboundmessage | 6 | 2 | 4 | 0 |
 | insight | 2 | 1 | 0 | 1 |
@@ -408,26 +277,26 @@ The writes no tool performs yet, and what the tool would do.
 | orgholiday | 3 | 0 | 3 | 0 |
 | orgstructure | 6 | 0 | 6 | 0 |
 | pagefavorite | 1 | 0 | 1 | 0 |
-| performancereview | 11 | 0 | 5 | 6 |
+| performancereview | 11 | 3 | 8 | 0 |
 | permission | 1 | 0 | 1 | 0 |
-| permit | 3 | 0 | 0 | 3 |
-| ptopolicy | 8 | 0 | 4 | 4 |
+| permit | 3 | 2 | 1 | 0 |
+| ptopolicy | 8 | 1 | 7 | 0 |
 | push | 2 | 0 | 2 | 0 |
-| rateagreement | 12 | 0 | 1 | 11 |
+| rateagreement | 12 | 11 | 1 | 0 |
 | rateconfirmation | 4 | 4 | 0 | 0 |
 | rateconfirmationpublic | 1 | 0 | 1 | 0 |
-| rateimport | 3 | 0 | 1 | 2 |
-| ratematrix | 4 | 0 | 0 | 4 |
+| rateimport | 3 | 2 | 1 | 0 |
+| ratematrix | 4 | 0 | 4 | 0 |
 | ratequote | 3 | 0 | 3 | 0 |
-| ratesimulation | 1 | 0 | 0 | 1 |
-| ratezone | 3 | 0 | 0 | 3 |
+| ratesimulation | 1 | 1 | 0 | 0 |
+| ratezone | 3 | 0 | 3 | 0 |
 | realtime | 3 | 0 | 3 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
-| report | 17 | 7 | 1 | 9 |
+| report | 17 | 13 | 4 | 0 |
 | role | 11 | 0 | 11 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
-| selfservice | 3 | 0 | 2 | 1 |
+| selfservice | 3 | 0 | 3 | 0 |
 | sequenceconfig | 1 | 0 | 1 | 0 |
 | servicefailure | 9 | 7 | 2 | 0 |
 | servicefailurereasoncode | 6 | 0 | 6 | 0 |
@@ -437,7 +306,7 @@ The writes no tool performs yet, and what the tool would do.
 | shipmentmove | 4 | 4 | 0 | 0 |
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
-| storedmileage | 1 | 0 | 0 | 1 |
+| storedmileage | 1 | 0 | 1 | 0 |
 | tablechangealert | 5 | 1 | 0 | 4 |
 | tableconfiguration | 6 | 1 | 5 | 0 |
 | tablequery | 1 | 0 | 1 | 0 |
@@ -445,22 +314,22 @@ The writes no tool performs yet, and what the tool would do.
 | tenant | 1 | 0 | 1 | 0 |
 | tender | 4 | 4 | 0 | 0 |
 | tenderpublic | 2 | 0 | 2 | 0 |
-| timesheet | 7 | 0 | 3 | 4 |
+| timesheet | 7 | 2 | 5 | 0 |
 | tractor | 5 | 1 | 0 | 4 |
 | trailer | 5 | 1 | 0 | 4 |
 | user | 11 | 0 | 11 | 0 |
 | version | 1 | 0 | 1 | 0 |
 | watchtower | 3 | 0 | 1 | 2 |
-| worker | 8 | 3 | 0 | 5 |
-| workerchecklist | 10 | 0 | 4 | 6 |
-| workercredential | 9 | 0 | 4 | 5 |
-| workerdqf | 5 | 0 | 0 | 5 |
-| workerdrugalcohol | 13 | 0 | 0 | 13 |
-| workeremployment | 2 | 0 | 0 | 2 |
-| workerinjury | 6 | 0 | 2 | 4 |
-| workerleave | 10 | 0 | 1 | 9 |
-| workersafety | 11 | 0 | 1 | 10 |
-| workertraining | 13 | 0 | 6 | 7 |
+| worker | 8 | 5 | 3 | 0 |
+| workerchecklist | 10 | 6 | 4 | 0 |
+| workercredential | 9 | 4 | 5 | 0 |
+| workerdqf | 5 | 5 | 0 | 0 |
+| workerdrugalcohol | 13 | 6 | 7 | 0 |
+| workeremployment | 2 | 0 | 2 | 0 |
+| workerinjury | 6 | 3 | 3 | 0 |
+| workerleave | 10 | 7 | 3 | 0 |
+| workersafety | 11 | 8 | 3 | 0 |
+| workertraining | 13 | 7 | 6 | 0 |
 
 ## Action tools no write maps to
 
@@ -691,8 +560,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation createBenefitPlan` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation endBenefitEnrollment` | Pending: End benefit enrollment. |
-| `mutation enrollBenefit` | Pending: Enroll benefit. |
+| `mutation endBenefitEnrollment` | Exempt, attestation: Ending a benefit election is the worker's own choice, with the payroll deduction it stops; an agent must not make it for them. |
+| `mutation enrollBenefit` | Exempt, attestation: Enrolling in a benefit is the worker's own election, with payroll deductions it starts; an agent must not make it for them. |
 | `mutation updateBenefitPlan` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### billingcontrol
@@ -929,10 +798,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.delete | Pending: Delete a distance override. |
-| `PATCH /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.patch | Pending: Update some fields of a distance override. |
-| `POST /api/v1/distance-overrides/`<br>distanceoverridehandler.create | Pending: Create a distance override. |
-| `PUT /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.update | Pending: Update a distance override. |
+| `DELETE /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.delete | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
+| `PATCH /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.patch | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
+| `POST /api/v1/distance-overrides/`<br>distanceoverridehandler.create | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
+| `PUT /api/v1/distance-overrides/:distanceOverrideID/`<br>distanceoverridehandler.update | Exempt, configuration: A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it. |
 
 ### distanceprofile
 
@@ -1040,14 +909,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation proposeMyShiftSwap` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation recordMyStopAction` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation requestMyPto` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation resolveSettlementDispute` | Pending: Resolve settlement dispute. |
+| `mutation resolveSettlementDispute` | Tool: `resolve_settlement_dispute` |
 | `mutation respondToMyAssignment` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation respondToMyShiftSwap` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation restoreMyNotifications` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation reviewDriverExpense` | Pending: Review driver expense. |
+| `mutation reviewDriverExpense` | Tool: `review_driver_expense` |
 | `mutation revokeWorkerPortalAccess` | Exempt, security: Removes a driver's sign-in to the driver portal. |
 | `mutation setMyAvailability` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation startSettlementDisputeReview` | Pending: Start settlement dispute review. |
+| `mutation startSettlementDisputeReview` | Tool: `start_settlement_dispute_review` |
 | `mutation submitMyExpense` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation updateDashControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 | `mutation updateMyContactInfo` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
@@ -1258,9 +1127,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation deleteSafetyViolation` | Pending: Delete safety violation. |
-| `mutation recordSafetyViolation` | Pending: Record safety violation. |
-| `mutation updateSafetyViolation` | Pending: Update safety violation. |
+| `mutation deleteSafetyViolation` | Tool: `delete_safety_violation` |
+| `mutation recordSafetyViolation` | Tool: `record_safety_violation` |
+| `mutation updateSafetyViolation` | Tool: `update_safety_violation` |
 
 ### formulatemplate
 
@@ -1295,32 +1164,32 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assignFuelCard` | Pending: Assign fuel card. |
-| `mutation cancelFuelCard` | Pending: Cancel fuel card. |
-| `mutation commitFuelPurchaseImport` | Pending: Commit fuel purchase import. |
-| `mutation createFuelCard` | Pending: Create fuel card. |
-| `mutation createFuelPurchase` | Pending: Create fuel purchase. |
-| `mutation createFuelPurchaseImport` | Pending: Create fuel purchase import. |
-| `mutation deleteFuelPurchase` | Pending: Delete fuel purchase. |
-| `mutation discardFuelPurchaseImport` | Pending: Discard fuel purchase import. |
-| `mutation resolveFuelPurchaseImportRows` | Pending: Resolve fuel purchase import rows. |
-| `mutation stageFuelPurchaseImport` | Pending: Stage fuel purchase import. |
-| `mutation syncFuelCardFeed` | Pending: Sync fuel card feed. |
-| `mutation updateFuelCard` | Pending: Update fuel card. |
-| `mutation updateFuelPurchase` | Pending: Update fuel purchase. |
+| `mutation assignFuelCard` | Tool: `assign_fuel_card` |
+| `mutation cancelFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card). |
+| `mutation commitFuelPurchaseImport` | Tool: `commit_fuel_purchase_import` |
+| `mutation createFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card). |
+| `mutation createFuelPurchase` | Tool: `record_fuel_purchase` |
+| `mutation createFuelPurchaseImport` | Exempt, infrastructure: Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import. |
+| `mutation deleteFuelPurchase` | Tool: `delete_fuel_purchase` |
+| `mutation discardFuelPurchaseImport` | Tool: `discard_fuel_purchase_import` |
+| `mutation resolveFuelPurchaseImportRows` | Tool: `resolve_fuel_purchase_import_rows` |
+| `mutation stageFuelPurchaseImport` | Exempt, infrastructure: Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import. |
+| `mutation syncFuelCardFeed` | Exempt, infrastructure: Reads the card provider's feed on the connection an administrator set up, which runs on its own schedule; resolve_fuel_purchase_import_rows works the rows a run held back. |
+| `mutation updateFuelCard` | Exempt, configuration: Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card). |
+| `mutation updateFuelPurchase` | Tool: `correct_fuel_purchase` |
 
 ### fuelsurcharge
 
 | Write | Decision |
 | --- | --- |
-| `mutation addFuelIndexPrice` | Pending: Add fuel index price. |
+| `mutation addFuelIndexPrice` | Tool: `record_fuel_index_price` |
 | `mutation createFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation createFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation deleteFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
-| `mutation deleteFuelIndexPrice` | Pending: Delete fuel index price. |
+| `mutation deleteFuelIndexPrice` | Exempt, configuration: Pruning an index's price history is curation an administrator does; a manual price entered wrong is fixed with correct_fuel_index_price. |
 | `mutation deleteFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 | `mutation updateFuelIndex` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
-| `mutation updateFuelIndexPrice` | Pending: Update fuel index price. |
+| `mutation updateFuelIndexPrice` | Tool: `correct_fuel_index_price` |
 | `mutation updateFuelSurchargeProgram` | Exempt, configuration: Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up. |
 
 ### glaccount
@@ -1403,20 +1272,20 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation amendIftaReturn` | Pending: Amend IFTA return. |
-| `mutation backfillJurisdictionMiles` | Pending: Backfill jurisdiction miles. |
-| `mutation createIftaMileageEntry` | Pending: Create IFTA mileage entry. |
-| `mutation deleteIftaMileageEntry` | Pending: Delete IFTA mileage entry. |
-| `mutation deleteIftaReturn` | Pending: Delete IFTA return. |
-| `mutation deleteIftaTaxRate` | Pending: Delete IFTA tax rate. |
+| `mutation amendIftaReturn` | Tool: `amend_ifta_return` |
+| `mutation backfillJurisdictionMiles` | Tool: `backfill_jurisdiction_miles` |
+| `mutation createIftaMileageEntry` | Tool: `record_ifta_mileage_entry` |
+| `mutation deleteIftaMileageEntry` | Tool: `delete_ifta_mileage_entry` |
+| `mutation deleteIftaReturn` | Tool: `delete_ifta_return` |
+| `mutation deleteIftaTaxRate` | Exempt, configuration: IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them. |
 | `mutation finalizeIftaReturn` | Exempt, attestation: A fuel tax return is signed off by the person accountable for filing it. |
-| `mutation generateIftaReturn` | Pending: Generate IFTA return. |
+| `mutation generateIftaReturn` | Tool: `generate_ifta_return` |
 | `mutation markIftaReturnFiled` | Exempt, attestation: Records that a person filed the return with the jurisdiction. |
-| `mutation recalculateMoveJurisdictionMiles` | Pending: Recalculate move jurisdiction miles. |
-| `mutation recomputeIftaReturn` | Pending: Recompute IFTA return. |
-| `mutation reopenIftaReturn` | Pending: Reopen IFTA return. |
-| `mutation updateIftaMileageEntry` | Pending: Update IFTA mileage entry. |
-| `mutation upsertIftaTaxRates` | Pending: Upsert IFTA tax rates. |
+| `mutation recalculateMoveJurisdictionMiles` | Tool: `recalculate_move_jurisdiction_miles` |
+| `mutation recomputeIftaReturn` | Tool: `recompute_ifta_return` |
+| `mutation reopenIftaReturn` | Exempt, attestation: Reopening undoes the sign-off of the person accountable for filing the return, so that person decides. |
+| `mutation updateIftaMileageEntry` | Tool: `correct_ifta_mileage_entry` |
+| `mutation upsertIftaTaxRates` | Exempt, configuration: IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them. |
 
 ### inbound
 
@@ -1642,14 +1511,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation acknowledgeMyReview` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation archivePerformanceReviewTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation closePerformanceReview` | Pending: Close performance review. |
-| `mutation createPerformanceReview` | Pending: Create performance review. |
+| `mutation closePerformanceReview` | Exempt, attestation: Closing a review is the reviewer's sign-off on a record the worker has acknowledged; an agent drafts, it does not sign. |
+| `mutation createPerformanceReview` | Tool: `start_performance_review` |
 | `mutation createPerformanceReviewTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation deletePerformanceReview` | Pending: Delete performance review. |
-| `mutation reopenPerformanceReview` | Pending: Reopen performance review. |
+| `mutation deletePerformanceReview` | Tool: `delete_performance_review` |
+| `mutation reopenPerformanceReview` | Exempt, attestation: Reopening a submitted review withdraws the reviewer's signed assessment from the worker; only the reviewer does that. |
 | `mutation restorePerformanceReviewTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation submitPerformanceReview` | Pending: Submit performance review. |
-| `mutation updatePerformanceReview` | Pending: Update performance review. |
+| `mutation submitPerformanceReview` | Exempt, attestation: Submitting is the reviewer signing the assessment and sending it to the worker to acknowledge; an agent drafts, it does not sign. |
+| `mutation updatePerformanceReview` | Tool: `draft_performance_review` |
 | `mutation updatePerformanceReviewTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### permission
@@ -1662,21 +1531,21 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/`<br>permithandler.waiveRequirement | Pending: Waive requirement (shipment). |
-| `POST /api/v1/shipments/:shipmentID/permits/`<br>permithandler.createPermit | Pending: Create permit (shipment). |
-| `PUT /api/v1/shipments/:shipmentID/permits/:permitID/`<br>permithandler.updatePermit | Pending: Update permit (shipment). |
+| `POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/`<br>permithandler.waiveRequirement | Exempt, attestation: Waiving a permit requirement is a named person accepting the compliance risk of moving the load without that state's permit. |
+| `POST /api/v1/shipments/:shipmentID/permits/`<br>permithandler.createPermit | Tool: `record_shipment_permit` |
+| `PUT /api/v1/shipments/:shipmentID/permits/:permitID/`<br>permithandler.updatePermit | Tool: `update_shipment_permit` |
 
 ### ptopolicy
 
 | Write | Decision |
 | --- | --- |
-| `mutation adjustWorkerPtoBalance` | Pending: Adjust worker PTO balance. |
+| `mutation adjustWorkerPtoBalance` | Tool: `adjust_worker_pto_balance` |
 | `mutation archivePtoPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation assignWorkerPtoPolicy` | Pending: Assign worker PTO policy. |
+| `mutation assignWorkerPtoPolicy` | Exempt, configuration: Which PTO policy a worker accrues under is an HR setting an administrator assigns; requests and balances follow from it. |
 | `mutation createPtoPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation endWorkerPtoPolicyAssignment` | Pending: End worker PTO policy assignment. |
+| `mutation endWorkerPtoPolicyAssignment` | Exempt, configuration: Which PTO policy a worker accrues under is an HR setting an administrator assigns; requests and balances follow from it. |
 | `mutation restorePtoPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation runPtoAccrual` | Pending: Run PTO accrual. |
+| `mutation runPtoAccrual` | Exempt, infrastructure: Accrual runs on its schedule; this re-runs the job for a period, which is repair work on the ledger rather than a decision. |
 | `mutation updatePtoPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### push
@@ -1690,18 +1559,18 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-agreements/`<br>rateagreementhandler.create | Pending: Create a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/approve/`<br>rateagreementhandler.review | Pending: Approve a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/archive/`<br>rateagreementhandler.review | Pending: Archive a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/`<br>rateagreementhandler.duplicate | Pending: Duplicate a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/reject/`<br>rateagreementhandler.review | Pending: Reject a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/resume/`<br>rateagreementhandler.review | Pending: Resume a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/`<br>rateagreementhandler.amendRules | Pending: Amend the rating rules of an active rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/submit/`<br>rateagreementhandler.review | Pending: Submit a rate agreement. |
-| `POST /api/v1/rate-agreements/:rateAgreementID/suspend/`<br>rateagreementhandler.review | Pending: Suspend a rate agreement. |
-| `POST /api/v1/rate-agreements/rate-increase/apply/`<br>rateagreementhandler.applyRateIncrease | Pending: Apply rate increase (rate agreement). |
+| `POST /api/v1/rate-agreements/`<br>rateagreementhandler.create | Tool: `draft_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/approve/`<br>rateagreementhandler.review | Tool: `approve_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/archive/`<br>rateagreementhandler.review | Tool: `archive_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/duplicate/`<br>rateagreementhandler.duplicate | Tool: `duplicate_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/reject/`<br>rateagreementhandler.review | Tool: `reject_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/resume/`<br>rateagreementhandler.review | Tool: `resume_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/`<br>rateagreementhandler.amendRules | Tool: `amend_rate_agreement_rules` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/submit/`<br>rateagreementhandler.review | Tool: `submit_rate_agreement` |
+| `POST /api/v1/rate-agreements/:rateAgreementID/suspend/`<br>rateagreementhandler.review | Tool: `suspend_rate_agreement` |
+| `POST /api/v1/rate-agreements/rate-increase/apply/`<br>rateagreementhandler.applyRateIncrease | Tool: `apply_rate_increase` |
 | `POST /api/v1/rate-agreements/rate-increase/preview/`<br>rateagreementhandler.previewRateIncrease | Exempt, read-only: Plans a general rate increase for review and saves nothing. |
-| `PUT /api/v1/rate-agreements/:rateAgreementID/`<br>rateagreementhandler.update | Pending: Update a rate agreement. |
+| `PUT /api/v1/rate-agreements/:rateAgreementID/`<br>rateagreementhandler.update | Tool: `revise_rate_agreement_draft` |
 
 ### rateconfirmation
 
@@ -1723,17 +1592,17 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/rate-imports/`<br>rateimporthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
-| `POST /api/v1/rate-imports/:rateImportID/commit/`<br>rateimporthandler.commit | Pending: Commit a rate import. |
-| `POST /api/v1/rate-imports/:rateImportID/discard/`<br>rateimporthandler.discard | Pending: Discard a rate import. |
+| `POST /api/v1/rate-imports/:rateImportID/commit/`<br>rateimporthandler.commit | Tool: `commit_rate_import` |
+| `POST /api/v1/rate-imports/:rateImportID/discard/`<br>rateimporthandler.discard | Tool: `discard_rate_import` |
 
 ### ratematrix
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.delete | Pending: Delete a rate matrice. |
-| `POST /api/v1/rate-matrices/`<br>ratematrixhandler.create | Pending: Create a rate matrice. |
-| `PUT /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.update | Pending: Update a rate matrice. |
-| `PUT /api/v1/rate-matrices/:rateMatrixID/cells/`<br>ratematrixhandler.replaceCells | Pending: Replace cells (rate matrice). |
+| `DELETE /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.delete | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `POST /api/v1/rate-matrices/`<br>ratematrixhandler.create | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `PUT /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.update | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `PUT /api/v1/rate-matrices/:rateMatrixID/cells/`<br>ratematrixhandler.replaceCells | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 
 ### ratequote
 
@@ -1747,15 +1616,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-simulations/`<br>ratesimulationhandler.create | Pending: Run and save a rate simulation across past shipments. |
+| `POST /api/v1/rate-simulations/`<br>ratesimulationhandler.create | Tool: `run_rate_simulation` |
 
 ### ratezone
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.delete | Pending: Delete a rate zone. |
-| `POST /api/v1/rate-zones/`<br>ratezonehandler.create | Pending: Create a rate zone. |
-| `PUT /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.update | Pending: Update a rate zone. |
+| `DELETE /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.delete | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
+| `POST /api/v1/rate-zones/`<br>ratezonehandler.create | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
+| `PUT /api/v1/rate-zones/:rateZoneID/`<br>ratezonehandler.update | Exempt, configuration: Rate zones are the geography agreements price against, which an administrator defines once for every agreement. |
 
 ### realtime
 
@@ -1779,22 +1648,22 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation cancelReportRun` | Pending: Cancel report run. |
+| `mutation cancelReportRun` | Tool: `cancel_report_run` |
 | `mutation createReportDashboard` | Tool: `create_dashboard` |
 | `mutation createReportDefinition` | Tool: `create_report` |
 | `mutation createReportSchedule` | Tool: `schedule_report` |
-| `mutation createReportView` | Pending: Create report view. |
-| `mutation deleteReportDashboard` | Pending: Delete report dashboard. |
-| `mutation deleteReportDefinition` | Pending: Delete report definition. |
-| `mutation deleteReportSchedule` | Pending: Delete report schedule. |
-| `mutation deleteReportView` | Pending: Delete report view. |
+| `mutation createReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
+| `mutation deleteReportDashboard` | Tool: `delete_dashboard` |
+| `mutation deleteReportDefinition` | Tool: `delete_report` |
+| `mutation deleteReportSchedule` | Tool: `delete_report_schedule` |
+| `mutation deleteReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
 | `mutation forkCannedReport` | Tool: `fork_report` |
-| `mutation resetCannedFork` | Pending: Reset canned fork. |
+| `mutation resetCannedFork` | Tool: `reset_report_fork` |
 | `mutation runReport` | Tool: `run_report` |
 | `mutation updateReportDashboard` | Tool: `add_dashboard_tile` |
 | `mutation updateReportDefinition` | Tool: `update_report` |
-| `mutation updateReportSchedule` | Pending: Update report schedule. |
-| `mutation updateReportView` | Pending: Update report view. |
+| `mutation updateReportSchedule` | Tool: `update_report_schedule` |
+| `mutation updateReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
 | `POST /api/v1/reports/dashboards/:dashboardID/export/`<br>reporthandler.exportDashboard | Exempt, read-only: Renders a dashboard to a file for download. |
 
 ### role
@@ -1838,7 +1707,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation createWorkerPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation decideProfileChange` | Pending: Decide profile change. |
+| `mutation decideProfileChange` | Exempt, attestation: Approving a driver's own change to their personal or banking details is a person verifying it came from the driver; an agent must not vouch for identity or pay details. |
 | `mutation updateWorkerPolicy` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### sequenceconfig
@@ -1953,7 +1822,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/stored-mileages/:storedMileageID/`<br>storedmileagehandler.delete | Pending: Delete a stored mileage. |
+| `DELETE /api/v1/stored-mileages/:storedMileageID/`<br>storedmileagehandler.delete | Exempt, infrastructure: A stored mileage is a cached routing answer; clearing one only makes the next rating ask the routing provider again. |
 
 ### tablechangealert
 
@@ -2019,11 +1888,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation clockIn` | Exempt, counterparty: A worker clocking their own time; an agent must not record hours worked for a person. |
 | `mutation clockOut` | Exempt, counterparty: A worker clocking their own time; an agent must not record hours worked for a person. |
-| `mutation deleteTimeEntry` | Pending: Delete time entry. |
-| `mutation generatePayrollExport` | Pending: Generate payroll export. |
-| `mutation recordTimeEntry` | Pending: Record time entry. |
+| `mutation deleteTimeEntry` | Exempt, attestation: Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may change them. |
+| `mutation generatePayrollExport` | Tool: `generate_payroll_export` |
+| `mutation recordTimeEntry` | Exempt, attestation: Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may enter them. |
 | `mutation transitionTimesheet` | Exempt, attestation: Submitting and approving hours for payroll is a sign-off by the worker and their manager. |
-| `mutation voidPayrollExport` | Pending: Void payroll export. |
+| `mutation voidPayrollExport` | Tool: `void_payroll_export` |
 
 ### tractor
 
@@ -2080,119 +1949,119 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation approveWorkerPTO` | Tool: `approve_worker_pto` |
-| `mutation bulkWorkerPTOAction` | Pending: Approve, reject or cancel several PTO requests at once. |
+| `mutation bulkWorkerPTOAction` | Exempt, duplicate: Approves, rejects or cancels several requests at once; approve_worker_pto, reject_worker_pto and cancel_worker_pto each do one. |
 | `mutation cancelWorkerPTO` | Tool: `cancel_worker_pto` |
-| `mutation createWorkerPTO` | Pending: Create worker PTO. |
-| `mutation patchWorker`<br>twin `PATCH /api/v1/workers/:workerID/`<br>twin `PUT /api/v1/workers/:workerID/` | Pending: Update some fields of a worker. |
+| `mutation createWorkerPTO` | Tool: `request_worker_pto` |
+| `mutation patchWorker`<br>twin `PATCH /api/v1/workers/:workerID/`<br>twin `PUT /api/v1/workers/:workerID/` | Exempt, attestation: Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs. |
 | `mutation rejectWorkerPTO` | Tool: `reject_worker_pto` |
-| `mutation updateWorkerPTO` | Pending: Update worker PTO. |
-| `POST /api/v1/workers/`<br>workerhandler.create | Pending: Create a worker. |
+| `mutation updateWorkerPTO` | Tool: `update_worker_pto` |
+| `POST /api/v1/workers/`<br>workerhandler.create | Exempt, attestation: Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it. |
 
 ### workerchecklist
 
 | Write | Decision |
 | --- | --- |
 | `mutation archiveWorkerChecklistTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation cancelWorkerChecklist` | Pending: Cancel worker checklist. |
-| `mutation completeWorkerChecklistItem` | Pending: Complete worker checklist item. |
+| `mutation cancelWorkerChecklist` | Tool: `cancel_worker_checklist` |
+| `mutation completeWorkerChecklistItem` | Tool: `update_worker_checklist_item` |
 | `mutation createWorkerChecklistTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation markWorkerChecklistItemNotApplicable` | Pending: Mark worker checklist item not applicable. |
-| `mutation reopenWorkerChecklistItem` | Pending: Reopen worker checklist item. |
+| `mutation markWorkerChecklistItemNotApplicable` | Tool: `update_worker_checklist_item` |
+| `mutation reopenWorkerChecklistItem` | Tool: `update_worker_checklist_item` |
 | `mutation restoreWorkerChecklistTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation skipWorkerChecklistItem` | Pending: Skip worker checklist item. |
-| `mutation startWorkerChecklist` | Pending: Start worker checklist. |
+| `mutation skipWorkerChecklistItem` | Tool: `update_worker_checklist_item` |
+| `mutation startWorkerChecklist` | Tool: `start_worker_checklist` |
 | `mutation updateWorkerChecklistTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### workercredential
 
 | Write | Decision |
 | --- | --- |
-| `mutation archiveWorkerCredential` | Pending: Archive worker credential. |
+| `mutation archiveWorkerCredential` | Tool: `archive_worker_credential` |
 | `mutation archiveWorkerCredentialType` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation attachWorkerCredentialDocument` | Pending: Attach worker credential document. |
-| `mutation createWorkerCredential` | Pending: Create worker credential. |
+| `mutation attachWorkerCredentialDocument` | Tool: `attach_worker_credential_document` |
+| `mutation createWorkerCredential` | Tool: `record_worker_credential` |
 | `mutation createWorkerCredentialType` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation restoreWorkerCredentialType` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation updateWorkerCredential` | Pending: Update worker credential. |
+| `mutation updateWorkerCredential` | Tool: `update_worker_credential` |
 | `mutation updateWorkerCredentialType` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation verifyWorkerCredential` | Pending: Verify worker credential. |
+| `mutation verifyWorkerCredential` | Exempt, attestation: Verifying is a person vouching that they checked the credential against the original; an agent records, it does not vouch. |
 
 ### workerdqf
 
 | Write | Decision |
 | --- | --- |
-| `mutation deleteEmploymentVerification` | Pending: Delete employment verification. |
-| `mutation markEmploymentVerificationRequested` | Pending: Mark employment verification requested. |
-| `mutation recordEmploymentVerification` | Pending: Record employment verification. |
-| `mutation recordEmploymentVerificationFollowUp` | Pending: Record a follow-up on an employment verification request. |
-| `mutation updateEmploymentVerification` | Pending: Update employment verification. |
+| `mutation deleteEmploymentVerification` | Tool: `delete_employment_verification` |
+| `mutation markEmploymentVerificationRequested` | Tool: `log_employment_verification_request` |
+| `mutation recordEmploymentVerification` | Tool: `record_employment_verification` |
+| `mutation recordEmploymentVerificationFollowUp` | Tool: `log_employment_verification_request` |
+| `mutation updateEmploymentVerification` | Tool: `update_employment_verification` |
 
 ### workerdrugalcohol
 
 | Write | Decision |
 | --- | --- |
-| `mutation cancelDotRandomDraw` | Pending: Cancel DOT random draw. |
-| `mutation cancelDotTest` | Pending: Cancel DOT test. |
-| `mutation completeClearinghouseQuery` | Pending: Complete clearinghouse query. |
-| `mutation createDotRandomPool` | Pending: Create DOT random pool. |
-| `mutation finalizeDotRandomDraw` | Pending: Finalize DOT random draw. |
-| `mutation recordClearinghouseQuery` | Pending: Record clearinghouse query. |
-| `mutation recordDotTest` | Pending: Record DOT test. |
-| `mutation recordDotTestResult` | Pending: Record DOT test result. |
-| `mutation recordDotViolation` | Pending: Record DOT violation. |
-| `mutation runDotRandomDraw` | Pending: Run DOT random draw. |
-| `mutation updateDotRandomDrawEntry` | Pending: Update DOT random draw entry. |
-| `mutation updateDotRandomPool` | Pending: Update DOT random pool. |
-| `mutation updateDotViolation` | Pending: Update DOT violation. |
+| `mutation cancelDotRandomDraw` | Tool: `cancel_dot_random_draw` |
+| `mutation cancelDotTest` | Tool: `cancel_dot_test` |
+| `mutation completeClearinghouseQuery` | Exempt, attestation: A Clearinghouse query's outcome is what FMCSA returned to the person who ran it under the carrier's account; only they record it. |
+| `mutation createDotRandomPool` | Exempt, configuration: A random testing pool sets who is tested and at what annual rate under 49 CFR 382.305; the designated employer representative maintains it. |
+| `mutation finalizeDotRandomDraw` | Tool: `finalize_dot_random_draw` |
+| `mutation recordClearinghouseQuery` | Exempt, attestation: A Clearinghouse query is made under the carrier's FMCSA account with the driver's consent; the person who ran it records it. |
+| `mutation recordDotTest` | Tool: `schedule_dot_test` |
+| `mutation recordDotTestResult` | Exempt, attestation: A test result is what the lab and medical review officer reported; the person who received it records it, and a positive result reaches the Clearinghouse. |
+| `mutation recordDotViolation` | Exempt, attestation: A drug or alcohol violation is reported to the FMCSA Clearinghouse and removes the driver from safety-sensitive work; a person records it. |
+| `mutation runDotRandomDraw` | Tool: `run_dot_random_draw` |
+| `mutation updateDotRandomDrawEntry` | Tool: `update_dot_random_selection` |
+| `mutation updateDotRandomPool` | Exempt, configuration: A random testing pool sets who is tested and at what annual rate under 49 CFR 382.305; the designated employer representative maintains it. |
+| `mutation updateDotViolation` | Exempt, attestation: A drug or alcohol violation and its return-to-duty steps are reported to the FMCSA Clearinghouse; a person records them. |
 
 ### workeremployment
 
 | Write | Decision |
 | --- | --- |
-| `mutation amendWorkerEmploymentEvent` | Pending: Amend worker employment event. |
-| `mutation recordWorkerEmploymentEvent` | Pending: Record worker employment event. |
+| `mutation amendWorkerEmploymentEvent` | Exempt, attestation: An employment event is a hire, rehire, leave or termination decision on the worker's record; a person makes and amends it. |
+| `mutation recordWorkerEmploymentEvent` | Exempt, attestation: An employment event is a hire, rehire, leave or termination decision on the worker's record; a person makes it. |
 
 ### workerinjury
 
 | Write | Decision |
 | --- | --- |
 | `mutation certifyOshaSummary` | Exempt, attestation: OSHA requires a company executive to certify the annual injury summary. |
-| `mutation deleteWorkerInjury` | Pending: Delete worker injury. |
-| `mutation recordWorkerInjury` | Pending: Record worker injury. |
-| `mutation saveOshaSummary` | Pending: Save OSHA summary. |
+| `mutation deleteWorkerInjury` | Tool: `delete_worker_injury` |
+| `mutation recordWorkerInjury` | Tool: `record_worker_injury` |
+| `mutation saveOshaSummary` | Exempt, attestation: The OSHA 300A summary is certified by a company executive and posted for employees; the figures are theirs to sign. |
 | `mutation uncertifyOshaSummary` | Exempt, attestation: Withdraws the executive certification of the annual injury summary. |
-| `mutation updateWorkerInjury` | Pending: Update worker injury. |
+| `mutation updateWorkerInjury` | Tool: `update_worker_injury` |
 
 ### workerleave
 
 | Write | Decision |
 | --- | --- |
-| `mutation closeLeaveCase` | Pending: Close leave case. |
-| `mutation decideLeaveCase` | Pending: Decide leave case. |
-| `mutation deleteLeaveDay` | Pending: Delete leave day. |
-| `mutation openLeaveCase` | Pending: Open leave case. |
-| `mutation recordLeaveCertification` | Pending: Record leave certification. |
-| `mutation recordLeaveDay` | Pending: Record leave day. |
-| `mutation requestLeaveCertification` | Pending: Request leave certification. |
-| `mutation updateLeaveCase` | Pending: Update leave case. |
+| `mutation closeLeaveCase` | Tool: `close_leave_case` |
+| `mutation decideLeaveCase` | Exempt, attestation: Approving or denying leave, and designating it FMLA, is the employer's notice to the employee under 29 CFR 825.300; a person decides it. |
+| `mutation deleteLeaveDay` | Tool: `delete_leave_day` |
+| `mutation openLeaveCase` | Tool: `open_leave_case` |
+| `mutation recordLeaveCertification` | Exempt, attestation: The certification is the health care provider's statement received from the employee; the person who received it records it. |
+| `mutation recordLeaveDay` | Tool: `record_leave_day` |
+| `mutation requestLeaveCertification` | Tool: `request_leave_certification` |
+| `mutation updateLeaveCase` | Tool: `update_leave_case` |
 | `mutation updateLeaveControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation updateLeaveDay` | Pending: Update leave day. |
+| `mutation updateLeaveDay` | Tool: `update_leave_day` |
 
 ### workersafety
 
 | Write | Decision |
 | --- | --- |
 | `mutation acknowledgeMyDisciplinaryAction` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation closeWorkerSafetyEvent` | Pending: Close worker safety event. |
-| `mutation createWorkerSafetyEvent` | Pending: Create worker safety event. |
-| `mutation deleteWorkerRecognition` | Pending: Delete worker recognition. |
-| `mutation deleteWorkerSafetyEvent` | Pending: Delete worker safety event. |
-| `mutation giveWorkerRecognition` | Pending: Give worker recognition. |
-| `mutation issueDisciplinaryAction` | Pending: Issue disciplinary action. |
-| `mutation reopenWorkerSafetyEvent` | Pending: Reopen worker safety event. |
-| `mutation rescindDisciplinaryAction` | Pending: Rescind disciplinary action. |
-| `mutation reviewWorkerSafetyEvent` | Pending: Review worker safety event. |
-| `mutation updateWorkerSafetyEvent` | Pending: Update worker safety event. |
+| `mutation closeWorkerSafetyEvent` | Tool: `change_worker_safety_event_status` |
+| `mutation createWorkerSafetyEvent` | Tool: `open_worker_safety_event` |
+| `mutation deleteWorkerRecognition` | Tool: `delete_worker_recognition` |
+| `mutation deleteWorkerSafetyEvent` | Tool: `delete_worker_safety_event` |
+| `mutation giveWorkerRecognition` | Tool: `give_worker_recognition` |
+| `mutation issueDisciplinaryAction` | Exempt, attestation: Discipline is a manager's decision on an employee's record, which the driver acknowledges in the portal; a person issues it. |
+| `mutation reopenWorkerSafetyEvent` | Tool: `change_worker_safety_event_status` |
+| `mutation rescindDisciplinaryAction` | Exempt, attestation: Rescinding discipline reverses a manager's decision on an employee's record; the person who owns that decision makes it. |
+| `mutation reviewWorkerSafetyEvent` | Tool: `change_worker_safety_event_status` |
+| `mutation updateWorkerSafetyEvent` | Tool: `update_worker_safety_event` |
 
 ### workertraining
 
@@ -2200,14 +2069,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation acknowledgeMyTraining` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation archiveTrainingCourse` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation assignRequiredWorkerTraining` | Pending: Assign required worker training. |
-| `mutation assignWorkerTraining` | Pending: Assign worker training. |
-| `mutation attachWorkerTrainingDocument` | Pending: Attach worker training document. |
-| `mutation bulkAssignTraining` | Pending: Bulk assign training. |
-| `mutation cancelWorkerTraining` | Pending: Cancel worker training. |
-| `mutation completeWorkerTraining` | Pending: Complete worker training. |
+| `mutation assignRequiredWorkerTraining` | Tool: `assign_required_worker_training` |
+| `mutation assignWorkerTraining` | Tool: `assign_worker_training` |
+| `mutation attachWorkerTrainingDocument` | Tool: `attach_worker_training_document` |
+| `mutation bulkAssignTraining` | Tool: `assign_worker_training` |
+| `mutation cancelWorkerTraining` | Tool: `close_worker_training` |
+| `mutation completeWorkerTraining` | Tool: `record_training_completion` |
 | `mutation createTrainingCourse` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation restoreTrainingCourse` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `mutation startMyTraining` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation updateTrainingCourse` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `mutation waiveWorkerTraining` | Pending: Waive worker training. |
+| `mutation waiveWorkerTraining` | Tool: `close_worker_training` |

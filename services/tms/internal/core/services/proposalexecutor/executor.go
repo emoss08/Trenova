@@ -86,6 +86,7 @@ type Params struct {
 	Runs        repositories.AgentRunRepository
 	Definitions repositories.AgentDefinitionRepository
 	DB          ports.DBConnection
+	Zones       services.TenantTimezoneReader `optional:"true"`
 }
 
 type Service struct {
@@ -98,6 +99,7 @@ type Service struct {
 	budgets      services.AgentBudgetService
 	definitions  definitionResolver
 	db           ports.DBConnection
+	zones        services.TenantTimezoneReader
 	// schemas holds each tool's compiled schema, against which an approver's
 	// changes are checked.
 	schemas *toolschema.Validator
@@ -115,6 +117,7 @@ func New(p Params) *Service {
 		budgets:      p.Budgets,
 		definitions:  runDefinitions{runs: p.Runs, definitions: p.Definitions},
 		db:           p.DB,
+		zones:        p.Zones,
 	}
 }
 
@@ -250,7 +253,12 @@ func (s *Service) execute(ctx context.Context, approval *Approval) (*Outcome, er
 	}
 
 	policy := tool.Policy()
-	execParams := ExecutionParams(proposal, &policy, params, actor)
+	execParams, err := s.executionParams(ctx, proposal, &policy, params, actor)
+	if err != nil {
+		s.recordFailureBy(ctx, proposal, err, actor)
+
+		return nil, err
+	}
 
 	egress := policy.Classified(execParams).Egress
 	if err = assertTaintDecidedByPerson(proposal, egress, actor); err != nil {
@@ -346,10 +354,11 @@ func (s *Service) admit(
 	// record of an execution is written.
 	if validator, checks := tool.(services.ToolValidator); checks {
 		policy := tool.Policy()
-		if err := validator.Validate(
-			ctx,
-			ExecutionParams(proposal, &policy, params, approval.Actor),
-		); err != nil {
+		validateParams, err := s.executionParams(ctx, proposal, &policy, params, approval.Actor)
+		if err != nil {
+			return nil, nil, err
+		}
+		if err = validator.Validate(ctx, validateParams); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -382,6 +391,38 @@ func ExecutionParams(
 	}
 
 	return execParams
+}
+
+func (s *Service) executionParams(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	policy *services.ToolPolicy,
+	params map[string]any,
+	actor *services.RequestActor,
+) (services.ToolExecuteParams, error) {
+	return WithTimezone(ctx, s.zones, ExecutionParams(proposal, policy, params, actor))
+}
+
+func WithTimezone(
+	ctx context.Context,
+	zones services.TenantTimezoneReader,
+	params services.ToolExecuteParams, //nolint:gocritic // returned as the tool is handed it
+) (services.ToolExecuteParams, error) {
+	if zones == nil || params.Timezone != "" {
+		return params, nil
+	}
+
+	info := pagination.TenantInfo{OrgID: params.OrganizationID, BuID: params.BusinessUnitID}
+	if params.Actor != nil {
+		info.UserID = params.Actor.UserID
+	}
+	zone, err := zones.TenantTimezone(ctx, info)
+	if err != nil {
+		return params, err
+	}
+	params.Timezone = zone
+
+	return params, nil
 }
 
 type approvedRun struct {
@@ -495,14 +536,18 @@ func (s *Service) CheckModifications(
 	}
 
 	if validator, checks := tool.(services.ToolValidator); checks {
-		if err := validator.Validate(ctx, services.ToolExecuteParams{
+		validateParams, err := WithTimezone(ctx, s.zones, services.ToolExecuteParams{
 			OrganizationID: proposal.OrganizationID,
 			BusinessUnitID: proposal.BusinessUnitID,
 			Actor:          actor,
 			IdempotencyKey: proposal.ID.String(),
 			RunID:          proposal.RunID,
 			Params:         params,
-		}); err != nil {
+		})
+		if err != nil {
+			return nil, err
+		}
+		if err = validator.Validate(ctx, validateParams); err != nil {
 			return nil, err
 		}
 	}

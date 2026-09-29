@@ -10,10 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -342,4 +344,69 @@ func optionalPulidParam(params map[string]any, key string) (*pulid.ID, error) {
 	}
 
 	return &id, nil
+}
+
+func localTimeProperty(description string) map[string]any {
+	return stringProperty(description+" A local date and time where it happens, without a UTC "+
+		"offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or "+
+		"the organization's when the location names none; never send Unix seconds.", 0)
+}
+
+func requireLocalTime(params map[string]any, key string, loc *time.Location) (int64, error) {
+	raw, given := params[key]
+	if !given || raw == nil {
+		return 0, errortypes.NewValidationError(key, errortypes.ErrRequired,
+			"A local date and time such as 2026-10-01T08:00 is required")
+	}
+
+	text, isText := raw.(string)
+	if !isText {
+		return 0, errortypes.NewValidationError(key, errortypes.ErrInvalid,
+			"Send a local date and time such as 2026-10-01T08:00, not a number")
+	}
+
+	seconds, fieldErr := parseLocalTime(key, text, loc)
+	if fieldErr != nil {
+		return 0, fieldErr
+	}
+
+	return seconds, nil
+}
+
+func optionalLocalTime(params map[string]any, key string, loc *time.Location) (*int64, error) {
+	raw, given := params[key]
+	if !given || raw == nil {
+		return nil, nil //nolint:nilnil // an absent time is no time and no error
+	}
+	if text, isText := raw.(string); isText && strings.TrimSpace(text) == "" {
+		return nil, nil //nolint:nilnil // an empty time is no time and no error
+	}
+
+	seconds, err := requireLocalTime(params, key, loc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &seconds, nil
+}
+
+func parseLocalTime(field, value string, loc *time.Location) (int64, *errortypes.Error) {
+	text := strings.TrimSpace(value)
+	if _, offset := timeutils.ParseTimeRFC3339(text); offset {
+		return 0, errortypes.NewValidationError(field, errortypes.ErrInvalid,
+			"{0} carries a UTC offset or is a Unix time; send the local time where it happens, "+
+				"such as 2026-10-01T08:00", text)
+	}
+
+	seconds, err := timeutils.ParseLocalDateTime(text, loc)
+	switch {
+	case err == nil:
+		return seconds, nil
+	case errors.Is(err, timeutils.ErrSkippedLocalTime):
+		return 0, errortypes.NewValidationError(field, errortypes.ErrInvalid,
+			"{0} does not exist in {1}: the clocks move forward past it", text, loc.String())
+	default:
+		return 0, errortypes.NewValidationError(field, errortypes.ErrInvalid,
+			"{0} is not a local date and time such as 2026-10-01T08:00", text)
+	}
 }

@@ -4,10 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"go.uber.org/zap"
 )
 
@@ -58,34 +56,10 @@ func (s *Service) ResetCannedFork(
 	ctx context.Context,
 	req *GetDefinitionRequest,
 ) (*report.ReportDefinition, error) {
-	existing, err := s.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
-		TenantInfo:   req.TenantInfo,
-		DefinitionID: req.DefinitionID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if existing.OwnerID != req.TenantInfo.UserID {
-		return nil, errortypes.NewAuthorizationError(
-			"Only the report owner can reset this report",
-		)
-	}
-	if existing.Kind != report.DefinitionKindCannedFork || existing.CannedKey == "" {
-		return nil, errortypes.NewBusinessError(
-			"Only reports customized from a canned report can be reset",
-		)
-	}
-
-	entry, err := s.GetCanned(existing.CannedKey)
+	change, err := s.PlanResetCannedFork(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	existing.Definition = entry.Definition
-	existing.CannedVersion = entry.Version
-	existing.CatalogVersion = reportcatalog.Version
-	existing.Status = report.DefinitionStatusActive
-	existing.Diagnostics = nil
-
-	return s.defRepo.Update(ctx, existing, req.TenantInfo.UserID)
+	return s.defRepo.Update(ctx, change.After, req.TenantInfo.UserID)
 }

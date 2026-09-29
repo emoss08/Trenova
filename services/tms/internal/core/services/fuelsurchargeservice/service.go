@@ -191,7 +191,12 @@ func (s *Service) DeleteIndex(
 	return nil
 }
 
-func (s *Service) AddManualPrice(
+type PriceChange struct {
+	Before *fuelsurcharge.FuelIndexPrice
+	After  *fuelsurcharge.FuelIndexPrice
+}
+
+func (s *Service) PlanAddManualPrice(
 	ctx context.Context,
 	entity *fuelsurcharge.FuelIndexPrice,
 	userID pulid.ID,
@@ -214,17 +219,31 @@ func (s *Service) AddManualPrice(
 		return nil, multiErr
 	}
 
-	entity.IsManual = true
-	entity.EnteredByID = &userID
-	entity.Currency = index.Currency
+	planned := *entity
+	planned.IsManual = true
+	planned.EnteredByID = &userID
+	planned.Currency = index.Currency
 
 	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
+	planned.Validate(multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
 
-	created, err := s.priceRepo.Create(ctx, entity)
+	return &planned, nil
+}
+
+func (s *Service) AddManualPrice(
+	ctx context.Context,
+	entity *fuelsurcharge.FuelIndexPrice,
+	userID pulid.ID,
+) (*fuelsurcharge.FuelIndexPrice, error) {
+	planned, err := s.PlanAddManualPrice(ctx, entity, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := s.priceRepo.Create(ctx, planned)
 	if err != nil {
 		s.l.Error("failed to create manual fuel price", zap.Error(err))
 		return nil, err
@@ -233,19 +252,17 @@ func (s *Service) AddManualPrice(
 	return created, nil
 }
 
-func (s *Service) UpdateManualPrice(
+func (s *Service) PlanUpdateManualPrice(
 	ctx context.Context,
 	entity *fuelsurcharge.FuelIndexPrice,
 	userID pulid.ID,
-) (*fuelsurcharge.FuelIndexPrice, error) {
-	tenantInfo := pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}
-
+) (*PriceChange, error) {
 	existing, err := s.priceRepo.GetByID(ctx, &repositories.GetFuelIndexPriceByIDRequest{
-		PriceID:    entity.ID,
-		TenantInfo: tenantInfo,
+		PriceID: entity.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -258,18 +275,32 @@ func (s *Service) UpdateManualPrice(
 		return nil, multiErr
 	}
 
-	entity.FuelIndexID = existing.FuelIndexID
-	entity.IsManual = true
-	entity.EnteredByID = &userID
-	entity.Currency = existing.Currency
+	planned := *entity
+	planned.FuelIndexID = existing.FuelIndexID
+	planned.IsManual = true
+	planned.EnteredByID = &userID
+	planned.Currency = existing.Currency
 
 	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
+	planned.Validate(multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
 
-	updated, err := s.priceRepo.Update(ctx, entity)
+	return &PriceChange{Before: existing, After: &planned}, nil
+}
+
+func (s *Service) UpdateManualPrice(
+	ctx context.Context,
+	entity *fuelsurcharge.FuelIndexPrice,
+	userID pulid.ID,
+) (*fuelsurcharge.FuelIndexPrice, error) {
+	change, err := s.PlanUpdateManualPrice(ctx, entity, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	updated, err := s.priceRepo.Update(ctx, change.After)
 	if err != nil {
 		s.l.Error("failed to update manual fuel price", zap.Error(err))
 		return nil, err

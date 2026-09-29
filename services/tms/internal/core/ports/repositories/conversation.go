@@ -22,6 +22,11 @@ type GetThreadOwnedRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+type ListThreadAgentsByIDsRequest struct {
+	IDs        []pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type ListThreadsRequest struct {
 	UserID     pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -94,6 +99,10 @@ type ConversationRepository interface {
 	// never reached from a request: a person reads threads through GetThread,
 	// scoped to themselves.
 	GetThreadOwned(ctx context.Context, req GetThreadOwnedRequest) (*conversation.Thread, error)
+	ListThreadAgentsByIDs(
+		ctx context.Context,
+		req ListThreadAgentsByIDsRequest,
+	) ([]*conversation.Thread, error)
 	ListThreads(
 		ctx context.Context,
 		req ListThreadsRequest,

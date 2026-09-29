@@ -3619,6 +3619,18 @@ func init() {
 				Special: "traceUrl",
 			},
 			{
+				Name:        "parentOwnerKind",
+				FieldMapKey: "parentOwnerKind",
+			},
+			{
+				Name:        "parentOwnerId",
+				FieldMapKey: "parentOwnerId",
+			},
+			{
+				Name:        "delegateCallId",
+				FieldMapKey: "delegateCallId",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -3633,6 +3645,10 @@ func init() {
 			{
 				Name:    "definition",
 				Special: "definition",
+			},
+			{
+				Name:    "handedBy",
+				Special: "handedBy",
 			},
 		},
 	}

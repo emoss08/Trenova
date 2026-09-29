@@ -7,6 +7,7 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
@@ -151,6 +152,19 @@ func (r *agentProposalFieldResolver) Choices(ctx context.Context, obj *toolschem
 
 func (r *agentRunResolver) TraceURL(ctx context.Context, obj *agent.AgentRun) (*string, error) {
 	return r.traceURLOf(obj.TraceID), nil
+}
+
+func (r *agentRunResolver) ParentOwnerKind(ctx context.Context, obj *agent.AgentRun) (*gqlmodel.AgentRunEventOwnerKind, error) {
+	if obj.ParentOwnerKind == "" {
+		return nil, nil
+	}
+
+	kind := gqlmodel.AgentRunEventOwnerKind(obj.ParentOwnerKind)
+	if !kind.IsValid() {
+		return nil, fmt.Errorf("unknown agent run parent owner kind: %s", obj.ParentOwnerKind)
+	}
+
+	return &kind, nil
 }
 
 func (r *mutationResolver) DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {

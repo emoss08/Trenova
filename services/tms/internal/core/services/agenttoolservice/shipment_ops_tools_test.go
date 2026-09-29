@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
+	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -328,12 +329,13 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &writeGuard{}}
-	tool := newDuplicateShipmentTool(shipments)
+	tool := newDuplicateShipmentTool(duplicateShipmentDeps{Shipments: shipments})
 	params := executeParams(map[string]any{
 		paramShipmentID:    shipments.shipment().ID.String(),
 		paramCopyCount:     float64(2),
-		paramFirstPickupAt: "2030-03-17T12:46:40-05:00",
+		paramFirstPickupAt: "2030-03-17T12:46:40",
 	})
+	params.Timezone = "America/Chicago"
 
 	preview := previewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
 		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
@@ -357,11 +359,13 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 func TestDuplicateShipment_RefusesBadArguments(t *testing.T) {
 	t.Parallel()
 
-	tool := newDuplicateShipmentTool(&fakeShipmentOperator{})
+	tool := newDuplicateShipmentTool(duplicateShipmentDeps{Shipments: &fakeShipmentOperator{}})
 	id := pulid.MustNew("shp_").String()
 	for name, raw := range map[string]map[string]any{
 		"too many copies":     {paramShipmentID: id, paramCopyCount: float64(21)},
 		"unix seconds":        {paramShipmentID: id, paramFirstPickupAt: float64(1_900_000_000)},
+		"unix seconds text":   {paramShipmentID: id, paramFirstPickupAt: "1900000000"},
+		"a utc offset":        {paramShipmentID: id, paramFirstPickupAt: "2030-03-17T12:46:40Z"},
 		"a date without time": {paramShipmentID: id, paramFirstPickupAt: "2030-03-17"},
 		"no shipment":         {paramCopyCount: float64(1)},
 	} {
@@ -371,6 +375,74 @@ func TestDuplicateShipment_RefusesBadArguments(t *testing.T) {
 				executeParams(raw)))
 		})
 	}
+}
+
+type fakeShipmentSources struct {
+	source *shipment.Shipment
+	asked  *repositories.GetShipmentByIDRequest
+}
+
+func (f *fakeShipmentSources) Get(
+	_ context.Context,
+	req *repositories.GetShipmentByIDRequest,
+) (*shipment.Shipment, error) {
+	f.asked = req
+
+	return f.source, nil
+}
+
+type fakeLocationZones struct {
+	zones map[pulid.ID]string
+}
+
+func (f fakeLocationZones) GetByIDs(
+	_ context.Context,
+	req repositories.GetLocationsByIDsRequest,
+) ([]*location.Location, error) {
+	found := make([]*location.Location, 0, len(req.LocationIDs))
+	for _, id := range req.LocationIDs {
+		if zone, ok := f.zones[id]; ok {
+			found = append(found, &location.Location{ID: id, Timezone: zone})
+		}
+	}
+
+	return found, nil
+}
+
+func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
+	t.Parallel()
+
+	shipments := &fakeShipmentOperator{guard: &writeGuard{}}
+	pickup, delivery := pulid.MustNew("loc_"), pulid.MustNew("loc_")
+	sources := &fakeShipmentSources{source: &shipment.Shipment{Moves: []*shipment.ShipmentMove{{
+		Sequence: 0,
+		Stops: []*shipment.Stop{
+			{LocationID: delivery, Sequence: 1},
+			{LocationID: pickup, Sequence: 0},
+		},
+	}}}}
+	tool := newDuplicateShipmentTool(duplicateShipmentDeps{
+		Shipments: shipments,
+		Sources:   sources,
+		Locations: fakeLocationZones{zones: map[pulid.ID]string{
+			pickup:   "America/Los_Angeles",
+			delivery: "America/New_York",
+		}},
+	})
+	params := executeParams(map[string]any{
+		paramShipmentID:    shipments.shipment().ID.String(),
+		paramFirstPickupAt: "2030-03-17T10:46:40",
+	})
+	params.Timezone = "America/Chicago"
+
+	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	require.NoError(t, err)
+
+	require.NotNil(t, shipments.duplicated.FirstPickupAt)
+	assert.Equal(t, int64(1_900_000_000), *shipments.duplicated.FirstPickupAt,
+		"10:46:40 at a pickup in Los Angeles is 12:46:40 in Chicago")
+	require.NotNil(t, sources.asked)
+	assert.True(t, sources.asked.ExpandShipmentDetails)
 }
 
 type fakeHoldUpdater struct {

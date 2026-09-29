@@ -41,16 +41,9 @@ func (s *Service) fileBaseline(
 	}
 
 	result := s.previews.Baseline(ctx, &serviceports.ProposalBaselineRequest{
-		ProposalID: b.proposalID,
-		Tool:       b.tool,
-		Params: serviceports.ToolExecuteParams{
-			OrganizationID: b.req.Actor.OrganizationID,
-			BusinessUnitID: b.req.Actor.BusinessUnitID,
-			Actor:          b.req.Actor,
-			IdempotencyKey: b.call.ID,
-			RunID:          b.req.RunID,
-			Params:         b.call.Arguments,
-		},
+		ProposalID:  b.proposalID,
+		Tool:        b.tool,
+		Params:      runToolParams(b.req, b.call.ID, b.call.Arguments),
 		Persist:     b.persist,
 		FileRefused: b.fileRefused,
 	})

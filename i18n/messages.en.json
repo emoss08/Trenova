@@ -3860,6 +3860,15 @@
       "template/notification.dash.load_unassigned"
     ]
   },
+  "A local date and time such as 2026-10-01T08:00 is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A loop cannot be its own parent": {
     "sites": 1,
     "scope": [
@@ -5224,6 +5233,15 @@
       "domain/ifta"
     ]
   },
+  "A reopened item takes no note or evidence": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A repeated field must name its repeat path": {
     "sites": 1,
     "scope": [
@@ -5330,6 +5348,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "A retraining cycle is already exporting, waiting for a trainer, or training": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A retry is started from the transfer it retries": {
@@ -5775,6 +5802,15 @@
       "domain/agentquality"
     ]
   },
+  "A score report is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
   "A search could not be embedded and fell back to keywords. Test the provider on the Providers tab.": {
     "sites": 1,
     "scope": [
@@ -6009,6 +6045,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "A shipment needs a move with its stops in travel order": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "A short classification code for the reversal reason.": {
@@ -16864,6 +16909,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "An imported bank receipt could not be matched to a customer payment on its own and is waiting in the reconciliation queue.": {
@@ -34259,7 +34313,7 @@
     ]
   },
   "Checklist item was changed by someone else. Reload and try again": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -34659,6 +34713,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Choose a rating method: no rate agreement covers this lane, so this shipment would be priced at zero": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
+  "Choose a rating method: this shipment has no rate agreement and no rating method, so it cannot be priced": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
     ]
   },
   "Choose a record for each document you want to file": {
@@ -50018,6 +50090,15 @@
       "api/handlers"
     ]
   },
+  "Decide whether enough new corrections have been confirmed to retrain the document extraction model, and start its training export": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Decided": {
     "sites": 2,
     "scope": [
@@ -55881,6 +55962,15 @@
     ],
     "areas": [
       "routes/invoice-register"
+    ]
+  },
+  "Dispute adjustment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Dispute cases raised against posted invoices": {
@@ -69456,7 +69546,7 @@
     ]
   },
   "Export at least one example per organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -77038,11 +77128,12 @@
     ]
   },
   "Fuel purchase": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/fuel-purchase"
     ]
   },
@@ -79798,6 +79889,15 @@
       "domain/permission"
     ]
   },
+  "Handed by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Handed out": {
     "sites": 1,
     "scope": [
@@ -81093,6 +81193,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Hold out at least one percent for validation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
     ]
   },
   "Hold pay": {
@@ -112027,6 +112136,15 @@
       "apps/web/lib"
     ]
   },
+  "None of these courses could be assigned: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "None of these rows are carriers": {
     "sites": 1,
     "scope": [
@@ -113966,6 +114084,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "Nothing prices this shipment, so it would be saved at zero and flagged for review.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Nothing readable came attached. The desk can build the load from the text.": {
@@ -117169,6 +117296,15 @@
       "service/invoiceshareservice"
     ]
   },
+  "Only a skipped cycle has a skip reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
   "Only a submitted review the worker has not signed can be reopened": {
     "sites": 1,
     "scope": [
@@ -117434,15 +117570,6 @@
       "domain/documenttemplate"
     ]
   },
-  "Only an assigned or in-progress course can be cancelled": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/workertrainingservice"
-    ]
-  },
   "Only an assigned or in-progress course can be completed. Assign it again to record a renewal": {
     "sites": 1,
     "scope": [
@@ -117452,13 +117579,13 @@
       "service/workertrainingservice"
     ]
   },
-  "Only an assigned or in-progress course can be waived": {
+  "Only an exporting, ready or training cycle can be canceled; this one is {0}": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/workertrainingservice"
+      "domain/aitraining"
     ]
   },
   "Only an import or formula conversation carries a page's draft": {
@@ -120078,7 +120205,7 @@
     ]
   },
   "Opening the desk": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -136703,11 +136830,12 @@
     ]
   },
   "Rate agreement": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/rate-agreement"
     ]
   },
@@ -142746,12 +142874,14 @@
     ]
   },
   "Reimbursement": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/pay-code"
+      "routes/pay-code",
+      "service/agenttoolservice"
     ]
   },
   "Reimbursements": {
@@ -145165,6 +145295,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Report run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Report run canceled": {
@@ -148042,6 +148181,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Retraining cycle {0} is no longer held by this trainer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
+  "Retraining cycle {0} is {1}, not ready to train": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
     ]
   },
   "Retrieval": {
@@ -154142,6 +154299,15 @@
       "domain/aitraining"
     ]
   },
+  "Say who is requesting the retraining": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
   "Say who it goes to": {
     "sites": 1,
     "scope": [
@@ -159310,6 +159476,15 @@
       "domain/permission"
     ]
   },
+  "Send a local date and time such as 2026-10-01T08:00, not a number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Send a message to a driver": {
     "sites": 1,
     "scope": [
@@ -160539,6 +160714,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Sequences count from 0 in travel order, so this one is {0}, not {1}; or leave sequence out": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Sequential": {
@@ -164108,6 +164292,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Shipment {0} has no rate agreement covering its lane and no rating method, so a copy would be priced at zero. Choose a rating method on it first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
     ]
   },
   "Shipment {0} is not on this run": {
@@ -168158,6 +168351,15 @@
       "apps/web/components"
     ]
   },
+  "Start a document extraction retraining when enough new corrections have been confirmed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Start a fresh conversation with the assistant": {
     "sites": 1,
     "scope": [
@@ -169227,7 +169429,7 @@
     ]
   },
   "Status is required": {
-    "sites": 139,
+    "sites": 140,
     "scope": [
       "go"
     ],
@@ -170420,12 +170622,13 @@
     ]
   },
   "Structured output mode is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/aiprovider"
+      "domain/aiprovider",
+      "domain/aitraining"
     ]
   },
   "Structured partner settings reserved for integration-specific options and runtime overrides.": {
@@ -172802,7 +173005,7 @@
     ]
   },
   "Task is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -175593,6 +175796,24 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The allowed regression cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
+  "The allowed regression must be at most 100 points": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
     ]
   },
   "The amount added each time the earning applies to a settlement.": {
@@ -180410,6 +180631,24 @@
       "domain/worker"
     ]
   },
+  "The minimum accuracy cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
+  "The minimum accuracy must be at most 100 percent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
   "The minimum number of stops the parser must extract for this fixture to pass.": {
     "sites": 1,
     "scope": [
@@ -181331,6 +181570,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "The per-organization cap must be positive": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The performance review waiting for the driver's sign-off.": {
     "sites": 1,
     "scope": [
@@ -182087,6 +182335,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "The rate needs review: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The rate that applies after free time, in words.": {
@@ -184762,7 +185019,7 @@
     ]
   },
   "The window must end after it starts": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -187046,7 +187303,7 @@
     ]
   },
   "This import has already been {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -187933,6 +188190,15 @@
       "routes/fiscal-year"
     ]
   },
+  "This permit belongs to another shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/permitservice"
+    ]
+  },
   "This place is already part of the zone": {
     "sites": 1,
     "scope": [
@@ -188434,6 +188700,15 @@
       "domain/invoice"
     ]
   },
+  "This review has no item {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "This review is not waiting for your sign-off": {
     "sites": 1,
     "scope": [
@@ -188668,6 +188943,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This shipment has no permit {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "This shipment is currently being reviewed by the billing team and cannot be modified. If changes are needed, contact your billing department to have it returned to operations.": {
@@ -189186,7 +189470,7 @@
     ]
   },
   "This worker already has pending or approved time off that overlaps these dates": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -189219,6 +189503,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This worker already holds an active credential of this type; renew it instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/workercredentialservice"
     ]
   },
   "This worker is already inactive": {
@@ -193637,13 +193930,14 @@
     ]
   },
   "Trigger is required": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/agent",
       "domain/agentquality",
+      "domain/aitraining",
       "domain/jurisdictionrule",
       "domain/recurringshipment",
       "domain/report",
@@ -218810,6 +219104,15 @@
       "routes/admin"
     ]
   },
+  "{0} carries a UTC offset or is a Unix time; send the local time where it happens, such as 2026-10-01T08:00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} changed": {
     "sites": 1,
     "scope": [
@@ -219106,6 +219409,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "{0} does not exist in {1}: the clocks move forward past it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} does not have a plain-text body": {
@@ -220009,6 +220321,24 @@
       "apps/web/hooks"
     ]
   },
+  "{0} is not a decimal such as 1250.00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is not a local date and time such as 2026-10-01T08:00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} is not a mapping target": {
     "sites": 1,
     "scope": [
@@ -220016,6 +220346,15 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "{0} is not a step in a rate agreement's review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/rateagreementservice"
     ]
   },
   "{0} is not a supported telematics provider": {
@@ -220098,6 +220437,15 @@
     ],
     "areas": [
       "service/accountingsyncservice"
+    ]
+  },
+  "{0} is not an id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} is not available": {
@@ -220193,6 +220541,15 @@
     ],
     "areas": [
       "service/accountingmappingservice",
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is not one of Prepaid, Collect or ThirdParty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "service/agenttoolservice"
     ]
   },

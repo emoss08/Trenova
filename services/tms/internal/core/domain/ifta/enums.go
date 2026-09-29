@@ -38,6 +38,14 @@ const (
 
 func (s MileageSource) String() string { return string(s) }
 
+func MileageSourceValues() []MileageSource {
+	return []MileageSource{
+		MileageSourceManual,
+		MileageSourceRouteCalculation,
+		MileageSourceTelematics,
+	}
+}
+
 func (s MileageSource) IsValid() bool {
 	switch s {
 	case MileageSourceManual, MileageSourceRouteCalculation, MileageSourceTelematics:
@@ -69,6 +77,10 @@ const (
 )
 
 func (s ReturnStatus) String() string { return string(s) }
+
+func ReturnStatusValues() []ReturnStatus {
+	return []ReturnStatus{ReturnStatusDraft, ReturnStatusFinalized, ReturnStatusFiled}
+}
 
 func (s ReturnStatus) IsValid() bool {
 	switch s {

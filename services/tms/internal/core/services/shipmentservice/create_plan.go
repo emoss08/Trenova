@@ -37,8 +37,9 @@ func (s *service) PreviewCreate(
 	}
 
 	return &services.ShipmentCreatePlan{
-		Shipment: entity,
-		Rating:   ratingOutcome(prepared.rating),
+		Shipment:   entity,
+		Rating:     ratingOutcome(prepared.rating),
+		Advisories: prepared.advisories,
 	}, nil
 }
 

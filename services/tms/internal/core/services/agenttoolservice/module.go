@@ -84,7 +84,7 @@ func ToolProviders() []any {
 		newPlaceShipmentHoldTool,
 		newReleaseShipmentHoldTool,
 		provideCancelShipmentTool,
-		newRecordStopActualTool,
+		provideRecordStopActualTool,
 		provideUpdateTractorStatusTool,
 		provideUpdateTrailerStatusTool,
 		provideApproveWorkerPTOTool,
@@ -153,6 +153,8 @@ func ToolProviders() []any {
 	providers = append(providers, ediToolProviders()...)
 	providers = append(providers, ledgerToolProviders()...)
 	providers = append(providers, operationsToolProviders()...)
+	providers = append(providers, ratesToolProviders()...)
+	providers = append(providers, workforceToolProviders()...)
 
 	return append(providers, settlementToolProviders()...)
 }
@@ -239,16 +241,21 @@ type intakeToolParams struct {
 
 	Logger    *zap.Logger
 	Shipments services.ShipmentService
+	Locations repositories.LocationRepository
 	Imports   services.ShipmentImportAssistantService `optional:"true"`
 }
 
 func provideCreateShipmentTool(p intakeToolParams) services.AgentTool {
-	var imports importCompleter
+	deps := createShipmentDeps{
+		Shipments: p.Shipments,
+		Locations: p.Locations,
+		Logger:    p.Logger,
+	}
 	if p.Imports != nil {
-		imports = p.Imports
+		deps.Imports = p.Imports
 	}
 
-	return newCreateShipmentTool(p.Shipments, imports, p.Logger)
+	return newCreateShipmentTool(deps)
 }
 
 func provideCreateLocationTool(

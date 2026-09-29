@@ -23,6 +23,16 @@ const (
 
 func (s Status) String() string { return string(s) }
 
+func StatusValues() []Status {
+	return []Status{
+		StatusPending,
+		StatusParsed,
+		StatusCommitted,
+		StatusFailed,
+		StatusDiscarded,
+	}
+}
+
 func (s Status) IsValid() bool {
 	switch s {
 	case StatusPending, StatusParsed, StatusCommitted, StatusFailed, StatusDiscarded:

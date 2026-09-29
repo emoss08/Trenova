@@ -41,6 +41,17 @@ const (
 
 func (c OSHACaseClassification) String() string { return string(c) }
 
+func OSHACaseClassificationValues() []OSHACaseClassification {
+	return []OSHACaseClassification{
+		CaseNotRecordable,
+		CaseFirstAidOnly,
+		CaseOtherRecordable,
+		CaseJobTransferOrRestriction,
+		CaseDaysAway,
+		CaseDeath,
+	}
+}
+
 func (c OSHACaseClassification) IsValid() bool {
 	switch c {
 	case CaseNotRecordable, CaseFirstAidOnly, CaseOtherRecordable,
@@ -97,6 +108,17 @@ const (
 
 func (t OSHAIllnessType) String() string { return string(t) }
 
+func OSHAIllnessTypeValues() []OSHAIllnessType {
+	return []OSHAIllnessType{
+		IllnessInjury,
+		IllnessSkinDisorder,
+		IllnessRespiratoryCondition,
+		IllnessPoisoning,
+		IllnessHearingLoss,
+		IllnessOther,
+	}
+}
+
 func (t OSHAIllnessType) IsValid() bool {
 	switch t {
 	case IllnessInjury, IllnessSkinDisorder, IllnessRespiratoryCondition, IllnessPoisoning,
@@ -138,6 +160,16 @@ const (
 
 func (t InjuryTreatment) String() string { return string(t) }
 
+func InjuryTreatmentValues() []InjuryTreatment {
+	return []InjuryTreatment{
+		TreatmentNone,
+		TreatmentFirstAid,
+		TreatmentMedical,
+		TreatmentEmergencyRoom,
+		TreatmentHospitalization,
+	}
+}
+
 func (t InjuryTreatment) IsValid() bool {
 	switch t {
 	case TreatmentNone, TreatmentFirstAid, TreatmentMedical, TreatmentEmergencyRoom,
@@ -165,6 +197,13 @@ const (
 
 func (s InjuryCaseStatus) String() string { return string(s) }
 
+func InjuryCaseStatusValues() []InjuryCaseStatus {
+	return []InjuryCaseStatus{
+		InjuryCaseOpen,
+		InjuryCaseClosed,
+	}
+}
+
 func (s InjuryCaseStatus) IsValid() bool {
 	return s == InjuryCaseOpen || s == InjuryCaseClosed
 }
@@ -180,6 +219,16 @@ const (
 )
 
 func (s WorkersCompClaimStatus) String() string { return string(s) }
+
+func WorkersCompClaimStatusValues() []WorkersCompClaimStatus {
+	return []WorkersCompClaimStatus{
+		ClaimNotFiled,
+		ClaimFiled,
+		ClaimAccepted,
+		ClaimDenied,
+		ClaimClosed,
+	}
+}
 
 func (s WorkersCompClaimStatus) IsValid() bool {
 	switch s {

@@ -20,6 +20,10 @@ func (pt PartyType) String() string {
 	return string(pt)
 }
 
+func PartyTypeValues() []PartyType {
+	return []PartyType{PartyTypeCustomer, PartyTypeCarrier}
+}
+
 func (pt PartyType) IsValid() bool {
 	switch pt {
 	case PartyTypeCustomer, PartyTypeCarrier:
@@ -43,6 +47,16 @@ const (
 
 func (at AgreementType) String() string {
 	return string(at)
+}
+
+func AgreementTypeValues() []AgreementType {
+	return []AgreementType{
+		AgreementTypeContract,
+		AgreementTypeTariff,
+		AgreementTypeSpot,
+		AgreementTypeProject,
+		AgreementTypeDedicated,
+	}
 }
 
 func (at AgreementType) IsValid() bool {
@@ -72,6 +86,17 @@ const (
 
 func (s Status) String() string {
 	return string(s)
+}
+
+func StatusValues() []Status {
+	return []Status{
+		StatusDraft,
+		StatusInReview,
+		StatusActive,
+		StatusSuspended,
+		StatusExpired,
+		StatusArchived,
+	}
 }
 
 func (s Status) IsValid() bool {
@@ -176,6 +201,10 @@ const (
 
 func (d Direction) String() string {
 	return string(d)
+}
+
+func DirectionValues() []Direction {
+	return []Direction{DirectionDirectional, DirectionBidirectional}
 }
 
 func (d Direction) IsValid() bool {

@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -93,7 +95,7 @@ func (t *createShipmentTool) Preview(
 		return nil, err
 	}
 
-	entity, err := t.draft(&params)
+	entity, err := t.draft(ctx, &params)
 	if err != nil {
 		if isRefusal(err) {
 			return warnWouldFail(toolpreview.Build("Would enter a new shipment."), err), nil
@@ -116,7 +118,22 @@ func (t *createShipmentTool) Preview(
 		return nil, err
 	}
 
-	return toolpreview.Build(enteredShipmentSummary(plan.Shipment, plan.Rating), changes...), nil
+	preview := toolpreview.Build(enteredShipmentSummary(plan.Shipment, plan.Rating), changes...)
+	warnRateCoverage(preview, plan.Advisories)
+
+	return preview, nil
+}
+
+func warnRateCoverage(preview *agent.ToolPreview, advisories []*errortypes.AdvisoryError) {
+	for _, advisory := range advisories {
+		if advisory == nil || advisory.RuleKey != shipment.RateCoverageRuleKey {
+			continue
+		}
+
+		reason := i18n.Format(advisory.Message, advisory.Args...)
+		toolpreview.Warn(preview, agent.PreviewWarningRateCoverage,
+			"The rate needs review: "+reason+".", reason)
+	}
 }
 
 func enteredShipmentChanges(plan *serviceports.ShipmentCreatePlan) ([]*agent.RecordChange, error) {

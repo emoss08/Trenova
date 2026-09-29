@@ -110,17 +110,15 @@ func validatorWithProfileAndEquipment(
 		Maybe()
 
 	return &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			mocks.NewMockCommodityRepository(t),
-			mocks.NewMockHazmatSegregationRuleRepository(t),
-			mocks.NewMockShipmentRepository(t),
-			equipmentTypeRepo,
-			&stubModeProfileService{policy: policy},
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:       controlRepo,
+			CustomerRepo:      NewTestCustomerRepository(t),
+			CommodityRepo:     mocks.NewMockCommodityRepository(t),
+			HazmatRuleRepo:    mocks.NewMockHazmatSegregationRuleRepository(t),
+			ShipmentRepo:      mocks.NewMockShipmentRepository(t),
+			EquipmentTypeRepo: equipmentTypeRepo,
+			ProfileService:    &stubModeProfileService{policy: policy},
+		}).Build(),
 	}
 }
 
@@ -581,6 +579,18 @@ func (s *stubPermitService) UpdatePermit(
 	return e, nil
 }
 
+func (s *stubPermitService) PlanCreatePermit(
+	_ context.Context, e *permit.Permit,
+) (*permit.Permit, error) {
+	return e, nil
+}
+
+func (s *stubPermitService) PlanUpdatePermit(
+	_ context.Context, e *permit.Permit,
+) (*services.RecordChange[permit.Permit], error) {
+	return &services.RecordChange[permit.Permit]{Before: e, After: e}, nil
+}
+
 func (s *stubPermitService) WaiveRequirement(
 	_ context.Context, _ *services.WaiveRequirementRequest,
 ) (*permit.Requirement, error) {
@@ -644,17 +654,15 @@ func validatorWithPermits(
 		Maybe()
 
 	return &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			mocks.NewMockCommodityRepository(t),
-			mocks.NewMockHazmatSegregationRuleRepository(t),
-			mocks.NewMockShipmentRepository(t),
-			nil,
-			&stubModeProfileService{policy: policy},
-			&stubPermitService{assessment: assessment},
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   NewTestCustomerRepository(t),
+			CommodityRepo:  mocks.NewMockCommodityRepository(t),
+			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
+			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+			ProfileService: &stubModeProfileService{policy: policy},
+			PermitService:  &stubPermitService{assessment: assessment},
+		}).Build(),
 	}
 }
 
