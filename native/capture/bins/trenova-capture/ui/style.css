@@ -1067,6 +1067,204 @@ select:disabled {
   margin-top: 2px;
 }
 
+/* Pages: a sheet is a page's picture on a paper-coloured card, turned as
+   the person turned it. A sideways page is scaled to fit the same card. */
+
+.sheet {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--sunken);
+}
+
+.sheet img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  background: oklch(1 0 0);
+  transition: transform 160ms var(--ease);
+}
+
+.rot-90 img {
+  transform: rotate(90deg) scale(0.75);
+}
+
+.rot-180 img {
+  transform: rotate(180deg);
+}
+
+.rot-270 img {
+  transform: rotate(270deg) scale(0.75);
+}
+
+.sheet-empty {
+  color: var(--foreground-subtle);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.review {
+  border-color: var(--info-border);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tile-open,
+.strip-page {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+}
+
+.tile-open:hover:not(:disabled) .sheet,
+.strip-page:hover:not(:disabled) .sheet {
+  border-color: var(--border-strong);
+}
+
+.tile-open:hover:not(:disabled),
+.strip-page:hover:not(:disabled) {
+  background: none;
+}
+
+.tile-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 24px;
+}
+
+.tile-actions {
+  display: flex;
+}
+
+.tile-actions .icon-button {
+  width: 24px;
+  height: 24px;
+}
+
+.tile-actions .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.danger-text {
+  color: var(--danger-foreground);
+}
+
+button.danger-text:hover:not(:disabled) {
+  color: var(--danger-hover);
+}
+
+.callout.tone-neutral {
+  border-color: var(--neutral-border);
+  background: var(--neutral-subtle);
+  color: var(--neutral-subtle-foreground);
+}
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.strip-page {
+  flex: none;
+  width: 40px;
+}
+
+.strip.live .strip-page {
+  width: 48px;
+}
+
+/* The page open full size. It fills the window, so it follows the theme
+   rather than floating above it. */
+
+#viewer[hidden] {
+  display: none;
+}
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  background: var(--canvas);
+  animation: rise 160ms var(--ease);
+}
+
+.viewer-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.viewer-bar + .viewer-stage + .viewer-bar {
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 0;
+}
+
+.viewer-count {
+  color: var(--foreground-muted);
+  font-size: 12px;
+}
+
+.viewer-stage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: var(--sunken);
+}
+
+.viewer-sheet {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.viewer-sheet img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  background: oklch(1 0 0);
+  transition: transform 160ms var(--ease);
+}
+
+.viewer-sheet.rot-90 img,
+.viewer-sheet.rot-270 img {
+  max-width: 75vh;
+}
+
 /* Toasts: the window's own notifications while it is in front. */
 
 .toasts {

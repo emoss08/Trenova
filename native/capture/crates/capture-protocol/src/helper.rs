@@ -5,8 +5,10 @@
 //! reads one [`HelperCommand`] (and possibly a later
 //! [`HelperCommand::Cancel`]) and writes [`HelperEvent`]s back until it exits.
 //! A page travels as a [`HelperEvent::Page`] followed immediately by one
-//! binary frame holding its single-page PDF, so raw bitmaps never cross the
-//! process boundary and the helper never touches the network.
+//! binary frame holding its single-page PDF and, when [`PageMeta::preview`]
+//! says so, two more holding its small and large JPEG pictures, so raw
+//! bitmaps never cross the process boundary and the helper never touches the
+//! network.
 //!
 //! Every frame is a one-byte kind, a little-endian `u32` length and that many
 //! bytes. A JSON frame is at most [`MAX_JSON_FRAME`] bytes and a page frame at
@@ -104,7 +106,15 @@ pub struct PageMeta {
     pub patch_code: Option<String>,
     #[serde(default)]
     pub barcodes: Vec<String>,
+    /// Two more binary frames follow the PDF: the page's small and large
+    /// pictures, each at most [`MAX_PREVIEW_BYTES`].
+    #[serde(default)]
+    pub preview: bool,
 }
+
+/// The largest picture of a page either side accepts. A 1100-pixel JPEG of
+/// a busy colour page is a few hundred kilobytes.
+pub const MAX_PREVIEW_BYTES: usize = 2 << 20;
 
 /// What a helper reports.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -286,6 +296,7 @@ mod tests {
             pixel_type: PixelType::BlackWhite,
             patch_code: Some("T".into()),
             barcodes: vec![],
+            preview: false,
         };
         write_message(&mut pipe, &HelperEvent::Page(meta.clone())).expect("meta");
         write_bytes(&mut pipe, b"%PDF-1.7 one page").expect("bytes");

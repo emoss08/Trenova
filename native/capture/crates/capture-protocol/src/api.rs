@@ -17,6 +17,8 @@ pub const DPI_HEADER: &str = "X-Capture-Dpi";
 pub const PATCH_CODE_HEADER: &str = "X-Capture-Patch-Code";
 /// A barcode the scanner decoded on a page; sent once per barcode.
 pub const BARCODE_HEADER: &str = "X-Capture-Barcode";
+/// Degrees clockwise the person turned a page before sending it.
+pub const ROTATION_HEADER: &str = "X-Capture-Rotation";
 
 /// `capture.MaxPageBytes`: the largest single page the server takes.
 pub const MAX_PAGE_BYTES: usize = 20 << 20;

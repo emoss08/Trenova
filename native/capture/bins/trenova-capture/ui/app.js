@@ -2,6 +2,7 @@
   "use strict";
 
   const app = document.getElementById("app");
+  const viewerHost = document.getElementById("viewer");
   const who = document.getElementById("who");
   const connection = document.getElementById("connection");
   const tabs = document.getElementById("tabs");
@@ -15,6 +16,14 @@
   const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
   const TOAST_MS = 6000;
   const RECENT_ON_HOME = 3;
+  // Pages shown of a held batch before "Show all", and in a strip.
+  const HELD_PAGES_SHOWN = 12;
+  const STRIP_PAGES = 4;
+  const LIVE_PAGES = 6;
+  // The most pictures asked for in one message, as the agent allows.
+  const PICTURES_PER_ASK = 24;
+  // How long before a picture asked for and not received is asked again.
+  const ASK_AGAIN_MS = 20000;
 
   // What belongs to this window alone and survives a redraw: the tab shown,
   // choices made, text being typed, a question being asked, and buttons
@@ -29,7 +38,66 @@
     pending: new Map(),
     // The newest message already seen, so only later ones become toasts.
     lastMessage: null,
+    // The page open full size: { key, page, label, pages, editable }.
+    viewer: null,
+    // Held batches showing all their pages, and the one being discarded.
+    expanded: new Set(),
+    confirmHeld: null,
   };
+
+  // Pictures the agent sent, by batch, size and page, and when each was
+  // last asked for. A batch whose pages change (one taken out) is dropped.
+  const pictures = new Map();
+  const asked = new Map();
+  let shapes = new Map();
+
+  function pictureId(key, size, page) {
+    return `${key}|${size}|${page}`;
+  }
+
+  function forgetBatch(key) {
+    for (const store of [pictures, asked]) {
+      for (const id of [...store.keys()]) {
+        if (id.startsWith(`${key}|`)) {
+          store.delete(id);
+        }
+      }
+    }
+  }
+
+  function trackShapes(v) {
+    const next = new Map();
+    for (const batch of [...v.held, ...v.waiting, ...v.refused]) {
+      next.set(batch.key, batch.pictures.map((p) => p.page).join(","));
+    }
+    for (const [key, shape] of shapes) {
+      if (next.get(key) !== shape) {
+        forgetBatch(key);
+      }
+    }
+    shapes = next;
+  }
+
+  // Asks the agent for the pictures of `pages` not already here or asked
+  // for lately.
+  function want(key, size, pages) {
+    const now = Date.now();
+    const missing = pages.filter((page) => {
+      const id = pictureId(key, size, page);
+      return !pictures.has(id) && now - (asked.get(id) || 0) > ASK_AGAIN_MS;
+    });
+    for (let at = 0; at < missing.length; at += PICTURES_PER_ASK) {
+      const chunk = missing.slice(at, at + PICTURES_PER_ASK);
+      for (const page of chunk) {
+        asked.set(pictureId(key, size, page), now);
+      }
+      send({ type: "pictures", key, size, pages: chunk });
+    }
+  }
+
+  function pictureOf(key, size, page) {
+    return pictures.get(pictureId(key, size, page)) || null;
+  }
   let view = null;
 
   const ICONS = {
@@ -61,6 +129,13 @@
     close: "M18 6 6 18 M6 6l12 12",
     stop: "M7 7h10v10H7z",
     tray: "M4 14h16v6H4z M8 10l4-4 4 4 M12 6v8",
+    rotateLeft: "M3 12a9 9 0 1 0 2.64-6.36L3 8 M3 3v5h5",
+    rotateRight: "M21 12a9 9 0 1 1-2.64-6.36L21 8 M21 3v5h-5",
+    trash: "M3 6h18 M8 6V4h8v2 M19 6l-1 14H6L5 6 M10 11v6 M14 11v6",
+    send: "M22 2 11 13 M22 2l-7 20-4-9-9-4 20-7z",
+    chevronLeft: "M15 18l-6-6 6-6",
+    chevronRight: "M9 18l6-6-6-6",
+    review: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
   };
 
   function send(message) {
@@ -236,7 +311,7 @@
   }
 
   function activityCount(v) {
-    return v.refused.length + v.waiting.length;
+    return v.refused.length + v.held.length + v.waiting.length;
   }
 
   function drawTabs(v) {
@@ -626,6 +701,36 @@
     return `${scanner.protocol}:${scanner.name}`;
   }
 
+  // The last pages scanned, as they arrive.
+  function liveStrip(scan) {
+    if (!scan.pages) {
+      return null;
+    }
+    const first = Math.max(1, scan.pages - LIVE_PAGES + 1);
+    const recent = [];
+    for (let page = first; page <= scan.pages; page += 1) {
+      recent.push(page);
+    }
+    want(scan.key, "thumb", recent);
+    const live = { key: scan.key, label: scan.label };
+    return el(
+      "div",
+      { class: "strip live", "aria-label": "Pages scanned so far" },
+      recent.map((page) =>
+        el(
+          "button",
+          {
+            type: "button",
+            class: "strip-page",
+            "aria-label": `Open page ${page}`,
+            onclick: () => openViewer(live, page, false),
+          },
+          pagePicture(scan.key, page, 0, "thumb", `Page ${page}`),
+        ),
+      ),
+    );
+  }
+
   function drawScanning(v) {
     const scan = v.scan;
     return el(
@@ -658,13 +763,18 @@
           ),
         ),
         el("div", { class: scan.stopping ? "progress done" : "progress", role: "progressbar", "aria-label": "Scanning" }),
+        liveStrip(scan),
         el("p", {
           class: "subtle",
           text: scan.stopping
-            ? "The pages scanned so far will be sent."
-            : scan.requested
-              ? "Going to the record you chose in Trenova. Pages are sent as they are scanned."
-              : "Going to Intake. Pages are sent as they are scanned.",
+            ? v.reviewBeforeSending
+              ? "The pages scanned so far wait here for you to look over."
+              : "The pages scanned so far will be sent."
+            : v.reviewBeforeSending
+              ? "The pages wait here for you to look over before they are sent."
+              : scan.requested
+                ? "Going to the record you chose in Trenova. Pages are sent as they are scanned."
+                : "Going to Intake. Pages are sent as they are scanned.",
         }),
       ),
     );
@@ -862,6 +972,427 @@
     );
   }
 
+  // A page's picture, turned as the person turned it; its number stands in
+  // until the picture arrives, or for a page that has none.
+  function pagePicture(key, page, rotation, size, label) {
+    const src = pictureOf(key, size, page);
+    return el(
+      "span",
+      { class: `sheet rot-${rotation || 0}` },
+      src
+        ? el("img", { src, alt: label, draggable: "false" })
+        : el("span", { class: "sheet-empty", text: String(page) }),
+    );
+  }
+
+  function openViewer(batch, page, editable) {
+    local.viewer = {
+      key: batch.key,
+      page,
+      label: batch.label,
+      editable,
+    };
+    draw();
+  }
+
+  function heldPresent(key) {
+    return (next) => next.held.some((batch) => batch.key === key);
+  }
+
+  function rotate(batch, page, degrees) {
+    const before = (batch.pictures.find((p) => p.page === page) || {}).rotation || 0;
+    press(
+      `rotate:${batch.key}:${page}`,
+      (next) => {
+        const now = next.held.find((b) => b.key === batch.key);
+        const picture = now && now.pictures.find((p) => p.page === page);
+        return Boolean(picture) && picture.rotation === before;
+      },
+      { type: "rotatePage", key: batch.key, page, degrees },
+    );
+  }
+
+  function removePage(batch, page) {
+    forgetBatch(batch.key);
+    press(
+      `delete:${batch.key}`,
+      (next) => {
+        const now = next.held.find((b) => b.key === batch.key);
+        return Boolean(now) && now.pages === batch.pages;
+      },
+      { type: "deletePage", key: batch.key, page },
+    );
+  }
+
+  function pageTile(batch, picture, editable) {
+    const busy = pressed(`delete:${batch.key}`) || pressed(`rotate:${batch.key}:${picture.page}`);
+    const label = `Page ${picture.page}`;
+    return el(
+      "li",
+      { class: "tile" },
+      el(
+        "button",
+        {
+          type: "button",
+          class: "tile-open",
+          "aria-label": `Open ${label.toLowerCase()}`,
+          onclick: () => openViewer(batch, picture.page, editable),
+        },
+        pagePicture(batch.key, picture.page, picture.rotation, "thumb", label),
+      ),
+      el(
+        "div",
+        { class: "tile-bar" },
+        el("span", { class: "subtle numeric", text: String(picture.page) }),
+        editable
+          ? el(
+              "span",
+              { class: "tile-actions" },
+              button("", {
+                class: "icon-button",
+                "aria-label": `Turn ${label.toLowerCase()} left`,
+                title: "Turn left",
+                disabled: busy,
+                onclick: () => rotate(batch, picture.page, -90),
+              }, "rotateLeft"),
+              button("", {
+                class: "icon-button",
+                "aria-label": `Turn ${label.toLowerCase()} right`,
+                title: "Turn right",
+                disabled: busy,
+                onclick: () => rotate(batch, picture.page, 90),
+              }, "rotateRight"),
+              button("", {
+                class: "icon-button danger-text",
+                "aria-label": `Take out ${label.toLowerCase()}`,
+                title: "Take out",
+                disabled: busy,
+                onclick: () => removePage(batch, picture.page),
+              }, "trash"),
+            )
+          : null,
+      ),
+    );
+  }
+
+  function chosenScan(v) {
+    if (!v.scanners.some((s) => scannerKey(s) === local.scanner)) {
+      const preferred = v.scanners.find((s) => s.isDefault) || v.scanners[0];
+      local.scanner = preferred ? scannerKey(preferred) : null;
+    }
+    const scanner = v.scanners.find((s) => scannerKey(s) === local.scanner);
+    const profile = v.profiles.find((p) => p.id === local.profile);
+    return { scanner, profile };
+  }
+
+  function drawHeldBatch(v, batch) {
+    const editable = batch.editable;
+    const all = local.expanded.has(batch.key);
+    const shown = all ? batch.pictures : batch.pictures.slice(0, HELD_PAGES_SHOWN);
+    want(batch.key, "thumb", shown.map((p) => p.page));
+    const unpictured = batch.pages - batch.pictures.length;
+    const confirming = local.confirmHeld === batch.key;
+    const { scanner, profile } = chosenScan(v);
+    return el(
+      "section",
+      { class: "panel review", "aria-label": `Look over ${batch.label}` },
+      el(
+        "div",
+        { class: "panel-head" },
+        icon(batch.kind === "print" ? "print" : "scan"),
+        el("h2", { class: "grow name", text: batch.label }),
+        el("span", { class: "badge", text: pages(batch.pages) }),
+      ),
+      el(
+        "div",
+        { class: "panel-body" },
+        el("p", {
+          class: "subtle",
+          text: editable
+            ? "Nothing is sent until you choose Send. Turn a page, take one out, or scan more first."
+            : "Nothing is sent until you choose Send. Pages of a print are turned or split in Intake.",
+        }),
+        shown.length
+          ? el(
+              "ul",
+              { class: "tiles", "aria-label": "Pages" },
+              shown.map((picture) => pageTile(batch, picture, editable)),
+            )
+          : el("p", {
+              class: "callout tone-neutral",
+              text: "There are no pictures of these pages on this computer. You see them in Intake once they are sent.",
+            }),
+        batch.pictures.length > HELD_PAGES_SHOWN
+          ? button(all ? "Show fewer" : `Show all ${batch.pictures.length} pages`, {
+              class: "link",
+              onclick: () => {
+                if (all) {
+                  local.expanded.delete(batch.key);
+                } else {
+                  local.expanded.add(batch.key);
+                }
+                draw();
+              },
+            })
+          : null,
+        unpictured > 0 && batch.pictures.length
+          ? el("p", {
+              class: "subtle",
+              text: `${pages(unpictured)} ${unpictured === 1 ? "has" : "have"} no picture here.`,
+            })
+          : null,
+        confirming
+          ? el(
+              "div",
+              { class: "row" },
+              el("span", {
+                class: "grow",
+                text: `Delete these ${pages(batch.pages)} from this computer for good?`,
+              }),
+              button("Discard", {
+                class: "danger",
+                disabled: pressed(`discardHeld:${batch.key}`),
+                onclick: () => {
+                  local.confirmHeld = null;
+                  press(`discardHeld:${batch.key}`, heldPresent(batch.key), {
+                    type: "discardHeld",
+                    key: batch.key,
+                  });
+                },
+              }),
+              button("Keep", {
+                class: "ghost",
+                onclick: () => {
+                  local.confirmHeld = null;
+                  draw();
+                },
+              }),
+            )
+          : el(
+              "div",
+              { class: "actions" },
+              button(
+                `Send ${pages(batch.pages)}`,
+                {
+                  class: "primary",
+                  disabled: pressed(`sendHeld:${batch.key}`),
+                  onclick: () =>
+                    press(`sendHeld:${batch.key}`, heldPresent(batch.key), {
+                      type: "sendHeld",
+                      key: batch.key,
+                    }),
+                },
+                "send",
+              ),
+              editable && scanner
+                ? button(
+                    "Scan more",
+                    {
+                      disabled: Boolean(v.scan) || pressed(`more:${batch.key}`),
+                      title: `Adds pages from ${scanner.title}`,
+                      onclick: () =>
+                        press(`more:${batch.key}`, (next) => !next.scan, {
+                          type: "scanMore",
+                          key: batch.key,
+                          scanner: scanner.name,
+                          protocol: scanner.protocol,
+                          profile: profile ? profile.id : null,
+                        }),
+                    },
+                    "scan",
+                  )
+                : null,
+              button("Discard", {
+                class: "ghost",
+                onclick: () => {
+                  local.confirmHeld = batch.key;
+                  draw();
+                },
+              }),
+            ),
+      ),
+    );
+  }
+
+  function drawHeld(v) {
+    return v.held.map((batch) => drawHeldBatch(v, batch));
+  }
+
+  // A few of a waiting or refused batch's pages, to see what it is.
+  function strip(batch) {
+    if (!batch.pictures.length) {
+      return null;
+    }
+    const shown = batch.pictures.slice(0, STRIP_PAGES);
+    want(batch.key, "thumb", shown.map((p) => p.page));
+    const more = batch.pictures.length - shown.length;
+    return el(
+      "div",
+      { class: "strip" },
+      shown.map((picture) =>
+        el(
+          "button",
+          {
+            type: "button",
+            class: "strip-page",
+            "aria-label": `Open page ${picture.page}`,
+            onclick: () => openViewer(batch, picture.page, false),
+          },
+          pagePicture(batch.key, picture.page, picture.rotation, "thumb", `Page ${picture.page}`),
+        ),
+      ),
+      more > 0 ? el("span", { class: "subtle numeric", text: `+${more}` }) : null,
+    );
+  }
+
+  // The page open full size, over the window.
+  function viewerBatch(v) {
+    if (!local.viewer) {
+      return null;
+    }
+    const { key } = local.viewer;
+    if (v.scan && v.scan.key === key) {
+      const first = Math.max(1, v.scan.pages - LIVE_PAGES + 1);
+      const scanned = [];
+      for (let page = first; page <= v.scan.pages; page += 1) {
+        scanned.push({ page, rotation: 0 });
+      }
+      return { key, label: v.scan.label, pictures: scanned, editable: false };
+    }
+    const found =
+      v.held.find((b) => b.key === key) ||
+      v.waiting.find((b) => b.key === key) ||
+      v.refused.find((b) => b.key === key);
+    if (!found) {
+      return null;
+    }
+    const editable = Boolean(v.held.find((b) => b.key === key && b.editable));
+    return { ...found, editable };
+  }
+
+  function drawViewer(v) {
+    const batch = viewerBatch(v);
+    if (!batch || !batch.pictures.some((p) => p.page === local.viewer.page)) {
+      local.viewer = null;
+      viewerHost.replaceChildren();
+      viewerHost.hidden = true;
+      return;
+    }
+    const index = batch.pictures.findIndex((p) => p.page === local.viewer.page);
+    const picture = batch.pictures[index];
+    want(batch.key, "view", [picture.page]);
+    const neighbours = [batch.pictures[index - 1], batch.pictures[index + 1]].filter(Boolean);
+    want(batch.key, "view", neighbours.map((p) => p.page));
+    const go = (step) => {
+      const next = batch.pictures[index + step];
+      if (next) {
+        local.viewer.page = next.page;
+        draw();
+      }
+    };
+    const opening = viewerHost.hidden;
+    const large = pictureOf(batch.key, "view", picture.page);
+    const small = pictureOf(batch.key, "thumb", picture.page);
+    viewerHost.hidden = false;
+    viewerHost.replaceChildren(
+      el(
+        "div",
+        {
+          class: "viewer",
+          role: "dialog",
+          "aria-modal": "true",
+          "aria-label": `${batch.label}, page ${picture.page}`,
+        },
+        el(
+          "div",
+          { class: "viewer-bar" },
+          el(
+            "div",
+            { class: "grow" },
+            el("div", { class: "name", text: batch.label }),
+            el("div", {
+              class: "viewer-count numeric",
+              text: `Page ${index + 1} of ${batch.pictures.length}`,
+            }),
+          ),
+          button("", {
+            id: "viewer-close",
+            class: "icon-button",
+            "aria-label": "Close",
+            onclick: () => {
+              local.viewer = null;
+              draw();
+            },
+          }, "close"),
+        ),
+        el(
+          "div",
+          { class: "viewer-stage" },
+          large || small
+            ? el(
+                "span",
+                { class: `viewer-sheet rot-${picture.rotation || 0}` },
+                el("img", {
+                  src: large || small,
+                  alt: `Page ${picture.page}`,
+                  draggable: "false",
+                }),
+              )
+            : el("span", { class: "spinner", "aria-hidden": "true" }),
+        ),
+        el(
+          "div",
+          { class: "viewer-bar" },
+          button("", {
+            id: "viewer-previous",
+            class: "icon-button",
+            "aria-label": "Previous page",
+            disabled: index === 0,
+            onclick: () => go(-1),
+          }, "chevronLeft"),
+          button("", {
+            id: "viewer-next",
+            class: "icon-button",
+            "aria-label": "Next page",
+            disabled: index === batch.pictures.length - 1,
+            onclick: () => go(1),
+          }, "chevronRight"),
+          el("span", { class: "grow" }),
+          batch.editable
+            ? [
+                button("Turn left", {
+                  id: "viewer-left",
+                  disabled: pressed(`rotate:${batch.key}:${picture.page}`),
+                  onclick: () => rotate(batch, picture.page, -90),
+                }, "rotateLeft"),
+                button("Turn right", {
+                  id: "viewer-right",
+                  disabled: pressed(`rotate:${batch.key}:${picture.page}`),
+                  onclick: () => rotate(batch, picture.page, 90),
+                }, "rotateRight"),
+                button("Take out", {
+                  id: "viewer-delete",
+                  class: "danger-text",
+                  disabled: pressed(`delete:${batch.key}`),
+                  onclick: () => {
+                    const after = batch.pictures[index + 1] || batch.pictures[index - 1];
+                    local.viewer.page = after ? (after.page > picture.page ? picture.page : after.page) : picture.page;
+                    removePage(batch, picture.page);
+                  },
+                }, "trash"),
+              ]
+            : null,
+        ),
+      ),
+    );
+    if (opening) {
+      const close = document.getElementById("viewer-close");
+      if (close) {
+        close.focus();
+      }
+    }
+  }
+
   function drawHome(v) {
     const setup = drawSetup(v);
     if (setup) {
@@ -869,6 +1400,7 @@
     }
     return [
       drawNotices(v),
+      drawHeld(v),
       v.stage === "blocked" ? null : drawScanCard(v),
       drawPrintCard(v),
       drawRecentOnHome(v),
@@ -914,6 +1446,7 @@
               ),
             ),
             batch.reason ? el("div", { class: "callout tone-danger", text: batch.reason }) : null,
+            strip(batch),
             confirming
               ? el(
                   "div",
@@ -1016,6 +1549,7 @@
               ),
               el("div", { class: "item-meta" }, when(batch.createdAt)),
             ),
+            strip(batch),
           ),
         ),
       ),
@@ -1077,7 +1611,13 @@
   }
 
   function drawActivity(v) {
-    const sections = [drawRefused(v), drawWaiting(v), drawSent(v), drawMessages(v)].filter(Boolean);
+    const sections = [
+      ...drawHeld(v),
+      drawRefused(v),
+      drawWaiting(v),
+      drawSent(v),
+      drawMessages(v),
+    ].filter(Boolean);
     if (!sections.length) {
       return el(
         "section",
@@ -1164,6 +1704,37 @@
               el("p", {
                 class: "subtle",
                 text: "Something sent, the connection back, an update installed. Problems are always shown.",
+              }),
+            ),
+          ),
+        ),
+      ),
+      panel(
+        "Before sending",
+        { iconName: "review" },
+        el(
+          "div",
+          { class: "panel-body" },
+          el(
+            "label",
+            { class: "switch" },
+            el("input", {
+              id: "review-before-sending",
+              type: "checkbox",
+              role: "switch",
+              checked: v.reviewBeforeSending,
+              disabled: v.reviewLocked,
+              onchange: (event) => send({ type: "setReview", on: Boolean(event.target.checked) }),
+            }),
+            el(
+              "span",
+              { class: "grow" },
+              el("span", { class: "name", text: "Let me look things over before they are sent" }),
+              el("p", {
+                class: "subtle",
+                text: v.reviewLocked
+                  ? "Your organization sets this on this computer."
+                  : "Scans and prints wait here until you choose Send, so you can turn a page, take one out, or scan more.",
               }),
             ),
           ),
@@ -1298,7 +1869,7 @@
   // Keeps the field being typed in, and where in it, across a redraw.
   function captureFocus() {
     const active = document.activeElement;
-    if (!active || !active.id || !app.contains(active)) {
+    if (!active || !active.id || !(app.contains(active) || viewerHost.contains(active))) {
       return null;
     }
     const focus = { id: active.id };
@@ -1332,6 +1903,7 @@
       return;
     }
     const v = view;
+    trackShapes(v);
     prunePending();
     const focus = captureFocus();
     drawMasthead(v);
@@ -1356,14 +1928,31 @@
       app.removeAttribute("aria-labelledby");
     }
     app.replaceChildren(...[content].flat(3).filter(Boolean));
+    drawViewer(v);
     restoreFocus(focus);
   }
 
   document.addEventListener("keydown", (event) => {
+    if (local.viewer) {
+      const control = {
+        Escape: "viewer-close",
+        ArrowLeft: "viewer-previous",
+        ArrowRight: "viewer-next",
+      }[event.key];
+      const target = control && document.getElementById(control);
+      if (target && !target.disabled) {
+        event.preventDefault();
+        target.click();
+      }
+      return;
+    }
     if (event.key !== "Escape") {
       return;
     }
-    if (local.confirmDiscard) {
+    if (local.confirmHeld) {
+      local.confirmHeld = null;
+      draw();
+    } else if (local.confirmDiscard) {
       local.confirmDiscard = null;
       draw();
     } else if (local.tab !== "home") {
@@ -1383,6 +1972,17 @@
     render(next) {
       view = next;
       toastNew(next);
+      draw();
+    },
+    pictures(delivered) {
+      if (!delivered || typeof delivered.key !== "string" || !Array.isArray(delivered.pictures)) {
+        return;
+      }
+      for (const picture of delivered.pictures) {
+        if (typeof picture.src === "string" && picture.src.startsWith("data:image/jpeg;base64,")) {
+          pictures.set(pictureId(delivered.key, delivered.size, picture.page), picture.src);
+        }
+      }
       draw();
     },
   };

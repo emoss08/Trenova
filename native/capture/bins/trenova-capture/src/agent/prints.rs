@@ -12,7 +12,7 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use capture_client::spool::{Spool, SpoolError};
+use capture_client::spool::{NewPrint, PagePictures, Spool, SpoolError};
 use capture_protocol::api::{BatchSource, OpenBatchInput, Settings};
 use capture_protocol::handoff::{HandoffError, Inbox, PrintedJob};
 use tokio::sync::mpsc;
@@ -30,8 +30,13 @@ pub const PRINTER_SOURCE_NAME: &str = "Trenova printer";
 /// What happened to a job found in the inbox.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Imported {
-    /// It is in the spool, waiting to be sent.
-    Spooled { name: String, pages: Option<u32> },
+    /// It is in the spool, waiting to be sent, or held for the person to
+    /// look over first.
+    Spooled {
+        name: String,
+        pages: Option<u32>,
+        held: bool,
+    },
     /// It could not be read, and was set aside in the inbox.
     Rejected { name: String, reason: String },
 }
@@ -72,8 +77,14 @@ fn set_aside(inbox: &Inbox, id: &str, name: String, reason: String) -> Imported 
     Imported::Rejected { name, reason }
 }
 
+/// Whether a printed job waits for the person to look it over, asked as each
+/// job is taken, since the person can change it at any time.
+pub type HoldPrints = Arc<dyn Fn() -> bool + Send + Sync>;
+
 /// Moves one job into the spool. `None` when it should be tried again later.
-fn import_one(inbox: &Inbox, spool: &Spool, job: &PrintedJob) -> Option<Imported> {
+/// Its pictures come with it when they can be read; a job is still sent
+/// without them.
+fn import_one(inbox: &Inbox, spool: &Spool, job: &PrintedJob, held: bool) -> Option<Imported> {
     let pdf = match inbox.read(job) {
         Ok(pdf) => pdf,
         Err(HandoffError::Io(err)) => {
@@ -82,7 +93,29 @@ fn import_one(inbox: &Inbox, spool: &Spool, job: &PrintedJob) -> Option<Imported
         }
         Err(err) => return Some(set_aside(inbox, &job.id, label(job), err.to_string())),
     };
-    match spool.create_print(batch_input(job), label(job), &pdf, job.pages) {
+    let pictures: Vec<PagePictures> = match inbox.read_pictures(job) {
+        Ok(pictures) => pictures
+            .into_iter()
+            .map(|picture| PagePictures {
+                thumb: picture.thumb,
+                view: picture.view,
+            })
+            .collect(),
+        Err(err) => {
+            tracing::warn!(id = %job.id, error = %err, "a print's pictures could not be read");
+            Vec::new()
+        }
+    };
+    let name = label(job);
+    let print = NewPrint {
+        input: batch_input(job),
+        label: &name,
+        pdf: &pdf,
+        pages: job.pages,
+        pictures: &pictures,
+        held,
+    };
+    match spool.create_print(print) {
         Ok(_) => {}
         Err(SpoolError::Io(err)) => {
             tracing::warn!(id = %job.id, error = %err, "could not spool a print yet");
@@ -94,13 +127,15 @@ fn import_one(inbox: &Inbox, spool: &Spool, job: &PrintedJob) -> Option<Imported
         tracing::warn!(id = %job.id, error = %err, "spooled a print but could not remove it");
     }
     Some(Imported::Spooled {
-        name: label(job),
+        name,
         pages: job.pages,
+        held,
     })
 }
 
-/// Moves every job waiting in the inbox into the spool, oldest first.
-pub fn import(inbox: &Inbox, spool: &Spool) -> Vec<Imported> {
+/// Moves every job waiting in the inbox into the spool, oldest first, held
+/// for review when `held`.
+pub fn import(inbox: &Inbox, spool: &Spool, held: bool) -> Vec<Imported> {
     let waiting = match inbox.waiting() {
         Ok(waiting) => waiting,
         Err(err) => {
@@ -111,7 +146,7 @@ pub fn import(inbox: &Inbox, spool: &Spool) -> Vec<Imported> {
     let mut imported = Vec::new();
     for job in waiting {
         let outcome = match job {
-            Ok(job) => import_one(inbox, spool, &job),
+            Ok(job) => import_one(inbox, spool, &job, held),
             Err(HandoffError::Description(id)) => Some(set_aside(
                 inbox,
                 &id,
@@ -133,6 +168,7 @@ pub async fn watch(
     inbox: Inbox,
     spool: Arc<Spool>,
     report: mpsc::Sender<Imported>,
+    hold: HoldPrints,
     cancel: CancellationToken,
 ) {
     let inbox = Arc::new(inbox);
@@ -142,6 +178,7 @@ pub async fn watch(
     loop {
         let (from, into) = (Arc::clone(&inbox), Arc::clone(&spool));
         let sweep = swept.elapsed() >= SWEEP_EVERY;
+        let hold_now = hold();
         if sweep {
             swept = Instant::now();
         }
@@ -149,7 +186,7 @@ pub async fn watch(
             if sweep && let Err(err) = from.sweep(SWEEP_AFTER) {
                 tracing::warn!(error = %err, "could not tidy the print inbox");
             }
-            import(&from, &into)
+            import(&from, &into, hold_now)
         })
         .await
         .unwrap_or_default();
@@ -170,6 +207,8 @@ mod tests {
     use std::io;
 
     use capture_client::Protector;
+    use capture_client::spool::PictureSize;
+    use capture_protocol::handoff::PrintedPicture;
 
     use super::*;
 
@@ -197,23 +236,33 @@ mod tests {
     fn printed_jobs_become_finished_print_batches_and_leave_the_inbox() {
         let (_dir, inbox, spool) = setup();
         let raster = inbox
-            .deliver("Rate confirmation", Some(2), b"%PDF-1.7 raster")
+            .deliver(
+                "Rate confirmation",
+                Some(2),
+                b"%PDF-1.7 raster",
+                &[PrintedPicture {
+                    thumb: b"thumb 1".to_vec(),
+                    view: b"view 1".to_vec(),
+                }],
+            )
             .expect("delivers");
         inbox
-            .deliver("  ", None, b"%PDF-1.7 pdf")
+            .deliver("  ", None, b"%PDF-1.7 pdf", &[])
             .expect("delivers");
 
-        let imported = import(&inbox, &spool);
+        let imported = import(&inbox, &spool, false);
         assert_eq!(
             imported,
             [
                 Imported::Spooled {
                     name: "Rate confirmation".into(),
-                    pages: Some(2)
+                    pages: Some(2),
+                    held: false,
                 },
                 Imported::Spooled {
                     name: "Printed document".into(),
-                    pages: None
+                    pages: None,
+                    held: false,
                 },
             ]
         );
@@ -235,19 +284,41 @@ mod tests {
             b"%PDF-1.7 raster"
         );
         assert_eq!(first.pages_waiting(), 2);
+        assert_eq!(
+            spool
+                .picture(first.key(), 1, PictureSize::View)
+                .expect("its picture"),
+            b"view 1"
+        );
+        assert!(!first.held);
+    }
+
+    #[test]
+    fn a_print_is_held_for_review_when_asked() {
+        let (_dir, inbox, spool) = setup();
+        inbox
+            .deliver("BOL", None, b"%PDF-1.7 bol", &[])
+            .expect("delivers");
+        let imported = import(&inbox, &spool, true);
+        assert!(matches!(
+            imported.as_slice(),
+            [Imported::Spooled { held: true, .. }]
+        ));
+        assert!(spool.sendable().expect("sendable").is_empty());
+        assert_eq!(spool.pending().expect("pending").len(), 1);
     }
 
     #[test]
     fn a_job_taken_twice_is_spooled_once() {
         let (dir, inbox, spool) = setup();
         let job = inbox
-            .deliver("BOL", None, b"%PDF-1.7 bol")
+            .deliver("BOL", None, b"%PDF-1.7 bol", &[])
             .expect("delivers");
         let pdf =
             std::fs::read(dir.path().join("inbox").join(format!("{}.pdf", job.id))).expect("pdf");
         let json =
             std::fs::read(dir.path().join("inbox").join(format!("{}.json", job.id))).expect("json");
-        import(&inbox, &spool);
+        import(&inbox, &spool, false);
         std::fs::write(
             dir.path().join("inbox").join(format!("{}.pdf", job.id)),
             pdf,
@@ -258,7 +329,7 @@ mod tests {
             json,
         )
         .expect("restore");
-        import(&inbox, &spool);
+        import(&inbox, &spool, false);
         assert_eq!(spool.pending().expect("pending").len(), 1);
         assert!(inbox.waiting().expect("lists").is_empty());
     }
@@ -267,7 +338,7 @@ mod tests {
     fn an_unreadable_job_is_set_aside_not_lost_or_retried_forever() {
         let (dir, inbox, spool) = setup();
         let job = inbox
-            .deliver("Invoice", None, b"%PDF-1.7 a")
+            .deliver("Invoice", None, b"%PDF-1.7 a", &[])
             .expect("delivers");
         std::fs::write(
             dir.path().join("inbox").join(format!("{}.pdf", job.id)),
@@ -280,7 +351,7 @@ mod tests {
         )
         .expect("junk");
 
-        let imported = import(&inbox, &spool);
+        let imported = import(&inbox, &spool, false);
         assert_eq!(imported.len(), 2);
         assert!(
             imported
@@ -288,7 +359,10 @@ mod tests {
                 .all(|i| matches!(i, Imported::Rejected { .. }))
         );
         assert!(spool.pending().expect("pending").is_empty());
-        assert!(import(&inbox, &spool).is_empty(), "not offered again");
+        assert!(
+            import(&inbox, &spool, false).is_empty(),
+            "not offered again"
+        );
         assert!(
             dir.path()
                 .join("inbox")
