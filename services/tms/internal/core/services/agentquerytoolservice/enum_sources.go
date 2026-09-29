@@ -108,5 +108,9 @@ var (
 			agent.MemorySubjectCarrier,
 		},
 	)
-	listSortDirections = agenttoolschema.Source("list.sortDirection", []string{"asc", "desc"})
+	listSortDirections   = agenttoolschema.Source("list.sortDirection", []string{"asc", "desc"})
+	shipmentDetailLevels = agenttoolschema.Source("shipment.detail", []shipmentDetail{
+		shipmentDetailSummary,
+		shipmentDetailFull,
+	})
 )
