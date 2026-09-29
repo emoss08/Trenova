@@ -28,7 +28,7 @@ var (
 	_ documentKeeper      = (*documentservice.Service)(nil)
 	_ insightRestorer     = (*insightservice.Service)(nil)
 	_ alertKeeper         = (*tablechangealertservice.Service)(nil)
-	_ watchtowerDismisser = (*watchtowerservice.Service)(nil)
+	_ watchtowerDismisser = (*watchtowerservice.Dismisser)(nil)
 	_ captureKeeper       = (*captureservice.Service)(nil)
 	_ stateLookup         = repositories.UsStateRepository(nil)
 )
@@ -225,7 +225,7 @@ func provideDeleteTableChangeAlertTool(
 }
 
 func provideDismissWatchtowerItemTool(
-	items *watchtowerservice.Service,
+	items *watchtowerservice.Dismisser,
 ) serviceports.AgentTool {
 	return newDismissWatchtowerItemTool(items)
 }
