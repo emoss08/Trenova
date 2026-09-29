@@ -101,10 +101,10 @@ func (s *Service) webhookSender(
 	if err != nil {
 		return nil, err
 	}
-	if connector.VerifyWebhook(req.Signature, req.Body) != nil {
-		return nil, nil //nolint:nilnil // a tenant app on the shared address is checked per connection
+	if verifyErr := connector.VerifyWebhook(req.Signature, req.Body); verifyErr == nil {
+		return &webhookSender{identity: instance.Identity()}, nil
 	}
-	return &webhookSender{identity: instance.Identity()}, nil
+	return nil, nil //nolint:nilnil // a tenant app on the shared address is checked per connection
 }
 
 func (s *Service) tenantWebhookSender(

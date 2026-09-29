@@ -140,7 +140,8 @@ func salesKindOf(kind accountingsync.SyncObjectType) (salesKind, error) {
 		accountingsync.SyncObjectDriverBill,
 		accountingsync.SyncObjectDriverBillPay,
 		accountingsync.SyncObjectJournalEntry,
-		accountingsync.SyncObjectJournalSummary:
+		accountingsync.SyncObjectJournalSummary,
+		accountingsync.DriftObjectGLAccount:
 		return salesKind{}, errDocumentKind
 	default:
 		return salesKind{}, errDocumentKind
@@ -251,7 +252,10 @@ type lineSpec struct {
 
 func lineItem(spec *lineSpec) xero.LineItem {
 	item := xero.LineItem{
-		Description: stringutils.TruncateRunes(lineText(spec.description), xero.MaxDescriptionLength),
+		Description: stringutils.TruncateRunes(
+			lineText(spec.description),
+			xero.MaxDescriptionLength,
+		),
 		Quantity:    decimal.NewFromInt(1),
 		UnitAmount:  spec.amount,
 		LineAmount:  spec.amount,

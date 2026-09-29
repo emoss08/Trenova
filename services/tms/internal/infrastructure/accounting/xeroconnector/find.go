@@ -214,7 +214,10 @@ func findPayment(
 		return nil, false, nil
 	}
 
-	payments, err := client.FindPayments(ctx, xero.PaymentFilter{InvoiceIDs: req.AppliesToExternalIDs})
+	payments, err := client.FindPayments(
+		ctx,
+		xero.PaymentFilter{InvoiceIDs: req.AppliesToExternalIDs},
+	)
 	if err != nil {
 		return nil, false, err
 	}

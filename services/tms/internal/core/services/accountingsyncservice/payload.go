@@ -306,9 +306,9 @@ func (s *Service) salesDocument(
 			continue
 		}
 		target := lineTarget(line)
-		externalID, err := res.require(ctx, target)
-		if err != nil {
-			return nil, err
+		externalID, refErr := res.require(ctx, target)
+		if refErr != nil {
+			return nil, refErr
 		}
 		entry := services.AccountingDocumentLine{
 			Description: line.Description,

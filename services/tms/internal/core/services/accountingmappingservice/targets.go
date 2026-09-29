@@ -117,10 +117,11 @@ func (s *Service) listTargets(
 	if err != nil {
 		return nil, err
 	}
-	return offeredTargets(accountingsync.MustProfile(conn.IntegrationType), all), nil
+	profile := accountingsync.MustProfile(conn.IntegrationType)
+	return offeredTargets(&profile, all), nil
 }
 
-func offeredTargets(profile accountingsync.ProviderProfile, all []*target) []*target {
+func offeredTargets(profile *accountingsync.ProviderProfile, all []*target) []*target {
 	offered := make([]*target, 0, len(all))
 	for _, t := range all {
 		if !profile.OffersKey(t.TargetType, t.Key) {

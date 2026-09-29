@@ -45,8 +45,8 @@ type authorizedApp struct {
 }
 
 type companyConnect struct {
-	owner   stateOwner
-	app     authorizedApp
+	owner   *stateOwner
+	app     *authorizedApp
 	grant   *services.AccountingTokenGrant
 	company services.AccountingCompany
 }
@@ -88,7 +88,7 @@ func (s *Service) CompleteAuthorization(
 	if err = validateCompletion(req, &profile); err != nil {
 		return nil, err
 	}
-	owner := stateOwner{
+	owner := &stateOwner{
 		tenantInfo:      req.TenantInfo,
 		userID:          req.UserID,
 		integrationType: req.IntegrationType,
@@ -140,7 +140,7 @@ func (s *Service) CompleteAuthorization(
 
 func (s *Service) grantedCompanies(
 	ctx context.Context,
-	app authorizedApp,
+	app *authorizedApp,
 	grant *services.AccountingTokenGrant,
 	callbackRealmID string,
 ) ([]services.AccountingCompany, error) {
@@ -167,9 +167,9 @@ func (s *Service) grantedCompanies(
 }
 
 type companyChoiceOffer struct {
-	owner     stateOwner
+	owner     *stateOwner
 	state     *repositories.AccountingOAuthState
-	app       authorizedApp
+	app       *authorizedApp
 	grant     *services.AccountingTokenGrant
 	companies []services.AccountingCompany
 }
@@ -252,7 +252,7 @@ func (s *Service) ChooseCompany(
 	if err = validateChoice(req); err != nil {
 		return nil, err
 	}
-	owner := stateOwner{
+	owner := &stateOwner{
 		tenantInfo:      req.TenantInfo,
 		userID:          req.UserID,
 		integrationType: req.IntegrationType,
@@ -300,9 +300,8 @@ func (s *Service) ChooseCompany(
 func splitChoice(
 	choices []repositories.AccountingOAuthCompany,
 	companyID string,
-) (*services.AccountingCompany, []services.AccountingCompany) {
-	var chosen *services.AccountingCompany
-	others := make([]services.AccountingCompany, 0, len(choices))
+) (chosen *services.AccountingCompany, others []services.AccountingCompany) {
+	others = make([]services.AccountingCompany, 0, len(choices))
 	for _, choice := range choices {
 		company := services.AccountingCompany{
 			ID:           choice.ID,
@@ -335,17 +334,17 @@ func (s *Service) releaseQuietly(
 func (s *Service) authorizedApp(
 	ctx context.Context,
 	provider services.AccountingProvider,
-	owner stateOwner,
+	owner *stateOwner,
 	state *repositories.AccountingOAuthState,
-) (authorizedApp, error) {
+) (*authorizedApp, error) {
 	name := accountingsync.ProviderName(owner.integrationType)
 	app, err := s.appForTenant(ctx, owner.tenantInfo, provider)
 	if err != nil {
-		return authorizedApp{}, err
+		return nil, err
 	}
 	identity := app.Identity()
 	if state.AppSource != identity.Source || state.AppFingerprint != identity.Fingerprint {
-		return authorizedApp{}, errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"state",
 			errortypes.ErrInvalid,
 			"The {0} app keys changed while you were signing in. Start the connection again.",
@@ -354,9 +353,9 @@ func (s *Service) authorizedApp(
 	}
 	connector, err := provider.Bind(app)
 	if err != nil {
-		return authorizedApp{}, err
+		return nil, err
 	}
-	return authorizedApp{connector: connector, identity: identity, provider: name}, nil
+	return &authorizedApp{connector: connector, identity: identity, provider: name}, nil
 }
 
 func (s *Service) connectCompany(
@@ -423,7 +422,7 @@ func errStateExpired() error {
 func (s *Service) takeState(
 	ctx context.Context,
 	token string,
-	owner stateOwner,
+	owner *stateOwner,
 ) (*repositories.AccountingOAuthState, error) {
 	state, err := s.states.Take(ctx, tokenutils.Hash(token))
 	if err != nil {
@@ -495,7 +494,7 @@ func (s *Service) openPendingGrant(
 }
 
 type connectionSave struct {
-	owner    stateOwner
+	owner    *stateOwner
 	realmID  string
 	grant    *services.AccountingTokenGrant
 	facts    *accountingsync.CompanyFacts

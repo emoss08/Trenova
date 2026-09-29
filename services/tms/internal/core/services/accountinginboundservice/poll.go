@@ -461,7 +461,11 @@ func (s *Service) observation(
 	}
 	externalURL := ""
 	if sess.writer != nil {
-		externalURL = sess.writer.DocumentURL(sess.auth, payment.Kind.SyncObjectType(), payment.ExternalID)
+		externalURL = sess.writer.DocumentURL(
+			sess.auth,
+			payment.Kind.SyncObjectType(),
+			payment.ExternalID,
+		)
 	}
 	return &accountingsync.InboundObservation{
 		TenantInfo:         sess.tenant,

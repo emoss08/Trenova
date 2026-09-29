@@ -338,13 +338,20 @@ func (c *Connector) VoidPayment(
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
 
-	if err = deletePaymentDocument(ctx, client, ref.RequestID, ref.ExternalID, ref.Refs); err != nil {
+	if err = deletePaymentDocument(
+		ctx,
+		client,
+		ref.RequestID,
+		ref.ExternalID,
+		ref.Refs,
+	); err != nil {
 		return result, err
 	}
 
 	step := 0
 	for _, key := range slices.Sorted(maps.Keys(result.Refs)) {
-		if !strings.HasPrefix(key, accountingsync.ExternalRefShortPayPrefix) || result.Refs[key] == "" {
+		if !strings.HasPrefix(key, accountingsync.ExternalRefShortPayPrefix) ||
+			result.Refs[key] == "" {
 			continue
 		}
 		step++

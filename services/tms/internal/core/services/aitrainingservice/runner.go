@@ -245,15 +245,18 @@ func (r *Runner) writeExamples(
 			return nil, aitraining.ErrExportInactive
 		}
 
-		page, err := r.corrections.ListForTraining(ctx, &repositories.ListAICorrectionsForTrainingRequest{
-			TenantInfo:      job.tenant,
-			Task:            job.export.Task,
-			CapturedFrom:    job.export.CapturedFrom,
-			CapturedTo:      job.export.CapturedTo,
-			AfterCapturedAt: afterCapturedAt,
-			AfterID:         afterID,
-			Limit:           correctionPageSize,
-		})
+		page, err := r.corrections.ListForTraining(
+			ctx,
+			&repositories.ListAICorrectionsForTrainingRequest{
+				TenantInfo:      job.tenant,
+				Task:            job.export.Task,
+				CapturedFrom:    job.export.CapturedFrom,
+				CapturedTo:      job.export.CapturedTo,
+				AfterCapturedAt: afterCapturedAt,
+				AfterID:         afterID,
+				Limit:           correctionPageSize,
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -375,10 +378,14 @@ func (r *Runner) example(
 	}
 
 	return &aitraining.Example{
-		ID:           id,
-		Format:       job.export.Format,
-		Task:         correction.Task,
-		Split:        aitraining.SplitFor(job.export.ID, correction.ID, job.export.ValidationPercent),
+		ID:     id,
+		Format: job.export.Format,
+		Task:   correction.Task,
+		Split: aitraining.SplitFor(
+			job.export.ID,
+			correction.ID,
+			job.export.ValidationPercent,
+		),
 		DocumentKind: correction.DocumentKind,
 		Input: aitraining.ExampleInput{
 			FileName: anonymized.FileName,
@@ -391,7 +398,10 @@ func (r *Runner) example(
 	}, "", nil
 }
 
-func (r *Runner) identity(ctx context.Context, tenantInfo pagination.TenantInfo) (*aitraining.Identity, error) {
+func (r *Runner) identity(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*aitraining.Identity, error) {
 	org, err := r.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 		IncludeBU:  true,

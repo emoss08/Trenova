@@ -74,12 +74,12 @@ func (a *accountCodes) lookup(
 	ctx context.Context,
 	client *xero.Client,
 	find func(*accountIndex) (string, bool),
-) (string, bool, error) {
+) (value string, found bool, err error) {
 	tenant := client.TenantID()
 	index, fresh := a.cached(tenant)
 	if fresh {
-		if value, ok := find(index); ok {
-			return value, true, nil
+		if cachedValue, ok := find(index); ok {
+			return cachedValue, true, nil
 		}
 		if a.now().Sub(index.loadedAt) < accountCodesRefetch {
 			return "", false, nil
@@ -90,19 +90,19 @@ func (a *accountCodes) lookup(
 	if err != nil {
 		return "", false, err
 	}
-	value, ok := find(a.store(tenant, accounts))
-	return value, ok, nil
+	value, found = find(a.store(tenant, accounts))
+	return value, found, nil
 }
 
 func (a *accountCodes) codeFor(
 	ctx context.Context,
 	client *xero.Client,
 	accountID string,
-) (string, bool, error) {
+) (code string, found bool, err error) {
 	id := strings.ToLower(strings.TrimSpace(accountID))
 	return a.lookup(ctx, client, func(index *accountIndex) (string, bool) {
-		code, ok := index.codeByID[id]
-		return code, ok && code != ""
+		accountCode, ok := index.codeByID[id]
+		return accountCode, ok && accountCode != ""
 	})
 }
 
@@ -110,14 +110,14 @@ func (a *accountCodes) idFor(
 	ctx context.Context,
 	client *xero.Client,
 	code string,
-) (string, bool, error) {
+) (id string, found bool, err error) {
 	key := strings.ToUpper(strings.TrimSpace(code))
 	if key == "" {
 		return "", false, nil
 	}
 	return a.lookup(ctx, client, func(index *accountIndex) (string, bool) {
-		id, ok := index.idByCode[key]
-		return id, ok
+		accountID, ok := index.idByCode[key]
+		return accountID, ok
 	})
 }
 

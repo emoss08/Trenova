@@ -220,29 +220,7 @@ func (c *Connector) ReadChanges(
 	collect := newChangeCollector(c, client, req)
 
 	if cursor.paging {
-		more, readErr := collect.read(ctx, cursor.targets[cursor.index], cursor.page, cursor.since)
-		if readErr != nil {
-			return nil, readErr
-		}
-		if err = collect.finish(ctx); err != nil {
-			return nil, err
-		}
-		cursor.latest = laterTime(cursor.latest, collect.latest)
-		switch {
-		case more:
-			cursor.page++
-			collect.page.More = true
-			collect.page.NextCursor = cursor.String()
-		case cursor.index+1 < len(cursor.targets):
-			cursor.index++
-			cursor.page = 2
-			collect.page.More = true
-			collect.page.NextCursor = cursor.String()
-		default:
-			done := changeCursor{since: nextSince(cursor.since, cursor.latest, cursor.started)}
-			collect.page.NextCursor = done.String()
-		}
-		return collect.page, nil
+		return collect.continuePaging(ctx, &cursor)
 	}
 
 	full := make([]changeTarget, 0, len(targets))
@@ -274,6 +252,35 @@ func (c *Connector) ReadChanges(
 	collect.page.More = true
 	collect.page.NextCursor = paging.String()
 	return collect.page, nil
+}
+
+func (c *changeCollector) continuePaging(
+	ctx context.Context,
+	cursor *changeCursor,
+) (*services.AccountingChangePage, error) {
+	more, err := c.read(ctx, cursor.targets[cursor.index], cursor.page, cursor.since)
+	if err != nil {
+		return nil, err
+	}
+	if err = c.finish(ctx); err != nil {
+		return nil, err
+	}
+	cursor.latest = laterTime(cursor.latest, c.latest)
+	switch {
+	case more:
+		cursor.page++
+		c.page.More = true
+		c.page.NextCursor = cursor.String()
+	case cursor.index+1 < len(cursor.targets):
+		cursor.index++
+		cursor.page = 2
+		c.page.More = true
+		c.page.NextCursor = cursor.String()
+	default:
+		done := changeCursor{since: nextSince(cursor.since, cursor.latest, cursor.started)}
+		c.page.NextCursor = done.String()
+	}
+	return c.page, nil
 }
 
 func laterTime(a, b time.Time) time.Time {
