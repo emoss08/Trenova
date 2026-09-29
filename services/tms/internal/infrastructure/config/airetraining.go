@@ -1,9 +1,13 @@
 package config
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/urlutils"
 )
 
 const (
@@ -18,6 +22,11 @@ const (
 	defaultAIRetrainingLease               = 2 * time.Hour
 	minAIRetrainingLease                   = 10 * time.Minute
 	maxAIRetrainingLease                   = 24 * time.Hour
+	defaultAIRetrainingAlertTimeout        = 10 * time.Second
+	minAIRetrainingAlertTimeout            = time.Second
+	maxAIRetrainingAlertTimeout            = time.Minute
+	minAIRetrainingAlertSecretBytes        = 24
+	aiRetrainingAlertSecretPrefix          = "whsec_"
 )
 
 var ErrAIRetrainingLease = fmt.Errorf(
@@ -30,18 +39,82 @@ var ErrAIRetrainingGate = errors.New(
 	"aiRetraining.minAccuracyPercent and aiRetraining.maxRegressionPoints must be between 0 and 100",
 )
 
+var (
+	ErrAIRetrainingAlertURL = errors.New(
+		"aiRetraining.alerts.webhookUrl must be an absolute http or https URL",
+	)
+	ErrAIRetrainingAlertSecret = fmt.Errorf(
+		"aiRetraining.alerts.secret must be %s followed by at least %d base64-encoded bytes",
+		aiRetrainingAlertSecretPrefix,
+		minAIRetrainingAlertSecretBytes,
+	)
+	ErrAIRetrainingAlertTimeout = fmt.Errorf(
+		"aiRetraining.alerts.timeout must be between %s and %s",
+		minAIRetrainingAlertTimeout,
+		maxAIRetrainingAlertTimeout,
+	)
+	ErrAIRetrainingAlertInsecure = errors.New(
+		"production and staging require aiRetraining.alerts.webhookUrl to use https",
+	)
+)
+
 type AIRetrainingConfig struct {
-	Enabled              bool          `mapstructure:"enabled"`
-	LookbackDays         int           `mapstructure:"lookbackDays"         validate:"omitempty,min=30,max=1095"`
-	MinNewExamples       int           `mapstructure:"minNewExamples"       validate:"omitempty,min=1,max=1000000"`
-	MinIntervalDays      int           `mapstructure:"minIntervalDays"      validate:"omitempty,min=1,max=365"`
-	RetrainOnDrift       *bool         `mapstructure:"retrainOnDrift"`
-	MaxPerOrganization   int           `mapstructure:"maxPerOrganization"   validate:"omitempty,min=1,max=20000"`
-	ValidationPercent    int           `mapstructure:"validationPercent"    validate:"omitempty,min=1,max=50"`
-	StructuredOutputMode string        `mapstructure:"structuredOutputMode" validate:"omitempty,oneof=JSONSchema JSONMode Prompted"`
-	MinAccuracyPercent   *int          `mapstructure:"minAccuracyPercent"`
-	MaxRegressionPoints  *int          `mapstructure:"maxRegressionPoints"`
-	LeaseDuration        time.Duration `mapstructure:"leaseDuration"`
+	Enabled              bool                     `mapstructure:"enabled"`
+	LookbackDays         int                      `mapstructure:"lookbackDays"         validate:"omitempty,min=30,max=1095"`
+	MinNewExamples       int                      `mapstructure:"minNewExamples"       validate:"omitempty,min=1,max=1000000"`
+	MinIntervalDays      int                      `mapstructure:"minIntervalDays"      validate:"omitempty,min=1,max=365"`
+	RetrainOnDrift       *bool                    `mapstructure:"retrainOnDrift"`
+	MaxPerOrganization   int                      `mapstructure:"maxPerOrganization"   validate:"omitempty,min=1,max=20000"`
+	ValidationPercent    int                      `mapstructure:"validationPercent"    validate:"omitempty,min=1,max=50"`
+	StructuredOutputMode string                   `mapstructure:"structuredOutputMode" validate:"omitempty,oneof=JSONSchema JSONMode Prompted"`
+	MinAccuracyPercent   *int                     `mapstructure:"minAccuracyPercent"`
+	MaxRegressionPoints  *int                     `mapstructure:"maxRegressionPoints"`
+	LeaseDuration        time.Duration            `mapstructure:"leaseDuration"`
+	Alerts               AIRetrainingAlertsConfig `mapstructure:"alerts"`
+}
+
+type AIRetrainingAlertsConfig struct {
+	WebhookURL          string        `mapstructure:"webhookUrl"`
+	Secret              string        `mapstructure:"secret"`
+	IncludeSkipped      bool          `mapstructure:"includeSkipped"`
+	AllowPrivateNetwork bool          `mapstructure:"allowPrivateNetwork"`
+	Timeout             time.Duration `mapstructure:"timeout"`
+}
+
+func (c AIRetrainingAlertsConfig) String() string {
+	secret := ""
+	if c.Secret != "" {
+		secret = redactedValue
+	}
+
+	return fmt.Sprintf(
+		"{WebhookURL:%s Secret:%s IncludeSkipped:%t AllowPrivateNetwork:%t Timeout:%s}",
+		c.WebhookURL,
+		secret,
+		c.IncludeSkipped,
+		c.AllowPrivateNetwork,
+		c.Timeout,
+	)
+}
+
+func (c AIRetrainingAlertsConfig) GoString() string {
+	return "config.AIRetrainingAlertsConfig" + c.String()
+}
+
+func (c *AIRetrainingAlertsConfig) Enabled() bool {
+	return c != nil && strings.TrimSpace(c.WebhookURL) != ""
+}
+
+func (c *AIRetrainingAlertsConfig) Signed() bool {
+	return c != nil && c.Secret != ""
+}
+
+func (c *AIRetrainingAlertsConfig) GetTimeout() time.Duration {
+	if c == nil || c.Timeout <= 0 {
+		return defaultAIRetrainingAlertTimeout
+	}
+
+	return c.Timeout
 }
 
 func (c *AIRetrainingConfig) IsEnabled() bool {
@@ -133,6 +206,43 @@ func validateAIRetrainingConfig(config *Config) error {
 	if !percentInRange(retraining.MinAccuracyPercent) ||
 		!percentInRange(retraining.MaxRegressionPoints) {
 		return ErrAIRetrainingGate
+	}
+
+	return validateAIRetrainingAlerts(&retraining.Alerts)
+}
+
+func validateAIRetrainingAlerts(alerts *AIRetrainingAlertsConfig) error {
+	if timeout := alerts.Timeout; timeout != 0 &&
+		(timeout < minAIRetrainingAlertTimeout || timeout > maxAIRetrainingAlertTimeout) {
+		return ErrAIRetrainingAlertTimeout
+	}
+	if alerts.Signed() {
+		key, err := base64.StdEncoding.DecodeString(
+			strings.TrimPrefix(alerts.Secret, aiRetrainingAlertSecretPrefix),
+		)
+		if !strings.HasPrefix(alerts.Secret, aiRetrainingAlertSecretPrefix) || err != nil ||
+			len(key) < minAIRetrainingAlertSecretBytes {
+			return ErrAIRetrainingAlertSecret
+		}
+	}
+	if !alerts.Enabled() {
+		return nil
+	}
+
+	if _, ok := urlutils.ParseAbsoluteHTTP(alerts.WebhookURL); !ok {
+		return ErrAIRetrainingAlertURL
+	}
+
+	return nil
+}
+
+func validateAIRetrainingAlertsProduction(config *Config) error {
+	alerts := &config.AIRetraining.Alerts
+	if !alerts.Enabled() {
+		return nil
+	}
+	if !strings.HasPrefix(strings.TrimSpace(alerts.WebhookURL), "https://") {
+		return ErrAIRetrainingAlertInsecure
 	}
 
 	return nil

@@ -121,14 +121,49 @@ func TestExportOrganizationStopsAtTheOrganizationCap(t *testing.T) {
 
 	f := newRunnerFixture()
 	f.export.MaxPerOrganization = 3
+	corrections := make([]*aicorrection.Correction, 0, 5)
 	for range 5 {
-		f.addCorrection(documentText, confirmedSnapshot())
+		corrections = append(corrections, f.addCorrection(documentText, confirmedSnapshot()))
 	}
 
 	result, err := f.runner.ExportOrganization(t.Context(), exportRequest(f))
 	require.NoError(t, err)
 	assert.Equal(t, 3, result.Examples)
-	assert.Len(t, f.records.records[f.export.ID], 3)
+	records := f.records.records[f.export.ID]
+	require.Len(t, records, 3)
+
+	exported := make([]pulid.ID, 0, len(records))
+	for _, record := range records {
+		exported = append(exported, record.CorrectionID)
+	}
+	assert.ElementsMatch(t,
+		[]pulid.ID{corrections[4].ID, corrections[3].ID, corrections[2].ID},
+		exported,
+		"the cap keeps an organization's newest corrections, not its oldest",
+	)
+}
+
+func TestExportOrganizationPagesThroughEveryCorrectionOnce(t *testing.T) {
+	t.Parallel()
+
+	f := newRunnerFixture()
+	total := correctionPageSize + 7
+	for range total {
+		f.addCorrection(documentText, confirmedSnapshot())
+	}
+
+	result, err := f.runner.ExportOrganization(t.Context(), exportRequest(f))
+	require.NoError(t, err)
+	assert.Equal(t, total, result.Examples)
+
+	seen := make(map[pulid.ID]struct{}, total)
+	for _, record := range f.records.records[f.export.ID] {
+		_, duplicate := seen[record.CorrectionID]
+		assert.False(t, duplicate, "a correction is exported once")
+		seen[record.CorrectionID] = struct{}{}
+	}
+	assert.Len(t, seen, total)
+	assert.Equal(t, 2, f.corrections.calls, "two pages are read")
 }
 
 func TestExportOrganizationSkipsWithdrawnConsent(t *testing.T) {

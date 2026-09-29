@@ -156,3 +156,7 @@ type AIRetrainingService interface {
 	Get(ctx context.Context, id pulid.ID) (*aitraining.RetrainingCycle, error)
 	LeaseDuration() time.Duration
 }
+
+type RetrainingAlerter interface {
+	AlertRetraining(ctx context.Context, cycle *aitraining.RetrainingCycle) error
+}

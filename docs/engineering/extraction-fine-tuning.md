@@ -592,7 +592,8 @@ GPU timer          trenova ai retraining run
 - **New corrections.** `AICorrectionRepository.CountTrainable` counts what the export would read:
   corrections of consenting organizations with a document, at least one scored field, and not the
   source of an evaluation case, each organization counting for at most `maxPerOrganization`.
-  The count starts where the last cycle's window ended.
+  The count starts where the last cycle's window ended. The export reads each organization's corrections
+  newest first, so an organization's capped share is its most recent work.
 - **Drift.** `WeeklyTrainableTotalsByProvider` totals the consenting organizations' corrections by
   provider and week, and `aicorrection.BuildProviderTrends` judges them exactly as the weekly drift
   check does (section 8). The run is scheduled after that check, on Mondays.
@@ -624,6 +625,19 @@ GPU timer          trenova ai retraining run
 - **The gate.** `minAccuracyPercent` and `maxRegressionPoints`, compared exactly on the counts
   (`intutils.RatioLeadExceedsPoints`) against the production model's predictions for the same
   validation documents. A model with nothing scored never passes.
+- **Alerts.** With `aiRetraining.alerts.webhookUrl` set, every change of a cycle's state is sent
+  as a JSON POST: started (`retraining.exporting`), `ready`, `training`, `passed`, `rejected`,
+  `failed` and `canceled`, and `skipped` too when `includeSkipped` is on. The body has a `text`
+  line, so a Slack incoming webhook shows it as it is, plus `event`, `instanceId`, `sentAt` and
+  the whole `cycle` (status, trigger, counts, trainer, model directory, both accuracies, the gate,
+  and any failure). With a `secret`, each delivery is signed in the Standard Webhooks scheme
+  (`webhook-id`, `webhook-timestamp`, `webhook-signature`, `shared/webhooksig`); `webhook-id` is
+  the cycle and state, so a retry can be dropped as a duplicate. The sender is
+  `infrastructure/retrainingalert`: three attempts with 1s and 2s backoff, no retry on a 4xx other
+  than 408 and 429, through `shared/httpsafe` (a private or loopback address needs
+  `allowPrivateNetwork`). A failed alert is logged and never fails the retraining. Alerts come
+  from whichever process changed the cycle, so the worker and the GPU machine both need to reach
+  the webhook.
 - **What passing means.** `Passed` records the model directory, the config and the prompt
   fingerprint. The model is not served: serve it, register it after the current provider, run an
   evaluation on the golden set, then shadow and roll it out (sections 5 to 7).

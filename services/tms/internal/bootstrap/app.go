@@ -97,6 +97,7 @@ import (
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
+	"github.com/emoss08/trenova/internal/infrastructure/retrainingalert"
 	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
 	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
 	"go.uber.org/fx"
@@ -198,6 +199,7 @@ func Options() fx.Option {
 		extractionshadowjobs.Module,
 		aitrainingservice.Module,
 		aitrainingjobs.Module,
+		retrainingalert.Module,
 		fx.Provide(aidocumentservice.NewContract),
 		aifeedbackjobs.Module,
 		retrievaljobs.Module,
@@ -265,6 +267,8 @@ func TrainingExportCommandOptions() fx.Option {
 			aitrainingservice.AsRenderer,
 			aitrainingservice.NewRetrainer,
 			aitrainingservice.AsRetrainer,
+			retrainingalert.New,
+			retrainingalert.AsAlerter,
 			aidocumentservice.NewContract,
 			completionrouter.NewPromptRenderer,
 		),

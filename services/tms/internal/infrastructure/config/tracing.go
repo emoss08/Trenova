@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/url"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/urlutils"
 )
 
 const (
@@ -48,10 +50,9 @@ func validateTracingConfig(config *Config) error {
 		return ErrTraceURLTemplateMissingPlaceholder
 	}
 
-	probe, err := url.Parse(
+	if _, ok := urlutils.ParseAbsoluteHTTP(
 		strings.ReplaceAll(template, TraceURLTraceIDPlaceholder, traceURLProbeTraceID),
-	)
-	if err != nil || probe.Host == "" || (probe.Scheme != "http" && probe.Scheme != "https") {
+	); !ok {
 		return ErrTraceURLTemplateInvalid
 	}
 
