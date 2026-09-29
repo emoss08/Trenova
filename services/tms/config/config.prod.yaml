@@ -1,6 +1,7 @@
 app:
   env: production
   debug: false
+  webBaseUrl: https://cloud.trenova.app
 
 server:
   mode: release
@@ -80,7 +81,7 @@ security:
       requestsPerMinute: 10
       burstSize: 5
   passwordReset:
-    baseUrl: https://app.example.com # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
+    baseUrl: https://cloud.trenova.app # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
     maxRequestsPerHour: 5 # Reset links one account can be sent per hour, so the endpoint cannot flood an inbox.
   graphql:

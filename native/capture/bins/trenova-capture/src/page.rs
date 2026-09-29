@@ -50,18 +50,26 @@ mod tests {
             1,
             "the stylesheet cannot end early"
         );
+        let addresses_removed = ADDRESSES
+            .iter()
+            .fold(page.clone(), |page, address| page.replace(address, ""));
         for outside in ["http://", "https://", "src=\"//", "@import", "url("] {
             assert!(
-                !page.contains(outside) || outside == "https://" && only_placeholder(&page),
+                !addresses_removed.contains(outside),
                 "the page reaches outside itself: {outside}"
+            );
+        }
+        for address in ADDRESSES {
+            assert_eq!(
+                page.matches(address).count(),
+                1,
+                "{address} is suggested once, as text"
             );
         }
     }
 
-    /// The only address in the page is the example in the server field.
-    fn only_placeholder(page: &str) -> bool {
-        page.matches("https://").count() == 1 && page.contains("https://tms.example.com")
-    }
+    /// The only addresses in the page are the ones the server field suggests.
+    const ADDRESSES: [&str; 2] = ["\"https://cloud.trenova.app\"", "\"http://localhost:5173\""];
 
     #[test]
     fn the_script_draws_text_never_markup() {

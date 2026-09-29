@@ -7,6 +7,11 @@
 
   // What belongs to this window alone and survives a redraw: choices made,
   // text being typed, a question being asked, and buttons already pressed.
+  // Trenova's own service, and the web app's dev server when Trenova runs on
+  // this computer; the dev server passes /api on to the API.
+  const CLOUD_ADDRESS = "https://cloud.trenova.app";
+  const DEVELOPMENT_ADDRESS = "http://localhost:5173";
+
   const local = {
     settings: false,
     scanner: null,
@@ -151,14 +156,14 @@
 
   function serverForm(v, submitLabel) {
     const locked = v.account.serverLocked;
-    const value = local.serverDraft ?? v.account.server ?? "";
+    const value = local.serverDraft ?? v.account.server ?? CLOUD_ADDRESS;
     const form = el(
       "form",
       {
         class: "field",
         onsubmit: (event) => {
           event.preventDefault();
-          const address = (local.serverDraft ?? v.account.server ?? "").trim();
+          const address = (local.serverDraft ?? v.account.server ?? CLOUD_ADDRESS).trim();
           if (!address) {
             return;
           }
@@ -177,7 +182,7 @@
           inputmode: "url",
           autocomplete: "off",
           spellcheck: "false",
-          placeholder: "https://tms.example.com",
+          placeholder: CLOUD_ADDRESS,
           value,
           disabled: locked,
           oninput: (event) => {
@@ -192,10 +197,19 @@
       ),
       locked
         ? el("p", { class: "subtle", text: "Your organization sets this address." })
-        : el("p", {
-            class: "subtle",
-            text: "The address you open Trenova at in your browser.",
-          }),
+        : el(
+            "p",
+            { class: "subtle" },
+            "The address you open Trenova at in your browser. Running Trenova on this computer for development? ",
+            button(`Use ${DEVELOPMENT_ADDRESS}`, {
+              class: "link",
+              type: "button",
+              onclick: () => {
+                local.serverDraft = DEVELOPMENT_ADDRESS;
+                draw();
+              },
+            }),
+          ),
     );
     return form;
   }
