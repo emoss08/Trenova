@@ -39,6 +39,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { stepsFromExchanges } from "./activity";
 import { askRequestsFrom } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
+import { decisionRequestsFrom } from "./decision-requests";
+import { RequestedDecision } from "./requested-decision";
 import { PlanCard } from "./plan-card";
 import type { PlanGroup } from "./plan-state";
 import { ProposalCard } from "./proposal-card";
@@ -477,6 +479,7 @@ export function AssistantEntry({
   // rather than leaving the reader to ask again for the outcome.
   const reportRuns = reportRunsFrom(tools);
   const asks = askRequestsFrom(tools);
+  const decisions = decisionRequestsFrom(tools);
   const steps = stepsFromExchanges(tools, message.createdAt);
 
   return (
@@ -521,6 +524,13 @@ export function AssistantEntry({
           request={ask}
           answered={latestUserSequence > ask.sequence}
           onAnswer={onAnswer}
+        />
+      ))}
+      {decisions.map((request) => (
+        <RequestedDecision
+          key={request.callId}
+          proposalId={request.proposalId}
+          threadId={threadId}
         />
       ))}
       {plans.map((group) => (

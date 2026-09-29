@@ -123,6 +123,7 @@
   "A decision follow-up carries no message; the decision is its input": "Un seguimiento de decisión no lleva mensaje; la decisión es su entrada",
   "A decision must reference exactly one proposal or exception": "Una decisión debe hacer referencia exactamente a una propuesta o excepción",
   "A decision needs the date it was made": "Una decisión requiere la fecha en que se tomó",
+  "A decision request is a view over a proposal": "Una solicitud de decisión es una vista de una propuesta",
   "A declined assignment must record its reason": "Una asignación rechazada debe registrar su motivo",
   "A decrease of 100% or more would invert every rate it touches": "Una reducción del 100 % o más invertiría todas las tarifas afectadas",
   "A default cash account must be configured before recording carrier settlement payments": "Debe configurarse una cuenta de caja predeterminada antes de registrar pagos de liquidaciones de transportistas",

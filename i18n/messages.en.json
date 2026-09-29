@@ -2723,6 +2723,15 @@
       "domain/worker"
     ]
   },
+  "A decision request is a view over a proposal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/assistantartifact"
+    ]
+  },
   "A decline reason is required": {
     "sites": 1,
     "scope": [
@@ -20686,6 +20695,15 @@
     ]
   },
   "Asked you to choose": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Asked you to decide": {
     "sites": 1,
     "scope": [
       "ts"
@@ -44033,6 +44051,15 @@
       "packages/shared/hooks"
     ]
   },
+  "Couldn't show the card again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Count": {
     "sites": 6,
     "scope": [
@@ -49921,7 +49948,7 @@
     ]
   },
   "Decision": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -95423,6 +95450,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Loading the proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Loading the return": {
@@ -164321,6 +164357,15 @@
       "routes/formula-template"
     ]
   },
+  "Showing the card again…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Showing the first {0}": {
     "sites": 1,
     "scope": [
@@ -185528,6 +185573,15 @@
       "routes/reports"
     ]
   },
+  "This decision no longer names a proposal.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This decrease would push some lanes below zero, and a negative rate is not a discount. Narrow the scope or soften the change.": {
     "sites": 1,
     "scope": [
@@ -187090,6 +187144,15 @@
     ],
     "areas": [
       "service/agentdecisionqueueservice"
+    ]
+  },
+  "This proposal is no longer part of the conversation.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This proposal was not made by a configured agent, so there is nothing to evaluate": {
