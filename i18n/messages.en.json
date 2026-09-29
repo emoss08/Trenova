@@ -19234,6 +19234,15 @@
       "routes/desk"
     ]
   },
+  "Approve all {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approve all {0} changes?": {
     "sites": 1,
     "scope": [
@@ -19278,6 +19287,15 @@
     "areas": [
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Approve billing items": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Approve charge": {
@@ -19665,6 +19683,15 @@
     ]
   },
   "Approved. {0} of {1} done so far.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approved. {0} of {1} done; the others did not go through, and each says why.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -131393,6 +131420,15 @@
       "routes/invoice"
     ]
   },
+  "Post invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Post it where employees can see it, from February 1 to April 30.": {
     "sites": 1,
     "scope": [
@@ -150897,6 +150933,16 @@
       "routes/scheduling"
     ]
   },
+  "Rotation must be 0, 90, 180 or 270": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers",
+      "service/captureservice"
+    ]
+  },
   "Rotation offset (weeks)": {
     "sites": 1,
     "scope": [
@@ -157969,6 +158015,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Select all {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Select all {0} matching": {
     "sites": 1,
     "scope": [
@@ -159988,6 +160043,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Send invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Send it in before the deadline on the request.": {
@@ -175545,11 +175609,12 @@
     ]
   },
   "That proposal was not raised in one of your conversations": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/agentdecisionqueueservice",
       "service/agentdecisionservice"
     ]
   },
@@ -217358,6 +217423,24 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# change is waiting} other {# changes are waiting}}: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# change like this is waiting} other {# changes like this are waiting}}: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# change ran without being asked} other {# changes ran without being asked}}": {
     "sites": 1,
     "scope": [
@@ -222189,6 +222272,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} of {1} approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} of {1} chosen": {

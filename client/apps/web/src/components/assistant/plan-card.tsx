@@ -52,7 +52,8 @@ import { WorkingDot } from "./voice/working-dot";
  * the card lists the steps in the order they will run and takes one answer
  * for all of them. Once approved it keeps following the steps, because
  * "approved" and "done" are different facts and a step that failed stops the
- * ones after it; each step's mark settles as it finishes.
+ * ones after it, unless each step changes a different record, when the rest
+ * still run; each step's mark settles as it finishes.
  */
 export function PlanCard({
   plan,
@@ -121,7 +122,7 @@ export function PlanCard({
         arrived={decidedHere}
         footer={steps.length > 0 ? <StepList steps={steps} settled /> : null}
       >
-        <PlanOutcomeLine plan={plan} state={state} />
+        <PlanOutcomeLine plan={plan} state={state} steps={steps} />
       </DecisionReceipt>
     );
   }
@@ -304,15 +305,51 @@ function StepIcon({ state }: { state: PlanStepState }) {
 }
 
 /**
+ * Whether a failed plan went on past its first failure: steps that each change
+ * a different record run whatever became of the others, so a step after the
+ * one that failed still ran and none was skipped.
+ */
+function ranEveryStep(plan: AssistantPlan, steps: AssistantProposal[]): boolean {
+  const failedAt = plan.failedStep ?? 0;
+  if (failedAt === 0 || steps.some((step) => planStepState(step) === "skipped")) {
+    return false;
+  }
+
+  return steps.some((step) => {
+    const state = planStepState(step);
+    return step.planStep > failedAt && (state === "done" || state === "failed");
+  });
+}
+
+/**
  * What became of the plan, kept apart from the decision. A plan that stopped
  * says which step stopped it and how far it got, because the approver is the
  * one who has to finish what did not run.
  */
-function PlanOutcomeLine({ plan, state }: { plan: AssistantPlan; state: PlanPresentation }) {
+function PlanOutcomeLine({
+  plan,
+  state,
+  steps,
+}: {
+  plan: AssistantPlan;
+  state: PlanPresentation;
+  steps: AssistantProposal[];
+}) {
   const t = useT();
 
   switch (state) {
     case "failed":
+      if (ranEveryStep(plan, steps)) {
+        return (
+          <span className="text-danger block">
+            {t(
+              "Approved. {0} of {1} done; the others did not go through, and each says why.",
+              plan.completedSteps,
+              plan.stepCount,
+            )}
+          </span>
+        );
+      }
       return (
         <span className="text-danger block">
           {plan.failedStep

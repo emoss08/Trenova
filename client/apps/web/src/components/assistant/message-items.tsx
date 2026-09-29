@@ -527,11 +527,7 @@ export function AssistantEntry({
         />
       ))}
       {decisions.map((request) => (
-        <RequestedDecision
-          key={request.callId}
-          proposalId={request.proposalId}
-          threadId={threadId}
-        />
+        <RequestedDecision key={request.callId} request={request} threadId={threadId} />
       ))}
       {plans.map((group) => (
         <PlanCard key={group.plan.id} plan={group.plan} steps={group.steps} threadId={threadId} />

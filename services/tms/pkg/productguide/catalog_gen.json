@@ -1,5 +1,5 @@
 {
-  "version": "sha256:ef51310c618f120fc71f4c1513cdac2247a56253a953f5ca3dc37bf24e75f5ff",
+  "version": "sha256:46c7bfedceb0b3a86dc4dc8a1c024819de7441d8749967cfa53b3797aa3e268b",
   "modules": [
     {
       "id": "home",
@@ -8176,7 +8176,7 @@
           ],
           "steps": [
             "Open [Decisions](/desk/decisions).",
-            "Mark proposals with their checkbox (or x). A batch holds one kind of change at a time, and a plan is always decided on its own.",
+            "Mark proposals with their checkbox (or x). When the proposal you are reading has others of the same kind waiting, a line above the list says how many and offers to select all of them at once. A batch holds one kind of change at a time, and a plan is always decided on its own.",
             "Select **Approve all** or **Reject all**, enter one **Reason** for all of them (required when rejecting), and confirm. Approved changes run one after another; one that cannot run, or whose preview changed since you read it, is reported on its own."
           ]
         },
@@ -8200,7 +8200,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.\n\nAn approval records exactly what you were shown. In a batch, a proposal you never opened is recorded as approved without its preview having been reviewed, and the confirmation says how many of those there are. Some changes cannot say exactly what they would do; they show the values they would run with under a warning instead. If what a change would do cannot be loaded at all, you can still approve it, and the decision is recorded as made without a preview.\n\nIn a plan, a step that changes a record an earlier step also changes is shown as that earlier step would leave it, with a note naming the step.",
+      "notes": "Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.\n\nAn approval records exactly what you were shown. In a batch, a proposal you never opened is recorded as approved without its preview having been reviewed, and the confirmation says how many of those there are. Some changes cannot say exactly what they would do; they show the values they would run with under a warning instead. If what a change would do cannot be loaded at all, you can still approve it, and the decision is recorded as made without a preview.\n\nIn a plan, a step that changes a record an earlier step also changes is shown as that earlier step would leave it, with a note naming the step. When every step of an approved plan changes a different record of the same kind, such as posting several invoices, each step runs whatever became of the others and the plan says how many went through; otherwise the first step that fails stops the rest.",
       "related": [
         "/desk",
         "/desk/watchtower",

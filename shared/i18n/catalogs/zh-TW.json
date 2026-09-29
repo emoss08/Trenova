@@ -5217,6 +5217,7 @@
   "Roll up provider usage, purge expired payloads and prune snapshot history": "彙總供應商用量、清除過期的負載資料，並修剪快照歷程",
   "Rolling twelve months looking back": "回溯十二個月滾動期間",
   "Root invoice is required": "根發票為必填",
+  "Rotation must be 0, 90, 180 or 270": "旋轉角度必須為 0、90、180 或 270",
   "Round is invalid": "輪次無效",
   "Round starts at one": "梯次自 1 開始",
   "Rounded minutes cannot be negative": "四捨五入後的分鐘數不得為負數",
