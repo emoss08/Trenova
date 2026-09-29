@@ -30,7 +30,9 @@ const STALE_DOWNLOAD: Duration = Duration::from_secs(86_400);
 /// Windows Installer's "done, reboot to finish" codes.
 const REBOOT_REQUIRED: [i32; 2] = [3010, 1641];
 
-fn say(message: &str) {
+/// Writes a line the installer's log keeps (Windows Installer records what
+/// its custom actions print).
+pub(crate) fn say(message: &str) {
     let _ = writeln!(std::io::stderr(), "{message}");
 }
 

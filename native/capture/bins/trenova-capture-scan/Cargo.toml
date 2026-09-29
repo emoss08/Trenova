@@ -17,5 +17,8 @@ tracing-subscriber.workspace = true
 capture-twain.workspace = true
 capture-wia.workspace = true
 
+[build-dependencies]
+static_vcruntime.workspace = true
+
 [lints]
 workspace = true

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The installer's words: its own pages, and the standard pages it says more on. -->
+<WixLocalization Culture="en-US" Codepage="1252" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="WelcomeDlgDescription" Overridable="yes" Value="Trenova Capture scans and prints paper straight into Trenova from this computer. The next pages ask where your Trenova is and show everything that will be installed, before anything changes." />
+  <String Id="VerifyReadyDlgInstallText" Overridable="yes" Value="Click Install to begin. Windows asks for administrator permission, because Trenova Capture adds a printer and two services.&#13;&#10;&#13;&#10;Every step is written to the install log:&#13;&#10;[MsiLogFileLocation]" />
+  <String Id="FatalErrorDescription2" Overridable="yes" Value="Nothing was left half-installed. A log of what happened is at [MsiLogFileLocation]; send it to your administrator or to Trenova support." />
+
+  <String Id="ServerDlg_Title" Value="[ProductName] Setup" />
+  <String Id="ServerDlgTitle" Value="{\WixUI_Font_Title}Your Trenova" />
+  <String Id="ServerDlgDescription" Value="Where Trenova Capture sends what you scan and print." />
+  <String Id="ServerDlgAddressLabel" Value="Trenova address" />
+  <String Id="ServerDlgAddressHelp" Value="The address you open Trenova at in your browser, such as https://tms.example.com. Leave it empty to enter it in Trenova Capture after installing." />
+  <String Id="ServerDlgUpdates" Value="Install new versions of Trenova Capture automatically" />
+  <String Id="ServerDlgUpdatesHelp" Value="Trenova Capture checks for a signed release every six hours and installs it when nothing is being scanned. Turn this off if your IT department deploys updates." />
+  <String Id="InvalidServerDlgText" Value="Enter an address that starts with https://, or http://localhost for a Trenova running on this computer. Trenova Capture sends documents only over an encrypted connection." />
+
+  <String Id="DetailsDlg_Title" Value="[ProductName] Setup" />
+  <String Id="DetailsDlgTitle" Value="{\WixUI_Font_Title}What will be installed" />
+  <String Id="DetailsDlgDescription" Value="Everything Trenova Capture adds to this computer." />
+  <String Id="DetailsDlgFolderLabel" Value="Installed in" />
+  <String Id="DetailsDlgPiecesLabel" Value="It adds" />
+  <String Id="DetailsDlgPieces" Value="• Trenova Capture, which starts at sign-in in the notification area&#13;&#10;• Scan helpers for 64-bit and 32-bit scanner drivers (TWAIN and WIA)&#13;&#10;• The Trenova printer, served only on this computer at port [PRINTPORT]&#13;&#10;• Two services: TrenovaCaptureSvc for printing, TrenovaCaptureUpdater for updates&#13;&#10;• A Start menu shortcut" />
+  <String Id="DetailsDlgReplacing" Value="Trenova Capture is already installed here. It is closed, replaced and started again; pages waiting to be sent are kept." />
+  <String Id="DetailsDlgServerLabel" Value="Server" />
+  <String Id="DetailsDlgUpdatesLabel" Value="Updates" />
+  <String Id="DetailsDlgLogLabel" Value="Install log" />
+  <String Id="DetailsDlgNoServer" Value="Not set yet; you enter it in Trenova Capture" />
+  <String Id="DetailsDlgUpdatesOn" Value="Installed automatically" />
+  <String Id="DetailsDlgUpdatesOff" Value="Left to your administrator" />
+
+  <String Id="ExitDialogNextSteps" Value="Next, choose Sign in in Trenova Capture: you approve this computer once, in your browser. If the Trenova printer could not be added, Trenova Capture offers to add it.&#13;&#10;&#13;&#10;Install log: [MsiLogFileLocation]" />
+  <String Id="ExitDialogOpen" Value="Open Trenova Capture now" />
+</WixLocalization>

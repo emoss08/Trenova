@@ -7,6 +7,10 @@ const LOGO: &str = "../../../../client/apps/web/public/logo.ico";
 fn main() {
     println!("cargo:rerun-if-changed={LOGO}");
     println!("cargo:rerun-if-changed=build.rs");
+    // The Visual C++ runtime goes into the executable, so it runs on a
+    // Windows without the Visual C++ Redistributable; the Universal CRT is
+    // part of Windows. Nothing happens on other targets.
+    static_vcruntime::metabuild();
     #[cfg(windows)]
     embed();
 }

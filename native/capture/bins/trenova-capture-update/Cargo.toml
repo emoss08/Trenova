@@ -50,5 +50,8 @@ wiremock.workspace = true
 sha2.workspace = true
 hex.workspace = true
 
+[build-dependencies]
+static_vcruntime.workspace = true
+
 [lints]
 workspace = true

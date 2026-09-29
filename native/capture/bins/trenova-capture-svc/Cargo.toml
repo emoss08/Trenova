@@ -52,5 +52,8 @@ windows = { workspace = true, features = [
 reqwest.workspace = true
 tempfile.workspace = true
 
+[build-dependencies]
+static_vcruntime.workspace = true
+
 [lints]
 workspace = true

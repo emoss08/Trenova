@@ -19,9 +19,13 @@ use trenova_capture::agent::{
 };
 use trenova_capture::scanners::HelperHost;
 use trenova_capture::state::{Command, Shared, Ui};
+use windows::Win32::System::Recovery::{
+    RESTART_NO_CRASH, RESTART_NO_HANG, RESTART_NO_REBOOT, RegisterApplicationRestart,
+};
 use windows::Win32::UI::HiDpi::{
     DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext,
 };
+use windows_core::w;
 use windows_service::service::ServiceAccess;
 use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
 
@@ -201,6 +205,18 @@ pub fn run() -> ExitCode {
     };
     let shared = Shared::new(Arc::clone(&ui) as Arc<dyn Ui>);
     tray.attach(Arc::clone(&shared));
+    // An installer that closes Trenova Capture to replace it (through Restart
+    // Manager) starts it again afterwards. Not after a crash, a hang or a
+    // reboot: sign-in starts it then.
+    // SAFETY: registers this process with a static, NUL-terminated command line.
+    if let Err(err) = unsafe {
+        RegisterApplicationRestart(
+            w!(""),
+            RESTART_NO_CRASH | RESTART_NO_HANG | RESTART_NO_REBOOT,
+        )
+    } {
+        tracing::warn!(error = %err, "could not register to be restarted after an update");
+    }
 
     let cancel = CancellationToken::new();
     let env = environment(&data_dir);

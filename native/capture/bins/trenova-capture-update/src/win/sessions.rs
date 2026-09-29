@@ -149,15 +149,36 @@ fn start_in_session(exe: &Path, session: u32) -> Result<(), UpdaterError> {
 /// Starts `exe` for everyone signed in. One session failing does not stop
 /// the others; the first failure is returned once all were tried.
 pub fn start_in_every_session(exe: &Path) -> Result<(), UpdaterError> {
+    let sessions = active_sessions()?;
+    if sessions.is_empty() {
+        super::say("No one is signed in; Trenova Capture starts at the next sign-in");
+        return Ok(());
+    }
     let mut first_error = None;
-    for session in active_sessions()? {
+    let mut started = 0usize;
+    for &session in &sessions {
         match start_in_session(exe, session) {
-            Ok(()) => tracing::info!(session, "started Trenova Capture"),
+            Ok(()) => {
+                started += 1;
+                tracing::info!(session, "started Trenova Capture");
+            }
             Err(err) => {
                 tracing::warn!(session, error = %err, "could not start Trenova Capture");
+                super::say(&format!(
+                    "Could not start Trenova Capture in session {session}: {err}"
+                ));
                 first_error.get_or_insert(err);
             }
         }
     }
+    super::say(&format!(
+        "Started Trenova Capture for {started} of {} signed-in {}",
+        sessions.len(),
+        if sessions.len() == 1 {
+            "person"
+        } else {
+            "people"
+        }
+    ));
     first_error.map_or(Ok(()), Err)
 }

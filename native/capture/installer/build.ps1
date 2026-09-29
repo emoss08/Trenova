@@ -79,6 +79,28 @@ if (-not $loader) {
 }
 Copy-Item $loader.FullName (Join-Path $stage 'WebView2Loader.dll')
 
+# Every executable carries the Visual C++ runtime itself (static_vcruntime in
+# each build script): a Windows without the Visual C++ Redistributable has no
+# VCRUNTIME140.dll or VCRUNTIME140_1.dll, and an executable that imports one
+# does not start. dumpbin, from the MSVC tools the build already needs, lists
+# what each one imports.
+$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+$dumpbin = if (Test-Path $vswhere) {
+    & $vswhere -latest -products * -find 'VC\Tools\MSVC\**\bin\Hostx64\x64\dumpbin.exe' | Select-Object -First 1
+}
+if (-not $dumpbin) {
+    throw 'dumpbin.exe was not found; install the Visual Studio C++ build tools.'
+}
+foreach ($exe in Get-ChildItem $stage -Filter *.exe) {
+    $imports = & $dumpbin /nologo /dependents $exe.FullName
+    if ($LASTEXITCODE -ne 0) { throw "dumpbin could not read $($exe.Name)." }
+    $runtime = $imports | Where-Object { $_ -match '(?i)^\s*(vcruntime|msvcp)\d+\S*\.dll\s*$' }
+    if ($runtime) {
+        throw "$($exe.Name) imports $(($runtime | ForEach-Object { $_.Trim() }) -join ', '), which not every Windows has. Its build script must call static_vcruntime::metabuild()."
+    }
+    Write-Host "$($exe.Name) imports: $((($imports | Where-Object { $_ -match '(?i)\.dll\s*$' }) | ForEach-Object { $_.Trim() }) -join ', ')"
+}
+
 if ($Sign) {
     & (Join-Path $PSScriptRoot 'sign.ps1') -Path (Get-ChildItem $stage -Filter *.exe | ForEach-Object FullName)
 }
@@ -89,9 +111,14 @@ wix build `
     -d "Version=$Version" `
     -d "StageDir=$stage" `
     -d "LogoPath=$((Resolve-Path $logo).Path)" `
+    -d "AssetsDir=$(Join-Path $PSScriptRoot 'assets')" `
     -ext WixToolset.Util.wixext `
+    -ext WixToolset.UI.wixext `
+    -culture en-US `
+    -loc (Join-Path $PSScriptRoot 'Package.en-us.wxl') `
     -o $msi `
-    (Join-Path $PSScriptRoot 'Package.wxs')
+    (Join-Path $PSScriptRoot 'Package.wxs') `
+    (Join-Path $PSScriptRoot 'Ui.wxs')
 if ($LASTEXITCODE -ne 0) { throw "wix build failed with $LASTEXITCODE." }
 
 if ($Sign) {

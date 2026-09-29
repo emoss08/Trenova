@@ -25,7 +25,9 @@ use self::spooler::WindowsPrintSystem;
 
 type Handler = PrintHandler<WindowsPrintSystem, SecuredInboxes>;
 
-fn say(message: &str) {
+/// Writes a line the installer's log keeps (Windows Installer records what
+/// its custom actions print).
+pub(crate) fn say(message: &str) {
     let _ = writeln!(std::io::stderr(), "{message}");
 }
 
