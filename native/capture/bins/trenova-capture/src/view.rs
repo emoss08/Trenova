@@ -237,6 +237,9 @@ pub struct View {
     pub review_before_sending: bool,
     /// An administrator decides that, not the person.
     pub review_locked: bool,
+    /// The test scanners are listed.
+    pub test_scanner: bool,
+    pub test_scanner_locked: bool,
     pub update: Option<UpdateView>,
     pub update_required: Option<String>,
     pub can_open_intake: bool,
@@ -588,6 +591,8 @@ impl Snapshot {
             routine_notifications: !self.routine_muted,
             review_before_sending: self.review_before_sending,
             review_locked: self.review_locked,
+            test_scanner: self.test_scanner,
+            test_scanner_locked: self.test_scanner_locked,
             update: self.update.as_ref().map(|update| UpdateView {
                 version: update.version.clone(),
                 status: match update.status {
@@ -768,6 +773,9 @@ impl Snapshot {
             | PageMessage::SendHeld { .. }
             | PageMessage::DiscardHeld { .. }
             | PageMessage::ScanMore { .. }) => self.resolve_review(message),
+            PageMessage::SetTestScanner { on } => {
+                (!self.test_scanner_locked).then_some(WindowAction::SetTestScanner(on))
+            }
             PageMessage::SetReview { on } => {
                 (!self.review_locked).then_some(WindowAction::SetReviewBeforeSending(on))
             }
@@ -888,6 +896,10 @@ pub enum PageMessage {
     SetReview {
         on: bool,
     },
+    /// Whether the test scanners are listed.
+    SetTestScanner {
+        on: bool,
+    },
     Quit {},
 }
 
@@ -915,6 +927,9 @@ pub enum WindowAction {
     SetRoutineNotifications(bool),
     /// Hold scans and prints for review, or not, and remember the choice.
     SetReviewBeforeSending(bool),
+    /// List the test scanners, or not, remember the choice, and look for
+    /// scanners again.
+    SetTestScanner(bool),
     Quit,
 }
 
@@ -1178,6 +1193,15 @@ mod tests {
         assert_eq!(
             resolve(r#"{"type":"setReview","on":true}"#),
             Some(WindowAction::SetReviewBeforeSending(true))
+        );
+        assert_eq!(
+            resolve(r#"{"type":"setTestScanner","on":true}"#),
+            Some(WindowAction::SetTestScanner(true))
+        );
+        snapshot.test_scanner_locked = true;
+        assert_eq!(
+            snapshot.resolve(parse(r#"{"type":"setTestScanner","on":true}"#)),
+            None
         );
         snapshot.review_locked = true;
         assert_eq!(

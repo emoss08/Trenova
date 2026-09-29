@@ -7,12 +7,15 @@ use std::sync::{Arc, Mutex, PoisonError};
 
 use capture_imaging::scan::{ScanEnd, ScanSettings, ScannedPage};
 use capture_imaging::{PagePreview, PixelFormat, binarize, encode_page, preview};
+use capture_platform::settings;
 use capture_protocol::api::{PixelType, RequestFailureCode, Settings, SourceInfo, SourceProtocol};
 use capture_protocol::helper::{
     Frame, HelperCommand, HelperEvent, MAX_PREVIEW_BYTES, PageMeta, ScanCondition, ScanJob,
     read_frame, write_bytes, write_message,
 };
 use capture_twain::win::{Canceller, LibraryDsm, WindowPump};
+
+use crate::test_scanner;
 use capture_twain::{AppIdentity, Manager, TwainError};
 
 const BITNESS: u8 = if cfg!(target_pointer_width = "64") {
@@ -107,6 +110,9 @@ fn enumerate(pipe: &Pipe) {
         match capture_wia::sources() {
             Ok(wia) => sources.extend(wia),
             Err(err) => tracing::warn!(error = %err, "no WIA sources"),
+        }
+        if settings::test_scanner_enabled() {
+            sources.extend(test_scanner::sources());
         }
     }
     if let Err(err) = pipe.send(&HelperEvent::Sources { sources }) {
@@ -228,7 +234,11 @@ fn report_end(pipe: &Pipe, end: ScanEnd) -> Result<(), String> {
 fn scan(job: &ScanJob, pipe: &Pipe, stdin: io::Stdin) {
     let want = ScanSettings::from(job);
     let cancel = Arc::new(AtomicBool::new(false));
+    let testing = job.source.protocol == SourceProtocol::Twain
+        && test_scanner::is_test_source(&job.source.name)
+        && settings::test_scanner_enabled();
     let result = match job.source.protocol {
+        SourceProtocol::Twain if testing => scan_test(job, &want, pipe, stdin, &cancel),
         SourceProtocol::Twain => scan_twain(job, &want, pipe, stdin, &cancel),
         SourceProtocol::Wia => scan_wia(job, &want, pipe, stdin, &cancel),
         SourceProtocol::Unknown => Err((
@@ -282,6 +292,42 @@ fn scan_twain(
         })
         .map_err(|e| twain_failure(&e))?;
     report_end(pipe, end).map_err(|e| (RequestFailureCode::Internal, e))
+}
+
+/// Scans with one of the test scanners, through the same delivery a real
+/// scanner's pages take.
+fn scan_test(
+    job: &ScanJob,
+    want: &ScanSettings,
+    pipe: &Pipe,
+    stdin: io::Stdin,
+    cancel: &Arc<AtomicBool>,
+) -> Result<(), Failure> {
+    watch_for_cancel(stdin, Arc::clone(cancel), None);
+    let internal = |e: String| (RequestFailureCode::Internal, e);
+    pipe.send(&HelperEvent::Described {
+        source: test_scanner::described(&job.source.name),
+    })
+    .map_err(internal)?;
+    pipe.send(&HelperEvent::Started {
+        settings: test_scanner::settings(want),
+    })
+    .map_err(internal)?;
+    let state = std::env::temp_dir().join("Trenova Capture test scanner");
+    let mut index = 0u32;
+    let end = test_scanner::scan(
+        &job.source.name,
+        want,
+        &state,
+        test_scanner::sheet_time(),
+        cancel,
+        &mut |page| {
+            index += 1;
+            deliver(pipe, page, index, want, job.jpeg_quality)
+        },
+    )
+    .map_err(internal)?;
+    report_end(pipe, end).map_err(internal)
 }
 
 fn scan_wia(

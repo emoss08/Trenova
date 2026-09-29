@@ -160,10 +160,14 @@ fn apply_preferences(shared: &Shared) {
     let routine = settings::routine_notifications();
     let review = settings::review_before_sending();
     let review_locked = settings::review_before_sending_locked();
+    let test_scanner = settings::test_scanner_enabled();
+    let test_scanner_locked = settings::test_scanner_locked();
     shared.update(|s| {
         s.routine_muted = !routine;
         s.review_before_sending = review;
         s.review_locked = review_locked;
+        s.test_scanner = test_scanner;
+        s.test_scanner_locked = test_scanner_locked;
     });
 }
 

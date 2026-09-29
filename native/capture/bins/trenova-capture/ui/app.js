@@ -1785,6 +1785,30 @@
             }),
           ),
           el(
+            "label",
+            { class: "switch" },
+            el("input", {
+              id: "test-scanner",
+              type: "checkbox",
+              role: "switch",
+              checked: v.testScanner,
+              disabled: v.testScannerLocked,
+              onchange: (event) =>
+                send({ type: "setTestScanner", on: Boolean(event.target.checked) }),
+            }),
+            el(
+              "span",
+              { class: "grow" },
+              el("span", { class: "name", text: "Show test scanners" }),
+              el("p", {
+                class: "subtle",
+                text: v.testScannerLocked
+                  ? "Your organization has turned these off on this computer."
+                  : "Scanners that feed sample paperwork, including a paper jam and a double feed, for trying Trenova Capture without a scanner. What they scan goes to Intake like any scan.",
+              }),
+            ),
+          ),
+          el(
             "div",
             { class: "actions" },
             button(

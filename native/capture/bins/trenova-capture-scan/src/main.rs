@@ -11,6 +11,8 @@
 
 #[cfg(windows)]
 mod run;
+#[cfg(any(windows, test))]
+mod test_scanner;
 
 use std::process::ExitCode;
 
