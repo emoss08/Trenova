@@ -138,6 +138,20 @@ export function AccountingConnectionPanel({
       <AccountingCompanyFacts connection={connection} />
 
       <DescriptionList columns={2} className="border-t pt-4">
+        <DescriptionItem label={t("What is sent")}>
+          {connection.syncMode === "Ledger"
+            ? connection.ledgerGranularity === "DailySummary"
+              ? t("Journal entries, summed by day")
+              : t("Journal entries")
+            : t("Documents")}
+        </DescriptionItem>
+        {connection.syncMode === "Ledger" ? (
+          <DescriptionItem label={t("Opening balances")}>
+            {connection.ledgerOpeningBalancesSentAt != null
+              ? t("Sent on {0}", formatUnixDateMedium(connection.ledgerOpeningBalancesSentAt))
+              : t("Not sent")}
+          </DescriptionItem>
+        ) : null}
         <DescriptionItem label={t("Connected on")} numeric>
           {formatUnixDateMedium(connection.connectedAt)}
         </DescriptionItem>

@@ -238,7 +238,7 @@ func TestCompanyFactsCombinesInfoAndPreferences(t *testing.T) {
 		case "/v3/company/123/companyinfo/123":
 			_, _ = w.Write([]byte(`{"CompanyInfo":{"CompanyName":"Acme","LegalName":"Acme LLC","Country":"US"}}`))
 		case "/v3/company/123/preferences":
-			_, _ = w.Write([]byte(`{"Preferences":{"CurrencyPrefs":{"MultiCurrencyEnabled":true,"HomeCurrency":{"value":"cad"}},"AccountingInfoPrefs":{"BookCloseDate":"2026-06-30"}}}`))
+			_, _ = w.Write([]byte(`{"Preferences":{"CurrencyPrefs":{"MultiCurrencyEnabled":true,"HomeCurrency":{"value":"cad"}},"AccountingInfoPrefs":{"BookCloseDate":"2026-06-30","FirstMonthOfFiscalYear":"July"}}}`))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -257,6 +257,7 @@ func TestCompanyFactsCombinesInfoAndPreferences(t *testing.T) {
 	require.NotNil(t, facts.BooksClosedThrough)
 	expected := time.Date(2026, 6, 30, 23, 59, 59, 0, time.UTC).Unix()
 	assert.Equal(t, expected, *facts.BooksClosedThrough)
+	assert.Equal(t, time.July, facts.FiscalYearStartMonth)
 }
 
 func TestClassifyError(t *testing.T) {

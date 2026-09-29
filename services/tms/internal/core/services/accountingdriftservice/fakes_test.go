@@ -68,6 +68,8 @@ type fakeReader struct {
 	omit     map[string]bool
 	calls    []readCall
 	failWith error
+	trial    []services.AccountingTrialBalanceRow
+	trialReq []services.ReadTrialBalanceRequest
 }
 
 func (f *fakeReader) set(kind accountingsync.SyncObjectType, state *services.AccountingDocumentState) {

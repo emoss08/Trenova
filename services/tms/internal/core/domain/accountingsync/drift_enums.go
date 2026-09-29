@@ -8,7 +8,10 @@ const (
 	DriftDeletedInProvider       = DriftKind("DeletedInProvider")
 	DriftVoidedInProvider        = DriftKind("VoidedInProvider")
 	DriftCustomerBalanceMismatch = DriftKind("CustomerBalanceMismatch")
+	DriftTrialBalanceMismatch    = DriftKind("TrialBalanceMismatch")
 )
+
+const DriftObjectGLAccount = SyncObjectType("GLAccount")
 
 func (k DriftKind) String() string { return string(k) }
 
@@ -18,7 +21,8 @@ func (k DriftKind) IsValid() bool {
 		DriftStatusMismatch,
 		DriftDeletedInProvider,
 		DriftVoidedInProvider,
-		DriftCustomerBalanceMismatch:
+		DriftCustomerBalanceMismatch,
+		DriftTrialBalanceMismatch:
 		return true
 	default:
 		return false
@@ -26,7 +30,13 @@ func (k DriftKind) IsValid() bool {
 }
 
 func (k DriftKind) IsMoney() bool {
-	return k == DriftAmountMismatch || k == DriftCustomerBalanceMismatch
+	return k == DriftAmountMismatch ||
+		k == DriftCustomerBalanceMismatch ||
+		k == DriftTrialBalanceMismatch
+}
+
+func (k DriftKind) IsBalance() bool {
+	return k == DriftCustomerBalanceMismatch || k == DriftTrialBalanceMismatch
 }
 
 func (k DriftKind) Gone() bool {
@@ -40,6 +50,7 @@ func AllDriftKinds() []DriftKind {
 		DriftDeletedInProvider,
 		DriftVoidedInProvider,
 		DriftCustomerBalanceMismatch,
+		DriftTrialBalanceMismatch,
 	}
 }
 

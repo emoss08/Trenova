@@ -15,13 +15,16 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import type { UseFormReturn } from "react-hook-form";
 import {
+  chooseAccountingSyncMode,
   enableAccountingSync,
   updateAccountingSyncSettings,
 } from "@/lib/graphql/accounting-sync-ledger";
 import type { AccountingAppFormValues } from "./accounting-app-schema";
-import type {
-  AccountingStartDateValues,
-  AccountingSyncSettingsValues,
+import {
+  accountingModeInput,
+  type AccountingModeValues,
+  type AccountingStartDateValues,
+  type AccountingSyncSettingsValues,
 } from "./accounting-start-date-schema";
 import type { AccountingVendor } from "./accounting-vendors";
 
@@ -146,6 +149,7 @@ export function useAccountingSyncSetupActions(
         autoSync: values.autoSync,
         driverSettlements: values.driverSettlements,
         backfill: values.backfill,
+        openingBalances: values.openingBalances,
       }),
     form,
     resourceName: vendor.name,
@@ -164,6 +168,39 @@ export function useAccountingSyncSetupActions(
   });
 
   return { enable };
+}
+
+export function useAccountingModeAction(
+  vendor: AccountingVendor,
+  form?: UseFormReturn<AccountingModeValues>,
+) {
+  const t = useT();
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (values: AccountingModeValues) =>
+      chooseAccountingSyncMode({
+        integrationType: vendor.system,
+        ...accountingModeInput(values),
+      }),
+    form,
+    resourceName: vendor.name,
+    onSuccess: async (connection) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queries.accountingSync.status(vendor.system).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queries.accountingSync.mappingSummary(vendor.system).queryKey,
+        }),
+      ]);
+      toast.success(
+        connection.syncMode === "Ledger"
+          ? t("Journal entries will be sent to {0}", vendor.name)
+          : t("Documents will be sent to {0}", vendor.name),
+      );
+    },
+  });
 }
 
 export function useAccountingSyncSettingsAction(

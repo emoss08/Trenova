@@ -1532,6 +1532,14 @@ type ChargeAllocationInput struct {
 	Version          *int                            `json:"version,omitempty"`
 }
 
+// Chooses what a connection sends, before its mappings.
+type ChooseAccountingSyncModeInput struct {
+	IntegrationType integration.Type        `json:"integrationType"`
+	Mode            accountingsync.SyncMode `json:"mode"`
+	// Required in ledger mode.
+	Granularity *accountingsync.LedgerGranularity `json:"granularity,omitempty"`
+}
+
 type ClockInput struct {
 	WorkerID string `json:"workerId"`
 	// Any instant; defaults to now. A punch cannot be dated in the future.
@@ -3174,6 +3182,8 @@ type EnableAccountingSyncInput struct {
 	DriverSettlements *bool `json:"driverSettlements,omitempty"`
 	// Also queue documents dated from the start date up to now, which were posted before sync was on.
 	Backfill bool `json:"backfill"`
+	// In ledger mode, also send one journal entry with every balance before the start date. Leave it off when the accounting system already holds them.
+	OpeningBalances *bool `json:"openingBalances,omitempty"`
 }
 
 type EndBenefitEnrollmentInput struct {

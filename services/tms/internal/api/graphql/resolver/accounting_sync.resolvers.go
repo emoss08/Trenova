@@ -49,6 +49,10 @@ func (r *accountingConnectionResolver) LastErrorCategory(ctx context.Context, ob
 	return &category, nil
 }
 
+func (r *accountingConnectionResolver) LedgerGranularity(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.LedgerGranularity, error) {
+	return stringutils.NilIfEmpty(obj.Granularity()), nil
+}
+
 func (r *accountingConnectionResolver) PausedBy(ctx context.Context, obj *accountingsync.AccountingConnection) (*tenant.User, error) {
 	if obj.PausedBy != nil {
 		return obj.PausedBy, nil
@@ -476,6 +480,28 @@ func (r *mutationResolver) CompleteAccountingSetup(ctx context.Context, integrat
 	})
 }
 
+func (r *mutationResolver) ChooseAccountingSyncMode(ctx context.Context, input gqlmodel.ChooseAccountingSyncModeInput) (*accountingsync.AccountingConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+
+	var granularity accountingsync.LedgerGranularity
+	if input.Granularity != nil {
+		granularity = *input.Granularity
+	}
+	return r.accountingSync.ChooseMode(ctx, &services.ChooseAccountingSyncModeRequest{
+		TenantInfo:      tenantInfo(authCtx),
+		UserID:          authCtx.UserID,
+		IntegrationType: input.IntegrationType,
+		Mode:            input.Mode,
+		Granularity:     granularity,
+	})
+}
+
 func (r *mutationResolver) EnableAccountingSync(ctx context.Context, input gqlmodel.EnableAccountingSyncInput) (*accountingsync.AccountingConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
@@ -493,6 +519,7 @@ func (r *mutationResolver) EnableAccountingSync(ctx context.Context, input gqlmo
 		AutoSync:          input.AutoSync,
 		DriverSettlements: input.DriverSettlements != nil && *input.DriverSettlements,
 		Backfill:          input.Backfill,
+		OpeningBalances:   input.OpeningBalances != nil && *input.OpeningBalances,
 	})
 }
 

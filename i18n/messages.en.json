@@ -15212,6 +15212,15 @@
       "routes/admin"
     ]
   },
+  "Also send journal entries already posted since the start date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Alternative labels the parser will also recognize": {
     "sites": 1,
     "scope": [
@@ -15766,6 +15775,15 @@
     "areas": [
       "domain/shipment",
       "go/other"
+    ]
+  },
+  "An account balance cannot be pushed or adjusted as a whole. Look for an entry made in {0} by hand, or one missing from it, and correct that entry. The difference closes once the balances agree; dismiss it when both sides stay as they are.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "An account with this email address already exists. Contact your carrier to resolve this.": {
@@ -35184,6 +35202,15 @@
       "routes/admin"
     ]
   },
+  "Choose what is sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Choose what the sidebar shows: which counts you watch, which shortcuts you keep, and how much activity you see. Your choices follow you across devices.": {
     "sites": 1,
     "scope": [
@@ -35239,6 +35266,15 @@
     ]
   },
   "Choose whether payments recorded in {0} are ignored, proposed or applied": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
+  "Choose whether to send documents or journal entries first": {
     "sites": 1,
     "scope": [
       "go"
@@ -35351,6 +35387,15 @@
     ]
   },
   "Choosing the start date needs manage access to the accounting integration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Choosing what is sent needs manage access to the accounting integration.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -41554,7 +41599,7 @@
     ]
   },
   "Continue": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -48370,6 +48415,16 @@
       "domain/agentextension"
     ]
   },
+  "Daily summary": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/admin"
+    ]
+  },
   "Daily sweep for expiring driver credentials (CDL, medical, MVR, ...)": {
     "sites": 1,
     "scope": [
@@ -53582,6 +53637,15 @@
       "routes/customer"
     ]
   },
+  "Detailed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Detailed description for this rule": {
     "sites": 1,
     "scope": [
@@ -54485,6 +54549,15 @@
     ],
     "areas": [
       "routes/accounting-drift"
+    ]
+  },
+  "Different account balance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Different allowance for delivery stops, when the contract splits them.": {
@@ -57377,13 +57450,14 @@
     ]
   },
   "Documents": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
       "routes/fuel-purchase",
@@ -57484,6 +57558,15 @@
       "routes/document-packet-rule"
     ]
   },
+  "Documents or journal entries": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Documents that differ": {
     "sites": 1,
     "scope": [
@@ -57518,6 +57601,15 @@
     ],
     "areas": [
       "domain/platformcatalog"
+    ]
+  },
+  "Documents will be sent to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Does not contain": {
@@ -64793,6 +64885,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Entries are sent once they are posted. When journals are posted by hand, an entry goes to {0} after someone posts it on Journals to post.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Entries per page": {
@@ -73956,6 +74057,15 @@
       "routes/my-team"
     ]
   },
+  "Find the entry that differs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "Find this in Samsara under the driver form's settings, or from a form submission.": {
     "sites": 1,
     "scope": [
@@ -77384,12 +77494,13 @@
     ]
   },
   "GL account": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/pay-code"
     ]
   },
@@ -89380,16 +89491,35 @@
     ]
   },
   "Journal entries": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/journal-entry"
+    ]
+  },
+  "Journal entries will be sent to {0}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/journal-entry"
+      "routes/admin"
+    ]
+  },
+  "Journal entries, summed by day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Journal entry": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -89424,6 +89554,15 @@
     ],
     "areas": [
       "service/journalreviewservice"
+    ]
+  },
+  "Journal entry posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Journal entry {0} does not balance and cannot be posted": {
@@ -112503,13 +112642,14 @@
     ]
   },
   "Not sent": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/components",
+      "routes/admin",
       "routes/billing-queue",
       "routes/invoice"
     ]
@@ -116000,6 +116140,24 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "One journal entry in {0} for each one posted in Trenova.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "One journal entry per day, summed per account and customer or vendor. A day is sent again when an entry is posted to it later.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "One lane can never apply": {
@@ -119698,11 +119856,13 @@
     ]
   },
   "Opening balances": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
+      "routes/admin",
       "routes/worker"
     ]
   },
@@ -135674,6 +135834,15 @@
     ]
   },
   "Queues the documents dated from the start date up to today. Leave this off if they are already in {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Queues the journal entries dated from the start date up to today. Leave this off if they are already in {0}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -153533,7 +153702,7 @@
     ]
   },
   "Saving...": {
-    "sites": 60,
+    "sites": 61,
     "scope": [
       "ts"
     ],
@@ -158992,6 +159161,15 @@
       "apps/web/config"
     ]
   },
+  "Send documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Send due detention notices for auto-send policies before the contractual deadline lapses": {
     "sites": 1,
     "scope": [
@@ -159064,6 +159242,15 @@
       "apps/dash/_components"
     ]
   },
+  "Send journal entries": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Send message": {
     "sites": 2,
     "scope": [
@@ -159108,6 +159295,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Send opening balances": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Send owner-operator settlements": {
@@ -159665,6 +159861,15 @@
       "routes/billing-control"
     ]
   },
+  "Sends one journal entry, dated the day before the start date, with every account's balance up to then. Leave this off when {0} already holds those balances.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Sends only when the report returns {0} {1, plural, one {# row} other {# rows}}.": {
     "sites": 1,
     "scope": [
@@ -159788,6 +159993,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Sent on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Sent to a customer while a driver is detained, and again once the charge is final. Branch on Kind to vary the wording per stage.": {
@@ -182878,6 +183092,15 @@
       "service/accountingsyncservice"
     ]
   },
+  "The start date cannot move once opening balances are sent, because they hold every balance up to it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "The start of the range is required": {
     "sites": 2,
     "scope": [
@@ -185233,6 +185456,15 @@
     ],
     "areas": [
       "service/workerchecklistservice"
+    ]
+  },
+  "This choice is fixed once sending starts, because {0} will already hold what was sent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "This code is non-taxable — amounts post to the settlement as reimbursements, are excluded from guaranteed-minimum checks, and post to the code's GL account (or the driver reimbursement account) instead of wages expense.": {
@@ -192652,6 +192884,15 @@
       "go/other"
     ]
   },
+  "Trenova accounts in this balance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "Trenova adjusted": {
     "sites": 1,
     "scope": [
@@ -192796,6 +193037,15 @@
       "routes/intake"
     ]
   },
+  "Trenova keeps the ledger and sends {0} every journal entry it posts. Invoices, payments and bills stay in Trenova; {0} receives their accounting.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trenova logo": {
     "sites": 1,
     "scope": [
@@ -192833,6 +193083,24 @@
     ]
   },
   "Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments to {0} as they are posted. Documents dated before the start date are never sent, so anything you already entered in {0} by hand is not duplicated.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova sends {0} each journal entry as it is posted. Entries dated before the start date are never sent; send opening balances instead so {0} starts from Trenova's balances.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova sends {0} the invoices, memos, customer payments and settlement bills it posts, and {0} keeps the ledger.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -203040,6 +203308,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What is sent": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "What is the customer disputing?": {
@@ -219398,7 +219675,7 @@
     ]
   },
   "{0} is not connected. A person must connect it from the integrations page.": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -221394,7 +221671,7 @@
     ]
   },
   "{0} setup": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -19,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -340,8 +342,21 @@ func (s *Service) EnableSync(
 			provider,
 		)
 	}
-	if conn.SetupStep == accountingsync.SetupStepMappings {
+	switch conn.SetupStep {
+	case accountingsync.SetupStepMode:
+		return nil, errortypes.NewBusinessError(
+			"Choose whether to send documents or journal entries first",
+		)
+	case accountingsync.SetupStepMappings:
 		return nil, errortypes.NewBusinessError("Confirm the required mappings first")
+	case accountingsync.SetupStepStartDate, accountingsync.SetupStepComplete:
+	}
+	if req.OpeningBalances && !conn.SendsLedger() {
+		return nil, errortypes.NewValidationError(
+			"openingBalances",
+			errortypes.ErrInvalid,
+			accountingsync.ErrOpeningBalancesNeedLedger.Error(),
+		)
 	}
 	now := timeutils.NowUnix()
 	if req.StartDate <= 0 {
@@ -358,19 +373,39 @@ func (s *Service) EnableSync(
 			"The start date cannot be in the future",
 		)
 	}
+	if err = conn.CanMoveStartDate(req.StartDate); err != nil {
+		return nil, errortypes.NewValidationError(
+			"startDate",
+			errortypes.ErrInvalid,
+			"The start date cannot move once opening balances are sent, because they hold every balance up to it",
+		)
+	}
 
 	before := jsonutils.MustToJSON(conn)
+	hadOpeningBalances := conn.SentOpeningBalances()
 	conn.EnableSync(accountingsync.SyncSettings{
 		StartDate:         req.StartDate,
 		AutoSync:          req.AutoSync,
 		DriverSettlements: req.DriverSettlements,
+		OpeningBalances:   req.OpeningBalances,
 	}, now)
 	multiErr := errortypes.NewMultiError()
 	conn.Validate(multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	updated, err := s.connections.Update(ctx, conn)
+
+	var updated *accountingsync.AccountingConnection
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		if updated, txErr = s.connections.Update(txCtx, conn); txErr != nil {
+			return txErr
+		}
+		if hadOpeningBalances || !updated.SentOpeningBalances() {
+			return nil
+		}
+		return s.enqueueOpeningBalances(txCtx, updated, now)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +417,7 @@ func (s *Service) EnableSync(
 		tenant:     req.TenantInfo,
 		current:    updated,
 		previous:   before,
-		comment:    "Started sending documents to " + provider,
+		comment:    "Started sending " + sentWhat(updated) + " to " + provider,
 	})
 	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
 
@@ -815,6 +850,9 @@ func BackfillTypes(
 ) ([]accountingsync.SyncObjectType, error) {
 	allowed := make([]accountingsync.SyncObjectType, 0, len(accountingsync.BackfillObjectTypes()))
 	for _, typ := range accountingsync.BackfillObjectTypes() {
+		if !conn.Backfills(typ) {
+			continue
+		}
 		if typ.NeedsDriverSettlements() && !conn.SyncsDriverSettlements() {
 			if slices.Contains(requested, typ) {
 				return nil, errortypes.NewValidationError(
@@ -914,4 +952,109 @@ func (s *Service) ChangeBackfill(
 		}
 	}
 	return updated, nil
+}
+
+func (s *Service) ChooseMode(
+	ctx context.Context,
+	req *services.ChooseAccountingSyncModeRequest,
+) (*accountingsync.AccountingConnection, error) {
+	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
+	if err != nil {
+		return nil, err
+	}
+	provider := accountingsync.ProviderName(conn.IntegrationType)
+	if !conn.IsActive() {
+		return nil, errortypes.NewBusinessError(
+			"{0} is not connected. A person must connect it from the integrations page.",
+			provider,
+		)
+	}
+
+	before := jsonutils.MustToJSON(conn)
+	if err = conn.ChooseMode(req.Mode, req.Granularity); err != nil {
+		return nil, modeError(err)
+	}
+	multiErr := errortypes.NewMultiError()
+	conn.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+	updated, err := s.connections.Update(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+	if _, rescoreErr := s.mappingService.Rescore(
+		ctx,
+		req.TenantInfo,
+		updated.ID,
+	); rescoreErr != nil {
+		s.l.Warn("the mode was saved but its mappings were not rebuilt; the next refresh will",
+			zap.String("connectionId", updated.ID.String()), zap.Error(rescoreErr))
+	}
+
+	comment := "Chose to send documents to " + provider
+	if updated.SendsLedger() {
+		comment = "Chose to send journal entries to " + provider
+		if updated.SumsByDay() {
+			comment += ", summed by day"
+		}
+	}
+	s.logAudit(&auditEntry{
+		resource:   permission.ResourceAccountingIntegration,
+		resourceID: updated.ID,
+		userID:     req.UserID,
+		tenant:     req.TenantInfo,
+		current:    updated,
+		previous:   before,
+		comment:    comment,
+	})
+	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
+	return updated, nil
+}
+
+func modeError(err error) error {
+	switch {
+	case errors.Is(err, accountingsync.ErrModeNotRecognized):
+		return errortypes.NewValidationError("mode", errortypes.ErrInvalid, err.Error())
+	case errors.Is(err, accountingsync.ErrGranularityRequired):
+		return errortypes.NewValidationError("granularity", errortypes.ErrRequired, err.Error())
+	default:
+		return errortypes.NewBusinessError(err.Error())
+	}
+}
+
+func sentWhat(conn *accountingsync.AccountingConnection) string {
+	if conn.SendsLedger() {
+		return "journal entries"
+	}
+	return "documents"
+}
+
+func (s *Service) enqueueOpeningBalances(
+	ctx context.Context,
+	conn *accountingsync.AccountingConnection,
+	now int64,
+) error {
+	loc, err := s.orgLocation(ctx, tenantOf(conn))
+	if err != nil {
+		return err
+	}
+	start := *conn.SyncStartDate
+	dated := timeutils.PreviousDayStart(start, loc)
+	req := &services.AccountingSyncEnqueueRequest{
+		TenantInfo:   tenantOf(conn),
+		ObjectType:   accountingsync.SyncObjectJournalSummary,
+		ObjectID:     pulid.ID(accountingsync.JournalOpeningID(start, loc)),
+		ObjectNumber: timeutils.FormatCalendarDate(dated, loc),
+		Operation:    accountingsync.SyncOperationCreate,
+		Revision:     1,
+		SourceEvent:  accountingsync.SyncSourceOpeningBalances,
+		DocumentDate: dated,
+	}
+	_, err = s.enqueuer.EnqueueRecords(
+		ctx,
+		req.TenantInfo,
+		[]*accountingsync.AccountingSyncRecord{NewRecordFor(conn, req, now)},
+	)
+	return err
 }

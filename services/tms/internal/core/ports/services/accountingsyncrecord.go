@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -242,6 +243,15 @@ type EnableAccountingSyncRequest struct {
 	AutoSync          bool
 	DriverSettlements bool
 	Backfill          bool
+	OpeningBalances   bool
+}
+
+type ChooseAccountingSyncModeRequest struct {
+	TenantInfo      pagination.TenantInfo
+	UserID          pulid.ID
+	IntegrationType integration.Type
+	Mode            accountingsync.SyncMode
+	Granularity     accountingsync.LedgerGranularity
 }
 
 type UpdateAccountingSyncSettingsRequest struct {
@@ -390,6 +400,10 @@ type AccountingSyncService interface {
 		ctx context.Context,
 		req *EnableAccountingSyncRequest,
 	) (*accountingsync.AccountingConnection, error)
+	ChooseMode(
+		ctx context.Context,
+		req *ChooseAccountingSyncModeRequest,
+	) (*accountingsync.AccountingConnection, error)
 	UpdateSettings(
 		ctx context.Context,
 		req *UpdateAccountingSyncSettingsRequest,
@@ -442,4 +456,19 @@ type AccountingSyncService interface {
 		backfillID pulid.ID,
 	) (*AccountingBackfillStepResult, error)
 	PurgeHistory(ctx context.Context) (*repositories.PurgeAccountingSyncHistoryResult, error)
+}
+
+type AccountingJournalPosted struct {
+	TenantInfo     pagination.TenantInfo
+	EntryID        pulid.ID
+	EntryNumber    string
+	EntryType      journalentry.EntryType
+	ReversalOfID   pulid.ID
+	AccountingDate int64
+}
+
+// AccountingLedgerEnqueuer queues a posted journal entry for every connection
+// that sends the ledger, inside the transaction that posted it.
+type AccountingLedgerEnqueuer interface {
+	EnqueueJournal(ctx context.Context, posted *AccountingJournalPosted) error
 }

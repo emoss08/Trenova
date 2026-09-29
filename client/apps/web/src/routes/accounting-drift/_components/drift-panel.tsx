@@ -8,6 +8,7 @@ import { useAccountingSyncLabels } from "@/hooks/use-accounting-sync-labels";
 import { usePermission } from "@/hooks/use-permission";
 import { describeApiError } from "@/lib/api-error-message";
 import {
+  accountingDriftExplainedOnly,
   accountingDriftPhase,
   accountingDriftWithinTolerance,
   accountingSyncObjectPath,
@@ -116,6 +117,7 @@ function DriftFindingDetail({
   const objectPath = accountingSyncObjectPath(finding.objectType, finding.objectId);
   const withinTolerance = accountingDriftWithinTolerance(finding, toleranceMinor);
   const actionable = canUpdate && isOpen && !finding.pushed;
+  const explainedOnly = accountingDriftExplainedOnly(finding.kind);
 
   return (
     <DataTablePanelContainer
@@ -170,6 +172,18 @@ function DriftFindingDetail({
             <AlertDescription>
               {t(
                 "The difference closes once the next check finds {0} matches Trenova.",
+                providerName,
+              )}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
+        {explainedOnly && isOpen ? (
+          <Alert size="sm" variant="info">
+            <AlertTitle>{t("Find the entry that differs")}</AlertTitle>
+            <AlertDescription>
+              {t(
+                "An account balance cannot be pushed or adjusted as a whole. Look for an entry made in {0} by hand, or one missing from it, and correct that entry. The difference closes once the balances agree; dismiss it when both sides stay as they are.",
                 providerName,
               )}
             </AlertDescription>
@@ -256,7 +270,9 @@ function DriftFindingDetail({
 
         {finding.detail.length > 0 ? (
           <section className="space-y-2">
-            <h3 className="text-sm font-semibold">{t("Documents that differ")}</h3>
+            <h3 className="text-sm font-semibold">
+              {explainedOnly ? t("Trenova accounts in this balance") : t("Documents that differ")}
+            </h3>
             <ul className="divide-y rounded-md border">
               {finding.detail.map((line) => {
                 const path = accountingSyncObjectPath(line.objectType, line.objectId);
@@ -275,12 +291,14 @@ function DriftFindingDetail({
                       )}
                     </span>
                     <span className="tabular-nums">
-                      {t(
-                        "{0} in Trenova, {1} in {2}",
-                        formatAccountingMinor(line.trenovaMinor, currency),
-                        formatAccountingMinor(line.providerMinor, currency),
-                        providerName,
-                      )}
+                      {explainedOnly
+                        ? formatAccountingMinor(line.trenovaMinor, currency)
+                        : t(
+                            "{0} in Trenova, {1} in {2}",
+                            formatAccountingMinor(line.trenovaMinor, currency),
+                            formatAccountingMinor(line.providerMinor, currency),
+                            providerName,
+                          )}
                     </span>
                   </li>
                 );

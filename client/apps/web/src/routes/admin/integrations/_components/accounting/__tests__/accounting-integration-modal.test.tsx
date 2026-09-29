@@ -29,6 +29,7 @@ const mocks = vi.hoisted(() => ({
   saveAccountingApp: vi.fn(),
   removeAccountingApp: vi.fn(),
   enableAccountingSync: vi.fn(),
+  chooseAccountingSyncMode: vi.fn(),
   updateAccountingSyncSettings: vi.fn(),
   granted: new Set<string>(),
   assign: vi.fn(),
@@ -56,6 +57,7 @@ vi.mock("@/lib/graphql/accounting-sync", () => ({
 
 vi.mock("@/lib/graphql/accounting-sync-ledger", () => ({
   enableAccountingSync: mocks.enableAccountingSync,
+  chooseAccountingSyncMode: mocks.chooseAccountingSyncMode,
   updateAccountingSyncSettings: mocks.updateAccountingSyncSettings,
 }));
 
@@ -105,6 +107,10 @@ const connected: AccountingConnection = {
   connectedAt: 1_780_000_000,
   disconnectedAt: null,
   setupStep: "Complete",
+  syncMode: "Document",
+  ledgerGranularity: null,
+  ledgerOpeningBalancesSentAt: null,
+  externalFiscalYearStartMonth: 1,
   syncStartDate: 1_780_000_000,
   syncEnabledAt: 1_780_000_000,
   autoSync: true,
@@ -124,6 +130,20 @@ const connected: AccountingConnection = {
 };
 
 const mapping = { ...connected, setupStep: "Mappings" as const };
+const modeStep = {
+  ...connected,
+  setupStep: "Mode" as const,
+  syncStartDate: null,
+  syncEnabledAt: null,
+};
+const ledgerStart = {
+  ...connected,
+  setupStep: "StartDate" as const,
+  syncMode: "Ledger" as const,
+  ledgerGranularity: "Detailed" as const,
+  syncStartDate: 1_780_000_000,
+  syncEnabledAt: null,
+};
 const startDate = {
   ...connected,
   setupStep: "StartDate" as const,
@@ -756,6 +776,7 @@ describe("QuickBooksIntegrationModal", () => {
         autoSync: true,
         driverSettlements: false,
         backfill: true,
+        openingBalances: false,
       }),
     );
   });
@@ -937,5 +958,116 @@ describe("QuickBooksIntegrationModal", () => {
 
     expect(await screen.findByText("Choose when sending starts")).toBeInTheDocument();
     expect(screen.queryByText("Sync settings")).not.toBeInTheDocument();
+  });
+
+  it("asks what is sent before matching records", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: modeStep }));
+    mocks.chooseAccountingSyncMode.mockResolvedValue({
+      ...modeStep,
+      setupStep: "Mappings",
+      syncMode: "Ledger",
+      ledgerGranularity: "DailySummary",
+    });
+    const user = userEvent.setup();
+
+    renderModal();
+
+    expect(await screen.findByText("Choose what is sent")).toBeInTheDocument();
+    expect(screen.queryByText("Match your records")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Detailed" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Send documents" }));
+    await user.click(await screen.findByRole("option", { name: "Send journal entries" }));
+    await user.click(await screen.findByRole("button", { name: "Detailed" }));
+    await user.click(await screen.findByRole("option", { name: "Daily summary" }));
+    expect(screen.getByText(/One journal entry per day/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() =>
+      expect(mocks.chooseAccountingSyncMode).toHaveBeenCalledWith({
+        integrationType: "QuickBooksOnline",
+        mode: "Ledger",
+        granularity: "DailySummary",
+      }),
+    );
+  });
+
+  it("sends no granularity when documents are chosen", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: modeStep }));
+    mocks.chooseAccountingSyncMode.mockResolvedValue({ ...modeStep, setupStep: "Mappings" });
+
+    renderModal();
+    await userEvent.click(await screen.findByRole("button", { name: "Continue" }));
+
+    await waitFor(() =>
+      expect(mocks.chooseAccountingSyncMode).toHaveBeenCalledWith({
+        integrationType: "QuickBooksOnline",
+        mode: "Document",
+        granularity: null,
+      }),
+    );
+  });
+
+  it("cannot choose what is sent without manage access", async () => {
+    mocks.granted = new Set([READ, UPDATE]);
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: modeStep }));
+
+    renderModal();
+
+    expect(await screen.findByRole("button", { name: "Continue" })).toBeDisabled();
+    expect(
+      screen.getByText("Choosing what is sent needs manage access to the accounting integration."),
+    ).toBeInTheDocument();
+  });
+
+  it("offers opening balances, not settlements, when journal entries are sent", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: ledgerStart }));
+    mocks.enableAccountingSync.mockResolvedValue({ ...ledgerStart, setupStep: "Complete" });
+
+    renderModal();
+    await userEvent.click(await screen.findByText("Send opening balances"));
+    expect(
+      screen.queryByRole("switch", { name: "Send owner-operator settlements" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Also send journal entries already posted since the start date"),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Start sending" }));
+
+    await waitFor(() =>
+      expect(mocks.enableAccountingSync).toHaveBeenCalledWith(
+        expect.objectContaining({ openingBalances: true, driverSettlements: false }),
+      ),
+    );
+  });
+
+  it("shows a ledger connection what it sends and hides the document settings", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(
+      status({
+        connection: {
+          ...connected,
+          syncMode: "Ledger",
+          ledgerGranularity: "DailySummary",
+          ledgerOpeningBalancesSentAt: 1_780_000_000,
+        },
+      }),
+    );
+
+    renderModal();
+
+    expect(await screen.findByText("Journal entries, summed by day")).toBeInTheDocument();
+    expect(screen.getByText(/^Sent on /)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("switch", { name: "Send owner-operator settlements" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Payments recorded in QuickBooks Online")).not.toBeInTheDocument();
+  });
+
+  it("shows a document connection that it sends documents", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
+
+    renderModal();
+
+    expect(await screen.findByText("Documents")).toBeInTheDocument();
+    expect(screen.queryByText("Opening balances")).not.toBeInTheDocument();
   });
 });

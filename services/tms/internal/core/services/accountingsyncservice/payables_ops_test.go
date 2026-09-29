@@ -311,7 +311,8 @@ func TestRequestBackfillReachesDriverSettlementsOnlyWhenTheSettingIsOn(t *testin
 		backfill, err := h.requestBackfill(t, nil)
 		require.NoError(t, err)
 
-		assert.Equal(t, accountingsync.BackfillObjectTypes(), backfill.ObjectTypes)
+		assert.Equal(t, documentBackfillTypes(), backfill.ObjectTypes,
+			"a document connection backfills documents, never journals")
 	})
 
 	for _, typ := range []accountingsync.SyncObjectType{
@@ -561,7 +562,7 @@ func TestEnableSyncWithDriverSettlementsStampsBothTimesAndBackfillsThem(t *testi
 	assert.Equal(t, *conn.SyncEnabledAt, *conn.DriverSettlementsEnabledAt)
 	started := h.dispatcher.started()
 	require.Len(t, started, 1)
-	assert.Equal(t, accountingsync.BackfillObjectTypes(), started[0].ObjectTypes)
+	assert.Equal(t, documentBackfillTypes(), started[0].ObjectTypes)
 }
 
 func TestEnableSyncLeavesDriverSettlementsOffByDefault(t *testing.T) {
@@ -575,4 +576,18 @@ func TestEnableSyncLeavesDriverSettlementsOffByDefault(t *testing.T) {
 
 	assert.Nil(t, conn.DriverSettlementsEnabledAt)
 	assert.False(t, conn.SyncsDriverSettlements())
+}
+
+func documentBackfillTypes() []accountingsync.SyncObjectType {
+	return []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncObjectDebitMemo,
+		accountingsync.SyncObjectCreditMemo,
+		accountingsync.SyncObjectCustomerPayment,
+		accountingsync.SyncObjectCreditApplication,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncObjectDriverBill,
+		accountingsync.SyncObjectDriverBillPay,
+	}
 }

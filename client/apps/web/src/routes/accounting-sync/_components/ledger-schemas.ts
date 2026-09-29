@@ -1,4 +1,9 @@
-import type { AccountingSyncObjectType } from "@trenova/graphql/generated/graphql";
+import { isLedgerObjectType } from "@/lib/accounting-sync";
+import type {
+  AccountingLedgerGranularity,
+  AccountingSyncMode,
+  AccountingSyncObjectType,
+} from "@trenova/graphql/generated/graphql";
 import { z } from "zod";
 
 export const ACCOUNTING_SYNC_OBJECT_TYPES = [
@@ -14,6 +19,8 @@ export const ACCOUNTING_SYNC_OBJECT_TYPES = [
   "CarrierBillPayment",
   "DriverBill",
   "DriverBillPayment",
+  "JournalEntry",
+  "JournalSummary",
 ] as const satisfies readonly AccountingSyncObjectType[];
 
 export const ACCOUNTING_BACKFILL_OBJECT_TYPES = [
@@ -26,18 +33,29 @@ export const ACCOUNTING_BACKFILL_OBJECT_TYPES = [
   "CarrierBillPayment",
   "DriverBill",
   "DriverBillPayment",
+  "JournalEntry",
+  "JournalSummary",
 ] as const satisfies readonly AccountingSyncObjectType[];
+
+type BackfillObjectType = (typeof ACCOUNTING_BACKFILL_OBJECT_TYPES)[number];
 
 const DRIVER_BACKFILL_OBJECT_TYPES: readonly AccountingSyncObjectType[] = [
   "DriverBill",
   "DriverBillPayment",
 ];
 
-export function backfillObjectTypes(
-  sendsDriverSettlements: boolean,
-): (typeof ACCOUNTING_BACKFILL_OBJECT_TYPES)[number][] {
+export function backfillObjectTypes(connection: {
+  syncMode: AccountingSyncMode;
+  ledgerGranularity?: AccountingLedgerGranularity | null;
+  syncsDriverSettlements: boolean;
+}): BackfillObjectType[] {
+  if (connection.syncMode === "Ledger") {
+    return [connection.ledgerGranularity === "DailySummary" ? "JournalSummary" : "JournalEntry"];
+  }
   return ACCOUNTING_BACKFILL_OBJECT_TYPES.filter(
-    (type) => sendsDriverSettlements || !DRIVER_BACKFILL_OBJECT_TYPES.includes(type),
+    (type) =>
+      !isLedgerObjectType(type) &&
+      (connection.syncsDriverSettlements || !DRIVER_BACKFILL_OBJECT_TYPES.includes(type)),
   );
 }
 

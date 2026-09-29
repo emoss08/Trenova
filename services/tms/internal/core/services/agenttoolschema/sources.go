@@ -89,7 +89,10 @@ var (
 	DriftObjectTypes = Source(
 		"accountingSync.driftObjectType",
 		append(
-			[]accountingsync.SyncObjectType{accountingsync.SyncObjectCustomer},
+			[]accountingsync.SyncObjectType{
+				accountingsync.SyncObjectCustomer,
+				accountingsync.DriftObjectGLAccount,
+			},
 			accountingsync.DriftObjectTypes()...,
 		),
 	)

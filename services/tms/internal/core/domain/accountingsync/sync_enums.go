@@ -21,6 +21,8 @@ const (
 	SyncObjectCarrierBillPay    = SyncObjectType("CarrierBillPayment")
 	SyncObjectDriverBill        = SyncObjectType("DriverBill")
 	SyncObjectDriverBillPay     = SyncObjectType("DriverBillPayment")
+	SyncObjectJournalEntry      = SyncObjectType("JournalEntry")
+	SyncObjectJournalSummary    = SyncObjectType("JournalSummary")
 )
 
 func (t SyncObjectType) String() string { return string(t) }
@@ -38,11 +40,23 @@ func (t SyncObjectType) IsValid() bool {
 		SyncObjectCarrierBill,
 		SyncObjectCarrierBillPay,
 		SyncObjectDriverBill,
-		SyncObjectDriverBillPay:
+		SyncObjectDriverBillPay,
+		SyncObjectJournalEntry,
+		SyncObjectJournalSummary:
 		return true
+	case DriftObjectGLAccount:
+		return false
 	default:
 		return false
 	}
+}
+
+func (t SyncObjectType) IsLedger() bool {
+	return t == SyncObjectJournalEntry || t == SyncObjectJournalSummary
+}
+
+func (t SyncObjectType) IsParty() bool {
+	return t == SyncObjectCustomer || t.IsVendor()
 }
 
 func (t SyncObjectType) IsSalesDocument() bool {
@@ -116,13 +130,17 @@ func (t SyncObjectType) DispatchRank() int {
 		SyncObjectCreditMemo,
 		SyncObjectDebitMemo,
 		SyncObjectCarrierBill,
-		SyncObjectDriverBill:
+		SyncObjectDriverBill,
+		SyncObjectJournalEntry,
+		SyncObjectJournalSummary:
 		return 1
 	case SyncObjectCustomerPayment,
 		SyncObjectCreditApplication,
 		SyncObjectCarrierBillPay,
 		SyncObjectDriverBillPay:
 		return 2
+	case DriftObjectGLAccount:
+		return 3
 	default:
 		return 3
 	}
@@ -142,6 +160,8 @@ func AllSyncObjectTypes() []SyncObjectType {
 		SyncObjectCarrierBillPay,
 		SyncObjectDriverBill,
 		SyncObjectDriverBillPay,
+		SyncObjectJournalEntry,
+		SyncObjectJournalSummary,
 	}
 }
 
@@ -199,6 +219,8 @@ const (
 	SyncSourceSafetyNet               = SyncSourceEvent("SafetyNet")
 	SyncSourceBackfill                = SyncSourceEvent("Backfill")
 	SyncSourceDriftResolved           = SyncSourceEvent("DriftResolved")
+	SyncSourceJournalPosted           = SyncSourceEvent("JournalPosted")
+	SyncSourceOpeningBalances         = SyncSourceEvent("OpeningBalances")
 )
 
 func (e SyncSourceEvent) String() string { return string(e) }
@@ -226,7 +248,9 @@ func (e SyncSourceEvent) IsValid() bool {
 		SyncSourceDependencyOf,
 		SyncSourceSafetyNet,
 		SyncSourceBackfill,
-		SyncSourceDriftResolved:
+		SyncSourceDriftResolved,
+		SyncSourceJournalPosted,
+		SyncSourceOpeningBalances:
 		return true
 	default:
 		return false
@@ -257,6 +281,8 @@ func AllSyncSourceEvents() []SyncSourceEvent {
 		SyncSourceSafetyNet,
 		SyncSourceBackfill,
 		SyncSourceDriftResolved,
+		SyncSourceJournalPosted,
+		SyncSourceOpeningBalances,
 	}
 }
 
@@ -494,7 +520,10 @@ func (t SyncObjectType) BillType() (billingqueue.BillType, bool) {
 		SyncObjectCarrierBill,
 		SyncObjectCarrierBillPay,
 		SyncObjectDriverBill,
-		SyncObjectDriverBillPay:
+		SyncObjectDriverBillPay,
+		SyncObjectJournalEntry,
+		SyncObjectJournalSummary,
+		DriftObjectGLAccount:
 		return "", false
 	default:
 		return "", false

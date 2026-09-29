@@ -39,6 +39,10 @@ type Params struct {
 	Records           repositories.AccountingSyncRecordRepository
 	Findings          repositories.AccountingDriftFindingRepository
 	Source            repositories.AccountingDriftSource
+	Ledger            repositories.AccountingLedgerSource
+	Mappings          repositories.AccountingMappingRepository
+	References        repositories.AccountingReferenceObjectRepository
+	Organizations     repositories.OrganizationRepository
 	InvoiceRepo       repositories.InvoiceRepository
 	Controls          repositories.AccountingControlRepository
 	Invoices          services.InvoiceService
@@ -53,25 +57,29 @@ type Params struct {
 }
 
 type Service struct {
-	l           *zap.Logger
-	db          ports.DBConnection
-	connections repositories.AccountingConnectionRepository
-	connService services.AccountingConnectionService
-	records     repositories.AccountingSyncRecordRepository
-	findings    repositories.AccountingDriftFindingRepository
-	source      repositories.AccountingDriftSource
-	invoiceRepo repositories.InvoiceRepository
-	controls    repositories.AccountingControlRepository
-	invoices    services.InvoiceService
-	payments    services.CustomerPaymentService
-	permissions services.PermissionEngine
-	audit       services.AuditService
-	dispatcher  services.AccountingSyncDispatcher
-	checker     services.AccountingDriftChecker
-	publisher   services.AgentEventPublisher
-	watchtower  services.WatchtowerProjector
-	realtime    services.RealtimeService
-	now         func() time.Time
+	l             *zap.Logger
+	db            ports.DBConnection
+	connections   repositories.AccountingConnectionRepository
+	connService   services.AccountingConnectionService
+	records       repositories.AccountingSyncRecordRepository
+	findings      repositories.AccountingDriftFindingRepository
+	source        repositories.AccountingDriftSource
+	ledger        repositories.AccountingLedgerSource
+	mappings      repositories.AccountingMappingRepository
+	references    repositories.AccountingReferenceObjectRepository
+	organizations repositories.OrganizationRepository
+	invoiceRepo   repositories.InvoiceRepository
+	controls      repositories.AccountingControlRepository
+	invoices      services.InvoiceService
+	payments      services.CustomerPaymentService
+	permissions   services.PermissionEngine
+	audit         services.AuditService
+	dispatcher    services.AccountingSyncDispatcher
+	checker       services.AccountingDriftChecker
+	publisher     services.AgentEventPublisher
+	watchtower    services.WatchtowerProjector
+	realtime      services.RealtimeService
+	now           func() time.Time
 }
 
 var (
@@ -83,25 +91,29 @@ var (
 //nolint:gocritic // dependency injection
 func New(p Params) *Service {
 	return &Service{
-		l:           p.Logger.Named("service.accounting-drift"),
-		db:          p.DB,
-		connections: p.Connections,
-		connService: p.ConnectionService,
-		records:     p.Records,
-		findings:    p.Findings,
-		source:      p.Source,
-		invoiceRepo: p.InvoiceRepo,
-		controls:    p.Controls,
-		invoices:    p.Invoices,
-		payments:    p.Payments,
-		permissions: p.Permissions,
-		audit:       p.AuditService,
-		dispatcher:  p.Dispatcher,
-		checker:     p.Checker,
-		publisher:   p.Publisher,
-		watchtower:  p.Watchtower,
-		realtime:    p.Realtime,
-		now:         time.Now,
+		l:             p.Logger.Named("service.accounting-drift"),
+		db:            p.DB,
+		connections:   p.Connections,
+		connService:   p.ConnectionService,
+		records:       p.Records,
+		findings:      p.Findings,
+		source:        p.Source,
+		ledger:        p.Ledger,
+		mappings:      p.Mappings,
+		references:    p.References,
+		organizations: p.Organizations,
+		invoiceRepo:   p.InvoiceRepo,
+		controls:      p.Controls,
+		invoices:      p.Invoices,
+		payments:      p.Payments,
+		permissions:   p.Permissions,
+		audit:         p.AuditService,
+		dispatcher:    p.Dispatcher,
+		checker:       p.Checker,
+		publisher:     p.Publisher,
+		watchtower:    p.Watchtower,
+		realtime:      p.Realtime,
+		now:           time.Now,
 	}
 }
 
@@ -110,6 +122,7 @@ type readSession struct {
 	conn   *accountingsync.AccountingConnection
 	reader services.AccountingDocumentReader
 	writer services.AccountingDocumentWriter
+	ledger services.AccountingLedgerReader
 	auth   services.AccountingDocumentAuth
 	limit  int
 }
@@ -146,11 +159,13 @@ func (s *Service) openRead(
 		)
 	}
 	writer, _ := session.Connector.(services.AccountingDocumentWriter)
+	ledger, _ := session.Connector.(services.AccountingLedgerReader)
 	return &readSession{
 		tenant: tenant,
 		conn:   session.Connection,
 		reader: reader,
 		writer: writer,
+		ledger: ledger,
 		auth: services.AccountingDocumentAuth{
 			RealmID:     session.Connection.ExternalRealmID,
 			AccessToken: session.AccessToken,

@@ -95,6 +95,36 @@ func TestGetAccountingSyncStatus_NeverRepeatsProviderText(t *testing.T) {
 	assert.Equal(t, "Acme Freight", row.Company)
 	assert.NotContains(t, row.LastError, "ignore previous instructions")
 	assert.Equal(t, "Unknown", row.LastErrorCategory)
+	assert.Equal(t, "Document", row.Mode)
+	assert.Empty(t, row.Granularity)
+	assert.False(t, row.OpeningBalancesSent)
+}
+
+func TestGetAccountingSyncStatus_ReportsTheLedgerMode(t *testing.T) {
+	t.Parallel()
+
+	sent := int64(1_790_000_000)
+	reader := &fakeAccountingStatus{status: &serviceports.AccountingSyncStatus{
+		IntegrationType: integration.TypeQuickBooksOnline,
+		ProviderName:    "QuickBooks Online",
+		Available:       true,
+		Connection: &accountingsync.AccountingConnection{
+			ID:                          pulid.MustNew("acctc_"),
+			IntegrationType:             integration.TypeQuickBooksOnline,
+			Status:                      accountingsync.ConnectionStatusConnected,
+			SyncMode:                    accountingsync.SyncModeLedger,
+			LedgerGranularity:           accountingsync.LedgerDailySummary,
+			LedgerOpeningBalancesSentAt: &sent,
+		},
+	}}
+	tool := newGetAccountingSyncStatusTool(reader, &fakeSyncLedger{}, nil)
+
+	out, err := tool.Query(t.Context(), accountingQueryParams("QuickBooksOnline"))
+	require.NoError(t, err)
+	row := out.(accountingSyncStatusRow)
+	assert.Equal(t, "Ledger", row.Mode)
+	assert.Equal(t, "DailySummary", row.Granularity)
+	assert.True(t, row.OpeningBalancesSent)
 }
 
 func TestGetAccountingSyncStatus_RefusesUnknownSystemsAndForeignTenants(t *testing.T) {

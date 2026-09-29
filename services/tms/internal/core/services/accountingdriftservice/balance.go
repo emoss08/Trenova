@@ -49,6 +49,9 @@ func (s *Service) ReconcileBalances(
 		result.Held = held
 		return result, err
 	}
+	if sess.conn.SendsLedger() {
+		return s.reconcileTrialBalance(ctx, sess, req.EventBudget)
+	}
 
 	datedFrom, err := s.source.ScopeStart(ctx, sess.tenant)
 	if err != nil {

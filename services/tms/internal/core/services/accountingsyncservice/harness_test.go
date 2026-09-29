@@ -43,6 +43,8 @@ type harness struct {
 	adjustments *fakeAdjustments
 	payments    *fakePayments
 	payables    *fakePayables
+	ledger      *fakeLedger
+	references  *fakeReferences
 	controls    *fakeControls
 	rates       *fakeRates
 	audit       *fakeAudit
@@ -89,6 +91,8 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 			applications: map[pulid.ID]*customerpayment.CreditMemoApplication{},
 		},
 		payables:   newFakePayables(),
+		ledger:     &fakeLedger{},
+		references: newFakeReferences(),
 		rates:      newFakeRates(),
 		controls:   newFakeControls(),
 		audit:      &fakeAudit{},
@@ -114,6 +118,8 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Connections: h.connections,
 		Records:     h.records,
 		Mappings:    fakeMappingRepo{store: h.mappings},
+		Orgs:        fakeOrganizations{timezone: cfg.timezone},
+		Ledger:      h.ledger,
 		Dispatcher:  dispatcher,
 	})
 	h.svc = New(Params{
@@ -131,6 +137,8 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Organizations:     fakeOrganizations{timezone: cfg.timezone},
 		Controls:          h.controls,
 		Payables:          h.payables,
+		Ledger:            h.ledger,
+		References:        h.references,
 		Rates:             h.rates,
 		Policy:            accountingcontrolpolicyservice.New(accountingcontrolpolicyservice.Params{Logger: zap.NewNop()}),
 		AuditService:      h.audit,

@@ -27,6 +27,7 @@ type pushSession struct {
 	tenant            pagination.TenantInfo
 	conn              *accountingsync.AccountingConnection
 	writer            services.AccountingDocumentWriter
+	journals          services.AccountingJournalWriter
 	auth              services.AccountingDocumentAuth
 	loc               *time.Location
 	providerName      string
@@ -93,6 +94,8 @@ func (s *Service) openSession(
 		)
 	}
 
+	journals, _ := session.Connector.(services.AccountingJournalWriter)
+
 	loc, err := s.orgLocation(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -103,9 +106,10 @@ func (s *Service) openSession(
 	}
 
 	return &pushSession{
-		tenant: tenantInfo,
-		conn:   session.Connection,
-		writer: writer,
+		tenant:   tenantInfo,
+		conn:     session.Connection,
+		writer:   writer,
+		journals: journals,
 		auth: services.AccountingDocumentAuth{
 			RealmID:     session.Connection.ExternalRealmID,
 			AccessToken: session.AccessToken,
@@ -331,6 +335,8 @@ func (s *Service) pushOne(
 			return s.pushCreditApplicationVoid(ctx, sess, record)
 		}
 		return s.pushCreditApplication(ctx, sess, record)
+	case record.ObjectType.IsLedger():
+		return s.pushLedger(ctx, sess, record)
 	default:
 		return nil, blocked(
 			accountingsync.SyncErrorConfiguration,

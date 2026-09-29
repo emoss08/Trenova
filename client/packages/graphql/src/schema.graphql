@@ -1357,6 +1357,8 @@ type AccountingConnection {
   """The company's name in the accounting system."""
   externalCompanyName: String!
   externalCountry: String!
+  """The month, 1 to 12, the accounting system's fiscal year starts in."""
+  externalFiscalYearStartMonth: Int!
   """ISO 4217 code of the company's home currency."""
   externalHomeCurrency: String!
   externalLegalName: String!
@@ -1376,6 +1378,10 @@ type AccountingConnection {
   lastFailureAt: Timestamp
   lastSuccessAt: Timestamp
   lastWebhookAt: Timestamp
+  """How journal entries are sent. Absent in document mode."""
+  ledgerGranularity: AccountingLedgerGranularity
+  """When the opening balances were queued. Absent when they were not sent."""
+  ledgerOpeningBalancesSentAt: Timestamp
   """
   When sending was paused. Records keep queueing while it is. Absent when it is running.
   """
@@ -1399,6 +1405,8 @@ type AccountingConnection {
   status: AccountingConnectionStatus!
   """When sending was turned on."""
   syncEnabledAt: Timestamp
+  """What the connection sends. Fixed once sync is enabled."""
+  syncMode: AccountingSyncMode!
   """
   Documents dated before this day are never sent. Absent until the start date step is finished.
   """
@@ -1540,6 +1548,10 @@ enum AccountingDriftKind {
   DeletedInProvider
   """Trenova voided or reversed it; the accounting system still has it."""
   StatusMismatch
+  """
+  An account's balance differs from the accounting system's trial balance.
+  """
+  TrialBalanceMismatch
   """It was voided in the accounting system."""
   VoidedInProvider
 }
@@ -1773,6 +1785,16 @@ type AccountingInboundSummary {
   proposed: Int!
 }
 
+"""How journal entries are sent in ledger mode."""
+enum AccountingLedgerGranularity {
+  """
+  One journal entry for each day, summed per account and customer or vendor.
+  """
+  DailySummary
+  """One journal entry for each one posted in Trenova."""
+  Detailed
+}
+
 """
 Which accounting system record a Trenova record or setting is sent as.
 
@@ -1964,6 +1986,8 @@ enum AccountingSetupStep {
   Complete
   """Trenova records are being matched to the accounting system's records."""
   Mappings
+  """Choosing whether documents or journal entries are sent."""
+  Mode
   """
   The matches are confirmed; a start date has to be chosen before anything is sent.
   """
@@ -2026,6 +2050,16 @@ enum AccountingSyncErrorCategory {
   Validation
 }
 
+"""What a connection sends to the accounting system."""
+enum AccountingSyncMode {
+  """Invoices, memos, payments and bills."""
+  Document
+  """
+  Posted journal entries. Trenova keeps the ledger and the accounting system receives it.
+  """
+  Ledger
+}
+
 """Where one Trenova document stands in the accounting system."""
 type AccountingSyncObjectState {
   objectId: ID!
@@ -2059,7 +2093,15 @@ enum AccountingSyncObjectType {
   DriverBillPayment
   """An owner-operator driver, sent as a 1099 vendor."""
   DriverVendor
+  """A Trenova GL account. Only trial balance differences name one."""
+  GLAccount
   Invoice
+  """One posted journal entry, sent as a journal entry."""
+  JournalEntry
+  """
+  Every journal entry posted for one day, or the opening balances, sent as one journal entry.
+  """
+  JournalSummary
 }
 
 """What a sync record does to the document in the accounting system."""
@@ -2188,6 +2230,10 @@ enum AccountingSyncSourceEvent {
   DriverSettlementVoided
   DriverUpdated
   InvoicePosted
+  """A journal entry was posted."""
+  JournalPosted
+  """Ledger sync was turned on with opening balances."""
+  OpeningBalances
   """The hourly check found a posted document no enqueue point had queued."""
   SafetyNet
 }
@@ -7364,6 +7410,14 @@ enum ChargeAllocationMethod {
   Percent
 }
 
+"""Chooses what a connection sends, before its mappings."""
+input ChooseAccountingSyncModeInput {
+  """Required in ledger mode."""
+  granularity: AccountingLedgerGranularity
+  integrationType: AccountingSystem!
+  mode: AccountingSyncMode!
+}
+
 enum ClearinghouseQueryType {
   AnnualLimited
   Full
@@ -10939,6 +10993,10 @@ input EnableAccountingSyncInput {
   """
   driverSettlements: Boolean = false
   integrationType: AccountingSystem!
+  """
+  In ledger mode, also send one journal entry with every balance before the start date. Leave it off when the accounting system already holds them.
+  """
+  openingBalances: Boolean = false
   """Documents dated before this day are never sent."""
   startDate: Timestamp!
 }
@@ -15154,6 +15212,10 @@ type Mutation {
   checkAccountingDrift(integrationType: AccountingSystem!): AccountingDriftOverview!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
+  """
+  Chooses whether documents or journal entries are sent. Only before sync is enabled.
+  """
+  chooseAccountingSyncMode(input: ChooseAccountingSyncModeInput!): AccountingConnection!
   """
   Removes the chosen record so the mapping is unmatched again. Trenova will not propose that record for it again.
   """

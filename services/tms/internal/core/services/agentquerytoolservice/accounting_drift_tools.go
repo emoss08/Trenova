@@ -181,9 +181,9 @@ func (t *listAccountingDriftFindingsTool) ParamSchema() map[string]any {
 			len(accountingsync.AllDriftKinds()),
 		),
 		paramDriftObjectType: jsonschemautils.DescribedArray(
-			"Only these document types. Customer means a customer's balance.",
+			"Only these document types. Customer means a customer's balance; GLAccount a trial balance account.",
 			agenttoolschema.Enum("A document type.", agenttoolschema.DriftObjectTypes),
-			len(accountingsync.DriftObjectTypes())+1,
+			len(agenttoolschema.DriftObjectTypes.Values),
 		),
 		paramDriftSearch: jsonschemautils.Text(
 			"Words to find in the document number, the party name or who changed it.",

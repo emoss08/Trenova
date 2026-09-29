@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/shared/restx"
 )
@@ -26,6 +27,7 @@ type Preferences struct {
 	HomeCurrency         string
 	MultiCurrencyEnabled bool
 	BooksClosedThrough   string
+	FiscalYearStartMonth time.Month
 }
 
 type companyInfoEnvelope struct {
@@ -46,7 +48,8 @@ type preferencesEnvelope struct {
 			} `json:"HomeCurrency"`
 		} `json:"CurrencyPrefs"`
 		AccountingInfoPrefs *struct {
-			BookCloseDate string `json:"BookCloseDate"`
+			BookCloseDate          string `json:"BookCloseDate"`
+			FirstMonthOfFiscalYear string `json:"FirstMonthOfFiscalYear"`
 		} `json:"AccountingInfoPrefs"`
 	} `json:"Preferences"`
 }
@@ -148,6 +151,7 @@ func (c *Client) Preferences(ctx context.Context) (*Preferences, error) {
 	}
 	if accounting := out.Preferences.AccountingInfoPrefs; accounting != nil {
 		prefs.BooksClosedThrough = strings.TrimSpace(accounting.BookCloseDate)
+		prefs.FiscalYearStartMonth = monthNamed(accounting.FirstMonthOfFiscalYear)
 	}
 
 	return prefs, nil
@@ -164,4 +168,14 @@ func (c *Client) companyPath(parts ...string) string {
 
 func (c *Client) query() url.Values {
 	return url.Values{"minorversion": {minorVersion}}
+}
+
+func monthNamed(name string) time.Month {
+	trimmed := strings.TrimSpace(name)
+	for month := time.January; month <= time.December; month++ {
+		if strings.EqualFold(month.String(), trimmed) {
+			return month
+		}
+	}
+	return time.January
 }

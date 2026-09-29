@@ -91,6 +91,9 @@ type accountingSyncStatusRow struct {
 	ReconnectBy         optionalDate            `json:"reconnectBy"`
 	LastWebhookOn       optionalDate            `json:"lastWebhookOn"`
 	Sending             string                  `json:"sending"`
+	Mode                string                  `json:"mode,omitempty"`
+	Granularity         string                  `json:"granularity,omitempty"`
+	OpeningBalancesSent bool                    `json:"openingBalancesSent"`
 	StartDate           optionalDate            `json:"startDate"`
 	AutomaticSending    bool                    `json:"automaticSending"`
 	PausedOn            optionalDate            `json:"pausedOn"`
@@ -273,6 +276,9 @@ func accountingSyncStatusRowFrom(
 	row.ReconnectBy = recordedDate(conn.RefreshTokenAbsoluteExpiresAt)
 	row.LastWebhookOn = pointerDate(conn.LastWebhookAt)
 	row.Sending = accountingSending(conn)
+	row.Mode = string(conn.Mode())
+	row.Granularity = string(conn.Granularity())
+	row.OpeningBalancesSent = conn.SentOpeningBalances()
 	row.StartDate = expectedDate(derefInt64(conn.SyncStartDate), absentNotChosen)
 	row.AutomaticSending = conn.IsSyncing() && conn.AutoSync
 	row.PausedOn = expectedDate(derefInt64(conn.PausedAt), absentNotPaused)

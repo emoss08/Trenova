@@ -1,6 +1,6 @@
 ---
 path: /accounting/sync/drift
-aliases: [QuickBooks drift, invoice changed in QuickBooks, document deleted in QuickBooks, books differ, reconcile QuickBooks, reconciliation differences, QuickBooks does not match, fix QuickBooks mismatch, customer balance differs, sync mismatch]
+aliases: [QuickBooks drift, invoice changed in QuickBooks, document deleted in QuickBooks, books differ, reconcile QuickBooks, reconciliation differences, QuickBooks does not match, fix QuickBooks mismatch, customer balance differs, sync mismatch, account balance differs, trial balance does not match QuickBooks]
 related:
   - /accounting/sync
   - /accounting/sync/inbound
@@ -18,6 +18,13 @@ Trenova compares every synced document dated in an open or locked period each ni
 a document again within minutes when QuickBooks reports it changed. A finding closes on its own
 once both sides agree again. A document with a change still on its way to QuickBooks is left out
 until that change is sent.
+
+When the connection sends journal entries, the check also compares each QuickBooks account's
+balance with the Trenova accounts mapped to it. A **Different account balance** finding lists
+those Trenova accounts and their balances. It cannot be pushed or adjusted as a whole: find the
+entry made in QuickBooks by hand, or the one missing from it, and correct that entry. Accounts are
+not compared while journal entries are still waiting to be sent, or when Trenova and QuickBooks
+keep different home currencies.
 
 The strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or
 voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the
@@ -57,5 +64,5 @@ Viewing the page needs read access to accounting sync; fixing and dismissing nee
 Adjusting Trenova also needs permission to change invoices, or customer payments for a reversal.
 Adjust Trenova is offered for invoices and debit memos, and for customer payments voided or
 deleted in QuickBooks; settlements, credit memos and customer balances offer only Push Trenova's
-value or Dismiss. An invoice with payments or credits applied cannot be voided to match until they
+value or Dismiss, and account balances offer only Dismiss. An invoice with payments or credits applied cannot be voided to match until they
 are unapplied. Agents may dismiss only an amount difference within the reconciliation tolerance.

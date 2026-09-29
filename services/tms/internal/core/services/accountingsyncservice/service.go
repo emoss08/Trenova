@@ -49,6 +49,8 @@ type Params struct {
 	Organizations     repositories.OrganizationRepository
 	Controls          repositories.AccountingControlRepository
 	Payables          repositories.AccountingPayablesSource
+	Ledger            repositories.AccountingLedgerSource
+	References        repositories.AccountingReferenceObjectRepository
 	Rates             services.ExchangeRateService
 	Policy            *accountingcontrolpolicyservice.Service
 	AuditService      services.AuditService
@@ -74,6 +76,8 @@ type Service struct {
 	organizations  repositories.OrganizationRepository
 	controls       repositories.AccountingControlRepository
 	payables       repositories.AccountingPayablesSource
+	ledger         repositories.AccountingLedgerSource
+	references     repositories.AccountingReferenceObjectRepository
 	rates          services.ExchangeRateService
 	policy         *accountingcontrolpolicyservice.Service
 	audit          services.AuditService
@@ -103,6 +107,8 @@ func New(p Params) *Service {
 		organizations:  p.Organizations,
 		controls:       p.Controls,
 		payables:       p.Payables,
+		ledger:         p.Ledger,
+		references:     p.References,
 		rates:          p.Rates,
 		policy:         p.Policy,
 		audit:          p.AuditService,
