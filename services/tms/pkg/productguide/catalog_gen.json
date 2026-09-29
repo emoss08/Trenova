@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5a7306e570cbb1bc6747c162c15bd00d20bc976bc92e39c0dc97cfee410dae2e",
+  "version": "sha256:336cd8438f13fd513726d6f9aa9c6c043e2e5a5e7665422055440b5b39317126",
   "modules": [
     {
       "id": "home",
@@ -2471,6 +2471,34 @@
             "In **Start from**, choose the settlements clerk to draft driver and carrier settlements, sort out pay that is missing or held, match carrier invoices and propose each payment, or the receivables assistant to apply payments and credit, handle disputes and late charges, and say which overdue invoices to chase first. Both are chat agents that act as the person talking to them, and anything that moves money waits for that person to approve it. The settlements clerk reads each driver's pay setup but never changes it: a pay rate, a standing deduction or escrow terms stay with the people who set up driver pay.",
             "Leave **Data access** at **Restricted**, since both work with amounts and pay.",
             "Select **Save**. To let the billing assistant and the receivables assistant pass work to each other, add each to the other's **Can ask** list as described below."
+          ]
+        },
+        {
+          "title": "Set up an agent for master data, workforce records or fuel tax",
+          "keywords": [
+            "master data agent",
+            "carrier setup agent",
+            "customer setup agent",
+            "equipment agent",
+            "document filing agent",
+            "capture filing agent",
+            "HR agent",
+            "time off agent",
+            "leave agent",
+            "injury log agent",
+            "random drug test agent",
+            "permit agent",
+            "fuel agent",
+            "IFTA agent",
+            "fuel tax agent",
+            "fuel card agent"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Agents** in the rail.",
+            "Select **New agent**.",
+            "In **Start from**, choose the master data steward to keep carriers, customers, commodities, hazardous materials, locations, tractors and trailers right, file scanned paperwork and clear the watchtower feed; the workforce coordinator to handle time off, leave, injuries, reviews, safety records, random testing rounds, checklists and shipment permits; or the fuel and IFTA clerk to record fuel purchases and card statements, fill in state miles and draft the quarter's IFTA return. All three are chat agents that only propose: every change waits for the person talking to them to approve it.",
+            "Leave **Data access** as the starter set it: **Restricted** for the workforce coordinator, **Internal** for the other two. None of them changes pay, rate agreements or payroll.",
+            "Select **Save**."
           ]
         },
         {

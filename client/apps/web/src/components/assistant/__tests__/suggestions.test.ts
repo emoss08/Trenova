@@ -94,6 +94,19 @@ describe("agentSuggestions", () => {
     expect(receivables.some((item) => item.label === "What can you do?")).toBe(false);
   });
 
+  it("opens the focused clerks on their own work", () => {
+    const steward = agentSuggestions({ template: "MasterDataSteward", starters: [] });
+    const workforce = agentSuggestions({ template: "WorkforceCoordinator", starters: [] });
+    const fuel = agentSuggestions({ template: "FuelTaxClerk", starters: [] });
+
+    expect(steward.map((item) => item.label)).toContain("Paperwork to file");
+    expect(workforce.map((item) => item.label)).toContain("Time off to decide");
+    expect(fuel.map((item) => item.label)).toContain("Is the IFTA return ready?");
+    for (const suggestions of [steward, workforce, fuel]) {
+      expect(suggestions.some((item) => item.label === "What can you do?")).toBe(false);
+    }
+  });
+
   it("puts the page's questions ahead of the agent's", () => {
     const suggestions = agentSuggestions(
       { template: null, starters: [{ label: "Own", prompt: "Own question" }] },

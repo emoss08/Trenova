@@ -4230,16 +4230,19 @@ enum AgentTemplate {
   DispatchAssistant
   EDIDesk
   FormulaAssistant
+  FuelTaxClerk
   GeneralAssistant
   ImportAssistant
   InsightAnalyst
   IntakeDesk
   LoadEntryCheck
   LoadMonitor
+  MasterDataSteward
   Receivables
   ServiceFailureDesk
   SettlementsClerk
   ShipmentIntake
+  WorkforceCoordinator
 }
 
 """What one tool does on one agent for a representative call."""

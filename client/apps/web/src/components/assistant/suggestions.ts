@@ -81,6 +81,49 @@ const SUGGESTIONS: Partial<Record<AgentTemplateKind, Suggestion[]>> = {
       prompt: "Which customer payments still have cash not applied to an invoice?",
     },
   ],
+  MasterDataSteward: [
+    {
+      label: "Is a carrier on file?",
+      prompt: "Is the carrier with DOT number 1234567 already on file, and is it active?",
+    },
+    {
+      label: "Paperwork to file",
+      prompt: "Which scanned documents are waiting to be filed, and where does each belong?",
+    },
+    {
+      label: "Open watchtower items",
+      prompt: "Which watchtower items are open, and which are already dealt with?",
+    },
+  ],
+  WorkforceCoordinator: [
+    {
+      label: "Time off to decide",
+      prompt:
+        "Which time-off requests are waiting for a decision, and what is each driver covering?",
+    },
+    {
+      label: "Open leave cases",
+      prompt: "Which leave cases are open, and what does each one still need?",
+    },
+    {
+      label: "Random testing round",
+      prompt: "Draw this period's random drug and alcohol testing round from our pool.",
+    },
+  ],
+  FuelTaxClerk: [
+    {
+      label: "Is the IFTA return ready?",
+      prompt: "Is last quarter's IFTA return drafted, and what still blocks finalizing it?",
+    },
+    {
+      label: "Held fuel imports",
+      prompt: "Which fuel card statements have rows held back, and why?",
+    },
+    {
+      label: "Unassigned fuel cards",
+      prompt: "Which fuel cards are not assigned to a tractor or a driver?",
+    },
+  ],
   GeneralAssistant: [
     { label: "Create a rate matrix", prompt: "How do I create a rate matrix for a customer?" },
     {
