@@ -30,8 +30,8 @@ func contractArguments(
 	validator *toolschema.Validator,
 	name string,
 	schema, args map[string]any,
-) (map[string]any, error) {
-	aliased := aliasedArguments(schema, args)
+) (map[string]any, []argumentAlias, error) {
+	aliased, aliases := aliasArguments(schema, args)
 	if _, owned := aliased[serviceports.SelfScopeOwnerParam]; owned {
 		stripped := make(map[string]any, len(aliased)-1)
 		for key, value := range aliased {
@@ -43,10 +43,29 @@ func contractArguments(
 	}
 
 	if err := validator.ValidateFor(name, schema, aliased); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return aliased, nil
+	return aliased, aliases, nil
+}
+
+type argumentAlias struct {
+	From string
+	To   string
+}
+
+func aliasNote(aliases []argumentAlias) string {
+	if len(aliases) == 0 {
+		return ""
+	}
+
+	renamed := make([]string, 0, len(aliases))
+	for _, alias := range aliases {
+		renamed = append(renamed, alias.From+" was read as "+alias.To)
+	}
+
+	return "Arguments renamed to the tool's parameters: " + strings.Join(renamed, "; ") +
+		". Use those names from now on."
 }
 
 // argumentProblems lists each thing wrong with a call as "path: message",
@@ -101,21 +120,29 @@ func argumentOutcome(name string, err error) toolOutcome {
 // The model's own call is not changed: the result is a copy, so the thread
 // records what was sent and the tool reads what was meant.
 func aliasedArguments(schema, args map[string]any) map[string]any {
+	aliased, _ := aliasArguments(schema, args)
+
+	return aliased
+}
+
+func aliasArguments(schema, args map[string]any) (map[string]any, []argumentAlias) {
 	if len(args) == 0 {
-		return args
+		return args, nil
 	}
 	properties, ok := schema["properties"].(map[string]any)
 	if !ok || len(properties) == 0 {
-		return args
+		return args, nil
 	}
 
 	missing := missingRequired(schema, properties, args)
 	if len(missing) == 0 {
-		return args
+		return args, nil
 	}
 
 	var aliased map[string]any
+	var aliases []argumentAlias
 	rename := func(from, to string) {
+		aliases = append(aliases, argumentAlias{From: from, To: to})
 		if aliased == nil {
 			aliased = make(map[string]any, len(args))
 			for key, value := range args {
@@ -155,10 +182,11 @@ func aliasedArguments(schema, args map[string]any) map[string]any {
 	}
 
 	if aliased == nil {
-		return args
+		return args, nil
 	}
+	sort.Slice(aliases, func(i, j int) bool { return aliases[i].From < aliases[j].From })
 
-	return aliased
+	return aliased, aliases
 }
 
 // missingRequired is the schema's required parameters the arguments lack.

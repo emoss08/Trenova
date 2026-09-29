@@ -101,7 +101,7 @@ func TestArgumentCases_WhatAToolReceives(t *testing.T) {
 			t.Parallel()
 
 			sent := maps.Clone(tc.Args)
-			got, err := contractArguments(nil, "record_case", tc.Schema, sent)
+			got, _, err := contractArguments(nil, "record_case", tc.Schema, sent)
 			assert.Equal(t, tc.Args, sent, "the model's own call is never changed")
 			if len(tc.Refused) > 0 {
 				var multiErr *errortypes.MultiError
