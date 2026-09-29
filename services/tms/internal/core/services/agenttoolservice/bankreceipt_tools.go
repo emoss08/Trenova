@@ -220,6 +220,10 @@ func newPostCustomerPaymentTool(
 
 func (t *postCustomerPaymentTool) Name() string { return "post_customer_payment" }
 
+func (t *postCustomerPaymentTool) SearchTerms() []string {
+	return []string{"received payment", "customer paid", "payment against invoices"}
+}
+
 func (t *postCustomerPaymentTool) Description() string {
 	return "Record a customer payment and apply it to that customer's invoices. Give the " +
 		"customer, the amount, the date and the method, and the invoices it pays with the " +

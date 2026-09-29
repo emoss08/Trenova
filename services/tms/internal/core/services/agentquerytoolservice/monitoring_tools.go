@@ -83,10 +83,11 @@ func newListServiceFailuresTool(failures serviceFailureLister) serviceports.Agen
 	spec := listSpec{
 		name:         "list_service_failures",
 		entityPlural: "service failures",
-		summary: "List service failures: late and missed pickups and deliveries, detected or " +
-			"recorded, with how late, which stop, and whether anyone reviewed or " +
-			"resolved them. Filter on status Open for what " +
-			"still needs attention, on detectedAt for a period, or give a shipmentId. " +
+		summary: "List the service failures that happened: late and missed pickups and " +
+			"deliveries, with how late, which stop, and whether anyone reviewed or resolved " +
+			"them. Each was detected by the service check or recorded by a person. Filter on " +
+			"status Open for what still needs attention, on detectedAt for a period such as " +
+			"last week, or give a shipmentId. " +
 			"Resolving one takes its id and version, which are in the row.",
 		resource: permission.ResourceServiceFailure,
 		config:   querybuilder.GetFieldConfiguration((*servicefailure.ServiceFailure)(nil)),

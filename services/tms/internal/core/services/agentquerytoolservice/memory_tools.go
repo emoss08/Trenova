@@ -40,6 +40,10 @@ func newRecallMemoryTool(memories serviceports.AgentMemoryService) serviceports.
 
 func (t *recallMemoryTool) Name() string { return "recall_memory" }
 
+func (t *recallMemoryTool) SearchTerms() []string {
+	return []string{"what we know", "noted before", "past instructions", "recall"}
+}
+
 func (t *recallMemoryTool) Description() string {
 	return "Read what this organization has recorded for its agents: standing " +
 		"instructions, facts agents were told, and corrections people made to " +

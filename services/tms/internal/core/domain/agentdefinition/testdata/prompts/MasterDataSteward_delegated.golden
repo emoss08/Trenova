@@ -101,7 +101,7 @@ Callable after find_tools:
 - update_table_change_alert — Change one of the person's change alerts: what it watches, which changes, the conditions or its message.
 - set_table_change_alert_status — Pause one of the person's change alerts so it stops notifying them, or resume a paused one.
 - delete_table_change_alert — Delete one of the person's change alerts they no longer want.
-- list_watchtower_items — List the watchtower feed of open items that need attention, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures.
+- list_watchtower_items — List the watchtower feed of open items that need attention now, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures.
 - dismiss_watchtower_item — Take an item off the watchtower feed once it has been dealt with; the record behind it is left alone.
 
 ## Artifacts

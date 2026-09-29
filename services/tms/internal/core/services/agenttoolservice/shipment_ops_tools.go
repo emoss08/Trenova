@@ -300,8 +300,9 @@ type distanceRequest struct {
 
 func newRecalculateShipmentDistanceTool(shipments shipmentOperator) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name:     "recalculate_shipment_distance",
-		artifact: shipmentRecordEntity,
+		name:        "recalculate_shipment_distance",
+		searchTerms: []string{"recalculate miles", "shipment mileage", "rerun distance"},
+		artifact:    shipmentRecordEntity,
 		description: "Work out a shipment's move miles again from its stops through the " +
 			"organization's distance profile and routing provider, and save them. Use it " +
 			"after its stops changed and the miles on the board look wrong. It " +

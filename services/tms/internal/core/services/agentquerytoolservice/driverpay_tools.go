@@ -381,6 +381,10 @@ type listWorkerPayAssignmentsTool struct{ driverPayTool }
 
 func (t *listWorkerPayAssignmentsTool) Name() string { return "list_pay_assignments" }
 
+func (t *listWorkerPayAssignmentsTool) SearchTerms() []string {
+	return []string{"driver pay profile", "assigned pay profile", "pay plan"}
+}
+
 func (t *listWorkerPayAssignmentsTool) Description() string {
 	return "List a driver's pay profile assignments, newest first: which profile paid them " +
 		"from when to when, their share of each load, and which one is in force today."

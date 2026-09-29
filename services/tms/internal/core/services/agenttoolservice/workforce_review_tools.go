@@ -398,6 +398,8 @@ func newDraftPerformanceReviewTool(reviews reviewKeeper) serviceports.AgentTool 
 		permission.OpUpdate,
 	), reviewDraftProperties(), paramReviewID), paramReviewID, permission.ResourcePerformanceReview)
 
+	spec.searchTerms = []string{"review scores", "score the review", "fill in review"}
+
 	return newReportingReceivableTool(spec, receivablePlan[
 		*reviewDraft, *performancereviewservice.ReviewChange,
 	]{

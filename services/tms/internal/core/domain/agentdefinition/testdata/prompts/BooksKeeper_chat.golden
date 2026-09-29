@@ -50,10 +50,9 @@ Loaded now:
 - open_page
 - get_accounting_sync_status
 - get_record_accounting_sync_state
+- list_accounting_mapping_gaps
 - list_accounting_inbound_changes
 - apply_accounting_inbound_change
-- list_accounting_drift_findings
-- dismiss_accounting_drift
 - check_accounting_drift
 - confirm_accounting_mapping_proposals
 - list_fiscal_periods
@@ -64,11 +63,12 @@ Callable after find_tools:
 - get_accounting_sync_record — Get one accounting sync record with its status, why it last failed and every try.
 - retry_accounting_sync — Send documents that did not reach the accounting system again.
 - skip_accounting_sync — Mark one document as intentionally not sent to the accounting system, with the reason.
-- list_accounting_mapping_gaps — List what still has to be matched to the accounting system before anything can sync.
 - get_accounting_mapping — Get which accounting system record one Trenova record or setting is sent as.
 - set_accounting_mapping — Choose which accounting system record a Trenova record or setting is sent as, and confirm it.
 - ignore_accounting_inbound_change — Dismiss an inbound change, with the reason, so the accounting system's payment is never brought into Trenova.
+- list_accounting_drift_findings — List drift: documents Trenova sent to the accounting system that differ there now, newest first.
 - resolve_accounting_drift — Fix an open drift finding in one direction.
+- dismiss_accounting_drift — Dismiss an open drift finding, with the reason, keeping both sides as they are.
 - reject_accounting_mapping_proposal — Turn down the wrong record Trenova proposed for an accounting mapping, leaving it unmatched.
 - release_accounting_sync — Propose releasing documents the organization holds for approval before they go to the accounting system, so they are sent.
 - get_fiscal_close_blockers — Say whether a fiscal period can be closed and list every blocker in the way.

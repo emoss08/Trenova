@@ -32,6 +32,10 @@ func newRememberTool(memories serviceports.AgentMemoryService) serviceports.Agen
 
 func (t *rememberTool) Name() string { return "remember" }
 
+func (t *rememberTool) SearchTerms() []string {
+	return []string{"memory", "keep in mind", "standing instruction", "save a fact"}
+}
+
 func (t *rememberTool) Description() string {
 	return "Record a standing instruction or a fact for every later run of every agent in " +
 		"this organization to know. Use kind Instruction for a rule a person gave you, Fact " +

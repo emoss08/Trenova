@@ -1002,6 +1002,12 @@ func (t *getJournalEntryTool) Description() string {
 		"history. Use list_journal_entries first when you have a number or a date."
 }
 
+func (t *getJournalEntryTool) SearchTerms() []string {
+	return []string{
+		"journal entry lines", "debits and credits", "what an entry posts to", "gl lines",
+	}
+}
+
 func (t *getJournalEntryTool) ParamSchema() map[string]any {
 	return idSchema("journalEntryId", "The journal entry's id, from list_journal_entries or "+
 		onThePage)
@@ -1278,6 +1284,9 @@ func newListFiscalPeriodsTool(
 	return newListTool(listSpec{
 		name:         "list_fiscal_periods",
 		entityPlural: "fiscal periods",
+		searchTerms: []string{
+			"open periods", "period end dates", "current period", "fiscal calendar",
+		},
 		summary: "List fiscal periods, the months, quarters or adjusting periods the books " +
 			"close by, with their dates and whether each is open, locked or closed. " +
 			"get_fiscal_close_blockers says what stops one from closing.",
@@ -1370,7 +1379,9 @@ func newGetFiscalCloseBlockersTool(periods closeBlockerReader) serviceports.Agen
 func (t *getFiscalCloseBlockersTool) Name() string { return "get_fiscal_close_blockers" }
 
 func (t *getFiscalCloseBlockersTool) SearchTerms() []string {
-	return []string{"blocking", "blocked", "closing", "period", "ready"}
+	return []string{
+		"blocking", "blocked", "closing", "period", "ready", "close the books", "month end close",
+	}
 }
 
 func (t *getFiscalCloseBlockersTool) Description() string {

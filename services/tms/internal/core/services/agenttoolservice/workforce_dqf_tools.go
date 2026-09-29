@@ -475,6 +475,8 @@ func newLogEmploymentVerificationRequestTool(dqf verificationKeeper) serviceport
 		permission.ResourceQualification)
 	spec.reversible = false
 
+	spec.searchTerms = []string{"followed up", "follow up with employer", "chase previous employer"}
+
 	return newReportingReceivableTool(spec, receivablePlan[
 		*verificationRequestLog, *workerdqfservice.VerificationChange,
 	]{

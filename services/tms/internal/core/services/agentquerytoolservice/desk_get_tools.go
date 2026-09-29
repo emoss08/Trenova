@@ -51,8 +51,11 @@ func newGetCarrierIntelEventTool(
 	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:     "get_carrier_intel_event",
-		entity:   "carrier intelligence event",
+		name:   "get_carrier_intel_event",
+		entity: "carrier intelligence event",
+		searchTerms: []string{
+			"carrier risk alert", "authority change", "insurance lapse", "safety rating change",
+		},
 		resource: permission.ResourceCarrierIntelligence,
 		summary: "Retrieve one carrier intelligence event by id: what changed on the " +
 			"carrier's authority, insurance or safety record, and its severity. It also " +

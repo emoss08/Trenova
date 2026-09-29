@@ -50,7 +50,7 @@ Loaded now:
 - create_commodity
 
 Callable after find_tools:
-- get_shipment — Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments.
+- get_shipment — Retrieve one shipment (load) by its id, with its stops, the driver and equipment assigned to each move, the holds on it now and its newest comments.
 - list_customers — List customers narrowed by status, code, name or city, with their ids.
 - list_invoices — List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates.
 - add_shipment_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
@@ -80,7 +80,7 @@ Callable after find_tools:
 - edit_shipment_comment — Change the text, visibility, priority or acknowledgment request of a comment on a shipment.
 - unpin_shipment_comment — Take a pinned comment off the top of a shipment's thread once what it said no longer applies.
 - delete_shipment_comment — Delete a comment from a shipment's thread: your own, or another person's when the person you act for may moderate comments.
-- list_service_failures — List service failures: late and missed pickups and deliveries, detected or recorded, with how late, which stop, and whether anyone reviewed or resolved them.
+- list_service_failures — List the service failures that happened: late and missed pickups and deliveries, with how late, which stop, and whether anyone reviewed or resolved them.
 - get_service_failure — Retrieve one service failure by id: the late or missed stop, how late, the reason code, the notes, and who reviewed, resolved or voided it.
 - update_service_failure — Change the reason code, notes or EDI 214 code overrides on an open or reviewed service failure.
 - review_service_failure — Mark an open service failure reviewed, with the reason code that explains it, once a person has looked into what happened.

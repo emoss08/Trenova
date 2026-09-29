@@ -59,6 +59,10 @@ func newGetDocumentSummaryTool(
 
 func (t *getDocumentSummaryTool) Name() string { return "get_document_summary" }
 
+func (t *getDocumentSummaryTool) SearchTerms() []string {
+	return []string{"read document", "document summary", "read a rate confirmation"}
+}
+
 func (t *getDocumentSummaryTool) Description() string {
 	return "Read a document by id: what kind of document it looks like, how many pages, " +
 		"the text extracted from it, and the structured fields document intelligence " +

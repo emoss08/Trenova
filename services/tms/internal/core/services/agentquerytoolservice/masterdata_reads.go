@@ -242,6 +242,10 @@ func newListCaptureBatchesTool(batches captureBatchReader) serviceports.AgentQue
 
 func (t *listCaptureBatchesTool) Name() string { return "list_capture_batches" }
 
+func (t *listCaptureBatchesTool) SearchTerms() []string {
+	return []string{"capture intake", "scanned paperwork waiting", "capture queue"}
+}
+
 func (t *listCaptureBatchesTool) Description() string {
 	return "List scanned and printed paperwork waiting in capture intake, newest first. " +
 		"Each stack comes with the documents it was split into, what each looks like, the " +

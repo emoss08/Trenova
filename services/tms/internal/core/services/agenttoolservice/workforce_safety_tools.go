@@ -852,6 +852,8 @@ func newGiveWorkerRecognitionTool(events safetyKeeper) serviceports.AgentTool {
 	}, paramWorkerID, paramRecognitionKind, paramTitle)
 	spec.egress = agent.EgressDriverVisible
 
+	spec.searchTerms = []string{"safe miles award", "recognize driver", "safety award", "praise"}
+
 	return newReportingReceivableTool(spec,
 		receivablePlan[*worker.WorkerRecognition, *worker.WorkerRecognition]{
 			request: recognitionFrom,
@@ -992,6 +994,8 @@ func newRecordSafetyViolationTool(events safetyKeeper) serviceports.AgentTool {
 		permission.ResourceWorkerSafetyEvent,
 		permission.OpCreate,
 	), properties, paramSafetyEventID, fieldDescription)
+
+	spec.searchTerms = []string{"roadside violation", "inspection violation", "add violation"}
 
 	return newReportingReceivableTool(spec, receivablePlan[
 		*workersafetyservice.RecordViolationRequest, *worker.WorkerSafetyViolation,
