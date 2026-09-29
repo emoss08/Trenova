@@ -20,6 +20,7 @@
   <String Id="DetailsDlgFolderLabel" Value="Installed in" />
   <String Id="DetailsDlgPiecesLabel" Value="It adds" />
   <String Id="DetailsDlgPieces" Value="• Trenova Capture, which starts at sign-in in the notification area&#13;&#10;• Scan helpers for 64-bit and 32-bit scanner drivers (TWAIN and WIA)&#13;&#10;• The Trenova printer, served only on this computer at port [PRINTPORT]&#13;&#10;• Two services: TrenovaCaptureSvc for printing, TrenovaCaptureUpdater for updates&#13;&#10;• A Start menu shortcut" />
+  <String Id="DetailsDlgReplacing" Value="Trenova Capture is already installed here. It is closed, replaced and started again; pages waiting to be sent are kept." />
   <String Id="DetailsDlgServerLabel" Value="Server" />
   <String Id="DetailsDlgUpdatesLabel" Value="Updates" />
   <String Id="DetailsDlgLogLabel" Value="Install log" />

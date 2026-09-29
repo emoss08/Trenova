@@ -33,6 +33,7 @@
       <DialogRef Id="UserExit" />
 
       <!-- Each step the binaries run, named on the progress page. -->
+      <ProgressText Action="RemoveExistingProducts" Message="Closing and removing the Trenova Capture installed before; pages waiting to be sent are kept" />
       <ProgressText Action="ConfigurePrintService" Message="Setting up the print service and its folders" />
       <ProgressText Action="ConfigureUpdater" Message="Letting Trenova Capture keep itself up to date" />
       <ProgressText Action="InstallPrinter" Message="Adding the Trenova printer" />
@@ -104,15 +105,16 @@
         <Control Id="FolderLabel" Type="Text" X="20" Y="52" Width="330" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgFolderLabel)" />
         <Control Id="Folder" Type="Text" X="20" Y="64" Width="330" Height="12" NoPrefix="yes" Text="[INSTALLFOLDER]" />
 
-        <Control Id="PiecesLabel" Type="Text" X="20" Y="82" Width="330" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgPiecesLabel)" />
-        <Control Id="Pieces" Type="Text" X="20" Y="94" Width="330" Height="74" NoPrefix="yes" Text="!(loc.DetailsDlgPieces)" />
+        <Control Id="PiecesLabel" Type="Text" X="20" Y="80" Width="330" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgPiecesLabel)" />
+        <Control Id="Pieces" Type="Text" X="20" Y="92" Width="330" Height="62" NoPrefix="yes" Text="!(loc.DetailsDlgPieces)" />
+        <Control Id="Replacing" Type="Text" X="20" Y="156" Width="330" Height="20" NoPrefix="yes" Hidden="yes" Text="!(loc.DetailsDlgReplacing)" ShowCondition="WIX_UPGRADE_DETECTED" />
 
-        <Control Id="ServerLabel" Type="Text" X="20" Y="172" Width="80" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgServerLabel)" />
-        <Control Id="Server" Type="Text" X="100" Y="172" Width="250" Height="12" NoPrefix="yes" Text="[SERVERSUMMARY]" />
-        <Control Id="UpdatesLabel" Type="Text" X="20" Y="186" Width="80" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgUpdatesLabel)" />
-        <Control Id="Updates" Type="Text" X="100" Y="186" Width="250" Height="12" NoPrefix="yes" Text="[UPDATESSUMMARY]" />
-        <Control Id="LogLabel" Type="Text" X="20" Y="200" Width="80" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgLogLabel)" />
-        <Control Id="Log" Type="Text" X="100" Y="200" Width="250" Height="28" NoPrefix="yes" Text="[MsiLogFileLocation]" />
+        <Control Id="ServerLabel" Type="Text" X="20" Y="178" Width="80" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgServerLabel)" />
+        <Control Id="Server" Type="Text" X="100" Y="178" Width="250" Height="12" NoPrefix="yes" Text="[SERVERSUMMARY]" />
+        <Control Id="UpdatesLabel" Type="Text" X="20" Y="190" Width="80" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgUpdatesLabel)" />
+        <Control Id="Updates" Type="Text" X="100" Y="190" Width="250" Height="12" NoPrefix="yes" Text="[UPDATESSUMMARY]" />
+        <Control Id="LogLabel" Type="Text" X="20" Y="202" Width="80" Height="12" NoPrefix="yes" Text="{\Trenova_Font_Heading}!(loc.DetailsDlgLogLabel)" />
+        <Control Id="Log" Type="Text" X="100" Y="202" Width="250" Height="28" NoPrefix="yes" Text="[MsiLogFileLocation]" />
 
         <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">

@@ -33,7 +33,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     RegisterClassW, RegisterWindowMessageW, SM_CXICON, SM_CXSMICON, SYSTEM_METRICS_INDEX,
     SetForegroundWindow, TPM_BOTTOMALIGN, TPM_NONOTIFY, TPM_RETURNCMD, TPM_RIGHTBUTTON,
     TrackPopupMenuEx, TranslateMessage, WINDOW_EX_STYLE, WM_APP, WM_CLOSE, WM_CONTEXTMENU,
-    WM_DESTROY, WM_NULL, WNDCLASSW, WS_OVERLAPPED,
+    WM_DESTROY, WM_ENDSESSION, WM_NULL, WM_QUERYENDSESSION, WNDCLASSW, WS_OVERLAPPED,
 };
 use windows_core::{PCWSTR, w};
 
@@ -523,6 +523,19 @@ extern "system" fn window_proc(
             // SAFETY: this thread's own window.
             unsafe {
                 let _ = DestroyWindow(hwnd);
+            }
+            LRESULT(0)
+        }
+        // Signing out, shutting down, or an installer that needs these files
+        // (Restart Manager): agree, then close properly rather than be ended.
+        WM_QUERYENDSESSION => LRESULT(1),
+        WM_ENDSESSION => {
+            if wparam.0 != 0 {
+                tracing::info!("Windows asked Trenova Capture to close");
+                // SAFETY: this thread's own window.
+                unsafe {
+                    let _ = DestroyWindow(hwnd);
+                }
             }
             LRESULT(0)
         }

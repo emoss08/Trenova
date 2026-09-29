@@ -24,9 +24,12 @@
   verbose log (MsiLogging) and every page that can go wrong names it; the
   print service and updater write what they did into that log.
 
-  Upgrades are major upgrades: a newer MSI replaces an older install in place,
-  keeping what people have not yet uploaded, the server address and the
-  update choice. A downgrade is refused.
+  Upgrades are major upgrades: a newer MSI (or another build of the same
+  version) replaces the install in place, keeping what people have not yet
+  uploaded, the server address and the update choice. A running Trenova
+  Capture is closed through Restart Manager, which it answers by closing
+  properly, and is started again afterwards, for the person installing and
+  everyone else signed in. A downgrade is refused.
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
@@ -47,7 +50,13 @@
     <SummaryInformation Description="Trenova Capture: scan and print into Trenova"
                         Manufacturer="Trenova" />
 
-    <MajorUpgrade AllowSameVersionUpgrades="no"
+    <!--
+      A build of the same version replaces the one installed, as a newer one
+      does: builds between releases share a version, and treating them as
+      unrelated installed a second copy beside the first and left its files
+      in place.
+    -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes"
                   Schedule="afterInstallInitialize"
                   DowngradeErrorMessage="A newer version of Trenova Capture is already installed." />
 
