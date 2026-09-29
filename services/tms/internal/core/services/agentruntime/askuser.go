@@ -356,14 +356,14 @@ func datedOptionLabels(options []askOption, now time.Time) []string {
 	return past
 }
 
-func humanizeDateLabel(label string, now time.Time) (string, int64, bool) {
+func humanizeDateLabel(label string, now time.Time) (humanized string, days int64, dated bool) {
 	written, found := timeutils.FindWrittenDate(label)
 	if !found {
 		return label, 0, false
 	}
 
 	day := written.Day.On(now)
-	days := timeutils.CalendarDaysBetween(now, day)
+	days = timeutils.CalendarDaysBetween(now, day)
 	if relativeDayPattern.MatchString(label) {
 		return label, days, true
 	}
@@ -382,7 +382,7 @@ func humanizeDateLabel(label string, now time.Time) (string, int64, bool) {
 		start = weekday[0]
 	}
 
-	humanized := strings.TrimSpace(label[:start] + formatted + label[written.End:])
+	humanized = strings.TrimSpace(label[:start] + formatted + label[written.End:])
 
 	return humanized + " (" + timeutils.RelativeDays(days) + ")", days, true
 }

@@ -291,9 +291,11 @@ func schemaLabels(schema map[string]any) []schemaLabel {
 		if strings.HasSuffix(name, "Id") || strings.HasSuffix(name, "Ids") {
 			return
 		}
-		words := strings.ToLower(strings.ReplaceAll(stringutils.ConvertCamelToSnake(name), "_", " "))
-		kind, _ := node["type"].(string)
-		collection := kind == "array" || kind == "object"
+		words := strings.ToLower(
+			strings.ReplaceAll(stringutils.ConvertCamelToSnake(name), "_", " "),
+		)
+		kind, _ := node[toolschema.KeyType].(string)
+		collection := kind == toolschema.TypeArray || kind == toolschema.TypeObject
 		if !collection && len(strings.Fields(words)) < minLabelWords {
 			return
 		}
@@ -322,7 +324,8 @@ func claimedPhrases(reply string) replyClaims {
 func (c replyClaims) names(words string) bool {
 	singular := singularOf(words)
 	for _, sentence := range c {
-		if containsWords(sentence, words) || (singular != words && containsWords(sentence, singular)) {
+		if containsWords(sentence, words) ||
+			(singular != words && containsWords(sentence, singular)) {
 			return true
 		}
 	}

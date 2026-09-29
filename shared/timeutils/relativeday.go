@@ -98,7 +98,7 @@ func FindWrittenDate(value string) (WrittenDate, bool) {
 		return written, true
 	}
 
-	if match := writtenNumericPattern.FindStringSubmatchIndex(value); match != nil &&
+	if match := writtenNumericPattern.FindStringSubmatchIndex(value); len(match) == 12 &&
 		value[match[4]:match[5]] == value[match[8]:match[9]] {
 		day, ok := newCalendarDay(
 			atoi(value[match[10]:match[11]]),

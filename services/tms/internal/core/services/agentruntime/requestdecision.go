@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,16 +30,16 @@ func requestDecisionSpec() serviceports.ToolSpec {
 		Name:        requestDecisionName,
 		Description: requestDecisionDescription,
 		Parameters: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
 				"proposalId": map[string]any{
-					"type": "string",
-					"description": "The id of the waiting proposal, exactly as the " +
-						"Proposals awaiting a decision list gives it.",
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "The id of the waiting proposal, exactly as " +
+						"the Proposals awaiting a decision list gives it.",
 				},
 			},
-			"required":             []string{"proposalId"},
-			"additionalProperties": false,
+			toolschema.KeyRequired:             []string{"proposalId"},
+			toolschema.KeyAdditionalProperties: false,
 		},
 	}
 }
@@ -132,14 +133,14 @@ func decisionStepOutcome(arguments map[string]any) toolOutcome {
 
 func decisionRequested(
 	observe serviceports.ToolObserver,
-	call serviceports.ToolCall,
+	call *serviceports.ToolCall,
 	request serviceports.DecisionRequest,
 ) toolOutcome {
 	if observe == nil {
 		return failedOutcome("%s", undecidableRefusal)
 	}
 
-	shown, err := observe(serviceports.ToolObservation{Call: call, Data: request})
+	shown, err := observe(serviceports.ToolObservation{Call: *call, Data: request})
 	switch {
 	case err != nil:
 		return failedOutcome("The card for proposal %s could not be shown again: %s. Tell "+

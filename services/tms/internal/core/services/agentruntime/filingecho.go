@@ -15,9 +15,11 @@ const (
 	maxFilingEchoValue    = 240
 	filedArgumentsLead    = "Filed arguments: "
 	filingEchoCutNote     = "(cut short; the card holds the whole call)"
-	filingPreviewLead     = "The card shows the person what this proposal would do. Say only what it and this result hold; anything else is not part of the proposal."
-	filingArgumentsLead   = "The proposal holds exactly these arguments. Say only what they hold; anything else is not part of the proposal."
 	filingUnreadableValue = "a value that could not be repeated"
+	filingPreviewLead     = "The card shows the person what this proposal would do. Say " +
+		"only what it and this result hold; anything else is not part of the proposal."
+	filingArgumentsLead = "The proposal holds exactly these arguments. Say only what " +
+		"they hold; anything else is not part of the proposal."
 )
 
 func filingEcho(baseline *serviceports.ProposalBaselineResult, args map[string]any) string {

@@ -139,20 +139,7 @@ func aliasArguments(schema, args map[string]any) (map[string]any, []argumentAlia
 		return args, nil
 	}
 
-	var aliased map[string]any
-	var aliases []argumentAlias
-	rename := func(from, to string) {
-		aliases = append(aliases, argumentAlias{From: from, To: to})
-		if aliased == nil {
-			aliased = make(map[string]any, len(args))
-			for key, value := range args {
-				aliased[key] = value
-			}
-		}
-		aliased[to] = aliased[from]
-		delete(aliased, from)
-	}
-
+	renamer := &argumentRenamer{args: args}
 	byShape := make(map[string]string, len(missing))
 	for _, name := range missing {
 		byShape[argumentShape(name)] = name
@@ -162,31 +149,64 @@ func aliasArguments(schema, args map[string]any) (map[string]any, []argumentAlia
 			continue
 		}
 		if target, found := byShape[argumentShape(key)]; found {
-			rename(key, target)
+			renamer.rename(key, target)
 			delete(byShape, argumentShape(key))
 		}
 	}
 
 	if _, declared := properties["id"]; !declared {
 		if value, sent := args["id"]; sent && value != nil {
-			idTargets := make([]string, 0, 1)
-			for _, name := range byShape {
-				if len(name) > 2 && strings.HasSuffix(name, "Id") {
-					idTargets = append(idTargets, name)
-				}
-			}
-			if len(idTargets) == 1 && (aliased == nil || aliased["id"] != nil) {
-				rename("id", idTargets[0])
+			if target, lone := loneIDTarget(byShape); lone && renamer.holds("id") {
+				renamer.rename("id", target)
 			}
 		}
 	}
 
-	if aliased == nil {
-		return args, nil
-	}
-	sort.Slice(aliases, func(i, j int) bool { return aliases[i].From < aliases[j].From })
+	return renamer.result()
+}
 
-	return aliased, aliases
+type argumentRenamer struct {
+	args    map[string]any
+	aliased map[string]any
+	aliases []argumentAlias
+}
+
+func (r *argumentRenamer) rename(from, to string) {
+	r.aliases = append(r.aliases, argumentAlias{From: from, To: to})
+	if r.aliased == nil {
+		r.aliased = make(map[string]any, len(r.args))
+		for key, value := range r.args {
+			r.aliased[key] = value
+		}
+	}
+	r.aliased[to] = r.aliased[from]
+	delete(r.aliased, from)
+}
+
+func (r *argumentRenamer) holds(key string) bool {
+	return r.aliased == nil || r.aliased[key] != nil
+}
+
+func (r *argumentRenamer) result() (map[string]any, []argumentAlias) {
+	if r.aliased == nil {
+		return r.args, nil
+	}
+	sort.Slice(r.aliases, func(i, j int) bool { return r.aliases[i].From < r.aliases[j].From })
+
+	return r.aliased, r.aliases
+}
+
+func loneIDTarget(byShape map[string]string) (string, bool) {
+	target := ""
+	count := 0
+	for _, name := range byShape {
+		if len(name) > 2 && strings.HasSuffix(name, "Id") {
+			target = name
+			count++
+		}
+	}
+
+	return target, count == 1
 }
 
 // missingRequired is the schema's required parameters the arguments lack.

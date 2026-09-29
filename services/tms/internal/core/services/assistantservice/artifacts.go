@@ -43,6 +43,10 @@ const (
 
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
+
+	payloadProposalID = "proposalId"
+	payloadToolName   = "toolName"
+	payloadRationale  = "rationale"
 )
 
 // draftSpec names how an outbound message proposal reads as a draft: which
@@ -378,9 +382,9 @@ func decisionRequestArtifact(
 			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(proposal.ToolName)),
 		),
 		Payload: map[string]any{
-			"proposalId": proposal.ID.String(),
-			"toolName":   proposal.ToolName,
-			"rationale":  proposal.Rationale,
+			payloadProposalID: proposal.ID.String(),
+			payloadToolName:   proposal.ToolName,
+			payloadRationale:  proposal.Rationale,
 		},
 		ProposalID:       proposal.ID,
 		RunID:            proposal.RunID,
@@ -877,9 +881,9 @@ func draftArtifact(proposal *agent.AgentProposal) *assistantartifact.Artifact {
 	}
 
 	payload := map[string]any{
-		"tool":      proposal.ToolName,
-		"arguments": proposal.ToolParams,
-		"rationale": proposal.Rationale,
+		"tool":           proposal.ToolName,
+		"arguments":      proposal.ToolParams,
+		payloadRationale: proposal.Rationale,
 	}
 	subject := ""
 	if spec.subjectKey != "" {
@@ -931,10 +935,10 @@ func planArtifact(
 	steps := make([]map[string]any, 0, len(ordered))
 	for _, proposal := range ordered {
 		steps = append(steps, map[string]any{
-			"step":       proposal.PlanStep,
-			"proposalId": proposal.ID.String(),
-			"toolName":   proposal.ToolName,
-			"rationale":  proposal.Rationale,
+			"step":            proposal.PlanStep,
+			payloadProposalID: proposal.ID.String(),
+			payloadToolName:   proposal.ToolName,
+			payloadRationale:  proposal.Rationale,
 		})
 	}
 

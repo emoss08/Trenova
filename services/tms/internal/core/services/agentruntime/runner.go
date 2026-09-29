@@ -514,7 +514,7 @@ func (s *Service) observe(
 ) toolOutcome {
 	if request, requested := outcome.data.(serviceports.DecisionRequest); requested &&
 		outcome.publishes {
-		return decisionRequested(observe, call, request)
+		return decisionRequested(observe, &call, request)
 	}
 	if observe == nil {
 		if outcome.publishes {
