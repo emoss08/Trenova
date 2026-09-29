@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
@@ -28,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -39,7 +42,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
+	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -685,6 +692,51 @@ var lookups = map[permission.Resource]lookup{
 		scope:   buncolgen.ExpenseScopeTenant,
 		idEq:    buncolgen.ExpenseColumns.ID.Eq(),
 		version: versionOf(func(entity *driverpay.Expense) int64 { return entity.Version }),
+	}, permission.ResourceCommodity: {
+		model:   func() versioned { return new(commodity.Commodity) },
+		scope:   buncolgen.CommodityScopeTenant,
+		idEq:    buncolgen.CommodityColumns.ID.Eq(),
+		version: versionOf(func(entity *commodity.Commodity) int64 { return entity.Version }),
+	},
+	permission.ResourceHazardousMaterial: {
+		model: func() versioned { return new(hazardousmaterial.HazardousMaterial) },
+		scope: buncolgen.HazardousMaterialScopeTenant,
+		idEq:  buncolgen.HazardousMaterialColumns.ID.Eq(),
+		version: versionOf(
+			func(entity *hazardousmaterial.HazardousMaterial) int64 { return entity.Version },
+		),
+	},
+	permission.ResourceLocation: {
+		model:   func() versioned { return new(location.Location) },
+		scope:   buncolgen.LocationScopeTenant,
+		idEq:    buncolgen.LocationColumns.ID.Eq(),
+		version: versionOf(func(entity *location.Location) int64 { return entity.Version }),
+	},
+	permission.ResourceTractor: {
+		model:   func() versioned { return new(tractor.Tractor) },
+		scope:   buncolgen.TractorScopeTenant,
+		idEq:    buncolgen.TractorColumns.ID.Eq(),
+		version: versionOf(func(entity *tractor.Tractor) int64 { return entity.Version }),
+	},
+	permission.ResourceTrailer: {
+		model:   func() versioned { return new(trailer.Trailer) },
+		scope:   buncolgen.TrailerScopeTenant,
+		idEq:    buncolgen.TrailerColumns.ID.Eq(),
+		version: versionOf(func(entity *trailer.Trailer) int64 { return entity.Version }),
+	},
+	permission.ResourceTableChangeAlert: {
+		model: func() versioned { return new(tablechangealert.TCASubscription) },
+		scope: buncolgen.TCASubscriptionScopeTenant,
+		idEq:  buncolgen.TCASubscriptionColumns.ID.Eq(),
+		version: versionOf(
+			func(entity *tablechangealert.TCASubscription) int64 { return entity.Version },
+		),
+	},
+	permission.ResourceWatchtower: {
+		model:   func() versioned { return new(watchtower.Item) },
+		scope:   buncolgen.ItemScopeTenant,
+		idEq:    buncolgen.ItemColumns.ID.Eq(),
+		version: versionOf(func(entity *watchtower.Item) int64 { return entity.Version }),
 	},
 }
 

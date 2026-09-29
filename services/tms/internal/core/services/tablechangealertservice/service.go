@@ -72,11 +72,8 @@ func (s *Service) UpdateSubscription(
 		zap.String("id", entity.ID.String()),
 	)
 
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-
-	if multiErr.HasErrors() {
-		return nil, multiErr
+	if _, err := s.PlanUpdateSubscription(ctx, entity); err != nil {
+		return nil, err
 	}
 
 	updated, err := s.subRepo.Update(ctx, entity)
@@ -114,6 +111,10 @@ func (s *Service) DeleteSubscription(
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
+	if _, err := s.PlanDeleteSubscription(ctx, id, tenantInfo); err != nil {
+		return err
+	}
+
 	return s.subRepo.Delete(ctx, id, tenantInfo)
 }
 
@@ -145,17 +146,12 @@ func (s *Service) setSubscriptionStatus(
 		zap.String("status", status.String()),
 	)
 
-	entity, err := s.subRepo.GetByID(ctx, repositories.GetTCASubscriptionByIDRequest{
-		SubscriptionID: id,
-		TenantInfo:     tenantInfo,
-	})
+	change, err := s.PlanSetSubscriptionStatus(ctx, id, tenantInfo, status)
 	if err != nil {
 		return nil, err
 	}
 
-	entity.Status = status
-
-	updated, err := s.subRepo.Update(ctx, entity)
+	updated, err := s.subRepo.Update(ctx, change.After)
 	if err != nil {
 		log.Error("failed to update subscription status", zap.Error(err))
 		return nil, err

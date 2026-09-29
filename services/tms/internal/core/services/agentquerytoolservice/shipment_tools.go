@@ -21,6 +21,14 @@ const (
 	maxSearchLimit      = 25
 	maxShipmentComments = 20
 	maxShipmentHolds    = 25
+	paramDetail         = "detail"
+)
+
+type shipmentDetail string
+
+const (
+	shipmentDetailSummary shipmentDetail = "summary"
+	shipmentDetailFull    shipmentDetail = "full"
 )
 
 type getShipmentTool struct {
@@ -48,9 +56,11 @@ func (t *getShipmentTool) Name() string { return "get_shipment" }
 
 func (t *getShipmentTool) Description() string {
 	return "Retrieve one shipment by its id, with its stops, moves, assignments, the holds " +
-		"on it now and its newest comments. Each hold carries the holdId " +
-		"update_shipment_hold and release_shipment_hold take. Use search_shipments first " +
-		"when you only have a pro number or customer name."
+		"on it now and its newest comments. It returns a summary with each stop's window in " +
+		"the stop's local time; pass detail full only when you need a field the summary " +
+		"leaves out. Each hold carries the holdId update_shipment_hold and " +
+		"release_shipment_hold take. Use search_shipments first when you only have a pro " +
+		"number or customer name."
 }
 
 func (t *getShipmentTool) ParamSchema() map[string]any {
@@ -62,6 +72,12 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 				"description": "The shipment's id, from search_shipments or list_shipments, " +
 					"the page you are on, or this run's subject.",
 			},
+			paramDetail: agenttoolschema.Enum(
+				"How much to return. Omit it for the summary: the customer, the rating, "+
+					"the moves with their stops, assignment and carrier, the commodities, "+
+					"charges, holds and comments. full returns every stored field.",
+				shipmentDetailLevels,
+			),
 		},
 		"required":             []string{"shipmentId"},
 		"additionalProperties": false,
@@ -88,6 +104,11 @@ func (t *getShipmentTool) Query(
 	}
 
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	if err != nil {
+		return nil, err
+	}
+
+	detail, err := shipmentDetailOf(params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +140,34 @@ func (t *getShipmentTool) Query(
 		return nil, err
 	}
 
-	return newShipmentView(entity, comments, holds), nil
+	activity := newShipmentActivity(comments, holds)
+	workers := t.access.recordGate(ctx, params, workerRecords)
+
+	var result any
+	if detail == shipmentDetailFull {
+		result = newShipmentView(entity, activity)
+	} else {
+		result = summarizeShipment(&shipmentSummaryInput{
+			entity:   entity,
+			activity: activity,
+			timezone: params.Timezone,
+			workers:  workers,
+		})
+	}
+
+	return workers.withhold(result)
+}
+
+func shipmentDetailOf(params map[string]any) (shipmentDetail, error) {
+	value, err := validEnum(params, paramDetail, shipmentDetailLevels.AsStrings())
+	if err != nil {
+		return "", err
+	}
+	if value == "" {
+		return shipmentDetailSummary, nil
+	}
+
+	return shipmentDetail(value), nil
 }
 
 func (t *getShipmentTool) activeHolds(

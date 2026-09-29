@@ -83,6 +83,8 @@ var idParameter = regexp.MustCompile(`(Id|Ids|Key|Keys)$|^(dataset|reportKey|key
 // caller's own choice.
 var selfEvident = map[string]struct{}{
 	"idempotencyKey": {},
+	"taxId":          {},
+	"externalId":     {},
 }
 
 // fromContext is an id the turn itself carries rather than a tool: the record

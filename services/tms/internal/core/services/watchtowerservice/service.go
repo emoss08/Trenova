@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -62,6 +61,8 @@ type Service struct {
 	repo        repositories.WatchtowerRepository
 	projector   *Projector
 	permissions services.PermissionEngine
+	access      kindAccess
+	dismisser   *Dismisser
 	definitions repositories.AgentDefinitionRepository
 	runs        services.AgentRunService
 	events      services.AgentEventPublisher
@@ -77,77 +78,39 @@ func New(p Params) *Service {
 		}
 	}
 
-	return &Service{
+	access := kindAccess{permissions: p.Permissions}
+	svc := &Service{
 		l:           p.Logger.Named("service.watchtower"),
 		repo:        p.Repo,
 		projector:   p.Projector,
 		permissions: p.Permissions,
+		access:      access,
 		definitions: p.Definitions,
 		runs:        p.Runs,
 		events:      p.Events,
 		sources:     sources,
 		now:         timeutils.NowUnix,
 	}
+	svc.dismisser = &Dismisser{
+		repo:      p.Repo,
+		projector: p.Projector,
+		access:    access,
+		now:       svc.clock,
+	}
+
+	return svc
 }
+
+func (s *Service) clock() int64 { return s.now() }
 
 func AsService(s *Service) services.WatchtowerService { return s }
-
-// visibleKinds is the kinds this reader may be shown: those whose source
-// resource they may read. A request naming kinds is narrowed to the ones
-// they may see; naming none means all of them.
-func (s *Service) visibleKinds(
-	ctx context.Context,
-	actor *services.RequestActor,
-	requested []watchtower.SourceKind,
-) ([]watchtower.SourceKind, error) {
-	candidates := requested
-	if len(candidates) == 0 {
-		candidates = watchtower.AllSourceKinds()
-	}
-
-	allowed := make(map[permission.Resource]bool, len(candidates))
-	kinds := make([]watchtower.SourceKind, 0, len(candidates))
-	for _, kind := range candidates {
-		if !kind.IsValid() {
-			return nil, errortypes.NewValidationError(
-				"kinds",
-				errortypes.ErrInvalid,
-				"Unknown watchtower kind",
-			)
-		}
-		resource := kind.ReadResource()
-		ok, seen := allowed[resource]
-		if !seen {
-			result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
-				PrincipalType:  actor.PrincipalType,
-				PrincipalID:    actor.PrincipalID,
-				UserID:         actor.UserID,
-				APIKeyID:       actor.APIKeyID,
-				BusinessUnitID: actor.BusinessUnitID,
-				OrganizationID: actor.OrganizationID,
-				Resource:       resource.String(),
-				Operation:      permission.OpRead,
-			})
-			if err != nil {
-				return nil, err
-			}
-			ok = result != nil && result.Allowed
-			allowed[resource] = ok
-		}
-		if ok {
-			kinds = append(kinds, kind)
-		}
-	}
-
-	return kinds, nil
-}
 
 func (s *Service) List(
 	ctx context.Context,
 	req services.ListWatchtowerItemsRequest,
 	actor *services.RequestActor,
 ) (*services.WatchtowerPage, error) {
-	kinds, err := s.visibleKinds(ctx, actor, req.Kinds)
+	kinds, err := s.access.visibleKinds(ctx, actor, req.Kinds)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +197,7 @@ func (s *Service) Counts(
 	tenant pagination.TenantInfo,
 	actor *services.RequestActor,
 ) (*services.WatchtowerCounts, error) {
-	kinds, err := s.visibleKinds(ctx, actor, nil)
+	kinds, err := s.access.visibleKinds(ctx, actor, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -300,55 +263,22 @@ func (s *Service) MarkSeen(
 	return s.Counts(ctx, tenant, actor)
 }
 
-// Dismiss resolves an item by hand. The source is untouched: a dismissed
-// failed run is still a failed run, it is just no longer on the tower.
 func (s *Service) Dismiss(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
 	actor *services.RequestActor,
 ) (*watchtower.Item, error) {
-	item, err := s.repo.GetByID(
-		ctx,
-		repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err = s.assertMaySee(ctx, actor, item); err != nil {
-		return nil, err
-	}
-	if item.IsResolved() {
-		return item, nil
-	}
-
-	resolved, err := s.repo.ResolveByID(
-		ctx,
-		repositories.GetWatchtowerItemRequest{ID: id, TenantInfo: tenant},
-		s.now(),
-	)
-	if err != nil {
-		return nil, err
-	}
-	s.projector.publish(ctx, resolved, "resolved")
-
-	return resolved, nil
+	return s.dismisser.Dismiss(ctx, tenant, id, actor)
 }
 
-func (s *Service) assertMaySee(
+func (s *Service) PlanDismiss(
 	ctx context.Context,
+	tenant pagination.TenantInfo,
+	id pulid.ID,
 	actor *services.RequestActor,
-	item *watchtower.Item,
-) error {
-	kinds, err := s.visibleKinds(ctx, actor, []watchtower.SourceKind{item.SourceKind})
-	if err != nil {
-		return err
-	}
-	if len(kinds) == 0 {
-		return errortypes.NewAuthorizationError("You cannot see this watchtower item")
-	}
-
-	return nil
+) (*services.RecordChange[watchtower.Item], error) {
+	return s.dismisser.PlanDismiss(ctx, tenant, id, actor)
 }
 
 // HandOff gives an item to an agent. A named agent runs on the item's
@@ -367,7 +297,7 @@ func (s *Service) HandOff(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.assertMaySee(ctx, actor, item); err != nil {
+	if err = s.access.assertMaySee(ctx, actor, item); err != nil {
 		return nil, err
 	}
 	if item.SubjectType == "" || item.SubjectID.IsNil() {

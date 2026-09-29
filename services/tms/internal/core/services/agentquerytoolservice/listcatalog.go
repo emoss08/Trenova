@@ -488,6 +488,8 @@ func listCatalogSpecs() []listSpec {
 		specOf(newListOrdersTool(nil, nil)),
 		specOf(newListRecurringShipmentsTool(nil)),
 		specOf(newListFormulaTemplatesTool(nil)),
+		specOf(newListEquipmentManufacturersTool(nil)),
+		specOf(newListTableChangeAlertsTool(nil)),
 	}
 }
 

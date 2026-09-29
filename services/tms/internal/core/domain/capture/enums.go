@@ -312,6 +312,10 @@ func (s BatchStatus) Terminal() bool {
 }
 
 // Editable reports whether a person may change how the batch is split.
+func OpenBatchStatuses() []BatchStatus {
+	return []BatchStatus{BatchReady, BatchPartiallyFiled, BatchFailed}
+}
+
 func (s BatchStatus) Editable() bool {
 	switch s {
 	case BatchReady, BatchPartiallyFiled, BatchFailed:

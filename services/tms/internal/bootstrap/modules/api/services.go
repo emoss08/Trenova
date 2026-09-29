@@ -343,6 +343,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	insightservice.New,
 	watchtowerservice.NewProjector,
 	watchtowerservice.New,
+	watchtowerservice.NewDismisser,
 	watchtowerservice.AsProjector,
 	watchtowerservice.AsService,
 	briefingwriter.New,

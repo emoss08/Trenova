@@ -17028,6 +17028,15 @@
       "service/orderservice"
     ]
   },
+  "An item about an agent's own work stays on the feed for a person to clear": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "An item on hold was held there by a person or a rule, so moving one into review is a proposal a person decides; an item in any other state moves as far as the agent allows, and one that cannot be read waits for a person.": {
     "sites": 1,
     "scope": [
@@ -22167,6 +22176,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "At most {0} characters are kept": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "At most {0} documents can be looked up at a time": {
@@ -31746,15 +31764,6 @@
       "routes/carrier-monitoring"
     ]
   },
-  "Carrier status is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/carrierservice"
-    ]
-  },
   "Carrier tender response rate.": {
     "sites": 1,
     "scope": [
@@ -38523,12 +38532,13 @@
     ]
   },
   "Commodity": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "domain/aicorrection",
       "go/other",
       "routes/commodity",
@@ -79909,11 +79919,12 @@
     ]
   },
   "Hazardous material": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/commodity",
       "routes/hazardous-material",
       "routes/reports"
@@ -103852,6 +103863,15 @@
       "service/inboundmessageservice"
     ]
   },
+  "Name at least one {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/statuschange"
+    ]
+  },
   "Name can only contain letters, numbers, spaces, hyphens, ampersands, and periods": {
     "sites": 1,
     "scope": [
@@ -104311,6 +104331,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Name the state": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Name the tool the agent should call": {
@@ -159005,6 +159034,15 @@
       "go/other"
     ]
   },
+  "Send a decimal that is zero or more, such as 42.5": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Send a detention notice": {
     "sites": 1,
     "scope": [
@@ -159066,6 +159104,24 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Send a whole number from {0} to {1}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "Send an id from the read tool named here; never guess one": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Send anyway": {
@@ -159403,6 +159459,15 @@
       "routes/organization"
     ]
   },
+  "Send text": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Send the comment you are composing": {
     "sites": 1,
     "scope": [
@@ -159519,6 +159584,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Send true or false": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Send {0}": {
@@ -184589,6 +184663,24 @@
       "routes/rate-agreement"
     ]
   },
+  "These are not documents of this organization: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/documentservice"
+    ]
+  },
+  "These are not {0} records of this organization: {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/statuschange"
+    ]
+  },
   "These are required for the worker's role and nothing is open.": {
     "sites": 1,
     "scope": [
@@ -185897,6 +185989,15 @@
       "service/captureservice"
     ]
   },
+  "This document has no version {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "This document is already attached to a shipment.": {
     "sites": 1,
     "scope": [
@@ -185904,6 +186005,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "This document is already filed or being filed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "This document is already in the evaluation set": {
@@ -186465,6 +186575,15 @@
       "service/fuelpurchaseservice"
     ]
   },
+  "This insight is {0}, and only a dismissed one can be restored": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
   "This insight is {0}, and only an active one can be dismissed": {
     "sites": 1,
     "scope": [
@@ -186639,7 +186758,7 @@
     ]
   },
   "This is required": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -186690,6 +186809,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "This item is already off the feed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "This item is already settled. Reopen it first": {
@@ -188106,6 +188234,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "This stack is already closed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "This stack is gone": {
@@ -190796,6 +190933,15 @@
     ],
     "areas": [
       "domain/driverpay"
+    ]
+  },
+  "Total charge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Total charges grouped by customer for the selected period": {
@@ -197185,6 +197331,15 @@
       "packages/shared/types"
     ]
   },
+  "Use all or any": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Use an AI provider for structured extraction on supported document kinds.": {
     "sites": 1,
     "scope": [
@@ -197320,6 +197475,15 @@
       "routes/shipment"
     ]
   },
+  "Use one of {0}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Use original if open else next open": {
     "sites": 1,
     "scope": [
@@ -197402,7 +197566,7 @@
     ]
   },
   "Use the two-letter state abbreviation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -199156,6 +199320,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Version {0} is already the current one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Version {0}. A signature on an earlier version does not count — those people are outstanding again.": {
@@ -219282,6 +219455,24 @@
       "apps/web/hooks"
     ]
   },
+  "{0} is not a US state abbreviation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is not a date as YYYY-MM-DD": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} is not a decimal such as 1250.00": {
     "sites": 1,
     "scope": [
@@ -219370,6 +219561,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} is not a {1} status": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/statuschange"
     ]
   },
   "{0} is not an accounting system Trenova can sync with": {

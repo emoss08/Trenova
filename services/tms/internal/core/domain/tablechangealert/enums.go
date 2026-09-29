@@ -44,3 +44,7 @@ func ValidEventType(v string) bool {
 		return false
 	}
 }
+
+func SubscriptionStatusValues() []SubscriptionStatus {
+	return []SubscriptionStatus{SubscriptionStatusActive, SubscriptionStatusPaused}
+}

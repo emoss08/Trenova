@@ -331,6 +331,9 @@ administration tools, and who holds them, are in
 The worker safety, compliance, HR, permit and driver pay tools, what is left to a person's
 signature, and who holds them are in
 [docs/engineering/agent-workforce-tools.md](docs/engineering/agent-workforce-tools.md).
+The carrier, customer, commodity, hazardous material, location and equipment tools, document,
+change alert and watchtower housekeeping, capture filing, and who holds them are in
+[docs/engineering/agent-master-data-tools.md](docs/engineering/agent-master-data-tools.md).
 What a person approves is a preview of the write, computed for them from the world as it is
 now, and the approval carries its digest; tools implement `ToolPreviewer` with
 `services/toolpreview`, and the filing baseline stays off `PendingAction`. **Read

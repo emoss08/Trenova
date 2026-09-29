@@ -5,10 +5,27 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/shopspring/decimal"
 
+	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/commodity"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/holdreason"
+	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -217,4 +234,495 @@ func TestListShipments_FindsShipmentsNeverTransferredToBilling(t *testing.T) {
 	require.Len(t, repo.captured.Filter.FieldFilters, 1)
 	assert.Equal(t, "billingTransferStatus", repo.captured.Filter.FieldFilters[0].Field)
 	assert.Equal(t, "isnull", string(repo.captured.Filter.FieldFilters[0].Operator))
+}
+
+type shipmentFixture struct {
+	entity    *shipment.Shipment
+	primary   *worker.Worker
+	secondary *worker.Worker
+	pickup    *shipment.Stop
+	delivery  *shipment.Stop
+	move      *shipment.ShipmentMove
+}
+
+func realisticShipment() shipmentFixture {
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	illinois := &usstate.UsState{ID: pulid.MustNew("us_"), Name: "Illinois", Abbreviation: "IL"}
+	ohio := &usstate.UsState{ID: pulid.MustNew("us_"), Name: "Ohio", Abbreviation: "OH"}
+	lat, lng := 41.8781, -87.6298
+	chicago := &location.Location{
+		ID:             pulid.MustNew("loc_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Code:           "CHI-DC",
+		Name:           "Chicago Distribution Center",
+		Description:    "Cross-dock serving the Midwest region, doors 1-40 inbound only",
+		AddressLine1:   "2200 S Western Ave",
+		City:           "Chicago",
+		PostalCode:     "60608",
+		Timezone:       "America/Chicago",
+		Latitude:       &lat,
+		Longitude:      &lng,
+		StateID:        illinois.ID,
+		State:          illinois,
+	}
+	columbus := &location.Location{
+		ID:             pulid.MustNew("loc_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Code:           "CMH-RX",
+		Name:           "Columbus Receiving",
+		AddressLine1:   "4100 Alum Creek Dr",
+		City:           "Columbus",
+		PostalCode:     "43207",
+		StateID:        ohio.ID,
+		State:          ohio,
+	}
+	windowEnd := int64(1_790_866_800)
+	arrived := int64(1_790_861_400)
+	departed := int64(1_790_866_800)
+	pickup := &shipment.Stop{
+		ID:                   pulid.MustNew("stp_"),
+		OrganizationID:       orgID,
+		BusinessUnitID:       buID,
+		LocationID:           chicago.ID,
+		Status:               shipment.StopStatusCompleted,
+		Type:                 shipment.StopTypePickup,
+		Sequence:             1,
+		ScheduledWindowStart: 1_790_859_600,
+		ScheduledWindowEnd:   &windowEnd,
+		ActualArrival:        &arrived,
+		ActualDeparture:      &departed,
+		AddressLine:          "2200 S Western Ave, Chicago, IL 60608",
+		Location:             chicago,
+	}
+	delivery := &shipment.Stop{
+		ID:                   pulid.MustNew("stp_"),
+		OrganizationID:       orgID,
+		BusinessUnitID:       buID,
+		LocationID:           columbus.ID,
+		Status:               shipment.StopStatusNew,
+		Type:                 shipment.StopTypeDelivery,
+		Sequence:             2,
+		ScheduledWindowStart: 1_790_942_400,
+		AddressLine:          "4100 Alum Creek Dr, Columbus, OH 43207",
+		Location:             columbus,
+	}
+	primary := &worker.Worker{
+		ID:                    pulid.MustNew("wrk_"),
+		OrganizationID:        orgID,
+		BusinessUnitID:        buID,
+		FirstName:             "Dana",
+		LastName:              "Whitfield",
+		AddressLine1:          "18 Maple Row",
+		City:                  "Joliet",
+		PostalCode:            "60431",
+		Email:                 "dana.whitfield@example.com",
+		PhoneNumber:           "815-555-0142",
+		EmergencyContactName:  "Sam Whitfield",
+		EmergencyContactPhone: "815-555-0199",
+		Profile: &worker.WorkerProfile{
+			ID:            pulid.MustNew("wpr_"),
+			LicenseNumber: "W123-4567-8901",
+			DOB:           315_532_800,
+		},
+	}
+	secondary := &worker.Worker{
+		ID:          pulid.MustNew("wrk_"),
+		FirstName:   "Luis",
+		LastName:    "Ortega",
+		Email:       "luis.ortega@example.com",
+		PhoneNumber: "815-555-0178",
+	}
+	tractorID := pulid.MustNew("tr_")
+	trailerID := pulid.MustNew("trl_")
+	move := &shipment.ShipmentMove{
+		ID:             pulid.MustNew("sm_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         shipment.MoveStatusInTransit,
+		Loaded:         true,
+		Sequence:       1,
+		Stops:          []*shipment.Stop{delivery, pickup},
+		Assignment: &shipment.Assignment{
+			ID:                pulid.MustNew("a_"),
+			Status:            shipment.AssignmentStatusInProgress,
+			TractorID:         &tractorID,
+			TrailerID:         &trailerID,
+			PrimaryWorkerID:   &primary.ID,
+			SecondaryWorkerID: &secondary.ID,
+			Tractor:           &tractor.Tractor{ID: tractorID, Code: "T-104"},
+			Trailer:           &trailer.Trailer{ID: trailerID, Code: "TRL-2201"},
+			PrimaryWorker:     primary,
+			SecondaryWorker:   secondary,
+		},
+		CarrierAssignment: &shipment.CarrierAssignment{
+			ID:                  pulid.MustNew("casn_"),
+			Status:              shipment.CarrierAssignmentStatusConfirmed,
+			ExternalDriverName:  "Pat Carrier",
+			ExternalDriverPhone: "312-555-0111",
+			Carrier:             &carrier.Carrier{ID: pulid.MustNew("car_"), Name: "Lakeshore Freight"},
+		},
+	}
+	move.CarrierAssignment.CarrierID = move.CarrierAssignment.Carrier.ID
+	templateID := pulid.MustNew("ft_")
+	customerID := pulid.MustNew("cus_")
+	entity := &shipment.Shipment{
+		ID:                  pulid.MustNew("shp_"),
+		OrganizationID:      orgID,
+		BusinessUnitID:      buID,
+		CustomerID:          customerID,
+		FormulaTemplateID:   templateID,
+		Status:              shipment.StatusInTransit,
+		ProNumber:           "S-1001",
+		BOL:                 "BOL-77812",
+		BaseRate:            decimal.NewNullDecimal(decimal.RequireFromString("1850.0000")),
+		FreightChargeAmount: decimal.NewNullDecimal(decimal.RequireFromString("1850.0000")),
+		OtherChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("225.5000")),
+		TotalChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("2075.5000")),
+		RateLocked:          true,
+		RatingDetail: &shipment.RatingDetail{
+			FormulaTemplateID:   templateID.String(),
+			FormulaTemplateName: "Midwest dry van",
+			Expression:          "max(minCharge, distance * ratePerMile) + stops * stopCharge",
+			ResolvedVariables: map[string]any{
+				"distance": 355.2, "ratePerMile": 5.2, "stops": 2, "stopCharge": 50,
+			},
+			Result:        1850,
+			Source:        "Agreement",
+			AgreementName: "Acme 2026 contract",
+			Breakdown: []shipment.RatingBreakdownItem{
+				{Name: "linehaul", Label: "Linehaul", Amount: 1750},
+				{Name: "stops", Label: "Stop charges", Amount: 100},
+			},
+		},
+		Customer: &customer.Customer{
+			ID:           customerID,
+			Code:         "ACME",
+			Name:         "Acme Foods",
+			AddressLine1: "1 Acme Plaza",
+			City:         "Chicago",
+		},
+		ServiceType:  &servicetype.ServiceType{ID: pulid.MustNew("st_"), Code: "STD"},
+		ShipmentType: &shipmenttype.ShipmentType{ID: pulid.MustNew("sht_"), Code: "FTL"},
+		FormulaTemplate: &formulatemplate.FormulaTemplate{
+			ID:          templateID,
+			Name:        "Midwest dry van",
+			Description: "Distance-based dry van rating for the Midwest lanes",
+			Expression:  "max(minCharge, distance * ratePerMile) + stops * stopCharge",
+		},
+		Moves: []*shipment.ShipmentMove{move},
+		Commodities: []*shipment.ShipmentCommodity{{
+			ID:          pulid.MustNew("sc_"),
+			CommodityID: pulid.MustNew("com_"),
+			Pieces:      24,
+			Weight:      38_000,
+			Commodity:   &commodity.Commodity{Name: "Canned goods"},
+		}},
+		AdditionalCharges: []*shipment.AdditionalCharge{{
+			ID:                  pulid.MustNew("ac_"),
+			AccessorialChargeID: pulid.MustNew("acc_"),
+			Method:              accessorialcharge.MethodFlat,
+			Amount:              decimal.RequireFromString("225.50"),
+			Unit:                1,
+			AccessorialCharge: &accessorialcharge.AccessorialCharge{
+				Code:        "LUMP",
+				Description: "Lumper fee",
+			},
+		}},
+	}
+	move.ShipmentID = entity.ID
+
+	return shipmentFixture{
+		entity:    entity,
+		primary:   primary,
+		secondary: secondary,
+		pickup:    pickup,
+		delivery:  delivery,
+		move:      move,
+	}
+}
+
+func queryShipment(
+	t *testing.T,
+	fixture shipmentFixture,
+	permissions *fakePermissions,
+	params *serviceports.QueryToolParams,
+) map[string]any {
+	t.Helper()
+
+	tool := newGetShipmentTool(
+		&fakeShipmentGetter{entity: fixture.entity},
+		nil,
+		&fakeHoldLister{holds: []*shipment.ShipmentHold{{
+			ID:             pulid.MustNew("shh_"),
+			Type:           holdreason.HoldType("Compliance"),
+			Severity:       holdreason.HoldSeverityBlocking,
+			Source:         shipment.HoldSourceUser,
+			BlocksDelivery: true,
+		}}},
+		permissions,
+	)
+	result, err := tool.Query(t.Context(), params)
+	require.NoError(t, err)
+
+	return encodedDocument(t, result)
+}
+
+func encodedDocument(t *testing.T, result any) map[string]any {
+	t.Helper()
+
+	encoded, err := sonic.Marshal(result)
+	require.NoError(t, err)
+	var document map[string]any
+	require.NoError(t, sonic.Unmarshal(encoded, &document))
+
+	return document
+}
+
+func shipmentArgs(fixture shipmentFixture, detail string) map[string]any {
+	args := map[string]any{"shipmentId": fixture.entity.ID.String()}
+	if detail != "" {
+		args["detail"] = detail
+	}
+
+	return args
+}
+
+func objectAt(t *testing.T, document any, path ...any) map[string]any {
+	t.Helper()
+
+	node := document
+	for _, step := range path {
+		switch key := step.(type) {
+		case string:
+			object, ok := node.(map[string]any)
+			require.True(t, ok, "expected an object before %q", key)
+			node = object[key]
+		case int:
+			list, ok := node.([]any)
+			require.True(t, ok, "expected a list before [%d]", key)
+			require.Greater(t, len(list), key)
+			node = list[key]
+		}
+	}
+	object, ok := node.(map[string]any)
+	require.True(t, ok, "expected an object at %v", path)
+
+	return object
+}
+
+func TestGetShipment_SummaryIsTheDefault(t *testing.T) {
+	t.Parallel()
+
+	fixture := realisticShipment()
+	params := testParamsIn("America/New_York", shipmentArgs(fixture, ""))
+	document := queryShipment(t, fixture, &fakePermissions{allowed: true}, params)
+
+	assert.Equal(t, fixture.entity.ID.String(), document["id"])
+	assert.Equal(t, "S-1001", document["proNumber"])
+	assert.Equal(t, "BOL-77812", document["bol"])
+	assert.Equal(t, "InTransit", document["status"])
+	assert.Equal(t, map[string]any{
+		"id": fixture.entity.CustomerID.String(), "name": "Acme Foods",
+	}, document["customer"])
+	assert.Equal(t, "STD", document["serviceType"])
+	assert.Equal(t, "FTL", document["shipmentType"])
+
+	rating := objectAt(t, document, "rating")
+	assert.Equal(t, fixture.entity.FormulaTemplateID.String(), rating["formulaTemplateId"])
+	assert.Equal(t, "Midwest dry van", rating["formulaTemplate"])
+	assert.Equal(t, "Agreement", rating["ratingMethod"])
+	assert.Equal(t, "1850", rating["baseRate"])
+	assert.Equal(t, "225.50", rating["otherChargeAmount"])
+	assert.Equal(t, "2075.50", rating["totalChargeAmount"])
+	assert.Equal(t, true, rating["rateLocked"])
+
+	move := objectAt(t, document, "moves", 0)
+	assert.Equal(t, fixture.move.ID.String(), move["id"])
+	pickup := objectAt(t, move, "stops", 0)
+	delivery := objectAt(t, move, "stops", 1)
+	assert.Equal(t, fixture.pickup.ID.String(), pickup["id"], "stops run in sequence")
+	assert.Equal(t, "Pickup", pickup["type"])
+	assert.Equal(t, "Chicago Distribution Center", pickup["location"])
+	assert.Equal(t, "Chicago", pickup["city"])
+	assert.Equal(t, "IL", pickup["state"])
+	assert.Equal(t, "Delivery", delivery["type"])
+	assert.Equal(t, "Columbus", delivery["city"])
+
+	assignment := objectAt(t, move, "assignment")
+	assert.Equal(t, "T-104", assignment["tractor"])
+	assert.Equal(t, "TRL-2201", assignment["trailer"])
+	assert.Equal(t, "Dana Whitfield", assignment["primaryWorker"])
+	assert.Equal(t, fixture.primary.ID.String(), assignment["primaryWorkerId"])
+	assert.Equal(t, "Luis Ortega", assignment["secondaryWorker"])
+	assert.Equal(t, "Lakeshore Freight", objectAt(t, move, "carrier")["carrier"])
+
+	commodity := objectAt(t, document, "commodities", 0)
+	assert.Equal(t, "Canned goods", commodity["name"])
+	assert.InDelta(t, 24, commodity["pieces"], 0)
+	assert.InDelta(t, 38_000, commodity["weight"], 0)
+
+	charge := objectAt(t, document, "additionalCharges", 0)
+	assert.Equal(t, "LUMP", charge["code"])
+	assert.Equal(t, "225.5", charge["amount"])
+
+	hold := objectAt(t, document, "activeHolds", 0)
+	assert.Equal(t, true, hold["blocksDelivery"])
+
+	encoded, err := sonic.Marshal(document)
+	require.NoError(t, err)
+	for _, contact := range []string{
+		"dana.whitfield@example.com", "815-555-0142", "18 Maple Row", "W123-4567-8901",
+		"312-555-0111",
+	} {
+		assert.NotContains(t, string(encoded), contact, "the summary names people, never reaches them")
+	}
+}
+
+func TestGetShipment_SummaryIsAFractionOfTheFullRecord(t *testing.T) {
+	t.Parallel()
+
+	fixture := realisticShipment()
+	permissions := &fakePermissions{allowed: true}
+	summary, err := sonic.Marshal(queryShipment(t, fixture, permissions,
+		testParams(shipmentArgs(fixture, "summary"))))
+	require.NoError(t, err)
+	full, err := sonic.Marshal(queryShipment(t, realisticShipment(), permissions,
+		testParams(shipmentArgs(fixture, "full"))))
+	require.NoError(t, err)
+
+	assert.Less(t, len(summary)*3, len(full),
+		"summary is %d bytes against %d for the full record", len(summary), len(full))
+}
+
+func TestGetShipment_FullKeepsTheStoredRecord(t *testing.T) {
+	t.Parallel()
+
+	fixture := realisticShipment()
+	document := queryShipment(t, fixture, &fakePermissions{allowed: true},
+		testParams(shipmentArgs(fixture, "full")))
+
+	assert.Equal(t, fixture.entity.ID.String(), document["id"])
+	assert.Equal(t, fixture.entity.FormulaTemplateID.String(), document["formulaTemplateId"])
+	assert.Contains(t, objectAt(t, document, "ratingDetail"), "resolvedVariables")
+	assert.Contains(t, objectAt(t, document, "formulaTemplate"), "expression")
+	assignment := objectAt(t, document, "moves", 0, "assignment")
+	assert.Equal(t, "T-104", objectAt(t, assignment, "tractor")["code"])
+	assert.Equal(t, "Dana", objectAt(t, assignment, "primaryWorker")["firstName"])
+	stop := objectAt(t, document, "moves", 0, "stops", 0)
+	assert.Contains(t, stop, "addressLine")
+	assert.Contains(t, document, "activeHolds")
+}
+
+func TestGetShipment_SummaryWindowsAreLocalToTheStop(t *testing.T) {
+	t.Parallel()
+
+	fixture := realisticShipment()
+	document := queryShipment(t, fixture, &fakePermissions{allowed: true},
+		testParamsIn("America/New_York", shipmentArgs(fixture, "")))
+
+	pickup := objectAt(t, document, "moves", 0, "stops", 0)
+	assert.Equal(t, "America/Chicago", pickup["timezone"])
+	assert.Equal(t, "2026-10-01T08:00", pickup["scheduledWindowStart"])
+	assert.Equal(t, "2026-10-01T10:00", pickup["scheduledWindowEnd"])
+	assert.Equal(t, "2026-10-01T08:30", pickup["actualArrival"])
+	assert.Equal(t, "2026-10-01T10:00", pickup["actualDeparture"])
+
+	delivery := objectAt(t, document, "moves", 0, "stops", 1)
+	assert.Equal(t, "America/New_York", delivery["timezone"],
+		"a location with no zone reads in the organization's")
+	assert.Equal(t, "2026-10-02T08:00", delivery["scheduledWindowStart"])
+	assert.NotContains(t, delivery, "actualArrival")
+
+	utc := queryShipment(t, realisticShipment(), &fakePermissions{allowed: true},
+		testParams(shipmentArgs(fixture, "")))
+	delivery = objectAt(t, utc, "moves", 0, "stops", 1)
+	assert.Equal(t, "UTC", delivery["timezone"])
+	assert.Equal(t, "2026-10-02T12:00", delivery["scheduledWindowStart"])
+}
+
+func TestGetShipment_WorkerContactFollowsTheCeiling(t *testing.T) {
+	t.Parallel()
+
+	for _, detail := range []string{"summary", "full"} {
+		t.Run(detail+" below the ceiling", func(t *testing.T) {
+			t.Parallel()
+
+			fixture := realisticShipment()
+			document := queryShipment(t, fixture, &fakePermissions{allowed: true},
+				agentParams(shipmentArgs(fixture, detail), permission.SensitivityInternal))
+
+			encoded, err := sonic.Marshal(document)
+			require.NoError(t, err)
+			for _, contact := range []string{
+				"dana.whitfield@example.com", "815-555-0142", "luis.ortega@example.com",
+				"815-555-0178", "18 Maple Row", "Sam Whitfield", "W123-4567-8901",
+			} {
+				assert.NotContains(t, string(encoded), contact)
+			}
+			assert.Contains(t, string(encoded), "Dana")
+			if detail == "full" {
+				assert.Subset(t, document["withheldByAccess"],
+					[]any{"worker.email", "worker.phoneNumber", "worker.addressLine1"})
+				assert.NotContains(t, document["withheldByAccess"], "worker.licenseNumber",
+					"a confidential field is never named")
+			}
+		})
+
+		t.Run(detail+" within the ceiling", func(t *testing.T) {
+			t.Parallel()
+
+			fixture := realisticShipment()
+			document := queryShipment(t, fixture,
+				personReaching(permission.ResourceWorker, permission.SensitivityRestricted),
+				chatParams(shipmentArgs(fixture, detail), ""))
+
+			encoded, err := sonic.Marshal(document)
+			require.NoError(t, err)
+			assert.NotContains(t, string(encoded), "W123-4567-8901",
+				"a confidential field never reaches a model")
+			assert.NotContains(t, document, "withheldByAccess")
+			if detail == "full" {
+				primary := objectAt(t, document, "moves", 0, "assignment", "primaryWorker")
+				assert.Equal(t, "dana.whitfield@example.com", primary["email"])
+				assert.Equal(t, "815-555-0142", primary["phoneNumber"])
+				assert.NotContains(t, objectAt(t, primary, "profile"), "dob")
+			}
+		})
+	}
+}
+
+func TestGetShipment_SummaryWithholdsNamesFromSomeoneWhoCannotSeeWorkers(t *testing.T) {
+	t.Parallel()
+
+	fixture := realisticShipment()
+	document := queryShipment(t, fixture,
+		personReaching(permission.ResourceShipment, permission.SensitivityRestricted),
+		chatParams(shipmentArgs(fixture, ""), ""))
+
+	assignment := objectAt(t, document, "moves", 0, "assignment")
+	assert.NotContains(t, assignment, "primaryWorker")
+	assert.Equal(t, fixture.primary.ID.String(), assignment["primaryWorkerId"])
+	assert.Subset(t, document["withheldByAccess"], []any{"worker.firstName", "worker.lastName"})
+}
+
+func TestGetShipmentSchema_RefusesAnUnknownDetail(t *testing.T) {
+	t.Parallel()
+
+	fixture := realisticShipment()
+	getter := &fakeShipmentGetter{entity: fixture.entity}
+	tool := newGetShipmentTool(getter, nil, nil, &fakePermissions{allowed: true})
+	schema := tool.ParamSchema()
+
+	require.NoError(t, toolschema.Validate(schema, shipmentArgs(fixture, "full")))
+	require.NoError(t, toolschema.Validate(schema, shipmentArgs(fixture, "summary")))
+	require.NoError(t, toolschema.Validate(schema, shipmentArgs(fixture, "")))
+	require.Error(t, toolschema.Validate(schema, shipmentArgs(fixture, "brief")))
+
+	_, err := tool.Query(t.Context(), testParams(shipmentArgs(fixture, "brief")))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "summary")
+	assert.Zero(t, getter.reads, "nothing is read on a refused argument")
 }

@@ -544,8 +544,32 @@ func (s *Service) Restore(
 	ctx context.Context,
 	req services.RestoreInsightRequest,
 ) (*insight.Insight, error) {
+	if _, err := s.PlanRestore(ctx, req); err != nil {
+		return nil, err
+	}
+
 	return s.repo.Restore(ctx, repositories.RestoreInsightRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
+}
+
+func (s *Service) PlanRestore(
+	ctx context.Context,
+	req services.RestoreInsightRequest,
+) (*services.RecordChange[insight.Insight], error) {
+	found, err := s.repo.GetByID(ctx, repositories.GetInsightByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	restored := *found
+	if err = restored.Restore(); err != nil {
+		return nil, err
+	}
+
+	return &services.RecordChange[insight.Insight]{Before: found, After: &restored}, nil
 }

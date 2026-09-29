@@ -48,23 +48,26 @@ Loaded now:
 - flag_for_manual_review
 - find_in_trenova
 - open_page
-- list_shipments
 - list_customers
 - list_invoices
-- add_shipment_comment
-- accept_edi_tender
 - list_orders
 - list_recurring_shipments
 - list_service_failures
+- create_customer
+- list_locations
+- list_commodities
 
 Callable after find_tools:
 - get_shipment — Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments.
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
+- list_shipments — List shipments by status, billing state, dates or charges: anything with a date or threshold, such as delivered yesterday or not yet billed.
+- add_shipment_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
 - list_insights — List insight detector findings: service slipping for a customer, cash tied up in unbilled work, cost leaking at a location, compliance about to lapse.
 - get_insight — Read one insight in full: the finding with its numbers and records, its earlier runs, and the rule behind it.
 - list_edi_partners — List this organization's EDI trading partners with their code, name and the customer each stands for.
 - list_edi_transfers — List EDI load tender transfers, the tenders partners sent in or this organization sent out.
 - get_edi_transfer — Retrieve one EDI load tender by id, with its stops, freight and rate and the mappings it still lacks.
+- accept_edi_tender — Propose accepting a load tender a trading partner sent over EDI, which creates the shipment from it and tells the partner.
 - decline_edi_tender — Propose declining a load tender a trading partner sent over EDI, with the reason they are given.
 - list_edi_tender_changes — List changes another Trenova organization made to loads it tendered to this one over EDI, and changes this organization made to loads it tendered, newest first.
 - review_edi_tender_change — Propose applying or rejecting a change another Trenova organization made to a load it tendered to this one over EDI, after this organization received it.
@@ -94,6 +97,12 @@ Callable after find_tools:
 - void_service_failure — Void a service failure that should never have been opened, with the reason why: a wrong appointment window, a corrected arrival, a stop that was not late.
 - dispute_detention — Record that the customer disputes a detention charge, with what they said.
 - vet_customer_broker — Check a customer that is a freight broker against the public FMCSA record by its DOT number: broker authority and bond.
+- update_customer — Change a customer's details: name, billing address, DOT and MC numbers, who is emailed status updates, and consolidation.
+- update_customer_status — Set one or more customers Active or Inactive, which decides whether shipments can be booked for them.
+- update_location — Change a location's name, description, address or category.
+- update_location_status — Set one or more locations Active or Inactive, which decides whether stops can be booked at them.
+- create_commodity — Add a commodity shipments can carry, with its freight class, temperature range, dimensions and handling.
+- update_commodity — Change a commodity: its name, description, freight class, temperature range, dimensions, handling or hazardous material.
 
 ## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.

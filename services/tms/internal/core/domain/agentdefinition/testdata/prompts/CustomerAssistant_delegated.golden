@@ -40,7 +40,6 @@ Loaded now:
 - raise_exception
 - flag_for_manual_review
 - find_in_trenova
-- get_shipment
 - search_shipments
 - list_shipments
 - attach_order_shipments
@@ -48,8 +47,10 @@ Loaded now:
 - create_recurring_shipment
 - set_recurring_shipment_status
 - rerate_shipment
+- create_commodity
 
 Callable after find_tools:
+- get_shipment — Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments.
 - list_customers — List customers narrowed by status, code, name or city, with their ids.
 - list_invoices — List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates.
 - add_shipment_comment — Leave a note on a shipment's comment thread, where dispatch will read it.
@@ -86,6 +87,14 @@ Callable after find_tools:
 - void_service_failure — Void a service failure that should never have been opened, with the reason why: a wrong appointment window, a corrected arrival, a stop that was not late.
 - dispute_detention — Record that the customer disputes a detention charge, with what they said.
 - vet_customer_broker — Check a customer that is a freight broker against the public FMCSA record by its DOT number: broker authority and bond.
+- create_customer — Add a customer the organization ships for: its code, name, billing address and DOT and MC numbers.
+- update_customer — Change a customer's details: name, billing address, DOT and MC numbers, who is emailed status updates, and consolidation.
+- update_customer_status — Set one or more customers Active or Inactive, which decides whether shipments can be booked for them.
+- list_locations — List locations (facilities, terminals, yards) narrowed by status, code, name or city.
+- update_location — Change a location's name, description, address or category.
+- update_location_status — Set one or more locations Active or Inactive, which decides whether stops can be booked at them.
+- list_commodities — List commodities — what this organization hauls, with freight class, handling flags and whether the commodity is hazardous.
+- update_commodity — Change a commodity: its name, description, freight class, temperature range, dimensions, handling or hazardous material.
 
 ## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.

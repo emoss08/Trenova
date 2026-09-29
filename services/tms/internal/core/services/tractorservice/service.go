@@ -11,11 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -187,11 +185,12 @@ func (s *Service) Create(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
+	planned, err := s.PlanCreate(ctx, entity)
+	if err != nil {
+		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, entity)
+	createdEntity, err := s.repo.Create(ctx, planned)
 	if err != nil {
 		log.Error("failed to create tractor", zap.Error(err))
 		return nil, err
@@ -262,21 +261,11 @@ func (s *Service) Update(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	original, err := s.repo.GetByID(ctx, repositories.GetTractorByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
-		},
-	})
+	change, err := s.PlanUpdate(ctx, entity)
 	if err != nil {
-		log.Error("failed to get original tractor", zap.Error(err))
 		return nil, err
 	}
+	original := change.Before
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
@@ -401,59 +390,22 @@ func (s *Service) Locate(
 
 	var result *equipmentcontinuity.EquipmentContinuity
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if _, err := s.repo.GetByID(txCtx, repositories.GetTractorByIDRequest{
-			ID:         req.TractorID,
-			TenantInfo: req.TenantInfo,
-		}); err != nil {
+		if _, err := s.planLocate(txCtx, req); err != nil {
 			return err
 		}
 
-		if _, err := s.locationRepo.GetByID(txCtx, repositories.GetLocationByIDRequest{
-			ID:         req.NewLocationID,
-			TenantInfo: req.TenantInfo,
-		}); err != nil {
-			return err
-		}
-
-		inProgress, err := s.assignmentRepo.FindInProgressByTractorID(
+		var advanceErr error
+		result, advanceErr = s.continuityRepo.Advance(
 			txCtx,
-			req.TenantInfo,
-			req.TractorID,
-			pulid.Nil,
-		)
-		if err != nil {
-			return err
-		}
-		if inProgress != nil {
-			return errortypes.NewBusinessError("Tractor is currently in progress on another move").
-				WithParam("tractorId", req.TractorID.String()).
-				WithParam("shipmentMoveId", inProgress.ShipmentMoveID.String())
-		}
-
-		current, err := s.continuityRepo.GetEffectiveCurrent(
-			txCtx,
-			repositories.GetCurrentEquipmentContinuityRequest{
-				TenantInfo:    req.TenantInfo,
-				EquipmentType: equipmentcontinuity.EquipmentTypeTractor,
-				EquipmentID:   req.TractorID,
+			repositories.CreateEquipmentContinuityRequest{
+				TenantInfo:        req.TenantInfo,
+				EquipmentType:     equipmentcontinuity.EquipmentTypeTractor,
+				EquipmentID:       req.TractorID,
+				CurrentLocationID: req.NewLocationID,
+				SourceType:        equipmentcontinuity.SourceTypeManualLocate,
 			},
 		)
-		if err != nil {
-			return err
-		}
-		if current != nil && current.CurrentLocationID == req.NewLocationID {
-			return errortypes.NewBusinessError("Tractor is already located at the requested location").
-				WithParam("tractorId", req.TractorID.String())
-		}
-
-		result, err = s.continuityRepo.Advance(txCtx, repositories.CreateEquipmentContinuityRequest{
-			TenantInfo:        req.TenantInfo,
-			EquipmentType:     equipmentcontinuity.EquipmentTypeTractor,
-			EquipmentID:       req.TractorID,
-			CurrentLocationID: req.NewLocationID,
-			SourceType:        equipmentcontinuity.SourceTypeManualLocate,
-		})
-		return err
+		return advanceErr
 	})
 	if err != nil {
 		return nil, err
