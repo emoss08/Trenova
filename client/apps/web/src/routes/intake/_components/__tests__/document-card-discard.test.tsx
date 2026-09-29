@@ -32,6 +32,7 @@ const ITEM: CaptureItem = {
   version: 3,
   suggestedRecord: null,
   filedRecord: null,
+  filedBy: null,
 } as unknown as CaptureItem;
 
 function deferred() {

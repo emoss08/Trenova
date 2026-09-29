@@ -8793,7 +8793,7 @@ export type CaptureBatchRowFieldsFragment = { id: string, userId: string, source
 
 export type CapturePageFieldsFragment = { id: string, sequence: number, status: CapturePageStatus, rotation: number, widthPx: number, heightPx: number, dpi: number, isBlank: boolean, isSeparator: boolean, patchCode: string, isCoverSheet: boolean, unrecognizedCoverSheet: boolean, failureMessage: string, contentPath: string, thumbnailPath: string } & { ' $fragmentName'?: 'CapturePageFieldsFragment' };
 
-export type CaptureItemFieldsFragment = { id: string, position: number, status: CaptureItemStatus, pageIds: Array<string>, pageCount: number, suggestedType: string, suggestedId: string | null, suggestedDocumentTypeId: string | null, suggestionSource: CaptureSuggestionSource | null, suggestionConfidence: number | null, suggestionReason: string, detectedKind: string, filedType: string, filedId: string | null, filedDocumentTypeId: string | null, documentId: string | null, filedAt: number | null, failureMessage: string, version: number, suggestedRecord: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null, filedRecord: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null } & { ' $fragmentName'?: 'CaptureItemFieldsFragment' };
+export type CaptureItemFieldsFragment = { id: string, position: number, status: CaptureItemStatus, pageIds: Array<string>, pageCount: number, suggestedType: string, suggestedId: string | null, suggestedDocumentTypeId: string | null, suggestionSource: CaptureSuggestionSource | null, suggestionConfidence: number | null, suggestionReason: string, detectedKind: string, filedType: string, filedId: string | null, filedDocumentTypeId: string | null, documentId: string | null, filedAt: number | null, failureMessage: string, version: number, filedBy: { id: string, name: string } | null, suggestedRecord: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null, filedRecord: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null } & { ' $fragmentName'?: 'CaptureItemFieldsFragment' };
 
 export type CaptureBatchDetailFieldsFragment = (
   { documentTypeId: string | null, settings: { protocol: CaptureSourceProtocol | null, dpi: number, pixelType: CapturePixelType | null, duplex: boolean, feeder: boolean, driverVersion: string, application: string, refused: Array<string> }, pages: Array<{ ' $fragmentRefs'?: { 'CapturePageFieldsFragment': CapturePageFieldsFragment } }>, items: Array<{ ' $fragmentRefs'?: { 'CaptureItemFieldsFragment': CaptureItemFieldsFragment } }> }
@@ -17102,6 +17102,10 @@ export const CaptureItemFieldsFragmentDoc = new TypedDocumentString(`
   filedAt
   failureMessage
   version
+  filedBy {
+    id
+    name
+  }
   suggestedRecord {
     ...CaptureRecordRefFields
   }
@@ -17213,6 +17217,10 @@ fragment CaptureItemFields on CaptureItem {
   filedAt
   failureMessage
   version
+  filedBy {
+    id
+    name
+  }
   suggestedRecord {
     ...CaptureRecordRefFields
   }
@@ -24281,16 +24289,16 @@ export const MyCaptureAccessDocument = {"__meta__":{"kind":"query","name":"MyCap
 export const CaptureAgentReleaseDocument = {"__meta__":{"kind":"query","name":"CaptureAgentRelease","hash":"sha256:871e3e29040b717530d9bdae990b25cbdefea215ade1970666878959c1219e44"}} as unknown as TypedDocumentString<CaptureAgentReleaseQuery, CaptureAgentReleaseQueryVariables>;
 export const CaptureBatchesDocument = {"__meta__":{"kind":"query","name":"CaptureBatches","hash":"sha256:d40d49842db626aa6d822a89f8f3be992c716d71db561f1a4deb6127f19e40ce"}} as unknown as TypedDocumentString<CaptureBatchesQuery, CaptureBatchesQueryVariables>;
 export const CaptureBatchCountDocument = {"__meta__":{"kind":"query","name":"CaptureBatchCount","hash":"sha256:b72597d4462c7841309af83ee9f1217281f91dac439d6841b736ece7af92f402"}} as unknown as TypedDocumentString<CaptureBatchCountQuery, CaptureBatchCountQueryVariables>;
-export const CaptureBatchDocument = {"__meta__":{"kind":"query","name":"CaptureBatch","hash":"sha256:255eebc82d775317997d672fded4e4026bab5ffc76dcb793de5d5909311e255a"}} as unknown as TypedDocumentString<CaptureBatchQuery, CaptureBatchQueryVariables>;
+export const CaptureBatchDocument = {"__meta__":{"kind":"query","name":"CaptureBatch","hash":"sha256:93eb60acc16a9ff7e70b7b68401f478fd6d03076e325f414036fc914f8f557e5"}} as unknown as TypedDocumentString<CaptureBatchQuery, CaptureBatchQueryVariables>;
 export const MyCaptureDevicesDocument = {"__meta__":{"kind":"query","name":"MyCaptureDevices","hash":"sha256:f0a7a8fb1db403a1954eeeb2c75defe50fcb341e515af418b73561ae814d368a"}} as unknown as TypedDocumentString<MyCaptureDevicesQuery, MyCaptureDevicesQueryVariables>;
 export const CaptureDevicesDocument = {"__meta__":{"kind":"query","name":"CaptureDevices","hash":"sha256:7ed34756eb9cbcfe72d1c537858c28eb8195e3379d1135036e1253c99b48e7c8"}} as unknown as TypedDocumentString<CaptureDevicesQuery, CaptureDevicesQueryVariables>;
 export const AvailableCaptureProfilesDocument = {"__meta__":{"kind":"query","name":"AvailableCaptureProfiles","hash":"sha256:a2d1f056167566bda91fd73250f53846888fef9ba1b1ff3e55b3d7ba1c55e1de"}} as unknown as TypedDocumentString<AvailableCaptureProfilesQuery, AvailableCaptureProfilesQueryVariables>;
 export const CaptureProfilesDocument = {"__meta__":{"kind":"query","name":"CaptureProfiles","hash":"sha256:2103f21a0d012b8ccb48e32ad18b5a160398424b61dc860f390be96c92cda1aa"}} as unknown as TypedDocumentString<CaptureProfilesQuery, CaptureProfilesQueryVariables>;
 export const CaptureRequestsForTargetDocument = {"__meta__":{"kind":"query","name":"CaptureRequestsForTarget","hash":"sha256:de806e1cc66ab39521e34f5e9e6c75d2643ff1e8a53d73e92c226b173da599d5"}} as unknown as TypedDocumentString<CaptureRequestsForTargetQuery, CaptureRequestsForTargetQueryVariables>;
 export const CaptureDevicePairingDocument = {"__meta__":{"kind":"query","name":"CaptureDevicePairing","hash":"sha256:b7581d44accbc6f587878682111c7d54b4ba3ea85c33460b45478c030b6198bf"}} as unknown as TypedDocumentString<CaptureDevicePairingQuery, CaptureDevicePairingQueryVariables>;
-export const EditCaptureItemsDocument = {"__meta__":{"kind":"mutation","name":"EditCaptureItems","hash":"sha256:06d6ea7c7108d379fda0f748bfd8f0cc67e0858c0e12ebe10077ddab0e22ed48"}} as unknown as TypedDocumentString<EditCaptureItemsMutation, EditCaptureItemsMutationVariables>;
-export const FileCaptureItemDocument = {"__meta__":{"kind":"mutation","name":"FileCaptureItem","hash":"sha256:61340153bcc7647b8cba47c96ebb6c5234d6d7cf70689826ac13863304a77154"}} as unknown as TypedDocumentString<FileCaptureItemMutation, FileCaptureItemMutationVariables>;
-export const FileCaptureItemsDocument = {"__meta__":{"kind":"mutation","name":"FileCaptureItems","hash":"sha256:61e2b7bd0d853ce8ce7959b820c8f954855355108629c60b9849b339f090d865"}} as unknown as TypedDocumentString<FileCaptureItemsMutation, FileCaptureItemsMutationVariables>;
+export const EditCaptureItemsDocument = {"__meta__":{"kind":"mutation","name":"EditCaptureItems","hash":"sha256:6714bdad687385cf5fb7f51038fdb91432724eba5c18e79447bc3101618b0974"}} as unknown as TypedDocumentString<EditCaptureItemsMutation, EditCaptureItemsMutationVariables>;
+export const FileCaptureItemDocument = {"__meta__":{"kind":"mutation","name":"FileCaptureItem","hash":"sha256:67a9c857e8f256327d5470aae64fa9c467ca21b32cb78967a38a99d4a23a151e"}} as unknown as TypedDocumentString<FileCaptureItemMutation, FileCaptureItemMutationVariables>;
+export const FileCaptureItemsDocument = {"__meta__":{"kind":"mutation","name":"FileCaptureItems","hash":"sha256:5876b2493cb4446d062209bccbd1f64a3c020991631807adde074f453d3a7d46"}} as unknown as TypedDocumentString<FileCaptureItemsMutation, FileCaptureItemsMutationVariables>;
 export const DiscardCaptureItemDocument = {"__meta__":{"kind":"mutation","name":"DiscardCaptureItem","hash":"sha256:5e69ac2162aa94b31c531a951def13cf7af38ee2c80141f8b32ac7b21f8efd5e"}} as unknown as TypedDocumentString<DiscardCaptureItemMutation, DiscardCaptureItemMutationVariables>;
 export const DiscardCaptureBatchDocument = {"__meta__":{"kind":"mutation","name":"DiscardCaptureBatch","hash":"sha256:58fba2eb65ea4ee0f0a268f1e1d1f43603612e23e3cfb2b7b33e0c485829a357"}} as unknown as TypedDocumentString<DiscardCaptureBatchMutation, DiscardCaptureBatchMutationVariables>;
 export const CreateCaptureRequestDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureRequest","hash":"sha256:c6ab98771f332dcd609f88468c69d5cb046414a8ab5454d211d378fd4957113f"}} as unknown as TypedDocumentString<CreateCaptureRequestMutation, CreateCaptureRequestMutationVariables>;

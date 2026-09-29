@@ -60,6 +60,7 @@ function item(id: string, position: number, status: Item["status"], pageIds: str
     version: 1,
     suggestedRecord: null,
     filedRecord: null,
+    filedBy: null,
   };
 }
 

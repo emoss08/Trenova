@@ -693,6 +693,7 @@ func TestEditItemsSplitsKeepingTheRoute(t *testing.T) {
 		assert.Equal(t, shipmentID, *split.SuggestedID)
 	}
 	assert.Equal(t, 270, w.pages[item.PageIDs[1]].Rotation)
+	assert.Contains(t, w.audited, "update:Rearranged captured pages")
 
 	_, err = s.EditItems(t.Context(), &EditItemsInput{
 		TenantInfo: w.tenant, BatchID: batch.ID, Version: current.Version,
@@ -902,4 +903,26 @@ func TestPageContentIsTaggedForGood(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, pdf.NotModified, "the page and its thumbnail carry different tags")
 	assert.NotEqual(t, first.ETag, pdf.ETag)
+}
+
+func TestDiscardingADocumentLeavesTheRestAndIsAudited(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	s := w.service()
+	principal := principalFor(t, s, pair(t, w, s))
+	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "d", Source: capture.SourceScan},
+		[][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3)}, map[int]string{2: "T"})
+	_, err := s.ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	require.NoError(t, err)
+	items := w.itemsOf(batch.ID)
+	require.Len(t, items, 2)
+
+	settled, err := s.DiscardItem(t.Context(), &DiscardItemInput{
+		TenantInfo: w.tenant, ItemID: items[0].ID, Version: items[0].Version,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, settled.ItemCount)
+	assert.Equal(t, capture.BatchReady, settled.Status)
+	assert.Contains(t, w.audited, "delete:Discarded a captured document")
 }

@@ -6416,6 +6416,8 @@ type CaptureItem {
   "The document it became."
   documentId: ID
   filedById: ID
+  "The person who filed it, when the reader may see them."
+  filedBy: User
   filedAt: Timestamp
   failureMessage: String!
   version: Int!
@@ -32312,6 +32314,8 @@ func (ec *executionContext) childFields_CaptureItem(ctx context.Context, field g
 		return ec.fieldContext_CaptureItem_documentId(ctx, field)
 	case "filedById":
 		return ec.fieldContext_CaptureItem_filedById(ctx, field)
+	case "filedBy":
+		return ec.fieldContext_CaptureItem_filedBy(ctx, field)
 	case "filedAt":
 		return ec.fieldContext_CaptureItem_filedAt(ctx, field)
 	case "failureMessage":

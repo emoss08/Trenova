@@ -13,6 +13,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
@@ -65,6 +66,7 @@ type world struct {
 	sessions    map[pulid.ID]*documentupload.DocumentUploadSession
 	uploaded    map[pulid.ID][]byte
 	published   []string
+	audited     []string
 	notified    []*notification.Notification
 }
 
@@ -119,6 +121,7 @@ func (w *world) service() *Service {
 		qrCodes:       captureqr.New(),
 		notifications: &fakeNotifier{w},
 		realtime:      &fakeRealtime{w},
+		audit:         &fakeAudit{w: w},
 	}
 }
 
@@ -1090,4 +1093,24 @@ func (f fakeOrganizations) GetByID(
 	}
 
 	return &tenant.Organization{ID: f.w.tenant.OrgID, Name: "Acme Freight"}, nil
+}
+
+// fakeAudit records each action as "<operation>:<comment>".
+type fakeAudit struct {
+	services.AuditService
+	w *world
+}
+
+func (f *fakeAudit) LogAction(params *services.LogActionParams, opts ...services.LogOption) error {
+	entry := &audit.Entry{}
+	for _, opt := range opts {
+		if err := opt(entry); err != nil {
+			return err
+		}
+	}
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	f.w.audited = append(f.w.audited, string(params.Operation)+":"+entry.Comment)
+
+	return nil
 }

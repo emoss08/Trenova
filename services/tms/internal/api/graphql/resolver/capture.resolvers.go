@@ -92,6 +92,14 @@ func (r *captureItemResolver) FiledRecord(ctx context.Context, obj *capture.Capt
 	return r.captureRecord(ctx, obj.FiledType, obj.FiledID)
 }
 
+func (r *captureItemResolver) FiledBy(ctx context.Context, obj *capture.CaptureItem) (*tenant.User, error) {
+	if obj.FiledByID == nil {
+		return nil, nil
+	}
+
+	return loadUser(ctx, *obj.FiledByID)
+}
+
 func (r *capturePageResolver) PatchCode(ctx context.Context, obj *capture.CapturePage) (string, error) {
 	return obj.Markers.PatchCode, nil
 }

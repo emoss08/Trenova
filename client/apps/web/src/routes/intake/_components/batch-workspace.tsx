@@ -1,3 +1,5 @@
+import { recordPath } from "@/config/record-links";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { usePermission } from "@/hooks/use-permission";
 import {
   captureBatchStatusAttrs,
@@ -37,7 +39,7 @@ import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowLeftIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, LinkIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { ConfirmDiscardDialog } from "./confirm-discard-dialog";
 import { DocumentCard, type DiscardEffect } from "./document-card";
@@ -131,6 +133,13 @@ function DocumentSketch() {
   );
 }
 
+/** A stack not yet split: every page it has is on its way to being read. */
+const ARRIVING_STATUSES: readonly CaptureBatchDetail["status"][] = [
+  "Receiving",
+  "Sealed",
+  "Processing",
+];
+
 function discardEffectFor(batch: CaptureBatchDetail): DiscardEffect {
   const open = batch.items.filter((item) => item.status === "Proposed" || item.status === "Failed");
   if (open.length > 1) {
@@ -157,6 +166,7 @@ function OpenBatch({
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [pageMenu] = useState(() => createDropdownMenuHandle<PageMenuPayload>());
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const { copy } = useCopyToClipboard();
 
   const canEdit = canUpdate && batch.isEditable;
   const pages = useMemo(() => new Map(batch.pages.map((page) => [page.id, page])), [batch.pages]);
@@ -164,6 +174,7 @@ function OpenBatch({
   const statusAttrs = captureBatchStatusAttrs(t)[batch.status];
   const retention = captureRetention(batch.retainUntil, now);
   const settled = batch.items.filter((item) => item.status === "Filed" || item.status === "Filing");
+  const arriving = batch.items.length === 0 && ARRIVING_STATUSES.includes(batch.status);
   const discardEffect = discardEffectFor(batch);
 
   const sensors = useSensors(
@@ -275,21 +286,33 @@ function OpenBatch({
                 </Button>
               )
             )}
-            {canDelete && batch.isEditable && (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="outline"
-                      aria-label={t("Stack actions")}
-                    >
-                      <MoreHorizontalIcon className="size-4" />
-                    </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    aria-label={t("Stack actions")}
+                  >
+                    <MoreHorizontalIcon className="size-4" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuItem
+                  title={t("Copy link")}
+                  description={t("Opens this stack in Intake for anyone who can see it")}
+                  descriptionClassProps="whitespace-normal"
+                  startContent={<LinkIcon className="size-3.5" />}
+                  onClick={() =>
+                    void copy(
+                      new URL(recordPath("capture_batch", batch.id), window.location.origin).href,
+                      { withToast: true },
+                    )
                   }
                 />
-                <DropdownMenuContent align="end" className="w-64">
+                {canDelete && batch.isEditable && (
                   <DropdownMenuItem
                     title={t("Discard the stack")}
                     description={t("Deletes every page not already filed")}
@@ -298,9 +321,9 @@ function OpenBatch({
                     color="danger"
                     onClick={() => setConfirmDiscard(true)}
                   />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -394,8 +417,9 @@ function OpenBatch({
               />
             )}
 
-            {(batch.isEditable || layout.loose.length > 0) && (
+            {(batch.isEditable || arriving || layout.loose.length > 0) && (
               <LoosePages
+                arriving={arriving}
                 pageIds={layout.loose}
                 pages={pages}
                 rotations={layout.rotations}

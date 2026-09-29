@@ -12,6 +12,9 @@ import { PageThumbnail, type PageMenu } from "./page-thumbnail";
  * backs, and anything the person set aside. They stay on the stack, so a page
  * dropped by mistake is here to be dragged back, and they are deleted with
  * the rest of the stack's unfiled pages when its retention runs out.
+ *
+ * Before a stack is split every page is in no document, and none was set
+ * aside: `arriving` shows them as the pages received so far instead.
  */
 export function LoosePages({
   pageIds,
@@ -21,6 +24,7 @@ export function LoosePages({
   menu,
   onPreview,
   canEdit,
+  arriving = false,
 }: {
   pageIds: string[];
   pages: Map<string, CapturePage>;
@@ -29,23 +33,33 @@ export function LoosePages({
   menu: PageMenu;
   onPreview: (pageId: string) => void;
   canEdit: boolean;
+  arriving?: boolean;
 }) {
   const t = useT();
-  const { setNodeRef, isOver } = useDroppable({ id: LOOSE, disabled: !canEdit });
+  const { setNodeRef, isOver } = useDroppable({ id: LOOSE, disabled: !canEdit || arriving });
 
   return (
-    <SectionPanel title={t("Set aside")} count={pageIds.length} className="overflow-visible">
+    <SectionPanel
+      title={arriving ? t("Pages received") : t("Set aside")}
+      count={pageIds.length}
+      className="overflow-visible"
+    >
       <div className="flex flex-col gap-2 p-3">
         <p className="text-foreground-subtle text-xs">
-          {pageIds.length === 0
-            ? t("Drag a page here to keep it out of every document")
-            : t("Not in any document. Drag a page into one to file it.")}
+          {arriving
+            ? pageIds.length === 0
+              ? t("Pages appear here as they arrive")
+              : t("Shown as they arrive. They are split into documents once every page is in.")
+            : pageIds.length === 0
+              ? t("Drag a page here to keep it out of every document")
+              : t("Not in any document. Drag a page into one to file it.")}
         </p>
         <SortableContext items={pageIds} strategy={rectSortingStrategy}>
           <div
             ref={setNodeRef}
             className={cn(
-              "border-border flex min-h-16 flex-wrap gap-3 rounded-md border border-dashed p-2 transition-colors",
+              "flex min-h-16 flex-wrap gap-3 rounded-md p-2 transition-colors",
+              !arriving && "border-border border border-dashed",
               isOver && "bg-surface-selected",
             )}
           >
@@ -64,7 +78,7 @@ export function LoosePages({
                   last={false}
                   menu={menu}
                   onPreview={onPreview}
-                  disabled={!canEdit}
+                  disabled={!canEdit || arriving}
                 />
               );
             })}

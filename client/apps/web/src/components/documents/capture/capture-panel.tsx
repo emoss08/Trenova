@@ -1,4 +1,5 @@
 import { SectionPanel } from "@/components/section-panel";
+import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   captureRequestFailureLabel,
@@ -59,7 +60,7 @@ export function useCaptureKind(resourceType: string): CaptureRecordKind | null {
 /**
  * "Scan" beside Upload in the Documents tab, with printing into the record and
  * cover sheets behind its menu. Scanning is the common case, so it is the
- * button; the others are one click further.
+ * button, and only there; the others are one click further.
  */
 export function CaptureButton({
   kind,
@@ -102,13 +103,6 @@ export function CaptureButton({
             }
           />
           <DropdownMenuContent align="end" className="w-72">
-            <DropdownMenuItem
-              title={t("Scan into this record")}
-              description={t("Start a scan on one of your computers")}
-              descriptionClassProps="whitespace-normal"
-              startContent={<ScanLineIcon className="size-3.5" />}
-              onClick={() => setRequestMode("Scan")}
-            />
             <DropdownMenuItem
               title={t("Print into this record")}
               description={t("File the next thing you print to Trenova here")}
@@ -197,7 +191,7 @@ function RequestRow({
         )}
         {request.batchId !== null && (
           <Link
-            to={`/intake?batch=${encodeURIComponent(request.batchId)}&view=all`}
+            to={recordPath("capture_batch", request.batchId)}
             className="ui-focus-ring text-brand text-xs hover:underline"
           >
             {t("Open in Intake")}

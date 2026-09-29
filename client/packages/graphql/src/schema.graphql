@@ -5595,6 +5595,8 @@ type CaptureItem {
   documentId: ID
   failureMessage: String!
   filedAt: Timestamp
+  """The person who filed it, when the reader may see them."""
+  filedBy: User
   filedById: ID
   filedDocumentTypeId: ID
   filedId: ID

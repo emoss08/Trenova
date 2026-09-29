@@ -3,12 +3,13 @@ package captureservice
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/productguide"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -198,6 +199,8 @@ const (
 	retentionReminderSeconds = 7 * secondsPerDay
 	retentionReminderEvent   = "capture.retention_reminder"
 	retentionReminderSource  = "captureservice"
+	// captureBatchEntity names a stack in the product guide's record links.
+	captureBatchEntity = "capture_batch"
 )
 
 // RemindRetention tells the owner of each stack still waiting to be filed
@@ -275,7 +278,7 @@ func (s *Service) remindOwner(ctx context.Context, batch *capture.CaptureBatch, 
 			batchName(batch), waiting, daysLeft,
 		),
 		Data: map[string]any{
-			"link":        "/intake?view=all&batch=" + url.QueryEscape(batch.ID.String()),
+			"link":        batchLink(batch.ID),
 			"batchId":     batch.ID.String(),
 			"retainUntil": batch.RetainUntil,
 		},
@@ -301,4 +304,13 @@ func batchName(batch *capture.CaptureBatch) string {
 	default:
 		return "A scanned stack"
 	}
+}
+
+// batchLink is where a stack opens in Intake.
+func batchLink(id pulid.ID) string {
+	if path, ok := productguide.RecordPath(captureBatchEntity, id.String()); ok {
+		return path
+	}
+
+	return "/intake"
 }
