@@ -44,6 +44,9 @@ write cannot differ: `ShipmentService.BulkTransferToBilling` and `billingtransfe
 | `cancel_billing_queue_item` | billing queue / update | money | Propose → Propose | yes |
 | `post_invoice` | invoice / update | money | Propose → Propose | yes |
 | `send_invoice` | invoice / submit | sent outside | Propose → Propose | yes |
+| `approve_billing_queue_items` | billing queue / update | money | Propose → Propose | yes |
+| `post_invoices` | invoice / update | money | Propose → Propose | yes |
+| `send_invoices` | invoice / submit | sent outside | Propose → Propose | yes |
 
 **Reads.** `list_billing_transfer_candidates` is the transfer dialog's list (the same
 candidate predicate through `ListBillingTransferCandidateIDs`, oldest first, with its
@@ -104,6 +107,37 @@ for (`AccountingSyncPlanner`) and the EDI 210 plan. `send_invoice` takes only th
 the recipients, wording and attachments are `PlanSend`'s, and a send whose attachments would
 go as download links is refused, since those links are built against the browser's address.
 
+## Several records at once
+
+Posting five drafts used to be five `get_invoice` calls and five `post_invoice` proposals the
+person approved one by one. The three person-only steps now each have a bulk twin that takes
+up to 50 records as a record subset (`toolschema.RecordSubset`), so the person approving sees
+one card, may untick records, and approves exactly the set that remains:
+
+| Bulk tool | Parameter | Runs each record as |
+| --- | --- | --- |
+| `approve_billing_queue_items` | `billingQueueItemIds` (billing queue), `reviewNotes` | `approve_billing_queue_item` |
+| `post_invoices` | `invoiceIds` (invoice) | `post_invoice` |
+| `send_invoices` | `invoiceIds` (invoice) | `send_invoice` |
+
+Each bulk tool wraps its single-record tool (`agenttoolservice/bulk_records.go`): the preview
+runs the single tool's own preview for each of the first 20 records (a preview's bound) and
+keeps that record's change, with a `What happens` field carrying the single preview's
+sentence, refusals first; a larger set is `Partial` and says the rest are checked when it
+runs. A record the single tool would refuse, one already posted, or one not found in the
+caller's tenant is shown as refused and the rest still go; only a set of which nothing would
+go carries `would_fail`, which is also what `Validate` refuses. Execution runs only from a
+person's approval, as the approver, record by record through the single tool (so every
+single-record guard, including `ApprovedFromProposal`, still applies), on the approved ids
+only, and reports "N of M posted; refused: …". A run in which every record was refused fails.
+The single tools stay, pinned to their record, and their descriptions point to the bulk tool
+when there is more than one record.
+
+`get_invoices` reads up to 50 invoices by id in one call (`InvoiceRepository.GetByIDs`,
+tenant-scoped, amounts gated as `get_invoice` gates them) and names ids that are not an
+invoice of the organization. `list_invoices` and `list_billing_queue_items` also filter on
+`id` with `in`.
+
 ## After the invoice: receivables
 
 The same rules carry past posting. Every write calls the service its page calls
@@ -152,7 +186,7 @@ unpinned: an open statement is computed when asked and has no row.
 
 | Template | Runs | Holds |
 | --- | --- | --- |
-| Billing assistant | in chat, as the person | the lifecycle up to an invoice in the customer's hands and its corrections: transfer, the queue decisions, `create_invoice`, `update_invoice_draft`, `generate_invoice_pdf`, `post_invoice`, `send_invoice`, `send_invoice_edi`, `void_invoice`, `create_invoice_memo`, the adjustment tools, invoice runs and statements, and `share_invoice` |
+| Billing assistant | in chat, as the person | the lifecycle up to an invoice in the customer's hands and its corrections: transfer, the queue decisions, `create_invoice`, `update_invoice_draft`, `generate_invoice_pdf`, `post_invoice`, `send_invoice`, their bulk twins `approve_billing_queue_items`, `post_invoices` and `send_invoices`, `get_invoices`, `send_invoice_edi`, `void_invoice`, `create_invoice_memo`, the adjustment tools, invoice runs and statements, and `share_invoice` |
 | Receivables assistant | in chat, as the person | what happens after: `apply_customer_payment`, `reverse_customer_payment`, `apply_credit_memo`, `unapply_credit_memo`, the dispute tools, `assess_late_charges`, `send_invoice` to send a copy again, `share_invoice`, and the reads `get_ar_aging`, `list_ar_open_items`, `list_collections_worklist`, `get_customer_statement`, `list_customer_payments`, `list_credit_memo_applications`, `list_invoice_adjustments` |
 | Cash application agent | unattended, on bank receipt exceptions | `match_bank_receipt` and `post_customer_payment` for money that arrived at the bank |
 | Billing exception agent | unattended, on queue events | the reads, review, hold, exception, send back |
@@ -179,7 +213,9 @@ on without seeing what it bills.
 
 - An agent definition holds at most 64 tools. Every template leaves room for at least eight of
   an organization's own (`TestTemplates_LeaveRoomForAnOrganizationsOwnTools`): the billing
-  assistant holds 53 and the receivables assistant 27.
+  assistant holds 56 and the receivables assistant 27. To make room for the bulk tools the
+  billing assistant gave up `list_insights`, `get_insight` (the insight analyst's) and
+  `get_report_run` (a run's progress is already on screen).
 - A template is copied into an agent when the agent is made. An agent made from the billing
   assistant before collections moved to receivables keeps the tools it was saved with, and no
   existing agent gains `share_invoice`; an administrator changes either in AI control.

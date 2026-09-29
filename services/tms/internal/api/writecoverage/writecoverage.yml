@@ -370,7 +370,7 @@ writes:
   "mutation assignBillingQueueBiller":
     tools: [assign_billing_queue_biller]
   "mutation updateBillingQueueStatus":
-    tools: [approve_billing_queue_item, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review]
+    tools: [approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review]
 
   # billingtransfer
   "mutation cancelBillingTransferRun":
@@ -1667,12 +1667,12 @@ writes:
   "POST /api/v1/billing/invoices/:invoiceID/generate-pdf/":
     tools: [generate_invoice_pdf]
   "POST /api/v1/billing/invoices/:invoiceID/post/":
-    tools: [post_invoice]
+    tools: [post_invoice, post_invoices]
   "POST /api/v1/billing/invoices/:invoiceID/preview/":
     exempt: read-only
     reason: "Renders an invoice for review and saves nothing."
   "POST /api/v1/billing/invoices/:invoiceID/send/":
-    tools: [send_invoice]
+    tools: [send_invoice, send_invoices]
   "mutation createInvoiceFromOrder":
     tools: [create_invoice]
   "mutation createInvoiceFromShipments":

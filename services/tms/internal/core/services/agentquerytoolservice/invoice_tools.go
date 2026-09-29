@@ -2,12 +2,15 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 const maxInvoiceLines = 100
@@ -36,7 +39,8 @@ func (t *getInvoiceTool) Name() string { return "get_invoice" }
 func (t *getInvoiceTool) Description() string {
 	return "Retrieve one invoice by id, with its line items, totals, payment and dispute " +
 		"state. Each line's id is what an invoice adjustment names. Use list_invoices first " +
-		"when you have a number or are looking for what is unpaid. Amounts and the memo are " +
+		"when you have a number or are looking for what is unpaid, and get_invoices to check " +
+		"several at once. Amounts and the memo are " +
 		"left out, and named in withheldByAccess, when your data access does not reach them."
 }
 
@@ -252,4 +256,161 @@ func invoiceLines(lines []*invoice.InvoiceLine, gate *fieldGate) ([]invoiceLineD
 	}
 
 	return rows, truncated
+}
+
+const (
+	paramInvoiceIDs       = "invoiceIds"
+	maxBatchInvoices      = 50
+	maxBatchInvoiceLines  = 25
+	batchInvoiceSearchFor = "invoices by id"
+)
+
+type invoiceBatchReader interface {
+	GetByIDs(
+		ctx context.Context,
+		req repositories.GetInvoicesByIDsRequest,
+	) ([]*invoice.Invoice, error)
+}
+
+type getInvoicesTool struct {
+	invoices invoiceBatchReader
+	access   fieldAccess
+}
+
+func newGetInvoicesTool(
+	invoices repositories.InvoiceRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return &getInvoicesTool{invoices: invoices, access: newFieldAccess(permissions)}
+}
+
+func (t *getInvoicesTool) Name() string { return "get_invoices" }
+
+func (t *getInvoicesTool) Description() string {
+	return "Retrieve several invoices by id in one call, each with its status, totals, " +
+		"payment state and line items. Use it instead of calling get_invoice once per " +
+		"invoice, for example to check a batch of drafts before posting them. Up to 50; an " +
+		"id that is not an invoice of this organization is named in the note. Amounts are " +
+		"left out, and named in withheldByAccess, when your data access does not reach them."
+}
+
+func (t *getInvoicesTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			paramInvoiceIDs: idListProperty("The invoices' ids, from list_invoices, "+
+				"list_ar_open_items or the page you are on.", maxBatchInvoices),
+		},
+		"required":             []string{paramInvoiceIDs},
+		"additionalProperties": false,
+	}
+}
+
+func (t *getInvoicesTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{resource: permission.ResourceInvoice})
+}
+
+type invoiceBatchRow struct {
+	ID               string              `json:"id"`
+	Number           string              `json:"number"`
+	Status           string              `json:"status"`
+	SettlementStatus string              `json:"settlementStatus"`
+	BillType         string              `json:"billType"`
+	BillToName       string              `json:"billToName"`
+	ProNumber        string              `json:"proNumber,omitempty"`
+	TotalAmount      string              `json:"totalAmount,omitempty"`
+	Currency         string              `json:"currency"`
+	InvoiceDate      optionalDate        `json:"invoiceDate"`
+	DueDate          optionalDate        `json:"dueDate"`
+	SendStatus       string              `json:"sendStatus"`
+	LineCount        int                 `json:"lineCount"`
+	Lines            []invoiceLineDetail `json:"lines"`
+	LinesTruncated   bool                `json:"linesTruncated,omitempty"`
+}
+
+func (t *getInvoicesTool) Query(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+) (any, error) {
+	if err := guardQuery(params); err != nil {
+		return nil, err
+	}
+
+	ids, err := requireIDList(params.Params, paramInvoiceIDs, maxBatchInvoices)
+	if err != nil {
+		return nil, err
+	}
+	ids = sliceutils.Dedupe(ids)
+
+	entities, err := t.invoices.GetByIDs(ctx, repositories.GetInvoicesByIDsRequest{
+		TenantInfo: tenantOf(params),
+		InvoiceIDs: ids,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	byID := make(map[pulid.ID]*invoice.Invoice, len(entities))
+	for _, entity := range entities {
+		if entity != nil {
+			byID[entity.ID] = entity
+		}
+	}
+
+	gate := t.access.gate(ctx, params, permission.ResourceInvoice)
+	rows := make([]invoiceBatchRow, 0, len(byID))
+	missing := make([]string, 0, len(ids)-len(byID))
+	for _, id := range ids {
+		entity, ok := byID[id]
+		if !ok {
+			missing = append(missing, id.String())
+
+			continue
+		}
+		rows = append(rows, invoiceBatchRowFrom(entity, gate))
+	}
+
+	outcome := searchOutcome{
+		Count:       len(rows),
+		SearchedFor: []string{batchInvoiceSearchFor},
+		Items:       rows,
+		Columns:     columnsOf(rows),
+	}
+	if len(missing) > 0 {
+		outcome.Note = "No invoice of this organization has these ids: " +
+			strings.Join(missing, ", ")
+	}
+
+	return gatedResult(&outcome, gate), nil
+}
+
+func invoiceBatchRowFrom(entity *invoice.Invoice, gate *fieldGate) invoiceBatchRow {
+	lines := entity.Lines
+	truncated := len(lines) > maxBatchInvoiceLines
+	if truncated {
+		lines = lines[:maxBatchInvoiceLines]
+	}
+	details, _ := invoiceLines(lines, gate)
+
+	row := invoiceBatchRow{
+		ID:               entity.ID.String(),
+		Number:           entity.Number,
+		Status:           string(entity.Status),
+		SettlementStatus: string(entity.SettlementStatus),
+		BillType:         string(entity.BillType),
+		BillToName:       entity.BillToName,
+		ProNumber:        entity.ShipmentProNumber,
+		Currency:         money.CurrencyCode(entity.CurrencyCode),
+		InvoiceDate:      recordedDate(entity.InvoiceDate),
+		DueDate:          pointerDate(entity.DueDate),
+		SendStatus:       string(entity.SendStatus),
+		LineCount:        len(entity.Lines),
+		Lines:            details,
+		LinesTruncated:   truncated,
+	}
+	if gate.show(fieldTotalAmount, fieldTotalAmount) {
+		row.TotalAmount = entity.TotalAmount.StringFixed(2)
+	}
+
+	return row
 }
