@@ -172,6 +172,10 @@ pub struct Snapshot {
     pub review_before_sending: bool,
     /// An administrator set review before sending, so the person cannot.
     pub review_locked: bool,
+    /// The test scanners are listed, for trying scanning without one.
+    pub test_scanner: bool,
+    /// An administrator turned the test scanners off.
+    pub test_scanner_locked: bool,
 }
 
 impl Snapshot {

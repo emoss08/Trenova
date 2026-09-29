@@ -10,6 +10,7 @@ pub mod page;
 pub mod preview;
 pub mod pwg;
 pub mod raster;
+pub mod sample;
 pub mod scan;
 
 pub use dib::{Bitmap, decode_bmp};

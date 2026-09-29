@@ -2506,10 +2506,12 @@ name = "trenova-capture-scan"
 version = "1.0.0"
 dependencies = [
  "capture-imaging",
+ "capture-platform",
  "capture-protocol",
  "capture-twain",
  "capture-wia",
  "static_vcruntime",
+ "tempfile",
  "tracing",
  "tracing-subscriber",
 ]
