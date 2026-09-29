@@ -40,13 +40,27 @@ function itemForGroup(batch: CaptureBatchDetail, group: LayoutGroup): CaptureIte
   );
 }
 
+/** The open item holding exactly these pages, in this order. */
+function itemWithPages(
+  batch: CaptureBatchDetail,
+  pageIds: readonly string[],
+): CaptureItem | undefined {
+  return batch.items.find(
+    (item) =>
+      (item.status === "Proposed" || item.status === "Failed") &&
+      item.pageIds.length === pageIds.length &&
+      item.pageIds.every((id, index) => id === pageIds[index]),
+  );
+}
+
 /**
  * Everything a person does to one open stack, in one place: rearranging its
  * pages, choosing where each document goes, and filing or throwing away.
  *
- * The rearranged layout is a draft until it is saved, and filing waits for
- * it: a document is filed as the server holds it, so filing one the screen
- * shows differently would file the wrong pages.
+ * The rearranged layout is a draft until it is saved. A document is filed as
+ * the server holds it, so filing from a changed draft saves the draft first
+ * and then files the documents as they now stand on the server: what the
+ * person sees is what is filed, without a separate save.
  */
 export function useBatchEditor(batch: CaptureBatchDetail) {
   const t = useT();
@@ -104,6 +118,26 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
     [batch.id, queryClient],
   );
 
+  /**
+   * The batch to file from: this one when nothing changed, otherwise the one
+   * the server returns once the draft is saved.
+   */
+  const settle = useCallback(async (): Promise<CaptureBatchDetail> => {
+    if (!dirty) {
+      return batch;
+    }
+    const next = await editCaptureItems(batch.id, toEditInput(layout, saved, batch.version));
+    queryClient.setQueryData(queries.capture.batch(next.id).queryKey, next);
+    return next;
+  }, [batch, dirty, layout, queryClient, saved]);
+
+  /** The item a document on screen is on `current`, which may be newly saved. */
+  const itemOn = useCallback(
+    (current: CaptureBatchDetail, group: LayoutGroup) =>
+      dirty ? itemWithPages(current, group.pageIds) : itemForGroup(current, group),
+    [dirty],
+  );
+
   const saveMutation = useApiMutation({
     mutationFn: () => editCaptureItems(batch.id, toEditInput(layout, saved, batch.version)),
     onSuccess: async (next) => {
@@ -114,7 +148,13 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
   });
 
   const fileOneMutation = useApiMutation({
-    mutationFn: ({ item, destination }: { item: CaptureItem; destination: Destination }) => {
+    mutationFn: async (group: LayoutGroup) => {
+      const destination = destinationFor(group);
+      const current = await settle();
+      const item = itemOn(current, group);
+      if (item === undefined) {
+        throw new Error(t("The stack changed while you were working. Reload it and file again."));
+      }
       const entry = filingEntry(item, destination);
       return fileCaptureItem(item.id, {
         targetType: entry.targetType,
@@ -134,8 +174,14 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
   });
 
   const fileAllMutation = useApiMutation({
-    mutationFn: (entries: { item: CaptureItem; destination: Destination }[]) =>
-      fileCaptureItems(entries.map(({ item, destination }) => filingEntry(item, destination))),
+    mutationFn: async (ready: { group: LayoutGroup; destination: Destination }[]) => {
+      const current = await settle();
+      const entries = ready.flatMap(({ group, destination }) => {
+        const item = itemOn(current, group);
+        return item === undefined ? [] : [filingEntry(item, destination)];
+      });
+      return fileCaptureItems(entries);
+    },
     onSuccess: async (result) => {
       setFailures(Object.fromEntries(result.failures.map((row) => [row.itemId, row.message])));
       if (result.failures.length === 0) {
@@ -183,17 +229,21 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
     },
   });
 
-  /** Every open document with a record chosen, as it would be filed now. */
-  const readyToFile = useMemo(() => {
-    if (dirty) {
-      return [];
-    }
-    return layout.groups.flatMap((group) => {
-      const item = itemForGroup(batch, group);
-      const destination = destinationFor(group);
-      return item !== undefined && isFileable(destination) ? [{ item, destination }] : [];
-    });
-  }, [batch, destinationFor, dirty, layout.groups]);
+  /**
+   * Every document on screen with a record chosen, as it would be filed now.
+   * A changed draft counts every one of its documents: filing saves it first.
+   */
+  const readyToFile = useMemo(
+    () =>
+      layout.groups.flatMap((group) => {
+        const destination = destinationFor(group);
+        const known = dirty || itemForGroup(batch, group) !== undefined;
+        return known && group.pageIds.length > 0 && isFileable(destination)
+          ? [{ group, destination }]
+          : [];
+      }),
+    [batch, destinationFor, dirty, layout.groups],
+  );
 
   return {
     layout,
@@ -209,7 +259,7 @@ export function useBatchEditor(batch: CaptureBatchDetail) {
     save: () => saveMutation.mutate(undefined),
     saving: saveMutation.isPending,
     fileOne: fileOneMutation.mutate,
-    filingOne: fileOneMutation.isPending ? fileOneMutation.variables?.item.id : undefined,
+    filingOne: fileOneMutation.isPending ? fileOneMutation.variables?.key : undefined,
     fileAll: () => fileAllMutation.mutate(readyToFile),
     filingAll: fileAllMutation.isPending,
     discardItem: discardItemMutation.mutateAsync,

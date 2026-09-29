@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a0495f7bf9bf7c57d85902e51c1fae0e9c0fc5b5c5c96bfaf36b7ac9de225a3a",
+  "version": "sha256:216548f6366ca19989daf6226e97a28cf8871df296c06ae7153c27be2816b4fc",
   "modules": [
     {
       "id": "home",
@@ -12983,7 +12983,8 @@
             "Open [Intake](/intake) and select **To file**.",
             "Select a stack. Each document shows its pages, what Trenova suggested and why, and where it will be filed.",
             "For each document, check **File onto**, the record and the **Document type**, and change any that are wrong.",
-            "Select **File** on one document, or the button at the top to file every document that has a record chosen. A document that cannot be filed says why on its card; the rest are filed."
+            "Select **File** on one document, or the button at the top to file every document that has a record chosen. A document that cannot be filed says why on its card; the rest are filed.",
+            "To work from the keyboard, press J and K to move between documents, F to file the one you are on, R to turn its pages and S to save the split."
           ]
         },
         {
@@ -12999,7 +13000,21 @@
             "Open the stack in [Intake](/intake).",
             "Drag a page to another document or to **Set aside**, or open a page's menu and choose **Start a new document after this page**, **Move to**, **Rotate right**, **Rotate left** or **Set aside**.",
             "Select **Join with next** on a document to make it and the one after it one document.",
-            "Select **Save split**, or **Undo changes** to go back. Documents are filed as saved, so save before filing."
+            "Select **Save split**, or **Undo changes** to go back. Filing a changed stack saves the split first, so the documents are filed as you see them."
+          ]
+        },
+        {
+          "title": "Look at a page closely",
+          "keywords": [
+            "preview page",
+            "zoom",
+            "read a scan",
+            "check a page"
+          ],
+          "steps": [
+            "Open the stack in [Intake](/intake) and double-click a page, or open its menu and choose **Preview**.",
+            "Use **Previous page** and **Next page**, or the arrow keys, to go through the stack, and **Zoom in** or **Zoom out** to read small print.",
+            "Select **Rotate left** or **Rotate right** to turn the page; the turn is part of the split until you save or file."
           ]
         },
         {
@@ -13011,7 +13026,7 @@
           ],
           "steps": [
             "Open the stack in [Intake](/intake) and find the page under **Set aside**.",
-            "Drag it into a document, or open its menu and choose **Make it a document of its own**, then **Save split**."
+            "Drag it into a document, or open its menu and choose **Make it a document of its own**."
           ]
         },
         {
@@ -13023,7 +13038,7 @@
           ],
           "steps": [
             "Open the stack in [Intake](/intake).",
-            "Open the menu beside the filing button and choose **Discard the stack**, then **Discard stack**. Documents already filed stay on their records; every other page is deleted."
+            "Open **Stack actions** beside the filing button and choose **Discard the stack**, then **Discard stack**. Documents already filed stay on their records; every other page is deleted."
           ]
         },
         {

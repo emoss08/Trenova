@@ -36,6 +36,11 @@ import { withKind, type Destination } from "./destination";
 import { pageNumber, type LayoutGroup } from "./page-layout";
 import { PageThumbnail, type PageMenu } from "./page-thumbnail";
 
+/** The element id of a document's card, for bringing it into view. */
+export function documentCardId(groupKey: string): string {
+  return `capture-document-${groupKey}`;
+}
+
 /**
  * What discarding a document does to its stack. The server closes a stack
  * once nothing in it is left to file, so throwing away the last open document
@@ -143,6 +148,8 @@ export function DocumentCard({
   filing,
   discardEffect,
   onDiscard,
+  active,
+  onActivate,
 }: {
   number: number;
   group: LayoutGroup;
@@ -166,178 +173,184 @@ export function DocumentCard({
   discardEffect: DiscardEffect;
   /** Throws the document away; settles when the server has answered. */
   onDiscard: () => Promise<unknown>;
+  /** The document the stack's shortcuts act on. */
+  active: boolean;
+  onActivate: () => void;
 }) {
   const t = useT();
   const kindId = useId();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const { setNodeRef, isOver } = useDroppable({ id: group.key, disabled: !canEdit });
   const failureText = failure ?? (item?.status === "Failed" ? item.failureMessage : "");
-  const fileBlocker =
-    dirty || item === undefined
-      ? t("Save the split before filing")
-      : destination.recordId === ""
-        ? t("Choose a record to file onto")
-        : null;
+  const fileBlocker = destination.recordId === "" ? t("Choose a record to file onto") : null;
   const title = t("Document {0}", number);
   const showMerge = canEdit && onMergeWithNext !== undefined;
   const showDiscard = canDiscard && item !== undefined && !dirty;
 
   return (
-    <SectionPanel
-      title={title}
-      hint={t("{0, plural, one {# page} other {# pages}}", group.pageIds.length)}
-      className="overflow-visible"
-      action={
-        showMerge || showDiscard ? (
-          <div className="flex items-center gap-1">
-            {showMerge && (
-              <Button
-                type="button"
-                size="xs"
-                variant="ghost"
-                onClick={onMergeWithNext}
-                title={t("Join with next")}
-              >
-                <CombineIcon className="size-3.5" aria-hidden />
-                <span className="sr-only sm:not-sr-only">{t("Join with next")}</span>
-              </Button>
-            )}
-            {showDiscard && (
-              <Button
-                type="button"
-                size="xs"
-                variant="ghost"
-                onClick={() => setConfirmDiscard(true)}
-                title={t("Discard document")}
-              >
-                <Trash2Icon className="size-3.5" aria-hidden />
-                <span className="sr-only sm:not-sr-only">{t("Discard document")}</span>
-              </Button>
-            )}
-          </div>
-        ) : undefined
-      }
+    <div
+      id={documentCardId(group.key)}
+      data-active={active || undefined}
+      onFocusCapture={onActivate}
+      onPointerDownCapture={onActivate}
+      className={cn("scroll-my-4 rounded-lg", active && "ring-brand ring-1")}
     >
-      <div className="flex flex-col gap-3 p-3">
-        {item && <DocumentMarks item={item} />}
-
-        <SortableContext items={group.pageIds} strategy={rectSortingStrategy}>
-          <div
-            ref={setNodeRef}
-            className={cn(
-              "flex min-h-32 flex-wrap gap-3 rounded-md p-1 transition-colors",
-              isOver && "bg-surface-selected",
-            )}
-          >
-            {group.pageIds.map((pageId, index) => {
-              const page = pages.get(pageId);
-              if (page === undefined) {
-                return null;
-              }
-              return (
-                <PageThumbnail
-                  key={pageId}
-                  page={page}
-                  rotation={rotations[pageId] ?? 0}
-                  number={pageNumber({ sequence }, page)}
-                  groupKey={group.key}
-                  last={index === group.pageIds.length - 1}
-                  menu={menu}
-                  onPreview={onPreview}
-                  disabled={!canEdit}
-                />
-              );
-            })}
-          </div>
-        </SortableContext>
-
-        {failureText !== "" && (
-          <Alert variant="destructive" size="sm">
-            <AlertDescription>{failureText}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_minmax(0,14rem)] sm:items-end">
-          <div className="flex flex-col gap-0.5">
-            <div className="mb-0.5 flex items-center">
-              <Label htmlFor={kindId} className="block text-xs font-medium">
-                {t("File onto")}
-              </Label>
+      <SectionPanel
+        title={title}
+        hint={t("{0, plural, one {# page} other {# pages}}", group.pageIds.length)}
+        className="overflow-visible"
+        action={
+          showMerge || showDiscard ? (
+            <div className="flex items-center gap-1">
+              {showMerge && (
+                <Button
+                  type="button"
+                  size="xs"
+                  variant="ghost"
+                  onClick={onMergeWithNext}
+                  title={t("Join with next")}
+                >
+                  <CombineIcon className="size-3.5" aria-hidden />
+                  <span className="sr-only sm:not-sr-only">{t("Join with next")}</span>
+                </Button>
+              )}
+              {showDiscard && (
+                <Button
+                  type="button"
+                  size="xs"
+                  variant="ghost"
+                  onClick={() => setConfirmDiscard(true)}
+                  title={t("Discard document")}
+                >
+                  <Trash2Icon className="size-3.5" aria-hidden />
+                  <span className="sr-only sm:not-sr-only">{t("Discard document")}</span>
+                </Button>
+              )}
             </div>
-            <Select
-              value={destination.kind}
-              items={CAPTURE_RECORD_KINDS.map((kind) => ({
-                value: kind,
-                label: captureRecordKindLabel(t, kind),
-              }))}
-              onValueChange={(value) => {
-                if (typeof value === "string" && isCaptureRecordKind(value)) {
-                  onDestinationChange(withKind(destination, value));
-                }
-              }}
-              disabled={!canFile}
+          ) : undefined
+        }
+      >
+        <div className="flex flex-col gap-3 p-3">
+          {item && <DocumentMarks item={item} />}
+
+          <SortableContext items={group.pageIds} strategy={rectSortingStrategy}>
+            <div
+              ref={setNodeRef}
+              className={cn(
+                "flex min-h-32 flex-wrap gap-3 rounded-md p-1 transition-colors",
+                isOver && "bg-surface-selected",
+              )}
             >
-              <SelectTrigger id={kindId} className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CAPTURE_RECORD_KINDS.map((kind) => (
-                  <SelectItem key={kind} value={kind}>
-                    {captureRecordKindLabel(t, kind)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {group.pageIds.map((pageId, index) => {
+                const page = pages.get(pageId);
+                if (page === undefined) {
+                  return null;
+                }
+                return (
+                  <PageThumbnail
+                    key={pageId}
+                    page={page}
+                    rotation={rotations[pageId] ?? 0}
+                    number={pageNumber({ sequence }, page)}
+                    groupKey={group.key}
+                    last={index === group.pageIds.length - 1}
+                    menu={menu}
+                    onPreview={onPreview}
+                    disabled={!canEdit}
+                  />
+                );
+              })}
+            </div>
+          </SortableContext>
+
+          {failureText !== "" && (
+            <Alert variant="destructive" size="sm">
+              <AlertDescription>{failureText}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_minmax(0,14rem)] sm:items-end">
+            <div className="flex flex-col gap-0.5">
+              <div className="mb-0.5 flex items-center">
+                <Label htmlFor={kindId} className="block text-xs font-medium">
+                  {t("File onto")}
+                </Label>
+              </div>
+              <Select
+                value={destination.kind}
+                items={CAPTURE_RECORD_KINDS.map((kind) => ({
+                  value: kind,
+                  label: captureRecordKindLabel(t, kind),
+                }))}
+                onValueChange={(value) => {
+                  if (typeof value === "string" && isCaptureRecordKind(value)) {
+                    onDestinationChange(withKind(destination, value));
+                  }
+                }}
+                disabled={!canFile}
+              >
+                <SelectTrigger id={kindId} className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CAPTURE_RECORD_KINDS.map((kind) => (
+                    <SelectItem key={kind} value={kind}>
+                      {captureRecordKindLabel(t, kind)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <ControlledCaptureRecordAutocompleteField
+              key={destination.kind}
+              kind={destination.kind}
+              label={captureRecordKindLabel(t, destination.kind)}
+              value={destination.recordId}
+              onValueChange={(recordId) => onDestinationChange({ ...destination, recordId })}
+              disabled={!canFile}
+            />
+            <ControlledDocumentTypeAutocompleteField
+              label={t("Document type")}
+              placeholder={t("Optional")}
+              value={destination.documentTypeId}
+              onValueChange={(documentTypeId) =>
+                onDestinationChange({ ...destination, documentTypeId })
+              }
+              disabled={!canFile}
+            />
           </div>
-          <ControlledCaptureRecordAutocompleteField
-            key={destination.kind}
-            kind={destination.kind}
-            label={captureRecordKindLabel(t, destination.kind)}
-            value={destination.recordId}
-            onValueChange={(recordId) => onDestinationChange({ ...destination, recordId })}
-            disabled={!canFile}
-          />
-          <ControlledDocumentTypeAutocompleteField
-            label={t("Document type")}
-            placeholder={t("Optional")}
-            value={destination.documentTypeId}
-            onValueChange={(documentTypeId) =>
-              onDestinationChange({ ...destination, documentTypeId })
-            }
-            disabled={!canFile}
-          />
+
+          {canFile && (
+            <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+              {fileBlocker !== null && (
+                <span className="text-foreground-subtle text-xs">{fileBlocker}</span>
+              )}
+              <Button
+                type="button"
+                size="sm"
+                onClick={onFile}
+                disabled={fileBlocker !== null}
+                isLoading={filing}
+                loadingText={t("Filing")}
+              >
+                {t("File")}
+              </Button>
+            </div>
+          )}
         </div>
 
-        {canFile && (
-          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
-            {fileBlocker !== null && (
-              <span className="text-foreground-subtle text-xs">{fileBlocker}</span>
-            )}
-            <Button
-              type="button"
-              size="sm"
-              onClick={onFile}
-              disabled={fileBlocker !== null}
-              isLoading={filing}
-              loadingText={t("Filing")}
-            >
-              {t("File")}
-            </Button>
-          </div>
+        {showDiscard && (
+          <ConfirmDiscardDialog
+            open={confirmDiscard}
+            onOpenChange={setConfirmDiscard}
+            title={t("Discard document {0}?", number)}
+            description={discardDescription(t, discardEffect, group.pageIds.length)}
+            confirmLabel={t("Discard")}
+            failureTitle={t("The document was not discarded")}
+            onConfirm={onDiscard}
+          />
         )}
-      </div>
-
-      {showDiscard && (
-        <ConfirmDiscardDialog
-          open={confirmDiscard}
-          onOpenChange={setConfirmDiscard}
-          title={t("Discard document {0}?", number)}
-          description={discardDescription(t, discardEffect, group.pageIds.length)}
-          confirmLabel={t("Discard")}
-          failureTitle={t("The document was not discarded")}
-          onConfirm={onDiscard}
-        />
-      )}
-    </SectionPanel>
+      </SectionPanel>
+    </div>
   );
 }

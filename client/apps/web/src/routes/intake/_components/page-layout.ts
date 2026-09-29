@@ -267,3 +267,32 @@ export function dropPosition(
 
   return null;
 }
+
+/** Where a page sits in the stack as the person has arranged it. */
+export type PagePlace = {
+  /** The document it is in, from 1, or null for a page set aside. */
+  document: number | null;
+  /** Its place in that document, or among the pages set aside, from 1. */
+  index: number;
+  /** Pages in that document, or set aside. */
+  of: number;
+};
+
+/** Every page in the order the person reads the stack: document by document, then those set aside. */
+export function pageOrder(layout: Pick<PageLayout, "groups" | "loose">): string[] {
+  return [...layout.groups.flatMap((group) => group.pageIds), ...layout.loose];
+}
+
+export function pagePlace(
+  layout: Pick<PageLayout, "groups" | "loose">,
+  pageId: string,
+): PagePlace | null {
+  for (const [number, group] of layout.groups.entries()) {
+    const index = group.pageIds.indexOf(pageId);
+    if (index >= 0) {
+      return { document: number + 1, index: index + 1, of: group.pageIds.length };
+    }
+  }
+  const index = layout.loose.indexOf(pageId);
+  return index >= 0 ? { document: null, index: index + 1, of: layout.loose.length } : null;
+}

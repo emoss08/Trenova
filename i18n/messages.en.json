@@ -20427,15 +20427,6 @@
       "routes/intake"
     ]
   },
-  "As it was captured. It will be filed turned {0}° clockwise.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/intake"
-    ]
-  },
   "As it was shown when it was decided.": {
     "sites": 1,
     "scope": [
@@ -57730,6 +57721,15 @@
       "routes/intake"
     ]
   },
+  "Document {0}, page {1} of {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Documentation": {
     "sites": 2,
     "scope": [
@@ -73515,6 +73515,15 @@
       "service/documentservice"
     ]
   },
+  "File document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "File documents": {
     "sites": 1,
     "scope": [
@@ -73672,6 +73681,15 @@
     "areas": [
       "domain/document",
       "domain/documentupload"
+    ]
+  },
+  "File the document you are on, once it has a record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "File the next thing you print to Trenova here": {
@@ -75036,6 +75054,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Fit to width": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Five fields: minute, hour, day-of-month, month, day-of-week.": {
@@ -86124,7 +86151,7 @@
     ]
   },
   "Intake": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -103662,6 +103689,24 @@
       "apps/web/lib"
     ]
   },
+  "Move to the next document in the open stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Move to the previous document in the open stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Move unassigned": {
     "sites": 2,
     "scope": [
@@ -106715,6 +106760,15 @@
       "packages/shared/lib"
     ]
   },
+  "Next document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Next frame": {
     "sites": 1,
     "scope": [
@@ -106772,12 +106826,14 @@
     ]
   },
   "Next page": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/insights",
+      "routes/intake",
       "routes/shipment"
     ]
   },
@@ -132667,6 +132723,15 @@
       "domain/edi"
     ]
   },
+  "Previous document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Previous employers": {
     "sites": 1,
     "scope": [
@@ -132732,12 +132797,14 @@
     ]
   },
   "Previous page": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/insights",
+      "routes/intake",
       "routes/shipment"
     ]
   },
@@ -150890,7 +150957,7 @@
     ]
   },
   "Rotate left": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -150899,7 +150966,7 @@
     ]
   },
   "Rotate right": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -153963,6 +154030,15 @@
       "routes/admin"
     ]
   },
+  "Save how the pages divide into documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Save keys": {
     "sites": 1,
     "scope": [
@@ -154091,11 +154167,12 @@
     ]
   },
   "Save split": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/intake"
     ]
   },
@@ -154205,15 +154282,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Save the split before filing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/intake"
     ]
   },
   "Save the template before adding scenarios": {
@@ -161940,7 +162008,7 @@
     ]
   },
   "Set aside": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -165503,6 +165571,24 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Show the page after in a page preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Show the page before in a page preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Show the results in the email": {
@@ -184368,6 +184454,15 @@
       "routes/worker"
     ]
   },
+  "The stack changed while you were working. Reload it and file again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "The stack could not be read": {
     "sites": 2,
     "scope": [
@@ -188589,6 +188684,15 @@
     ]
   },
   "This page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This page could not be shown.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -195030,6 +195134,15 @@
       "domain/shipmentimportchat"
     ]
   },
+  "Turn document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Turn documents on before re-indexing them.": {
     "sites": 1,
     "scope": [
@@ -195047,6 +195160,15 @@
     "areas": [
       "apps/web/components",
       "routes/worker"
+    ]
+  },
+  "Turn every page of the document you are on a quarter to the right": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Turn extensions on or off, change their settings and test them": {
@@ -195191,6 +195313,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Turned {0}° clockwise, as it will be filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Turning a request down needs a reason": {
@@ -210253,7 +210384,7 @@
       "service/invoiceshareservice"
     ]
   },
-  "You changed how the pages divide. Save the split to file these documents.": {
+  "You changed how the pages divide. Filing saves the change first, or save it now and keep working.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -211777,20 +211908,22 @@
     ]
   },
   "Zoom in": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/intake",
       "routes/shipment"
     ]
   },
   "Zoom out": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/intake",
       "routes/shipment"
     ]
   },
@@ -222216,7 +222349,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -222225,6 +222358,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/dispatch-console",
+      "routes/intake",
       "routes/scheduling",
       "routes/time-attendance"
     ]
