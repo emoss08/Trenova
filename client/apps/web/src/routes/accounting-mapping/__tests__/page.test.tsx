@@ -157,6 +157,69 @@ describe("AccountingMappingsPage", () => {
     expect(mocks.fetchAccountingMappings).not.toHaveBeenCalled();
   });
 
+  it("works on the organization's Xero connection when that is the one connected", async () => {
+    mocks.fetchAccountingMappingSummary.mockImplementation((system: string) =>
+      Promise.resolve(
+        system === "Xero"
+          ? summary({
+              integrationType: "Xero",
+              providerName: "Xero",
+              connection: { ...connection, integrationType: "Xero" },
+            })
+          : summary({ connection: null }),
+      ),
+    );
+
+    renderAccountingPage(<AccountingMappingsPage />);
+
+    expect(await screen.findByRole("button", { name: /Acme Logistics/ })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(mocks.fetchAccountingMappings).toHaveBeenCalledWith(
+        expect.objectContaining({ integrationType: "Xero" }),
+        expect.anything(),
+      ),
+    );
+    expect(mocks.fetchAccountingMappings).not.toHaveBeenCalledWith(
+      expect.objectContaining({ integrationType: "QuickBooksOnline" }),
+      expect.anything(),
+    );
+  });
+
+  it("points at the Xero setup when the organization last used Xero and disconnected it", async () => {
+    mocks.fetchAccountingMappingSummary.mockImplementation((system: string) =>
+      Promise.resolve(
+        system === "Xero"
+          ? summary({
+              integrationType: "Xero",
+              providerName: "Xero",
+              connection: { ...connection, integrationType: "Xero", status: "Disconnected" },
+            })
+          : summary({ connection: null }),
+      ),
+    );
+
+    renderAccountingPage(<AccountingMappingsPage />);
+
+    expect(await screen.findByText("Xero is not connected")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open integrations" })).toHaveAttribute(
+      "href",
+      "/admin/integrations?type=Xero",
+    );
+  });
+
+  it("says the mappings could not be loaded when no system could be read", async () => {
+    mocks.fetchAccountingMappingSummary.mockImplementation((system: string) =>
+      system === "Xero"
+        ? Promise.reject(new Error("offline"))
+        : Promise.resolve(summary({ connection: null })),
+    );
+
+    renderAccountingPage(<AccountingMappingsPage />);
+
+    expect(await screen.findByText("The mappings could not be loaded.")).toBeInTheDocument();
+    expect(mocks.fetchAccountingMappings).not.toHaveBeenCalled();
+  });
+
   it("totals the mappings and filters to the proposals when that figure is chosen", async () => {
     const user = userEvent.setup();
     renderAccountingPage(<AccountingMappingsPage />);

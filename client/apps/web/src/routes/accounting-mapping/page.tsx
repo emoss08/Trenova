@@ -9,12 +9,14 @@ import { useAccountingMappingActions } from "@/hooks/use-accounting-mapping-acti
 import { useAccountingMappingLabels } from "@/hooks/use-accounting-mapping-labels";
 import { useAccountingMappingList } from "@/hooks/use-accounting-mapping-list";
 import { useAccountingMappingSummary } from "@/hooks/use-accounting-mapping-summary";
+import { useConnectedAccountingSystem } from "@/hooks/use-connected-accounting-system";
 import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { usePermission } from "@/hooks/use-permission";
 import {
   ACCOUNTING_MAPPING_TARGET_TYPES,
   accountingSetupPath,
   checkedMappingConfirmations,
+  DEFAULT_ACCOUNTING_SYSTEM,
   hasLiveAccountingConnection,
   mappingCheckKey,
 } from "@/lib/accounting-sync";
@@ -22,7 +24,6 @@ import type {
   AccountingMappingFilterInput,
   AccountingMappingState,
   AccountingMappingTargetType,
-  AccountingSystem,
 } from "@trenova/graphql/generated/graphql";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -44,7 +45,6 @@ import { SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
-const SYSTEM: AccountingSystem = "QuickBooksOnline";
 const PAGE_SIZE = 50;
 const SEARCH_DELAY_MS = 250;
 const ALL = "all";
@@ -54,9 +54,11 @@ export function AccountingMappingsPage() {
   const t = useT();
   const labels = useAccountingMappingLabels();
   const { allowed: canUpdate } = usePermission(Resource.AccountingIntegration, Operation.Update);
-  const summary = useAccountingMappingSummary(SYSTEM, true);
+  const resolved = useConnectedAccountingSystem("mappingSummary");
+  const system = resolved.system ?? DEFAULT_ACCOUNTING_SYSTEM;
+  const summary = useAccountingMappingSummary(system, resolved.system !== null);
   const providerName = summary.data?.providerName ?? "";
-  const actions = useAccountingMappingActions(SYSTEM, providerName);
+  const actions = useAccountingMappingActions(system, providerName);
 
   const [targetType, setTargetType] = useState<AccountingMappingTargetType | null>(null);
   const [state, setState] = useState<AccountingMappingState | null>(null);
@@ -78,7 +80,7 @@ export function AccountingMappingsPage() {
   const connection = summary.data?.connection ?? null;
   const live = hasLiveAccountingConnection(connection);
   const list = useAccountingMappingList({
-    system: SYSTEM,
+    system,
     filter,
     pageSize: PAGE_SIZE,
     enabled: live,
@@ -121,7 +123,7 @@ export function AccountingMappingsPage() {
     setState((current) => (current === next ? null : next));
   };
 
-  if (summary.isLoading) {
+  if ((resolved.system === null && !resolved.isError) || summary.isLoading) {
     return (
       <PageLayout pageHeaderProps={pageHeaderProps}>
         <Skeleton className="h-16 w-full" />
@@ -130,7 +132,7 @@ export function AccountingMappingsPage() {
     );
   }
 
-  if (summary.isError || !summary.data) {
+  if (resolved.isError || summary.isError || !summary.data) {
     return (
       <PageLayout pageHeaderProps={pageHeaderProps}>
         <Alert size="sm" variant="destructive">
@@ -140,7 +142,7 @@ export function AccountingMappingsPage() {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => void summary.refetch()}
+              onClick={() => (resolved.isError ? resolved.retry() : void summary.refetch())}
             >
               {t("Retry")}
             </Button>
@@ -169,7 +171,7 @@ export function AccountingMappingsPage() {
             </div>
           }
           action={
-            <Button type="button" size="sm" render={<Link to={accountingSetupPath(SYSTEM)} />}>
+            <Button type="button" size="sm" render={<Link to={accountingSetupPath(system)} />}>
               {t("Open integrations")}
             </Button>
           }
@@ -330,7 +332,7 @@ export function AccountingMappingsPage() {
             <div className="p-4">
               <MappingEditor
                 key={selected.id}
-                system={SYSTEM}
+                system={system}
                 providerName={providerName}
                 mapping={selected}
                 canUpdate={canUpdate}

@@ -1,7 +1,11 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { ACCOUNTING_MAPPINGS_PATH, accountingSetupPath } from "@/lib/accounting-sync";
+import { useConnectedAccountingSystem } from "@/hooks/use-connected-accounting-system";
+import {
+  ACCOUNTING_MAPPINGS_PATH,
+  accountingSetupPath,
+  DEFAULT_ACCOUNTING_SYSTEM,
+} from "@/lib/accounting-sync";
 import { queries } from "@/lib/queries";
-import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -13,15 +17,20 @@ import { InboundPaymentsLink } from "@/components/accounting-sync/inbound-paymen
 import { LedgerHeaderActions } from "./_components/ledger-header-actions";
 import { LedgerNotices, LedgerSummary, LedgerSummarySkeleton } from "./_components/ledger-summary";
 
-const SYSTEM: AccountingSystem = "QuickBooksOnline";
-
 const Table = lazy(() => import("./_components/ledger-table"));
 
 export function AccountingSyncLedgerPage() {
   const t = useT();
-  const summaryQuery = useQuery(queries.accountingSync.syncSummary(SYSTEM));
+  const resolved = useConnectedAccountingSystem("syncSummary");
+  const system = resolved.system ?? DEFAULT_ACCOUNTING_SYSTEM;
+  const summaryQuery = useQuery({
+    ...queries.accountingSync.syncSummary(system),
+    enabled: resolved.system !== null,
+  });
   const summary = summaryQuery.data;
-  const providerName = summary?.providerName ?? "QuickBooks Online";
+  const providerName = summary?.providerName ?? t("the accounting system");
+  const loading = resolved.isLoading || summaryQuery.isLoading;
+  const failed = resolved.isError || summaryQuery.isError;
   const connection = summary?.connection ?? null;
   const syncing = connection?.syncEnabledAt != null;
 
@@ -35,14 +44,14 @@ export function AccountingSyncLedgerPage() {
         ),
         actions: summary ? (
           <div className="flex flex-wrap items-center gap-2">
-            {syncing ? <InboundPaymentsLink system={SYSTEM} /> : null}
+            {syncing ? <InboundPaymentsLink system={system} /> : null}
             <LedgerHeaderActions summary={summary} />
           </div>
         ) : null,
       }}
     >
-      {summaryQuery.isLoading ? <LedgerSummarySkeleton /> : null}
-      {summaryQuery.isError ? (
+      {loading ? <LedgerSummarySkeleton /> : null}
+      {failed ? (
         <Alert size="sm" variant="destructive">
           <AlertDescription className="flex items-center justify-between gap-3">
             <span>{t("The sync ledger could not be loaded.")}</span>
@@ -50,7 +59,7 @@ export function AccountingSyncLedgerPage() {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => void summaryQuery.refetch()}
+              onClick={() => (resolved.isError ? resolved.retry() : void summaryQuery.refetch())}
             >
               {t("Retry")}
             </Button>
@@ -79,7 +88,7 @@ export function AccountingSyncLedgerPage() {
                   {t("Open mappings")}
                 </Button>
               ) : null}
-              <Button type="button" size="sm" render={<Link to={accountingSetupPath(SYSTEM)} />}>
+              <Button type="button" size="sm" render={<Link to={accountingSetupPath(system)} />}>
                 {connection ? t("Finish setup") : t("Connect {0}", providerName)}
               </Button>
             </span>
@@ -93,7 +102,7 @@ export function AccountingSyncLedgerPage() {
         </>
       ) : null}
       <DataTableLazyComponent>
-        <Table system={SYSTEM} providerName={providerName} />
+        {resolved.system ? <Table system={resolved.system} providerName={providerName} /> : null}
       </DataTableLazyComponent>
     </PageLayout>
   );

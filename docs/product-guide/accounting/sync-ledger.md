@@ -1,6 +1,6 @@
 ---
 path: /accounting/sync
-aliases: [QuickBooks sync, sync log, sync errors, sync history, failed to sync, QuickBooks not updating, invoice not in QuickBooks, accounting sync ledger, outbox, settlement not in QuickBooks, carrier bill, bill payment, vendor credit, journal entry not in QuickBooks, daily summary, opening balances entry]
+aliases: [QuickBooks sync, sync log, sync errors, sync history, failed to sync, QuickBooks not updating, invoice not in QuickBooks, accounting sync ledger, outbox, settlement not in QuickBooks, carrier bill, bill payment, vendor credit, journal entry not in QuickBooks, daily summary, opening balances entry, Xero sync, invoice not in Xero, Xero not updating]
 related:
   - /accounting/sync/mappings
   - /accounting/sync/inbound
@@ -9,8 +9,8 @@ related:
 ---
 
 ## What it's for
-The sync ledger lists every document Trenova sends to QuickBooks Online and what happened to
-each one: invoices, credit and debit memos, customer payments, credit applications and customer
+The sync ledger lists every document Trenova sends to the accounting system (QuickBooks Online
+or Xero) and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer
 changes, and on the payables side carrier settlements, owner-operator settlements, their payments,
 and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what
 went through, what is waiting, and fix what did not.
@@ -25,29 +25,30 @@ paid sends a bill payment from the cash account. Voiding a posted settlement rem
 Owner-operator settlements work the same way once **Send owner-operator settlements** is on for
 the connection, each driver becoming a 1099 vendor; company driver pay is never sent.
 
-When the connection sends journal entries instead of documents, the ledger lists one record for
+When a QuickBooks Online connection sends journal entries instead of documents, the ledger lists one record for
 each posted journal entry, or one **Daily summary** per day, and the **Opening balances** entry when
 it was sent. A day's summary is sent again whenever an entry is posted to that day later, and a
 day whose entries net to nothing removes its summary from QuickBooks.
 
 ## Tasks
 
-### Fix a document that did not reach QuickBooks
+### Fix a document that did not reach the accounting system
 Keywords: sync failed, held document, blocked invoice, missing mapping, closed period
 1. Open [Sync ledger](/accounting/sync) and select **Needs attention** in the strip.
 2. Open the record. Its reason says what to do, such as mapping a charge code to a QuickBooks item
-   on the [Mappings](/accounting/sync/mappings) page.
+   or a Xero account on the [Mappings](/accounting/sync/mappings) page.
 3. Fix what the reason names, then select **Retry now**. To retry every record held for the same
    reason, select **Retry these** beside the reason under **Needs attention**.
 
-### Fix a settlement that did not reach QuickBooks
+### Fix a settlement that did not reach the accounting system
 Keywords: carrier bill held, settlement not synced, map GL account, vendor missing
 1. Open [Sync ledger](/accounting/sync) and open the settlement's record.
-2. When its reason names a GL account, map that account to a QuickBooks account on the
+2. When its reason names a GL account, map that account to an account in the books on the
    [Mappings](/accounting/sync/mappings) page (filter by **GL accounts**). When it names a carrier
-   or an owner-operator, map them to the existing QuickBooks vendor, or let Trenova create one.
+   or an owner-operator, map them to the existing vendor (a supplier contact in Xero), or let
+   Trenova create one.
 3. Select **Retry now**. A settlement's payment waits for its bill and follows once the bill is
-   in QuickBooks.
+   in the books.
 
 ### Fix a journal entry that did not reach QuickBooks
 Keywords: journal entry held, daily summary held, GL account not mapped, customer or vendor needed
@@ -61,15 +62,15 @@ Keywords: journal entry held, daily summary held, GL account not mapped, custome
 Keywords: closed period, books closed, re-date, first open day, closing date
 1. Open [Sync ledger](/accounting/sync) and open the record held for a closed period.
 2. Select **Send on first open day**. The document goes out dated on the day after the closing
-   date in QuickBooks, and its note in QuickBooks keeps Trenova's date. This is offered only while
-   Trenova's closed-period policy is to post to the next open period; otherwise reopen the period
-   in QuickBooks, then select **Retry now**.
+   date in the books (the lock date in Xero), and its note there keeps Trenova's date. This is
+   offered only while Trenova's closed-period policy is to post to the next open period; otherwise
+   reopen the period in the accounting system, then select **Retry now**.
 
 ### Send a document in another currency
 Keywords: foreign currency, exchange rate, multicurrency, CAD invoice, rate missing
 1. Open [Sync ledger](/accounting/sync) and open the record whose reason names a currency.
-2. When the reason says the books are kept in one currency, turn on multicurrency in QuickBooks,
-   then select **Retry now**.
+2. When the reason says the books are kept in one currency, turn on multicurrency in the
+   accounting system, then select **Retry now**.
 3. When the reason says Trenova has no exchange rate for a day, connect OANDA under
    [Accounting controls](/admin/accounting-control) so the rate can be fetched, then select
    **Retry now**. The rate the books received is shown on the invoice, payment or settlement
@@ -87,7 +88,7 @@ Keywords: do not send, already entered by hand, ignore sync error
 2. Select **Skip**, say why it is not sent, then select **Skip document**.
 
 ### Pause or resume sending
-Keywords: stop syncing, month-end close, hold QuickBooks sync
+Keywords: stop syncing, month-end close, hold QuickBooks sync, hold Xero sync
 1. Open [Sync ledger](/accounting/sync) and select **Pause sending**. Add a reason if you like,
    then select **Pause sending** again to confirm.
 2. Posted documents keep queueing while sending is paused. Select **Resume sending** to send them
@@ -105,5 +106,5 @@ Viewing the ledger needs read access to accounting sync; retrying, releasing, sk
 and resuming need update access; a backfill needs manage access to the accounting integration.
 A document that fails for a temporary reason is retried on its own, backing off from 30 seconds
 to 6 hours, and is marked failed after 8 tries. Invoices, customer payments, customers, carrier and
-driver settlements, carriers and workers show where they stand in QuickBooks Online on their own
+driver settlements, carriers and workers show where they stand in the accounting system on their own
 pages, with a link back to this ledger.

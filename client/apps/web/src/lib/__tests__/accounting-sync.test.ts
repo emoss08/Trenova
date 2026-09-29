@@ -26,6 +26,9 @@ import {
   isTrustedAuthorizeUrl,
   readAccountingCallback,
   reconnectDeadlineNear,
+  resolveAccountingSystem,
+  DEFAULT_ACCOUNTING_SYSTEM,
+  hasReconnectDeadline,
 } from "../accounting-sync";
 
 const DAY = 24 * 60 * 60;
@@ -77,6 +80,30 @@ describe("isTrustedAuthorizeUrl", () => {
     ).toBe(true);
   });
 
+  it("accepts Xero's authorize page for Xero", () => {
+    expect(
+      isTrustedAuthorizeUrl(
+        "Xero",
+        "https://login.xero.com/identity/connect/authorize?client_id=abc&state=xyz",
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps each system to its own authorize host", () => {
+    expect(isTrustedAuthorizeUrl("Xero", "https://appcenter.intuit.com/connect/oauth2")).toBe(
+      false,
+    );
+    expect(
+      isTrustedAuthorizeUrl(
+        "QuickBooksOnline",
+        "https://login.xero.com/identity/connect/authorize",
+      ),
+    ).toBe(false);
+    expect(isTrustedAuthorizeUrl("Xero", "https://identity.xero.com/connect/authorize")).toBe(
+      false,
+    );
+  });
+
   it("refuses another host, even one that ends with the right name", () => {
     expect(
       isTrustedAuthorizeUrl("QuickBooksOnline", "https://appcenter.intuit.com.example.org/connect"),
@@ -109,42 +136,117 @@ describe("isTrustedAuthorizeUrl", () => {
 });
 
 describe("readAccountingCallback", () => {
+  const withCompany = { requireCompany: true };
+  const withoutCompany = { requireCompany: false };
+
   it("reads what the provider sends back after approval", () => {
-    expect(readAccountingCallback(new URLSearchParams("code=c1&state=s1&realmId=9130348"))).toEqual(
-      { kind: "authorized", code: "c1", state: "s1", realmId: "9130348" },
-    );
+    expect(
+      readAccountingCallback(new URLSearchParams("code=c1&state=s1&realmId=9130348"), withCompany),
+    ).toEqual({ kind: "authorized", code: "c1", state: "s1", realmId: "9130348" });
   });
 
   it("trims stray whitespace from every value", () => {
     expect(
-      readAccountingCallback(new URLSearchParams("code=%20c1%20&state=s1%0A&realmId=%209")),
+      readAccountingCallback(
+        new URLSearchParams("code=%20c1%20&state=s1%0A&realmId=%209"),
+        withCompany,
+      ),
     ).toEqual({ kind: "authorized", code: "c1", state: "s1", realmId: "9" });
   });
 
   it("reports a refusal when the person declined, whatever else came with it", () => {
     expect(
-      readAccountingCallback(new URLSearchParams("error=access_denied&state=s1&code=c1")),
+      readAccountingCallback(
+        new URLSearchParams("error=access_denied&state=s1&code=c1"),
+        withCompany,
+      ),
     ).toEqual({ kind: "denied" });
   });
 
   it("reports any other provider error as a provider error", () => {
-    expect(readAccountingCallback(new URLSearchParams("error=invalid_scope&state=s1"))).toEqual({
+    expect(
+      readAccountingCallback(new URLSearchParams("error=invalid_scope&state=s1"), withoutCompany),
+    ).toEqual({
       kind: "provider-error",
       error: "invalid_scope",
     });
   });
 
-  it("reports a return missing any of the three values as incomplete", () => {
-    expect(readAccountingCallback(new URLSearchParams("code=c1&state=s1"))).toEqual({
+  it("reports a return missing any of the three values as incomplete when the provider names the company", () => {
+    expect(readAccountingCallback(new URLSearchParams("code=c1&state=s1"), withCompany)).toEqual({
       kind: "incomplete",
     });
-    expect(readAccountingCallback(new URLSearchParams("state=s1&realmId=9"))).toEqual({
+    expect(readAccountingCallback(new URLSearchParams("state=s1&realmId=9"), withCompany)).toEqual({
       kind: "incomplete",
     });
-    expect(readAccountingCallback(new URLSearchParams("code=c1&realmId=9&state="))).toEqual({
+    expect(
+      readAccountingCallback(new URLSearchParams("code=c1&realmId=9&state="), withCompany),
+    ).toEqual({ kind: "incomplete" });
+    expect(readAccountingCallback(new URLSearchParams(""), withCompany)).toEqual({
       kind: "incomplete",
     });
-    expect(readAccountingCallback(new URLSearchParams(""))).toEqual({ kind: "incomplete" });
+  });
+
+  it("accepts a return with only the code and state when the provider names no company", () => {
+    expect(readAccountingCallback(new URLSearchParams("code=c1&state=s1"), withoutCompany)).toEqual(
+      { kind: "authorized", code: "c1", state: "s1", realmId: null },
+    );
+  });
+
+  it("treats a blank company as absent rather than sending an empty one", () => {
+    expect(
+      readAccountingCallback(new URLSearchParams("code=c1&state=s1&realmId=%20"), withoutCompany),
+    ).toEqual({ kind: "authorized", code: "c1", state: "s1", realmId: null });
+  });
+
+  it("still needs the code and the state when the provider names no company", () => {
+    expect(readAccountingCallback(new URLSearchParams("state=s1"), withoutCompany)).toEqual({
+      kind: "incomplete",
+    });
+    expect(readAccountingCallback(new URLSearchParams("code=c1"), withoutCompany)).toEqual({
+      kind: "incomplete",
+    });
+  });
+});
+
+describe("resolveAccountingSystem", () => {
+  const live = { status: "Connected" as const, connectedAt: 100 };
+
+  it("falls back to QuickBooks Online when nothing was ever connected", () => {
+    expect(
+      resolveAccountingSystem([
+        { system: "QuickBooksOnline", connection: null },
+        { system: "Xero", connection: null },
+      ]),
+    ).toBe("QuickBooksOnline");
+    expect(resolveAccountingSystem([])).toBe(DEFAULT_ACCOUNTING_SYSTEM);
+  });
+
+  it("picks the system the organization is connected to, whichever order it comes in", () => {
+    expect(
+      resolveAccountingSystem([
+        { system: "QuickBooksOnline", connection: null },
+        { system: "Xero", connection: live },
+      ]),
+    ).toBe("Xero");
+  });
+
+  it("prefers the live connection over one that was disconnected later", () => {
+    expect(
+      resolveAccountingSystem([
+        { system: "QuickBooksOnline", connection: { status: "Disconnected", connectedAt: 500 } },
+        { system: "Xero", connection: { ...live, status: "Revoked" } },
+      ]),
+    ).toBe("Xero");
+  });
+
+  it("shows the most recently connected system when every connection was disconnected", () => {
+    expect(
+      resolveAccountingSystem([
+        { system: "QuickBooksOnline", connection: { status: "Disconnected", connectedAt: 100 } },
+        { system: "Xero", connection: { status: "Disconnected", connectedAt: 200 } },
+      ]),
+    ).toBe("Xero");
   });
 });
 
@@ -163,6 +265,12 @@ describe("reconnectDeadlineNear", () => {
 
   it("is near once the limit has passed", () => {
     expect(reconnectDeadlineNear(now - DAY, now)).toBe(true);
+  });
+
+  it("is never near when the provider sets no limit", () => {
+    expect(reconnectDeadlineNear(0, now)).toBe(false);
+    expect(hasReconnectDeadline(0)).toBe(false);
+    expect(hasReconnectDeadline(now)).toBe(true);
   });
 
   it("warns fourteen days out, the same window the server raises its Watchtower item at", () => {

@@ -1918,6 +1918,15 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                path: "integrations/xero/callback",
+                loader: createPermissionLoader(Resource.AccountingIntegration, Operation.Manage),
+                async lazy() {
+                  const { XeroCallbackPage } =
+                    await import("@/routes/admin/integrations/xero-callback/page");
+                  return { Component: XeroCallbackPage };
+                },
+              },
+              {
                 // Agents are configured from Agent Control; the old standalone
                 // page forwards so a saved link still lands somewhere useful.
                 path: "agents",

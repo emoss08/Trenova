@@ -12,14 +12,15 @@ import userEvent from "@testing-library/user-event";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { QuickBooksIntegrationModal } from "../accounting-integration-modal";
+import { quickBooksProfile, XERO_LEDGER_REASON, xeroProfile } from "@/test/accounting-profiles";
+import { AccountingIntegrationModal } from "../accounting-integration-modal";
+import { quickBooksVendor, xeroVendor, type AccountingVendor } from "../accounting-vendors";
 
 const mocks = vi.hoisted(() => ({
   fetchAccountingSyncStatus: vi.fn(),
   startAccountingAuthorization: vi.fn(),
   checkAccountingConnection: vi.fn(),
   disconnectAccountingSystem: vi.fn(),
-  completeAccountingAuthorization: vi.fn(),
   fetchAccountingMappingSummary: vi.fn(),
   fetchAccountingMappings: vi.fn(),
   searchAccountingReferenceObjects: vi.fn(),
@@ -40,7 +41,6 @@ vi.mock("@/lib/graphql/accounting-sync", () => ({
   startAccountingAuthorization: mocks.startAccountingAuthorization,
   checkAccountingConnection: mocks.checkAccountingConnection,
   disconnectAccountingSystem: mocks.disconnectAccountingSystem,
-  completeAccountingAuthorization: mocks.completeAccountingAuthorization,
   fetchAccountingMappingSummary: mocks.fetchAccountingMappingSummary,
   fetchAccountingMappings: mocks.fetchAccountingMappings,
   searchAccountingReferenceObjects: mocks.searchAccountingReferenceObjects,
@@ -236,6 +236,7 @@ function status(overrides: Partial<AccountingSyncStatus> = {}): AccountingSyncSt
   return {
     integrationType: "QuickBooksOnline",
     providerName: "QuickBooks Online",
+    profile: quickBooksProfile,
     available: true,
     app: instanceApp,
     connection: null,
@@ -253,18 +254,19 @@ async function field(name: string): Promise<HTMLElement> {
   });
 }
 
-function renderModal(props: { justConnected?: boolean } = {}) {
+function renderModal(props: { justConnected?: boolean; vendor?: AccountingVendor } = {}) {
   return renderWithRouter(props);
 }
 
-function renderWithRouter(props: { justConnected?: boolean }) {
+function renderWithRouter(props: { justConnected?: boolean; vendor?: AccountingVendor }) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
     <MemoryRouter>
       <QueryClientProvider client={client}>
-        <QuickBooksIntegrationModal
+        <AccountingIntegrationModal
+          vendor={props.vendor ?? quickBooksVendor}
           open
           onOpenChange={() => undefined}
           justConnected={props.justConnected ?? false}
@@ -275,17 +277,19 @@ function renderWithRouter(props: { justConnected?: boolean }) {
   );
 }
 
-describe("QuickBooksIntegrationModal", () => {
-  beforeEach(() => {
-    for (const mock of Object.values(mocks)) {
-      if (typeof mock === "function") mock.mockReset();
-    }
-    mocks.granted = new Set([READ, UPDATE, MANAGE]);
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      value: { ...window.location, assign: mocks.assign },
-    });
+function resetModal() {
+  for (const mock of Object.values(mocks)) {
+    if (typeof mock === "function") mock.mockReset();
+  }
+  mocks.granted = new Set([READ, UPDATE, MANAGE]);
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    value: { ...window.location, assign: mocks.assign },
   });
+}
+
+describe("AccountingIntegrationModal", () => {
+  beforeEach(resetModal);
 
   it("starts at the connect step before the organization has ever connected", async () => {
     mocks.fetchAccountingSyncStatus.mockResolvedValue(status());
@@ -324,7 +328,10 @@ describe("QuickBooksIntegrationModal", () => {
     expect(screen.getByText(/has no Intuit app of its own/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save keys" })).toBeInTheDocument();
     expect(screen.getByText(REDIRECT_URL)).toBeInTheDocument();
-    expect(screen.getByText(/\/webhooks\/accounting\/quickbooks\/$/)).toBeInTheDocument();
+    expect(screen.queryByText(/\/webhooks\/accounting\//)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/the webhook endpoint for your app appears here once they are saved/),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/is not set up on this Trenova server yet/)).not.toBeInTheDocument();
   });
 
@@ -1069,5 +1076,207 @@ describe("QuickBooksIntegrationModal", () => {
 
     expect(await screen.findByText("Documents")).toBeInTheDocument();
     expect(screen.queryByText("Opening balances")).not.toBeInTheDocument();
+  });
+});
+
+describe("AccountingIntegrationModal for Xero", () => {
+  const xeroConnected: AccountingConnection = {
+    ...connected,
+    integrationType: "Xero",
+    appEnvironment: "Production",
+    refreshTokenAbsoluteExpiresAt: 0,
+  };
+  const xeroApp: AccountingAppSettings = {
+    ...noApp,
+    redirectUrl: "http://localhost:5173/admin/integrations/xero/callback",
+    webhookPath: "/webhooks/accounting/xero/",
+  };
+  const xeroTenantApp: AccountingAppSettings = {
+    ...xeroApp,
+    activeSource: "Tenant",
+    webhookPath: "/webhooks/accounting/xero/acctapp_x1/",
+    tenantApp: {
+      id: "acctapp_x1",
+      integrationType: "Xero",
+      environment: "Production",
+      clientId: "XEROCLIENT",
+      hasWebhookVerifier: false,
+      version: 1,
+      updatedAt: 1_780_000_000,
+    },
+  };
+
+  function xeroStatus(overrides: Partial<AccountingSyncStatus> = {}): AccountingSyncStatus {
+    return {
+      integrationType: "Xero",
+      providerName: "Xero",
+      profile: xeroProfile,
+      available: true,
+      app: instanceApp,
+      connection: null,
+      ...overrides,
+    };
+  }
+
+  function statusBySystem(byXero: AccountingSyncStatus, byQuickBooks = status()) {
+    mocks.fetchAccountingSyncStatus.mockImplementation((system: string) =>
+      Promise.resolve(system === "Xero" ? byXero : byQuickBooks),
+    );
+  }
+
+  beforeEach(resetModal);
+
+  it("asks for the Xero app keys without an environment and saves them as production", async () => {
+    statusBySystem(xeroStatus({ available: false, app: xeroApp }));
+    mocks.saveAccountingApp.mockResolvedValue(xeroStatus({ app: xeroTenantApp }));
+
+    renderModal({ vendor: xeroVendor });
+
+    expect(await screen.findByRole("region", { name: "Xero app" })).toBeInTheDocument();
+    expect(screen.getByText(/has no Xero app of its own/)).toBeInTheDocument();
+    expect(screen.getByText("Create a Web app on the Xero developer portal.")).toBeInTheDocument();
+    expect(screen.queryByText(/\/webhooks\/accounting\/xero\/$/)).not.toBeInTheDocument();
+    expect(document.getElementById("input-environment")).toBeNull();
+    expect(screen.queryByText("Environment")).not.toBeInTheDocument();
+    expect(screen.getByText("Webhook key (optional)")).toBeInTheDocument();
+    expect(screen.queryByText(/verifier token/i)).not.toBeInTheDocument();
+
+    await userEvent.type(await field("clientId"), "XEROCLIENT");
+    await userEvent.type(await field("clientSecret"), "s3cret");
+    await userEvent.type(await field("webhookVerifierToken"), "xero-webhook-key");
+    await userEvent.click(screen.getByRole("button", { name: "Save keys" }));
+
+    await waitFor(() =>
+      expect(mocks.saveAccountingApp).toHaveBeenCalledWith({
+        integrationType: "Xero",
+        environment: "Production",
+        clientId: "XEROCLIENT",
+        clientSecret: "s3cret",
+        webhookVerifierToken: "xero-webhook-key",
+        clearWebhookVerifierToken: false,
+      }),
+    );
+  });
+
+  it("shows a saved Xero app without an environment and names its webhook key", async () => {
+    statusBySystem(xeroStatus({ app: xeroTenantApp }));
+
+    renderModal({ vendor: xeroVendor });
+
+    expect(await screen.findByText("XEROCLIENT")).toBeInTheDocument();
+    expect(screen.getByText("Webhook key")).toBeInTheDocument();
+    expect(screen.queryByText("Environment")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Change keys" }));
+    expect(
+      await screen.findByText(/\/webhooks\/accounting\/xero\/acctapp_x1\/$/),
+    ).toBeInTheDocument();
+    expect(await field("clientId")).toHaveValue("XEROCLIENT");
+    expect(document.getElementById("input-environment")).toBeNull();
+  });
+
+  it("sends the person to Xero's authorize page", async () => {
+    statusBySystem(xeroStatus());
+    mocks.startAccountingAuthorization.mockResolvedValue({
+      authorizeUrl: "https://login.xero.com/identity/connect/authorize?client_id=abc&state=s1",
+      state: "s1",
+      expiresAt: 1_780_000_600,
+    });
+
+    renderModal({ vendor: xeroVendor });
+    await userEvent.click(await screen.findByRole("button", { name: /Connect to Xero/ }));
+
+    await waitFor(() =>
+      expect(mocks.assign).toHaveBeenCalledWith(
+        "https://login.xero.com/identity/connect/authorize?client_id=abc&state=s1",
+      ),
+    );
+    expect(mocks.startAccountingAuthorization).toHaveBeenCalledWith("Xero");
+  });
+
+  it("will not connect Xero while QuickBooks Online is still connected", async () => {
+    statusBySystem(xeroStatus(), status({ connection: connected }));
+
+    renderModal({ vendor: xeroVendor });
+
+    expect(
+      await screen.findByText(
+        "This organization is connected to QuickBooks Online. Disconnect QuickBooks Online before connecting Xero, so the same documents never reach two sets of books.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Connect to Xero/ })).toBeDisabled();
+  });
+
+  it("connects Xero once QuickBooks Online has been disconnected", async () => {
+    statusBySystem(xeroStatus(), status({ connection: { ...connected, status: "Disconnected" } }));
+
+    renderModal({ vendor: xeroVendor });
+
+    expect(await screen.findByRole("button", { name: /Connect to Xero/ })).toBeEnabled();
+    expect(screen.queryByText(/Disconnect QuickBooks Online before/)).not.toBeInTheDocument();
+  });
+
+  it("shows journal entries as unavailable with Xero's reason and sends documents", async () => {
+    const xeroModeStep = { ...xeroConnected, setupStep: "Mode" as const, syncEnabledAt: null };
+    statusBySystem(xeroStatus({ connection: xeroModeStep }));
+    mocks.chooseAccountingSyncMode.mockResolvedValue({ ...xeroModeStep, setupStep: "Mappings" });
+    const user = userEvent.setup();
+
+    renderModal({ vendor: xeroVendor });
+
+    expect(await screen.findByText("Journal entries cannot be sent to Xero")).toBeInTheDocument();
+    expect(screen.getByText(XERO_LEDGER_REASON)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Send documents" }));
+    const ledger = await screen.findByRole("option", { name: /Send journal entries/ });
+    expect(ledger).toHaveAttribute("aria-disabled", "true");
+    await user.click(ledger);
+    expect(screen.queryByRole("button", { name: "Detailed" })).not.toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() =>
+      expect(mocks.chooseAccountingSyncMode).toHaveBeenCalledWith({
+        integrationType: "Xero",
+        mode: "Document",
+        granularity: null,
+      }),
+    );
+  });
+
+  it("never sends journal entries for Xero, even from a connection left in ledger mode", async () => {
+    const xeroModeStep = {
+      ...xeroConnected,
+      setupStep: "Mode" as const,
+      syncMode: "Ledger" as const,
+      ledgerGranularity: "Detailed" as const,
+      syncEnabledAt: null,
+    };
+    statusBySystem(xeroStatus({ connection: xeroModeStep }));
+    mocks.chooseAccountingSyncMode.mockResolvedValue({
+      ...xeroModeStep,
+      setupStep: "Mappings",
+      syncMode: "Document",
+    });
+
+    renderModal({ vendor: xeroVendor });
+    await userEvent.click(await screen.findByRole("button", { name: "Continue" }));
+
+    await waitFor(() =>
+      expect(mocks.chooseAccountingSyncMode).toHaveBeenCalledWith({
+        integrationType: "Xero",
+        mode: "Document",
+        granularity: null,
+      }),
+    );
+  });
+
+  it("gives a Xero connection no reconnect date, because its authorization has no fixed end", async () => {
+    statusBySystem(xeroStatus({ connection: xeroConnected }));
+
+    renderModal({ vendor: xeroVendor });
+
+    expect(await screen.findByText("Connected on")).toBeInTheDocument();
+    expect(screen.queryByText("Reconnect by")).not.toBeInTheDocument();
+    expect(screen.queryByText(/ends this authorization/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reconnect" })).not.toBeInTheDocument();
   });
 });

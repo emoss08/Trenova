@@ -2,7 +2,11 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ExternalLinkIcon, InfoIcon, LockIcon } from "lucide-react";
-import type { AccountingAppSettings, AccountingConnection } from "@/lib/graphql/accounting-sync";
+import type {
+  AccountingAppSettings,
+  AccountingConnection,
+  AccountingProviderProfile,
+} from "@/lib/graphql/accounting-sync";
 import { AccountingAppKeys } from "./accounting-app-keys";
 import type { AccountingVendor } from "./accounting-vendors";
 
@@ -10,7 +14,9 @@ type AccountingConnectStepProps = {
   vendor: AccountingVendor;
   available: boolean;
   app: AccountingAppSettings;
+  profile: AccountingProviderProfile;
   connection: AccountingConnection | null;
+  connectedElsewhere: AccountingVendor | null;
   canManage: boolean;
   previousCompanyName: string;
   isConnecting: boolean;
@@ -22,7 +28,9 @@ export function AccountingConnectStep({
   vendor,
   available,
   app,
+  profile,
   connection,
+  connectedElsewhere,
   canManage,
   previousCompanyName,
   isConnecting,
@@ -71,7 +79,24 @@ export function AccountingConnectStep({
           </AlertDescription>
         </Alert>
       ) : null}
-      <AccountingAppKeys vendor={vendor} app={app} connection={connection} canManage={canManage} />
+      {connectedElsewhere ? (
+        <Alert size="sm" variant="warning">
+          <AlertDescription>
+            {t(
+              "This organization is connected to {0}. Disconnect {0} before connecting {1}, so the same documents never reach two sets of books.",
+              connectedElsewhere.name,
+              vendor.name,
+            )}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      <AccountingAppKeys
+        vendor={vendor}
+        app={app}
+        profile={profile}
+        connection={connection}
+        canManage={canManage}
+      />
       {available && !canManage ? (
         <Alert size="sm" variant="warning">
           <AlertDescription>
@@ -86,7 +111,7 @@ export function AccountingConnectStep({
         <Button
           type="button"
           onClick={onConnect}
-          disabled={!available || !canManage}
+          disabled={!available || !canManage || connectedElsewhere !== null}
           isLoading={isConnecting}
           loadingText={t("Opening {0}...", vendor.name)}
         >

@@ -86,6 +86,16 @@ describe("accountingAppFormSchema", () => {
       issues(accountingAppFormSchema(saved), values({ clearWebhookVerifierToken: true })),
     ).toEqual([]);
   });
+
+  it("takes only an environment the accounting system offers", () => {
+    const productionOnly = accountingAppFormSchema(null, ["Production"]);
+    expect(
+      issues(productionOnly, values({ environment: "Production", clientSecret: "s" })),
+    ).toEqual([]);
+    expect(issues(productionOnly, values({ environment: "Sandbox", clientSecret: "s" }))).toEqual([
+      "environment",
+    ]);
+  });
 });
 
 describe("accountingAppFormDefaults", () => {
@@ -97,5 +107,17 @@ describe("accountingAppFormDefaults", () => {
     expect(accountingAppFormDefaults({ clientId: "ABprod", environment: "Production" })).toEqual(
       values({ clientId: "ABprod", environment: "Production" }),
     );
+  });
+
+  it("starts on the only environment a system offers", () => {
+    expect(accountingAppFormDefaults(null, ["Production"])).toEqual(
+      values({ clientId: "", environment: "Production" }),
+    );
+  });
+
+  it("moves a saved app off an environment the system no longer offers", () => {
+    expect(
+      accountingAppFormDefaults({ clientId: "ABsaved", environment: "Sandbox" }, ["Production"]),
+    ).toEqual(values({ environment: "Production" }));
   });
 });

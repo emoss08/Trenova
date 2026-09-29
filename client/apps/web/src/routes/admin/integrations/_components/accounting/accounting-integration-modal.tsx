@@ -2,6 +2,7 @@ import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { usePermission } from "@/hooks/use-permission";
 import { useAccountingMappingSummary } from "@/hooks/use-accounting-mapping-summary";
+import { useConnectedAccountingSystem } from "@/hooks/use-connected-accounting-system";
 import {
   hasLiveAccountingConnection,
   needsAccountingMappings,
@@ -31,27 +32,24 @@ import { AccountingConnectionPanel } from "./accounting-connection-panel";
 import { AccountingMapStep } from "./accounting-map-step";
 import { AccountingModeStep } from "./accounting-mode-step";
 import { AccountingStartDateStep } from "./accounting-start-date-step";
-import { quickBooksVendor, type AccountingVendor } from "./accounting-vendors";
+import { accountingVendor, type AccountingVendor } from "./accounting-vendors";
 import { useAccountingConnectionActions } from "./use-accounting-connection";
 
 type AccountingIntegrationModalProps = {
+  vendor: AccountingVendor;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   justConnected: boolean;
   onReviewed: () => void;
 };
 
-export function QuickBooksIntegrationModal(props: AccountingIntegrationModalProps) {
-  return <AccountingIntegrationModal vendor={quickBooksVendor} {...props} />;
-}
-
-function AccountingIntegrationModal({
+export function AccountingIntegrationModal({
   vendor,
   open,
   onOpenChange,
   justConnected,
   onReviewed,
-}: AccountingIntegrationModalProps & { vendor: AccountingVendor }) {
+}: AccountingIntegrationModalProps) {
   const t = useT();
   const { theme } = useTheme();
 
@@ -113,6 +111,7 @@ function AccountingIntegrationBody({
     ...queries.accountingSync.status(vendor.system),
     enabled: open && canRead,
   });
+  const tenantSystem = useConnectedAccountingSystem("status", open && canRead);
   const { connect, check, disconnect } = useAccountingConnectionActions(vendor);
   const mapping = needsAccountingMappings(statusQuery.data?.connection);
   const summaryQuery = useAccountingMappingSummary(vendor.system, open && canRead && mapping);
@@ -165,6 +164,12 @@ function AccountingIntegrationBody({
 
   const connection = status.connection;
   if (!connection || !hasLiveAccountingConnection(connection)) {
+    const connectedElsewhere =
+      tenantSystem.connected &&
+      tenantSystem.system !== null &&
+      tenantSystem.system !== vendor.system
+        ? accountingVendor(tenantSystem.system)
+        : null;
     return (
       <IntegrationSetupWizard
         steps={steps}
@@ -175,7 +180,9 @@ function AccountingIntegrationBody({
           vendor={vendor}
           available={status.available}
           app={status.app}
+          profile={status.profile}
           connection={connection ?? null}
+          connectedElsewhere={connectedElsewhere}
           canManage={canManage}
           previousCompanyName={connection?.externalCompanyName ?? ""}
           isConnecting={connect.isPending || connect.isSuccess}
@@ -221,7 +228,12 @@ function AccountingIntegrationBody({
   if (needsAccountingMode(connection)) {
     return (
       <IntegrationSetupWizard steps={steps} activeStepId="mode" label={t("{0} setup", vendor.name)}>
-        <AccountingModeStep vendor={vendor} connection={connection} canManage={canManage} />
+        <AccountingModeStep
+          vendor={vendor}
+          profile={status.profile}
+          connection={connection}
+          canManage={canManage}
+        />
       </IntegrationSetupWizard>
     );
   }
@@ -271,6 +283,7 @@ function AccountingIntegrationBody({
     <AccountingConnectionPanel
       vendor={vendor}
       app={status.app}
+      profile={status.profile}
       connection={connection}
       canUpdate={canUpdate}
       canManage={canManage}

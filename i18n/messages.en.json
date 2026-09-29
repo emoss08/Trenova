@@ -24703,7 +24703,7 @@
     ]
   },
   "Back to integrations": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -34320,7 +34320,7 @@
       "apps/web/components"
     ]
   },
-  "Checking with Intuit...": {
+  "Checking with {0}...": {
     "sites": 1,
     "scope": [
       "ts"
@@ -34985,6 +34985,15 @@
       "service/journalreviewservice"
     ]
   },
+  "Choose by {0}. After that, start the connection again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Choose column": {
     "sites": 2,
     "scope": [
@@ -35028,6 +35037,15 @@
     ],
     "areas": [
       "domain/report"
+    ]
+  },
+  "Choose one of the offered companies": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
     ]
   },
   "Choose one that did better than production in shadow traffic. Changing it starts a new comparison.": {
@@ -35324,6 +35342,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Choose the organisation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Choose the organization to connect with and confirm the reciprocal partner records that will be created.": {
@@ -40927,6 +40954,15 @@
       "routes/admin"
     ]
   },
+  "Connect this organisation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Connect to {0}": {
     "sites": 1,
     "scope": [
@@ -41024,6 +41060,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Connect your Xero organisation so Trenova can send the invoices, credit notes, payments and bills it posts. Trenova checks the connection and raises a Watchtower item when it needs attention.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Connect your stack, sync operational data, and manage telematics from one workspace.": {
@@ -41137,6 +41182,15 @@
       "service/accountingconnectionservice"
     ]
   },
+  "Connected, but {0} would not say which company was authorized. Try connecting again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "Connecticut (CT)": {
     "sites": 1,
     "scope": [
@@ -41155,6 +41209,15 @@
       "routes/admin"
     ]
   },
+  "Connecting Xero": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Connecting or disconnecting an accounting system needs a signed-in person, not an API key": {
     "sites": 1,
     "scope": [
@@ -41165,6 +41228,15 @@
     ]
   },
   "Connecting {0} needs manage access to the accounting integration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Connecting...": {
     "sites": 1,
     "scope": [
       "ts"
@@ -41246,7 +41318,7 @@
       "routes/agent-control"
     ]
   },
-  "Connects through the {0} this server is configured with ({1}). Use your own app instead if your organization registers one with Intuit.": {
+  "Connects through the {0} this server is configured with ({1}). Use your own app instead if your organization registers one with {2}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -41255,7 +41327,7 @@
       "routes/admin"
     ]
   },
-  "Connects through the {0} this server is configured with.": {
+  "Connects through the {0} this server is configured with. Use your own app instead if your organization registers one with {1}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -43010,6 +43082,15 @@
       "routes/admin"
     ]
   },
+  "Copy the client ID, generate a client secret, and enter both in this form.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Copy the install commands": {
     "sites": 1,
     "scope": [
@@ -43887,6 +43968,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Could not hold the authorization while you choose a company. Try connecting again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
     ]
   },
   "Could not load reports.": {
@@ -45078,6 +45168,15 @@
     ]
   },
   "Create a SCIM directory before issuing tokens or mapping groups.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Create a Web app on the Xero developer portal.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -55502,6 +55601,15 @@
       "service/accountingconnectionservice"
     ]
   },
+  "Disconnect {0} before connecting {1}. Trenova syncs with one accounting system at a time.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "Disconnect {0} before switching to your own app. Its authorization belongs to the app it was connected through.": {
     "sites": 1,
     "scope": [
@@ -65357,15 +65465,6 @@
     ],
     "areas": [
       "domain/accountingsync"
-    ]
-  },
-  "Environment must be Sandbox or Production": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/accountingconnectionservice"
     ]
   },
   "Equals": {
@@ -86731,6 +86830,15 @@
       "service/ediservice"
     ]
   },
+  "Intuit app": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
   "Invalid AP account": {
     "sites": 1,
     "scope": [
@@ -89888,6 +89996,15 @@
     "areas": [
       "routes/admin",
       "routes/journal-entry"
+    ]
+  },
+  "Journal entries cannot be sent to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Journal entries will be sent to {0}": {
@@ -112565,6 +112682,15 @@
       "apps/web/components"
     ]
   },
+  "Not available for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Not checked": {
     "sites": 1,
     "scope": [
@@ -119917,15 +120043,6 @@
       "apps/web/config"
     ]
   },
-  "Open the Intuit developer portal": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Open the amendment": {
     "sites": 1,
     "scope": [
@@ -120105,6 +120222,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Open the {0} developer portal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Open this report": {
@@ -121734,6 +121860,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Organisations in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Organization": {
@@ -144289,7 +144424,7 @@
       "routes/policies"
     ]
   },
-  "Remove the saved webhook verifier token": {
+  "Remove the saved {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -170799,6 +170934,15 @@
       "service/documentservice"
     ]
   },
+  "Stored encrypted and never shown again. Enter it again whenever the client ID changes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Stored encrypted and never shown again. Enter it again whenever the client ID or environment changes.": {
     "sites": 1,
     "scope": [
@@ -175193,6 +175337,15 @@
       "routes/capture"
     ]
   },
+  "That company was not among the ones {0} authorized. Connect again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "That computer was not paired. If it was yours, start again from its tray icon.": {
     "sites": 1,
     "scope": [
@@ -177572,6 +177725,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "The company choice is missing its token": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
     ]
   },
   "The company executive who will certify the summary; a name is required before it can be certified.": {
@@ -180124,6 +180286,15 @@
     ],
     "areas": [
       "domain/rateagreement"
+    ]
+  },
+  "The held authorization could not be read. Try connecting again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
     ]
   },
   "The highest price must be above the lowest price.": {
@@ -184060,6 +184231,15 @@
       "routes/rate-matrix"
     ]
   },
+  "The short pay write-off account is not mapped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The short pay write-off item is not mapped": {
     "sites": 1,
     "scope": [
@@ -184069,13 +184249,13 @@
       "go/other"
     ]
   },
-  "The short-pay write-off item": {
+  "The sign-in authorized several companies. Reload the page and connect again to choose one.": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/accountingsyncservice"
+      "api/graphql"
     ]
   },
   "The signed document's own number, for when somebody asks": {
@@ -184798,6 +184978,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The time to choose an organisation ran out, so nothing was connected. Start the connection again from Integrations.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The title the roster is counted by. Front-office titles are held by users, not workers.": {
@@ -186067,7 +186256,7 @@
       "service/accountingconnectionservice"
     ]
   },
-  "This Trenova server has no {0} of its own, so this organization connects through one it registers with Intuit. Create an app on the Intuit developer portal and enter its keys below.": {
+  "This Trenova server has no {0} of its own, so this organization connects through one it registers with {1}. Create an app on the {1} developer portal and enter its keys below.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -188395,6 +188584,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This organization is connected to {0}. Disconnect {0} before connecting {1}, so the same documents never reach two sets of books.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "This organization requires a receipt before an expense can be approved": {
@@ -191137,6 +191335,24 @@
     ]
   },
   "To get a free API key, visit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "To have {0} tell Trenova about changes, add the webhook endpoint below to the app's webhooks and enter its {1} here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "To have {0} tell Trenova about changes, save the keys first: the webhook endpoint for your app appears here once they are saved.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -194187,6 +194403,15 @@
       "routes/admin"
     ]
   },
+  "Trenova finishes the connection Xero just approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trenova has been updated": {
     "sites": 1,
     "scope": [
@@ -196043,6 +196268,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Under Configuration, add the redirect URI below exactly as written. Xero accepts http://localhost while developing; anything else needs https.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Under Keys and credentials, add the redirect URI below exactly as written. Development keys accept http://localhost; production keys need https.": {
@@ -203607,6 +203841,15 @@
       "routes/admin"
     ]
   },
+  "Webhook key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
   "Webhook signing secret {0}": {
     "sites": 1,
     "scope": [
@@ -203628,19 +203871,10 @@
   "Webhook verifier token": {
     "sites": 1,
     "scope": [
-      "ts"
+      "go"
     ],
     "areas": [
-      "routes/admin"
-    ]
-  },
-  "Webhook verifier token (optional)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
+      "domain/accountingsync"
     ]
   },
   "Webhooks": {
@@ -207140,7 +207374,7 @@
       "routes/policies"
     ]
   },
-  "While {0} is connected, only the client secret and webhook verifier token can change.": {
+  "While {0} is connected, only the client secret and {1} can change.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -209630,6 +209864,24 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Xero app": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
+  "Xero manual journals cannot post to accounts receivable, accounts payable or bank accounts, or name a customer or supplier, so Trenova's journals cannot be sent to Xero as they are. Send documents instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
     ]
   },
   "YYYY-MM-DD": {
@@ -216197,6 +216449,17 @@
       "domain/worker"
     ]
   },
+  "the accounting system": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift",
+      "routes/accounting-inbound",
+      "routes/accounting-sync"
+    ]
+  },
   "the customer's EDI partner": {
     "sites": 1,
     "scope": [
@@ -218857,6 +219120,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} ({1} days ago), through #{2}": {
     "sites": 1,
     "scope": [
@@ -219280,6 +219552,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} apps run in {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "{0} at risk": {
     "sites": 1,
     "scope": [
@@ -219487,6 +219768,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} can only receive documents.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} can't search by name": {
@@ -219861,6 +220151,15 @@
       "routes/admin"
     ]
   },
+  "{0} did not authorize any company. Connect again and choose the company to sync with.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "{0} did not create the record: {1}": {
     "sites": 1,
     "scope": [
@@ -219868,6 +220167,15 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "{0} did not give Trenova access to any organisation, so nothing was connected.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} didn't go through": {
@@ -219976,6 +220284,15 @@
     ],
     "areas": [
       "service/carrierintelservice"
+    ]
+  },
+  "{0} does not use this mapping": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "{0} doesn't charge per lookup.": {
@@ -220296,6 +220613,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "{0} gave Trenova access to more than one organisation. Choose the one whose books this Trenova organization keeps; Trenova gives up its access to the others.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} granted": {

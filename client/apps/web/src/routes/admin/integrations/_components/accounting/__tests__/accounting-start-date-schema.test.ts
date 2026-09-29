@@ -81,33 +81,55 @@ describe("accountingModeSchema", () => {
   it("takes either mode with a granularity", () => {
     for (const mode of ["Document", "Ledger"]) {
       for (const granularity of ["Detailed", "DailySummary"]) {
-        expect(accountingModeSchema.safeParse({ mode, granularity }).success).toBe(true);
+        expect(accountingModeSchema(true).safeParse({ mode, granularity }).success).toBe(true);
       }
     }
   });
 
   it("refuses a mode or granularity the server does not know", () => {
     for (const mode of [undefined, "", "Journal"]) {
-      const result = accountingModeSchema.safeParse({ mode, granularity: "Detailed" });
+      const result = accountingModeSchema(true).safeParse({ mode, granularity: "Detailed" });
       expect(result.success).toBe(false);
       expect(result.error?.issues[0]?.path).toEqual(["mode"]);
       expect(result.error?.issues[0]?.message).toBe("Choose what is sent");
     }
     for (const granularity of [undefined, "", "Weekly"]) {
-      const result = accountingModeSchema.safeParse({ mode: "Ledger", granularity });
+      const result = accountingModeSchema(true).safeParse({ mode: "Ledger", granularity });
       expect(result.success).toBe(false);
       expect(result.error?.issues[0]?.path).toEqual(["granularity"]);
     }
+  });
+
+  it("refuses journal entries when the accounting system cannot receive them", () => {
+    const result = accountingModeSchema(false).safeParse({
+      mode: "Ledger",
+      granularity: "Detailed",
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["mode"]);
+    expect(result.error?.issues[0]?.message).toBe(
+      "This accounting system cannot receive journal entries",
+    );
+    expect(
+      accountingModeSchema(false).safeParse({ mode: "Document", granularity: "Detailed" }).success,
+    ).toBe(true);
   });
 });
 
 describe("accountingModeInput", () => {
   it("sends the granularity only with journal entries", () => {
-    expect(accountingModeInput({ mode: "Ledger", granularity: "DailySummary" })).toEqual({
+    expect(accountingModeInput({ mode: "Ledger", granularity: "DailySummary" }, true)).toEqual({
       mode: "Ledger",
       granularity: "DailySummary",
     });
-    expect(accountingModeInput({ mode: "Document", granularity: "DailySummary" })).toEqual({
+    expect(accountingModeInput({ mode: "Document", granularity: "DailySummary" }, true)).toEqual({
+      mode: "Document",
+      granularity: null,
+    });
+  });
+
+  it("never sends journal entries to a system that cannot receive them", () => {
+    expect(accountingModeInput({ mode: "Ledger", granularity: "DailySummary" }, false)).toEqual({
       mode: "Document",
       granularity: null,
     });

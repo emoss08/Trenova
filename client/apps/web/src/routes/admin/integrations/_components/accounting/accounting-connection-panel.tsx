@@ -1,6 +1,10 @@
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { AccountingConnection } from "@/lib/graphql/accounting-sync";
-import { accountingConnectionPhase, reconnectDeadlineNear } from "@/lib/accounting-sync";
+import {
+  accountingConnectionPhase,
+  hasReconnectDeadline,
+  reconnectDeadlineNear,
+} from "@/lib/accounting-sync";
 import { formatPreciseTimeAgo } from "@/lib/time-utils";
 import type { AccountingConnectionStatus } from "@trenova/graphql/generated/graphql";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
@@ -25,7 +29,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { useState } from "react";
-import type { AccountingAppSettings } from "@/lib/graphql/accounting-sync";
+import type {
+  AccountingAppSettings,
+  AccountingProviderProfile,
+} from "@/lib/graphql/accounting-sync";
 import { AccountingAppKeys } from "./accounting-app-keys";
 import { AccountingCompanyFacts } from "./accounting-company-facts";
 import { AccountingSyncSettings } from "./accounting-sync-settings";
@@ -34,6 +41,7 @@ import type { AccountingVendor } from "./accounting-vendors";
 type AccountingConnectionPanelProps = {
   vendor: AccountingVendor;
   app: AccountingAppSettings;
+  profile: AccountingProviderProfile;
   connection: AccountingConnection;
   canUpdate: boolean;
   canManage: boolean;
@@ -48,6 +56,7 @@ type AccountingConnectionPanelProps = {
 export function AccountingConnectionPanel({
   vendor,
   app,
+  profile,
   connection,
   canUpdate,
   canManage,
@@ -155,9 +164,11 @@ export function AccountingConnectionPanel({
         <DescriptionItem label={t("Connected on")} numeric>
           {formatUnixDateMedium(connection.connectedAt)}
         </DescriptionItem>
-        <DescriptionItem label={t("Reconnect by")} numeric>
-          {formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt)}
-        </DescriptionItem>
+        {hasReconnectDeadline(connection.refreshTokenAbsoluteExpiresAt) ? (
+          <DescriptionItem label={t("Reconnect by")} numeric>
+            {formatUnixDateMedium(connection.refreshTokenAbsoluteExpiresAt)}
+          </DescriptionItem>
+        ) : null}
         <DescriptionItem label={t("Last checked")} numeric>
           {since(connection.lastCheckedAt) ?? <DescriptionEmpty />}
         </DescriptionItem>
@@ -176,7 +187,13 @@ export function AccountingConnectionPanel({
         <AccountingSyncSettings vendor={vendor} connection={connection} canManage={canManage} />
       ) : null}
 
-      <AccountingAppKeys vendor={vendor} app={app} connection={connection} canManage={canManage} />
+      <AccountingAppKeys
+        vendor={vendor}
+        app={app}
+        profile={profile}
+        connection={connection}
+        canManage={canManage}
+      />
 
       {canManage ? (
         <div className="flex justify-end gap-2 border-t pt-4">

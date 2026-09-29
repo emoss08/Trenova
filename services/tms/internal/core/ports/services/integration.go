@@ -474,6 +474,36 @@ var CatalogDefinitions = []CatalogItem{
 		SortOrder:          70,
 		PrimaryActionLabel: "Connect",
 	},
+	{
+		Type:          integration.TypeXero,
+		Name:          "Xero",
+		Description:   "Connect your Xero organisation so Trenova can send the invoices, credit notes, payments and bills it posts. Trenova checks the connection and raises a Watchtower item when it needs attention.",
+		Category:      integration.CategoryAccounting,
+		CategoryLabel: catalogAccountingLabel,
+		LogoURL:       "/integrations/logos/xero-light.svg",
+		LogoLightURL:  "/integrations/logos/xero-light.svg",
+		LogoDarkURL:   "/integrations/logos/xero-dark.svg",
+		DocsURL:       "https://developer.xero.com/documentation/",
+		WebsiteURL:    "https://www.xero.com/",
+		Color:         "#13B5EA",
+		GlowFrom:      "#13B5EA",
+		GlowTo:        "#6FD3F5",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: catalogDocsLabel,
+				URL:   "https://developer.xero.com/documentation/",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: catalogWebsiteLabel,
+				URL:   "https://www.xero.com/",
+			},
+		},
+		Featured:           true,
+		SortOrder:          71,
+		PrimaryActionLabel: "Connect",
+	},
 }
 
 type plannedEmailCatalogItemParams struct {

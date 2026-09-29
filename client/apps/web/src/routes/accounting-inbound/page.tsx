@@ -1,7 +1,11 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { ACCOUNTING_SYNC_PATH, accountingSetupPath } from "@/lib/accounting-sync";
+import { useConnectedAccountingSystem } from "@/hooks/use-connected-accounting-system";
+import {
+  ACCOUNTING_SYNC_PATH,
+  accountingSetupPath,
+  DEFAULT_ACCOUNTING_SYSTEM,
+} from "@/lib/accounting-sync";
 import { queries } from "@/lib/queries";
-import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -15,15 +19,21 @@ import {
   InboundSummarySkeleton,
 } from "./_components/inbound-summary";
 
-const SYSTEM: AccountingSystem = "QuickBooksOnline";
-
 const Table = lazy(() => import("./_components/inbound-table"));
 
 export function AccountingInboundPage() {
   const t = useT();
-  const syncSummary = useQuery(queries.accountingSync.syncSummary(SYSTEM));
-  const overviewQuery = useQuery(queries.accountingSync.inboundOverview(SYSTEM));
-  const providerName = syncSummary.data?.providerName ?? "QuickBooks Online";
+  const resolved = useConnectedAccountingSystem("syncSummary");
+  const system = resolved.system ?? DEFAULT_ACCOUNTING_SYSTEM;
+  const syncSummary = useQuery({
+    ...queries.accountingSync.syncSummary(system),
+    enabled: resolved.system !== null,
+  });
+  const overviewQuery = useQuery({
+    ...queries.accountingSync.inboundOverview(system),
+    enabled: resolved.system !== null,
+  });
+  const providerName = syncSummary.data?.providerName ?? t("the accounting system");
   const connection = syncSummary.data?.connection ?? null;
   const overview = overviewQuery.data;
   const syncing = connection?.syncEnabledAt != null;
@@ -48,8 +58,10 @@ export function AccountingInboundPage() {
         ),
       }}
     >
-      {overviewQuery.isLoading || syncSummary.isLoading ? <InboundSummarySkeleton /> : null}
-      {overviewQuery.isError ? (
+      {resolved.isLoading || overviewQuery.isLoading || syncSummary.isLoading ? (
+        <InboundSummarySkeleton />
+      ) : null}
+      {resolved.isError || overviewQuery.isError ? (
         <Alert size="sm" variant="destructive">
           <AlertDescription className="flex items-center justify-between gap-3">
             <span>{t("Payments from the books could not be loaded.")}</span>
@@ -57,7 +69,7 @@ export function AccountingInboundPage() {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => void overviewQuery.refetch()}
+              onClick={() => (resolved.isError ? resolved.retry() : void overviewQuery.refetch())}
             >
               {t("Retry")}
             </Button>
@@ -75,7 +87,7 @@ export function AccountingInboundPage() {
                   )
                 : t("{0} is not connected yet.", providerName)}
             </span>
-            <Button type="button" size="sm" render={<Link to={accountingSetupPath(SYSTEM)} />}>
+            <Button type="button" size="sm" render={<Link to={accountingSetupPath(system)} />}>
               {connection ? t("Finish setup") : t("Connect {0}", providerName)}
             </Button>
           </AlertDescription>
@@ -84,11 +96,11 @@ export function AccountingInboundPage() {
       {overview && syncing ? (
         <>
           <InboundSummary overview={overview} />
-          <InboundNotices overview={overview} system={SYSTEM} providerName={providerName} />
+          <InboundNotices overview={overview} system={system} providerName={providerName} />
         </>
       ) : null}
       <DataTableLazyComponent>
-        <Table system={SYSTEM} providerName={providerName} />
+        {resolved.system ? <Table system={resolved.system} providerName={providerName} /> : null}
       </DataTableLazyComponent>
     </PageLayout>
   );

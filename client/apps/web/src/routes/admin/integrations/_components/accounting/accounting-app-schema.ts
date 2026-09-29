@@ -12,10 +12,21 @@ const MAX_CLIENT_ID_LENGTH = 255;
 
 type SavedApp = Pick<AccountingAppCredential, "clientId" | "environment"> | null;
 
-export function accountingAppFormSchema(saved: SavedApp) {
+export function defaultAccountingAppEnvironment(
+  environments: readonly AccountingAppEnvironment[],
+): AccountingAppEnvironment {
+  return environments[0] ?? "Production";
+}
+
+export function accountingAppFormSchema(
+  saved: SavedApp,
+  environments: readonly AccountingAppEnvironment[] = ACCOUNTING_APP_ENVIRONMENTS,
+) {
   return z
     .object({
-      environment: z.enum(ACCOUNTING_APP_ENVIRONMENTS, { error: "Choose an environment" }),
+      environment: z
+        .enum(ACCOUNTING_APP_ENVIRONMENTS, { error: "Choose an environment" })
+        .refine((value) => environments.includes(value), { error: "Choose an environment" }),
       clientId: z
         .string()
         .trim()
@@ -40,16 +51,22 @@ export function accountingAppFormSchema(saved: SavedApp) {
       },
     )
     .refine((value) => !(value.clearWebhookVerifierToken && value.webhookVerifierToken !== ""), {
-      error: "Enter a verifier token or remove the saved one, not both",
+      error: "Enter a new key or remove the saved one, not both",
       path: ["webhookVerifierToken"],
     });
 }
 
 export type AccountingAppFormValues = z.infer<ReturnType<typeof accountingAppFormSchema>>;
 
-export function accountingAppFormDefaults(saved: SavedApp): AccountingAppFormValues {
+export function accountingAppFormDefaults(
+  saved: SavedApp,
+  environments: readonly AccountingAppEnvironment[] = ACCOUNTING_APP_ENVIRONMENTS,
+): AccountingAppFormValues {
   return {
-    environment: saved?.environment ?? "Sandbox",
+    environment:
+      saved && environments.includes(saved.environment)
+        ? saved.environment
+        : defaultAccountingAppEnvironment(environments),
     clientId: saved?.clientId ?? "",
     clientSecret: "",
     webhookVerifierToken: "",
