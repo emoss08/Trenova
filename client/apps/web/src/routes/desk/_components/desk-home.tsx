@@ -1,5 +1,4 @@
 import { AgentAsk, type AgentAskHandle } from "@/components/assistant/agent-ask";
-import { DeskLoading } from "@/components/assistant/voice/desk-loading";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { useAttentionSummary } from "@/hooks/use-attention";
@@ -81,9 +80,9 @@ function entrance(step: number): CSSProperties {
  *
  * Everything arrives once, in reading order, a beat apart, and then holds
  * still. Nothing here moves again unless the person does something. Until
- * what the page says is known — the agents and conversations, the briefing,
- * and what is waiting on someone who decides — the desk visitor stands in,
- * so the page never opens on a headline it is about to take back.
+ * the headline's figures are known — the agents and conversations, the
+ * briefing, and what is waiting on someone who decides — the headline is a
+ * skeleton, so the page never opens on a sentence it is about to take back.
  */
 export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: DeskHomeProps) {
   const t = useT();
@@ -161,15 +160,11 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
 
   const showDecisions = canDecide && waiting > 0;
   const showAside = showDecisions || recent.length > 0;
-  const settingOut =
+  const headlinePending =
     isLoading ||
     permissionsLoading ||
     briefingQuery.isPending ||
     (canDecide && summaryQuery.isPending);
-
-  if (settingOut) {
-    return <DeskLoading className="min-h-[60dvh]" label={t("Opening the desk")} />;
-  }
 
   // The sky's wash reaches past the column on both sides and is clipped only
   // at the window's edge, never at the column's, so it has no edge to see.
@@ -189,7 +184,13 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
               dateline={dateline}
               isoDate={isoDate}
               entrance={entrance}
-              headline={headline}
+              headline={
+                headlinePending ? (
+                  <Skeleton data-part="headline-skeleton" className="h-9 w-3/4 max-w-lg" />
+                ) : (
+                  headline
+                )
+              }
               lede={
                 noAgents
                   ? t("The Desk comes alive once an agent is enabled.")

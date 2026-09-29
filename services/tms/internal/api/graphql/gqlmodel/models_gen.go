@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
+	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
@@ -3328,6 +3329,17 @@ type ExtractionEvalRunConnection struct {
 type ExtractionEvalRunEdge struct {
 	Node   *extractioneval.ExtractionRun `json:"node"`
 	Cursor string                        `json:"cursor"`
+}
+
+type ExtractionShadowResultConnection struct {
+	Edges      []*ExtractionShadowResultEdge `json:"edges"`
+	PageInfo   *PageInfo                     `json:"pageInfo"`
+	TotalCount *int                          `json:"totalCount,omitempty"`
+}
+
+type ExtractionShadowResultEdge struct {
+	Node   *extractionshadow.ShadowResult `json:"node"`
+	Cursor string                         `json:"cursor"`
 }
 
 type ExtractionSnapshotField struct {
@@ -8504,6 +8516,23 @@ type UpdateExtractionEvalCaseInput struct {
 	Title   *string                    `json:"title,omitempty"`
 	Notes   *string                    `json:"notes,omitempty"`
 	Status  *extractioneval.CaseStatus `json:"status,omitempty"`
+}
+
+type UpdateExtractionRolloutInput struct {
+	Enabled                    bool    `json:"enabled"`
+	ProviderID                 *string `json:"providerId,omitempty"`
+	Percent                    int     `json:"percent"`
+	MaxAccuracyDropPoints      int     `json:"maxAccuracyDropPoints"`
+	MaxRejectionIncreasePoints int     `json:"maxRejectionIncreasePoints"`
+	Version                    int     `json:"version"`
+}
+
+type UpdateExtractionShadowSettingsInput struct {
+	Enabled       bool    `json:"enabled"`
+	ProviderID    *string `json:"providerId,omitempty"`
+	SamplePercent int     `json:"samplePercent"`
+	DailyLimit    int     `json:"dailyLimit"`
+	Version       int     `json:"version"`
 }
 
 type UpdateFuelIndexPriceInput struct {

@@ -26,5 +26,17 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 				"purpose": "ai-correction-retention",
 			},
 		},
+		{
+			ID:            "extraction-accuracy-drift",
+			Description:   "Tell each organization when an extraction provider read last week's documents worse than its own recent weeks",
+			Spec:          schedule.Cron("20 6 * * 1"),
+			Workflow:      ExtractionAccuracyDriftWorkflow,
+			Args:          []any{&ExtractionAccuracyDriftInput{}},
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "extraction-accuracy-drift",
+			},
+		},
 	}
 }

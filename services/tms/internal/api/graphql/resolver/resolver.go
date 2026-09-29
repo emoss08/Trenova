@@ -229,6 +229,8 @@ type Params struct {
 	AgentEvaluationService       services.AgentEvaluationService
 	AgentEvalCaseService         services.AgentEvalCaseService
 	ExtractionEvalService        services.ExtractionEvalService
+	ExtractionShadowService      services.ExtractionShadowService
+	ExtractionRolloutService     services.ExtractionRolloutService
 	AITrainingHistoryService     services.AITrainingHistoryService
 	AgentQualityService          services.AgentQualityService
 	AgentExceptionService        services.AgentExceptionService
@@ -403,6 +405,8 @@ type Resolver struct {
 	agentEvaluationService       services.AgentEvaluationService
 	agentEvalCaseService         services.AgentEvalCaseService
 	extractionEvalService        services.ExtractionEvalService
+	extractionShadowService      services.ExtractionShadowService
+	extractionRolloutService     services.ExtractionRolloutService
 	aiTrainingHistoryService     services.AITrainingHistoryService
 	agentQualityService          services.AgentQualityService
 	agentExceptionService        services.AgentExceptionService
@@ -578,6 +582,8 @@ func New(p Params) *Resolver {
 		agentEvaluationService:       p.AgentEvaluationService,
 		agentEvalCaseService:         p.AgentEvalCaseService,
 		extractionEvalService:        p.ExtractionEvalService,
+		extractionShadowService:      p.ExtractionShadowService,
+		extractionRolloutService:     p.ExtractionRolloutService,
 		aiTrainingHistoryService:     p.AITrainingHistoryService,
 		agentQualityService:          p.AgentQualityService,
 		agentExceptionService:        p.AgentExceptionService,

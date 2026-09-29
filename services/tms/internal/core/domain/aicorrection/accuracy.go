@@ -79,3 +79,56 @@ func (a *AccuracyAggregator) Fields() []FieldAccuracy {
 
 	return out
 }
+
+type FieldComparison struct {
+	Key                string
+	CandidateScored    int
+	CandidateCorrect   int
+	CandidateAccuracy  float64
+	ProductionScored   int
+	ProductionCorrect  int
+	ProductionAccuracy float64
+}
+
+func CompareFields(candidate, production []FieldAccuracy) []FieldComparison {
+	byKey := make(map[string]*FieldComparison, len(candidate)+len(production))
+	entry := func(key string) *FieldComparison {
+		row, ok := byKey[key]
+		if !ok {
+			row = &FieldComparison{Key: key}
+			byKey[key] = row
+		}
+		return row
+	}
+	for i := range candidate {
+		row := entry(candidate[i].Key)
+		row.CandidateScored = candidate[i].Scored
+		row.CandidateCorrect = candidate[i].Correct
+		row.CandidateAccuracy = candidate[i].Accuracy
+	}
+	for i := range production {
+		row := entry(production[i].Key)
+		row.ProductionScored = production[i].Scored
+		row.ProductionCorrect = production[i].Correct
+		row.ProductionAccuracy = production[i].Accuracy
+	}
+
+	out := make([]FieldComparison, 0, len(byKey))
+	for _, row := range byKey {
+		if row.CandidateScored == 0 && row.ProductionScored == 0 {
+			continue
+		}
+		out = append(out, *row)
+	}
+	slices.SortFunc(out, func(a, b FieldComparison) int {
+		if c := cmp.Compare(
+			a.CandidateAccuracy-a.ProductionAccuracy,
+			b.CandidateAccuracy-b.ProductionAccuracy,
+		); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.Key, b.Key)
+	})
+
+	return out
+}

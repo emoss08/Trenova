@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 
@@ -102,4 +103,56 @@ type AITrainingScorer interface {
 		ctx context.Context,
 		req *ScoreTrainingPredictionsRequest,
 	) (*aitraining.ScoreReport, error)
+}
+
+type PlanAIRetrainingRequest struct {
+	Manual      bool
+	RequestedBy string
+	Note        string
+}
+
+type ClaimAIRetrainingRequest struct {
+	Trainer string
+}
+
+type HeartbeatAIRetrainingRequest struct {
+	CycleID pulid.ID
+	Trainer string
+}
+
+type RecordAIRetrainingRequest struct {
+	CycleID pulid.ID
+	Trainer string
+	Result  *aitraining.RetrainingResult
+}
+
+type FailAIRetrainingRequest struct {
+	CycleID pulid.ID
+	Trainer string
+	Message string
+}
+
+type AIRetrainingService interface {
+	Plan(ctx context.Context, req *PlanAIRetrainingRequest) (*aitraining.RetrainingCycle, error)
+	Reconcile(ctx context.Context) (int, error)
+	ClaimNext(
+		ctx context.Context,
+		req *ClaimAIRetrainingRequest,
+	) (*aitraining.RetrainingCycle, error)
+	Heartbeat(
+		ctx context.Context,
+		req *HeartbeatAIRetrainingRequest,
+	) (*aitraining.RetrainingCycle, error)
+	Record(
+		ctx context.Context,
+		req *RecordAIRetrainingRequest,
+	) (*aitraining.RetrainingCycle, error)
+	FailTraining(
+		ctx context.Context,
+		req *FailAIRetrainingRequest,
+	) (*aitraining.RetrainingCycle, error)
+	Cancel(ctx context.Context, id pulid.ID) (*aitraining.RetrainingCycle, error)
+	List(ctx context.Context, limit int) ([]*aitraining.RetrainingCycle, error)
+	Get(ctx context.Context, id pulid.ID) (*aitraining.RetrainingCycle, error)
+	LeaseDuration() time.Duration
 }

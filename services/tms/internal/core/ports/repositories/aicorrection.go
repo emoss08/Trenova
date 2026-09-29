@@ -19,6 +19,12 @@ type GetAICorrectionRequest struct {
 	ID         pulid.ID
 }
 
+type GetLatestAICorrectionByDocumentRequest struct {
+	TenantInfo pagination.TenantInfo
+	Task       aicorrection.Task
+	DocumentID pulid.ID
+}
+
 type ListAICorrectionConnectionRequest struct {
 	Filter  *pagination.QueryOptions
 	Cursor  pagination.CursorInfo
@@ -42,9 +48,44 @@ type ListAICorrectionsForTrainingRequest struct {
 	Limit           int
 }
 
+type TotalAICorrectionsByProviderRequest struct {
+	TenantInfo pagination.TenantInfo
+	Task       aicorrection.Task
+	ProviderID pulid.ID
+	Since      int64
+}
+
+type AICorrectionProviderTotal struct {
+	Candidate bool `bun:"candidate"`
+	Scored    int  `bun:"scored"`
+	Correct   int  `bun:"correct"`
+}
+
+type WeeklyAICorrectionTotalsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Task       aicorrection.Task
+	Since      int64
+}
+
+type CountTrainableAICorrectionsRequest struct {
+	Task               aicorrection.Task
+	CapturedFrom       int64
+	CapturedTo         int64
+	PerOrganizationCap int
+}
+
+type WeeklyTrainableAICorrectionTotalsRequest struct {
+	Task  aicorrection.Task
+	Since int64
+}
+
 type AICorrectionRepository interface {
 	Upsert(ctx context.Context, entity *aicorrection.Correction) (*aicorrection.Correction, error)
 	GetByID(ctx context.Context, req GetAICorrectionRequest) (*aicorrection.Correction, error)
+	GetLatestByDocument(
+		ctx context.Context,
+		req *GetLatestAICorrectionByDocumentRequest,
+	) (*aicorrection.Correction, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAICorrectionConnectionRequest,
@@ -57,5 +98,18 @@ type AICorrectionRepository interface {
 		ctx context.Context,
 		req *ListAICorrectionsForTrainingRequest,
 	) ([]*aicorrection.Correction, error)
+	TotalsByProvider(
+		ctx context.Context,
+		req *TotalAICorrectionsByProviderRequest,
+	) ([]AICorrectionProviderTotal, error)
+	WeeklyTotalsByProvider(
+		ctx context.Context,
+		req *WeeklyAICorrectionTotalsRequest,
+	) ([]aicorrection.WeekTotal, error)
+	CountTrainable(ctx context.Context, req *CountTrainableAICorrectionsRequest) (int, error)
+	WeeklyTrainableTotalsByProvider(
+		ctx context.Context,
+		req *WeeklyTrainableAICorrectionTotalsRequest,
+	) ([]aicorrection.WeekTotal, error)
 	PurgeBefore(ctx context.Context, req PurgeAICorrectionsRequest) (int64, error)
 }

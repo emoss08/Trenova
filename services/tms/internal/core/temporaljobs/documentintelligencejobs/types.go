@@ -152,6 +152,13 @@ type ProcessDocumentAIExtractionResult struct {
 	AcceptanceState string   `json:"acceptanceState"`
 }
 
+type ConsiderDocumentAIExtractionShadowInput struct {
+	temporaltype.BasePayload
+
+	DocumentID  pulid.ID `json:"documentId"`
+	ExtractedAt int64    `json:"extractedAt"`
+}
+
 type ReconcileDocumentIntelligencePayload struct {
 	temporaltype.BasePayload
 

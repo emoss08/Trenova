@@ -142,6 +142,44 @@ type ExtractionEvalService interface {
 		req repositories.GetExtractionEvalResultRequest,
 	) (*extractioneval.ExtractionResult, error)
 	Accuracy(ctx context.Context, req *ExtractionAccuracyRequest) (*ExtractionAccuracy, error)
+	ProviderTrends(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*ExtractionProviderTrends, error)
+}
+
+const ExtractionAccuracyDriftEvent = "ai.extraction_accuracy_drift"
+
+type ExtractionProviderTrend struct {
+	ProviderID      pulid.ID
+	ProviderName    string
+	Model           string
+	ProviderRemoved bool
+	Weeks           []aicorrection.WeekAccuracy
+	Checked         aicorrection.WeekAccuracy
+	Baseline        aicorrection.WeekAccuracy
+	DropPoints      float64
+	Comparable      bool
+	Drifting        bool
+}
+
+type ExtractionProviderTrends struct {
+	Weeks             []int64
+	CheckedWeek       int64
+	BaselineStart     int64
+	Providers         []ExtractionProviderTrend
+	DriftPoints       int
+	MinWeekFields     int
+	MinBaselineFields int
+}
+
+type ExtractionDriftCheckRequest struct {
+	TenantInfo pagination.TenantInfo
+	Now        int64
+}
+
+type ExtractionDriftChecker interface {
+	CheckDrift(ctx context.Context, req *ExtractionDriftCheckRequest) (int, error)
 }
 
 type ExtractionEvalRunner interface {

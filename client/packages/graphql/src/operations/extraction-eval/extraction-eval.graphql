@@ -309,3 +309,40 @@ mutation CancelExtractionEvalRun($id: ID!) {
     ...ExtractionEvalRunFields
   }
 }
+
+fragment ExtractionWeekAccuracyFields on ExtractionWeekAccuracy {
+  weekStart
+  corrections
+  scored
+  correct
+  accuracy
+}
+
+query ExtractionProviderTrends {
+  extractionProviderTrends {
+    weeks
+    checkedWeek
+    baselineStart
+    driftPoints
+    minWeekFields
+    minBaselineFields
+    providers {
+      providerId
+      providerName
+      model
+      providerRemoved
+      dropPoints
+      comparable
+      drifting
+      weeks {
+        ...ExtractionWeekAccuracyFields
+      }
+      checked {
+        ...ExtractionWeekAccuracyFields
+      }
+      baseline {
+        ...ExtractionWeekAccuracyFields
+      }
+    }
+  }
+}

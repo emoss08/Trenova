@@ -35,6 +35,21 @@ var asyncAIExtractionActivityOptions = workflow.ActivityOptions{
 // the global poller completed. One started before it finishes that way.
 const pollOnTimerChange = "document-ai-extraction-timer-poll"
 
+const shadowExtractionChange = "document-ai-extraction-shadow"
+
+var considerShadowActivityOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: time.Minute,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    2 * time.Second,
+		BackoffCoefficient: 2.0,
+		MaximumAttempts:    3,
+		MaximumInterval:    30 * time.Second,
+		NonRetryableErrorTypes: []string{
+			temporaltype.ErrorTypeInvalidInput.String(),
+		},
+	},
+}
+
 // submitAIExtractionActivityOptions bound a submit, which runs the model inline
 // when no provider can defer it, so it heartbeats on a timer rather than on
 // progress.
@@ -249,7 +264,35 @@ func applyAIExtraction(
 		return nil, err
 	}
 
+	if workflow.GetVersion(ctx, shadowExtractionChange, workflow.DefaultVersion, 1) == 1 {
+		considerShadow(ctx, payload)
+	}
+
 	return result, nil
+}
+
+func considerShadow(ctx workflow.Context, payload *ProcessDocumentAIExtractionPayload) {
+	ctx = workflow.WithActivityOptions(ctx, considerShadowActivityOptions)
+
+	var a *Activities
+	if err := workflow.ExecuteActivity(
+		ctx,
+		a.ConsiderDocumentAIExtractionShadowActivity,
+		&ConsiderDocumentAIExtractionShadowInput{
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: payload.OrganizationID,
+				BusinessUnitID: payload.BusinessUnitID,
+				UserID:         payload.UserID,
+			},
+			DocumentID:  payload.DocumentID,
+			ExtractedAt: payload.ExtractedAt,
+		},
+	).Get(ctx, nil); err != nil {
+		workflow.GetLogger(ctx).Warn("could not consider a shadow extraction",
+			"documentId", payload.DocumentID.String(),
+			"error", err,
+		)
+	}
 }
 
 func PollPendingDocumentAIExtractionsWorkflow(

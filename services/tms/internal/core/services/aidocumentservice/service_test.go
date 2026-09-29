@@ -311,6 +311,49 @@ func TestSubmitBackgroundExtraction_AttributesTheCallToThePersonAndDocument(t *t
 	)
 }
 
+func TestSubmitBackgroundExtraction_AsksARolloutCandidateFirstWithoutRequiringIt(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		submission: &serviceports.BackgroundSubmission{
+			Handle:     "resp_123",
+			ProviderID: pulid.MustNew("aipr_"),
+		},
+	}
+	service := newTestService(t, completion)
+	request := extractRequest()
+	request.PreferredProviderID = pulid.MustNew("aipr_")
+
+	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), request)
+	require.NoError(t, err)
+
+	require.NotNil(t, completion.sawRequest)
+	assert.Equal(t, request.PreferredProviderID, completion.sawRequest.PreferredProviderID)
+	assert.False(t, completion.sawRequest.RequireProvider,
+		"production falls back to the usual providers when the candidate cannot answer")
+	assert.Empty(t, completion.sawRequest.Attribution.Purpose,
+		"a served extraction is production usage, not evaluation")
+}
+
+func TestSubmitBackgroundExtraction_LeavesTheOrderAloneWithoutAPreference(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		submission: &serviceports.BackgroundSubmission{
+			Handle:     "resp_123",
+			ProviderID: pulid.MustNew("aipr_"),
+		},
+	}
+	service := newTestService(t, completion)
+
+	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), extractRequest())
+	require.NoError(t, err)
+
+	require.NotNil(t, completion.sawRequest)
+	assert.True(t, completion.sawRequest.PreferredProviderID.IsNil())
+	assert.False(t, completion.sawRequest.RequireProvider)
+}
+
 func TestPollBackgroundExtraction_AttributesTheOutcomeToThePersonAndDocument(t *testing.T) {
 	t.Parallel()
 
@@ -630,6 +673,49 @@ func TestExtractRateConfirmationForEvaluation_RequiresAProvider(t *testing.T) {
 	)
 	require.Error(t, err)
 	assert.Nil(t, completion.sawRequest)
+}
+
+func TestExtractRateConfirmationForShadow_SendsProductionsInputToThePinnedProvider(t *testing.T) {
+	t.Parallel()
+
+	providerID := pulid.MustNew("aiprv_")
+	completion := &stubCompletion{
+		structured: &serviceports.StructuredCompletionResult{
+			Text:            extractPayload,
+			ModelIdentifier: "tuned-extractor",
+			ProviderID:      providerID,
+			LatencyMs:       900,
+		},
+	}
+	service := newTestService(t, completion)
+	production := extractRequest()
+	production.Text = "RATE CONFIRMATION Load 4471 rate $1,850"
+
+	result, err := service.ExtractRateConfirmationForShadow(
+		t.Context(),
+		&serviceports.AIShadowExtractRequest{
+			TenantInfo: production.TenantInfo,
+			ProviderID: providerID,
+			DocumentID: production.DocumentID,
+			FileName:   production.FileName,
+			Text:       production.Text,
+			Pages:      production.Pages,
+		},
+	)
+	require.NoError(t, err)
+
+	request := completion.sawRequest
+	require.NotNil(t, request)
+	assert.Equal(t, providerID, request.PreferredProviderID)
+	assert.True(t, request.RequireProvider)
+	assert.Equal(t, serviceports.AIUsagePurposeEvaluation, request.Attribution.Purpose,
+		"shadow calls are billed to the evaluation budget, not live usage")
+	assert.Equal(t, aiusage.SubjectTypeDocument, request.Attribution.Subject.Type)
+	assert.Equal(t, production.DocumentID.String(), request.Attribution.Subject.ID)
+	assert.Equal(t, newExtractCall(production).context, request.Context,
+		"the candidate reads exactly what production read")
+	assert.Equal(t, "tuned-extractor", result.Model)
+	assert.Equal(t, int64(900), result.LatencyMs)
 }
 
 func TestExtractRateConfirmation_LiveCallsAreNotPinned(t *testing.T) {

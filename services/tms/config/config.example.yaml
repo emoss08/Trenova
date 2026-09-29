@@ -263,6 +263,25 @@ security:
       timeout: 10s
       retryAttempts: 3
 
+# Scheduled retraining of the document extraction model. Every Monday at
+# 08:10 UTC the worker checks whether enough new corrections have been
+# confirmed by consenting organizations; when they have, it starts a training
+# export and records a retraining cycle. A GPU machine running
+# "trenova ai retraining run" on a timer trains, scores and records it.
+# See docs/engineering/extraction-fine-tuning.md, "Retrain on a schedule".
+aiRetraining:
+  enabled: false # The schedule starts nothing until this is true; "trenova ai retraining start" works either way
+  lookbackDays: 365 # Corrections captured this far back are exported for each retraining (30-1095)
+  minNewExamples: 1000 # Trainable corrections needed since the last retraining's window (each organization counts up to maxPerOrganization)
+  minIntervalDays: 28 # Least time between two retrainings (1-365)
+  retrainOnDrift: true # A provider drifting below its own recent weeks lifts the interval, not the minimum of new corrections
+  maxPerOrganization: 2000 # Most examples one organization contributes (1-20000)
+  validationPercent: 10 # Share held out to score the model (1-50)
+  structuredOutputMode: JSONSchema # How the served model will be asked for JSON: JSONSchema, JSONMode or Prompted
+  minAccuracyPercent: 85 # The model must read at least this share of validation fields correctly (0-100)
+  maxRegressionPoints: 0 # How far below production's accuracy on the same documents the model may score (0-100)
+  leaseDuration: 2h # How long a trainer holds a cycle between heartbeats before another may take it (10m-24h)
+
 # AI audit trail. Each row is chained to the one before it with HMAC-SHA256
 # under a key kept outside the database, so an edit or a deleted row breaks the
 # chain. Keep every key that ever signed a row: old rows are verified with the

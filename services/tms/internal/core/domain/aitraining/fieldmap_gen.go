@@ -4,6 +4,13 @@ package aitraining
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RetrainingCycle].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.RetrainingCycleFieldMap] instead of parsing struct tags via reflection.
+func (e *RetrainingCycle) GetStaticFieldMap() map[string]string {
+	return buncolgen.RetrainingCycleFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TrainingExport].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.TrainingExportFieldMap] instead of parsing struct tags via reflection.

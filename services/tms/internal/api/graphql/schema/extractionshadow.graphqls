@@ -1,0 +1,158 @@
+enum ExtractionShadowResultStatus {
+  Pending
+  Completed
+  Failed
+  Skipped
+}
+
+enum ExtractionShadowVerdict {
+  Better
+  Worse
+  Same
+}
+
+"How production document extraction is shadowed by a candidate AI provider."
+type ExtractionShadowSettings {
+  enabled: Boolean!
+  "The candidate AI provider; set even while the shadow is off, so turning it back on keeps the choice."
+  providerId: ID
+  "The share of production extractions also sent to the candidate, 1 to 100."
+  samplePercent: Int!
+  "The most shadow extractions started in any 24 hours."
+  dailyLimit: Int!
+  updatedById: ID
+  version: Int!
+  "Zero until the settings are first saved."
+  updatedAt: Timestamp!
+}
+
+"A production extraction run again on the candidate provider, never applied, and scored beside production against the confirmed shipment."
+type ExtractionShadowResult {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  documentId: ID!
+  "When the production extraction this shadows was made."
+  extractedAt: Timestamp!
+  status: ExtractionShadowResultStatus!
+  "Why the shadow was skipped or failed."
+  statusReason: String!
+  providerId: ID!
+  providerName: String!
+  "The model the candidate reported serving."
+  servedModel: String!
+  productionProviderId: ID
+  productionModel: String!
+  "Whether the candidate's answer passed the checks production's must pass to replace the rule-based reading."
+  accepted: Boolean!
+  rejectionReason: String!
+  "The draft the candidate would have produced."
+  predicted: ExtractionSnapshot
+  "The correction the shadow was scored against; empty until a person confirms the document."
+  correctionId: ID
+  scoredAt: Timestamp
+  verdict: ExtractionShadowVerdict
+  fieldResults: [AICorrectionFieldResult!]!
+  scoredCount: Int!
+  correctCount: Int!
+  correctedCount: Int!
+  missedCount: Int!
+  accuracy: Float!
+  "How production's draft for the same document scored against the same confirmed shipment."
+  baselineFieldResults: [AICorrectionFieldResult!]!
+  baselineScoredCount: Int!
+  baselineCorrectCount: Int!
+  baselineCorrectedCount: Int!
+  baselineMissedCount: Int!
+  baselineAccuracy: Float!
+  latencyMs: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  costUsd: Decimal!
+  workflowId: String!
+  startedAt: Timestamp
+  completedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type ExtractionShadowResultEdge {
+  node: ExtractionShadowResult!
+  cursor: String!
+}
+
+type ExtractionShadowResultConnection {
+  edges: [ExtractionShadowResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One side of a shadow comparison, over the documents both sides were scored on."
+type ExtractionShadowSide {
+  scored: Int!
+  correct: Int!
+  corrected: Int!
+  missed: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+type ExtractionShadowFieldComparison {
+  "A field key, with stop fields grouped across stops (stops.pickup.city)."
+  key: String!
+  candidateScored: Int!
+  candidateCorrect: Int!
+  candidateAccuracy: Float!
+  productionScored: Int!
+  productionCorrect: Int!
+  productionAccuracy: Float!
+}
+
+"How a candidate provider did against production on the same documents over a window."
+type ExtractionShadowReport {
+  windowDays: Int!
+  since: Timestamp!
+  "The candidate reported on; empty when none has been chosen."
+  providerId: ID
+  providerName: String!
+  "Shadow extractions started in the window, in every state."
+  sampled: Int!
+  pending: Int!
+  completed: Int!
+  failed: Int!
+  skipped: Int!
+  "Shadows scored against a confirmed shipment."
+  scored: Int!
+  "True when the window held more scored shadows than were read."
+  truncated: Boolean!
+  better: Int!
+  worse: Int!
+  same: Int!
+  candidate: ExtractionShadowSide!
+  production: ExtractionShadowSide!
+  "Per field, the candidate's biggest shortfall against production first."
+  fields: [ExtractionShadowFieldComparison!]!
+  costUsd: Decimal!
+  avgLatencyMs: Int!
+}
+
+input UpdateExtractionShadowSettingsInput {
+  enabled: Boolean!
+  providerId: ID
+  samplePercent: Int!
+  dailyLimit: Int!
+  version: Int!
+}
+
+extend type Query {
+  extractionShadowSettings: ExtractionShadowSettings!
+  extractionShadowReport(windowDays: Int, providerId: ID): ExtractionShadowReport!
+  extractionShadowResults(input: DataTableConnectionInput!): ExtractionShadowResultConnection!
+  extractionShadowResult(id: ID!): ExtractionShadowResult
+}
+
+extend type Mutation {
+  "Chooses the candidate provider that shadows production document extraction, and how much of it."
+  updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
+}

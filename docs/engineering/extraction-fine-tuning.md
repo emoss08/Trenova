@@ -5,14 +5,19 @@ GPUs, checked against the production model, and put in front of customers. The d
 an [AI training export](ai-training-export.md); read that first.
 
 ```
-trenova ai training-export start            anonymized JSONL in object storage
-trenova ai training-export render           raw examples with the production prompt, on disk
-trenova-finetune run                        targets → SFT → merge → DPO → merge → predict (GPU)
-trenova ai fine-tune score                  model vs. production on the validation set
-trenova-finetune serve / bench              vLLM tuned and timed on production-shaped requests
-AI provider                                 the served model behind an OpenAIChat provider
-AI Control → Quality → Document extraction  evaluation run on the golden set
+trenova ai training-export start             anonymized JSONL in object storage
+trenova ai training-export render            raw examples with the production prompt, on disk
+trenova-finetune run                         targets → SFT → merge → DPO → merge → predict (GPU)
+trenova ai fine-tune score                   model vs. production on the validation set
+trenova-finetune serve / bench               vLLM tuned and timed on production-shaped requests
+AI provider                                  the served model behind an OpenAIChat provider
+AI Control → Quality → Document extraction   evaluation run on the golden set, then
+                                             shadow traffic scored beside production
 ```
+
+Once a model serves traffic, the first four steps repeat on a schedule: the worker starts an
+export when enough new corrections have been confirmed, and a GPU machine renders, trains and
+scores it with `trenova ai retraining run` (see [Retrain on a schedule](#9-retrain-on-a-schedule)).
 
 The Go side owns everything that must match production exactly: the prompt, the reply schema,
 reading a reply, and scoring it. The Python side in `ml/extraction-finetune` owns the training
@@ -415,8 +420,221 @@ Give it a priority after the current extraction provider, so nothing routes to i
 
 Then start an evaluation run on the organization's golden set, from AI Control → Quality →
 Document extraction, pinned to the new provider. That scores it on real, unanonymized documents
-the model never trained on, since promoted corrections are never exported. Move it ahead of the
-current provider only when both the offline score and the evaluation run beat production.
+the model never trained on, since promoted corrections are never exported. Then shadow
+production with it (below). Move it ahead of the current provider only when the offline score,
+the evaluation run and the shadow comparison all beat production.
+
+## 6. Shadow production traffic
+
+The golden set is small and was chosen by people. Shadow traffic measures a candidate on the
+documents actually arriving: a share of production extractions is also sent to the candidate
+provider, its answer is kept and never applied, and when a person creates a shipment from the
+document's draft both answers are scored against what they confirmed.
+
+```
+production extraction applied  →  sampled?  →  ExtractionShadowWorkflow (candidate, pinned)
+                                                  ↓
+correction captured  ────────────────────→  scored beside production on the same document
+```
+
+- **Settings.** AI Control → Quality → Document extraction → Shadow, stored per organization in
+  `extraction_shadow_settings`: the candidate provider, the share of extractions (1–100%) and
+  the most started in any 24 hours (1–5000). The candidate must be enabled for
+  `DocumentExtraction`; give it a priority after the current provider so nothing routes to it.
+  An extraction production already served with the candidate is never shadowed.
+- **Sampling.** `extractionshadow.Sampled` hashes the document id and extraction time
+  (`hashutils.InPercentSample`), so a retry makes the same choice and raising the share adds
+  documents rather than swapping them.
+- **The trigger.** After `ApplyDocumentAIExtractionResultActivity`,
+  `ProcessDocumentAIExtractionWorkflow` runs `ConsiderDocumentAIExtractionShadowActivity`
+  behind `workflow.GetVersion("document-ai-extraction-shadow", …)`, so executions already in
+  flight replay unchanged. A failure there is logged and never fails the production extraction.
+  The sampler creates the `extraction_shadow_results` row (one per document and extraction
+  time) and starts `ExtractionShadowWorkflow` (`extraction-shadow:<result id>`) on the document
+  intelligence queue at evaluation priority.
+- **The same input and the same merge.** `ShadowPredictor` reads the document the way the apply
+  activity did (the same text limit and pages), calls `ExtractRateConfirmationForShadow` pinned
+  to the candidate, then runs production's `mergeAIAnalysis` against the rule-based reading
+  production was merged with (`aiDiagnostics.fallbackAnalysis`). The stored draft is the one a
+  person would have seen had the candidate served; an answer that fails the checks leaves the
+  rule-based draft, as it would have in production. A document extracted again before the
+  shadow runs is skipped.
+- **Cost.** Shadow calls are billed with the evaluation purpose, so they never count as live
+  usage, and each shadow checks the evaluation budget first; a spent budget skips it.
+- **Scoring.** `CaptureShipmentDraft` hands the saved correction to the `Scorer`, which scores the
+  shadow of the extraction the draft came from. A shadow that finishes after the person
+  confirmed is scored on completion, but only against a correction captured after that
+  extraction ran. The candidate's field results sit beside the correction's own
+  (`baseline_field_results`), and the verdict counts correct fields first, then mistakes. The
+  report pairs both sides over the same documents, per field, candidate's biggest shortfall
+  first.
+- **Retention.** Shadow results keep a draft of real document values, so they are purged with
+  corrections, on the organization's AI correction retention period.
+
+## 7. Roll out gradually
+
+Shadow traffic proves a candidate reads well; a rollout proves it is safe to serve. The candidate
+reads a share of real documents and its answer fills their shipment drafts, while the rest stay
+on production. Both are measured on what people confirm, and two guards stop the rollout on their
+own when the candidate does worse.
+
+```
+extraction submitted  →  AssignExtraction  →  candidate side: PreferredProviderID = candidate
+                                              control side:   the usual priority order
+result applied        →  SettleExtraction  →  served provider, accepted / rejected / failed
+correction captured   →  ObserveCorrection →  accuracy guard
+                                              ↓ breach
+                         rollout halted, audited (critical), permitted people notified
+```
+
+- **Settings.** AI Control → Quality → Document extraction → Rollout, stored per organization in
+  `extraction_rollouts`: the candidate, the share of documents (1–100%), and the two guard
+  allowances. The candidate must be enabled for `DocumentExtraction`. Choosing a new candidate,
+  turning the rollout on, or starting it again after a guard stopped it sets `started_at`; the
+  guards and the report count only what happened since, so a widened share keeps its history but
+  a new comparison never inherits an old one.
+- **Assignment.** `ExtractionRollout.Assigns` hashes `rollout:` and the document id, so a document
+  keeps its side when it is extracted again, raising the share adds documents rather than swapping
+  them, and the choice is independent of which documents shadow traffic samples. Every extraction
+  while the rollout serves gets an `extraction_rollout_assignments` row (one per document and
+  extraction time), on either side, so both sides are compared over the same period.
+- **Serving.** `submitAIExtraction` asks `AssignExtraction` before it submits. A candidate-side
+  extraction passes the candidate as `AIExtractRequest.PreferredProviderID`; the completion router
+  tries it first and falls through to the usual priority order when it is disabled, busy or
+  failing, so a rollout can slow a document down but never strand it. The call is ordinary
+  production usage. A rollout that cannot be read is logged and the extraction goes to the usual
+  providers; nothing about a rollout can fail production. This is activity code only: no workflow
+  changed, so no `GetVersion` branch.
+- **Settling.** `ApplyDocumentAIExtractionResultActivity` records which provider served the
+  extraction and whether its answer was used (`Accepted`), failed the checks (`Rejected`), or never
+  came (`Failed`); an extraction superseded before it applied is `Superseded` and counts for
+  neither side. A candidate-side extraction the router served from production is a fallback: it
+  is shown, and it does not count against the candidate.
+- **Guards.** After a candidate-side extraction settles, and after every extraction correction is
+  captured, the rollout reads both sides since it started and stops when either guard is breached:
+  - *accuracy* — the candidate's share of confirmed fields read correctly is more than
+    `max_accuracy_drop_points` below production's, once each side has 200 scored fields;
+  - *unusable answers* — the candidate's rejected-or-failed share is more than
+    `max_rejection_increase_points` above production's, once each side has 30 settled extractions.
+
+  Accuracy is split by the provider recorded on each correction, so it measures the model that
+  actually read the document. A halt records the reason and both rates, is audited as a critical
+  change by the system actor, and notifies up to 25 people who may update AI providers. It
+  leaves `enabled` on so the reason stays visible; every document goes back to production at once.
+  A save that races a person's own change stands down rather than overwriting it.
+- **Who may change it.** Reading the rollout needs the evaluation suite's read permission, but
+  changing it needs **AI provider · Update**: it decides which model serves real drafts, the same
+  authority as reordering provider priority.
+- **Stopping and starting.** *Stop rollout* in the view turns it off in one step. Saving the
+  settings with the rollout on after a guard stopped it clears the halt and starts a new
+  comparison. At 100% nothing is left on production to compare against, so the guards cannot act;
+  promote a proven candidate by giving it the highest extraction priority instead.
+- **Retention.** Assignments are purged with corrections, on the organization's AI correction
+  retention period.
+
+## 8. Watch accuracy per provider over time
+
+A model that beat production when it was promoted can still drift: new customers bring new
+layouts, and a provider's hosted model can change underneath it. Every correction records the
+provider whose draft it scored (`ai_corrections.extraction_provider_id`), so accuracy per provider
+per week is read straight from them, and each provider is judged against its own recent weeks
+rather than against another model.
+
+- **Weeks.** Monday to Sunday in UTC (`timeutils.WeekStartUTC` in Go; in
+  `AICorrectionRepository.WeeklyTotalsByProvider` the same bucket is integer arithmetic from the
+  first Monday of 1970, so no dialect-specific epoch expression is needed). The window is the last 12 weeks including the
+  one in progress, which is shown but never judged. Drafts read by rules alone have no provider
+  and are left out.
+- **Drift.** `aicorrection.BuildProviderTrends` compares the last complete week with the four
+  weeks before it taken together. It judges only once last week has 100 scored fields and the
+  baseline 200, and calls it drift when last week is more than 5 points below. The comparison is
+  exact on the counts (`intutils.RatioLeadExceedsPoints`), so a drop of exactly 5 points is not
+  drift; the rollout guards use the same comparison.
+- **Where it shows.** AI Control → Quality → Document extraction → Accuracy, under *Accuracy by
+  provider over time*: a weekly sparkline, last week, the four weeks before, the change, and
+  *Drifting*, *Steady* or *Not enough data*. Reading it needs the evaluation suite's read
+  permission.
+- **Who is told.** `ExtractionAccuracyDriftWorkflow` runs every Monday at 06:20 UTC on the system
+  queue, one activity per organization. Each drifting provider sends one high-priority
+  notification to up to 25 people who may update AI providers, since they are the ones who can
+  move it back down the priority order; the correlation is the provider and the week, so a rerun
+  in the same week tells nobody twice. A removed provider is shown but not reported.
+
+## 9. Retrain on a schedule
+
+New customers bring new layouts, and every week people confirm more drafts. Retraining on a
+schedule turns those corrections into a new candidate model without anyone starting it, and
+stops before anything reaches production: a cycle ends with a scored model and a pass or fail
+against production, and serving it still goes through evaluation, shadow traffic and a rollout.
+
+```
+Monday 08:10 UTC   ExtractionRetrainingWorkflow → Plan
+                     enough new corrections?  →  training export  →  cycle Exporting
+                     not yet                  →  cycle Skipped, with the reason
+export finishes    →  cycle Ready
+GPU timer          trenova ai retraining run
+                     claim (lease) → render → trenova-finetune run → score → Passed / Rejected
+```
+
+- **Policy.** The `aiRetraining` section of the configuration, off until `enabled: true`. Each
+  cycle copies the policy it was planned under (`ai_retraining_cycles`), so a later change to the
+  gate never rewrites an old verdict.
+- **The decision.** `aitraining.PlanRetraining`, a pure function. In order:
+  - an open cycle (exporting, ready or training) or a running training export skips it;
+  - fewer than `minIntervalDays` since the last cycle that exported skips it (`TooSoon`), unless a
+    provider is drifting and `retrainOnDrift` is on;
+  - fewer than `minNewExamples` trainable corrections since that cycle's window skips it
+    (`NotEnoughExamples`). Drift never lifts this one: retraining on the same data cannot help.
+
+  A skipped run is recorded with its reason, so `trenova ai retraining list` shows why nothing
+  happened. A failed or canceled cycle does not count as the last one; a rejected one does, so a
+  model that failed the gate is not retrained on the same data every week.
+- **New corrections.** `AICorrectionRepository.CountTrainable` counts what the export would read:
+  corrections of consenting organizations with a document, at least one scored field, and not the
+  source of an evaluation case, each organization counting for at most `maxPerOrganization`.
+  The count starts where the last cycle's window ended.
+- **Drift.** `WeeklyTrainableTotalsByProvider` totals the consenting organizations' corrections by
+  provider and week, and `aicorrection.BuildProviderTrends` judges them exactly as the weekly drift
+  check does (section 8). The run is scheduled after that check, on Mondays.
+- **The export.** A normal training export over the last `lookbackDays`, started through the same
+  operator path as `trenova ai training-export start`, so consent is read three times and one
+  export runs at a time. Training always starts from the base model on the whole window; it is
+  never incremental. The cycle becomes `Ready` when the export completes with both a training and
+  a validation split, and `Failed` otherwise. Nothing polls for this: the next plan, the next
+  trainer claim, `list` and `status` each reconcile it.
+- **Training.** `trenova ai retraining run` on the GPU machine, from a timer:
+
+  ```bash
+  trenova ai retraining run \
+    --config ml/extraction-finetune/configs/qwen2.5-7b-instruct.yaml \
+    --work-dir /data/retraining
+  ```
+
+  It exits at once when nothing is ready. Otherwise it claims the cycle with a lease of
+  `leaseDuration`, renders the export into `<work-dir>/<cycle>/dataset` (withdrawals made since
+  the export are left out, as with `render`), runs `uv run --directory <finetune-dir>
+  trenova-finetune run`, scores `predictions.jsonl` with the same scorer as
+  `trenova ai fine-tune score`, and records the result. The rendered dataset and the run's built
+  training data are deleted when it ends, unless `--keep-data`; the model is kept.
+- **The lease.** Extended every quarter of `leaseDuration` while training runs. A trainer whose
+  heartbeat finds the cycle canceled or taken stops the pipeline (SIGINT, then 30 seconds) and
+  records nothing. A cycle whose trainer vanished is claimed again once its lease expires, and
+  starts from a fresh render: resuming would train on a dataset rendered before the latest
+  withdrawals.
+- **The gate.** `minAccuracyPercent` and `maxRegressionPoints`, compared exactly on the counts
+  (`intutils.RatioLeadExceedsPoints`) against the production model's predictions for the same
+  validation documents. A model with nothing scored never passes.
+- **What passing means.** `Passed` records the model directory, the config and the prompt
+  fingerprint. The model is not served: serve it, register it after the current provider, run an
+  evaluation on the golden set, then shadow and roll it out (sections 5 to 7).
+
+| Command | What it does |
+| --- | --- |
+| `trenova ai retraining start [--requested-by] [--note]` | Plan now, without the interval or minimum; works with the schedule off |
+| `trenova ai retraining list [--limit]` | Recent cycles, skipped ones included, with both accuracies |
+| `trenova ai retraining status <cycle-id>` | One cycle: window, counts, gate, trainer, lease and result |
+| `trenova ai retraining cancel <cycle-id>` | Stops an open cycle and its running export; its trainer stops at the next heartbeat |
+| `trenova ai retraining run --config … --work-dir …` | Claims, trains, scores and records the ready cycle |
 
 ## Handling the data
 

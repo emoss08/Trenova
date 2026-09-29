@@ -107,6 +107,8 @@ aliases:
 virtuals:
   AICorrection:
     - accuracy
+  ExtractionRollout:
+    - serving
   AccountingDriftFinding:
     - directions
     - pushed

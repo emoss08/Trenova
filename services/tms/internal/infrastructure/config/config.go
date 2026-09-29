@@ -1774,6 +1774,7 @@ type Config struct {
 	AI                  AIConfig                  `mapstructure:"ai"`
 	Audit               AuditConfig               `mapstructure:"audit"`
 	AIAudit             AIAuditConfig             `mapstructure:"aiAudit"`
+	AIRetraining        AIRetrainingConfig        `mapstructure:"aiRetraining"`
 	Update              UpdateConfig              `mapstructure:"update"`
 	Twilio              TwilioConfig              `mapstructure:"twilio"`
 	Platform            PlatformConfig            `mapstructure:"platform"`

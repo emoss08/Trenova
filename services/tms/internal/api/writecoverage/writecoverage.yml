@@ -1253,6 +1253,12 @@ writes:
   "mutation updateExtractionEvalCase":
     exempt: agent-administration
     reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
+  "mutation updateExtractionShadowSettings":
+    exempt: agent-administration
+    reason: "Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against."
+  "mutation updateExtractionRollout":
+    exempt: agent-administration
+    reason: "Choosing which AI provider serves real document extractions, how much of them, and when its guards stop it is oversight of the agents; an agent must not promote or protect the model it is measured against."
 
   # fiscalperiod
   "DELETE /api/v1/fiscal-periods/:fiscalPeriodID/":
