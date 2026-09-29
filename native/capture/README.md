@@ -110,6 +110,28 @@ Closing or minimizing the window leaves Trenova Capture running in the notificat
 first time each run, a notification says so. While the window is in front, notifications show
 in it instead of from the icon.
 
+### Testing without a scanner
+
+Settings → This computer → "Show test scanners" (or `TestScanner`=1 under
+`HKCU\SOFTWARE\Trenova\Capture`, or `TRENOVA_CAPTURE_TEST_SCANNER=1`) lists four TWAIN
+scanners that exist only in the scan helper. They feed sample freight paperwork, drawn at the
+profile's resolution and colour, through the same path a real scanner's pages take (helper,
+pictures, spool, review, upload, Intake), and they appear in the web app's scanner lists, so a
+scan asked for from a record works too:
+
+| Scanner | Feeds |
+|---|---|
+| Trenova Test Scanner | A three-sheet bill of lading (PRO 1042, barcode on page 1, terms on the back of sheet 1), a Patch T sheet, and a two-sheet delivery receipt (PRO 1043). Other backs are blank, so duplex with blank-page removal gives 7 pages and without it 12. |
+| Trenova Test Scanner (paper jam) | Five sheets that jam after the third; Continue scanning feeds the last two. |
+| Trenova Test Scanner (double feed) | Four sheets that double-feed after the second; Continue scanning feeds the rest. |
+| Trenova Test Scanner (empty feeder) | Nothing, as a scanner with no paper loaded. |
+
+Patch codes and barcodes are reported only when the profile asks for them, as a real scanner
+does. A value of 0 for `TestScanner` under `HKLM\SOFTWARE\Policies\Trenova\Capture` keeps
+them off on a computer. To exercise a real TWAIN driver without hardware, install the TWAIN
+Working Group's data source manager and sample data source (github.com/twain); it is listed
+like any scanner.
+
 ### Looking things over before sending
 
 With "Let me look things over before they are sent" on (Settings in the window), a scan or a
@@ -133,7 +155,11 @@ says so.
 
 The agent keeps its files in `%LOCALAPPDATA%\Trenova\Capture`: `logs\agent.<date>.log` (fourteen
 days; `TRENOVA_CAPTURE_LOG=debug` for more), and `spool\`, where every page waits, encrypted
-with DPAPI, until the server has it. Batches the server refused are kept in `spool\failed\`
+with DPAPI, until the server has it. Each batch there is a manifest, continued by a journal
+of the changes made since it was written (a page added, its pictures kept, the server taking
+it), so spooling costs the same for the thousandth page of a stack as for the first; the
+journal is folded back into the manifest every 512 changes. Pages of a batch are uploaded four
+at a time. Batches the server refused are kept in `spool\failed\`
 with the reason, and listed in the window to send again, save as PDFs, or discard. The window's
 `WebView2` profile is in `WebView2\`. The device credential is in Credential Manager as
 `Trenova Capture/<server host>`.

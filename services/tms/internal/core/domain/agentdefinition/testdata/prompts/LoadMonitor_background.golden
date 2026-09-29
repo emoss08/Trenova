@@ -56,12 +56,12 @@ Loaded now:
 - email_customer
 
 Callable after find_tools:
-- list_vehicle_positions — The last known position of every tractor the telematics feed reports: coordinates, the nearest place name, speed, engine state and how old the reading is.
-- list_service_failures — List service failures: late and missed pickups and deliveries, detected or recorded, with how late, which stop, and whether anyone reviewed or resolved them.
+- list_vehicle_positions — Where every tractor is right now, from the telematics feed: its last known position, the nearest place name, speed, engine state and how old the reading is.
+- list_service_failures — List the service failures that happened: late and missed pickups and deliveries, with how late, which stop, and whether anyone reviewed or resolved them.
 - list_service_failure_reason_codes — The reason codes a service failure can carry, such as Weather, Shipper delay or Equipment.
 - list_weather_alerts — Active National Weather Service alerts: the event, its severity, the area it covers and when it expires.
 - resolve_service_failure — Close an open service failure with the reason it happened and a note on what was done.
-- notify_driver — Send a driver a message in the Dash app, such as a changed appointment, a weather warning on their route, or a request to call dispatch.
+- notify_driver — Send a driver a message in the Dash app, such as a moved pickup, a new delivery window, a weather warning on their route, or a request to call dispatch.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - send_detention_notice — Send the customer the detention notice for an occurrence on the desk.
 - record_stop_actual — Record that a driver arrived at or departed from a stop.

@@ -1,7 +1,7 @@
 //! Moving spooled batches to the server.
 //!
-//! Each batch is opened (idempotent on its client key), its pages sent in
-//! order (idempotent on their sequence), and, once acquisition has ended and
+//! Each batch is opened (idempotent on its client key), its pages sent a few
+//! at a time (idempotent on their sequence), and, once acquisition has ended and
 //! every page is there, sealed with the manifest digest. A printed job is
 //! sent whole instead, and the server splits and seals it; sending it again
 //! returns the batch as it is. Every step is
@@ -22,13 +22,19 @@ use std::time::Duration;
 use bytes::Bytes;
 use capture_protocol::api::{BatchSource, BatchStatus, CaptureBatch, Id, SealBatchInput};
 use capture_protocol::manifest::manifest_digest;
+use futures_util::StreamExt;
 use tokio::sync::{Notify, mpsc};
 use tokio_util::sync::CancellationToken;
 
 use crate::api::Api;
 use crate::backoff::Backoff;
 use crate::error::ApiError;
-use crate::spool::{Spool, SpoolError, SpoolSummary, SpooledBatch, SpooledDocument};
+use crate::spool::{Spool, SpoolError, SpoolSummary, SpooledBatch, SpooledDocument, SpooledPage};
+
+/// Pages of one batch in flight at once. Each upload waits mostly on the
+/// network and the server, so a few together fill a link that one at a time
+/// leaves idle, without crowding out the rest of the office.
+const PAGES_IN_FLIGHT: usize = 4;
 
 /// What the uploader tells the tray.
 #[derive(Debug)]
@@ -219,22 +225,17 @@ impl Uploader {
             None => self.open(batch).await?,
         };
 
-        for page in batch.pages.iter().filter(|p| !p.uploaded) {
-            let (read_key, read_page) = (key.clone(), page.clone());
-            let pdf = blocking(&self.spool, move |s| s.read_page(&read_key, &read_page)).await?;
-            let stored = self
-                .api
-                .put_page(&batch_id, page.sequence, Bytes::from(pdf), &page.markers())
-                .await?;
-            if stored.checksum_sha256 != page.checksum {
-                return Err(Step::Refused(format!(
-                    "the server holds a different page {}",
-                    page.sequence
-                )));
-            }
-            let (mark_key, sequence) = (key.clone(), page.sequence);
-            blocking(&self.spool, move |s| s.mark_uploaded(&mark_key, sequence)).await?;
+        let pending: Vec<_> = batch
+            .pages
+            .iter()
+            .filter(|p| !p.uploaded)
+            .map(|page| self.send_page(&key, &batch_id, page.clone()))
+            .collect();
+        let mut sends = futures_util::stream::iter(pending).buffer_unordered(PAGES_IN_FLIGHT);
+        while let Some(sent) = sends.next().await {
+            sent?;
         }
+        drop(sends);
 
         if !batch.complete {
             return Ok(());
@@ -257,6 +258,27 @@ impl Uploader {
                 requested,
             })
             .await;
+        Ok(())
+    }
+
+    /// Sends one page and records that the server has it. A page cut off by
+    /// another page's failure is sent again next time; the server keeps the
+    /// first copy of a sequence.
+    async fn send_page(&self, key: &str, batch_id: &Id, page: SpooledPage) -> Result<(), Step> {
+        let (read_key, read_page) = (key.to_owned(), page.clone());
+        let pdf = blocking(&self.spool, move |s| s.read_page(&read_key, &read_page)).await?;
+        let stored = self
+            .api
+            .put_page(batch_id, page.sequence, Bytes::from(pdf), &page.markers())
+            .await?;
+        if stored.checksum_sha256 != page.checksum {
+            return Err(Step::Refused(format!(
+                "the server holds a different page {}",
+                page.sequence
+            )));
+        }
+        let (mark_key, sequence) = (key.to_owned(), page.sequence);
+        blocking(&self.spool, move |s| s.mark_uploaded(&mark_key, sequence)).await?;
         Ok(())
     }
 

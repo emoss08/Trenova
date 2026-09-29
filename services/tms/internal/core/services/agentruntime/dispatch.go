@@ -151,6 +151,21 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		owned[serviceports.SelfScopeOwnerParam] = req.Actor.UserID.String()
 		call.Arguments = owned
 	}
+	if resolver, resolves := tool.(serviceports.ToolSelectionResolver); resolves {
+		resolved, rErr := resolver.ResolveSelection(
+			ctx, runToolParams(req, p.idempotencyKey, call.Arguments),
+		)
+		if rErr != nil {
+			return refusedOutcome(
+				aitrace.OutcomeInvalid,
+				rErr.Error(),
+				"Tool %q was not proposed or run: its selection could not be resolved to "+
+					"records: %s\nFix the call and try again.",
+				call.Name, rErr.Error(),
+			)
+		}
+		call.Arguments = resolved
+	}
 	p.call = call
 	tierParams := runToolParams(req, call.ID, call.Arguments)
 	decision := s.decideCall(ctx, agenttoolpolicy.DecideInput{

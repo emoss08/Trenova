@@ -228,11 +228,12 @@ func (t *addHomeWidgetTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *addHomeWidgetTool) Description() string {
-	return "Add a widget to the person's own home page. Use it when they want something on " +
-		"\"my dashboard\" or home page; pick the key and metric from list_home_widgets and " +
-		"pass the version from get_my_home_layout. A report widget takes a definitionId or " +
-		"cannedKey from list_reports, a dashboard widget a dashboardId from list_dashboards. " +
-		"Not for report dashboards under Reports; create_dashboard builds those."
+	return "Add a widget, a tile on the person's own home page. Use it when they want " +
+		"something on \"my dashboard\" or home page; pick the key and metric from " +
+		"list_home_widgets and pass the version from get_my_home_layout. A report widget " +
+		"takes a definitionId or cannedKey from list_reports, a dashboard widget a " +
+		"dashboardId from list_dashboards. Not for report dashboards under Reports; " +
+		"create_dashboard builds those."
 }
 
 func (t *addHomeWidgetTool) Prerequisites() []string {

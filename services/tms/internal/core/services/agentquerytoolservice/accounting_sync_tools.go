@@ -141,6 +141,10 @@ func (t *getAccountingSyncStatusTool) Description() string {
 		"something did not reach the books. It returns status and dates, never credentials."
 }
 
+func (t *getAccountingSyncStatusTool) SearchTerms() []string {
+	return []string{"sync working", "sync health", "sync queue", "connected"}
+}
+
 func (t *getAccountingSyncStatusTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		"system": agenttoolschema.Enum(

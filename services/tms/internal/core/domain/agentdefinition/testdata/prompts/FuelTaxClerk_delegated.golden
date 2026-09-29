@@ -54,9 +54,9 @@ Loaded now:
 - search_shipments
 - get_shipment
 - get_document_summary
+- assign_fuel_card
 - list_ifta_mileage_entries
 - correct_ifta_mileage_entry
-- recalculate_move_jurisdiction_miles
 - get_fuel_surcharge_rates
 
 Callable after find_tools:
@@ -69,13 +69,13 @@ Callable after find_tools:
 - correct_fuel_purchase — Correct a recorded fuel purchase: the tractor, jurisdiction, day, fuel type, quantity, amount or any other field that was keyed wrong.
 - delete_fuel_purchase — Propose deleting a fuel purchase recorded in error, such as a receipt entered twice.
 - list_fuel_cards — List the organization's fuel cards with the provider, the last four digits, the status and the tractor or driver each is assigned to.
-- assign_fuel_card — Assign a fuel card to the tractor or driver that carries it, most often a card a feed discovered.
 - list_fuel_purchase_imports — List fuel card statements and feed runs staged for import, newest first, with how many rows are ready to commit, already on file, duplicated or in error.
 - resolve_fuel_purchase_import_rows — Work out again the rows a fuel import is still holding, against the cards, tractors and jurisdictions on file now, without fetching the statement again.
 - commit_fuel_purchase_import — Commit a staged fuel card statement: every row ready to commit becomes a fuel purchase in one step, and rows whose reference is already on file are skipped.
 - discard_fuel_purchase_import — Discard a fuel card statement that was staged but should not be committed, such as the wrong month or a file loaded twice.
 - record_ifta_mileage_entry — Record miles a tractor drove in one state or province that no routed move carries, or that correct a move's routed miles.
 - delete_ifta_mileage_entry — Propose deleting a jurisdiction mileage entry recorded in error, such as a trip sheet entered twice.
+- recalculate_move_jurisdiction_miles — Ask the routing provider again for one move's state-by-state miles and replace its jurisdiction rows.
 - backfill_jurisdiction_miles — Start a background job that routes every completed move in a quarter that has no state-by-state miles.
 - list_ifta_returns — List the organization's quarterly IFTA fuel tax returns with their status, miles, gallons, the net tax due and how many problems each carries.
 - generate_ifta_return — Generate a quarter's IFTA fuel tax return as a draft, computed from the jurisdiction miles and fuel purchases on file.

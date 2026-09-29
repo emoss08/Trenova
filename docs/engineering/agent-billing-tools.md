@@ -57,12 +57,29 @@ per shipment. `list_billing_queue_items` lists through the queue repository the 
 page uses and, like the page, includes posted items only when a status filter names
 Posted. `get_billing_queue_item` adds the payer's charges, detention holds, notes, what the
 shipment still lacks, whether it can be approved and the invoice approval made.
+The candidates result also carries `totals`: for `Transfer`, `MarkReadyAndTransfer` and
+`Refused`, a count and the decimal sum of the charges per currency (the currency each
+shipment is billed in, from its default payer's billing profile), with `covers` saying
+whether they count every matching shipment or only the page, so the model quotes figures
+rather than adding rows. The filters live in `billingtransfercriteria`, shared with the
+transfer.
 
 **Transfer.** `transfer_to_billing` takes the shipments as a record subset (below), so the
 person approving can untick some. Up to 100 go through the synchronous bulk transfer; more
 start a background transfer run (scope Selected) as the person who asked, which allows one
 active run per person. Its preview plans the same shipments with `PlanBillingTransfers` and
 shows one record per shipment, refusals first.
+
+When the person means every shipment that can go, the model sets `allTransferable: true`
+with the candidates list's own filters (`query`, `status`, `customerId`, `deliveredFrom`,
+`deliveredTo`) rather than copying ids, which is what a reasoning model with a small output
+limit could not finish doing for 21 of them. `Validate` refuses neither selection and both,
+and filters beside `shipmentIds`. The call is resolved where it is filed
+(`ToolSelectionResolver`): the candidates are listed, planned once, and those that would
+transfer become the proposal's `shipmentIds`, so the card, its preview digest and the
+approver's untick list are those shipments; a selection that would transfer none, or that
+matches more than one transfer holds, is refused to the model. Execution runs on the
+approved `shipmentIds` only and refuses a call that still carries `allTransferable`.
 
 **Decisions that make no money.** Hold, exception, send back to operations, review and
 assignment change who works an item next and are undone by moving it again. The billing

@@ -5,27 +5,15 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
-	"github.com/emoss08/trenova/pkg/dbtype"
-	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/internal/core/services/billingtransfercriteria"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 const (
-	paramDeliveredFrom = "deliveredFrom"
-	paramDeliveredTo   = "deliveredTo"
-	paramMarkReady     = "markCompletedReadyToInvoice"
-	maxTransferIssues  = 3
-	// fieldActualDeliveryDate is the shipment field a delivery window filters.
-	fieldActualDeliveryDate = "actualDeliveryDate"
-)
-
-var billingTransferCandidateStatuses = agenttoolschema.Source(
-	"billingTransfer.candidateStatus",
-	[]string{string(shipment.StatusReadyToInvoice), string(shipment.StatusCompleted)},
+	paramMarkReady    = "markCompletedReadyToInvoice"
+	maxTransferIssues = 3
 )
 
 type billingTransferCandidateLister interface {
@@ -54,26 +42,19 @@ func (t *listBillingTransferCandidatesTool) Description() string {
 		"list the transfer-to-billing dialog offers. Each row says what a transfer would do " +
 		"with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or " +
 		"ReturnToOperations), the documents it still lacks and its rate or validation " +
-		"issues, decided by the checks the transfer itself makes. To transfer, propose one " +
-		"transfer_to_billing covering the rows that can go, rather than one call per shipment."
+		"issues, decided by the checks the transfer itself makes. totals counts and sums " +
+		"the charges of each outcome per currency, so quote them rather than adding rows " +
+		"yourself. To transfer, propose one transfer_to_billing: allTransferable with these " +
+		"same filters when every row that can go should go, or shipmentIds for a hand-picked " +
+		"set, rather than one call per shipment."
 }
 
 func (t *listBillingTransferCandidatesTool) ParamSchema() map[string]any {
-	return objectSchema(withPaging(map[string]any{
-		paramQuery: stringParam("Words matched against pro number, BOL and the other " +
-			"searchable columns, as the dialog's search box does."),
-		paramStatus: enumParam(
-			"Only shipments in this status. Completed shipments transfer only when "+
-				"markCompletedReadyToInvoice is true.",
-			billingTransferCandidateStatuses,
-		),
-		paramCustomerID: stringParam("Only this customer's shipments, by id from " +
-			"list_customers."),
-		paramDeliveredFrom: dateParam("Only shipments delivered on or after this day."),
-		paramDeliveredTo:   dateParam("Only shipments delivered on or before this day."),
-		paramMarkReady: boolParam("Decide as a transfer that first marks completed " +
-			"shipments ready to invoice would. Defaults to false."),
-	}, defaultListLimit, maxListLimit))
+	properties := billingtransfercriteria.Properties()
+	properties[paramMarkReady] = boolParam("Decide as a transfer that first marks completed " +
+		"shipments ready to invoice would. Defaults to false.")
+
+	return objectSchema(withPaging(properties, defaultListLimit, maxListLimit))
 }
 
 func (t *listBillingTransferCandidatesTool) Policy() serviceports.ToolPolicy {
@@ -104,6 +85,8 @@ type billingTransferCandidatesResult struct {
 	PageTransfer    int `json:"pageTransfer"`
 	PageRefused     int `json:"pageRefused"`
 	PageReturned    int `json:"pageReturnedToOperations"`
+
+	Totals candidateTotals `json:"totals"`
 }
 
 func (t *listBillingTransferCandidatesTool) Query(
@@ -114,62 +97,24 @@ func (t *listBillingTransferCandidatesTool) Query(
 		return nil, err
 	}
 
-	status, err := validEnum(params.Params, paramStatus, billingTransferCandidateStatuses)
-	if err != nil {
-		return nil, err
-	}
-	customerID, err := optionalID(params.Params, paramCustomerID)
-	if err != nil {
-		return nil, err
-	}
 	clk := clockFor(params)
-	from, err := readDay(params.Params, paramDeliveredFrom, clk)
-	if err != nil {
-		return nil, err
-	}
-	to, err := readDay(params.Params, paramDeliveredTo, clk)
+	selection, err := billingtransfercriteria.Read(params.Params, clk)
 	if err != nil {
 		return nil, err
 	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
-	query := optionalString(params.Params, paramQuery)
 
 	criteria := filtercatalog.NewCriteria("shipments ready to transfer to billing").At(clk)
-	criteria.Text(query)
-	filters := make([]domaintypes.FieldFilter, 0, 3)
-	if status != "" {
-		criteria.Field(paramStatus, status)
-	}
-	if customerID.IsNotNil() {
-		criteria.Field(labelCustomer, customerID.String())
-		filters = append(filters, domaintypes.FieldFilter{
-			Field: paramCustomerID, Operator: dbtype.OpEqual, Value: customerID.String(),
-		})
-	}
-	if from > 0 {
-		criteria.Field("delivered from", optionalString(params.Params, paramDeliveredFrom))
-		filters = append(filters, domaintypes.FieldFilter{
-			Field: fieldActualDeliveryDate, Operator: dbtype.OpGreaterThanOrEqual, Value: from,
-		})
-	}
-	if to > 0 {
-		criteria.Field("delivered to", optionalString(params.Params, paramDeliveredTo))
-		filters = append(filters, domaintypes.FieldFilter{
-			Field: fieldActualDeliveryDate, Operator: dbtype.OpLessThanOrEqual,
-			Value: endOfDay(clk, to),
-		})
-	}
+	selection.Describe(criteria)
 
 	candidates, err := t.shipments.ListBillingTransferCandidates(
 		ctx,
 		&serviceports.ListBillingTransferCandidatesRequest{
-			Filter: &pagination.QueryOptions{
-				TenantInfo:   tenantOf(params),
-				Pagination:   pagination.Info{Limit: window.limit, Offset: window.offset},
-				Query:        query,
-				FieldFilters: filters,
-			},
-			Status:                      shipment.Status(status),
+			Filter: selection.QueryOptions(
+				tenantOf(params),
+				pagination.Info{Limit: window.limit, Offset: window.offset},
+			),
+			Status:                      selection.Status,
 			MarkCompletedReadyToInvoice: optionalBool(params.Params, paramMarkReady),
 		},
 	)
@@ -192,6 +137,10 @@ func (t *listBillingTransferCandidatesTool) Query(
 		}
 	}
 	result.searchOutcome = searchResult(criteria, rows, len(rows)).paged(window, candidates.HasMore)
+	result.Totals = candidateTotalsOf(
+		candidates.Decisions,
+		window.offset == 0 && !candidates.HasMore,
+	)
 
 	return result, nil
 }

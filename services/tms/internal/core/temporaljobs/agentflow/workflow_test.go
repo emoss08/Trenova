@@ -467,3 +467,36 @@ func TestToolActivityRefusesWhatIsNotATool(t *testing.T) {
 		})
 	}
 }
+
+func TestRunAsksACutOffCallAgainWithMoreRoom(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, harnessParams{})
+	cut := &serviceports.ChatCompletionResult{
+		Text:            "Transferring.",
+		Truncated:       true,
+		OutputLimit:     1024,
+		CutOffCall:      &serviceports.CutOffToolCall{Name: "transfer_to_billing"},
+		ModelIdentifier: "z-ai/glm-5.3",
+	}
+	replies := []*serviceports.ChatCompletionResult{cut, textReply("Nothing is waiting.")}
+	var (
+		mu      sync.Mutex
+		budgets []int
+	)
+	h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, in *ModelCallInput) (*agentruntime.ModelReply, error) {
+			mu.Lock()
+			defer mu.Unlock()
+			budgets = append(budgets, in.Request.MaxTokens)
+
+			return &agentruntime.ModelReply{Completion: replies[len(budgets)-1]}, nil
+		}).Times(2)
+
+	result := h.run(t, runContext())
+
+	require.Empty(t, result.Err)
+	assert.Equal(t, []int{0, 2048}, budgets)
+	assert.Equal(t, "Nothing is waiting.", result.Outcome.Result.Reply)
+	assert.Contains(t, eventNames(result.Outcome), serviceports.AssistantEventRetrying)
+}

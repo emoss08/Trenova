@@ -2,6 +2,7 @@ package filtercatalog
 
 import (
 	"math"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -65,6 +66,22 @@ func (c Clock) DaysBetween(from, to int64) int64 {
 	diff := float64(c.DayStart(to) - c.DayStart(from))
 
 	return int64(math.Round(diff / SecondsPerDay))
+}
+
+func (c Clock) Day(raw string) (int64, bool) {
+	if strings.EqualFold(strings.TrimSpace(raw), "today") {
+		return c.Today(), true
+	}
+	day, ok := c.ParseDate(strings.TrimSpace(raw))
+	if !ok {
+		return 0, false
+	}
+
+	return c.DayStart(day), true
+}
+
+func (c Clock) DayEnd(day int64) int64 {
+	return c.DayStart(day) + SecondsPerDay - 1
 }
 
 // ParseDate reads a calendar date as midnight of that day in the zone, or an

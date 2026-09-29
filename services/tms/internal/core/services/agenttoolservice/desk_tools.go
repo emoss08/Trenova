@@ -416,6 +416,10 @@ func (t *requestCredentialRenewalTool) Description() string {
 		"expiry date. This only asks; it does not record a renewal or change what is on file."
 }
 
+func (t *requestCredentialRenewalTool) SearchTerms() []string {
+	return []string{"ask to renew", "renewal reminder", "medical card renewal", "license renewal"}
+}
+
 func (t *requestCredentialRenewalTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",

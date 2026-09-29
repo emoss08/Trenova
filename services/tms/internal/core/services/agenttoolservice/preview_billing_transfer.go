@@ -39,15 +39,7 @@ func (t *transferToBillingTool) Preview(
 		return nil, err
 	}
 
-	checked := request.shipmentIDs
-	if request.background() {
-		checked = checked[:serviceports.MaxBulkTransferToBillingShipments]
-	}
-	plan, err := t.shipments.PlanBillingTransfers(ctx, &serviceports.PlanBillingTransfersRequest{
-		TenantInfo:                  tenantFrom(params),
-		ShipmentIDs:                 checked,
-		MarkCompletedReadyToInvoice: request.markReady,
-	})
+	plan, err := t.previewPlan(ctx, &params, &request)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +54,7 @@ func (t *transferToBillingTool) Preview(
 	}
 
 	preview := toolpreview.Build(transferSummary(request, plan), changes...)
-	if request.background() {
+	if request.background() && len(plan.Decisions) < len(request.shipmentIDs) {
 		preview.Partial = true
 	}
 	if plan.Transfer == 0 {
@@ -71,6 +63,33 @@ func (t *transferToBillingTool) Preview(
 	}
 
 	return preview, nil
+}
+
+func (t *transferToBillingTool) previewPlan(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+	request *transferRequest,
+) (*serviceports.BillingTransferPlan, error) {
+	if request.all {
+		ids, plan, err := t.transferable(ctx, params, request)
+		if err != nil {
+			return nil, err
+		}
+		request.shipmentIDs = ids
+
+		return plan, nil
+	}
+
+	checked := request.shipmentIDs
+	if request.background() {
+		checked = checked[:serviceports.MaxBulkTransferToBillingShipments]
+	}
+
+	return t.shipments.PlanBillingTransfers(ctx, &serviceports.PlanBillingTransfersRequest{
+		TenantInfo:                  tenantFrom(*params),
+		ShipmentIDs:                 checked,
+		MarkCompletedReadyToInvoice: request.markReady,
+	})
 }
 
 // refusalsFirst orders the shipments a person most needs to see ahead of the
@@ -188,7 +207,7 @@ func transferSummary(request transferRequest, plan *serviceports.BillingTransfer
 
 	if request.background() {
 		return fmt.Sprintf(
-			"Would start a background transfer of %s to billing as %s. Of the first %d "+
+			"Would start a background transfer of %s to billing as %s. Of the %d "+
 				"checked, %s.",
 			countOf(len(request.shipmentIDs), "shipment"),
 			request.billType,

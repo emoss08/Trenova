@@ -143,6 +143,7 @@ func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
 		Tools:           toResponsesTools(call.Request.Tools),
 	}
 	body.applyReasoning(call)
+	body.MaxOutputTokens = answerRoom(call, body.MaxOutputTokens)
 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&
@@ -191,7 +192,16 @@ func (a openAIResponsesAdapter) responseFrom(call *Call, envelope *responsesEnve
 		Reasoning:       responsesReasoningOf(envelope),
 		ReasoningTokens: envelope.Usage.OutputTokensDetails.ReasoningTokens,
 		CacheReadTokens: envelope.Usage.InputTokensDetails.CachedTokens,
+		OutputLimit:     requestedOutputLimit(call),
 	}
+}
+
+func requestedOutputLimit(call *Call) int {
+	if call.Request == nil {
+		return 0
+	}
+
+	return answerRoom(call, call.Request.MaxTokens)
 }
 
 // Submit starts a run the provider holds for us. Extraction of a long document
@@ -326,6 +336,7 @@ func (a openAIResponsesAdapter) Stream(
 		Stream:          true,
 	}
 	body.applyReasoning(call)
+	body.MaxOutputTokens = answerRoom(call, body.MaxOutputTokens)
 
 	stream, err := postStream(
 		ctx,
@@ -402,6 +413,7 @@ func (a openAIResponsesAdapter) Stream(
 			ModelIdentifier: stringutils.FirstNonEmpty(model, call.Provider.Model),
 			Refused:         refused,
 			Reasoning:       textReasoning(thinking.String()),
+			OutputLimit:     body.MaxOutputTokens,
 		}, nil
 	}
 
@@ -422,6 +434,7 @@ func (a openAIResponsesAdapter) Stream(
 		Reasoning:       reasoning,
 		ReasoningTokens: completed.Usage.OutputTokensDetails.ReasoningTokens,
 		CacheReadTokens: completed.Usage.InputTokensDetails.CachedTokens,
+		OutputLimit:     body.MaxOutputTokens,
 	}, nil
 }
 

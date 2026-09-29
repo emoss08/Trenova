@@ -318,3 +318,74 @@ func TestListBillingTransferCandidates_RefusesAStatusTheDialogDoesNotOffer(t *te
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"status": "InTransit"}))
 	require.Error(t, err)
 }
+
+func candidateDecision(
+	outcome serviceports.BillingTransferOutcome,
+	currency, amount string,
+) serviceports.BillingTransferDecision {
+	decision := serviceports.BillingTransferDecision{
+		ShipmentID:   pulid.MustNew("shp_"),
+		Status:       shipment.StatusReadyToInvoice,
+		Outcome:      outcome,
+		CurrencyCode: currency,
+	}
+	if amount != "" {
+		decision.TotalCharge = decimal.NewNullDecimal(decimal.RequireFromString(amount))
+	}
+
+	return decision
+}
+
+func TestListBillingTransferCandidates_TotalsEachOutcomeByCurrency(t *testing.T) {
+	t.Parallel()
+
+	candidates := &fakeCandidates{result: &serviceports.BillingTransferCandidates{
+		TotalCount: 6,
+		Decisions: []serviceports.BillingTransferDecision{
+			candidateDecision(serviceports.BillingTransferOutcomeTransfer, "USD", "1200.10"),
+			candidateDecision(serviceports.BillingTransferOutcomeTransfer, "USD", "0.20"),
+			candidateDecision(serviceports.BillingTransferOutcomeTransfer, "CAD", "500"),
+			candidateDecision(serviceports.BillingTransferOutcomeMarkReadyAndTransfer, "USD", ""),
+			candidateDecision(serviceports.BillingTransferOutcomeRefused, "USD", "99.99"),
+			candidateDecision(serviceports.BillingTransferOutcomeReturnToOperations, "USD", "10"),
+		},
+	}}
+	tool := &listBillingTransferCandidatesTool{shipments: candidates}
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{}))
+	require.NoError(t, err)
+
+	totals := result.(billingTransferCandidatesResult).Totals
+	assert.Equal(t, candidateTotalsEveryMatch, totals.Covers)
+	assert.Equal(t, []candidateTotal{
+		{Currency: "CAD", Count: 1, Amount: "500.00"},
+		{Currency: "USD", Count: 2, Amount: "1200.30"},
+	}, totals.Transfer)
+	assert.Equal(t, []candidateTotal{
+		{Currency: "USD", Count: 1, Amount: "0.00", WithoutCharge: 1},
+	}, totals.MarkReadyAndTransfer)
+	assert.Equal(t, []candidateTotal{
+		{Currency: "USD", Count: 1, Amount: "99.99"},
+	}, totals.Refused)
+}
+
+func TestListBillingTransferCandidates_SaysTheTotalsCoverOnlyThisPage(t *testing.T) {
+	t.Parallel()
+
+	candidates := &fakeCandidates{result: &serviceports.BillingTransferCandidates{
+		TotalCount: 30,
+		HasMore:    true,
+		Decisions: []serviceports.BillingTransferDecision{
+			candidateDecision(serviceports.BillingTransferOutcomeTransfer, "", "10"),
+		},
+	}}
+	tool := &listBillingTransferCandidatesTool{shipments: candidates}
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{"limit": 1}))
+	require.NoError(t, err)
+
+	totals := result.(billingTransferCandidatesResult).Totals
+	assert.Equal(t, candidateTotalsThisPage, totals.Covers)
+	assert.Equal(t, []candidateTotal{{Currency: "USD", Count: 1, Amount: "10.00"}}, totals.Transfer)
+	assert.Empty(t, totals.Refused)
+}

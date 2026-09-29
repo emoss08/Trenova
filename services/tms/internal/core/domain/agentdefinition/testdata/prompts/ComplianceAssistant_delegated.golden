@@ -58,7 +58,7 @@ Callable after find_tools:
 - list_trailers — List trailers narrowed by status, ownership, or a registration, lease or inspection date.
 - describe_report — Show what a report contains: its dataset, columns, filters, sort, parameters and the full definition as the report builder saves it.
 - preview_report — Run a report definition now and see its first rows, without saving it or producing a file.
-- run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId.
+- run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads.
 - get_report_run — Check on a report started by run_report, when the person asks a question about the run that its own progress display does not answer.
 - list_insights — List insight detector findings: service slipping for a customer, cash tied up in unbilled work, cost leaking at a location, compliance about to lapse.
 - get_insight — Read one insight in full: the finding with its numbers and records, its earlier runs, and the rule behind it.

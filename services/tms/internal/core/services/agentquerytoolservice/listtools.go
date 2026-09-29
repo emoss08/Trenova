@@ -53,6 +53,7 @@ type listSpec struct {
 	name         string
 	entityPlural string
 	summary      string
+	searchTerms  []string
 	resource     permission.Resource
 	fields       []listField
 	// config is the entity's computed field configuration. A curated field that
@@ -194,6 +195,8 @@ func buildListDescription(spec listSpec) string {
 func (t *listTool) Name() string { return t.spec.name }
 
 func (t *listTool) Description() string { return t.description }
+
+func (t *listTool) SearchTerms() []string { return t.spec.searchTerms }
 
 func (t *listTool) Policy() serviceports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{

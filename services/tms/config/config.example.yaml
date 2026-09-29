@@ -281,6 +281,12 @@ aiRetraining:
   minAccuracyPercent: 85 # The model must read at least this share of validation fields correctly (0-100)
   maxRegressionPoints: 0 # How far below production's accuracy on the same documents the model may score (0-100)
   leaseDuration: 2h # How long a trainer holds a cycle between heartbeats before another may take it (10m-24h)
+  alerts: # A JSON POST when a cycle starts, becomes ready, trains, passes, is rejected, fails or is canceled
+    webhookUrl: "" # e.g. a Slack incoming webhook; must be https in production and staging
+    secret: "" # Optional Standard Webhooks signing secret, whsec_ + base64 (at least 24 bytes); pass as TRENOVA_AIRETRAINING_ALERTS_SECRET
+    includeSkipped: false # Also send the weekly "not enough new corrections" skips
+    allowPrivateNetwork: false # Allow a webhook on a private or loopback address, such as an internal relay
+    timeout: 10s # Per attempt; three attempts with 1s and 2s backoff (1s-1m)
 
 # AI audit trail. Each row is chained to the one before it with HMAC-SHA256
 # under a key kept outside the database, so an edit or a deleted row breaks the

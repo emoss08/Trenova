@@ -55,12 +55,16 @@ func newGetShipmentTool(
 func (t *getShipmentTool) Name() string { return "get_shipment" }
 
 func (t *getShipmentTool) Description() string {
-	return "Retrieve one shipment by its id, with its stops, moves, assignments, the holds " +
-		"on it now and its newest comments. It returns a summary with each stop's window in " +
-		"the stop's local time; pass detail full only when you need a field the summary " +
-		"leaves out. Each hold carries the holdId update_shipment_hold and " +
-		"release_shipment_hold take. Use search_shipments first when you only have a pro " +
-		"number or customer name."
+	return "Retrieve one shipment (load) by its id, with its stops, the driver and equipment " +
+		"assigned to each move, the holds on it now and its newest comments. It returns a " +
+		"summary with each stop's window in the stop's local time; pass detail full only " +
+		"when you need a field the summary leaves out. Each hold carries the holdId " +
+		"update_shipment_hold and release_shipment_hold take. Use search_shipments first " +
+		"when you only have a pro number or customer name."
+}
+
+func (t *getShipmentTool) SearchTerms() []string {
+	return []string{"assigned driver", "who is driving", "shipment details"}
 }
 
 func (t *getShipmentTool) ParamSchema() map[string]any {
@@ -245,6 +249,10 @@ func (t *searchShipmentsTool) Description() string {
 		"BOL, customer name, or city, and by status. Call it with no query to see the " +
 		"most recent shipments. Returns matches with their ids, which get_shipment " +
 		"can then expand."
+}
+
+func (t *searchShipmentsTool) SearchTerms() []string {
+	return []string{"pro number", "bol number", "reference number"}
 }
 
 func (t *searchShipmentsTool) ParamSchema() map[string]any {

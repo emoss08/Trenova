@@ -109,6 +109,10 @@ func (r *capturePageResolver) ContentPath(ctx context.Context, obj *capture.Capt
 }
 
 func (r *capturePageResolver) ThumbnailPath(ctx context.Context, obj *capture.CapturePage) (string, error) {
+	if obj.ThumbnailPath == "" {
+		return "", nil
+	}
+
 	return capturehandler.PageContentPath(obj.ID, captureservice.PageContentThumbnail), nil
 }
 

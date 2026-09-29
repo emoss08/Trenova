@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -21,6 +22,9 @@ import (
 
 const (
 	maxPageFailureLength = 500
+	// pageInspectionWorkers is how many pages of a sealed batch are read at
+	// once.
+	pageInspectionWorkers = 4
 	// maxReferencesTried bounds how many numbers from a document are looked
 	// up as shipment references. The first few are the ones printed large.
 	maxReferencesTried  = 8
@@ -78,16 +82,8 @@ func (s *Service) ProcessBatch(
 	}
 
 	tenantInfo.UserID = batch.UserID
-	for i, page := range pages {
-		if page.Status == capture.PageReceived {
-			pages[i] = s.inspectPage(ctx, tenantInfo, page)
-		}
-		if progress != nil {
-			progress(i + 1)
-		}
-		if err = ctx.Err(); err != nil {
-			return nil, err
-		}
+	if err = s.inspectPages(ctx, tenantInfo, pages, progress); err != nil {
+		return nil, err
 	}
 
 	profile := s.batchProfile(ctx, tenantInfo, batch)
@@ -166,6 +162,50 @@ func autoFileable(
 	return ready
 }
 
+// inspectPages reads every page still waiting to be read, a few at a time:
+// rendering a page is mostly waiting on storage and the renderer, and a
+// thousand-page batch read one page after another keeps its stack out of
+// Intake for minutes. Pages read as they arrived are already done.
+func (s *Service) inspectPages(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	pages []*capture.CapturePage,
+	progress Progress,
+) error {
+	var (
+		mu   sync.Mutex
+		read int
+		wg   sync.WaitGroup
+	)
+	report := func() {
+		mu.Lock()
+		read++
+		if progress != nil {
+			progress(read)
+		}
+		mu.Unlock()
+	}
+	slots := make(chan struct{}, pageInspectionWorkers)
+	for i, page := range pages {
+		if page.Status != capture.PageReceived {
+			report()
+			continue
+		}
+		if err := ctx.Err(); err != nil {
+			break
+		}
+		slots <- struct{}{}
+		wg.Go(func() {
+			defer func() { <-slots }()
+			pages[i] = s.inspectPage(ctx, tenantInfo, page)
+			report()
+		})
+	}
+	wg.Wait()
+
+	return ctx.Err()
+}
+
 // inspectPage renders a page and records what it found. A page that cannot be
 // read is kept and marked, never dropped: it is still paper somebody scanned.
 func (s *Service) inspectPage(
@@ -173,28 +213,56 @@ func (s *Service) inspectPage(
 	tenantInfo pagination.TenantInfo,
 	page *capture.CapturePage,
 ) *capture.CapturePage {
-	fail := func(message string, err error) *capture.CapturePage {
+	s.readPage(ctx, tenantInfo, page)
+
+	return s.savePage(ctx, page)
+}
+
+// inspectOnArrival reads a page as soon as it is stored, so its thumbnail is
+// there while the rest of the batch is still arriving. It is best effort: a
+// page not read now, because the readers are busy or the read failed, is
+// read when the batch is sealed.
+func (s *Service) inspectOnArrival(tenantInfo pagination.TenantInfo, page *capture.CapturePage) {
+	arrived := *page
+	s.arrivals.submit(func(ctx context.Context) {
+		s.readPage(ctx, tenantInfo, &arrived)
+		if arrived.Status != capture.PageProcessed {
+			return
+		}
+		if _, err := s.pages.RecordInspection(ctx, &arrived); err != nil {
+			s.l.Warn("could not record a page read on arrival",
+				zap.String("pageId", arrived.ID.String()), zap.Error(err))
+		}
+	})
+}
+
+// readPage renders a page and sets what it found on it, without saving.
+func (s *Service) readPage(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	page *capture.CapturePage,
+) {
+	fail := func(message string, err error) {
 		s.l.Warn("could not read a captured page",
 			zap.String("pageId", page.ID.String()), zap.Error(err))
 		page.Status = capture.PageFailed
 		page.FailureMessage = stringutils.TruncateRunes(message, maxPageFailureLength)
-
-		return s.savePage(ctx, page)
 	}
 
 	data, err := s.getObject(ctx, tenantInfo, page.StoragePath)
 	if err != nil {
-		return fail("The page could not be read back from storage.", err)
+		fail("The page could not be read back from storage.", err)
+		return
 	}
 
 	inspection, err := s.inspector.Inspect(ctx, data)
 	if errors.Is(err, services.ErrPageInspectionUnavailable) {
 		page.Status = capture.PageProcessed
-
-		return s.savePage(ctx, page)
+		return
 	}
 	if err != nil {
-		return fail("The page could not be rendered.", err)
+		fail("The page could not be rendered.", err)
+		return
 	}
 
 	thumb := thumbnailKey(page.StoragePath)
@@ -220,8 +288,6 @@ func (s *Service) inspectPage(
 	page.HeightPx = inspection.HeightPx
 	s.readCodes(ctx, tenantInfo, page, inspection.Codes)
 	page.Status = capture.PageProcessed
-
-	return s.savePage(ctx, page)
 }
 
 // readCodes looks each cover-sheet code up in this tenant. A code that does

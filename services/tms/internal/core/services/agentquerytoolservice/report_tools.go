@@ -363,8 +363,8 @@ func (t *runReportTool) Name() string { return "run_report" }
 
 func (t *runReportTool) Description() string {
 	return "Start one of the reports from list_reports: a built-in one by reportKey or " +
-		"a saved one by definitionId. Take every parameter you can " +
-		"from what the person already said — a request naming a window, a date range " +
+		"a saved one by definitionId, whichever dataset it reads. Take every parameter " +
+		"you can from what the person already said — a request naming a window, a date range " +
 		"or a customer has supplied it — and ask_user for the rest, offering the " +
 		"allowed values list_reports gave rather than choices you made up. Reports " +
 		"run in the background: a run that finishes within a few seconds comes " +

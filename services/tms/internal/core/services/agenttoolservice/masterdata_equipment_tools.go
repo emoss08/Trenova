@@ -538,7 +538,7 @@ func newLocateTractorTool(tractors tractorKeeper) serviceports.AgentTool {
 			"again moves it back.",
 		properties:  locateProperties(paramTractorID, tractorRecordEntity, "from list_tractors"),
 		required:    []string{paramTractorID, paramNewLocationID},
-		searchTerms: []string{"locate tractor", "truck location", "move tractor", "yard"},
+		searchTerms: []string{"locate tractor", "relocate truck", "move tractor", "yard"},
 		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
 			return targetOf(params, paramTractorID, permission.ResourceTractor)
 		},

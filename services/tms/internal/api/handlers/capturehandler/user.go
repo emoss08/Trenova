@@ -18,6 +18,7 @@ import (
 // @Param pageID path string true "Page ID"
 // @Param kind query string false "pdf or thumbnail"
 // @Success 200 {file} file
+// @Success 304 "The reader already holds this page"
 // @Failure 403 {object} helpers.ProblemDetail
 // @Failure 404 {object} helpers.ProblemDetail
 // @Security BearerAuth
@@ -40,14 +41,25 @@ func (h *Handler) pageContent(c *gin.Context) {
 		return
 	}
 
-	content, err := h.service.PageContent(c.Request.Context(), userTenant(c), pageID, kind)
+	content, err := h.service.PageContent(c.Request.Context(), &captureservice.PageContentRequest{
+		TenantInfo:  userTenant(c),
+		PageID:      pageID,
+		Kind:        kind,
+		IfNoneMatch: c.GetHeader("If-None-Match"),
+	})
 	if err != nil {
 		h.fail(c, err)
 
 		return
 	}
 
-	c.Header("Cache-Control", "private, max-age=300")
+	c.Header("Cache-Control", "private, max-age=31536000, immutable")
+	c.Header("ETag", content.ETag)
 	c.Header("X-Content-Type-Options", "nosniff")
+	if content.NotModified {
+		c.Status(http.StatusNotModified)
+
+		return
+	}
 	c.Data(http.StatusOK, content.ContentType, content.Data)
 }

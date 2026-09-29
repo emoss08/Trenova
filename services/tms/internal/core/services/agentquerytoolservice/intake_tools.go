@@ -257,6 +257,10 @@ func newQuoteShipmentTool(
 
 func (t *quoteShipmentTool) Name() string { return "quote_shipment" }
 
+func (t *quoteShipmentTool) SearchTerms() []string {
+	return []string{"rate quote", "price a lane", "quote a lane"}
+}
+
 func (t *quoteShipmentTool) Description() string {
 	return "Price a shipment that has not been saved, from the customer's rate " +
 		"agreements and the organization's rating rules. Give the customer, the " +

@@ -111,6 +111,14 @@ var vocabulary = map[string][]string{
 	"stuck":          {"exception", "review"},
 	"email":          {"email", "message"},
 	"inbox":          {"inbound", "message"},
+	"mail":           {"email", "message"},
+	"quickbooks":     {"accounting"},
+	"qbo":            {"accounting"},
+	"ledger":         {"gl"},
+	"track":          {"tracking"},
+	"driving":        {"driver"},
+	"expire":         {"expiring", "credential"},
+	"clause":         {"document"},
 	"view":           {"view", "table"},
 	"filter":         {"view", "table"},
 }
@@ -125,7 +133,7 @@ var stopWords = map[string]struct{}{
 	"of": {}, "on": {}, "or": {}, "our": {}, "please": {}, "show": {},
 	"tell": {}, "that": {}, "the": {}, "their": {}, "them": {}, "there": {},
 	"these": {}, "this": {}, "those": {}, "to": {}, "us": {}, "was": {},
-	"were": {}, "what": {}, "when": {}, "where": {}, "which": {}, "who": {},
+	"we": {}, "were": {}, "what": {}, "when": {}, "where": {}, "which": {}, "who": {},
 	"whom": {}, "whose": {}, "why": {}, "with": {}, "would": {},
 	"list": {}, "find": {}, "look": {}, "see": {}, "need": {}, "want": {},
 	"tool": {}, "tools": {}, "data": {}, "record": {}, "records": {},
@@ -209,6 +217,9 @@ func TokenSet(text string) map[string]struct{} {
 // It is deliberately crude: the cost of a wrong stem is a slightly worse
 // ranking, not a wrong answer.
 func Singularize(token string) string {
+	if len(token) > 4 && strings.HasSuffix(token, "ies") {
+		return strings.TrimSuffix(token, "ies") + "y"
+	}
 	if len(token) > 3 && strings.HasSuffix(token, "s") && !strings.HasSuffix(token, "ss") {
 		return strings.TrimSuffix(token, "s")
 	}

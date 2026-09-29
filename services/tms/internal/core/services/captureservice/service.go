@@ -149,6 +149,8 @@ type Service struct {
 	audit         services.AuditService
 	analyzer      services.CaptureAnalyzer
 	shipments     repositories.InboundShipmentFinder
+	received      *receivedAnnouncer
+	arrivals      *arrivalReaders
 }
 
 //nolint:gocritic // dependency injection param
@@ -192,6 +194,8 @@ func New(p Params) *Service {
 		analyzer:      p.Analyzer,
 		shipments:     p.Shipments,
 		notifications: notifications,
+		received:      newReceivedAnnouncer(receivedAnnounceEvery),
+		arrivals:      newArrivalReaders(arrivalReaderCount, arrivalQueueLength),
 	}
 }
 

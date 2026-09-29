@@ -254,3 +254,57 @@ func TestStreamChat_ACutOffReplyNamesTheModelThatServedIt(t *testing.T) {
 	assert.True(t, result.Truncated)
 	assert.Equal(t, "served-model-2026-09", result.ModelIdentifier)
 }
+
+func cutOffStreamServer(t *testing.T, chunks ...string) *httptest.Server {
+	t.Helper()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		for _, chunk := range chunks {
+			_, _ = w.Write([]byte("data: " + chunk + "\n\n"))
+		}
+		_, _ = w.Write([]byte(`data: {"choices":[{"delta":{},"finish_reason":"length"}]}` + "\n\n"))
+		_, _ = w.Write([]byte("data: [DONE]\n\n"))
+	}))
+	t.Cleanup(server.Close)
+
+	return server
+}
+
+func TestStreamChat_ReturnsAReplyTheLimitCutBeforeAnyAnswer(t *testing.T) {
+	t.Parallel()
+
+	thinking := cutOffStreamServer(t,
+		`{"choices":[{"delta":{"reasoning_content":"The 21 ids are shp_1, shp_2,"}}]}`)
+	other := completeStreamServer(t, "Answered elsewhere.")
+	t.Cleanup(other.Close)
+	provider := chatProvider("glm", thinking.URL, 10)
+	provider.MaxTokens = 1024
+
+	service := newTestService(t, provider, chatProvider("other", other.URL, 20))
+	result, err := service.StreamChat(t.Context(), chatRequest(pulid.Nil), func(string) {})
+
+	require.NoError(t, err)
+	assert.True(t, result.Truncated)
+	assert.Empty(t, result.Text)
+	assert.Equal(t, provider.ID, result.ProviderID)
+	assert.Equal(t, 1024, result.OutputLimit)
+}
+
+func TestStreamChat_NamesTheCallTheLimitCut(t *testing.T) {
+	t.Parallel()
+
+	server := cutOffStreamServer(t,
+		`{"choices":[{"delta":{"content":"<tool_call>transfer_to_billing<arg_key>shipmentIds</arg_key><arg_value>[\"shp_"}}]}`)
+	provider := chatProvider("glm", server.URL, 10)
+
+	result, err := newTestService(t, provider).
+		StreamChat(t.Context(), chatRequest(pulid.Nil), func(string) {})
+
+	require.NoError(t, err)
+	assert.True(t, result.Truncated)
+	assert.Empty(t, result.Text)
+	require.NotNil(t, result.CutOffCall)
+	assert.Equal(t, "transfer_to_billing", result.CutOffCall.Name)
+}

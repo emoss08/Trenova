@@ -19222,6 +19222,8 @@ paths:
                     description: OK
                     schema:
                         type: file
+                "304":
+                    description: The reader already holds this page
                 "403":
                     description: Forbidden
                     schema:

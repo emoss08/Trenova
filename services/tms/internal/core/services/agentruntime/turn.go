@@ -58,6 +58,7 @@ type Turn struct {
 	// external says the turn has read content from outside the
 	// organization. From then on every write it asks for waits for a person.
 	external bool
+	cutOff   cutOffState
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -484,6 +485,7 @@ func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
 		PreferredProviderID: preferredProvider(req, definition),
 		PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
 		Attribution:         turnAttribution(req),
+		MaxTokens:           t.cutOff.budget,
 	}
 }
 

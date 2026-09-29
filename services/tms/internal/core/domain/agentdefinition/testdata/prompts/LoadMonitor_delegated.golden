@@ -51,7 +51,7 @@ Loaded now:
 
 Callable after find_tools:
 - get_dispatch_board — The dispatch board: every move in the window with its urgency and coverage, and every driver with availability, hours remaining and last position.
-- list_vehicle_positions — The last known position of every tractor the telematics feed reports: coordinates, the nearest place name, speed, engine state and how old the reading is.
+- list_vehicle_positions — Where every tractor is right now, from the telematics feed: its last known position, the nearest place name, speed, engine state and how old the reading is.
 - get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
 - list_service_failure_reason_codes — The reason codes a service failure can carry, such as Weather, Shipper delay or Equipment.
 - list_detention_desk — List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk.

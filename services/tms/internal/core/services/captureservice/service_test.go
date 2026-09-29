@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -827,4 +828,78 @@ func TestListBatchesNarrowsOwnScope(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, result.Items)
+}
+
+func TestPagesAreReadAsTheyArrive(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	s := w.service()
+	s.arrivals = newArrivalReaders(1, 4)
+	principal := principalFor(t, s, pair(t, w, s))
+
+	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k", Source: capture.SourceScan})
+	require.NoError(t, err)
+	data := pdfPage(t, 7)
+	page, err := s.PutPage(t.Context(), principal, &PutPageInput{BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(data)})
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		w.mu.Lock()
+		defer w.mu.Unlock()
+		stored := w.pages[page.ID]
+
+		return stored.Status == capture.PageProcessed && stored.ThumbnailPath != ""
+	}, 5*time.Second, 10*time.Millisecond, "the thumbnail is there before the batch is sealed")
+
+	_, err = s.SealBatch(t.Context(), principal, &SealBatchInput{
+		BatchID: batch.ID, PageCount: 1, ManifestDigest: ManifestDigest([]string{hashutils.SHA256BytesHex(data)}),
+	})
+	require.NoError(t, err)
+	_, err = s.ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	require.NoError(t, err)
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	assert.Equal(t, 1, w.inspected, "a page read on arrival is not read again when the batch is processed")
+}
+
+func TestPageContentIsTaggedForGood(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	s := w.service()
+	principal := principalFor(t, s, pair(t, w, s))
+	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "k", Source: capture.SourceScan},
+		[][]byte{pdfPage(t, 3)}, nil)
+	page := w.pagesOf(batch.ID)[0]
+
+	_, err := s.PageContent(t.Context(), &PageContentRequest{
+		TenantInfo: w.tenant, PageID: page.ID, Kind: PageContentThumbnail,
+	})
+	assert.True(t, errortypes.IsNotFoundError(err), "a page not read yet has no thumbnail")
+
+	_, err = s.ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	require.NoError(t, err)
+
+	first, err := s.PageContent(t.Context(), &PageContentRequest{
+		TenantInfo: w.tenant, PageID: page.ID, Kind: PageContentThumbnail,
+	})
+	require.NoError(t, err)
+	assert.NotEmpty(t, first.Data)
+	assert.NotEmpty(t, first.ETag)
+
+	again, err := s.PageContent(t.Context(), &PageContentRequest{
+		TenantInfo: w.tenant, PageID: page.ID, Kind: PageContentThumbnail, IfNoneMatch: first.ETag,
+	})
+	require.NoError(t, err)
+	assert.True(t, again.NotModified)
+	assert.Empty(t, again.Data)
+
+	pdf, err := s.PageContent(t.Context(), &PageContentRequest{
+		TenantInfo: w.tenant, PageID: page.ID, Kind: PageContentPDF, IfNoneMatch: first.ETag,
+	})
+	require.NoError(t, err)
+	assert.False(t, pdf.NotModified, "the page and its thumbnail carry different tags")
+	assert.NotEqual(t, first.ETag, pdf.ETag)
 }

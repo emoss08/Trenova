@@ -25,16 +25,17 @@ idSource on the parameter itself. Without that, a model holding a customer's
 name and no id has nowhere to go but guessing one.
 */
 type getSpec struct {
-	name      string
-	entity    string
-	summary   string
-	resource  permission.Resource
-	paramName string
-	idSource  string
-	reads     agent.ExternalRead
-	source    agent.TaintSource
-	rationale string
-	fetch     func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
+	name        string
+	entity      string
+	summary     string
+	searchTerms []string
+	resource    permission.Resource
+	paramName   string
+	idSource    string
+	reads       agent.ExternalRead
+	source      agent.TaintSource
+	rationale   string
+	fetch       func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
 }
 
 type getTool struct {
@@ -52,6 +53,8 @@ func newGetTool(
 func (t *getTool) Name() string { return t.spec.name }
 
 func (t *getTool) Description() string { return t.spec.summary }
+
+func (t *getTool) SearchTerms() []string { return t.spec.searchTerms }
 
 func (t *getTool) Policy() serviceports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
@@ -118,9 +121,10 @@ func newGetCustomerTool(
 	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:     "get_customer",
-		entity:   "customer",
-		resource: permission.ResourceCustomer,
+		name:        "get_customer",
+		entity:      labelCustomer,
+		searchTerms: []string{"customer details", "customer profile"},
+		resource:    permission.ResourceCustomer,
 		summary: "Retrieve one customer by id, with their billing and email profiles. " +
 			"Use list_customers first when you have a name or a code rather than an id.",
 		paramName: "customerId",

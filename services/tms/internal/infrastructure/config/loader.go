@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/urlutils"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -305,6 +305,8 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("monitoring.tracing.aiSamplingRate", defaultAISamplingRate)
 	l.viper.SetDefault("monitoring.tracing.traceUrlTemplate", "")
 	l.viper.SetDefault("aiAudit.chain.activeKeyId", "")
+	l.viper.SetDefault("aiRetraining.alerts.webhookUrl", "")
+	l.viper.SetDefault("aiRetraining.alerts.secret", "")
 	l.viper.SetDefault("aiAudit.export.syncMaxRows", defaultAIAuditExportSyncMaxRows)
 	l.viper.SetDefault("aiAudit.export.maxRows", defaultAIAuditExportMaxRows)
 	l.viper.SetDefault("aiAudit.export.ttl", defaultAIAuditExportTTL.String())
@@ -623,6 +625,10 @@ func validateProductionSecurity(config *Config) error {
 		return ErrProductionStorageTLSRequired
 	}
 
+	if err := validateAIRetrainingAlertsProduction(config); err != nil {
+		return err
+	}
+
 	return validateAIAuditChainSecrets(config)
 }
 
@@ -675,12 +681,8 @@ func (l *Loader) registerValidators() {
 			return true
 		}
 
-		origin, err := url.Parse(raw)
-		if err != nil || origin.Scheme == "" || origin.Host == "" {
-			return false
-		}
-
-		if origin.Scheme != "http" && origin.Scheme != "https" {
+		origin, ok := urlutils.ParseAbsoluteHTTP(raw)
+		if !ok {
 			return false
 		}
 

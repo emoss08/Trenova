@@ -241,6 +241,35 @@ export function parseInvalidationEvent(payload: unknown): ResourceInvalidationEv
   return data as ResourceInvalidationEvent;
 }
 
+/** What an event asks to refetch, and whether only what is on screen. */
+export interface Invalidation {
+  roots: QueryKeyRoot[];
+  /** Refetch only queries a screen is showing; the rest refetch when shown. */
+  activeOnly: boolean;
+}
+
+/**
+ * The caches an event reaches. Most events reach every root their resource
+ * names. A page arriving on a capture batch is the exception: a scanner sends
+ * one every second or two, and it changes only the queue, its counts and that
+ * batch, never a record's requests or a batch nobody has open, so it reaches
+ * those alone and only where they are on screen.
+ */
+export function invalidationFor(event: ResourceInvalidationEvent): Invalidation {
+  if (event.resource === "capture_batch" && event.action === "page.received") {
+    const batchId = resolveEntityID(event);
+    const roots: QueryKeyRoot[] = [
+      ["capture", "batches"],
+      ["capture", "batchCount"],
+    ];
+    if (batchId) {
+      roots.push(["capture", "batch", batchId]);
+    }
+    return { roots, activeOnly: true };
+  }
+  return { roots: RESOURCE_QUERY_KEY_MAP[event.resource] ?? [], activeOnly: false };
+}
+
 export function isBulkAction(action: string) {
   return action.startsWith("bulk_");
 }

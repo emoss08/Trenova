@@ -254,20 +254,17 @@ func readDay(params map[string]any, key string, clk clock) (int64, error) {
 	if raw == "" {
 		return 0, nil
 	}
-	if strings.EqualFold(raw, "today") {
-		return clk.Today(), nil
-	}
 
-	day, ok := clk.ParseDate(raw)
+	day, ok := clk.Day(raw)
 	if !ok {
 		return 0, fmt.Errorf("parameter %q must be a date as YYYY-MM-DD", key)
 	}
 
-	return clk.DayStart(day), nil
+	return day, nil
 }
 
 func endOfDay(clk clock, day int64) int64 {
-	return clk.DayStart(day) + secondsPerDay - 1
+	return clk.DayEnd(day)
 }
 
 func dateParam(description string) map[string]any {

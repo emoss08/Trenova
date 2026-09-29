@@ -49,29 +49,6 @@ type chatRequest struct {
 	TopP            *float64 `json:"top_p,omitempty"`
 }
 
-// reserveAnswerRoom raises the ceiling so a thinking model has somewhere
-// to put the answer.
-//
-// This adapter cannot name a thinking budget the way the Anthropic one can;
-// the server decides how long to think. So the only lever is the ceiling,
-// and a ceiling sized for an answer alone is spent entirely on the chain of
-// thought — the reply comes back with reasoning and empty content, which
-// reads as a broken endpoint rather than as a budget that was too small.
-func (r *chatRequest) reserveAnswerRoom(call *Call) {
-	if call.reasoning() == aiprovider.ReasoningOff {
-		return
-	}
-	if floor := thinkingFloor + thinkingAnswerRoom; r.MaxTokens < floor {
-		r.MaxTokens = floor
-	}
-}
-
-// thinkingFloor is the room a chain of thought is assumed to want when the
-// endpoint will not say. It is deliberately generous: overshooting costs
-// nothing on a reply that finishes early, while undershooting costs the
-// whole answer.
-const thinkingFloor = 8192
-
 // applySampling sets the sampling this task calls for, unless the provider
 // has stated its own. A value in the provider's extra fields is a
 // deliberate choice about a particular endpoint and outranks a default
@@ -179,7 +156,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 	body.ResponseFormat = chatResponseFormatFor(call)
 	body.ReasoningEffort = call.reasoning().Wire()
 	body.applySampling(call)
-	body.reserveAnswerRoom(call)
+	body.MaxTokens = answerRoom(call, body.MaxTokens)
 
 	payload, err := mergeExtraBody(body, call.Provider)
 	if err != nil {
@@ -201,10 +178,11 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 
 	text, toolCalls, refused, truncated := firstChatResult(&envelope)
 	text, reasoning := mergeInlineThinking(text, firstChatReasoning(&envelope))
+	lifted := liftInlineToolCalls(text, call.Request.Tools, len(toolCalls))
 
 	return &Response{
-		Text:            text,
-		ToolCalls:       toolCalls,
+		Text:            lifted.text,
+		ToolCalls:       appendToolCalls(toolCalls, lifted.calls),
 		ModelIdentifier: stringutils.FirstNonEmpty(envelope.Model, call.Provider.Model),
 		InputTokens:     envelope.Usage.PromptTokens,
 		OutputTokens:    envelope.Usage.CompletionTokens,
@@ -213,6 +191,8 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		Reasoning:       reasoning,
 		ReasoningTokens: envelope.Usage.CompletionTokensDetails.ReasoningTokens,
 		CacheReadTokens: envelope.Usage.PromptTokensDetails.CachedTokens,
+		OutputLimit:     body.MaxTokens,
+		CutOffCall:      lifted.cutOff,
 	}, nil
 }
 
@@ -276,7 +256,7 @@ func (a openAIChatAdapter) Stream(
 	body.ResponseFormat = chatResponseFormatFor(call)
 	body.ReasoningEffort = call.reasoning().Wire()
 	body.applySampling(call)
-	body.reserveAnswerRoom(call)
+	body.MaxTokens = answerRoom(call, body.MaxTokens)
 
 	payload, err := mergeExtraBody(body, call.Provider)
 	if err != nil {
@@ -391,10 +371,11 @@ func (a openAIChatAdapter) Stream(
 	// sees the thinking appear and then settle into the answer, which is
 	// what a reasoning model looks like anyway.
 	reply, reasoning := mergeInlineThinking(text.String(), textReasoning(thinking.String()))
+	lifted := liftInlineToolCalls(reply, call.Request.Tools, len(toolCalls))
 
 	return &Response{
-		Text:            reply,
-		ToolCalls:       toolCalls,
+		Text:            lifted.text,
+		ToolCalls:       appendToolCalls(toolCalls, lifted.calls),
 		ModelIdentifier: stringutils.FirstNonEmpty(model, call.Provider.Model),
 		InputTokens:     usage.PromptTokens,
 		OutputTokens:    usage.CompletionTokens,
@@ -403,6 +384,8 @@ func (a openAIChatAdapter) Stream(
 		Reasoning:       reasoning,
 		ReasoningTokens: usage.CompletionTokensDetails.ReasoningTokens,
 		CacheReadTokens: usage.PromptTokensDetails.CachedTokens,
+		OutputLimit:     body.MaxTokens,
+		CutOffCall:      lifted.cutOff,
 	}, nil
 }
 
@@ -552,7 +535,7 @@ func firstChatResult(resp *chatResponse) (string, []ToolCall, bool, bool) {
 		}
 	}
 
-	return "", nil, false, false
+	return "", nil, false, len(resp.Choices) > 0 && resp.Choices[0].FinishReason == "length"
 }
 
 func fromChatToolCalls(calls []chatToolCall) []ToolCall {

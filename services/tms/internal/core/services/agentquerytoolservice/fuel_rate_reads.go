@@ -672,6 +672,10 @@ func newListRateImportsTool(imports repositories.RateImportRepository) servicepo
 
 func (t *listRateImportsTool) Name() string { return "list_rate_imports" }
 
+func (t *listRateImportsTool) SearchTerms() []string {
+	return []string{"rate sheet imports", "imports waiting review", "pending rate imports"}
+}
+
 func (t *listRateImportsTool) Description() string {
 	return "List rate sheets uploaded against rate agreements, newest first, with the " +
 		"agreement and the day the new rates take effect. Each says how many lanes the " +

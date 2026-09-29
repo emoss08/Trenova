@@ -6381,7 +6381,7 @@ type CapturePage {
   failureMessage: String!
   "Where to fetch the page to show it, under the API's base URL."
   contentPath: String!
-  "Where to fetch a small image of the page, under the API's base URL."
+  "Where to fetch a small image of the page, under the API's base URL; empty until the page has been read."
   thumbnailPath: String!
   createdAt: Timestamp!
 }

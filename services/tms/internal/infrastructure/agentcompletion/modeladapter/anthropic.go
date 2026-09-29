@@ -55,9 +55,6 @@ func (r *anthropicRequest) applyThinking(call *Call) {
 	}
 }
 
-// thinkingAnswerRoom is what the answer keeps after the thinking budget.
-const thinkingAnswerRoom = 2048
-
 // anthropicMessage carries content as blocks rather than a string, since tool
 // use and tool results are block types rather than roles.
 type anthropicMessage struct {
@@ -195,6 +192,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		Refused:          envelope.StopReason == "refusal",
 		Truncated:        envelope.StopReason == "max_tokens",
 		Reasoning:        anthropicReasoning(envelope.Content),
+		OutputLimit:      body.MaxTokens,
 	}, nil
 }
 
@@ -362,6 +360,7 @@ func (a anthropicAdapter) Stream(
 		Refused:          stopReason == "refusal",
 		Truncated:        stopReason == "max_tokens",
 		Reasoning:        anthropicReasoning(content),
+		OutputLimit:      body.MaxTokens,
 	}, nil
 }
 

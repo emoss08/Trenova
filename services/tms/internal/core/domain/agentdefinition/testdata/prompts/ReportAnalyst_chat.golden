@@ -72,7 +72,7 @@ Loaded now:
 - list_customers
 
 Callable after find_tools:
-- run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId.
+- run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads.
 - get_report_run — Check on a report started by run_report, when the person asks a question about the run that its own progress display does not answer.
 - update_report — Change a saved report the person owns: its definition, name, description, category, tags, visibility or default format.
 - fork_report — Give the person their own copy of a built-in report, so it can be adjusted with update_report: the built-in catalog cannot be edited in place.

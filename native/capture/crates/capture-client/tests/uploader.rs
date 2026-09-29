@@ -546,3 +546,67 @@ async fn a_batch_held_for_review_waits_until_it_is_released() {
     cancel.cancel();
     task.await.expect("uploader");
 }
+
+/// Answers a page upload as [`StorePage`] does, slowly.
+struct SlowStorePage(Duration);
+
+impl Respond for SlowStorePage {
+    fn respond(&self, request: &Request) -> ResponseTemplate {
+        StorePage.respond(request).set_delay(self.0)
+    }
+}
+
+#[tokio::test]
+async fn pages_of_a_batch_travel_together() {
+    let server = MockServer::start().await;
+    let dir = tempfile::tempdir().expect("dir");
+    let spool = Arc::new(Spool::open(dir.path(), Arc::new(Xor)).expect("spool"));
+    let key = Spool::new_key();
+    spool.create(input(&key, None), "fi-8170").expect("create");
+    let pages: Vec<Vec<u8>> = (0..8u8)
+        .map(|n| format!("%PDF-1.7 page {n}").into_bytes())
+        .collect();
+    for page in &pages {
+        spool
+            .append_page(&key, page, &PageMarkers::default())
+            .expect("page");
+    }
+    spool.complete(&key).expect("complete");
+
+    Mock::given(method("POST"))
+        .and(path("/api/v1/capture/device/batches/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(batch_json(None)))
+        .mount(&server)
+        .await;
+    let delay = Duration::from_millis(400);
+    Mock::given(method("PUT"))
+        .respond_with(SlowStorePage(delay))
+        .expect(8)
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/api/v1/capture/device/batches/cbat_1/seal/"))
+        .and(body_partial_json(json!({"pageCount": 8})))
+        .respond_with(ResponseTemplate::new(200).set_body_json(batch_json(None)))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let device = device(&server, 900);
+    let (tx, mut rx) = mpsc::channel(32);
+    let started = std::time::Instant::now();
+    let events =
+        run_until_settled(Uploader::new(device.api, Arc::clone(&spool), tx), &mut rx).await;
+
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e, UploadEvent::Sent { pages: 8, .. }))
+    );
+    assert!(
+        started.elapsed() < delay * 6,
+        "eight slow pages one after another take {:?}; together they took {:?}",
+        delay * 8,
+        started.elapsed()
+    );
+}

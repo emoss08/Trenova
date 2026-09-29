@@ -166,9 +166,17 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			return result, err
 		}
 
+		retry, stop := s.handleCutOff(t, fx, completion)
+		if retry {
+			continue
+		}
+
 		result.Model = completion.ModelIdentifier
 		result.ProviderID = completion.ProviderID
 		tagReasoning(completion)
+		if stop {
+			return s.finishCutOff(t, fx, completion), nil
+		}
 		tagToolCalls(completion)
 		distinctCallIDs(completion, t.callIDs, callIDMinter{
 			mint: fx.NewCallID,

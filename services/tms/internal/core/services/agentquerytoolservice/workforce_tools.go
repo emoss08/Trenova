@@ -31,6 +31,7 @@ const (
 type workforceRead struct {
 	name        string
 	description string
+	searchTerms []string
 	resource    permission.Resource
 	rationale   string
 	reads       agent.ExternalRead
@@ -48,6 +49,8 @@ type workforceRead struct {
 func (t *workforceRead) Name() string { return t.name }
 
 func (t *workforceRead) Description() string { return t.description }
+
+func (t *workforceRead) SearchTerms() []string { return t.searchTerms }
 
 func (t *workforceRead) ParamSchema() map[string]any {
 	schema := map[string]any{

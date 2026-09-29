@@ -1,6 +1,7 @@
 package aitrainingservice
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -398,4 +399,96 @@ func TestRetrainerCancel(t *testing.T) {
 	finished := exportingCycle(t, f, &aitraining.TrainingExport{Status: aitraining.ExportStatusCompleted})
 	_, err = f.service.Cancel(t.Context(), finished.ID)
 	require.NoError(t, err, "an export that already finished does not stop the cancel")
+}
+
+func TestRetrainerAlertsOnEveryTransition(t *testing.T) {
+	t.Parallel()
+
+	f := newRetrainingFixture()
+	f.corrections.trainable = 5000
+
+	cycle, err := f.service.Plan(t.Context(), scheduled())
+	require.NoError(t, err)
+	export := f.exports.items[*cycle.ExportID]
+	export.Status = aitraining.ExportStatusCompleted
+	export.TrainExamples, export.ValidationExamples = 90, 10
+
+	_, err = f.service.ClaimNext(t.Context(), &services.ClaimAIRetrainingRequest{Trainer: "gpu-1"})
+	require.NoError(t, err)
+	_, err = f.service.Heartbeat(t.Context(), &services.HeartbeatAIRetrainingRequest{
+		CycleID: cycle.ID, Trainer: "gpu-1",
+	})
+	require.NoError(t, err)
+	_, err = f.service.Record(t.Context(), &services.RecordAIRetrainingRequest{
+		CycleID: cycle.ID,
+		Trainer: "gpu-1",
+		Result: &aitraining.RetrainingResult{Report: &aitraining.ScoreReport{
+			Model:    aitraining.ScoreSide{Correct: 95, Scored: 100},
+			Baseline: aitraining.ScoreSide{Correct: 90, Scored: 100},
+		}},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, []aitraining.RetrainingStatus{
+		aitraining.RetrainingStatusExporting,
+		aitraining.RetrainingStatusReady,
+		aitraining.RetrainingStatusTraining,
+		aitraining.RetrainingStatusPassed,
+	}, f.alerts.sent, "a heartbeat is not an alert")
+}
+
+func TestRetrainerAlertsOnFailureAndCancel(t *testing.T) {
+	t.Parallel()
+
+	f := newRetrainingFixture()
+	f.corrections.trainable = 5000
+	f.operator.startErr = errStartRefused
+	_, err := f.service.Plan(t.Context(), scheduled())
+	require.Error(t, err)
+	assert.Equal(t, []aitraining.RetrainingStatus{aitraining.RetrainingStatusFailed}, f.alerts.sent)
+
+	g := newRetrainingFixture()
+	cycle := readyCycle(g)
+	_, err = g.service.ClaimNext(t.Context(), &services.ClaimAIRetrainingRequest{Trainer: "gpu-1"})
+	require.NoError(t, err)
+	_, err = g.service.FailTraining(t.Context(), &services.FailAIRetrainingRequest{
+		CycleID: cycle.ID, Trainer: "gpu-1", Message: "out of GPU memory",
+	})
+	require.NoError(t, err)
+	second := readyCycle(g)
+	_, err = g.service.Cancel(t.Context(), second.ID)
+	require.NoError(t, err)
+	assert.Equal(t, []aitraining.RetrainingStatus{
+		aitraining.RetrainingStatusTraining,
+		aitraining.RetrainingStatusFailed,
+		aitraining.RetrainingStatusCanceled,
+	}, g.alerts.sent)
+}
+
+func TestRetrainerAlertsOnSkipsOnlyWhenAsked(t *testing.T) {
+	t.Parallel()
+
+	quiet := newRetrainingFixture()
+	_, err := quiet.service.Plan(t.Context(), scheduled())
+	require.NoError(t, err)
+	assert.Empty(t, quiet.alerts.sent, "a weekly skip is not news by default")
+
+	loud := newRetrainingFixture()
+	loud.cfg.AIRetraining.Alerts.IncludeSkipped = true
+	_, err = loud.service.Plan(t.Context(), scheduled())
+	require.NoError(t, err)
+	assert.Equal(t, []aitraining.RetrainingStatus{aitraining.RetrainingStatusSkipped}, loud.alerts.sent)
+}
+
+func TestRetrainerKeepsGoingWhenAnAlertFails(t *testing.T) {
+	t.Parallel()
+
+	f := newRetrainingFixture()
+	f.alerts.err = errors.New("webhook unreachable")
+	cycle := readyCycle(f)
+
+	claimed, err := f.service.ClaimNext(t.Context(), &services.ClaimAIRetrainingRequest{Trainer: "gpu-1"})
+	require.NoError(t, err, "an alert that cannot be sent never fails the retraining")
+	require.NotNil(t, claimed)
+	assert.Equal(t, aitraining.RetrainingStatusTraining, f.cycles.find(cycle.ID).Status)
 }

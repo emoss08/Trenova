@@ -21,11 +21,25 @@ import (
 var errTransferredDuringPreview = errors.New("a preview transferred shipments")
 
 type fakeTransferPlanner struct {
-	plan      *serviceports.BillingTransferPlan
-	planned   *serviceports.PlanBillingTransfersRequest
-	response  *serviceports.BulkTransferToBillingResponse
-	requested *serviceports.BulkTransferShipmentToBillingRequest
-	preview   bool
+	plan       *serviceports.BillingTransferPlan
+	planned    *serviceports.PlanBillingTransfersRequest
+	response   *serviceports.BulkTransferToBillingResponse
+	requested  *serviceports.BulkTransferShipmentToBillingRequest
+	preview    bool
+	candidates *serviceports.BillingTransferCandidateIDsResponse
+	listed     *serviceports.ListBillingTransferCandidateIDsRequest
+}
+
+func (f *fakeTransferPlanner) ListBillingTransferCandidateIDs(
+	_ context.Context,
+	req *serviceports.ListBillingTransferCandidateIDsRequest,
+) (*serviceports.BillingTransferCandidateIDsResponse, error) {
+	f.listed = req
+	if f.candidates == nil {
+		return &serviceports.BillingTransferCandidateIDsResponse{}, nil
+	}
+
+	return f.candidates, nil
 }
 
 func (f *fakeTransferPlanner) PlanBillingTransfers(

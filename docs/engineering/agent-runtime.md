@@ -122,6 +122,41 @@ An activity with a deterministic fallback — document routing, inbound email
 classification — leaves a transient failure to Temporal and falls back only on
 its last attempt (`modelcall.Transient`, `modelcall.FinalAttempt`).
 
+### A reply cut off mid call
+
+A provider's output limit is the ceiling on each reply (`aiprovider.Provider.MaxTokens`,
+"Max tokens" in AI Control). A reasoning model spends most of it thinking, so two things
+keep a small ceiling from ending every turn partway through a tool call:
+
+- **Room to answer.** The OpenAI Chat and Responses adapters send at least
+  `reasoningAnswerFloor` (the thinking floor plus `thinkingAnswerRoom`, the room Anthropic's
+  adapter keeps after its thinking budget) when the provider is set to reason, or when the
+  conversation carries this protocol's reasoning, which is how a model that thinks without
+  being asked shows itself. A call that does not reason keeps the configured ceiling. Every
+  adapter reports the limit it sent as `ChatCompletionResult.OutputLimit`.
+- **One more try with more room.** A completion that is `Truncated` and carries no whole
+  tool call, when it was cut inside a call (`CutOffCall`, set by the adapter; or a native
+  call whose arguments did not parse) or spent its whole budget before any visible answer,
+  is asked for again once with twice the output limit, capped at the provider maximum and
+  `cutOffRetryCeiling` (32768). The raised limit rides `ChatCompletionRequest.MaxTokens` for
+  the rest of the turn. The cut attempt is not kept, and the reader gets a `retrying` event
+  so it drops the text it watched stream. When the retry is cut too, or there is no more room
+  to give, the reply keeps whatever it said before the call and ends by saying it ran out of
+  room, that the named tool was not filed, the limits it hit, and to raise **Max tokens**
+  on the provider. A plain long answer cut by the limit keeps `truncationNotice`.
+
+The retry is one more model activity, so it is behind the `agent-loop-cut-off-call-retry`
+gate, asked only of a completion that meets the condition.
+
+OpenAI-compatible servers that do not parse a model's tool-call template return it as text.
+The chat adapter lifts it (`modeladapter.liftInlineToolCalls`): a whole GLM call
+(`<tool_call>name<arg_key>k</arg_key><arg_value>v</arg_value>…</tool_call>`, each value
+read as the tool's schema types it) or Hermes/Qwen call (`<tool_call>{"name":…,
+"arguments":…}</tool_call>`) becomes a tool call with a synthesized id, and goes through the
+same argument contract as a native one; an unfinished call, or an opening tag cut partway,
+is removed from the reply and named in `CutOffCall`. Markup inside a code fence or code span
+is left alone, because a model quoting the format is not calling a tool.
+
 ## What makes a retry safe
 
 A tool call is an activity, and an activity can run more than once. The tools do
@@ -843,6 +878,7 @@ before the change:
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
 | `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
+| `agent-loop-cut-off-call-retry` | a completion cut off inside a tool call, or before any visible answer, ends the turn with `truncationNotice` (a broken native call is refused as invalid JSON and the model asked again at the same limit) | nothing; the check itself is the only cost, and it is asked only of a completion cut off that way |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 | none: the workflow is retired whole | `ImportAssistantTurnWorkflow` on `agent-chat-queue`, which no route starts any more | the workflow, its activities and registry in `importassistantjobs`, `workflow_test.go`, and the turn machinery in `shipmentimportassistantservice` (the tool loop, `toolGrants`, `persistConversationTurn`); delete them once no `ImportAssistantTurnWorkflow` execution is open |
@@ -887,6 +923,11 @@ every later tool activity, so nothing about the action, the activity results or 
 commands changed. An evaluation keeps no baseline, a retried activity's orphan is purged
 by the expiry sweep inside its activity, and a settled step replayed from the ledger
 never previews again. See [proposal-previews.md](proposal-previews.md).
+
+Resolving a criteria selection to records (`ToolSelectionResolver`, `transfer_to_billing`'s
+`allTransferable`) took no gate: it happens inside the dispatch activity, the ledger key is
+still derived from the model's own arguments, and only the activity's result changes. See
+[proposal-previews.md](proposal-previews.md#record-subsets).
 
 Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an

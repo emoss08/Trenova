@@ -488,6 +488,13 @@ fn perform(context: &WindowContext, action: WindowAction) {
             }
             context.shared.update(|s| s.routine_muted = !on);
         }
+        WindowAction::SetTestScanner(on) => {
+            if let Err(err) = settings::set_test_scanner(on) {
+                tracing::warn!(error = %err, "could not save the test scanner choice");
+            }
+            context.shared.update(|s| s.test_scanner = on);
+            send(context, Command::RefreshScanners);
+        }
         WindowAction::SetReviewBeforeSending(on) => {
             if let Err(err) = settings::set_review_before_sending(on) {
                 tracing::warn!(error = %err, "could not save the review choice");

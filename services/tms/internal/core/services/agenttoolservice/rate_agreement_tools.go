@@ -1162,6 +1162,7 @@ type agreementReviewStep struct {
 	money       bool
 	needsReason bool
 	description string
+	searchTerms []string
 	rationale   string
 	outcome     string
 }
@@ -1179,6 +1180,7 @@ func (s *agreementReviewStep) spec() *receivableSpec {
 	spec := &receivableSpec{
 		name:        s.name,
 		description: s.description,
+		searchTerms: s.searchTerms,
 		operation:   s.operation,
 		rationale:   s.rationale,
 		properties:  properties,
@@ -1274,9 +1276,10 @@ func newAgreementReviewTool(
 func agreementReviewSteps() []*agreementReviewStep {
 	return []*agreementReviewStep{
 		{
-			name:      "submit_rate_agreement",
-			review:    rateagreementservice.ReviewSubmit,
-			operation: permission.OpSubmit,
+			name:        "submit_rate_agreement",
+			searchTerms: []string{"submit for approval", "send for approval"},
+			review:      rateagreementservice.ReviewSubmit,
+			operation:   permission.OpSubmit,
 			description: "Submit a draft rate agreement for review. It prices nothing until a " +
 				"person approves it. Read it with get_rate_agreement first.",
 			rationale: "Moves a draft agreement into review inside Trenova; it prices nothing " +

@@ -17,6 +17,7 @@ type (
 	// ReasoningTrace is the conversation domain's, so what an adapter reads
 	// off the wire is what the message stores and what the next call replays.
 	ReasoningTrace = conversation.ReasoningTrace
+	CutOffToolCall = serviceports.CutOffToolCall
 )
 
 const (

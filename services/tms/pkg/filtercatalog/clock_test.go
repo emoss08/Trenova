@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // 2026-09-20T03:30:00Z: 23:30 on the 19th in New York.
@@ -56,4 +57,22 @@ func TestClock_ZeroValueReadsTheWallClock(t *testing.T) {
 	var zero Clock
 	assert.Greater(t, zero.Instant(), int64(1789875000))
 	assert.Equal(t, "UTC", zero.Location().String())
+}
+
+func TestClock_DayReadsADateOrTodayAsTheStartOfThatDay(t *testing.T) {
+	t.Parallel()
+
+	clk := Clock{Now: 1790000000, Timezone: "America/Chicago"}
+
+	today, ok := clk.Day(" Today ")
+	require.True(t, ok)
+	assert.Equal(t, clk.Today(), today)
+
+	day, ok := clk.Day("2026-09-01")
+	require.True(t, ok)
+	assert.Equal(t, clk.DayStart(day), day)
+	assert.Equal(t, day+SecondsPerDay-1, clk.DayEnd(day))
+
+	_, ok = clk.Day("next week")
+	assert.False(t, ok)
 }
