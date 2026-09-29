@@ -3,10 +3,12 @@
 package aicorrectionrepository
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -19,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -27,7 +30,9 @@ type tenantRow struct {
 	BusinessUnitID pulid.ID `bun:"business_unit_id"`
 }
 
-func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
+func seededTenant(t *testing.T) (context.Context, *bun.DB, pagination.TenantInfo) {
+	t.Helper()
+
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
@@ -48,9 +53,14 @@ func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
 		Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
 		Limit(1).
 		Scan(ctx, &row))
-	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
 
+	return ctx, db, pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
+}
+
+func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
+	ctx, db, tenant := seededTenant(t)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	var err error
 	candidate := pulid.MustNew("aip_")
 	production := pulid.MustNew("aip_")
 	monday := time.Date(2026, time.September, 21, 0, 0, 0, 0, time.UTC).Unix()
@@ -126,4 +136,116 @@ func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
 	assert.Equal(t, 35, sides[true].Scored)
 	assert.Equal(t, 29, sides[true].Correct)
 	assert.Equal(t, 40, sides[false].Scored)
+}
+
+func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
+	ctx, db, tenantInfo := seededTenant(t)
+	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+
+	provider := pulid.MustNew("aip_")
+	from := time.Date(2026, time.September, 1, 0, 0, 0, 0, time.UTC).Unix()
+	to := time.Date(2026, time.October, 1, 0, 0, 0, 0, time.UTC).Unix()
+	monday := time.Date(2026, time.September, 21, 0, 0, 0, 0, time.UTC).Unix()
+	document := func() *pulid.ID {
+		id := pulid.MustNew("doc_")
+		return &id
+	}
+
+	for _, c := range []struct {
+		document   *pulid.ID
+		provider   *pulid.ID
+		capturedAt int64
+		scored     int
+	}{
+		{document: document(), provider: &provider, capturedAt: monday, scored: 5},
+		{document: document(), provider: &provider, capturedAt: monday + 3600, scored: 7},
+		{document: document(), capturedAt: from, scored: 2},
+		{capturedAt: monday, scored: 9},
+		{document: document(), capturedAt: monday, scored: 0},
+		{document: document(), capturedAt: from - 1, scored: 4},
+		{document: document(), capturedAt: to, scored: 4},
+	} {
+		_, err := repo.Upsert(ctx, &aicorrection.Correction{
+			OrganizationID:       tenantInfo.OrgID,
+			BusinessUnitID:       tenantInfo.BuID,
+			Task:                 aicorrection.TaskShipmentDraftExtraction,
+			SourceType:           aicorrection.SourceDocumentShipmentDraft,
+			SourceID:             pulid.MustNew("dsd_"),
+			SubjectType:          aicorrection.SubjectShipment,
+			SubjectID:            pulid.MustNew("shp_"),
+			CapturedByID:         pulid.MustNew("usr_"),
+			DocumentID:           c.document,
+			ExtractionProviderID: c.provider,
+			Predicted:            &aicorrection.Snapshot{Fields: map[string]string{}},
+			Confirmed:            &aicorrection.Snapshot{Fields: map[string]string{}},
+			FieldResults:         []aicorrection.FieldResult{},
+			ScoredCount:          c.scored,
+			CorrectCount:         c.scored,
+			CapturedAt:           c.capturedAt,
+		})
+		require.NoError(t, err)
+	}
+
+	count := func(capPerOrganization int) int {
+		t.Helper()
+		total, err := repo.CountTrainable(ctx, &repositories.CountTrainableAICorrectionsRequest{
+			Task:               aicorrection.TaskShipmentDraftExtraction,
+			CapturedFrom:       from,
+			CapturedTo:         to,
+			PerOrganizationCap: capPerOrganization,
+		})
+		require.NoError(t, err)
+		return total
+	}
+	weekly := func() []aicorrection.WeekTotal {
+		t.Helper()
+		totals, err := repo.WeeklyTrainableTotalsByProvider(
+			ctx,
+			&repositories.WeeklyTrainableAICorrectionTotalsRequest{
+				Task:  aicorrection.TaskShipmentDraftExtraction,
+				Since: from,
+			},
+		)
+		require.NoError(t, err)
+		return totals
+	}
+
+	assert.Zero(t, count(100), "an organization without consent has nothing to train on")
+	assert.Empty(t, weekly())
+
+	controls := buncolgen.AgentControlColumns
+	_, err := db.NewInsert().
+		Model(&tenant.AgentControl{
+			ID:                pulid.MustNew("agc_"),
+			OrganizationID:    tenantInfo.OrgID,
+			BusinessUnitID:    tenantInfo.BuID,
+			AITrainingConsent: true,
+		}).
+		Column(
+			controls.ID.Bare(),
+			controls.OrganizationID.Bare(),
+			controls.BusinessUnitID.Bare(),
+			controls.AITrainingConsent.Bare(),
+		).
+		On("CONFLICT (organization_id, business_unit_id) DO UPDATE").
+		Set(controls.AITrainingConsent.SetExcluded()).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	assert.Equal(t, 3, count(100),
+		"only scored corrections with a document, inside the window, are trainable")
+	assert.Equal(t, 2, count(2), "an organization counts for at most its cap")
+
+	totals := weekly()
+	require.Len(t, totals, 1, "a draft with no provider is not counted for any")
+	assert.Equal(t, aicorrection.WeekTotal{
+		ProviderID: provider, WeekStart: monday, Corrections: 2, Scored: 12, Correct: 12,
+	}, totals[0])
+
+	_, err = repo.CountTrainable(ctx, &repositories.CountTrainableAICorrectionsRequest{
+		Task:         aicorrection.TaskShipmentDraftExtraction,
+		CapturedFrom: from,
+		CapturedTo:   to,
+	})
+	require.Error(t, err, "a missing cap is refused rather than counting without one")
 }

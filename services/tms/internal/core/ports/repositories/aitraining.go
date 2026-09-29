@@ -53,13 +53,19 @@ type WithdrawnTrainingExample struct {
 }
 
 type AITrainingExportRepository interface {
-	Create(ctx context.Context, entity *aitraining.TrainingExport) (*aitraining.TrainingExport, error)
+	Create(
+		ctx context.Context,
+		entity *aitraining.TrainingExport,
+	) (*aitraining.TrainingExport, error)
 	GetByID(ctx context.Context, id pulid.ID) (*aitraining.TrainingExport, error)
 	List(
 		ctx context.Context,
 		req ListAITrainingExportsRequest,
 	) ([]*aitraining.TrainingExport, error)
-	Update(ctx context.Context, entity *aitraining.TrainingExport) (*aitraining.TrainingExport, error)
+	Update(
+		ctx context.Context,
+		entity *aitraining.TrainingExport,
+	) (*aitraining.TrainingExport, error)
 	ListConsentingOrganizations(
 		ctx context.Context,
 		req ListConsentingOrganizationsRequest,
@@ -87,4 +93,25 @@ type AITrainingRecordRepository interface {
 		ctx context.Context,
 		req ListWithdrawnTrainingExamplesRequest,
 	) ([]WithdrawnTrainingExample, error)
+}
+
+type ListRetrainingCyclesRequest struct {
+	Statuses []aitraining.RetrainingStatus
+	Limit    int
+}
+
+type RetrainingCycleRepository interface {
+	Create(
+		ctx context.Context,
+		entity *aitraining.RetrainingCycle,
+	) (*aitraining.RetrainingCycle, error)
+	GetByID(ctx context.Context, id pulid.ID) (*aitraining.RetrainingCycle, error)
+	List(
+		ctx context.Context,
+		req ListRetrainingCyclesRequest,
+	) ([]*aitraining.RetrainingCycle, error)
+	Update(
+		ctx context.Context,
+		entity *aitraining.RetrainingCycle,
+	) (*aitraining.RetrainingCycle, error)
 }

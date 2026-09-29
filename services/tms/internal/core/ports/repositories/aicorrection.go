@@ -67,6 +67,18 @@ type WeeklyAICorrectionTotalsRequest struct {
 	Since      int64
 }
 
+type CountTrainableAICorrectionsRequest struct {
+	Task               aicorrection.Task
+	CapturedFrom       int64
+	CapturedTo         int64
+	PerOrganizationCap int
+}
+
+type WeeklyTrainableAICorrectionTotalsRequest struct {
+	Task  aicorrection.Task
+	Since int64
+}
+
 type AICorrectionRepository interface {
 	Upsert(ctx context.Context, entity *aicorrection.Correction) (*aicorrection.Correction, error)
 	GetByID(ctx context.Context, req GetAICorrectionRequest) (*aicorrection.Correction, error)
@@ -93,6 +105,11 @@ type AICorrectionRepository interface {
 	WeeklyTotalsByProvider(
 		ctx context.Context,
 		req *WeeklyAICorrectionTotalsRequest,
+	) ([]aicorrection.WeekTotal, error)
+	CountTrainable(ctx context.Context, req *CountTrainableAICorrectionsRequest) (int, error)
+	WeeklyTrainableTotalsByProvider(
+		ctx context.Context,
+		req *WeeklyTrainableAICorrectionTotalsRequest,
 	) ([]aicorrection.WeekTotal, error)
 	PurgeBefore(ctx context.Context, req PurgeAICorrectionsRequest) (int64, error)
 }

@@ -64,10 +64,7 @@ Examples:
 		}
 		defer predictions.Close()
 
-		scorer := aitrainingservice.NewScorer(
-			extractionevaljobs.NewReplyReader(aidocumentservice.NewContract()),
-		)
-		report, err := scorer.Score(cmd.Context(), &services.ScoreTrainingPredictionsRequest{
+		report, err := newScorer().Score(cmd.Context(), &services.ScoreTrainingPredictionsRequest{
 			Evaluation:  evaluation,
 			Predictions: predictions,
 		})
@@ -87,6 +84,12 @@ Examples:
 
 		return scoreGate(report, scoreMinAccuracy, scoreMaxRegression)
 	},
+}
+
+func newScorer() services.AITrainingScorer {
+	return aitrainingservice.NewScorer(
+		extractionevaljobs.NewReplyReader(aidocumentservice.NewContract()),
+	)
 }
 
 func scoreGate(report *aitraining.ScoreReport, minAccuracy, maxRegression float64) error {

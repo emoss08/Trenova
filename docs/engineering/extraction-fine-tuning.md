@@ -15,6 +15,10 @@ AI Control → Quality → Document extraction   evaluation run on the golden se
                                              shadow traffic scored beside production
 ```
 
+Once a model serves traffic, the first four steps repeat on a schedule: the worker starts an
+export when enough new corrections have been confirmed, and a GPU machine renders, trains and
+scores it with `trenova ai retraining run` (see [Retrain on a schedule](#9-retrain-on-a-schedule)).
+
 The Go side owns everything that must match production exactly: the prompt, the reply schema,
 reading a reply, and scoring it. The Python side in `ml/extraction-finetune` owns the training
 recipe: how a confirmed answer becomes the reply the model learns, which examples become
@@ -555,6 +559,82 @@ rather than against another model.
   notification to up to 25 people who may update AI providers, since they are the ones who can
   move it back down the priority order; the correlation is the provider and the week, so a rerun
   in the same week tells nobody twice. A removed provider is shown but not reported.
+
+## 9. Retrain on a schedule
+
+New customers bring new layouts, and every week people confirm more drafts. Retraining on a
+schedule turns those corrections into a new candidate model without anyone starting it, and
+stops before anything reaches production: a cycle ends with a scored model and a pass or fail
+against production, and serving it still goes through evaluation, shadow traffic and a rollout.
+
+```
+Monday 08:10 UTC   ExtractionRetrainingWorkflow → Plan
+                     enough new corrections?  →  training export  →  cycle Exporting
+                     not yet                  →  cycle Skipped, with the reason
+export finishes    →  cycle Ready
+GPU timer          trenova ai retraining run
+                     claim (lease) → render → trenova-finetune run → score → Passed / Rejected
+```
+
+- **Policy.** The `aiRetraining` section of the configuration, off until `enabled: true`. Each
+  cycle copies the policy it was planned under (`ai_retraining_cycles`), so a later change to the
+  gate never rewrites an old verdict.
+- **The decision.** `aitraining.PlanRetraining`, a pure function. In order:
+  - an open cycle (exporting, ready or training) or a running training export skips it;
+  - fewer than `minIntervalDays` since the last cycle that exported skips it (`TooSoon`), unless a
+    provider is drifting and `retrainOnDrift` is on;
+  - fewer than `minNewExamples` trainable corrections since that cycle's window skips it
+    (`NotEnoughExamples`). Drift never lifts this one: retraining on the same data cannot help.
+
+  A skipped run is recorded with its reason, so `trenova ai retraining list` shows why nothing
+  happened. A failed or canceled cycle does not count as the last one; a rejected one does, so a
+  model that failed the gate is not retrained on the same data every week.
+- **New corrections.** `AICorrectionRepository.CountTrainable` counts what the export would read:
+  corrections of consenting organizations with a document, at least one scored field, and not the
+  source of an evaluation case, each organization counting for at most `maxPerOrganization`.
+  The count starts where the last cycle's window ended.
+- **Drift.** `WeeklyTrainableTotalsByProvider` totals the consenting organizations' corrections by
+  provider and week, and `aicorrection.BuildProviderTrends` judges them exactly as the weekly drift
+  check does (section 8). The run is scheduled after that check, on Mondays.
+- **The export.** A normal training export over the last `lookbackDays`, started through the same
+  operator path as `trenova ai training-export start`, so consent is read three times and one
+  export runs at a time. Training always starts from the base model on the whole window; it is
+  never incremental. The cycle becomes `Ready` when the export completes with both a training and
+  a validation split, and `Failed` otherwise. Nothing polls for this: the next plan, the next
+  trainer claim, `list` and `status` each reconcile it.
+- **Training.** `trenova ai retraining run` on the GPU machine, from a timer:
+
+  ```bash
+  trenova ai retraining run \
+    --config ml/extraction-finetune/configs/qwen2.5-7b-instruct.yaml \
+    --work-dir /data/retraining
+  ```
+
+  It exits at once when nothing is ready. Otherwise it claims the cycle with a lease of
+  `leaseDuration`, renders the export into `<work-dir>/<cycle>/dataset` (withdrawals made since
+  the export are left out, as with `render`), runs `uv run --directory <finetune-dir>
+  trenova-finetune run`, scores `predictions.jsonl` with the same scorer as
+  `trenova ai fine-tune score`, and records the result. The rendered dataset and the run's built
+  training data are deleted when it ends, unless `--keep-data`; the model is kept.
+- **The lease.** Extended every quarter of `leaseDuration` while training runs. A trainer whose
+  heartbeat finds the cycle canceled or taken stops the pipeline (SIGINT, then 30 seconds) and
+  records nothing. A cycle whose trainer vanished is claimed again once its lease expires, and
+  starts from a fresh render: resuming would train on a dataset rendered before the latest
+  withdrawals.
+- **The gate.** `minAccuracyPercent` and `maxRegressionPoints`, compared exactly on the counts
+  (`intutils.RatioLeadExceedsPoints`) against the production model's predictions for the same
+  validation documents. A model with nothing scored never passes.
+- **What passing means.** `Passed` records the model directory, the config and the prompt
+  fingerprint. The model is not served: serve it, register it after the current provider, run an
+  evaluation on the golden set, then shadow and roll it out (sections 5 to 7).
+
+| Command | What it does |
+| --- | --- |
+| `trenova ai retraining start [--requested-by] [--note]` | Plan now, without the interval or minimum; works with the schedule off |
+| `trenova ai retraining list [--limit]` | Recent cycles, skipped ones included, with both accuracies |
+| `trenova ai retraining status <cycle-id>` | One cycle: window, counts, gate, trainer, lease and result |
+| `trenova ai retraining cancel <cycle-id>` | Stops an open cycle and its running export; its trainer stops at the next heartbeat |
+| `trenova ai retraining run --config … --work-dir …` | Claims, trains, scores and records the ready cycle |
 
 ## Handling the data
 

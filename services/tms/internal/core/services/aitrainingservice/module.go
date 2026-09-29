@@ -13,5 +13,7 @@ var Module = fx.Module("ai-training-service",
 		NewHistory,
 		NewRenderer,
 		AsRenderer,
+		NewRetrainer,
+		AsRetrainer,
 	),
 )

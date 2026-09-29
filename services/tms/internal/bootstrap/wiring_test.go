@@ -115,6 +115,11 @@ func TestWiring_TrainingExportCommandResolvesWithoutAProcess(t *testing.T) {
 
 	require.NoError(t, fx.ValidateApp(
 		bootstrap.TrainingExportCommandOptions(),
-		fx.Invoke(func(services.AITrainingExportOperator, services.AITrainingDatasetRenderer) {}),
+		fx.Invoke(func(
+			services.AITrainingExportOperator,
+			services.AITrainingDatasetRenderer,
+			services.AIRetrainingService,
+		) {
+		}),
 	))
 }

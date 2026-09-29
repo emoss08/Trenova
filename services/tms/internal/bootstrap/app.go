@@ -92,6 +92,7 @@ import (
 	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aicorrectionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aitrainingrepository"
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
@@ -254,12 +255,16 @@ func TrainingExportCommandOptions() fx.Option {
 			temporaljobs.NewTemporalClient,
 			aitrainingrepository.NewExports,
 			aitrainingrepository.NewRecords,
+			aitrainingrepository.NewCycles,
+			aicorrectionrepository.New,
 			aitrainingjobs.NewExportStarter,
 			aitrainingjobs.AsExportStarter,
 			aitrainingservice.NewOperator,
 			aitrainingservice.AsOperator,
 			aitrainingservice.NewRenderer,
 			aitrainingservice.AsRenderer,
+			aitrainingservice.NewRetrainer,
+			aitrainingservice.AsRetrainer,
 			aidocumentservice.NewContract,
 			completionrouter.NewPromptRenderer,
 		),
