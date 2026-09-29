@@ -5,6 +5,7 @@ import (
 	"errors"
 	"maps"
 	"slices"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -14,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
+
+const clockLineLayout = "2006-01-02 15:04"
 
 // Turn is one turn's working state: what the model is shown, what it may call,
 // and what it has done so far.
@@ -412,15 +415,18 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	}
 
 	messages := toAdapterMessages(history, req.Proposals)
+	now := timeutils.NowUnix()
 	input := req.Input
 	if req.Delegation == nil {
 		input = outOfViewDecisions(history, req.Proposals) + input
+	}
+	if definition.HasContextProvider(agentdefinition.ContextClock) {
+		input = clockLine(now, runtimeContext.Timezone) + input
 	}
 	messages = append(messages, serviceports.Message{
 		Role:    serviceports.RoleUser,
 		Content: input,
 	})
-	now := timeutils.NowUnix()
 	taint, opened := openTaint(req, &runtimeContext, now)
 
 	return &Turn{
@@ -447,6 +453,12 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		delegates: delegates,
 		opened:    opened,
 	}
+}
+
+func clockLine(now int64, timezone string) string {
+	loc, name := timeutils.ResolveZone(timezone)
+
+	return "Now: " + time.Unix(now, 0).In(loc).Format(clockLineLayout) + " " + name + "\n\n"
 }
 
 // completionRequest is what the turn is ready to send the model now.
