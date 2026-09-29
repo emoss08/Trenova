@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -908,7 +909,7 @@ func (r *repository) BulkDuplicate(
 	graph := buildDuplicatedShipmentGraph(
 		source,
 		proNumbers,
-		req.OverrideDates,
+		req.DateAnchor(timeutils.NowUnix()),
 		req.TenantInfo.UserID,
 	)
 
@@ -1017,6 +1018,25 @@ func (r *repository) BulkDuplicate(
 	}
 
 	return graph.shipments, nil
+}
+
+func (r *repository) PlanDuplicate(
+	ctx context.Context,
+	req *repositories.BulkDuplicateShipmentRequest,
+) (*repositories.ShipmentDuplicatePlan, error) {
+	source, err := r.getDuplicateSource(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	graph := buildDuplicatedShipmentGraph(
+		source,
+		make([]string, req.Count),
+		req.DateAnchor(timeutils.NowUnix()),
+		req.TenantInfo.UserID,
+	)
+
+	return &repositories.ShipmentDuplicatePlan{Source: source, Copies: graph.shipments}, nil
 }
 
 func (r *repository) getDuplicateSource(

@@ -1,5 +1,17 @@
-import { captureBatchStatusAttrs, captureBatchTitle, captureRetention } from "@/lib/capture";
+import {
+  captureBatchStatusAttrs,
+  captureBatchTitle,
+  captureRetention,
+  captureSourceLabel,
+} from "@/lib/capture";
 import type { CaptureBatchRow, CaptureBatchSort } from "@/lib/graphql/capture";
+import { errorCopy } from "@trenova/shared/components/errors/error-copy";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
@@ -15,10 +27,11 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
+import { describeError } from "@trenova/shared/lib/error-presentation";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
 import { PrinterIcon, ScanLineIcon, SearchIcon, XIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { INTAKE_SORTS, sortLabel } from "./queue-filter";
 
 export type BatchListState = {
@@ -26,6 +39,7 @@ export type BatchListState = {
   total: number | undefined;
   isLoading: boolean;
   isError: boolean;
+  error: unknown;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
@@ -64,12 +78,16 @@ function BatchRowItem({
           open ? "bg-surface-selected" : "hover:bg-surface-hover",
         )}
       >
-        <span className="bg-sunken text-foreground-muted flex size-8 shrink-0 items-center justify-center rounded-md">
-          <SourceIcon className="size-4" aria-hidden />
-        </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-sm font-medium">{captureBatchTitle(t, batch)}</span>
+            <span className="flex min-w-0 items-center gap-1.5">
+              <SourceIcon
+                className="text-foreground-subtle size-3.5 shrink-0 self-center"
+                aria-label={captureSourceLabel(t, batch.source)}
+                role="img"
+              />
+              <span className="truncate text-sm">{captureBatchTitle(t, batch)}</span>
+            </span>
             <span className="text-foreground-subtle shrink-0 text-xs">
               {formatSecondsAgo(Math.max(0, now - batch.createdAt))}
             </span>
@@ -139,7 +157,7 @@ export function BatchList({
   sort: CaptureBatchSort;
   onSortChange: (sort: CaptureBatchSort) => void;
   onOpen: (id: string) => void;
-  empty: { title: string; description: string };
+  empty: { title: string; description: string; action?: ReactNode };
 }) {
   const t = useT();
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -222,7 +240,6 @@ export function BatchList({
           <div className="flex flex-col gap-3 p-4" aria-busy="true">
             {[0, 1, 2, 3, 4].map((index) => (
               <div key={index} className="flex gap-3">
-                <Skeleton className="size-8 shrink-0 rounded-md" />
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Skeleton className="h-3.5 w-1/2" />
                   <Skeleton className="h-3.5 w-4/5" />
@@ -232,21 +249,28 @@ export function BatchList({
             ))}
           </div>
         ) : list.isError ? (
-          <div className="flex flex-col items-center gap-3 p-8 text-center">
-            <p className="text-sm font-medium">{t("The queue could not be loaded")}</p>
-            <Button size="sm" variant="outline" onClick={list.retry}>
-              {t("Try again")}
-            </Button>
+          <div className="p-4">
+            <Alert variant="destructive" size="sm">
+              <AlertTitle>{t("The queue could not be loaded")}</AlertTitle>
+              <AlertDescription>
+                {errorCopy(t, describeError(list.error)).description}
+              </AlertDescription>
+              <AlertAction>
+                <Button size="xs" variant="outline" onClick={list.retry}>
+                  {t("Try again")}
+                </Button>
+              </AlertAction>
+            </Alert>
           </div>
         ) : list.batches.length === 0 ? (
           <EmptySheet
             title={empty.title}
             description={empty.description}
+            action={empty.action}
             sketch={
               <div className="flex flex-col gap-3 px-6">
                 {[0, 1, 2].map((index) => (
                   <div key={index} className="flex gap-3">
-                    <div className="bg-sunken size-8 shrink-0 rounded-md" />
                     <div className="flex flex-1 flex-col gap-1.5">
                       <GhostLine className="w-1/2" />
                       <GhostLine className="w-4/5" />

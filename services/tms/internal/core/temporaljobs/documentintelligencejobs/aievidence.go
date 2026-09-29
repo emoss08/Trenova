@@ -46,7 +46,7 @@ func locateEvidence(
 	value string,
 	preferredPage int,
 	pages []services.AIDocumentPage,
-) (int, string) {
+) (foundPage int, foundExcerpt string) {
 	needles := evidenceNeedles(value)
 	if len(needles) == 0 {
 		return 0, ""

@@ -323,6 +323,14 @@ const (
 	AccountingBackfillCancel = AccountingBackfillAction("Cancel")
 )
 
+func AccountingBackfillActionValues() []AccountingBackfillAction {
+	return []AccountingBackfillAction{
+		AccountingBackfillPause,
+		AccountingBackfillResume,
+		AccountingBackfillCancel,
+	}
+}
+
 type ChangeAccountingBackfillRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID

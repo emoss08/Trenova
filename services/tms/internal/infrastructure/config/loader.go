@@ -223,6 +223,9 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("server.requestTimeout", "55s")
 	l.viper.SetDefault("server.trustedProxies", DefaultTrustedProxies)
 
+	if l.env == EnvDevelopment || l.env == EnvTest {
+		l.viper.SetDefault("temporal.hostPort", "localhost:7233")
+	}
 	l.viper.SetDefault("temporal.profile", "")
 	l.viper.SetDefault("temporal.configFile", "")
 	l.viper.SetDefault("temporal.apiKey", "")
@@ -310,6 +313,11 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("logging.output", "stdout")
 	l.viper.SetDefault("logging.sampling", false)
 	l.viper.SetDefault("logging.stacktrace", false)
+
+	// Metrics defaults
+	l.viper.SetDefault("monitoring.metrics.host", "127.0.0.1")
+	l.viper.SetDefault("monitoring.metrics.port", 9090)
+	l.viper.SetDefault("monitoring.metrics.path", "/internal/metricsz")
 
 	// Health check defaults
 	l.viper.SetDefault("monitoring.health.path", "/health")

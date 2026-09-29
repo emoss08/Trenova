@@ -27,11 +27,15 @@ import type { PreviewScope } from "@/lib/graphql/agent-preview";
 import { modificationsKey } from "@/lib/queries/agent-preview";
 import type { ProposalField } from "@/types/assistant";
 import { CircleAlertIcon, LockIcon } from "lucide-react";
+import { humanizeKey } from "./readable-values";
 import { useId, useMemo, useState } from "react";
 import {
   changedValues,
   draftFromArguments,
+  parseParamPath,
+  readNested,
   validateDraft,
+  writeNested,
   type ProposalDraft,
 } from "./proposal-edits";
 import {
@@ -48,11 +52,21 @@ import { RecordSubsetField } from "./record-subset-field";
 /** How long typing settles before the draft is previewed. */
 export const PREVIEW_DEBOUNCE_MS = 400;
 
+/**
+ * The value the editor opens on: a parameter path (status, shipment.bol)
+ * and the words it is known by. A path into an object parameter gets an
+ * input of its own above the object, so a person changes the one value a
+ * refusal named without editing JSON.
+ */
+export type EditorFocus = { param: string; label: string };
+
 export type ProposalEditorRequest = {
   /** The sentence the card shows, so the person knows which change they are editing. */
   summary: string;
   fields: readonly ProposalField[];
   arguments: Record<string, unknown> | null | undefined;
+  /** The value to open on, when a reason named one. */
+  focus?: EditorFocus;
   /** When set, a reason is asked for beside the values and passed along. */
   withReason?: { label: string; required: boolean };
   /**
@@ -171,6 +185,34 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
     setTouched((current) => (current[name] ? current : { ...current, [name]: true }));
   };
 
+  // A refusal names one value; the editor opens on it. A path into an object
+  // parameter is edited in an input of its own, and the object follows.
+  const focus = useMemo(() => {
+    const parsed = request.focus ? parseParamPath(request.focus.param) : null;
+    if (parsed === null) {
+      return null;
+    }
+    const field = request.fields.find((entry) => entry.name === parsed.field);
+    if (field === undefined || field.readOnly === true) {
+      return null;
+    }
+
+    return { field, steps: parsed.steps, label: request.focus?.label ?? "" };
+  }, [request.fields, request.focus]);
+  const nested =
+    focus !== null && focus.steps.length > 0 && focus.field.kind === "JSON"
+      ? readNested(draft, focus.field.name, focus.steps)
+      : undefined;
+  const setNested = (value: string) => {
+    if (focus === null) {
+      return;
+    }
+    setDraft((current) => writeNested(current, focus.field.name, focus.steps, value));
+    setTouched((current) =>
+      current[focus.field.name] ? current : { ...current, [focus.field.name]: true },
+    );
+  };
+
   const confirm = async () => {
     setSubmitted(true);
     if (!canConfirm) {
@@ -210,8 +252,30 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
               !subset && (touched[field.name] || submitted) ? errors[field.name] : undefined;
             const readOnly = field.readOnly === true;
 
+            const focused = focus?.field.name === field.name;
+            const nestedHere = focused && nested !== undefined;
+
             return (
               <div key={field.name} className="flex flex-col gap-1.5">
+                {nestedHere && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`${id}-focus`}>
+                      {focus.label !== "" ? focus.label : humanizeKey(String(focus.steps.at(-1)))}
+                    </Label>
+                    <Input
+                      id={`${id}-focus`}
+                      value={nested}
+                      autoFocus
+                      onChange={(event) => setNested(event.target.value)}
+                    />
+                    <p className="text-muted-foreground text-xs">
+                      {t(
+                        "Part of {0}; the rest stays as proposed unless you change it below.",
+                        field.label,
+                      )}
+                    </p>
+                  </div>
+                )}
                 <Label id={`${id}-label`} htmlFor={subset ? undefined : id}>
                   {field.label}
                   {field.required || subset ? "" : ` (${t("optional")})`}
@@ -233,6 +297,7 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
                     value={draft[field.name] ?? ""}
                     invalid={error !== undefined}
                     readOnly={readOnly}
+                    autoFocus={focused && !nestedHere && focus.steps.length === 0}
                     onChange={(value) => set(field.name, value)}
                   />
                 )}
@@ -337,6 +402,7 @@ function FieldControl({
   value,
   invalid,
   readOnly,
+  autoFocus = false,
   onChange,
 }: {
   id: string;
@@ -344,6 +410,8 @@ function FieldControl({
   value: string;
   invalid: boolean;
   readOnly: boolean;
+  /** The control the editor was opened on takes focus. */
+  autoFocus?: boolean;
   onChange: (value: string) => void;
 }) {
   const t = useT();
@@ -360,6 +428,7 @@ function FieldControl({
           maxLength={field.maxLength ?? undefined}
           isInvalid={invalid}
           readOnly={readOnly}
+          autoFocus={autoFocus}
           className={cn(field.kind === "JSON" && "font-mono text-xs")}
         />
       );
@@ -408,6 +477,7 @@ function FieldControl({
           max={field.maximum ?? undefined}
           value={value}
           readOnly={readOnly}
+          autoFocus={autoFocus}
           onChange={(event) => onChange(event.target.value)}
           aria-invalid={invalid}
         />
@@ -422,6 +492,7 @@ function FieldControl({
           placeholder={
             field.options.length > 0 ? field.options.join(", ") : t("Comma-separated values")
           }
+          autoFocus={autoFocus}
           aria-invalid={invalid}
         />
       );
@@ -431,6 +502,7 @@ function FieldControl({
           id={id}
           value={value}
           readOnly={readOnly}
+          autoFocus={autoFocus}
           onChange={(event) => onChange(event.target.value)}
           maxLength={field.maxLength ?? undefined}
           aria-invalid={invalid}

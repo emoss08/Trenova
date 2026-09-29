@@ -1,9 +1,10 @@
+import { SectionPanel } from "@/components/section-panel";
 import type { CapturePage } from "@/lib/graphql/capture";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { LOOSE } from "./page-layout";
+import { LOOSE, pageNumber } from "./page-layout";
 import { PageThumbnail, type PageActions, type PageMoveTarget } from "./page-thumbnail";
 
 /**
@@ -16,6 +17,7 @@ export function LoosePages({
   pageIds,
   pages,
   rotations,
+  sequence,
   moveTargets,
   pageActions,
   canEdit,
@@ -23,6 +25,7 @@ export function LoosePages({
   pageIds: string[];
   pages: Map<string, CapturePage>;
   rotations: Readonly<Record<string, number>>;
+  sequence: Readonly<Record<string, number>>;
   moveTargets: PageMoveTarget[];
   pageActions: Omit<PageActions, "leaveOut" | "splitAfter">;
   canEdit: boolean;
@@ -31,45 +34,41 @@ export function LoosePages({
   const { setNodeRef, isOver } = useDroppable({ id: LOOSE, disabled: !canEdit });
 
   return (
-    <section
-      aria-label={t("Set aside")}
-      className="border-border flex flex-col gap-2 rounded-lg border border-dashed p-3"
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-sm font-semibold">{t("Set aside")}</h3>
-        <span className="text-foreground-subtle text-xs">
+    <SectionPanel title={t("Set aside")} count={pageIds.length} className="overflow-visible">
+      <div className="flex flex-col gap-2 p-3">
+        <p className="text-foreground-subtle text-xs">
           {pageIds.length === 0
             ? t("Drag a page here to keep it out of every document")
             : t("Not in any document. Drag a page into one to file it.")}
-        </span>
+        </p>
+        <SortableContext items={pageIds} strategy={rectSortingStrategy}>
+          <div
+            ref={setNodeRef}
+            className={cn(
+              "border-border flex min-h-16 flex-wrap gap-3 rounded-md border border-dashed p-2 transition-colors",
+              isOver && "bg-surface-selected",
+            )}
+          >
+            {pageIds.map((pageId) => {
+              const page = pages.get(pageId);
+              if (page === undefined) {
+                return null;
+              }
+              return (
+                <PageThumbnail
+                  key={pageId}
+                  page={page}
+                  rotation={rotations[pageId] ?? 0}
+                  number={pageNumber({ sequence }, page)}
+                  moveTargets={moveTargets}
+                  disabled={!canEdit}
+                  actions={pageActions}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
       </div>
-      <SortableContext items={pageIds} strategy={rectSortingStrategy}>
-        <div
-          ref={setNodeRef}
-          className={cn(
-            "flex min-h-16 flex-wrap gap-3 rounded-md p-1 transition-colors",
-            isOver && "bg-surface-selected",
-          )}
-        >
-          {pageIds.map((pageId) => {
-            const page = pages.get(pageId);
-            if (page === undefined) {
-              return null;
-            }
-            return (
-              <PageThumbnail
-                key={pageId}
-                page={page}
-                rotation={rotations[pageId] ?? 0}
-                number={page.sequence}
-                moveTargets={moveTargets}
-                disabled={!canEdit}
-                actions={pageActions}
-              />
-            );
-          })}
-        </div>
-      </SortableContext>
-    </section>
+    </SectionPanel>
   );
 }

@@ -5,6 +5,7 @@ import {
 } from "@/lib/route-permission";
 import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
 import { AppErrorLayout, AppLayout } from "@/routes/app-layout";
+import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
 import { DeskShellLayout } from "@/routes/desk/shell-layout";
 import { RootLayout } from "@/routes/root-layout";
 import { NotFoundRoute, RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
@@ -1987,6 +1988,7 @@ export const routes: RouteObject[] = [
         // less guarded than anything inside; it simply wears none of the
         // frame. The way back is in its own chrome.
         element: <DeskShellLayout />,
+        HydrateFallback: DeskLoadingScreen,
         loader: protectedLoader,
         children: [
           {

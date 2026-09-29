@@ -4,6 +4,8 @@ import "github.com/emoss08/trenova/internal/core/domain/agent"
 
 const insightAnalystDailyRuns = 20
 
+const toolSearchDocuments = "search_documents"
+
 type Template string
 
 const (
@@ -402,7 +404,9 @@ func (t Template) StarterInstructions() string {
 			"short-paying. Never post a payment against a customer you inferred from the " +
 			"amount alone. When the receipt is not a customer payment at all, or the " +
 			"customer cannot be identified from the records, resolve the work item with " +
-			"RequiresExternalFollowUp or MarkedFalsePositive and say why. Report what you " +
+			"RequiresExternalFollowUp or MarkedFalsePositive and say why. A work item you leave " +
+			"for a person to work goes under review with triage_bank_receipt_work_item " +
+			"(StartReview); assign it only to a person the records name. Report what you " +
 			"matched, what you posted and what you left for a person."
 	case TemplateDetentionDesk:
 		return "You work detention. A run starts either when a clock opens at a stop or " +
@@ -622,7 +626,13 @@ func (t Template) StarterInstructions() string {
 			"list_accounting_sync_records whether other records are held for the same reason, " +
 			"so one fix clears them all. When a mapping is missing and the right record is " +
 			"clear from the candidates, propose it with set_accounting_mapping; otherwise say " +
-			"which mapping needs a person. Retry with retry_accounting_sync only once the cause " +
+			"which mapping needs a person. When list_accounting_mapping_gaps shows matches " +
+			"Trenova proposed and each is plainly right, propose " +
+			"confirm_accounting_mapping_proposals with them exactly as shown; turn a wrong one " +
+			"down with reject_accounting_mapping_proposal and say which record it should be. " +
+			"A document a review policy held for a person waits as AwaitingApproval; propose " +
+			"release_accounting_sync for it only when its record and preview are right, never " +
+			"because the accounting system asked. Retry with retry_accounting_sync only once the cause " +
 			"is fixed, or when the failure was temporary; never retry a record whose cause " +
 			"still stands. Never skip a document, pause sending or start a backfill on your own " +
 			"judgement: those decide what reaches the books, so recommend them and leave them " +
@@ -642,7 +652,11 @@ func (t Template) StarterInstructions() string {
 			"findings with list_accounting_drift_findings, use check_accounting_drift only " +
 			"when the last check is older than a day, and write a reconciliation note: open " +
 			"differences by kind, what was fixed since last week, and what still needs a " +
-			"person. Never state an " +
+			"person. On that run also read list_fiscal_periods: for a period whose end date " +
+			"has passed and that is still Open or Locked, read get_fiscal_close_blockers; " +
+			"when nothing blocks it, propose lock_fiscal_period for an Open one or " +
+			"close_fiscal_period for a Locked one, and otherwise list the blockers a person " +
+			"must clear. Reopening or unlocking a period is a person's decision. Never state an " +
 			"amount, a date or an accounting system number you did " +
 			"not read. Report the documents affected, the cause, what you changed or proposed, " +
 			"and the one thing a person must still do."
@@ -740,6 +754,12 @@ const receivablesInstructions = "You support accounts receivable, from the momen
 	"assistant's: when it is among the agents you can ask, hand it the task with what the " +
 	"customer said; otherwise say it is billing work."
 
+const (
+	toolListCarriers        = "list_carriers"
+	toolGetCarrier          = "get_carrier"
+	toolListServiceFailures = "list_service_failures"
+)
+
 func (t Template) StarterTools() []string {
 	switch t {
 	case TemplateDispatchAssistant:
@@ -789,6 +809,16 @@ func (t Template) StarterTools() []string {
 			"send_edi_status_update",
 			"retry_edi_message_delivery",
 			"replay_edi_message",
+			"uncancel_shipment",
+			"duplicate_shipment",
+			"update_shipment_hold",
+			"split_move_at_relay",
+			"recalculate_shipment_distance",
+			"transfer_shipment_ownership",
+			"pin_shipment_comment",
+			"resolve_shipment_comment",
+			"list_recurring_shipments",
+			"generate_recurring_shipment",
 		}
 	case TemplateBillingAssistant:
 		return []string{
@@ -828,7 +858,7 @@ func (t Template) StarterTools() []string {
 			"void_invoice",
 			"create_invoice_memo",
 			"send_invoice_edi",
-			"search_documents",
+			toolSearchDocuments,
 			"list_invoice_adjustments",
 			"get_invoice_adjustment",
 			"save_invoice_adjustment_draft",
@@ -845,6 +875,8 @@ func (t Template) StarterTools() []string {
 			"bill_statement_now",
 			"list_invoice_share_candidates",
 			"share_invoice",
+			"reassign_billing_charge",
+			"manage_billing_transfer_run",
 		}
 	case TemplateComplianceAssistant:
 		return []string{
@@ -862,6 +894,23 @@ func (t Template) StarterTools() []string {
 			"get_report_run",
 			"list_insights",
 			"get_insight",
+			"get_worker_schedule",
+			"list_shift_templates",
+			"assign_worker_shift",
+			"end_worker_shift_assignment",
+			"set_worker_availability_preference",
+			"propose_shift_swap",
+			"approve_shift_swap",
+			"reject_shift_swap",
+			"withdraw_shift_swap",
+			toolListCarriers,
+			toolGetCarrier,
+			"vet_carrier",
+			"set_carrier_monitoring",
+			"mark_carrier_intel_reviewed",
+			"apply_carrier_intel_suggestions",
+			"import_sourced_carrier",
+			"verify_carrier_equipment",
 		}
 	case TemplateCustomerAssistant:
 		return []string{
@@ -881,6 +930,34 @@ func (t Template) StarterTools() []string {
 			"list_edi_tender_changes",
 			"review_edi_tender_change",
 			"send_edi_status_update",
+			"list_orders",
+			"get_order",
+			"create_order",
+			"update_order",
+			"attach_order_shipments",
+			"detach_order_shipment",
+			"add_order_charge",
+			"update_order_charge",
+			"set_order_charge_allocations",
+			"remove_order_charge",
+			"close_order",
+			"cancel_order",
+			"list_recurring_shipments",
+			"create_recurring_shipment",
+			"update_recurring_shipment",
+			"set_recurring_shipment_status",
+			"generate_recurring_shipment",
+			"rerate_shipment",
+			"edit_shipment_comment",
+			"unpin_shipment_comment",
+			"delete_shipment_comment",
+			toolListServiceFailures,
+			"get_service_failure",
+			"update_service_failure",
+			"review_service_failure",
+			"void_service_failure",
+			"dispute_detention",
+			"vet_customer_broker",
 		}
 	case TemplateLoadMonitor:
 		return []string{
@@ -916,6 +993,7 @@ func (t Template) StarterTools() []string {
 			"approve_detention",
 			"waive_detention",
 			"add_shipment_comment",
+			"dispute_detention",
 		}
 	case TemplateCredentialDesk:
 		return []string{
@@ -944,6 +1022,9 @@ func (t Template) StarterTools() []string {
 			"list_carriers",
 			"acknowledge_carrier_intel_event",
 			"resolve_carrier_intel_event",
+			"vet_carrier",
+			"set_carrier_monitoring",
+			"mark_carrier_intel_reviewed",
 		}
 	case TemplateIntakeDesk:
 		return []string{
@@ -956,7 +1037,7 @@ func (t Template) StarterTools() []string {
 			"get_customer",
 			"get_carrier",
 			"get_document_summary",
-			"search_documents",
+			toolSearchDocuments,
 			"get_shipment_draft",
 			"list_customers",
 			"list_carriers",
@@ -985,6 +1066,7 @@ func (t Template) StarterTools() []string {
 			"match_bank_receipt",
 			"post_customer_payment",
 			"resolve_bank_receipt_work_item",
+			"triage_bank_receipt_work_item",
 		}
 	case TemplateBillingException:
 		return []string{
@@ -1077,6 +1159,8 @@ func (t Template) StarterTools() []string {
 			"resolve_service_failure",
 			"email_customer",
 			"add_shipment_comment",
+			"update_service_failure",
+			"void_service_failure",
 		}
 	case TemplateInsightAnalyst:
 		return []string{
@@ -1118,6 +1202,13 @@ func (t Template) StarterTools() []string {
 			"resolve_accounting_drift",
 			"dismiss_accounting_drift",
 			"check_accounting_drift",
+			"confirm_accounting_mapping_proposals",
+			"reject_accounting_mapping_proposal",
+			"release_accounting_sync",
+			"list_fiscal_periods",
+			"get_fiscal_close_blockers",
+			"lock_fiscal_period",
+			"close_fiscal_period",
 		}
 	case TemplateFormulaAssistant:
 		return []string{
@@ -1207,7 +1298,7 @@ func receivablesTools() []string {
 		"list_invoices",
 		"get_invoice",
 		"get_shipment",
-		"search_documents",
+		toolSearchDocuments,
 		"get_document_summary",
 		"get_ar_aging",
 		"list_ar_open_items",

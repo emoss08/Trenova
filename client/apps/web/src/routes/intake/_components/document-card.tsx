@@ -2,9 +2,10 @@ import {
   ControlledCaptureRecordAutocompleteField,
   ControlledDocumentTypeAutocompleteField,
 } from "@/components/autocomplete-fields";
+import { SectionPanel } from "@/components/section-panel";
 import {
   CAPTURE_RECORD_KINDS,
-  captureDocumentCategory,
+  captureDetectedKindLabel,
   captureItemStatusAttrs,
   captureRecordKindLabel,
   captureSuggestionSourceLabel,
@@ -17,6 +18,7 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Label } from "@trenova/shared/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -24,13 +26,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
-import { CombineIcon, UndoDotIcon } from "lucide-react";
+import { CombineIcon, Trash2Icon } from "lucide-react";
+import { useId, useState } from "react";
+import { ConfirmDiscardDialog } from "./confirm-discard-dialog";
 import { withKind, type Destination } from "./destination";
-import type { LayoutGroup } from "./page-layout";
+import { pageNumber, type LayoutGroup } from "./page-layout";
 import { PageThumbnail, type PageActions, type PageMoveTarget } from "./page-thumbnail";
+
+/**
+ * What discarding a document does to its stack. The server closes a stack
+ * once nothing in it is left to file, so throwing away the last open document
+ * is not the small thing throwing away one of several is.
+ */
+export type DiscardEffect = "set-aside" | "closes-stack" | "discards-stack";
 
 function SuggestionLine({ item }: { item: CaptureItem }) {
   const t = useT();
@@ -47,7 +58,7 @@ function SuggestionLine({ item }: { item: CaptureItem }) {
     <p className="text-foreground-muted flex items-start gap-1.5 text-xs">
       <AssistMark className="text-brand mt-0.5 size-3.5 shrink-0" aria-hidden />
       <span>
-        <span className="text-foreground font-medium">
+        <span className="text-foreground">
           {captureSuggestionSourceLabel(t, item.suggestionSource)}
         </span>
         {item.suggestionReason !== "" && <> · {item.suggestionReason}</>}
@@ -55,6 +66,56 @@ function SuggestionLine({ item }: { item: CaptureItem }) {
       </span>
     </p>
   );
+}
+
+function DocumentMarks({ item }: { item: CaptureItem }) {
+  const t = useT();
+  const statusAttrs = captureItemStatusAttrs(t)[item.status];
+  const detected = captureDetectedKindLabel(t, item.detectedKind);
+  const showStatus = item.status !== "Proposed";
+
+  if (!showStatus && detected === null && item.suggestionSource === null) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      {showStatus && (
+        <Badge variant={phaseTone(statusAttrs.phase)} title={statusAttrs.description}>
+          {statusAttrs.text}
+        </Badge>
+      )}
+      {detected !== null && (
+        <Badge
+          variant="neutral"
+          appearance="outline"
+          title={t("What Trenova read this document as")}
+        >
+          <AssistMark aria-hidden />
+          {detected}
+        </Badge>
+      )}
+      <SuggestionLine item={item} />
+    </div>
+  );
+}
+
+function discardDescription(t: TranslateFn, effect: DiscardEffect, pageCount: number): string {
+  switch (effect) {
+    case "set-aside":
+      return t(
+        "{0, plural, one {Its page moves} other {Its # pages move}} to Set aside. From there you can drag them into another document, or leave them to be deleted with the stack's other unfiled pages.",
+        pageCount,
+      );
+    case "closes-stack":
+      return t(
+        "It is the last document left to file, so the stack is done once it goes. Its pages are not filed and are deleted with the stack's other unfiled pages.",
+      );
+    case "discards-stack":
+      return t(
+        "It is the only document left in the stack, so the whole stack is discarded and every page in it is deleted. This cannot be undone.",
+      );
+  }
 }
 
 /**
@@ -80,8 +141,8 @@ export function DocumentCard({
   onMergeWithNext,
   onFile,
   filing,
-  onSetAside,
-  settingAside,
+  discardEffect,
+  onDiscard,
 }: {
   number: number;
   group: LayoutGroup;
@@ -102,63 +163,63 @@ export function DocumentCard({
   onMergeWithNext?: () => void;
   onFile: () => void;
   filing: boolean;
-  onSetAside: () => void;
-  settingAside: boolean;
+  discardEffect: DiscardEffect;
+  /** Throws the document away; settles when the server has answered. */
+  onDiscard: () => Promise<unknown>;
 }) {
   const t = useT();
+  const kindId = useId();
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const { setNodeRef, isOver } = useDroppable({ id: group.key, disabled: !canEdit });
-  const statusAttrs = item ? captureItemStatusAttrs(t)[item.status] : null;
   const failureText = failure ?? (item?.status === "Failed" ? item.failureMessage : "");
-  const fileBlocker = dirty
-    ? t("Save the split before filing")
-    : item === undefined
+  const fileBlocker =
+    dirty || item === undefined
       ? t("Save the split before filing")
       : destination.recordId === ""
         ? t("Choose a record to file onto")
         : null;
+  const title = t("Document {0}", number);
+  const showMerge = canEdit && onMergeWithNext !== undefined;
+  const showDiscard = canDiscard && item !== undefined && !dirty;
 
   return (
-    <article
-      aria-label={t("Document {0}", number)}
-      className="border-border bg-card flex flex-col rounded-lg border"
+    <SectionPanel
+      title={title}
+      hint={t("{0, plural, one {# page} other {# pages}}", group.pageIds.length)}
+      className="overflow-visible"
+      action={
+        showMerge || showDiscard ? (
+          <div className="flex items-center gap-1">
+            {showMerge && (
+              <Button
+                type="button"
+                size="xs"
+                variant="ghost"
+                onClick={onMergeWithNext}
+                title={t("Join with next")}
+              >
+                <CombineIcon className="size-3.5" aria-hidden />
+                <span className="sr-only sm:not-sr-only">{t("Join with next")}</span>
+              </Button>
+            )}
+            {showDiscard && (
+              <Button
+                type="button"
+                size="xs"
+                variant="ghost"
+                onClick={() => setConfirmDiscard(true)}
+                title={t("Discard document")}
+              >
+                <Trash2Icon className="size-3.5" aria-hidden />
+                <span className="sr-only sm:not-sr-only">{t("Discard document")}</span>
+              </Button>
+            )}
+          </div>
+        ) : undefined
+      }
     >
-      <header className="border-border-subtle flex flex-wrap items-center gap-2 border-b px-3 py-2">
-        <h3 className="text-sm font-semibold">{t("Document {0}", number)}</h3>
-        <span className="text-foreground-subtle text-xs tabular-nums">
-          {t("{0, plural, one {# page} other {# pages}}", group.pageIds.length)}
-        </span>
-        {statusAttrs !== null && item?.status !== "Proposed" && (
-          <Badge variant={phaseTone(statusAttrs.phase)}>{statusAttrs.text}</Badge>
-        )}
-        {item?.detectedKind && item.detectedKind !== "" && (
-          <Badge variant="neutral" appearance="outline">
-            {item.detectedKind}
-          </Badge>
-        )}
-        <div className="ml-auto flex items-center gap-1">
-          {canEdit && onMergeWithNext && (
-            <Button type="button" size="xs" variant="ghost" onClick={onMergeWithNext}>
-              <CombineIcon className="size-3.5" />
-              {t("Join with next")}
-            </Button>
-          )}
-          {canDiscard && item !== undefined && !dirty && (
-            <Button
-              type="button"
-              size="xs"
-              variant="ghost"
-              onClick={onSetAside}
-              isLoading={settingAside}
-            >
-              <UndoDotIcon className="size-3.5" />
-              {t("Set aside")}
-            </Button>
-          )}
-        </div>
-      </header>
-
       <div className="flex flex-col gap-3 p-3">
-        {item && <SuggestionLine item={item} />}
+        {item && <DocumentMarks item={item} />}
 
         <SortableContext items={group.pageIds} strategy={rectSortingStrategy}>
           <div
@@ -179,7 +240,7 @@ export function DocumentCard({
                   key={pageId}
                   page={page}
                   rotation={rotations[pageId] ?? 0}
-                  number={sequence[pageId] ?? page.sequence}
+                  number={pageNumber({ sequence }, page)}
                   moveTargets={moveTargets.filter((target) => target.key !== group.key)}
                   disabled={!canEdit}
                   actions={{
@@ -199,8 +260,12 @@ export function DocumentCard({
         )}
 
         <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_minmax(0,14rem)] sm:items-end">
-          <div className="flex flex-col gap-1">
-            <span className="text-foreground-subtle text-xs font-medium">{t("File onto")}</span>
+          <div className="flex flex-col gap-0.5">
+            <div className="mb-0.5 flex items-center">
+              <Label htmlFor={kindId} className="block text-xs font-medium">
+                {t("File onto")}
+              </Label>
+            </div>
             <Select
               value={destination.kind}
               items={CAPTURE_RECORD_KINDS.map((kind) => ({
@@ -214,7 +279,7 @@ export function DocumentCard({
               }}
               disabled={!canFile}
             >
-              <SelectTrigger aria-label={t("Kind of record")}>
+              <SelectTrigger id={kindId} className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -237,7 +302,6 @@ export function DocumentCard({
           <ControlledDocumentTypeAutocompleteField
             label={t("Document type")}
             placeholder={t("Optional")}
-            category={captureDocumentCategory(destination.kind)}
             value={destination.documentTypeId}
             onValueChange={(documentTypeId) =>
               onDestinationChange({ ...destination, documentTypeId })
@@ -247,7 +311,7 @@ export function DocumentCard({
         </div>
 
         {canFile && (
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
             {fileBlocker !== null && (
               <span className="text-foreground-subtle text-xs">{fileBlocker}</span>
             )}
@@ -264,6 +328,18 @@ export function DocumentCard({
           </div>
         )}
       </div>
-    </article>
+
+      {showDiscard && (
+        <ConfirmDiscardDialog
+          open={confirmDiscard}
+          onOpenChange={setConfirmDiscard}
+          title={t("Discard document {0}?", number)}
+          description={discardDescription(t, discardEffect, group.pageIds.length)}
+          confirmLabel={t("Discard")}
+          failureTitle={t("The document was not discarded")}
+          onConfirm={onDiscard}
+        />
+      )}
+    </SectionPanel>
   );
 }

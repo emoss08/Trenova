@@ -50,6 +50,7 @@ type Renderer struct {
 	now      func() int64
 }
 
+//nolint:gocritic // hugeParam: fx.In parameter structs are passed by value
 func NewRenderer(p RendererParams) *Renderer {
 	return &Renderer{
 		l:        p.Logger.Named("service.aitraining-renderer"),
@@ -65,6 +66,8 @@ func NewRenderer(p RendererParams) *Renderer {
 func AsRenderer(r *Renderer) services.AITrainingDatasetRenderer { return r }
 
 type renderJob struct {
+	export    *aitraining.TrainingExport
+	manifest  *aitraining.Manifest
 	mode      aiprovider.StructuredOutputMode
 	pageLimit int
 	withdrawn map[string]struct{}
@@ -77,7 +80,11 @@ func (r *Renderer) Render(
 	req *services.RenderTrainingDatasetRequest,
 ) (*aitraining.DatasetManifest, error) {
 	if req == nil || req.Sink == nil {
-		return nil, errortypes.NewValidationError("sink", errortypes.ErrRequired, "An output is required")
+		return nil, errortypes.NewValidationError(
+			"sink",
+			errortypes.ErrRequired,
+			"An output is required",
+		)
 	}
 	mode := req.StructuredOutputMode
 	if mode == "" {
@@ -117,6 +124,8 @@ func (r *Renderer) Render(
 		return nil, err
 	}
 	job := &renderJob{
+		export:    export,
+		manifest:  manifest,
 		mode:      mode,
 		pageLimit: r.contract.PageLimit(),
 		withdrawn: withdrawn,
@@ -135,9 +144,28 @@ func (r *Renderer) Render(
 		return nil, err
 	}
 
+	dataset, err := r.writeDatasetManifest(req.Sink, job, written)
+	if err != nil {
+		return nil, err
+	}
+
+	r.l.Info("training dataset rendered",
+		zap.String("exportId", export.ID.String()),
+		zap.Int("examples", dataset.Counts.Examples),
+		zap.Int("withdrawnExcluded", dataset.Counts.WithdrawnExcluded),
+	)
+
+	return dataset, nil
+}
+
+func (r *Renderer) writeDatasetManifest(
+	sink services.TrainingDatasetSink,
+	job *renderJob,
+	written []aitraining.DatasetFile,
+) (*aitraining.DatasetManifest, error) {
 	template := r.contract.CompletionRequest("", nil)
-	prompt := r.prompts.RenderStructuredPrompt(template, mode)
-	schemaFile, err := r.writeDocument(req.Sink, aitraining.DatasetSchemaFile, template.OutputSchema)
+	prompt := r.prompts.RenderStructuredPrompt(template, job.mode)
+	schemaFile, err := r.writeDocument(sink, aitraining.DatasetSchemaFile, template.OutputSchema)
 	if err != nil {
 		return nil, err
 	}
@@ -148,11 +176,11 @@ func (r *Renderer) Render(
 
 	dataset := &aitraining.DatasetManifest{
 		Format:               aitraining.DatasetFormat,
-		ExportID:             export.ID,
-		ExportManifestSHA256: export.ManifestSHA256,
-		ExampleFormat:        manifest.ExampleFormat,
-		Task:                 export.Task,
-		StructuredOutputMode: mode,
+		ExportID:             job.export.ID,
+		ExportManifestSHA256: job.export.ManifestSHA256,
+		ExampleFormat:        job.manifest.ExampleFormat,
+		Task:                 job.export.Task,
+		StructuredOutputMode: job.mode,
 		SchemaName:           template.SchemaName,
 		PromptSHA256:         hashutils.SHA256Hex(prompt.System + "\n" + string(schemaJSON)),
 		Temperature:          prompt.Temperature,
@@ -163,15 +191,9 @@ func (r *Renderer) Render(
 		Files:                append(written, schemaFile),
 		RenderedAt:           r.now(),
 	}
-	if _, err = r.writeDocument(req.Sink, aitraining.DatasetManifestFile, dataset); err != nil {
+	if _, err = r.writeDocument(sink, aitraining.DatasetManifestFile, dataset); err != nil {
 		return nil, err
 	}
-
-	r.l.Info("training dataset rendered",
-		zap.String("exportId", export.ID.String()),
-		zap.Int("examples", dataset.Counts.Examples),
-		zap.Int("withdrawnExcluded", dataset.Counts.WithdrawnExcluded),
-	)
 
 	return dataset, nil
 }

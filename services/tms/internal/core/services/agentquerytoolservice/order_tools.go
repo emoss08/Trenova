@@ -153,6 +153,10 @@ func newGetOrderTool(
 
 func (t *getOrderTool) Name() string { return "get_order" }
 
+func (t *getOrderTool) SearchTerms() []string {
+	return []string{"charges", "invoiced", "legs"}
+}
+
 func (t *getOrderTool) Description() string {
 	return "Retrieve one customer order by id with the shipments it groups and its " +
 		"order-level charges, including which charges are already invoiced. Use " +
@@ -226,8 +230,12 @@ func (t *getOrderTool) Query(
 		ShipmentsOmitted: max(len(entity.Shipments)-maxOrderShipments, 0),
 		ChargeCount:      len(entity.Charges),
 		ChargesOmitted:   max(len(entity.Charges)-maxOrderCharges, 0),
-		Shipments:        make([]orderShipmentRow, 0, min(len(entity.Shipments), maxOrderShipments)),
-		Charges:          make([]orderChargeRow, 0, min(len(entity.Charges), maxOrderCharges)),
+		Shipments: make(
+			[]orderShipmentRow,
+			0,
+			min(len(entity.Shipments), maxOrderShipments),
+		),
+		Charges: make([]orderChargeRow, 0, min(len(entity.Charges), maxOrderCharges)),
 	}
 	for _, item := range entity.Shipments {
 		if item == nil || len(view.Shipments) == maxOrderShipments {

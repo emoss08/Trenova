@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/money"
-	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 const (
@@ -143,26 +143,17 @@ func (t *listAccountingInboundChangesTool) ParamSchema() map[string]any {
 		paramAccountingSystem: accountingSystemParam(),
 		paramInboundStatus: jsonschemautils.DescribedArray(
 			"Only payments in these statuses. Proposed ones wait for a person.",
-			jsonschemautils.Enum(
-				"A status.",
-				sliceutils.Strings(accountingsync.AllInboundChangeStatuses())...,
-			),
+			agenttoolschema.Enum("A status.", agenttoolschema.InboundChangeStatuses),
 			len(accountingsync.AllInboundChangeStatuses()),
 		),
 		paramInboundKind: jsonschemautils.DescribedArray(
 			"Only customer payments or only bill payments.",
-			jsonschemautils.Enum(
-				"A kind.",
-				sliceutils.Strings(accountingsync.AllInboundChangeKinds())...,
-			),
+			agenttoolschema.Enum("A kind.", agenttoolschema.InboundChangeKinds),
 			len(accountingsync.AllInboundChangeKinds()),
 		),
 		paramInboundReason: jsonschemautils.DescribedArray(
 			"Only payments held back for these reasons.",
-			jsonschemautils.Enum(
-				"A reason.",
-				sliceutils.Strings(accountingsync.AllInboundChangeReasons())...,
-			),
+			agenttoolschema.Enum("A reason.", agenttoolschema.InboundChangeReasons),
 			len(accountingsync.AllInboundChangeReasons()),
 		),
 		paramInboundSearch: jsonschemautils.Text(

@@ -134,6 +134,10 @@ const (
 	LookupDepthFull  = LookupDepth("Full")
 )
 
+func LookupDepthValues() []LookupDepth {
+	return []LookupDepth{LookupDepthFMCSA, LookupDepthLite, LookupDepthFull}
+}
+
 func (d LookupDepth) String() string { return string(d) }
 
 func (d LookupDepth) IsValid() bool {
@@ -546,6 +550,10 @@ const (
 	UnitTypeTrailer  = UnitType("Trailer")
 	UnitTypeStraight = UnitType("Straight")
 )
+
+func UnitTypeValues() []UnitType {
+	return []UnitType{UnitTypeTractor, UnitTypeTrailer, UnitTypeStraight}
+}
 
 func (t UnitType) String() string { return string(t) }
 

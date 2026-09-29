@@ -12,10 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/cronutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -97,11 +97,8 @@ func (t *scheduleReportTool) ParamSchema() map[string]any {
 				"description": "The email addresses it goes to.",
 			},
 			"formats": map[string]any{
-				"type": "array",
-				"items": map[string]any{
-					"type":             "string",
-					toolschema.KeyEnum: scheduleFormatNames(),
-				},
+				"type":        "array",
+				"items":       agenttoolschema.Enum("", reportFormats),
 				"description": "Which formats to attach. Defaults to xlsx, as the schedule form does.",
 			},
 			"attach": map[string]any{
@@ -263,16 +260,6 @@ func scheduleFormats(params map[string]any) []string {
 	return []string{string(report.DefaultScheduleFormat)}
 }
 
-func scheduleFormatNames() []string {
-	formats := report.AllFormats()
-	names := make([]string, 0, len(formats))
-	for _, format := range formats {
-		names = append(names, string(format))
-	}
-
-	return names
-}
-
 func (t *scheduleReportTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
 	return targetOf(params, "definitionId", permission.ResourceReport)
 }
@@ -323,10 +310,7 @@ func (t *createTableChangeAlertTool) ParamSchema() map[string]any {
 				"maxItems": 3,
 				"description": "Which changes to watch: INSERT for a new record, UPDATE for " +
 					"an edit, DELETE for a removal. A status change is an UPDATE.",
-				"items": map[string]any{
-					"type": "string",
-					"enum": []string{"INSERT", "UPDATE", "DELETE"},
-				},
+				"items": agenttoolschema.Enum("", alertEventTypes),
 			},
 			"watchedColumns": map[string]any{
 				"type":  "array",
@@ -345,17 +329,16 @@ func (t *createTableChangeAlertTool) ParamSchema() map[string]any {
 					"required": []string{"field", "operator"},
 					"properties": map[string]any{
 						"field":    map[string]any{"type": "string"},
-						"operator": map[string]any{"type": "string", "enum": alertOperators()},
+						"operator": agenttoolschema.Enum("", alertOperators),
 						"value":    map[string]any{"type": "string"},
 					},
 					"additionalProperties": false,
 				},
 			},
-			"conditionMatch": map[string]any{
-				"type":        "string",
-				"enum":        []string{"all", "any"},
-				"description": "Whether every condition must hold, or any one. Defaults to all.",
-			},
+			"conditionMatch": agenttoolschema.Enum(
+				"Whether every condition must hold, or any one. Defaults to all.",
+				alertConditionMatches,
+			),
 			"customMessage": map[string]any{
 				"type":        "string",
 				"description": "What the notification should say.",
@@ -365,23 +348,32 @@ func (t *createTableChangeAlertTool) ParamSchema() map[string]any {
 	}
 }
 
-func alertOperators() []string {
-	operators := []tablechangealert.ConditionOperator{
-		tablechangealert.OpEq, tablechangealert.OpNeq,
-		tablechangealert.OpGt, tablechangealert.OpGte,
-		tablechangealert.OpLt, tablechangealert.OpLte,
-		tablechangealert.OpIsNull, tablechangealert.OpIsNotNull,
-		tablechangealert.OpContains, tablechangealert.OpNotContains,
-		tablechangealert.OpChangedTo, tablechangealert.OpChangedFrom,
-		tablechangealert.OpChanged,
-	}
-	names := make([]string, 0, len(operators))
-	for _, operator := range operators {
-		names = append(names, string(operator))
-	}
-
-	return names
-}
+var (
+	alertOperators = agenttoolschema.Source(
+		"tableChangeAlert.conditionOperator",
+		[]tablechangealert.ConditionOperator{
+			tablechangealert.OpEq, tablechangealert.OpNeq,
+			tablechangealert.OpGt, tablechangealert.OpGte,
+			tablechangealert.OpLt, tablechangealert.OpLte,
+			tablechangealert.OpIsNull, tablechangealert.OpIsNotNull,
+			tablechangealert.OpContains, tablechangealert.OpNotContains,
+			tablechangealert.OpChangedTo, tablechangealert.OpChangedFrom,
+			tablechangealert.OpChanged,
+		},
+	)
+	alertEventTypes = agenttoolschema.Source(
+		"tableChangeAlert.eventType",
+		[]tablechangealert.EventType{
+			tablechangealert.EventTypeInsert,
+			tablechangealert.EventTypeUpdate,
+			tablechangealert.EventTypeDelete,
+		},
+	)
+	alertConditionMatches = agenttoolschema.Source(
+		"tableChangeAlert.conditionMatch",
+		[]string{"all", "any"},
+	)
+)
 
 func (t *createTableChangeAlertTool) Policy() serviceports.ToolPolicy {
 	return serviceports.ToolPolicy{

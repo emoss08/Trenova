@@ -1,0 +1,169 @@
+package shipmentservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+func (s *service) PreviewUncancel(
+	ctx context.Context,
+	req *repositories.UncancelShipmentRequest,
+) (*services.ShipmentChangePreview, error) {
+	original, err := s.planUncancel(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	after := *original
+	after.ApplyUncancel()
+
+	return &services.ShipmentChangePreview{Before: original, After: &after}, nil
+}
+
+func (s *service) planUncancel(
+	ctx context.Context,
+	req *repositories.UncancelShipmentRequest,
+) (*shipment.Shipment, error) {
+	if req == nil {
+		multiErr := errortypes.NewMultiError()
+		multiErr.Add("request", errortypes.ErrRequired, "Uncancel request is required")
+		return nil, multiErr
+	}
+
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID: req.ShipmentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: req.TenantInfo.OrgID,
+			BuID:  req.TenantInfo.BuID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !original.IsCanceled() {
+		return nil, errortypes.NewBusinessError("shipment is not canceled")
+	}
+
+	return original, nil
+}
+
+func (s *service) PreviewTransferOwnership(
+	ctx context.Context,
+	req *repositories.TransferOwnershipRequest,
+	actor *services.RequestActor,
+) (*services.ShipmentChangePreview, error) {
+	original, err := s.planTransferOwnership(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	after := *original
+	after.OwnerID = req.OwnerID
+
+	return &services.ShipmentChangePreview{Before: original, After: &after}, nil
+}
+
+func (s *service) planTransferOwnership(
+	ctx context.Context,
+	req *repositories.TransferOwnershipRequest,
+	actor *services.RequestActor,
+) (*shipment.Shipment, error) {
+	if req == nil {
+		multiErr := errortypes.NewMultiError()
+		multiErr.Add("request", errortypes.ErrRequired, "Transfer ownership request is required")
+		return nil, multiErr
+	}
+
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	auditActor := actor.AuditActor()
+	if auditActor.PrincipalType == services.PrincipalTypeAPIKey || auditActor.UserID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrInvalidOperation,
+			"Shipment ownership transfer requires a user actor",
+		)
+	}
+
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID: req.ShipmentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: req.TenantInfo.OrgID,
+			BuID:  req.TenantInfo.BuID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if original.OwnerID == req.OwnerID {
+		return nil, errortypes.NewValidationError(
+			"ownerId",
+			errortypes.ErrInvalid,
+			"Shipment already belongs to this owner",
+		)
+	}
+
+	if err = s.validateTransferActor(ctx, auditActor, original, req.TenantInfo.OrgID); err != nil {
+		return nil, err
+	}
+
+	if err = s.validateTransferTarget(ctx, req); err != nil {
+		return nil, err
+	}
+
+	return original, nil
+}
+
+func (s *service) PreviewRecalculateDistance(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*services.ShipmentDistancePreview, error) {
+	if s.distanceCalculation == nil {
+		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
+	}
+
+	return s.distanceCalculation.PreviewRecalculateShipment(ctx, shipmentID, tenantInfo)
+}
+
+func (s *service) PreviewDuplicate(
+	ctx context.Context,
+	req *repositories.BulkDuplicateShipmentRequest,
+) (*services.ShipmentDuplicatePreview, error) {
+	if err := s.guardDuplicate(req); err != nil {
+		return nil, err
+	}
+
+	plan, err := s.repo.PlanDuplicate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.ShipmentDuplicatePreview{Source: plan.Source, Copies: plan.Copies}, nil
+}
+
+func (s *service) guardDuplicate(req *repositories.BulkDuplicateShipmentRequest) error {
+	if multiErr := req.Validate(); multiErr != nil {
+		return multiErr
+	}
+
+	if !s.workflowStarter.Enabled() {
+		return errortypes.NewBusinessError("shipment duplication is not configured")
+	}
+
+	return nil
+}

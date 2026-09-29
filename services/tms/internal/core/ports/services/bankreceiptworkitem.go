@@ -25,6 +25,11 @@ type DismissBankReceiptWorkItemRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type BankReceiptWorkItemChange struct {
+	Before *bankreceiptworkitem.WorkItem
+	After  *bankreceiptworkitem.WorkItem
+}
+
 type GetBankReceiptWorkItemRequest struct {
 	WorkItemID pulid.ID              `json:"workItemId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`

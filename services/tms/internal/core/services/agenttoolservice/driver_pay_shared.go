@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -106,14 +107,6 @@ func dateProperty(description string) map[string]any {
 	}
 }
 
-func enumProperty[T ~string](description string, values []T) map[string]any {
-	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyEnum:        enumNames(values),
-		toolschema.KeyDescription: description,
-	}
-}
-
 func errUnknownValue(key, raw string, names []string) error {
 	return fmt.Errorf("%s %q is not one of %s", key, raw, strings.Join(names, ", "))
 }
@@ -134,29 +127,38 @@ var driverPayDateTypes = map[string]assistantartifact.DisplayType{
 }
 
 var (
-	advanceSources = []driverpay.AdvanceSource{
+	advanceSources = agenttoolschema.Source("driverPay.advanceSource", []driverpay.AdvanceSource{
 		driverpay.AdvanceSourceCash,
 		driverpay.AdvanceSourceEFSMoneyCode,
 		driverpay.AdvanceSourceComdataCode,
 		driverpay.AdvanceSourceFuelCard,
 		driverpay.AdvanceSourceOther,
-	}
-	deductionFrequencies = []driverpay.DeductionFrequency{
-		driverpay.DeductionFrequencyEverySettlement,
-		driverpay.DeductionFrequencyMonthly,
-	}
-	deductionStatuses = []driverpay.DeductionStatus{
-		driverpay.DeductionStatusActive,
-		driverpay.DeductionStatusPaused,
-		driverpay.DeductionStatusCompleted,
-	}
-	earningFrequencies = []driverpay.EarningFrequency{
-		driverpay.EarningFrequencyEverySettlement,
-		driverpay.EarningFrequencyMonthly,
-	}
-	earningStatuses = []driverpay.EarningStatus{
+	})
+	deductionFrequencies = agenttoolschema.Source(
+		"driverPay.deductionFrequency",
+		[]driverpay.DeductionFrequency{
+			driverpay.DeductionFrequencyEverySettlement,
+			driverpay.DeductionFrequencyMonthly,
+		},
+	)
+	deductionStatuses = agenttoolschema.Source(
+		"driverPay.deductionStatus",
+		[]driverpay.DeductionStatus{
+			driverpay.DeductionStatusActive,
+			driverpay.DeductionStatusPaused,
+			driverpay.DeductionStatusCompleted,
+		},
+	)
+	earningFrequencies = agenttoolschema.Source(
+		"driverPay.earningFrequency",
+		[]driverpay.EarningFrequency{
+			driverpay.EarningFrequencyEverySettlement,
+			driverpay.EarningFrequencyMonthly,
+		},
+	)
+	earningStatuses = agenttoolschema.Source("driverPay.earningStatus", []driverpay.EarningStatus{
 		driverpay.EarningStatusActive,
 		driverpay.EarningStatusPaused,
 		driverpay.EarningStatusCompleted,
-	}
+	})
 )

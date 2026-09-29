@@ -2,7 +2,6 @@ package shipmentholdservice
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -148,49 +147,12 @@ func (s *service) Update(
 	req *repositories.UpdateShipmentHoldRequest,
 	actor *services.RequestActor,
 ) (*shipment.ShipmentHold, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Shipment hold request is required",
-		)
-	}
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
-	}
-
-	if _, err := requireHoldUser(actor); err != nil {
-		return nil, err
-	}
-
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
-		HoldID:     req.HoldID,
-		ShipmentID: req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-	})
+	original, updated, err := s.planUpdate(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	if !original.IsActive() {
-		return nil, errortypes.NewBusinessError("Only active shipment holds can be updated").
-			WithParam("holdId", req.HoldID.String())
-	}
 
-	updated := *original
-	updated.StartedAt = req.StartedAt
-	updated.Severity = req.Severity
-	updated.Notes = strings.TrimSpace(req.Notes)
-	updated.BlocksDispatch = req.BlocksDispatch
-	updated.BlocksDelivery = req.BlocksDelivery
-	updated.BlocksBilling = req.BlocksBilling
-	updated.VisibleToCustomer = req.VisibleToCustomer
-	updated.Version = req.Version
-
-	if multiErr := validateHold(&updated); multiErr != nil {
-		return nil, multiErr
-	}
-
-	saved, err := s.repo.Update(ctx, &updated)
+	saved, err := s.repo.Update(ctx, updated)
 	if err != nil {
 		return nil, err
 	}

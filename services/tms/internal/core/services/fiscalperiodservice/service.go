@@ -270,16 +270,13 @@ type transition struct {
 	operation permission.Operation
 	comment   string
 	validate  func(ctx context.Context, state transitionState) error
+	project   func(period *fiscalperiod.FiscalPeriod, userID pulid.ID, at int64)
 	apply     func(ctx context.Context, state transitionState) (*fiscalperiod.FiscalPeriod, error)
 }
 
-func (s *Service) Close(
-	ctx context.Context,
-	req repositories.CloseFiscalPeriodRequest, //nolint:gocritic // stable API shape
-	userID pulid.ID,
-) (*fiscalperiod.FiscalPeriod, error) {
-	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
-		name:      "Close",
+func (s *Service) closeTransition() transition {
+	return transition{
+		name:      string(TransitionClose),
 		operation: permission.OpClose,
 		comment:   "Fiscal period closed",
 		validate: func(ctx context.Context, state transitionState) error {
@@ -297,46 +294,42 @@ func (s *Service) Close(
 
 			return nil
 		},
-		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
-			req.ClosedByID = userID
-			req.ClosedAt = timeutils.NowUnix()
-			return s.repo.Close(ctx, req)
+		project: func(period *fiscalperiod.FiscalPeriod, userID pulid.ID, at int64) {
+			period.Status = fiscalperiod.StatusClosed
+			period.ClosedAt = &at
+			period.ClosedByID = userID
 		},
-	})
+	}
 }
 
-func (s *Service) Reopen(
-	ctx context.Context,
-	req repositories.ReopenFiscalPeriodRequest, //nolint:gocritic // stable API shape
-	userID pulid.ID,
-) (*fiscalperiod.FiscalPeriod, error) {
-	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
-		name:      "Reopen",
+func reopenTransition(reason string) transition {
+	return transition{
+		name:      string(TransitionReopen),
 		operation: permission.OpReopen,
 		comment:   "Fiscal period reopened",
 		validate: func(_ context.Context, state transitionState) error {
-			if multiErr := validateReopen(state, req.ReopenReason); multiErr != nil {
+			if multiErr := validateReopen(state, reason); multiErr != nil {
 				return multiErr
 			}
 
 			return nil
 		},
-		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
-			req.ReopenReason = strings.TrimSpace(req.ReopenReason)
-			req.ReopenedByID = userID
-			req.ReopenedAt = timeutils.NowUnix()
-			return s.repo.Reopen(ctx, req)
+		project: func(period *fiscalperiod.FiscalPeriod, userID pulid.ID, at int64) {
+			period.Status = fiscalperiod.StatusOpen
+			period.ClosedAt = nil
+			period.ClosedByID = pulid.Nil
+			period.LockedAt = nil
+			period.LockedByID = pulid.Nil
+			period.ReopenedAt = &at
+			period.ReopenedByID = userID
+			period.ReopenReason = strings.TrimSpace(reason)
 		},
-	})
+	}
 }
 
-func (s *Service) Lock(
-	ctx context.Context,
-	req repositories.LockFiscalPeriodRequest,
-	userID pulid.ID,
-) (*fiscalperiod.FiscalPeriod, error) {
-	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
-		name:      "Lock",
+func lockTransition() transition {
+	return transition{
+		name:      string(TransitionLock),
 		operation: permission.OpLock,
 		comment:   "Fiscal period locked",
 		validate: func(_ context.Context, state transitionState) error {
@@ -346,21 +339,17 @@ func (s *Service) Lock(
 
 			return nil
 		},
-		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
-			req.LockedByID = userID
-			req.LockedAt = timeutils.NowUnix()
-			return s.repo.Lock(ctx, req)
+		project: func(period *fiscalperiod.FiscalPeriod, userID pulid.ID, at int64) {
+			period.Status = fiscalperiod.StatusLocked
+			period.LockedAt = &at
+			period.LockedByID = userID
 		},
-	})
+	}
 }
 
-func (s *Service) Unlock(
-	ctx context.Context,
-	req repositories.UnlockFiscalPeriodRequest,
-	userID pulid.ID,
-) (*fiscalperiod.FiscalPeriod, error) {
-	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
-		name:      "Unlock",
+func unlockTransition() transition {
+	return transition{
+		name:      string(TransitionUnlock),
 		operation: permission.OpUnlock,
 		comment:   "Fiscal period unlocked",
 		validate: func(_ context.Context, state transitionState) error {
@@ -370,19 +359,17 @@ func (s *Service) Unlock(
 
 			return nil
 		},
-		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
-			return s.repo.Unlock(ctx, req)
+		project: func(period *fiscalperiod.FiscalPeriod, _ pulid.ID, _ int64) {
+			period.Status = fiscalperiod.StatusOpen
+			period.LockedAt = nil
+			period.LockedByID = pulid.Nil
 		},
-	})
+	}
 }
 
-func (s *Service) Activate(
-	ctx context.Context,
-	req repositories.ActivateFiscalPeriodRequest,
-	userID pulid.ID,
-) (*fiscalperiod.FiscalPeriod, error) {
-	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, transition{
-		name:      "Activate",
+func activateTransition() transition {
+	return transition{
+		name:      string(TransitionActivate),
 		operation: permission.OpActivate,
 		comment:   "Fiscal period opened",
 		validate: func(_ context.Context, state transitionState) error {
@@ -392,10 +379,82 @@ func (s *Service) Activate(
 
 			return nil
 		},
-		apply: func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
-			return s.repo.Activate(ctx, req)
+		project: func(period *fiscalperiod.FiscalPeriod, _ pulid.ID, _ int64) {
+			period.Status = fiscalperiod.StatusOpen
 		},
-	})
+	}
+}
+
+func (s *Service) Close(
+	ctx context.Context,
+	req repositories.CloseFiscalPeriodRequest, //nolint:gocritic // stable API shape
+	userID pulid.ID,
+) (*fiscalperiod.FiscalPeriod, error) {
+	t := s.closeTransition()
+	t.apply = func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
+		req.ClosedByID = userID
+		req.ClosedAt = timeutils.NowUnix()
+		return s.repo.Close(ctx, req)
+	}
+
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, t)
+}
+
+func (s *Service) Reopen(
+	ctx context.Context,
+	req repositories.ReopenFiscalPeriodRequest, //nolint:gocritic // stable API shape
+	userID pulid.ID,
+) (*fiscalperiod.FiscalPeriod, error) {
+	t := reopenTransition(req.ReopenReason)
+	t.apply = func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
+		req.ReopenReason = strings.TrimSpace(req.ReopenReason)
+		req.ReopenedByID = userID
+		req.ReopenedAt = timeutils.NowUnix()
+		return s.repo.Reopen(ctx, req)
+	}
+
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, t)
+}
+
+func (s *Service) Lock(
+	ctx context.Context,
+	req *repositories.LockFiscalPeriodRequest,
+	userID pulid.ID,
+) (*fiscalperiod.FiscalPeriod, error) {
+	t := lockTransition()
+	t.apply = func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
+		req.LockedByID = userID
+		req.LockedAt = timeutils.NowUnix()
+		return s.repo.Lock(ctx, *req)
+	}
+
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, t)
+}
+
+func (s *Service) Unlock(
+	ctx context.Context,
+	req repositories.UnlockFiscalPeriodRequest,
+	userID pulid.ID,
+) (*fiscalperiod.FiscalPeriod, error) {
+	t := unlockTransition()
+	t.apply = func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
+		return s.repo.Unlock(ctx, req)
+	}
+
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, t)
+}
+
+func (s *Service) Activate(
+	ctx context.Context,
+	req repositories.ActivateFiscalPeriodRequest,
+	userID pulid.ID,
+) (*fiscalperiod.FiscalPeriod, error) {
+	t := activateTransition()
+	t.apply = func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
+		return s.repo.Activate(ctx, req)
+	}
+
+	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, t)
 }
 
 func (s *Service) runTransition(

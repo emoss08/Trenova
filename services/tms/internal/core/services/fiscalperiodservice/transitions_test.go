@@ -188,7 +188,7 @@ func TestLockRecordsWhoLockedAndWhen(t *testing.T) {
 		Return(&locked, nil).
 		Once()
 
-	result, err := f.svc.Lock(t.Context(), repositories.LockFiscalPeriodRequest{
+	result, err := f.svc.Lock(t.Context(), &repositories.LockFiscalPeriodRequest{
 		ID:         target.ID,
 		TenantInfo: f.tenant,
 	}, f.userID)
@@ -204,7 +204,7 @@ func TestLockRejectsClosedPeriod(t *testing.T) {
 	target := f.period(1, fiscalperiod.StatusClosed)
 	f.expectState(target)
 
-	_, err := f.svc.Lock(t.Context(), repositories.LockFiscalPeriodRequest{
+	_, err := f.svc.Lock(t.Context(), &repositories.LockFiscalPeriodRequest{
 		ID:         target.ID,
 		TenantInfo: f.tenant,
 	}, f.userID)

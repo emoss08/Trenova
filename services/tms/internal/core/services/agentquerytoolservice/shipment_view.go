@@ -22,9 +22,28 @@ type shipmentCommentRow struct {
 	CreatedAt      int64  `json:"createdAt"`
 }
 
+// shipmentHoldRow is a hold in force on the shipment. Notes a person or a
+// hold rule wrote are shown; a hold an integration raised shows what it
+// blocks and not its text, which came from outside the organization.
+type shipmentHoldRow struct {
+	HoldID            string `json:"holdId"`
+	Type              string `json:"type"`
+	Severity          string `json:"severity"`
+	Reason            string `json:"reason,omitempty"`
+	ReasonCode        string `json:"reasonCode,omitempty"`
+	Source            string `json:"source"`
+	Notes             string `json:"notes,omitempty"`
+	BlocksDispatch    bool   `json:"blocksDispatch"`
+	BlocksDelivery    bool   `json:"blocksDelivery"`
+	BlocksBilling     bool   `json:"blocksBilling"`
+	VisibleToCustomer bool   `json:"visibleToCustomer"`
+	StartedAt         int64  `json:"startedAt"`
+}
+
 type shipmentView struct {
 	*shipment.Shipment
 
+	ActiveHolds    []shipmentHoldRow    `json:"activeHolds"`
 	RecentComments []shipmentCommentRow `json:"recentComments,omitempty"`
 	CommentsNote   string               `json:"commentsNote,omitempty"`
 
@@ -34,11 +53,18 @@ type shipmentView struct {
 func newShipmentView(
 	entity *shipment.Shipment,
 	comments []*shipment.ShipmentComment,
+	holds []*shipment.ShipmentHold,
 ) *shipmentView {
 	entity.Comments = nil
 	view := &shipmentView{
 		Shipment:       entity,
+		ActiveHolds:    make([]shipmentHoldRow, 0, len(holds)),
 		RecentComments: make([]shipmentCommentRow, 0, len(comments)),
+	}
+	for _, hold := range holds {
+		if hold != nil {
+			view.ActiveHolds = append(view.ActiveHolds, holdRowOf(hold))
+		}
 	}
 	for _, comment := range comments {
 		if comment == nil || comment.IsDeleted() {
@@ -77,4 +103,27 @@ func commentAuthor(comment *shipment.ShipmentComment) string {
 	}
 
 	return strings.TrimSpace(comment.User.Name)
+}
+
+func holdRowOf(hold *shipment.ShipmentHold) shipmentHoldRow {
+	row := shipmentHoldRow{
+		HoldID:            hold.ID.String(),
+		Type:              string(hold.Type),
+		Severity:          string(hold.Severity),
+		ReasonCode:        hold.ReasonCode,
+		Source:            string(hold.Source),
+		BlocksDispatch:    hold.BlocksDispatch,
+		BlocksDelivery:    hold.BlocksDelivery,
+		BlocksBilling:     hold.BlocksBilling,
+		VisibleToCustomer: hold.VisibleToCustomer,
+		StartedAt:         hold.StartedAt,
+	}
+	if hold.HoldReason != nil {
+		row.Reason = strings.TrimSpace(hold.HoldReason.Label)
+	}
+	if hold.Source == shipment.HoldSourceUser || hold.Source == shipment.HoldSourceRule {
+		row.Notes = strings.TrimSpace(hold.Notes)
+	}
+
+	return row
 }

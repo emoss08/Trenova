@@ -374,6 +374,33 @@ func (s *service) SplitMove(
 	return response, nil
 }
 
+func (s *service) PreviewSplitMove(
+	ctx context.Context,
+	req *repositories.SplitMoveRequest,
+) (*portservices.MoveSplitPlan, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	move, err := s.repo.GetByID(ctx, &repositories.GetMoveByIDRequest{
+		MoveID:            req.MoveID,
+		TenantInfo:        req.TenantInfo,
+		ExpandMoveDetails: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = validateSplitRequest(req, move); err != nil {
+		return nil, err
+	}
+
+	return &portservices.MoveSplitPlan{
+		Move:  move,
+		Split: shipment.PlanMoveSplit(move, req.Spec()),
+	}, nil
+}
+
 func validateSplitRequest(req *repositories.SplitMoveRequest, move *shipment.ShipmentMove) error {
 	if len(move.Stops) != 2 {
 		return errortypes.NewBusinessError("Only simple two-stop moves can be split").

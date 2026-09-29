@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -51,19 +52,14 @@ func (t *rememberTool) ParamSchema() map[string]any {
 					"characters, written so a reader with no other context understands them.",
 					agent.MaxMemoryContentChars),
 			},
-			"kind": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				"enum": []string{
-					string(agent.MemoryKindInstruction),
-					string(agent.MemoryKindFact),
-				},
-				toolschema.KeyDescription: "Instruction for a rule a person gave; Fact for something learned. Defaults to Fact.",
-			},
-			"subjectType": map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				"enum":                    memorySubjectTypeNames(),
-				toolschema.KeyDescription: "The kind of record the memory is about, with subjectId. Omit for organization-wide.",
-			},
+			fieldKind: agenttoolschema.Enum(
+				"Instruction for a rule a person gave; Fact for something learned. Defaults to Fact.",
+				rememberedMemoryKinds,
+			),
+			fieldSubjectType: agenttoolschema.Enum(
+				"The kind of record the memory is about, with subjectId. Omit for organization-wide.",
+				memorySubjectTypes,
+			),
 			"subjectId": map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "The record the memory is about: this run's subject, the page, or " +
@@ -253,15 +249,16 @@ func (t *forgetMemoryTool) request(
 	}, nil
 }
 
-func memorySubjectTypeNames() []string {
-	types := agent.AllMemorySubjectTypes()
-	names := make([]string, 0, len(types))
-	for _, subjectType := range types {
-		names = append(names, string(subjectType))
-	}
-
-	return names
-}
+var (
+	memorySubjectTypes = agenttoolschema.Source(
+		"agent.memorySubjectType",
+		agent.AllMemorySubjectTypes(),
+	)
+	rememberedMemoryKinds = agenttoolschema.Source(
+		"agent.rememberedMemoryKind",
+		[]agent.MemoryKind{agent.MemoryKindInstruction, agent.MemoryKindFact},
+	)
+)
 
 // memorySubject reads the optional subject pair, refusing half of one: a
 // type without an id names nothing, and an id without a type cannot be
@@ -280,7 +277,7 @@ func memorySubject(params map[string]any) (agent.MemorySubjectType, pulid.ID, er
 	}
 	if !subjectType.IsValid() {
 		return "", pulid.Nil, fmt.Errorf("subjectType %q is not one of %s",
-			subjectType, strings.Join(memorySubjectTypeNames(), ", "))
+			subjectType, strings.Join(memorySubjectTypes.Names(), ", "))
 	}
 
 	subjectID, err := pulid.Parse(rawID)

@@ -87,18 +87,8 @@ func (s *Service) Create(
 		zap.String("userID", userID.String()),
 	)
 
-	if entity.Status == "" {
-		entity.Status = recurringshipment.StatusActive
-	}
-
-	if entity.ExceptionPolicy == "" {
-		entity.ExceptionPolicy = recurringshipment.ExceptionPolicySkip
-	}
-
-	entity.EnteredByID = userID
-
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
-		return nil, multiErr
+	if err := s.planCreate(ctx, entity, userID); err != nil {
+		return nil, err
 	}
 
 	createdEntity, err := s.repo.Create(ctx, entity)
@@ -136,19 +126,9 @@ func (s *Service) Update(
 		zap.String("userID", userID.String()),
 	)
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	original, err := s.repo.GetByID(ctx, &repositories.GetRecurringShipmentByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
-		},
-	})
+	original, err := s.planUpdate(ctx, entity)
 	if err != nil {
-		log.Error("failed to get original recurring shipment", zap.Error(err))
+		log.Error("failed to plan recurring shipment update", zap.Error(err))
 		return nil, err
 	}
 

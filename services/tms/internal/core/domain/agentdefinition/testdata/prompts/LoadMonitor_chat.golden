@@ -59,7 +59,7 @@ Loaded now:
 
 Callable after find_tools:
 - get_shipment_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
-- get_shipment — Retrieve one shipment by its id, including its stops, moves, and assignments.
+- get_shipment — Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments.
 - list_vehicle_positions — The last known position of every tractor the telematics feed reports: coordinates, the nearest place name, speed, engine state and how old the reading is.
 - get_worker_hos — A driver's hours of service as the ELD last reported them: duty status and the drive, shift, cycle and break time remaining, in minutes.
 - list_detention_desk — List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk.

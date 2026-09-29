@@ -645,6 +645,38 @@ func TestSetDefaults(t *testing.T) {
 		assert.Equal(t, "5s", l.viper.GetString("monitoring.health.timeout"))
 	})
 
+	t.Run("metrics defaults", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader(WithEnvironment("production"))
+		_ = l.determineEnvironment()
+		l.configureViper()
+
+		assert.Equal(t, "127.0.0.1", l.viper.GetString("monitoring.metrics.host"))
+		assert.Equal(t, 9090, l.viper.GetInt("monitoring.metrics.port"))
+		assert.Equal(t, "/internal/metricsz", l.viper.GetString("monitoring.metrics.path"))
+	})
+
+	t.Run("development temporal host port default", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader(WithEnvironment("development"))
+		_ = l.determineEnvironment()
+		l.configureViper()
+
+		assert.Equal(t, "localhost:7233", l.viper.GetString("temporal.hostPort"))
+	})
+
+	t.Run("production has no temporal host port default", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader(WithEnvironment("production"))
+		_ = l.determineEnvironment()
+		l.configureViper()
+
+		assert.Empty(t, l.viper.GetString("temporal.hostPort"))
+	})
+
 	t.Run("cache defaults", func(t *testing.T) {
 		t.Parallel()
 

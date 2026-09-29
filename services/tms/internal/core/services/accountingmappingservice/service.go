@@ -360,6 +360,42 @@ func (s *Service) Confirm(
 	if len(req.Items) == 0 {
 		return []*accountingsync.AccountingMapping{}, nil
 	}
+	plan, err := s.PlanConfirm(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		for _, change := range plan.Changes {
+			if _, updateErr := s.mappings.Update(txCtx, change.After); updateErr != nil {
+				return updateErr
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	connectionIDs := make([]pulid.ID, 0, 1)
+	for _, change := range plan.Changes {
+		s.logAudit(
+			change.After,
+			req.UserID,
+			jsonutils.MustToJSON(change.Before),
+			"Confirmed mapping for "+change.After.TargetLabel,
+		)
+		connectionIDs = append(connectionIDs, change.After.ConnectionID)
+	}
+	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, plan.Confirmed)
+	s.requeueMappingBlocked(ctx, req.TenantInfo, connectionIDs...)
+	return plan.Confirmed, nil
+}
+
+func (s *Service) PlanConfirm(
+	ctx context.Context,
+	req *services.ConfirmAccountingMappingsRequest,
+) (*services.AccountingMappingConfirmPlan, error) {
 	if len(req.Items) > maxConfirmBatch {
 		return nil, errortypes.NewValidationError(
 			"ids",
@@ -397,11 +433,13 @@ func (s *Service) Confirm(
 	}
 
 	now := timeutils.NowUnix()
-	confirmed := make([]*accountingsync.AccountingMapping, 0, len(rows))
-	previous := make(map[pulid.ID]map[string]any, len(rows))
+	plan := &services.AccountingMappingConfirmPlan{
+		Changes:   make([]*services.AccountingMappingChange, 0, len(rows)),
+		Confirmed: make([]*accountingsync.AccountingMapping, 0, len(rows)),
+	}
 	for _, row := range rows {
 		if row.State == accountingsync.MappingStateConfirmed {
-			confirmed = append(confirmed, row)
+			plan.Confirmed = append(plan.Confirmed, row)
 			continue
 		}
 		if row.State != accountingsync.MappingStateProposed {
@@ -413,7 +451,7 @@ func (s *Service) Confirm(
 		if _, err = s.usableReference(ctx, req.TenantInfo, row, row.ExternalID); err != nil {
 			return nil, err
 		}
-		previous[row.ID] = jsonutils.MustToJSON(row)
+		before := row.Clone()
 		source := row.Source
 		if req.Source == accountingsync.MappingSourceAgent {
 			source = accountingsync.MappingSourceAgent
@@ -425,54 +463,51 @@ func (s *Service) Confirm(
 			ActorID:      req.UserID,
 			At:           now,
 		})
-		confirmed = append(confirmed, row)
+		plan.Changes = append(plan.Changes, &services.AccountingMappingChange{
+			Before: before,
+			After:  row,
+		})
+		plan.Confirmed = append(plan.Confirmed, row)
 	}
 
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		for _, row := range confirmed {
-			if _, ok := previous[row.ID]; !ok {
-				continue
-			}
-			if _, updateErr := s.mappings.Update(txCtx, row); updateErr != nil {
-				return updateErr
-			}
-		}
-		return nil
-	})
+	return plan, nil
+}
+
+func (s *Service) PlanReject(
+	ctx context.Context,
+	req *services.AccountingMappingActionRequest,
+) (*services.AccountingMappingChange, error) {
+	row, err := s.GetMapping(ctx, req.TenantInfo, req.ID)
 	if err != nil {
 		return nil, err
 	}
-
-	connectionIDs := make([]pulid.ID, 0, 1)
-	for _, row := range confirmed {
-		if before, ok := previous[row.ID]; ok {
-			s.logAudit(row, req.UserID, before, "Confirmed mapping for "+row.TargetLabel)
-			connectionIDs = append(connectionIDs, row.ConnectionID)
-		}
+	before := row.Clone()
+	if err = row.Reject(); err != nil {
+		return nil, errortypes.NewBusinessError("Only a proposed mapping can be rejected").
+			WithInternal(err)
 	}
-	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, confirmed)
-	s.requeueMappingBlocked(ctx, req.TenantInfo, connectionIDs...)
-	return confirmed, nil
+
+	return &services.AccountingMappingChange{Before: before, After: row}, nil
 }
 
 func (s *Service) Reject(
 	ctx context.Context,
 	req *services.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error) {
-	row, err := s.GetMapping(ctx, req.TenantInfo, req.ID)
+	change, err := s.PlanReject(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	before := jsonutils.MustToJSON(row)
-	if err = row.Reject(); err != nil {
-		return nil, errortypes.NewBusinessError("Only a proposed mapping can be rejected").
-			WithInternal(err)
-	}
-	updated, err := s.mappings.Update(ctx, row)
+	updated, err := s.mappings.Update(ctx, change.After)
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(updated, req.UserID, before, "Rejected the proposed match for "+updated.TargetLabel)
+	s.logAudit(
+		updated,
+		req.UserID,
+		jsonutils.MustToJSON(change.Before),
+		"Rejected the proposed match for "+updated.TargetLabel,
+	)
 	s.publishInvalidation(
 		ctx,
 		req.TenantInfo,

@@ -115,6 +115,14 @@ func (c Channel) IsValid() bool {
 	return false
 }
 
+func ChannelValues() []Channel {
+	return []Channel{ChannelEmail, ChannelEDI}
+}
+
+func SpotModeValues() []Mode {
+	return []Mode{ModeSpotBroadcast, ModeSpotSequential}
+}
+
 type ResponseAction string
 
 const (

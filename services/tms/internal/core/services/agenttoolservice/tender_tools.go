@@ -3,12 +3,14 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -174,14 +176,10 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 				"description": "The move to tender, from get_dispatch_board (moveId) or " +
 					"get_shipment (its moves).",
 			},
-			"mode": map[string]any{
-				"type": "string",
-				"enum": []string{
-					string(tender.ModeSpotBroadcast),
-					string(tender.ModeSpotSequential),
-				},
-				"description": "Broadcast asks every carrier at once; Sequential asks them in order.",
-			},
+			"mode": agenttoolschema.Enum(
+				"Broadcast asks every carrier at once; Sequential asks them in order.",
+				agenttoolschema.SpotTenderModes,
+			),
 			"lines": map[string]any{
 				"type":        "array",
 				"description": "One line per carrier, in the order they should be asked.",
@@ -196,18 +194,18 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 							"type":        "string",
 							"description": "The offered rate as a decimal string.",
 						},
-						"rateMethod": map[string]any{
-							"type": "string",
-							"enum": []string{"Flat", "PerMile"},
-						},
+						"rateMethod": agenttoolschema.Enum(
+							"How the rate is measured. Defaults to Flat.",
+							agenttoolschema.CarrierRateMethods,
+						),
 						"offerTtlSeconds": map[string]any{
 							"type":        "integer",
 							"description": "How long the carrier has to accept. Defaults to the organization's setting.",
 						},
-						"channel": map[string]any{
-							"type": "string",
-							"enum": []string{"Email", "EDI"},
-						},
+						"channel": agenttoolschema.Enum(
+							"How the offer is sent.",
+							agenttoolschema.TenderChannels,
+						),
 						"email": map[string]any{
 							"type":        "string",
 							"description": "Where to send an email offer, when not the carrier's own address.",
@@ -279,7 +277,7 @@ func (t *tenderToCarriersTool) request(
 	if err != nil {
 		return nil, err
 	}
-	mode, err := requireString(params.Params, "mode")
+	mode, err := requireEnum(params.Params, "mode", agenttoolschema.SpotTenderModes.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +306,7 @@ func (t *tenderToCarriersTool) request(
 	return &tenderservice.CreateSpotTenderRequest{
 		TenantInfo:                tenantFrom(*params),
 		ShipmentMoveID:            moveID,
-		Mode:                      tender.Mode(mode),
+		Mode:                      mode,
 		Lines:                     lines,
 		OverrideInsuranceWarnings: optionalBool(params.Params, "overrideInsuranceWarnings"),
 	}, nil
@@ -330,14 +328,46 @@ func spotTenderLineOf(idx int, line tenderLineParam) (tenderservice.SpotTenderLi
 		)
 	}
 
+	rateMethod, err := lineEnum(
+		idx,
+		"rateMethod",
+		line.RateMethod,
+		agenttoolschema.CarrierRateMethods,
+	)
+	if err != nil {
+		return tenderservice.SpotTenderLine{}, err
+	}
+	channel, err := lineEnum(idx, "channel", line.Channel, agenttoolschema.TenderChannels)
+	if err != nil {
+		return tenderservice.SpotTenderLine{}, err
+	}
+
 	return tenderservice.SpotTenderLine{
 		CarrierID:       carrierID,
-		RateMethod:      shipment.CarrierRateMethod(line.RateMethod),
+		RateMethod:      rateMethod,
 		Rate:            rate,
 		OfferTTLSeconds: line.OfferTTLSeconds,
-		Channel:         tender.Channel(line.Channel),
+		Channel:         channel,
 		Email:           line.Email,
 	}, nil
+}
+
+// lineEnum reads one line's enum value, refusing anything outside the
+// source and leaving an absent value to the service's default.
+func lineEnum[T ~string](
+	idx int,
+	key, raw string,
+	source agenttoolschema.EnumSource[T],
+) (T, error) {
+	if strings.TrimSpace(raw) == "" {
+		return "", nil
+	}
+	value := T(strings.TrimSpace(raw))
+	if !slices.Contains(source.Values, value) {
+		return "", errUnknownValue(fmt.Sprintf("lines[%d].%s", idx, key), raw, source.Names())
+	}
+
+	return value, nil
 }
 
 func (t *tenderToCarriersTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {

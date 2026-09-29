@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -74,8 +75,8 @@ type recurringKind[E any] struct {
 	idParam     string
 	payee       string
 	direction   string
-	statuses    []string
-	frequencies []string
+	statuses    agenttoolschema.EnumSource[string]
+	frequencies agenttoolschema.EnumSource[string]
 	escrow      bool
 	create      func(tenant pagination.TenantInfo, fields *recurringFields) *E
 	apply       func(entity *E, fields *recurringFields, given map[string]bool)
@@ -128,11 +129,7 @@ func (t *recurringPayTool[E]) ParamSchema() map[string]any {
 			"driver's statement.", maxRecurringDescription),
 		paramDriverPayAmount: amountProperty("The amount each time, as a decimal such as " +
 			"25.00."),
-		paramRecurringFrequency: map[string]any{
-			toolschema.KeyType:        toolschema.TypeString,
-			toolschema.KeyEnum:        t.kind.frequencies,
-			toolschema.KeyDescription: "How often it applies.",
-		},
+		paramRecurringFrequency: agenttoolschema.Enum("How often it applies.", t.kind.frequencies),
 		paramRecurringCap: amountProperty("The total after which it stops, when there is " +
 			"one."),
 		paramRecurringStart: dateProperty("The first day it applies."),
@@ -141,11 +138,9 @@ func (t *recurringPayTool[E]) ParamSchema() map[string]any {
 	if t.update {
 		properties[t.kind.idParam] = idProperty("The " + t.kind.noun + ", from " +
 			t.kind.listTool + ". Never guess one.")
-		properties[paramRecurringStatus] = map[string]any{
-			toolschema.KeyType:        toolschema.TypeString,
-			toolschema.KeyEnum:        t.kind.statuses,
-			toolschema.KeyDescription: "Paused stops it for now; Completed ends it for good.",
-		}
+		properties[paramRecurringStatus] = agenttoolschema.Enum(
+			"Paused stops it for now; Completed ends it for good.", t.kind.statuses,
+		)
 
 		return objectParams(properties, t.kind.idParam)
 	}
@@ -283,7 +278,10 @@ func (t *recurringPayTool[E]) planned(
 	if err := guardPreview(t, params); err != nil {
 		return nil, err
 	}
-	text := recurringKindText{frequencies: t.kind.frequencies, statuses: t.kind.statuses}
+	text := recurringKindText{
+		frequencies: t.kind.frequencies.Values,
+		statuses:    t.kind.statuses.Values,
+	}
 	tenant := tenantFrom(*params)
 	if !t.update {
 		workerID, err := requirePulid(params.Params, paramWorkerID)
@@ -462,8 +460,8 @@ func deductionKind() recurringKind[driverpay.RecurringDeduction] {
 		idParam:     "deductionId",
 		payee:       "deduction",
 		direction:   "taken from the driver's pay",
-		statuses:    enumNames(deductionStatuses),
-		frequencies: enumNames(deductionFrequencies),
+		statuses:    deductionStatuses.AsStrings(),
+		frequencies: deductionFrequencies.AsStrings(),
 		escrow:      true,
 		sensitive:   "amountMinor",
 		create: func(
@@ -536,8 +534,8 @@ func earningKind() recurringKind[driverpay.RecurringEarning] {
 		idParam:     "earningId",
 		payee:       "earning",
 		direction:   "added to the driver's pay",
-		statuses:    enumNames(earningStatuses),
-		frequencies: enumNames(earningFrequencies),
+		statuses:    earningStatuses.AsStrings(),
+		frequencies: earningFrequencies.AsStrings(),
 		sensitive:   "amountMinor",
 		create: func(
 			tenant pagination.TenantInfo,

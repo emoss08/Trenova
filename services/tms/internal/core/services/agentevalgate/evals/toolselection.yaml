@@ -394,3 +394,95 @@ cases:
     expect: [propose_formula]
   - request: propose a rating formula with a hazmat surcharge
     expect: [propose_formula]
+  - request: reopen the canceled shipment, the load is back on
+    expect: [uncancel_shipment]
+  - request: make Maria the owner of shipment 4471
+    expect: [transfer_shipment_ownership]
+  - request: rerate the shipment from its contract
+    expect: [rerate_shipment]
+  - request: recalculate the miles on shipment 4471
+    expect: [recalculate_shipment_distance]
+  - request: duplicate shipment 4471 three times for next week
+    expect: [duplicate_shipment]
+  - request: change the hold so it also blocks billing
+    expect: [update_shipment_hold]
+  - request: split the move at the Memphis yard as a relay
+    expect: [split_move_at_relay]
+  - request: pin that comment to the top of the thread
+    expect: [pin_shipment_comment]
+  - request: mark the comment about the late pickup resolved
+    expect: [resolve_shipment_comment]
+  - request: delete my comment on the shipment
+    expect: [delete_shipment_comment]
+  - request: void the service failure that was opened by mistake
+    expect: [void_service_failure]
+  - request: the customer disputes the detention charge
+    expect: [dispute_detention]
+  - request: create an order for Acme with PO 5512
+    expect: [create_order]
+  - request: add a consolidation fee to the order
+    expect: [add_order_charge]
+  - request: attach these shipments to the order
+    expect: [attach_order_shipments]
+  - request: close the billed order
+    expect: [close_order]
+  - request: set up a recurring shipment every weekday for Acme
+    expect: [create_recurring_shipment]
+  - request: pause the recurring shipment
+    expect: [set_recurring_shipment_status]
+  - request: which recurring shipments generate tomorrow
+    expect: [list_recurring_shipments]
+  - request: put Maria on the early shift pattern from Monday
+    expect: [assign_worker_shift]
+  - request: what shift schedule is the driver on
+    expect: [get_worker_schedule]
+  - request: approve the shift swap between the two drivers
+    expect: [approve_shift_swap]
+  - request: vet this carrier before we tender to it
+    expect: [vet_carrier]
+  - request: turn on monitoring for these carriers
+    expect: [set_carrier_monitoring]
+  - request: import the carrier we found in sourcing by its DOT number
+    expect: [import_sourced_carrier]
+  - request: verify the carrier's truck VIN is registered to them
+    expect: [verify_carrier_equipment]
+  - request: reassign the fuel charge on this billing item to the other customer
+    expect: [reassign_billing_charge]
+  - request: stop the billing transfer that is still running
+    expect: [manage_billing_transfer_run]
+  - request: draft a manual journal entry to accrue September fuel
+    expect: [draft_manual_journal]
+  - request: change the lines on the draft manual journal
+    expect: [revise_manual_journal_draft]
+  - request: submit the manual journal for approval
+    expect: [submit_manual_journal]
+  - request: cancel that manual journal, it was entered twice
+    expect: [cancel_manual_journal]
+  - request: post the approved manual journal to the general ledger
+    expect: [post_manual_journal]
+  - request: which manual journals are waiting to be posted
+    expect: [list_manual_journals]
+  - request: reverse journal entry JE-104, it hit the wrong account
+    expect: [request_journal_reversal]
+  - request: post the approved journal reversal
+    expect: [post_journal_reversal]
+  - request: cancel the journal reversal, the entry was right
+    expect: [cancel_journal_reversal]
+  - request: close the September fiscal period
+    expect: [close_fiscal_period]
+  - request: lock the fiscal period while we review the books
+    expect: [lock_fiscal_period]
+  - request: reopen the closed fiscal period for a late invoice
+    expect: [reopen_fiscal_period]
+  - request: open the next fiscal period so postings are accepted
+    expect: [open_fiscal_period]
+  - request: confirm the proposed quickbooks mappings
+    expect: [confirm_accounting_mapping_proposals, set_accounting_mapping]
+  - request: reject the proposed accounting mapping for this customer
+    expect: [reject_accounting_mapping_proposal, clear_accounting_mapping]
+  - request: release the documents held for approval to quickbooks
+    expect: [release_accounting_sync]
+  - request: pause the accounting backfill
+    expect: [change_accounting_backfill]
+  - request: assign the bank receipt work item to Maria
+    expect: [triage_bank_receipt_work_item]

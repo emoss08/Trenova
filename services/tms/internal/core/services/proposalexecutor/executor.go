@@ -98,10 +98,14 @@ type Service struct {
 	budgets      services.AgentBudgetService
 	definitions  definitionResolver
 	db           ports.DBConnection
+	// schemas holds each tool's compiled schema, against which an approver's
+	// changes are checked.
+	schemas *toolschema.Validator
 }
 
 func New(p Params) *Service {
 	return &Service{
+		schemas:      toolschema.NewValidator(),
 		l:            p.Logger.Named("service.proposal-executor"),
 		tools:        p.Tools,
 		proposalRepo: p.ProposalRepo,
@@ -331,7 +335,21 @@ func (s *Service) admit(
 		); err != nil {
 			return nil, nil, err
 		}
-		if err := validateParams(tool, params); err != nil {
+		if err := s.validateParams(tool, params); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// A tool that can check its own arguments does so where they run, not
+	// only where they were proposed: the world may have moved since the
+	// proposal was filed, and a write that would fail is refused before the
+	// record of an execution is written.
+	if validator, checks := tool.(services.ToolValidator); checks {
+		policy := tool.Policy()
+		if err := validator.Validate(
+			ctx,
+			ExecutionParams(proposal, &policy, params, approval.Actor),
+		); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -472,7 +490,7 @@ func (s *Service) CheckModifications(
 	); err != nil {
 		return nil, err
 	}
-	if err := validateParams(tool, params); err != nil {
+	if err := s.validateParams(tool, params); err != nil {
 		return nil, err
 	}
 
@@ -742,9 +760,9 @@ func refuseRetarget(tool services.AgentTool, proposed, merged map[string]any) er
 // schema. The owner the runtime records on a self-scoped call is not one of
 // the tool's declared parameters, so it is set aside for the check and the
 // schema judges only what the model and the approver supplied.
-func validateParams(tool services.AgentTool, params map[string]any) error {
+func (s *Service) validateParams(tool services.AgentTool, params map[string]any) error {
 	if _, owned := params[services.SelfScopeOwnerParam]; !owned || !services.IsSelfScoped(tool) {
-		return toolschema.Validate(tool.ParamSchema(), params)
+		return s.schemas.ValidateFor(tool.Name(), tool.ParamSchema(), params)
 	}
 
 	declared := make(map[string]any, len(params)-1)
@@ -754,7 +772,7 @@ func validateParams(tool services.AgentTool, params map[string]any) error {
 		}
 	}
 
-	return toolschema.Validate(tool.ParamSchema(), declared)
+	return s.schemas.ValidateFor(tool.Name(), tool.ParamSchema(), declared)
 }
 
 // MergeParams overlays an approver's modifications onto the proposed parameters.

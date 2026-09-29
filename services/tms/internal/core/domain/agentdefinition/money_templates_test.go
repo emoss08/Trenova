@@ -253,3 +253,49 @@ func TestTemplates_EveryTemplateImpliesAnIcon(t *testing.T) {
 	require.Contains(t, agentdefinition.KnownIcons(), agentdefinition.IconBanknote)
 	require.Contains(t, agentdefinition.KnownIcons(), agentdefinition.IconCoins)
 }
+
+/*
+The books keeper keeps the accounting system in step with what Trenova posts
+and, once a period has ended, gets it ready to close. It confirms or turns down
+the mappings Trenova proposed, proposes releasing what a review policy held,
+and proposes locking and closing a period whose blockers are clear. Drafting
+and posting journals, reversing entries, reopening a period and changing a
+backfill are started by a person, so no unattended desk holds them.
+*/
+func TestTemplates_TheBooksKeeperKeepsTheBooksInStepAndReadyToClose(t *testing.T) {
+	t.Parallel()
+
+	tools := agentdefinition.TemplateBooksKeeper.StarterTools()
+	for _, tool := range []string{
+		"confirm_accounting_mapping_proposals",
+		"reject_accounting_mapping_proposal",
+		"release_accounting_sync",
+		"list_fiscal_periods",
+		"get_fiscal_close_blockers",
+		"lock_fiscal_period",
+		"close_fiscal_period",
+	} {
+		require.Containsf(t, tools, tool, "the books keeper needs %s", tool)
+	}
+
+	for _, tool := range []string{
+		"draft_manual_journal",
+		"revise_manual_journal_draft",
+		"submit_manual_journal",
+		"cancel_manual_journal",
+		"post_manual_journal",
+		"request_journal_reversal",
+		"cancel_journal_reversal",
+		"post_journal_reversal",
+		"reopen_fiscal_period",
+		"unlock_fiscal_period",
+		"open_fiscal_period",
+		"change_accounting_backfill",
+	} {
+		require.NotContainsf(t, tools, tool, "the books keeper must not hold %s", tool)
+	}
+
+	cash := agentdefinition.TemplateCashApplication.StarterTools()
+	require.Contains(t, cash, "triage_bank_receipt_work_item",
+		"the cash application agent hands a receipt it cannot place to a person")
+}

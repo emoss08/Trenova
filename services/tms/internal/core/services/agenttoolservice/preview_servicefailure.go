@@ -65,12 +65,27 @@ func (t *resolveServiceFailureTool) Preview(
 
 	summary := fmt.Sprintf("Would resolve service failure %s as %s.",
 		existing.Number, reasonCodeWords(resolved.After))
+
+	return serviceFailureLifecyclePreview(summary, change, resolved, "resolved"), nil
+}
+
+func serviceFailureLifecyclePreview(
+	summary string,
+	change *agent.RecordChange,
+	preview *serviceports.ServiceFailureLifecyclePreview,
+	transition string,
+) *agent.ToolPreview {
 	changes := []*agent.RecordChange{change}
 
-	switch edi := resolved.EDI; {
+	switch edi := preview.EDI; {
 	case edi == nil:
 	case edi.Action == serviceports.ServiceFailureEDIActionSkipped &&
 		edi.SkippedReason == ediReadyForGeneration:
+		body := "Reason: " + reasonCodeWords(preview.After) + ". " +
+			strings.TrimSpace(preview.After.InternalNotes)
+		if preview.After.Status == servicefailure.StatusVoided {
+			body = "Voided: " + strings.TrimSpace(preview.After.VoidReason)
+		}
 		changes = append(changes, toolpreview.Send(
 			toolpreview.Record{
 				Resource: permission.ResourceEDI,
@@ -80,9 +95,8 @@ func (t *resolveServiceFailureTool) Preview(
 			&agent.MessagePreview{
 				Channel: agent.MessageChannelEDI,
 				To:      []string{"Customer's EDI trading partner"},
-				Subject: "EDI 214 service failure resolved",
-				Body: "Reason: " + reasonCodeWords(resolved.After) + ". " +
-					strings.TrimSpace(resolved.After.InternalNotes),
+				Subject: "EDI 214 service failure " + transition,
+				Body:    body,
 			},
 		))
 		summary += " The customer's trading partner is sent an EDI 214 with the reason."
@@ -92,7 +106,7 @@ func (t *resolveServiceFailureTool) Preview(
 		summary += " The EDI 214 would not be sent: " + edi.SkippedReason + "."
 	}
 
-	return toolpreview.Build(summary, changes...), nil
+	return toolpreview.Build(summary, changes...)
 }
 
 func reasonCodeWords(failure *servicefailure.ServiceFailure) string {

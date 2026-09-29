@@ -16,3 +16,18 @@ export function apiUrl(serverPath: string): string {
 
   return `${API_BASE_URL}${relative.startsWith("/") ? relative : `/${relative}`}`;
 }
+
+/**
+ * The address a device is told to use for this server: the API base,
+ * resolved against the page, without the versioned prefix. A companion
+ * appends `/api/v1` itself, and keeps any path the server is mounted under.
+ */
+export function serverBaseUrl(
+  pageUrl: string = window.location.href,
+  apiBase: string = API_BASE_URL,
+): string {
+  const url = new URL(apiBase, pageUrl);
+  const path = url.pathname.replace(/\/+$/, "");
+  const mount = path.endsWith(SERVER_API_PREFIX) ? path.slice(0, -SERVER_API_PREFIX.length) : path;
+  return `${url.origin}${mount}`;
+}

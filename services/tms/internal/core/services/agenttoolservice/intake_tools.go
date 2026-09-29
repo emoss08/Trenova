@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -86,7 +87,8 @@ func (t *createShipmentTool) Description() string {
 		"are optional; a shipment with none is rated from the customer's agreements. " +
 		"When the shipment comes from an uploaded document, pass sourceDocumentId so " +
 		"the document is linked and its import conversation closed. The pro number is " +
-		"assigned by the system."
+		"assigned by the system. A BOL must be unique among open shipments, so a copied " +
+		"shipment needs a new BOL or none; ask the person for it rather than reusing one."
 }
 
 func (t *createShipmentTool) ParamSchema() map[string]any {
@@ -118,8 +120,11 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 						"description": "A trailer equipment type, from list_equipment_types.",
 					},
 					"bol": map[string]any{
-						"type":        "string",
-						"description": "The customer's BOL or reference.",
+						"type": "string",
+						"description": "The customer's BOL or reference. It must be unique among " +
+							"open shipments, so never reuse one from another shipment. Optional " +
+							"unless the customer's billing requires a BOL; leave it out when " +
+							"none is known.",
 					},
 					"pieces": map[string]any{"type": "integer"},
 					"weight": map[string]any{"type": "integer", "description": "Pounds."},
@@ -153,19 +158,14 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 										"type": "object",
 										"properties": map[string]any{
 											"locationId": map[string]any{"type": "string"},
-											"type": map[string]any{
-												"type": "string",
-												"enum": []string{
-													"Pickup",
-													"Delivery",
-													"SplitPickup",
-													"SplitDelivery",
-												},
-											},
-											"scheduleType": map[string]any{
-												"type": "string",
-												"enum": []string{"Open", "Appointment"},
-											},
+											"type": agenttoolschema.Enum(
+												"What happens at the stop.",
+												agenttoolschema.StopTypes,
+											),
+											"scheduleType": agenttoolschema.Enum(
+												"Open for a window, Appointment for a fixed time. Defaults to Open.",
+												agenttoolschema.StopScheduleTypes,
+											),
 											"sequence": map[string]any{
 												"type": "integer",
 											},
@@ -203,7 +203,7 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 					},
 				},
 				"required":             []string{"customerId", "serviceTypeId", "moves"},
-				"additionalProperties": true,
+				"additionalProperties": false,
 			},
 			"sourceDocumentId": map[string]any{
 				"type": "string",
@@ -268,6 +268,16 @@ func (t *createShipmentTool) Execute(
 	}
 
 	return nil
+}
+
+// Validate runs the create plan the preview runs, so a shipment the service
+// would refuse, a BOL it already has or a rate it cannot find among them,
+// is refused to the model before it is proposed to a person.
+func (t *createShipmentTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	return previewValidates(ctx, t, &params)
 }
 
 func (t *createShipmentTool) draft(

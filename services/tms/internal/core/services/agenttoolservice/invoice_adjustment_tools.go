@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,17 +41,20 @@ const (
 )
 
 var (
-	adjustmentKinds = []invoiceadjustment.Kind{
+	adjustmentKinds = agenttoolschema.Source("invoiceAdjustment.kind", []invoiceadjustment.Kind{
 		invoiceadjustment.KindCreditOnly,
 		invoiceadjustment.KindCreditRebill,
 		invoiceadjustment.KindFullReversal,
 		invoiceadjustment.KindWriteOff,
-	}
-	rebillStrategies = []invoiceadjustment.RebillStrategy{
-		invoiceadjustment.RebillStrategyCloneExact,
-		invoiceadjustment.RebillStrategyRerate,
-		invoiceadjustment.RebillStrategyManual,
-	}
+	})
+	rebillStrategies = agenttoolschema.Source(
+		"invoiceAdjustment.rebillStrategy",
+		[]invoiceadjustment.RebillStrategy{
+			invoiceadjustment.RebillStrategyCloneExact,
+			invoiceadjustment.RebillStrategyRerate,
+			invoiceadjustment.RebillStrategyManual,
+		},
+	)
 	errDraftOrAdjustments = errors.New(
 		"give either draftAdjustmentId, to submit a saved draft, or adjustments, not both",
 	)
@@ -118,15 +122,15 @@ type invoiceAdjuster interface {
 }
 
 func adjustmentKindProperty() map[string]any {
-	return enumProperty("CreditOnly credits lines; CreditAndRebill credits them and reissues "+
-		"a corrected invoice; FullReversal credits the whole invoice; WriteOff writes an "+
-		"uncollectable balance off.", enumNames(adjustmentKinds))
+	return agenttoolschema.Enum("CreditOnly credits lines; CreditAndRebill credits them and "+
+		"reissues a corrected invoice; FullReversal credits the whole invoice; WriteOff writes "+
+		"an uncollectable balance off.", adjustmentKinds)
 }
 
 func rebillStrategyProperty() map[string]any {
-	return enumProperty("How a CreditAndRebill reissues: CloneExact copies the lines, Rerate "+
-		"prices them again, Manual takes the rebill amounts you give. Defaults to CloneExact.",
-		enumNames(rebillStrategies))
+	return agenttoolschema.Enum("How a CreditAndRebill reissues: CloneExact copies the lines, "+
+		"Rerate prices them again, Manual takes the rebill amounts you give. Defaults to "+
+		"CloneExact.", rebillStrategies)
 }
 
 func adjustmentLinesProperty() map[string]any {
@@ -254,7 +258,7 @@ func readAdjustmentDocuments(fields map[string]any) ([]pulid.ID, error) {
 }
 
 func readRebillStrategy(fields map[string]any) (invoiceadjustment.RebillStrategy, error) {
-	strategy, _, err := optionalEnum(fields, paramRebillStrategy, rebillStrategies)
+	strategy, _, err := optionalEnum(fields, paramRebillStrategy, rebillStrategies.Values)
 	if err != nil {
 		return "", err
 	}
@@ -461,7 +465,7 @@ func readAdjustmentRequest(entry any) (*serviceports.InvoiceAdjustmentRequest, e
 	if err != nil {
 		return nil, err
 	}
-	kind, err := requireEnum(fields, paramAdjustmentKind, adjustmentKinds)
+	kind, err := requireEnum(fields, paramAdjustmentKind, adjustmentKinds.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -710,7 +714,7 @@ func draftRequest(
 			"give invoiceId for a new draft or adjustmentId for a saved one, not both",
 		)
 	}
-	kind, err := requireEnum(params.Params, paramAdjustmentKind, adjustmentKinds)
+	kind, err := requireEnum(params.Params, paramAdjustmentKind, adjustmentKinds.Values)
 	if err != nil {
 		return nil, err
 	}

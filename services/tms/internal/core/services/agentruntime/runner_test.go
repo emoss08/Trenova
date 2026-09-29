@@ -93,6 +93,45 @@ func toolTurn(name string, args map[string]any) *serviceports.ChatCompletionResu
 	}
 }
 
+// A call refused by the tool's schema is a call like any other: it spends
+// the budget, and sending the identical call again is answered by the
+// repeat guard rather than checked a second time.
+func TestRun_ASchemaRefusalSpendsTheBudgetAndArmsTheRepeatGuard(t *testing.T) {
+	t.Parallel()
+
+	tool := actionTool("record_case", agent.TierAutoExecute, nil)
+	tool.Schema = closedSchema("subjectId")
+	badCall := map[string]any{"subjectId": "shp_1", "runId": "ar_made_up"}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("record_case", badCall),
+		toolTurn("record_case", badCall),
+		textTurn("I could not record it."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{},
+		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: autoDefinition("record_case"),
+		Actor:      testActor(),
+		Input:      "Record it.",
+	})
+	require.NoError(t, err)
+
+	assert.Zero(t, tool.Calls)
+	assert.Empty(t, result.Actions)
+	assert.Equal(t, 2, result.ToolCallsUsed, "each refused call spends the budget")
+
+	refusals := toolMessages(result)
+	require.Len(t, refusals, 2)
+	assert.True(t, refusals[0].ToolFailed)
+	requireRefusalNames(t, refusals[0].Content, []string{"runId"})
+	assert.True(t, refusals[1].ToolFailed)
+	assert.Contains(t, refusals[1].Content, "already made in this turn",
+		"the identical call is answered by the repeat guard")
+	assert.Contains(t, refusals[1].Content, "runId: This tool does not take this value",
+		"and the guard repeats what was wrong")
+}
+
 func TestRun_AnswersAndRecordsTheTurn(t *testing.T) {
 	t.Parallel()
 
@@ -322,10 +361,11 @@ func TestRun_TurnsAWriteIntoAProposalAtTheEffectiveTier(t *testing.T) {
 	assert.Contains(t, result.Messages[2].Content, "has not run")
 }
 
-// The proposal carries what the tool will read. An argument the model made
-// up, which the tool's closed schema never declared, is not part of the
-// request and does not reach the card.
-func TestRun_KeepsOnlyTheArgumentsTheToolDeclares(t *testing.T) {
+// An argument the model made up, which the tool's closed schema never
+// declared, used to be pruned on its way to the card. It is refused now,
+// naming the argument, so the model learns the tool does not take it
+// rather than believing it did; nothing reaches the card.
+func TestRun_RefusesAnArgumentTheToolDoesNotDeclare(t *testing.T) {
 	t.Parallel()
 
 	action := actionTool("raise_exception", agent.TierPropose, nil)
@@ -351,8 +391,11 @@ func TestRun_KeepsOnlyTheArgumentsTheToolDeclares(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.Len(t, result.Actions, 1)
-	assert.Equal(t, map[string]any{"subjectId": "shp_1"}, result.Actions[0].Arguments)
+	assert.Empty(t, result.Actions)
+	refusals := toolMessages(result)
+	require.Len(t, refusals, 1)
+	assert.True(t, refusals[0].ToolFailed)
+	requireRefusalNames(t, refusals[0].Content, []string{"runId"})
 }
 
 // An organization that raised a tool to auto-execute, under a ceiling that

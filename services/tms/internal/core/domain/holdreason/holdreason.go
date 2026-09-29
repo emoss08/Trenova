@@ -31,6 +31,14 @@ const (
 	HoldSeverityBlocking      HoldSeverity = "Blocking"
 )
 
+func HoldSeverityValues() []HoldSeverity {
+	return []HoldSeverity{
+		HoldSeverityInformational,
+		HoldSeverityAdvisory,
+		HoldSeverityBlocking,
+	}
+}
+
 var (
 	_ bun.BeforeAppendModelHook          = (*HoldReason)(nil)
 	_ validationframework.TenantedEntity = (*HoldReason)(nil)

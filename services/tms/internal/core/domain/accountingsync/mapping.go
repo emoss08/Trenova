@@ -307,6 +307,23 @@ func (m *AccountingMapping) ApplyProposal(p *Proposal) bool {
 	return changed
 }
 
+func (m *AccountingMapping) Clone() *AccountingMapping {
+	clone := *m
+	clone.Signals.Matchers = slices.Clone(m.Signals.Matchers)
+	clone.Signals.Candidates = slices.Clone(m.Signals.Candidates)
+	clone.Signals.RejectedExternalIDs = slices.Clone(m.Signals.RejectedExternalIDs)
+	if m.Confidence != nil {
+		confidence := *m.Confidence
+		clone.Confidence = &confidence
+	}
+	if m.ConfirmedAt != nil {
+		confirmedAt := *m.ConfirmedAt
+		clone.ConfirmedAt = &confirmedAt
+	}
+
+	return &clone
+}
+
 func (m *AccountingMapping) Confirm(choice *Choice) {
 	m.State = MappingStateConfirmed
 	m.ExternalID = choice.ExternalID

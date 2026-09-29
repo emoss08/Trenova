@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
@@ -202,11 +203,7 @@ func (t *recordTenderResponseTool) ParamSchema() map[string]any {
 		fieldOfferID: jsonschemautils.Text(
 			"The offer the carrier answered, from list_shipment_tenders.",
 		),
-		fieldAction: jsonschemautils.Enum(
-			"The carrier's answer.",
-			string(tender.ResponseActionAccept),
-			string(tender.ResponseActionDecline),
-		),
+		fieldAction: agenttoolschema.Enum("The carrier's answer.", agenttoolschema.TenderResponses),
 		fieldDeclineReason: jsonschemautils.Text(fmt.Sprintf(
 			"Why the carrier declined, as they put it, in at most %d characters, when they "+
 				"gave a reason. Only for a decline.",

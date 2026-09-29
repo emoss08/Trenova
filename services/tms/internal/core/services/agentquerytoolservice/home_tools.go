@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -192,18 +193,10 @@ func (t *listHomeWidgetsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"category": map[string]any{
-				"type": "string",
-				"enum": []string{
-					homelayout.CategoryWork,
-					homelayout.CategoryPulse,
-					homelayout.CategoryInsight,
-					homelayout.CategoryOrientation,
-					homelayout.CategoryComms,
-				},
-				"description": "Optional group: work (queues), pulse (figures), insight, " +
-					"orientation or comms.",
-			},
+			paramCategory: agenttoolschema.Enum(
+				"Optional group: work (queues), pulse (figures), insight, orientation or comms.",
+				homeWidgetCategories,
+			),
 		},
 		"additionalProperties": false,
 	}

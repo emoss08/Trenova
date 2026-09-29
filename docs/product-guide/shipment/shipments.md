@@ -57,7 +57,7 @@ Keywords: scan POD, scan BOL, scan paperwork, print to shipment, cover sheet, Ko
 1. Open the shipment and go to its **Documents** tab.
 2. Select **Scan**, choose the **Computer**, the **Scanner** and **Scan settings**, optionally a **Document type**, then **Start scan**. The pages are filed onto the shipment as they arrive; anything Trenova cannot place waits in [Intake](/intake).
 3. To file something you print from another program instead, open the menu beside **Scan**, choose **Print into this record**, select **Wait for my print**, and print to the Trenova printer within ten minutes.
-4. To scan paperwork for this shipment later or on another scanner, choose **Print cover sheets**, pick how many **Sheets**, select **Print**, and put a sheet on top of the paper before it is scanned.
+4. To scan paperwork for this shipment later or on another scanner, choose **Print cover sheets** from the menu beside **Scan**, pick how many **Cover sheets**, select **Print cover sheets**, and put a sheet on top of the paper before it is scanned.
 
 ### Send an EDI load tender
 Keywords: 204, tender to partner, EDI tender

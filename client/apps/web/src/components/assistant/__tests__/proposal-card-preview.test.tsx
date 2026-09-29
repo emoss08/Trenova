@@ -1,13 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ProposalPreview } from "@/lib/graphql/agent-preview";
-import type { AssistantProposal } from "@/types/assistant";
+import type { AssistantProposal, ProposalField } from "@/types/assistant";
+import { AskAgentProvider } from "../ask-agent";
 import { ProposalCard } from "../proposal-card";
-import { preview } from "./preview-fixtures";
+import { preview, reason, warning } from "./preview-fixtures";
 
 const fetchProposalPreview = vi.fn<(...args: unknown[]) => Promise<ProposalPreview>>();
 const decideMyProposal = vi.fn<(...args: unknown[]) => Promise<unknown>>();
@@ -46,16 +47,47 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
   };
 }
 
-function renderCard(value = proposal()) {
+function renderCard(value = proposal(), askAgent: ((message: string) => void) | null = null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <ProposalCard proposal={value} threadId="athr_1" />
+        <AskAgentProvider value={askAgent}>
+          <ProposalCard proposal={value} threadId="athr_1" />
+        </AskAgentProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
+}
+
+const SHIPMENT_FIELD: ProposalField = {
+  name: "shipment",
+  label: "Shipment",
+  description: "The shipment, in the shape the shipment form sends.",
+  kind: "JSON",
+  required: true,
+  options: [],
+  minimum: null,
+  maximum: null,
+  maxLength: null,
+};
+
+/** The Shipment Desk's copy of SEED-DET-009, proposed with its BOL. */
+function copiedShipment(): AssistantProposal {
+  return proposal({
+    toolName: "create_shipment",
+    arguments: { shipment: { customerId: "cus_1", bol: "SEED-BOL-009", moves: [] } },
+    fields: [SHIPMENT_FIELD],
+  });
+}
+
+function refusedOverBOL(): ProposalPreview {
+  return preview({
+    tool: "create_shipment",
+    changes: [],
+    warnings: [warning({ reasons: [reason()] })],
+  });
 }
 
 function conflict() {
@@ -183,6 +215,49 @@ describe("ProposalCard with a preview", () => {
         previewDigest: undefined,
       }),
     );
+  });
+
+  // The card used to say only "This would not go through as it stands."
+  // Now it names the BOL, and "Change BOL" opens the editor on that value
+  // rather than on the whole shipment object.
+  it("offers to change the field a refusal names, opening the editor on it", async () => {
+    const user = userEvent.setup();
+    fetchProposalPreview.mockResolvedValue(refusedOverBOL());
+    renderCard(copiedShipment());
+
+    expect(
+      await screen.findByText("BOL is already in use by shipment SEED-DET-009"),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Change BOL" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Approve with changes" });
+    const bol = within(dialog).getByLabelText("BOL");
+    expect(bol).toHaveValue("SEED-BOL-009");
+    expect(bol).toHaveFocus();
+  });
+
+  it("asks the agent to fix it in the conversation, naming the reasons", async () => {
+    const user = userEvent.setup();
+    const askAgent = vi.fn();
+    fetchProposalPreview.mockResolvedValue(refusedOverBOL());
+    renderCard(copiedShipment(), askAgent);
+
+    await screen.findByText("BOL is already in use by shipment SEED-DET-009");
+    await user.click(screen.getByRole("button", { name: "Ask the agent to fix it" }));
+
+    expect(askAgent).toHaveBeenCalledWith(
+      "The proposal to create shipment would not go through as it stands: BOL: BOL is already in use by shipment SEED-DET-009. Fix it and propose it again; ask me for anything you need.",
+    );
+  });
+
+  it("does not offer to ask the agent where the conversation cannot continue", async () => {
+    fetchProposalPreview.mockResolvedValue(refusedOverBOL());
+    renderCard(copiedShipment());
+
+    await screen.findByText("BOL is already in use by shipment SEED-DET-009");
+    expect(
+      screen.queryByRole("button", { name: "Ask the agent to fix it" }),
+    ).not.toBeInTheDocument();
   });
 
   it("reads no preview for a proposal already decided", () => {

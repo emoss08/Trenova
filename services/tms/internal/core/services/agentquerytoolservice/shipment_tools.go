@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,22 +20,26 @@ const (
 	defaultSearchLimit  = 10
 	maxSearchLimit      = 25
 	maxShipmentComments = 20
+	maxShipmentHolds    = 25
 )
 
 type getShipmentTool struct {
 	repo     repositories.ShipmentRepository
 	comments repositories.ShipmentCommentRepository
+	holds    repositories.ShipmentHoldRepository
 	access   fieldAccess
 }
 
 func newGetShipmentTool(
 	repo repositories.ShipmentRepository,
 	comments repositories.ShipmentCommentRepository,
+	holds repositories.ShipmentHoldRepository,
 	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
 	return &getShipmentTool{
 		repo:     repo,
 		comments: comments,
+		holds:    holds,
 		access:   newFieldAccess(permissions),
 	}
 }
@@ -42,8 +47,10 @@ func newGetShipmentTool(
 func (t *getShipmentTool) Name() string { return "get_shipment" }
 
 func (t *getShipmentTool) Description() string {
-	return "Retrieve one shipment by its id, including its stops, moves, and assignments. " +
-		"Use search_shipments first when you only have a pro number or customer name."
+	return "Retrieve one shipment by its id, with its stops, moves, assignments, the holds " +
+		"on it now and its newest comments. Each hold carries the holdId " +
+		"update_shipment_hold and release_shipment_hold take. Use search_shipments first " +
+		"when you only have a pro number or customer name."
 }
 
 func (t *getShipmentTool) ParamSchema() map[string]any {
@@ -107,7 +114,46 @@ func (t *getShipmentTool) Query(
 		return nil, err
 	}
 
-	return newShipmentView(entity, comments), nil
+	holds, err := t.activeHolds(ctx, params, tenant, entity.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return newShipmentView(entity, comments, holds), nil
+}
+
+func (t *getShipmentTool) activeHolds(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+	tenant pagination.TenantInfo,
+	shipmentID pulid.ID,
+) ([]*shipment.ShipmentHold, error) {
+	if t.holds == nil || !t.access.mayRead(ctx, params, permission.ResourceShipmentHold) {
+		return nil, nil
+	}
+
+	page, err := t.holds.ListByShipmentID(ctx, &repositories.ListShipmentHoldsRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: tenant,
+			Pagination: pagination.Info{Limit: maxShipmentHolds},
+		},
+		ShipmentID: shipmentID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read the shipment's holds: %w", err)
+	}
+	if page == nil {
+		return nil, nil
+	}
+
+	active := make([]*shipment.ShipmentHold, 0, len(page.Items))
+	for _, hold := range page.Items {
+		if hold != nil && hold.ReleasedAt == nil {
+			active = append(active, hold)
+		}
+	}
+
+	return active, nil
 }
 
 func (t *getShipmentTool) recentComments(
@@ -164,12 +210,11 @@ func (t *searchShipmentsTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Optional text to match. Omit to list shipments unfiltered.",
 			},
-			"status": map[string]any{
-				"type": "string",
-				"enum": shipmentStatuses,
-				"description": "Optional status filter. There is no Delivered: a " +
+			paramStatus: agenttoolschema.Enum(
+				"Optional status filter. There is no Delivered: a "+
 					"delivered load is Completed. Omit to include every status.",
-			},
+				listShipmentStatuses,
+			),
 			"limit": map[string]any{
 				"type":        "integer",
 				"description": "How many results to return, at most 25",

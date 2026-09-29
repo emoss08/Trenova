@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -24,9 +25,8 @@ var (
 type RedisContainer struct {
 	container testcontainers.Container
 	address   string
-	// db isolates concurrent test processes that share one Redis server, so a
-	// flush in one package cannot wipe another package's keys.
-	db int
+	db        int
+	lease     *redisDBLease
 }
 
 func (r *RedisContainer) Address() string {
@@ -41,10 +41,14 @@ func (r *RedisContainer) Client() *redis.Client {
 }
 
 func (r *RedisContainer) Terminate(ctx context.Context) error {
-	if r.container != nil {
-		return r.container.Terminate(ctx)
+	var leaseErr error
+	if r.lease != nil {
+		leaseErr = r.lease.release()
 	}
-	return nil
+	if r.container != nil {
+		return errors.Join(r.container.Terminate(ctx), leaseErr)
+	}
+	return leaseErr
 }
 
 type RedisOptions struct {
@@ -104,15 +108,18 @@ const RedisAddrEnv = "TRENOVA_TEST_REDIS_ADDR"
 
 func getSharedRedis() (*RedisContainer, error) {
 	sharedRedisOnce.Do(func() {
-		if addr := strings.TrimSpace(os.Getenv(RedisAddrEnv)); addr != "" {
-			// Redis ships with 16 logical databases; spreading processes across
-			// them keeps a shared server safe for parallel packages.
-			sharedRedisContainer = &RedisContainer{address: addr, db: os.Getpid() % 16}
-			return
-		}
-
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
+
+		if addr := strings.TrimSpace(os.Getenv(RedisAddrEnv)); addr != "" {
+			lease, err := leaseRedisDB(ctx, addr, redisLeaseKeyPrefix)
+			if err != nil {
+				sharedRedisErr = err
+				return
+			}
+			sharedRedisContainer = &RedisContainer{address: addr, db: lease.db, lease: lease}
+			return
+		}
 
 		req := testcontainers.ContainerRequest{
 			Image:        "redis:8",

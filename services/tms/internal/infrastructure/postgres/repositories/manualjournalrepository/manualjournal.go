@@ -44,18 +44,18 @@ func (r *repository) List(
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
-		Where("mjr.organization_id = ?", req.Filter.TenantInfo.OrgID).
-		Where("mjr.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-		Order("mjr.created_at DESC").
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return querybuilder.ApplyFilters(
+				sq,
+				buncolgen.RequestTable.Alias,
+				req.Filter,
+				(*manualjournal.Request)(nil),
+			)
+		}).
 		Limit(limit).
 		Offset(req.Filter.Pagination.SafeOffset())
-
-	if req.Filter.Query != "" {
-		query = query.Where(
-			"(mjr.request_number ILIKE ? OR mjr.description ILIKE ?)",
-			"%"+req.Filter.Query+"%",
-			"%"+req.Filter.Query+"%",
-		)
+	if len(req.Filter.Sort) == 0 {
+		query = query.Order(buncolgen.RequestColumns.CreatedAt.OrderDesc())
 	}
 
 	total, err := query.ScanAndCount(ctx)

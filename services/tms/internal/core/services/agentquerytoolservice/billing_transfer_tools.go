@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -22,10 +23,10 @@ const (
 	fieldActualDeliveryDate = "actualDeliveryDate"
 )
 
-var billingTransferCandidateStatuses = []string{
-	string(shipment.StatusReadyToInvoice),
-	string(shipment.StatusCompleted),
-}
+var billingTransferCandidateStatuses = agenttoolschema.Source(
+	"billingTransfer.candidateStatus",
+	[]string{string(shipment.StatusReadyToInvoice), string(shipment.StatusCompleted)},
+)
 
 type billingTransferCandidateLister interface {
 	ListBillingTransferCandidates(

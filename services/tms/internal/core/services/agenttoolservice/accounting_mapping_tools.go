@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -65,27 +66,22 @@ type accountingMappingWriter interface {
 }
 
 func accountingSystemSchema() map[string]any {
-	return jsonschemautils.Enum(
+	return agenttoolschema.Enum(
 		"The accounting system. Example: \"QuickBooksOnline\".",
-		string(integration.TypeQuickBooksOnline),
+		agenttoolschema.AccountingSystems,
 	)
 }
 
 func mappingTargetProperties() map[string]any {
-	types := accountingsync.AllMappingTargetTypes()
-	values := make([]string, 0, len(types))
-	for _, targetType := range types {
-		values = append(values, string(targetType))
-	}
 	return map[string]any{
 		paramAccountingSystem: accountingSystemSchema(),
 		paramMappingID: jsonschemautils.Text(
 			"The mapping's id from list_accounting_mapping_gaps or " +
 				"get_accounting_mapping. Never guess one.",
 		),
-		paramTargetType: jsonschemautils.Enum(
+		paramTargetType: agenttoolschema.Enum(
 			"The kind of Trenova record or setting, when naming it by recordId or key.",
-			values...,
+			agenttoolschema.MappingTargetTypes,
 		),
 		paramRecordID: jsonschemautils.Text(
 			"The Trenova customer, carrier or accessorial charge id, from " +

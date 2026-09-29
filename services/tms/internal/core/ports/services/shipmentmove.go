@@ -22,6 +22,11 @@ type MoveStatusPlan struct {
 	ShipmentsAfter  []*shipment.Shipment
 }
 
+type MoveSplitPlan struct {
+	Move  *shipment.ShipmentMove
+	Split *shipment.MoveSplit
+}
+
 type ShipmentMoveService interface {
 	UpdateStatus(
 		ctx context.Context,
@@ -47,4 +52,8 @@ type ShipmentMoveService interface {
 		ctx context.Context,
 		req *repositories.SplitMoveRequest,
 	) (*repositories.SplitMoveResponse, error)
+	PreviewSplitMove(
+		ctx context.Context,
+		req *repositories.SplitMoveRequest,
+	) (*MoveSplitPlan, error)
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/reporting/canned"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -80,24 +81,11 @@ func reportMetadataProperties() map[string]any {
 			"items":       map[string]any{"type": "string"},
 			"description": "Optional short labels, at most ten.",
 		},
-		"visibility": map[string]any{
-			"type": "string",
-			"enum": []string{
-				string(report.VisibilityPrivate),
-				string(report.VisibilityShared),
-			},
-			"description": reportVisibilityNote,
-		},
-		"defaultFormat": map[string]any{
-			"type": "string",
-			"enum": []string{
-				string(report.FormatCSV),
-				string(report.FormatXLSX),
-				string(report.FormatPDF),
-				string(report.FormatJSON),
-			},
-			"description": "The file format a run produces unless one is asked for. Default csv.",
-		},
+		fieldVisibility: agenttoolschema.Enum(reportVisibilityNote, reportVisibilities),
+		"defaultFormat": agenttoolschema.Enum(
+			"The file format a run produces unless one is asked for. Default csv.",
+			reportFormats,
+		),
 	}
 }
 
@@ -273,6 +261,22 @@ func (t *createReportTool) Prerequisites() []string {
 	}
 }
 
+var (
+	reportVisibilities = agenttoolschema.Source("report.visibility", []report.Visibility{
+		report.VisibilityPrivate,
+		report.VisibilityShared,
+	})
+	reportFormats            = agenttoolschema.Source("report.format", report.AllFormats())
+	reportDefinitionStatuses = agenttoolschema.Source(
+		"report.definitionStatus",
+		[]report.DefinitionStatus{
+			report.DefinitionStatusDraft,
+			report.DefinitionStatusActive,
+			report.DefinitionStatusArchived,
+		},
+	)
+)
+
 func (t *createReportTool) SearchTerms() []string {
 	return []string{"build report", "new report", "custom report"}
 }
@@ -399,16 +403,11 @@ func (t *updateReportTool) ParamSchema() map[string]any {
 	}
 	properties["name"] = map[string]any{"type": "string", "description": reportNameNote}
 	properties["definition"] = report.DefinitionJSONSchema()
-	properties["status"] = map[string]any{
-		"type": "string",
-		"enum": []string{
-			string(report.DefinitionStatusDraft),
-			string(report.DefinitionStatusActive),
-			string(report.DefinitionStatusArchived),
-		},
-		"description": "Optional: active runs, draft is kept but hidden from runs, archived " +
+	properties["status"] = agenttoolschema.Enum(
+		"Optional: active runs, draft is kept but hidden from runs, archived "+
 			"retires it. Leave it out to keep the current status.",
-	}
+		reportDefinitionStatuses,
+	)
 
 	return map[string]any{
 		"type":                 "object",

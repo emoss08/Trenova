@@ -1,9 +1,16 @@
 package services
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+type ManualJournalChange struct {
+	Before  *manualjournal.Request
+	After   *manualjournal.Request
+	Journal *JournalPreview
+}
 
 type ManualJournalLineInput struct {
 	GLAccountID  pulid.ID `json:"glAccountId"`

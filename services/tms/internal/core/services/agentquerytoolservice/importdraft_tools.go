@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -366,20 +367,12 @@ func (t *setRequiredFieldTool) Description() string {
 }
 
 func (t *setRequiredFieldTool) ParamSchema() map[string]any {
-	fields := pagedraft.AllRequiredFields()
-	names := make([]string, 0, len(fields))
-	for _, field := range fields {
-		names = append(names, string(field))
-	}
-
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"field": map[string]any{
-				"type":        "string",
-				"enum":        names,
-				"description": "Which of the four the record is for.",
-			},
+			paramField: agenttoolschema.Enum(
+				"Which of the four the record is for.", importRequiredFields,
+			),
 			"recordId": map[string]any{
 				"type": "string",
 				"description": "The record's id, from list_customers, list_service_types, " +

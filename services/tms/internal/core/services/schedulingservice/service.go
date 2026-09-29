@@ -26,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -286,48 +285,16 @@ func (s *Service) AssignShift(
 	ctx context.Context,
 	req *AssignShiftRequest,
 ) (*worker.WorkerShiftAssignment, error) {
-	entity := req.Entity
-	entity.OrganizationID = req.TenantInfo.OrgID
-	entity.BusinessUnitID = req.TenantInfo.BuID
-	entity.AssignedByID = req.UserID
-	entity.EffectiveFrom = startOfDayUTC(entity.EffectiveFrom)
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	template, err := s.repo.GetTemplateByID(ctx, &repositories.GetShiftTemplateByIDRequest{
-		ID:         entity.ShiftTemplateID,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, err := s.planAssignShift(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if template.Status != domaintypes.StatusActive {
-		return nil, errortypes.NewValidationError(
-			"shiftTemplateId",
-			errortypes.ErrInvalidOperation,
-			"That shift has been retired",
-		)
-	}
-	// An offset beyond the cycle wraps to a week the pattern never reaches, so
-	// it is a typo rather than a rotation.
-	if entity.CycleOffsetWeeks >= template.CycleWeeks && template.CycleWeeks > 1 {
-		return nil, errortypes.NewValidationError(
-			"cycleOffsetWeeks",
-			errortypes.ErrInvalid,
-			"This shift rotates over {0} weeks, so the offset is 0 to {1}",
-			template.CycleWeeks,
-			template.CycleWeeks-1,
-		)
-	}
+	entity := plan.Created
 
 	if err = s.closeOpenAssignment(ctx, closeAssignmentParams{
 		tenantInfo: req.TenantInfo,
 		workerID:   entity.WorkerID,
-		endAt:      entity.EffectiveFrom - secondsPerDay,
+		endAt:      plan.EndedAt,
 		userID:     req.UserID,
 	}); err != nil {
 		return nil, err
@@ -359,28 +326,12 @@ type closeAssignmentParams struct {
 }
 
 func (s *Service) closeOpenAssignment(ctx context.Context, p closeAssignmentParams) error {
-	open, err := s.repo.ListAssignments(ctx, &repositories.ListShiftAssignmentsRequest{
-		TenantInfo: p.tenantInfo,
-		WorkerID:   p.workerID,
-		ActiveAt:   p.endAt + secondsPerDay,
-	})
+	open, err := s.openAssignmentsToClose(ctx, &p)
 	if err != nil {
 		return err
 	}
 
 	for _, assignment := range open {
-		if assignment.EffectiveTo != nil {
-			continue
-		}
-		// An assignment that never took effect is replaced rather than ended
-		// on a date before it began, which would not validate.
-		if assignment.EffectiveFrom > p.endAt {
-			return errortypes.NewValidationError(
-				"effectiveFrom",
-				errortypes.ErrInvalidOperation,
-				"This worker already has a shift starting on or after that date",
-			)
-		}
 		previous := *assignment
 		endAt := p.endAt
 		assignment.EffectiveTo = &endAt
@@ -414,29 +365,9 @@ func (s *Service) EndAssignment(
 	ctx context.Context,
 	req *EndAssignmentRequest,
 ) (*worker.WorkerShiftAssignment, error) {
-	assignment, err := s.repo.GetAssignmentByID(ctx, &repositories.GetShiftAssignmentByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	previous, assignment, err := s.planEndAssignment(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-	if assignment.EffectiveTo != nil {
-		return nil, errortypes.NewValidationError(
-			"effectiveTo",
-			errortypes.ErrInvalidOperation,
-			"That assignment has already ended",
-		)
-	}
-
-	previous := *assignment
-	endAt := startOfDayUTC(req.EffectiveTo)
-	assignment.EffectiveTo = &endAt
-
-	multiErr := errortypes.NewMultiError()
-	assignment.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	updated, err := s.repo.UpdateAssignment(ctx, assignment)
@@ -451,7 +382,7 @@ func (s *Service) EndAssignment(
 		userID:     req.UserID,
 		tenantInfo: req.TenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    "Shift assignment ended",
 	})
 
@@ -476,14 +407,9 @@ func (s *Service) SetPreference(
 	ctx context.Context,
 	req *SetPreferenceRequest,
 ) (*worker.WorkerAvailabilityPreference, error) {
-	entity := req.Entity
-	entity.OrganizationID = req.TenantInfo.OrgID
-	entity.BusinessUnitID = req.TenantInfo.BuID
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
+	entity, err := s.planSetPreference(req)
+	if err != nil {
+		return nil, err
 	}
 
 	saved, err := s.repo.UpsertPreference(ctx, entity)
@@ -533,30 +459,9 @@ func (s *Service) ProposeSwap(
 	ctx context.Context,
 	req *ProposeSwapRequest,
 ) (*worker.ShiftSwapRequest, error) {
-	entity := req.Entity
-	entity.OrganizationID = req.TenantInfo.OrgID
-	entity.BusinessUnitID = req.TenantInfo.BuID
-	entity.Status = worker.SwapProposed
-	entity.ShiftDate = startOfDayUTC(entity.ShiftDate)
-	if entity.CounterpartyShiftDate != nil {
-		counterDate := startOfDayUTC(*entity.CounterpartyShiftDate)
-		entity.CounterpartyShiftDate = &counterDate
-	}
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	// A swap for a day that has already been worked cannot change who worked
-	// it, and would let the board be rewritten after the fact.
-	if entity.ShiftDate < startOfDayUTC(timeutils.NowUnix()) {
-		return nil, errortypes.NewValidationError(
-			"shiftDate",
-			errortypes.ErrInvalid,
-			"That day has already passed",
-		)
+	entity, err := s.planProposeSwap(req)
+	if err != nil {
+		return nil, err
 	}
 
 	created, err := s.repo.CreateSwap(ctx, entity)
@@ -597,45 +502,9 @@ func (s *Service) TransitionSwap(
 	ctx context.Context,
 	req *TransitionSwapRequest,
 ) (*worker.ShiftSwapRequest, error) {
-	swap, err := s.repo.GetSwapByID(ctx, &repositories.GetShiftSwapByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	previous, swap, err := s.planTransitionSwap(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-
-	if !swap.Status.CanTransitionTo(req.Status) {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"A {0} swap cannot be {1}", swap.Status, req.Status,
-		)
-	}
-	if err = authoriseSwapActor(swap, req); err != nil {
-		return nil, err
-	}
-
-	previous := *swap
-	now := timeutils.NowUnix()
-	swap.Status = req.Status
-	if req.Note != "" {
-		swap.ResponseNote = req.Note
-	}
-
-	switch req.Status {
-	case worker.SwapAccepted, worker.SwapDeclined, worker.SwapWithdrawn:
-		swap.RespondedAt = &now
-	case worker.SwapApproved, worker.SwapRejected:
-		swap.DecidedAt = &now
-		swap.DecidedByID = req.UserID
-	case worker.SwapProposed:
-	}
-
-	multiErr := errortypes.NewMultiError()
-	swap.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	updated, err := s.repo.UpdateSwap(ctx, swap)
@@ -650,7 +519,7 @@ func (s *Service) TransitionSwap(
 		userID:     req.UserID,
 		tenantInfo: req.TenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    fmt.Sprintf("Shift swap %s", req.Status),
 	})
 
