@@ -59,6 +59,13 @@ impl TestUi {
             .clone()
     }
 
+    fn notices(&self) -> Vec<Notice> {
+        self.notices
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
+    }
+
     fn titles(&self) -> Vec<String> {
         self.notices
             .lock()
@@ -437,6 +444,7 @@ fn start_with(
         windows_build: 22631,
         machine_auto_update: true,
         printer: Arc::clone(&printer) as Arc<dyn PrinterCheck>,
+        offline_notice_after: Duration::from_millis(200),
     };
     let ui = Arc::new(TestUi::default());
     let shared = Shared::new(Arc::clone(&ui) as Arc<dyn Ui>);
@@ -800,6 +808,43 @@ async fn a_missing_printer_is_offered_and_its_outcome_is_told() {
             && !format!("{:?}", s.menu()).contains("Add the Trenova printer")
     })
     .await;
+    stop(running).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_lost_connection_is_told_once_and_its_return_is_routine_news() {
+    let server = server(json!([])).await;
+    Mock::given(method("GET"))
+        .and(path("/api/v1/capture/device/stream/"))
+        .respond_with(ResponseTemplate::new(503).insert_header("Retry-After", "1"))
+        .with_priority(1)
+        .up_to_n_times(2)
+        .expect(2)
+        .mount(&server)
+        .await;
+    let running = start(&server, Vec::new());
+
+    until(&running, "the connection to come back", |s, titles| {
+        s.connection == Connection::Online
+            && titles.contains(&"Connected to Trenova again".to_owned())
+    })
+    .await;
+    let notices = running.ui.notices();
+    let offline: Vec<_> = notices
+        .iter()
+        .filter(|n| n.title == "Trenova Capture is offline")
+        .collect();
+    assert_eq!(offline.len(), 1, "told once per outage: {notices:?}");
+    assert!(!offline[0].routine, "a lost connection is always told");
+    let back = notices
+        .iter()
+        .find(|n| n.title == "Connected to Trenova again")
+        .expect("back");
+    assert!(back.routine);
+    assert!(
+        running.shared.snapshot().printing,
+        "the print inbox means printing is offered"
+    );
     stop(running).await;
 }
 

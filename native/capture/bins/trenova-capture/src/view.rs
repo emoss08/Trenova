@@ -183,6 +183,10 @@ pub struct View {
     pub recent: Vec<RecentView>,
     pub messages: Vec<MessageView>,
     pub printer_missing: bool,
+    /// Printing into Trenova is installed on this computer.
+    pub printing: bool,
+    /// Routine notifications (something sent, the connection back) are shown.
+    pub routine_notifications: bool,
     pub update: Option<UpdateView>,
     pub update_required: Option<String>,
     pub can_open_intake: bool,
@@ -488,6 +492,8 @@ impl Snapshot {
             recent: self.recent_views(),
             messages: self.message_views(),
             printer_missing: self.printer_missing,
+            printing: self.printing,
+            routine_notifications: !self.routine_muted,
             update: self.update.as_ref().map(|update| UpdateView {
                 version: update.version.clone(),
                 status: match update.status {
@@ -596,6 +602,9 @@ impl Snapshot {
                 .as_ref()
                 .map(|update| WindowAction::Open(update.download_url.clone())),
             PageMessage::OpenLogs {} => Some(WindowAction::OpenLogs),
+            PageMessage::SetNotifications { routine } => {
+                Some(WindowAction::SetRoutineNotifications(routine))
+            }
             PageMessage::Quit {} => Some(WindowAction::Quit),
         }
     }
@@ -649,6 +658,10 @@ pub enum PageMessage {
     Update {},
     OpenDownload {},
     OpenLogs {},
+    /// Whether routine notifications are shown.
+    SetNotifications {
+        routine: bool,
+    },
     Quit {},
 }
 
@@ -672,6 +685,8 @@ pub enum WindowAction {
     Save(String),
     AddPrinter,
     OpenLogs,
+    /// Show routine notifications, or not, and remember the choice.
+    SetRoutineNotifications(bool),
     Quit,
 }
 
@@ -898,6 +913,7 @@ mod tests {
                 body: "fi-8170: invalid".into(),
                 severity: Severity::Error,
                 link: None,
+                routine: false,
             },
             at,
         });
@@ -934,6 +950,22 @@ mod tests {
         ] {
             assert_eq!(PageMessage::parse(bad), None, "{bad} should be refused");
         }
+    }
+
+    #[test]
+    fn the_notification_choice_round_trips() {
+        let mut snapshot = online();
+        assert!(snapshot.view("1.0.0").routine_notifications);
+        snapshot.routine_muted = true;
+        assert!(!snapshot.view("1.0.0").routine_notifications);
+        assert_eq!(
+            snapshot.resolve(parse(r#"{"type":"setNotifications","routine":true}"#)),
+            Some(WindowAction::SetRoutineNotifications(true))
+        );
+        assert_eq!(
+            PageMessage::parse(r#"{"type":"setNotifications","routine":"yes"}"#),
+            None
+        );
     }
 
     #[test]

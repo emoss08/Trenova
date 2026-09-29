@@ -8,7 +8,7 @@
 mod prompt;
 mod window;
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, PoisonError};
 
@@ -20,10 +20,10 @@ use trenova_capture::state::{Attention, Command, Notice, PrinterAttempt, Severit
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::Shell::{
-    NIF_ICON, NIF_INFO, NIF_MESSAGE, NIF_SHOWTIP, NIF_TIP, NIIF_ERROR, NIIF_INFO,
-    NIIF_RESPECT_QUIET_TIME, NIIF_WARNING, NIM_ADD, NIM_DELETE, NIM_MODIFY, NIM_SETVERSION,
-    NIN_BALLOONUSERCLICK, NIN_SELECT, NINF_KEY, NOTIFYICON_VERSION_4, NOTIFYICONDATAW,
-    Shell_NotifyIconW,
+    NIF_ICON, NIF_INFO, NIF_MESSAGE, NIF_SHOWTIP, NIF_TIP, NIIF_ERROR, NIIF_LARGE_ICON,
+    NIIF_RESPECT_QUIET_TIME, NIIF_USER, NIIF_WARNING, NIM_ADD, NIM_DELETE, NIM_MODIFY,
+    NIM_SETVERSION, NIN_BALLOONUSERCLICK, NIN_SELECT, NINF_KEY, NOTIFYICON_VERSION_4,
+    NOTIFYICONDATAW, Shell_NotifyIconW,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreateIconFromResourceEx, CreatePopupMenu, CreateWindowExW, DefWindowProcW,
@@ -155,6 +155,9 @@ struct TrayState {
 
 thread_local! {
     static STATE: RefCell<Option<TrayState>> = const { RefCell::new(None) };
+    /// The person was told this run that closing the window leaves Trenova
+    /// Capture running.
+    static HINTED: Cell<bool> = const { Cell::new(false) };
 }
 
 /// The tray's window, on the thread that runs its message loop.
@@ -231,8 +234,30 @@ fn refresh_tip(state: &TrayState) {
     }
 }
 
+/// Shows a notification from the icon: news in the Trenova mark, a
+/// problem with Windows' own warning or error sign.
+fn show_balloon(state: &mut TrayState, notice: &Notice) {
+    let mut data = icon_data(state.hwnd);
+    data.uFlags = NIF_INFO;
+    data.szInfoTitle = filled(data.szInfoTitle, &notice.title);
+    data.szInfo = filled(data.szInfo, &notice.body);
+    data.dwInfoFlags = NIIF_RESPECT_QUIET_TIME
+        | match notice.severity {
+            Severity::Info => NIIF_USER | NIIF_LARGE_ICON,
+            Severity::Warning => NIIF_WARNING,
+            Severity::Error => NIIF_ERROR,
+        };
+    data.hBalloonIcon = state.icon_big;
+    state.notice_link.clone_from(&notice.link);
+    // SAFETY: a filled structure for this window's icon.
+    unsafe {
+        let _ = Shell_NotifyIconW(NIM_MODIFY, &raw const data);
+    }
+}
+
 /// Shows the newest notification. Windows shows one at a time, and the
-/// menu keeps the state that older ones reported.
+/// window keeps the ones before it. Nothing is shown while the window is in
+/// front, since it shows the same, nor routine news the person turned off.
 fn show_notice(state: &mut TrayState) {
     let newest = {
         let mut queue = state.notices.lock().unwrap_or_else(PoisonError::into_inner);
@@ -243,21 +268,37 @@ fn show_notice(state: &mut TrayState) {
     let Some(notice) = newest else {
         return;
     };
-    let mut data = icon_data(state.hwnd);
-    data.uFlags = NIF_INFO;
-    data.szInfoTitle = filled(data.szInfoTitle, &notice.title);
-    data.szInfo = filled(data.szInfo, &notice.body);
-    data.dwInfoFlags = NIIF_RESPECT_QUIET_TIME
-        | match notice.severity {
-            Severity::Info => NIIF_INFO,
-            Severity::Warning => NIIF_WARNING,
-            Severity::Error => NIIF_ERROR,
-        };
-    state.notice_link = notice.link;
-    // SAFETY: a filled structure for this window's icon.
-    unsafe {
-        let _ = Shell_NotifyIconW(NIM_MODIFY, &raw const data);
+    let muted = notice.routine
+        && state
+            .shared
+            .as_ref()
+            .is_some_and(|shared| shared.snapshot().routine_muted);
+    if muted || window::is_foreground() {
+        return;
     }
+    show_balloon(state, &notice);
+}
+
+/// Once a run, when the window is put away: Trenova Capture keeps working
+/// from the notification area, which Windows may fold behind its arrow.
+pub(crate) fn still_running_hint() {
+    if HINTED.with(|hinted| hinted.replace(true)) {
+        return;
+    }
+    let notice = Notice {
+        title: "Trenova Capture is still running".into(),
+        body: "It keeps sending scans and prints from the notification area by the clock. Select its icon, or the ^ arrow if it is hidden, to open it again.".into(),
+        severity: Severity::Info,
+        link: None,
+        routine: false,
+    };
+    STATE.with(|s| {
+        if let Ok(mut state) = s.try_borrow_mut()
+            && let Some(state) = state.as_mut()
+        {
+            show_balloon(state, &notice);
+        }
+    });
 }
 
 /// Menu text, with `&` doubled so Windows does not take it as a mnemonic.

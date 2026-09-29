@@ -94,6 +94,8 @@ pub struct Environment {
     pub machine_auto_update: bool,
     /// Whether the print service is installed without its printer.
     pub printer: Arc<dyn PrinterCheck>,
+    /// How long the connection stays lost before the person is told.
+    pub offline_notice_after: Duration,
 }
 
 /// Whether the Trenova printer needs adding on this computer.
@@ -122,6 +124,8 @@ enum Internal {
     Reported(Result<(), ApiError>),
     Release(Result<Option<Release>, ApiError>),
     Recheck,
+    /// The connection lost in this outage has not come back yet.
+    StillOffline(u64),
 }
 
 /// A scan waiting its turn, or paused to be continued.
@@ -183,6 +187,11 @@ struct Agent {
     fetching: bool,
     fetch_again: bool,
     blocked: bool,
+    /// Counts connection losses, so a late check for one that ended is
+    /// ignored.
+    outage: u64,
+    /// The person was told about the loss that is going on now.
+    outage_announced: bool,
     /// Counts spool reads, so a slow one never overwrites a newer one.
     spool_reads: Arc<AtomicU64>,
 }
@@ -234,6 +243,8 @@ pub async fn run(
         fetching: false,
         fetch_again: false,
         blocked: false,
+        outage: 0,
+        outage_announced: false,
         spool_reads: Arc::new(AtomicU64::new(0)),
     };
     if let Some(dir) = agent.env.print_inbox.clone() {
@@ -247,7 +258,11 @@ pub async fn run(
         agent.prints_rx = Some(rx);
     }
     let locked = agent.env.server_setting.locked();
-    agent.shared.update(|s| s.server_locked = locked);
+    let printing = agent.env.print_inbox.is_some();
+    agent.shared.update(|s| {
+        s.server_locked = locked;
+        s.printing = printing;
+    });
     agent.refresh_spool();
     agent.check_printer();
     let configured = agent.env.server_setting.load();
@@ -366,6 +381,24 @@ impl Agent {
             body: body.into(),
             severity,
             link,
+            routine: false,
+        });
+    }
+
+    /// Tells the person something that needs nothing from them, unless they
+    /// chose not to hear about such things.
+    fn notify_routine(
+        &self,
+        title: impl Into<String>,
+        body: impl Into<String>,
+        link: Option<String>,
+    ) {
+        self.shared.notify(Notice {
+            title: title.into(),
+            body: body.into(),
+            severity: Severity::Info,
+            link,
+            routine: true,
         });
     }
 
@@ -473,7 +506,31 @@ impl Agent {
         self.enumerate();
     }
 
+    /// Tells the person the connection has been lost for a while, once per
+    /// outage.
+    fn still_offline(&mut self, outage: u64) {
+        let snapshot = self.shared.snapshot();
+        if outage != self.outage
+            || self.outage_announced
+            || !matches!(snapshot.connection, Connection::Offline { .. })
+        {
+            return;
+        }
+        self.outage_announced = true;
+        let body = if snapshot.pages_waiting > 0 {
+            format!(
+                "It keeps trying to reconnect. The {} not yet sent are kept on this computer and sent when it does.",
+                plural(snapshot.pages_waiting, "page", "pages")
+            )
+        } else {
+            "It keeps trying to reconnect. Anything scanned or printed meanwhile is kept on this computer and sent when it does.".to_owned()
+        };
+        self.notify(Severity::Warning, "Trenova Capture is offline", body, None);
+    }
+
     fn stop_session(&mut self) {
+        self.outage += 1;
+        self.outage_announced = false;
         if let Some(token) = self.session.take() {
             token.cancel();
         }
@@ -835,6 +892,7 @@ impl Agent {
                         .into(),
                     severity: Severity::Info,
                     link: Some(grant.verification_uri_complete.clone()),
+                    routine: false,
                 });
             };
             let result = pair(&api, &machine, show, &token).await;
@@ -936,6 +994,7 @@ impl Agent {
                     self.start_session().await;
                 }
             }
+            Internal::StillOffline(outage) => self.still_offline(outage),
         }
     }
 
@@ -1288,11 +1347,40 @@ impl Agent {
         match event {
             DeviceEvent::Connected => {
                 self.blocked = false;
+                self.outage += 1;
                 self.shared.update(|s| s.connection = Connection::Online);
+                if std::mem::take(&mut self.outage_announced) {
+                    let waiting = self.shared.snapshot().pages_waiting;
+                    let body = if waiting > 0 {
+                        format!(
+                            "The {} kept on this computer are being sent.",
+                            plural(waiting, "page", "pages")
+                        )
+                    } else {
+                        "Scans and prints reach Trenova again.".to_owned()
+                    };
+                    self.notify_routine("Connected to Trenova again", body, None);
+                }
             }
             DeviceEvent::Disconnected { reason, .. } => {
+                let already = matches!(
+                    self.shared.snapshot().connection,
+                    Connection::Offline { .. }
+                );
                 self.shared
                     .update(|s| s.connection = Connection::Offline { reason });
+                if !already {
+                    self.outage += 1;
+                    let (tx, wait, outage) = (
+                        self.internal_tx.clone(),
+                        self.env.offline_notice_after,
+                        self.outage,
+                    );
+                    tokio::spawn(async move {
+                        tokio::time::sleep(wait).await;
+                        let _ = tx.send(Internal::StillOffline(outage)).await;
+                    });
+                }
             }
             DeviceEvent::FetchRequests => self.fetch_requests(),
             DeviceEvent::Revoked => {
@@ -1341,8 +1429,7 @@ impl Agent {
                 } else {
                     "They are waiting in Intake."
                 };
-                self.notify(
-                    Severity::Info,
+                self.notify_routine(
                     format!("{} sent to Trenova", plural(pages, "page", "pages")),
                     body,
                     link,

@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use capture_platform::{paths, shell};
+use capture_platform::{paths, settings, shell};
 use tokio::sync::mpsc::UnboundedSender;
 use trenova_capture::page;
 use trenova_capture::state::{Attention, Command, Notice, Severity, Shared};
@@ -25,12 +25,12 @@ use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::HiDpi::GetDpiForSystem;
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, FLASHW_TIMERNOFG, FLASHW_TRAY, FLASHWINFO,
-    FlashWindowEx, HICON, ICON_BIG, ICON_SMALL, IsIconic, IsWindowVisible, KillTimer, MINMAXINFO,
-    PostMessageW, RegisterClassW, SPI_GETWORKAREA, SW_RESTORE, SW_SHOW, SW_SHOWNOACTIVATE,
-    SWP_NOACTIVATE, SWP_NOZORDER, SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS, SendMessageW,
-    SetForegroundWindow, SetTimer, SetWindowPos, ShowWindow, SystemParametersInfoW, WA_INACTIVE,
-    WINDOW_EX_STYLE, WM_ACTIVATE, WM_CLOSE, WM_DPICHANGED, WM_GETMINMAXINFO, WM_SETICON, WM_TIMER,
-    WNDCLASSW, WS_OVERLAPPEDWINDOW,
+    FlashWindowEx, GetForegroundWindow, HICON, ICON_BIG, ICON_SMALL, IsIconic, IsWindowVisible,
+    KillTimer, MINMAXINFO, PostMessageW, RegisterClassW, SIZE_MINIMIZED, SPI_GETWORKAREA, SW_HIDE,
+    SW_RESTORE, SW_SHOW, SW_SHOWNOACTIVATE, SWP_NOACTIVATE, SWP_NOZORDER,
+    SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS, SendMessageW, SetForegroundWindow, SetTimer, SetWindowPos,
+    ShowWindow, SystemParametersInfoW, WA_INACTIVE, WINDOW_EX_STYLE, WM_ACTIVATE, WM_CLOSE,
+    WM_DPICHANGED, WM_GETMINMAXINFO, WM_SETICON, WM_SIZE, WM_TIMER, WNDCLASSW, WS_OVERLAPPEDWINDOW,
 };
 use windows_core::{PCWSTR, w};
 use wry::raw_window_handle::{
@@ -248,7 +248,27 @@ fn is_open() -> bool {
 }
 
 fn hwnd() -> Option<HWND> {
-    WINDOW.with(|w| w.borrow().as_ref().map(|window| window.hwnd))
+    WINDOW.with(|w| w.try_borrow().ok()?.as_ref().map(|window| window.hwnd))
+}
+
+/// Whether the window is in front, where the person sees what happens
+/// without a notification.
+pub fn is_foreground() -> bool {
+    hwnd().is_some_and(|hwnd| {
+        // SAFETY: reads which window is in front and this window's state.
+        unsafe {
+            GetForegroundWindow() == hwnd
+                && IsWindowVisible(hwnd).as_bool()
+                && !IsIconic(hwnd).as_bool()
+        }
+    })
+}
+
+/// Puts the window away, closing the browser engine behind it, and says
+/// where Trenova Capture went.
+fn put_away() {
+    close();
+    super::still_running_hint();
 }
 
 /// Shows the window, creating it first if it is not open.
@@ -265,6 +285,7 @@ pub fn show(context: &WindowContext, how: Show) {
                     ),
                     severity: Severity::Error,
                     link: None,
+                    routine: false,
                 });
                 return;
             }
@@ -424,7 +445,7 @@ fn send(context: &WindowContext, command: Command) {
 fn perform(context: &WindowContext, action: WindowAction) {
     match action {
         WindowAction::Redraw => refresh(&context.shared),
-        WindowAction::Close => close(),
+        WindowAction::Close => put_away(),
         WindowAction::Command(command) => send(context, command),
         WindowAction::Open(url) => {
             if let Err(err) = shell::open_url(&url) {
@@ -438,6 +459,7 @@ fn perform(context: &WindowContext, action: WindowAction) {
                 body: format!("Your Downloads folder could not be found: {err}"),
                 severity: Severity::Error,
                 link: None,
+                routine: false,
             }),
         },
         WindowAction::AddPrinter => super::add_printer_in_background(&context.commands),
@@ -449,6 +471,12 @@ fn perform(context: &WindowContext, action: WindowAction) {
             }
             Err(err) => tracing::warn!(error = %err, "no log folder"),
         },
+        WindowAction::SetRoutineNotifications(on) => {
+            if let Err(err) = settings::set_routine_notifications(on) {
+                tracing::warn!(error = %err, "could not save the notification choice");
+            }
+            context.shared.update(|s| s.routine_muted = !on);
+        }
         WindowAction::Quit => send(context, Command::Quit),
     }
 }
@@ -461,7 +489,17 @@ extern "system" fn window_proc(
 ) -> LRESULT {
     match message {
         WM_CLOSE => {
-            close();
+            put_away();
+            LRESULT(0)
+        }
+        // Minimizing puts the window in the notification area, where
+        // Trenova Capture lives, rather than on the taskbar.
+        WM_SIZE if u32::try_from(wparam.0).is_ok_and(|kind| kind == SIZE_MINIMIZED) => {
+            // SAFETY: this thread's own window.
+            unsafe {
+                let _ = ShowWindow(hwnd, SW_HIDE);
+            }
+            super::still_running_hint();
             LRESULT(0)
         }
         WM_ACTIVATE => {
