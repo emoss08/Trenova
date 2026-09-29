@@ -111,9 +111,24 @@ fragment AccountingAppSettingsFields on AccountingAppSettings {
   }
 }
 
+fragment AccountingProviderProfileFields on AccountingProviderProfile {
+  appName
+  webhookKeyLabel
+  environments
+  ledgerAvailable
+  ledgerUnavailableReason
+  callbackCarriesCompany
+  callbackPath
+  lineKind
+  referenceKinds
+}
+
 fragment AccountingSyncStatusFields on AccountingSyncStatus {
   integrationType
   providerName
+  profile {
+    ...AccountingProviderProfileFields
+  }
   available
   app {
     ...AccountingAppSettingsFields
@@ -251,8 +266,22 @@ mutation StartAccountingAuthorization($integrationType: AccountingSystem!) {
   }
 }
 
-mutation CompleteAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {
-  completeAccountingAuthorization(input: $input) {
+mutation FinishAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {
+  finishAccountingAuthorization(input: $input) {
+    connection {
+      ...AccountingConnectionFields
+    }
+    companies {
+      id
+      name
+    }
+    choiceToken
+    choiceExpiresAt
+  }
+}
+
+mutation ChooseAccountingCompany($input: ChooseAccountingCompanyInput!) {
+  chooseAccountingCompany(input: $input) {
     ...AccountingConnectionFields
   }
 }

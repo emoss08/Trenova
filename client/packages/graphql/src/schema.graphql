@@ -1321,6 +1321,15 @@ enum AccountingBackfillStatus {
 }
 
 """
+A company the person authorized, offered when one sign-in authorized several.
+"""
+type AccountingCompany {
+  """The company's ID in the accounting system."""
+  id: ID!
+  name: String!
+}
+
+"""
 A tenant's link to its accounting system.
 
 The authorization itself is never returned. It is stored encrypted, bound to
@@ -1934,6 +1943,30 @@ enum AccountingMappingTargetType {
   PaymentTerm
 }
 
+"""
+What an accounting system supports, which decides the steps and choices setup offers.
+"""
+type AccountingProviderProfile {
+  """The name of the app a person registers with the provider."""
+  appName: String!
+  """Whether the provider names the company in the sign-in callback."""
+  callbackCarriesCompany: Boolean!
+  """The web app path the provider sends people back to."""
+  callbackPath: String!
+  """The environments the provider's apps run in."""
+  environments: [AccountingAppEnvironment!]!
+  """Whether journal entries can be sent to this system."""
+  ledgerAvailable: Boolean!
+  """Why journal entries cannot be sent. Absent when they can."""
+  ledgerUnavailableReason: String
+  """What an invoice line is mapped to in this system."""
+  lineKind: AccountingReferenceKind!
+  """The kinds of records Trenova reads from this system."""
+  referenceKinds: [AccountingReferenceKind!]!
+  """What the provider calls the key webhooks are signed with."""
+  webhookKeyLabel: String!
+}
+
 """A kind of record kept in the accounting system."""
 enum AccountingReferenceKind {
   Account
@@ -2248,6 +2281,7 @@ type AccountingSyncStatus {
   """Absent until the organization first connects."""
   connection: AccountingConnection
   integrationType: AccountingSystem!
+  profile: AccountingProviderProfile!
   providerName: String!
 }
 
@@ -2273,6 +2307,7 @@ type AccountingSyncSummary {
 """An accounting system Trenova keeps its books in step with."""
 enum AccountingSystem {
   QuickBooksOnline
+  Xero
 }
 
 input AcknowledgeMyPolicyInput {
@@ -7410,6 +7445,14 @@ enum ChargeAllocationMethod {
   Percent
 }
 
+input ChooseAccountingCompanyInput {
+  """The token finishAccountingAuthorization returned."""
+  choiceToken: String!
+  """The ID of one of the offered companies."""
+  companyId: ID!
+  integrationType: AccountingSystem!
+}
+
 """Chooses what a connection sends, before its mappings."""
 input ChooseAccountingSyncModeInput {
   """Required in ledger mode."""
@@ -7482,8 +7525,29 @@ What the accounting system returned to the callback page after the person approv
 input CompleteAccountingAuthorizationInput {
   code: String!
   integrationType: AccountingSystem!
-  realmId: String!
+  """
+  The company the provider named in its callback. Required only for systems whose callback carries one.
+  """
+  realmId: String
   state: String!
+}
+
+"""
+What finishing a sign-in produced.
+
+When the sign-in authorized one company, it is connected and returned. When it authorized
+several, nothing is connected yet: the person picks one with chooseAccountingCompany before
+choiceExpiresAt.
+"""
+type CompleteAccountingAuthorizationPayload {
+  """When the choice lapses and the sign-in has to be started again."""
+  choiceExpiresAt: Timestamp
+  """Passed to chooseAccountingCompany. Absent when a connection was made."""
+  choiceToken: String
+  """The companies to choose between. Empty when a connection was made."""
+  companies: [AccountingCompany!]!
+  """The connection, when the sign-in authorized a single company."""
+  connection: AccountingConnection
 }
 
 input CompleteClearinghouseQueryInput {
@@ -15539,6 +15603,10 @@ type Mutation {
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
   """
+  Connects the company the person chose after a sign-in that authorized several. The choice can be made once; the other companies are released.
+  """
+  chooseAccountingCompany(input: ChooseAccountingCompanyInput!): AccountingConnection!
+  """
   Chooses whether documents or journal entries are sent. Only before sync is enabled.
   """
   chooseAccountingSyncMode(input: ChooseAccountingSyncModeInput!): AccountingConnection!
@@ -15563,7 +15631,7 @@ type Mutation {
   """
   Finishes connecting with what the provider returned. Only the person who started it can finish it.
   """
-  completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
+  completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection! @deprecated(reason: "Use finishAccountingAuthorization, which can offer a choice of companies")
   """
   Moves setup to the start date step once every required mapping is confirmed.
   """
@@ -15769,6 +15837,10 @@ type Mutation {
   Recomputes, then locks the Draft. Refused while any member line is missing a rate.
   """
   finalizeIftaReturn(id: ID!, version: Int!): IFTAReturn!
+  """
+  Finishes connecting with what the provider returned, or offers the companies to choose between when the sign-in authorized several. Only the person who started it can finish it.
+  """
+  finishAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): CompleteAccountingAuthorizationPayload!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
   generateCarrierSettlementBatch(input: GenerateCarrierSettlementBatchInput!): CarrierSettlementBatch!
   generateDriverSettlement(input: GenerateDriverSettlementInput!): DriverSettlement
