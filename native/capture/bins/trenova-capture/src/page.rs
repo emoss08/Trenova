@@ -60,16 +60,18 @@ mod tests {
             );
         }
         for address in ADDRESSES {
-            assert_eq!(
-                page.matches(address).count(),
-                1,
-                "{address} is suggested once, as text"
-            );
+            assert_eq!(page.matches(address).count(), 1, "{address} appears once");
         }
     }
 
-    /// The only addresses in the page are the ones the server field suggests.
-    const ADDRESSES: [&str; 2] = ["\"https://cloud.trenova.app\"", "\"http://localhost:5173\""];
+    /// The only addresses in the page: the ones the server field suggests,
+    /// and the SVG namespace the icons are created in, which is a name, not
+    /// something fetched.
+    const ADDRESSES: [&str; 3] = [
+        "\"https://cloud.trenova.app\"",
+        "\"http://localhost:5173\"",
+        "\"http://www.w3.org/2000/svg\"",
+    ];
 
     #[test]
     fn the_script_draws_text_never_markup() {
