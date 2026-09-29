@@ -261,8 +261,25 @@ const (
 	AssistantEventDelegateRetrying  = "delegate_retrying"
 	// AssistantEventRunTainted says the turn read content written outside
 	// the organization, once for each new place it came from.
-	AssistantEventRunTainted = "run_tainted"
+	AssistantEventRunTainted      = "run_tainted"
+	AssistantEventReplyRegrounded = "reply_regrounded"
 )
+
+type RegroundAction string
+
+const (
+	RegroundRewrite RegroundAction = "rewrite"
+	RegroundNote    RegroundAction = "note"
+)
+
+type AssistantReplyRegroundedEvent struct {
+	Action         RegroundAction `json:"action"`
+	Figures        []string       `json:"figures,omitempty"`
+	Fields         []string       `json:"fields,omitempty"`
+	Reason         string         `json:"reason"`
+	AgentID        pulid.ID       `json:"agentId,omitempty"`
+	DelegateCallID string         `json:"delegateCallId,omitempty"`
+}
 
 // DelegateScope tags what another agent did on a task the turn's agent
 // handed it, so a reader can nest it under the call that handed it over.
@@ -308,6 +325,9 @@ func (s DelegateScope) Tag(event StreamEvent) (StreamEvent, bool) {
 		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
 		return StreamEvent{Event: event.Event, Data: data}, true
 	case AssistantRunTaintedEvent:
+		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
+		return StreamEvent{Event: event.Event, Data: data}, true
+	case AssistantReplyRegroundedEvent:
 		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
 		return StreamEvent{Event: event.Event, Data: data}, true
 	case AssistantRefusedEvent:

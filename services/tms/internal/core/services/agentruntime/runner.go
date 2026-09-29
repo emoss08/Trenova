@@ -123,6 +123,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 
 	retries := 0
 	asked := false
+	grounding := groundingState{}
 	for result.ToolCallsUsed < budget {
 		reply, err := fx.Complete(t, t.completionRequest())
 		result.Usage = result.Usage.Add(reply.usage())
@@ -187,6 +188,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				}
 				fx.Emit(deltaEvent(emptyReply))
 				return s.finish(result, cannedCompletion(completion, emptyReply), fx), nil
+			}
+			if s.reground(t, fx, completion, &grounding) {
+				continue
 			}
 
 			return s.finish(result, completion, fx), nil
@@ -376,6 +380,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 
 	if fx.Supports(changeFinalAnswer) {
 		if final := s.finalAnswer(t, fx, result); final != nil {
+			grounding.rewritten = true
+			s.reground(t, fx, final, &grounding)
+
 			return s.finish(result, final, fx), nil
 		}
 	}
