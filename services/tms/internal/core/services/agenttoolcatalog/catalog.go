@@ -96,7 +96,7 @@ func (c *Catalog) Rank(
 	query string,
 	limit int,
 ) []serviceports.AgentToolDescriptor {
-	return c.rank(allowed, query, limit, 0)
+	return c.rank(allowed, query, limit, 0, false)
 }
 
 func (c *Catalog) rank(
@@ -104,17 +104,17 @@ func (c *Catalog) rank(
 	query string,
 	limit int,
 	minScore int,
+	strong bool,
 ) []serviceports.AgentToolDescriptor {
 	if limit <= 0 {
 		return nil
 	}
 
-	candidates := c.keywordRanked(
-		c.allowedSet(allowed),
-		agentsearch.Terms(query),
-		minScore,
-		minScore > 0,
-	)
+	candidates := c.keywordRanked(c.allowedSet(allowed), agentsearch.Terms(query), keywordRanking{
+		minScore: minScore,
+		cutoff:   minScore > 0,
+		strong:   strong,
+	})
 	if len(candidates) > limit {
 		candidates = candidates[:limit]
 	}
@@ -132,12 +132,21 @@ type scored struct {
 	score int
 }
 
+type keywordRanking struct {
+	minScore int
+	cutoff   bool
+	strong   bool
+}
+
 func (c *Catalog) keywordRanked(
 	wanted map[string]struct{},
 	terms map[string]struct{},
-	minScore int,
-	cutoff bool,
+	ranking keywordRanking,
 ) []scored {
+	minScore := ranking.minScore
+	if ranking.strong {
+		minScore = max(minScore, 1)
+	}
 	candidates := make([]scored, 0, len(c.entries))
 	for i := range c.entries {
 		entry := &c.entries[i]
@@ -146,7 +155,7 @@ func (c *Catalog) keywordRanked(
 				continue
 			}
 		}
-		value := score(entry, terms)
+		value := score(entry, terms, ranking.strong)
 		if value < minScore {
 			continue
 		}
@@ -164,7 +173,7 @@ func (c *Catalog) keywordRanked(
 		return candidates[i].entry.catalogRank < candidates[j].entry.catalogRank
 	})
 
-	if cutoff && len(candidates) > 0 {
+	if ranking.cutoff && len(candidates) > 0 {
 		floor := candidates[0].score / findCutoffDivisor
 		kept := candidates[:0]
 		for _, candidate := range candidates {
@@ -195,7 +204,16 @@ func (c *Catalog) Find(
 	query string,
 	limit int,
 ) []serviceports.AgentToolDescriptor {
-	return c.withFamilies(c.allowedSet(allowed), c.rank(allowed, query, limit, 1))
+	return c.withFamilies(c.allowedSet(allowed), c.rank(allowed, query, limit, 1, false))
+}
+
+func (c *Catalog) MatchesStrongly(name, query string) bool {
+	index, ok := c.byName[name]
+	if !ok {
+		return false
+	}
+
+	return score(&c.entries[index], agentsearch.Terms(query), true) > 0
 }
 
 // Prerequisites names the tools a tool's arguments come from.
@@ -241,7 +259,7 @@ func (c *Catalog) allowedSet(allowed []string) map[string]struct{} {
 	return wanted
 }
 
-func score(entry *indexed, terms map[string]struct{}) int {
+func score(entry *indexed, terms map[string]struct{}, strong bool) int {
 	total := 0
 	for term := range terms {
 		if _, ok := entry.nameTokens[term]; ok {
@@ -250,6 +268,9 @@ func score(entry *indexed, terms map[string]struct{}) int {
 		}
 		if _, ok := entry.bodyTokens[term]; ok {
 			total += descriptionMatchWeight
+			continue
+		}
+		if strong {
 			continue
 		}
 		if _, ok := entry.paramTokens[term]; ok {

@@ -352,3 +352,77 @@ func TestRank_DoesNotBringAlongFamilies(t *testing.T) {
 
 	assert.Len(t, reportFamilyCatalog().Rank(nil, "start", 1), 1)
 }
+
+func parameterOnlyCatalog() *Catalog {
+	return New([]serviceports.AgentToolDescriptor{
+		{
+			Name:        "list_shipments",
+			Description: "List shipments narrowed by status or dates.",
+			Parameters: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"commodityId": map[string]any{
+						"type":        "string",
+						"description": "Only shipments carrying this commodity.",
+					},
+				},
+			},
+		},
+		descriptor("list_commodities", "Look up a commodity by name or hazmat class."),
+		descriptor("list_workers", "List workers narrowed by status."),
+	})
+}
+
+func TestFindHybrid_StrongOnlyKeepsOnlyNameAndDescriptionMatches(t *testing.T) {
+	t.Parallel()
+
+	catalog := parameterOnlyCatalog()
+
+	assert.Equal(t, []string{"list_shipments"},
+		names(catalog.FindHybrid(Query{Text: "shipments carrying a commodity", Limit: 6})))
+	assert.Empty(t, names(catalog.FindHybrid(Query{
+		Allowed:    []string{"list_shipments", "list_workers"},
+		Text:       "commodity",
+		Limit:      6,
+		StrongOnly: true,
+	})))
+	assert.Equal(t, []string{"list_shipments"}, names(catalog.FindHybrid(Query{
+		Allowed: []string{"list_shipments", "list_workers"},
+		Text:    "commodity",
+		Limit:   6,
+	})))
+	assert.Equal(t, []string{"list_commodities"}, names(catalog.FindHybrid(Query{
+		Text:       "commodity",
+		Limit:      6,
+		StrongOnly: true,
+	})))
+}
+
+func TestFindHybrid_StrongOnlyAppliesToTheSemanticRankingToo(t *testing.T) {
+	t.Parallel()
+
+	catalog := parameterOnlyCatalog()
+
+	found := names(catalog.FindHybrid(Query{
+		Allowed:    []string{"list_shipments", "list_workers"},
+		Text:       "commodity",
+		Limit:      6,
+		StrongOnly: true,
+		Semantic: NewSemantic(map[string]float64{
+			"list_shipments": 0.1,
+			"list_workers":   0.1,
+		}),
+	}))
+
+	assert.Empty(t, found)
+}
+
+func TestMatchesStrongly(t *testing.T) {
+	t.Parallel()
+
+	catalog := parameterOnlyCatalog()
+
+	assert.True(t, catalog.MatchesStrongly("list_commodities", "which commodity is hazmat"))
+	assert.False(t, catalog.MatchesStrongly("list_shipments", "commodity"))
+	assert.False(t, catalog.MatchesStrongly("no_such_tool", "commodity"))
+}

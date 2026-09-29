@@ -318,28 +318,90 @@ func (s *Service) resolveFind(
 		SkipSemantic: set.loaded,
 	})
 	names := make([]string, 0, len(found))
+	callable := make([]serviceports.AgentToolDescriptor, 0, len(found))
+	added := make([]serviceports.AgentToolDescriptor, 0, len(found))
 	for _, descriptor := range found {
 		names = append(names, descriptor.Name)
-	}
-
-	var b strings.Builder
-	added := 0
-	for _, descriptor := range found {
-		if !s.load(set, descriptor.Name) {
+		if set.offers(descriptor.Name) {
+			callable = append(callable, descriptor)
 			continue
 		}
-		added++
-		fmt.Fprintf(&b, "- %s: %s\n", descriptor.Name, firstSentence(descriptor.Description))
+		if s.load(set, descriptor.Name) {
+			added = append(added, descriptor)
+		}
 	}
 
-	if added == 0 {
+	if len(added) == 0 && len(callable) == 0 {
 		return FindAnswer{Content: s.nothingLoaded(set, need), Found: names}
 	}
 
-	return FindAnswer{
-		Content: fmt.Sprintf("These tools are now callable:\n%s", b.String()),
-		Found:   names,
+	var b strings.Builder
+	if len(callable) > 0 {
+		b.WriteString("These tools you already hold match, are already loaded and can be " +
+			"called now:\n")
+		writeToolLines(&b, callable)
 	}
+	if len(added) > 0 {
+		if b.Len() > 0 {
+			b.WriteByte('\n')
+		}
+		b.WriteString("These tools are now callable:\n")
+		writeToolLines(&b, added)
+	} else {
+		fmt.Fprintf(&b, "\nNothing new matched %q beyond those.", need)
+	}
+	if !s.catalog.MatchesStrongly(bestMatch(callable, added), need) {
+		if note := s.delegatedStrongMatches(set, need); note != "" {
+			b.WriteByte('\n')
+			b.WriteString(note)
+		}
+	}
+
+	return FindAnswer{Content: strings.TrimRight(b.String(), "\n"), Found: names}
+}
+
+func bestMatch(callable, added []serviceports.AgentToolDescriptor) string {
+	if len(added) > 0 {
+		return added[0].Name
+	}
+	if len(callable) > 0 {
+		return callable[0].Name
+	}
+
+	return ""
+}
+
+func writeToolLines(b *strings.Builder, descriptors []serviceports.AgentToolDescriptor) {
+	for _, descriptor := range descriptors {
+		fmt.Fprintf(b, "- %s: %s\n", descriptor.Name, firstSentence(descriptor.Description))
+	}
+}
+
+func (s *Service) delegatedStrongMatches(set *toolSet, need string) string {
+	if len(set.delegates) == 0 {
+		return ""
+	}
+
+	return weakMatchDelegateNote(set.delegates, s.unheldStrongMatches(set, need))
+}
+
+func (s *Service) unheldStrongMatches(set *toolSet, need string) []string {
+	unheld := make([]string, 0, foundToolsLimit)
+	for _, descriptor := range s.catalog.FindHybrid(agenttoolcatalog.Query{
+		Text:       need,
+		Limit:      foundToolsLimit,
+		StrongOnly: true,
+	}) {
+		if _, loaded := set.loaded[descriptor.Name]; loaded {
+			continue
+		}
+		if slices.Contains(set.allowed, descriptor.Name) {
+			continue
+		}
+		unheld = append(unheld, descriptor.Name)
+	}
+
+	return unheld
 }
 
 // unheldRefusal answers a call to a tool the agent does not hold.
@@ -422,22 +484,15 @@ func (s *Service) holds(definition *agentdefinition.Definition, name string) boo
 // Naming them widens nothing. The specs are not loaded and the guard still
 // refuses a call to anything outside the allowlist.
 func (s *Service) nothingLoaded(set *toolSet, need string) string {
-	elsewhere := make([]serviceports.AgentToolDescriptor, 0, foundToolsLimit)
-	unheld := make([]string, 0, foundToolsLimit)
-	for _, descriptor := range s.catalog.Find(nil, need, foundToolsLimit) {
-		if _, held := set.loaded[descriptor.Name]; held {
+	unheld := s.unheldStrongMatches(set, need)
+	elsewhere := make([]serviceports.AgentToolDescriptor, 0, len(unheld))
+	for _, name := range unheld {
+		if set.usable != nil && !set.usable(name) {
 			continue
 		}
-		if slices.Contains(set.allowed, descriptor.Name) {
-			continue
+		if descriptor, ok := s.catalog.Descriptor(name); ok {
+			elsewhere = append(elsewhere, descriptor)
 		}
-		unheld = append(unheld, descriptor.Name)
-		// A tool the person may not use is not worth naming: an
-		// administrator adding it to the agent would change nothing for them.
-		if set.usable != nil && !set.usable(descriptor.Name) {
-			continue
-		}
-		elsewhere = append(elsewhere, descriptor)
 	}
 
 	if note := delegatedSearchNote(set.delegates, unheld); note != "" {
@@ -456,9 +511,7 @@ func (s *Service) nothingLoaded(set *toolSet, need string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Nothing you can call matched %q. These exist in this system but "+
 		"are not enabled for this agent:\n", need)
-	for _, descriptor := range elsewhere {
-		fmt.Fprintf(&b, "- %s: %s\n", descriptor.Name, firstSentence(descriptor.Description))
-	}
+	writeToolLines(&b, elsewhere)
 	b.WriteString("\nYou cannot call them. Tell the person these exist and that an " +
 		"administrator can add them to this agent in Agent Control, naming them exactly " +
 		"as above. Do not say the system has no such capability.")

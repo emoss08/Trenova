@@ -10,6 +10,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -613,4 +614,146 @@ func TestNewToolSet_CoreToolsDoNotCountTowardNarrowing(t *testing.T) {
 	assert.Contains(t, sent, "remember")
 	assert.Len(t, large.specs, preselectedTools+2+2,
 		"the preselected tools, the two core tools, find_tools and ask_user")
+}
+
+func TestResolveFind_ListsTheCallableMatchesFirst(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+	set := &toolSet{loaded: map[string]struct{}{}, allowed: names, disclosed: true}
+	require.True(t, service.load(set, "list_workers"))
+
+	answer := findContent(t, service, set, map[string]any{
+		"need": "workers and their credentials",
+	})
+
+	callable := strings.Index(answer, "- list_workers")
+	loaded := strings.Index(answer, "- list_expiring_credentials")
+	require.GreaterOrEqual(t, callable, 0, answer)
+	require.GreaterOrEqual(t, loaded, 0, answer)
+	assert.Less(t, callable, loaded, "what the model can already call is named first")
+	assert.Contains(t, answer, "already loaded")
+	assert.Contains(t, answer, "now callable")
+	assert.Contains(t, specNames(set.specs), "list_expiring_credentials")
+}
+
+func weakMatchRuntime(t *testing.T) *Service {
+	t.Helper()
+
+	tools := []serviceports.AgentQueryTool{
+		&agentruntimetest.StubQueryTool{
+			ToolName: "list_shipments",
+			Desc:     "List shipments by status or dates.",
+			Schema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"commodityId": map[string]any{
+						"type":        "string",
+						"description": "Only shipments carrying this commodity.",
+					},
+				},
+				"additionalProperties": false,
+			},
+		},
+		describedTool("search_commodities", "Look up a commodity by name or hazmat class."),
+	}
+	for idx := range disclosureThreshold + 1 {
+		tools = append(tools, describedTool(fmt.Sprintf("list_filler_%02d", idx), "Filler."))
+	}
+
+	query := &stubQueryRegistry{Tools: tools}
+	action := &stubActionRegistry{}
+
+	return &Service{
+		logger:      zap.NewNop(),
+		queryTools:  query,
+		actionTools: action,
+		permissions: &stubPermissions{},
+		catalog: agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+			QueryTools:  query,
+			ActionTools: action,
+		}),
+	}
+}
+
+func TestResolveFind_PointsAtADelegateWhenTheBestNewMatchIsWeak(t *testing.T) {
+	t.Parallel()
+
+	service := weakMatchRuntime(t)
+	held := []string{"list_shipments"}
+	for idx := range disclosureThreshold + 1 {
+		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
+	}
+	delegate := agentdefinition.RuntimeDelegate{
+		ID:    pulid.MustNew("agdef_"),
+		Name:  "Master Data",
+		Tools: []string{"search_commodities"},
+	}
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(held...),
+			actor:      testActor(),
+			input:      "hello",
+			delegates:  []agentdefinition.RuntimeDelegate{delegate},
+		},
+	)
+	require.True(t, set.disclosed)
+	require.NotContains(t, specNames(set.specs), "list_shipments",
+		"the fixture depends on the shipments list not being preselected")
+
+	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+
+	assert.Contains(t, answer, "list_shipments", "the weak match still loads")
+	assert.Contains(t, answer, "Master Data (agentId "+delegate.ID.String()+"): search_commodities")
+	assert.Contains(t, answer, delegateTaskName)
+}
+
+func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {
+	t.Parallel()
+
+	service := weakMatchRuntime(t)
+	held := []string{"search_commodities"}
+	for idx := range disclosureThreshold + 1 {
+		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
+	}
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(held...),
+			actor:      testActor(),
+			input:      "hello",
+			delegates: []agentdefinition.RuntimeDelegate{{
+				ID:    pulid.MustNew("agdef_"),
+				Name:  "Operations",
+				Tools: []string{"list_shipments"},
+			}},
+		},
+	)
+	require.NotContains(t, specNames(set.specs), "search_commodities")
+
+	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+
+	assert.Contains(t, answer, "search_commodities")
+	assert.NotContains(t, answer, "Operations")
+}
+
+func TestResolveFind_NamesOnlyStrongMatchesBeyondTheAgent(t *testing.T) {
+	t.Parallel()
+
+	service := weakMatchRuntime(t)
+	held := make([]string, 0, disclosureThreshold+1)
+	for idx := range disclosureThreshold + 1 {
+		held = append(held, fmt.Sprintf("list_filler_%02d", idx))
+	}
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{definition: testDefinition(held...), actor: testActor(), input: "hello"},
+	)
+
+	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
+
+	assert.Contains(t, answer, "search_commodities")
+	assert.NotContains(t, answer, "list_shipments",
+		"a tool that only takes the word as a parameter is not what was asked for")
 }
