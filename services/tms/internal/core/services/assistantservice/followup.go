@@ -29,7 +29,9 @@ const (
 
 // followUpInstruction is what the agent is asked to do with a decision.
 const followUpInstruction = "Tell the person in one or two sentences what happened and the " +
-	"most useful next step. Do not propose the same change again."
+	"most useful next step. Report only what this note and the proposal's card hold: do not " +
+	"describe a value, a record or an effect that neither of them names, and where they do " +
+	"not say, say you do not know. Do not propose the same change again."
 
 type decisionNoteParams struct {
 	thread     *conversation.Thread

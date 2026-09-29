@@ -123,6 +123,7 @@
   "A decision follow-up carries no message; the decision is its input": "決策的後續追蹤不附帶訊息；決策本身即為輸入",
   "A decision must reference exactly one proposal or exception": "裁決必須且僅能參照一項提案或例外",
   "A decision needs the date it was made": "裁決必須填寫作成日期",
+  "A decision request is a view over a proposal": "裁決請求是提議的檢視畫面",
   "A declined assignment must record its reason": "遭婉拒的指派必須記錄原因",
   "A decrease of 100% or more would invert every rate it touches": "調降 100% 以上會使其影響的每一筆費率變為負值",
   "A default cash account must be configured before recording carrier settlement payments": "記錄承運業者結算付款前，須先設定預設現金科目",

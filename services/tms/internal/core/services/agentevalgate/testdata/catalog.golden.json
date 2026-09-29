@@ -11827,10 +11827,19 @@
     },
     {
       "name": "get_shipment",
-      "description": "Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments. Each hold carries the holdId update_shipment_hold and release_shipment_hold take. Use search_shipments first when you only have a pro number or customer name.",
+      "description": "Retrieve one shipment by its id, with its stops, moves, assignments, the holds on it now and its newest comments. It returns a summary with each stop's window in the stop's local time; pass detail full only when you need a field the summary leaves out. Each hold carries the holdId update_shipment_hold and release_shipment_hold take. Use search_shipments first when you only have a pro number or customer name.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "detail": {
+            "description": "How much to return. Omit it for the summary: the customer, the rating, the moves with their stops, assignment and carrier, the commodities, charges, holds and comments. full returns every stored field.",
+            "enum": [
+              "summary",
+              "full"
+            ],
+            "type": "string",
+            "x-enumOf": "shipment.detail"
+          },
           "shipmentId": {
             "description": "The shipment's id, from search_shipments or list_shipments, the page you are on, or this run's subject.",
             "type": "string"
@@ -25944,6 +25953,30 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Sends a driver a renewal request the model wrote."
+      }
+    },
+    {
+      "name": "request_decision",
+      "policy": {
+        "kind": "runtime",
+        "resource": "assistant",
+        "operation": "read",
+        "scope": "run",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "personal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "ask",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Shows the person, in their own conversation, the card of a proposal already waiting on them; it decides nothing and changes no record."
       }
     },
     {

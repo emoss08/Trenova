@@ -113,6 +113,13 @@ func (a *Artifact) Validate(multiErr *errortypes.MultiError) {
 			"An email draft is a view over a proposal",
 		)
 	}
+	if a.Kind == KindDecisionRequest && a.ProposalID.IsNil() {
+		multiErr.Add(
+			"proposalId",
+			errortypes.ErrRequired,
+			"A decision request is a view over a proposal",
+		)
+	}
 	if a.Kind == KindPlan && a.PlanID.IsNil() {
 		multiErr.Add("planId", errortypes.ErrRequired, "A plan artifact is a view over a plan")
 	}

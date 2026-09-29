@@ -13,7 +13,9 @@ const (
 	maxMentionRuleLength = 200
 )
 
-var runtimeTools = []string{"find_tools", "ask_user", "publish_artifact", "delegate_task"}
+var runtimeTools = []string{
+	"find_tools", "ask_user", "publish_artifact", "delegate_task", "request_decision",
+}
 
 func IsRuntimeTool(name string) bool {
 	return slices.Contains(runtimeTools, name)

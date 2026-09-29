@@ -123,6 +123,7 @@
   "A decision follow-up carries no message; the decision is its input": "决定的跟进不携带消息；决定本身就是其输入",
   "A decision must reference exactly one proposal or exception": "裁决必须且仅能引用一项提案或例外",
   "A decision needs the date it was made": "裁决必须填写作出日期",
+  "A decision request is a view over a proposal": "裁决请求是提案的一个视图",
   "A declined assignment must record its reason": "被谢绝的分配必须记录原因",
   "A decrease of 100% or more would invert every rate it touches": "下调 100% 以上会使其影响的每一笔费率变为负值",
   "A default cash account must be configured before recording carrier settlement payments": "记录承运商结算付款前，须先配置默认现金科目",

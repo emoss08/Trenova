@@ -552,6 +552,7 @@ export function MessageThread({
           <div className="animate-rise">
             <StreamingTurn
               turn={turn}
+              threadId={thread.id}
               onRetry={readOnly ? undefined : retry}
               onDismiss={dismiss}
               onAnswer={answer}

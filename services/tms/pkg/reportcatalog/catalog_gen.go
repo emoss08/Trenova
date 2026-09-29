@@ -17610,7 +17610,7 @@ var defaultCatalog = Catalog{
 				{
 					Key:          "iftaQualified",
 					Column:       buncolgen.NewColumn("ifta_qualified", "trac"),
-					Label:        "Ifta Qualified",
+					Label:        "IFTA Qualified",
 					Type:         FieldBool,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,

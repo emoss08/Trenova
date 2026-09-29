@@ -732,7 +732,13 @@ func (s *Service) proposalOutcomes(
 		if proposal == nil {
 			continue
 		}
+		planID := pulid.Nil
+		if proposal.PlanID != nil {
+			planID = *proposal.PlanID
+		}
 		outcomes = append(outcomes, services.ProposalOutcome{
+			ProposalID:      proposal.ID,
+			PlanID:          planID,
 			SourceMessageID: proposal.SourceMessageID,
 			ToolName:        proposal.ToolName,
 			ToolParams:      proposal.ToolParams,

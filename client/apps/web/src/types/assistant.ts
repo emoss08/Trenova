@@ -102,6 +102,7 @@ export const artifactKindSchema = z.enum([
   "document",
   "navigation",
   "draft_edit",
+  "decision_request",
 ]);
 
 export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);

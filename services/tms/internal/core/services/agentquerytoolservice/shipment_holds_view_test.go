@@ -17,12 +17,15 @@ type fakeShipmentGetter struct {
 	repositories.ShipmentRepository
 
 	entity *shipment.Shipment
+	reads  int
 }
 
 func (f *fakeShipmentGetter) GetByID(
 	context.Context,
 	*repositories.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
+	f.reads++
+
 	return f.entity, nil
 }
 
@@ -78,14 +81,15 @@ func TestGetShipment_ListsTheHoldsInForce(t *testing.T) {
 		"shipmentId": pulid.MustNew("shp_").String(),
 	}))
 	require.NoError(t, err)
-	view, ok := result.(*shipmentView)
+	active, ok := encodedDocument(t, result)["activeHolds"].([]any)
 	require.True(t, ok)
-	require.Len(t, view.ActiveHolds, 2)
-	assert.Equal(t, holds.holds[0].ID.String(), view.ActiveHolds[0].HoldID)
-	assert.Equal(t, "Waiting on the BOL", view.ActiveHolds[0].Notes)
-	assert.Equal(t, "Missing documents", view.ActiveHolds[0].Reason)
-	assert.True(t, view.ActiveHolds[0].BlocksDispatch)
-	assert.Empty(t, view.ActiveHolds[1].Notes)
+	require.Len(t, active, 2)
+	first := objectAt(t, active, 0)
+	assert.Equal(t, holds.holds[0].ID.String(), first["holdId"])
+	assert.Equal(t, "Waiting on the BOL", first["notes"])
+	assert.Equal(t, "Missing documents", first["reason"])
+	assert.Equal(t, true, first["blocksDispatch"])
+	assert.NotContains(t, objectAt(t, active, 1), "notes")
 
 	hidden := newGetShipmentTool(
 		&fakeShipmentGetter{entity: &shipment.Shipment{ID: pulid.MustNew("shp_")}},
@@ -97,5 +101,5 @@ func TestGetShipment_ListsTheHoldsInForce(t *testing.T) {
 		"shipmentId": pulid.MustNew("shp_").String(),
 	}))
 	require.NoError(t, err)
-	assert.Empty(t, result.(*shipmentView).ActiveHolds)
+	assert.Empty(t, encodedDocument(t, result)["activeHolds"])
 }
