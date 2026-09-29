@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -109,4 +110,100 @@ func TestValidateConfig_BoundsTheRetrainingPolicy(t *testing.T) {
 	err = NewLoader().validateConfig(cfg)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "lookbackdays must be at least 30")
+}
+
+const validAlertSecret = "whsec_MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
+
+func TestValidateAIRetrainingAlerts(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		alerts AIRetrainingAlertsConfig
+		want   error
+	}{
+		{name: "no webhook"},
+		{name: "https webhook", alerts: AIRetrainingAlertsConfig{WebhookURL: "https://hooks.slack.com/services/T/B/x"}},
+		{
+			name:   "signed webhook",
+			alerts: AIRetrainingAlertsConfig{WebhookURL: "https://alerts.example.com/in", Secret: validAlertSecret},
+		},
+		{
+			name:   "not a url",
+			alerts: AIRetrainingAlertsConfig{WebhookURL: "alerts.example.com/in"},
+			want:   ErrAIRetrainingAlertURL,
+		},
+		{
+			name:   "another scheme",
+			alerts: AIRetrainingAlertsConfig{WebhookURL: "ftp://alerts.example.com/in"},
+			want:   ErrAIRetrainingAlertURL,
+		},
+		{
+			name:   "secret without prefix",
+			alerts: AIRetrainingAlertsConfig{Secret: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="},
+			want:   ErrAIRetrainingAlertSecret,
+		},
+		{
+			name:   "secret too short",
+			alerts: AIRetrainingAlertsConfig{Secret: "whsec_c2hvcnQ="},
+			want:   ErrAIRetrainingAlertSecret,
+		},
+		{
+			name:   "secret not base64",
+			alerts: AIRetrainingAlertsConfig{Secret: "whsec_not base64 at all, not at all, not at all"},
+			want:   ErrAIRetrainingAlertSecret,
+		},
+		{
+			name:   "timeout too long",
+			alerts: AIRetrainingAlertsConfig{Timeout: 2 * time.Minute},
+			want:   ErrAIRetrainingAlertTimeout,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			alerts := tt.alerts
+			err := validateAIRetrainingAlerts(&alerts)
+			if tt.want == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorIs(t, err, tt.want)
+		})
+	}
+}
+
+func TestAIRetrainingAlertsInProduction(t *testing.T) {
+	t.Parallel()
+
+	cfg := &Config{}
+	require.NoError(t, validateAIRetrainingAlertsProduction(cfg), "no webhook is fine")
+
+	cfg.AIRetraining.Alerts = AIRetrainingAlertsConfig{WebhookURL: "https://hooks.slack.com/services/T/B/x"}
+	require.NoError(t, validateAIRetrainingAlertsProduction(cfg),
+		"a receiver that cannot verify a signature, such as Slack, needs no secret")
+
+	cfg.AIRetraining.Alerts = AIRetrainingAlertsConfig{
+		WebhookURL: "http://alerts.example.com/in",
+		Secret:     validAlertSecret,
+	}
+	require.ErrorIs(t, validateAIRetrainingAlertsProduction(cfg), ErrAIRetrainingAlertInsecure,
+		"a retraining alert names model paths and should not cross the network in clear")
+
+	cfg.AIRetraining.Alerts.WebhookURL = "https://alerts.example.com/in"
+	require.NoError(t, validateAIRetrainingAlertsProduction(cfg))
+}
+
+func TestAIRetrainingAlertsNeverPrintTheirSecret(t *testing.T) {
+	t.Parallel()
+
+	alerts := AIRetrainingAlertsConfig{WebhookURL: "https://alerts.example.com/in", Secret: validAlertSecret}
+	assert.NotContains(t, alerts.String(), "MDEy")
+	assert.NotContains(t, fmt.Sprintf("%v %+v %#v", alerts, alerts, alerts), "MDEy")
+	assert.Contains(t, alerts.String(), redactedValue)
+	assert.Equal(t, 10*time.Second, alerts.GetTimeout())
+	assert.True(t, alerts.Enabled())
+	assert.True(t, alerts.Signed())
 }

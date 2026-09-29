@@ -189,12 +189,23 @@ func (f *fakeOperator) Cancel(ctx context.Context, id pulid.ID) (*aitraining.Tra
 
 var errStartRefused = errors.New("temporal unavailable")
 
+type fakeAlerter struct {
+	sent []aitraining.RetrainingStatus
+	err  error
+}
+
+func (f *fakeAlerter) AlertRetraining(_ context.Context, cycle *aitraining.RetrainingCycle) error {
+	f.sent = append(f.sent, cycle.Status)
+	return f.err
+}
+
 type retrainingFixture struct {
 	service     *Retrainer
 	cycles      *cycleStore
 	exports     *exportStore
 	corrections *trainableStore
 	operator    *fakeOperator
+	alerts      *fakeAlerter
 	cfg         *config.Config
 	now         int64
 }
@@ -204,6 +215,7 @@ func newRetrainingFixture() *retrainingFixture {
 		cycles:      &cycleStore{},
 		exports:     newExportStore(),
 		corrections: &trainableStore{},
+		alerts:      &fakeAlerter{},
 		cfg:         &config.Config{AIRetraining: config.AIRetrainingConfig{Enabled: true}},
 		now:         testNow,
 	}
@@ -215,6 +227,7 @@ func newRetrainingFixture() *retrainingFixture {
 		Exports:     f.exports,
 		Corrections: f.corrections,
 		Operator:    f.operator,
+		Alerter:     f.alerts,
 	})
 	f.service.now = func() int64 { return f.now }
 	return f

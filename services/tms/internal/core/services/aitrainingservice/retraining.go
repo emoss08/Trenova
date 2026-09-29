@@ -36,6 +36,7 @@ type RetrainerParams struct {
 	Exports     repositories.AITrainingExportRepository
 	Corrections repositories.AICorrectionRepository
 	Operator    services.AITrainingExportOperator
+	Alerter     services.RetrainingAlerter `optional:"true"`
 }
 
 type Retrainer struct {
@@ -45,6 +46,7 @@ type Retrainer struct {
 	exports     repositories.AITrainingExportRepository
 	corrections repositories.AICorrectionRepository
 	operator    services.AITrainingExportOperator
+	alerter     services.RetrainingAlerter
 	now         func() int64
 }
 
@@ -56,6 +58,7 @@ func NewRetrainer(p RetrainerParams) *Retrainer { //nolint:gocritic // fx params
 		exports:     p.Exports,
 		corrections: p.Corrections,
 		operator:    p.Operator,
+		alerter:     p.Alerter,
 		now:         timeutils.NowUnix,
 	}
 }
@@ -163,6 +166,7 @@ func (r *Retrainer) Plan(
 			zap.Int("newExamples", created.NewExamples),
 			zap.Int("minNewExamples", created.MinNewExamples),
 		)
+		r.alert(ctx, created)
 		return created, nil
 	}
 
@@ -194,6 +198,7 @@ func (r *Retrainer) startExport(
 		if _, updateErr := r.cycles.Update(ctx, cycle); updateErr != nil {
 			return nil, errors.Join(err, updateErr)
 		}
+		r.alert(ctx, cycle)
 
 		return cycle, fmt.Errorf("start retraining export: %w", err)
 	}
@@ -211,6 +216,7 @@ func (r *Retrainer) startExport(
 		zap.Int("newExamples", updated.NewExamples),
 		zap.Int("driftingProviders", updated.DriftingProviders),
 	)
+	r.alert(ctx, updated)
 
 	return updated, nil
 }
@@ -303,6 +309,7 @@ func (r *Retrainer) Reconcile(ctx context.Context) (int, error) {
 		zap.String("status", updated.Status.String()),
 		zap.String("failure", updated.FailureMessage),
 	)
+	r.alert(ctx, updated)
 
 	return 1, nil
 }
@@ -353,6 +360,7 @@ func (r *Retrainer) ClaimNext(
 		fields = append(fields, zap.String("expiredTrainer", previous))
 	}
 	r.l.Info("retraining claimed", fields...)
+	r.alert(ctx, claimed)
 
 	return claimed, nil
 }
@@ -396,6 +404,8 @@ func (r *Retrainer) Record(
 		zap.String("gate", recorded.GateMessage),
 	)
 
+	r.alert(ctx, recorded)
+
 	return recorded, nil
 }
 
@@ -420,6 +430,8 @@ func (r *Retrainer) FailTraining(
 		zap.String("trainer", failed.Trainer),
 		zap.String("failure", failed.FailureMessage),
 	)
+
+	r.alert(ctx, failed)
 
 	return failed, nil
 }
@@ -481,6 +493,7 @@ func (r *Retrainer) Cancel(ctx context.Context, id pulid.ID) (*aitraining.Retrai
 	}
 
 	r.l.Info("retraining canceled", zap.String("cycleId", canceled.ID.String()))
+	r.alert(ctx, canceled)
 
 	return canceled, nil
 }
@@ -491,6 +504,22 @@ func (r *Retrainer) List(ctx context.Context, limit int) ([]*aitraining.Retraini
 
 func (r *Retrainer) Get(ctx context.Context, id pulid.ID) (*aitraining.RetrainingCycle, error) {
 	return r.cycles.GetByID(ctx, id)
+}
+
+func (r *Retrainer) alert(ctx context.Context, cycle *aitraining.RetrainingCycle) {
+	if r.alerter == nil || cycle == nil {
+		return
+	}
+	if cycle.Status == aitraining.RetrainingStatusSkipped && !r.cfg.Alerts.IncludeSkipped {
+		return
+	}
+	if err := r.alerter.AlertRetraining(context.WithoutCancel(ctx), cycle); err != nil {
+		r.l.Warn("failed to send retraining alert",
+			zap.String("cycleId", cycle.ID.String()),
+			zap.String("status", cycle.Status.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (r *Retrainer) leaseSeconds() int64 {
