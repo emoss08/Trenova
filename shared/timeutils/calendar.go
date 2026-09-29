@@ -21,6 +21,12 @@ func DayStartUTC(ts int64) int64 {
 	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC).Unix()
 }
 
+func WeekStartUTC(ts int64) int64 {
+	day := time.Unix(DayStartUTC(ts), 0).UTC()
+	sinceMonday := (int(day.Weekday()) + 6) % 7
+	return day.AddDate(0, 0, -sinceMonday).Unix()
+}
+
 func DayStart(ts int64, loc *time.Location) int64 {
 	if loc == nil {
 		loc = time.UTC

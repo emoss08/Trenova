@@ -39,6 +39,13 @@ func (asyncRouteOnlyAIDocumentService) ExtractRateConfirmationForEvaluation(
 	return nil, errors.New("evaluation extraction is not used by these tests")
 }
 
+func (asyncRouteOnlyAIDocumentService) ExtractRateConfirmationForShadow(
+	context.Context,
+	*services.AIShadowExtractRequest,
+) (*services.AIEvaluationExtractResult, error) {
+	return nil, errors.New("shadow extraction is not used by these tests")
+}
+
 func (asyncRouteOnlyAIDocumentService) RouteDocument(
 	context.Context,
 	*services.AIRouteRequest,

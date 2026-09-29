@@ -17,19 +17,22 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Runner services.AITrainingExportRunner
-	Logger *zap.Logger
+	Runner    services.AITrainingExportRunner
+	Retrainer services.AIRetrainingService `optional:"true"`
+	Logger    *zap.Logger
 }
 
 type Activities struct {
-	runner services.AITrainingExportRunner
-	l      *zap.Logger
+	runner    services.AITrainingExportRunner
+	retrainer services.AIRetrainingService
+	l         *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		runner: p.Runner,
-		l:      p.Logger.Named("job.aitraining-export"),
+		runner:    p.Runner,
+		retrainer: p.Retrainer,
+		l:         p.Logger.Named("job.aitraining-export"),
 	}
 }
 

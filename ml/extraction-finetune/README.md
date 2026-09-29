@@ -8,6 +8,9 @@ result can be scored against the production model.
 
 How the pieces fit together, from export to a served model, is in
 [docs/engineering/extraction-fine-tuning.md](../../docs/engineering/extraction-fine-tuning.md).
+Scheduled retraining runs `trenova-finetune run` for you: on the GPU machine, a timer runs
+`trenova ai retraining run --config <config> --work-dir <dir>`, which claims the retraining cycle
+whose export has finished, renders it, trains, and records the score against production.
 
 ```bash
 uv sync --extra train --extra predict --extra dev   # on the GPU machine

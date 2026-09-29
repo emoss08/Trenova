@@ -34,6 +34,10 @@ import {
   type PromoteAiCorrectionInput,
   type StartExtractionEvalRunInput,
   type UpdateExtractionEvalCaseInput,
+  ExtractionProviderTrendsDocument,
+  ExtractionWeekAccuracyFieldsFragmentDoc,
+  type ExtractionProviderTrendsQuery,
+  type ExtractionWeekAccuracyFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -43,6 +47,20 @@ import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 type RequestOptions = { signal?: AbortSignal };
 
 export const EXTRACTION_ACCURACY_KEY = "extraction-accuracy";
+export const EXTRACTION_PROVIDER_TRENDS_KEY = "extraction-provider-trends";
+
+export type ExtractionWeekAccuracy = ExtractionWeekAccuracyFieldsFragment;
+type RawProviderTrend =
+  ExtractionProviderTrendsQuery["extractionProviderTrends"]["providers"][number];
+export type ExtractionProviderTrend = Omit<RawProviderTrend, "weeks" | "checked" | "baseline"> & {
+  weeks: ExtractionWeekAccuracy[];
+  checked: ExtractionWeekAccuracy;
+  baseline: ExtractionWeekAccuracy;
+};
+export type ExtractionProviderTrends = Omit<
+  ExtractionProviderTrendsQuery["extractionProviderTrends"],
+  "providers"
+> & { providers: ExtractionProviderTrend[] };
 export const AI_CORRECTION_LIST_KEY = "ai-correction-list";
 export const AI_CORRECTION_DETAIL_KEY = "ai-correction";
 export const EXTRACTION_EVAL_CASE_LIST_KEY = "extraction-eval-case-list";
@@ -316,4 +334,28 @@ export async function fetchExtractionEvalResults(
   }
 
   return results;
+}
+
+export async function fetchExtractionProviderTrends(
+  options?: RequestOptions,
+): Promise<ExtractionProviderTrends> {
+  const data = await requestGraphQL({
+    document: ExtractionProviderTrendsDocument,
+    operationName: "ExtractionProviderTrends",
+    variables: {},
+    signal: options?.signal,
+  });
+  const trends = data.extractionProviderTrends;
+  const week = (value: RawProviderTrend["checked"]) =>
+    getFragmentData(ExtractionWeekAccuracyFieldsFragmentDoc, value);
+
+  return {
+    ...trends,
+    providers: trends.providers.map((provider) => ({
+      ...provider,
+      weeks: provider.weeks.map(week),
+      checked: week(provider.checked),
+      baseline: week(provider.baseline),
+    })),
+  };
 }

@@ -65,6 +65,23 @@ func TestParseCalendarDateIsMidnightInTheLocation(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestWeekStartUTCIsTheMondayBefore(t *testing.T) {
+	t.Parallel()
+
+	monday := time.Date(2026, time.September, 28, 0, 0, 0, 0, time.UTC).Unix()
+	for _, ts := range []int64{
+		monday,
+		time.Date(2026, time.September, 30, 13, 5, 0, 0, time.UTC).Unix(),
+		time.Date(2026, time.October, 4, 23, 59, 59, 0, time.UTC).Unix(),
+	} {
+		assert.Equal(t, monday, WeekStartUTC(ts))
+	}
+
+	nextMonday := time.Date(2026, time.October, 5, 0, 0, 0, 0, time.UTC).Unix()
+	assert.Equal(t, nextMonday, WeekStartUTC(nextMonday+1))
+	assert.Equal(t, monday-7*SecondsPerDay, WeekStartUTC(monday-1))
+}
+
 func TestDayBoundariesFollowTheZone(t *testing.T) {
 	t.Parallel()
 

@@ -299,6 +299,51 @@ type ExtractionAccuracy {
   recentRuns: [ExtractionEvalRun!]!
 }
 
+"One provider's corrections in one UTC week, Monday to Sunday."
+type ExtractionWeekAccuracy {
+  weekStart: Timestamp!
+  corrections: Int!
+  scored: Int!
+  correct: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+"How one provider read documents week by week, and whether last week fell below its own recent weeks."
+type ExtractionProviderTrend {
+  providerId: ID!
+  "Empty when the provider has since been removed."
+  providerName: String!
+  model: String!
+  providerRemoved: Boolean!
+  "One entry per week in the window, oldest first; the last is the week in progress."
+  weeks: [ExtractionWeekAccuracy!]!
+  "The last complete week, the one judged for drift."
+  checked: ExtractionWeekAccuracy!
+  "The weeks before it, taken together."
+  baseline: ExtractionWeekAccuracy!
+  "Baseline accuracy less last week's, in points; zero until both have enough fields."
+  dropPoints: Float!
+  "Whether both weeks had enough scored fields to compare."
+  comparable: Boolean!
+  drifting: Boolean!
+}
+
+"Each extraction provider's accuracy over recent weeks, read from the corrections people made."
+type ExtractionProviderTrends {
+  weeks: [Timestamp!]!
+  checkedWeek: Timestamp!
+  baselineStart: Timestamp!
+  "Providers that read documents in the window, the busiest last week first."
+  providers: [ExtractionProviderTrend!]!
+  "How many points below its baseline last week must fall to count as drift."
+  driftPoints: Int!
+  "Scored fields last week needs before it is judged."
+  minWeekFields: Int!
+  "Scored fields the baseline needs before it is judged."
+  minBaselineFields: Int!
+}
+
 input PromoteAICorrectionInput {
   correctionId: ID!
   title: String
@@ -321,6 +366,7 @@ input StartExtractionEvalRunInput {
 
 extend type Query {
   extractionAccuracy(windowDays: Int): ExtractionAccuracy!
+  extractionProviderTrends: ExtractionProviderTrends!
   aiCorrections(input: DataTableConnectionInput!): AICorrectionConnection!
   aiCorrection(id: ID!): AICorrection
   extractionEvalCases(input: DataTableConnectionInput!): ExtractionEvalCaseConnection!

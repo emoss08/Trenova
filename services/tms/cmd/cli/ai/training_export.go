@@ -314,9 +314,17 @@ func parseDate(flag, value string) (int64, error) {
 }
 
 func exportID(raw string) (pulid.ID, error) {
+	return parseID(raw, "an export")
+}
+
+func cycleID(raw string) (pulid.ID, error) {
+	return parseID(raw, "a retraining cycle")
+}
+
+func parseID(raw, kind string) (pulid.ID, error) {
 	id, err := pulid.Parse(strings.TrimSpace(raw))
 	if err != nil {
-		return "", fmt.Errorf("%q is not an export id: %w", raw, err)
+		return "", fmt.Errorf("%q is not %s id: %w", raw, kind, err)
 	}
 
 	return id, nil

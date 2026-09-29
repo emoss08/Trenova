@@ -15,10 +15,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/aitraining"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
+	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,6 +54,42 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 	t.Parallel()
 
 	constraints := []enumConstraint{
+		{
+			name:   "ck_ai_retraining_cycles_status",
+			values: stringsOf(aitraining.AllRetrainingStatuses()),
+		},
+		{
+			name:   "ck_ai_retraining_cycles_trigger",
+			values: stringsOf(aitraining.AllRetrainingTriggers()),
+		},
+		{
+			name:   "ck_ai_retraining_cycles_skip_reason",
+			values: stringsOf(aitraining.AllRetrainingSkipReasons()),
+		},
+		{
+			name:   "ck_ai_retraining_cycles_structured_output_mode",
+			values: stringsOf(aiprovider.AllStructuredOutputModes()),
+		},
+		{
+			name:   "ck_extraction_rollouts_halt_reason",
+			values: stringsOf(extractionrollout.AllHaltReasons()),
+		},
+		{
+			name:   "ck_extraction_rollout_assignments_arm",
+			values: stringsOf(extractionrollout.AllArms()),
+		},
+		{
+			name:   "ck_extraction_rollout_assignments_outcome",
+			values: stringsOf(extractionrollout.AllOutcomes()),
+		},
+		{
+			name:   "ck_extraction_shadow_results_status",
+			values: stringsOf(extractionshadow.AllResultStatuses()),
+		},
+		{
+			name:   "ck_extraction_shadow_results_verdict",
+			values: stringsOf(extractionshadow.AllVerdicts()),
+		},
 		{
 			name:   "ck_accounting_connections_status",
 			values: stringsOf(accountingsync.AllConnectionStatuses()),
