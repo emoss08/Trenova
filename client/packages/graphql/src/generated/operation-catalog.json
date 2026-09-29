@@ -4199,7 +4199,7 @@
       "kind": "query",
       "domain": "capture",
       "sourceFile": "src/operations/capture/capture.graphql",
-      "hash": "sha256:255eebc82d775317997d672fded4e4026bab5ffc76dcb793de5d5909311e255a",
+      "hash": "sha256:93eb60acc16a9ff7e70b7b68401f478fd6d03076e325f414036fc914f8f557e5",
       "rootFields": [
         "captureBatch"
       ],
@@ -4218,7 +4218,7 @@
         "CaptureRecordRefFields"
       ],
       "usages": [],
-      "sdl": "query CaptureBatch($id: ID!) {\n  captureBatch(id: $id) {\n    ...CaptureBatchDetailFields\n  }\n}\n\nfragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+      "sdl": "query CaptureBatch($id: ID!) {\n  captureBatch(id: $id) {\n    ...CaptureBatchDetailFields\n  }\n}\n\nfragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  filedBy {\n    id\n    name\n  }\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "CaptureBatchCount",
@@ -9075,7 +9075,7 @@
       "kind": "mutation",
       "domain": "capture",
       "sourceFile": "src/operations/capture/capture.graphql",
-      "hash": "sha256:06d6ea7c7108d379fda0f748bfd8f0cc67e0858c0e12ebe10077ddab0e22ed48",
+      "hash": "sha256:6714bdad687385cf5fb7f51038fdb91432724eba5c18e79447bc3101618b0974",
       "rootFields": [
         "editCaptureItems"
       ],
@@ -9099,7 +9099,7 @@
         "CaptureRecordRefFields"
       ],
       "usages": [],
-      "sdl": "mutation EditCaptureItems($batchId: ID!, $input: EditCaptureItemsInput!) {\n  editCaptureItems(batchId: $batchId, input: $input) {\n    ...CaptureBatchDetailFields\n  }\n}\n\nfragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+      "sdl": "mutation EditCaptureItems($batchId: ID!, $input: EditCaptureItemsInput!) {\n  editCaptureItems(batchId: $batchId, input: $input) {\n    ...CaptureBatchDetailFields\n  }\n}\n\nfragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  filedBy {\n    id\n    name\n  }\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "EdiTemplateList",
@@ -9956,7 +9956,7 @@
       "kind": "mutation",
       "domain": "capture",
       "sourceFile": "src/operations/capture/capture.graphql",
-      "hash": "sha256:61340153bcc7647b8cba47c96ebb6c5234d6d7cf70689826ac13863304a77154",
+      "hash": "sha256:67a9c857e8f256327d5470aae64fa9c467ca21b32cb78967a38a99d4a23a151e",
       "rootFields": [
         "fileCaptureItem"
       ],
@@ -9977,14 +9977,14 @@
         "CaptureRecordRefFields"
       ],
       "usages": [],
-      "sdl": "mutation FileCaptureItem($id: ID!, $input: FileCaptureItemInput!) {\n  fileCaptureItem(id: $id, input: $input) {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+      "sdl": "mutation FileCaptureItem($id: ID!, $input: FileCaptureItemInput!) {\n  fileCaptureItem(id: $id, input: $input) {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  filedBy {\n    id\n    name\n  }\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "FileCaptureItems",
       "kind": "mutation",
       "domain": "capture",
       "sourceFile": "src/operations/capture/capture.graphql",
-      "hash": "sha256:61e2b7bd0d853ce8ce7959b820c8f954855355108629c60b9849b339f090d865",
+      "hash": "sha256:5876b2493cb4446d062209bccbd1f64a3c020991631807adde074f453d3a7d46",
       "rootFields": [
         "fileCaptureItems"
       ],
@@ -10000,7 +10000,7 @@
         "CaptureRecordRefFields"
       ],
       "usages": [],
-      "sdl": "mutation FileCaptureItems($items: [FileCaptureItemsEntryInput!]!) {\n  fileCaptureItems(items: $items) {\n    filed {\n      ...CaptureItemFields\n    }\n    failures {\n      itemId\n      message\n    }\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+      "sdl": "mutation FileCaptureItems($items: [FileCaptureItemsEntryInput!]!) {\n  fileCaptureItems(items: $items) {\n    filed {\n      ...CaptureItemFields\n    }\n    failures {\n      itemId\n      message\n    }\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  filedBy {\n    id\n    name\n  }\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "FinalizeDotRandomDraw",
@@ -22876,7 +22876,7 @@
         "EditCaptureItems"
       ],
       "usages": [],
-      "sdl": "fragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+      "sdl": "fragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  filedBy {\n    id\n    name\n  }\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "CaptureBatchRowFields",
@@ -22944,7 +22944,7 @@
         "FileCaptureItems"
       ],
       "usages": [],
-      "sdl": "fragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+      "sdl": "fragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  filedBy {\n    id\n    name\n  }\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "CapturePageFields",

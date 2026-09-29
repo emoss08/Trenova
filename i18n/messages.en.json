@@ -42873,13 +42873,14 @@
     ]
   },
   "Copy link": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "routes/intake",
       "routes/invoice"
     ]
   },
@@ -120574,6 +120575,15 @@
       "routes/worker"
     ]
   },
+  "Opens this stack in Intake for anyone who can see it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Operating authority": {
     "sites": 2,
     "scope": [
@@ -124522,6 +124532,15 @@
       "routes/agent-control"
     ]
   },
+  "Pages appear here as they arrive": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Pages are still arriving from the scanner": {
     "sites": 1,
     "scope": [
@@ -124574,6 +124593,15 @@
     ],
     "areas": [
       "domain/capture"
+    ]
+  },
+  "Pages received": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Pages rotate in quarter turns": {
@@ -154872,7 +154900,7 @@
     ]
   },
   "Scan into this record": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -165676,6 +165704,15 @@
       "routes/worker-checklist-template"
     ]
   },
+  "Shown as they arrive. They are split into documents once every page is in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Shown on customer profiles and the fuel dashboard.": {
     "sites": 1,
     "scope": [
@@ -168449,6 +168486,15 @@
       "routes/edi"
     ]
   },
+  "Stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Stack actions": {
     "sites": 1,
     "scope": [
@@ -168854,15 +168900,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Start a scan on one of your computers": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Start a scheduled or continuous agent's run on the slot its schedule fired for": {

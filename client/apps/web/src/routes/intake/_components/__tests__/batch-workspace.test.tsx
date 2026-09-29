@@ -71,6 +71,7 @@ function item(id: string, position: number, pageIds: string[]): CaptureItem {
     version: 1,
     suggestedRecord: null,
     filedRecord: null,
+    filedBy: null,
   } as unknown as CaptureItem;
 }
 
@@ -237,6 +238,17 @@ describe("BatchWorkspace", () => {
       await screen.findByRole("menuitem", { name: /Make it a document of its own/ }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: /Set aside/ })).not.toBeInTheDocument();
+  });
+
+  it("shows the pages of a stack still arriving as received, not set aside", async () => {
+    capture.fetchCaptureBatch.mockResolvedValue(
+      batch({ status: "Receiving", isEditable: false, items: [], itemCount: 0, openItemCount: 0 }),
+    );
+    renderWorkspace();
+
+    expect(await screen.findByText("Pages received")).toBeInTheDocument();
+    expect(screen.queryByText("Set aside")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Page 3\./ })).toBeInTheDocument();
   });
 
   it("says a stack that no longer exists is gone and leads back to the queue", async () => {

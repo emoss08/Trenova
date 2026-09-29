@@ -55,6 +55,7 @@ func TestRetentionRemindsTheOwnerOnceAWeekAhead(t *testing.T) {
 	assert.Contains(t, sent.Message, "A scan from fi-7160 has 2 document(s) not filed yet")
 	assert.Contains(t, sent.Message, "deleted in 3 day(s)")
 	assert.Contains(t, sent.Data["link"], due.ID.String())
+	assert.Contains(t, sent.Data["link"], "/intake?", "the link opens the stack in Intake")
 	assert.NotNil(t, w.batches[due.ID].RetentionRemindedAt)
 
 	reminded, err = s.RemindRetention(t.Context())

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:ef51310c618f120fc71f4c1513cdac2247a56253a953f5ca3dc37bf24e75f5ff",
+  "version": "sha256:a0495f7bf9bf7c57d85902e51c1fae0e9c0fc5b5c5c96bfaf36b7ac9de225a3a",
   "modules": [
     {
       "id": "home",
@@ -15589,6 +15589,15 @@
       "path": "/billing/queue",
       "params": {
         "item": "{id}"
+      }
+    },
+    {
+      "entity": "capture_batch",
+      "label": "Stack",
+      "path": "/intake",
+      "params": {
+        "view": "all",
+        "batch": "{id}"
       }
     },
     {

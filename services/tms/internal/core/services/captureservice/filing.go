@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/etagutils"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -286,6 +287,7 @@ func (s *Service) EditItems(
 	if err != nil {
 		return nil, err
 	}
+	before := layoutState(batch.Items)
 
 	tenantInfo := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 	var updated *capture.CaptureBatch
@@ -323,8 +325,33 @@ func (s *Service) EditItems(
 	}
 
 	s.publishBatch(ctx, updated, itemActionEdited)
+	s.logAudit(&services.LogActionParams{
+		Resource:       permission.ResourceCaptureBatch,
+		ResourceID:     updated.ID.String(),
+		Operation:      permission.OpUpdate,
+		PreviousState:  before,
+		CurrentState:   layoutState(items),
+		UserID:         in.TenantInfo.UserID,
+		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalID:    in.TenantInfo.UserID,
+		OrganizationID: updated.OrganizationID,
+		BusinessUnitID: updated.BusinessUnitID,
+	}, "Rearranged captured pages")
 
 	return s.GetBatch(ctx, in.TenantInfo, updated.ID)
+}
+
+// layoutState is how a batch's open pages divide, for the audit trail: the
+// pages of each document still to file, in order.
+func layoutState(items []*capture.CaptureItem) map[string]any {
+	documents := make([][]pulid.ID, 0, len(items))
+	for _, item := range items {
+		if item.Status.Open() {
+			documents = append(documents, item.PageIDs)
+		}
+	}
+
+	return map[string]any{"documents": documents}
 }
 
 // layoutItems validates a person's split and builds the items it describes.
@@ -853,6 +880,17 @@ func (s *Service) DiscardItem(
 	}
 
 	s.publishBatch(ctx, settled, batchActionUpdated)
+	s.logAudit(&services.LogActionParams{
+		Resource:       permission.ResourceCaptureBatch,
+		ResourceID:     settled.ID.String(),
+		Operation:      permission.OpDelete,
+		CurrentState:   jsonutils.MustToJSON(item),
+		UserID:         in.TenantInfo.UserID,
+		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalID:    in.TenantInfo.UserID,
+		OrganizationID: settled.OrganizationID,
+		BusinessUnitID: settled.BusinessUnitID,
+	}, "Discarded a captured document")
 
 	return settled, nil
 }

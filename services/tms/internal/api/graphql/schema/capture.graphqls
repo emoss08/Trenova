@@ -335,6 +335,8 @@ type CaptureItem {
   "The document it became."
   documentId: ID
   filedById: ID
+  "The person who filed it, when the reader may see them."
+  filedBy: User
   filedAt: Timestamp
   failureMessage: String!
   version: Int!
