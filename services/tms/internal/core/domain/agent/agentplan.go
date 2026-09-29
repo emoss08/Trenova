@@ -28,7 +28,9 @@ var (
 // its own, in whatever order the approver clicked. A plan is approved once
 // and its steps run in the order the agent asked for them; the first step
 // that fails stops the plan, and the steps after it are skipped rather than
-// run against a world the failed step was meant to change.
+// run against a world the failed step was meant to change. Steps that each
+// change a different record of one kind depend on none of the others, so
+// every one of them runs and the plan records how many went through.
 type AgentPlan struct {
 	bun.BaseModel `bun:"table:agent_plans,alias:apl" json:"-"`
 

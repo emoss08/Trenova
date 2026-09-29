@@ -205,7 +205,16 @@ digest that no longer matches, and hands each step the preview it was approved o
 (`StepPreview`, `StepPreviewReviewed`, server-only fields). A later step on a record an
 earlier step changed runs against the version that step left
 (`ExpectedTargetVersion`, from `DecisionOutcome.ExecutedTargetVersion`); a record moved by
-anything else still stops the plan.
+anything else still stops the plan. A plan whose steps each target a different record of one
+resource (five `post_invoice` steps) has no step resting on another, so every step runs,
+each settles on its own, and the plan records the steps that completed and, as its failure,
+each step that did not with its reason; a plan with a shared record, several resources or
+an untargeted step keeps the stop at the first failure.
+
+`decideMyProposals` is `decideAgentProposals` for proposals raised in the caller's own
+conversations (`AgentDecisionQueueService.DecideManyOwn`): every id passes
+`AssertOwnProposal` or nothing is decided, and each carries the digest of the preview the
+person had on screen.
 
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it
@@ -261,8 +270,10 @@ array-of-ids parameter as a subset of one permission resource's records with
   "everything awaiting approval" unseen is what the tool exists to prevent),
   `set_carrier_monitoring` (billed per carrier from `list_carriers`, a general list), and
   `retry_edi_message_delivery` and `reprocess_edi_inbound_files` (general lists of messages
-  and files, capped at `ediservice.MaxBulkEDIActionItems`). None of them has a candidates
-  read that decides each record the way the write would.
+  and files, capped at `ediservice.MaxBulkEDIActionItems`), and `post_invoices`,
+  `send_invoices` and `approve_billing_queue_items` (up to 50, each record previewed and run
+  through its single-record tool; see [agent-billing-tools.md](agent-billing-tools.md)).
+  None of them has a candidates read that decides each record the way the write would.
 
 A preview still shows at most 20 records, so a subset of more is shown in part; the
 parameter's value is the whole list, and the field's choices list it all. The approval form
