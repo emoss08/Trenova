@@ -238,6 +238,20 @@ which reaches the stream and the trajectory. A delegate's taint is folded back
 into the turn that asked when it ends, because its reply enters that turn's
 context.
 
+`get_shipment` returns a summary unless the call passes `detail: full`: the
+ids a follow-up write takes (moves, stops, assignment, holds, comments), the
+customer, the rating, the commodities and charges, and each stop's window and
+actuals as a local date and time in the stop location's zone (the
+organization's when the location has none, UTC when neither does), with the
+zone named beside it. It names the people on a move and never how to reach
+them. Either way the result is walked before it leaves the tool: every nested
+worker record (an object whose `id` is a worker id) keeps only the fields the
+`worker` resource's sensitivities let the caller see
+(`fieldaccess.go`, `recordGate`), and the fields withheld are listed as
+`worker.<field>` in `withheldByAccess`. Confidential fields are dropped
+without being named. A caller below Restricted on workers therefore never
+reads a driver's email, phone or address, even in the full record.
+
 ### Oversight tools
 
 Four read tools let an agent look over the organization's own agents, and each
