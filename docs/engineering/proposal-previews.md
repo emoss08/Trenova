@@ -160,6 +160,14 @@ says the write is filed anyway, which the runtime sets for a write on a record a
 unexecuted write of the same turn changes: the two become steps of one plan, the earlier step
 may be what makes the later one valid, and the plan's preview says it depends on that step.
 
+**The model is told what the card holds.** The result of a filing carries the baseline
+preview's summary and each warning's reason lines, and says that is all the model may say the
+proposal holds. A tool with no preview (or a baseline that could not be taken) echoes the filed
+arguments instead, as canonical JSON (`jsonutils.CanonicalMarshal`) up to 2 KiB; past that,
+one line per argument, lists and long text counted rather than repeated. An argument the
+runtime renamed to the tool's parameter (`aliasArguments`) is named, so the model uses the
+right name next time. The echo is text in the tool activity's result, so it took no gate.
+
 **It never rides `PendingAction`.** The action is an activity result that
 `DispatchCall.ProposedSoFar` hands to every later tool activity of the turn, so a preview
 there would grow the history by the square of the proposals. `PendingAction` is unchanged:

@@ -509,6 +509,52 @@ decided proposal whose call is not in the replay (a delegate's, or one older
 than the history) is told beside the question instead (`outOfViewDecisions`),
 so a delegate_task result saying a card is waiting is not the last word.
 
+The follow-up asks the agent to report only what the note and the proposal's
+card hold.
+
+### A typed approval puts the card back
+
+Typing "approved" decides nothing: a proposal is decided on its card. The
+system prompt's "Proposals awaiting a decision" section lists each waiting
+proposal with its id, and a turn a person is reading, with somewhere to show
+things and a proposal still waiting, holds `request_decision {proposalId}`.
+The runtime answers it itself, like `ask_user` and `publish_artifact`: the loop
+checks the id against the conversation's proposals as the turn opened (one of
+them, still pending; one filed this turn already has its card on screen; one
+card a turn), and the observer, where `publish_artifact` is kept
+(`PublishArtifactActivity` in workflow code), reads the thread's proposals
+again for this tenant and keeps a `decision_request` artifact over the one
+still pending (and its plan, for a step of one). The client draws the
+proposal's own card for the call, in the thread and on the Desk; the
+artifact's status follows the proposal. A delegate never holds it. The tool
+is held only by turns opened after it existed, so it took no gate.
+
+### What the reply may claim
+
+After the final completion of a turn that filed or executed writes, the reply
+is checked against what the turn actually has (`groundingguard.go`):
+`numberguard.CheckNumbers` over the figures the system prompt, the question,
+the tool results and the filed arguments support, and the reply's claims
+against the filed tools' own schemas: each collection property and each
+multi-word field (derived with `toolschema.Walk`, ids left out) must carry a
+value in some filed call, or be named in its filing result, before the reply
+may say it is part of the change. A sentence that says the thing was left out
+is not a claim. A hit discards the reply once, the way a looping reply is (a
+`retrying` event, then the draft and a correction to the model); a reply that
+still drifts, or one written after the tool budget was spent, ends with a note
+to check the card. Each is a `reply_regrounded` event in the run's trajectory.
+The LLM judge that scores the same thing stays in the evaluations.
+
+### The clock
+
+The system prompt names today's date only, so its cached prefix is the same all
+day. The question the model reads (never what the conversation keeps) opens with
+`Now: YYYY-MM-DD HH:MM zone` in the organization's zone, UTC when the zone is
+unknown, for an agent that reads the clock. `ask_user` option labels that carry a
+date read "Tue Oct 6 (in 7 days)", counted from the turn's own clock
+(`TurnEffects.Now`) in that zone; a past date on a scheduling question adds a note
+telling the model so.
+
 ## Agent runs
 
 `AgentRunWorkflow` runs one agent definition against its subject.
@@ -777,6 +823,7 @@ before the change:
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
+| `agent-loop-grounding-guard` | a reply that names what the filed writes do not hold is kept as written | nothing; the check itself is the only cost, and it is asked only of a reply the guard found wanting |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 | none: the workflow is retired whole | `ImportAssistantTurnWorkflow` on `agent-chat-queue`, which no route starts any more | the workflow, its activities and registry in `importassistantjobs`, `workflow_test.go`, and the turn machinery in `shipmentimportassistantservice` (the tool loop, `toolGrants`, `persistConversationTurn`); delete them once no `ImportAssistantTurnWorkflow` execution is open |
