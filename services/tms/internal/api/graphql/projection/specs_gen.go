@@ -5123,6 +5123,10 @@ func init() {
 				FieldMapKey: "filedById",
 			},
 			{
+				Name:        "filedBy",
+				FieldMapKey: "filedById",
+			},
+			{
 				Name:        "filedAt",
 				FieldMapKey: "filedAt",
 			},

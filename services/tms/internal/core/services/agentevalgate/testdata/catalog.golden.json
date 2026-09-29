@@ -21899,6 +21899,7 @@
               "ai_audit_export",
               "assistant_thread",
               "billing_queue_item",
+              "capture_batch",
               "carrier",
               "carrier_settlement",
               "commodity",
