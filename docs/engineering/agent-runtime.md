@@ -583,6 +583,30 @@ proposal's own card for the call, in the thread and on the Desk; the
 artifact's status follows the proposal. A delegate never holds it. The tool
 is held only by turns opened after it existed, so it took no gate.
 
+Several waiting proposals of one tool share one card: `request_decision
+{proposalIds}` (2 to 50, standalone, all still pending, one tool) keeps one
+`decision_request` artifact anchored on the first with every id in its payload,
+and the client draws them as one list with "Approve all N", decided through
+`decideMyProposals`. A plan's steps are asked for by `{planId}`: the card is
+the plan's, anchored on its first waiting step. A step of a plan among
+`proposalIds` is refused with the plan's id, and a mix of tools is refused.
+Exactly one of the three parameters is given.
+
+### Reads bunch into one table
+
+Every `get_*` call used to leave its own entity card, so checking five
+invoices put five cards beside the conversation. The loop remembers, per turn,
+the calls of each `get_*` tool that succeeded and hands them to the next call
+of that tool (`DispatchCall.Earlier`, carried to the observer as
+`ToolObservation.Earlier`). A first call still makes its card; a later one
+folds the turn's earlier cards of that tool into one `table_view` artifact
+keyed by the turn's first call of the tool (`payload.bunched`, with the calls
+it covers), adds its own row, and removes the cards it replaced. When the turn
+is saved, a card a table covers is not tied back to its message. A `get_*`
+result that is already rows and columns (`get_invoices`) is a table from the
+start. `Earlier` is activity input, not a workflow decision, so the recorded
+histories replay unchanged.
+
 ### What the reply may claim
 
 After the final completion of a turn that filed or executed writes, the reply

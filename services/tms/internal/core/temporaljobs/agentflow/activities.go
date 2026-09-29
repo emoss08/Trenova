@@ -236,7 +236,7 @@ func (a *Activities) runTool(
 	outcome := a.runtime.DispatchStep(ctx, req, in.Call)
 	observe, kept, done := a.observing(ctx, &in.Run)
 	defer done()
-	outcome = a.runtime.ObserveCall(observe, &in.Call.Call, outcome)
+	outcome = a.runtime.ObserveDispatch(observe, &in.Call, outcome)
 
 	return &ToolResult{Outcome: outcome, Artifacts: *kept}, nil
 }

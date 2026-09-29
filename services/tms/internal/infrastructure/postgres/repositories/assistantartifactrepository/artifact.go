@@ -161,6 +161,63 @@ func (r *repository) GetByID(
 	return entity, nil
 }
 
+func (r *repository) ListByToolCalls(
+	ctx context.Context,
+	req repositories.ListArtifactsByToolCallsRequest,
+) ([]*assistantartifact.Artifact, error) {
+	if len(req.CallIDs) == 0 {
+		return []*assistantartifact.Artifact{}, nil
+	}
+
+	cols := buncolgen.ArtifactColumns
+	entities := make([]*assistantartifact.Artifact, 0, len(req.CallIDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ArtifactScopeTenant(sq, req.TenantInfo).
+				Where(cols.ThreadID.Eq(), req.ThreadID).
+				Where(cols.SourceToolCallID.In(), bun.List(req.CallIDs))
+		}).
+		Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list assistant artifacts by tool call",
+			zap.String("threadId", req.ThreadID.String()),
+			zap.Error(err))
+
+		return nil, fmt.Errorf("list assistant artifacts by tool call: %w", err)
+	}
+
+	return entities, nil
+}
+
+func (r *repository) Delete(ctx context.Context, req repositories.DeleteArtifactsRequest) error {
+	if len(req.IDs) == 0 {
+		return nil
+	}
+
+	cols := buncolgen.ArtifactColumns
+	_, err := r.db.DBForContext(ctx).
+		NewDelete().
+		Model((*assistantartifact.Artifact)(nil)).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			return buncolgen.ArtifactScopeTenantDelete(dq, req.TenantInfo).
+				Where(cols.ThreadID.Eq(), req.ThreadID).
+				Where(cols.ID.In(), bun.List(req.IDs))
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to delete assistant artifacts",
+			zap.String("threadId", req.ThreadID.String()),
+			zap.Error(err))
+
+		return fmt.Errorf("delete assistant artifacts: %w", err)
+	}
+
+	return nil
+}
+
 func (r *repository) SetPinned(
 	ctx context.Context,
 	req repositories.SetArtifactPinnedRequest,

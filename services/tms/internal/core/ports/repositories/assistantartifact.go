@@ -16,6 +16,18 @@ type ListArtifactsRequest struct {
 	Limit int
 }
 
+type ListArtifactsByToolCallsRequest struct {
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	CallIDs    []string
+}
+
+type DeleteArtifactsRequest struct {
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	IDs        []pulid.ID
+}
+
 type GetArtifactRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -50,6 +62,11 @@ type AssistantArtifactRepository interface {
 		req ListArtifactsRequest,
 	) ([]*assistantartifact.Artifact, error)
 	GetByID(ctx context.Context, req GetArtifactRequest) (*assistantartifact.Artifact, error)
+	ListByToolCalls(
+		ctx context.Context,
+		req ListArtifactsByToolCallsRequest,
+	) ([]*assistantartifact.Artifact, error)
+	Delete(ctx context.Context, req DeleteArtifactsRequest) error
 	SetPinned(
 		ctx context.Context,
 		req SetArtifactPinnedRequest,
