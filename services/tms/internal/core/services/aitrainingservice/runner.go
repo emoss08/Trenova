@@ -233,8 +233,8 @@ func (r *Runner) writeExamples(
 ) ([]*aitraining.TrainingExportRecord, error) {
 	limit := job.export.MaxPerOrganization
 	written := make([]*aitraining.TrainingExportRecord, 0, min(limit, correctionPageSize))
-	var afterCapturedAt int64
-	var afterID pulid.ID
+	var beforeCapturedAt int64
+	var beforeID pulid.ID
 
 	for len(written) < limit {
 		active, err := r.IsActive(ctx, job.export.ID)
@@ -250,9 +250,9 @@ func (r *Runner) writeExamples(
 			Task:            job.export.Task,
 			CapturedFrom:    job.export.CapturedFrom,
 			CapturedTo:      job.export.CapturedTo,
-			AfterCapturedAt: afterCapturedAt,
-			AfterID:         afterID,
-			Limit:           correctionPageSize,
+			BeforeCapturedAt: beforeCapturedAt,
+			BeforeID:         beforeID,
+			Limit:            correctionPageSize,
 		})
 		if err != nil {
 			return nil, err
@@ -262,7 +262,7 @@ func (r *Runner) writeExamples(
 		}
 
 		for _, correction := range page {
-			afterCapturedAt, afterID = correction.CapturedAt, correction.ID
+			beforeCapturedAt, beforeID = correction.CapturedAt, correction.ID
 			example, reason, exampleErr := r.example(ctx, job, correction)
 			if exampleErr != nil {
 				return nil, exampleErr

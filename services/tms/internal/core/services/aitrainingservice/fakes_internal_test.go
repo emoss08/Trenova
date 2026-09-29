@@ -2,11 +2,13 @@ package aitrainingservice
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"io"
 	"maps"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
@@ -183,10 +185,17 @@ func (f *correctionStore) ListForTraining(
 	req *repositories.ListAICorrectionsForTrainingRequest,
 ) ([]*aicorrection.Correction, error) {
 	f.calls++
+	ordered := slices.Clone(f.items)
+	slices.SortFunc(ordered, func(a, b *aicorrection.Correction) int {
+		if a.CapturedAt != b.CapturedAt {
+			return cmp.Compare(b.CapturedAt, a.CapturedAt)
+		}
+		return strings.Compare(b.ID.String(), a.ID.String())
+	})
 	out := make([]*aicorrection.Correction, 0, req.Limit)
-	for _, item := range f.items {
-		if req.AfterID.IsNotNil() && (item.CapturedAt < req.AfterCapturedAt ||
-			(item.CapturedAt == req.AfterCapturedAt && item.ID <= req.AfterID)) {
+	for _, item := range ordered {
+		if req.BeforeID.IsNotNil() && (item.CapturedAt > req.BeforeCapturedAt ||
+			(item.CapturedAt == req.BeforeCapturedAt && item.ID >= req.BeforeID)) {
 			continue
 		}
 		out = append(out, item)

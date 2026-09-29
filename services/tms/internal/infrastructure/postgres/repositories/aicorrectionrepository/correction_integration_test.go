@@ -234,6 +234,31 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 
 	assert.Equal(t, 3, count(100),
 		"only scored corrections with a document, inside the window, are trainable")
+
+	first, err := repo.ListForTraining(ctx, &repositories.ListAICorrectionsForTrainingRequest{
+		TenantInfo:   tenantInfo,
+		Task:         aicorrection.TaskShipmentDraftExtraction,
+		CapturedFrom: from,
+		CapturedTo:   to,
+		Limit:        2,
+	})
+	require.NoError(t, err)
+	require.Len(t, first, 2)
+	assert.Equal(t, monday+3600, first[0].CapturedAt, "the newest correction comes first")
+	assert.Equal(t, monday, first[1].CapturedAt)
+
+	rest, err := repo.ListForTraining(ctx, &repositories.ListAICorrectionsForTrainingRequest{
+		TenantInfo:       tenantInfo,
+		Task:             aicorrection.TaskShipmentDraftExtraction,
+		CapturedFrom:     from,
+		CapturedTo:       to,
+		BeforeCapturedAt: first[1].CapturedAt,
+		BeforeID:         first[1].ID,
+		Limit:            2,
+	})
+	require.NoError(t, err)
+	require.Len(t, rest, 1, "the cursor continues after the last correction read")
+	assert.Equal(t, from, rest[0].CapturedAt)
 	assert.Equal(t, 2, count(2), "an organization counts for at most its cap")
 
 	totals := weekly()

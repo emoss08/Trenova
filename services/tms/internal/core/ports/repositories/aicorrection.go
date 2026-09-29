@@ -43,8 +43,8 @@ type ListAICorrectionsForTrainingRequest struct {
 	Task            aicorrection.Task
 	CapturedFrom    int64
 	CapturedTo      int64
-	AfterCapturedAt int64
-	AfterID         pulid.ID
+	BeforeCapturedAt int64
+	BeforeID         pulid.ID
 	Limit           int
 }
 

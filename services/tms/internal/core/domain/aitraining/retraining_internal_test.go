@@ -447,3 +447,57 @@ func TestRetrainingCycleValidate(t *testing.T) {
 	}
 	assert.ElementsMatch(t, []string{"skipReason", "validationPercent"}, fields)
 }
+
+func TestRetrainingAlertSummary(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("airc_")
+	tests := []struct {
+		cycle RetrainingCycle
+		event string
+		text  string
+	}{
+		{
+			cycle: RetrainingCycle{
+				ID: id, Status: RetrainingStatusSkipped, SkipReason: RetrainingSkipNotEnoughExamples,
+				NewExamples: 12, MinNewExamples: 1000,
+			},
+			event: "retraining.skipped",
+			text:  "12 new corrections, 1000 needed",
+		},
+		{
+			cycle: RetrainingCycle{ID: id, Status: RetrainingStatusExporting, Trigger: RetrainingTriggerDrift, NewExamples: 1400},
+			event: "retraining.exporting",
+			text:  "started (drift) with 1400 new corrections",
+		},
+		{
+			cycle: RetrainingCycle{
+				ID: id, Status: RetrainingStatusPassed, ModelCorrect: 91, ModelScored: 100,
+				BaselineCorrect: 89, BaselineScored: 100, Examples: 40, ModelDirectory: "/m",
+			},
+			event: "retraining.passed",
+			text:  "model 91.00% against production 89.00% on 40 validation examples. Model: /m",
+		},
+		{
+			cycle: RetrainingCycle{ID: id, Status: RetrainingStatusRejected, GateMessage: "Accuracy 80.00% is below the minimum of 85%"},
+			event: "retraining.rejected",
+			text:  "rejected by its gate: Accuracy 80.00% is below the minimum of 85%",
+		},
+		{
+			cycle: RetrainingCycle{ID: id, Status: RetrainingStatusFailed, FailureMessage: "out of GPU memory"},
+			event: "retraining.failed",
+			text:  "failed: out of GPU memory",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.event, func(t *testing.T) {
+			t.Parallel()
+
+			cycle := tt.cycle
+			assert.Equal(t, tt.event, cycle.Status.EventName())
+			assert.Contains(t, cycle.AlertSummary(), tt.text)
+			assert.Contains(t, cycle.AlertSummary(), id.String())
+		})
+	}
+}

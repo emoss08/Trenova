@@ -38,7 +38,9 @@ For each organization whose `agent_controls.ai_training_consent` is on, in organ
 order (`aitrainingjobs` pages through them and continues as new every 25):
 
 1. Consent is read again when the organization's turn comes, and skipped if it is off.
-2. Corrections are read oldest first. They must:
+2. Corrections are read newest first, so when an organization has more than `--max-per-org`
+   its most recent corrections are the ones kept; the layouts it receives now matter more than
+   the ones it received a year ago. They must:
    - be captured inside the window;
    - have a document;
    - have at least one scored field;

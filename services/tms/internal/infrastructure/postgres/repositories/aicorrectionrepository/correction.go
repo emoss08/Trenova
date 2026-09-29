@@ -488,18 +488,18 @@ func (r *repository) ListForTraining(
 				req.CapturedFrom,
 				req.CapturedTo,
 			)
-			if req.AfterID.IsNotNil() {
+			if req.BeforeID.IsNotNil() {
 				sq = sq.WhereGroup(" AND ", func(cq *bun.SelectQuery) *bun.SelectQuery {
-					return cq.Where(cols.CapturedAt.Gt(), req.AfterCapturedAt).
+					return cq.Where(cols.CapturedAt.Lt(), req.BeforeCapturedAt).
 						WhereGroup(" OR ", func(tq *bun.SelectQuery) *bun.SelectQuery {
-							return tq.Where(cols.CapturedAt.Eq(), req.AfterCapturedAt).
-								Where(cols.ID.Gt(), req.AfterID)
+							return tq.Where(cols.CapturedAt.Eq(), req.BeforeCapturedAt).
+								Where(cols.ID.Lt(), req.BeforeID)
 						})
 				})
 			}
 			return sq
 		}).
-		Order(cols.CapturedAt.OrderAsc(), cols.ID.OrderAsc()).
+		Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderDesc()).
 		Limit(limit).
 		Scan(ctx)
 	if err != nil {
