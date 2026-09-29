@@ -30,8 +30,8 @@ func contractArguments(
 	validator *toolschema.Validator,
 	name string,
 	schema, args map[string]any,
-) (map[string]any, error) {
-	aliased := aliasedArguments(schema, args)
+) (map[string]any, []argumentAlias, error) {
+	aliased, aliases := aliasArguments(schema, args)
 	if _, owned := aliased[serviceports.SelfScopeOwnerParam]; owned {
 		stripped := make(map[string]any, len(aliased)-1)
 		for key, value := range aliased {
@@ -43,10 +43,29 @@ func contractArguments(
 	}
 
 	if err := validator.ValidateFor(name, schema, aliased); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return aliased, nil
+	return aliased, aliases, nil
+}
+
+type argumentAlias struct {
+	From string
+	To   string
+}
+
+func aliasNote(aliases []argumentAlias) string {
+	if len(aliases) == 0 {
+		return ""
+	}
+
+	renamed := make([]string, 0, len(aliases))
+	for _, alias := range aliases {
+		renamed = append(renamed, alias.From+" was read as "+alias.To)
+	}
+
+	return "Arguments renamed to the tool's parameters: " + strings.Join(renamed, "; ") +
+		". Use those names from now on."
 }
 
 // argumentProblems lists each thing wrong with a call as "path: message",
@@ -101,31 +120,26 @@ func argumentOutcome(name string, err error) toolOutcome {
 // The model's own call is not changed: the result is a copy, so the thread
 // records what was sent and the tool reads what was meant.
 func aliasedArguments(schema, args map[string]any) map[string]any {
+	aliased, _ := aliasArguments(schema, args)
+
+	return aliased
+}
+
+func aliasArguments(schema, args map[string]any) (map[string]any, []argumentAlias) {
 	if len(args) == 0 {
-		return args
+		return args, nil
 	}
 	properties, ok := schema["properties"].(map[string]any)
 	if !ok || len(properties) == 0 {
-		return args
+		return args, nil
 	}
 
 	missing := missingRequired(schema, properties, args)
 	if len(missing) == 0 {
-		return args
+		return args, nil
 	}
 
-	var aliased map[string]any
-	rename := func(from, to string) {
-		if aliased == nil {
-			aliased = make(map[string]any, len(args))
-			for key, value := range args {
-				aliased[key] = value
-			}
-		}
-		aliased[to] = aliased[from]
-		delete(aliased, from)
-	}
-
+	renamer := &argumentRenamer{args: args}
 	byShape := make(map[string]string, len(missing))
 	for _, name := range missing {
 		byShape[argumentShape(name)] = name
@@ -135,30 +149,64 @@ func aliasedArguments(schema, args map[string]any) map[string]any {
 			continue
 		}
 		if target, found := byShape[argumentShape(key)]; found {
-			rename(key, target)
+			renamer.rename(key, target)
 			delete(byShape, argumentShape(key))
 		}
 	}
 
 	if _, declared := properties["id"]; !declared {
 		if value, sent := args["id"]; sent && value != nil {
-			idTargets := make([]string, 0, 1)
-			for _, name := range byShape {
-				if len(name) > 2 && strings.HasSuffix(name, "Id") {
-					idTargets = append(idTargets, name)
-				}
-			}
-			if len(idTargets) == 1 && (aliased == nil || aliased["id"] != nil) {
-				rename("id", idTargets[0])
+			if target, lone := loneIDTarget(byShape); lone && renamer.holds("id") {
+				renamer.rename("id", target)
 			}
 		}
 	}
 
-	if aliased == nil {
-		return args
+	return renamer.result()
+}
+
+type argumentRenamer struct {
+	args    map[string]any
+	aliased map[string]any
+	aliases []argumentAlias
+}
+
+func (r *argumentRenamer) rename(from, to string) {
+	r.aliases = append(r.aliases, argumentAlias{From: from, To: to})
+	if r.aliased == nil {
+		r.aliased = make(map[string]any, len(r.args))
+		for key, value := range r.args {
+			r.aliased[key] = value
+		}
+	}
+	r.aliased[to] = r.aliased[from]
+	delete(r.aliased, from)
+}
+
+func (r *argumentRenamer) holds(key string) bool {
+	return r.aliased == nil || r.aliased[key] != nil
+}
+
+func (r *argumentRenamer) result() (map[string]any, []argumentAlias) {
+	if r.aliased == nil {
+		return r.args, nil
+	}
+	sort.Slice(r.aliases, func(i, j int) bool { return r.aliases[i].From < r.aliases[j].From })
+
+	return r.aliased, r.aliases
+}
+
+func loneIDTarget(byShape map[string]string) (string, bool) {
+	target := ""
+	count := 0
+	for _, name := range byShape {
+		if len(name) > 2 && strings.HasSuffix(name, "Id") {
+			target = name
+			count++
+		}
 	}
 
-	return aliased
+	return target, count == 1
 }
 
 // missingRequired is the schema's required parameters the arguments lack.

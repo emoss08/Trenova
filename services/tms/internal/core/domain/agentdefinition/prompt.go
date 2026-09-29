@@ -136,6 +136,7 @@ type RuntimeContext struct {
 	// has not decided yet. The model is told so it points them at the card
 	// rather than proposing the same change again.
 	PendingProposals []PendingProposal
+	DecisionRequests bool
 	// Artifacts says the conversation keeps what the turn produces beside it:
 	// lists as tables, records as cards, and documents the model publishes.
 	Artifacts bool
@@ -177,8 +178,9 @@ type RuntimePage struct {
 
 // PendingProposal is one undecided proposal as the prompt names it.
 type PendingProposal struct {
-	ToolName  string
-	Rationale string
+	ProposalID pulid.ID
+	ToolName   string
+	Rationale  string
 }
 
 func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
@@ -230,7 +232,10 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 		builder.WriteString(section)
 	}
 
-	if section := buildPendingProposalSection(rc.PendingProposals); section != "" {
+	if section := buildPendingProposalSection(
+		rc.PendingProposals,
+		rc.DecisionRequests,
+	); section != "" {
 		builder.WriteString("\n\n")
 		builder.WriteString(section)
 	}
@@ -920,7 +925,7 @@ const maxPendingProposalRationaleChars = 200
 // person. Without it a model read "yes" or "approved" as a decision and
 // proposed the same write again, and told the person a change had been made
 // that was still sitting on its card.
-func buildPendingProposalSection(pending []PendingProposal) string {
+func buildPendingProposalSection(pending []PendingProposal, requestable bool) string {
 	if len(pending) == 0 {
 		return ""
 	}
@@ -931,13 +936,29 @@ func buildPendingProposalSection(pending []PendingProposal) string {
 		"These changes you proposed earlier in this conversation are waiting on the " +
 			"person. They approve or reject each one on its card in this conversation, " +
 			"not by typing: a message such as \"yes\", \"approved\" or \"go ahead\" does " +
-			"not decide it. Do not propose any of them again. If the person asks you to " +
-			"proceed, tell them the proposal is waiting for their approval on its card, " +
-			"and that nothing has been changed yet.",
+			"not decide it. Do not propose any of them again.",
 	)
+	if requestable {
+		builder.WriteString(
+			" When the person types an approval or asks you to proceed with one of them, " +
+				"call request_decision with its proposalId: that puts its card back in front " +
+				"of them to decide. Then tell them in one line that it is decided on the " +
+				"card and that nothing has been changed yet.",
+		)
+	} else {
+		builder.WriteString(
+			" If the person asks you to proceed, tell them the proposal is waiting for " +
+				"their approval on its card, and that nothing has been changed yet.",
+		)
+	}
 	for _, proposal := range pending {
 		builder.WriteString("\n- ")
 		builder.WriteString(proposal.ToolName)
+		if proposal.ProposalID.IsNotNil() {
+			builder.WriteString(" (proposalId ")
+			builder.WriteString(proposal.ProposalID.String())
+			builder.WriteString(")")
+		}
 		if rationale := strings.TrimSpace(proposal.Rationale); rationale != "" {
 			builder.WriteString(" — ")
 			builder.WriteString(stringutils.Ellipsize(rationale, maxPendingProposalRationaleChars))

@@ -153,6 +153,7 @@ func ToolProviders() []any {
 	providers = append(providers, ediToolProviders()...)
 	providers = append(providers, ledgerToolProviders()...)
 	providers = append(providers, operationsToolProviders()...)
+	providers = append(providers, ratesToolProviders()...)
 	providers = append(providers, workforceToolProviders()...)
 
 	return append(providers, settlementToolProviders()...)

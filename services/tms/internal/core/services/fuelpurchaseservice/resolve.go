@@ -3,12 +3,9 @@ package fuelpurchaseservice
 import (
 	"context"
 	"strconv"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -51,56 +48,14 @@ func (s *Service) ResolveRows(
 		zap.String("batchId", req.BatchID.String()),
 	)
 
-	batch, err := s.repo.GetImportBatchByID(ctx, &repositories.GetImportBatchByIDRequest{
-		ID:          req.BatchID,
-		TenantInfo:  req.TenantInfo,
-		IncludeRows: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if batch.Version != req.Version {
-		return nil, dberror.CreateVersionMismatchError("FuelPurchaseImportBatch", batch.ID.String())
-	}
-	if batch.IsTerminal() && !batch.IsFeed() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"This import is {0} and its rows cannot be worked out again",
-			strings.ToLower(batch.Status.Label()),
-		)
-	}
-
-	settled, pending := partitionRows(batch.Rows)
-	if len(pending) == 0 {
-		return nil, errortypes.NewValidationError(
-			"rows",
-			errortypes.ErrInvalid,
-			"Nothing in this import is waiting to be worked out",
-		)
-	}
-
-	staged, err := restage(batch, pending)
-	if err != nil {
-		return nil, err
-	}
-
-	resolved, summary, err := s.resolveRows(ctx, batch, staged)
+	plan, err := s.PlanResolveRows(ctx, req)
 	if err != nil {
 		log.Error("failed to resolve held rows", zap.Error(err))
 		return nil, err
 	}
+	batch, summary, resolved := plan.Batch, plan.Summary, plan.Worked
 
-	// The settled rows keep their identity and their purchase, and their counts
-	// have to be folded back in or the batch would look like it had shrunk.
-	for _, row := range settled {
-		summary.RowCount++
-		if row.Status == fuelpurchase.ImportRowStatusAlreadyImported {
-			summary.AlreadyImportedCount++
-		}
-	}
-
-	if err = s.repo.ReplaceImportRows(ctx, batch, append(settled, resolved...)); err != nil {
+	if err = s.repo.ReplaceImportRows(ctx, batch, append(plan.Settled, resolved...)); err != nil {
 		return nil, err
 	}
 
@@ -121,9 +76,9 @@ func (s *Service) ResolveRows(
 	}
 
 	result := &ResolveRowsResult{
-		Reviewed: len(pending),
-		Resolved: summary.NewCount,
-		Queued:   queuedRowCount(resolved),
+		Reviewed: plan.Reviewed,
+		Resolved: plan.Resolved,
+		Queued:   plan.Queued,
 	}
 
 	// A feed posts what it can on its own, exactly as the sync that opened the

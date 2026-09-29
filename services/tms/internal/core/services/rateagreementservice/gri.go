@@ -293,16 +293,8 @@ func (s *Service) ApplyRateIncrease(
 		return nil, err
 	}
 
-	if plan.NegativeCount > 0 {
-		return nil, errortypes.NewBusinessError(
-			"This decrease would push some lanes below zero, and a negative rate is not a discount. Narrow the scope or soften the change.",
-		)
-	}
-
-	if len(plan.Lines) == 0 {
-		return nil, errortypes.NewBusinessError(
-			"No lane in scope carries a rate this change could move",
-		)
+	if err = rateIncreaseApplicable(plan); err != nil {
+		return nil, err
 	}
 
 	for _, slice := range slices {

@@ -2,6 +2,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { AssistantMessage, DelegateReport, ToolEffect } from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
 import { describeToolCall, isWebTool, parseToolResult, WEB_READ_TOOL } from "./tool-presentation";
+import { REQUEST_DECISION_TOOL } from "./decision-requests";
 import {
   DELEGATE_TOOL,
   emptyDelegateProgress,
@@ -57,6 +58,7 @@ const NAMED_EFFECTS: Readonly<Record<string, ToolEffect>> = {
   compare_report_runs: "present",
   compose_table_view: "present",
   ask_user: "ask",
+  [REQUEST_DECISION_TOOL]: "ask",
   [DELEGATE_TOOL]: "delegate",
 };
 
@@ -586,6 +588,9 @@ function changeLine(step: ToolStep, t: TranslateFn): ActivityLine {
 }
 
 function askLine(step: ToolStep, t: TranslateFn): ActivityLine {
+  if (step.name === REQUEST_DECISION_TOOL) {
+    return decisionLine(step, t);
+  }
   if (step.status === "failed") {
     return {
       phrase: t("Couldn't ask you"),
@@ -598,6 +603,24 @@ function askLine(step: ToolStep, t: TranslateFn): ActivityLine {
   return {
     phrase: step.status === "running" ? t("Asking you…") : t("Asked you to choose"),
     detail: "",
+    failure: "",
+    state: step.status === "running" ? "running" : "done",
+  };
+}
+
+function decisionLine(step: ToolStep, t: TranslateFn): ActivityLine {
+  if (step.status === "failed") {
+    return {
+      phrase: t("Couldn't show the card again"),
+      detail: failureMessage(step),
+      failure: "",
+      state: "failed",
+    };
+  }
+
+  return {
+    phrase: step.status === "running" ? t("Showing the card again…") : t("Asked you to decide"),
+    detail: step.summary,
     failure: "",
     state: step.status === "running" ? "running" : "done",
   };

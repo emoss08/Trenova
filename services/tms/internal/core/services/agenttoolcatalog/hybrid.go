@@ -38,6 +38,7 @@ type Query struct {
 	Limit        int
 	Semantic     *Semantic
 	SkipSemantic map[string]struct{}
+	StrongOnly   bool
 }
 
 func (c *Catalog) Items() []serviceports.EmbeddingCatalogItem {
@@ -71,7 +72,7 @@ func (c *Catalog) RankHybrid(q Query) []serviceports.AgentToolDescriptor {
 
 	wanted := c.allowedSet(q.Allowed)
 	terms := agentsearch.Terms(q.Text)
-	fused := c.fuse(wanted, c.keywordRanked(wanted, terms, 1, false), q)
+	fused := c.fuse(wanted, c.keywordRanked(wanted, terms, keywordRanking{minScore: 1}), q)
 
 	out := make([]serviceports.AgentToolDescriptor, 0, q.Limit)
 	taken := make(map[string]struct{}, q.Limit)
@@ -83,7 +84,7 @@ func (c *Catalog) RankHybrid(q Query) []serviceports.AgentToolDescriptor {
 		out = append(out, entry.descriptor)
 	}
 
-	for _, candidate := range c.keywordRanked(wanted, terms, 0, false) {
+	for _, candidate := range c.keywordRanked(wanted, terms, keywordRanking{}) {
 		if len(out) == q.Limit {
 			break
 		}
@@ -98,14 +99,21 @@ func (c *Catalog) RankHybrid(q Query) []serviceports.AgentToolDescriptor {
 
 func (c *Catalog) FindHybrid(q Query) []serviceports.AgentToolDescriptor {
 	if !q.Semantic.usable() {
-		return c.Find(q.Allowed, q.Text, q.Limit)
+		return c.withFamilies(
+			c.allowedSet(q.Allowed),
+			c.rank(q.Allowed, q.Text, q.Limit, 1, q.StrongOnly),
+		)
 	}
 	if q.Limit <= 0 {
 		return nil
 	}
 
 	wanted := c.allowedSet(q.Allowed)
-	fused := c.fuse(wanted, c.keywordRanked(wanted, agentsearch.Terms(q.Text), 1, true), q)
+	fused := c.fuse(wanted, c.keywordRanked(wanted, agentsearch.Terms(q.Text), keywordRanking{
+		minScore: 1,
+		cutoff:   true,
+		strong:   q.StrongOnly,
+	}), q)
 	if len(fused) > q.Limit {
 		fused = fused[:q.Limit]
 	}

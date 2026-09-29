@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -48,28 +47,8 @@ func (s *Service) CreatePurchase(
 	ctx context.Context,
 	req *CreatePurchaseRequest,
 ) (*fuelpurchase.FuelPurchase, error) {
-	purchase := req.Purchase
-	if purchase == nil {
-		return nil, errortypes.NewValidationError(
-			"purchase",
-			errortypes.ErrRequired,
-			"A purchase is required",
-		)
-	}
-
-	purchase.ID = ""
-	purchase.OrganizationID = req.TenantInfo.OrgID
-	purchase.BusinessUnitID = req.TenantInfo.BuID
-	purchase.Source = fuelpurchase.PurchaseSourceManual
-	purchase.ImportBatchID = nil
-	purchase.CreatedByID = req.UserID
-	purchase.Normalize()
-
-	err := s.resolvePurchaseReferences(ctx, req.TenantInfo, purchase, req.JurisdictionCode)
+	purchase, err := s.PlanCreatePurchase(ctx, req)
 	if err != nil {
-		return nil, err
-	}
-	if err = validateEntity(purchase); err != nil {
 		return nil, err
 	}
 
@@ -104,57 +83,13 @@ func (s *Service) UpdatePurchase(
 	ctx context.Context,
 	req *UpdatePurchaseRequest,
 ) (*fuelpurchase.FuelPurchase, error) {
-	purchase := req.Purchase
-	if purchase == nil {
-		return nil, errortypes.NewValidationError(
-			"purchase",
-			errortypes.ErrRequired,
-			"A purchase is required",
-		)
-	}
-
-	stored, err := s.repo.GetPurchaseByID(ctx, &repositories.GetFuelPurchaseByIDRequest{
-		ID:         purchase.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanUpdatePurchase(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	if purchase.Source != "" && purchase.Source != stored.Source {
-		return nil, errortypes.NewValidationError(
-			"source",
-			errortypes.ErrInvalid,
-			"The source of a purchase cannot be changed",
-		)
-	}
-	if purchase.ImportBatchID != nil && !purchase.ImportBatchID.IsNil() &&
-		!sameOptionalID(purchase.ImportBatchID, stored.ImportBatchID) {
-		return nil, errortypes.NewValidationError(
-			"importBatchId",
-			errortypes.ErrInvalid,
-			"A purchase cannot be moved between imports",
-		)
-	}
-
-	purchase.OrganizationID = stored.OrganizationID
-	purchase.BusinessUnitID = stored.BusinessUnitID
-	purchase.Source = stored.Source
-	purchase.ImportBatchID = stored.ImportBatchID
-	purchase.CreatedByID = stored.CreatedByID
-	purchase.CreatedAt = stored.CreatedAt
-	purchase.Normalize()
-
-	err = s.resolvePurchaseReferences(ctx, req.TenantInfo, purchase, req.JurisdictionCode)
-	if err != nil {
-		return nil, err
-	}
-	if err = validateEntity(purchase); err != nil {
-		return nil, err
-	}
-
-	previous := *stored
-	updated, err := s.repo.UpdatePurchase(ctx, purchase)
+	previous := *change.Before
+	updated, err := s.repo.UpdatePurchase(ctx, change.After)
 	if err != nil {
 		return nil, err
 	}
@@ -183,15 +118,9 @@ type DeletePurchaseRequest struct {
 }
 
 func (s *Service) DeletePurchase(ctx context.Context, req *DeletePurchaseRequest) error {
-	stored, err := s.repo.GetPurchaseByID(ctx, &repositories.GetFuelPurchaseByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	stored, err := s.PlanDeletePurchase(ctx, req)
 	if err != nil {
 		return err
-	}
-	if stored.Version != req.Version {
-		return dberror.CreateVersionMismatchError("FuelPurchase", stored.ID.String())
 	}
 
 	if err = s.repo.DeletePurchase(ctx, &repositories.DeleteFuelPurchaseRequest{

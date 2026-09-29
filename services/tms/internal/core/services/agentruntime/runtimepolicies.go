@@ -44,6 +44,15 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"only they read it.",
 	},
 	{
+		name:      requestDecisionName,
+		operation: permission.OpRead,
+		scope:     agent.ToolScopeRun,
+		egress:    agent.EgressPersonal,
+		effect:    agent.ToolEffectAsk,
+		rationale: "Shows the person, in their own conversation, the card of a proposal " +
+			"already waiting on them; it decides nothing and changes no record.",
+	},
+	{
 		name:      delegateTaskName,
 		operation: permission.OpCreate,
 		scope:     agent.ToolScopeRun,

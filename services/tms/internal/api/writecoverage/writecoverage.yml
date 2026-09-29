@@ -674,13 +674,17 @@ writes:
 
   # distanceoverride
   "DELETE /api/v1/distance-overrides/:distanceOverrideID/":
-    pending: "Delete a distance override."
+    exempt: configuration
+    reason: "A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it."
   "PATCH /api/v1/distance-overrides/:distanceOverrideID/":
-    pending: "Update some fields of a distance override."
+    exempt: configuration
+    reason: "A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it."
   "POST /api/v1/distance-overrides/":
-    pending: "Create a distance override."
+    exempt: configuration
+    reason: "A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it."
   "PUT /api/v1/distance-overrides/:distanceOverrideID/":
-    pending: "Update a distance override."
+    exempt: configuration
+    reason: "A distance override is standing routing data an administrator keeps for a lane the routing provider gets wrong; every later rating, pay and IFTA run reads it."
 
   # distanceprofile
   "DELETE /api/v1/distance-profiles/:distanceProfileID/":
@@ -1387,35 +1391,41 @@ writes:
 
   # fuelpurchase
   "mutation assignFuelCard":
-    pending: "Assign fuel card."
+    tools: [assign_fuel_card]
   "mutation cancelFuelCard":
-    pending: "Cancel fuel card."
+    exempt: configuration
+    reason: "Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card)."
   "mutation commitFuelPurchaseImport":
-    pending: "Commit fuel purchase import."
+    tools: [commit_fuel_purchase_import]
   "mutation createFuelCard":
-    pending: "Create fuel card."
+    exempt: configuration
+    reason: "Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card)."
   "mutation createFuelPurchase":
-    pending: "Create fuel purchase."
+    tools: [record_fuel_purchase]
   "mutation createFuelPurchaseImport":
-    pending: "Create fuel purchase import."
+    exempt: infrastructure
+    reason: "Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import."
   "mutation deleteFuelPurchase":
-    pending: "Delete fuel purchase."
+    tools: [delete_fuel_purchase]
   "mutation discardFuelPurchaseImport":
-    pending: "Discard fuel purchase import."
+    tools: [discard_fuel_purchase_import]
   "mutation resolveFuelPurchaseImportRows":
-    pending: "Resolve fuel purchase import rows."
+    tools: [resolve_fuel_purchase_import_rows]
   "mutation stageFuelPurchaseImport":
-    pending: "Stage fuel purchase import."
+    exempt: infrastructure
+    reason: "Part of uploading a statement file from a browser: the batch holds the upload and staging parses it; an agent works a staged batch with commit_fuel_purchase_import or discard_fuel_purchase_import."
   "mutation syncFuelCardFeed":
-    pending: "Sync fuel card feed."
+    exempt: infrastructure
+    reason: "Reads the card provider's feed on the connection an administrator set up, which runs on its own schedule; resolve_fuel_purchase_import_rows works the rows a run held back."
   "mutation updateFuelCard":
-    pending: "Update fuel card."
+    exempt: configuration
+    reason: "Fuel cards are payment instruments an administrator issues, edits and cancels with the card provider; an agent assigns a card already on file (assign_fuel_card)."
   "mutation updateFuelPurchase":
-    pending: "Update fuel purchase."
+    tools: [correct_fuel_purchase]
 
   # fuelsurcharge
   "mutation addFuelIndexPrice":
-    pending: "Add fuel index price."
+    tools: [record_fuel_index_price]
   "mutation createFuelIndex":
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
@@ -1426,7 +1436,8 @@ writes:
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
   "mutation deleteFuelIndexPrice":
-    pending: "Delete fuel index price."
+    exempt: configuration
+    reason: "Pruning an index's price history is curation an administrator does; a manual price entered wrong is fixed with correct_fuel_index_price."
   "mutation deleteFuelSurchargeProgram":
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
@@ -1434,7 +1445,7 @@ writes:
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
   "mutation updateFuelIndexPrice":
-    pending: "Update fuel index price."
+    tools: [correct_fuel_index_price]
   "mutation updateFuelSurchargeProgram":
     exempt: configuration
     reason: "Fuel surcharge programs and the indexes they follow are commercial terms an administrator sets up."
@@ -1560,35 +1571,38 @@ writes:
 
   # ifta
   "mutation amendIftaReturn":
-    pending: "Amend IFTA return."
+    tools: [amend_ifta_return]
   "mutation backfillJurisdictionMiles":
-    pending: "Backfill jurisdiction miles."
+    tools: [backfill_jurisdiction_miles]
   "mutation createIftaMileageEntry":
-    pending: "Create IFTA mileage entry."
+    tools: [record_ifta_mileage_entry]
   "mutation deleteIftaMileageEntry":
-    pending: "Delete IFTA mileage entry."
+    tools: [delete_ifta_mileage_entry]
   "mutation deleteIftaReturn":
-    pending: "Delete IFTA return."
+    tools: [delete_ifta_return]
   "mutation deleteIftaTaxRate":
-    pending: "Delete IFTA tax rate."
+    exempt: configuration
+    reason: "IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them."
   "mutation finalizeIftaReturn":
     exempt: attestation
     reason: "A fuel tax return is signed off by the person accountable for filing it."
   "mutation generateIftaReturn":
-    pending: "Generate IFTA return."
+    tools: [generate_ifta_return]
   "mutation markIftaReturnFiled":
     exempt: attestation
     reason: "Records that a person filed the return with the jurisdiction."
   "mutation recalculateMoveJurisdictionMiles":
-    pending: "Recalculate move jurisdiction miles."
+    tools: [recalculate_move_jurisdiction_miles]
   "mutation recomputeIftaReturn":
-    pending: "Recompute IFTA return."
+    tools: [recompute_ifta_return]
   "mutation reopenIftaReturn":
-    pending: "Reopen IFTA return."
+    exempt: attestation
+    reason: "Reopening undoes the sign-off of the person accountable for filing the return, so that person decides."
   "mutation updateIftaMileageEntry":
-    pending: "Update IFTA mileage entry."
+    tools: [correct_ifta_mileage_entry]
   "mutation upsertIftaTaxRates":
-    pending: "Upsert IFTA tax rates."
+    exempt: configuration
+    reason: "IFTA tax rates are the jurisdictions' published rates an administrator loads each quarter; every return is computed from them."
 
   # inbound
   "POST /api/v1/webhooks/inbound-mail/:mailboxToken/":
@@ -1972,30 +1986,30 @@ writes:
 
   # rateagreement
   "POST /api/v1/rate-agreements/":
-    pending: "Create a rate agreement."
+    tools: [draft_rate_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/approve/":
-    pending: "Approve a rate agreement."
+    tools: [approve_rate_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/archive/":
-    pending: "Archive a rate agreement."
+    tools: [archive_rate_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/duplicate/":
-    pending: "Duplicate a rate agreement."
+    tools: [duplicate_rate_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/reject/":
-    pending: "Reject a rate agreement."
+    tools: [reject_rate_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/resume/":
-    pending: "Resume a rate agreement."
+    tools: [resume_rate_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/rules/amend/":
-    pending: "Amend the rating rules of an active rate agreement."
+    tools: [amend_rate_agreement_rules]
   "POST /api/v1/rate-agreements/:rateAgreementID/submit/":
-    pending: "Submit a rate agreement."
+    tools: [submit_rate_agreement]
   "POST /api/v1/rate-agreements/:rateAgreementID/suspend/":
-    pending: "Suspend a rate agreement."
+    tools: [suspend_rate_agreement]
   "POST /api/v1/rate-agreements/rate-increase/apply/":
-    pending: "Apply rate increase (rate agreement)."
+    tools: [apply_rate_increase]
   "POST /api/v1/rate-agreements/rate-increase/preview/":
     exempt: read-only
     reason: "Plans a general rate increase for review and saves nothing."
   "PUT /api/v1/rate-agreements/:rateAgreementID/":
-    pending: "Update a rate agreement."
+    tools: [revise_rate_agreement_draft]
 
   # rateconfirmation
   "POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/":
@@ -2017,19 +2031,23 @@ writes:
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment)."
   "POST /api/v1/rate-imports/:rateImportID/commit/":
-    pending: "Commit a rate import."
+    tools: [commit_rate_import]
   "POST /api/v1/rate-imports/:rateImportID/discard/":
-    pending: "Discard a rate import."
+    tools: [discard_rate_import]
 
   # ratematrix
   "DELETE /api/v1/rate-matrices/:rateMatrixID/":
-    pending: "Delete a rate matrice."
+    exempt: configuration
+    reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
   "POST /api/v1/rate-matrices/":
-    pending: "Create a rate matrice."
+    exempt: configuration
+    reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
   "PUT /api/v1/rate-matrices/:rateMatrixID/":
-    pending: "Update a rate matrice."
+    exempt: configuration
+    reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
   "PUT /api/v1/rate-matrices/:rateMatrixID/cells/":
-    pending: "Replace cells (rate matrice)."
+    exempt: configuration
+    reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
 
   # ratequote
   "POST /api/v1/rate-quotes/quote/":
@@ -2044,15 +2062,18 @@ writes:
 
   # ratesimulation
   "POST /api/v1/rate-simulations/":
-    pending: "Run and save a rate simulation across past shipments."
+    tools: [run_rate_simulation]
 
   # ratezone
   "DELETE /api/v1/rate-zones/:rateZoneID/":
-    pending: "Delete a rate zone."
+    exempt: configuration
+    reason: "Rate zones are the geography agreements price against, which an administrator defines once for every agreement."
   "POST /api/v1/rate-zones/":
-    pending: "Create a rate zone."
+    exempt: configuration
+    reason: "Rate zones are the geography agreements price against, which an administrator defines once for every agreement."
   "PUT /api/v1/rate-zones/:rateZoneID/":
-    pending: "Update a rate zone."
+    exempt: configuration
+    reason: "Rate zones are the geography agreements price against, which an administrator defines once for every agreement."
 
   # realtime
   "DELETE /api/v1/shipments/:shipmentID/comments/presence/":
@@ -2083,7 +2104,7 @@ writes:
     exempt: read-only
     reason: "Renders a dashboard to a file for download."
   "mutation cancelReportRun":
-    pending: "Cancel report run."
+    tools: [cancel_report_run]
   "mutation createReportDashboard":
     tools: [create_dashboard]
   "mutation createReportDefinition":
@@ -2091,19 +2112,21 @@ writes:
   "mutation createReportSchedule":
     tools: [schedule_report]
   "mutation createReportView":
-    pending: "Create report view."
+    exempt: user-preference
+    reason: "A saved view is one person's own columns and filters on a report page."
   "mutation deleteReportDashboard":
-    pending: "Delete report dashboard."
+    tools: [delete_dashboard]
   "mutation deleteReportDefinition":
-    pending: "Delete report definition."
+    tools: [delete_report]
   "mutation deleteReportSchedule":
-    pending: "Delete report schedule."
+    tools: [delete_report_schedule]
   "mutation deleteReportView":
-    pending: "Delete report view."
+    exempt: user-preference
+    reason: "A saved view is one person's own columns and filters on a report page."
   "mutation forkCannedReport":
     tools: [fork_report]
   "mutation resetCannedFork":
-    pending: "Reset canned fork."
+    tools: [reset_report_fork]
   "mutation runReport":
     tools: [run_report]
   "mutation updateReportDashboard":
@@ -2111,9 +2134,10 @@ writes:
   "mutation updateReportDefinition":
     tools: [update_report]
   "mutation updateReportSchedule":
-    pending: "Update report schedule."
+    tools: [update_report_schedule]
   "mutation updateReportView":
-    pending: "Update report view."
+    exempt: user-preference
+    reason: "A saved view is one person's own columns and filters on a report page."
 
   # role
   "DELETE /api/v1/roles/:roleID/permissions/:permID":
@@ -2367,7 +2391,8 @@ writes:
 
   # storedmileage
   "DELETE /api/v1/stored-mileages/:storedMileageID/":
-    pending: "Delete a stored mileage."
+    exempt: infrastructure
+    reason: "A stored mileage is a cached routing answer; clearing one only makes the next rating ask the routing provider again."
 
   # tablechangealert
   "DELETE /api/v1/tca/subscriptions/:id":

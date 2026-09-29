@@ -439,7 +439,15 @@ byte. With one:
    families after its matches, as before.
 
 The vector is the turn's request, which preselection has already spent, so `find_tools`'
-vector leg skips the tools the turn already carries and adds the next closest ones.
+vector leg skips the tools the turn already carries and adds the next closest ones. A match
+the turn already carries is still named, first, as already loaded, so a model that searched
+for a tool it holds is told to use it rather than that nothing matched.
+
+`Query.StrongOnly` counts only name and description hits (a tool that merely takes the word
+as a parameter is not a match), for the keyword leg and for the cutoff alike; a vector-only
+match still needs the floor. `find_tools` uses it for every search past the turn's own tools:
+naming tools not enabled for the agent, and naming a delegate that holds one.
+`Catalog.MatchesStrongly` says whether one tool matched that way.
 `unheldRefusal` runs in workflow code and stays keyword-only.
 
 `find_in_trenova` does the same through `productguideservice`: it embeds the question (the

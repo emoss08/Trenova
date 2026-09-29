@@ -457,6 +457,31 @@ func TestBuildSystemPrompt_NamesTheProposalsStillWaitingOnThePerson(t *testing.T
 		d.BuildSystemPrompt(agentdefinition.RuntimeContext{}),
 		"Proposals awaiting",
 	)
+	assert.NotContains(t, prompt, "request_decision",
+		"a turn that cannot put the card back is not told to")
+}
+
+func TestBuildSystemPrompt_ListsTheWaitingProposalIdsForRequestDecision(t *testing.T) {
+	t.Parallel()
+
+	d := &agentdefinition.Definition{Name: "Dispatch", Instructions: "Dispatch."}
+	d.ApplyDefaults()
+	id := pulid.ID("aprop_01JWAITING0000000000000000")
+
+	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
+		PendingProposals: []agentdefinition.PendingProposal{{
+			ProposalID: id,
+			ToolName:   "create_shipment",
+			Rationale:  "Copy PRO-100 for Tuesday.",
+		}},
+		DecisionRequests: true,
+	})
+
+	assert.Contains(t, prompt,
+		"- create_shipment (proposalId aprop_01JWAITING0000000000000000) — Copy PRO-100")
+	assert.Contains(t, prompt, "call request_decision with its proposalId")
+	assert.Contains(t, prompt, "not by typing")
+	assert.NotContains(t, prompt, "tell them the proposal is waiting for their approval")
 }
 
 // A model handed eight of forty tools and a bare list of names told the

@@ -44,6 +44,12 @@ var allIFTAFuelTypes = [...]IFTAFuelType{
 
 func (f IFTAFuelType) String() string { return string(f) }
 
+func IFTAFuelTypeValues() []IFTAFuelType {
+	values := allIFTAFuelTypes
+
+	return values[:]
+}
+
 func (f IFTAFuelType) IsValid() bool {
 	switch f {
 	case IFTAFuelTypeDiesel, IFTAFuelTypeGasoline, IFTAFuelTypeGasohol, IFTAFuelTypePropane,
