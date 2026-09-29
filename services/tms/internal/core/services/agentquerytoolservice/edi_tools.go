@@ -278,6 +278,10 @@ func newGetEDIInboundFileTool(
 
 func (t *getEDIInboundFileTool) Name() string { return "get_edi_inbound_file" }
 
+func (t *getEDIInboundFileTool) SearchTerms() []string {
+	return []string{"fail reason", "edi error", "processing error"}
+}
+
 func (t *getEDIInboundFileTool) Description() string {
 	return "Retrieve one inbound EDI file by id: its partner, status and failure reason, " +
 		"and each transaction set parsed from it with its control numbers. With " +
@@ -606,6 +610,10 @@ func newGetEDIPartnerTool(
 }
 
 func (t *getEDIPartnerTool) Name() string { return "get_edi_partner" }
+
+func (t *getEDIPartnerTool) SearchTerms() []string {
+	return []string{"partner setup", "inbound enabled", "outbound enabled", "partner settings"}
+}
 
 func (t *getEDIPartnerTool) Description() string {
 	return "Retrieve one EDI trading partner's setup and readiness checklist by id. It " +

@@ -58,10 +58,10 @@ Loaded now:
 - list_customers
 - create_customer
 - list_commodities
-- list_hazardous_materials
 - list_equipment_types
 - list_fleet_codes
 - list_document_types
+- list_watchtower_items
 
 Callable after find_tools:
 - get_carrier — Retrieve one carrier by id, including its authority, insurance and compliance state.
@@ -74,6 +74,7 @@ Callable after find_tools:
 - create_commodity — Add a commodity shipments can carry, with its freight class, temperature range, dimensions and handling.
 - update_commodity — Change a commodity: its name, description, freight class, temperature range, dimensions, handling or hazardous material.
 - update_commodity_status — Set one or more commodities Active or Inactive, which decides whether shipments can name them.
+- list_hazardous_materials — List the hazardous materials this organization is set up to haul, with hazard class, UN number, packing group and whether a placard is required.
 - create_hazardous_material — Add a hazardous material commodities can name, with its hazard class, UN number and packing group.
 - update_hazardous_material — Change a hazardous material: its class, UN number, packing group, shipping name, placarding, handling or emergency contact.
 - update_hazardous_material_status — Set one or more hazardous materials Active or Inactive, which decides whether commodities can name them.
@@ -109,7 +110,6 @@ Callable after find_tools:
 - update_table_change_alert — Change one of the person's change alerts: what it watches, which changes, the conditions or its message.
 - set_table_change_alert_status — Pause one of the person's change alerts so it stops notifying them, or resume a paused one.
 - delete_table_change_alert — Delete one of the person's change alerts they no longer want.
-- list_watchtower_items — List the watchtower feed of open items that need attention, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures.
 - dismiss_watchtower_item — Take an item off the watchtower feed once it has been dealt with; the record behind it is left alone.
 
 ## Artifacts

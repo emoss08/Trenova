@@ -299,7 +299,8 @@ func iftaReturnIDFrom(params *serviceports.ToolExecuteParams) (pulid.ID, error) 
 
 func newRecomputeIFTAReturnTool(returns iftaReturnKeeper) serviceports.AgentTool {
 	return newReceivableTool(iftaInternalSpec(&receivableSpec{
-		name: "recompute_ifta_return",
+		name:        "recompute_ifta_return",
+		searchTerms: []string{"refresh draft return", "recompute after corrections"},
 		description: "Recompute a draft IFTA return from the miles, purchases and tax rates " +
 			"on file now, after purchases or mileage were corrected. Only a draft can be " +
 			"recomputed; a finalized return must be reopened by a person first.",
@@ -749,7 +750,8 @@ type labelledMileageChange struct {
 
 func newCorrectIFTAMileageEntryTool(entries iftaMileageKeeper) serviceports.AgentTool {
 	return newReceivableTool(iftaInternalSpec(&receivableSpec{
-		name: "correct_ifta_mileage_entry",
+		name:        "correct_ifta_mileage_entry",
+		searchTerms: []string{"fix mileage entry", "wrong jurisdiction miles", "correct miles"},
 		description: "Correct a jurisdiction mileage entry that was keyed wrong: its tractor, " +
 			"state or province, day, miles or notes. Fields left out keep their value. A " +
 			"finalized return keeps its figures until it is reopened or amended.",
@@ -860,7 +862,8 @@ func deleteMileageRequest(
 
 func newDeleteIFTAMileageEntryTool(entries iftaMileageKeeper) serviceports.AgentTool {
 	return newReceivableTool(iftaInternalSpec(&receivableSpec{
-		name: "delete_ifta_mileage_entry",
+		name:        "delete_ifta_mileage_entry",
+		searchTerms: []string{"remove mileage entry", "duplicate mileage entry"},
 		description: "Propose deleting a jurisdiction mileage entry recorded in error, such " +
 			"as a trip sheet entered twice. The next IFTA return no longer counts its miles. " +
 			"To fix a wrong field use correct_ifta_mileage_entry instead.",

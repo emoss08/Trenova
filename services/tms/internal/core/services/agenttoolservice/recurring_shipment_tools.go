@@ -367,7 +367,8 @@ func newCreateRecurringShipmentTool(series recurringShipmentKeeper) serviceports
 		"(customer, stops, commodities and charges)")
 
 	return newReceivableTool(&receivableSpec{
-		name: "create_recurring_shipment",
+		name:        "create_recurring_shipment",
+		searchTerms: []string{"every weekday", "repeat every week", "standing lane"},
 		description: "Start a recurring shipment: a series that copies one saved shipment " +
 			"on a schedule, for a customer's standing lane. Give the source shipment, a " +
 			"name, the cron schedule and its timezone, all from what the person or the " +

@@ -60,7 +60,7 @@ Loaded now:
 - list_customers
 
 Callable after find_tools:
-- run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId.
+- run_report — Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads.
 - get_report_run — Check on a report started by run_report, when the person asks a question about the run that its own progress display does not answer.
 - cancel_report_run — Cancel a report run the person started that is still queued or running, such as one asked for with the wrong parameters.
 - update_report — Change a saved report the person owns: its definition, name, description, category, tags, visibility or default format.

@@ -82,7 +82,7 @@ func (t *createDashboardTool) Prerequisites() []string {
 }
 
 func (t *createDashboardTool) SearchTerms() []string {
-	return []string{"report dashboard", "reports page", "board"}
+	return []string{"report dashboard", "reports page", "board", "build dashboard", "new dashboard"}
 }
 
 func (t *createDashboardTool) ParamSchema() map[string]any {

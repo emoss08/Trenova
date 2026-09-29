@@ -55,6 +55,10 @@ func newListExpiringCredentialsTool(
 
 func (t *listExpiringCredentialsTool) Name() string { return "list_expiring_credentials" }
 
+func (t *listExpiringCredentialsTool) SearchTerms() []string {
+	return []string{"expiring licenses", "medical card expiry", "credentials due", "lapsed"}
+}
+
 func (t *listExpiringCredentialsTool) Description() string {
 	return "List worker (driver) credentials falling due, newest expiry first — " +
 		"medical cards, licences, hazmat endorsements and anything else the " +

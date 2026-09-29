@@ -69,6 +69,10 @@ func (t *listTimeOffTool) Description() string {
 		"still awaiting a decision."
 }
 
+func (t *listTimeOffTool) SearchTerms() []string {
+	return []string{"who is off", "time off calendar", "booked time off", "out of office"}
+}
+
 func (t *listTimeOffTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",

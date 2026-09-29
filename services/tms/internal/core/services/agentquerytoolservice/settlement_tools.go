@@ -353,6 +353,10 @@ func newGetDriverSettlementTool(
 
 func (t *getDriverSettlementTool) Name() string { return "get_driver_settlement" }
 
+func (t *getDriverSettlementTool) SearchTerms() []string {
+	return []string{"net pay", "pay statement", "pay stub", "deductions"}
+}
+
 func (t *getDriverSettlementTool) Description() string {
 	return "Retrieve one driver settlement, a driver's pay statement, by id with its " +
 		"earnings, deduction and adjustment lines. It also gives the exceptions it raised " +
@@ -572,6 +576,10 @@ func newListDriverPayEventsTool(
 
 func (t *listDriverPayEventsTool) Name() string { return "list_driver_pay_events" }
 
+func (t *listDriverPayEventsTool) SearchTerms() []string {
+	return []string{"what a driver was paid", "pay by shipment"}
+}
+
 func (t *listDriverPayEventsTool) Description() string {
 	return "List driver pay events, the pay a driver earned per load, newest first. " +
 		"Each has the shipment, the date, whether it is accrued, settled or voided, and " +
@@ -785,6 +793,10 @@ func newGetSettlementDisputeTool(
 
 func (t *getSettlementDisputeTool) Name() string { return "get_settlement_dispute" }
 
+func (t *getSettlementDisputeTool) SearchTerms() []string {
+	return []string{"driver pay dispute", "read dispute", "what the driver says", "dispute details"}
+}
+
 func (t *getSettlementDisputeTool) Description() string {
 	return "Retrieve one pay dispute a driver raised on a settlement: its category, status, " +
 		"the driver's own description, the line it is about, and how it was resolved. " +
@@ -948,6 +960,12 @@ func newListCarrierSettlementsTool(
 }
 
 func (t *listCarrierSettlementsTool) Name() string { return "list_carrier_settlements" }
+
+func (t *listCarrierSettlementsTool) SearchTerms() []string {
+	return []string{
+		"paid carrier settlements", "pending carrier settlements", "carrier pay history",
+	}
+}
 
 func (t *listCarrierSettlementsTool) Description() string {
 	return "List carrier settlements, the statements paying outside carriers for the " +

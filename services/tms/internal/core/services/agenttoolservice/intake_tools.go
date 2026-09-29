@@ -87,6 +87,10 @@ func newCreateShipmentTool(deps createShipmentDeps) serviceports.AgentTool {
 
 func (t *createShipmentTool) Name() string { return "create_shipment" }
 
+func (t *createShipmentTool) SearchTerms() []string {
+	return []string{"new shipment", "enter shipment"}
+}
+
 func (t *createShipmentTool) Description() string {
 	return "Enter a new shipment. To copy an existing shipment use duplicate_shipment instead, " +
 		"which carries its stops, commodities, charges and rating exactly. Give the customer, " +

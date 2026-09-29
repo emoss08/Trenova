@@ -605,7 +605,8 @@ func newReviseManualJournalDraftTool(
 	accounts ledgerAccounts,
 ) serviceports.AgentTool {
 	return newReportingReceivableTool(journalDraftSpec(&receivableSpec{
-		name: "revise_manual_journal_draft",
+		name:        "revise_manual_journal_draft",
+		searchTerms: []string{"change journal lines", "edit draft journal", "fix draft journal"},
 		description: "Rewrite a draft manual journal before it is submitted: its " +
 			"description, reason, day, currency or lines. Fields left out keep their value; " +
 			"lines, when given, replace every line. Only a draft can be revised; a journal " +

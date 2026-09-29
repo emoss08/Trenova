@@ -321,6 +321,10 @@ func newGetRateAgreementTool(
 
 func (t *getRateAgreementTool) Name() string { return "get_rate_agreement" }
 
+func (t *getRateAgreementTool) SearchTerms() []string {
+	return []string{"contract terms", "lane rates", "minimums"}
+}
+
 func (t *getRateAgreementTool) Description() string {
 	return "Retrieve one rate agreement, a contract or tariff, by id with its lane rules, " +
 		"rates, minimums and weight breaks. It also gives the current version, the " +
@@ -845,6 +849,10 @@ func newGetFuelSurchargeRatesTool(fuel fuelRateReader) serviceports.AgentQueryTo
 }
 
 func (t *getFuelSurchargeRatesTool) Name() string { return "get_fuel_surcharge_rates" }
+
+func (t *getFuelSurchargeRatesTool) SearchTerms() []string {
+	return []string{"fuel program", "diesel price in use", "surcharge schedule"}
+}
 
 func (t *getFuelSurchargeRatesTool) Description() string {
 	return "Read this week's fuel surcharge rate for every active fuel program. It gives " +
