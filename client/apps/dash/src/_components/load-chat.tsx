@@ -14,6 +14,7 @@ import {
   MessageScrollerItem,
   MessageScrollerProvider,
   MessageScrollerViewport,
+  useMessageScroller,
 } from "@trenova/shared/components/ui/message-scroller";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
@@ -89,25 +90,18 @@ function ChatMessage({ comment }: { comment: PortalLoadComment }) {
   );
 }
 
-export function LoadChat({ shipmentId }: { shipmentId: string }) {
+function ChatComposer({ shipmentId }: { shipmentId: string }) {
   const t = useT();
 
-  const features = useDashFeatures();
   const queryClient = useQueryClient();
+  const { scrollToEnd } = useMessageScroller();
   const [draft, setDraft] = useState("");
-
-  const comments = useQuery({
-    queryKey: ["dash-load-comments", shipmentId],
-    queryFn: ({ signal }) => fetchMyLoadComments(shipmentId, { signal }),
-    enabled: shipmentId.length > 0,
-  });
-
-  const thread = useMemo(() => [...(comments.data ?? [])].reverse(), [comments.data]);
 
   const send = useMutation({
     mutationFn: () => createMyLoadComment({ shipmentId, comment: draft.trim() }),
     onSuccess: async () => {
       setDraft("");
+      scrollToEnd({ behavior: "smooth" });
       await queryClient.invalidateQueries({ queryKey: ["dash-load-comments", shipmentId] });
     },
     onError: (error: Error) => toast.error(error.message || "We couldn't send your message."),
@@ -119,6 +113,47 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
     }
     send.mutate();
   };
+
+  return (
+    <div className="flex items-end gap-2 border-t border-border p-3">
+      <Textarea
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            handleSend();
+          }
+        }}
+        placeholder={t("Message dispatch...")}
+        rows={1}
+        maxLength={5000}
+        className="max-h-24 min-h-9 flex-1 resize-none"
+      />
+      <Button
+        size="icon"
+        aria-label={t("Send message")}
+        disabled={draft.trim().length === 0 || send.isPending}
+        onClick={handleSend}
+      >
+        <SendIcon className="size-4" />
+      </Button>
+    </div>
+  );
+}
+
+export function LoadChat({ shipmentId }: { shipmentId: string }) {
+  const t = useT();
+
+  const features = useDashFeatures();
+
+  const comments = useQuery({
+    queryKey: ["dash-load-comments", shipmentId],
+    queryFn: ({ signal }) => fetchMyLoadComments(shipmentId, { signal }),
+    enabled: shipmentId.length > 0,
+  });
+
+  const thread = useMemo(() => [...(comments.data ?? [])].reverse(), [comments.data]);
 
   if (comments.isPending) {
     return <Skeleton className="h-64 w-full rounded-2xl" />;
@@ -147,11 +182,7 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
                 </p>
               ) : (
                 thread.map((comment) => (
-                  <MessageScrollerItem
-                    key={comment.id}
-                    messageId={comment.id}
-                    scrollAnchor={comment.type === "DriverUpdate"}
-                  >
+                  <MessageScrollerItem key={comment.id} messageId={comment.id}>
                     <ChatMessage comment={comment} />
                   </MessageScrollerItem>
                 ))
@@ -160,34 +191,9 @@ export function LoadChat({ shipmentId }: { shipmentId: string }) {
           </MessageScrollerViewport>
           <MessageScrollerButton />
         </MessageScroller>
-      </MessageScrollerProvider>
 
-      {features.allowLoadComments ? (
-        <div className="flex items-end gap-2 border-t border-border p-3">
-          <Textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder={t("Message dispatch...")}
-            rows={1}
-            maxLength={5000}
-            className="max-h-24 min-h-9 flex-1 resize-none"
-          />
-          <Button
-            size="icon"
-            aria-label={t("Send message")}
-            disabled={draft.trim().length === 0 || send.isPending}
-            onClick={handleSend}
-          >
-            <SendIcon className="size-4" />
-          </Button>
-        </div>
-      ) : null}
+        {features.allowLoadComments ? <ChatComposer shipmentId={shipmentId} /> : null}
+      </MessageScrollerProvider>
     </div>
   );
 }
