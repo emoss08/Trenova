@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func selectRequest(limit, offset int, ids ...pulid.ID) selectOptionsRequest {
-	return selectOptionsRequest{
+func selectRequest(limit, offset int, ids ...pulid.ID) *selectOptionsRequest {
+	return &selectOptionsRequest{
 		ids: ids,
 		selectQuery: &pagination.SelectQueryRequest{
 			Pagination: pagination.Info{Limit: limit, Offset: offset},

@@ -12,7 +12,7 @@ import (
 
 func (r *Resolver) resolveFiscalYearSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -49,7 +49,7 @@ func (r *Resolver) resolveFiscalYearSelectOptions(
 
 func (r *Resolver) resolveFiscalPeriodSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
