@@ -210,6 +210,35 @@ describe("BatchWorkspace", () => {
     }
   });
 
+  it("offers each page only what it can do, from the one menu the stack shares", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await user.click(await screen.findByRole("button", { name: "Page 1 actions" }));
+    expect(
+      await screen.findByRole("menuitem", { name: /Start a new document after this page/ }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("menuitem", { name: /Set aside/ })).toHaveLength(1);
+    await user.click(screen.getByRole("menuitem", { name: /Move to/ }));
+    expect(await screen.findByRole("menuitem", { name: "Document 2" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Document 1" })).not.toBeInTheDocument();
+    await user.keyboard("{Escape}{Escape}");
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Page 2 actions" }));
+    expect(await screen.findByRole("menuitem", { name: /Preview/ })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: /Start a new document after this page/ }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: /Set aside/ }));
+
+    await user.click(await screen.findByRole("button", { name: "Page 2 actions" }));
+    expect(
+      await screen.findByRole("menuitem", { name: /Make it a document of its own/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Set aside/ })).not.toBeInTheDocument();
+  });
+
   it("says a stack that no longer exists is gone and leads back to the queue", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();

@@ -14,9 +14,19 @@ const statusColors = {
     "text-success-foreground focus:text-success-foreground focus:bg-success-subtle hover:text-success-foreground hover:bg-success-subtle dark:text-success-foreground dark:focus:text-success-foreground dark:focus:bg-success-subtle dark:hover:bg-success-subtle dark:hover:text-success-foreground",
 };
 
-function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
-  return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
+function DropdownMenu<Payload = unknown>({ ...props }: MenuPrimitive.Root.Props<Payload>) {
+  return <MenuPrimitive.Root<Payload> data-slot="dropdown-menu" {...props} />;
 }
+
+/**
+ * Connects one menu to many triggers rendered elsewhere, each passing a
+ * payload, so a long list shares one menu instead of mounting one per row.
+ */
+function createDropdownMenuHandle<Payload>() {
+  return MenuPrimitive.createHandle<Payload>();
+}
+
+type DropdownMenuHandle<Payload> = MenuPrimitive.Handle<Payload>;
 
 function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
   return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />;
@@ -262,7 +272,10 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
   );
 }
 
+export type { DropdownMenuHandle };
+
 export {
+  createDropdownMenuHandle,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,

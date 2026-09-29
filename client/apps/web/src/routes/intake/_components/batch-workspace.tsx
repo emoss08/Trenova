@@ -5,7 +5,7 @@ import {
   captureRetention,
   captureSourceLabel,
 } from "@/lib/capture";
-import type { CaptureBatchDetail, CapturePage } from "@/lib/graphql/capture";
+import type { CaptureBatchDetail } from "@/lib/graphql/capture";
 import { queries } from "@/lib/queries";
 import {
   DndContext,
@@ -24,6 +24,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBox, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import {
+  createDropdownMenuHandle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -37,13 +38,12 @@ import { describeError } from "@trenova/shared/lib/error-presentation";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ArrowLeftIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ConfirmDiscardDialog } from "./confirm-discard-dialog";
 import { DocumentCard, type DiscardEffect } from "./document-card";
 import { FiledDocuments } from "./filed-documents";
 import { LoosePages } from "./loose-pages";
 import {
-  LOOSE,
   dropPosition,
   leaveOut,
   mergeWithNext,
@@ -53,8 +53,9 @@ import {
   rotate,
   splitAfter,
 } from "./page-layout";
+import { PageMenu, type PageMenuActions } from "./page-menu";
 import { PagePreviewDialog } from "./page-preview-dialog";
-import type { PageMoveTarget } from "./page-thumbnail";
+import type { PageMenuPayload } from "./page-thumbnail";
 import { useBatchEditor } from "./use-batch-editor";
 
 /** One stack, opened: its documents to check, file or rearrange. */
@@ -154,6 +155,7 @@ function OpenBatch({
   const { allowed: canUpdate } = usePermission(Resource.CaptureBatch, Operation.Update);
   const { allowed: canDelete } = usePermission(Resource.CaptureBatch, Operation.Delete);
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [pageMenu] = useState(() => createDropdownMenuHandle<PageMenuPayload>());
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   const canEdit = canUpdate && batch.isEditable;
@@ -169,17 +171,20 @@ function OpenBatch({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const moveTargets: PageMoveTarget[] = layout.groups.map((group, index) => ({
-    key: group.key,
-    label: t("Document {0}", index + 1),
-  }));
-
-  const pageActions = {
-    preview: (page: CapturePage) => setPreviewId(page.id),
-    rotate: (pageId: string, turns: number) => editor.update((l) => rotate(l, pageId, turns)),
-    moveTo: (pageId: string, target: string) =>
-      editor.update((l) => movePage(l, pageId, target, Number.MAX_SAFE_INTEGER)),
-  };
+  const update = editor.update;
+  const preview = useCallback((pageId: string) => setPreviewId(pageId), []);
+  const pageActions = useMemo<PageMenuActions>(
+    () => ({
+      preview,
+      rotate: (pageId, turns) => update((l) => rotate(l, pageId, turns)),
+      splitAfter: (groupKey, pageId) => update((l) => splitAfter(l, groupKey, pageId)),
+      leaveOut: (pageId) => update((l) => leaveOut(l, pageId)),
+      newDocument: (pageId) => update((l) => newDocumentFrom(l, pageId)),
+      moveTo: (pageId, target) =>
+        update((l) => movePage(l, pageId, target, Number.MAX_SAFE_INTEGER)),
+    }),
+    [preview, update],
+  );
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (over === null || active.id === over.id) {
@@ -354,12 +359,8 @@ function OpenBatch({
                   destination={editor.destinationFor(group)}
                   onDestinationChange={(destination) => editor.setDestination(group, destination)}
                   failure={item ? editor.failures[item.id] : undefined}
-                  moveTargets={[...moveTargets, { key: LOOSE, label: t("Set aside") }]}
-                  pageActions={{
-                    ...pageActions,
-                    splitAfter: (pageId) => editor.update((l) => splitAfter(l, group.key, pageId)),
-                    leaveOut: (pageId) => editor.update((l) => leaveOut(l, pageId)),
-                  }}
+                  menu={pageMenu}
+                  onPreview={preview}
                   canEdit={canEdit}
                   canFile={canEdit}
                   canDiscard={canDelete && batch.isEditable}
@@ -399,15 +400,18 @@ function OpenBatch({
                 pages={pages}
                 rotations={layout.rotations}
                 sequence={layout.sequence}
-                moveTargets={moveTargets}
+                menu={pageMenu}
+                onPreview={preview}
                 canEdit={canEdit}
-                pageActions={{
-                  ...pageActions,
-                  newDocument: (pageId) => editor.update((l) => newDocumentFrom(l, pageId)),
-                }}
               />
             )}
           </DndContext>
+          <PageMenu
+            handle={pageMenu}
+            groups={layout.groups}
+            canEdit={canEdit}
+            actions={pageActions}
+          />
 
           <FiledDocuments items={settled} />
         </div>

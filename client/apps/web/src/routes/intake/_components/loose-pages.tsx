@@ -5,7 +5,7 @@ import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { LOOSE, pageNumber } from "./page-layout";
-import { PageThumbnail, type PageActions, type PageMoveTarget } from "./page-thumbnail";
+import { PageThumbnail, type PageMenu } from "./page-thumbnail";
 
 /**
  * The pages in no document: the separators the splitter took out, blank
@@ -18,16 +18,16 @@ export function LoosePages({
   pages,
   rotations,
   sequence,
-  moveTargets,
-  pageActions,
+  menu,
+  onPreview,
   canEdit,
 }: {
   pageIds: string[];
   pages: Map<string, CapturePage>;
   rotations: Readonly<Record<string, number>>;
   sequence: Readonly<Record<string, number>>;
-  moveTargets: PageMoveTarget[];
-  pageActions: Omit<PageActions, "leaveOut" | "splitAfter">;
+  menu: PageMenu;
+  onPreview: (pageId: string) => void;
   canEdit: boolean;
 }) {
   const t = useT();
@@ -60,9 +60,11 @@ export function LoosePages({
                   page={page}
                   rotation={rotations[pageId] ?? 0}
                   number={pageNumber({ sequence }, page)}
-                  moveTargets={moveTargets}
+                  groupKey={LOOSE}
+                  last={false}
+                  menu={menu}
+                  onPreview={onPreview}
                   disabled={!canEdit}
-                  actions={pageActions}
                 />
               );
             })}

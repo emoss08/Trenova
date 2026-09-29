@@ -34,7 +34,7 @@ import { useId, useState } from "react";
 import { ConfirmDiscardDialog } from "./confirm-discard-dialog";
 import { withKind, type Destination } from "./destination";
 import { pageNumber, type LayoutGroup } from "./page-layout";
-import { PageThumbnail, type PageActions, type PageMoveTarget } from "./page-thumbnail";
+import { PageThumbnail, type PageMenu } from "./page-thumbnail";
 
 /**
  * What discarding a document does to its stack. The server closes a stack
@@ -132,8 +132,8 @@ export function DocumentCard({
   destination,
   onDestinationChange,
   failure,
-  moveTargets,
-  pageActions,
+  menu,
+  onPreview,
   canEdit,
   canFile,
   canDiscard,
@@ -154,8 +154,8 @@ export function DocumentCard({
   destination: Destination;
   onDestinationChange: (destination: Destination) => void;
   failure: string | undefined;
-  moveTargets: PageMoveTarget[];
-  pageActions: Omit<PageActions, "splitAfter"> & { splitAfter: (pageId: string) => void };
+  menu: PageMenu;
+  onPreview: (pageId: string) => void;
   canEdit: boolean;
   canFile: boolean;
   canDiscard: boolean;
@@ -234,19 +234,17 @@ export function DocumentCard({
               if (page === undefined) {
                 return null;
               }
-              const last = index === group.pageIds.length - 1;
               return (
                 <PageThumbnail
                   key={pageId}
                   page={page}
                   rotation={rotations[pageId] ?? 0}
                   number={pageNumber({ sequence }, page)}
-                  moveTargets={moveTargets.filter((target) => target.key !== group.key)}
+                  groupKey={group.key}
+                  last={index === group.pageIds.length - 1}
+                  menu={menu}
+                  onPreview={onPreview}
                   disabled={!canEdit}
-                  actions={{
-                    ...pageActions,
-                    splitAfter: last ? undefined : pageActions.splitAfter,
-                  }}
                 />
               );
             })}
