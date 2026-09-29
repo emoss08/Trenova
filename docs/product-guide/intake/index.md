@@ -47,7 +47,9 @@ Keywords: delete scan, throw away pages, duplicate scan
 ### Find a stack
 Keywords: search scans, find print job, expiring scans
 1. Open [Intake](/intake) and pick a view on the left.
-2. Type in **Search scanner, print job or device**, or change the sort to **Expiring soonest** to see what will be deleted first.
+2. Type in **Search PRO, barcode, scanner, computer or person**: a PRO or bill of lading number finds the stacks for that shipment, and a barcode the scanner read finds the stack it is on.
+3. Choose **Today**, **Last 7 days** or **Last 30 days** to see only what arrived then, or change the sort to **Expiring soonest** to see what will be deleted first.
+4. A record's **Documents** tab also lists its **Stacks in Intake**, each a link to the stack.
 
 ## Notes
 Needs read access to capture batches to see the queue; filing needs update access and the permission to add documents to the record, and discarding needs delete access. A person whose access is limited to their own records sees only the stacks they captured.

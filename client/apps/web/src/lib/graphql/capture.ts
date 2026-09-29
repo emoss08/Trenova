@@ -186,6 +186,8 @@ export type CaptureBatchFilter = {
   targetType?: string | null;
   targetId?: string | null;
   query?: string | null;
+  /** Only stacks that arrived at or after this time, in Unix seconds. */
+  createdFrom?: number | null;
   after?: string | null;
   first?: number;
 };
@@ -207,6 +209,7 @@ function batchesInput(filter: CaptureBatchFilter, first: number) {
     targetType: filter.targetType ?? null,
     targetId: filter.targetId ?? null,
     query: filter.query ?? null,
+    createdFrom: filter.createdFrom ?? null,
   };
 }
 

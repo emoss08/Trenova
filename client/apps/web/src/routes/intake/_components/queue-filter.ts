@@ -5,6 +5,7 @@ import type {
   CaptureSource,
 } from "@/lib/graphql/capture";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { startOfDay, subDays } from "date-fns";
 
 /**
  * The queue's views, by what a person can do with a stack. There is one queue;
@@ -21,12 +22,18 @@ export const INTAKE_SORTS = [
   "MostPages",
 ] as const satisfies readonly CaptureBatchSort[];
 
+/** How far back a stack may have arrived, counted in whole days. */
+export const INTAKE_RECEIVED = ["any", "today", "week", "month"] as const;
+
+export type IntakeReceived = (typeof INTAKE_RECEIVED)[number];
+
 export type IntakeFilter = {
   view: IntakeView;
   source: CaptureSource | null;
   mine: boolean;
   query: string;
   sort: CaptureBatchSort;
+  received: IntakeReceived;
 };
 
 export const DEFAULT_INTAKE_FILTER: IntakeFilter = {
@@ -35,6 +42,7 @@ export const DEFAULT_INTAKE_FILTER: IntakeFilter = {
   mine: false,
   query: "",
   sort: "Newest",
+  received: "any",
 };
 
 export function viewStatuses(view: IntakeView): CaptureBatchStatus[] {
@@ -80,6 +88,38 @@ export function sortLabel(t: TranslateFn, sort: CaptureBatchSort): string {
   }
 }
 
+export function receivedLabel(t: TranslateFn, received: IntakeReceived): string {
+  switch (received) {
+    case "any":
+      return t("Any time");
+    case "today":
+      return t("Today");
+    case "week":
+      return t("Last 7 days");
+    case "month":
+      return t("Last 30 days");
+  }
+}
+
+/**
+ * The start of the window, in Unix seconds, or null for any time. It starts
+ * at midnight, so the request, and the cache entry it is kept under, stay the
+ * same all day.
+ */
+export function receivedSince(received: IntakeReceived, now: number): number | null {
+  const today = startOfDay(now);
+  switch (received) {
+    case "any":
+      return null;
+    case "today":
+      return Math.floor(today.getTime() / 1000);
+    case "week":
+      return Math.floor(subDays(today, 6).getTime() / 1000);
+    case "month":
+      return Math.floor(subDays(today, 29).getTime() / 1000);
+  }
+}
+
 function oneOf<T extends string>(value: string | null, options: readonly T[], fallback: T): T {
   return value !== null && (options as readonly string[]).includes(value) ? (value as T) : fallback;
 }
@@ -96,6 +136,7 @@ export function parseIntakeFilter(params: URLSearchParams): IntakeFilter {
     mine: params.get("mine") === "1",
     query: params.get("q") ?? "",
     sort: oneOf(params.get("sort"), INTAKE_SORTS, DEFAULT_INTAKE_FILTER.sort),
+    received: oneOf(params.get("received"), INTAKE_RECEIVED, DEFAULT_INTAKE_FILTER.received),
   };
 }
 
@@ -115,17 +156,22 @@ export function writeIntakeFilter(current: URLSearchParams, filter: IntakeFilter
   set("mine", filter.mine ? "1" : "", "");
   set("q", filter.query.trim(), "");
   set("sort", filter.sort, DEFAULT_INTAKE_FILTER.sort);
+  set("received", filter.received, DEFAULT_INTAKE_FILTER.received);
 
   return next;
 }
 
 /** The request the queue sends for a filter. */
-export function batchFilter(filter: IntakeFilter): Omit<CaptureBatchFilter, "after"> {
+export function batchFilter(
+  filter: IntakeFilter,
+  now: number = Date.now(),
+): Omit<CaptureBatchFilter, "after"> {
   return {
     statuses: viewStatuses(filter.view),
     source: filter.source,
     mine: filter.mine,
     query: filter.query.trim() === "" ? null : filter.query.trim(),
     sort: filter.sort,
+    createdFrom: receivedSince(filter.received, now),
   };
 }

@@ -491,9 +491,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       {draft.attachedShipmentId ? (
         <Alert variant="success" size="sm">
           <CircleCheckIcon />
-          <AlertTitle>
-            {t("This document is already attached to a shipment.")}
-          </AlertTitle>
+          <AlertTitle>{t("This document is already attached to a shipment.")}</AlertTitle>
           <AlertDescription>
             {t(
               "Shipment {0} attached {1} .",

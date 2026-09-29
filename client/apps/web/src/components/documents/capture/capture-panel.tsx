@@ -2,6 +2,8 @@ import { SectionPanel } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
+  captureBatchStatusAttrs,
+  captureBatchTitle,
   captureRequestFailureLabel,
   captureRequestStatusAttrs,
   captureRequestsToShow,
@@ -14,6 +16,7 @@ import {
   type CaptureRequestMode,
 } from "@/lib/graphql/capture";
 import { queries } from "@/lib/queries";
+import { RECORD_STACKS_SHOWN, recordBatchesQuery } from "@/lib/queries/capture";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -26,9 +29,9 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatSecondsAgo } from "@trenova/shared/lib/date";
+import { formatSecondsAgo, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
-import { ChevronDownIcon, PrinterIcon, QrCodeIcon, ScanLineIcon } from "lucide-react";
+import { ChevronDownIcon, InboxIcon, PrinterIcon, QrCodeIcon, ScanLineIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { CaptureRequestDialog } from "./capture-request-dialog";
@@ -297,6 +300,63 @@ export function CaptureRequestsPanel({
             canceling={cancel.isPending && cancel.variables === request.id}
           />
         ))}
+      </ul>
+    </SectionPanel>
+  );
+}
+
+/**
+ * The stacks this record's paper came in: scanned or printed into it, or
+ * with a document filed or suggested onto it, newest first, each a link to
+ * Intake. Hidden when there are none.
+ */
+export function CaptureStacksPanel({
+  kind,
+  recordId,
+}: {
+  kind: CaptureRecordKind;
+  recordId: string;
+}) {
+  const t = useT();
+  const stacksQuery = useQuery(recordBatchesQuery(kind, recordId));
+  const page = stacksQuery.data;
+  if (page === undefined || page.batches.length === 0) {
+    return null;
+  }
+  const statusAttrs = captureBatchStatusAttrs(t);
+
+  return (
+    <SectionPanel
+      title={t("Stacks in Intake")}
+      icon={<InboxIcon aria-hidden />}
+      hint={page.hasNextPage ? t("The {0} most recent", RECORD_STACKS_SHOWN) : undefined}
+    >
+      <ul className="divide-border-subtle divide-y">
+        {page.batches.map((batch) => {
+          const attrs = statusAttrs[batch.status];
+          return (
+            <li
+              key={batch.id}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm"
+            >
+              <Link
+                to={recordPath("capture_batch", batch.id)}
+                className="ui-focus-ring text-brand min-w-0 truncate hover:underline"
+              >
+                {captureBatchTitle(t, batch)}
+              </Link>
+              <Badge variant={phaseTone(attrs.phase)} title={attrs.description}>
+                {attrs.text}
+              </Badge>
+              <span className="text-foreground-subtle text-xs tabular-nums">
+                {t("{0, plural, one {# page} other {# pages}}", batch.receivedPageCount)}
+              </span>
+              <span className="text-foreground-subtle ml-auto text-xs">
+                {formatUnixDateTime(batch.createdAt)}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </SectionPanel>
   );

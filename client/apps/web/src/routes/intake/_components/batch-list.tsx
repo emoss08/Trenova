@@ -32,7 +32,13 @@ import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
 import { PrinterIcon, ScanLineIcon, SearchIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
-import { INTAKE_SORTS, sortLabel } from "./queue-filter";
+import {
+  INTAKE_RECEIVED,
+  INTAKE_SORTS,
+  receivedLabel,
+  sortLabel,
+  type IntakeReceived,
+} from "./queue-filter";
 
 export type BatchListState = {
   batches: CaptureBatchRow[];
@@ -145,6 +151,8 @@ export function BatchList({
   onSearchChange,
   sort,
   onSortChange,
+  received,
+  onReceivedChange,
   onOpen,
   empty,
 }: {
@@ -156,6 +164,8 @@ export function BatchList({
   onSearchChange: (value: string) => void;
   sort: CaptureBatchSort;
   onSortChange: (sort: CaptureBatchSort) => void;
+  received: IntakeReceived;
+  onReceivedChange: (received: IntakeReceived) => void;
   onOpen: (id: string) => void;
   empty: { title: string; description: string; action?: ReactNode };
 }) {
@@ -178,6 +188,10 @@ export function BatchList({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const sortItems = INTAKE_SORTS.map((value) => ({ value, label: sortLabel(t, value) }));
+  const receivedItems = INTAKE_RECEIVED.map((value) => ({
+    value,
+    label: receivedLabel(t, value),
+  }));
 
   return (
     <section aria-label={title} className="flex min-h-0 flex-1 flex-col">
@@ -190,27 +204,48 @@ export function BatchList({
             </span>
           )}
         </div>
+        <Input
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder={t("Search PRO, barcode, scanner, computer or person")}
+          aria-label={t("Search PRO, barcode, scanner, computer or person")}
+          className="w-full"
+          leftElement={<SearchIcon className="text-foreground-subtle size-3.5" />}
+          rightElement={
+            search === "" ? undefined : (
+              <Button
+                size="icon-xs"
+                variant="ghost"
+                aria-label={t("Clear the search")}
+                onClick={() => onSearchChange("")}
+              >
+                <XIcon className="size-3.5" />
+              </Button>
+            )
+          }
+        />
         <div className="flex gap-2">
-          <Input
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder={t("Search scanner, print job or device")}
-            aria-label={t("Search scanner, print job or device")}
-            className="min-w-0 flex-1"
-            leftElement={<SearchIcon className="text-foreground-subtle size-3.5" />}
-            rightElement={
-              search === "" ? undefined : (
-                <Button
-                  size="icon-xs"
-                  variant="ghost"
-                  aria-label={t("Clear the search")}
-                  onClick={() => onSearchChange("")}
-                >
-                  <XIcon className="size-3.5" />
-                </Button>
-              )
-            }
-          />
+          <Select
+            value={received}
+            items={receivedItems}
+            onValueChange={(value) => {
+              const next = INTAKE_RECEIVED.find((option) => option === value);
+              if (next !== undefined) {
+                onReceivedChange(next);
+              }
+            }}
+          >
+            <SelectTrigger className="min-w-0 flex-1" aria-label={t("Received")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {receivedItems.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select
             value={sort}
             items={sortItems}
@@ -221,7 +256,7 @@ export function BatchList({
               }
             }}
           >
-            <SelectTrigger className="w-40 shrink-0" aria-label={t("Sort")}>
+            <SelectTrigger className="min-w-0 flex-1" aria-label={t("Sort")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

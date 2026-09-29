@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
@@ -32,6 +33,13 @@ const (
 	coverSheetReason    = "Routed by the cover sheet in front of these pages"
 	requestReason       = "Scanned from this record"
 	referenceConfidence = 0.9
+	barcodeReason       = "A barcode on these pages names this shipment"
+	// barcodeConfidence ranks a barcode above the text: it was printed to be
+	// read by a machine, and it names exactly one shipment or none.
+	barcodeConfidence = 0.95
+	// maxReadCodes and maxReadCodeLength bound the codes kept from a page.
+	maxReadCodes      = 8
+	maxReadCodeLength = 200
 )
 
 // Progress is told how many pages have been read, so a long batch keeps its
@@ -298,9 +306,20 @@ func (s *Service) readCodes(
 	page *capture.CapturePage,
 	codes []string,
 ) {
+	page.Markers.ReadCodes = nil
 	for _, code := range codes {
 		token, ok := capture.CoverSheetToken(code)
 		if !ok {
+			if len(page.Markers.ReadCodes) < maxReadCodes {
+				page.Markers.ReadCodes = append(
+					page.Markers.ReadCodes,
+					stringutils.TruncateRunes(strings.TrimSpace(code), maxReadCodeLength),
+				)
+			}
+
+			continue
+		}
+		if page.Markers.CoverSheetID != nil {
 			continue
 		}
 
@@ -322,8 +341,6 @@ func (s *Service) readCodes(
 
 		page.Markers.CoverSheetID = &sheet.ID
 		page.Markers.UnrecognizedCoverSheet = false
-
-		return
 	}
 }
 
@@ -423,6 +440,10 @@ func (s *Service) proposeItems(
 			}
 		case batch.Target().HasRecord():
 			item.Suggest(batch.Target(), capture.SuggestionRequest, 1, requestReason)
+		}
+
+		if !item.Suggestion().HasRecord() {
+			s.suggestFromBarcodes(ctx, tenantInfo, item, pages)
 		}
 
 		if item.SuggestedDocTypeID == nil || !item.Suggestion().HasRecord() {
@@ -531,10 +552,51 @@ func (s *Service) suggestFromContent(
 	}
 
 	reason := item.SuggestionReason
-	if source == capture.SuggestionClassifier {
+	if source == capture.SuggestionClassifier && reason == "" {
 		reason = classifierReason
 	}
 	item.Suggest(target, source, confidence, reason)
+}
+
+// suggestFromBarcodes routes an item to the shipment a code on its pages
+// names: a PRO or bill of lading number the scanner decoded, or a QR code the
+// server read. It is a reading of the document, so it is offered for a person
+// to confirm, never filed on its own.
+func (s *Service) suggestFromBarcodes(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	item *capture.CaptureItem,
+	pages []*capture.CapturePage,
+) {
+	byID := make(map[pulid.ID]*capture.CapturePage, len(pages))
+	for _, page := range pages {
+		byID[page.ID] = page
+	}
+	seen := make(map[string]struct{})
+	codes := make([]string, 0, maxReferencesTried)
+	for _, id := range item.PageIDs {
+		page, ok := byID[id]
+		if !ok {
+			continue
+		}
+		for _, code := range page.Markers.Codes() {
+			code = strings.TrimSpace(code)
+			if _, dup := seen[code]; dup || code == "" {
+				continue
+			}
+			seen[code] = struct{}{}
+			codes = append(codes, code)
+		}
+	}
+
+	shipmentID, ok := s.shipmentFromReferences(ctx, tenantInfo, codes)
+	if !ok {
+		return
+	}
+	target := item.Suggestion()
+	target.ResourceType = permission.ResourceShipment.String()
+	target.ResourceID = &shipmentID
+	item.Suggest(target, capture.SuggestionClassifier, barcodeConfidence, barcodeReason)
 }
 
 func (s *Service) documentTypeByCode(

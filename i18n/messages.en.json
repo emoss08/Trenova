@@ -17922,6 +17922,15 @@
       "routes/hazardous-material"
     ]
   },
+  "Any time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Any value — or comma-separated choices": {
     "sites": 1,
     "scope": [
@@ -91892,22 +91901,24 @@
     ]
   },
   "Last 30 days": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Last 7 days": {
     "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
-      "routes/hos.tsx"
+      "routes/intake"
+    ]
+  },
+  "Last 7 days": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/hos.tsx",
+      "routes/intake"
     ]
   },
   "Last 90 days": {
@@ -140268,7 +140279,7 @@
     ]
   },
   "Received": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -140278,7 +140289,8 @@
       "domain/worker",
       "packages/shared/components",
       "routes/edi",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/intake"
     ]
   },
   "Received At": {
@@ -156006,6 +156018,15 @@
       "routes/billing-queue"
     ]
   },
+  "Search PRO, barcode, scanner, computer or person": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Search actions…": {
     "sites": 1,
     "scope": [
@@ -156748,15 +156769,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Search scanner, print job or device": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/intake"
     ]
   },
   "Search scope": {
@@ -168635,6 +168647,15 @@
       "routes/intake"
     ]
   },
+  "Stacks in Intake": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Staff": {
     "sites": 1,
     "scope": [
@@ -179393,14 +179414,15 @@
     ]
   },
   "The end of the range must not be before its start": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/aiaudit",
-      "routes/agent-control"
+      "routes/agent-control",
+      "service/captureservice"
     ]
   },
   "The end of the sample must be after its start": {
@@ -185873,6 +185895,15 @@
       "service/journalposting"
     ]
   },
+  "The {0} most recent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The {0} protocol has no embedding endpoint": {
     "sites": 1,
     "scope": [
@@ -191461,7 +191492,7 @@
     ]
   },
   "Today": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -191476,6 +191507,7 @@
       "routes/desk",
       "routes/dispatch-console",
       "routes/inbox",
+      "routes/intake",
       "routes/late-charges",
       "routes/scheduling",
       "routes/shipment",
@@ -218259,11 +218291,12 @@
     ]
   },
   "{0, plural, one {# page} other {# pages}}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/intake"
     ]
   },

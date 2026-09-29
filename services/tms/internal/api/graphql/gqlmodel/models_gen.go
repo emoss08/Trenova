@@ -1200,11 +1200,15 @@ type CaptureBatchesInput struct {
 	Source   *capture.Source       `json:"source,omitempty"`
 	// Only the caller's own batches, even when they could see everybody's.
 	Mine *bool `json:"mine,omitempty"`
-	// Only batches scanned into this record.
+	// Only stacks for this record: scanned into it, or with a document filed or suggested onto it.
 	TargetType *string `json:"targetType,omitempty"`
 	TargetID   *string `json:"targetId,omitempty"`
-	// Words from the scanner, print job or device name.
+	// Finds a stack by scanner or print job, the computer that sent it, whose it is, a code on one of its pages, or the PRO or bill of lading number of a shipment it is for.
 	Query *string `json:"query,omitempty"`
+	// Only stacks that arrived at or after this time.
+	CreatedFrom *int `json:"createdFrom,omitempty"`
+	// Only stacks that arrived at or before this time.
+	CreatedTo *int `json:"createdTo,omitempty"`
 }
 
 // A cover sheet ready to print.

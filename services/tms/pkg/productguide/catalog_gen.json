@@ -1,5 +1,5 @@
 {
-  "version": "sha256:216548f6366ca19989daf6226e97a28cf8871df296c06ae7153c27be2816b4fc",
+  "version": "sha256:d8c94afaea8a7882b879516a9428b9136753f913f78b5065e21bc4faaf4d53ae",
   "modules": [
     {
       "id": "home",
@@ -13050,7 +13050,9 @@
           ],
           "steps": [
             "Open [Intake](/intake) and pick a view on the left.",
-            "Type in **Search scanner, print job or device**, or change the sort to **Expiring soonest** to see what will be deleted first."
+            "Type in **Search PRO, barcode, scanner, computer or person**: a PRO or bill of lading number finds the stacks for that shipment, and a barcode the scanner read finds the stack it is on.",
+            "Choose **Today**, **Last 7 days** or **Last 30 days** to see only what arrived then, or change the sort to **Expiring soonest** to see what will be deleted first.",
+            "A record's **Documents** tab also lists its **Stacks in Intake**, each a link to the stack."
           ]
         }
       ],

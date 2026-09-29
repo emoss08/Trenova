@@ -25,9 +25,13 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
 vi.mock("@/components/autocomplete-fields", () => ({
-  ControlledCaptureRecordAutocompleteField: ({ label, value }: { label: string; value: string }) => (
-    <output aria-label={label}>{value}</output>
-  ),
+  ControlledCaptureRecordAutocompleteField: ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: string;
+  }) => <output aria-label={label}>{value}</output>,
   ControlledDocumentTypeAutocompleteField: ({ label }: { label: string }) => (
     <output aria-label={label} />
   ),

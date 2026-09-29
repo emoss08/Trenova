@@ -87,3 +87,19 @@ export function captureBatchesQuery(filter: Omit<CaptureBatchFilter, "after">) {
       last.hasNextPage ? last.endCursor : null,
   };
 }
+
+/** How many of a record's stacks its Documents tab lists. */
+export const RECORD_STACKS_SHOWN = 5;
+
+/**
+ * The most recent stacks for one record: scanned into it, or with a document
+ * filed or suggested onto it. It sits under the queue's key, so whatever
+ * refreshes the queue refreshes it too.
+ */
+export function recordBatchesQuery(targetType: string, targetId: string) {
+  const filter = { targetType, targetId, sort: "Newest" as const, first: RECORD_STACKS_SHOWN };
+  return {
+    queryKey: [...capture.batches(filter).queryKey, "record"] as const,
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchCaptureBatches(filter, { signal }),
+  };
+}
