@@ -16,7 +16,9 @@ use capture_platform::shell;
 use tokio::sync::mpsc::UnboundedSender;
 use trenova_capture::icon::{LOGO, best_for};
 use trenova_capture::menu::{MenuAction, MenuEntry};
-use trenova_capture::state::{Attention, Command, Notice, PrinterAttempt, Severity, Shared, Ui};
+use trenova_capture::state::{
+    Attention, Command, Notice, Pictures, PrinterAttempt, Severity, Shared, Ui,
+};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::Shell::{
@@ -45,6 +47,7 @@ const WM_REFRESH: u32 = WM_APP + 2;
 const WM_NOTICE: u32 = WM_APP + 3;
 const WM_ATTENTION: u32 = WM_APP + 4;
 const WM_PAGE: u32 = WM_APP + 5;
+const WM_PICTURES: u32 = WM_APP + 6;
 const ICON_ID: u32 = 1;
 const CLASS_NAME: PCWSTR = w!("TrenovaCaptureTray");
 /// Sent by a second start (the Start menu shortcut) to the one running.
@@ -58,6 +61,7 @@ fn attention_code(attention: Attention) -> usize {
         Attention::ScanPaused => 4,
         Attention::ScanEnded => 5,
         Attention::Refused => 6,
+        Attention::Review => 7,
     }
 }
 
@@ -69,6 +73,7 @@ fn attention_from(code: usize) -> Option<Attention> {
         4 => Attention::ScanPaused,
         5 => Attention::ScanEnded,
         6 => Attention::Refused,
+        7 => Attention::Review,
         _ => return None,
     })
 }
@@ -91,6 +96,7 @@ pub fn show_running_window() -> bool {
 pub struct TrayUi {
     window: usize,
     notices: Arc<Mutex<VecDeque<Notice>>>,
+    pictures: Arc<Mutex<VecDeque<Pictures>>>,
 }
 
 impl TrayUi {
@@ -137,13 +143,30 @@ impl Ui for TrayUi {
     fn attention(&self, attention: Attention) {
         self.post_with(WM_ATTENTION, attention_code(attention));
     }
+
+    fn pictures(&self, pictures: Pictures) {
+        {
+            let mut queue = self.pictures.lock().unwrap_or_else(PoisonError::into_inner);
+            queue.push_back(pictures);
+            while queue.len() > MAX_QUEUED_PICTURES {
+                queue.pop_front();
+            }
+        }
+        self.post(WM_PICTURES);
+    }
 }
+
+/// Answers to the window's asks for pictures kept until the tray's thread
+/// hands them over; a window that asks faster than it is answered loses the
+/// oldest, and asks again for what it still shows.
+const MAX_QUEUED_PICTURES: usize = 16;
 
 struct TrayState {
     hwnd: HWND,
     shared: Option<Arc<Shared>>,
     commands: UnboundedSender<Command>,
     notices: Arc<Mutex<VecDeque<Notice>>>,
+    pictures: Arc<Mutex<VecDeque<Pictures>>>,
     icon: HICON,
     /// The same mark at the large-icon size, for the window.
     icon_big: HICON,
@@ -509,6 +532,23 @@ fn tray_event(hwnd: HWND, lparam: LPARAM) {
     }
 }
 
+/// Hands the window the pictures read for it since the last time.
+fn deliver_pictures() {
+    let ready: Vec<Pictures> = STATE.with(|s| {
+        s.borrow().as_ref().map_or_else(Vec::new, |state| {
+            state
+                .pictures
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .drain(..)
+                .collect()
+        })
+    });
+    for pictures in &ready {
+        window::deliver_pictures(pictures);
+    }
+}
+
 extern "system" fn window_proc(
     hwnd: HWND,
     message: u32,
@@ -550,6 +590,10 @@ extern "system" fn window_proc(
             if let Some(context) = window_context() {
                 window::drain_inbox(&context);
             }
+            LRESULT(0)
+        }
+        WM_PICTURES => {
+            deliver_pictures();
             LRESULT(0)
         }
         WM_NOTICE => {
@@ -651,11 +695,13 @@ impl Tray {
         // SAFETY: as above.
         let show_message = unsafe { RegisterWindowMessageW(SHOW_MESSAGE) };
         let notices = Arc::new(Mutex::new(VecDeque::new()));
+        let pictures = Arc::new(Mutex::new(VecDeque::new()));
         let state = TrayState {
             hwnd,
             shared: None,
             commands,
             notices: Arc::clone(&notices),
+            pictures: Arc::clone(&pictures),
             icon: load_icon(SM_CXSMICON),
             icon_big: load_icon(SM_CXICON),
             notice_link: None,
@@ -667,6 +713,7 @@ impl Tray {
         let ui = Arc::new(TrayUi {
             window: hwnd.0.expose_provenance(),
             notices,
+            pictures,
         });
         Ok((Self { hwnd }, ui))
     }

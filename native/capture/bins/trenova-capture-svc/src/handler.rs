@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use capture_imaging::{ConvertLimits, PwgError, pwg_to_pdf};
 use capture_ipp::{DocumentFormat, IncomingJob, JobHandler, Refusal};
 use capture_protocol::api::{MAX_BATCH_PAGES, MAX_PRINT_JOB_BYTES};
-use capture_protocol::handoff::Inbox;
+use capture_protocol::handoff::{Inbox, PrintedPicture};
 
 use crate::attribution::{Attributor, Owner, PrintSystem, valid_sid};
 
@@ -54,9 +54,16 @@ impl<S: PrintSystem, I: Inboxes> PrintHandler<S, I> {
     }
 }
 
-/// A printed document as the PDF the server takes, and its page count when
-/// the conversion counted it.
-fn to_pdf(job: &IncomingJob) -> Result<(Vec<u8>, Option<u32>), Refusal> {
+/// A printed document as the PDF the server takes.
+struct Converted {
+    pdf: Vec<u8>,
+    /// Pages, when the conversion counted them.
+    pages: Option<u32>,
+    /// Pictures of its pages, when it was converted from raster.
+    pictures: Vec<PrintedPicture>,
+}
+
+fn to_pdf(job: &IncomingJob) -> Result<Converted, Refusal> {
     match job.format {
         DocumentFormat::Pdf => {
             if !job.data.starts_with(b"%PDF-") {
@@ -65,7 +72,11 @@ fn to_pdf(job: &IncomingJob) -> Result<(Vec<u8>, Option<u32>), Refusal> {
             if job.data.len() > MAX_PRINT_JOB_BYTES {
                 return Err(Refusal::TooLarge);
             }
-            Ok((job.data.clone(), None))
+            Ok(Converted {
+                pdf: job.data.clone(),
+                pages: None,
+                pictures: Vec::new(),
+            })
         }
         DocumentFormat::PwgRaster => {
             let limits = ConvertLimits {
@@ -74,7 +85,18 @@ fn to_pdf(job: &IncomingJob) -> Result<(Vec<u8>, Option<u32>), Refusal> {
                 jpeg_quality: PRINT_JPEG_QUALITY,
             };
             match pwg_to_pdf(&job.data, limits) {
-                Ok(document) => Ok((document.pdf, Some(document.pages))),
+                Ok(document) => Ok(Converted {
+                    pdf: document.pdf,
+                    pages: Some(document.pages),
+                    pictures: document
+                        .pictures
+                        .into_iter()
+                        .map(|picture| PrintedPicture {
+                            thumb: picture.thumb,
+                            view: picture.view,
+                        })
+                        .collect(),
+                }),
                 Err(PwgError::TooManyPages { .. } | PwgError::TooLarge { .. }) => {
                     Err(Refusal::TooLarge)
                 }
@@ -96,17 +118,24 @@ impl<S: PrintSystem, I: Inboxes> JobHandler for PrintHandler<S, I> {
                     "refused a print job it could not attribute"
                 );
             })?;
-        let (pdf, pages) = to_pdf(&job).inspect_err(|refusal| {
+        let converted = to_pdf(&job).inspect_err(|refusal| {
             tracing::warn!(job = job.job_id, sid = %owner.sid, ?refusal, "refused a printed document");
         })?;
         let inbox = self.inboxes.inbox_for(&owner).map_err(|err| {
             tracing::error!(sid = %owner.sid, error = %err, "could not open the inbox");
             Refusal::Internal("The print could not be stored.".into())
         })?;
-        let delivered = inbox.deliver(&job.name, pages, &pdf).map_err(|err| {
-            tracing::error!(sid = %owner.sid, error = %err, "could not store a print");
-            Refusal::Internal("The print could not be stored.".into())
-        })?;
+        let delivered = inbox
+            .deliver(
+                &job.name,
+                converted.pages,
+                &converted.pdf,
+                &converted.pictures,
+            )
+            .map_err(|err| {
+                tracing::error!(sid = %owner.sid, error = %err, "could not store a print");
+                Refusal::Internal("The print could not be stored.".into())
+            })?;
         tracing::info!(
             job = job.job_id,
             id = %delivered.id,

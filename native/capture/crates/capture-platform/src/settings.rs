@@ -22,6 +22,7 @@ const PRINT_PORT: &str = "PrintPort";
 const AUTO_UPDATE: &str = "AutoUpdate";
 const ROUTINE_NOTIFICATIONS: &str = "RoutineNotifications";
 const LAST_VERSION: &str = "LastVersion";
+const REVIEW_BEFORE_SENDING: &str = "ReviewBeforeSending";
 const CRYPTOGRAPHY_KEY: &str = "SOFTWARE\\Microsoft\\Cryptography";
 const MACHINE_GUID: &str = "MachineGuid";
 
@@ -169,6 +170,29 @@ pub fn routine_notifications() -> bool {
 pub fn set_routine_notifications(on: bool) -> std::io::Result<()> {
     set_user_value(
         ROUTINE_NOTIFICATIONS,
+        REG_DWORD,
+        &u32::from(on).to_le_bytes(),
+    )
+}
+
+/// Whether scans and prints wait for this Windows user to look them over
+/// before they are sent: set by policy (`ReviewBeforeSending` under the
+/// policy key) or by the person. Unset means no.
+pub fn review_before_sending() -> bool {
+    read_dword(HKEY_LOCAL_MACHINE, POLICY_KEY, REVIEW_BEFORE_SENDING)
+        .or_else(|| read_dword(HKEY_CURRENT_USER, KEY, REVIEW_BEFORE_SENDING))
+        .is_some_and(|value| value != 0)
+}
+
+/// Whether an administrator decided review before sending for everyone.
+pub fn review_before_sending_locked() -> bool {
+    read_dword(HKEY_LOCAL_MACHINE, POLICY_KEY, REVIEW_BEFORE_SENDING).is_some()
+}
+
+/// Saves whether this Windows user wants to look things over first.
+pub fn set_review_before_sending(on: bool) -> std::io::Result<()> {
+    set_user_value(
+        REVIEW_BEFORE_SENDING,
         REG_DWORD,
         &u32::from(on).to_le_bytes(),
     )

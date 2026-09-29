@@ -18,8 +18,8 @@ use std::sync::Arc;
 use capture_platform::{paths, settings, shell};
 use tokio::sync::mpsc::UnboundedSender;
 use trenova_capture::page;
-use trenova_capture::state::{Attention, Command, Notice, Severity, Shared};
-use trenova_capture::view::{PageMessage, WindowAction, render_script};
+use trenova_capture::state::{Attention, Command, Notice, Pictures, Severity, Shared};
+use trenova_capture::view::{PageMessage, WindowAction, pictures_script, render_script};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::HiDpi::GetDpiForSystem;
@@ -348,6 +348,17 @@ pub fn refresh(shared: &Shared) {
     });
 }
 
+/// Hands the page pictures it asked for, when the window is open.
+pub fn deliver_pictures(pictures: &Pictures) {
+    WINDOW.with(|w| {
+        if let Some(window) = w.borrow().as_ref()
+            && let Err(err) = window.webview.evaluate_script(&pictures_script(pictures))
+        {
+            tracing::warn!(error = %err, "the window could not be given its pictures");
+        }
+    });
+}
+
 /// Closes the window, and the browser engine behind it.
 pub fn close() {
     let window = WINDOW.with(|w| w.borrow_mut().take());
@@ -365,7 +376,7 @@ pub fn close() {
 pub fn attention(context: &WindowContext, attention: Attention) {
     match attention {
         Attention::SignIn | Attention::SetUp => show(context, Show::Activate),
-        Attention::ScanPaused | Attention::Refused => {
+        Attention::ScanPaused | Attention::Refused | Attention::Review => {
             WINDOW.with(|w| {
                 if let Some(window) = w.borrow_mut().as_mut() {
                     window.auto_hide = false;
@@ -476,6 +487,12 @@ fn perform(context: &WindowContext, action: WindowAction) {
                 tracing::warn!(error = %err, "could not save the notification choice");
             }
             context.shared.update(|s| s.routine_muted = !on);
+        }
+        WindowAction::SetReviewBeforeSending(on) => {
+            if let Err(err) = settings::set_review_before_sending(on) {
+                tracing::warn!(error = %err, "could not save the review choice");
+            }
+            context.shared.update(|s| s.review_before_sending = on);
         }
         WindowAction::Quit => send(context, Command::Quit),
     }

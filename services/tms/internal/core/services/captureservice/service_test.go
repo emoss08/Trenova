@@ -329,6 +329,31 @@ func TestPageUploadIsIdempotentAndRefusesAnotherPage(t *testing.T) {
 	assert.True(t, bytes.HasPrefix(stored, []byte("sealed|capture_page|")), "pages are sealed at rest")
 }
 
+func TestPageUploadKeepsTheTurnMadeOnTheDevice(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	s := w.service()
+	principal := principalFor(t, s, pair(t, w, s))
+
+	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k1", Source: capture.SourceScan})
+	require.NoError(t, err)
+
+	page, err := s.PutPage(t.Context(), principal, &PutPageInput{
+		BatchID: batch.ID, Sequence: 1, Body: bytes.NewReader(pdfPage(t, 200)), Rotation: 90,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 90, page.Rotation)
+
+	for _, degrees := range []int{45, 360, -90, 200} {
+		_, err = s.PutPage(t.Context(), principal, &PutPageInput{
+			BatchID: batch.ID, Sequence: 2, Body: bytes.NewReader(pdfPage(t, 100)), Rotation: degrees,
+		})
+		var validation *errortypes.Error
+		assert.ErrorAs(t, err, &validation, "rotation %d", degrees)
+	}
+}
+
 func TestPageUploadRejectsWhatIsNotAOnePagePDF(t *testing.T) {
 	t.Parallel()
 

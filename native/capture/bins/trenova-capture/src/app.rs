@@ -154,6 +154,19 @@ fn environment(data_dir: &Path) -> Environment {
     }
 }
 
+/// What this Windows user, or their administrator, chose: routine
+/// notifications, and looking things over before they are sent.
+fn apply_preferences(shared: &Shared) {
+    let routine = settings::routine_notifications();
+    let review = settings::review_before_sending();
+    let review_locked = settings::review_before_sending_locked();
+    shared.update(|s| {
+        s.routine_muted = !routine;
+        s.review_before_sending = review;
+        s.review_locked = review_locked;
+    });
+}
+
 /// Tells the person when this start is the first since Trenova Capture was
 /// updated, and remembers the version for next time.
 fn announce_update(shared: &Shared) {
@@ -231,8 +244,7 @@ pub fn run() -> ExitCode {
         }
     };
     let shared = Shared::new(Arc::clone(&ui) as Arc<dyn Ui>);
-    let routine = settings::routine_notifications();
-    shared.update(|s| s.routine_muted = !routine);
+    apply_preferences(&shared);
     tray.attach(Arc::clone(&shared));
     announce_update(&shared);
     // An installer that closes Trenova Capture to replace it (through Restart

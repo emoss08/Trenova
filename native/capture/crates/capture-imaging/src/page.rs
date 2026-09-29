@@ -203,7 +203,7 @@ fn encode_g4(raster: &Raster<'_>, zero_is_black: bool) -> Vec<u8> {
     writer.finish()
 }
 
-fn encode_jpeg(
+pub(crate) fn encode_jpeg(
     raster: &Raster<'_>,
     color: ColorType,
     quality: u8,

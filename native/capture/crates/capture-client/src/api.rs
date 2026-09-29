@@ -14,9 +14,9 @@ use bytes::Bytes;
 use capture_protocol::api::{
     BARCODE_HEADER, CaptureBatch, CaptureDevice, CapturePage, CaptureProfile, CaptureRequest,
     DPI_HEADER, DeviceIdentity, ExchangePairingRequest, Id, OAuthError, OAuthErrorCode,
-    OpenBatchInput, OutdatedAgent, PATCH_CODE_HEADER, PairingGrant, ProblemDetail, RefreshRequest,
-    ReportSourcesRequest, RequestStatusReport, SealBatchInput, SourceInfo, StartPairingRequest,
-    TokenPair, known_patch_code,
+    OpenBatchInput, OutdatedAgent, PATCH_CODE_HEADER, PairingGrant, ProblemDetail, ROTATION_HEADER,
+    RefreshRequest, ReportSourcesRequest, RequestStatusReport, SealBatchInput, SourceInfo,
+    StartPairingRequest, TokenPair, known_patch_code,
 };
 use capture_protocol::release::{MAX_SIGNED_BYTES, SignedRelease};
 use reqwest::header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue, RETRY_AFTER};
@@ -61,6 +61,8 @@ pub struct PageMarkers {
     pub dpi: u32,
     pub patch_code: Option<String>,
     pub barcodes: Vec<String>,
+    /// Degrees clockwise the person turned it: 0, 90, 180 or 270.
+    pub rotation: u16,
 }
 
 pub struct Api {
@@ -492,6 +494,9 @@ fn marker_headers(markers: &PageMarkers) -> HeaderMap {
     let mut headers = HeaderMap::new();
     if markers.dpi > 0 {
         headers.insert(DPI_HEADER, HeaderValue::from(markers.dpi));
+    }
+    if matches!(markers.rotation, 90 | 180 | 270) {
+        headers.insert(ROTATION_HEADER, HeaderValue::from(markers.rotation));
     }
     if let Some(code) = markers.patch_code.as_deref().and_then(known_patch_code) {
         headers.insert(PATCH_CODE_HEADER, HeaderValue::from_static(code));
