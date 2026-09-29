@@ -124,6 +124,9 @@ type ExtractionShadowRunner interface {
 		req repositories.GetExtractionShadowResultRequest,
 		message string,
 	) error
+}
+
+type ExtractionShadowRetention interface {
 	PurgeExpiredShadows(ctx context.Context, req PurgeExpiredAICorrectionsRequest) (int64, error)
 }
 

@@ -87,7 +87,10 @@ do.
 - The turn holds `delegate_task`, whose `agentId` is an enum of exactly those
   ids.
 - `find_tools` that finds nothing the turn can call names a delegate holding
-  what matched, before it falls back to "an administrator can add it".
+  what matched, before it falls back to "an administrator can add it". It
+  names one as well when the best new match is weak (no name or description
+  hit, a parameter only) and a delegate holds a tool matching by name. Both
+  searches past the turn's own tools are `StrongOnly`.
 
 The same context is what `PreviewPrompt` shows in AI Control.
 

@@ -162,3 +162,29 @@ func (s Severity) Rank() int {
 		return 0
 	}
 }
+
+func (k SourceKind) OverseesAgents() bool {
+	switch k {
+	case SourceAgentProposal,
+		SourceAgentPlan,
+		SourceAgentRunFailed,
+		SourceAgentException,
+		SourceAgentQualityRegression:
+		return true
+	case SourceInsight,
+		SourceServiceFailure,
+		SourceCarrierIntelEvent,
+		SourceHOSViolation,
+		SourceWeatherAlert,
+		SourceEDIInboundQuarantined,
+		SourceBillingException,
+		SourceDetentionOccurrence,
+		SourceInboundMessage,
+		SourceWorkerCredential,
+		SourceMoveCoverage,
+		SourceAccountingSync:
+		return false
+	default:
+		return false
+	}
+}

@@ -33,3 +33,33 @@ const (
 	HazardousClass8     = HazardousClass("HazardClass8")
 	HazardousClass9     = HazardousClass("HazardClass9")
 )
+
+func PackingGroupValues() []PackingGroup {
+	return []PackingGroup{PackingGroupI, PackingGroupII, PackingGroupIII}
+}
+
+func HazardousClassValues() []HazardousClass {
+	return []HazardousClass{
+		HazardousClass1,
+		HazardousClass1And1,
+		HazardousClass1And2,
+		HazardousClass1And3,
+		HazardousClass1And4,
+		HazardousClass1And5,
+		HazardousClass1And6,
+		HazardousClass2And1,
+		HazardousClass2And2,
+		HazardousClass2And3,
+		HazardousClass3,
+		HazardousClass4And1,
+		HazardousClass4And2,
+		HazardousClass4And3,
+		HazardousClass5And1,
+		HazardousClass5And2,
+		HazardousClass6And1,
+		HazardousClass6And2,
+		HazardousClass7,
+		HazardousClass8,
+		HazardousClass9,
+	}
+}

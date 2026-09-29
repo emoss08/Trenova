@@ -882,14 +882,12 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 		return &BulkDeleteResult{DeletedCount: 0}, nil
 	}
 
-	docs, err := s.repo.GetByIDs(ctx, repositories.BulkDeleteDocumentRequest{
-		IDs:        req.IDs,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, err := s.PlanDelete(ctx, req)
 	if err != nil {
-		log.Error("failed to get documents for bulk delete", zap.Error(err))
+		log.Error("failed to plan bulk document delete", zap.Error(err))
 		return nil, err
 	}
+	docs := plan.Documents
 
 	result := &BulkDeleteResult{
 		Errors: make([]error, 0),
@@ -949,14 +947,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 	lineageSet := make(map[string]struct{}, len(docs))
 	versionsByLineage := make(map[string][]*document.Document, len(docs))
 	for _, doc := range docs {
-		versions, versionErr := s.repo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
-			LineageID:  doc.LineageID,
-			TenantInfo: req.TenantInfo,
-		})
-		if versionErr != nil {
-			log.Error("failed to get document versions for bulk delete", zap.Error(versionErr))
-			return nil, versionErr
-		}
+		versions := plan.Versions[doc.LineageID]
 		versionsByLineage[doc.LineageID.String()] = versions
 		for _, version := range versions {
 			docIDs = append(docIDs, version.ID)

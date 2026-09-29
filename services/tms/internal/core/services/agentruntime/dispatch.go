@@ -109,7 +109,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
-		arguments, err := contractArguments(
+		arguments, _, err := contractArguments(
 			s.arguments, call.Name, tool.ParamSchema(), call.Arguments,
 		)
 		if err != nil {
@@ -135,7 +135,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 	}
 
-	arguments, err := contractArguments(s.arguments, call.Name, tool.ParamSchema(), call.Arguments)
+	arguments, aliases, err := contractArguments(
+		s.arguments, call.Name, tool.ParamSchema(), call.Arguments,
+	)
 	if err != nil {
 		return argumentOutcome(call.Name, err)
 	}
@@ -244,7 +246,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			"Recorded a proposal to run %q. It is awaiting a person's review at the %s tier and has not run.",
 			call.Name,
 			tier,
-		)
+		) + filingEcho(baseline, call.Arguments)
+		if note := aliasNote(aliases); note != "" {
+			content += "\n" + note
+		}
 		if heldForExternal {
 			content += externalContentNote
 		}

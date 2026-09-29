@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -323,6 +326,7 @@ type fieldGate struct {
 	access   fieldAccess
 	resource permission.Resource
 	ceiling  permission.FieldSensitivity
+	resolve  func() permission.FieldSensitivity
 	withheld []string
 }
 
@@ -345,8 +349,30 @@ func (a fieldAccess) gateAt(
 	return &fieldGate{access: a, resource: resource, ceiling: ceiling}
 }
 
+func (a fieldAccess) deferredGate(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+	resource permission.Resource,
+) *fieldGate {
+	gate := a.gateAt(resource, "")
+	gate.resolve = func() permission.FieldSensitivity {
+		return a.ceiling(ctx, params, resource)
+	}
+
+	return gate
+}
+
+func (g *fieldGate) level() permission.FieldSensitivity {
+	if g.resolve != nil {
+		g.ceiling = g.resolve()
+		g.resolve = nil
+	}
+
+	return g.ceiling
+}
+
 func (g *fieldGate) shows(field string) bool {
-	return g.access.visible(g.resource, field, g.ceiling)
+	return g.access.visible(g.resource, field, g.level())
 }
 
 func (g *fieldGate) show(field, name string) bool {
@@ -396,3 +422,113 @@ func (o *gatedOutcome) withTaint(refs []agent.RecordRef) *gatedOutcome {
 }
 
 func (o *gatedOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
+
+type nestedRecords struct {
+	resource permission.Resource
+	idPrefix string
+}
+
+var workerRecords = nestedRecords{
+	resource: permission.ResourceWorker,
+	idPrefix: agent.SubjectWorker.IDPrefix(),
+}
+
+type recordGate struct {
+	gate     *fieldGate
+	idPrefix string
+}
+
+func (a fieldAccess) recordGate(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+	records nestedRecords,
+) *recordGate {
+	return &recordGate{
+		gate:     a.deferredGate(ctx, params, records.resource),
+		idPrefix: records.idPrefix,
+	}
+}
+
+func (g *recordGate) showField(field string) bool {
+	return g.gate.show(field, g.gate.resource.String()+"."+field)
+}
+
+func (g *recordGate) workerName(w *worker.Worker) string {
+	if w == nil {
+		return ""
+	}
+	first := g.showField("firstName")
+	last := g.showField("lastName")
+	if !first || !last {
+		return ""
+	}
+
+	return workerName(w)
+}
+
+func (g *recordGate) withhold(result any) (*gatedDocument, error) {
+	tree, err := jsonutils.ToJSON(result)
+	if err != nil {
+		return nil, fmt.Errorf("encode the result to withhold what access does not reach: %w", err)
+	}
+
+	g.withholdRecords(tree)
+	if withheld := g.gate.Withheld(); len(withheld) > 0 {
+		slices.Sort(withheld)
+		tree[withheldByAccessKey] = withheld
+	}
+
+	gated := &gatedDocument{tree: tree}
+	if carrier, ok := result.(agent.TaintCarrier); ok {
+		gated.tainted = carrier.TaintedRecords()
+	}
+
+	return gated, nil
+}
+
+func (g *recordGate) withholdRecords(node any) {
+	switch typed := node.(type) {
+	case map[string]any:
+		if id, ok := typed["id"].(string); ok && pulid.ID(id).Prefix() == g.idPrefix {
+			g.withholdFields(typed)
+			return
+		}
+		for _, child := range typed {
+			g.withholdRecords(child)
+		}
+	case []any:
+		for _, child := range typed {
+			g.withholdRecords(child)
+		}
+	}
+}
+
+func (g *recordGate) withholdFields(node any) {
+	switch typed := node.(type) {
+	case map[string]any:
+		for key, child := range typed {
+			if !g.showField(key) {
+				delete(typed, key)
+				continue
+			}
+			g.withholdFields(child)
+		}
+	case []any:
+		for _, child := range typed {
+			g.withholdFields(child)
+		}
+	}
+}
+
+const withheldByAccessKey = "withheldByAccess"
+
+type gatedDocument struct {
+	tree    map[string]any
+	tainted []agent.RecordRef
+}
+
+func (d *gatedDocument) MarshalJSON() ([]byte, error) {
+	return sonic.Marshal(d.tree)
+}
+
+func (d *gatedDocument) TaintedRecords() []agent.RecordRef { return d.tainted }

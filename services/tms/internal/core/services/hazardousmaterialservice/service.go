@@ -79,14 +79,11 @@ func (s *Service) BulkUpdateStatus(
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetHazardousMaterialsByIDsRequest{
-		TenantInfo:           req.TenantInfo,
-		HazardousMaterialIDs: req.HazardousMaterialIDs,
-	})
+	changes, err := s.PlanBulkUpdateStatus(ctx, req)
 	if err != nil {
-		log.Error("failed to get original hazardous materials", zap.Error(err))
 		return nil, err
 	}
+	originalEntities := services.Befores(changes)
 
 	entities, err := s.repo.BulkUpdateStatus(ctx, req)
 	if err != nil {
@@ -118,16 +115,12 @@ func (s *Service) Create(
 	actor *services.RequestActor,
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	auditActor := actor.AuditActor()
-	if err := s.transformer.TransformHazardousMaterial(ctx, entity); err != nil {
-		s.l.Error("failed to transform hazardous material", zap.Error(err))
+	planned, err := s.PlanCreate(ctx, entity)
+	if err != nil {
 		return nil, err
 	}
 
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	createdEntity, err := s.repo.Create(ctx, entity)
+	createdEntity, err := s.repo.Create(ctx, planned)
 	if err != nil {
 		s.l.Error("failed to create hazardous material", zap.Error(err))
 		return nil, err
@@ -159,26 +152,11 @@ func (s *Service) Update(
 	actor *services.RequestActor,
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	auditActor := actor.AuditActor()
-	if err := s.transformer.TransformHazardousMaterial(ctx, entity); err != nil {
-		s.l.Error("failed to transform hazardous material", zap.Error(err))
-		return nil, err
-	}
-
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	original, err := s.repo.GetByID(ctx, repositories.GetHazardousMaterialByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
-		},
-	})
+	change, err := s.PlanUpdate(ctx, entity)
 	if err != nil {
-		s.l.Error("failed to get original hazardous material", zap.Error(err))
 		return nil, err
 	}
+	original := change.Before
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {

@@ -82,7 +82,7 @@ func shipmentEntrySchema() map[string]any {
 func TestContractArguments_RefusesEachProblemAtItsPath(t *testing.T) {
 	t.Parallel()
 
-	_, err := contractArguments(toolschema.NewValidator(), "create_shipment",
+	_, _, err := contractArguments(toolschema.NewValidator(), "create_shipment",
 		shipmentEntrySchema(), map[string]any{
 			"shipment": map[string]any{
 				"customerId": "cust_1",
@@ -130,9 +130,10 @@ func TestContractArguments_StillAliasesAMisnamedRequiredParameter(t *testing.T) 
 	schema["required"] = []string{"shipmentId"}
 	sent := map[string]any{"shipment_id": "shp_1"}
 
-	got, err := contractArguments(toolschema.NewValidator(), "get_shipment", schema, sent)
+	got, aliases, err := contractArguments(toolschema.NewValidator(), "get_shipment", schema, sent)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"shipmentId": "shp_1"}, got)
+	assert.Equal(t, []argumentAlias{{From: "shipment_id", To: "shipmentId"}}, aliases)
 	assert.Equal(t, map[string]any{"shipment_id": "shp_1"}, sent,
 		"the model's own call is never changed")
 }
@@ -140,7 +141,7 @@ func TestContractArguments_StillAliasesAMisnamedRequiredParameter(t *testing.T) 
 func TestContractArguments_AnOpenSchemaAcceptsAnything(t *testing.T) {
 	t.Parallel()
 
-	got, err := contractArguments(nil, "stub", map[string]any{"type": "object"},
+	got, _, err := contractArguments(nil, "stub", map[string]any{"type": "object"},
 		map[string]any{"anything": 1, serviceports.SelfScopeOwnerParam: "usr_x"})
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"anything": 1}, got,
@@ -150,7 +151,7 @@ func TestContractArguments_AnOpenSchemaAcceptsAnything(t *testing.T) {
 func TestArgumentOutcome_ReportsAnUncheckableSchemaAsAFailure(t *testing.T) {
 	t.Parallel()
 
-	_, err := contractArguments(nil, "broken", map[string]any{"type": 12}, map[string]any{})
+	_, _, err := contractArguments(nil, "broken", map[string]any{"type": 12}, map[string]any{})
 	require.Error(t, err)
 
 	outcome := argumentOutcome("broken", err)

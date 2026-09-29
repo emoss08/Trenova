@@ -429,8 +429,9 @@ func pendingProposals(outcomes []serviceports.ProposalOutcome) []agentdefinition
 	for _, outcome := range outcomes {
 		if outcome.Pending() {
 			pending = append(pending, agentdefinition.PendingProposal{
-				ToolName:  outcome.ToolName,
-				Rationale: outcome.Rationale,
+				ProposalID: outcome.ProposalID,
+				ToolName:   outcome.ToolName,
+				Rationale:  outcome.Rationale,
 			})
 		}
 	}

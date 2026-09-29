@@ -188,16 +188,21 @@ func (r *repository) Update(
 	entity.Version++
 	cols := buncolgen.TCASubscriptionColumns
 
-	_, err := r.db.DB().
+	results, err := r.db.DB().
 		NewUpdate().
 		Model(entity).
 		WherePK().
 		Where(cols.Version.Eq(), ov).
+		Where(cols.UserID.Eq(), entity.UserID).
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to update tca subscription", zap.Error(err))
+		return nil, err
+	}
+
+	if err = dberror.CheckRowsAffected(results, "TCASubscription", entity.ID.String()); err != nil {
 		return nil, err
 	}
 

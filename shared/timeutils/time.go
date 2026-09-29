@@ -153,31 +153,10 @@ func DescribeUnixDate(ts, now int64) string {
 // is UTC.
 func DescribeUnixDateIn(ts, now int64, timezone string) string {
 	loc := LoadLocation(timezone)
-	date := time.Unix(ts, 0).In(loc).Format(time.DateOnly)
+	at := time.Unix(ts, 0).In(loc)
 
-	startOfDay := func(seconds int64) time.Time {
-		t := time.Unix(seconds, 0).In(loc)
-
-		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
-	}
-
-	// Whole days apart, not seconds apart. "Tomorrow" has to read as one day
-	// away at any hour, or a card expiring tonight and one expiring tomorrow
-	// morning differ by a rounding decision nobody can see.
-	days := int64(startOfDay(ts).Sub(startOfDay(now)).Hours() / 24)
-
-	switch {
-	case days == 0:
-		return date + " (today)"
-	case days == 1:
-		return date + " (tomorrow)"
-	case days == -1:
-		return date + " (yesterday)"
-	case days > 1:
-		return fmt.Sprintf("%s (in %d days)", date, days)
-	default:
-		return fmt.Sprintf("%s (%d days ago)", date, -days)
-	}
+	return at.Format(time.DateOnly) + " (" +
+		RelativeDays(CalendarDaysBetween(time.Unix(now, 0).In(loc), at)) + ")"
 }
 
 // DescribeUnixInstantIn is DescribeUnixDateIn with the time of day, for an

@@ -351,6 +351,7 @@ func (f *fakeStarter) StartExtractionShadow(
 
 type world struct {
 	svc         *Service
+	runner      *Runner
 	scorer      *Scorer
 	settings    *settingsStore
 	results     *resultStore
@@ -411,9 +412,16 @@ func newWorld() *world {
 		providers: w.providers,
 		retention: w.retention,
 		audit:     &mocks.NoopAuditService{},
-		budget:    w.budget,
 		predictor: w.predictor,
 		starter:   w.starter,
+		now:       func() int64 { return testNow },
+	}
+	w.runner = &Runner{
+		l:         zap.NewNop(),
+		results:   w.results,
+		scorer:    w.scorer,
+		budget:    w.budget,
+		predictor: w.predictor,
 		now:       func() int64 { return testNow },
 	}
 	return w

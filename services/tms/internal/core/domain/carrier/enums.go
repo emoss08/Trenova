@@ -153,3 +153,19 @@ var RequiredInsurancePolicyTypes = []InsurancePolicyType{
 	InsurancePolicyTypeAutoLiability,
 	InsurancePolicyTypeCargoLiability,
 }
+
+func StatusValues() []Status {
+	return []Status{StatusActive, StatusInactive, StatusDoNotUse}
+}
+
+func TypeValues() []Type {
+	return []Type{TypeCommon, TypeContract, TypeBroker, TypeExempt}
+}
+
+func TaxIDTypeValues() []TaxIDType {
+	return []TaxIDType{TaxIDTypeEIN, TaxIDTypeSSN}
+}
+
+func PaymentMethodValues() []PaymentMethod {
+	return []PaymentMethod{PaymentMethodCheck, PaymentMethodACHManual}
+}

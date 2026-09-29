@@ -85,11 +85,11 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 68 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 70 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 258 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 26 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 44 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 49 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 50 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 42 |
@@ -101,21 +101,21 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 335 |
-| Exempt | 571 |
-| — Security | 68 |
+| Covered by a tool | 375 |
+| Exempt | 577 |
+| — Security | 70 |
 | — Configuration | 258 |
-| — User preference | 26 |
-| — Infrastructure | 44 |
-| — Agent administration | 49 |
+| — User preference | 27 |
+| — Infrastructure | 46 |
+| — Agent administration | 50 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
 | — Attestation | 42 |
 | — Duplicate | 4 |
-| **Pending** | **46** |
+| **Pending** | **0** |
 | Total | 952 |
 
-Of the 381 writes an agent should be able to make, 335 have a tool (87%).
+Of the 375 writes an agent should be able to make, 375 have a tool (100%).
 
 ## Pending
 
@@ -123,52 +123,6 @@ The writes no tool performs yet, and what the tool would do.
 
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
-| capture | `mutation cancelCaptureRequest` | Cancel a scan or print request that has not started. |
-| capture | `mutation createCaptureCoverSheets` | Print cover sheets that route scanned paperwork to a record and document type. |
-| capture | `mutation createCaptureRequest` | Ask a person's paired computer to scan paperwork into a record, or send their next print there. |
-| capture | `mutation discardCaptureBatch` | Discard a scanned stack that holds nothing worth filing. |
-| capture | `mutation discardCaptureItem` | Discard one scanned document that is not needed. |
-| capture | `mutation editCaptureItems` | Split, merge, reorder, rotate or leave out pages of a scanned stack to form its documents. |
-| capture | `mutation fileCaptureItem` | File a scanned document onto the record it belongs to, as the document type it is. |
-| capture | `mutation fileCaptureItems` | File every document of a scanned stack onto its record at once. |
-| carrier | `PATCH /api/v1/carriers/:carrierID/` | Update some fields of a carrier. |
-| carrier | `POST /api/v1/carriers/` | Create a carrier. |
-| carrier | `POST /api/v1/carriers/bulk-update-status/` | Change the status of several carriers at once. |
-| carrier | `PUT /api/v1/carriers/:carrierID/` | Update a carrier. |
-| commodity | `PATCH /api/v1/commodities/:commodityID/` | Update some fields of a commodity. |
-| commodity | `POST /api/v1/commodities/` | Create a commodity. |
-| commodity | `POST /api/v1/commodities/bulk-update-status/` | Change the status of several commodities at once. |
-| commodity | `PUT /api/v1/commodities/:commodityID/` | Update a commodity. |
-| customer | `PATCH /api/v1/customers/:customerID/` | Update some fields of a customer. |
-| customer | `POST /api/v1/customers/` | Create a customer. |
-| customer | `POST /api/v1/customers/bulk-update-status/` | Change the status of several customers at once. |
-| customer | `PUT /api/v1/customers/:customerID/` | Update a customer. |
-| document | `DELETE /api/v1/documents/:documentID/` | Delete a document. |
-| document | `POST /api/v1/documents/:documentID/restore/` | Restore an earlier version of a document. |
-| document | `POST /api/v1/documents/:documentID/shipment-draft/reextract/` | Run shipment extraction again on a document and replace the draft. |
-| document | `POST /api/v1/documents/bulk-delete/` | Delete several documents at once. |
-| hazardousmaterial | `PATCH /api/v1/hazardous-materials/:hazardousMaterialID/` | Update some fields of a hazardous material. |
-| hazardousmaterial | `POST /api/v1/hazardous-materials/` | Create a hazardous material. |
-| hazardousmaterial | `POST /api/v1/hazardous-materials/bulk-update-status/` | Change the status of several hazardous materials at once. |
-| hazardousmaterial | `PUT /api/v1/hazardous-materials/:hazardousMaterialID/` | Update a hazardous material. |
-| insight | `POST /api/v1/insights/:insightID/restore/` | Restore an insight that was dismissed. |
-| location | `PATCH /api/v1/locations/:locationID/` | Update some fields of a location. |
-| location | `POST /api/v1/locations/bulk-update-status/` | Change the status of several locations at once. |
-| location | `PUT /api/v1/locations/:locationID/` | Update a location. |
-| tablechangealert | `DELETE /api/v1/tca/subscriptions/:id` | Delete subscription (table change alert). |
-| tablechangealert | `PATCH /api/v1/tca/subscriptions/:id/pause` | Pause subscription (table change alert). |
-| tablechangealert | `PATCH /api/v1/tca/subscriptions/:id/resume` | Resume subscription (table change alert). |
-| tablechangealert | `PUT /api/v1/tca/subscriptions/:id` | Update subscription (table change alert). |
-| tractor | `mutation createTractor` | Create tractor. |
-| tractor | `mutation locateTractor` | Locate tractor. |
-| tractor | `mutation patchTractor` | Update some fields of a tractor. |
-| tractor | `mutation updateTractor` | Update tractor. |
-| trailer | `mutation createTrailer` | Create trailer. |
-| trailer | `mutation locateTrailer` | Locate trailer. |
-| trailer | `mutation patchTrailer` | Update some fields of a trailer. |
-| trailer | `mutation updateTrailer` | Update trailer. |
-| watchtower | `mutation dismissWatchtowerItem` | Dismiss watchtower item. |
-| watchtower | `mutation handOffWatchtowerItem` | Hand off watchtower item. |
 
 ## By domain
 
@@ -200,14 +154,14 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | 8 | 5 | 3 | 0 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
-| capture | 25 | 0 | 17 | 8 |
-| carrier | 4 | 0 | 0 | 4 |
+| capture | 25 | 4 | 21 | 0 |
+| carrier | 4 | 4 | 0 | 0 |
 | carrierintelligence | 15 | 9 | 6 | 0 |
 | carriersettlement | 16 | 15 | 1 | 0 |
-| commodity | 4 | 0 | 0 | 4 |
+| commodity | 4 | 4 | 0 | 0 |
 | controlplaneprovisioning | 1 | 0 | 1 | 0 |
 | costing | 2 | 0 | 2 | 0 |
-| customer | 4 | 0 | 0 | 4 |
+| customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
 | customfield | 4 | 0 | 4 | 0 |
 | databasesession | 1 | 0 | 1 | 0 |
@@ -221,7 +175,7 @@ The writes no tool performs yet, and what the tool would do.
 | distancecontrol | 2 | 0 | 2 | 0 |
 | distanceoverride | 4 | 0 | 4 | 0 |
 | distanceprofile | 5 | 0 | 5 | 0 |
-| document | 13 | 1 | 8 | 4 |
+| document | 13 | 4 | 9 | 0 |
 | documentcontrol | 1 | 0 | 1 | 0 |
 | documentoperations | 3 | 0 | 3 | 0 |
 | documentpacketrule | 3 | 0 | 3 | 0 |
@@ -248,7 +202,7 @@ The writes no tool performs yet, and what the tool would do.
 | glaccount | 5 | 0 | 5 | 0 |
 | googlemaps | 1 | 0 | 1 | 0 |
 | graphql | 1 | 0 | 1 | 0 |
-| hazardousmaterial | 4 | 0 | 0 | 4 |
+| hazardousmaterial | 4 | 4 | 0 | 0 |
 | hazmatsegregationrule | 3 | 0 | 3 | 0 |
 | holdreason | 3 | 0 | 3 | 0 |
 | homelayout | 5 | 1 | 4 | 0 |
@@ -256,7 +210,7 @@ The writes no tool performs yet, and what the tool would do.
 | ifta | 14 | 9 | 5 | 0 |
 | inbound | 1 | 0 | 1 | 0 |
 | inboundmessage | 6 | 2 | 4 | 0 |
-| insight | 2 | 1 | 0 | 1 |
+| insight | 2 | 2 | 0 | 0 |
 | integration | 5 | 0 | 5 | 0 |
 | invoice | 12 | 11 | 1 | 0 |
 | invoiceadjustment | 10 | 7 | 3 | 0 |
@@ -268,7 +222,7 @@ The writes no tool performs yet, and what the tool would do.
 | journalreversal | 5 | 3 | 2 | 0 |
 | jurisdictionrule | 6 | 0 | 6 | 0 |
 | latecharge | 1 | 1 | 0 | 0 |
-| location | 4 | 1 | 0 | 3 |
+| location | 4 | 4 | 0 | 0 |
 | locationcategory | 3 | 0 | 3 | 0 |
 | manualjournal | 7 | 5 | 2 | 0 |
 | notification | 5 | 0 | 5 | 0 |
@@ -307,7 +261,7 @@ The writes no tool performs yet, and what the tool would do.
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
 | storedmileage | 1 | 0 | 1 | 0 |
-| tablechangealert | 5 | 1 | 0 | 4 |
+| tablechangealert | 5 | 5 | 0 | 0 |
 | tableconfiguration | 6 | 1 | 5 | 0 |
 | tablequery | 1 | 0 | 1 | 0 |
 | telematics | 4 | 0 | 4 | 0 |
@@ -315,11 +269,11 @@ The writes no tool performs yet, and what the tool would do.
 | tender | 4 | 4 | 0 | 0 |
 | tenderpublic | 2 | 0 | 2 | 0 |
 | timesheet | 7 | 2 | 5 | 0 |
-| tractor | 5 | 1 | 0 | 4 |
-| trailer | 5 | 1 | 0 | 4 |
+| tractor | 5 | 5 | 0 | 0 |
+| trailer | 5 | 5 | 0 | 0 |
 | user | 11 | 0 | 11 | 0 |
 | version | 1 | 0 | 1 | 0 |
-| watchtower | 3 | 0 | 1 | 2 |
+| watchtower | 3 | 1 | 2 | 0 |
 | worker | 8 | 5 | 3 | 0 |
 | workerchecklist | 10 | 6 | 4 | 0 |
 | workercredential | 9 | 4 | 5 | 0 |
@@ -603,17 +557,17 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation approveCaptureDevicePairing` | Exempt, security: Approving a pairing grants a computer the person's access; only that person may do it. |
-| `mutation cancelCaptureRequest` | Pending: Cancel a scan or print request that has not started. |
-| `mutation createCaptureCoverSheets` | Pending: Print cover sheets that route scanned paperwork to a record and document type. |
+| `mutation cancelCaptureRequest` | Exempt, security: Withdraws an instruction the caller gave one of their own paired computers; those instructions are the person's, given under the access they granted the machine, and an agent never acts through a device pairing. |
+| `mutation createCaptureCoverSheets` | Exempt, infrastructure: Issues printable routing codes that exist only to be printed and laid on paper at a scanner, returned once to the person who prints them; an agent has no printer, and file_capture_items files what the sheets route. |
 | `mutation createCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
-| `mutation createCaptureRequest` | Pending: Ask a person's paired computer to scan paperwork into a record, or send their next print there. |
+| `mutation createCaptureRequest` | Exempt, security: Drives one of the caller's own paired computers, starting its scanner or catching its next print, under the access the person granted that machine; a scan also needs the person at the scanner with the paper. An agent never acts through a device pairing. |
 | `mutation deleteCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
 | `mutation denyCaptureDevicePairing` | Exempt, security: Denying a pairing is the person's answer to a request for their access. |
-| `mutation discardCaptureBatch` | Pending: Discard a scanned stack that holds nothing worth filing. |
-| `mutation discardCaptureItem` | Pending: Discard one scanned document that is not needed. |
-| `mutation editCaptureItems` | Pending: Split, merge, reorder, rotate or leave out pages of a scanned stack to form its documents. |
-| `mutation fileCaptureItem` | Pending: File a scanned document onto the record it belongs to, as the document type it is. |
-| `mutation fileCaptureItems` | Pending: File every document of a scanned stack onto its record at once. |
+| `mutation discardCaptureBatch` | Tool: `discard_capture_batch` |
+| `mutation discardCaptureItem` | Tool: `discard_capture_item` |
+| `mutation editCaptureItems` | Exempt, user-preference: The person arranging a scanned stack in the intake editor, looking at the page images, replaces the whole layout of the version they were looking at; pages carry no text an agent can read, so an agent would split documents blind. Filing and discarding what the split proposes are file_capture_items and discard_capture_item. |
+| `mutation fileCaptureItem` | Tool: `file_capture_items` |
+| `mutation fileCaptureItems` | Tool: `file_capture_items` |
 | `mutation revokeCaptureDevice` | Exempt, security: Revoking a paired computer removes a person's access. |
 | `mutation revokeMyCaptureDevice` | Exempt, security: A person removing their own paired computer's access. |
 | `mutation updateCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
@@ -632,10 +586,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/carriers/:carrierID/`<br>carrierhandler.patch | Pending: Update some fields of a carrier. |
-| `POST /api/v1/carriers/`<br>carrierhandler.create | Pending: Create a carrier. |
-| `POST /api/v1/carriers/bulk-update-status/`<br>carrierhandler.bulkUpdateStatus | Pending: Change the status of several carriers at once. |
-| `PUT /api/v1/carriers/:carrierID/`<br>carrierhandler.update | Pending: Update a carrier. |
+| `PATCH /api/v1/carriers/:carrierID/`<br>carrierhandler.patch | Tool: `update_carrier` |
+| `POST /api/v1/carriers/`<br>carrierhandler.create | Tool: `create_carrier` |
+| `POST /api/v1/carriers/bulk-update-status/`<br>carrierhandler.bulkUpdateStatus | Tool: `update_carrier_status` |
+| `PUT /api/v1/carriers/:carrierID/`<br>carrierhandler.update | Tool: `update_carrier` |
 
 ### carrierintelligence
 
@@ -682,10 +636,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/commodities/:commodityID/`<br>commodityhandler.patch | Pending: Update some fields of a commodity. |
-| `POST /api/v1/commodities/`<br>commodityhandler.create | Pending: Create a commodity. |
-| `POST /api/v1/commodities/bulk-update-status/`<br>commodityhandler.bulkUpdateStatus | Pending: Change the status of several commodities at once. |
-| `PUT /api/v1/commodities/:commodityID/`<br>commodityhandler.update | Pending: Update a commodity. |
+| `PATCH /api/v1/commodities/:commodityID/`<br>commodityhandler.patch | Tool: `update_commodity` |
+| `POST /api/v1/commodities/`<br>commodityhandler.create | Tool: `create_commodity` |
+| `POST /api/v1/commodities/bulk-update-status/`<br>commodityhandler.bulkUpdateStatus | Tool: `update_commodity_status` |
+| `PUT /api/v1/commodities/:commodityID/`<br>commodityhandler.update | Tool: `update_commodity` |
 
 ### controlplaneprovisioning
 
@@ -704,10 +658,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/customers/:customerID/`<br>customerhandler.patch | Pending: Update some fields of a customer. |
-| `POST /api/v1/customers/`<br>customerhandler.create | Pending: Create a customer. |
-| `POST /api/v1/customers/bulk-update-status/`<br>customerhandler.bulkUpdateStatus | Pending: Change the status of several customers at once. |
-| `PUT /api/v1/customers/:customerID/`<br>customerhandler.update | Pending: Update a customer. |
+| `PATCH /api/v1/customers/:customerID/`<br>customerhandler.patch | Tool: `update_customer` |
+| `POST /api/v1/customers/`<br>customerhandler.create | Tool: `create_customer` |
+| `POST /api/v1/customers/bulk-update-status/`<br>customerhandler.bulkUpdateStatus | Tool: `update_customer_status` |
+| `PUT /api/v1/customers/:customerID/`<br>customerhandler.update | Tool: `update_customer` |
 
 ### customerpayment
 
@@ -817,12 +771,12 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/documents/:documentID/`<br>documenthandler.delete | Pending: Delete a document. |
+| `DELETE /api/v1/documents/:documentID/`<br>documenthandler.delete | Tool: `delete_documents` |
 | `POST /api/v1/documents/:documentID/attach-to-shipment/`<br>documenthandler.attachToShipment | Tool: `attach_document_to_shipment` |
 | `POST /api/v1/documents/:documentID/import-assistant/thread/`<br>documenthandler.openImportAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
-| `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Pending: Restore an earlier version of a document. |
-| `POST /api/v1/documents/:documentID/shipment-draft/reextract/`<br>documenthandler.reextractDocumentContent | Pending: Run shipment extraction again on a document and replace the draft. |
-| `POST /api/v1/documents/bulk-delete/`<br>documenthandler.bulkDelete | Pending: Delete several documents at once. |
+| `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Tool: `restore_document_version` |
+| `POST /api/v1/documents/:documentID/shipment-draft/reextract/`<br>documenthandler.reextractDocumentContent | Exempt, infrastructure: A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it. |
+| `POST /api/v1/documents/bulk-delete/`<br>documenthandler.bulkDelete | Tool: `delete_documents` |
 | `POST /api/v1/documents/upload-bulk/`<br>documenthandler.uploadBulk | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
 | `POST /api/v1/documents/upload/`<br>documenthandler.upload | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
 | `POST /api/v1/documents/uploads/`<br>documenthandler.createUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (attach_document_to_shipment). |
@@ -1218,10 +1172,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.patch | Pending: Update some fields of a hazardous material. |
-| `POST /api/v1/hazardous-materials/`<br>hazardousmaterialhandler.create | Pending: Create a hazardous material. |
-| `POST /api/v1/hazardous-materials/bulk-update-status/`<br>hazardousmaterialhandler.bulkUpdateStatus | Pending: Change the status of several hazardous materials at once. |
-| `PUT /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.update | Pending: Update a hazardous material. |
+| `PATCH /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.patch | Tool: `update_hazardous_material` |
+| `POST /api/v1/hazardous-materials/`<br>hazardousmaterialhandler.create | Tool: `create_hazardous_material` |
+| `POST /api/v1/hazardous-materials/bulk-update-status/`<br>hazardousmaterialhandler.bulkUpdateStatus | Tool: `update_hazardous_material_status` |
+| `PUT /api/v1/hazardous-materials/:hazardousMaterialID/`<br>hazardousmaterialhandler.update | Tool: `update_hazardous_material` |
 
 ### hazmatsegregationrule
 
@@ -1309,7 +1263,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/insights/:insightID/dismiss/`<br>insighthandler.dismiss | Tool: `dismiss_insight` |
-| `POST /api/v1/insights/:insightID/restore/`<br>insighthandler.restore | Pending: Restore an insight that was dismissed. |
+| `POST /api/v1/insights/:insightID/restore/`<br>insighthandler.restore | Tool: `restore_insight` |
 
 ### integration
 
@@ -1421,10 +1375,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/locations/:locationID/`<br>locationhandler.patch | Pending: Update some fields of a location. |
+| `PATCH /api/v1/locations/:locationID/`<br>locationhandler.patch | Tool: `update_location` |
 | `POST /api/v1/locations/`<br>locationhandler.create | Tool: `create_location` |
-| `POST /api/v1/locations/bulk-update-status/`<br>locationhandler.bulkUpdateStatus | Pending: Change the status of several locations at once. |
-| `PUT /api/v1/locations/:locationID/`<br>locationhandler.update | Pending: Update a location. |
+| `POST /api/v1/locations/bulk-update-status/`<br>locationhandler.bulkUpdateStatus | Tool: `update_location_status` |
+| `PUT /api/v1/locations/:locationID/`<br>locationhandler.update | Tool: `update_location` |
 
 ### locationcategory
 
@@ -1828,11 +1782,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.deleteSubscription | Pending: Delete subscription (table change alert). |
-| `PATCH /api/v1/tca/subscriptions/:id/pause`<br>tablechangealerthandler.pauseSubscription | Pending: Pause subscription (table change alert). |
-| `PATCH /api/v1/tca/subscriptions/:id/resume`<br>tablechangealerthandler.resumeSubscription | Pending: Resume subscription (table change alert). |
+| `DELETE /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.deleteSubscription | Tool: `delete_table_change_alert` |
+| `PATCH /api/v1/tca/subscriptions/:id/pause`<br>tablechangealerthandler.pauseSubscription | Tool: `set_table_change_alert_status` |
+| `PATCH /api/v1/tca/subscriptions/:id/resume`<br>tablechangealerthandler.resumeSubscription | Tool: `set_table_change_alert_status` |
 | `POST /api/v1/tca/subscriptions/`<br>tablechangealerthandler.createSubscription | Tool: `create_table_change_alert` |
-| `PUT /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.updateSubscription | Pending: Update subscription (table change alert). |
+| `PUT /api/v1/tca/subscriptions/:id`<br>tablechangealerthandler.updateSubscription | Tool: `update_table_change_alert` |
 
 ### tableconfiguration
 
@@ -1899,20 +1853,20 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation bulkUpdateTractorStatus`<br>twin `POST /api/v1/tractors/bulk-update-status/` | Tool: `update_tractor_status` |
-| `mutation createTractor`<br>twin `POST /api/v1/tractors/` | Pending: Create tractor. |
-| `mutation locateTractor` | Pending: Locate tractor. |
-| `mutation patchTractor`<br>twin `PATCH /api/v1/tractors/:tractorID/` | Pending: Update some fields of a tractor. |
-| `mutation updateTractor`<br>twin `PUT /api/v1/tractors/:tractorID/` | Pending: Update tractor. |
+| `mutation createTractor`<br>twin `POST /api/v1/tractors/` | Tool: `create_tractor` |
+| `mutation locateTractor` | Tool: `locate_tractor` |
+| `mutation patchTractor`<br>twin `PATCH /api/v1/tractors/:tractorID/` | Tool: `update_tractor` |
+| `mutation updateTractor`<br>twin `PUT /api/v1/tractors/:tractorID/` | Tool: `update_tractor` |
 
 ### trailer
 
 | Write | Decision |
 | --- | --- |
 | `mutation bulkUpdateTrailerStatus`<br>twin `POST /api/v1/trailers/bulk-update-status/` | Tool: `update_trailer_status` |
-| `mutation createTrailer`<br>twin `POST /api/v1/trailers/` | Pending: Create trailer. |
-| `mutation locateTrailer`<br>twin `POST /api/v1/trailers/:trailerID/locate/` | Pending: Locate trailer. |
-| `mutation patchTrailer`<br>twin `PATCH /api/v1/trailers/:trailerID/` | Pending: Update some fields of a trailer. |
-| `mutation updateTrailer`<br>twin `PUT /api/v1/trailers/:trailerID/` | Pending: Update trailer. |
+| `mutation createTrailer`<br>twin `POST /api/v1/trailers/` | Tool: `create_trailer` |
+| `mutation locateTrailer`<br>twin `POST /api/v1/trailers/:trailerID/locate/` | Tool: `locate_trailer` |
+| `mutation patchTrailer`<br>twin `PATCH /api/v1/trailers/:trailerID/` | Tool: `update_trailer` |
+| `mutation updateTrailer`<br>twin `PUT /api/v1/trailers/:trailerID/` | Tool: `update_trailer` |
 
 ### user
 
@@ -1940,8 +1894,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation dismissWatchtowerItem` | Pending: Dismiss watchtower item. |
-| `mutation handOffWatchtowerItem` | Pending: Hand off watchtower item. |
+| `mutation dismissWatchtowerItem` | Tool: `dismiss_watchtower_item` |
+| `mutation handOffWatchtowerItem` | Exempt, agent-administration: Starts an agent on the item's subject, or publishes its event to the agents that subscribe; agents hand work to one another through delegate_task instead. |
 | `mutation markWatchtowerSeen` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 
 ### worker

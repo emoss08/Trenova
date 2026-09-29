@@ -54,6 +54,7 @@ describe("toolEffect", () => {
     ["compare_report_runs", "present"],
     ["compose_table_view", "present"],
     ["ask_user", "ask"],
+    ["request_decision", "ask"],
     ["list_customers", "lookup"],
     ["get_shipment", "lookup"],
     ["search_worker", "lookup"],
@@ -221,6 +222,15 @@ describe("describeActivity", () => {
 
   it("reads a question as asked", () => {
     expect(line([step({ name: "ask_user" })]).phrase).toBe("Asked you to choose");
+  });
+
+  it("reads a card put back as a decision asked for", () => {
+    const shown = line([step({ name: "request_decision", summary: "Create shipment" })]);
+    expect(shown.phrase).toBe("Asked you to decide");
+    expect(shown.detail).toBe("Create shipment");
+    expect(line([step({ name: "request_decision", status: "failed" })]).phrase).toBe(
+      "Couldn't show the card again",
+    );
   });
 
   it("says a failed call failed, with the reason", () => {

@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -124,24 +123,11 @@ func (s *Service) BulkUpdateStatus(
 		zap.Any("request", req),
 	)
 
-	// Note: customerservice.BulkUpdateStatus has the same missing-enum-check gap;
-	// it is left untouched on this branch.
-	if !req.Status.IsValid() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"Carrier status is invalid",
-		)
-	}
-
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
-		TenantInfo: req.TenantInfo,
-		CarrierIDs: req.CarrierIDs,
-	})
+	changes, err := s.PlanBulkUpdateStatus(ctx, req)
 	if err != nil {
-		log.Error("failed to get original carriers", zap.Error(err))
 		return nil, err
 	}
+	originalEntities := services.Befores(changes)
 
 	entities, err := s.repo.BulkUpdateStatus(ctx, req)
 	if err != nil {
@@ -201,11 +187,12 @@ func (s *Service) Create(
 		zap.String("principalID", auditActor.PrincipalID.String()),
 	)
 
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
-		return nil, multiErr
+	planned, err := s.PlanCreate(ctx, entity)
+	if err != nil {
+		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, entity)
+	createdEntity, err := s.repo.Create(ctx, planned)
 	if err != nil {
 		log.Error("failed to create carrier", zap.Error(err))
 		return nil, err
@@ -268,25 +255,11 @@ func (s *Service) Update(
 		zap.String("principalID", auditActor.PrincipalID.String()),
 	)
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	original, err := s.repo.GetByID(ctx, repositories.GetCarrierByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
-		},
-		CarrierFilterOptions: repositories.CarrierFilterOptions{
-			IncludeContacts:          true,
-			IncludeInsurancePolicies: true,
-		},
-	})
+	change, err := s.PlanUpdate(ctx, entity)
 	if err != nil {
-		log.Error("failed to get original carrier", zap.Error(err))
 		return nil, err
 	}
+	original := change.Before
 
 	updatedEntity, err := s.updateAndQueueSync(ctx, entity, original)
 	if err != nil {

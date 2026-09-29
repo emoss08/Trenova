@@ -269,3 +269,11 @@ func TestSendMessageStream_RefusesAPlanFollowUpThatCannotBeAnswered(t *testing.T
 	require.ErrorAs(t, err, &multiErr)
 	assert.Nil(t, completion.LastReq)
 }
+
+func TestFollowUpInstruction_KeepsTheReplyToWhatTheNoteAndTheCardHold(t *testing.T) {
+	t.Parallel()
+
+	assert.Contains(t, followUpInstruction,
+		"Report only what this note and the proposal's card hold")
+	assert.Contains(t, followUpInstruction, "Do not propose the same change again.")
+}

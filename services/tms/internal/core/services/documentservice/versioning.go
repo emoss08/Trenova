@@ -150,24 +150,12 @@ func (s *Service) RestoreVersion(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) (*document.Document, error) {
-	target, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
-		ID:         documentID,
-		TenantInfo: tenantInfo,
-	})
+	plan, err := s.PlanRestoreVersion(ctx, documentID, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-
-	versions, err := s.repo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
-		LineageID:  target.LineageID,
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	current := currentDocumentVersion(versions)
-	if current != nil && current.ID == target.ID {
+	target, current := plan.Target, plan.Current
+	if plan.Unchanged {
 		return target, nil
 	}
 

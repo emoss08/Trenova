@@ -294,57 +294,61 @@ func (t *createTableChangeAlertTool) Description() string {
 
 func (t *createTableChangeAlertTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type":     "object",
-		"required": []string{"name", "tableName", "eventTypes"},
-		"properties": map[string]any{
-			"name": map[string]any{
-				"type":        "string",
-				"description": "What the alert is called, in the words of the thing watched.",
-			},
-			"tableName": map[string]any{
-				"type":        "string",
-				"description": "The table to watch, e.g. shipments, customers, workers.",
-			},
-			"eventTypes": map[string]any{
-				"type":     "array",
-				"maxItems": 3,
-				"description": "Which changes to watch: INSERT for a new record, UPDATE for " +
-					"an edit, DELETE for a removal. A status change is an UPDATE.",
-				"items": agenttoolschema.Enum("", alertEventTypes),
-			},
-			"watchedColumns": map[string]any{
-				"type":  "array",
-				"items": map[string]any{"type": "string"},
-				"description": "Only fire when one of these columns changed. " +
-					"Leave empty to fire on any change.",
-			},
-			"conditions": map[string]any{
-				"type":     "array",
-				"maxItems": 6,
-				"description": "Narrow when it fires: each compares a column (field) to a " +
-					"value, e.g. status changed_to Delayed. is_null, is_not_null and changed " +
-					"take no value. Leave empty to fire on every matching event.",
-				"items": map[string]any{
-					"type":     "object",
-					"required": []string{"field", "operator"},
-					"properties": map[string]any{
-						"field":    map[string]any{"type": "string"},
-						"operator": agenttoolschema.Enum("", alertOperators),
-						"value":    map[string]any{"type": "string"},
-					},
-					"additionalProperties": false,
+		"type":                 "object",
+		"required":             []string{mdName, alertTableName, "eventTypes"},
+		"properties":           alertProperties(""),
+		"additionalProperties": false,
+	}
+}
+
+func alertProperties(keep string) map[string]any {
+	return map[string]any{
+		mdName: map[string]any{
+			"type":        "string",
+			"description": "What the alert is called, in the words of the thing watched." + keep,
+		},
+		alertTableName: map[string]any{
+			"type":        "string",
+			"description": "The table to watch, e.g. shipments, customers, workers." + keep,
+		},
+		"eventTypes": map[string]any{
+			"type":     "array",
+			"maxItems": 3,
+			"description": "Which changes to watch: INSERT for a new record, UPDATE for " +
+				"an edit, DELETE for a removal. A status change is an UPDATE." + keep,
+			"items": agenttoolschema.Enum("", alertEventTypes),
+		},
+		"watchedColumns": map[string]any{
+			"type":  "array",
+			"items": map[string]any{"type": "string"},
+			"description": "Only fire when one of these columns changed. " +
+				"Leave empty to fire on any change." + keep,
+		},
+		"conditions": map[string]any{
+			"type":     "array",
+			"maxItems": 6,
+			"description": "Narrow when it fires: each compares a column (field) to a " +
+				"value, e.g. status changed_to Delayed. is_null, is_not_null and changed " +
+				"take no value. Leave empty to fire on every matching event." + keep,
+			"items": map[string]any{
+				"type":     "object",
+				"required": []string{"field", "operator"},
+				"properties": map[string]any{
+					"field":    map[string]any{"type": "string"},
+					"operator": agenttoolschema.Enum("", alertOperators),
+					"value":    map[string]any{"type": "string"},
 				},
-			},
-			"conditionMatch": agenttoolschema.Enum(
-				"Whether every condition must hold, or any one. Defaults to all.",
-				alertConditionMatches,
-			),
-			"customMessage": map[string]any{
-				"type":        "string",
-				"description": "What the notification should say.",
+				"additionalProperties": false,
 			},
 		},
-		"additionalProperties": false,
+		"conditionMatch": agenttoolschema.Enum(
+			"Whether every condition must hold, or any one. Defaults to all."+keep,
+			alertConditionMatches,
+		),
+		alertCustomMessage: map[string]any{
+			"type":        "string",
+			"description": "What the notification should say." + keep,
+		},
 	}
 }
 

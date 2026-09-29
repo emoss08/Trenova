@@ -79,14 +79,11 @@ func (s *Service) BulkUpdateStatus(
 		zap.Any("request", req),
 	)
 
-	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetCommoditiesByIDsRequest{
-		TenantInfo:   req.TenantInfo,
-		CommodityIDs: req.CommodityIDs,
-	})
+	changes, err := s.PlanBulkUpdateStatus(ctx, req)
 	if err != nil {
-		log.Error("failed to get original commodities", zap.Error(err))
 		return nil, err
 	}
+	originalEntities := services.Befores(changes)
 
 	entities, err := s.repo.BulkUpdateStatus(ctx, req)
 	if err != nil {
@@ -124,16 +121,12 @@ func (s *Service) Create(
 		zap.String("principalID", auditActor.PrincipalID.String()),
 	)
 
-	if err := s.transformer.TransformCommodity(ctx, entity); err != nil {
-		log.Error("failed to transform commodity", zap.Error(err))
+	planned, err := s.PlanCreate(ctx, entity)
+	if err != nil {
 		return nil, err
 	}
 
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	createdEntity, err := s.repo.Create(ctx, entity)
+	createdEntity, err := s.repo.Create(ctx, planned)
 	if err != nil {
 		log.Error("failed to create commodity", zap.Error(err))
 		return nil, err
@@ -171,26 +164,11 @@ func (s *Service) Update(
 		zap.String("principalID", auditActor.PrincipalID.String()),
 	)
 
-	if err := s.transformer.TransformCommodity(ctx, entity); err != nil {
-		log.Error("failed to transform commodity", zap.Error(err))
-		return nil, err
-	}
-
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	original, err := s.repo.GetByID(ctx, repositories.GetCommodityByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
-		},
-	})
+	change, err := s.PlanUpdate(ctx, entity)
 	if err != nil {
-		log.Error("failed to get original commodity", zap.Error(err))
 		return nil, err
 	}
+	original := change.Before
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {

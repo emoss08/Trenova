@@ -797,8 +797,15 @@ func TestRestore_ReturnsADismissedFindingToActive(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("inst_")
+	dismissedAt := int64(1_789_000_000)
+	repo := &stubRepo{byID: &insight.Insight{
+		ID:            id,
+		Status:        insight.StatusDismissed,
+		DismissedAt:   &dismissedAt,
+		DismissReason: "Seasonal",
+	}}
 
-	restored, err := newService(&stubRepo{}, &stubPermissions{}).Restore(
+	restored, err := newService(repo, &stubPermissions{}).Restore(
 		t.Context(),
 		services.RestoreInsightRequest{ID: id, TenantInfo: tenant()},
 	)
@@ -806,6 +813,41 @@ func TestRestore_ReturnsADismissedFindingToActive(t *testing.T) {
 
 	assert.Equal(t, id, restored.ID)
 	assert.Equal(t, insight.StatusActive, restored.Status)
+}
+
+func TestPlanRestore_RefusesAFindingThatIsNotDismissed(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubRepo{byID: &insight.Insight{ID: pulid.MustNew("inst_"), Status: insight.StatusActive}}
+
+	_, err := newService(repo, &stubPermissions{}).Restore(
+		t.Context(),
+		services.RestoreInsightRequest{ID: repo.byID.ID, TenantInfo: tenant()},
+	)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "only a dismissed one can be restored")
+}
+
+func TestPlanRestore_ShowsTheDismissalCleared(t *testing.T) {
+	t.Parallel()
+
+	dismissedAt := int64(1_789_000_000)
+	repo := &stubRepo{byID: &insight.Insight{
+		ID:            pulid.MustNew("inst_"),
+		Status:        insight.StatusDismissed,
+		DismissedAt:   &dismissedAt,
+		DismissReason: "Seasonal",
+	}}
+
+	change, err := newService(repo, &stubPermissions{}).PlanRestore(
+		t.Context(),
+		services.RestoreInsightRequest{ID: repo.byID.ID, TenantInfo: tenant()},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, insight.StatusDismissed, change.Before.Status)
+	assert.Equal(t, insight.StatusActive, change.After.Status)
+	assert.Nil(t, change.After.DismissedAt)
+	assert.Empty(t, change.After.DismissReason)
 }
 
 // The widget's default applies when a caller does not say how many it wants.

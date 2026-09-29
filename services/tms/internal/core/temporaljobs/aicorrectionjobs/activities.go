@@ -16,7 +16,7 @@ type ActivitiesParams struct {
 
 	Corrections services.AICorrectionService
 	Evaluations services.ExtractionEvalRunner       `optional:"true"`
-	Shadows     services.ExtractionShadowRunner     `optional:"true"`
+	Shadows     services.ExtractionShadowRetention  `optional:"true"`
 	Rollout     services.ExtractionRolloutRetention `optional:"true"`
 	Drift       services.ExtractionDriftChecker     `optional:"true"`
 	Tenants     repositories.TenantSyncRepository
@@ -26,7 +26,7 @@ type ActivitiesParams struct {
 type Activities struct {
 	corrections services.AICorrectionService
 	evaluations services.ExtractionEvalRunner
-	shadows     services.ExtractionShadowRunner
+	shadows     services.ExtractionShadowRetention
 	rollout     services.ExtractionRolloutRetention
 	drift       services.ExtractionDriftChecker
 	tenants     repositories.TenantSyncRepository

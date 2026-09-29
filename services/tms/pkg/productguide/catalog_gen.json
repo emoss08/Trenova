@@ -1,5 +1,5 @@
 {
-  "version": "sha256:cdd873e59fb176b741e99553ba24e77cda514d988cd3462ed025d6b076d255cb",
+  "version": "sha256:67dbd1e79d0c9a5adfa297e2293f18e470926d8a1dea9bf093431fe6ad77c181",
   "modules": [
     {
       "id": "home",
@@ -15519,6 +15519,15 @@
       }
     },
     {
+      "entity": "commodity",
+      "label": "Commodity",
+      "path": "/shipment-management/configuration-files/commodities",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
       "entity": "customer",
       "label": "Customer",
       "path": "/billing/configuration-files/customers",
@@ -15572,6 +15581,15 @@
       "entity": "fuel_purchase",
       "label": "Fuel purchase",
       "path": "/fuel/purchases",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
+      "entity": "hazardous_material",
+      "label": "Hazardous material",
+      "path": "/shipment-management/configuration-files/hazardous-materials",
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"

@@ -18,6 +18,11 @@ const (
 		"preview pins"
 )
 
+func stateCode(field string) string {
+	return "the tool takes the two-letter state code and resolves it to the " + field +
+		" the input takes; no read tool hands out state ids"
+}
+
 func namedID(param string) string {
 	return "one id under two names: the input's, and " + param + ", the name the read " +
 		"tools hand it out under and the tool takes"
@@ -263,6 +268,40 @@ var Bindings = []Binding{
 		Extra: map[string]string{"iftaMileageEntryId": namedID("iftaMileageEntryId")},
 	},
 	{Tool: "generate_ifta_return", Input: "IFTAPeriodInput"},
+	{
+		Tool:  "create_tractor",
+		Input: "TractorInput",
+		Extra: map[string]string{"state": stateCode("stateId")},
+	},
+	{
+		Tool:  "update_tractor",
+		Input: "TractorPatchInput",
+		Extra: map[string]string{
+			"tractorId": "the mutation takes the tractor as its id argument, beside the input",
+			"state":     stateCode("stateId"),
+		},
+	},
+	{Tool: "locate_tractor", Input: "LocateTractorInput"},
+	{
+		Tool:  "create_trailer",
+		Input: "TrailerInput",
+		Extra: map[string]string{"registrationState": stateCode("registrationStateId")},
+	},
+	{
+		Tool:  "update_trailer",
+		Input: "TrailerPatchInput",
+		Extra: map[string]string{
+			"trailerId":         "the mutation takes the trailer as its id argument, beside the input",
+			"registrationState": stateCode("registrationStateId"),
+		},
+	},
+	{Tool: "locate_trailer", Input: "LocateTrailerInput"},
+	{
+		Tool:      "file_capture_items",
+		Input:     "FileCaptureItemsEntryInput",
+		Param:     "items",
+		Defaulted: map[string]string{"version": readVersion},
+	},
 	{
 		Tool:   "create_invoice_memo",
 		Input:  "CreateMemoInput",

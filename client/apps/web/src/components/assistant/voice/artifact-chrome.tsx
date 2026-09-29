@@ -10,6 +10,7 @@ import type { ArtifactKind, ArtifactStatus } from "@/types/assistant";
 import {
   CompassIcon,
   FileTextIcon,
+  GavelIcon,
   GitCompareArrowsIcon,
   IdCardIcon,
   InboxIcon,
@@ -52,6 +53,7 @@ export const ARTIFACT_KINDS: Record<
   document: { label: "Document", icon: ScrollTextIcon },
   navigation: { label: "Page", icon: CompassIcon },
   draft_edit: { label: "Draft change", icon: PencilLineIcon },
+  decision_request: { label: "Decision", icon: GavelIcon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */

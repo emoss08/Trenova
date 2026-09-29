@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/extractionfailure"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
@@ -22,13 +24,47 @@ const (
 	budgetReason     = "The evaluation budget is spent: "
 )
 
+var _ services.ExtractionShadowRunner = (*Runner)(nil)
+
 var errPredictorUnavailable = errors.New("extraction shadow predictor is not configured")
 
-func (s *Service) RunShadow(
+type RunnerParams struct {
+	fx.In
+
+	Logger    *zap.Logger
+	Results   repositories.ExtractionShadowResultRepository
+	Scorer    *Scorer
+	Budget    services.EvaluationBudget          `optional:"true"`
+	Predictor services.ExtractionShadowPredictor `optional:"true"`
+}
+
+type Runner struct {
+	l         *zap.Logger
+	results   repositories.ExtractionShadowResultRepository
+	scorer    *Scorer
+	budget    services.EvaluationBudget
+	predictor services.ExtractionShadowPredictor
+	now       func() int64
+}
+
+func NewRunner(p RunnerParams) *Runner {
+	return &Runner{
+		l:         p.Logger.Named("service.extractionshadow-runner"),
+		results:   p.Results,
+		scorer:    p.Scorer,
+		budget:    p.Budget,
+		predictor: p.Predictor,
+		now:       timeutils.NowUnix,
+	}
+}
+
+func AsRunner(r *Runner) services.ExtractionShadowRunner { return r }
+
+func (r *Runner) RunShadow(
 	ctx context.Context,
 	req *services.RunExtractionShadowRequest,
 ) error {
-	result, err := s.results.GetByID(ctx, repositories.GetExtractionShadowResultRequest{
+	result, err := r.results.GetByID(ctx, repositories.GetExtractionShadowResultRequest{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ResultID,
 	})
@@ -38,24 +74,24 @@ func (s *Service) RunShadow(
 	if result.Status.IsSettled() {
 		return nil
 	}
-	if s.predictor == nil {
+	if r.predictor == nil {
 		return errortypes.NewBusinessError(
 			"Shadow extractions cannot run on this installation",
 		).WithInternal(errPredictorUnavailable)
 	}
 
-	if stop, reason, budgetErr := s.budgetSpent(ctx, result); budgetErr != nil {
+	if stop, reason, budgetErr := r.budgetSpent(ctx, result); budgetErr != nil {
 		return budgetErr
 	} else if stop {
-		return s.settle(ctx, result, extractionshadow.ResultStatusSkipped, reason)
+		return r.settle(ctx, result, extractionshadow.ResultStatusSkipped, reason)
 	}
 
-	started := s.now()
+	started := r.now()
 	if result.StartedAt == nil {
 		result.StartedAt = &started
 	}
 
-	prediction, err := s.predictor.PredictShadowDraft(ctx, &services.PredictShadowDraftRequest{
+	prediction, err := r.predictor.PredictShadowDraft(ctx, &services.PredictShadowDraftRequest{
 		TenantInfo:  tenantOf(result),
 		DocumentID:  result.DocumentID,
 		ExtractedAt: result.ExtractedAt,
@@ -64,17 +100,17 @@ func (s *Service) RunShadow(
 	switch {
 	case err == nil:
 	case errors.Is(err, services.ErrShadowSuperseded):
-		return s.settle(ctx, result, extractionshadow.ResultStatusSkipped, supersededReason)
+		return r.settle(ctx, result, extractionshadow.ResultStatusSkipped, supersededReason)
 	case errortypes.IsNotFoundError(err):
-		return s.settle(ctx, result, extractionshadow.ResultStatusSkipped, deletedReason)
+		return r.settle(ctx, result, extractionshadow.ResultStatusSkipped, deletedReason)
 	case extractionfailure.Retryable(err) && !req.FinalAttempt:
 		return fmt.Errorf("predict shadow extraction %s: %w", result.ID, err)
 	default:
-		s.l.Warn("shadow extraction failed",
+		r.l.Warn("shadow extraction failed",
 			zap.String("resultId", result.ID.String()),
 			zap.Error(err),
 		)
-		return s.settle(
+		return r.settle(
 			ctx,
 			result,
 			extractionshadow.ResultStatusFailed,
@@ -82,15 +118,15 @@ func (s *Service) RunShadow(
 		)
 	}
 
-	s.recordPrediction(result, prediction)
-	result.Settle(extractionshadow.ResultStatusCompleted, "", s.now())
-	saved, err := s.results.Save(ctx, result)
+	r.recordPrediction(result, prediction)
+	result.Settle(extractionshadow.ResultStatusCompleted, "", r.now())
+	saved, err := r.results.Save(ctx, result)
 	if err != nil {
 		return err
 	}
 
-	if err = s.scorer.scoreAgainstCorrection(ctx, saved); err != nil {
-		s.l.Warn("failed to score a shadow extraction on completion",
+	if err = r.scorer.scoreAgainstCorrection(ctx, saved); err != nil {
+		r.l.Warn("failed to score a shadow extraction on completion",
 			zap.String("resultId", saved.ID.String()),
 			zap.Error(err),
 		)
@@ -99,12 +135,12 @@ func (s *Service) RunShadow(
 	return nil
 }
 
-func (s *Service) FailShadow(
+func (r *Runner) FailShadow(
 	ctx context.Context,
 	req repositories.GetExtractionShadowResultRequest,
 	message string,
 ) error {
-	result, err := s.results.GetByID(ctx, req)
+	result, err := r.results.GetByID(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -112,18 +148,18 @@ func (s *Service) FailShadow(
 		return nil
 	}
 
-	return s.settle(ctx, result, extractionshadow.ResultStatusFailed, message)
+	return r.settle(ctx, result, extractionshadow.ResultStatusFailed, message)
 }
 
-func (s *Service) budgetSpent(
+func (r *Runner) budgetSpent(
 	ctx context.Context,
 	result *extractionshadow.ShadowResult,
 ) (stop bool, reason string, err error) {
-	if s.budget == nil {
+	if r.budget == nil {
 		return false, "", nil
 	}
 
-	decision, err := s.budget.CheckEvaluationBudget(ctx, tenantOf(result))
+	decision, err := r.budget.CheckEvaluationBudget(ctx, tenantOf(result))
 	if err != nil {
 		return false, "", err
 	}
@@ -134,7 +170,7 @@ func (s *Service) budgetSpent(
 	return true, budgetReason + decision.Reason, nil
 }
 
-func (s *Service) recordPrediction(
+func (r *Runner) recordPrediction(
 	result *extractionshadow.ShadowResult,
 	prediction *services.ShadowDraftPrediction,
 ) {
@@ -154,7 +190,7 @@ func (s *Service) recordPrediction(
 	}
 }
 
-func (s *Service) settle(
+func (r *Runner) settle(
 	ctx context.Context,
 	result *extractionshadow.ShadowResult,
 	status extractionshadow.ResultStatus,
@@ -163,9 +199,9 @@ func (s *Service) settle(
 	result.Settle(
 		status,
 		stringutils.TruncateRunes(reason, extractionshadow.MaxReasonRunes),
-		s.now(),
+		r.now(),
 	)
-	_, err := s.results.Save(ctx, result)
+	_, err := r.results.Save(ctx, result)
 
 	return err
 }

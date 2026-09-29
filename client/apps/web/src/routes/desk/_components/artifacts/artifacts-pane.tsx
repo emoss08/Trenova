@@ -22,6 +22,7 @@ import { useCallback, useEffect, useId, useMemo } from "react";
 import { DocumentArtifact } from "./document-artifact";
 import { EmailDraftArtifact } from "./email-draft-artifact";
 import { EntityCardArtifact } from "./entity-card-artifact";
+import { DecisionRequestArtifact } from "./decision-request-artifact";
 import { NavigationArtifact } from "./navigation-artifact";
 import { PlanArtifact } from "./plan-artifact";
 import { ReportPreviewArtifact } from "./report-preview-artifact";
@@ -165,6 +166,8 @@ function ArtifactBody({ artifact }: { artifact: AssistantArtifact }) {
       return <DocumentArtifact artifact={artifact} />;
     case "navigation":
       return <NavigationArtifact artifact={artifact} />;
+    case "decision_request":
+      return <DecisionRequestArtifact artifact={artifact} />;
     default:
       return (
         <ArtifactNotice kind={artifact.kind}>
@@ -413,6 +416,7 @@ export function isRenderableArtifactKind(kind: AssistantArtifact["kind"]): boole
       "run_diff",
       "document",
       "navigation",
+      "decision_request",
     ].includes(kind)
   );
 }

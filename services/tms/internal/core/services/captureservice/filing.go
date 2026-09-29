@@ -473,45 +473,14 @@ type FileItemInput struct {
 // encrypted, checksummed, thumbnailed, read and counted toward the record's
 // required paperwork exactly as an uploaded file would be.
 func (s *Service) FileItem(ctx context.Context, in *FileItemInput) (*capture.CaptureItem, error) {
-	item, err := s.items.GetByID(
-		ctx,
-		repositories.GetCaptureItemByIDRequest{ID: in.ItemID, TenantInfo: in.TenantInfo},
-	)
+	plan, err := s.PlanFileItem(ctx, in)
 	if err != nil {
 		return nil, err
 	}
-
-	batch, err := s.visibleBatch(
-		ctx,
-		in.TenantInfo,
-		permission.OpUpdate,
-		&repositories.GetCaptureBatchByIDRequest{
-			ID:           item.BatchID,
-			IncludePages: true,
-		},
-	)
-	if err != nil {
-		return nil, err
+	if plan.Unchanged {
+		return plan.Item, nil
 	}
-	if item.Status == capture.ItemFiled || item.Status == capture.ItemFiling {
-		return item, nil
-	}
-	if !item.Status.Open() || !batch.Status.Editable() {
-		return nil, errortypes.NewConflictError("This document can no longer be filed")
-	}
-	if !in.Automatic && item.Version != in.Version {
-		return nil, errortypes.NewConflictError(
-			"Somebody else changed this document; reload it and try again")
-	}
-
-	target := capture.Target{
-		ResourceType:   in.TargetType,
-		ResourceID:     &in.TargetID,
-		DocumentTypeID: in.DocumentTypeID,
-	}
-	if err = s.checkTarget(ctx, in.TenantInfo, target, "targetType", "targetId"); err != nil {
-		return nil, err
-	}
+	item, batch, target := plan.Item, plan.Batch, plan.Target
 
 	filer := in.TenantInfo.UserID
 	now := timeutils.NowUnix()
@@ -849,33 +818,11 @@ func (s *Service) DiscardItem(
 	ctx context.Context,
 	in *DiscardItemInput,
 ) (*capture.CaptureBatch, error) {
-	item, err := s.items.GetByID(
-		ctx,
-		repositories.GetCaptureItemByIDRequest{ID: in.ItemID, TenantInfo: in.TenantInfo},
-	)
+	plan, err := s.PlanDiscardItem(ctx, in)
 	if err != nil {
 		return nil, err
 	}
-	batch, err := s.visibleBatch(
-		ctx,
-		in.TenantInfo,
-		permission.OpDelete,
-		&repositories.GetCaptureBatchByIDRequest{
-			ID: item.BatchID,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if !item.Status.Open() {
-		return nil, errortypes.NewConflictError(
-			"Only a document waiting to be filed can be discarded",
-		)
-	}
-	if item.Version != in.Version {
-		return nil, errortypes.NewConflictError(
-			"Somebody else changed this document; reload it and try again")
-	}
+	item, batch := plan.Item, plan.Batch
 
 	item.Status = capture.ItemDiscarded
 	scope := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
@@ -910,31 +857,13 @@ func (s *Service) DiscardBatch(
 	ctx context.Context,
 	in *DiscardBatchInput,
 ) (*capture.CaptureBatch, error) {
-	batch, err := s.visibleBatch(
-		ctx,
-		in.TenantInfo,
-		permission.OpDelete,
-		&repositories.GetCaptureBatchByIDRequest{
-			ID:           in.BatchID,
-			IncludeItems: true,
-		},
-	)
+	plan, err := s.PlanDiscardBatch(ctx, in)
 	if err != nil {
 		return nil, err
 	}
-	if batch.Status.Terminal() {
+	batch := plan.Batch
+	if plan.Unchanged {
 		return batch, nil
-	}
-	if batch.Version != in.Version {
-		return nil, errortypes.NewConflictError(
-			"Somebody else changed this batch; reload it and try again")
-	}
-	if slices.ContainsFunc(batch.Items, func(item *capture.CaptureItem) bool {
-		return item.Status == capture.ItemFiling
-	}) {
-		return nil, errortypes.NewConflictError(
-			"A document in this batch is being filed; wait for it to finish",
-		)
 	}
 
 	discarded, err := s.discardBatch(ctx, batch, capture.BatchDiscarded)

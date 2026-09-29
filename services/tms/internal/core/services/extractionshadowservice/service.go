@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	_ services.ExtractionShadowService = (*Service)(nil)
-	_ services.ExtractionShadowSampler = (*Service)(nil)
-	_ services.ExtractionShadowRunner  = (*Service)(nil)
+	_ services.ExtractionShadowService   = (*Service)(nil)
+	_ services.ExtractionShadowSampler   = (*Service)(nil)
+	_ services.ExtractionShadowRetention = (*Service)(nil)
 )
 
 type contentReader interface {
@@ -40,7 +40,6 @@ type Params struct {
 	Providers repositories.AIProviderRepository
 	Retention repositories.DataRetentionRepository
 	Audit     services.AuditService
-	Budget    services.EvaluationBudget          `optional:"true"`
 	Predictor services.ExtractionShadowPredictor `optional:"true"`
 	Starter   services.ExtractionShadowStarter   `optional:"true"`
 }
@@ -54,7 +53,6 @@ type Service struct {
 	providers repositories.AIProviderRepository
 	retention repositories.DataRetentionRepository
 	audit     services.AuditService
-	budget    services.EvaluationBudget
 	predictor services.ExtractionShadowPredictor
 	starter   services.ExtractionShadowStarter
 	now       func() int64
@@ -71,7 +69,6 @@ func New(p Params) *Service {
 		providers: p.Providers,
 		retention: p.Retention,
 		audit:     p.Audit,
-		budget:    p.Budget,
 		predictor: p.Predictor,
 		starter:   p.Starter,
 		now:       timeutils.NowUnix,
@@ -82,7 +79,7 @@ func AsService(s *Service) services.ExtractionShadowService { return s }
 
 func AsSampler(s *Service) services.ExtractionShadowSampler { return s }
 
-func AsRunner(s *Service) services.ExtractionShadowRunner { return s }
+func AsRetention(s *Service) services.ExtractionShadowRetention { return s }
 
 func tenantOf(result *extractionshadow.ShadowResult) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: result.OrganizationID, BuID: result.BusinessUnitID}

@@ -719,13 +719,37 @@ func delegatedSearchNote(
 	delegates []agentdefinition.RuntimeDelegate,
 	unheld []string,
 ) string {
+	return delegateHoldersNote(
+		"Nothing you can call matched. These agents you can ask hold tools that do:\n",
+		delegates,
+		unheld,
+	)
+}
+
+func weakMatchDelegateNote(
+	delegates []agentdefinition.RuntimeDelegate,
+	unheld []string,
+) string {
+	return delegateHoldersNote(
+		"What you can call matches that only loosely. These agents you can ask hold "+
+			"tools that match it by name:\n",
+		delegates,
+		unheld,
+	)
+}
+
+func delegateHoldersNote(
+	lead string,
+	delegates []agentdefinition.RuntimeDelegate,
+	unheld []string,
+) string {
 	holding := delegatesHolding(delegates, unheld)
 	if len(holding) == 0 {
 		return ""
 	}
 
 	var b strings.Builder
-	b.WriteString("Nothing you can call matched. These agents you can ask hold tools that do:\n")
+	b.WriteString(lead)
 	for _, delegate := range holding {
 		matched := make([]string, 0, len(unheld))
 		for _, name := range unheld {

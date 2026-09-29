@@ -290,7 +290,7 @@ func TestRunShadowStoresTheWouldBeDraft(t *testing.T) {
 		CostUSD:      &cost,
 	}
 
-	require.NoError(t, w.svc.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -322,7 +322,7 @@ func TestRunShadowScoresAtOnceWhenThePersonConfirmedFirst(t *testing.T) {
 		Accepted:  true,
 	}
 
-	require.NoError(t, w.svc.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -345,7 +345,7 @@ func TestRunShadowDoesNotScoreAgainstAnEarlierConfirmation(t *testing.T) {
 	w.correction(documentID, extractedAt-3600, draftData("2500.00", "OUG-8393964"))
 	w.predictor.prediction = &services.ShadowDraftPrediction{DraftData: draftData("2563.12", "X")}
 
-	require.NoError(t, w.svc.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -362,7 +362,7 @@ func TestRunShadowSkipsWhenTheBudgetIsSpent(t *testing.T) {
 	result := w.pending(w.document(extractedAt))
 	w.budget.decision = &agentquality.BudgetDecision{Stop: true, Reason: "the nightly cap is reached"}
 
-	require.NoError(t, w.svc.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -390,7 +390,7 @@ func TestRunShadowSkipsASupersededOrDeletedDocument(t *testing.T) {
 			result := w.pending(w.document(extractedAt))
 			w.predictor.err = tc.err
 
-			require.NoError(t, w.svc.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+			require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
 				TenantInfo: testTenant(),
 				ResultID:   result.ID,
 			}))
@@ -409,14 +409,14 @@ func TestRunShadowRetriesATransientFailureThenRecordsIt(t *testing.T) {
 	result := w.pending(w.document(extractedAt))
 	w.predictor.err = errUpstream
 
-	err := w.svc.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	err := w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	})
 	require.ErrorIs(t, err, errUpstream)
 	assert.Equal(t, extractionshadow.ResultStatusPending, w.results.find(result.ID).Status)
 
-	require.NoError(t, w.svc.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
 		TenantInfo:   testTenant(),
 		ResultID:     result.ID,
 		FinalAttempt: true,
@@ -433,7 +433,7 @@ func TestRunShadowLeavesASettledResultAlone(t *testing.T) {
 	result := w.pending(w.document(extractedAt))
 	result.Status = extractionshadow.ResultStatusSkipped
 
-	require.NoError(t, w.svc.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
+	require.NoError(t, w.runner.RunShadow(t.Context(), &services.RunExtractionShadowRequest{
 		TenantInfo: testTenant(),
 		ResultID:   result.ID,
 	}))
@@ -447,10 +447,10 @@ func TestFailShadowSettlesOnlyAPendingResult(t *testing.T) {
 	result := w.pending(w.document(extractedAt))
 	req := repositories.GetExtractionShadowResultRequest{TenantInfo: testTenant(), ID: result.ID}
 
-	require.NoError(t, w.svc.FailShadow(t.Context(), req, "boom"))
+	require.NoError(t, w.runner.FailShadow(t.Context(), req, "boom"))
 	assert.Equal(t, extractionshadow.ResultStatusFailed, w.results.find(result.ID).Status)
 
-	require.NoError(t, w.svc.FailShadow(t.Context(), req, "again"))
+	require.NoError(t, w.runner.FailShadow(t.Context(), req, "again"))
 	assert.Equal(t, "boom", w.results.find(result.ID).StatusReason)
 }
 

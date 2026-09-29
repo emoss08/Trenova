@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -217,11 +216,12 @@ func (s *Service) Create(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
-		return nil, multiErr
+	planned, err := s.PlanCreate(ctx, entity)
+	if err != nil {
+		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, entity)
+	createdEntity, err := s.repo.Create(ctx, planned)
 	if err != nil {
 		log.Error("failed to create trailer", zap.Error(err))
 		return nil, err
@@ -292,21 +292,11 @@ func (s *Service) Update(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	original, err := s.repo.GetByID(ctx, repositories.GetTrailerByIDRequest{
-		ID: entity.GetID(),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.GetOrganizationID(),
-			BuID:  entity.GetBusinessUnitID(),
-		},
-	})
+	change, err := s.PlanUpdate(ctx, entity)
 	if err != nil {
-		log.Error("failed to get original trailer", zap.Error(err))
 		return nil, err
 	}
+	original := change.Before
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
@@ -435,105 +425,12 @@ func (s *Service) Locate( //nolint:gocognit // legacy workflow
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		actorUserID := actor.AuditActor().UserID
 
-		trailerEntity, err := s.repo.GetByID(txCtx, repositories.GetTrailerByIDRequest{
-			ID: req.TrailerID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: req.TenantInfo.OrgID,
-				BuID:  req.TenantInfo.BuID,
-			},
-		})
+		plan, err := s.planLocate(txCtx, req, actorUserID)
 		if err != nil {
 			return err
 		}
-		inProgress, err := s.assignmentRepo.FindInProgressByTrailerID(
-			txCtx,
-			req.TenantInfo,
-			req.TrailerID,
-			pulid.Nil,
-		)
-		if err != nil {
-			return err
-		}
-		if inProgress != nil {
-			return errortypes.NewBusinessError("Trailer is currently in progress on another move").
-				WithParam("trailerId", req.TrailerID.String()).
-				WithParam("shipmentMoveId", inProgress.ShipmentMoveID.String())
-		}
-
-		current, err := s.continuityRepo.GetEffectiveCurrent(
-			txCtx,
-			repositories.GetCurrentEquipmentContinuityRequest{
-				TenantInfo:    req.TenantInfo,
-				EquipmentType: equipmentcontinuity.EquipmentTypeTrailer,
-				EquipmentID:   req.TrailerID,
-			},
-		)
-		if err != nil {
-			return err
-		}
-		if current == nil {
-			return errortypes.NewBusinessError(
-				"Trailer has no continuity history and does not need manual locate before dispatch",
-			).WithParam("trailerId", req.TrailerID.String())
-		}
-		if current.SourceShipmentID.IsNil() {
-			return errortypes.NewBusinessError(
-				"Trailer continuity is missing the previous shipment association required for locate",
-			).WithParam("trailerId", req.TrailerID.String())
-		}
-		if current.CurrentLocationID == req.NewLocationID {
-			return errortypes.NewBusinessError("Trailer is already located at the requested location").
-				WithParam("trailerId", req.TrailerID.String())
-		}
-
-		previousShipment, err := s.shipmentRepo.GetByID(txCtx, &repositories.GetShipmentByIDRequest{
-			ID: current.SourceShipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: req.TenantInfo.OrgID,
-				BuID:  req.TenantInfo.BuID,
-			},
-			ShipmentOptions: repositories.ShipmentOptions{
-				ExpandShipmentDetails: true,
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		updatedShipment := cloneShipment(previousShipment)
-		timing := locateMoveTiming()
-		appendLocateMove(updatedShipment, current, req, timing)
-
-		control, err := s.controlRepo.Get(txCtx, repositories.GetShipmentControlRequest{
-			TenantInfo: req.TenantInfo,
-		})
-		if err != nil {
-			return err
-		}
-
-		if multiErr := s.coordinator.PrepareForUpdateWithDelayThreshold(
-			previousShipment,
-			updatedShipment,
-			shipmentstate.ResolveControlDelayThreshold(control),
-		); multiErr != nil {
-			return multiErr
-		}
-
-		if err = s.commercial.Recalculate(
-			txCtx,
-			updatedShipment,
-			control,
-			actorUserID,
-		); err != nil {
-			return err
-		}
-		if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(
-			txCtx,
-			previousShipment,
-			updatedShipment,
-		); multiErr != nil {
-			return multiErr
-		}
+		trailerEntity, current := plan.Trailer, plan.Current
+		previousShipment, updatedShipment := plan.Previous, plan.Updated
 		if _, err = s.shipmentRepo.Update(txCtx, updatedShipment); err != nil {
 			return dberror.MapRetryableTransactionError(err, "Shipment is busy. Retry the request.")
 		}

@@ -123,6 +123,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 
 	retries := 0
 	asked := false
+	grounding := groundingState{}
 	for result.ToolCallsUsed < budget {
 		reply, err := fx.Complete(t, t.completionRequest())
 		result.Usage = result.Usage.Add(reply.usage())
@@ -187,6 +188,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				}
 				fx.Emit(deltaEvent(emptyReply))
 				return s.finish(result, cannedCompletion(completion, emptyReply), fx), nil
+			}
+			if s.reground(t, fx, completion, &grounding) {
+				continue
 			}
 
 			return s.finish(result, completion, fx), nil
@@ -290,7 +294,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			if call.Name == askUserName {
 				question := comparableQuestion(stringArg(call.Arguments, "question"))
 				_, repeated := t.questions[question]
-				outcome := toolOutcome{content: resolveAsk(call.Arguments)}
+				outcome := toolOutcome{content: resolveAsk(t.localNow(fx), call.Arguments)}
 				switch {
 				case !tools.offers(askUserName) && t.req.Delegation != nil:
 					outcome = failedOutcome("%s", delegatedAskRefusal)
@@ -303,6 +307,16 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 					if question != "" {
 						t.questions[question] = struct{}{}
 					}
+				}
+				result.ToolCallsUsed++
+				s.recordToolResult(t, fx, call, outcome)
+				continue
+			}
+
+			if call.Name == requestDecisionName {
+				outcome := failedOutcome("%s", unofferedDecisionRefusal)
+				if tools.offers(requestDecisionName) {
+					outcome = t.requestDecision(call.Arguments)
 				}
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
@@ -376,6 +390,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 
 	if fx.Supports(changeFinalAnswer) {
 		if final := s.finalAnswer(t, fx, result); final != nil {
+			grounding.rewritten = true
+			s.reground(t, fx, final, &grounding)
+
 			return s.finish(result, final, fx), nil
 		}
 	}
@@ -495,6 +512,10 @@ func (s *Service) observe(
 	call serviceports.ToolCall,
 	outcome toolOutcome,
 ) toolOutcome {
+	if request, requested := outcome.data.(serviceports.DecisionRequest); requested &&
+		outcome.publishes {
+		return decisionRequested(observe, &call, request)
+	}
 	if observe == nil {
 		if outcome.publishes {
 			return failedOutcome("%s", unpublishableRefusal)

@@ -66,6 +66,16 @@ export const RECORD_LINKS = {
     path: "/dispatch/locations",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  commodity: {
+    label: "Commodity",
+    path: "/shipment-management/configuration-files/commodities",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
+  hazardous_material: {
+    label: "Hazardous material",
+    path: "/shipment-management/configuration-files/hazardous-materials",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   rate_matrix: {
     label: "Rate matrix",
     path: "/billing/configuration-files/rate-matrices",

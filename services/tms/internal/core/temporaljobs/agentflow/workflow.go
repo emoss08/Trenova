@@ -196,11 +196,7 @@ func (fx *workflowEffects) Observe(
 		Call: *call,
 	}).Get(ctx, &result)
 	if err != nil {
-		return agentruntime.ToolOutcome{
-			Content: fmt.Sprintf("Tool %q could not keep the document just now. "+
-				"Put the text in your reply instead.", call.Name),
-			Failed: true,
-		}
+		return agentruntime.UnkeptOutcome(call.Name)
 	}
 
 	fx.outcome.Artifacts = append(fx.outcome.Artifacts, result.Artifacts...)

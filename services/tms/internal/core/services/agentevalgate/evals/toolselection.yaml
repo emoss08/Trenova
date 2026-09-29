@@ -632,3 +632,69 @@ cases:
     expect: [generate_payroll_export]
   - request: draft the performance review scores for the driver
     expect: [draft_performance_review]
+  - request: onboard a new carrier with their USDOT and MC numbers
+    expect: [create_carrier]
+  - request: change the carrier's remit to address
+    expect: [update_carrier]
+  - request: mark these carriers do not use
+    expect: [update_carrier_status]
+  - request: add a new customer account for Acme Foods
+    expect: [create_customer]
+  - request: change the customer's billing address
+    expect: [update_customer]
+  - request: deactivate the customer we no longer ship for
+    expect: [update_customer_status]
+  - request: add a new commodity with its freight class
+    expect: [create_commodity]
+  - request: change the commodity's temperature range
+    expect: [update_commodity]
+  - request: retire the commodities we stopped carrying
+    expect: [update_commodity_status]
+  - request: add a hazardous material with its UN number and packing group
+    expect: [create_hazardous_material]
+  - request: fix the ERG guide number on the hazmat record
+    expect: [update_hazardous_material]
+  - request: deactivate the hazardous material we no longer haul
+    expect: [update_hazardous_material_status]
+  - request: fix the facility address on the location
+    expect: [update_location]
+  - request: deactivate the location that closed
+    expect: [update_location_status]
+  - request: add a new tractor to the fleet
+    expect: [create_tractor]
+  - request: reassign the truck to a different driver and renew its registration
+    expect: [update_tractor]
+  - request: the tractor is actually sitting in the Dallas yard, locate it there
+    expect: [locate_tractor]
+  - request: add a new reefer trailer to the fleet
+    expect: [create_trailer]
+  - request: record the trailer's last inspection date
+    expect: [update_trailer]
+  - request: the trailer was dropped at another yard, locate it there
+    expect: [locate_trailer]
+  - request: delete the duplicate document upload
+    expect: [delete_documents]
+  - request: restore the previous version of the document
+    expect: [restore_document_version]
+  - request: restore the insight we dismissed
+    expect: [restore_insight]
+  - request: change the table change alert to watch a different column
+    expect: [update_table_change_alert]
+  - request: pause my change alert
+    expect: [set_table_change_alert_status]
+  - request: delete the change alert I no longer need
+    expect: [delete_table_change_alert]
+  - request: which change alerts do I have set up
+    expect: [list_table_change_alerts]
+  - request: dismiss the weather item on the watchtower feed
+    expect: [dismiss_watchtower_item]
+  - request: file the scanned PODs from capture intake onto their shipments
+    expect: [file_capture_items]
+  - request: discard the blank scanned page
+    expect: [discard_capture_item]
+  - request: discard the whole scanned stack in capture intake
+    expect: [discard_capture_batch]
+  - request: show the scanned paperwork waiting in capture intake
+    expect: [list_capture_batches]
+  - request: which equipment manufacturers do we have
+    expect: [list_equipment_manufacturers]
