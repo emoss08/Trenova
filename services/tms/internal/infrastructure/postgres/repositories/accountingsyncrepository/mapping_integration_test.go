@@ -188,6 +188,7 @@ func roleRow(f *mappingFixture, key string) *accountingsync.AccountingMapping {
 		TargetType:     accountingsync.TargetAccountRole,
 		TrenovaKey:     key,
 		TargetLabel:    key,
+		ProviderKind:   accountingsync.ReferenceKindAccount,
 		State:          accountingsync.MappingStateUnmatched,
 	}
 }
