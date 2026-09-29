@@ -23,6 +23,8 @@ const (
 	payloadColumns  = "columns"
 	payloadRows     = "rows"
 	payloadFields   = "fields"
+	payloadDisplay  = "display"
+	payloadRowCount = "rowCount"
 	maxBunchColumns = 8
 )
 
@@ -38,10 +40,10 @@ type bunchParts struct {
 }
 
 func (r *artifactRecorder) bunch(
-	observation services.ToolObservation,
+	observation *services.ToolObservation,
 	card *assistantartifact.Artifact,
 ) (*services.ShownArtifact, error) {
-	earlier, err := r.repo.ListByToolCalls(r.ctx, repositories.ListArtifactsByToolCallsRequest{
+	earlier, err := r.repo.ListByToolCalls(r.ctx, &repositories.ListArtifactsByToolCallsRequest{
 		ThreadID:   r.thread.ID,
 		TenantInfo: r.tenant,
 		CallIDs:    observation.Earlier,
@@ -63,7 +65,7 @@ func (r *artifactRecorder) bunch(
 	table := bunchTable(observation.Call.Name, parts, card)
 	saved, err := r.save(table)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	r.retire(parts.cards)
@@ -71,10 +73,12 @@ func (r *artifactRecorder) bunch(
 	return shownArtifact(saved), nil
 }
 
-func (r *artifactRecorder) keep(artifact *assistantartifact.Artifact) (*services.ShownArtifact, error) {
+func (r *artifactRecorder) keep(
+	artifact *assistantartifact.Artifact,
+) (*services.ShownArtifact, error) {
 	saved, err := r.save(artifact)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	return shownArtifact(saved), nil
@@ -89,7 +93,7 @@ func (r *artifactRecorder) retire(cards []*assistantartifact.Artifact) {
 	for _, card := range cards {
 		ids = append(ids, card.ID)
 	}
-	if err := r.repo.Delete(r.ctx, repositories.DeleteArtifactsRequest{
+	if err := r.repo.Delete(r.ctx, &repositories.DeleteArtifactsRequest{
 		ThreadID:   r.thread.ID,
 		TenantInfo: r.tenant,
 		IDs:        ids,
@@ -160,15 +164,15 @@ func bunchTable(
 	}
 
 	payload := map[string]any{
-		"display":      assistantartifact.DisplayVersion,
-		payloadTool:    tool,
-		payloadEntity:  entity,
-		payloadColumns: columns,
-		payloadRows:    rows,
-		"rowCount":     len(rows),
-		"searchedFor":  []string{},
-		payloadBunched: true,
-		payloadCalls:   calls,
+		payloadDisplay:  assistantartifact.DisplayVersion,
+		payloadTool:     tool,
+		payloadEntity:   entity,
+		payloadColumns:  columns,
+		payloadRows:     rows,
+		payloadRowCount: len(rows),
+		"searchedFor":   []string{},
+		payloadBunched:  true,
+		payloadCalls:    calls,
 	}
 	if recordEntity != "" {
 		payload["recordEntity"] = recordEntity

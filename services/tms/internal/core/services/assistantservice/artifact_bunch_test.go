@@ -45,9 +45,9 @@ func (r *bunchingRepo) current() []*assistantartifact.Artifact {
 
 func (r *bunchingRepo) ListByToolCalls(
 	_ context.Context,
-	req repositories.ListArtifactsByToolCallsRequest,
+	req *repositories.ListArtifactsByToolCallsRequest,
 ) ([]*assistantartifact.Artifact, error) {
-	r.listedBy = append(r.listedBy, req)
+	r.listedBy = append(r.listedBy, *req)
 	out := make([]*assistantartifact.Artifact, 0, len(req.CallIDs))
 	for _, artifact := range r.current() {
 		if slices.Contains(req.CallIDs, artifact.SourceToolCallID) {
@@ -58,7 +58,7 @@ func (r *bunchingRepo) ListByToolCalls(
 	return out, nil
 }
 
-func (r *bunchingRepo) Delete(_ context.Context, req repositories.DeleteArtifactsRequest) error {
+func (r *bunchingRepo) Delete(_ context.Context, req *repositories.DeleteArtifactsRequest) error {
 	r.deleted = append(r.deleted, req.IDs...)
 
 	return nil

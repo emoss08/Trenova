@@ -163,7 +163,7 @@ func (r *repository) GetByID(
 
 func (r *repository) ListByToolCalls(
 	ctx context.Context,
-	req repositories.ListArtifactsByToolCallsRequest,
+	req *repositories.ListArtifactsByToolCallsRequest,
 ) ([]*assistantartifact.Artifact, error) {
 	if len(req.CallIDs) == 0 {
 		return []*assistantartifact.Artifact{}, nil
@@ -192,7 +192,7 @@ func (r *repository) ListByToolCalls(
 	return entities, nil
 }
 
-func (r *repository) Delete(ctx context.Context, req repositories.DeleteArtifactsRequest) error {
+func (r *repository) Delete(ctx context.Context, req *repositories.DeleteArtifactsRequest) error {
 	if len(req.IDs) == 0 {
 		return nil
 	}

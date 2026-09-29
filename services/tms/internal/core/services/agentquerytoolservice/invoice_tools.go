@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -296,13 +297,13 @@ func (t *getInvoicesTool) Description() string {
 
 func (t *getInvoicesTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			paramInvoiceIDs: idListProperty("The invoices' ids, from list_invoices, "+
 				"list_ar_open_items or the page you are on.", maxBatchInvoices),
 		},
-		"required":             []string{paramInvoiceIDs},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{paramInvoiceIDs},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 

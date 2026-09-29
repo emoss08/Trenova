@@ -64,9 +64,9 @@ type AssistantArtifactRepository interface {
 	GetByID(ctx context.Context, req GetArtifactRequest) (*assistantartifact.Artifact, error)
 	ListByToolCalls(
 		ctx context.Context,
-		req ListArtifactsByToolCallsRequest,
+		req *ListArtifactsByToolCallsRequest,
 	) ([]*assistantartifact.Artifact, error)
-	Delete(ctx context.Context, req DeleteArtifactsRequest) error
+	Delete(ctx context.Context, req *DeleteArtifactsRequest) error
 	SetPinned(
 		ctx context.Context,
 		req SetArtifactPinnedRequest,

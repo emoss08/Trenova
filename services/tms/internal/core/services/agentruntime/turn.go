@@ -693,7 +693,7 @@ func (s *Service) ObserveCall(
 func (s *Service) ObserveDispatch(
 	observe serviceports.ToolObserver,
 	call *DispatchCall,
-	outcome ToolOutcome,
+	outcome *ToolOutcome,
 ) ToolOutcome {
 	return s.observe(observe, call.Call, outcome.internal(), call.Earlier).exported()
 }
@@ -799,7 +799,7 @@ func (t *Turn) earlier(name string) []string {
 	return slices.Clone(t.shown[name])
 }
 
-func (t *Turn) noteShown(call serviceports.ToolCall) {
+func (t *Turn) noteShown(call *serviceports.ToolCall) {
 	if !strings.HasPrefix(call.Name, getToolPrefix) || call.ID == "" {
 		return
 	}

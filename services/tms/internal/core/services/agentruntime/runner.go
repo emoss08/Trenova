@@ -389,7 +389,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			result.ToolCallsUsed++
 			s.recordToolResult(t, fx, call, outcome)
 			if !outcome.failed {
-				t.noteShown(call)
+				t.noteShown(&call)
 			}
 		}
 

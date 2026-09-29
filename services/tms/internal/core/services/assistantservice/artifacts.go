@@ -148,7 +148,7 @@ func (r *artifactRecorder) observe(
 		return nil, nil
 	}
 	if artifact.Kind == assistantartifact.KindEntityCard && len(observation.Earlier) > 0 {
-		return r.bunch(observation, artifact)
+		return r.bunch(&observation, artifact)
 	}
 
 	saved, err := r.save(artifact)
@@ -520,9 +520,11 @@ var (
 	errUnknownProposal     = errors.New("there is no proposal with that id in this conversation")
 	errProposalDecided     = errors.New("that proposal is no longer waiting on the person")
 	errDecisionNotShown    = errors.New("its card could not be saved")
-	errUnknownPlan         = errors.New("there is no plan with that id waiting in this conversation")
-	errProposalInPlan      = errors.New("one of them is a step of a plan; ask with its planId")
-	errMixedTools          = errors.New("proposals of different tools cannot share one card")
+	errUnknownPlan         = errors.New(
+		"there is no plan with that id waiting in this conversation",
+	)
+	errProposalInPlan = errors.New("one of them is a step of a plan; ask with its planId")
+	errMixedTools     = errors.New("proposals of different tools cannot share one card")
 )
 
 var (

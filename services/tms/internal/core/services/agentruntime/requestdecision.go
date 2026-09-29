@@ -86,9 +86,8 @@ var requestedNothing = fmt.Sprintf("Tool %q was not run: proposalId must be the 
 	"proposal listed under Proposals awaiting a decision, proposalIds several of them, or "+
 	"planId the id of a waiting plan.", requestDecisionName)
 
-func requestedIDs(arguments map[string]any) (requestedDecision, string) {
+func requestedIDs(arguments map[string]any) (request requestedDecision, refusal string) {
 	given := 0
-	var request requestedDecision
 
 	if raw := strings.TrimSpace(stringArg(arguments, paramProposalID)); raw != "" {
 		given++
