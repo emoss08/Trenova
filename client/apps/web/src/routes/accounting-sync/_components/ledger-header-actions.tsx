@@ -263,12 +263,14 @@ function BackfillDialog({
                 name="objectTypes"
                 control={form.control}
                 label={t("Documents (leave all unticked for every kind)")}
-                options={backfillObjectTypes(connection?.syncsDriverSettlements ?? false).map(
-                  (value) => ({
-                    value,
-                    label: labels.objectType[value],
-                  }),
-                )}
+                options={backfillObjectTypes({
+                  syncMode: connection?.syncMode ?? "Document",
+                  ledgerGranularity: connection?.ledgerGranularity,
+                  syncsDriverSettlements: connection?.syncsDriverSettlements ?? false,
+                }).map((value) => ({
+                  value,
+                  label: labels.objectType[value],
+                }))}
               />
             </FormControl>
           </FormGroup>

@@ -28,6 +28,10 @@ var (
 	ErrDriftClosed         = errors.New("the finding was already resolved or dismissed")
 	ErrDriftNoteRequired   = errors.New("a note is required to dismiss a finding")
 	ErrDriftFixUnavailable = errors.New("that fix is not offered for this finding")
+	ErrDriftExplainOnly    = errors.New(
+		"a trial balance difference is explained, not fixed: find the entry made in the " +
+			"accounting system or the record Trenova could not send, then dismiss it",
+	)
 )
 
 type DriftLine struct {
@@ -159,7 +163,7 @@ func (f *AccountingDriftFinding) Pushed() bool {
 
 func (f *AccountingDriftFinding) Directions() []DriftDirection {
 	directions := make([]DriftDirection, 0, len(AllDriftDirections()))
-	if f.Kind != DriftCustomerBalanceMismatch {
+	if !f.Kind.IsBalance() {
 		directions = append(directions, DriftPushTrenovaValue)
 	}
 	if f.adjustable() {
@@ -178,6 +182,9 @@ func (f *AccountingDriftFinding) adjustable() bool {
 func (f *AccountingDriftFinding) CanFix(direction DriftDirection) error {
 	if !f.IsOpen() {
 		return ErrDriftClosed
+	}
+	if f.Kind == DriftTrialBalanceMismatch {
+		return ErrDriftExplainOnly
 	}
 	if !slices.Contains(f.Directions(), direction) {
 		return ErrDriftFixUnavailable

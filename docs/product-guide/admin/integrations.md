@@ -1,6 +1,6 @@
 ---
 path: /admin/integrations
-aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit]
+aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit, ledger mode, send journal entries, opening balances]
 related:
   - /accounting/sync
   - /admin/inbound-mailboxes
@@ -74,20 +74,45 @@ Keywords: QuickBooks setup, connect accounting, Intuit sign in, accounting sync
 3. Intuit sends you back to Trenova, which finishes the connection and shows the company it
    connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books
    closed through**. Check it is the right company, then select **Continue**.
-4. On **Match records**, Trenova reads the company's accounts, items, customers and vendors and
+4. On **What is sent**, choose **Send documents** to send invoices, payments and bills and let
+   QuickBooks keep the ledger, or **Send journal entries** to keep the ledger in Trenova and send
+   QuickBooks every journal entry it posts. With journal entries, choose **Detailed** for one entry
+   per Trenova entry or **Daily summary** for one entry per day, then select **Continue**. The
+   choice is fixed once sending starts.
+5. On **Match records**, Trenova reads the company's accounts, items, customers and vendors and
    proposes a match for each Trenova record. Tick the proposals that are right and select the
    confirm button, which names how many are ticked, or select a row to choose another record.
-5. When every required mapping is confirmed, select **Finish setup**. The rest can be done later
+   When journal entries are sent, every GL account that carries posted entries needs a QuickBooks
+   account.
+6. When every required mapping is confirmed, select **Finish setup**. The rest can be done later
    on [Mappings](/accounting/sync/mappings) (**Open all mappings**).
-6. Choose the **Start date**: documents dated before it are never sent. Leave **Send posted
+7. Choose the **Start date**: documents dated before it are never sent. Leave **Send posted
    documents automatically** on to send each document as it is posted, or turn it off to hold each
    one in the [Sync ledger](/accounting/sync) until someone releases it. When the start date is in
    the past, tick **Also send documents already posted since the start date** to queue those too.
    Turn on **Send owner-operator settlements** to also send owner-operator settlements as bills;
-   it is off unless you turn it on, and company driver pay is never sent.
-7. Select **Start sending**. From then on Trenova sends invoices, credit and debit memos, customer
+   it is off unless you turn it on, and company driver pay is never sent. When journal entries
+   are sent, tick **Send opening balances** instead to send one entry, dated the day before the
+   start date, with every account's balance up to then.
+8. Select **Start sending**. From then on Trenova sends invoices, credit and debit memos, customer
    payments, credit applications, carrier settlements and their payments as they are posted, and
    checks the connection every fifteen minutes.
+
+### Send journal entries instead of documents
+Keywords: ledger mode, journal entry sync, general ledger to QuickBooks, daily summary, detailed journal entries, opening balances
+1. Open [Integrations](/admin/integrations) and connect QuickBooks Online.
+2. On **What is sent**, choose **Send journal entries**. Under **Journal entries**, choose
+   **Detailed** to send each posted Trenova entry as its own QuickBooks entry, or **Daily summary**
+   to send one entry per day summed per account and customer or vendor. A day is sent again when
+   an entry is posted to it later.
+3. Select **Continue**, confirm a QuickBooks account for each GL account on **Match records**, then
+   choose the **Start date**. Tick **Send opening balances** when QuickBooks does not already hold
+   the balances up to that day.
+4. Select **Start sending**. Invoices, payments and bills stay in Trenova; QuickBooks receives their
+   journal entries once they are posted, including entries posted by hand on
+   [Journals to post](/accounting/journals-to-post). The connection shows **What is sent** and when
+   **Opening balances** were sent. The choice cannot be changed once sending starts, and the start
+   date cannot move once opening balances are sent.
 
 ### Change how documents are sent
 Keywords: automatic sync, hold documents, owner-operator settlements, 1099 drivers, driver bills
@@ -95,6 +120,7 @@ Keywords: automatic sync, hold documents, owner-operator settlements, 1099 drive
 2. Under **Sync settings**, turn **Send posted documents automatically** on or off. When it is
    off, each new document waits in the [Sync ledger](/accounting/sync) until someone releases it;
    documents already held stay held.
+   When journal entries are sent, only this setting is shown; the rest apply to documents.
 3. Turn **Send owner-operator settlements** on to send owner-operator settlements to QuickBooks
    as bills, with a 1099 vendor for each driver. Settlements posted from then on are sent; request
    a backfill from the [Sync ledger](/accounting/sync) to send earlier ones.
@@ -135,7 +161,7 @@ intelligence tabs need read access to carrier intelligence, and changing them ne
 
 Seeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs
 update access, and connecting, reconnecting or disconnecting needs manage access and must be done
-by a signed-in person, as do saving or removing the Intuit app keys, choosing the start date and
-changing the sync settings.
+by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent,
+choosing the start date and changing the sync settings.
 A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an
 item that links back here.

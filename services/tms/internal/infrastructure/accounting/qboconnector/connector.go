@@ -248,6 +248,7 @@ func (c *Connector) CompanyFacts(
 		Country:              info.Country,
 		HomeCurrency:         prefs.HomeCurrency,
 		MultiCurrencyEnabled: prefs.MultiCurrencyEnabled,
+		FiscalYearStartMonth: prefs.FiscalYearStartMonth,
 	}
 	if prefs.BooksClosedThrough != "" {
 		closed, parseErr := time.Parse(time.DateOnly, prefs.BooksClosedThrough)

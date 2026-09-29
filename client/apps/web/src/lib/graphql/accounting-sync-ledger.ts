@@ -9,6 +9,7 @@ import {
   AccountingSyncRecordFieldsFragmentDoc,
   AccountingSyncSummaryDocument,
   ChangeAccountingBackfillDocument,
+  ChooseAccountingSyncModeDocument,
   EnableAccountingSyncDocument,
   PauseAccountingSyncDocument,
   RedateAccountingSyncDocument,
@@ -24,6 +25,7 @@ import {
   type AccountingSyncSummaryQuery,
   type AccountingSystem,
   type ChangeAccountingBackfillInput,
+  type ChooseAccountingSyncModeInput,
   type EnableAccountingSyncInput,
   type PauseAccountingSyncInput,
   type ReleaseAccountingSyncInput,
@@ -143,6 +145,17 @@ export async function fetchAccountingBackfills(
   return data.accountingBackfills.map((backfill) =>
     getFragmentData(AccountingBackfillFieldsFragmentDoc, backfill),
   );
+}
+
+export async function chooseAccountingSyncMode(
+  input: ChooseAccountingSyncModeInput,
+): Promise<AccountingConnection> {
+  const data = await requestGraphQL({
+    document: ChooseAccountingSyncModeDocument,
+    operationName: "ChooseAccountingSyncMode",
+    variables: { input },
+  });
+  return getFragmentData(AccountingConnectionFieldsFragmentDoc, data.chooseAccountingSyncMode);
 }
 
 export async function enableAccountingSync(

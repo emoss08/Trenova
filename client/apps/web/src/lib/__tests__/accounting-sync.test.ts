@@ -10,7 +10,14 @@ import {
   accountingMappingPhase,
   accountingMappingRecordPath,
   accountingSetupPath,
+  accountingDriftExplainedOnly,
+  accountingDriftWithinTolerance,
+  accountingSyncObjectPath,
+  ACCOUNTING_DRIFT_KINDS,
+  isLedgerObjectType,
   needsAccountingMappings,
+  needsAccountingMode,
+  sendsLedger,
   checkedMappingConfirmations,
   mappingCheckKey,
   REFERENCE_REFRESH_STALE_SECONDS,
@@ -217,6 +224,47 @@ describe("needsAccountingMappings", () => {
     expect(needsAccountingMappings({ status: "Connected", setupStep: "Complete" })).toBe(false);
     expect(needsAccountingMappings({ status: "Disconnected", setupStep: "Mappings" })).toBe(false);
     expect(needsAccountingMappings(null)).toBe(false);
+  });
+});
+
+describe("needsAccountingMode", () => {
+  it("asks a new live connection what it sends before anything else", () => {
+    expect(needsAccountingMode({ status: "Connected", setupStep: "Mode" })).toBe(true);
+    expect(needsAccountingMappings({ status: "Connected", setupStep: "Mode" })).toBe(false);
+  });
+
+  it("leaves a connection past the mode step or disconnected alone", () => {
+    expect(needsAccountingMode({ status: "Connected", setupStep: "Mappings" })).toBe(false);
+    expect(needsAccountingMode({ status: "Disconnected", setupStep: "Mode" })).toBe(false);
+    expect(needsAccountingMode(undefined)).toBe(false);
+  });
+});
+
+describe("ledger mode helpers", () => {
+  it("links a journal entry record to the journal and nothing else ledger-only", () => {
+    expect(accountingSyncObjectPath("JournalEntry", "je_1")).toBe(
+      "/accounting/journal-entries/je_1",
+    );
+    expect(accountingSyncObjectPath("JournalSummary", "jday_20260927")).toBeNull();
+    expect(accountingSyncObjectPath("GLAccount", "gla_1")).toBeNull();
+  });
+
+  it("tells journal records from documents", () => {
+    expect(isLedgerObjectType("JournalEntry")).toBe(true);
+    expect(isLedgerObjectType("JournalSummary")).toBe(true);
+    expect(isLedgerObjectType("Invoice")).toBe(false);
+    expect(sendsLedger({ syncMode: "Ledger" })).toBe(true);
+    expect(sendsLedger({ syncMode: "Document" })).toBe(false);
+    expect(sendsLedger(null)).toBe(false);
+  });
+
+  it("treats a trial balance difference as money that is explained, not fixed", () => {
+    expect(
+      accountingDriftWithinTolerance({ kind: "TrialBalanceMismatch", differenceMinor: 40 }, 500),
+    ).toBe(true);
+    expect(accountingDriftExplainedOnly("TrialBalanceMismatch")).toBe(true);
+    expect(accountingDriftExplainedOnly("AmountMismatch")).toBe(false);
+    expect(ACCOUNTING_DRIFT_KINDS).toContain("TrialBalanceMismatch");
   });
 });
 

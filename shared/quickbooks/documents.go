@@ -46,6 +46,7 @@ type documentQueryEnvelope struct {
 		Bill         []wireDocument `json:"Bill"`
 		VendorCredit []wireDocument `json:"VendorCredit"`
 		BillPayment  []wireDocument `json:"BillPayment"`
+		JournalEntry []wireDocument `json:"JournalEntry"`
 	} `json:"QueryResponse"`
 }
 
@@ -63,6 +64,8 @@ func (e *documentQueryEnvelope) documents(kind TxnKind) []wireDocument {
 		return e.QueryResponse.VendorCredit
 	case TxnBillPayment:
 		return e.QueryResponse.BillPayment
+	case TxnJournalEntry:
+		return e.QueryResponse.JournalEntry
 	default:
 		return nil
 	}

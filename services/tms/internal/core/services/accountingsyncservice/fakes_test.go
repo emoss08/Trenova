@@ -787,6 +787,18 @@ type fakeMappingStore struct {
 	createErr   error
 	parties     map[pulid.ID]*services.AccountingPartyDraft
 	vendorCalls []vendorPartyCall
+	rescored    []pulid.ID
+}
+
+func (f fakeMappingService) Rescore(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	connectionID pulid.ID,
+) (*services.AccountingRescoreResult, error) {
+	f.store.mu.Lock()
+	defer f.store.mu.Unlock()
+	f.store.rescored = append(f.store.rescored, connectionID)
+	return &services.AccountingRescoreResult{}, nil
 }
 
 func newFakeMappingStore() *fakeMappingStore {

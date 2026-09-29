@@ -632,6 +632,8 @@ func BackfillObjectTypes() []SyncObjectType {
 		SyncObjectCarrierBillPay,
 		SyncObjectDriverBill,
 		SyncObjectDriverBillPay,
+		SyncObjectJournalEntry,
+		SyncObjectJournalSummary,
 	}
 }
 

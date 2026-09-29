@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountingModeInput,
+  accountingModeSchema,
   accountingStartDateSchema,
   accountingSyncSettingsSchema,
   startDateInClosedBooks,
@@ -17,6 +19,7 @@ describe("accountingStartDateSchema", () => {
         autoSync: true,
         driverSettlements: false,
         backfill: false,
+        openingBalances: false,
       }).success,
     ).toBe(true);
   });
@@ -27,6 +30,7 @@ describe("accountingStartDateSchema", () => {
       autoSync: true,
       driverSettlements: false,
       backfill: false,
+      openingBalances: false,
     });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.message).toBe("The start date cannot be in the future");
@@ -39,6 +43,7 @@ describe("accountingStartDateSchema", () => {
         autoSync: true,
         driverSettlements: false,
         backfill: false,
+        openingBalances: false,
       });
       expect(result.success).toBe(false);
       expect(result.error?.issues[0]?.path).toEqual(["startDate"]);
@@ -52,9 +57,60 @@ describe("accountingStartDateSchema driver settlements", () => {
       startDate: latest,
       autoSync: true,
       backfill: false,
+      openingBalances: false,
     });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["driverSettlements"]);
+  });
+});
+
+describe("accountingStartDateSchema opening balances", () => {
+  it("needs the opening balances choice to be made", () => {
+    const result = accountingStartDateSchema(latest).safeParse({
+      startDate: latest,
+      autoSync: true,
+      driverSettlements: false,
+      backfill: true,
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["openingBalances"]);
+  });
+});
+
+describe("accountingModeSchema", () => {
+  it("takes either mode with a granularity", () => {
+    for (const mode of ["Document", "Ledger"]) {
+      for (const granularity of ["Detailed", "DailySummary"]) {
+        expect(accountingModeSchema.safeParse({ mode, granularity }).success).toBe(true);
+      }
+    }
+  });
+
+  it("refuses a mode or granularity the server does not know", () => {
+    for (const mode of [undefined, "", "Journal"]) {
+      const result = accountingModeSchema.safeParse({ mode, granularity: "Detailed" });
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.path).toEqual(["mode"]);
+      expect(result.error?.issues[0]?.message).toBe("Choose what is sent");
+    }
+    for (const granularity of [undefined, "", "Weekly"]) {
+      const result = accountingModeSchema.safeParse({ mode: "Ledger", granularity });
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.path).toEqual(["granularity"]);
+    }
+  });
+});
+
+describe("accountingModeInput", () => {
+  it("sends the granularity only with journal entries", () => {
+    expect(accountingModeInput({ mode: "Ledger", granularity: "DailySummary" })).toEqual({
+      mode: "Ledger",
+      granularity: "DailySummary",
+    });
+    expect(accountingModeInput({ mode: "Document", granularity: "DailySummary" })).toEqual({
+      mode: "Document",
+      granularity: null,
+    });
   });
 });
 

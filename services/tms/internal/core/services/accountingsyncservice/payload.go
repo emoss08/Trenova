@@ -48,6 +48,10 @@ func documentLabel(objectType accountingsync.SyncObjectType, number string) stri
 		kind = "Payment of carrier settlement"
 	case accountingsync.SyncObjectDriverBillPay:
 		kind = "Payment of owner-operator settlement"
+	case accountingsync.SyncObjectJournalEntry:
+		kind = "Journal entry"
+	case accountingsync.SyncObjectJournalSummary:
+		kind = "Journal entries for"
 	default:
 		kind = "Document"
 	}

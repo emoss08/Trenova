@@ -1,4 +1,8 @@
-import { ACCOUNTING_INBOUND_POLICIES } from "@/lib/accounting-sync";
+import {
+  ACCOUNTING_INBOUND_POLICIES,
+  ACCOUNTING_LEDGER_GRANULARITIES,
+  ACCOUNTING_SYNC_MODES,
+} from "@/lib/accounting-sync";
 import { z } from "zod";
 
 export function accountingStartDateSchema(latestAllowed: number) {
@@ -11,7 +15,24 @@ export function accountingStartDateSchema(latestAllowed: number) {
     autoSync: z.boolean(),
     driverSettlements: z.boolean(),
     backfill: z.boolean(),
+    openingBalances: z.boolean(),
   });
+}
+
+export const accountingModeSchema = z.object({
+  mode: z.enum(ACCOUNTING_SYNC_MODES, { error: "Choose what is sent" }),
+  granularity: z.enum(ACCOUNTING_LEDGER_GRANULARITIES, {
+    error: "Choose how journal entries are sent",
+  }),
+});
+
+export type AccountingModeValues = z.infer<typeof accountingModeSchema>;
+
+export function accountingModeInput(values: AccountingModeValues) {
+  return {
+    mode: values.mode,
+    granularity: values.mode === "Ledger" ? values.granularity : null,
+  };
 }
 
 export const accountingSyncSettingsSchema = z.object({

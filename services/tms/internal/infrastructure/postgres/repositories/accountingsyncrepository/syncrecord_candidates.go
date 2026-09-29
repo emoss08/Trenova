@@ -4,11 +4,13 @@ import (
 	"cmp"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -32,6 +34,7 @@ type candidateSource struct {
 	date   buncolgen.Column
 	at     buncolgen.Column
 	filter func(q *bun.SelectQuery, req *repositories.ListAccountingSyncCandidatesRequest) *bun.SelectQuery
+	queued func(q *bun.SelectQuery, req *repositories.ListAccountingSyncCandidatesRequest) *bun.SelectQuery
 }
 
 func postgresTxOptions() ports.TxOptions {
@@ -62,6 +65,12 @@ func candidateSourceFor(
 		return creditApplicationSource(operation)
 	case objectType.IsBill(), objectType.IsBillPayment():
 		return settlementSource(objectType, operation)
+	case objectType == accountingsync.SyncObjectJournalEntry &&
+		operation == accountingsync.SyncOperationCreate:
+		return journalSource(nil), nil
+	case objectType == accountingsync.SyncObjectJournalSummary &&
+		operation == accountingsync.SyncOperationCreate:
+		return journalSource(journalDayQueued), nil
 	default:
 		return nil, fmt.Errorf(
 			"no posted documents back %s %s records",
@@ -194,10 +203,15 @@ func (s *candidateSource) query(
 		ColumnExpr("1").
 		Where(records.OrganizationID.EqColumn(s.org)).
 		Where(records.BusinessUnitID.EqColumn(s.bu)).
-		Where(records.ObjectID.EqColumn(s.id)).
 		Where(records.ConnectionID.Eq(), req.ConnectionID).
-		Where(records.ObjectType.Eq(), req.ObjectType).
-		Where(records.Operation.Eq(), req.Operation)
+		Where(records.ObjectType.Eq(), req.ObjectType)
+	if s.queued != nil {
+		queued = s.queued(queued, req)
+	} else {
+		queued = queued.
+			Where(records.ObjectID.EqColumn(s.id)).
+			Where(records.Operation.Eq(), req.Operation)
+	}
 
 	numberExpr := "''"
 	if s.number != nil {
@@ -228,4 +242,52 @@ func (s *candidateSource) query(
 	return q.
 		Order(s.at.OrderAsc(), s.id.OrderAsc()).
 		Limit(limit)
+}
+
+func journalSource(
+	queued func(*bun.SelectQuery, *repositories.ListAccountingSyncCandidatesRequest) *bun.SelectQuery,
+) *candidateSource {
+	cols := buncolgen.JournalEntryColumns
+	return &candidateSource{
+		model:  (*journalentry.JournalEntry)(nil),
+		org:    cols.OrganizationID,
+		bu:     cols.BusinessUnitID,
+		id:     cols.ID,
+		number: &cols.EntryNumber,
+		date:   cols.AccountingDate,
+		at:     cols.PostedAt,
+		filter: func(
+			q *bun.SelectQuery,
+			_ *repositories.ListAccountingSyncCandidatesRequest,
+		) *bun.SelectQuery {
+			return q.
+				Where(cols.IsPosted.IsTrue()).
+				Apply(withoutEntryTypes(unsentEntryTypes()))
+		},
+		queued: queued,
+	}
+}
+
+func journalDayQueued(
+	q *bun.SelectQuery,
+	req *repositories.ListAccountingSyncCandidatesRequest,
+) *bun.SelectQuery {
+	records := buncolgen.AccountingSyncRecordColumns
+	entries := buncolgen.JournalEntryColumns
+	timezone := req.Timezone
+	if timezone == "" {
+		timezone = time.UTC.String()
+	}
+	return q.
+		Where(
+			buncolgen.Expr(
+				"{0} = ? || to_char(to_timestamp({1}) AT TIME ZONE ?, ?)",
+				records.ObjectID,
+				entries.AccountingDate,
+			),
+			accountingsync.JournalDayPrefix,
+			timezone,
+			accountingsync.JournalDaySQLLayout,
+		).
+		Where(buncolgen.Expr("{0} >= {1}", records.QueuedAt, entries.PostedAt))
 }

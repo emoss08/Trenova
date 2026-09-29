@@ -144,6 +144,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/journalreviewservice"
 	"github.com/emoss08/trenova/internal/core/services/jurisdictionruleservice"
 	"github.com/emoss08/trenova/internal/core/services/latechargeservice"
+	"github.com/emoss08/trenova/internal/core/services/ledgersync"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
@@ -236,7 +237,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var ServiceModule = fx.Module("api-services", fx.Provide(
+var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	organizationservice.New,
 	iamservice.New,
 	userservice.New,
@@ -548,6 +549,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *accountingmappingservice.Service) services.AccountingMappingService { return s },
 	accountingsyncservice.NewEnqueuer,
 	func(e *accountingsyncservice.Enqueuer) services.AccountingSyncEnqueuer { return e },
+	func(e *accountingsyncservice.Enqueuer) services.AccountingLedgerEnqueuer { return e },
 	accountingsyncservice.New,
 	func(s *accountingsyncservice.Service) services.AccountingSyncService { return s },
 	accountinginboundservice.New,

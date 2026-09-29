@@ -4214,6 +4214,8 @@ models:
     fields:
       lastErrorCategory:
         resolver: true
+      ledgerGranularity:
+        resolver: true
       appEnvironment:
         resolver: true
       pausedBy:
@@ -4224,6 +4226,12 @@ models:
   AccountingSyncObjectType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncObjectType
+  AccountingSyncMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncMode
+  AccountingLedgerGranularity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.LedgerGranularity
   AccountingSyncOperation:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncOperation

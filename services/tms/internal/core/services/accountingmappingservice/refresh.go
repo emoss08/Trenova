@@ -93,7 +93,14 @@ func (s *Service) Rescore(
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
 ) (*services.AccountingRescoreResult, error) {
-	targets, err := s.listTargets(ctx, tenantInfo)
+	conn, err := s.connections.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+		TenantInfo: tenantInfo,
+		ID:         connectionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	targets, err := s.listTargets(ctx, tenantInfo, conn.SendsLedger())
 	if err != nil {
 		return nil, err
 	}

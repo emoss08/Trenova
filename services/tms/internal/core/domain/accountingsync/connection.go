@@ -67,6 +67,10 @@ type AccountingConnection struct {
 	AutoSync                      bool                 `json:"autoSync"                      bun:"auto_sync,type:BOOLEAN,notnull"`
 	DriverSettlementsEnabledAt    *int64               `json:"driverSettlementsEnabledAt"    bun:"driver_settlements_enabled_at,type:BIGINT,nullzero"`
 	InboundPaymentPolicy          InboundPaymentPolicy `json:"inboundPaymentPolicy"          bun:"inbound_payment_policy,type:VARCHAR(20),nullzero,notnull,default:'Propose'"`
+	SyncMode                      SyncMode             `json:"syncMode"                      bun:"sync_mode,type:VARCHAR(20),nullzero,notnull,default:'Document'"`
+	LedgerGranularity             LedgerGranularity    `json:"ledgerGranularity"             bun:"ledger_granularity,type:VARCHAR(20),nullzero"`
+	LedgerOpeningBalancesSentAt   *int64               `json:"ledgerOpeningBalancesSentAt"   bun:"ledger_opening_balances_sent_at,type:BIGINT,nullzero"`
+	ExternalFiscalYearStartMonth  int                  `json:"externalFiscalYearStartMonth"  bun:"external_fiscal_year_start_month,type:SMALLINT,nullzero,notnull,default:1"`
 	ChangeCursor                  string               `json:"-"                             bun:"change_cursor,type:TEXT,nullzero"`
 	ChangesReadAt                 *int64               `json:"changesReadAt"                 bun:"changes_read_at,type:BIGINT,nullzero"`
 	ChangesErrorCategory          SyncErrorCategory    `json:"changesErrorCategory"          bun:"changes_error_category,type:VARCHAR(30),nullzero"`
@@ -106,6 +110,7 @@ type CompanyFacts struct {
 	HomeCurrency         string
 	MultiCurrencyEnabled bool
 	BooksClosedThrough   *int64
+	FiscalYearStartMonth time.Month
 }
 
 func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
@@ -157,6 +162,19 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 			return nil
 		})),
 		validation.Field(&c.PausedReason, validation.Length(0, maxPausedReasonLength)),
+		validation.Field(&c.SyncMode,
+			domainvalidation.ValidEnum[SyncMode]("Sync mode is not recognized"),
+		),
+		validation.Field(&c.LedgerGranularity,
+			domainvalidation.ValidEnum[LedgerGranularity]("Journal detail is not recognized"),
+			validation.By(func(any) error {
+				if c.SendsLedger() && !c.LedgerGranularity.IsValid() {
+					return validation.NewError("required", ErrGranularityRequired.Error())
+				}
+				return nil
+			}),
+		),
+		validation.Field(&c.ExternalFiscalYearStartMonth, validation.Min(0), validation.Max(12)),
 	))
 }
 
@@ -236,7 +254,7 @@ func (c *AccountingConnection) Connect(userID pulid.ID, grant TokenGrant, now in
 	c.DisconnectedAt = nil
 	c.RefreshTokenAbsoluteExpiresAt = now + RefreshTokenAbsoluteLifetime
 	if c.SetupStep == "" {
-		c.SetupStep = SetupStepMappings
+		c.SetupStep = SetupStepMode
 	}
 	c.ApplyGrant(grant, now)
 	c.RecordSuccess(now)
@@ -257,6 +275,9 @@ func (c *AccountingConnection) ApplyCompanyFacts(facts *CompanyFacts) {
 	c.ExternalHomeCurrency = facts.HomeCurrency
 	c.ExternalMultiCurrencyEnabled = facts.MultiCurrencyEnabled
 	c.ExternalBooksClosedThrough = facts.BooksClosedThrough
+	if facts.FiscalYearStartMonth >= time.January && facts.FiscalYearStartMonth <= time.December {
+		c.ExternalFiscalYearStartMonth = int(facts.FiscalYearStartMonth)
+	}
 }
 
 func (c *AccountingConnection) RecordSuccess(now int64) {
@@ -356,6 +377,7 @@ type SyncSettings struct {
 	AutoSync          bool
 	DriverSettlements bool
 	InboundPayments   InboundPaymentPolicy
+	OpeningBalances   bool
 }
 
 func (c *AccountingConnection) EnableSync(settings SyncSettings, now int64) {
@@ -366,6 +388,9 @@ func (c *AccountingConnection) EnableSync(settings SyncSettings, now int64) {
 	c.SetInboundPayments(settings.InboundPayments)
 	if c.SyncEnabledAt == nil {
 		c.SyncEnabledAt = &now
+		if settings.OpeningBalances && c.SendsLedger() {
+			c.LedgerOpeningBalancesSentAt = &now
+		}
 	}
 	c.SetupStep = SetupStepComplete
 }

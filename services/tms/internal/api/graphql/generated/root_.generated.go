@@ -340,6 +340,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCarrierSourcingSearchInput,
 		ec.unmarshalInputChangeAccountingBackfillInput,
 		ec.unmarshalInputChargeAllocationInput,
+		ec.unmarshalInputChooseAccountingSyncModeInput,
 		ec.unmarshalInputClockInput,
 		ec.unmarshalInputCompleteAccountingAuthorizationInput,
 		ec.unmarshalInputCompleteClearinghouseQueryInput,
@@ -856,6 +857,8 @@ enum AccountingConnectionStatus {
 
 "How far the organization has got through setting up the accounting sync."
 enum AccountingSetupStep {
+  "Choosing whether documents or journal entries are sent."
+  Mode
   "Trenova records are being matched to the accounting system's records."
   Mappings
   "The matches are confirmed; a start date has to be chosen before anything is sent."
@@ -885,6 +888,28 @@ enum AccountingSyncObjectType {
   DriverBill
   "The payment of an owner-operator settlement, sent as a bill payment."
   DriverBillPayment
+  "One posted journal entry, sent as a journal entry."
+  JournalEntry
+  "Every journal entry posted for one day, or the opening balances, sent as one journal entry."
+  JournalSummary
+  "A Trenova GL account. Only trial balance differences name one."
+  GLAccount
+}
+
+"What a connection sends to the accounting system."
+enum AccountingSyncMode {
+  "Invoices, memos, payments and bills."
+  Document
+  "Posted journal entries. Trenova keeps the ledger and the accounting system receives it."
+  Ledger
+}
+
+"How journal entries are sent in ledger mode."
+enum AccountingLedgerGranularity {
+  "One journal entry for each one posted in Trenova."
+  Detailed
+  "One journal entry for each day, summed per account and customer or vendor."
+  DailySummary
 }
 
 "What a sync record does to the document in the accounting system."
@@ -920,6 +945,10 @@ enum AccountingSyncSourceEvent {
   SafetyNet
   "A backfill of documents dated before sync was turned on."
   Backfill
+  "A journal entry was posted."
+  JournalPosted
+  "Ledger sync was turned on with opening balances."
+  OpeningBalances
 }
 
 "Where a sync record stands."
@@ -1101,6 +1130,14 @@ type AccountingConnection {
   disconnectedAt: Timestamp
   "How far setup has got. Syncing waits until it is Complete."
   setupStep: AccountingSetupStep!
+  "What the connection sends. Fixed once sync is enabled."
+  syncMode: AccountingSyncMode!
+  "How journal entries are sent. Absent in document mode."
+  ledgerGranularity: AccountingLedgerGranularity
+  "When the opening balances were queued. Absent when they were not sent."
+  ledgerOpeningBalancesSentAt: Timestamp
+  "The month, 1 to 12, the accounting system's fiscal year starts in."
+  externalFiscalYearStartMonth: Int!
   "Documents dated before this day are never sent. Absent until the start date step is finished."
   syncStartDate: Timestamp
   "When sending was turned on."
@@ -1326,6 +1363,16 @@ input EnableAccountingSyncInput {
   driverSettlements: Boolean = false
   "Also queue documents dated from the start date up to now, which were posted before sync was on."
   backfill: Boolean!
+  "In ledger mode, also send one journal entry with every balance before the start date. Leave it off when the accounting system already holds them."
+  openingBalances: Boolean = false
+}
+
+"Chooses what a connection sends, before its mappings."
+input ChooseAccountingSyncModeInput {
+  integrationType: AccountingSystem!
+  mode: AccountingSyncMode!
+  "Required in ledger mode."
+  granularity: AccountingLedgerGranularity
 }
 
 input UpdateAccountingSyncSettingsInput {
@@ -1735,6 +1782,8 @@ enum AccountingDriftKind {
   VoidedInProvider
   "A customer's open balance differs over the documents both sides hold."
   CustomerBalanceMismatch
+  "An account's balance differs from the accounting system's trial balance."
+  TrialBalanceMismatch
 }
 
 enum AccountingDriftStatus {
@@ -1974,6 +2023,8 @@ extend type Mutation {
   refreshAccountingReferenceData(integrationType: AccountingSystem!): AccountingConnection!
   "Moves setup to the start date step once every required mapping is confirmed."
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
+  "Chooses whether documents or journal entries are sent. Only before sync is enabled."
+  chooseAccountingSyncMode(input: ChooseAccountingSyncModeInput!): AccountingConnection!
   "Finishes setup with a start date and turns sending on."
   enableAccountingSync(input: EnableAccountingSyncInput!): AccountingConnection!
   "Change how documents are sent once setup is complete."
@@ -28487,6 +28538,14 @@ func (ec *executionContext) childFields_AccountingConnection(ctx context.Context
 		return ec.fieldContext_AccountingConnection_disconnectedAt(ctx, field)
 	case "setupStep":
 		return ec.fieldContext_AccountingConnection_setupStep(ctx, field)
+	case "syncMode":
+		return ec.fieldContext_AccountingConnection_syncMode(ctx, field)
+	case "ledgerGranularity":
+		return ec.fieldContext_AccountingConnection_ledgerGranularity(ctx, field)
+	case "ledgerOpeningBalancesSentAt":
+		return ec.fieldContext_AccountingConnection_ledgerOpeningBalancesSentAt(ctx, field)
+	case "externalFiscalYearStartMonth":
+		return ec.fieldContext_AccountingConnection_externalFiscalYearStartMonth(ctx, field)
 	case "syncStartDate":
 		return ec.fieldContext_AccountingConnection_syncStartDate(ctx, field)
 	case "syncEnabledAt":

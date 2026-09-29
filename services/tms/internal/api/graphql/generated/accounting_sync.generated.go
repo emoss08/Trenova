@@ -35,6 +35,8 @@ type AccountingConnectionResolver interface {
 
 	LastErrorCategory(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.ErrorCategory, error)
 
+	LedgerGranularity(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.LedgerGranularity, error)
+
 	PausedBy(ctx context.Context, obj *accountingsync.AccountingConnection) (*tenant.User, error)
 }
 type AccountingDriftFindingResolver interface {
@@ -1313,6 +1315,98 @@ func (ec *executionContext) _AccountingConnection_setupStep(ctx context.Context,
 }
 func (ec *executionContext) fieldContext_AccountingConnection_setupStep(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type AccountingSetupStep does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingConnection_syncMode(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_syncMode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SyncMode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.SyncMode) graphql.Marshaler {
+			return ec.marshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐSyncMode(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_syncMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type AccountingSyncMode does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingConnection_ledgerGranularity(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_ledgerGranularity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingConnection().LedgerGranularity(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.LedgerGranularity) graphql.Marshaler {
+			return ec.marshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐLedgerGranularity(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_ledgerGranularity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, true, true, errors.New("field of type AccountingLedgerGranularity does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingConnection_ledgerOpeningBalancesSentAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_ledgerOpeningBalancesSentAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LedgerOpeningBalancesSentAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_ledgerOpeningBalancesSentAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingConnection_externalFiscalYearStartMonth(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_externalFiscalYearStartMonth(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalFiscalYearStartMonth, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_externalFiscalYearStartMonth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _AccountingConnection_syncStartDate(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
@@ -7953,6 +8047,50 @@ func (ec *executionContext) unmarshalInputChangeAccountingBackfillInput(ctx cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputChooseAccountingSyncModeInput(ctx context.Context, obj any) (gqlmodel.ChooseAccountingSyncModeInput, error) {
+	var it gqlmodel.ChooseAccountingSyncModeInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"integrationType", "mode", "granularity"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "integrationType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("integrationType"))
+			data, err := ec.unmarshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋintegrationᚐType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IntegrationType = data
+		case "mode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
+			data, err := ec.unmarshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐSyncMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mode = data
+		case "granularity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("granularity"))
+			data, err := ec.unmarshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐLedgerGranularity(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Granularity = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCompleteAccountingAuthorizationInput(ctx context.Context, obj any) (gqlmodel.CompleteAccountingAuthorizationInput, error) {
 	var it gqlmodel.CompleteAccountingAuthorizationInput
 	if obj == nil {
@@ -8129,8 +8267,11 @@ func (ec *executionContext) unmarshalInputEnableAccountingSyncInput(ctx context.
 	if _, present := asMap["driverSettlements"]; !present {
 		asMap["driverSettlements"] = false
 	}
+	if _, present := asMap["openingBalances"]; !present {
+		asMap["openingBalances"] = false
+	}
 
-	fieldsInOrder := [...]string{"integrationType", "startDate", "autoSync", "driverSettlements", "backfill"}
+	fieldsInOrder := [...]string{"integrationType", "startDate", "autoSync", "driverSettlements", "backfill", "openingBalances"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8172,6 +8313,13 @@ func (ec *executionContext) unmarshalInputEnableAccountingSyncInput(ctx context.
 				return it, err
 			}
 			it.Backfill = data
+		case "openingBalances":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("openingBalances"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OpeningBalances = data
 		}
 	}
 	return it, nil
@@ -9224,6 +9372,59 @@ func (ec *executionContext) _AccountingConnection(ctx context.Context, sel ast.S
 			}
 		case "setupStep":
 			out.Values[i] = ec._AccountingConnection_setupStep(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "syncMode":
+			out.Values[i] = ec._AccountingConnection_syncMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ledgerGranularity":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingConnection_ledgerGranularity(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "ledgerOpeningBalancesSentAt":
+			out.Values[i] = ec._AccountingConnection_ledgerOpeningBalancesSentAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "externalFiscalYearStartMonth":
+			out.Values[i] = ec._AccountingConnection_externalFiscalYearStartMonth(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -13775,6 +13976,23 @@ func (ec *executionContext) marshalNAccountingSyncErrorCategory2githubᚗcomᚋe
 	return res
 }
 
+func (ec *executionContext) unmarshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐSyncMode(ctx context.Context, v any) (accountingsync.SyncMode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.SyncMode(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐSyncMode(ctx context.Context, sel ast.SelectionSet, v accountingsync.SyncMode) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNAccountingSyncObjectState2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingSyncObjectStateᚄ(ctx context.Context, sel ast.SelectionSet, v []*services.AccountingSyncObjectState) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -14004,6 +14222,11 @@ func (ec *executionContext) marshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtr
 
 func (ec *executionContext) unmarshalNChangeAccountingBackfillInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐChangeAccountingBackfillInput(ctx context.Context, v any) (gqlmodel.ChangeAccountingBackfillInput, error) {
 	res, err := ec.unmarshalInputChangeAccountingBackfillInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNChooseAccountingSyncModeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐChooseAccountingSyncModeInput(ctx context.Context, v any) (gqlmodel.ChooseAccountingSyncModeInput, error) {
+	res, err := ec.unmarshalInputChooseAccountingSyncModeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -14260,6 +14483,25 @@ func (ec *executionContext) unmarshalOAccountingInboundPaymentPolicy2ᚖgithub�
 }
 
 func (ec *executionContext) marshalOAccountingInboundPaymentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx context.Context, sel ast.SelectionSet, v *accountingsync.InboundPaymentPolicy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐLedgerGranularity(ctx context.Context, v any) (*accountingsync.LedgerGranularity, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.LedgerGranularity(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐLedgerGranularity(ctx context.Context, sel ast.SelectionSet, v *accountingsync.LedgerGranularity) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

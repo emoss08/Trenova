@@ -146,6 +146,7 @@ type ListAccountingSyncCandidatesRequest struct {
 	AfterAt      int64
 	AfterID      pulid.ID
 	Limit        int
+	Timezone     string
 }
 
 type AccountingSyncCandidate struct {

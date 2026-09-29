@@ -372,6 +372,10 @@ func TestDocumentURLPointsAtTheRightScreen(t *testing.T) {
 		"https://app.sandbox.qbo.intuit.com/app/customerdetail?nameId=58",
 		conn.DocumentURL(accountingsync.SyncObjectCustomer, "58"),
 	)
+	assert.Equal(t,
+		"https://app.sandbox.qbo.intuit.com/app/journal?txnId=212",
+		conn.DocumentURL(accountingsync.SyncObjectJournalSummary, "212"),
+	)
 	assert.Empty(t, conn.DocumentURL(accountingsync.SyncObjectInvoice, " "))
 	assert.Equal(t, quickbooks.MaxDocNumberLength, conn.DocumentLimits().MaxDocNumberLength)
 }

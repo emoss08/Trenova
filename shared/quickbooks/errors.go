@@ -19,11 +19,14 @@ var (
 	ErrCodeRequired         = errors.New("quickbooks: authorization code is required")
 	ErrTokenRequired        = errors.New("quickbooks: token is required")
 	ErrInvalidGrant         = errors.New("quickbooks: the authorization was revoked or has expired")
-	ErrInvalidClient        = errors.New("quickbooks: the app's client id or secret was not accepted")
-	ErrUnexpectedPayload    = errors.New("quickbooks: unexpected response payload")
-	ErrInvalidSignature     = errors.New("quickbooks: webhook signature does not match")
-	ErrMissingSignature     = errors.New("quickbooks: webhook signature is missing")
-	ErrVerifierRequired     = errors.New("quickbooks: webhook verifier token is required")
+	ErrInvalidClient        = errors.New(
+		"quickbooks: the app's client id or secret was not accepted",
+	)
+	ErrUnexpectedPayload  = errors.New("quickbooks: unexpected response payload")
+	ErrReportDateRequired = errors.New("quickbooks: a report needs an end date")
+	ErrInvalidSignature   = errors.New("quickbooks: webhook signature does not match")
+	ErrMissingSignature   = errors.New("quickbooks: webhook signature is missing")
+	ErrVerifierRequired   = errors.New("quickbooks: webhook verifier token is required")
 )
 
 type FaultDetail struct {

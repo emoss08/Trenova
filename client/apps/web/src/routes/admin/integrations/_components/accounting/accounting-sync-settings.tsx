@@ -1,7 +1,11 @@
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { useAccountingInboundLabels } from "@/hooks/use-accounting-inbound-labels";
-import { ACCOUNTING_INBOUND_PATH, ACCOUNTING_INBOUND_POLICIES } from "@/lib/accounting-sync";
+import {
+  ACCOUNTING_INBOUND_PATH,
+  ACCOUNTING_INBOUND_POLICIES,
+  sendsLedger,
+} from "@/lib/accounting-sync";
 import type { AccountingInboundPaymentPolicy } from "@trenova/graphql/generated/graphql";
 import { SectionPanel } from "@/components/section-panel";
 import type { AccountingConnection } from "@/lib/graphql/accounting-sync";
@@ -42,6 +46,7 @@ export function AccountingSyncSettings({
     },
   });
   const inboundLabels = useAccountingInboundLabels();
+  const ledger = sendsLedger(connection);
   const {
     control,
     handleSubmit,
@@ -85,40 +90,44 @@ export function AccountingSyncSettings({
               disabled={!canManage}
             />
           </FormControl>
-          <FormControl>
-            <SwitchField
-              name="driverSettlements"
-              control={control}
-              label={t("Send owner-operator settlements")}
-              description={
-                connection.driverSettlementsEnabledAt && driverSettlements
-                  ? t(
-                      "Sent as bills since {0}. Company driver pay is never sent.",
-                      formatUnixDateMedium(connection.driverSettlementsEnabledAt),
-                    )
-                  : t(
-                      "Sends owner-operator settlements to {0} as bills to a vendor for each driver. Company driver pay is never sent; it belongs to your payroll system.",
-                      vendor.name,
-                    )
-              }
-              disabled={!canManage}
-            />
-          </FormControl>
-          <FormControl>
-            <SelectField
-              name="inboundPayments"
-              control={control}
-              label={t("Payments recorded in {0}", vendor.name)}
-              description={policyHelp[inboundPayments]}
-              options={ACCOUNTING_INBOUND_POLICIES.map((value) => ({
-                value,
-                label: inboundLabels.policy[value],
-              }))}
-              isReadOnly={!canManage}
-            />
-          </FormControl>
+          {ledger ? null : (
+            <>
+              <FormControl>
+                <SwitchField
+                  name="driverSettlements"
+                  control={control}
+                  label={t("Send owner-operator settlements")}
+                  description={
+                    connection.driverSettlementsEnabledAt && driverSettlements
+                      ? t(
+                          "Sent as bills since {0}. Company driver pay is never sent.",
+                          formatUnixDateMedium(connection.driverSettlementsEnabledAt),
+                        )
+                      : t(
+                          "Sends owner-operator settlements to {0} as bills to a vendor for each driver. Company driver pay is never sent; it belongs to your payroll system.",
+                          vendor.name,
+                        )
+                  }
+                  disabled={!canManage}
+                />
+              </FormControl>
+              <FormControl>
+                <SelectField
+                  name="inboundPayments"
+                  control={control}
+                  label={t("Payments recorded in {0}", vendor.name)}
+                  description={policyHelp[inboundPayments]}
+                  options={ACCOUNTING_INBOUND_POLICIES.map((value) => ({
+                    value,
+                    label: inboundLabels.policy[value],
+                  }))}
+                  isReadOnly={!canManage}
+                />
+              </FormControl>
+            </>
+          )}
         </FormGroup>
-        {connection.inboundPaymentPolicy !== "Off" ? (
+        {!ledger && connection.inboundPaymentPolicy !== "Off" ? (
           <p className="text-foreground-muted text-xs">
             {t("Review them on")}{" "}
             <Link to={ACCOUNTING_INBOUND_PATH} className="text-brand font-medium hover:underline">

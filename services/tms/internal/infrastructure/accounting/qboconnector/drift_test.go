@@ -88,6 +88,8 @@ func TestReadDocumentsMapsEachTrenovaKindToItsProviderEntity(t *testing.T) {
 		accountingsync.SyncObjectDriverBill:        "Bill",
 		accountingsync.SyncObjectCarrierBillPay:    "BillPayment",
 		accountingsync.SyncObjectDriverBillPay:     "BillPayment",
+		accountingsync.SyncObjectJournalEntry:      "JournalEntry",
+		accountingsync.SyncObjectJournalSummary:    "JournalEntry",
 	}
 	for kind, entity := range cases {
 		var statement string

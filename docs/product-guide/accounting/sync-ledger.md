@@ -1,6 +1,6 @@
 ---
 path: /accounting/sync
-aliases: [QuickBooks sync, sync log, sync errors, sync history, failed to sync, QuickBooks not updating, invoice not in QuickBooks, accounting sync ledger, outbox, settlement not in QuickBooks, carrier bill, bill payment, vendor credit]
+aliases: [QuickBooks sync, sync log, sync errors, sync history, failed to sync, QuickBooks not updating, invoice not in QuickBooks, accounting sync ledger, outbox, settlement not in QuickBooks, carrier bill, bill payment, vendor credit, journal entry not in QuickBooks, daily summary, opening balances entry]
 related:
   - /accounting/sync/mappings
   - /accounting/sync/inbound
@@ -25,6 +25,11 @@ paid sends a bill payment from the cash account. Voiding a posted settlement rem
 Owner-operator settlements work the same way once **Send owner-operator settlements** is on for
 the connection, each driver becoming a 1099 vendor; company driver pay is never sent.
 
+When the connection sends journal entries instead of documents, the ledger lists one record for
+each posted journal entry, or one **Daily summary** per day, and the **Opening balances** entry when
+it was sent. A day's summary is sent again whenever an entry is posted to that day later, and a
+day whose entries net to nothing removes its summary from QuickBooks.
+
 ## Tasks
 
 ### Fix a document that did not reach QuickBooks
@@ -43,6 +48,14 @@ Keywords: carrier bill held, settlement not synced, map GL account, vendor missi
    or an owner-operator, map them to the existing QuickBooks vendor, or let Trenova create one.
 3. Select **Retry now**. A settlement's payment waits for its bill and follows once the bill is
    in QuickBooks.
+
+### Fix a journal entry that did not reach QuickBooks
+Keywords: journal entry held, daily summary held, GL account not mapped, customer or vendor needed
+1. Open [Sync ledger](/accounting/sync) and open the journal entry or daily summary record.
+2. When its reason names a GL account, map that account to a QuickBooks account on the
+   [Mappings](/accounting/sync/mappings) page (filter by **GL accounts**). A receivable or payable
+   account needs the customer or vendor too; map it, or let Trenova create one.
+3. Select **Retry now**. Entries unbalanced by rounding are not sent; the reason says by how much.
 
 ### Send a document dated in closed books
 Keywords: closed period, books closed, re-date, first open day, closing date
@@ -84,7 +97,8 @@ Keywords: stop syncing, month-end close, hold QuickBooks sync
 Keywords: backfill, historical invoices, send old documents
 1. Open [Sync ledger](/accounting/sync) and select **Backfill**.
 2. Choose the range and, optionally, the kinds of documents, then select **Start backfill**.
-   Documents already queued are left alone, and one backfill runs at a time.
+   Documents already queued are left alone, and one backfill runs at a time. A connection that
+   sends journal entries backfills journal entries or daily summaries instead.
 
 ## Notes
 Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing

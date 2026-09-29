@@ -110,6 +110,7 @@ func TestPreferencesNormalizesCurrencyAndCloseDate(t *testing.T) {
 	assert.Equal(t, "USD", prefs.HomeCurrency)
 	assert.False(t, prefs.MultiCurrencyEnabled)
 	assert.Equal(t, "2026-06-30", prefs.BooksClosedThrough)
+	assert.Equal(t, time.April, prefs.FiscalYearStartMonth)
 }
 
 func TestFaultIsDecodedAndClassified(t *testing.T) {
