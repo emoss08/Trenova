@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -195,6 +196,8 @@ func newDelegateFixture() *delegateFixture {
 // The delegate's turn is opened as the delegate, as the same person, marked as
 // working for the agent that asked: it never holds delegate_task, and it is
 // not unattended, so a write that is the person's own still runs as theirs.
+var clockLinePrefix = regexp.MustCompile(`^Now: \d{4}-\d{2}-\d{2} \d{2}:\d{2} \S+\n\n`)
+
 func TestOpenDelegate_OpensTheDelegatesOwnTurnForTheSamePerson(t *testing.T) {
 	t.Parallel()
 
@@ -215,7 +218,9 @@ func TestOpenDelegate_OpensTheDelegatesOwnTurnForTheSamePerson(t *testing.T) {
 	assert.Equal(t, f.parent.ID, req.Delegation.ParentAgentID)
 	assert.NotContains(t, opened.Turn.Held, "delegate_task")
 	assert.Contains(t, opened.Turn.System, "The agent Homepage Widget Builder handed you this task")
-	assert.Equal(t, f.request.Call.Task, opened.Turn.Messages[len(opened.Turn.Messages)-1].Content)
+	asked := opened.Turn.Messages[len(opened.Turn.Messages)-1].Content
+	assert.Regexp(t, clockLinePrefix, asked, "the delegate reads the time like any turn")
+	assert.Equal(t, f.request.Call.Task, clockLinePrefix.ReplaceAllString(asked, ""))
 	assert.Contains(t, f.perms.asked, "assistant:create", "the person must be allowed to use it")
 }
 
@@ -403,7 +408,9 @@ func TestOpenDelegate_PutsWhatWasHandedOverAfterTheTask(t *testing.T) {
 	opened, err := f.svc.OpenDelegate(t.Context(), f.request)
 	require.NoError(t, err)
 
-	question := opened.Turn.Messages[len(opened.Turn.Messages)-1].Content
+	question := clockLinePrefix.ReplaceAllString(
+		opened.Turn.Messages[len(opened.Turn.Messages)-1].Content, "",
+	)
 	assert.True(t, strings.HasPrefix(question, f.request.Call.Task+"\n\n"))
 	assert.Contains(t, question, "shipment shp_1")
 	assert.Contains(t, question, "PRO-1001")
