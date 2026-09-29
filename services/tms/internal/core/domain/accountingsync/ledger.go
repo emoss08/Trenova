@@ -64,6 +64,7 @@ var (
 		"the start date is fixed once opening balances are sent, because they hold every balance up to it",
 	)
 	ErrModeNotRecognized   = errors.New("the mode is not recognized")
+	ErrModeUnavailable     = errors.New("this accounting system cannot receive journal entries")
 	ErrGranularityRequired = errors.New(
 		"journal entries are sent detailed or as a daily summary",
 	)
@@ -130,6 +131,9 @@ func (c *AccountingConnection) ChooseMode(mode SyncMode, granularity LedgerGranu
 	}
 	if !mode.IsValid() {
 		return ErrModeNotRecognized
+	}
+	if profile, ok := Profile(c.IntegrationType); ok && !profile.SupportsMode(mode) {
+		return ErrModeUnavailable
 	}
 	if mode == SyncModeLedger && !granularity.IsValid() {
 		return ErrGranularityRequired

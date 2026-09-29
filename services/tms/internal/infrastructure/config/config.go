@@ -1789,6 +1789,32 @@ type Config struct {
 
 type AccountingConfig struct {
 	QuickBooks QuickBooksConfig `mapstructure:"quickbooks"`
+	Xero       XeroConfig       `mapstructure:"xero"`
+}
+
+type XeroConfig struct {
+	ClientID     string `mapstructure:"clientId"`
+	ClientSecret string `mapstructure:"clientSecret"`
+	WebhookKey   string `mapstructure:"webhookKey"`
+	RedirectURL  string `mapstructure:"redirectUrl"  validate:"omitempty,url"`
+}
+
+const xeroCallbackPath = "/admin/integrations/xero/callback"
+
+func (c *XeroConfig) GetRedirectURL(app *AppConfig) string {
+	if c.RedirectURL != "" {
+		return c.RedirectURL
+	}
+	if base := app.GetWebBaseURL(); base != "" {
+		return base + xeroCallbackPath
+	}
+	return ""
+}
+
+func (c *XeroConfig) IsConfigured(app *AppConfig) bool {
+	return strings.TrimSpace(c.ClientID) != "" &&
+		strings.TrimSpace(c.ClientSecret) != "" &&
+		c.GetRedirectURL(app) != ""
 }
 
 type QuickBooksConfig struct {

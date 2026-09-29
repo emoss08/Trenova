@@ -16,6 +16,12 @@ type AccountingTokenGrant struct {
 	RefreshTokenTTL time.Duration
 }
 
+type AccountingCompany struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	ConnectionID string `json:"connectionId"`
+}
+
 var ErrAccountingAppRejected = errors.New(
 	"the accounting system did not accept the app's client id or secret",
 )
@@ -42,6 +48,16 @@ type AccountingConnector interface {
 	ExchangeCode(ctx context.Context, code string) (*AccountingTokenGrant, error)
 	Refresh(ctx context.Context, refreshToken string) (*AccountingTokenGrant, error)
 	Revoke(ctx context.Context, token string) error
+	Companies(
+		ctx context.Context,
+		grant *AccountingTokenGrant,
+		callbackRealmID string,
+	) ([]AccountingCompany, error)
+	ReleaseCompanies(
+		ctx context.Context,
+		grant *AccountingTokenGrant,
+		companies []AccountingCompany,
+	) error
 	CompanyFacts(
 		ctx context.Context,
 		realmID, accessToken string,

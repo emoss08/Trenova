@@ -2,7 +2,6 @@ package agenttoolservice
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -67,7 +66,7 @@ type accountingMappingWriter interface {
 
 func accountingSystemSchema() map[string]any {
 	return agenttoolschema.Enum(
-		"The accounting system. Example: \"QuickBooksOnline\".",
+		"The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
 		agenttoolschema.AccountingSystems,
 	)
 }
@@ -102,7 +101,7 @@ func accountingSystemFrom(params map[string]any) (integration.Type, error) {
 	}
 	typ := integration.Type(system)
 	if !accountingsync.SupportsAccountingSync(typ) {
-		return "", fmt.Errorf("system must be %q", integration.TypeQuickBooksOnline)
+		return "", agenttoolschema.ErrAccountingSystem()
 	}
 	return typ, nil
 }

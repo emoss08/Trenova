@@ -1,0 +1,78 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Invoices": [
+    {
+      "Type": "ACCREC",
+      "InvoiceID": "fee88eea-f2aa-4a71-a372-33d6d83d3c45",
+      "InvoiceNumber": "INV-1001",
+      "Reference": "PRO 55012",
+      "Payments": [
+        {
+          "PaymentID": "b26fd49a-cbae-470a-a8f8-bcbc119e0379",
+          "Date": "/Date(1790294400000+0000)/",
+          "Amount": 500.0
+        }
+      ],
+      "CreditNotes": [
+        {
+          "CreditNoteID": "7f8b6e4a-2d3c-4b1a-9e8f-6a5b4c3d2e1f",
+          "CreditNoteNumber": "CN-0007",
+          "AppliedAmount": 100.0,
+          "Total": 100.0
+        }
+      ],
+      "AmountDue": 850.25,
+      "AmountPaid": 500.0,
+      "AmountCredited": 100.0,
+      "CurrencyRate": 1.0,
+      "IsDiscounted": false,
+      "HasAttachments": false,
+      "HasErrors": false,
+      "Contact": {
+        "ContactID": "bd2270c3-8706-4c11-9cfb-000b551c3f51",
+        "Name": "Globex Shipping"
+      },
+      "DateString": "2026-09-24T00:00:00",
+      "Date": "/Date(1790208000000+0000)/",
+      "DueDateString": "2026-10-24T00:00:00",
+      "DueDate": "/Date(1792800000000+0000)/",
+      "Status": "AUTHORISED",
+      "LineAmountTypes": "NoTax",
+      "LineItems": [
+        {
+          "Description": "Linehaul Chicago to Dallas",
+          "UnitAmount": 1450.25,
+          "LineAmount": 1450.25,
+          "AccountCode": "200",
+          "Quantity": 1.0,
+          "LineItemID": "5f7a0e24-1c1f-4b8e-a1f4-2f2e8d6b7c01"
+        }
+      ],
+      "SubTotal": 1450.25,
+      "TotalTax": 0.0,
+      "Total": 1450.25,
+      "UpdatedDateUTC": "/Date(1790298030000+0000)/",
+      "CurrencyCode": "USD"
+    },
+    {
+      "Type": "ACCPAY",
+      "InvoiceID": "0032c6e3-7b1e-4b0f-9c7e-2f6d2b5b8a11",
+      "InvoiceNumber": "BILL-88",
+      "Reference": "",
+      "Payments": [],
+      "CreditNotes": [],
+      "AmountDue": 0.0,
+      "AmountPaid": 0.0,
+      "Contact": {
+        "ContactID": "3e5f7a9b-1c2d-4e6f-8a0b-2c4d6e8f0a1b"
+      },
+      "Date": "/Date(1790121600000+0000)/",
+      "Status": "VOIDED",
+      "LineAmountTypes": "NoTax",
+      "Total": 900.0,
+      "UpdatedDateUTC": "/Date(1790300000000+0000)/",
+      "CurrencyCode": "USD"
+    }
+  ]
+}

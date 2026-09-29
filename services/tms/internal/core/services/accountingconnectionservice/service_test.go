@@ -99,14 +99,21 @@ func (h *harness) start(t *testing.T) string {
 
 func (h *harness) complete(t *testing.T, state string) (*accountingsync.AccountingConnection, error) {
 	t.Helper()
-	return h.svc.CompleteAuthorization(t.Context(), &services.CompleteAccountingAuthorizationRequest{
-		TenantInfo:      h.tenant,
-		UserID:          h.userID,
-		IntegrationType: integration.TypeQuickBooksOnline,
-		State:           state,
-		Code:            "auth-code",
-		RealmID:         testRealm,
-	})
+	completion, err := h.svc.CompleteAuthorization(
+		t.Context(),
+		&services.CompleteAccountingAuthorizationRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			State:           state,
+			Code:            "auth-code",
+			RealmID:         testRealm,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return completion.Connection, nil
 }
 
 func (h *harness) connect(t *testing.T) *accountingsync.AccountingConnection {
@@ -510,7 +517,7 @@ func TestReceiveWebhookVerifiesBeforeRecording(t *testing.T) {
 	h.connector.webhookErr = nil
 	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &services.ReceiveAccountingWebhookRequest{
 		IntegrationType: integration.TypeQuickBooksOnline,
-		Signature:       "good",
+		Signature:       instanceVerifier,
 		Body:            []byte("[]"),
 	}))
 	assert.NotNil(t, h.connections.rows[conn.ID].LastWebhookAt)
@@ -524,7 +531,7 @@ func TestAVerifiedWebhookWakesTheChangeReaderOfASyncingConnection(t *testing.T) 
 	h.connector.webhookRealms = []string{testRealm}
 	webhook := &services.ReceiveAccountingWebhookRequest{
 		IntegrationType: integration.TypeQuickBooksOnline,
-		Signature:       "good",
+		Signature:       instanceVerifier,
 		Body:            []byte("[]"),
 	}
 

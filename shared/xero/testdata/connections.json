@@ -1,0 +1,11 @@
+[
+  {
+    "id": "e1eede29-f875-4a5d-8470-17f6a29a88b1",
+    "authEventId": "d99ecdfe-391d-43d2-b834-17636ba90e8d",
+    "tenantId": "4c7e1f20-3b5a-4d8e-9f10-2a3b4c5d6e7f",
+    "tenantType": "ORGANISATION",
+    "tenantName": "Acme Freight Ltd",
+    "createdDateUtc": "2026-09-20T23:40:30.1833130",
+    "updatedDateUtc": "2026-09-21T01:02:03.5000000"
+  }
+]

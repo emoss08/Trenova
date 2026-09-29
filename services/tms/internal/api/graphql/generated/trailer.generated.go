@@ -124,6 +124,8 @@ type MutationResolver interface {
 	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error)
 	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*services.AccountingAuthorizationStart, error)
 	CompleteAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsync.AccountingConnection, error)
+	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*services.AccountingAuthorizationCompletion, error)
+	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error)
 	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
 	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
 	ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingsync.AccountingMapping, error)
@@ -2556,6 +2558,20 @@ func (ec *executionContext) field_Mutation_checkShipmentHazmatSegregation_args(c
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_chooseAccountingCompany_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ChooseAccountingCompanyInput, error) {
+			return ec.unmarshalNChooseAccountingCompanyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐChooseAccountingCompanyInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_chooseAccountingSyncMode_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4751,6 +4767,20 @@ func (ec *executionContext) field_Mutation_finalizeIftaReturn_args(ctx context.C
 		return nil, err
 	}
 	args["version"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_finishAccountingAuthorization_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CompleteAccountingAuthorizationInput, error) {
+			return ec.unmarshalNCompleteAccountingAuthorizationInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCompleteAccountingAuthorizationInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -17462,6 +17492,94 @@ func (ec *executionContext) fieldContext_Mutation_completeAccountingAuthorizatio
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_completeAccountingAuthorization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_finishAccountingAuthorization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_finishAccountingAuthorization(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().FinishAccountingAuthorization(ctx, fc.Args["input"].(gqlmodel.CompleteAccountingAuthorizationInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.AccountingAuthorizationCompletion) graphql.Marshaler {
+			return ec.marshalNCompleteAccountingAuthorizationPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingAuthorizationCompletion(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_finishAccountingAuthorization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CompleteAccountingAuthorizationPayload(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_finishAccountingAuthorization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_chooseAccountingCompany(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_chooseAccountingCompany(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ChooseAccountingCompany(ctx, fc.Args["input"].(gqlmodel.ChooseAccountingCompanyInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.AccountingConnection) graphql.Marshaler {
+			return ec.marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAccountingConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_chooseAccountingCompany(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_chooseAccountingCompany_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -64136,6 +64254,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "completeAccountingAuthorization":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_completeAccountingAuthorization(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "finishAccountingAuthorization":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_finishAccountingAuthorization(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "chooseAccountingCompany":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_chooseAccountingCompany(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

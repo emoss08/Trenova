@@ -519,7 +519,10 @@ func (s *Service) linkTarget(
 		return target
 	}
 	if writer, ok := session.Connector.(services.AccountingDocumentWriter); ok {
-		target.urlOf = writer.DocumentURL
+		auth := services.DocumentAuthFor(session.Connection, session.AccessToken)
+		target.urlOf = func(kind accountingsync.SyncObjectType, externalID string) string {
+			return writer.DocumentURL(auth, kind, externalID)
+		}
 	}
 	return target
 }

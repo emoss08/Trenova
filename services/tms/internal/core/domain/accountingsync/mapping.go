@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -206,9 +205,6 @@ func (m *AccountingMapping) GetPostgresSearchConfig() domaintypes.PostgresSearch
 func (m *AccountingMapping) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	m.SearchLabel = stringutils.NormalizeName(m.TargetLabel)
-	if m.ProviderKind == "" {
-		m.ProviderKind = m.TargetType.ProviderKind()
-	}
 
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -229,21 +225,12 @@ func (m *AccountingMapping) IsRequired() bool {
 }
 
 func IsRequiredTarget(target MappingTargetType, key string) bool {
-	switch target {
-	case TargetAccountRole:
-		return key == AccountRoleAR || key == AccountRoleRevenue || key == AccountRoleDeposit
-	case TargetLineType:
-		return key == string(invoice.InvoiceLineTypeFreight)
-	case TargetAccessorialCharge,
-		TargetItemRole,
-		TargetCustomer,
-		TargetCarrier,
-		TargetPaymentTerm,
-		TargetPaymentMethod:
-		return false
-	default:
-		return false
+	for idx := range providerProfiles {
+		if providerProfiles[idx].IsRequiredTarget(target, key) {
+			return true
+		}
 	}
+	return false
 }
 
 func (m *AccountingMapping) Rescorable() bool {

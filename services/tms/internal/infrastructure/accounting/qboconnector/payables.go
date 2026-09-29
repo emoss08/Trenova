@@ -1,6 +1,7 @@
 package qboconnector
 
 import (
+	"strconv"
 	"context"
 	"errors"
 	"strings"
@@ -66,9 +67,10 @@ func (c *Connector) CreatePurchaseDocument(
 		ExternalID: created.ID,
 		DocNumber:  created.DocNumber,
 		Refs: map[string]string{
-			accountingsync.ExternalRefDocument:     created.ID,
-			accountingsync.ExternalRefDocumentType: string(kind),
-			accountingsync.ExternalRefURL:          c.appURL(kind.AppPath(), created.ID),
+			accountingsync.ExternalRefDocument:       created.ID,
+			accountingsync.ExternalRefDocumentType:   string(kind),
+			accountingsync.ExternalRefCreditDocument: strconv.FormatBool(kind == quickbooks.TxnVendorCredit),
+			accountingsync.ExternalRefURL:            c.appURL(kind.AppPath(), created.ID),
 		},
 	}, nil
 }

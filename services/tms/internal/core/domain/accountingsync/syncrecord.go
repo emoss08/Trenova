@@ -37,6 +37,8 @@ const (
 	ExternalRefApplication    = "application"
 	ExternalRefShortPayPrefix = "shortPay:"
 	ExternalRefDocumentType   = "documentType"
+	ExternalRefCreditDocument = "creditDocument"
+	ExternalRefAdopted        = "adopted"
 	ExternalRefURL            = "url"
 	ExternalRefCombined       = "combined"
 	ExternalRefReflectedIn    = "reflectedIn"
@@ -275,6 +277,7 @@ type SyncError struct {
 	Code       string
 	Message    string
 	Resolution string
+	RetryAfter time.Duration
 }
 
 func (f *SyncError) Error() string { return f.Message }
@@ -350,7 +353,8 @@ func (r *AccountingSyncRecord) MarkFailed(failure *SyncError, at int64) SyncAtte
 		r.NextAttemptAt = &next
 		return SyncAttemptWaiting
 	case failure.Category.Retries() && r.AttemptCount < MaxSyncAttempts:
-		next := at + int64(SyncRetryDelay(r.AttemptCount)/time.Second)
+		delay := max(SyncRetryDelay(r.AttemptCount), min(failure.RetryAfter, SyncRetryCeiling))
+		next := at + int64(delay/time.Second)
 		r.Status = SyncStatusRetrying
 		r.NextAttemptAt = &next
 		return SyncAttemptRetrying
@@ -698,4 +702,9 @@ func (b *AccountingBackfill) Fail(message string, at int64) {
 	b.Status = BackfillStatusFailed
 	b.CompletedAt = &at
 	b.LastError = stringutils.TruncateRunes(message, maxSyncErrorMessage)
+}
+
+func IsCreditDocument(refs map[string]string) bool {
+	return refs[ExternalRefCreditDocument] == "true" ||
+		refs[ExternalRefDocumentType] == "VendorCredit"
 }

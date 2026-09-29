@@ -199,9 +199,10 @@ func (s *Service) appSettings(
 	provider services.AccountingProvider,
 ) (*services.AccountingAppSettings, error) {
 	typ := provider.IntegrationType()
+	profile := accountingsync.MustProfile(typ)
 	settings := &services.AccountingAppSettings{
 		RedirectURL: provider.RedirectURL(),
-		WebhookPath: accountingsync.WebhookPath(typ),
+		WebhookPath: profile.WebhookPath(),
 	}
 	if instance, ok := provider.InstanceApp(); ok {
 		settings.InstanceAppAvailable = true
@@ -216,6 +217,7 @@ func (s *Service) appSettings(
 	if found {
 		settings.TenantApp = cred
 		settings.ActiveSource = accountingsync.AppSourceTenant
+		settings.WebhookPath = profile.AppWebhookPath(cred.ID.String())
 	}
 	return settings, nil
 }
@@ -225,11 +227,14 @@ func validateSaveApp(req *services.SaveAccountingAppRequest) error {
 	if strings.TrimSpace(req.ClientID) == "" {
 		multiErr.Add("clientId", errortypes.ErrRequired, "Client ID is required")
 	}
-	if !req.Environment.IsValid() {
+	profile := accountingsync.MustProfile(req.IntegrationType)
+	if !req.Environment.IsValid() || !profile.HasEnvironment(req.Environment) {
 		multiErr.Add(
 			"environment",
 			errortypes.ErrInvalid,
-			"Environment must be Sandbox or Production",
+			"{0} apps run in {1}",
+			profile.Name,
+			environmentList(profile.Environments),
 		)
 	}
 	if req.ClearWebhookVerifierToken && strings.TrimSpace(req.WebhookVerifierToken) != "" {
@@ -243,6 +248,14 @@ func validateSaveApp(req *services.SaveAccountingAppRequest) error {
 		return multiErr
 	}
 	return nil
+}
+
+func environmentList(environments []accountingsync.AppEnvironment) string {
+	names := make([]string, 0, len(environments))
+	for _, env := range environments {
+		names = append(names, string(env))
+	}
+	return strings.Join(names, " or ")
 }
 
 type appChange struct {

@@ -367,6 +367,13 @@ accounting:
   quickbooks:
     environment: sandbox # sandbox or production
     redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/quickbooks/callback
+  # Xero works the same way: register a web app at developer.xero.com/app/manage, set its
+  # redirect URI to <webBaseUrl>/admin/integrations/xero/callback and its webhook delivery URL
+  # to <api origin>/api/v1/webhooks/accounting/xero/. Xero has no sandbox; develop against the
+  # Demo Company. Instance secrets come from TRENOVA_XERO_CLIENT_ID, TRENOVA_XERO_CLIENT_SECRET
+  # and TRENOVA_XERO_WEBHOOK_KEY rather than this file.
+  xero:
+    redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/xero/callback
 
 system:
   # Instance-wide figures on the sign-in screen, served without a session. Off by

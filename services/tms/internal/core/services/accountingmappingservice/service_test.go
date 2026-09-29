@@ -46,8 +46,9 @@ func account(externalID, name, accountType string) *accountingsync.AccountingRef
 		Kind:        accountingsync.ReferenceKindAccount,
 		ExternalID:  externalID,
 		Name:        name,
-		AccountType: accountType,
-		Active:      true,
+		AccountType:  accountType,
+		AccountClass: classOf(accountType),
+		Active:       true,
 	}
 }
 

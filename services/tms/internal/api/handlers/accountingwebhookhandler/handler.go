@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
@@ -14,10 +14,6 @@ import (
 )
 
 const maxWebhookBodyBytes = 1 << 20
-
-var providers = map[string]integration.Type{
-	"quickbooks": integration.TypeQuickBooksOnline,
-}
 
 type Params struct {
 	fx.In
@@ -43,14 +39,16 @@ func WebhookPath(provider string) string {
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	rg.POST("/webhooks/accounting/:provider/", h.receive)
+	rg.POST("/webhooks/accounting/:provider/:app/", h.receive)
 }
 
 func (h *Handler) receive(c *gin.Context) {
-	typ, ok := providers[strings.ToLower(c.Param("provider"))]
+	profile, ok := accountingsync.ProfileByWebhookSlug(strings.ToLower(c.Param("provider")))
 	if !ok {
 		c.Status(http.StatusNotFound)
 		return
 	}
+	typ := profile.Type
 	provider, ok := h.connectors.For(typ)
 	if !ok {
 		c.Status(http.StatusNotFound)
@@ -69,6 +67,7 @@ func (h *Handler) receive(c *gin.Context) {
 
 	err = h.service.ReceiveWebhook(c.Request.Context(), &services.ReceiveAccountingWebhookRequest{
 		IntegrationType: typ,
+		AppID:           c.Param("app"),
 		Signature:       c.GetHeader(provider.WebhookSignatureHeader()),
 		Body:            body,
 	})

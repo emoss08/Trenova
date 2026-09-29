@@ -135,6 +135,14 @@ type AccountingOAuthState struct {
 	CreatedAt       int64                    `json:"createdAt"`
 	AppSource       accountingsync.AppSource `json:"appSource"`
 	AppFingerprint  string                   `json:"appFingerprint"`
+	SealedGrant     string                   `json:"sealedGrant,omitempty"`
+	Companies       []AccountingOAuthCompany `json:"companies,omitempty"`
+}
+
+type AccountingOAuthCompany struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	ConnectionID string `json:"connectionId"`
 }
 
 type AccountingOAuthStateRepository interface {
@@ -161,4 +169,9 @@ type AccountingAppCredentialRepository interface {
 		entity *accountingsync.AccountingAppCredential,
 	) (*accountingsync.AccountingAppCredential, error)
 	Delete(ctx context.Context, req GetAccountingAppCredentialRequest) error
+	GetForWebhook(
+		ctx context.Context,
+		id pulid.ID,
+		integrationType integration.Type,
+	) (*accountingsync.AccountingAppCredential, error)
 }

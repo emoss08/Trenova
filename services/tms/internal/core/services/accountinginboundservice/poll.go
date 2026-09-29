@@ -67,10 +67,7 @@ func (s *Service) openRead(
 		tenant: tenant,
 		conn:   session.Connection,
 		reader: reader,
-		auth: services.AccountingDocumentAuth{
-			RealmID:     session.Connection.ExternalRealmID,
-			AccessToken: session.AccessToken,
-		},
+		auth: services.DocumentAuthFor(session.Connection, session.AccessToken),
 		writer: writer,
 		loc:    loc,
 	}, nil
@@ -111,7 +108,7 @@ func (s *Service) PollChanges(
 		Payments:       true,
 		BillPayments:   true,
 		Documents:      s.drift != nil,
-		ReferenceKinds: accountingsync.AllReferenceKinds(),
+		ReferenceKinds: accountingsync.MustProfile(sess.conn.IntegrationType).ReferenceKinds,
 	})
 	if err != nil {
 		s.recordReadFailure(ctx, sess, err)
@@ -464,7 +461,7 @@ func (s *Service) observation(
 	}
 	externalURL := ""
 	if sess.writer != nil {
-		externalURL = sess.writer.DocumentURL(payment.Kind.SyncObjectType(), payment.ExternalID)
+		externalURL = sess.writer.DocumentURL(sess.auth, payment.Kind.SyncObjectType(), payment.ExternalID)
 	}
 	return &accountingsync.InboundObservation{
 		TenantInfo:         sess.tenant,

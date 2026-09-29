@@ -972,6 +972,13 @@ func (s *Service) ChooseMode(
 
 	before := jsonutils.MustToJSON(conn)
 	if err = conn.ChooseMode(req.Mode, req.Granularity); err != nil {
+		if errors.Is(err, accountingsync.ErrModeUnavailable) {
+			return nil, errortypes.NewValidationError(
+				"mode",
+				errortypes.ErrInvalid,
+				accountingsync.MustProfile(conn.IntegrationType).LedgerUnavailableReason,
+			)
+		}
 		return nil, modeError(err)
 	}
 	multiErr := errortypes.NewMultiError()

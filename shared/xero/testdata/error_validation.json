@@ -1,0 +1,31 @@
+{
+  "ErrorNumber": 10,
+  "Type": "ValidationException",
+  "Message": "A validation exception occurred",
+  "Elements": [
+    {
+      "Type": "ACCREC",
+      "Contact": {
+        "ContactID": "bd2270c3-8706-4c11-9cfb-000b551c3f51"
+      },
+      "LineItems": [
+        {
+          "Description": "Linehaul",
+          "ValidationErrors": [
+            {
+              "Message": "Account code '999' is not a valid code for this document."
+            }
+          ]
+        }
+      ],
+      "ValidationErrors": [
+        {
+          "Message": "Invoice not of valid status for modification"
+        },
+        {
+          "Message": "Invoice not of valid status for modification"
+        }
+      ]
+    }
+  ]
+}

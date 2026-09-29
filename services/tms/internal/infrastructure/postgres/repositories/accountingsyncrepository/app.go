@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -48,6 +50,27 @@ func (r *appCredentialRepository) GetByType(
 		Model(entity).
 		Where(cols.IntegrationType.Eq(), req.IntegrationType).
 		Apply(buncolgen.AccountingAppCredentialApplyTenant(req.TenantInfo)).
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, appCredentialEntity)
+	}
+
+	return entity, nil
+}
+
+func (r *appCredentialRepository) GetForWebhook(
+	ctx context.Context,
+	id pulid.ID,
+	integrationType integration.Type,
+) (*accountingsync.AccountingAppCredential, error) {
+	entity := new(accountingsync.AccountingAppCredential)
+	cols := buncolgen.AccountingAppCredentialColumns
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where(cols.ID.Eq(), id).
+		Where(cols.IntegrationType.Eq(), integrationType).
+		Limit(1).
 		Scan(ctx); err != nil {
 		return nil, dberror.HandleNotFoundError(err, appCredentialEntity)
 	}

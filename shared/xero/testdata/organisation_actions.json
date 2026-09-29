@@ -1,0 +1,19 @@
+{
+  "Id": "a1b2c3d4-0000-4000-8000-000000000002",
+  "Status": "OK",
+  "ProviderName": "Trenova",
+  "Actions": [
+    {
+      "Name": "UseMulticurrency",
+      "Status": "ALLOWED"
+    },
+    {
+      "Name": "CreateApprovedInvoice",
+      "Status": "ALLOWED"
+    },
+    {
+      "Name": "CreateApprovedBill",
+      "Status": "NOT-ALLOWED"
+    }
+  ]
+}

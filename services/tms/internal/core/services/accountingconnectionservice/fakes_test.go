@@ -436,14 +436,20 @@ type fakeConnector struct {
 	redirectURL    string
 	verifyAppErr   error
 	bound          []*services.AccountingApp
+	companies      []services.AccountingCompany
+	companiesErr   error
+	released       []services.AccountingCompany
 }
 
 var testInstanceApp = services.AccountingApp{
-	Source:      accountingsync.AppSourceInstance,
-	Environment: accountingsync.AppEnvironmentSandbox,
-	ClientID:    "instance-client",
-	ClientSecret: "instance-secret",
+	Source:               accountingsync.AppSourceInstance,
+	Environment:          accountingsync.AppEnvironmentSandbox,
+	ClientID:             "instance-client",
+	ClientSecret:         "instance-secret",
+	WebhookVerifierToken: instanceVerifier,
 }
+
+const instanceVerifier = "instance-verifier"
 
 func newFakeConnector() *fakeConnector {
 	return &fakeConnector{
@@ -510,7 +516,7 @@ func (b *boundConnector) VerifyWebhook(signature string, body []byte) error {
 	if err := b.fakeConnector.VerifyWebhook(signature, body); err != nil {
 		return err
 	}
-	if b.app.WebhookVerifierToken != "" && signature != b.app.WebhookVerifierToken {
+	if b.app.WebhookVerifierToken == "" || signature != b.app.WebhookVerifierToken {
 		return errProvider
 	}
 	return nil
@@ -574,6 +580,33 @@ func (f *fakeConnector) CompanyFacts(
 	}
 	facts := f.facts
 	return &facts, nil
+}
+
+func (f *fakeConnector) Companies(
+	_ context.Context,
+	_ *services.AccountingTokenGrant,
+	callbackRealmID string,
+) ([]services.AccountingCompany, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.companiesErr != nil {
+		return nil, f.companiesErr
+	}
+	if f.companies != nil {
+		return append([]services.AccountingCompany(nil), f.companies...), nil
+	}
+	return []services.AccountingCompany{{ID: callbackRealmID}}, nil
+}
+
+func (f *fakeConnector) ReleaseCompanies(
+	_ context.Context,
+	_ *services.AccountingTokenGrant,
+	companies []services.AccountingCompany,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.released = append(f.released, companies...)
+	return nil
 }
 
 func (f *fakeConnector) VerifyWebhook(string, []byte) error { return f.webhookErr }
@@ -693,6 +726,22 @@ func (f *fakeApps) GetByType(
 	}
 	clone := *row
 	return &clone, nil
+}
+
+func (f *fakeApps) GetForWebhook(
+	_ context.Context,
+	id pulid.ID,
+	integrationType integration.Type,
+) (*accountingsync.AccountingAppCredential, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, row := range f.rows {
+		if row.ID == id && row.IntegrationType == integrationType {
+			clone := *row
+			return &clone, nil
+		}
+	}
+	return nil, errortypes.NewNotFoundError("Accounting app not found")
 }
 
 func (f *fakeApps) Create(

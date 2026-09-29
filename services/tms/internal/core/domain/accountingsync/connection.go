@@ -19,7 +19,6 @@ import (
 const (
 	FailingAfterConsecutiveFailures = 3
 	RefreshTokenWarningWindow       = int64(14 * 24 * 60 * 60)
-	RefreshTokenAbsoluteLifetime    = int64(5 * 365 * 24 * 60 * 60)
 	maxPausedReasonLength           = 500
 	maxChangesErrorMessage          = 2000
 	maxErrorMessageLength           = 2000
@@ -40,6 +39,7 @@ type AccountingConnection struct {
 	AppEnvironment                AppEnvironment       `json:"appEnvironment"                bun:"app_environment,type:VARCHAR(20),nullzero"`
 	AppFingerprint                string               `json:"-"                             bun:"app_fingerprint,type:VARCHAR(64),nullzero"`
 	ExternalCompanyName           string               `json:"externalCompanyName"           bun:"external_company_name,type:VARCHAR(255),nullzero"`
+	ExternalShortCode             string               `json:"externalShortCode"             bun:"external_short_code,type:VARCHAR(20),nullzero"`
 	ExternalLegalName             string               `json:"externalLegalName"             bun:"external_legal_name,type:VARCHAR(255),nullzero"`
 	ExternalCountry               string               `json:"externalCountry"               bun:"external_country,type:VARCHAR(10),nullzero"`
 	ExternalHomeCurrency          string               `json:"externalHomeCurrency"          bun:"external_home_currency,type:VARCHAR(3),nullzero"`
@@ -111,6 +111,7 @@ type CompanyFacts struct {
 	MultiCurrencyEnabled bool
 	BooksClosedThrough   *int64
 	FiscalYearStartMonth time.Month
+	ShortCode            string
 }
 
 func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
@@ -204,7 +205,8 @@ func (c *AccountingConnection) BeforeAppendModel(_ context.Context, query bun.Qu
 }
 
 func SupportsAccountingSync(typ integration.Type) bool {
-	return typ == integration.TypeQuickBooksOnline
+	_, ok := Profile(typ)
+	return ok
 }
 
 func (c *AccountingConnection) IsActive() bool {
@@ -252,7 +254,11 @@ func (c *AccountingConnection) Connect(userID pulid.ID, grant TokenGrant, now in
 	c.ConnectedAt = now
 	c.DisconnectedByID = pulid.Nil
 	c.DisconnectedAt = nil
-	c.RefreshTokenAbsoluteExpiresAt = now + RefreshTokenAbsoluteLifetime
+	c.RefreshTokenAbsoluteExpiresAt = 0
+	profile := MustProfile(c.IntegrationType)
+	if lifetime := int64(profile.RefreshTokenAbsoluteLifetime / time.Second); lifetime > 0 {
+		c.RefreshTokenAbsoluteExpiresAt = now + lifetime
+	}
 	if c.SetupStep == "" {
 		c.SetupStep = SetupStepMode
 	}
@@ -270,6 +276,7 @@ func (c *AccountingConnection) ApplyGrant(grant TokenGrant, now int64) {
 
 func (c *AccountingConnection) ApplyCompanyFacts(facts *CompanyFacts) {
 	c.ExternalCompanyName = facts.CompanyName
+	c.ExternalShortCode = facts.ShortCode
 	c.ExternalLegalName = facts.LegalName
 	c.ExternalCountry = facts.Country
 	c.ExternalHomeCurrency = facts.HomeCurrency
@@ -479,12 +486,7 @@ func (c *AccountingConnection) RecordWebhook(now int64) {
 }
 
 func ProviderName(typ integration.Type) string {
-	switch typ { //nolint:exhaustive // only accounting systems have a display name here
-	case integration.TypeQuickBooksOnline:
-		return "QuickBooks Online"
-	default:
-		return string(typ)
-	}
+	return MustProfile(typ).Name
 }
 
 func SetupPath(typ integration.Type) string {

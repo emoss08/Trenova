@@ -1,0 +1,21 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Items": [
+    {
+      "ItemID": "1f6a2c3b-4d5e-4a6b-8c7d-9e0f1a2b3c4d",
+      "Code": "DETENTION",
+      "Description": "Detention time",
+      "UpdatedDateUTC": "/Date(1790294400000+0000)/",
+      "PurchaseDetails": {},
+      "SalesDetails": {
+        "AccountCode": "200"
+      },
+      "Name": "Detention",
+      "IsTrackedAsInventory": false,
+      "IsSold": true,
+      "IsPurchased": false,
+      "ValidationErrors": []
+    }
+  ]
+}

@@ -55,6 +55,7 @@ const (
 	PurposeAgentExtensionSecret        Purpose = "agent_extension_secret"      // #nosec G101 -- AAD label, not a credential.
 	PurposeAccountingConnectionToken   Purpose = "accounting_connection_token" // #nosec G101 -- AAD label, not a credential.
 	PurposeAccountingAppSecret         Purpose = "accounting_app_secret"       // #nosec G101 -- AAD label, not a credential.
+	PurposeAccountingPendingGrant      Purpose = "accounting_pending_grant"    // #nosec G101 -- AAD label, not a credential.
 
 	CryptoModeEnvelopeV1 = "envelope_v1"
 

@@ -263,10 +263,10 @@ func TestLedgerPartyFollowsTheProviderAccountType(t *testing.T) {
 		ref  *AccountingReferenceObject
 		want LedgerPartyNeed
 	}{
-		{name: "receivable", ref: &AccountingReferenceObject{Kind: ReferenceKindAccount, AccountType: AccountTypeReceivable}, want: LedgerPartyCustomer},
-		{name: "payable", ref: &AccountingReferenceObject{Kind: ReferenceKindAccount, AccountType: AccountTypePayable}, want: LedgerPartyVendor},
-		{name: "income", ref: &AccountingReferenceObject{Kind: ReferenceKindAccount, AccountType: "Income"}, want: LedgerPartyNone},
-		{name: "not an account", ref: &AccountingReferenceObject{Kind: ReferenceKindCustomer, AccountType: AccountTypeReceivable}, want: LedgerPartyNone},
+		{name: "receivable", ref: &AccountingReferenceObject{Kind: ReferenceKindAccount, AccountClass: AccountClassReceivable}, want: LedgerPartyCustomer},
+		{name: "payable", ref: &AccountingReferenceObject{Kind: ReferenceKindAccount, AccountClass: AccountClassPayable}, want: LedgerPartyVendor},
+		{name: "income", ref: &AccountingReferenceObject{Kind: ReferenceKindAccount, AccountClass: AccountClassIncome}, want: LedgerPartyNone},
+		{name: "not an account", ref: &AccountingReferenceObject{Kind: ReferenceKindCustomer, AccountClass: AccountClassReceivable}, want: LedgerPartyNone},
 		{name: "unknown", want: LedgerPartyNone},
 	}
 	for _, tc := range cases {

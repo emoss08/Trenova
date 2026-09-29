@@ -4223,6 +4223,18 @@ models:
   AccountingSyncStatus:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncStatus
+  AccountingProviderProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.ProviderProfile
+    fields:
+      ledgerAvailable:
+        fieldName: Ledger
+  AccountingCompany:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingCompany
+  CompleteAccountingAuthorizationPayload:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingAuthorizationCompletion
   AccountingSyncObjectType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncObjectType

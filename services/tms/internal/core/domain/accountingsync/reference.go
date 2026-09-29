@@ -29,6 +29,7 @@ type AccountingReferenceObject struct {
 	Classification          string        `json:"classification"          bun:"classification,type:VARCHAR(50),nullzero"`
 	AccountType             string        `json:"accountType"             bun:"account_type,type:VARCHAR(100),nullzero"`
 	AccountSubType          string        `json:"accountSubType"          bun:"account_sub_type,type:VARCHAR(100),nullzero"`
+	AccountClass            AccountClass  `json:"accountClass"            bun:"account_class,type:VARCHAR(30),nullzero"`
 	ItemType                string        `json:"itemType"                bun:"item_type,type:VARCHAR(50),nullzero"`
 	SubType                 string        `json:"subType"                 bun:"sub_type,type:VARCHAR(50),nullzero"`
 	ParentExternalID        string        `json:"parentExternalId"        bun:"parent_external_id,type:VARCHAR(100),nullzero"`
@@ -102,10 +103,61 @@ const (
 	ItemTypeGroup    = "Group"
 )
 
+type AccountClass string
+
 const (
-	AccountTypeReceivable = "Accounts Receivable"
-	AccountTypePayable    = "Accounts Payable"
+	AccountClassReceivable       = AccountClass("Receivable")
+	AccountClassPayable          = AccountClass("Payable")
+	AccountClassBank             = AccountClass("Bank")
+	AccountClassUndepositedFunds = AccountClass("UndepositedFunds")
+	AccountClassIncome           = AccountClass("Income")
+	AccountClassOtherIncome      = AccountClass("OtherIncome")
+	AccountClassCostOfSales      = AccountClass("CostOfSales")
+	AccountClassExpense          = AccountClass("Expense")
+	AccountClassOtherExpense     = AccountClass("OtherExpense")
+	AccountClassAsset            = AccountClass("Asset")
+	AccountClassLiability        = AccountClass("Liability")
+	AccountClassEquity           = AccountClass("Equity")
 )
+
+func (c AccountClass) String() string { return string(c) }
+
+func (c AccountClass) IsValid() bool {
+	switch c {
+	case AccountClassReceivable,
+		AccountClassPayable,
+		AccountClassBank,
+		AccountClassUndepositedFunds,
+		AccountClassIncome,
+		AccountClassOtherIncome,
+		AccountClassCostOfSales,
+		AccountClassExpense,
+		AccountClassOtherExpense,
+		AccountClassAsset,
+		AccountClassLiability,
+		AccountClassEquity:
+		return true
+	default:
+		return false
+	}
+}
+
+func AllAccountClasses() []AccountClass {
+	return []AccountClass{
+		AccountClassReceivable,
+		AccountClassPayable,
+		AccountClassBank,
+		AccountClassUndepositedFunds,
+		AccountClassIncome,
+		AccountClassOtherIncome,
+		AccountClassCostOfSales,
+		AccountClassExpense,
+		AccountClassOtherExpense,
+		AccountClassAsset,
+		AccountClassLiability,
+		AccountClassEquity,
+	}
+}
 
 type LedgerPartyNeed string
 
@@ -119,10 +171,10 @@ func (r *AccountingReferenceObject) LedgerParty() LedgerPartyNeed {
 	if r == nil || r.Kind != ReferenceKindAccount {
 		return LedgerPartyNone
 	}
-	switch r.AccountType {
-	case AccountTypeReceivable:
+	switch r.AccountClass { //nolint:exhaustive // only receivable and payable accounts need a party
+	case AccountClassReceivable:
 		return LedgerPartyCustomer
-	case AccountTypePayable:
+	case AccountClassPayable:
 		return LedgerPartyVendor
 	default:
 		return LedgerPartyNone

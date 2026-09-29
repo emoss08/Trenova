@@ -1,0 +1,11 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Allocations": [
+    {
+      "AllocationID": "b6c3a2d1-9f8e-4d7c-8b6a-5e4f3d2c1b0a",
+      "Amount": 100.0,
+      "IsDeleted": true
+    }
+  ]
+}

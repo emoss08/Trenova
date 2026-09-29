@@ -2,7 +2,6 @@ package agenttoolservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -59,7 +58,7 @@ func (t *checkAccountingConnectionTool) Description() string {
 func (t *checkAccountingConnectionTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		"system": agenttoolschema.Enum(
-			"The accounting system. Example: \"QuickBooksOnline\".",
+			"The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
 			agenttoolschema.AccountingSystems,
 		),
 	}, "system")
@@ -118,7 +117,7 @@ func (t *checkAccountingConnectionTool) connection(
 	}
 	typ := integration.Type(system)
 	if !accountingsync.SupportsAccountingSync(typ) {
-		return nil, fmt.Errorf("system must be %q", integration.TypeQuickBooksOnline)
+		return nil, agenttoolschema.ErrAccountingSystem()
 	}
 
 	status, err := t.accounting.Status(ctx, tenantFrom(*params), typ)

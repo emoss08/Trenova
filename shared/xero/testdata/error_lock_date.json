@@ -1,0 +1,15 @@
+{
+  "ErrorNumber": 10,
+  "Type": "ValidationException",
+  "Message": "A validation exception occurred",
+  "Elements": [
+    {
+      "Date": "2026-06-15T00:00:00",
+      "ValidationErrors": [
+        {
+          "Message": "The document date cannot be before the period lock date of 30 June 2026"
+        }
+      ]
+    }
+  ]
+}

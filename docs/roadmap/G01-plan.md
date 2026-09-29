@@ -968,8 +968,8 @@ M7 adds Xero as the second accounting system. The rule from §2 point 8 is teste
 **Decisions.**
 1. **Xero is document mode only in M7.** A Xero manual journal cannot carry a receivable or payable line with a party, and routing them through clearing accounts would leave Xero's AR and AP ageing empty. The adapter declares `Ledger: false`. The mode step shows ledger mode as unavailable for Xero with that reason, and `chooseAccountingSyncMode` refuses it. The capability exists so a later provider (Business Central, NetSuite) can declare it.
 2. **One syncing accounting connection per tenant.** Connecting a second system while another is connected (in any status but `Disconnected`) is refused: "Disconnect QuickBooks Online before connecting Xero". Two books receiving the same documents is the D7 problem in another form. The four client pages resolve the tenant's one connection instead of a constant.
-3. **Providers declare their shape as data: `AccountingProviderProfile`**, returned by `AccountingProvider.Profile()`:
-   - `LineTarget`: `Item` for QuickBooks, `Account` for Xero.
+3. **Providers declare their shape as data: `accountingsync.ProviderProfile`**, a static table in the domain read with `accountingsync.Profile(type)` (the domain, the mapping service and the GraphQL `AccountingSyncStatus.profile` all read it without reaching an adapter):
+   - `LineKind`: `Item` for QuickBooks, `Account` for Xero.
    - `ReferenceKinds`: the kinds the provider has. Xero lists Account, Item, Customer and Vendor, and has no Term or PaymentMethod.
    - `Environments`: QuickBooks has Sandbox and Production; Xero has Production only.
    - `RefreshTokenLifetime` and `RefreshTokenAbsoluteLifetime` (zero means none).
@@ -984,7 +984,7 @@ M7 adds Xero as the second accounting system. The rule from §2 point 8 is teste
    - The connector gains `Companies(ctx, grant) ([]AccountingCompany, error)`. QuickBooks returns the callback's realm; Xero returns the `/connections` for the consent's `authEventId`, taken from the access token's claims.
    - `realmId` becomes optional in `completeAccountingAuthorization`, and required only when the profile says the callback carries it.
    - With exactly one company, completion proceeds as today.
-   - With several, completion seals the token grant into the Redis state (AES-GCM through the existing secret codec, purpose `AccountingOAuthGrant`, TTL unchanged at 10 minutes) and returns the list. A second mutation, `chooseAccountingCompany(state, companyId)`, finishes the connection and deletes the other organisations' Xero connections, so the token reaches only the chosen one.
+   - With several, completion seals the token grant into the Redis state (AES-GCM through the existing secret codec, purpose `accounting_pending_grant`, keyed to a fresh single-use choice token with a 10-minute TTL) and returns the list with that token. A second mutation, `chooseAccountingCompany(integrationType, choiceToken, companyId)`, finishes the connection and deletes the other organisations' Xero connections, so the token reaches only the chosen one.
    - PKCE is not added. Xero documents it only for public clients, the web-app flow authenticates the code exchange with the client secret, and QuickBooks made the same choice in §9.1.
 8. **The webhook verifies first, against the app its URL names.**
    - Paths become `/webhooks/accounting/{provider}/` for the instance app and `/webhooks/accounting/{provider}/{appId}/` for a tenant's own app. The app-keys panel shows the path for that app, and `WebhookPath` lives in one place.
@@ -993,13 +993,14 @@ M7 adds Xero as the second accounting system. The rule from §2 point 8 is teste
    - The existing QuickBooks path without an app id keeps verifying against the instance app, and falls back to the holders' apps as today, so live QuickBooks subscriptions do not need re-registering.
 9. **A retry after Xero forgets its idempotency key finds the document before creating it.**
    - `AccountingDocumentLimits.IdempotencyWindow` is 6 minutes for Xero and zero (unbounded) for QuickBooks.
-   - When a create's previous attempt ended without a known outcome (transport error, lease expiry) and began longer ago than the window, the dispatcher first calls a new `FindDocument(kind, match)`. Sales documents match by number. Bills and vendor credits match by contact, reference, date and total, because an `ACCPAY` number is not unique. Payments match by the invoice, date, amount and the reference, which carries the request id. A match is adopted and the record is marked synced with `adopted` in its attempt; no match creates as normal.
+   - When a create's previous attempt ended without a known outcome (transport error, lease expiry) (a retry whose last error is transient or absent) and the provider declares a window, the dispatcher first calls a new `FindDocument(kind, match)`. Sales documents match by number. Bills and vendor credits match by contact, reference, date and total, because an `ACCPAY` number is not unique. Payments match by the invoice, date, amount and the reference, which carries the request id. Credit applications match by the credit note's allocations to the invoice. A match is adopted and the record is marked synced with the external ref `adopted = true`; no match creates as normal. The search runs whatever the previous attempt's age: the attempt's start is overwritten at claim, and a search inside the window costs one read and is equally correct.
    - The same path handles a sales document whose create returns Duplicate (a unique `ACCREC` number): if the total matches, the record adopts it; otherwise it blocks as today.
 10. **The declared limits are read.**
     - `ChangeFeedLimits.MaxLookback`: zero for Xero, so the cursor never expires; QuickBooks keeps 30 days.
     - `ReportsDeletes`: true for Xero, whose voided and deleted documents come back with their status.
     - `MaxPerRead` sizes the poll.
-    - `DocumentLimits.CanVoidCreditMemo` and `CanVoidPurchaseDocument` gate the void paths, which block with a reason instead of failing at the provider.
+    - `DocumentLimits.CanVoidCreditMemo` and `CanVoidPurchaseDocument` describe how the adapter removes the document (QuickBooks deletes credit memos and bills, Xero voids them); both adapters can remove every document they write, so the void paths are not gated on them.
+    - `MaxLookback` and `MaxPerRead` are applied inside each adapter's change reader, which reports `CursorExpired` to the inbound service; the core reads `ReportsDeletes` only through what the feed returns.
 11. **Rate limits are declared, not guessed.**
     - The Xero client sets a per-tenant `restx.Limiter` bucket of 50 a minute (headroom for the poll) and caps concurrency at 4 with a per-tenant semaphore in the adapter.
     - `Retry-After` is honoured by `restx`.
@@ -1039,9 +1040,9 @@ M7 adds Xero as the second accounting system. The rule from §2 point 8 is teste
 **API and agents.**
 - The GraphQL `AccountingSystem` enum gains `Xero`. This is dangerous rather than breaking in the schema diff.
 - New fields and inputs:
-  - `CompleteAccountingAuthorizationPayload.companies` (for the choice)
+  - `finishAccountingAuthorization` returning `CompleteAccountingAuthorizationPayload { connection, companies, choiceToken, choiceExpiresAt }`. `completeAccountingAuthorization` keeps its `AccountingConnection!` return, is deprecated, and refuses a sign-in that needs a choice, so the schema change is additive; `realmId` becomes nullable.
   - `chooseAccountingCompany`
-  - `AccountingIntegration.profile` (ledger availability, environments, whether the callback needs a company)
+  - `AccountingSyncStatus.profile: AccountingProviderProfile!` (app name, webhook key label, environments, ledger availability and reason, whether the callback carries a company, callback path, line kind, reference kinds)
 - `agenttoolschema.AccountingSystems` reads the registry's types. The "system must be" messages list them.
 - Write coverage: `chooseAccountingCompany` is exempt, as configuration, like the other connect mutations.
 - The tool catalog golden, docs and translations are regenerated.

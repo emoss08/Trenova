@@ -500,6 +500,7 @@ var AccountingConnectionColumns = struct {
 	AppEnvironment                Column // "app_environment" → qualified: "acctc.app_environment"
 	AppFingerprint                Column // "app_fingerprint" → qualified: "acctc.app_fingerprint"
 	ExternalCompanyName           Column // "external_company_name" → qualified: "acctc.external_company_name"
+	ExternalShortCode             Column // "external_short_code" → qualified: "acctc.external_short_code"
 	ExternalLegalName             Column // "external_legal_name" → qualified: "acctc.external_legal_name"
 	ExternalCountry               Column // "external_country" → qualified: "acctc.external_country"
 	ExternalHomeCurrency          Column // "external_home_currency" → qualified: "acctc.external_home_currency"
@@ -559,6 +560,7 @@ var AccountingConnectionColumns = struct {
 	AppEnvironment:                NewColumn("app_environment", "acctc"),
 	AppFingerprint:                NewColumn("app_fingerprint", "acctc"),
 	ExternalCompanyName:           NewColumn("external_company_name", "acctc"),
+	ExternalShortCode:             NewColumn("external_short_code", "acctc"),
 	ExternalLegalName:             NewColumn("external_legal_name", "acctc"),
 	ExternalCountry:               NewColumn("external_country", "acctc"),
 	ExternalHomeCurrency:          NewColumn("external_home_currency", "acctc"),
@@ -623,6 +625,7 @@ var AccountingConnectionFieldMap = map[string]string{
 	"appSource":                     "app_source",
 	"appEnvironment":                "app_environment",
 	"externalCompanyName":           "external_company_name",
+	"externalShortCode":             "external_short_code",
 	"externalLegalName":             "external_legal_name",
 	"externalCountry":               "external_country",
 	"externalHomeCurrency":          "external_home_currency",
@@ -683,6 +686,7 @@ var AccountingConnectionInsertableColumns = []string{
 	"app_environment",
 	"app_fingerprint",
 	"external_company_name",
+	"external_short_code",
 	"external_legal_name",
 	"external_country",
 	"external_home_currency",
@@ -811,6 +815,7 @@ var AccountingConnectionFilter = struct {
 	AppSource                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appSource" → DB: "app_source"
 	AppEnvironment                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appEnvironment" → DB: "app_environment"
 	ExternalCompanyName           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalCompanyName" → DB: "external_company_name"
+	ExternalShortCode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalShortCode" → DB: "external_short_code"
 	ExternalLegalName             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalLegalName" → DB: "external_legal_name"
 	ExternalCountry               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalCountry" → DB: "external_country"
 	ExternalHomeCurrency          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalHomeCurrency" → DB: "external_home_currency"
@@ -883,6 +888,9 @@ var AccountingConnectionFilter = struct {
 	},
 	ExternalCompanyName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("externalCompanyName", op, value)
+	},
+	ExternalShortCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalShortCode", op, value)
 	},
 	ExternalLegalName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("externalLegalName", op, value)
@@ -2047,6 +2055,7 @@ var AccountingReferenceObjectColumns = struct {
 	Classification          Column // "classification" → qualified: "acctro.classification"
 	AccountType             Column // "account_type" → qualified: "acctro.account_type"
 	AccountSubType          Column // "account_sub_type" → qualified: "acctro.account_sub_type"
+	AccountClass            Column // "account_class" → qualified: "acctro.account_class"
 	ItemType                Column // "item_type" → qualified: "acctro.item_type"
 	SubType                 Column // "sub_type" → qualified: "acctro.sub_type"
 	ParentExternalID        Column // "parent_external_id" → qualified: "acctro.parent_external_id"
@@ -2082,6 +2091,7 @@ var AccountingReferenceObjectColumns = struct {
 	Classification:          NewColumn("classification", "acctro"),
 	AccountType:             NewColumn("account_type", "acctro"),
 	AccountSubType:          NewColumn("account_sub_type", "acctro"),
+	AccountClass:            NewColumn("account_class", "acctro"),
 	ItemType:                NewColumn("item_type", "acctro"),
 	SubType:                 NewColumn("sub_type", "acctro"),
 	ParentExternalID:        NewColumn("parent_external_id", "acctro"),
@@ -2122,6 +2132,7 @@ var AccountingReferenceObjectFieldMap = map[string]string{
 	"classification":          "classification",
 	"accountType":             "account_type",
 	"accountSubType":          "account_sub_type",
+	"accountClass":            "account_class",
 	"itemType":                "item_type",
 	"subType":                 "sub_type",
 	"parentExternalId":        "parent_external_id",
@@ -2160,6 +2171,7 @@ var AccountingReferenceObjectInsertableColumns = []string{
 	"classification",
 	"account_type",
 	"account_sub_type",
+	"account_class",
 	"item_type",
 	"sub_type",
 	"parent_external_id",
@@ -2258,6 +2270,7 @@ var AccountingReferenceObjectFilter = struct {
 	Classification          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "classification" → DB: "classification"
 	AccountType             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accountType" → DB: "account_type"
 	AccountSubType          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accountSubType" → DB: "account_sub_type"
+	AccountClass            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accountClass" → DB: "account_class"
 	ItemType                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "itemType" → DB: "item_type"
 	SubType                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subType" → DB: "sub_type"
 	ParentExternalID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentExternalId" → DB: "parent_external_id"
@@ -2316,6 +2329,9 @@ var AccountingReferenceObjectFilter = struct {
 	},
 	AccountSubType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("accountSubType", op, value)
+	},
+	AccountClass: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("accountClass", op, value)
 	},
 	ItemType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("itemType", op, value)

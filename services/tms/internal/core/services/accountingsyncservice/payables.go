@@ -441,7 +441,20 @@ func (s *Service) pushBill(
 		doc.DocNumber = ""
 	}
 
-	written, err := writeBill(ctx, sess, target, doc, label)
+	var written *services.AccountingDocumentResult
+	if target == nil {
+		written, err = s.createAdopting(ctx, sess, record, &services.AccountingFindDocumentRequest{
+			DocNumber:              doc.DocNumber,
+			CounterpartyExternalID: doc.VendorExternalID,
+			TxnDate:                doc.TxnDate,
+			Total:                  purchaseTotal(doc.Lines),
+			Credit:                 doc.VendorCredit,
+		}, func() (*services.AccountingDocumentResult, error) {
+			return sess.writer.CreatePurchaseDocument(ctx, doc)
+		})
+	} else {
+		written, err = writeBill(ctx, sess, target, doc, label)
+	}
 	if err != nil {
 		return partial(written), err
 	}
@@ -649,7 +662,15 @@ func (s *Service) pushBillPayment(
 		doc.ExternalID = target.ExternalID
 		written, err = sess.writer.UpdateBillPayment(ctx, doc)
 	} else {
-		written, err = sess.writer.CreateBillPayment(ctx, doc)
+		written, err = s.createAdopting(ctx, sess, record, &services.AccountingFindDocumentRequest{
+			DocNumber:              doc.DocNumber,
+			CounterpartyExternalID: vendorID,
+			TxnDate:                doc.TxnDate,
+			Total:                  doc.Amount,
+			AppliesToExternalIDs:   []string{billID},
+		}, func() (*services.AccountingDocumentResult, error) {
+			return sess.writer.CreateBillPayment(ctx, doc)
+		})
 	}
 	if err != nil {
 		return partial(written), err
@@ -724,7 +745,7 @@ func billPaymentNote(
 }
 
 func sentAsCredit(record *accountingsync.AccountingSyncRecord) bool {
-	return record.ExternalRefs[accountingsync.ExternalRefDocumentType] == "VendorCredit"
+	return accountingsync.IsCreditDocument(record.ExternalRefs)
 }
 
 func writeBill(
@@ -734,9 +755,6 @@ func writeBill(
 	doc *services.AccountingPurchaseDocument,
 	label string,
 ) (*services.AccountingDocumentResult, error) {
-	if target == nil {
-		return sess.writer.CreatePurchaseDocument(ctx, doc)
-	}
 	if sentAsCredit(target) != doc.VendorCredit {
 		return nil, blocked(
 			accountingsync.SyncErrorValidation,

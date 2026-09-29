@@ -122,25 +122,6 @@ func AllMappingTargetTypes() []MappingTargetType {
 	}
 }
 
-func (t MappingTargetType) ProviderKind() ReferenceKind {
-	switch t {
-	case TargetAccountRole, TargetGLAccount:
-		return ReferenceKindAccount
-	case TargetLineType, TargetAccessorialCharge, TargetItemRole:
-		return ReferenceKindItem
-	case TargetCustomer:
-		return ReferenceKindCustomer
-	case TargetCarrier, TargetDriver:
-		return ReferenceKindVendor
-	case TargetPaymentTerm:
-		return ReferenceKindTerm
-	case TargetPaymentMethod:
-		return ReferenceKindPaymentMethod
-	default:
-		return ""
-	}
-}
-
 func (t MappingTargetType) KeyedByObject() bool {
 	switch t {
 	case TargetAccessorialCharge, TargetCustomer, TargetCarrier, TargetDriver, TargetGLAccount:

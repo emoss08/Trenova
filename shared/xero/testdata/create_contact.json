@@ -1,0 +1,36 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Contacts": [
+    {
+      "ContactID": "bd2270c3-8706-4c11-9cfb-000b551c3f51",
+      "ContactNumber": "CUST-1001",
+      "ContactStatus": "ACTIVE",
+      "Name": "Globex Shipping",
+      "FirstName": "Hank",
+      "LastName": "Scorpio",
+      "EmailAddress": "ap@globex.example",
+      "TaxNumber": "12-3456789",
+      "Addresses": [
+        {
+          "AddressType": "POBOX",
+          "AddressLine1": "PO Box 42",
+          "City": "Cypress Creek",
+          "Region": "OR",
+          "PostalCode": "97000",
+          "Country": "USA"
+        },
+        {
+          "AddressType": "STREET"
+        }
+      ],
+      "Phones": [],
+      "UpdatedDateUTC": "/Date(1790208000000+0000)/",
+      "ContactGroups": [],
+      "IsSupplier": false,
+      "IsCustomer": true,
+      "DefaultCurrency": "USD",
+      "HasAttachments": false
+    }
+  ]
+}

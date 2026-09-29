@@ -36,7 +36,11 @@ func (c *Connector) DocumentLimits() services.AccountingDocumentLimits {
 	}
 }
 
-func (c *Connector) DocumentURL(kind accountingsync.SyncObjectType, externalID string) string {
+func (c *Connector) DocumentURL(
+	_ services.AccountingDocumentAuth,
+	kind accountingsync.SyncObjectType,
+	externalID string,
+) string {
 	var path string
 	switch kind {
 	case accountingsync.SyncObjectCustomer:
@@ -456,7 +460,7 @@ func (c *Connector) VoidCreditApplication(
 	}, nil
 }
 
-func (c *Connector) FindSalesDocument(
+func (c *Connector) FindDocument(
 	ctx context.Context,
 	req *services.AccountingFindDocumentRequest,
 ) (*services.AccountingDocumentResult, bool, error) {

@@ -147,6 +147,7 @@ func referenceObjectOf(
 		Classification:          obj.Classification,
 		AccountType:             obj.AccountType,
 		AccountSubType:          obj.AccountSubType,
+		AccountClass:            AccountClassOf(obj.AccountType, obj.AccountSubType),
 		ItemType:                obj.ItemType,
 		ParentExternalID:        obj.ParentID,
 		Active:                  obj.Active,
@@ -177,4 +178,31 @@ func referenceObjectOf(
 		out.ProviderUpdatedAt = &updated
 	}
 	return out
+}
+
+const undepositedFundsSubType = "UndepositedFunds"
+
+var accountClasses = map[string]accountingsync.AccountClass{
+	"Accounts Receivable":     accountingsync.AccountClassReceivable,
+	"Accounts Payable":        accountingsync.AccountClassPayable,
+	"Bank":                    accountingsync.AccountClassBank,
+	"Income":                  accountingsync.AccountClassIncome,
+	"Other Income":            accountingsync.AccountClassOtherIncome,
+	"Cost of Goods Sold":      accountingsync.AccountClassCostOfSales,
+	"Expense":                 accountingsync.AccountClassExpense,
+	"Other Expense":           accountingsync.AccountClassOtherExpense,
+	"Other Current Asset":     accountingsync.AccountClassAsset,
+	"Fixed Asset":             accountingsync.AccountClassAsset,
+	"Other Asset":             accountingsync.AccountClassAsset,
+	"Credit Card":             accountingsync.AccountClassLiability,
+	"Other Current Liability": accountingsync.AccountClassLiability,
+	"Long Term Liability":     accountingsync.AccountClassLiability,
+	"Equity":                  accountingsync.AccountClassEquity,
+}
+
+func AccountClassOf(accountType, subType string) accountingsync.AccountClass {
+	if subType == undepositedFundsSubType {
+		return accountingsync.AccountClassUndepositedFunds
+	}
+	return accountClasses[accountType]
 }
