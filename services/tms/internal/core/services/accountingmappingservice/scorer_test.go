@@ -13,9 +13,9 @@ import (
 
 func acct(id, name, accountType string) *accountingsync.AccountingReferenceObject {
 	return &accountingsync.AccountingReferenceObject{
-		Kind:        accountingsync.ReferenceKindAccount,
-		ExternalID:  id,
-		Name:        name,
+		Kind:         accountingsync.ReferenceKindAccount,
+		ExternalID:   id,
+		Name:         name,
 		AccountType:  accountType,
 		AccountClass: classOf(accountType),
 		Active:       true,

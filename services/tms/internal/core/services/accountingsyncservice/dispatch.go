@@ -107,11 +107,11 @@ func (s *Service) openSession(
 	}
 
 	return &pushSession{
-		tenant:   tenantInfo,
-		conn:     session.Connection,
-		writer:   writer,
-		journals: journals,
-		auth: services.DocumentAuthFor(session.Connection, session.AccessToken),
+		tenant:            tenantInfo,
+		conn:              session.Connection,
+		writer:            writer,
+		journals:          journals,
+		auth:              services.DocumentAuthFor(session.Connection, session.AccessToken),
 		loc:               loc,
 		providerName:      accountingsync.ProviderName(conn.IntegrationType),
 		profile:           accountingsync.MustProfile(conn.IntegrationType),

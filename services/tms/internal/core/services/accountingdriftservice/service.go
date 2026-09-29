@@ -166,8 +166,8 @@ func (s *Service) openRead(
 		reader: reader,
 		writer: writer,
 		ledger: ledger,
-		auth: services.DocumentAuthFor(session.Connection, session.AccessToken),
-		limit: max(reader.DocumentReadLimits().MaxPerRead, 1),
+		auth:   services.DocumentAuthFor(session.Connection, session.AccessToken),
+		limit:  max(reader.DocumentReadLimits().MaxPerRead, 1),
 	}, nil
 }
 

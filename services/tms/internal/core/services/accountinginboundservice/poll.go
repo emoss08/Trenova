@@ -67,7 +67,7 @@ func (s *Service) openRead(
 		tenant: tenant,
 		conn:   session.Connection,
 		reader: reader,
-		auth: services.DocumentAuthFor(session.Connection, session.AccessToken),
+		auth:   services.DocumentAuthFor(session.Connection, session.AccessToken),
 		writer: writer,
 		loc:    loc,
 	}, nil

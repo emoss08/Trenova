@@ -150,9 +150,9 @@ func (f *fakeReferences) account(externalID string, class accountingsync.Account
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.rows[externalID] = &accountingsync.AccountingReferenceObject{
-		Kind:        accountingsync.ReferenceKindAccount,
-		ExternalID:  externalID,
-		Name:        externalID,
+		Kind:         accountingsync.ReferenceKindAccount,
+		ExternalID:   externalID,
+		Name:         externalID,
 		AccountClass: class,
 		Active:       true,
 	}

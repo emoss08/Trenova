@@ -12,8 +12,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
