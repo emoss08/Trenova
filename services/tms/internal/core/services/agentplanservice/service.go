@@ -11,6 +11,7 @@ package agentplanservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -573,19 +574,23 @@ type recordKey struct {
 }
 
 // runSteps decides each pending step in order and stops at the first whose
-// write fails. A step that was already decided on its own, or that expired,
-// is passed over rather than treated as a failure: it is not the plan's to
-// run twice.
+// write fails, unless the steps are independent. A step that was already
+// decided on its own, or that expired, is passed over rather than treated as
+// a failure: it is not the plan's to run twice.
 //
 // A step on a record an earlier step already changed is run against the
 // version that step left it at. Its own pin was taken before either ran, so
 // comparing against it refused the second of two changes to one record every
 // time, although the approver approved both together.
 func (s *Service) runSteps(ctx context.Context, r *stepRun) *agent.AgentPlan {
+	if independent(r.steps) {
+		return s.runIndependent(ctx, r)
+	}
+
 	req, plan := r.req, r.plan
 	completed := plan.CompletedSteps
 	var last *agent.AgentDecision
-	var stepReq *services.DecideAgentProposalRequest
+	var lastReq *services.DecideAgentProposalRequest
 	left := make(map[recordKey]int64, len(r.steps))
 
 	for _, step := range r.steps {
@@ -597,52 +602,169 @@ func (s *Service) runSteps(ctx context.Context, r *stepRun) *agent.AgentPlan {
 			continue
 		}
 
-		key := recordKey{resource: step.TargetResource, id: step.TargetID}
-		stepReq = &services.DecideAgentProposalRequest{
-			ProposalID: step.ID,
-			Decision:   agent.DecisionAccepted,
-			ReasonCode: planReason(req.ReasonCode, plan.ID),
-			TenantInfo: req.TenantInfo,
-			WithinPlan: true,
-		}
-		if version, changed := left[key]; changed && step.TargetID.IsNotNil() {
-			stepReq.ExpectedTargetVersion = &version
-		}
-		r.preview.annotate(stepReq, step.ID)
-
-		outcome, err := s.decisions.DecideWithOutcome(ctx, stepReq, r.actor)
-		if err == nil && outcome.ExecutionError != nil {
-			err = outcome.ExecutionError
-		}
+		stepReq, outcome, err := s.runStep(ctx, r, step, left)
 		if err != nil {
 			return s.failAt(ctx, req, plan, step.PlanStep, completed, err)
 		}
-		if step.TargetID.IsNotNil() && outcome.ExecutedTargetVersion != nil {
-			left[key] = *outcome.ExecutedTargetVersion
-		}
-		last = outcome.Decision
+		last, lastReq = outcome.Decision, stepReq
 		completed++
 	}
 
+	return s.complete(ctx, r, completed, last, lastReq)
+}
+
+type stepFailure struct {
+	step  int
+	cause error
+}
+
+func (s *Service) runIndependent(ctx context.Context, r *stepRun) *agent.AgentPlan {
+	completed := r.plan.CompletedSteps
+	var last *agent.AgentDecision
+	var lastReq *services.DecideAgentProposalRequest
+	failures := make([]stepFailure, 0, len(r.steps))
+	left := make(map[recordKey]int64, len(r.steps))
+
+	for _, step := range r.steps {
+		if step.Status != agent.ProposalStatusPending {
+			if step.Status == agent.ProposalStatusExecuted {
+				completed++
+			}
+
+			continue
+		}
+
+		stepReq, outcome, err := s.runStep(ctx, r, step, left)
+		if err != nil {
+			failures = append(failures, stepFailure{step: step.PlanStep, cause: err})
+			s.l.Warn("an independent plan step failed; the others still run",
+				zap.String("plan", r.plan.ID.String()),
+				zap.Int("step", step.PlanStep),
+				zap.Error(err),
+			)
+
+			continue
+		}
+		last, lastReq = outcome.Decision, stepReq
+		completed++
+	}
+
+	if len(failures) == 0 {
+		return s.complete(ctx, r, completed, last, lastReq)
+	}
+
+	s.signal(ctx, r.plan, last, lastReq)
+
+	return s.failAt(ctx, r.req, r.plan, failures[0].step, completed,
+		independentFailure(failures, len(r.steps)))
+}
+
+const maxReportedStepFailures = 5
+
+func independentFailure(failures []stepFailure, steps int) error {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%d of %d steps did not run", len(failures), steps)
+	for idx, failure := range failures {
+		if idx == maxReportedStepFailures {
+			fmt.Fprintf(&b, "; and %d more", len(failures)-idx)
+
+			break
+		}
+		fmt.Fprintf(&b, "; step %d: %s", failure.step, failure.cause.Error())
+	}
+
+	return errors.New(b.String())
+}
+
+func (s *Service) runStep(
+	ctx context.Context,
+	r *stepRun,
+	step *agent.AgentProposal,
+	left map[recordKey]int64,
+) (*services.DecideAgentProposalRequest, *services.DecisionOutcome, error) {
+	key := recordKey{resource: step.TargetResource, id: step.TargetID}
+	stepReq := &services.DecideAgentProposalRequest{
+		ProposalID: step.ID,
+		Decision:   agent.DecisionAccepted,
+		ReasonCode: planReason(r.req.ReasonCode, r.plan.ID),
+		TenantInfo: r.req.TenantInfo,
+		WithinPlan: true,
+	}
+	if version, changed := left[key]; changed && step.TargetID.IsNotNil() {
+		stepReq.ExpectedTargetVersion = &version
+	}
+	r.preview.annotate(stepReq, step.ID)
+
+	outcome, err := s.decisions.DecideWithOutcome(ctx, stepReq, r.actor)
+	if err == nil && outcome.ExecutionError != nil {
+		err = outcome.ExecutionError
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	if step.TargetID.IsNotNil() && outcome.ExecutedTargetVersion != nil {
+		left[key] = *outcome.ExecutedTargetVersion
+	}
+
+	return stepReq, outcome, nil
+}
+
+func (s *Service) complete(
+	ctx context.Context,
+	r *stepRun,
+	completed int,
+	last *agent.AgentDecision,
+	lastReq *services.DecideAgentProposalRequest,
+) *agent.AgentPlan {
 	progressed, err := s.plans.RecordProgress(ctx, repositories.RecordAgentPlanProgressRequest{
-		ID:             plan.ID,
-		TenantInfo:     req.TenantInfo,
+		ID:             r.plan.ID,
+		TenantInfo:     r.req.TenantInfo,
 		Status:         agent.PlanStatusCompleted,
 		CompletedSteps: completed,
 	})
 	if err != nil {
 		s.l.Error("plan ran but its completion could not be recorded",
-			zap.String("plan", plan.ID.String()), zap.Error(err))
-		progressed = plan
+			zap.String("plan", r.plan.ID.String()), zap.Error(err))
+		progressed = r.plan
 	}
 
-	if last != nil && stepReq != nil {
-		if err = s.decisions.SignalRun(ctx, stepReq, last, plan.RunID); err != nil {
-			s.l.Error("failed to signal agent workflow for plan", zap.Error(err))
-		}
-	}
+	s.signal(ctx, r.plan, last, lastReq)
 
 	return progressed
+}
+
+func (s *Service) signal(
+	ctx context.Context,
+	plan *agent.AgentPlan,
+	last *agent.AgentDecision,
+	lastReq *services.DecideAgentProposalRequest,
+) {
+	if last == nil || lastReq == nil {
+		return
+	}
+	if err := s.decisions.SignalRun(ctx, lastReq, last, plan.RunID); err != nil {
+		s.l.Error("failed to signal agent workflow for plan", zap.Error(err))
+	}
+}
+
+func independent(steps []*agent.AgentProposal) bool {
+	if len(steps) < 2 {
+		return false
+	}
+
+	resource := steps[0].TargetResource
+	seen := make(map[pulid.ID]struct{}, len(steps))
+	for _, step := range steps {
+		if step.TargetID.IsNil() || step.TargetResource == "" || step.TargetResource != resource {
+			return false
+		}
+		if _, repeated := seen[step.TargetID]; repeated {
+			return false
+		}
+		seen[step.TargetID] = struct{}{}
+	}
+
+	return true
 }
 
 func (s *Service) failAt(
