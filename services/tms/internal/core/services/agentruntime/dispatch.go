@@ -150,14 +150,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		call.Arguments = owned
 	}
 	p.call = call
-	tierParams := serviceports.ToolExecuteParams{
-		OrganizationID: req.Actor.OrganizationID,
-		BusinessUnitID: req.Actor.BusinessUnitID,
-		Actor:          req.Actor,
-		IdempotencyKey: call.ID,
-		RunID:          req.RunID,
-		Params:         call.Arguments,
-	}
+	tierParams := runToolParams(req, call.ID, call.Arguments)
 	decision := s.decideCall(ctx, agenttoolpolicy.DecideInput{
 		Policy:     policy,
 		Params:     tierParams,
@@ -195,14 +188,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	// approve a proposal that was never going to run, before a simulation
 	// records what it would have done, and before an automatic write runs.
 	if validator, validates := tool.(serviceports.ToolValidator); validates {
-		if vErr := validator.Validate(ctx, serviceports.ToolExecuteParams{
-			OrganizationID: req.Actor.OrganizationID,
-			BusinessUnitID: req.Actor.BusinessUnitID,
-			Actor:          req.Actor,
-			IdempotencyKey: p.idempotencyKey,
-			RunID:          req.RunID,
-			Params:         call.Arguments,
-		}); vErr != nil {
+		if vErr := validator.Validate(
+			ctx, runToolParams(req, p.idempotencyKey, call.Arguments),
+		); vErr != nil {
 			verb := "run"
 			if tier != agent.TierAutoExecute {
 				verb = "proposed"
@@ -281,6 +269,22 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	return s.executeAction(ctx, actionParams{dispatchParams: p, tool: tool, action: action})
 }
 
+func runToolParams(
+	req *serviceports.RunRequest,
+	idempotencyKey string,
+	arguments map[string]any,
+) serviceports.ToolExecuteParams {
+	return serviceports.ToolExecuteParams{
+		OrganizationID: req.Actor.OrganizationID,
+		BusinessUnitID: req.Actor.BusinessUnitID,
+		Actor:          req.Actor,
+		IdempotencyKey: idempotencyKey,
+		RunID:          req.RunID,
+		Params:         arguments,
+		Timezone:       req.Context.Timezone,
+	}
+}
+
 // withinBudget refuses an automatic write past its tool's daily cap. The
 // model is told which cap and to say so, rather than left to try again.
 func (s *Service) withinBudget(
@@ -344,14 +348,7 @@ type actionParams struct {
 // executeParams is what the tool is handed, built once so the simulated and
 // the executed path cannot drift apart in what they pass.
 func (a actionParams) executeParams() serviceports.ToolExecuteParams {
-	params := serviceports.ToolExecuteParams{
-		OrganizationID: a.req.Actor.OrganizationID,
-		BusinessUnitID: a.req.Actor.BusinessUnitID,
-		Actor:          a.req.Actor,
-		IdempotencyKey: a.idempotencyKey,
-		RunID:          a.req.RunID,
-		Params:         a.call.Arguments,
-	}
+	params := runToolParams(a.req, a.idempotencyKey, a.call.Arguments)
 	if a.tool.Policy().CarriesTaint {
 		params.Taint = a.taint.Clone()
 	}

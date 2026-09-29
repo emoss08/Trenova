@@ -477,12 +477,14 @@ publishes nothing.
 ### Handing a task to another agent
 
 The agent a person is talking to may hand a task to another agent on its
-allowlist with `delegate_task`. The other agent's turn runs inline in the same
+allowlist with `delegate_task`, naming the records the task is about and sharing
+results of its own calls as data. The other agent's turn runs inline in the same
 `AssistantTurnWorkflow`, through the same `Drive` and effects, as its own agent
 and as the same person; its events reach the same stream tagged with
 `agentId` and `delegateCallId`, its steps are saved to the thread as
 `Delegated` messages the model never reads again, and its writes are recorded as
-its own. One level only. **Read [agent-delegation.md](agent-delegation.md)
+its own, in one plan with the turn's when several wait on the person. One level only.
+**Read [agent-delegation.md](agent-delegation.md)
 before changing it.**
 
 ### Decision follow-ups
@@ -824,7 +826,10 @@ Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an
 execution opened before it never takes the new branch. Keeping the hand-off's
 account structured on the saved result (`delegateReport`) and `record` on write
-results added only optional data, no command. See
+results added only optional data, no command. Handing a task its records and shared
+results (`DelegateCall.Context`) is optional data on the activity input, nil for a call
+made before it existed; filing a turn's and its delegates' writes as one ordered plan,
+and a run for a read-only hand-off, happen in `FinishTurnActivity`. See
 [agent-delegation.md](agent-delegation.md#versioning).
 
 Runs parked in a day-long decision wait are the slowest to drain; the recorded

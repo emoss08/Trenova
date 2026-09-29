@@ -36,6 +36,16 @@ const (
 
 func (k SafetyEventKind) String() string { return string(k) }
 
+func SafetyEventKindValues() []SafetyEventKind {
+	return []SafetyEventKind{
+		SafetyEventAccident,
+		SafetyEventIncident,
+		SafetyEventNearMiss,
+		SafetyEventCitation,
+		SafetyEventInspection,
+	}
+}
+
 func (k SafetyEventKind) IsValid() bool {
 	switch k {
 	case SafetyEventAccident, SafetyEventIncident, SafetyEventNearMiss, SafetyEventCitation,
@@ -62,6 +72,15 @@ const (
 )
 
 func (s SafetySeverity) String() string { return string(s) }
+
+func SafetySeverityValues() []SafetySeverity {
+	return []SafetySeverity{
+		SafetySeverityMinor,
+		SafetySeverityModerate,
+		SafetySeverityMajor,
+		SafetySeverityCritical,
+	}
+}
 
 func (s SafetySeverity) IsValid() bool {
 	switch s {
@@ -116,6 +135,14 @@ const (
 )
 
 func (r InspectionResult) String() string { return string(r) }
+
+func InspectionResultValues() []InspectionResult {
+	return []InspectionResult{
+		InspectionResultPass,
+		InspectionResultFail,
+		InspectionResultOutOfService,
+	}
+}
 
 func (r InspectionResult) IsValid() bool {
 	switch r {

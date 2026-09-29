@@ -1,5 +1,5 @@
 {
-  "version": "sha256:c03727aee30146ba7d347d01f1aaa0130ccc2e5c3153fb4557cfdd63fb421f19",
+  "version": "sha256:70cada5e2b9dc931b46a6f25e069fb598df29da8b554dd1123d9461a2c076117",
   "modules": [
     {
       "id": "home",
@@ -2883,7 +2883,7 @@
         "Billing controls"
       ],
       "description": "Configure and manage your billing control settings",
-      "summary": "Billing control holds the organization-wide rules for billing. The page is one settings form in five cards: **Invoice defaults** (what invoices show and the fallback payment term, terms and footer), **Automation policy** (how shipments move into billing and whether invoices are drafted and posted automatically), **Exception policy** (how missing billing requirements and rate variances are handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late charges** (whether the nightly late-charge run raises debit memos).\n\nBilling managers and finance leads use it. A warning at the top of the page notes that these settings affect revenue processing and invoicing, and should change only after review.",
+      "summary": "Billing control holds the organization-wide rules for billing. The page is one settings form in five cards: **Invoice defaults** (what invoices show and the fallback payment term, terms and footer), **Automation policy** (how shipments move into billing and whether invoices are drafted and posted automatically), **Exception policy** (how missing billing requirements and rate variances are handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late charges** (whether the nightly late-charge run raises debit memos).\n\nUnless the unrated shipment disposition is to zero the rate and flag it for review, a shipment that nothing can price is refused wherever it is entered: the shipment form, the API, an agent, or a copy of another shipment. Choose a rating method on the shipment, or set a fallback formula template here.\n\nBilling managers and finance leads use it. A warning at the top of the page notes that these settings affect revenue processing and invoicing, and should change only after review.",
       "requires": [
         {
           "resource": "billing_control",

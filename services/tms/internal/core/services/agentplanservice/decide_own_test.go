@@ -16,13 +16,17 @@ import (
 )
 
 type fakeRuns struct {
-	run *agent.AgentRun
+	run    *agent.AgentRun
+	others map[pulid.ID]*agent.AgentRun
 }
 
 func (f *fakeRuns) GetByID(
 	_ context.Context,
 	req repositories.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
+	if other, ok := f.others[req.ID]; ok {
+		return other, nil
+	}
 	if f.run == nil || f.run.ID != req.ID {
 		return nil, errortypes.NewNotFoundError("Agent run not found")
 	}
@@ -221,6 +225,78 @@ func TestDecideOwn_WithoutConversationsNothingIsYours(t *testing.T) {
 
 	f := newOwnFixture(t)
 	f.svc.threads = nil
+
+	_, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
+
+	assert.True(t, errortypes.IsNotFoundError(err))
+	assert.Empty(t, f.decider.decided)
+}
+
+// handOff makes the plan's last step the proposal of a delegate the parent
+// handed a task to: the same conversation, a run of the delegate's own.
+func (f *ownFixture) handOff(access agentdefinition.AccessMode) *agentdefinition.Definition {
+	delegate := &agentdefinition.Definition{
+		ID:             pulid.MustNew("agdef_"),
+		Name:           "Shipment Desk",
+		OrganizationID: f.agent.OrganizationID,
+		BusinessUnitID: f.agent.BusinessUnitID,
+		AccessMode:     access,
+		Enabled:        true,
+	}
+	f.agents.byID[delegate.ID] = delegate
+	run := &agent.AgentRun{
+		ID:                pulid.MustNew("arun_"),
+		AgentDefinitionID: delegate.ID,
+		SubjectType:       agent.SubjectAssistantThread,
+		SubjectID:         f.runs.run.SubjectID,
+		ParentOwnerKind:   agent.RunOwnerAssistantTurn,
+		ParentOwnerID:     pulid.MustNew("atrn_"),
+		DelegateCallID:    "call_hand",
+	}
+	f.runs.others = map[pulid.ID]*agent.AgentRun{run.ID: run}
+	f.steps.steps[len(f.steps.steps)-1].RunID = run.ID
+
+	return delegate
+}
+
+/*
+One plan now carries the writes of the agent a person talks to and of the
+agent it handed a task to. Deciding it decides both agents' proposals, so the
+person must be allowed each of them, not only the one whose run the plan
+hangs on.
+*/
+func TestDecideOwn_ChecksEveryAgentWhoseWriteIsAStep(t *testing.T) {
+	t.Parallel()
+
+	f := newOwnFixture(t)
+	delegate := f.handOff(agentdefinition.AccessRoles)
+
+	_, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+	assert.Contains(t, err.Error(), "Shipment Desk")
+	assert.Empty(t, f.decider.decided)
+	assert.Empty(t, f.plans.statuses)
+
+	f.access.granted[delegate.ID] = true
+	f.access.checked = nil
+	_, err = f.svc.DecideOwn(t.Context(), f.req, f.actor)
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{f.agent.ID, delegate.ID}, f.access.checked,
+		"each agent is checked once, the plan's own first")
+}
+
+// A step whose run is not in the caller's conversation does not belong to
+// the plan they may decide.
+func TestDecideOwn_AStepFromAnotherConversationIsNotYours(t *testing.T) {
+	t.Parallel()
+
+	f := newOwnFixture(t)
+	f.handOff(agentdefinition.AccessEveryone)
+	for _, run := range f.runs.others {
+		run.SubjectID = pulid.MustNew("athr_")
+	}
 
 	_, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
 

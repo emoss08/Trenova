@@ -76,6 +76,20 @@ func (s *serviceStub) UpdatePermit(
 	return s.updatePermitFn(entity)
 }
 
+func (s *serviceStub) PlanCreatePermit(
+	context.Context,
+	*permit.Permit,
+) (*permit.Permit, error) {
+	panic("unexpected PlanCreatePermit call")
+}
+
+func (s *serviceStub) PlanUpdatePermit(
+	context.Context,
+	*permit.Permit,
+) (*services.RecordChange[permit.Permit], error) {
+	panic("unexpected PlanUpdatePermit call")
+}
+
 func (s *serviceStub) WaiveRequirement(
 	_ context.Context,
 	req *services.WaiveRequirementRequest,

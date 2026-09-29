@@ -37,6 +37,18 @@ const (
 
 func (t DOTTestType) String() string { return string(t) }
 
+func DOTTestTypeValues() []DOTTestType {
+	return []DOTTestType{
+		DOTTestPreEmployment,
+		DOTTestRandom,
+		DOTTestPostAccident,
+		DOTTestReasonableSuspicion,
+		DOTTestReturnToDuty,
+		DOTTestFollowUp,
+		DOTTestOther,
+	}
+}
+
 func (t DOTTestType) IsValid() bool {
 	switch t {
 	case DOTTestPreEmployment, DOTTestRandom, DOTTestPostAccident, DOTTestReasonableSuspicion,
@@ -82,6 +94,13 @@ const (
 )
 
 func (s DOTTestSubstance) String() string { return string(s) }
+
+func DOTTestSubstanceValues() []DOTTestSubstance {
+	return []DOTTestSubstance{
+		DOTSubstanceDrug,
+		DOTSubstanceAlcohol,
+	}
+}
 
 func (s DOTTestSubstance) IsValid() bool {
 	return s == DOTSubstanceDrug || s == DOTSubstanceAlcohol

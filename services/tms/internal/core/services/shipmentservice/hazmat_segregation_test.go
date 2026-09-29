@@ -36,17 +36,13 @@ func TestValidatorValidateCreate_SkipsHazmatSegregationWhenDisabled(t *testing.T
 		Return(&tenant.ShipmentControl{CheckHazmatSegregation: false, AllowMoveRemovals: true, MaxShipmentWeightLimit: 1000000}, nil)
 
 	v := &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			mocks.NewMockCommodityRepository(t),
-			mocks.NewMockHazmatSegregationRuleRepository(t),
-			mocks.NewMockShipmentRepository(t),
-			nil,
-			nil,
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   NewTestCustomerRepository(t),
+			CommodityRepo:  mocks.NewMockCommodityRepository(t),
+			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
+			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+		}).Build(),
 	}
 
 	require.Nil(t, v.ValidateCreate(t.Context(), entity))
@@ -99,17 +95,13 @@ func TestValidatorValidateCreate_RejectsProhibitedHazmatPair(t *testing.T) {
 		Once()
 
 	v := &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			commodityRepo,
-			ruleRepo,
-			mocks.NewMockShipmentRepository(t),
-			nil,
-			nil,
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   NewTestCustomerRepository(t),
+			CommodityRepo:  commodityRepo,
+			HazmatRuleRepo: ruleRepo,
+			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+		}).Build(),
 	}
 
 	multiErr := v.ValidateCreate(t.Context(), entity)
@@ -168,17 +160,13 @@ func TestValidatorValidateCreate_RejectsDistanceRuleMatch(t *testing.T) {
 		Once()
 
 	v := &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			commodityRepo,
-			ruleRepo,
-			mocks.NewMockShipmentRepository(t),
-			nil,
-			nil,
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   NewTestCustomerRepository(t),
+			CommodityRepo:  commodityRepo,
+			HazmatRuleRepo: ruleRepo,
+			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+		}).Build(),
 	}
 
 	multiErr := v.ValidateCreate(t.Context(), entity)
@@ -241,17 +229,13 @@ func TestValidatorValidateCreate_MatchesSpecificHazmatMaterialsUnordered(t *test
 		Once()
 
 	v := &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			commodityRepo,
-			ruleRepo,
-			mocks.NewMockShipmentRepository(t),
-			nil,
-			nil,
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   NewTestCustomerRepository(t),
+			CommodityRepo:  commodityRepo,
+			HazmatRuleRepo: ruleRepo,
+			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+		}).Build(),
 	}
 
 	multiErr := v.ValidateCreate(t.Context(), entity)
@@ -308,17 +292,13 @@ func TestValidatorValidateCreate_IgnoresInactiveOrUnmatchedRules(t *testing.T) {
 		Once()
 
 	v := &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			commodityRepo,
-			ruleRepo,
-			mocks.NewMockShipmentRepository(t),
-			nil,
-			nil,
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   NewTestCustomerRepository(t),
+			CommodityRepo:  commodityRepo,
+			HazmatRuleRepo: ruleRepo,
+			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+		}).Build(),
 	}
 
 	require.Nil(t, v.ValidateCreate(t.Context(), entity))
@@ -376,17 +356,13 @@ func TestHazmatSegregationValidationAndServiceStayAligned(t *testing.T) {
 		Once()
 
 	v := &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			commodityRepo,
-			ruleRepo,
-			mocks.NewMockShipmentRepository(t),
-			nil,
-			nil,
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   NewTestCustomerRepository(t),
+			CommodityRepo:  commodityRepo,
+			HazmatRuleRepo: ruleRepo,
+			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+		}).Build(),
 	}
 
 	svc := &service{

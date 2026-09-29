@@ -3,12 +3,15 @@ package agenttoolservice
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,7 +45,7 @@ func TestRecordStopActual_PassesTheActionThrough(t *testing.T) {
 
 	for _, action := range []string{"Arrive", "Depart"} {
 		moves := &fakeMoveService{}
-		tool := newRecordStopActualTool(moves)
+		tool := newRecordStopActualTool(moves, nil)
 
 		moveID := pulid.MustNew("smv_")
 		stopID := pulid.MustNew("stp_")
@@ -67,7 +70,7 @@ func TestRecordStopActual_RefusesAnActionItDoesNotKnow(t *testing.T) {
 	t.Parallel()
 
 	moves := &fakeMoveService{}
-	tool := newRecordStopActualTool(moves)
+	tool := newRecordStopActualTool(moves, nil)
 
 	err := tool.Execute(t.Context(), executeParams(map[string]any{
 		"moveId": pulid.MustNew("smv_").String(),
@@ -88,7 +91,7 @@ func TestRecordStopActual_OnlySendsATimeWhenGivenOne(t *testing.T) {
 	t.Parallel()
 
 	moves := &fakeMoveService{}
-	tool := newRecordStopActualTool(moves)
+	tool := newRecordStopActualTool(moves, nil)
 
 	require.NoError(t, tool.Execute(t.Context(), executeParams(map[string]any{
 		"moveId": pulid.MustNew("smv_").String(),
@@ -98,24 +101,92 @@ func TestRecordStopActual_OnlySendsATimeWhenGivenOne(t *testing.T) {
 	assert.Nil(t, moves.recorded.OccurredAt, "no time given means the service stamps it")
 
 	moves2 := &fakeMoveService{}
-	require.NoError(t, newRecordStopActualTool(moves2).Execute(
-		t.Context(),
-		executeParams(map[string]any{
+	params := executeParams(map[string]any{
+		"moveId":     pulid.MustNew("smv_").String(),
+		"stopId":     pulid.MustNew("stp_").String(),
+		"action":     "Depart",
+		"occurredAt": "2026-09-30T14:30",
+	})
+	params.Timezone = "America/Chicago"
+	require.NoError(t, newRecordStopActualTool(moves2, nil).Execute(t.Context(), params))
+	require.NotNil(t, moves2.recorded.OccurredAt)
+	assert.Equal(t, localInstant(t, "America/Chicago", 2026, 9, 30, 14, 30),
+		*moves2.recorded.OccurredAt)
+}
+
+type fakeMoveStops struct {
+	move *shipment.ShipmentMove
+	asks int
+}
+
+func (f *fakeMoveStops) GetByID(
+	_ context.Context,
+	req *repositories.GetMoveByIDRequest,
+) (*shipment.ShipmentMove, error) {
+	f.asks++
+	f.move.ID = req.MoveID
+
+	return f.move, nil
+}
+
+func localInstant(t *testing.T, zone string, year, month, day, hour, minute int) int64 {
+	t.Helper()
+
+	loc, err := time.LoadLocation(zone)
+	require.NoError(t, err)
+
+	return time.Date(year, time.Month(month), day, hour, minute, 0, 0, loc).Unix()
+}
+
+func TestRecordStopActual_ReadsATimeWhereTheStopIs(t *testing.T) {
+	t.Parallel()
+
+	stopID := pulid.MustNew("stp_")
+	moveStops := &fakeMoveStops{move: &shipment.ShipmentMove{Stops: []*shipment.Stop{{
+		ID:       stopID,
+		Location: &location.Location{Timezone: "America/Los_Angeles"},
+	}}}}
+	moves := &fakeMoveService{}
+	params := executeParams(map[string]any{
+		"moveId":     pulid.MustNew("smv_").String(),
+		"stopId":     stopID.String(),
+		"action":     "Arrive",
+		"occurredAt": "2026-09-30T06:15",
+	})
+	params.Timezone = "America/New_York"
+
+	require.NoError(t, newRecordStopActualTool(moves, moveStops).Execute(t.Context(), params))
+
+	require.NotNil(t, moves.recorded.OccurredAt)
+	assert.Equal(t, localInstant(t, "America/Los_Angeles", 2026, 9, 30, 6, 15),
+		*moves.recorded.OccurredAt, "the stop's own zone wins over the organization's")
+}
+
+func TestRecordStopActual_RefusesAUnixTimeOrAnOffset(t *testing.T) {
+	t.Parallel()
+
+	for _, occurredAt := range []any{float64(1789000000), "1789000000", "2026-09-30T14:30:00Z"} {
+		moves := &fakeMoveService{}
+		err := newRecordStopActualTool(moves, nil).Execute(t.Context(), executeParams(map[string]any{
 			"moveId":     pulid.MustNew("smv_").String(),
 			"stopId":     pulid.MustNew("stp_").String(),
-			"action":     "Depart",
-			"occurredAt": float64(1789000000),
-		}),
-	))
-	require.NotNil(t, moves2.recorded.OccurredAt)
-	assert.Equal(t, int64(1789000000), *moves2.recorded.OccurredAt)
+			"action":     "Arrive",
+			"occurredAt": occurredAt,
+		}))
+
+		require.Error(t, err, occurredAt)
+		var fieldErr *errortypes.Error
+		require.ErrorAs(t, err, &fieldErr)
+		assert.Equal(t, "occurredAt", fieldErr.Field)
+		assert.Nil(t, moves.recorded, "nothing is recorded at a guessed time")
+	}
 }
 
 func TestRecordStopActual_ScopesToTheActorTenant(t *testing.T) {
 	t.Parallel()
 
 	moves := &fakeMoveService{}
-	tool := newRecordStopActualTool(moves)
+	tool := newRecordStopActualTool(moves, nil)
 
 	params := executeParams(map[string]any{
 		"moveId": pulid.MustNew("smv_").String(),
@@ -132,7 +203,7 @@ func TestRecordStopActual_RejectsAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	moves := &fakeMoveService{}
-	tool := newRecordStopActualTool(moves)
+	tool := newRecordStopActualTool(moves, nil)
 
 	params := executeParams(map[string]any{
 		"moveId": pulid.MustNew("smv_").String(),
@@ -150,7 +221,7 @@ func TestRecordStopActual_RejectsAMismatchedActor(t *testing.T) {
 func TestRecordStopActual_IsIrreversibleAndNeedsApproval(t *testing.T) {
 	t.Parallel()
 
-	tool := newRecordStopActualTool(nil)
+	tool := newRecordStopActualTool(nil, nil)
 
 	assert.False(t, tool.Policy().Reversible)
 	assert.Equal(t, agent.TierActWithApproval, tool.Policy().DefaultTier)

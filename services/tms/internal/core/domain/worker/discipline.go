@@ -305,6 +305,17 @@ const (
 
 func (k RecognitionKind) String() string { return string(k) }
 
+func RecognitionKindValues() []RecognitionKind {
+	return []RecognitionKind{
+		RecognitionKindSafetyMilestone,
+		RecognitionKindCustomerPraise,
+		RecognitionKindPerformance,
+		RecognitionKindTenure,
+		RecognitionKindTeamPlayer,
+		RecognitionKindOther,
+	}
+}
+
 func (k RecognitionKind) IsValid() bool {
 	switch k {
 	case RecognitionKindSafetyMilestone, RecognitionKindCustomerPraise, RecognitionKindPerformance,

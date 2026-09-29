@@ -292,9 +292,13 @@ func (m *MultiError) Error() string {
 		return ""
 	}
 
-	var messages []string
+	messages := make([]string, 0, len(m.Errors))
 	for _, err := range m.Errors {
-		messages = append(messages, err.Error())
+		if err.Field == "" {
+			messages = append(messages, err.Error())
+			continue
+		}
+		messages = append(messages, err.Field+": "+err.Error())
 	}
 
 	return fmt.Sprintf("validation failed:\n- %s", strings.Join(messages, "\n- "))

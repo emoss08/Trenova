@@ -71,9 +71,13 @@ func (s *Service) draft(ctx context.Context, in *draftInput) (*draft, error) {
 	d.params = params
 
 	policy := tool.Policy()
+	execParams, err := s.executionParams(ctx, proposal, &policy, params, in.actor)
+	if err != nil {
+		return nil, err
+	}
 	found, err := s.snapshot(ctx, &snapshotInput{
 		tool:     tool,
-		params:   proposalexecutor.ExecutionParams(proposal, &policy, params, in.actor),
+		params:   execParams,
 		pin:      pinOf(proposal),
 		timeout:  in.timeout,
 		labelled: true,
@@ -141,10 +145,11 @@ func (s *Service) settleParams(
 		return params, nil, nil
 	}
 	policy := tool.Policy()
-	if err := validator.Validate(
-		ctx,
-		proposalexecutor.ExecutionParams(proposal, &policy, params, in.actor),
-	); err != nil {
+	execParams, err := s.executionParams(ctx, proposal, &policy, params, in.actor)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err = validator.Validate(ctx, execParams); err != nil {
 		warnings := []agent.PreviewWarning{toolpreview.WouldFail(err)}
 		toolpreview.LocateReasons(warnings, tool.ParamSchema())
 
@@ -153,6 +158,18 @@ func (s *Service) settleParams(
 	}
 
 	return params, nil, nil
+}
+
+func (s *Service) executionParams(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	policy *services.ToolPolicy,
+	params map[string]any,
+	actor *services.RequestActor,
+) (services.ToolExecuteParams, error) {
+	return proposalexecutor.WithTimezone(
+		ctx, s.zones, proposalexecutor.ExecutionParams(proposal, policy, params, actor),
+	)
 }
 
 // assertOwner keeps a self-scoped proposal's preview to the person it is

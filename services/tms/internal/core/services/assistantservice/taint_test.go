@@ -159,7 +159,7 @@ func TestTurnTaint_FallsBackToWhatTheTurnOpenedWith(t *testing.T) {
 	assert.Same(t, ran, turnTaint(plan, &serviceports.RunResult{Taint: ran}))
 }
 
-func TestPersistDelegatedProposals_CarryTheDelegatesTaint(t *testing.T) {
+func TestPersistProposals_ADelegatesWritesCarryItsTaint(t *testing.T) {
 	t.Parallel()
 
 	runs := &stubRunRepo{}
@@ -169,7 +169,7 @@ func TestPersistDelegatedProposals_CarryTheDelegatesTaint(t *testing.T) {
 
 	params := proposalTestParams(nil, nil)
 	params.Taint = &agent.RunTaint{}
-	_, err := svc.persistDelegatedProposals(t.Context(), params, []serviceports.DelegatedRun{{
+	params.Delegations = []serviceports.DelegatedRun{{
 		Definition: &agentdefinition.Definition{
 			ID:              pulid.MustNew("agd_"),
 			Name:            "Report Builder",
@@ -186,7 +186,8 @@ func TestPersistDelegatedProposals_CarryTheDelegatesTaint(t *testing.T) {
 			Tainted:   true,
 		}},
 		Taint: delegateTaint,
-	}})
+	}}
+	_, err := svc.persistProposals(t.Context(), params)
 	require.NoError(t, err)
 
 	require.Len(t, runs.created, 1)
@@ -212,10 +213,7 @@ func TestPersistProposals_TieTheRunsToTheTurnAndADelegatesToItsTask(t *testing.T
 		Rationale: "Cover the move.",
 		Tier:      agent.TierPropose,
 	}}
-	_, err := svc.persistProposals(t.Context(), params)
-	require.NoError(t, err)
-
-	_, err = svc.persistDelegatedProposals(t.Context(), params, []serviceports.DelegatedRun{{
+	params.Delegations = []serviceports.DelegatedRun{{
 		Definition: &agentdefinition.Definition{
 			ID:              pulid.MustNew("agd_"),
 			Name:            "Report Builder",
@@ -228,7 +226,8 @@ func TestPersistProposals_TieTheRunsToTheTurnAndADelegatesToItsTask(t *testing.T
 			Rationale: "Asked for it.",
 			Tier:      agent.TierPropose,
 		}},
-	}})
+	}}
+	_, err := svc.persistProposals(t.Context(), params)
 	require.NoError(t, err)
 
 	require.Len(t, runs.created, 2)

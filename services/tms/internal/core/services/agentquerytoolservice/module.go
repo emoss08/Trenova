@@ -36,6 +36,7 @@ func ToolProviders() []any {
 		tenderingToolProviders(),
 		operationsQueryToolProviders(),
 		fuelRateReadProviders(),
+		workforceQueryToolProviders(),
 	}
 
 	size := 0

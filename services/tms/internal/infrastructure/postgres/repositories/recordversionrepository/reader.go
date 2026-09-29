@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
@@ -542,6 +543,148 @@ var lookups = map[permission.Resource]lookup{
 			}
 			return entity.Version
 		},
+	},
+	permission.ResourceWorkerDOTTest: {
+		model:   func() versioned { return new(worker.WorkerDOTTest) },
+		scope:   buncolgen.WorkerDOTTestScopeTenant,
+		idEq:    buncolgen.WorkerDOTTestColumns.ID.Eq(),
+		version: versionOf(func(entity *worker.WorkerDOTTest) int64 { return entity.Version }),
+	},
+	permission.ResourceDOTRandomPool: {kinds: map[string]lookup{
+		"drdraw_": {
+			model:   func() versioned { return new(worker.DOTRandomDraw) },
+			scope:   buncolgen.DOTRandomDrawScopeTenant,
+			idEq:    buncolgen.DOTRandomDrawColumns.ID.Eq(),
+			version: versionOf(func(entity *worker.DOTRandomDraw) int64 { return entity.Version }),
+		},
+		"drde_": {
+			model: func() versioned { return new(worker.DOTRandomDrawEntry) },
+			scope: buncolgen.DOTRandomDrawEntryScopeTenant,
+			idEq:  buncolgen.DOTRandomDrawEntryColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *worker.DOTRandomDrawEntry) int64 { return entity.Version },
+			),
+		},
+	}},
+	permission.ResourceWorkerSafetyEvent: {kinds: map[string]lookup{
+		"wsev_": {
+			model: func() versioned { return new(worker.WorkerSafetyEvent) },
+			scope: buncolgen.WorkerSafetyEventScopeTenant,
+			idEq:  buncolgen.WorkerSafetyEventColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *worker.WorkerSafetyEvent) int64 { return entity.Version },
+			),
+		},
+		"wsvi_": {
+			model: func() versioned { return new(worker.WorkerSafetyViolation) },
+			scope: buncolgen.WorkerSafetyViolationScopeTenant,
+			idEq:  buncolgen.WorkerSafetyViolationColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *worker.WorkerSafetyViolation) int64 { return entity.Version },
+			),
+		},
+	}},
+	permission.ResourceWorkerRecognition: {
+		model:   func() versioned { return new(worker.WorkerRecognition) },
+		scope:   buncolgen.WorkerRecognitionScopeTenant,
+		idEq:    buncolgen.WorkerRecognitionColumns.ID.Eq(),
+		version: versionOf(func(entity *worker.WorkerRecognition) int64 { return entity.Version }),
+	},
+	permission.ResourceWorkerLeave: {kinds: map[string]lookup{
+		"wlc_": {
+			model: func() versioned { return new(worker.WorkerLeaveCase) },
+			scope: buncolgen.WorkerLeaveCaseScopeTenant,
+			idEq:  buncolgen.WorkerLeaveCaseColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *worker.WorkerLeaveCase) int64 { return entity.Version },
+			),
+		},
+		"wle_": {
+			model: func() versioned { return new(worker.WorkerLeaveEntry) },
+			scope: buncolgen.WorkerLeaveEntryScopeTenant,
+			idEq:  buncolgen.WorkerLeaveEntryColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *worker.WorkerLeaveEntry) int64 { return entity.Version },
+			),
+		},
+	}},
+	permission.ResourceWorkerTraining: {
+		model: func() versioned { return new(worker.WorkerTrainingRecord) },
+		scope: buncolgen.WorkerTrainingRecordScopeTenant,
+		idEq:  buncolgen.WorkerTrainingRecordColumns.ID.Eq(),
+		version: versionOf(
+			func(entity *worker.WorkerTrainingRecord) int64 { return entity.Version },
+		),
+	},
+	permission.ResourceWorkerChecklist: {kinds: map[string]lookup{
+		"wcl_": {
+			model: func() versioned { return new(worker.WorkerChecklist) },
+			scope: buncolgen.WorkerChecklistScopeTenant,
+			idEq:  buncolgen.WorkerChecklistColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *worker.WorkerChecklist) int64 { return entity.Version },
+			),
+		},
+		"wcli_": {
+			model: func() versioned { return new(worker.WorkerChecklistItem) },
+			scope: buncolgen.WorkerChecklistItemScopeTenant,
+			idEq:  buncolgen.WorkerChecklistItemColumns.ID.Eq(),
+			version: versionOf(
+				func(entity *worker.WorkerChecklistItem) int64 { return entity.Version },
+			),
+		},
+	}},
+	permission.ResourcePerformanceReview: {
+		model:   func() versioned { return new(worker.PerformanceReview) },
+		scope:   buncolgen.PerformanceReviewScopeTenant,
+		idEq:    buncolgen.PerformanceReviewColumns.ID.Eq(),
+		version: versionOf(func(entity *worker.PerformanceReview) int64 { return entity.Version }),
+	},
+	permission.ResourceQualification: {
+		model: func() versioned { return new(worker.WorkerEmploymentVerification) },
+		scope: buncolgen.WorkerEmploymentVerificationScopeTenant,
+		idEq:  buncolgen.WorkerEmploymentVerificationColumns.ID.Eq(),
+		version: versionOf(
+			func(entity *worker.WorkerEmploymentVerification) int64 { return entity.Version },
+		),
+	},
+	permission.ResourceWorkerCredential: {
+		model:   func() versioned { return new(worker.WorkerCredential) },
+		scope:   buncolgen.WorkerCredentialScopeTenant,
+		idEq:    buncolgen.WorkerCredentialColumns.ID.Eq(),
+		version: versionOf(func(entity *worker.WorkerCredential) int64 { return entity.Version }),
+	},
+	permission.ResourceWorkerInjury: {
+		model:   func() versioned { return new(worker.WorkerInjury) },
+		scope:   buncolgen.WorkerInjuryScopeTenant,
+		idEq:    buncolgen.WorkerInjuryColumns.ID.Eq(),
+		version: versionOf(func(entity *worker.WorkerInjury) int64 { return entity.Version }),
+	},
+	permission.ResourceTimesheet: {kinds: map[string]lookup{
+		"pxb_": {
+			model:   func() versioned { return new(worker.PayrollExport) },
+			scope:   buncolgen.PayrollExportScopeTenant,
+			idEq:    buncolgen.PayrollExportColumns.ID.Eq(),
+			version: versionOf(func(entity *worker.PayrollExport) int64 { return entity.Version }),
+		},
+	}},
+	permission.ResourcePermit: {
+		model:   func() versioned { return new(permit.Permit) },
+		scope:   buncolgen.PermitScopeTenant,
+		idEq:    buncolgen.PermitColumns.ID.Eq(),
+		version: versionOf(func(entity *permit.Permit) int64 { return entity.Version }),
+	},
+	permission.ResourceSettlementDispute: {
+		model:   func() versioned { return new(driversettlement.Dispute) },
+		scope:   buncolgen.DisputeScopeTenant,
+		idEq:    buncolgen.DisputeColumns.ID.Eq(),
+		version: versionOf(func(entity *driversettlement.Dispute) int64 { return entity.Version }),
+	},
+	permission.ResourceDriverExpense: {
+		model:   func() versioned { return new(driverpay.Expense) },
+		scope:   buncolgen.ExpenseScopeTenant,
+		idEq:    buncolgen.ExpenseColumns.ID.Eq(),
+		version: versionOf(func(entity *driverpay.Expense) int64 { return entity.Version }),
 	},
 }
 

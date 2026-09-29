@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 440.
+Tools listed: 509.
 
 ## The model
 
@@ -51,13 +51,13 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 170 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 185 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 6 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 147 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 190 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
-| Seen by a driver | Changes something a driver can see. | Ask first | Yes | 14 |
+| Seen by a driver | Changes something a driver can see. | Ask first | Yes | 22 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 30 |
-| Money | Moves or commits money. | Automatic | Yes | 83 |
+| Money | Moves or commits money. | Automatic | Yes | 88 |
 
 ## Reads only
 
@@ -94,6 +94,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get detention occurrence (`get_detention_occurrence`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get dispatch board (`get_dispatch_board`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get document summary (`get_document_summary`) | Reads only | Automatic | — | Always, from document | Reads text extracted from a document someone outside sent; nothing changes and nothing is sent. |
+| Get DOT random draw (`get_dot_random_draw`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get driver settlement (`get_driver_settlement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get EDI inbound file (`get_edi_inbound_file`) | Reads only | Automatic | — | Always, from EDI | Reads an EDI file a trading partner sent, raw X12 included on request; nothing changes and nothing is sent. |
 | Get EDI partner (`get_edi_partner`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -146,6 +147,9 @@ Looks something up. Nothing changes and nothing is sent.
 | List dashboards (`list_dashboards`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List detention desk (`list_detention_desk`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List document types (`list_document_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List DOT random draws (`list_dot_random_draws`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List DOT tests (`list_dot_tests`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List driver expenses (`list_driver_expenses`) | Reads only | Automatic | — | When the record is marked, from record note | Reads expenses whose descriptions drivers wrote in the driver portal; nothing changes and nothing is sent. |
 | List driver pay events (`list_driver_pay_events`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List driver settlements (`list_driver_settlements`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List EDI carrier invoices (`list_edi_carrier_invoices`) | Reads only | Automatic | — | Always, from EDI | Lists carrier invoices a carrier sent over EDI with its own invoice text; nothing changes and nothing is sent. |
@@ -156,6 +160,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List EDI transfer changes (`list_edi_transfer_changes`) | Reads only | Automatic | — | Always, from EDI | Lists statuses another organization reported on a linked load; nothing changes and nothing is sent. |
 | List EDI transfers (`list_edi_transfers`) | Reads only | Automatic | — | Always, from EDI | Lists load tenders trading partners sent, whose contents the partner wrote; nothing changes and nothing is sent. |
 | List email profiles (`list_email_profiles`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List employment verifications (`list_employment_verifications`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List equipment types (`list_equipment_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List escrow accounts (`list_escrow_accounts`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List expiring credentials (`list_expiring_credentials`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -191,6 +196,8 @@ Looks something up. Nothing changes and nothing is sent.
 | List pay assignments (`list_pay_assignments`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List pay codes (`list_pay_codes`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List pay profiles (`list_pay_profiles`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List payroll exports (`list_payroll_exports`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List performance reviews (`list_performance_reviews`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List rate agreements (`list_rate_agreements`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List rate confirmations (`list_rate_confirmations`) | Reads only | Automatic | — | — | Reads a move's rate confirmation revisions; the name a carrier typed when signing is left out, so nothing written outside the organization is read. |
 | List rate imports (`list_rate_imports`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -205,15 +212,23 @@ Looks something up. Nothing changes and nothing is sent.
 | List service failures (`list_service_failures`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List service types (`list_service_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List shift templates (`list_shift_templates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List shipment permits (`list_shipment_permits`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List shipment tenders (`list_shipment_tenders`) | Reads only | Automatic | — | — | Reads a shipment's tenders and their offers; a carrier's own words, such as a decline reason, are left out, so nothing written outside the organization is read. |
 | List shipment types (`list_shipment_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List shipments (`list_shipments`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List time off (`list_time_off`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List tractors (`list_tractors`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List trailers (`list_trailers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List training courses (`list_training_courses`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List vehicle positions (`list_vehicle_positions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List watchtower items (`list_watchtower_items`) | Reads only | Automatic | — | When the record is marked, from inbound message, EDI, weather or run record | Reads the watchtower feed, whose headlines can quote an inbound email, an EDI file, a weather alert or a run that read outside text; it changes nothing, not even what the person has seen. |
 | List weather alerts (`list_weather_alerts`) | Reads only | Automatic | — | Always, from weather | Reads National Weather Service alert text; nothing changes and nothing is sent. |
+| List worker checklists (`list_worker_checklists`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List worker credentials (`list_worker_credentials`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List worker injuries (`list_worker_injuries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List worker leave cases (`list_worker_leave_cases`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List worker safety events (`list_worker_safety_events`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List worker training (`list_worker_training`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List workers (`list_workers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Open page (`open_page`) | Reads only | Automatic | — | — | Opens a page in the caller's own browser; nothing changes and nothing is sent. |
 | Plan dispatch (`plan_dispatch`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -259,6 +274,7 @@ Changes records only people inside the organization see.
 | Amend IFTA return (`amend_ifta_return`) | Inside the organization | Propose | — | — | Starts a correction of a return already filed with the jurisdictions; it files nothing, but a person decides to reopen a filing. |
 | Apply carrier intel suggestions (`apply_carrier_intel_suggestions`) | Inside the organization | Ask first | — | — | Edits the carrier's own profile inside Trenova from what the provider reports; nothing is sent, and the old values are set back by hand. |
 | Approve worker PTO (`approve_worker_pto`) | Inside the organization | Automatic | — | — | Books approved time off; the worker is told it was approved but reads no text the model wrote. |
+| Archive worker credential (`archive_worker_credential`) | Inside the organization | Propose | — | — | Retires a credential inside Trenova, which can take the worker off dispatch; the archived row stays on file, and a new credential is recorded to replace it. |
 | Assign billing queue biller (`assign_billing_queue_biller`) | Inside the organization | Automatic | — | — | Names who reviews an item inside Trenova; it creates no money and is changed by assigning someone else. |
 | Assign fuel card (`assign_fuel_card`) | Inside the organization | Ask first | — | — | Changes which tractor a card's purchases count against inside Trenova; nothing is sent, and assigning it again changes it back. |
 | Assign move (`assign_move`) | Inside the organization | Automatic | — | — | Assigns a driver and tractor to a move; the driver sees the assignment but no text the model wrote. |
@@ -266,17 +282,25 @@ Changes records only people inside the organization see.
 | Attach document to shipment (`attach_document_to_shipment`) | Inside the organization | Automatic | — | — | Files a document already in Trenova against a shipment; nobody outside is told. |
 | Attach order shipments (`attach_order_shipments`) | Inside the organization | Ask first | — | — | Regroups shipments under an order inside Trenova; nothing is sent, and detach_order_shipment moves one back out. |
 | Attach pay events to settlement (`attach_pay_events_to_settlement`) | Inside the organization | Automatic | — | — | Moves pay a driver already earned between the pool and a draft settlement inside Trenova; nothing is paid until a person approves it. |
+| Attach worker credential document (`attach_worker_credential_document`) | Inside the organization | Ask first | — | — | Links a filed document to a credential inside Trenova; attaching another replaces it. |
+| Attach worker training document (`attach_worker_training_document`) | Inside the organization | Ask first | — | — | Links a filed document to a training record inside Trenova; attaching another replaces it. |
 | Backfill jurisdiction miles (`backfill_jurisdiction_miles`) | Inside the organization | Ask first | — | — | Routes a quarter's unattributed moves inside Trenova in the background; nothing is sent to a customer or carrier, but each move is a billable request. |
 | Build invoice run (`build_invoice_run`) | Inside the organization | Automatic | — | — | Builds a proposal of invoices inside Trenova for a biller to review; it invoices nothing and is discarded with cancel_invoice_run. |
+| Cancel DOT random draw (`cancel_dot_random_draw`) | Inside the organization | Propose | — | — | Voids a round so the period is drawn again; the cancelled round and its reason stay on the record, and it cannot be undone. |
+| Cancel DOT test (`cancel_dot_test`) | Inside the organization | Propose | — | — | Voids a scheduled collection; the row and its reason stay on the record an auditor reads, and it cannot be undone. |
 | Cancel invoice run (`cancel_invoice_run`) | Inside the organization | Ask first | — | — | Discards a proposal of invoices; nothing was invoiced, and a new run is built with build_invoice_run. |
 | Cancel journal reversal (`cancel_journal_reversal`) | Inside the organization | Ask first | The reason is what the reversal's requester reads next, so a run that has read outside text proposes it. | — | Withdraws a reversal before it reaches the ledger; nothing is booked, and it is requested again if it was needed after all. |
 | Cancel manual journal (`cancel_manual_journal`) | Inside the organization | Ask first | The reason is what the journal's author reads next, so a run that has read outside text proposes it. | — | Withdraws a journal before it reaches the ledger; nothing is booked, and the entry is drafted again if it was needed after all. |
 | Cancel report run (`cancel_report_run`) | Inside the organization | Automatic | — | — | Stops a report the person asked for from running; nothing is changed or sent, and running the report again gives the same rows. |
+| Cancel worker checklist (`cancel_worker_checklist`) | Inside the organization | Propose | — | — | Cancels a checklist inside Trenova; nothing is sent, and a cancelled checklist is started again from its template. |
 | Change accounting backfill (`change_accounting_backfill`) | Inside the organization | Ask first | — | — | Changes how much history reaches the organization's books; a person who manages the integration approves it, and pausing or cancelling sends nothing. |
+| Change worker safety event status (`change_worker_safety_event_status`) | Inside the organization | Ask first | — | — | Moves a safety event's status inside Trenova; nothing is sent, and the event is reopened or closed again the same way. |
 | Check accounting connection (`check_accounting_connection`) | Inside the organization | Automatic | — | — | Asks the accounting system whether it answers and records the result in Trenova; it writes nothing to the books. |
 | Check accounting drift (`check_accounting_drift`) | Inside the organization | Ask first | — | — | Reads every synced document back from the accounting system, which spends the provider's call allowance, so a person approves it. |
 | Clear accounting mapping (`clear_accounting_mapping`) | Inside the organization | Ask first | — | — | Unmatches a record so it cannot sync until someone maps it again; mapping it again undoes it. |
+| Close leave case (`close_leave_case`) | Inside the organization | Propose | — | — | Closes a leave case under the leave approval grant, so it runs as the person who approves it; the days it drew down stay drawn down. |
 | Close order (`close_order`) | Inside the organization | Propose | — | — | Settles an order for good; nothing reopens it, so only a person closes one. |
+| Close worker training (`close_worker_training`) | Inside the organization | Propose | — | — | Closes a training assignment inside Trenova; the reason stays on the record, and the course is assigned again the same way. |
 | Commit fuel purchase import (`commit_fuel_purchase_import`) | Inside the organization | Ask first | — | — | Adds a statement's purchases inside Trenova, which the IFTA return counts; nothing is sent, but undoing it means deleting each purchase. |
 | Confirm accounting mapping proposals (`confirm_accounting_mapping_proposals`) | Inside the organization | Ask first | — | — | Decides which accounts and records Trenova's documents post to in the books, so a person approves it; clearing or changing a mapping undoes it. |
 | Correct fuel purchase (`correct_fuel_purchase`) | Inside the organization | Ask first | A purchase read from a receipt or statement someone outside sent is proposed, since it is a tax record the IFTA return is computed from. | — | Changes a fuel purchase inside Trenova; nothing is sent, and a later correction changes it back. |
@@ -291,12 +315,19 @@ Changes records only people inside the organization see.
 | Create shipment (`create_shipment`) | Inside the organization | Ask first | — | — | A new load commits a customer's freight and the money that follows, so no desk books one unattended. |
 | Create table change alert (`create_table_change_alert`) | Inside the organization | Automatic | — | — | Creates an alert whose notices go to people inside the organization. |
 | Delete dashboard (`delete_dashboard`) | Inside the organization | Propose | — | — | Removes a dashboard colleagues may open and nothing brings it back, so a person always decides. |
+| Delete employment verification (`delete_employment_verification`) | Inside the organization | Propose | — | — | Removes a previous employer from the qualification file; the audit trail keeps what was removed. |
 | Delete fuel purchase (`delete_fuel_purchase`) | Inside the organization | Propose | — | — | Removes a tax record the IFTA return is computed from, and nothing brings it back but entering it again, so a person always decides. |
 | Delete IFTA mileage entry (`delete_ifta_mileage_entry`) | Inside the organization | Propose | — | — | Removes miles the IFTA return is computed from, and nothing brings them back but entering them again, so a person always decides. |
 | Delete IFTA return (`delete_ifta_return`) | Inside the organization | Ask first | — | — | Removes a draft return inside Trenova that nothing was filed from; generating it again recomputes the same figures. |
+| Delete leave day (`delete_leave_day`) | Inside the organization | Propose | — | — | Removes a recorded day of leave; the audit trail keeps what was removed, and record_leave_day records it again. |
+| Delete performance review (`delete_performance_review`) | Inside the organization | Propose | — | — | Removes a draft review nobody has seen; the audit trail keeps what was removed. |
 | Delete report (`delete_report`) | Inside the organization | Propose | — | — | Removes a saved report colleagues may run and nothing brings it back, so a person always decides. |
 | Delete report schedule (`delete_report_schedule`) | Inside the organization | Propose | — | — | Stops a report reaching the people it was scheduled for; nothing brings the schedule back but setting it up again, so a person always decides. |
+| Delete safety violation (`delete_safety_violation`) | Inside the organization | Propose | — | — | Removes a cited violation inside Trenova; the audit trail keeps what was removed, and it is cited again with record_safety_violation. |
 | Delete shipment comment (`delete_shipment_comment`) | Inside the organization | Ask first | — | — | Removes a note from a shipment's own thread inside Trenova; the text is gone, so a person confirms it. |
+| Delete worker injury (`delete_worker_injury`) | Inside the organization | Propose | — | — | Removes a case from the OSHA log; the audit trail keeps what was removed, and the number is not given out again. |
+| Delete worker recognition (`delete_worker_recognition`) | Inside the organization | Propose | — | — | Removes a recognition from a driver's record; it is given again the same way. |
+| Delete worker safety event (`delete_worker_safety_event`) | Inside the organization | Propose | — | — | Removes an event recorded in error from a driver's safety record; the audit trail keeps what was deleted, and it cannot be put back. |
 | Detach order shipment (`detach_order_shipment`) | Inside the organization | Ask first | — | — | Moves a shipment onto a new order inside Trenova; nothing is sent, and attach_order_shipments puts it back. |
 | Detach pay event from settlement (`detach_pay_event_from_settlement`) | Inside the organization | Automatic | — | — | Moves pay a driver already earned between the pool and a draft settlement inside Trenova; nothing is paid until a person approves it. |
 | Discard fuel purchase import (`discard_fuel_purchase_import`) | Inside the organization | Ask first | — | — | Closes a staged statement inside Trenova without adding any purchase; it can be staged again. |
@@ -304,12 +335,14 @@ Changes records only people inside the organization see.
 | Dismiss accounting drift (`dismiss_accounting_drift`) | Inside the organization | Ask first | — | — | Closes a difference with the books without fixing it, so a person approves it. |
 | Dismiss insight (`dismiss_insight`) | Inside the organization | Automatic | — | — | Dismisses an insight inside Trenova; it can be restored. |
 | Draft manual journal (`draft_manual_journal`) | Inside the organization | Ask first | A journal drafted from what someone outside wrote is proposed, since its lines are what an approver books. | — | Saves a draft journal inside Trenova; nothing reaches the ledger until a person submits, approves and posts it, and a draft is cancelled the same way. |
+| Draft performance review (`draft_performance_review`) | Inside the organization | Ask first | — | — | Saves the reviewer's draft inside Trenova; the worker sees nothing until the reviewer submits it, and the draft is edited again the same way. |
 | Draft rate agreement (`draft_rate_agreement`) | Inside the organization | Ask first | An agreement drafted from a rate sheet or a message someone outside sent is proposed, since its lanes are what the organization will charge. | — | Saves a draft agreement inside Trenova that prices nothing until a person approves it; archive_rate_agreement retires it. |
 | Duplicate rate agreement (`duplicate_rate_agreement`) | Inside the organization | Ask first | An agreement drafted from a rate sheet or a message someone outside sent is proposed, since its lanes are what the organization will charge. | — | Saves a draft copy of an agreement inside Trenova that prices nothing until a person approves it. |
 | Duplicate shipment (`duplicate_shipment`) | Inside the organization | Ask first | — | — | Creates new shipments inside Trenova from one already saved; nothing is sent, and a copy made in error is canceled. |
 | End worker shift assignment (`end_worker_shift_assignment`) | Inside the organization | Ask first | — | — | Ends a worker's standing schedule inside Trenova; nothing is sent, and assign_worker_shift puts them back on it. |
 | Escalate detention (`escalate_detention`) | Inside the organization | Automatic | — | — | Hands a detention clock to a person inside the organization. |
 | Evaluate service failures (`evaluate_service_failures`) | Inside the organization | Automatic | — | — | Opens service failures from stop actuals inside Trenova; an open failure sends nothing. |
+| Finalize DOT random draw (`finalize_dot_random_draw`) | Inside the organization | Propose | — | — | Locks the round's selections as the record an auditor reads; it cannot be undone, only cancelled, so a person approves it. |
 | Flag for manual review (`flag_for_manual_review`) | Inside the organization | Automatic | — | — | Records an exception on the run for a person inside the organization to work. |
 | Forget memory (`forget_memory`) | Inside the organization | Automatic | — | — | Retires an agent memory inside Trenova. |
 | Fork report (`fork_report`) | Inside the organization | Automatic | — | — | Saves a copy of a report inside Trenova; nothing leaves the organization. |
@@ -325,11 +358,14 @@ Changes records only people inside the organization see.
 | Import sourced carrier (`import_sourced_carrier`) | Inside the organization | Ask first | — | — | Creates a carrier inside Trenova from the provider's profile; nothing is sent to it, and one added in error is made inactive. |
 | Link EDI carrier invoice to carrier (`link_edi_carrier_invoice_to_carrier`) | Inside the organization | Automatic | — | — | Names which carrier an inbound invoice belongs to inside Trenova; nothing is paid and it is relinked the same way. |
 | Link inbound message (`link_inbound_message`) | Inside the organization | Automatic | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Links an inbound message to a record inside Trenova; the mailbox decides how far it may run. |
+| Log employment verification request (`log_employment_verification_request`) | Inside the organization | Ask first | — | — | Stamps the request date or counts a follow-up inside Trenova; nothing is sent to the employer. |
 | Manage billing transfer run (`manage_billing_transfer_run`) | Inside the organization | Ask first | — | — | Stops or reruns a transfer inside Trenova; nothing is invoiced or sent, and a stopped run is retried the same way. |
 | Mark carrier intel reviewed (`mark_carrier_intel_reviewed`) | Inside the organization | Propose | — | — | Puts a person's name on a carrier risk review; only that person can say they reviewed it. |
 | Mark inbound message (`mark_inbound_message`) | Inside the organization | Automatic | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Settles an inbound message inside Trenova; the mailbox decides how far it may run. |
 | Move billing item to exception (`move_billing_item_to_exception`) | Inside the organization | Automatic | Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it. | — | Marks an item for a biller to resolve inside Trenova; it creates no money and a biller moves it back when it is resolved. |
 | Open invoice dispute (`open_invoice_dispute`) | Inside the organization | Ask first | A dispute opened from what a customer wrote is proposed, since the notes and the amount are what collections acts on. | — | Marks an invoice Disputed inside Trenova with the customer's reason; it moves no money and is withdrawn by withdraw_invoice_dispute. |
+| Open leave case (`open_leave_case`) | Inside the organization | Ask first | — | — | Files a pending leave request inside Trenova; nothing is decided or sent, and the case is corrected with update_leave_case. |
+| Open worker safety event (`open_worker_safety_event`) | Inside the organization | Ask first | — | — | Adds an event to a driver's safety record inside Trenova; nothing is sent to the driver, and it is corrected or deleted while it is open. |
 | Pause accounting sync (`pause_accounting_sync`) | Inside the organization | Automatic | — | — | Holds what is waiting to go to the books; nothing is sent, changed or lost, and resuming sends it on. |
 | Pin shipment comment (`pin_shipment_comment`) | Inside the organization | Automatic | — | — | Orders a shipment's own comment thread inside Trenova; unpinning undoes it and nothing is sent. |
 | Place shipment hold (`place_shipment_hold`) | Inside the organization | Automatic | — | — | Places a hold on a shipment inside Trenova; no customer or EDI notice is sent. |
@@ -341,9 +377,16 @@ Changes records only people inside the organization see.
 | Recalculate move jurisdiction miles (`recalculate_move_jurisdiction_miles`) | Inside the organization | Ask first | — | — | Re-derives one move's jurisdiction miles inside Trenova from its stops; nothing is sent to a customer or carrier, and running it again gives the same miles. |
 | Recalculate shipment distance (`recalculate_shipment_distance`) | Inside the organization | Automatic | — | — | Re-derives the shipment's move distances inside Trenova from its stops; nothing is sent and running it again gives the same miles. |
 | Recompute IFTA return (`recompute_ifta_return`) | Inside the organization | Automatic | — | — | Re-derives a draft return's figures inside Trenova from what is on file; nothing is filed, and running it again gives the same figures. |
+| Record employment verification (`record_employment_verification`) | Inside the organization | Ask first | — | — | Adds a previous employer to the qualification file inside Trenova; nothing is sent to the employer, and it is corrected or removed the same way. |
 | Record fuel purchase (`record_fuel_purchase`) | Inside the organization | Ask first | A purchase read from a receipt or statement someone outside sent is proposed, since it is a tax record the IFTA return is computed from. | — | Adds a fuel purchase inside Trenova that the next IFTA return counts; nothing is sent, and delete_fuel_purchase removes it. |
 | Record IFTA mileage entry (`record_ifta_mileage_entry`) | Inside the organization | Ask first | Miles read from a log or a message someone outside sent are proposed, since the IFTA return is computed from them. | — | Adds jurisdiction miles inside Trenova that the next IFTA return counts; nothing is sent, and delete_ifta_mileage_entry removes them. |
+| Record leave day (`record_leave_day`) | Inside the organization | Ask first | — | — | Records a day taken against a leave case inside Trenova; nothing is sent, and update_leave_day or delete_leave_day corrects it. |
+| Record safety violation (`record_safety_violation`) | Inside the organization | Ask first | — | — | Adds a cited violation to a safety event inside Trenova; nothing is sent, and it is corrected or removed the same way. |
+| Record shipment permit (`record_shipment_permit`) | Inside the organization | Ask first | — | — | Records a permit on the shipment inside Trenova, which can release a dispatch hold; nothing is sent to the state, and update_shipment_permit voids it. |
 | Record stop actual (`record_stop_actual`) | Inside the organization | Automatic | — | — | Records arrival and departure times on a stop; no model-written text leaves the organization. |
+| Record training completion (`record_training_completion`) | Inside the organization | Ask first | — | — | Records a completion on the worker's training record inside Trenova; nothing is sent, and a completion recorded in error is corrected by a person. |
+| Record worker credential (`record_worker_credential`) | Inside the organization | Ask first | — | — | Adds a credential to the worker's file inside Trenova, which can change whether they may be dispatched; nothing is sent, and archive_worker_credential retires it. |
+| Record worker injury (`record_worker_injury`) | Inside the organization | Ask first | — | — | Adds a case to the organization's OSHA log inside Trenova; nothing is sent, and it is corrected with update_worker_injury. |
 | Redate accounting sync (`redate_accounting_sync`) | Inside the organization | Ask first | — | — | Changes the date the organization's books record for a document, so a person approves it. |
 | Refresh accounting reference data (`refresh_accounting_reference_data`) | Inside the organization | Automatic | — | — | Reads the accounting system and refreshes Trenova's suggestions; it writes nothing to the books and leaves confirmed mappings alone. |
 | Reject accounting mapping proposal (`reject_accounting_mapping_proposal`) | Inside the organization | Ask first | — | — | Unmatches a proposal so it is not used; choosing a record for the mapping undoes it. |
@@ -356,6 +399,7 @@ Changes records only people inside the organization see.
 | Release shipment hold (`release_shipment_hold`) | Inside the organization | Automatic | — | — | Releases a hold on a shipment inside Trenova; no customer or EDI notice is sent. |
 | Remember (`remember`) | Inside the organization | Automatic | An Instruction or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text. | Carries outside text into later runs | Saves a memory later runs read, so it keeps the taint of the run that wrote it. |
 | Request accounting backfill (`request_accounting_backfill`) | Inside the organization | Ask first | — | — | Sends historical documents to the organization's books, some of which may already be there by hand, and cannot be called back; a person who manages the integration approves it. |
+| Request leave certification (`request_leave_certification`) | Inside the organization | Ask first | — | — | Starts the certification clock on a leave case inside Trenova; nothing is sent to the worker, and a later request restarts it. |
 | Reset report fork (`reset_report_fork`) | Inside the organization | Ask first | — | — | Rewrites a report the person owns from the built-in catalog; nothing is sent, but the person's changes to it are lost. |
 | Resolve bank receipt work item (`resolve_bank_receipt_work_item`) | Inside the organization | Automatic | — | — | Closes a reconciliation work item without moving money; the note is read inside the organization. |
 | Resolve carrier intel event (`resolve_carrier_intel_event`) | Inside the organization | Automatic | — | — | Closes a carrier finding inside Trenova. |
@@ -366,9 +410,11 @@ Changes records only people inside the organization see.
 | Retry accounting sync (`retry_accounting_sync`) | Inside the organization | Automatic | — | — | Sends again, to the organization's own books, documents Trenova already decided to send; the accounting system recognizes a repeat by its request id, so nothing is entered twice, and a document held for release stays held. |
 | Revise manual journal draft (`revise_manual_journal_draft`) | Inside the organization | Ask first | A journal rewritten from what someone outside wrote is proposed, since its lines are what an approver books. | — | Changes a draft journal inside Trenova; nothing reaches the ledger until a person submits, approves and posts it, and a later revision changes it back. |
 | Revise rate agreement draft (`revise_rate_agreement_draft`) | Inside the organization | Ask first | An agreement drafted from a rate sheet or a message someone outside sent is proposed, since its lanes are what the organization will charge. | — | Changes a draft agreement inside Trenova that prices nothing yet; a later revision changes it back. |
+| Run DOT random draw (`run_dot_random_draw`) | Inside the organization | Ask first | — | — | Draws a draft round inside Trenova; nobody is told and nothing is final until a person finalizes it, and cancel_dot_random_draw withdraws it. |
 | Run rate simulation (`run_rate_simulation`) | Inside the organization | Automatic | — | — | Saves a simulation inside Trenova and replays past shipments in the background; no shipment, rate or invoice changes. |
 | Save invoice adjustment draft (`save_invoice_adjustment_draft`) | Inside the organization | Automatic | A draft written from what a customer sent is proposed, since its reason and amounts are what a biller submits. | — | Saves a draft adjustment inside Trenova; it credits nothing until a person submits it, and a later save rewrites it. |
 | Save table view (`save_table_view`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. A call on the caller's own records runs unasked while they are present. | — | A private view is the caller's own picker entry; a shared one appears for every colleague, and nothing leaves the organization. |
+| Schedule DOT test (`schedule_dot_test`) | Inside the organization | Ask first | — | — | Files a scheduled collection inside Trenova. The driver is sent nothing, no result is recorded, and cancel_dot_test withdraws it. |
 | Send billing item back to ops (`send_billing_item_back_to_ops`) | Inside the organization | Automatic | Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it. | — | Returns an item to operations with a note on its shipment inside Trenova; it creates no money and the item comes back when operations fixes it. |
 | Set accounting mapping (`set_accounting_mapping`) | Inside the organization | Ask first | — | — | Decides which account or record Trenova's invoices, payments and bills will post to, so a person approves it; clearing or changing it undoes it. |
 | Set recurring shipment status (`set_recurring_shipment_status`) | Inside the organization | Ask first | — | — | Starts or stops a schedule inside Trenova; nothing is sent, and the status is set back the same way. |
@@ -376,6 +422,8 @@ Changes records only people inside the organization see.
 | Share invoice (`share_invoice`) | Inside the organization | Propose | — | — | Notifies and emails colleagues in the name of the person who shares it, with a note they read as theirs; only that person sends it. |
 | Skip accounting sync (`skip_accounting_sync`) | Inside the organization | Ask first | — | — | Leaves a document out of the organization's books for good; nothing sends it again, so a person approves it. |
 | Split move at relay (`split_move_at_relay`) | Inside the organization | Propose | — | — | Adds a move and turns a delivery into a relay inside Trenova; the two new windows are times only a person can vouch for, so a person always approves it. |
+| Start performance review (`start_performance_review`) | Inside the organization | Ask first | — | — | Opens a draft review inside Trenova; the worker sees nothing, and delete_performance_review removes the draft. |
+| Start worker checklist (`start_worker_checklist`) | Inside the organization | Ask first | — | — | Opens a checklist on the worker inside Trenova; nothing is sent, and cancel_worker_checklist cancels it. |
 | Submit carrier settlement (`submit_carrier_settlement`) | Inside the organization | Automatic | — | — | Moves a draft into the approval queue inside Trenova; nothing is paid and a reviewer sends it back to draft. |
 | Submit driver settlement (`submit_driver_settlement`) | Inside the organization | Automatic | — | — | Moves a draft into the approval queue inside Trenova; nothing is paid and a reviewer sends it back to draft. |
 | Submit manual journal (`submit_manual_journal`) | Inside the organization | Ask first | — | — | Moves a draft journal into the approval queue inside Trenova; an approver decides and it books nothing until a person posts it. |
@@ -387,13 +435,23 @@ Changes records only people inside the organization see.
 | Unassign moves (`unassign_moves`) | Inside the organization | Automatic | Only one move at a time, still freshly assigned, is taken off its driver without a decision; several moves, a move the service would refuse and a move that cannot be read each wait for a person. | — | Takes the driver off a move that has not started, inside Trenova; the driver is told the load was taken off them but sees no text the model wrote, and assigning the move again undoes it. |
 | Uncancel shipment (`uncancel_shipment`) | Inside the organization | Ask first | — | — | Puts a canceled shipment back to New inside Trenova; nothing is sent, and canceling it again undoes it. |
 | Unpin shipment comment (`unpin_shipment_comment`) | Inside the organization | Automatic | — | — | Orders a shipment's own comment thread inside Trenova; pinning again undoes it and nothing is sent. |
+| Update DOT random selection (`update_dot_random_selection`) | Inside the organization | Ask first | — | — | Updates a selection on a round inside Trenova; nothing is sent to the driver, and the selection is updated again the same way. |
+| Update employment verification (`update_employment_verification`) | Inside the organization | Ask first | — | — | Updates the previous employer's record in the qualification file inside Trenova; nothing is sent, and it is corrected again the same way. |
 | Update invoice draft (`update_invoice_draft`) | Inside the organization | Ask first | Changing who the invoice is emailed to is a proposal a person decides; any other change runs once a person approves it. Outside content could put its own wording or recipients on an invoice the customer receives. | — | Edits a draft nobody outside has seen; the customer sees it only when a person sends it, but the recipients decide where it goes then. |
+| Update leave case (`update_leave_case`) | Inside the organization | Ask first | — | — | Corrects a leave case inside Trenova; nothing is decided or sent, and it is corrected again the same way. |
+| Update leave day (`update_leave_day`) | Inside the organization | Ask first | — | — | Corrects a recorded day of leave inside Trenova; nothing is sent, and it is corrected again the same way. |
 | Update move status (`update_move_status`) | Inside the organization | Ask first | Canceling a move ends it for good, so a cancellation is a proposal a person decides; any other status runs once a person approves it. | — | Moves a move's status forward inside Trenova, which re-derives its shipment's status and, on completion, releases its equipment; a move never moves back, so it is not undone by running it again. |
 | Update recurring shipment (`update_recurring_shipment`) | Inside the organization | Ask first | — | — | Changes when a series creates shipments inside Trenova; nothing is sent, and the old schedule is set back the same way. |
 | Update report (`update_report`) | Inside the organization | Automatic | — | — | Changes a saved report colleagues may open; nothing leaves the organization. |
+| Update safety violation (`update_safety_violation`) | Inside the organization | Ask first | — | — | Corrects a cited violation inside Trenova; nothing is sent, and it is corrected again the same way. |
 | Update service failure (`update_service_failure`) | Inside the organization | Ask first | — | — | Edits a service failure's own notes and codes inside Trenova; the overrides shape a later EDI 214, so a person approves each edit. |
+| Update shipment permit (`update_shipment_permit`) | Inside the organization | Ask first | — | — | Changes a permit on the shipment inside Trenova, which can place or lift a dispatch hold; nothing is sent to the state, and it is changed again the same way. |
 | Update tractor status (`update_tractor_status`) | Inside the organization | Automatic | — | — | Changes a tractor's status inside Trenova. |
 | Update trailer status (`update_trailer_status`) | Inside the organization | Automatic | — | — | Changes a trailer's status inside Trenova. |
+| Update worker checklist item (`update_worker_checklist_item`) | Inside the organization | Ask first | — | — | Settles or reopens a checklist item inside Trenova; nothing is sent, and a settled item is reopened the same way. |
+| Update worker credential (`update_worker_credential`) | Inside the organization | Ask first | — | — | Corrects a credential inside Trenova, which can change whether the worker may be dispatched; nothing is sent, and it is corrected again the same way. |
+| Update worker injury (`update_worker_injury`) | Inside the organization | Ask first | — | — | Corrects a case on the OSHA log inside Trenova; nothing is sent, and it is corrected again the same way. |
+| Update worker safety event (`update_worker_safety_event`) | Inside the organization | Ask first | — | — | Corrects an event on a driver's safety record inside Trenova; nothing is sent, and the event is corrected again the same way. |
 | Verify carrier equipment (`verify_carrier_equipment`) | Inside the organization | Ask first | — | — | Records an equipment check inside Trenova after a provider lookup; nothing is sent to the carrier. |
 | Withdraw invoice dispute (`withdraw_invoice_dispute`) | Inside the organization | Ask first | A withdrawal read from what a customer wrote is proposed, since it sends the invoice back to collections. | — | Closes a dispute case inside Trenova with no outcome; it moves no money and a new case can be opened with open_invoice_dispute. |
 
@@ -413,13 +471,19 @@ Changes something a driver can see.
 | --- | --- | --- | --- | --- | --- |
 | Add shipment comment (`add_shipment_comment`) | Inside the organization, seen by a customer, seen by a driver | Automatic | Each call is classified by what it reaches. | Carries outside text into later runs | An internal note stays inside the organization; a customer or driver note is read outside it, so its visibility argument decides. A note written on its own after the run read outside text is marked as drawn from it. |
 | Approve shift swap (`approve_shift_swap`) | Seen by a driver | Propose | — | — | Changes who works a day; approving is the office's decision, so only a person makes it. |
+| Assign required worker training (`assign_required_worker_training`) | Seen by a driver | Ask first | — | — | Assigns the courses the worker's driver type requires; the driver sees them in Dash, and cancel_worker_training withdraws one. |
+| Assign worker training (`assign_worker_training`) | Seen by a driver | Ask first | — | — | Assigns courses the driver sees in Dash; cancel_worker_training withdraws one. |
 | Cancel worker PTO (`cancel_worker_pto`) | Seen by a driver | Ask first | — | — | The worker is sent the cancellation reason by push notice and text message. |
 | Edit shipment comment (`edit_shipment_comment`) | Inside the organization, seen by a customer, seen by a driver | Automatic | Each call is classified by what it reaches. | — | Edits a shipment's own comment inside Trenova; one made visible to a customer or a driver is read by them, so its visibility argument decides. |
+| Give worker recognition (`give_worker_recognition`) | Seen by a driver | Ask first | — | — | The driver is shown the recognition and told of it in Dash when it is visible to them. |
 | Hold driver pay event (`hold_driver_pay_event`) | Seen by a driver | Ask first | — | — | Defers a driver's pay and tells the driver why in the driver portal; it is released the same way. |
 | Notify driver (`notify_driver`) | Seen by a driver | Ask first | — | — | Sends a driver a message the model wrote to their phone. |
 | Reject shift swap (`reject_shift_swap`) | Seen by a driver | Ask first | — | — | Refuses a request the workers read in their portal; a person approves each refusal. |
 | Reject worker PTO (`reject_worker_pto`) | Seen by a driver | Ask first | — | — | The worker is sent the rejection reason by push notice and text message. |
 | Request credential renewal (`request_credential_renewal`) | Seen by a driver | Ask first | — | — | Sends a driver a renewal request the model wrote. |
+| Request worker PTO (`request_worker_pto`) | Seen by a driver | Ask first | — | — | Files time off the driver sees in Dash; under a policy with no approval step it is booked and the driver told at once, and cancel_worker_pto withdraws it. |
+| Start settlement dispute review (`start_settlement_dispute_review`) | Seen by a driver | Ask first | — | — | Marks the dispute as being worked inside Trenova; the driver sees its status in Dash, and resolving it moves it on. |
+| Update worker PTO (`update_worker_pto`) | Seen by a driver | Ask first | — | — | Changes a pending request the driver sees in Dash; it is changed again the same way. |
 | Withdraw shift swap (`withdraw_shift_swap`) | Seen by a driver | Ask first | — | — | Takes back a request the workers read in their portal; a person approves each withdrawal. |
 
 ## Sent outside the organization
@@ -470,6 +534,7 @@ Moves or commits money.
 | Add driver settlement adjustment (`add_driver_settlement_adjustment`) | Money | Automatic | Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Changes what the driver will be paid on a settlement a person still approves, so it moves money; the line is removed the same way. |
 | Add order charge (`add_order_charge`) | Money | Ask first | — | — | Adds to what the customer is billed; nothing is invoiced or sent, and remove_order_charge takes it off until it is invoiced. |
 | Adjust escrow account (`adjust_escrow_account`) | Money | Propose | — | — | Moves money held in escrow for an owner-operator; only a person moves it. |
+| Adjust worker PTO balance (`adjust_worker_pto_balance`) | Money | Propose | — | — | Changes how many paid days a worker holds, which the organization owes and may pay out, so a person approves it and it runs as them. |
 | Amend rate agreement rules (`amend_rate_agreement_rules`) | Money | Propose | — | — | Changes the rates an agreement prices shipments at; only a person amends a live contract. |
 | Apply accounting inbound change (`apply_accounting_inbound_change`) | Money | Ask first | — | — | Posts money in Trenova: a customer payment or a settlement payment, so a person approves each one. |
 | Apply credit memo (`apply_credit_memo`) | Money | Propose | — | — | Uses a customer's credit to settle what they owe; only a person applies credit. |
@@ -500,6 +565,7 @@ Moves or commits money.
 | Create recurring earning (`create_recurring_earning`) | Money | Propose | — | — | Sets money taken from or added to a driver's pay every settlement; only a person agrees it. |
 | Dispute detention (`dispute_detention`) | Money | Ask first | — | — | Marks a detention charge disputed inside Trenova and holds it from billing; nothing is sent, but the hold is not undone by a tool. |
 | End pay assignment (`end_pay_assignment`) | Money | Propose | — | — | Stops how a driver is paid from a date; only a person decides someone's pay. |
+| Generate payroll export (`generate_payroll_export`) | Money | Propose | — | — | Locks approved hours into a payroll run that pays people, so a person approves it and it runs as them; void_payroll_export takes it back. |
 | Issue pay advance (`issue_pay_advance`) | Money | Propose | — | — | Records money handed to a driver that their pay then repays; only a person records it. |
 | Lock fiscal period (`lock_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person locks a period. |
 | Match bank receipt (`match_bank_receipt`) | Money | Automatic | — | — | Matches a bank receipt to a posted payment, closing its reconciliation. |
@@ -526,8 +592,10 @@ Moves or commits money.
 | Request journal reversal (`request_journal_reversal`) | Money | Propose | — | — | Commits the organization to taking a posted entry back out of the ledger, approved at once where approval is off; only a person requests a reversal. |
 | Rerate shipment (`rerate_shipment`) | Money | Ask first | — | — | Changes what the customer will be billed for the shipment; nothing is invoiced or sent, and a person can edit the rate back. |
 | Resolve accounting drift (`resolve_accounting_drift`) | Money | Ask first | — | — | Changes money on one side of the books: it posts a memo, void or reversal in Trenova, or sends a document to the accounting system, so a person approves each fix. |
+| Resolve settlement dispute (`resolve_settlement_dispute`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Decides a driver's pay complaint, tells the driver, and can add pay to a settlement, so a person approves it and it runs as them; a decided dispute stays decided. |
 | Resume rate agreement (`resume_rate_agreement`) | Money | Propose | — | — | Turns an agreement back on so it prices shipments again; only a person resumes one. |
 | Reverse customer payment (`reverse_customer_payment`) | Money | Propose | — | — | Takes cash back off the books and reopens the invoices it paid; only a person reverses a payment. |
+| Review driver expense (`review_driver_expense`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Pays or refuses a driver's out-of-pocket expense and tells the driver, so a person approves it and it runs as them; a reviewed expense stays reviewed. |
 | Set carrier monitoring (`set_carrier_monitoring`) | Money | Ask first | — | — | Monitoring is billed per carrier by the provider; turning it off again undoes it, and nothing is sent to the carriers. |
 | Set order charge allocations (`set_order_charge_allocations`) | Money | Ask first | — | — | Moves who is billed for a charge; nothing is invoiced or sent, and the split is set back the same way until it is invoiced. |
 | Submit invoice adjustment (`submit_invoice_adjustment`) | Money | Propose | — | — | Credits, rebills or writes off receivables and books the entries that say so; only a person submits an adjustment, and the adjustment policy may still hold it for an approver. |
@@ -544,6 +612,7 @@ Moves or commits money.
 | Void carrier settlement (`void_carrier_settlement`) | Money | Propose | — | — | Cancels a settlement for good and reverses any posting; only a person voids. |
 | Void driver settlement (`void_driver_settlement`) | Money | Propose | — | — | Cancels a settlement for good and reverses any posting; only a person voids. |
 | Void invoice (`void_invoice`) | Money | Propose | — | — | Takes an invoice out of circulation and reverses what it booked; it cannot be undone, so only a person voids one. |
+| Void payroll export (`void_payroll_export`) | Money | Propose | — | — | Takes back a payroll run that payroll may already have paid from, so a person approves it and it runs as them; a voided run stays voided. |
 | Void rate confirmation (`void_rate_confirmation`) | Money | Ask first | A revision the carrier has been sent or has signed is voided only as a proposal a person decides, as is one that cannot be read; one never sent is voided once a person approves it. | — | Withdraws the organization's written agreement to pay a carrier, whose sign link stops working, and undoes a confirmation it carried; a voided revision cannot be restored, only replaced. |
 | Waive detention (`waive_detention`) | Money | Propose | — | — | Gives up detention revenue the organization would otherwise bill; only a person approves it. |
 | Write off pay advance (`write_off_pay_advance`) | Money | Propose | — | — | Forgives money a driver owes, which the organization absorbs; only a person writes it off. |

@@ -259,6 +259,17 @@ func (c *Catalog) Record(entity string) (*RecordLink, bool) {
 	return &c.Records[i], true
 }
 
+// RecordEntities are the kinds of record the registry opens, sorted.
+func (c *Catalog) RecordEntities() []string {
+	entities := make([]string, 0, len(c.Records))
+	for i := range c.Records {
+		entities = append(entities, c.Records[i].Entity)
+	}
+	sort.Strings(entities)
+
+	return entities
+}
+
 // RecordPath is the address that opens one record, with any extra parameters
 // (a tab, say) added.
 func (c *Catalog) RecordPath(entity, id string, extra map[string]string) (string, bool) {
