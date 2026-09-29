@@ -109,14 +109,19 @@ func TestRun_KeepsTheBaselineOffTheAction(t *testing.T) {
 
 	action := with.Actions[0]
 	assert.Nil(t, action.Simulation)
-	encoded, err := sonic.Marshal(action)
+	encoded, err := sonic.Marshal(untracedAction(action))
 	require.NoError(t, err)
 	assert.NotContains(t, string(encoded), bulkySummary)
 
-	before, err := sonic.Marshal(without.Actions[0])
+	before, err := sonic.Marshal(untracedAction(without.Actions[0]))
 	require.NoError(t, err)
 	assert.Len(t, encoded, len(before), "the action is exactly as big as it was before baselines")
 	assert.Equal(t, without.Actions[0].Target, action.Target)
+}
+
+func untracedAction(action serviceports.PendingAction) serviceports.PendingAction {
+	action.TraceID, action.SpanID = "", ""
+	return action
 }
 
 func TestRun_TakesTheTargetFromTheBaselineSnapshot(t *testing.T) {
