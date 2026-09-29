@@ -1,0 +1,78 @@
+fragment ExtractionRolloutFields on ExtractionRollout {
+  enabled
+  providerId
+  percent
+  maxAccuracyDropPoints
+  maxRejectionIncreasePoints
+  serving
+  startedAt
+  haltedAt
+  haltReason
+  haltCandidateRate
+  haltBaselineRate
+  updatedById
+  version
+  updatedAt
+}
+
+fragment ExtractionRolloutArmFields on ExtractionRolloutArm {
+  assigned
+  pending
+  accepted
+  rejected
+  failed
+  superseded
+  fellBack
+  rejectionRate
+}
+
+fragment ExtractionRolloutAccuracyFields on ExtractionRolloutAccuracy {
+  scored
+  correct
+  accuracy
+}
+
+query ExtractionRollout {
+  extractionRollout {
+    ...ExtractionRolloutFields
+  }
+}
+
+query ExtractionRolloutReport {
+  extractionRolloutReport {
+    rollout {
+      ...ExtractionRolloutFields
+    }
+    providerName
+    candidate {
+      ...ExtractionRolloutArmFields
+    }
+    control {
+      ...ExtractionRolloutArmFields
+    }
+    candidateAccuracy {
+      ...ExtractionRolloutAccuracyFields
+    }
+    productionAccuracy {
+      ...ExtractionRolloutAccuracyFields
+    }
+    fields {
+      key
+      candidateScored
+      candidateCorrect
+      candidateAccuracy
+      productionScored
+      productionCorrect
+      productionAccuracy
+    }
+    truncated
+    minGuardScoredFields
+    minGuardExtractions
+  }
+}
+
+mutation UpdateExtractionRollout($input: UpdateExtractionRolloutInput!) {
+  updateExtractionRollout(input: $input) {
+    ...ExtractionRolloutFields
+  }
+}

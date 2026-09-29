@@ -455,6 +455,7 @@ func (l *Loader) validateConfig(config *Config) error {
 		validateR2PublicEndpoint,
 		validateTracingConfig,
 		validateAIAuditConfig,
+		validateAIRetrainingConfig,
 	}
 	for _, validator := range validators {
 		if err := validator(config); err != nil {

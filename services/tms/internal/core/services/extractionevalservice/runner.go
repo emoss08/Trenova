@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/extractionfailure"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -122,7 +123,7 @@ func (s *Service) EvaluateResult(
 		Pages:      evalCase.Pages,
 	})
 	if err != nil {
-		if retryable(err) && !req.FinalAttempt {
+		if extractionfailure.Retryable(err) && !req.FinalAttempt {
 			return fmt.Errorf("predict extraction case %s: %w", evalCase.ID, err)
 		}
 		s.l.Warn("extraction evaluation case failed",
@@ -131,7 +132,7 @@ func (s *Service) EvaluateResult(
 			zap.Error(err),
 		)
 
-		return s.saveFailure(ctx, result, failureMessage(err))
+		return s.saveFailure(ctx, result, extractionfailure.Message(err))
 	}
 
 	predicted := aicorrection.ReadPrediction(prediction.DraftData)
@@ -246,33 +247,4 @@ func (s *Service) refreshTotals(
 	run.ApplyResults(results)
 
 	return s.runs.Update(ctx, run)
-}
-
-func retryable(err error) bool {
-	switch {
-	case errors.Is(err, context.Canceled),
-		errors.Is(err, services.ErrModelSchemaValidation),
-		errors.Is(err, services.ErrRequiredProviderUnavailable),
-		errors.Is(err, services.ErrNoProviderConfigured),
-		errortypes.IsBusinessError(err),
-		errortypes.IsError(err),
-		errortypes.IsMultiError(err),
-		errortypes.IsNotFoundError(err):
-		return false
-	default:
-		return true
-	}
-}
-
-func failureMessage(err error) string {
-	switch {
-	case errors.Is(err, services.ErrModelSchemaValidation):
-		return "The model's answer did not match the extraction schema"
-	case errors.Is(err, services.ErrRequiredProviderUnavailable):
-		return "The provider being evaluated is no longer enabled for document extraction"
-	case errortypes.IsBusinessError(err):
-		return err.Error()
-	default:
-		return "The model could not be reached after several attempts"
-	}
 }

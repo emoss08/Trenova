@@ -40,6 +40,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Write an anonymized model-training export from the AI corrections of every organization that consented",
 		},
+		retrainingWorkflowDefinition(),
 	}
 }
 

@@ -24,6 +24,362 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// RetrainingCycle — table "ai_retraining_cycles", alias "airc"
+// ---------------------------------------------------------------------------
+
+// RetrainingCycleTable holds the table name, alias, and primary key columns
+// for the "ai_retraining_cycles" table. The alias "airc" is used in all generated
+// SQL fragments (e.g. "airc.id = ?").
+var RetrainingCycleTable = TableInfo{
+	Name:       "ai_retraining_cycles",
+	Alias:      "airc",
+	PrimaryKey: []string{"id"},
+}
+
+// RetrainingCycleColumns provides type-safe column references for the "ai_retraining_cycles" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(RetrainingCycleColumns.ID.String())
+//	// SELECT airc.id FROM ai_retraining_cycles AS airc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(RetrainingCycleColumns.ID.Eq(), id)           // WHERE airc.id = ?
+//	q.Order(RetrainingCycleColumns.CreatedAt.OrderDesc())  // ORDER BY airc.created_at DESC
+var RetrainingCycleColumns = struct {
+	ID                   Column // "id" → qualified: "airc.id"
+	Task                 Column // "task" → qualified: "airc.task"
+	Trigger              Column // "trigger" → qualified: "airc.trigger"
+	Status               Column // "status" → qualified: "airc.status"
+	SkipReason           Column // "skip_reason" → qualified: "airc.skip_reason"
+	RequestedBy          Column // "requested_by" → qualified: "airc.requested_by"
+	Note                 Column // "note" → qualified: "airc.note"
+	ExportID             Column // "export_id" → qualified: "airc.export_id"
+	CapturedFrom         Column // "captured_from" → qualified: "airc.captured_from"
+	CapturedTo           Column // "captured_to" → qualified: "airc.captured_to"
+	NewSince             Column // "new_since" → qualified: "airc.new_since"
+	NewExamples          Column // "new_examples" → qualified: "airc.new_examples"
+	MinNewExamples       Column // "min_new_examples" → qualified: "airc.min_new_examples"
+	DriftingProviders    Column // "drifting_providers" → qualified: "airc.drifting_providers"
+	MaxPerOrganization   Column // "max_per_organization" → qualified: "airc.max_per_organization"
+	ValidationPercent    Column // "validation_percent" → qualified: "airc.validation_percent"
+	StructuredOutputMode Column // "structured_output_mode" → qualified: "airc.structured_output_mode"
+	MinAccuracyPercent   Column // "min_accuracy_percent" → qualified: "airc.min_accuracy_percent"
+	MaxRegressionPoints  Column // "max_regression_points" → qualified: "airc.max_regression_points"
+	Trainer              Column // "trainer" → qualified: "airc.trainer"
+	Attempts             Column // "attempts" → qualified: "airc.attempts"
+	ClaimedAt            Column // "claimed_at" → qualified: "airc.claimed_at"
+	LeaseExpiresAt       Column // "lease_expires_at" → qualified: "airc.lease_expires_at"
+	TrainingConfig       Column // "training_config" → qualified: "airc.training_config"
+	RunDirectory         Column // "run_directory" → qualified: "airc.run_directory"
+	ModelDirectory       Column // "model_directory" → qualified: "airc.model_directory"
+	PromptSHA256         Column // "prompt_sha256" → qualified: "airc.prompt_sha256"
+	Examples             Column // "examples" → qualified: "airc.examples"
+	ModelCorrect         Column // "model_correct" → qualified: "airc.model_correct"
+	ModelScored          Column // "model_scored" → qualified: "airc.model_scored"
+	BaselineCorrect      Column // "baseline_correct" → qualified: "airc.baseline_correct"
+	BaselineScored       Column // "baseline_scored" → qualified: "airc.baseline_scored"
+	GateMessage          Column // "gate_message" → qualified: "airc.gate_message"
+	FailureMessage       Column // "failure_message" → qualified: "airc.failure_message"
+	FinishedAt           Column // "finished_at" → qualified: "airc.finished_at"
+	Version              Column // "version" → qualified: "airc.version"
+	CreatedAt            Column // "created_at" → qualified: "airc.created_at"
+	UpdatedAt            Column // "updated_at" → qualified: "airc.updated_at"
+}{
+	ID:                   NewColumn("id", "airc"),
+	Task:                 NewColumn("task", "airc"),
+	Trigger:              NewColumn("trigger", "airc"),
+	Status:               NewColumn("status", "airc"),
+	SkipReason:           NewColumn("skip_reason", "airc"),
+	RequestedBy:          NewColumn("requested_by", "airc"),
+	Note:                 NewColumn("note", "airc"),
+	ExportID:             NewColumn("export_id", "airc"),
+	CapturedFrom:         NewColumn("captured_from", "airc"),
+	CapturedTo:           NewColumn("captured_to", "airc"),
+	NewSince:             NewColumn("new_since", "airc"),
+	NewExamples:          NewColumn("new_examples", "airc"),
+	MinNewExamples:       NewColumn("min_new_examples", "airc"),
+	DriftingProviders:    NewColumn("drifting_providers", "airc"),
+	MaxPerOrganization:   NewColumn("max_per_organization", "airc"),
+	ValidationPercent:    NewColumn("validation_percent", "airc"),
+	StructuredOutputMode: NewColumn("structured_output_mode", "airc"),
+	MinAccuracyPercent:   NewColumn("min_accuracy_percent", "airc"),
+	MaxRegressionPoints:  NewColumn("max_regression_points", "airc"),
+	Trainer:              NewColumn("trainer", "airc"),
+	Attempts:             NewColumn("attempts", "airc"),
+	ClaimedAt:            NewColumn("claimed_at", "airc"),
+	LeaseExpiresAt:       NewColumn("lease_expires_at", "airc"),
+	TrainingConfig:       NewColumn("training_config", "airc"),
+	RunDirectory:         NewColumn("run_directory", "airc"),
+	ModelDirectory:       NewColumn("model_directory", "airc"),
+	PromptSHA256:         NewColumn("prompt_sha256", "airc"),
+	Examples:             NewColumn("examples", "airc"),
+	ModelCorrect:         NewColumn("model_correct", "airc"),
+	ModelScored:          NewColumn("model_scored", "airc"),
+	BaselineCorrect:      NewColumn("baseline_correct", "airc"),
+	BaselineScored:       NewColumn("baseline_scored", "airc"),
+	GateMessage:          NewColumn("gate_message", "airc"),
+	FailureMessage:       NewColumn("failure_message", "airc"),
+	FinishedAt:           NewColumn("finished_at", "airc"),
+	Version:              NewColumn("version", "airc"),
+	CreatedAt:            NewColumn("created_at", "airc"),
+	UpdatedAt:            NewColumn("updated_at", "airc"),
+}
+
+// RetrainingCycleFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by RetrainingCycle.GetStaticFieldMap().
+var RetrainingCycleFieldMap = map[string]string{
+	"id":                   "id",
+	"task":                 "task",
+	"trigger":              "trigger",
+	"status":               "status",
+	"skipReason":           "skip_reason",
+	"requestedBy":          "requested_by",
+	"note":                 "note",
+	"exportId":             "export_id",
+	"capturedFrom":         "captured_from",
+	"capturedTo":           "captured_to",
+	"newSince":             "new_since",
+	"newExamples":          "new_examples",
+	"minNewExamples":       "min_new_examples",
+	"driftingProviders":    "drifting_providers",
+	"maxPerOrganization":   "max_per_organization",
+	"validationPercent":    "validation_percent",
+	"structuredOutputMode": "structured_output_mode",
+	"minAccuracyPercent":   "min_accuracy_percent",
+	"maxRegressionPoints":  "max_regression_points",
+	"trainer":              "trainer",
+	"attempts":             "attempts",
+	"claimedAt":            "claimed_at",
+	"leaseExpiresAt":       "lease_expires_at",
+	"trainingConfig":       "training_config",
+	"runDirectory":         "run_directory",
+	"modelDirectory":       "model_directory",
+	"promptSha256":         "prompt_sha256",
+	"examples":             "examples",
+	"modelCorrect":         "model_correct",
+	"modelScored":          "model_scored",
+	"baselineCorrect":      "baseline_correct",
+	"baselineScored":       "baseline_scored",
+	"gateMessage":          "gate_message",
+	"failureMessage":       "failure_message",
+	"finishedAt":           "finished_at",
+	"version":              "version",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
+}
+
+// RetrainingCycleInsertableColumns lists column names suitable for INSERT statements on the "ai_retraining_cycles" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var RetrainingCycleInsertableColumns = []string{
+	"id",
+	"task",
+	"trigger",
+	"status",
+	"skip_reason",
+	"requested_by",
+	"note",
+	"export_id",
+	"captured_from",
+	"captured_to",
+	"new_since",
+	"new_examples",
+	"min_new_examples",
+	"drifting_providers",
+	"max_per_organization",
+	"validation_percent",
+	"structured_output_mode",
+	"min_accuracy_percent",
+	"max_regression_points",
+	"trainer",
+	"attempts",
+	"claimed_at",
+	"lease_expires_at",
+	"training_config",
+	"run_directory",
+	"model_directory",
+	"prompt_sha256",
+	"examples",
+	"model_correct",
+	"model_scored",
+	"baseline_correct",
+	"baseline_scored",
+	"gate_message",
+	"failure_message",
+	"finished_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// RetrainingCycleFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "ai_retraining_cycles" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	RetrainingCycleFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var RetrainingCycleFilter = struct {
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	Task                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "task" → DB: "task"
+	Trigger              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trigger" → DB: "trigger"
+	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	SkipReason           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "skipReason" → DB: "skip_reason"
+	RequestedBy          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedBy" → DB: "requested_by"
+	Note                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "note" → DB: "note"
+	ExportID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exportId" → DB: "export_id"
+	CapturedFrom         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "capturedFrom" → DB: "captured_from"
+	CapturedTo           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "capturedTo" → DB: "captured_to"
+	NewSince             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "newSince" → DB: "new_since"
+	NewExamples          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "newExamples" → DB: "new_examples"
+	MinNewExamples       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minNewExamples" → DB: "min_new_examples"
+	DriftingProviders    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driftingProviders" → DB: "drifting_providers"
+	MaxPerOrganization   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxPerOrganization" → DB: "max_per_organization"
+	ValidationPercent    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "validationPercent" → DB: "validation_percent"
+	StructuredOutputMode func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "structuredOutputMode" → DB: "structured_output_mode"
+	MinAccuracyPercent   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minAccuracyPercent" → DB: "min_accuracy_percent"
+	MaxRegressionPoints  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxRegressionPoints" → DB: "max_regression_points"
+	Trainer              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trainer" → DB: "trainer"
+	Attempts             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attempts" → DB: "attempts"
+	ClaimedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "claimedAt" → DB: "claimed_at"
+	LeaseExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "leaseExpiresAt" → DB: "lease_expires_at"
+	TrainingConfig       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trainingConfig" → DB: "training_config"
+	RunDirectory         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runDirectory" → DB: "run_directory"
+	ModelDirectory       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelDirectory" → DB: "model_directory"
+	PromptSHA256         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "promptSha256" → DB: "prompt_sha256"
+	Examples             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "examples" → DB: "examples"
+	ModelCorrect         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelCorrect" → DB: "model_correct"
+	ModelScored          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelScored" → DB: "model_scored"
+	BaselineCorrect      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baselineCorrect" → DB: "baseline_correct"
+	BaselineScored       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baselineScored" → DB: "baseline_scored"
+	GateMessage          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "gateMessage" → DB: "gate_message"
+	FailureMessage       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureMessage" → DB: "failure_message"
+	FinishedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
+	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	Task: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("task", op, value)
+	},
+	Trigger: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("trigger", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	SkipReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("skipReason", op, value)
+	},
+	RequestedBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestedBy", op, value)
+	},
+	Note: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("note", op, value)
+	},
+	ExportID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("exportId", op, value)
+	},
+	CapturedFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("capturedFrom", op, value)
+	},
+	CapturedTo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("capturedTo", op, value)
+	},
+	NewSince: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("newSince", op, value)
+	},
+	NewExamples: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("newExamples", op, value)
+	},
+	MinNewExamples: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minNewExamples", op, value)
+	},
+	DriftingProviders: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("driftingProviders", op, value)
+	},
+	MaxPerOrganization: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxPerOrganization", op, value)
+	},
+	ValidationPercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("validationPercent", op, value)
+	},
+	StructuredOutputMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("structuredOutputMode", op, value)
+	},
+	MinAccuracyPercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minAccuracyPercent", op, value)
+	},
+	MaxRegressionPoints: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxRegressionPoints", op, value)
+	},
+	Trainer: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("trainer", op, value)
+	},
+	Attempts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attempts", op, value)
+	},
+	ClaimedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("claimedAt", op, value)
+	},
+	LeaseExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("leaseExpiresAt", op, value)
+	},
+	TrainingConfig: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("trainingConfig", op, value)
+	},
+	RunDirectory: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("runDirectory", op, value)
+	},
+	ModelDirectory: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("modelDirectory", op, value)
+	},
+	PromptSHA256: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("promptSha256", op, value)
+	},
+	Examples: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("examples", op, value)
+	},
+	ModelCorrect: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("modelCorrect", op, value)
+	},
+	ModelScored: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("modelScored", op, value)
+	},
+	BaselineCorrect: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("baselineCorrect", op, value)
+	},
+	BaselineScored: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("baselineScored", op, value)
+	},
+	GateMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("gateMessage", op, value)
+	},
+	FailureMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failureMessage", op, value)
+	},
+	FinishedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("finishedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // TrainingExport — table "ai_training_exports", alias "aitx"
 // ---------------------------------------------------------------------------
 

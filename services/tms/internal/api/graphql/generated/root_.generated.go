@@ -124,6 +124,9 @@ type ResolverRoot interface {
 	ExtractionEvalCase() ExtractionEvalCaseResolver
 	ExtractionEvalResult() ExtractionEvalResultResolver
 	ExtractionEvalRun() ExtractionEvalRunResolver
+	ExtractionRollout() ExtractionRolloutResolver
+	ExtractionShadowReport() ExtractionShadowReportResolver
+	ExtractionShadowResult() ExtractionShadowResultResolver
 	ExtractionSnapshot() ExtractionSnapshotResolver
 	FiscalYear() FiscalYearResolver
 	FleetSafetyRank() FleetSafetyRankResolver
@@ -623,6 +626,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateEmploymentVerificationInput,
 		ec.unmarshalInputUpdateEscrowAccountInput,
 		ec.unmarshalInputUpdateExtractionEvalCaseInput,
+		ec.unmarshalInputUpdateExtractionRolloutInput,
+		ec.unmarshalInputUpdateExtractionShadowSettingsInput,
 		ec.unmarshalInputUpdateFuelIndexPriceInput,
 		ec.unmarshalInputUpdateHomeLayoutPresetInput,
 		ec.unmarshalInputUpdateJobPositionInput,
@@ -13919,6 +13924,51 @@ type ExtractionAccuracy {
   recentRuns: [ExtractionEvalRun!]!
 }
 
+"One provider's corrections in one UTC week, Monday to Sunday."
+type ExtractionWeekAccuracy {
+  weekStart: Timestamp!
+  corrections: Int!
+  scored: Int!
+  correct: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+"How one provider read documents week by week, and whether last week fell below its own recent weeks."
+type ExtractionProviderTrend {
+  providerId: ID!
+  "Empty when the provider has since been removed."
+  providerName: String!
+  model: String!
+  providerRemoved: Boolean!
+  "One entry per week in the window, oldest first; the last is the week in progress."
+  weeks: [ExtractionWeekAccuracy!]!
+  "The last complete week, the one judged for drift."
+  checked: ExtractionWeekAccuracy!
+  "The weeks before it, taken together."
+  baseline: ExtractionWeekAccuracy!
+  "Baseline accuracy less last week's, in points; zero until both have enough fields."
+  dropPoints: Float!
+  "Whether both weeks had enough scored fields to compare."
+  comparable: Boolean!
+  drifting: Boolean!
+}
+
+"Each extraction provider's accuracy over recent weeks, read from the corrections people made."
+type ExtractionProviderTrends {
+  weeks: [Timestamp!]!
+  checkedWeek: Timestamp!
+  baselineStart: Timestamp!
+  "Providers that read documents in the window, the busiest last week first."
+  providers: [ExtractionProviderTrend!]!
+  "How many points below its baseline last week must fall to count as drift."
+  driftPoints: Int!
+  "Scored fields last week needs before it is judged."
+  minWeekFields: Int!
+  "Scored fields the baseline needs before it is judged."
+  minBaselineFields: Int!
+}
+
 input PromoteAICorrectionInput {
   correctionId: ID!
   title: String
@@ -13941,6 +13991,7 @@ input StartExtractionEvalRunInput {
 
 extend type Query {
   extractionAccuracy(windowDays: Int): ExtractionAccuracy!
+  extractionProviderTrends: ExtractionProviderTrends!
   aiCorrections(input: DataTableConnectionInput!): AICorrectionConnection!
   aiCorrection(id: ID!): AICorrection
   extractionEvalCases(input: DataTableConnectionInput!): ExtractionEvalCaseConnection!
@@ -13959,6 +14010,260 @@ extend type Mutation {
   "Runs one provider's model over the active cases, within the evaluation budget."
   startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
   cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
+}
+`, BuiltIn: false},
+	{Name: "../schema/extractionrollout.graphqls", Input: `enum ExtractionRolloutHaltReason {
+  "The candidate read confirmed fields worse than production by more than the allowed points."
+  AccuracyDrop
+  "The candidate's answers were unusable more often than production's by more than the allowed points."
+  Rejections
+}
+
+"How a candidate AI provider serves a share of an organization's real document extractions."
+type ExtractionRollout {
+  enabled: Boolean!
+  "The candidate AI provider; kept while the rollout is off, so turning it back on keeps the choice."
+  providerId: ID
+  "The share of documents whose extraction asks the candidate first, 1 to 100."
+  percent: Int!
+  "How many points below production's accuracy the candidate may fall before the rollout stops."
+  maxAccuracyDropPoints: Int!
+  "How many points above production's rejection rate the candidate may rise before the rollout stops."
+  maxRejectionIncreasePoints: Int!
+  "Whether documents are being sent to the candidate right now: on, with a candidate, and not stopped by a guard."
+  serving: Boolean!
+  "When the current comparison began; the guards and the report count only what happened since."
+  startedAt: Timestamp
+  "When a guard stopped the rollout; empty while it has not."
+  haltedAt: Timestamp
+  haltReason: ExtractionRolloutHaltReason
+  "The candidate's accuracy or rejection rate when a guard stopped the rollout."
+  haltCandidateRate: Float!
+  "Production's accuracy or rejection rate when a guard stopped the rollout."
+  haltBaselineRate: Float!
+  updatedById: ID
+  version: Int!
+  "Zero until the rollout is first saved."
+  updatedAt: Timestamp!
+}
+
+"The extractions assigned to one side of the rollout since it started."
+type ExtractionRolloutArm {
+  assigned: Int!
+  pending: Int!
+  accepted: Int!
+  rejected: Int!
+  failed: Int!
+  "Extracted again before the answer was applied; not counted for either side."
+  superseded: Int!
+  "Assigned to the candidate but served by production because the candidate could not answer."
+  fellBack: Int!
+  "Rejected and failed answers divided by settled ones, leaving out fallbacks."
+  rejectionRate: Float!
+}
+
+"Confirmed fields read by one side since the rollout started."
+type ExtractionRolloutAccuracy {
+  scored: Int!
+  correct: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+"How the candidate is doing on the documents it serves, beside production on the rest."
+type ExtractionRolloutReport {
+  rollout: ExtractionRollout!
+  providerName: String!
+  candidate: ExtractionRolloutArm!
+  control: ExtractionRolloutArm!
+  candidateAccuracy: ExtractionRolloutAccuracy!
+  productionAccuracy: ExtractionRolloutAccuracy!
+  "Per field, the candidate's biggest shortfall against production first."
+  fields: [ExtractionShadowFieldComparison!]!
+  "True when there were more corrections than the field comparison read."
+  truncated: Boolean!
+  "Confirmed fields each side needs before the accuracy guard can stop the rollout."
+  minGuardScoredFields: Int!
+  "Settled extractions each side needs before the rejection guard can stop the rollout."
+  minGuardExtractions: Int!
+}
+
+input UpdateExtractionRolloutInput {
+  enabled: Boolean!
+  providerId: ID
+  percent: Int!
+  maxAccuracyDropPoints: Int!
+  maxRejectionIncreasePoints: Int!
+  version: Int!
+}
+
+extend type Query {
+  extractionRollout: ExtractionRollout!
+  extractionRolloutReport: ExtractionRolloutReport!
+}
+
+extend type Mutation {
+  "Chooses the candidate provider that serves a share of real document extractions, how much of it, and when to stop."
+  updateExtractionRollout(input: UpdateExtractionRolloutInput!): ExtractionRollout!
+}
+`, BuiltIn: false},
+	{Name: "../schema/extractionshadow.graphqls", Input: `enum ExtractionShadowResultStatus {
+  Pending
+  Completed
+  Failed
+  Skipped
+}
+
+enum ExtractionShadowVerdict {
+  Better
+  Worse
+  Same
+}
+
+"How production document extraction is shadowed by a candidate AI provider."
+type ExtractionShadowSettings {
+  enabled: Boolean!
+  "The candidate AI provider; set even while the shadow is off, so turning it back on keeps the choice."
+  providerId: ID
+  "The share of production extractions also sent to the candidate, 1 to 100."
+  samplePercent: Int!
+  "The most shadow extractions started in any 24 hours."
+  dailyLimit: Int!
+  updatedById: ID
+  version: Int!
+  "Zero until the settings are first saved."
+  updatedAt: Timestamp!
+}
+
+"A production extraction run again on the candidate provider, never applied, and scored beside production against the confirmed shipment."
+type ExtractionShadowResult {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  documentId: ID!
+  "When the production extraction this shadows was made."
+  extractedAt: Timestamp!
+  status: ExtractionShadowResultStatus!
+  "Why the shadow was skipped or failed."
+  statusReason: String!
+  providerId: ID!
+  providerName: String!
+  "The model the candidate reported serving."
+  servedModel: String!
+  productionProviderId: ID
+  productionModel: String!
+  "Whether the candidate's answer passed the checks production's must pass to replace the rule-based reading."
+  accepted: Boolean!
+  rejectionReason: String!
+  "The draft the candidate would have produced."
+  predicted: ExtractionSnapshot
+  "The correction the shadow was scored against; empty until a person confirms the document."
+  correctionId: ID
+  scoredAt: Timestamp
+  verdict: ExtractionShadowVerdict
+  fieldResults: [AICorrectionFieldResult!]!
+  scoredCount: Int!
+  correctCount: Int!
+  correctedCount: Int!
+  missedCount: Int!
+  accuracy: Float!
+  "How production's draft for the same document scored against the same confirmed shipment."
+  baselineFieldResults: [AICorrectionFieldResult!]!
+  baselineScoredCount: Int!
+  baselineCorrectCount: Int!
+  baselineCorrectedCount: Int!
+  baselineMissedCount: Int!
+  baselineAccuracy: Float!
+  latencyMs: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  costUsd: Decimal!
+  workflowId: String!
+  startedAt: Timestamp
+  completedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type ExtractionShadowResultEdge {
+  node: ExtractionShadowResult!
+  cursor: String!
+}
+
+type ExtractionShadowResultConnection {
+  edges: [ExtractionShadowResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One side of a shadow comparison, over the documents both sides were scored on."
+type ExtractionShadowSide {
+  scored: Int!
+  correct: Int!
+  corrected: Int!
+  missed: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+type ExtractionShadowFieldComparison {
+  "A field key, with stop fields grouped across stops (stops.pickup.city)."
+  key: String!
+  candidateScored: Int!
+  candidateCorrect: Int!
+  candidateAccuracy: Float!
+  productionScored: Int!
+  productionCorrect: Int!
+  productionAccuracy: Float!
+}
+
+"How a candidate provider did against production on the same documents over a window."
+type ExtractionShadowReport {
+  windowDays: Int!
+  since: Timestamp!
+  "The candidate reported on; empty when none has been chosen."
+  providerId: ID
+  providerName: String!
+  "Shadow extractions started in the window, in every state."
+  sampled: Int!
+  pending: Int!
+  completed: Int!
+  failed: Int!
+  skipped: Int!
+  "Shadows scored against a confirmed shipment."
+  scored: Int!
+  "True when the window held more scored shadows than were read."
+  truncated: Boolean!
+  better: Int!
+  worse: Int!
+  same: Int!
+  candidate: ExtractionShadowSide!
+  production: ExtractionShadowSide!
+  "Per field, the candidate's biggest shortfall against production first."
+  fields: [ExtractionShadowFieldComparison!]!
+  costUsd: Decimal!
+  avgLatencyMs: Int!
+}
+
+input UpdateExtractionShadowSettingsInput {
+  enabled: Boolean!
+  providerId: ID
+  samplePercent: Int!
+  dailyLimit: Int!
+  version: Int!
+}
+
+extend type Query {
+  extractionShadowSettings: ExtractionShadowSettings!
+  extractionShadowReport(windowDays: Int, providerId: ID): ExtractionShadowReport!
+  extractionShadowResults(input: DataTableConnectionInput!): ExtractionShadowResultConnection!
+  extractionShadowResult(id: ID!): ExtractionShadowResult
+}
+
+extend type Mutation {
+  "Chooses the candidate provider that shadows production document extraction, and how much of it."
+  updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
 }
 `, BuiltIn: false},
 	{Name: "../schema/fiscal_period.graphqls", Input: `enum PeriodType {
@@ -38801,6 +39106,354 @@ func (ec *executionContext) childFields_ExtractionFieldAccuracy(ctx context.Cont
 	return nil, fmt.Errorf("no field named %q was found under type ExtractionFieldAccuracy", field.Name)
 }
 
+func (ec *executionContext) childFields_ExtractionProviderTrend(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "providerId":
+		return ec.fieldContext_ExtractionProviderTrend_providerId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_ExtractionProviderTrend_providerName(ctx, field)
+	case "model":
+		return ec.fieldContext_ExtractionProviderTrend_model(ctx, field)
+	case "providerRemoved":
+		return ec.fieldContext_ExtractionProviderTrend_providerRemoved(ctx, field)
+	case "weeks":
+		return ec.fieldContext_ExtractionProviderTrend_weeks(ctx, field)
+	case "checked":
+		return ec.fieldContext_ExtractionProviderTrend_checked(ctx, field)
+	case "baseline":
+		return ec.fieldContext_ExtractionProviderTrend_baseline(ctx, field)
+	case "dropPoints":
+		return ec.fieldContext_ExtractionProviderTrend_dropPoints(ctx, field)
+	case "comparable":
+		return ec.fieldContext_ExtractionProviderTrend_comparable(ctx, field)
+	case "drifting":
+		return ec.fieldContext_ExtractionProviderTrend_drifting(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionProviderTrend", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionProviderTrends(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "weeks":
+		return ec.fieldContext_ExtractionProviderTrends_weeks(ctx, field)
+	case "checkedWeek":
+		return ec.fieldContext_ExtractionProviderTrends_checkedWeek(ctx, field)
+	case "baselineStart":
+		return ec.fieldContext_ExtractionProviderTrends_baselineStart(ctx, field)
+	case "providers":
+		return ec.fieldContext_ExtractionProviderTrends_providers(ctx, field)
+	case "driftPoints":
+		return ec.fieldContext_ExtractionProviderTrends_driftPoints(ctx, field)
+	case "minWeekFields":
+		return ec.fieldContext_ExtractionProviderTrends_minWeekFields(ctx, field)
+	case "minBaselineFields":
+		return ec.fieldContext_ExtractionProviderTrends_minBaselineFields(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionProviderTrends", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionRollout(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "enabled":
+		return ec.fieldContext_ExtractionRollout_enabled(ctx, field)
+	case "providerId":
+		return ec.fieldContext_ExtractionRollout_providerId(ctx, field)
+	case "percent":
+		return ec.fieldContext_ExtractionRollout_percent(ctx, field)
+	case "maxAccuracyDropPoints":
+		return ec.fieldContext_ExtractionRollout_maxAccuracyDropPoints(ctx, field)
+	case "maxRejectionIncreasePoints":
+		return ec.fieldContext_ExtractionRollout_maxRejectionIncreasePoints(ctx, field)
+	case "serving":
+		return ec.fieldContext_ExtractionRollout_serving(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_ExtractionRollout_startedAt(ctx, field)
+	case "haltedAt":
+		return ec.fieldContext_ExtractionRollout_haltedAt(ctx, field)
+	case "haltReason":
+		return ec.fieldContext_ExtractionRollout_haltReason(ctx, field)
+	case "haltCandidateRate":
+		return ec.fieldContext_ExtractionRollout_haltCandidateRate(ctx, field)
+	case "haltBaselineRate":
+		return ec.fieldContext_ExtractionRollout_haltBaselineRate(ctx, field)
+	case "updatedById":
+		return ec.fieldContext_ExtractionRollout_updatedById(ctx, field)
+	case "version":
+		return ec.fieldContext_ExtractionRollout_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_ExtractionRollout_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionRollout", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionRolloutAccuracy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "scored":
+		return ec.fieldContext_ExtractionRolloutAccuracy_scored(ctx, field)
+	case "correct":
+		return ec.fieldContext_ExtractionRolloutAccuracy_correct(ctx, field)
+	case "accuracy":
+		return ec.fieldContext_ExtractionRolloutAccuracy_accuracy(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionRolloutAccuracy", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionRolloutArm(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "assigned":
+		return ec.fieldContext_ExtractionRolloutArm_assigned(ctx, field)
+	case "pending":
+		return ec.fieldContext_ExtractionRolloutArm_pending(ctx, field)
+	case "accepted":
+		return ec.fieldContext_ExtractionRolloutArm_accepted(ctx, field)
+	case "rejected":
+		return ec.fieldContext_ExtractionRolloutArm_rejected(ctx, field)
+	case "failed":
+		return ec.fieldContext_ExtractionRolloutArm_failed(ctx, field)
+	case "superseded":
+		return ec.fieldContext_ExtractionRolloutArm_superseded(ctx, field)
+	case "fellBack":
+		return ec.fieldContext_ExtractionRolloutArm_fellBack(ctx, field)
+	case "rejectionRate":
+		return ec.fieldContext_ExtractionRolloutArm_rejectionRate(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionRolloutArm", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionRolloutReport(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "rollout":
+		return ec.fieldContext_ExtractionRolloutReport_rollout(ctx, field)
+	case "providerName":
+		return ec.fieldContext_ExtractionRolloutReport_providerName(ctx, field)
+	case "candidate":
+		return ec.fieldContext_ExtractionRolloutReport_candidate(ctx, field)
+	case "control":
+		return ec.fieldContext_ExtractionRolloutReport_control(ctx, field)
+	case "candidateAccuracy":
+		return ec.fieldContext_ExtractionRolloutReport_candidateAccuracy(ctx, field)
+	case "productionAccuracy":
+		return ec.fieldContext_ExtractionRolloutReport_productionAccuracy(ctx, field)
+	case "fields":
+		return ec.fieldContext_ExtractionRolloutReport_fields(ctx, field)
+	case "truncated":
+		return ec.fieldContext_ExtractionRolloutReport_truncated(ctx, field)
+	case "minGuardScoredFields":
+		return ec.fieldContext_ExtractionRolloutReport_minGuardScoredFields(ctx, field)
+	case "minGuardExtractions":
+		return ec.fieldContext_ExtractionRolloutReport_minGuardExtractions(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionRolloutReport", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowFieldComparison(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_ExtractionShadowFieldComparison_key(ctx, field)
+	case "candidateScored":
+		return ec.fieldContext_ExtractionShadowFieldComparison_candidateScored(ctx, field)
+	case "candidateCorrect":
+		return ec.fieldContext_ExtractionShadowFieldComparison_candidateCorrect(ctx, field)
+	case "candidateAccuracy":
+		return ec.fieldContext_ExtractionShadowFieldComparison_candidateAccuracy(ctx, field)
+	case "productionScored":
+		return ec.fieldContext_ExtractionShadowFieldComparison_productionScored(ctx, field)
+	case "productionCorrect":
+		return ec.fieldContext_ExtractionShadowFieldComparison_productionCorrect(ctx, field)
+	case "productionAccuracy":
+		return ec.fieldContext_ExtractionShadowFieldComparison_productionAccuracy(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowFieldComparison", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowReport(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "windowDays":
+		return ec.fieldContext_ExtractionShadowReport_windowDays(ctx, field)
+	case "since":
+		return ec.fieldContext_ExtractionShadowReport_since(ctx, field)
+	case "providerId":
+		return ec.fieldContext_ExtractionShadowReport_providerId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_ExtractionShadowReport_providerName(ctx, field)
+	case "sampled":
+		return ec.fieldContext_ExtractionShadowReport_sampled(ctx, field)
+	case "pending":
+		return ec.fieldContext_ExtractionShadowReport_pending(ctx, field)
+	case "completed":
+		return ec.fieldContext_ExtractionShadowReport_completed(ctx, field)
+	case "failed":
+		return ec.fieldContext_ExtractionShadowReport_failed(ctx, field)
+	case "skipped":
+		return ec.fieldContext_ExtractionShadowReport_skipped(ctx, field)
+	case "scored":
+		return ec.fieldContext_ExtractionShadowReport_scored(ctx, field)
+	case "truncated":
+		return ec.fieldContext_ExtractionShadowReport_truncated(ctx, field)
+	case "better":
+		return ec.fieldContext_ExtractionShadowReport_better(ctx, field)
+	case "worse":
+		return ec.fieldContext_ExtractionShadowReport_worse(ctx, field)
+	case "same":
+		return ec.fieldContext_ExtractionShadowReport_same(ctx, field)
+	case "candidate":
+		return ec.fieldContext_ExtractionShadowReport_candidate(ctx, field)
+	case "production":
+		return ec.fieldContext_ExtractionShadowReport_production(ctx, field)
+	case "fields":
+		return ec.fieldContext_ExtractionShadowReport_fields(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_ExtractionShadowReport_costUsd(ctx, field)
+	case "avgLatencyMs":
+		return ec.fieldContext_ExtractionShadowReport_avgLatencyMs(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowReport", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_ExtractionShadowResult_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_ExtractionShadowResult_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_ExtractionShadowResult_businessUnitId(ctx, field)
+	case "documentId":
+		return ec.fieldContext_ExtractionShadowResult_documentId(ctx, field)
+	case "extractedAt":
+		return ec.fieldContext_ExtractionShadowResult_extractedAt(ctx, field)
+	case "status":
+		return ec.fieldContext_ExtractionShadowResult_status(ctx, field)
+	case "statusReason":
+		return ec.fieldContext_ExtractionShadowResult_statusReason(ctx, field)
+	case "providerId":
+		return ec.fieldContext_ExtractionShadowResult_providerId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_ExtractionShadowResult_providerName(ctx, field)
+	case "servedModel":
+		return ec.fieldContext_ExtractionShadowResult_servedModel(ctx, field)
+	case "productionProviderId":
+		return ec.fieldContext_ExtractionShadowResult_productionProviderId(ctx, field)
+	case "productionModel":
+		return ec.fieldContext_ExtractionShadowResult_productionModel(ctx, field)
+	case "accepted":
+		return ec.fieldContext_ExtractionShadowResult_accepted(ctx, field)
+	case "rejectionReason":
+		return ec.fieldContext_ExtractionShadowResult_rejectionReason(ctx, field)
+	case "predicted":
+		return ec.fieldContext_ExtractionShadowResult_predicted(ctx, field)
+	case "correctionId":
+		return ec.fieldContext_ExtractionShadowResult_correctionId(ctx, field)
+	case "scoredAt":
+		return ec.fieldContext_ExtractionShadowResult_scoredAt(ctx, field)
+	case "verdict":
+		return ec.fieldContext_ExtractionShadowResult_verdict(ctx, field)
+	case "fieldResults":
+		return ec.fieldContext_ExtractionShadowResult_fieldResults(ctx, field)
+	case "scoredCount":
+		return ec.fieldContext_ExtractionShadowResult_scoredCount(ctx, field)
+	case "correctCount":
+		return ec.fieldContext_ExtractionShadowResult_correctCount(ctx, field)
+	case "correctedCount":
+		return ec.fieldContext_ExtractionShadowResult_correctedCount(ctx, field)
+	case "missedCount":
+		return ec.fieldContext_ExtractionShadowResult_missedCount(ctx, field)
+	case "accuracy":
+		return ec.fieldContext_ExtractionShadowResult_accuracy(ctx, field)
+	case "baselineFieldResults":
+		return ec.fieldContext_ExtractionShadowResult_baselineFieldResults(ctx, field)
+	case "baselineScoredCount":
+		return ec.fieldContext_ExtractionShadowResult_baselineScoredCount(ctx, field)
+	case "baselineCorrectCount":
+		return ec.fieldContext_ExtractionShadowResult_baselineCorrectCount(ctx, field)
+	case "baselineCorrectedCount":
+		return ec.fieldContext_ExtractionShadowResult_baselineCorrectedCount(ctx, field)
+	case "baselineMissedCount":
+		return ec.fieldContext_ExtractionShadowResult_baselineMissedCount(ctx, field)
+	case "baselineAccuracy":
+		return ec.fieldContext_ExtractionShadowResult_baselineAccuracy(ctx, field)
+	case "latencyMs":
+		return ec.fieldContext_ExtractionShadowResult_latencyMs(ctx, field)
+	case "inputTokens":
+		return ec.fieldContext_ExtractionShadowResult_inputTokens(ctx, field)
+	case "outputTokens":
+		return ec.fieldContext_ExtractionShadowResult_outputTokens(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_ExtractionShadowResult_costUsd(ctx, field)
+	case "workflowId":
+		return ec.fieldContext_ExtractionShadowResult_workflowId(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_ExtractionShadowResult_startedAt(ctx, field)
+	case "completedAt":
+		return ec.fieldContext_ExtractionShadowResult_completedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_ExtractionShadowResult_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_ExtractionShadowResult_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_ExtractionShadowResult_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowResult", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowResultConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_ExtractionShadowResultConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_ExtractionShadowResultConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_ExtractionShadowResultConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowResultConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowResultEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_ExtractionShadowResultEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_ExtractionShadowResultEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowResultEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowSettings(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "enabled":
+		return ec.fieldContext_ExtractionShadowSettings_enabled(ctx, field)
+	case "providerId":
+		return ec.fieldContext_ExtractionShadowSettings_providerId(ctx, field)
+	case "samplePercent":
+		return ec.fieldContext_ExtractionShadowSettings_samplePercent(ctx, field)
+	case "dailyLimit":
+		return ec.fieldContext_ExtractionShadowSettings_dailyLimit(ctx, field)
+	case "updatedById":
+		return ec.fieldContext_ExtractionShadowSettings_updatedById(ctx, field)
+	case "version":
+		return ec.fieldContext_ExtractionShadowSettings_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_ExtractionShadowSettings_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowSettings", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionShadowSide(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "scored":
+		return ec.fieldContext_ExtractionShadowSide_scored(ctx, field)
+	case "correct":
+		return ec.fieldContext_ExtractionShadowSide_correct(ctx, field)
+	case "corrected":
+		return ec.fieldContext_ExtractionShadowSide_corrected(ctx, field)
+	case "missed":
+		return ec.fieldContext_ExtractionShadowSide_missed(ctx, field)
+	case "accuracy":
+		return ec.fieldContext_ExtractionShadowSide_accuracy(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionShadowSide", field.Name)
+}
+
 func (ec *executionContext) childFields_ExtractionSnapshot(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "fields":
@@ -38851,6 +39504,22 @@ func (ec *executionContext) childFields_ExtractionStop(ctx context.Context, fiel
 		return ec.fieldContext_ExtractionStop_timezone(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ExtractionStop", field.Name)
+}
+
+func (ec *executionContext) childFields_ExtractionWeekAccuracy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "weekStart":
+		return ec.fieldContext_ExtractionWeekAccuracy_weekStart(ctx, field)
+	case "corrections":
+		return ec.fieldContext_ExtractionWeekAccuracy_corrections(ctx, field)
+	case "scored":
+		return ec.fieldContext_ExtractionWeekAccuracy_scored(ctx, field)
+	case "correct":
+		return ec.fieldContext_ExtractionWeekAccuracy_correct(ctx, field)
+	case "accuracy":
+		return ec.fieldContext_ExtractionWeekAccuracy_accuracy(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtractionWeekAccuracy", field.Name)
 }
 
 func (ec *executionContext) childFields_FacilityDetentionStat(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

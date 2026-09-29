@@ -278,8 +278,19 @@ func (f *resultStore) SkipPending(
 type correctionStore struct {
 	repositories.AICorrectionRepository
 	items map[pulid.ID]*aicorrection.Correction
-	since int64
-	rows  []*aicorrection.Correction
+	since       int64
+	rows        []*aicorrection.Correction
+	weekly      []aicorrection.WeekTotal
+	weeklySince int64
+	weeklyErr   error
+}
+
+func (f *correctionStore) WeeklyTotalsByProvider(
+	_ context.Context,
+	req *repositories.WeeklyAICorrectionTotalsRequest,
+) ([]aicorrection.WeekTotal, error) {
+	f.weeklySince = req.Since
+	return f.weekly, f.weeklyErr
 }
 
 func (f *correctionStore) GetByID(
@@ -333,12 +344,16 @@ func (f *contentStore) ListPagesByDocumentID(
 type providerStore struct {
 	repositories.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
+	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
 	req repositories.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
 	provider, ok := f.providers[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("provider not found")

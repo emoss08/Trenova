@@ -1,0 +1,133 @@
+fragment ExtractionShadowSettingsFields on ExtractionShadowSettings {
+  enabled
+  providerId
+  samplePercent
+  dailyLimit
+  updatedById
+  version
+  updatedAt
+}
+
+fragment ExtractionShadowResultTableRowFields on ExtractionShadowResult {
+  id
+  documentId
+  extractedAt
+  status
+  statusReason
+  providerId
+  providerName
+  servedModel
+  productionModel
+  accepted
+  rejectionReason
+  correctionId
+  scoredAt
+  verdict
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  accuracy
+  baselineScoredCount
+  baselineCorrectCount
+  baselineCorrectedCount
+  baselineMissedCount
+  baselineAccuracy
+  latencyMs
+  costUsd
+  completedAt
+  createdAt
+  updatedAt
+}
+
+fragment ExtractionShadowResultDetailFields on ExtractionShadowResult {
+  ...ExtractionShadowResultTableRowFields
+  predicted {
+    ...ExtractionSnapshotFields
+  }
+  fieldResults {
+    ...AICorrectionFieldResultFields
+  }
+  baselineFieldResults {
+    ...AICorrectionFieldResultFields
+  }
+}
+
+query ExtractionShadowSettings {
+  extractionShadowSettings {
+    ...ExtractionShadowSettingsFields
+  }
+}
+
+query ExtractionShadowReport($windowDays: Int, $providerId: ID) {
+  extractionShadowReport(windowDays: $windowDays, providerId: $providerId) {
+    windowDays
+    since
+    providerId
+    providerName
+    sampled
+    pending
+    completed
+    failed
+    skipped
+    scored
+    truncated
+    better
+    worse
+    same
+    candidate {
+      scored
+      correct
+      corrected
+      missed
+      accuracy
+    }
+    production {
+      scored
+      correct
+      corrected
+      missed
+      accuracy
+    }
+    fields {
+      key
+      candidateScored
+      candidateCorrect
+      candidateAccuracy
+      productionScored
+      productionCorrect
+      productionAccuracy
+    }
+    costUsd
+    avgLatencyMs
+  }
+}
+
+query ExtractionShadowResultTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  extractionShadowResults(input: $input) {
+    edges {
+      node {
+        ...ExtractionShadowResultTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query ExtractionShadowResultDetail($id: ID!) {
+  extractionShadowResult(id: $id) {
+    ...ExtractionShadowResultDetailFields
+  }
+}
+
+mutation UpdateExtractionShadowSettings($input: UpdateExtractionShadowSettingsInput!) {
+  updateExtractionShadowSettings(input: $input) {
+    ...ExtractionShadowSettingsFields
+  }
+}

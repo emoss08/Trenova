@@ -15,7 +15,10 @@ type ActivitiesParams struct {
 	fx.In
 
 	Corrections services.AICorrectionService
-	Evaluations services.ExtractionEvalRunner `optional:"true"`
+	Evaluations services.ExtractionEvalRunner       `optional:"true"`
+	Shadows     services.ExtractionShadowRetention  `optional:"true"`
+	Rollout     services.ExtractionRolloutRetention `optional:"true"`
+	Drift       services.ExtractionDriftChecker     `optional:"true"`
 	Tenants     repositories.TenantSyncRepository
 	Logger      *zap.Logger
 }
@@ -23,6 +26,9 @@ type ActivitiesParams struct {
 type Activities struct {
 	corrections services.AICorrectionService
 	evaluations services.ExtractionEvalRunner
+	shadows     services.ExtractionShadowRetention
+	rollout     services.ExtractionRolloutRetention
+	drift       services.ExtractionDriftChecker
 	tenants     repositories.TenantSyncRepository
 	l           *zap.Logger
 }
@@ -31,6 +37,9 @@ func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		corrections: p.Corrections,
 		evaluations: p.Evaluations,
+		shadows:     p.Shadows,
+		rollout:     p.Rollout,
+		drift:       p.Drift,
 		tenants:     p.Tenants,
 		l:           p.Logger.Named("job.aicorrection-retention"),
 	}
@@ -63,14 +72,45 @@ func (a *Activities) PurgeOrganizationAICorrectionsActivity(
 	}
 
 	if a.evaluations != nil {
-		runs, runErr := a.evaluations.PurgeExpiredRuns(ctx, services.PurgeExpiredAICorrectionsRequest{
-			TenantInfo: tenant,
-			Now:        input.Now,
-		})
+		runs, runErr := a.evaluations.PurgeExpiredRuns(
+			ctx,
+			services.PurgeExpiredAICorrectionsRequest{
+				TenantInfo: tenant,
+				Now:        input.Now,
+			},
+		)
 		if runErr != nil {
 			return nil, fmt.Errorf("purge expired extraction evaluation runs: %w", runErr)
 		}
 		purged += runs
+	}
+
+	if a.shadows != nil {
+		shadows, shadowErr := a.shadows.PurgeExpiredShadows(
+			ctx,
+			services.PurgeExpiredAICorrectionsRequest{
+				TenantInfo: tenant,
+				Now:        input.Now,
+			},
+		)
+		if shadowErr != nil {
+			return nil, fmt.Errorf("purge expired extraction shadows: %w", shadowErr)
+		}
+		purged += shadows
+	}
+
+	if a.rollout != nil {
+		assignments, rolloutErr := a.rollout.PurgeExpiredAssignments(
+			ctx,
+			services.PurgeExpiredAICorrectionsRequest{
+				TenantInfo: tenant,
+				Now:        input.Now,
+			},
+		)
+		if rolloutErr != nil {
+			return nil, fmt.Errorf("purge expired extraction rollout assignments: %w", rolloutErr)
+		}
+		purged += assignments
 	}
 
 	a.l.Debug("ai corrections purged",

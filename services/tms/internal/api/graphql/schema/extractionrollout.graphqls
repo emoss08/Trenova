@@ -1,0 +1,94 @@
+enum ExtractionRolloutHaltReason {
+  "The candidate read confirmed fields worse than production by more than the allowed points."
+  AccuracyDrop
+  "The candidate's answers were unusable more often than production's by more than the allowed points."
+  Rejections
+}
+
+"How a candidate AI provider serves a share of an organization's real document extractions."
+type ExtractionRollout {
+  enabled: Boolean!
+  "The candidate AI provider; kept while the rollout is off, so turning it back on keeps the choice."
+  providerId: ID
+  "The share of documents whose extraction asks the candidate first, 1 to 100."
+  percent: Int!
+  "How many points below production's accuracy the candidate may fall before the rollout stops."
+  maxAccuracyDropPoints: Int!
+  "How many points above production's rejection rate the candidate may rise before the rollout stops."
+  maxRejectionIncreasePoints: Int!
+  "Whether documents are being sent to the candidate right now: on, with a candidate, and not stopped by a guard."
+  serving: Boolean!
+  "When the current comparison began; the guards and the report count only what happened since."
+  startedAt: Timestamp
+  "When a guard stopped the rollout; empty while it has not."
+  haltedAt: Timestamp
+  haltReason: ExtractionRolloutHaltReason
+  "The candidate's accuracy or rejection rate when a guard stopped the rollout."
+  haltCandidateRate: Float!
+  "Production's accuracy or rejection rate when a guard stopped the rollout."
+  haltBaselineRate: Float!
+  updatedById: ID
+  version: Int!
+  "Zero until the rollout is first saved."
+  updatedAt: Timestamp!
+}
+
+"The extractions assigned to one side of the rollout since it started."
+type ExtractionRolloutArm {
+  assigned: Int!
+  pending: Int!
+  accepted: Int!
+  rejected: Int!
+  failed: Int!
+  "Extracted again before the answer was applied; not counted for either side."
+  superseded: Int!
+  "Assigned to the candidate but served by production because the candidate could not answer."
+  fellBack: Int!
+  "Rejected and failed answers divided by settled ones, leaving out fallbacks."
+  rejectionRate: Float!
+}
+
+"Confirmed fields read by one side since the rollout started."
+type ExtractionRolloutAccuracy {
+  scored: Int!
+  correct: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+"How the candidate is doing on the documents it serves, beside production on the rest."
+type ExtractionRolloutReport {
+  rollout: ExtractionRollout!
+  providerName: String!
+  candidate: ExtractionRolloutArm!
+  control: ExtractionRolloutArm!
+  candidateAccuracy: ExtractionRolloutAccuracy!
+  productionAccuracy: ExtractionRolloutAccuracy!
+  "Per field, the candidate's biggest shortfall against production first."
+  fields: [ExtractionShadowFieldComparison!]!
+  "True when there were more corrections than the field comparison read."
+  truncated: Boolean!
+  "Confirmed fields each side needs before the accuracy guard can stop the rollout."
+  minGuardScoredFields: Int!
+  "Settled extractions each side needs before the rejection guard can stop the rollout."
+  minGuardExtractions: Int!
+}
+
+input UpdateExtractionRolloutInput {
+  enabled: Boolean!
+  providerId: ID
+  percent: Int!
+  maxAccuracyDropPoints: Int!
+  maxRejectionIncreasePoints: Int!
+  version: Int!
+}
+
+extend type Query {
+  extractionRollout: ExtractionRollout!
+  extractionRolloutReport: ExtractionRolloutReport!
+}
+
+extend type Mutation {
+  "Chooses the candidate provider that serves a share of real document extractions, how much of it, and when to stop."
+  updateExtractionRollout(input: UpdateExtractionRolloutInput!): ExtractionRollout!
+}

@@ -36,6 +36,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Purge AI corrections older than each organization's retention period",
 		},
+		driftWorkflowDefinition(),
 	}
 }
 

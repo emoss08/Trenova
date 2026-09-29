@@ -11466,6 +11466,322 @@ type ExtractionFieldAccuracy {
 }
 
 """
+How one provider read documents week by week, and whether last week fell below its own recent weeks.
+"""
+type ExtractionProviderTrend {
+  """The weeks before it, taken together."""
+  baseline: ExtractionWeekAccuracy!
+  """The last complete week, the one judged for drift."""
+  checked: ExtractionWeekAccuracy!
+  """Whether both weeks had enough scored fields to compare."""
+  comparable: Boolean!
+  drifting: Boolean!
+  """
+  Baseline accuracy less last week's, in points; zero until both have enough fields.
+  """
+  dropPoints: Float!
+  model: String!
+  providerId: ID!
+  """Empty when the provider has since been removed."""
+  providerName: String!
+  providerRemoved: Boolean!
+  """
+  One entry per week in the window, oldest first; the last is the week in progress.
+  """
+  weeks: [ExtractionWeekAccuracy!]!
+}
+
+"""
+Each extraction provider's accuracy over recent weeks, read from the corrections people made.
+"""
+type ExtractionProviderTrends {
+  baselineStart: Timestamp!
+  checkedWeek: Timestamp!
+  """
+  How many points below its baseline last week must fall to count as drift.
+  """
+  driftPoints: Int!
+  """Scored fields the baseline needs before it is judged."""
+  minBaselineFields: Int!
+  """Scored fields last week needs before it is judged."""
+  minWeekFields: Int!
+  """
+  Providers that read documents in the window, the busiest last week first.
+  """
+  providers: [ExtractionProviderTrend!]!
+  weeks: [Timestamp!]!
+}
+
+"""
+How a candidate AI provider serves a share of an organization's real document extractions.
+"""
+type ExtractionRollout {
+  enabled: Boolean!
+  """
+  Production's accuracy or rejection rate when a guard stopped the rollout.
+  """
+  haltBaselineRate: Float!
+  """
+  The candidate's accuracy or rejection rate when a guard stopped the rollout.
+  """
+  haltCandidateRate: Float!
+  haltReason: ExtractionRolloutHaltReason
+  """When a guard stopped the rollout; empty while it has not."""
+  haltedAt: Timestamp
+  """
+  How many points below production's accuracy the candidate may fall before the rollout stops.
+  """
+  maxAccuracyDropPoints: Int!
+  """
+  How many points above production's rejection rate the candidate may rise before the rollout stops.
+  """
+  maxRejectionIncreasePoints: Int!
+  """
+  The share of documents whose extraction asks the candidate first, 1 to 100.
+  """
+  percent: Int!
+  """
+  The candidate AI provider; kept while the rollout is off, so turning it back on keeps the choice.
+  """
+  providerId: ID
+  """
+  Whether documents are being sent to the candidate right now: on, with a candidate, and not stopped by a guard.
+  """
+  serving: Boolean!
+  """
+  When the current comparison began; the guards and the report count only what happened since.
+  """
+  startedAt: Timestamp
+  """Zero until the rollout is first saved."""
+  updatedAt: Timestamp!
+  updatedById: ID
+  version: Int!
+}
+
+"""Confirmed fields read by one side since the rollout started."""
+type ExtractionRolloutAccuracy {
+  """Correct divided by scored; zero when nothing was scored."""
+  accuracy: Float!
+  correct: Int!
+  scored: Int!
+}
+
+"""The extractions assigned to one side of the rollout since it started."""
+type ExtractionRolloutArm {
+  accepted: Int!
+  assigned: Int!
+  failed: Int!
+  """
+  Assigned to the candidate but served by production because the candidate could not answer.
+  """
+  fellBack: Int!
+  pending: Int!
+  rejected: Int!
+  """
+  Rejected and failed answers divided by settled ones, leaving out fallbacks.
+  """
+  rejectionRate: Float!
+  """
+  Extracted again before the answer was applied; not counted for either side.
+  """
+  superseded: Int!
+}
+
+enum ExtractionRolloutHaltReason {
+  """
+  The candidate read confirmed fields worse than production by more than the allowed points.
+  """
+  AccuracyDrop
+  """
+  The candidate's answers were unusable more often than production's by more than the allowed points.
+  """
+  Rejections
+}
+
+"""
+How the candidate is doing on the documents it serves, beside production on the rest.
+"""
+type ExtractionRolloutReport {
+  candidate: ExtractionRolloutArm!
+  candidateAccuracy: ExtractionRolloutAccuracy!
+  control: ExtractionRolloutArm!
+  """Per field, the candidate's biggest shortfall against production first."""
+  fields: [ExtractionShadowFieldComparison!]!
+  """
+  Settled extractions each side needs before the rejection guard can stop the rollout.
+  """
+  minGuardExtractions: Int!
+  """
+  Confirmed fields each side needs before the accuracy guard can stop the rollout.
+  """
+  minGuardScoredFields: Int!
+  productionAccuracy: ExtractionRolloutAccuracy!
+  providerName: String!
+  rollout: ExtractionRollout!
+  """True when there were more corrections than the field comparison read."""
+  truncated: Boolean!
+}
+
+type ExtractionShadowFieldComparison {
+  candidateAccuracy: Float!
+  candidateCorrect: Int!
+  candidateScored: Int!
+  """
+  A field key, with stop fields grouped across stops (stops.pickup.city).
+  """
+  key: String!
+  productionAccuracy: Float!
+  productionCorrect: Int!
+  productionScored: Int!
+}
+
+"""
+How a candidate provider did against production on the same documents over a window.
+"""
+type ExtractionShadowReport {
+  avgLatencyMs: Int!
+  better: Int!
+  candidate: ExtractionShadowSide!
+  completed: Int!
+  costUsd: Decimal!
+  failed: Int!
+  """Per field, the candidate's biggest shortfall against production first."""
+  fields: [ExtractionShadowFieldComparison!]!
+  pending: Int!
+  production: ExtractionShadowSide!
+  """The candidate reported on; empty when none has been chosen."""
+  providerId: ID
+  providerName: String!
+  same: Int!
+  """Shadow extractions started in the window, in every state."""
+  sampled: Int!
+  """Shadows scored against a confirmed shipment."""
+  scored: Int!
+  since: Timestamp!
+  skipped: Int!
+  """True when the window held more scored shadows than were read."""
+  truncated: Boolean!
+  windowDays: Int!
+  worse: Int!
+}
+
+"""
+A production extraction run again on the candidate provider, never applied, and scored beside production against the confirmed shipment.
+"""
+type ExtractionShadowResult {
+  """
+  Whether the candidate's answer passed the checks production's must pass to replace the rule-based reading.
+  """
+  accepted: Boolean!
+  accuracy: Float!
+  baselineAccuracy: Float!
+  baselineCorrectCount: Int!
+  baselineCorrectedCount: Int!
+  """
+  How production's draft for the same document scored against the same confirmed shipment.
+  """
+  baselineFieldResults: [AICorrectionFieldResult!]!
+  baselineMissedCount: Int!
+  baselineScoredCount: Int!
+  businessUnitId: ID!
+  completedAt: Timestamp
+  correctCount: Int!
+  correctedCount: Int!
+  """
+  The correction the shadow was scored against; empty until a person confirms the document.
+  """
+  correctionId: ID
+  costUsd: Decimal!
+  createdAt: Timestamp!
+  documentId: ID!
+  """When the production extraction this shadows was made."""
+  extractedAt: Timestamp!
+  fieldResults: [AICorrectionFieldResult!]!
+  id: ID!
+  inputTokens: Int!
+  latencyMs: Int!
+  missedCount: Int!
+  organizationId: ID!
+  outputTokens: Int!
+  """The draft the candidate would have produced."""
+  predicted: ExtractionSnapshot
+  productionModel: String!
+  productionProviderId: ID
+  providerId: ID!
+  providerName: String!
+  rejectionReason: String!
+  scoredAt: Timestamp
+  scoredCount: Int!
+  """The model the candidate reported serving."""
+  servedModel: String!
+  startedAt: Timestamp
+  status: ExtractionShadowResultStatus!
+  """Why the shadow was skipped or failed."""
+  statusReason: String!
+  updatedAt: Timestamp!
+  verdict: ExtractionShadowVerdict
+  version: Int!
+  workflowId: String!
+}
+
+type ExtractionShadowResultConnection {
+  edges: [ExtractionShadowResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ExtractionShadowResultEdge {
+  cursor: String!
+  node: ExtractionShadowResult!
+}
+
+enum ExtractionShadowResultStatus {
+  Completed
+  Failed
+  Pending
+  Skipped
+}
+
+"""
+How production document extraction is shadowed by a candidate AI provider.
+"""
+type ExtractionShadowSettings {
+  """The most shadow extractions started in any 24 hours."""
+  dailyLimit: Int!
+  enabled: Boolean!
+  """
+  The candidate AI provider; set even while the shadow is off, so turning it back on keeps the choice.
+  """
+  providerId: ID
+  """
+  The share of production extractions also sent to the candidate, 1 to 100.
+  """
+  samplePercent: Int!
+  """Zero until the settings are first saved."""
+  updatedAt: Timestamp!
+  updatedById: ID
+  version: Int!
+}
+
+"""
+One side of a shadow comparison, over the documents both sides were scored on.
+"""
+type ExtractionShadowSide {
+  """Correct divided by scored; zero when nothing was scored."""
+  accuracy: Float!
+  correct: Int!
+  corrected: Int!
+  missed: Int!
+  scored: Int!
+}
+
+enum ExtractionShadowVerdict {
+  Better
+  Same
+  Worse
+}
+
+"""
 Field values and stops, either as an extraction predicted them or as a person confirmed them.
 """
 type ExtractionSnapshot {
@@ -11496,6 +11812,16 @@ type ExtractionStop {
   state: String!
   timeWindow: String!
   timezone: String!
+}
+
+"""One provider's corrections in one UTC week, Monday to Sunday."""
+type ExtractionWeekAccuracy {
+  """Correct divided by scored; zero when nothing was scored."""
+  accuracy: Float!
+  correct: Int!
+  corrections: Int!
+  scored: Int!
+  weekStart: Timestamp!
 }
 
 type FacilityDetentionStat {
@@ -15830,6 +16156,14 @@ type Mutation {
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateEscrowAccount(input: UpdateEscrowAccountInput!): EscrowAccount!
   updateExtractionEvalCase(id: ID!, input: UpdateExtractionEvalCaseInput!): ExtractionEvalCase!
+  """
+  Chooses the candidate provider that serves a share of real document extractions, how much of it, and when to stop.
+  """
+  updateExtractionRollout(input: UpdateExtractionRolloutInput!): ExtractionRollout!
+  """
+  Chooses the candidate provider that shadows production document extraction, and how much of it.
+  """
+  updateExtractionShadowSettings(input: UpdateExtractionShadowSettingsInput!): ExtractionShadowSettings!
   updateFuelCard(id: ID!, input: FuelCardInput!, version: Int!): FuelCard!
   updateFuelIndex(id: ID!, input: FuelIndexInput!): FuelIndex!
   updateFuelIndexPrice(input: UpdateFuelIndexPriceInput!): FuelIndexPrice!
@@ -18009,6 +18343,13 @@ type Query {
   extractionEvalResults(input: DataTableConnectionInput!, runId: ID!): ExtractionEvalResultConnection!
   extractionEvalRun(id: ID!): ExtractionEvalRun
   extractionEvalRuns(input: DataTableConnectionInput!): ExtractionEvalRunConnection!
+  extractionProviderTrends: ExtractionProviderTrends!
+  extractionRollout: ExtractionRollout!
+  extractionRolloutReport: ExtractionRolloutReport!
+  extractionShadowReport(providerId: ID, windowDays: Int): ExtractionShadowReport!
+  extractionShadowResult(id: ID!): ExtractionShadowResult
+  extractionShadowResults(input: DataTableConnectionInput!): ExtractionShadowResultConnection!
+  extractionShadowSettings: ExtractionShadowSettings!
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
   fleetCode(id: ID!): FleetCode
@@ -23536,6 +23877,23 @@ input UpdateExtractionEvalCaseInput {
   notes: String
   status: ExtractionEvalCaseStatus
   title: String
+  version: Int!
+}
+
+input UpdateExtractionRolloutInput {
+  enabled: Boolean!
+  maxAccuracyDropPoints: Int!
+  maxRejectionIncreasePoints: Int!
+  percent: Int!
+  providerId: ID
+  version: Int!
+}
+
+input UpdateExtractionShadowSettingsInput {
+  dailyLimit: Int!
+  enabled: Boolean!
+  providerId: ID
+  samplePercent: Int!
   version: Int!
 }
 

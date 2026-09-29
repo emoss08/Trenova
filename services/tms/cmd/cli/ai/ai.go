@@ -13,7 +13,9 @@ Examples:
   trenova ai training-export start --from 2026-01-01 --requested-by "Jordan Lee"
   trenova ai training-export list
   trenova ai training-export status aitx_01J...
-  trenova ai training-export withdrawn aitx_01J... --output withdrawn.txt`,
+  trenova ai training-export withdrawn aitx_01J... --output withdrawn.txt
+  trenova ai retraining list
+  trenova ai retraining run --config ml/extraction-finetune/configs/qwen2.5-7b-instruct.yaml --work-dir /data/retraining`,
 }
 
 func init() {

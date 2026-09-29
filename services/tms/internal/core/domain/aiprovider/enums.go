@@ -131,6 +131,14 @@ func (m StructuredOutputMode) IsValid() bool {
 	}
 }
 
+func AllStructuredOutputModes() []StructuredOutputMode {
+	return []StructuredOutputMode{
+		StructuredOutputJSONSchema,
+		StructuredOutputJSONMode,
+		StructuredOutputPrompted,
+	}
+}
+
 // DefaultStructuredOutputMode is the mode assumed for a kind when an operator has
 // not chosen one. The hosted protocols enforce schemas; an arbitrary
 // OpenAI-compatible endpoint is assumed to be the weakest case until proven

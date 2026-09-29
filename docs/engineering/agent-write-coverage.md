@@ -89,7 +89,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 259 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 48 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 50 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 42 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-951 writes: 494 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
+953 writes: 496 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 375 |
-| Exempt | 576 |
+| Exempt | 578 |
 | — Security | 70 |
 | — Configuration | 259 |
 | — User preference | 27 |
 | — Infrastructure | 46 |
-| — Agent administration | 48 |
+| — Agent administration | 50 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
 | — Attestation | 42 |
 | — Duplicate | 4 |
 | **Pending** | **0** |
-| Total | 951 |
+| Total | 953 |
 
 Of the 375 writes an agent should be able to make, 375 have a tool (100%).
 
@@ -190,6 +190,8 @@ The writes no tool performs yet, and what the tool would do.
 | equipmenttype | 4 | 0 | 4 | 0 |
 | exchangerate | 2 | 0 | 2 | 0 |
 | extractioneval | 5 | 0 | 5 | 0 |
+| extractionrollout | 1 | 0 | 1 | 0 |
+| extractionshadow | 1 | 0 | 1 | 0 |
 | fiscalperiod | 9 | 5 | 4 | 0 |
 | fiscalyear | 7 | 0 | 7 | 0 |
 | fleetcode | 3 | 0 | 3 | 0 |
@@ -1029,6 +1031,18 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation promoteAICorrection` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
 | `mutation startExtractionEvalRun` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
 | `mutation updateExtractionEvalCase` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+
+### extractionrollout
+
+| Write | Decision |
+| --- | --- |
+| `mutation updateExtractionRollout` | Exempt, agent-administration: Choosing which AI provider serves real document extractions, how much of them, and when its guards stop it is oversight of the agents; an agent must not promote or protect the model it is measured against. |
+
+### extractionshadow
+
+| Write | Decision |
+| --- | --- |
+| `mutation updateExtractionShadowSettings` | Exempt, agent-administration: Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against. |
 
 ### fiscalperiod
 

@@ -38,8 +38,8 @@ func (c *structuredCall) request() *serviceports.StructuredCompletionRequest {
 		SchemaName:   c.schemaName,
 		Attribution:  documentAttribution(c.tenant, c.documentID, c.feature),
 	}
+	request.PreferredProviderID = c.providerID
 	if c.evaluation {
-		request.PreferredProviderID = c.providerID
 		request.RequireProvider = true
 		request.Attribution.Purpose = serviceports.AIUsagePurposeEvaluation
 	}

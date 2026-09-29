@@ -26,11 +26,7 @@ func TestRenderedPromptMatchesWhatTheRouterSends(t *testing.T) {
 	t.Parallel()
 
 	s := newTestService(t)
-	for _, mode := range []aiprovider.StructuredOutputMode{
-		aiprovider.StructuredOutputJSONSchema,
-		aiprovider.StructuredOutputJSONMode,
-		aiprovider.StructuredOutputPrompted,
-	} {
+	for _, mode := range aiprovider.AllStructuredOutputModes() {
 		t.Run(string(mode), func(t *testing.T) {
 			t.Parallel()
 

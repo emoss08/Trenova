@@ -267,6 +267,69 @@ Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden
    **Regression threshold (points)**, and whether to **Have a judge read a sample**. Then select
    **Save settings**.
 
+### Try a new document extraction model on real documents
+Keywords: shadow traffic, shadow model, candidate model, fine-tuned model, compare extraction models, A/B test extraction, new extraction provider, model rollout
+1. Register the new model as an AI provider assigned to **Document extraction**, with a
+   priority after the provider that extracts documents today, so nothing is routed to it.
+2. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
+   extraction**, and choose **Shadow**.
+3. Select **Edit settings**, turn on **Shadow production extraction**, choose the **Candidate
+   provider**, and set the **Share of extractions (%)** and the **Most per 24 hours**. Select
+   **Save**. From then on that share of documents is also read by the candidate; its answer is
+   kept but never used, and the calls spend from the evaluation budget.
+4. When someone creates a shipment from a shadowed document's draft, both answers are scored
+   against what they confirmed. Read the figures: **Candidate accuracy** against **Production
+   accuracy** on the same documents, how often the candidate did **Better or worse**, how many
+   documents were **Shadowed**, and the **Cost**. **Accuracy by field** puts the candidate's
+   biggest shortfall first.
+5. Select a row in the table to read one document field by field: what a person confirmed,
+   what the candidate read, and what production read.
+6. To stop, select **Edit settings**, turn **Shadow production extraction** off and select
+   **Save**. Move the candidate ahead of the current provider only when it beats production
+   here and in an evaluation run.
+
+### Roll out a new document extraction model gradually
+Keywords: gradual rollout, canary, promote extraction model, serve new model, fine-tuned model in production, stop rollout, rollout guard, rollback extraction model
+1. Try the model first under **Shadow** (see above), and roll it out only once it reads at least
+   as well as production there.
+2. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
+   extraction**, and choose **Rollout**. Changing the rollout needs permission to update AI
+   providers.
+3. Select **Edit settings**, turn on **Serve the candidate**, choose the **Candidate provider**,
+   and set the **Share of documents (%)**. Start small, such as 5 percent. The two guard
+   allowances say how far the candidate may fall behind production before the rollout stops on
+   its own: **Stop below production's accuracy by (pts)** and **Stop above production's unusable
+   answers by (pts)**. Select **Save**. From then on the candidate reads that share of documents
+   and its answers fill their shipment drafts; when it cannot answer, production reads the
+   document instead.
+4. Read the figures: **Candidate accuracy** on the documents it read against **Production
+   accuracy** on the rest, how often its answers were **Unusable answers** beside production's,
+   and how many documents were **Sent to the candidate** and **Kept on production**. **Guards**
+   says how much evidence each guard still needs before it can act. **Accuracy by field** puts
+   the candidate's biggest shortfall first.
+5. Raise the share in steps while the candidate holds up. The same documents stay with the
+   candidate, so each step adds documents.
+6. To stop at any time, select **Stop rollout**; every document goes back to production at once.
+   If a guard stops the rollout, the page says which one and why, and the people who can change
+   AI providers are notified. Save the settings with the rollout on to start a new
+   comparison.
+7. Once the candidate has served a large share without a guard stopping it, give it the highest
+   document extraction priority in **Providers** and turn the rollout off.
+
+### Check whether a document extraction model is getting worse
+Keywords: extraction accuracy over time, model drift, accuracy dropped, provider accuracy trend, weekly accuracy, extraction getting worse, accuracy alert
+1. Open [AI control](/admin/agent-control), select **Quality** in the rail, then **Document
+   extraction**, and choose **Accuracy**.
+2. Scroll to **Accuracy by provider over time**. Each AI provider that read documents in the
+   last 12 weeks has a row: its **Weekly accuracy** line, **Last week**, the four weeks
+   before it, the **Change** between them, and a **Status**.
+3. **Drifting** means last week's accuracy fell more than the allowed points below that
+   provider's own previous four weeks. **Not enough data** means too few fields were confirmed
+   to judge; the help on the panel says how many are needed.
+4. When a provider drifts, the people who can update AI providers are notified on Monday. To
+   respond, compare it with another provider under **Shadow**, or lower its document extraction
+   priority in **Providers** so another provider reads documents first.
+
 ### Read what agents did on the audit trail
 Keywords: AI audit trail, agent audit log, who approved, what did the agent do, AI compliance, tool calls, model calls, AI decisions, evaluations
 1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**.

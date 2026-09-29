@@ -252,6 +252,12 @@ var ExtractionEvalResultSpec TypeSpec
 
 var ExtractionEvalRunSpec TypeSpec
 
+var ExtractionRolloutSpec TypeSpec
+
+var ExtractionShadowResultSpec TypeSpec
+
+var ExtractionShadowSettingsSpec TypeSpec
+
 var FiscalPeriodSpec TypeSpec
 
 var FiscalYearSpec TypeSpec
@@ -12519,6 +12525,283 @@ func init() {
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	ExtractionRolloutSpec = TypeSpec{
+		TypeName: "ExtractionRollout",
+		FieldMap: buncolgen.ExtractionRolloutFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:        "providerId",
+				FieldMapKey: "providerId",
+			},
+			{
+				Name:        "percent",
+				FieldMapKey: "percent",
+			},
+			{
+				Name:        "maxAccuracyDropPoints",
+				FieldMapKey: "maxAccuracyDropPoints",
+			},
+			{
+				Name:        "maxRejectionIncreasePoints",
+				FieldMapKey: "maxRejectionIncreasePoints",
+			},
+			{
+				Name:    "serving",
+				Special: "serving",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "haltedAt",
+				FieldMapKey: "haltedAt",
+			},
+			{
+				Name:        "haltReason",
+				FieldMapKey: "haltReason",
+			},
+			{
+				Name:        "haltCandidateRate",
+				FieldMapKey: "haltCandidateRate",
+			},
+			{
+				Name:        "haltBaselineRate",
+				FieldMapKey: "haltBaselineRate",
+			},
+			{
+				Name:        "updatedById",
+				FieldMapKey: "updatedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	ExtractionShadowResultSpec = TypeSpec{
+		TypeName: "ExtractionShadowResult",
+		FieldMap: buncolgen.ShadowResultFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "extractedAt",
+				FieldMapKey: "extractedAt",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "statusReason",
+				FieldMapKey: "statusReason",
+			},
+			{
+				Name:        "providerId",
+				FieldMapKey: "providerId",
+			},
+			{
+				Name:        "providerName",
+				FieldMapKey: "providerName",
+			},
+			{
+				Name:        "servedModel",
+				FieldMapKey: "servedModel",
+			},
+			{
+				Name:        "productionProviderId",
+				FieldMapKey: "productionProviderId",
+			},
+			{
+				Name:        "productionModel",
+				FieldMapKey: "productionModel",
+			},
+			{
+				Name:        "accepted",
+				FieldMapKey: "accepted",
+			},
+			{
+				Name:        "rejectionReason",
+				FieldMapKey: "rejectionReason",
+			},
+			{
+				Name:        "predicted",
+				FieldMapKey: "predicted",
+			},
+			{
+				Name:        "correctionId",
+				FieldMapKey: "correctionId",
+			},
+			{
+				Name:        "scoredAt",
+				FieldMapKey: "scoredAt",
+			},
+			{
+				Name:        "verdict",
+				FieldMapKey: "verdict",
+			},
+			{
+				Name:        "fieldResults",
+				FieldMapKey: "fieldResults",
+			},
+			{
+				Name:        "scoredCount",
+				FieldMapKey: "scoredCount",
+			},
+			{
+				Name:        "correctCount",
+				FieldMapKey: "correctCount",
+			},
+			{
+				Name:        "correctedCount",
+				FieldMapKey: "correctedCount",
+			},
+			{
+				Name:        "missedCount",
+				FieldMapKey: "missedCount",
+			},
+			{
+				Name:        "accuracy",
+				FieldMapKey: "accuracy",
+			},
+			{
+				Name:        "baselineFieldResults",
+				FieldMapKey: "baselineFieldResults",
+			},
+			{
+				Name:        "baselineScoredCount",
+				FieldMapKey: "baselineScoredCount",
+			},
+			{
+				Name:        "baselineCorrectCount",
+				FieldMapKey: "baselineCorrectCount",
+			},
+			{
+				Name:        "baselineCorrectedCount",
+				FieldMapKey: "baselineCorrectedCount",
+			},
+			{
+				Name:        "baselineMissedCount",
+				FieldMapKey: "baselineMissedCount",
+			},
+			{
+				Name:        "baselineAccuracy",
+				FieldMapKey: "baselineAccuracy",
+			},
+			{
+				Name:        "latencyMs",
+				FieldMapKey: "latencyMs",
+			},
+			{
+				Name:        "inputTokens",
+				FieldMapKey: "inputTokens",
+			},
+			{
+				Name:        "outputTokens",
+				FieldMapKey: "outputTokens",
+			},
+			{
+				Name:        "costUsd",
+				FieldMapKey: "costUsd",
+			},
+			{
+				Name:        "workflowId",
+				FieldMapKey: "workflowId",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	ExtractionShadowSettingsSpec = TypeSpec{
+		TypeName: "ExtractionShadowSettings",
+		FieldMap: buncolgen.ShadowSettingsFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:        "providerId",
+				FieldMapKey: "providerId",
+			},
+			{
+				Name:        "samplePercent",
+				FieldMapKey: "samplePercent",
+			},
+			{
+				Name:        "dailyLimit",
+				FieldMapKey: "dailyLimit",
+			},
+			{
+				Name:        "updatedById",
+				FieldMapKey: "updatedById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
 			},
 			{
 				Name:        "updatedAt",

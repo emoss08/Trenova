@@ -25,6 +25,9 @@ trenova ai training-export withdrawn <export-id> --output withdrawn.tsv
 - `--validation-percent` (default 10, at most 50) sets how much is held out. The split is a hash
   of the export and the correction, so a retry puts every example back in the same split.
 - One export runs at a time (`uq_ai_training_exports_active`).
+- Exports are also started by scheduled retraining (`aiRetraining`), with the note
+  `Retraining cycle <id>`; see
+  [extraction-fine-tuning.md](extraction-fine-tuning.md#9-retrain-on-a-schedule).
 - The command builds only the graph it needs (`bootstrap.TrainingExportCommandOptions`):
   config, the database, object storage and a Temporal client. `AITrainingExportWorkflow` does
   the work on `system-queue`, so a worker must be running.

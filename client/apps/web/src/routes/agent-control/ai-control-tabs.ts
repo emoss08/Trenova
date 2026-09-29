@@ -121,8 +121,19 @@ export const CLEARED_TABLE_STATE = {
   modalType: null,
 } as const;
 
-/** Document extraction is four views: accuracy, corrections, the evaluation set, and its runs. */
-export const extractionViews = ["accuracy", "corrections", "cases", "runs"] as const;
+/**
+ * Document extraction is six views: accuracy, corrections, the evaluation set,
+ * its runs, the candidate shadowing production, and the candidate rolled out to
+ * a share of it.
+ */
+export const extractionViews = [
+  "accuracy",
+  "corrections",
+  "cases",
+  "runs",
+  "shadow",
+  "rollout",
+] as const;
 export type ExtractionView = (typeof extractionViews)[number];
 
 export const EXTRACTION_VIEW_PARAM = "extraction";
