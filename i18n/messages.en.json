@@ -119884,17 +119884,8 @@
       "routes/fiscal-year"
     ]
   },
-  "Opening the conversation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Opening the desk": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
