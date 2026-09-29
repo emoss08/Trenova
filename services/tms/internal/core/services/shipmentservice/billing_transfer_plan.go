@@ -194,8 +194,57 @@ func (s *service) planTransfers(
 		readiness := s.readinessFrom(entry.entity, entry.resolution, sources)
 		decide(&decisions[entry.index], readiness, entry.markReady)
 	}
+	if err = s.stampCurrencies(ctx, tenantInfo, decisions, pending, sources.payers); err != nil {
+		return nil, err
+	}
 
 	return summarize(decisions), nil
+}
+
+func (s *service) stampCurrencies(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	decisions []services.BillingTransferDecision,
+	pending []pendingReadiness,
+	payers map[pulid.ID]*customer.Customer,
+) error {
+	billedTo := make([]pulid.ID, len(decisions))
+	for idx := range decisions {
+		billedTo[idx] = decisions[idx].CustomerID
+	}
+	for _, entry := range pending {
+		billedTo[entry.index] = entry.resolution.DefaultPayerID
+	}
+
+	missing := make([]pulid.ID, 0, len(decisions))
+	for _, id := range billedTo {
+		if _, known := payers[id]; id.IsNotNil() && !known {
+			missing = append(missing, id)
+		}
+	}
+	if len(missing) > 0 {
+		loaded, err := s.customerRepo.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+			TenantInfo:  tenantInfo,
+			CustomerIDs: sliceutils.Dedupe(missing),
+			CustomerFilterOptions: repositories.CustomerFilterOptions{
+				IncludeBillingProfile: true,
+			},
+		})
+		if err != nil {
+			return err
+		}
+		for _, entry := range loaded {
+			if entry != nil {
+				payers[entry.ID] = entry
+			}
+		}
+	}
+
+	for idx := range decisions {
+		decisions[idx].CurrencyCode = payers[billedTo[idx]].BillingCurrencyCode()
+	}
+
+	return nil
 }
 
 func (s *service) readinessSourcesFor(

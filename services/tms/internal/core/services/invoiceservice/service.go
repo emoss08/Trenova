@@ -4,7 +4,6 @@ package invoiceservice
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 
@@ -1448,12 +1447,7 @@ func resolvePaymentTerm(
 }
 
 func billingCurrencyFromCustomer(cus *customer.Customer) string {
-	if cus == nil || cus.BillingProfile == nil ||
-		strings.TrimSpace(cus.BillingProfile.BillingCurrency) == "" {
-		return "USD"
-	}
-
-	return cus.BillingProfile.BillingCurrency
+	return cus.BillingCurrencyCode()
 }
 
 func serviceDateFromShipment(shp *shipment.Shipment) *int64 {

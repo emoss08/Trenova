@@ -322,6 +322,7 @@ type BillingTransferDecision struct {
 	CustomerID            pulid.ID                       `json:"customerId"`
 	CustomerName          string                         `json:"customerName"`
 	TotalCharge           decimal.NullDecimal            `json:"totalCharge"`
+	CurrencyCode          string                         `json:"currencyCode"`
 	DeliveredAt           *int64                         `json:"deliveredAt"`
 	Outcome               BillingTransferOutcome         `json:"outcome"`
 	FailureCode           BillingTransferFailureCode     `json:"failureCode,omitempty"`

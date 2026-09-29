@@ -3,6 +3,7 @@ package customer
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -171,6 +173,15 @@ func (c *Customer) GetBusinessUnitID() pulid.ID {
 
 func (c *Customer) HasBillingProfile() bool {
 	return c.BillingProfile != nil
+}
+
+func (c *Customer) BillingCurrencyCode() string {
+	if c == nil || c.BillingProfile == nil ||
+		strings.TrimSpace(c.BillingProfile.BillingCurrency) == "" {
+		return money.DefaultCurrencyCode
+	}
+
+	return c.BillingProfile.BillingCurrency
 }
 
 func (c *Customer) HasEmailProfile() bool {

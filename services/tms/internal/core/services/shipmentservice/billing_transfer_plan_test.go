@@ -1,6 +1,7 @@
 package shipmentservice
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -270,4 +271,57 @@ func TestListBillingTransferCandidates_RefusesAStatusTheDialogDoesNotOffer(t *te
 		},
 	)
 	require.Error(t, err)
+}
+
+func TestPlanBillingTransfers_NamesTheCurrencyEachShipmentIsBilledIn(t *testing.T) {
+	t.Parallel()
+
+	f := newPlanFixture(t)
+	f.profile.BillingCurrency = "CAD"
+	clean := f.newShipment("PRO-1", shipment.StatusReadyToInvoice)
+	queued := f.newShipment("PRO-2", shipment.StatusReadyToInvoice)
+	queued.BillingTransferStatus = shipment.BillingTransferInReview
+	queued.CustomerID = pulid.MustNew("cus_")
+
+	f.repo.EXPECT().
+		GetByIDs(mock.Anything, mock.Anything).
+		Return([]*shipment.Shipment{clean, queued}, nil).
+		Once()
+	f.customerRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+			return req.IncludeBillingProfile && !slices.Contains(req.CustomerIDs, queued.CustomerID)
+		})).
+		Return([]*customer.Customer{{
+			ID:             clean.CustomerID,
+			Name:           "Acme Foods",
+			BillingProfile: f.profile,
+		}}, nil).
+		Once()
+	f.customerRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
+			return req.IncludeBillingProfile && len(req.CustomerIDs) == 1 &&
+				req.CustomerIDs[0] == queued.CustomerID
+		})).
+		Return([]*customer.Customer{{
+			ID:             queued.CustomerID,
+			BillingProfile: &customer.CustomerBillingProfile{BillingCurrency: "EUR"},
+		}}, nil).
+		Once()
+	f.billingRepo.EXPECT().GetByOrgID(mock.Anything, f.orgID).Return(manualBillingControl(), nil).Once()
+	f.documentRepo.EXPECT().
+		GetByResourceIDs(mock.Anything, mock.Anything).
+		Return([]*document.Document{f.podFor(clean)}, nil).
+		Once()
+
+	plan, err := f.svc.PlanBillingTransfers(t.Context(), &services.PlanBillingTransfersRequest{
+		TenantInfo:  f.tenant(),
+		ShipmentIDs: []pulid.ID{clean.ID, queued.ID},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, plan.Decisions, 2)
+	assert.Equal(t, services.BillingTransferOutcomeTransfer, plan.Decisions[0].Outcome)
+	assert.Equal(t, "CAD", plan.Decisions[0].CurrencyCode)
+	assert.Equal(t, services.BillingTransferOutcomeRefused, plan.Decisions[1].Outcome)
+	assert.Equal(t, "EUR", plan.Decisions[1].CurrencyCode)
 }
