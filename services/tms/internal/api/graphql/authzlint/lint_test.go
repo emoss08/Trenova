@@ -200,6 +200,7 @@ func TestAgentAccessResolversAreAuthorized(t *testing.T) {
 		"mutationResolver.SetAgentAccess",
 		"mutationResolver.SetRoleAgentAccess",
 		"mutationResolver.DecideMyProposal",
+		"mutationResolver.DecideMyProposals",
 		// Self-scoped by name, so it would pass on authentication alone. It
 		// runs the plan's writes, so it must hold assistant:update before the
 		// service checks the thread is the caller's and the agent is theirs.

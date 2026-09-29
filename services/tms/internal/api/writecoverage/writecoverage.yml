@@ -133,6 +133,9 @@ writes:
   "mutation decideMyProposal":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+  "mutation decideMyProposals":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
   "mutation dismissAgentMemorySuggestion":
     exempt: agent-administration
     reason: "A person curating what agents remember; an agent writes memory through remember and forget_memory."

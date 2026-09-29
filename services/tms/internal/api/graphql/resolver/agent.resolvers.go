@@ -229,6 +229,25 @@ func (r *mutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 	}, actorutil.FromAuthContext(authCtx))
 }
 
+func (r *mutationResolver) DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := batchDecisionRequest(ids, &input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := r.agentDecisionQueueService.DecideManyOwn(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return batchDecisionResults(results), nil
+}
+
 func (r *mutationResolver) DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
 	if err != nil {
