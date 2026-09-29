@@ -189,24 +189,34 @@ because nothing brings them back. Saved report views are one person's preference
 
 | Template | Runs | Holds |
 | --- | --- | --- |
+| Fuel and IFTA clerk | chat, at a Propose ceiling, Internal data access | `list_fuel_purchases`, `record_fuel_purchase`, `correct_fuel_purchase`, `delete_fuel_purchase`, `list_fuel_cards`, `assign_fuel_card`, `list_fuel_purchase_imports`, `resolve_fuel_purchase_import_rows`, `commit_fuel_purchase_import`, `discard_fuel_purchase_import`, `list_ifta_jurisdictions`, `list_ifta_mileage_entries`, `record_ifta_mileage_entry`, `correct_ifta_mileage_entry`, `delete_ifta_mileage_entry`, `recalculate_move_jurisdiction_miles`, `backfill_jurisdiction_miles`, `list_ifta_returns`, `generate_ifta_return`, `recompute_ifta_return`, `delete_ifta_return`, `amend_ifta_return`, `list_fuel_index_prices`, `record_fuel_index_price`, `correct_fuel_index_price` |
 | Formula assistant | chat, at a Propose ceiling | `list_customers`, `list_carriers`, `list_locations`, `list_rate_imports`, `list_fuel_index_prices`, `draft_rate_agreement`, `revise_rate_agreement_draft`, `duplicate_rate_agreement`, `submit_rate_agreement`, `run_rate_simulation`, `amend_rate_agreement_rules`, `apply_rate_increase`, `suspend_rate_agreement`, `resume_rate_agreement`, `archive_rate_agreement`, `commit_rate_import`, `discard_rate_import`, `record_fuel_index_price`, `correct_fuel_index_price` |
 
-The formula assistant is the organization's pricing agent and holds 29 of its 56 tools. Its
-Propose ceiling means every write it makes waits for a person, so it needs no new permission
-ceiling entry.
+The fuel and IFTA clerk keeps the fuel tax record and holds 33 of its 56 tools: every fuel
+purchase, fuel card, fuel import, jurisdiction mileage and IFTA tool on this page, the fuel
+index prices it shares with the formula assistant, `get_fuel_surcharge_rates`, and the tractor,
+driver, shipment and document reads that find what a purchase or a mile belongs to. Fuel
+purchases and returns default to Internal sensitivity, so its data access is Internal. The
+formula assistant is the organization's pricing agent and holds 29. Both run at a Propose
+ceiling, so every write they make waits for a person and needs no new permission ceiling entry;
+a fuel index price still runs only from that person's approval.
 
-The fuel purchase, fuel card, fuel import, IFTA, jurisdiction mileage and report
-administration tools, and `approve_rate_agreement` and `reject_rate_agreement`, are
-registered and on no template. The billing assistant has no room left under the eight-tool
-headroom; the compliance assistant, where fuel tax would belong, has none once the
-workforce tools join it; and the books keeper is an unattended accounting desk. Approving and rejecting stay off every
-template so the agent that drafts an agreement is never the one that reviews it. An
-organization adds them to an agent it builds in AI control.
+The report administration tools (`delete_report`, `reset_report_fork`, `delete_dashboard`,
+`update_report_schedule`, `delete_report_schedule`, `cancel_report_run`) and the report and
+dashboard builders (`create_report`, `update_report`, `fork_report`, `schedule_report`,
+`create_dashboard`, `add_dashboard_tile`) are registered and on no template. The insight
+analyst, the one template that reads reports and has room, is an unattended desk: its template
+test keeps it from building reports, and deleting reports, dashboards and schedules and changing
+a schedule need grants the agent permission ceiling gives no agent. The chat templates that read
+reports have no room left under the eight-tool headroom. `approve_rate_agreement` and
+`reject_rate_agreement` stay off every template so the agent that drafts an agreement is never
+the one that reviews it. An organization adds any of them to an agent it builds in AI control.
 
 ## Known limits
 
 - An agent made from the formula assistant template before these tools existed keeps the
-  tools it was saved with; an administrator adds them in AI control.
+  tools it was saved with; an administrator adds them in AI control. An organization that
+  wants the fuel and IFTA clerk creates it from its starter.
 - A lane scoped by Radius cannot be drafted by an agent; a person draws it on the page.
 - `apply_rate_increase` takes at most 50 agreements by id, and a rate matrix's cells are not
   moved by it; the preview counts the matrix-priced lanes it leaves alone.

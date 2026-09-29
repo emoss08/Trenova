@@ -163,25 +163,29 @@ nothing to bring them back, so it is always proposed.
 
 | Template | Runs | Holds |
 | --- | --- | --- |
+| Master data steward | chat, at a Propose ceiling, Internal data access | `create_carrier`, `update_carrier`, `update_carrier_status`, `create_customer`, `update_customer`, `update_customer_status`, `create_commodity`, `update_commodity`, `update_commodity_status`, `create_hazardous_material`, `update_hazardous_material`, `update_hazardous_material_status`, `create_location`, `update_location`, `update_location_status`, `create_tractor`, `update_tractor`, `update_tractor_status`, `locate_tractor`, `create_trailer`, `update_trailer`, `update_trailer_status`, `locate_trailer`, `list_equipment_manufacturers`, `delete_documents`, `restore_document_version`, `list_table_change_alerts`, `create_table_change_alert`, `update_table_change_alert`, `set_table_change_alert_status`, `delete_table_change_alert`, `list_watchtower_items`, `dismiss_watchtower_item`, `list_capture_batches`, `file_capture_items`, `discard_capture_item`, `discard_capture_batch`, and the list and get tools each needs |
 | Customer assistant | chat, at a Propose ceiling | `create_customer`, `update_customer`, `update_customer_status`, `list_locations`, `update_location`, `update_location_status`, `list_commodities`, `create_commodity`, `update_commodity` |
 | Insight analyst | on each new insight, at a Propose ceiling | `restore_insight` |
 
-The customer assistant handles customer records and now holds 53 of its 56 tools. The insight
-analyst dismisses insights it finds are noise and can bring one back. Both run at a Propose
-ceiling, so every write they make waits for a person and needs no new permission ceiling
-entry.
+The master data steward is the organization's records keeper and holds 55 of its 56 tools:
+every write on this page, the reads that find each record, `search_documents` and
+`get_document_summary` for the documents it deletes or restores, `list_document_types` for
+filing, and `search_shipments` for paperwork that belongs on a load. The customer assistant
+handles customer records and holds 53. The insight analyst dismisses insights it finds are
+noise and can bring one back. All three run at a Propose ceiling, so every write they make
+waits for a person and needs no new permission ceiling entry; `locate_trailer`, and a carrier
+change that sets payment or remit-to, still run only from that person's approval.
 
-Every other tool on this page is registered and on no template. The dispatch, billing and
-compliance assistants each hold 55 of 56 tools and the settlements clerk all 56, so the
-carrier, equipment and document tools have no room there; the carrier risk desk says whether a
-carrier can be tendered and leaves the decision to stop using one to a person; and capture
-filing is a person's paperwork, done on their behalf. An organization adds these tools to an
-agent it builds in AI control.
+No write on this page is left without a holder. The carrier risk desk still only says whether a
+carrier can be tendered and leaves the decision to stop using one to a person, and capture
+filing stays a proposal the person whose paperwork it is approves. An organization can still
+add any of these tools to an agent it builds in AI control.
 
 ## Known limits
 
 - An agent made from the customer assistant or insight analyst template before these tools
-  existed keeps the tools it was saved with; an administrator adds them in AI control.
+  existed keeps the tools it was saved with; an administrator adds them in AI control. An
+  organization that wants the master data steward creates it from its starter.
 - A bulk status change, a document delete and a capture filing each take at most 25 records;
   `list_capture_batches` shows at most 10 open stacks.
 - An agent cannot edit a customer's billing or email profile, a carrier's contacts, insurance
