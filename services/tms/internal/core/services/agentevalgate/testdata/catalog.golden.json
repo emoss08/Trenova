@@ -4271,7 +4271,9 @@
               "fiscal periods",
               "orders",
               "recurring shipments",
-              "formula templates"
+              "formula templates",
+              "equipment manufacturers",
+              "table change alerts"
             ],
             "type": "string",
             "x-enumOf": "tableView.entity"
@@ -4794,6 +4796,198 @@
       }
     },
     {
+      "name": "create_carrier",
+      "description": "Add a carrier the organization can tender freight to: its code, name, USDOT and MC numbers, SCAC, address and dispatch contact. Check list_carriers first. Vetting and compliance are vet_carrier's; payment and remit-to details are only proposed.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "addressLine1": {
+            "description": "The street address.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Suite, building or unit.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "carrierType": {
+            "description": "What kind of carrier it is. Defaults to Common.",
+            "enum": [
+              "Common",
+              "Contract",
+              "Broker",
+              "Exempt"
+            ],
+            "type": "string",
+            "x-enumOf": "carrier.type"
+          },
+          "city": {
+            "description": "The city.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "code": {
+            "description": "The carrier's short code, unique in this organization.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "dbaName": {
+            "description": "The name it does business as, when that differs.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "dotNumber": {
+            "description": "The USDOT number, digits only.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "email": {
+            "description": "The dispatch email address.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "is1099Eligible": {
+            "description": "Whether payments are reported on a 1099.",
+            "type": "boolean"
+          },
+          "mcNumber": {
+            "description": "The MC docket number, digits only.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "name": {
+            "description": "The carrier's legal name.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "notes": {
+            "description": "Anything colleagues booking this carrier should know.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "paymentMethod": {
+            "description": "How the carrier is paid. Defaults to Check. Payment details are only ever proposed and change on a person's approval.",
+            "enum": [
+              "Check",
+              "ACHManual"
+            ],
+            "type": "string",
+            "x-enumOf": "carrier.paymentMethod"
+          },
+          "paymentTermDays": {
+            "description": "Days after the invoice the carrier is paid. Defaults to 30.",
+            "maximum": 365,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "phone": {
+            "description": "The dispatch phone number.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "The ZIP code.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "remitAddressLine1": {
+            "description": "The remit-to street address.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "remitAddressLine2": {
+            "description": "The remit-to suite or unit.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "remitCity": {
+            "description": "The remit-to city.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "remitPostalCode": {
+            "description": "The remit-to ZIP code.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "remitState": {
+            "description": "The remit-to state. The two-letter US state abbreviation, such as TX.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "remitToName": {
+            "description": "Who payment is made out to.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "scac": {
+            "description": "The two to four letter SCAC.",
+            "maxLength": 4,
+            "type": "string"
+          },
+          "state": {
+            "description": "The state of the street address. The two-letter US state abbreviation, such as TX.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "taxId": {
+            "description": "The tax id payments are reported under.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "taxIdType": {
+            "description": "Whether the tax id is an EIN or an SSN; required with a tax id.",
+            "enum": [
+              "EIN",
+              "SSN"
+            ],
+            "type": "string",
+            "x-enumOf": "carrier.taxIdType"
+          },
+          "w9OnFile": {
+            "description": "Whether a signed W-9 is on file.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "new carrier",
+        "add carrier",
+        "onboard carrier",
+        "trucking company"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal",
+          "money"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a carrier inside Trenova that colleagues can then book; nothing is sent. Payment and remit-to details decide where money goes, so a call that sets them is money and runs only on a person's approval."
+      }
+    },
+    {
       "name": "create_carrier_invoice_match",
       "description": "Match a carrier's EDI invoice to the load it bills, comparing its total with what the carrier assignment was expected to cost. The match is Matched when within tolerance and Variance when not. Link the invoice to a carrier first with link_edi_carrier_invoice_to_carrier when it has none.",
       "parameters": {
@@ -4838,6 +5032,260 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Records how a carrier's invoice compares with the expected cost inside Trenova; nothing is paid until a person accepts it."
+      }
+    },
+    {
+      "name": "create_commodity",
+      "description": "Add a commodity shipments can carry, with its freight class, temperature range, dimensions and handling. Name the hazardous material it is when it is hazmat, and check list_commodities first.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "What the goods are.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "fragile": {
+            "description": "Whether it is fragile.",
+            "type": "boolean"
+          },
+          "freightClass": {
+            "description": "The NMFC freight class.",
+            "enum": [
+              "Class50",
+              "Class55",
+              "Class60",
+              "Class65",
+              "Class70",
+              "Class77_5",
+              "Class85",
+              "Class92_5",
+              "Class100",
+              "Class110",
+              "Class125",
+              "Class150",
+              "Class175",
+              "Class200",
+              "Class250",
+              "Class300",
+              "Class400",
+              "Class500"
+            ],
+            "type": "string",
+            "x-enumOf": "commodity.freightClass"
+          },
+          "hazardousMaterialId": {
+            "description": "The hazardous material it is, from list_hazardous_materials, when the goods are hazmat.",
+            "type": "string"
+          },
+          "heightPerUnit": {
+            "description": "Inches high per unit. A decimal such as 42.5.",
+            "type": "string"
+          },
+          "lengthPerUnit": {
+            "description": "Inches long per unit. A decimal such as 42.5.",
+            "type": "string"
+          },
+          "linearFeetPerUnit": {
+            "description": "Linear feet of trailer per unit. A decimal such as 42.5.",
+            "type": "string"
+          },
+          "loadingInstructions": {
+            "description": "How it is loaded and secured.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "maxQuantityPerShipment": {
+            "description": "The most units one shipment may carry. A decimal such as 42.5.",
+            "type": "string"
+          },
+          "maxTemperature": {
+            "description": "The highest temperature it may be carried at, in degrees Fahrenheit.",
+            "maximum": 200,
+            "minimum": -100,
+            "type": "integer"
+          },
+          "minTemperature": {
+            "description": "The lowest temperature it may be carried at, in degrees Fahrenheit.",
+            "maximum": 200,
+            "minimum": -100,
+            "type": "integer"
+          },
+          "name": {
+            "description": "The commodity's name, unique in this organization.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "stackable": {
+            "description": "Whether units may be stacked.",
+            "type": "boolean"
+          },
+          "weightPerUnit": {
+            "description": "Pounds per unit. A decimal such as 42.5.",
+            "type": "string"
+          },
+          "widthPerUnit": {
+            "description": "Inches wide per unit. A decimal such as 42.5.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "new commodity",
+        "add commodity",
+        "product",
+        "freight class"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "commodity",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "commodity",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a commodity inside Trenova that shipments can name; nothing is sent and it can be made inactive."
+      }
+    },
+    {
+      "name": "create_customer",
+      "description": "Add a customer the organization ships for: its code, name, billing address and DOT and MC numbers. Check list_customers first. Billing terms start from the organization's defaults; who is emailed status updates is only proposed.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "addressLine1": {
+            "description": "The billing street address.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Suite, building or unit.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "allowConsolidation": {
+            "description": "Whether its shipments may be consolidated.",
+            "type": "boolean"
+          },
+          "city": {
+            "description": "The city.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "code": {
+            "description": "The customer's short code, unique in this organization.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "consolidationPriority": {
+            "description": "Its priority when shipments are consolidated, 1 first.",
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "dotNumber": {
+            "description": "The USDOT number, digits only, for a broker customer.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "exclusiveConsolidation": {
+            "description": "Whether its shipments are consolidated only with each other; needs allowConsolidation.",
+            "type": "boolean"
+          },
+          "mcNumber": {
+            "description": "The MC docket number, digits only.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "name": {
+            "description": "The customer's name.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "The ZIP code.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "state": {
+            "description": "The state. The two-letter US state abbreviation, such as TX.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "statusUpdatePreference": {
+            "description": "Which stop events the customer is emailed about. None stops the emails and clears the recipients. Changing who is emailed is only ever proposed.",
+            "enum": [
+              "None",
+              "Arrivals",
+              "Departures",
+              "ArrivalsAndDepartures"
+            ],
+            "type": "string",
+            "x-enumOf": "customer.statusUpdatePreference"
+          },
+          "statusUpdateRecipients": {
+            "description": "The addresses status updates go to, separated by commas.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "addressLine1",
+          "city",
+          "state",
+          "postalCode"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "new customer",
+        "add customer",
+        "shipper",
+        "bill to account"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "customer",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal",
+          "external_recipient"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "customer",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a customer inside Trenova that shipments can be booked for; nothing is sent. Setting who receives status emails decides where later emails go, so that call is held for a person."
       }
     },
     {
@@ -4959,6 +5407,165 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Saves a report dashboard colleagues can open; nothing leaves the organization."
+      }
+    },
+    {
+      "name": "create_hazardous_material",
+      "description": "Add a hazardous material commodities can name, with its hazard class, UN number and packing group. Give the shipping name, placarding and emergency contact as the DOT table does; check list_hazardous_materials first, and a person always approves it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "class": {
+            "description": "The DOT hazard class or division.",
+            "enum": [
+              "HazardClass1",
+              "HazardClass1And1",
+              "HazardClass1And2",
+              "HazardClass1And3",
+              "HazardClass1And4",
+              "HazardClass1And5",
+              "HazardClass1And6",
+              "HazardClass2And1",
+              "HazardClass2And2",
+              "HazardClass2And3",
+              "HazardClass3",
+              "HazardClass4And1",
+              "HazardClass4And2",
+              "HazardClass4And3",
+              "HazardClass5And1",
+              "HazardClass5And2",
+              "HazardClass6And1",
+              "HazardClass6And2",
+              "HazardClass7",
+              "HazardClass8",
+              "HazardClass9"
+            ],
+            "type": "string",
+            "x-enumOf": "hazardousMaterial.class"
+          },
+          "description": {
+            "description": "What the material is.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "emergencyContact": {
+            "description": "Who to call in an emergency.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "emergencyContactPhoneNumber": {
+            "description": "The emergency response phone number.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "ergGuideNumber": {
+            "description": "The Emergency Response Guidebook guide number.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "handlingInstructions": {
+            "description": "How it is handled.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "inhalationHazard": {
+            "description": "Whether it is a poison inhalation hazard.",
+            "type": "boolean"
+          },
+          "isReportableQuantity": {
+            "description": "Whether it is a reportable quantity substance.",
+            "type": "boolean"
+          },
+          "labelCodes": {
+            "description": "The label codes packages carry.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "marinePollutant": {
+            "description": "Whether it is a marine pollutant.",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "The material's name, unique in this organization.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "packingGroup": {
+            "description": "The packing group: I is great danger, III minor.",
+            "enum": [
+              "I",
+              "II",
+              "III"
+            ],
+            "type": "string",
+            "x-enumOf": "hazardousMaterial.packingGroup"
+          },
+          "placardRequired": {
+            "description": "Whether a vehicle carrying it must be placarded.",
+            "type": "boolean"
+          },
+          "properShippingName": {
+            "description": "The proper shipping name from the hazardous materials table.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "quantityThreshold": {
+            "description": "The reportable quantity; required when isReportableQuantity.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "specialProvisions": {
+            "description": "The special provision codes, separated by commas.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "subsidiaryHazardClass": {
+            "description": "Any subsidiary hazard class.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "unNumber": {
+            "description": "The four-digit UN or NA number, without the prefix.",
+            "maxLength": 4,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "class",
+          "packingGroup"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "new hazmat",
+        "add hazardous material",
+        "un number",
+        "placard"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "hazardous_material",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "hazardous_material",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a hazardous material inside Trenova; nothing is sent. Its class, placarding and emergency contact decide what drivers carry and post, so a person checks every one against the DOT table before it is saved."
       }
     },
     {
@@ -6302,6 +6909,290 @@
       }
     },
     {
+      "name": "create_tractor",
+      "description": "Add a tractor to the fleet: its unit number, driver, equipment type, manufacturer, make, model, VIN, registration and fuel. Check list_tractors first; it is Available unless another status is given.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The unit number, unique in this organization.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "equipmentManufacturerId": {
+            "description": "Who made it, from list_equipment_manufacturers.",
+            "type": "string"
+          },
+          "equipmentTypeId": {
+            "description": "Its equipment type, from list_equipment_types.",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "Its id in another system, such as a telematics provider.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "fleetCodeId": {
+            "description": "The fleet it belongs to, from list_fleet_codes.",
+            "type": "string"
+          },
+          "fuelType": {
+            "description": "The fuel it burns; its miles land on this fuel's lines of an IFTA return. Defaults to Diesel.",
+            "enum": [
+              "Diesel",
+              "Gasoline",
+              "Gasohol",
+              "Propane",
+              "CNG",
+              "LNG",
+              "Ethanol",
+              "Methanol",
+              "E85",
+              "M85",
+              "A55",
+              "Biodiesel",
+              "Electricity",
+              "Hydrogen",
+              "DEF",
+              "Reefer",
+              "Other"
+            ],
+            "type": "string",
+            "x-enumOf": "ifta.fuelType"
+          },
+          "iftaQualified": {
+            "description": "Whether its miles and fuel enter the IFTA return. Defaults to true.",
+            "type": "boolean"
+          },
+          "licensePlateNumber": {
+            "description": "The license plate.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "make": {
+            "description": "The make.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "model": {
+            "description": "The model.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "primaryWorkerId": {
+            "description": "The driver who runs it, from search_worker or list_workers.",
+            "type": "string"
+          },
+          "registrationExpiry": {
+            "description": "When the registration expires. A date as YYYY-MM-DD.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "registrationNumber": {
+            "description": "The registration number.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "secondaryWorkerId": {
+            "description": "A team driver, from search_worker or list_workers.",
+            "type": "string"
+          },
+          "state": {
+            "description": "The state it is registered in. The two-letter US state abbreviation, such as TX.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "status": {
+            "description": "Whether it can be dispatched. Available means it can be dispatched. OutOfService means it cannot, for any reason other than scheduled work. AtMaintenance means it is in the shop. Sold means it has left the fleet and is not coming back. Defaults to Available.",
+            "enum": [
+              "Available",
+              "OutOfService",
+              "AtMaintenance",
+              "Sold"
+            ],
+            "type": "string",
+            "x-enumOf": "equipment.status"
+          },
+          "vin": {
+            "description": "The 17-character VIN.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "year": {
+            "description": "The model year.",
+            "maximum": 2100,
+            "minimum": 1950,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "primaryWorkerId",
+          "equipmentTypeId",
+          "equipmentManufacturerId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "new tractor",
+        "add truck",
+        "power unit",
+        "new unit"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "tractor",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "tractor",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a tractor inside Trenova that dispatch can then assign; nothing is sent and it can be marked Sold or out of service."
+      }
+    },
+    {
+      "name": "create_trailer",
+      "description": "Add a trailer to the fleet: its unit number, equipment type, manufacturer, make, model, VIN, registration, load limit and last inspection. Check list_trailers first; it is Available unless another status is given.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The unit number, unique in this organization.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "equipmentManufacturerId": {
+            "description": "Who made it, from list_equipment_manufacturers.",
+            "type": "string"
+          },
+          "equipmentTypeId": {
+            "description": "Its equipment type, from list_equipment_types.",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "Its id in another system, such as a telematics provider.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "fleetCodeId": {
+            "description": "The fleet it belongs to, from list_fleet_codes.",
+            "type": "string"
+          },
+          "lastInspectionDate": {
+            "description": "When it was last inspected. A date as YYYY-MM-DD.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "licensePlateNumber": {
+            "description": "The license plate.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "make": {
+            "description": "The make.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "maxLoadWeight": {
+            "description": "The most it may carry, in pounds.",
+            "maximum": 200000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "model": {
+            "description": "The model.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "registrationExpiry": {
+            "description": "When the registration expires. A date as YYYY-MM-DD.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "registrationNumber": {
+            "description": "The registration number.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "registrationState": {
+            "description": "The state it is registered in. The two-letter US state abbreviation, such as TX.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "status": {
+            "description": "Whether it can be dispatched. Available means it can be dispatched. OutOfService means it cannot, for any reason other than scheduled work. AtMaintenance means it is in the shop. Sold means it has left the fleet and is not coming back. Defaults to Available.",
+            "enum": [
+              "Available",
+              "OutOfService",
+              "AtMaintenance",
+              "Sold"
+            ],
+            "type": "string",
+            "x-enumOf": "equipment.status"
+          },
+          "vin": {
+            "description": "The 17-character VIN.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "year": {
+            "description": "The model year.",
+            "maximum": 2100,
+            "minimum": 1950,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "equipmentTypeId",
+          "equipmentManufacturerId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "new trailer",
+        "add trailer",
+        "reefer",
+        "dry van"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "trailer",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "trailer",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a trailer inside Trenova that dispatch can then assign; nothing is sent and it can be marked Sold or out of service."
+      }
+    },
+    {
       "name": "decline_edi_tender",
       "description": "Propose declining a load tender a trading partner sent over EDI, with the reason they are given. Use it when the tender cannot be hauled as sent: a lane or equipment this organization does not run, dates it cannot make, a rate below the customer's agreement. Read it with get_edi_transfer first. A person always decides; an outside partner is sent a 990 decline carrying the reason.",
       "parameters": {
@@ -6405,6 +7296,54 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Removes a dashboard colleagues may open and nothing brings it back, so a person always decides."
+      }
+    },
+    {
+      "name": "delete_documents",
+      "description": "Delete documents that should not be on file, such as a duplicate upload or a scan of the wrong paperwork. Every stored version of each goes with it and nothing brings them back, so it is always proposed.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "documentIds": {
+            "description": "The documents to delete, from search_documents or get_document_summary. One id is the normal case.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "documentIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "delete document",
+        "remove duplicate upload",
+        "wrong file"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "document",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Removes documents and their stored files from Trenova for good; nothing is sent, but nothing restores them either."
       }
     },
     {
@@ -6803,6 +7742,49 @@
       }
     },
     {
+      "name": "delete_table_change_alert",
+      "description": "Delete one of the person's change alerts they no longer want.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "tableChangeAlertId": {
+            "description": "The alert, from list_table_change_alerts. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tableChangeAlertId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "delete alert",
+        "remove notification",
+        "stop alerting"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "table_change_alert",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Removes an alert whose notices went to the person who owns it; create_table_change_alert sets it up again."
+      }
+    },
+    {
       "name": "delete_worker_injury",
       "description": "Delete an injury case entered on the log in error, such as a duplicate. Its case number is not reused. A real case is corrected, never deleted.",
       "parameters": {
@@ -7140,6 +8122,92 @@
       }
     },
     {
+      "name": "discard_capture_batch",
+      "description": "Throw away every unfiled document of a scanned stack in capture intake, when nothing left in it is worth filing. Documents already filed stay on their records.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "captureBatchId": {
+            "description": "The scanned stack, from list_capture_batches. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "captureBatchId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "discard stack",
+        "clear capture intake",
+        "throw away scans"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "capture_batch",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Closes a scanned stack inside Trenova and drops its unfiled pages; nothing is sent, but nothing brings the pages back, so it is always proposed."
+      }
+    },
+    {
+      "name": "discard_capture_item",
+      "description": "Throw away one scanned document from capture intake without filing it, such as a blank sheet, a duplicate or a stray page. The rest of its stack stays.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "captureItemId": {
+            "description": "The scanned document, from list_capture_batches. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "captureItemId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "discard scan",
+        "blank page",
+        "throw away scan"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "capture_batch",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Marks one scanned document not worth filing inside Trenova; nothing is sent, and its pages are removed with the stack's other unfiled pages."
+      }
+    },
+    {
       "name": "discard_fuel_purchase_import",
       "description": "Discard a fuel card statement that was staged but should not be committed, such as the wrong month or a file loaded twice. Nothing it holds becomes a purchase, and it can be staged again later.",
       "parameters": {
@@ -7311,6 +8379,49 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Dismisses an insight inside Trenova; it can be restored."
+      }
+    },
+    {
+      "name": "dismiss_watchtower_item",
+      "description": "Take an item off the watchtower feed once it has been dealt with; the record behind it is left alone. Use it for a weather alert that has passed or a message already answered. Items about agents' own runs, proposals and exceptions stay for a person to clear.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "watchtowerItemId": {
+            "description": "The item, from list_watchtower_items. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "watchtowerItemId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "dismiss watchtower",
+        "clear feed item",
+        "mark handled"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "watchtower",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Takes an item off the shared attention feed inside Trenova; nothing is sent and the record behind it is unchanged."
       }
     },
     {
@@ -8313,6 +9424,88 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "file_capture_items",
+      "description": "File scanned documents from capture intake onto the shipment, worker, tractor, trailer, customer or carrier they belong to, as the document type they are. Take the documents and their suggested records from list_capture_batches.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "description": "The documents to file, each with the record it goes on.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "documentTypeId": {
+                  "description": "What kind of document it is, from list_document_types.",
+                  "type": "string"
+                },
+                "itemId": {
+                  "description": "The scanned document, from list_capture_batches. Never guess one.",
+                  "type": "string"
+                },
+                "targetId": {
+                  "description": "The record it goes on, by id from that record's read tool.",
+                  "type": "string"
+                },
+                "targetType": {
+                  "description": "The kind of record it goes on.",
+                  "enum": [
+                    "shipment",
+                    "worker",
+                    "tractor",
+                    "trailer",
+                    "customer",
+                    "carrier"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "capture.targetType"
+                }
+              },
+              "required": [
+                "itemId",
+                "targetType",
+                "targetId"
+              ],
+              "type": "object"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "file scan",
+        "scanned paperwork",
+        "capture intake",
+        "file pod"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "capture_batch",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Files scanned pages as documents on records inside Trenova, as the person it acts for; nothing is sent, and a misfiled document can be deleted."
       }
     },
     {
@@ -12424,6 +13617,45 @@
       }
     },
     {
+      "name": "list_capture_batches",
+      "description": "List scanned and printed paperwork waiting in capture intake, newest first. Each stack comes with the documents it was split into, what each looks like, the record it was matched to and how sure the match is. Use it before file_capture_items or discarding a scan; it never shows page images.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "captureBatchId": {
+            "description": "One stack to read, by an id a listing without it returned or the stack on the page. Leave it out to list open stacks.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many stacks to return, at most 10.",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "capture_batch",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_carrier_invoice_matches",
       "description": "List carrier freight invoices matched against what each load was expected to cost, with the variance. Each has the carrier's invoice number, the match status and how it was matched. Narrow to one carrier or a status such as Variance. An invoice a carrier sent over EDI is the carrier's own text.",
       "parameters": {
@@ -14005,6 +15237,117 @@
       "policy": {
         "kind": "query",
         "resource": "qualification",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_equipment_manufacturers",
+      "description": "List equipment manufacturers — who built the tractors and trailers in the fleet, such as Freightliner or Utility. Use it to turn a make a person named into the id create_tractor and create_trailer need. Filters: status (Active|Inactive); text: name, description.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "name",
+                    "description"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_equipment_manufacturers.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_equipment_manufacturers.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "name"
+            ],
+            "type": "string",
+            "x-enumOf": "list_equipment_manufacturers.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "equipment_manufacturer",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -18483,6 +19826,117 @@
       }
     },
     {
+      "name": "list_table_change_alerts",
+      "description": "List the change alerts the person you are working for has set up: what each watches, for which changes, and whether it is Active or Paused. Only their own alerts are returned. Use it to find one to change, pause, resume or delete. Filters: status (Active|Paused); text: name, tableName.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "name",
+                    "tableName"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_table_change_alerts.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_table_change_alerts.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "name"
+            ],
+            "type": "string",
+            "x-enumOf": "list_table_change_alerts.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "table_change_alert",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_time_off",
       "description": "List worker (driver) time-off requests — who is out, who is asking to be, and who was turned down. This is the tool for any question about availability by date, and the one that yields the request ids the approve, reject and cancel tools need. Filter by status to find what is still awaiting a decision.",
       "parameters": {
@@ -19435,6 +20889,106 @@
       }
     },
     {
+      "name": "locate_tractor",
+      "description": "Record where a tractor actually is when it was moved outside a shipment, so dispatch plans from the right place. A tractor on a move in progress cannot be located.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "newLocationId": {
+            "description": "Where it is now, from list_locations. Never guess one.",
+            "type": "string"
+          },
+          "tractorId": {
+            "description": "The tractor, from list_tractors. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tractorId",
+          "newLocationId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "locate tractor",
+        "truck location",
+        "move tractor",
+        "yard"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "tractor",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "tractor",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves where Trenova thinks a tractor is; nothing is sent and locating it again moves it back."
+      }
+    },
+    {
+      "name": "locate_trailer",
+      "description": "Record where a trailer actually is when it was moved outside a shipment. It adds a completed empty move to the shipment that last used it and re-rates that shipment, so a person always approves it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "newLocationId": {
+            "description": "Where it is now, from list_locations. Never guess one.",
+            "type": "string"
+          },
+          "trailerId": {
+            "description": "The trailer, from list_trailers. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trailerId",
+          "newLocationId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "locate trailer",
+        "trailer location",
+        "move trailer",
+        "drop yard"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "trailer",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "trailer",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds an empty move to the trailer's last shipment and re-rates it, which can change what that customer is charged, so it runs only on a person's approval."
+      }
+    },
+    {
       "name": "lock_fiscal_period",
       "description": "Propose locking an open fiscal period while its books are reviewed for close, the step before close_fiscal_period. unlock_fiscal_period undoes it. A person always decides.",
       "parameters": {
@@ -20123,6 +21677,7 @@
               "billing_queue_item",
               "carrier",
               "carrier_settlement",
+              "commodity",
               "customer",
               "dashboard",
               "detention_occurrence",
@@ -20130,6 +21685,7 @@
               "edi_inbound_file",
               "edi_message",
               "fuel_purchase",
+              "hazardous_material",
               "invoice",
               "journal_entry",
               "journal_reversal",
@@ -25153,6 +26709,99 @@
       }
     },
     {
+      "name": "restore_document_version",
+      "description": "Make an earlier version of a document the current one again, when the newest upload was the wrong file. Every version is kept, so a later restore can bring the newer one back.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "documentId": {
+            "description": "Any version of the document, from search_documents or get_document_summary. Never guess one.",
+            "type": "string"
+          },
+          "versionNumber": {
+            "description": "The version number to make current.",
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "documentId",
+          "versionNumber"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "restore document",
+        "previous version",
+        "undo upload"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "document",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes which stored version of a document Trenova shows; nothing is sent or removed."
+      }
+    },
+    {
+      "name": "restore_insight",
+      "description": "Put a dismissed insight back on the list of findings to act on, when the reason it was dismissed no longer holds. Find it with list_insights and status Dismissed.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "insightId": {
+            "description": "The dismissed insight, from list_insights. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "insightId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "restore insight",
+        "undismiss",
+        "reopen finding"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "insight",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Returns a finding to the active list inside Trenova; nothing is sent and dismiss_insight takes it off again."
+      }
+    },
+    {
       "name": "resume_accounting_sync",
       "description": "Start sending documents to the accounting system again after it was paused. Everything queued while paused goes out at once, so resume only when a person says the reason for the pause is over, or the outage it was paused for has passed and get_accounting_sync_status shows the connection answering.",
       "parameters": {
@@ -26302,7 +27951,9 @@
               "fiscal periods",
               "orders",
               "recurring shipments",
-              "formula templates"
+              "formula templates",
+              "equipment manufacturers",
+              "table change alerts"
             ],
             "type": "string",
             "x-enumOf": "tableView.entity"
@@ -27546,6 +29197,59 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "set_table_change_alert_status",
+      "description": "Pause one of the person's change alerts so it stops notifying them, or resume a paused one.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "description": "Paused stops its notices; Active resumes them.",
+            "enum": [
+              "Active",
+              "Paused"
+            ],
+            "type": "string",
+            "x-enumOf": "tableChangeAlert.status"
+          },
+          "tableChangeAlertId": {
+            "description": "The alert, from list_table_change_alerts. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tableChangeAlertId",
+          "status"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "pause alert",
+        "resume alert",
+        "mute notification"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "table_change_alert",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Pauses or resumes an alert whose notices go to the person who owns it; the opposite call undoes it."
       }
     },
     {
@@ -28986,6 +30690,632 @@
       }
     },
     {
+      "name": "update_carrier",
+      "description": "Change a carrier's details: name, numbers, SCAC, address, dispatch contact, notes, or payment and remit-to details. Fields left out keep their value. Use update_carrier_status to activate or retire it and vet_carrier for compliance.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "addressLine1": {
+            "description": "The street address. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Suite, building or unit. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "carrierId": {
+            "description": "The carrier to change, from list_carriers. Never guess one.",
+            "type": "string"
+          },
+          "carrierType": {
+            "description": "What kind of carrier it is. Defaults to Common. Leave it out to keep it.",
+            "enum": [
+              "Common",
+              "Contract",
+              "Broker",
+              "Exempt"
+            ],
+            "type": "string",
+            "x-enumOf": "carrier.type"
+          },
+          "city": {
+            "description": "The city. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "code": {
+            "description": "The carrier's short code, unique in this organization. Leave it out to keep it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "dbaName": {
+            "description": "The name it does business as, when that differs. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "dotNumber": {
+            "description": "The USDOT number, digits only. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "email": {
+            "description": "The dispatch email address. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "is1099Eligible": {
+            "description": "Whether payments are reported on a 1099. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "mcNumber": {
+            "description": "The MC docket number, digits only. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "name": {
+            "description": "The carrier's legal name. Leave it out to keep it.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "notes": {
+            "description": "Anything colleagues booking this carrier should know. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "paymentMethod": {
+            "description": "How the carrier is paid. Defaults to Check. Payment details are only ever proposed and change on a person's approval. Leave it out to keep it.",
+            "enum": [
+              "Check",
+              "ACHManual"
+            ],
+            "type": "string",
+            "x-enumOf": "carrier.paymentMethod"
+          },
+          "paymentTermDays": {
+            "description": "Days after the invoice the carrier is paid. Defaults to 30. Leave it out to keep it.",
+            "maximum": 365,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "phone": {
+            "description": "The dispatch phone number. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "The ZIP code. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "remitAddressLine1": {
+            "description": "The remit-to street address. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "remitAddressLine2": {
+            "description": "The remit-to suite or unit. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "remitCity": {
+            "description": "The remit-to city. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "remitPostalCode": {
+            "description": "The remit-to ZIP code. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "remitState": {
+            "description": "The remit-to state. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "remitToName": {
+            "description": "Who payment is made out to. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "scac": {
+            "description": "The two to four letter SCAC. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 4,
+            "type": "string"
+          },
+          "state": {
+            "description": "The state of the street address. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "taxId": {
+            "description": "The tax id payments are reported under. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "taxIdType": {
+            "description": "Whether the tax id is an EIN or an SSN; required with a tax id. Leave it out to keep it.",
+            "enum": [
+              "EIN",
+              "SSN"
+            ],
+            "type": "string",
+            "x-enumOf": "carrier.taxIdType"
+          },
+          "w9OnFile": {
+            "description": "Whether a signed W-9 is on file. Leave it out to keep it.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "carrierId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "edit carrier",
+        "carrier address",
+        "remit to",
+        "carrier details"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal",
+          "money"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a carrier inside Trenova and keeps its contacts, insurance and EDI channels; nothing is sent. A call that changes payment or remit-to details is money and runs only on a person's approval."
+      }
+    },
+    {
+      "name": "update_carrier_status",
+      "description": "Set one or more carriers Active, Inactive or DoNotUse, which decides whether they can be tendered freight. Get the ids from list_carriers.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "carrierIds": {
+            "description": "The carrier records to change, by id from list_carriers. One id is the normal case.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          },
+          "status": {
+            "description": "The status to set. Active carriers can be tendered freight; Inactive ones are kept on file; DoNotUse marks a carrier nobody may book.",
+            "enum": [
+              "Active",
+              "Inactive",
+              "DoNotUse"
+            ],
+            "type": "string",
+            "x-enumOf": "carrier.status"
+          }
+        },
+        "required": [
+          "carrierIds",
+          "status"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "deactivate carrier",
+        "do not use",
+        "reactivate carrier"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "carrier",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes whether carriers are offered for booking inside Trenova; nothing is sent."
+      }
+    },
+    {
+      "name": "update_commodity",
+      "description": "Change a commodity: its name, description, freight class, temperature range, dimensions, handling or hazardous material. Fields left out keep their value. Use update_commodity_status to activate or retire it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "commodityId": {
+            "description": "The commodity to change, from list_commodities. Never guess one.",
+            "type": "string"
+          },
+          "description": {
+            "description": "What the goods are. Leave it out to keep it.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "fragile": {
+            "description": "Whether it is fragile. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "freightClass": {
+            "description": "The NMFC freight class. Leave it out to keep it.",
+            "enum": [
+              "Class50",
+              "Class55",
+              "Class60",
+              "Class65",
+              "Class70",
+              "Class77_5",
+              "Class85",
+              "Class92_5",
+              "Class100",
+              "Class110",
+              "Class125",
+              "Class150",
+              "Class175",
+              "Class200",
+              "Class250",
+              "Class300",
+              "Class400",
+              "Class500"
+            ],
+            "type": "string",
+            "x-enumOf": "commodity.freightClass"
+          },
+          "hazardousMaterialId": {
+            "description": "The hazardous material it is, from list_hazardous_materials, when the goods are hazmat. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "heightPerUnit": {
+            "description": "Inches high per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "lengthPerUnit": {
+            "description": "Inches long per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "linearFeetPerUnit": {
+            "description": "Linear feet of trailer per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "loadingInstructions": {
+            "description": "How it is loaded and secured. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "maxQuantityPerShipment": {
+            "description": "The most units one shipment may carry. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "maxTemperature": {
+            "description": "The highest temperature it may be carried at, in degrees Fahrenheit. Leave it out to keep it.",
+            "maximum": 200,
+            "minimum": -100,
+            "type": "integer"
+          },
+          "minTemperature": {
+            "description": "The lowest temperature it may be carried at, in degrees Fahrenheit. Leave it out to keep it.",
+            "maximum": 200,
+            "minimum": -100,
+            "type": "integer"
+          },
+          "name": {
+            "description": "The commodity's name, unique in this organization. Leave it out to keep it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "stackable": {
+            "description": "Whether units may be stacked. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "weightPerUnit": {
+            "description": "Pounds per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "widthPerUnit": {
+            "description": "Inches wide per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "commodityId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "edit commodity",
+        "freight class",
+        "temperature range"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "commodity",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "commodity",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a commodity inside Trenova; nothing is sent, and a later change puts it back."
+      }
+    },
+    {
+      "name": "update_commodity_status",
+      "description": "Set one or more commodities Active or Inactive, which decides whether shipments can name them. Get the ids from list_commodities.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "commodityIds": {
+            "description": "The commodity records to change, by id from list_commodities. One id is the normal case.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          },
+          "status": {
+            "description": "The status to set. Active records are offered when people book; Inactive ones are kept on file and no longer offered.",
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string",
+            "x-enumOf": "masterData.status"
+          }
+        },
+        "required": [
+          "commodityIds",
+          "status"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "deactivate commodity",
+        "retire commodity"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "commodity",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "commodity",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes whether commodities are offered for booking inside Trenova; nothing is sent."
+      }
+    },
+    {
+      "name": "update_customer",
+      "description": "Change a customer's details: name, billing address, DOT and MC numbers, who is emailed status updates, and consolidation. Fields left out keep their value. Use update_customer_status to activate or retire it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "addressLine1": {
+            "description": "The billing street address. Leave it out to keep it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Suite, building or unit. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "allowConsolidation": {
+            "description": "Whether its shipments may be consolidated. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "city": {
+            "description": "The city. Leave it out to keep it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "code": {
+            "description": "The customer's short code, unique in this organization. Leave it out to keep it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "consolidationPriority": {
+            "description": "Its priority when shipments are consolidated, 1 first. Leave it out to keep it.",
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "customerId": {
+            "description": "The customer to change, from list_customers. Never guess one.",
+            "type": "string"
+          },
+          "dotNumber": {
+            "description": "The USDOT number, digits only, for a broker customer. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "exclusiveConsolidation": {
+            "description": "Whether its shipments are consolidated only with each other; needs allowConsolidation. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "mcNumber": {
+            "description": "The MC docket number, digits only. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 12,
+            "type": "string"
+          },
+          "name": {
+            "description": "The customer's name. Leave it out to keep it.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "The ZIP code. Leave it out to keep it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "state": {
+            "description": "The state. The two-letter US state abbreviation, such as TX. Leave it out to keep it.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "statusUpdatePreference": {
+            "description": "Which stop events the customer is emailed about. None stops the emails and clears the recipients. Changing who is emailed is only ever proposed. Leave it out to keep it.",
+            "enum": [
+              "None",
+              "Arrivals",
+              "Departures",
+              "ArrivalsAndDepartures"
+            ],
+            "type": "string",
+            "x-enumOf": "customer.statusUpdatePreference"
+          },
+          "statusUpdateRecipients": {
+            "description": "The addresses status updates go to, separated by commas. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "edit customer",
+        "customer address",
+        "status update emails"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "customer",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal",
+          "external_recipient"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "customer",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a customer inside Trenova and leaves its billing and email profiles alone; nothing is sent. Changing who receives status emails is held for a person."
+      }
+    },
+    {
+      "name": "update_customer_status",
+      "description": "Set one or more customers Active or Inactive, which decides whether shipments can be booked for them. Get the ids from list_customers.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerIds": {
+            "description": "The customer records to change, by id from list_customers. One id is the normal case.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          },
+          "status": {
+            "description": "The status to set. Active records are offered when people book; Inactive ones are kept on file and no longer offered.",
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string",
+            "x-enumOf": "masterData.status"
+          }
+        },
+        "required": [
+          "customerIds",
+          "status"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "deactivate customer",
+        "reactivate customer",
+        "inactive customer"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "customer",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "customer",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes whether customers are offered for booking inside Trenova; nothing is sent."
+      }
+    },
+    {
       "name": "update_dot_random_selection",
       "description": "Record where one random testing selection stands. Notified once the driver has been told to report, Excused with the reason when they cannot be tested this period, or Missed. A selection completes on its own when its test is recorded.",
       "parameters": {
@@ -29229,6 +31559,224 @@
       }
     },
     {
+      "name": "update_hazardous_material",
+      "description": "Change a hazardous material: its class, UN number, packing group, shipping name, placarding, handling or emergency contact. Fields left out keep their value. Use update_hazardous_material_status to activate or retire it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "class": {
+            "description": "The DOT hazard class or division. Leave it out to keep it.",
+            "enum": [
+              "HazardClass1",
+              "HazardClass1And1",
+              "HazardClass1And2",
+              "HazardClass1And3",
+              "HazardClass1And4",
+              "HazardClass1And5",
+              "HazardClass1And6",
+              "HazardClass2And1",
+              "HazardClass2And2",
+              "HazardClass2And3",
+              "HazardClass3",
+              "HazardClass4And1",
+              "HazardClass4And2",
+              "HazardClass4And3",
+              "HazardClass5And1",
+              "HazardClass5And2",
+              "HazardClass6And1",
+              "HazardClass6And2",
+              "HazardClass7",
+              "HazardClass8",
+              "HazardClass9"
+            ],
+            "type": "string",
+            "x-enumOf": "hazardousMaterial.class"
+          },
+          "description": {
+            "description": "What the material is. Leave it out to keep it.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "emergencyContact": {
+            "description": "Who to call in an emergency. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 255,
+            "type": "string"
+          },
+          "emergencyContactPhoneNumber": {
+            "description": "The emergency response phone number. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "ergGuideNumber": {
+            "description": "The Emergency Response Guidebook guide number. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "handlingInstructions": {
+            "description": "How it is handled. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "hazardousMaterialId": {
+            "description": "The hazardous material to change, from list_hazardous_materials. Never guess one.",
+            "type": "string"
+          },
+          "inhalationHazard": {
+            "description": "Whether it is a poison inhalation hazard. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "isReportableQuantity": {
+            "description": "Whether it is a reportable quantity substance. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "labelCodes": {
+            "description": "The label codes packages carry. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "marinePollutant": {
+            "description": "Whether it is a marine pollutant. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "The material's name, unique in this organization. Leave it out to keep it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "packingGroup": {
+            "description": "The packing group: I is great danger, III minor. Leave it out to keep it.",
+            "enum": [
+              "I",
+              "II",
+              "III"
+            ],
+            "type": "string",
+            "x-enumOf": "hazardousMaterial.packingGroup"
+          },
+          "placardRequired": {
+            "description": "Whether a vehicle carrying it must be placarded. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "properShippingName": {
+            "description": "The proper shipping name from the hazardous materials table. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "quantityThreshold": {
+            "description": "The reportable quantity; required when isReportableQuantity. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "specialProvisions": {
+            "description": "The special provision codes, separated by commas. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "subsidiaryHazardClass": {
+            "description": "Any subsidiary hazard class. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "unNumber": {
+            "description": "The four-digit UN or NA number, without the prefix. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 4,
+            "type": "string"
+          }
+        },
+        "required": [
+          "hazardousMaterialId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "edit hazmat",
+        "un number",
+        "packing group",
+        "erg guide"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "hazardous_material",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "hazardous_material",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a hazardous material inside Trenova; nothing is sent. What drivers placard and who they call follows it, so a person approves every change."
+      }
+    },
+    {
+      "name": "update_hazardous_material_status",
+      "description": "Set one or more hazardous materials Active or Inactive, which decides whether commodities can name them. Get the ids from list_hazardous_materials.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "hazardousMaterialIds": {
+            "description": "The hazardous material records to change, by id from list_hazardous_materials. One id is the normal case.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          },
+          "status": {
+            "description": "The status to set. Active records are offered when people book; Inactive ones are kept on file and no longer offered.",
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string",
+            "x-enumOf": "masterData.status"
+          }
+        },
+        "required": [
+          "hazardousMaterialIds",
+          "status"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "deactivate hazmat",
+        "retire hazardous material"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "hazardous_material",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "hazardous_material",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes whether hazardous materials are offered inside Trenova; nothing is sent."
+      }
+    },
+    {
       "name": "update_invoice_draft",
       "description": "Change what a draft invoice says and where it goes: its memo, remittance instructions, email subject and body, recipients and attached documents. Only the fields you pass change; an empty string or list clears one. A posted invoice is changed with an invoice adjustment instead.",
       "parameters": {
@@ -29468,6 +32016,150 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Corrects a recorded day of leave inside Trenova; nothing is sent, and it is corrected again the same way."
+      }
+    },
+    {
+      "name": "update_location",
+      "description": "Change a location's name, description, address or category. Fields left out keep their value, and its code never changes. Use update_location_status to activate or retire it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "addressLine1": {
+            "description": "The street address. Leave it out to keep it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Suite, building or dock. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "city": {
+            "description": "The city. Leave it out to keep it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "description": {
+            "description": "Anything drivers and dispatchers should know about it. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "locationCategoryId": {
+            "description": "What kind of place it is, from list_location_categories. Leave it out to keep it.",
+            "type": "string"
+          },
+          "locationId": {
+            "description": "The location to change, from list_locations. Never guess one.",
+            "type": "string"
+          },
+          "name": {
+            "description": "The facility or company name at the address. Leave it out to keep it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "The ZIP code. Leave it out to keep it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "state": {
+            "description": "The state. The two-letter US state abbreviation, such as TX. Leave it out to keep it.",
+            "maxLength": 2,
+            "type": "string"
+          }
+        },
+        "required": [
+          "locationId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "edit location",
+        "facility address",
+        "fix address",
+        "dock"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "location",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "location",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a location inside Trenova; nothing is sent. Its address is often read from a document someone outside sent, so such a change is proposed."
+      }
+    },
+    {
+      "name": "update_location_status",
+      "description": "Set one or more locations Active or Inactive, which decides whether stops can be booked at them. Get the ids from list_locations.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "locationIds": {
+            "description": "The location records to change, by id from list_locations. One id is the normal case.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "minItems": 1,
+            "type": "array"
+          },
+          "status": {
+            "description": "The status to set. Active records are offered when people book; Inactive ones are kept on file and no longer offered.",
+            "enum": [
+              "Active",
+              "Inactive"
+            ],
+            "type": "string",
+            "x-enumOf": "masterData.status"
+          }
+        },
+        "required": [
+          "locationIds",
+          "status"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "deactivate location",
+        "close facility",
+        "reactivate location"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "location",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "location",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes whether locations are offered for booking inside Trenova; nothing is sent."
       }
     },
     {
@@ -30794,6 +33486,286 @@
       }
     },
     {
+      "name": "update_table_change_alert",
+      "description": "Change one of the person's change alerts: what it watches, which changes, the conditions or its message. Parts left out keep their value.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "conditionMatch": {
+            "description": "Whether every condition must hold, or any one. Defaults to all. Leave it out to keep it.",
+            "enum": [
+              "all",
+              "any"
+            ],
+            "type": "string",
+            "x-enumOf": "tableChangeAlert.conditionMatch"
+          },
+          "conditions": {
+            "description": "Narrow when it fires: each compares a column (field) to a value, e.g. status changed_to Delayed. is_null, is_not_null and changed take no value. Leave empty to fire on every matching event. Leave it out to keep it.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "neq",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "is_null",
+                    "is_not_null",
+                    "contains",
+                    "not_contains",
+                    "changed_to",
+                    "changed_from",
+                    "changed"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "tableChangeAlert.conditionOperator"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "customMessage": {
+            "description": "What the notification should say. Leave it out to keep it.",
+            "type": "string"
+          },
+          "eventTypes": {
+            "description": "Which changes to watch: INSERT for a new record, UPDATE for an edit, DELETE for a removal. A status change is an UPDATE. Leave it out to keep it.",
+            "items": {
+              "enum": [
+                "INSERT",
+                "UPDATE",
+                "DELETE"
+              ],
+              "type": "string",
+              "x-enumOf": "tableChangeAlert.eventType"
+            },
+            "maxItems": 3,
+            "type": "array"
+          },
+          "name": {
+            "description": "What the alert is called, in the words of the thing watched. Leave it out to keep it.",
+            "type": "string"
+          },
+          "tableChangeAlertId": {
+            "description": "The alert, from list_table_change_alerts. Never guess one.",
+            "type": "string"
+          },
+          "tableName": {
+            "description": "The table to watch, e.g. shipments, customers, workers. Leave it out to keep it.",
+            "type": "string"
+          },
+          "watchedColumns": {
+            "description": "Only fire when one of these columns changed. Leave empty to fire on any change. Leave it out to keep it.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "tableChangeAlertId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "change alert",
+        "edit notification",
+        "watch different column"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "table_change_alert",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes an alert whose notices go to the person who owns it; nothing else changes."
+      }
+    },
+    {
+      "name": "update_tractor",
+      "description": "Change a tractor: its driver, team driver, equipment type, fleet, make, model, VIN, plate, registration or fuel. Fields left out keep their value. Use update_tractor_status for many units and locate_tractor to move one.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The unit number, unique in this organization. Leave it out to keep it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "equipmentManufacturerId": {
+            "description": "Who made it, from list_equipment_manufacturers. Leave it out to keep it.",
+            "type": "string"
+          },
+          "equipmentTypeId": {
+            "description": "Its equipment type, from list_equipment_types. Leave it out to keep it.",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "Its id in another system, such as a telematics provider. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "fleetCodeId": {
+            "description": "The fleet it belongs to, from list_fleet_codes. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "fuelType": {
+            "description": "The fuel it burns; its miles land on this fuel's lines of an IFTA return. Defaults to Diesel. Leave it out to keep it.",
+            "enum": [
+              "Diesel",
+              "Gasoline",
+              "Gasohol",
+              "Propane",
+              "CNG",
+              "LNG",
+              "Ethanol",
+              "Methanol",
+              "E85",
+              "M85",
+              "A55",
+              "Biodiesel",
+              "Electricity",
+              "Hydrogen",
+              "DEF",
+              "Reefer",
+              "Other"
+            ],
+            "type": "string",
+            "x-enumOf": "ifta.fuelType"
+          },
+          "iftaQualified": {
+            "description": "Whether its miles and fuel enter the IFTA return. Defaults to true. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "licensePlateNumber": {
+            "description": "The license plate. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "make": {
+            "description": "The make. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "model": {
+            "description": "The model. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "primaryWorkerId": {
+            "description": "The driver who runs it, from search_worker or list_workers. Leave it out to keep it.",
+            "type": "string"
+          },
+          "registrationExpiry": {
+            "description": "When the registration expires. A date as YYYY-MM-DD. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "registrationNumber": {
+            "description": "The registration number. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "secondaryWorkerId": {
+            "description": "A team driver, from search_worker or list_workers. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "state": {
+            "description": "The state it is registered in. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "status": {
+            "description": "Whether it can be dispatched. Available means it can be dispatched. OutOfService means it cannot, for any reason other than scheduled work. AtMaintenance means it is in the shop. Sold means it has left the fleet and is not coming back. Defaults to Available. Leave it out to keep it.",
+            "enum": [
+              "Available",
+              "OutOfService",
+              "AtMaintenance",
+              "Sold"
+            ],
+            "type": "string",
+            "x-enumOf": "equipment.status"
+          },
+          "tractorId": {
+            "description": "The tractor to change, from list_tractors. Never guess one.",
+            "type": "string"
+          },
+          "vin": {
+            "description": "The 17-character VIN. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "year": {
+            "description": "The model year. Leave it out to keep it.",
+            "maximum": 2100,
+            "minimum": 1950,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tractorId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "edit tractor",
+        "reassign truck driver",
+        "registration renewal"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "tractor",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "tractor",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a tractor inside Trenova; nothing is sent, and a later change puts it back."
+      }
+    },
+    {
       "name": "update_tractor_status",
       "description": "Change the status of one or more tractors, which is what makes a truck available to dispatch or takes it off the board. Available means it can be dispatched. OutOfService means it cannot, for any reason other than scheduled work. AtMaintenance means it is in the shop. Sold means it has left the fleet and is not coming back. Get the ids from list_tractors; a unit number is not an id.",
       "parameters": {
@@ -30851,6 +33823,136 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Changes a tractor's status inside Trenova."
+      }
+    },
+    {
+      "name": "update_trailer",
+      "description": "Change a trailer: its equipment type, fleet, make, model, VIN, plate, registration, load limit or last inspection. Fields left out keep their value. Use update_trailer_status for many units and locate_trailer to move one.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The unit number, unique in this organization. Leave it out to keep it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "equipmentManufacturerId": {
+            "description": "Who made it, from list_equipment_manufacturers. Leave it out to keep it.",
+            "type": "string"
+          },
+          "equipmentTypeId": {
+            "description": "Its equipment type, from list_equipment_types. Leave it out to keep it.",
+            "type": "string"
+          },
+          "externalId": {
+            "description": "Its id in another system, such as a telematics provider. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "fleetCodeId": {
+            "description": "The fleet it belongs to, from list_fleet_codes. Leave it out to keep it. Send an empty value to clear it.",
+            "type": "string"
+          },
+          "lastInspectionDate": {
+            "description": "When it was last inspected. A date as YYYY-MM-DD. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "licensePlateNumber": {
+            "description": "The license plate. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "make": {
+            "description": "The make. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "maxLoadWeight": {
+            "description": "The most it may carry, in pounds. Leave it out to keep it.",
+            "maximum": 200000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "model": {
+            "description": "The model. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "registrationExpiry": {
+            "description": "When the registration expires. A date as YYYY-MM-DD. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 10,
+            "type": "string"
+          },
+          "registrationNumber": {
+            "description": "The registration number. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "registrationState": {
+            "description": "The state it is registered in. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 2,
+            "type": "string"
+          },
+          "status": {
+            "description": "Whether it can be dispatched. Available means it can be dispatched. OutOfService means it cannot, for any reason other than scheduled work. AtMaintenance means it is in the shop. Sold means it has left the fleet and is not coming back. Defaults to Available. Leave it out to keep it.",
+            "enum": [
+              "Available",
+              "OutOfService",
+              "AtMaintenance",
+              "Sold"
+            ],
+            "type": "string",
+            "x-enumOf": "equipment.status"
+          },
+          "trailerId": {
+            "description": "The trailer to change, from list_trailers. Never guess one.",
+            "type": "string"
+          },
+          "vin": {
+            "description": "The 17-character VIN. Leave it out to keep it. Send an empty value to clear it.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "year": {
+            "description": "The model year. Leave it out to keep it.",
+            "maximum": 2100,
+            "minimum": 1950,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "trailerId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "edit trailer",
+        "trailer inspection",
+        "registration renewal"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "trailer",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A record read from a document or message someone outside sent is proposed, since colleagues book and pay against it.",
+        "effect": "change",
+        "artifact": "trailer",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a trailer inside Trenova; nothing is sent, and a later change puts it back."
       }
     },
     {

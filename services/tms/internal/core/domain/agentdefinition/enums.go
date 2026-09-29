@@ -1015,6 +1015,15 @@ func (t Template) StarterTools() []string {
 			"void_service_failure",
 			"dispute_detention",
 			"vet_customer_broker",
+			"create_customer",
+			"update_customer",
+			"update_customer_status",
+			"list_locations",
+			"update_location",
+			"update_location_status",
+			"list_commodities",
+			"create_commodity",
+			"update_commodity",
 		}
 	case TemplateLoadMonitor:
 		return []string{
@@ -1234,6 +1243,7 @@ func (t Template) StarterTools() []string {
 			"list_shipments",
 			"list_invoices",
 			"dismiss_insight",
+			"restore_insight",
 		}
 	case TemplateEDIDesk:
 		return []string{
