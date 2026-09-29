@@ -66,6 +66,8 @@ type Response struct {
 	ReasoningTokens  int
 	CacheReadTokens  int
 	CacheWriteTokens int
+	OutputLimit      int
+	CutOffCall       *CutOffToolCall
 }
 
 func CacheSeparateFromInput(kind aiprovider.Kind) bool {

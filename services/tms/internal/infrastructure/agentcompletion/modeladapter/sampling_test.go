@@ -107,14 +107,11 @@ func TestReserveAnswerRoom_LeavesSomewhereToPutTheAnswer(t *testing.T) {
 		Provider: &aiprovider.Provider{ReasoningEffort: aiprovider.ReasoningMedium},
 		Request:  &Request{},
 	}
-	body := chatRequest{MaxTokens: 1024}
-	body.reserveAnswerRoom(thinking)
-	assert.Greater(t, body.MaxTokens, 1024)
-	assert.GreaterOrEqual(t, body.MaxTokens, thinkingFloor+thinkingAnswerRoom)
+	floored := answerRoom(thinking, 1024)
+	assert.Greater(t, floored, 1024)
+	assert.GreaterOrEqual(t, floored, reasoningAnswerFloor)
 
 	// A model that does not think keeps the ceiling it was given.
 	plain := &Call{Provider: &aiprovider.Provider{}, Request: &Request{}}
-	quiet := chatRequest{MaxTokens: 1024}
-	quiet.reserveAnswerRoom(plain)
-	assert.Equal(t, 1024, quiet.MaxTokens)
+	assert.Equal(t, 1024, answerRoom(plain, 1024))
 }

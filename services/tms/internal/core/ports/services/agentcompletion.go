@@ -145,7 +145,13 @@ type ChatCompletionResult struct {
 	LatencyMs int64
 	// CostUSD is what the answering call cost at the provider's configured
 	// price, nil when the provider carries none.
-	CostUSD *decimal.Decimal
+	CostUSD     *decimal.Decimal
+	OutputLimit int
+	CutOffCall  *CutOffToolCall
+}
+
+type CutOffToolCall struct {
+	Name string `json:"name,omitempty"`
 }
 
 // ChatStreamSink receives reply text as the model produces it. It is a preview

@@ -1,6 +1,7 @@
 package completionrouter
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -289,7 +290,7 @@ func (s *Service) attemptChat(
 
 	// A turn with neither text nor a tool call is a dead end rather than an
 	// answer, so it counts as a failure and the next provider gets a try.
-	if resp.Text == "" && len(resp.ToolCalls) == 0 {
+	if resp.Text == "" && len(resp.ToolCalls) == 0 && !resp.Truncated {
 		return nil, streamed, errors.New("provider returned neither content nor a tool call")
 	}
 
@@ -308,6 +309,8 @@ func (s *Service) attemptChat(
 		Truncated:       resp.Truncated,
 		Reasoning:       resp.Reasoning,
 		ReasoningTokens: resp.ReasoningTokens,
+		OutputLimit:     cmp.Or(resp.OutputLimit, maxTokens),
+		CutOffCall:      resp.CutOffCall,
 	}, streamed, nil
 }
 
