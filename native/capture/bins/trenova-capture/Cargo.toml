@@ -50,6 +50,9 @@ windows = { workspace = true, features = [
     "Win32_UI_WindowsAndMessaging",
 ] }
 
+[build-dependencies]
+static_vcruntime.workspace = true
+
 [target.'cfg(windows)'.build-dependencies]
 winresource.workspace = true
 
