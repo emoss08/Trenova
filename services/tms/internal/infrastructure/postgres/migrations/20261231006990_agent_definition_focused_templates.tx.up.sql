@@ -12,6 +12,6 @@ ALTER TABLE "agent_definitions"
             'CredentialDesk', 'CustomerUpdateDesk', 'CarrierRiskDesk', 'IntakeDesk',
             'LoadEntryCheck', 'ServiceFailureDesk', 'InsightAnalyst', 'EDIDesk',
             'FormulaAssistant', 'BooksKeeper', 'SettlementsClerk', 'Receivables',
-            'MasterDataSteward', 'WorkforceCoordinator', 'FuelTaxClerk'
+            'MasterDataSteward', 'WorkforceCoordinator', 'FuelTaxClerk', 'ReportAnalyst'
         )
     );

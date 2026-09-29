@@ -1069,6 +1069,7 @@ export type AgentTemplate =
   | 'LoadMonitor'
   | 'MasterDataSteward'
   | 'Receivables'
+  | 'ReportAnalyst'
   | 'ServiceFailureDesk'
   | 'SettlementsClerk'
   | 'ShipmentIntake'

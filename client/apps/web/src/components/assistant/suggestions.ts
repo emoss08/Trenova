@@ -124,6 +124,20 @@ const SUGGESTIONS: Partial<Record<AgentTemplateKind, Suggestion[]>> = {
       prompt: "Which fuel cards are not assigned to a tractor or a driver?",
     },
   ],
+  ReportAnalyst: [
+    {
+      label: "Which report answers this?",
+      prompt: "Which of our reports shows on-time delivery by customer, and what does it contain?",
+    },
+    {
+      label: "What moved since last week?",
+      prompt: "Run the lane profitability report again and tell me what moved since last week.",
+    },
+    {
+      label: "Email a report weekly",
+      prompt: "Email the late shipments report to the operations team every Monday morning.",
+    },
+  ],
   GeneralAssistant: [
     { label: "Create a rate matrix", prompt: "How do I create a rate matrix for a customer?" },
     {

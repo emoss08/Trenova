@@ -64,6 +64,10 @@ func TestTemplates_TheFocusedClerksTalkToAPersonAndOnlyPropose(t *testing.T) {
 			dataAccess: agentdefinition.DataAccessInternal,
 			icon:       agentdefinition.IconGauge,
 		},
+		agentdefinition.TemplateReportAnalyst: {
+			dataAccess: agentdefinition.DataAccessInternal,
+			icon:       agentdefinition.IconCompass,
+		},
 	}
 
 	for template, want := range cases {
@@ -90,6 +94,7 @@ func TestTemplates_TheFocusedClerksTalkToAPersonAndOnlyPropose(t *testing.T) {
 		"Workforce coordinator", agentdefinition.TemplateWorkforceCoordinator.Label(),
 	)
 	require.Equal(t, "Fuel and IFTA clerk", agentdefinition.TemplateFuelTaxClerk.Label())
+	require.Equal(t, "Report analyst", agentdefinition.TemplateReportAnalyst.Label())
 }
 
 func TestTemplates_TheMasterDataStewardKeepsTheRecordsEveryoneWorksFrom(t *testing.T) {
@@ -174,6 +179,27 @@ func TestTemplates_TheFuelTaxClerkKeepsTheFuelTaxRecord(t *testing.T) {
 		"list_fuel_index_prices", "record_fuel_index_price", "correct_fuel_index_price",
 	} {
 		require.Containsf(t, tools, tool, "the fuel and IFTA clerk needs %s", tool)
+	}
+}
+
+func TestTemplates_TheReportAnalystBuildsRunsAndSchedulesReports(t *testing.T) {
+	t.Parallel()
+
+	tools := agentdefinition.TemplateReportAnalyst.StarterTools()
+	for _, tool := range []string{
+		"list_reports", "describe_report", "preview_report", "run_report", "get_report_run",
+		"list_report_runs", "compare_report_runs", "cancel_report_run",
+		"list_report_datasets", "describe_report_dataset",
+		"create_report", "update_report", "fork_report", "reset_report_fork", "delete_report",
+		"list_report_schedules", "schedule_report", "update_report_schedule",
+		"delete_report_schedule",
+		"list_dashboards", "create_dashboard", "add_dashboard_tile", "delete_dashboard",
+	} {
+		require.Containsf(t, tools, tool, "the report analyst needs %s", tool)
+	}
+
+	for _, tool := range []string{"add_home_widget", "save_table_view", "email_customer"} {
+		require.NotContainsf(t, tools, tool, "the report analyst must not hold %s", tool)
 	}
 }
 

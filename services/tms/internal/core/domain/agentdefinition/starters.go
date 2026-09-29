@@ -560,6 +560,28 @@ var templateStarters = map[Template][]starterQuestion{
 			"record_fuel_purchase",
 		),
 	},
+	TemplateReportAnalyst: {
+		ask(
+			"Which report answers this?",
+			"Which of our reports shows on-time delivery by customer, and what does it contain?",
+			"list_reports",
+		),
+		ask(
+			"What changed since last week?",
+			"Run this report again and tell me what moved since last week's run.",
+			"compare_report_runs",
+		),
+		ask(
+			"Build a report",
+			"Build a report of delivered shipments by customer for last month.",
+			"create_report",
+		),
+		ask(
+			"Email a report every week",
+			"Email this report to the operations team every Monday morning.",
+			"schedule_report",
+		),
+	},
 	TemplateFormulaAssistant: {
 		ask(
 			"Write a formula",

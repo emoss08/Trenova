@@ -2996,6 +2996,7 @@ extend type Mutation {
   MasterDataSteward
   WorkforceCoordinator
   FuelTaxClerk
+  ReportAnalyst
 }
 
 enum AgentTriggerMode {

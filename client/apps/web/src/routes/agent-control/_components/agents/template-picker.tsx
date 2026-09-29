@@ -7,6 +7,7 @@ import {
   BookCheckIcon,
   BellIcon,
   BotIcon,
+  ChartColumnIcon,
   ClipboardCheckIcon,
   ClipboardListIcon,
   CompassIcon,
@@ -64,6 +65,7 @@ export const TEMPLATE_ICONS: Record<AgentTemplateKind, LucideIcon> = {
   MasterDataSteward: DatabaseIcon,
   WorkforceCoordinator: UsersIcon,
   FuelTaxClerk: FuelIcon,
+  ReportAnalyst: ChartColumnIcon,
 };
 
 type TemplatePickerProps = {

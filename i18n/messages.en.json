@@ -62609,6 +62609,15 @@
       "apps/web/config"
     ]
   },
+  "Email a report weekly": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Email address": {
     "sites": 3,
     "scope": [
@@ -145495,6 +145504,15 @@
       "routes/reports"
     ]
   },
+  "Report analyst": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Report canceled": {
     "sites": 1,
     "scope": [
@@ -204812,6 +204830,15 @@
       "routes/shipment"
     ]
   },
+  "What moved since last week?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What needs attention?": {
     "sites": 1,
     "scope": [
@@ -207093,6 +207120,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Which report answers this?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Which resource type and document type does this rule apply to?": {

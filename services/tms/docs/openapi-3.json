@@ -321,7 +321,8 @@
                     "Receivables",
                     "MasterDataSteward",
                     "WorkforceCoordinator",
-                    "FuelTaxClerk"
+                    "FuelTaxClerk",
+                    "ReportAnalyst"
                 ],
                 "type": "string",
                 "x-enum-varnames": [
@@ -351,7 +352,8 @@
                     "TemplateReceivables",
                     "TemplateMasterDataSteward",
                     "TemplateWorkforceCoordinator",
-                    "TemplateFuelTaxClerk"
+                    "TemplateFuelTaxClerk",
+                    "TemplateReportAnalyst"
                 ]
             },
             "apikeyservice.AllowedResourceCategory": {

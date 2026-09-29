@@ -77,7 +77,7 @@ CREATE TABLE "agent_definitions_rebuilt"(
         'CredentialDesk', 'CustomerUpdateDesk', 'CarrierRiskDesk', 'IntakeDesk',
         'LoadEntryCheck', 'ServiceFailureDesk', 'InsightAnalyst', 'EDIDesk',
         'FormulaAssistant', 'BooksKeeper', 'SettlementsClerk', 'Receivables',
-        'MasterDataSteward', 'WorkforceCoordinator', 'FuelTaxClerk'
+        'MasterDataSteward', 'WorkforceCoordinator', 'FuelTaxClerk', 'ReportAnalyst'
     )),
     CONSTRAINT "ck_agent_definitions_autonomy" CHECK ("autonomy_ceiling" IN ('Propose', 'ActWithApproval', 'AutoExecute')),
     CONSTRAINT "ck_agent_definitions_trigger_mode" CHECK ("trigger_mode" IN ('Chat', 'Scheduled', 'Event', 'Continuous')),

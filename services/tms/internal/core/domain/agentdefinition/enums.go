@@ -36,6 +36,7 @@ const (
 	TemplateMasterDataSteward    = Template("MasterDataSteward")
 	TemplateWorkforceCoordinator = Template("WorkforceCoordinator")
 	TemplateFuelTaxClerk         = Template("FuelTaxClerk")
+	TemplateReportAnalyst        = Template("ReportAnalyst")
 )
 
 func (t Template) IsValid() bool {
@@ -66,7 +67,8 @@ func (t Template) IsValid() bool {
 		TemplateReceivables,
 		TemplateMasterDataSteward,
 		TemplateWorkforceCoordinator,
-		TemplateFuelTaxClerk:
+		TemplateFuelTaxClerk,
+		TemplateReportAnalyst:
 		return true
 	default:
 		return false
@@ -102,6 +104,7 @@ func AllTemplates() []Template {
 		TemplateMasterDataSteward,
 		TemplateWorkforceCoordinator,
 		TemplateFuelTaxClerk,
+		TemplateReportAnalyst,
 	}
 }
 
@@ -161,6 +164,8 @@ func (t Template) Label() string {
 		return "Workforce coordinator"
 	case TemplateFuelTaxClerk:
 		return "Fuel and IFTA clerk"
+	case TemplateReportAnalyst:
+		return "Report analyst"
 	default:
 		return string(t)
 	}
@@ -251,6 +256,9 @@ func (t Template) Description() string {
 		return "Keeps the fuel tax record: records and corrects fuel purchases and card " +
 			"statements, fills in state miles, and drafts the quarter's IFTA return for a " +
 			"person to file."
+	case TemplateReportAnalyst:
+		return "Builds, runs and explains reports and dashboards, compares runs to say what " +
+			"moved, and proposes schedules that email a report for a person to approve."
 	default:
 		return ""
 	}
@@ -733,6 +741,8 @@ func (t Template) StarterInstructions() string {
 		return workforceCoordinatorInstructions
 	case TemplateFuelTaxClerk:
 		return fuelTaxClerkInstructions
+	case TemplateReportAnalyst:
+		return reportAnalystInstructions
 	default:
 		return ""
 	}
@@ -1364,6 +1374,8 @@ func (t Template) StarterTools() []string {
 		return workforceCoordinatorTools()
 	case TemplateFuelTaxClerk:
 		return fuelTaxClerkTools()
+	case TemplateReportAnalyst:
+		return reportAnalystTools()
 	default:
 		return nil
 	}
@@ -1577,7 +1589,8 @@ func (t Template) StarterCeiling() agent.AutonomyTier {
 		TemplateFormulaAssistant,
 		TemplateMasterDataSteward,
 		TemplateWorkforceCoordinator,
-		TemplateFuelTaxClerk:
+		TemplateFuelTaxClerk,
+		TemplateReportAnalyst:
 		return agent.TierPropose
 	default:
 		return agent.TierActWithApproval

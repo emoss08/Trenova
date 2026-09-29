@@ -26,6 +26,7 @@ enum AgentTemplate {
   MasterDataSteward
   WorkforceCoordinator
   FuelTaxClerk
+  ReportAnalyst
 }
 
 enum AgentTriggerMode {

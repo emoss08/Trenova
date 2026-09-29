@@ -27,6 +27,7 @@ const (
 	SeedAgentMasterDataName = "Master data steward"
 	SeedAgentWorkforceName  = "Workforce coordinator"
 	SeedAgentFuelTaxName    = "Fuel and IFTA clerk"
+	SeedAgentReportName     = "Report analyst"
 )
 
 type AgentDefinitionSeed struct {
@@ -325,6 +326,21 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			ToolNames:         agentdefinition.TemplateFuelTaxClerk.StarterTools(),
 			AutonomyCeiling:   agentdefinition.TemplateFuelTaxClerk.StarterCeiling(),
 			DataAccessCeiling: agentdefinition.TemplateFuelTaxClerk.StarterDataAccess(),
+			TriggerMode:       agentdefinition.TriggerChat,
+			Enabled:           true,
+		},
+		{
+			OrganizationID:    orgID,
+			BusinessUnitID:    buID,
+			Name:              SeedAgentReportName,
+			Icon:              agentdefinition.IconCompass,
+			Accent:            agentdefinition.AccentIndigo,
+			Description:       agentdefinition.TemplateReportAnalyst.Description(),
+			Template:          agentdefinition.TemplateReportAnalyst,
+			Instructions:      agentdefinition.TemplateReportAnalyst.StarterInstructions(),
+			ToolNames:         agentdefinition.TemplateReportAnalyst.StarterTools(),
+			AutonomyCeiling:   agentdefinition.TemplateReportAnalyst.StarterCeiling(),
+			DataAccessCeiling: agentdefinition.TemplateReportAnalyst.StarterDataAccess(),
 			TriggerMode:       agentdefinition.TriggerChat,
 			Enabled:           true,
 		},
