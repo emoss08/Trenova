@@ -179,6 +179,7 @@ type RuntimePage struct {
 // PendingProposal is one undecided proposal as the prompt names it.
 type PendingProposal struct {
 	ProposalID pulid.ID
+	PlanID     pulid.ID
 	ToolName   string
 	Rationale  string
 }
@@ -942,7 +943,9 @@ func buildPendingProposalSection(pending []PendingProposal, requestable bool) st
 		builder.WriteString(
 			" When the person types an approval or asks you to proceed with one of them, " +
 				"call request_decision with its proposalId: that puts its card back in front " +
-				"of them to decide. Then tell them in one line that it is decided on the " +
+				"of them to decide. For several of one tool, pass their ids together in " +
+				"proposalIds so they share one card; a plan's steps are decided together: " +
+				"pass its planId. Then tell them in one line that it is decided on the " +
 				"card and that nothing has been changed yet.",
 		)
 	} else {
@@ -957,6 +960,10 @@ func buildPendingProposalSection(pending []PendingProposal, requestable bool) st
 		if proposal.ProposalID.IsNotNil() {
 			builder.WriteString(" (proposalId ")
 			builder.WriteString(proposal.ProposalID.String())
+			if proposal.PlanID.IsNotNil() {
+				builder.WriteString(", a step of planId ")
+				builder.WriteString(proposal.PlanID.String())
+			}
 			builder.WriteString(")")
 		}
 		if rationale := strings.TrimSpace(proposal.Rationale); rationale != "" {

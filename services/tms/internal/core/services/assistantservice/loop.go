@@ -430,6 +430,7 @@ func pendingProposals(outcomes []serviceports.ProposalOutcome) []agentdefinition
 		if outcome.Pending() {
 			pending = append(pending, agentdefinition.PendingProposal{
 				ProposalID: outcome.ProposalID,
+				PlanID:     outcome.PlanID,
 				ToolName:   outcome.ToolName,
 				Rationale:  outcome.Rationale,
 			})
