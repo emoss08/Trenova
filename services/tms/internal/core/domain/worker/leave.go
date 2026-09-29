@@ -19,6 +19,17 @@ const (
 
 func (l LeaveType) String() string { return string(l) }
 
+func LeaveTypeValues() []LeaveType {
+	return []LeaveType{
+		LeaveTypeFMLA,
+		LeaveTypeMedical,
+		LeaveTypeMilitary,
+		LeaveTypeParental,
+		LeaveTypePersonal,
+		LeaveTypeOther,
+	}
+}
+
 func (l LeaveType) IsValid() bool {
 	switch l {
 	case LeaveTypeFMLA, LeaveTypeMedical, LeaveTypeMilitary, LeaveTypeParental,

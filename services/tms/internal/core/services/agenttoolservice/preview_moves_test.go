@@ -101,13 +101,12 @@ func TestRecordStopActual_PreviewMatchesWhatIsSaved(t *testing.T) {
 	before := new(shipment.ShipmentMove)
 	require.NoError(t, jsonutils.Convert(move, before))
 	moves := &savingMoves{move: move}
-	tool := newRecordStopActualTool(moves).(*recordStopActualTool)
-	occurredAt := int64(1790000000)
+	tool := newRecordStopActualTool(moves, nil).(*recordStopActualTool)
 	params := executeParams(map[string]any{
 		"moveId":     move.ID.String(),
 		"stopId":     move.Stops[0].ID.String(),
 		"action":     "Arrive",
-		"occurredAt": float64(occurredAt),
+		"occurredAt": "2026-09-21T14:13:20",
 	})
 
 	preview := previewWithoutWrites(t, &moves.guard, func() (*agent.ToolPreview, error) {
@@ -122,7 +121,7 @@ func TestRecordStopActual_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Equal(t, "InTransit", fieldByPath(t, change, "moveStatus").After)
 	assert.Contains(t, preview.Summary, "from Assigned to InTransit")
 
-	request, err := tool.request(&params)
+	request, err := tool.request(t.Context(), &params)
 	require.NoError(t, err)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	stopID := move.Stops[0].ID
@@ -136,7 +135,7 @@ func TestRecordStopActual_PreviewMarksNowAsVolatile(t *testing.T) {
 
 	move := dispatchedMove()
 	moves := &savingMoves{move: move}
-	tool := newRecordStopActualTool(moves).(*recordStopActualTool)
+	tool := newRecordStopActualTool(moves, nil).(*recordStopActualTool)
 
 	preview := previewWithoutWrites(t, &moves.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), executeParams(map[string]any{
@@ -157,7 +156,7 @@ func TestRecordStopActual_PreviewWarnsWhenTheServiceWouldRefuse(t *testing.T) {
 	arrived := int64(100)
 	move.Stops[0].ActualArrival = &arrived
 	moves := &savingMoves{move: move}
-	tool := newRecordStopActualTool(moves).(*recordStopActualTool)
+	tool := newRecordStopActualTool(moves, nil).(*recordStopActualTool)
 
 	preview := previewWithoutWrites(t, &moves.guard, func() (*agent.ToolPreview, error) {
 		return tool.Preview(t.Context(), executeParams(map[string]any{

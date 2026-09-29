@@ -78,7 +78,7 @@ func (t *recordStopActualTool) Preview(
 		return nil, err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(ctx, &params)
 	if err != nil {
 		return nil, err
 	}

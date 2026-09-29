@@ -3824,6 +3824,15 @@
       "template/notification.dash.load_unassigned"
     ]
   },
+  "A local date and time such as 2026-10-01T08:00 is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A loop cannot be its own parent": {
     "sites": 1,
     "scope": [
@@ -5188,6 +5197,15 @@
       "domain/ifta"
     ]
   },
+  "A reopened item takes no note or evidence": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A repeated field must name its repeat path": {
     "sites": 1,
     "scope": [
@@ -5946,6 +5964,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "A shipment needs a move with its stops in travel order": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "A short classification code for the reversal reason.": {
@@ -16783,6 +16810,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "An imported bank receipt could not be matched to a customer payment on its own and is waiting in the reconciliation queue.": {
@@ -34085,7 +34121,7 @@
     ]
   },
   "Checklist item was changed by someone else. Reload and try again": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -34467,6 +34503,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Choose a rating method: no rate agreement covers this lane, so this shipment would be priced at zero": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
+  "Choose a rating method: this shipment has no rate agreement and no rating method, so it cannot be priced": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
     ]
   },
   "Choose a record for each document you want to file": {
@@ -55684,6 +55738,15 @@
     ],
     "areas": [
       "routes/invoice-register"
+    ]
+  },
+  "Dispute adjustment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Dispute cases raised against posted invoices": {
@@ -79553,6 +79616,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Handed by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Handed out": {
@@ -111739,6 +111811,15 @@
       "apps/web/lib"
     ]
   },
+  "None of these courses could be assigned: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "None of these rows are carriers": {
     "sites": 1,
     "scope": [
@@ -113651,6 +113732,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "Nothing prices this shipment, so it would be saved at zero and flagged for review.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Nothing readable came attached. The desk can build the load from the text.": {
@@ -117128,25 +117218,7 @@
       "domain/documenttemplate"
     ]
   },
-  "Only an assigned or in-progress course can be cancelled": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/workertrainingservice"
-    ]
-  },
   "Only an assigned or in-progress course can be completed. Assign it again to record a renewal": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/workertrainingservice"
-    ]
-  },
-  "Only an assigned or in-progress course can be waived": {
     "sites": 1,
     "scope": [
       "go"
@@ -119756,7 +119828,7 @@
     ]
   },
   "Opening the desk": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -142410,12 +142482,14 @@
     ]
   },
   "Reimbursement": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/pay-code"
+      "routes/pay-code",
+      "service/agenttoolservice"
     ]
   },
   "Reimbursements": {
@@ -158902,6 +158976,15 @@
       "domain/permission"
     ]
   },
+  "Send a local date and time such as 2026-10-01T08:00, not a number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Send a message to a driver": {
     "sites": 1,
     "scope": [
@@ -160158,6 +160241,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Sequences count from 0 in travel order, so this one is {0}, not {1}; or leave sequence out": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Sequential": {
@@ -163574,6 +163666,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Shipment {0} has no rate agreement covering its lane and no rating method, so a copy would be priced at zero. Choose a rating method on it first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
     ]
   },
   "Shipment {0} is not on this run": {
@@ -181344,6 +181445,15 @@
       "routes/billing-queue"
     ]
   },
+  "The rate needs review: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The rate that applies after free time, in words.": {
     "sites": 1,
     "scope": [
@@ -187124,6 +187234,15 @@
       "routes/fiscal-year"
     ]
   },
+  "This permit belongs to another shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/permitservice"
+    ]
+  },
   "This place is already part of the zone": {
     "sites": 1,
     "scope": [
@@ -187625,6 +187744,15 @@
       "domain/invoice"
     ]
   },
+  "This review has no item {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "This review is not waiting for your sign-off": {
     "sites": 1,
     "scope": [
@@ -187850,6 +187978,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This shipment has no permit {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "This shipment is currently being reviewed by the billing team and cannot be modified. If changes are needed, contact your billing department to have it returned to operations.": {
@@ -188368,7 +188505,7 @@
     ]
   },
   "This worker already has pending or approved time off that overlaps these dates": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -188401,6 +188538,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This worker already holds an active credential of this type; renew it instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/workercredentialservice"
     ]
   },
   "This worker is already inactive": {
@@ -217872,6 +218018,15 @@
       "routes/admin"
     ]
   },
+  "{0} carries a UTC offset or is a Unix time; send the local time where it happens, such as 2026-10-01T08:00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} changed": {
     "sites": 1,
     "scope": [
@@ -218168,6 +218323,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "{0} does not exist in {1}: the clocks move forward past it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} does not have a plain-text body": {
@@ -219044,6 +219208,24 @@
       "apps/web/hooks"
     ]
   },
+  "{0} is not a decimal such as 1250.00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is not a local date and time such as 2026-10-01T08:00": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} is not a mapping target": {
     "sites": 1,
     "scope": [
@@ -219133,6 +219315,15 @@
     ],
     "areas": [
       "service/accountingsyncservice"
+    ]
+  },
+  "{0} is not an id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} is not available": {
@@ -219228,6 +219419,15 @@
     ],
     "areas": [
       "service/accountingmappingservice",
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is not one of Prepaid, Collect or ThirdParty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "service/agenttoolservice"
     ]
   },

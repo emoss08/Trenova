@@ -1594,7 +1594,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/runs.graphql",
-      "hash": "sha256:542619e8aa647c0c8e3407b58eb090062f51b06e9e01c659be42f80040f1abd8",
+      "hash": "sha256:fe618bd81377c44ff0ac1138eebf30ddca3d60a29672d6b85d8ca6d09fb9eafc",
       "rootFields": [
         "agentRun"
       ],
@@ -1609,14 +1609,14 @@
         "AgentRunTableRowFields"
       ],
       "usages": [],
-      "sdl": "query AgentRunDetail($id: ID!) {\n  agentRun(id: $id) {\n    ...AgentRunTableRowFields\n    inputContextHash\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentRunDetail($id: ID!) {\n  agentRun(id: $id) {\n    ...AgentRunTableRowFields\n    inputContextHash\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  parentOwnerKind\n  delegateCallId\n  handedBy {\n    id\n    name\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentRunTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/runs.graphql",
-      "hash": "sha256:bd4c2649fa274bd45001f5123142976a84960ecfad6c95566cbc5f46362e2468",
+      "hash": "sha256:cb0c75efc8b293a1beed186c94dbd21763979412b273229f4abfdcaa6dab3224",
       "rootFields": [
         "agentRuns"
       ],
@@ -1637,7 +1637,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  parentOwnerKind\n  delegateCallId\n  handedBy {\n    id\n    name\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentSafety",
@@ -22363,7 +22363,7 @@
         "AgentRunTable"
       ],
       "usages": [],
-      "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  parentOwnerKind\n  delegateCallId\n  handedBy {\n    id\n    name\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentSafetyHeaderFields",

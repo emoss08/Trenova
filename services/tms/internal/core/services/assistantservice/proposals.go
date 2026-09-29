@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/zap"
 )
 
@@ -44,11 +46,10 @@ const chatPromptVersion = "assistant-chat/v2"
 // persistProposalsParams groups what turning a turn's pending actions into
 // durable proposals needs.
 type persistProposalsParams struct {
-	TurnID         pulid.ID
-	DelegateCallID string
-	Definition     *agentdefinition.Definition
-	Thread         *conversation.Thread
-	Actor          *services.RequestActor
+	TurnID     pulid.ID
+	Definition *agentdefinition.Definition
+	Thread     *conversation.Thread
+	Actor      *services.RequestActor
 	// Saved are the messages as persisted, used to tie each proposal to the
 	// assistant turn that asked for it.
 	Saved   []conversation.Message
@@ -63,6 +64,16 @@ type persistProposalsParams struct {
 	// Taint is the outside content the turn that proposed read.
 	Taint       *agent.RunTaint
 	Fingerprint *agent.Fingerprint
+	Delegations []services.DelegatedRun
+}
+
+type chatRun struct {
+	definition     *agentdefinition.Definition
+	delegateCallID string
+	failed         bool
+	model          string
+	input          string
+	fingerprint    *agent.Fingerprint
 }
 
 // persistProposals records the turn's proposed writes so they can be approved.
@@ -77,36 +88,44 @@ func (s *Service) persistProposals(
 	ctx context.Context,
 	params persistProposalsParams,
 ) ([]services.AssistantProposal, error) {
-	if len(params.Actions) == 0 {
-		return nil, nil
+	delegated := make([]proposalrecorder.DelegatedActions, 0, len(params.Delegations))
+	for idx := range params.Delegations {
+		delegation := &params.Delegations[idx]
+		if delegation.Definition == nil {
+			continue
+		}
+		delegated = append(delegated, proposalrecorder.DelegatedActions{
+			Definition: delegation.Definition,
+			Open: params.openRun(chatRun{
+				definition:     delegation.Definition,
+				delegateCallID: delegation.CallID,
+				failed:         params.Failed || delegation.Failed,
+				model:          delegation.Model,
+				input:          delegation.Input,
+			}),
+			Actions: delegation.Actions,
+			Taint:   delegation.Taint,
+		})
 	}
-
-	status := agent.RunStatusCompleted
-	if params.Failed {
-		status = agent.RunStatusFailed
+	if len(params.Actions) == 0 && len(delegated) == 0 {
+		return nil, nil
 	}
 
 	recorded, err := s.recorder.Record(ctx, &proposalrecorder.RecordRequest{
 		Actor:      params.Actor,
 		Definition: params.Definition,
-		Open: &proposalrecorder.OpenRunRequest{
-			AgentType:        agent.TypeAssistantChat,
-			SubjectType:      agent.SubjectAssistantThread,
-			SubjectID:        params.Thread.ID,
-			Trigger:          agent.RunTriggerChat,
-			Status:           status,
-			Model:            params.Model,
-			PromptVersion:    chatPromptVersion,
-			InputContextHash: hashChatContext(params.Definition, params.Input),
-			Fingerprint:      params.Fingerprint,
-			TraceID:          params.traceID(),
-			TurnID:           params.TurnID,
-			ParentOwnerKind:  params.parentOwnerKind(),
-			ParentOwnerID:    params.parentOwnerID(),
-			DelegateCallID:   params.delegateCallID(),
-		},
+		Open: params.openRun(chatRun{
+			definition:  params.Definition,
+			failed:      params.Failed,
+			model:       params.Model,
+			input:       params.Input,
+			fingerprint: params.Fingerprint,
+		}),
 		Actions:          params.Actions,
 		Taint:            params.Taint,
+		Delegated:        delegated,
+		OpenEmptyRuns:    true,
+		CallOrder:        callOrder(params.Saved),
 		SourceMessageIDs: sourceMessageIndex(params.Saved),
 		Evidence: func(_ services.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef {
 			return chatEvidence(params.Thread, sourceMessageID)
@@ -116,62 +135,110 @@ func (s *Service) persistProposals(
 		return nil, err
 	}
 
-	// The definition that just proposed is in hand, so the hold is decided
-	// from it rather than read back through the run. A card that appears
-	// with buttons and loses them on the next refresh would be worse than
-	// one that arrives on hold.
-	verdict, err := s.shadow.ForDefinition(ctx, tenantOf(params.Actor), params.Definition)
-	if err != nil {
-		return nil, err
+	groups := make([]proposalGroup, 0, len(recorded.Delegated)+1)
+	groups = append(groups, proposalGroup{
+		definition: params.Definition,
+		proposals:  recorded.Proposals,
+	})
+	for idx := range recorded.Delegated {
+		groups = append(groups, proposalGroup{
+			definition: recorded.Delegated[idx].Definition,
+			proposals:  recorded.Delegated[idx].Proposals,
+		})
 	}
-	hold := holdFor(verdict)
 
-	params.Artifacts.fromProposals(recorded.Proposals, recorded.Plan)
-
-	persisted := make([]services.AssistantProposal, 0, len(recorded.Proposals))
-	for _, proposal := range recorded.Proposals {
-		out := toAssistantProposal(proposal, hold)
-		out.AgentID = params.Definition.ID
-		out.AgentName = params.Definition.Name
-		persisted = append(persisted, out)
+	all := make([]*agent.AgentProposal, 0, len(params.Actions))
+	persisted := make([]services.AssistantProposal, 0, len(params.Actions))
+	for _, group := range groups {
+		if len(group.proposals) == 0 {
+			continue
+		}
+		// The definition that just proposed is in hand, so the hold is
+		// decided from it rather than read back through the run. A card that
+		// appears with buttons and loses them on the next refresh would be
+		// worse than one that arrives on hold.
+		verdict, verdictErr := s.shadow.ForDefinition(ctx, tenantOf(params.Actor),
+			group.definition)
+		if verdictErr != nil {
+			return nil, verdictErr
+		}
+		hold := holdFor(verdict)
+		for _, proposal := range group.proposals {
+			out := toAssistantProposal(proposal, hold)
+			out.AgentID = group.definition.ID
+			out.AgentName = group.definition.Name
+			persisted = append(persisted, out)
+		}
+		all = append(all, group.proposals...)
 	}
+
+	params.Artifacts.fromProposals(all, recorded.Plan)
 
 	return persisted, nil
 }
 
-func (p *persistProposalsParams) traceID() string {
+type proposalGroup struct {
+	definition *agentdefinition.Definition
+	proposals  []*agent.AgentProposal
+}
+
+func (p *persistProposalsParams) openRun(run chatRun) *proposalrecorder.OpenRunRequest {
+	status := agent.RunStatusCompleted
+	if run.failed {
+		status = agent.RunStatusFailed
+	}
+
+	return &proposalrecorder.OpenRunRequest{
+		AgentType:        agent.TypeAssistantChat,
+		SubjectType:      agent.SubjectAssistantThread,
+		SubjectID:        p.Thread.ID,
+		Trigger:          agent.RunTriggerChat,
+		Status:           status,
+		Model:            run.model,
+		PromptVersion:    chatPromptVersion,
+		InputContextHash: hashChatContext(run.definition, run.input),
+		Fingerprint:      run.fingerprint,
+		TraceID:          p.traceID(run.delegateCallID),
+		TurnID:           p.TurnID,
+		ParentOwnerKind:  p.parentOwnerKind(run.delegateCallID),
+		ParentOwnerID:    p.parentOwnerID(run.delegateCallID),
+		DelegateCallID:   p.delegateCallID(run.delegateCallID),
+	}
+}
+
+func (p *persistProposalsParams) traceID(delegateCallID string) string {
 	if p.TurnID.IsNil() {
 		return ""
 	}
-	if p.DelegateCallID != "" {
-		return aitrace.ForDelegate(p.TurnID, p.DelegateCallID).TraceID.String()
+	if delegateCallID != "" {
+		return aitrace.ForDelegate(p.TurnID, delegateCallID).TraceID.String()
 	}
 
 	return aitrace.AnchorFor(aitrace.AnchorAssistantTurn, p.TurnID.String()).TraceID.String()
 }
 
-func (p *persistProposalsParams) parentOwnerKind() agent.RunOwnerKind {
-	if p.DelegateCallID == "" || p.TurnID.IsNil() {
+func (p *persistProposalsParams) parentOwnerKind(delegateCallID string) agent.RunOwnerKind {
+	if delegateCallID == "" || p.TurnID.IsNil() {
 		return ""
 	}
 
 	return agent.RunOwnerAssistantTurn
 }
 
-func (p *persistProposalsParams) parentOwnerID() pulid.ID {
-	if p.DelegateCallID == "" {
+func (p *persistProposalsParams) parentOwnerID(delegateCallID string) pulid.ID {
+	if delegateCallID == "" {
 		return pulid.Nil
 	}
 
 	return p.TurnID
 }
 
-func (p *persistProposalsParams) delegateCallID() string {
+func (p *persistProposalsParams) delegateCallID(delegateCallID string) string {
 	if p.TurnID.IsNil() {
 		return ""
 	}
 
-	return p.DelegateCallID
+	return delegateCallID
 }
 
 func tenantOf(actor *services.RequestActor) pagination.TenantInfo {
@@ -204,6 +271,17 @@ func hashChatContext(definition *agentdefinition.Definition, input string) strin
 	)
 
 	return hex.EncodeToString(sum[:])
+}
+
+func callOrder(saved []conversation.Message) map[string]int {
+	order := make(map[string]int, len(saved))
+	for idx := range saved {
+		for _, call := range saved[idx].ToolCalls {
+			order[call.ID] = len(order)
+		}
+	}
+
+	return order
 }
 
 // sourceMessageIndex maps each tool call id to the saved assistant message that
@@ -495,7 +573,16 @@ func (s *Service) ListThreadPlans(
 			runIDs = append(runIDs, plan.RunID)
 		}
 	}
-	verdicts, err := s.shadow.ForRuns(ctx, req.TenantInfo, runIDs)
+	stepRuns, err := s.planStepRuns(ctx, &req, len(runIDs) > 0)
+	if err != nil {
+		return nil, err
+	}
+	for _, plan := range stored {
+		if plan.Status.Decidable() {
+			runIDs = append(runIDs, stepRuns[plan.ID]...)
+		}
+	}
+	verdicts, err := s.shadow.ForRuns(ctx, req.TenantInfo, sliceutils.Dedupe(runIDs))
 	if err != nil {
 		return nil, err
 	}
@@ -508,7 +595,7 @@ func (s *Service) ListThreadPlans(
 
 	plans := make([]services.AssistantPlan, 0, len(stored))
 	for _, plan := range stored {
-		out := toAssistantPlan(plan, holdFor(verdicts[plan.RunID]))
+		out := toAssistantPlan(plan, holdFor(planVerdict(verdicts, plan, stepRuns[plan.ID])))
 		if by, ok := proposers[plan.RunID]; ok {
 			out.AgentID, out.AgentName = by.id, by.name
 		}
@@ -516,6 +603,55 @@ func (s *Service) ListThreadPlans(
 	}
 
 	return plans, nil
+}
+
+func (s *Service) planStepRuns(
+	ctx context.Context,
+	req *repositories.GetThreadRequest,
+	needed bool,
+) (map[pulid.ID][]pulid.ID, error) {
+	runs := make(map[pulid.ID][]pulid.ID)
+	if !needed || s.proposals == nil {
+		return runs, nil
+	}
+
+	stored, err := s.proposals.ListByThread(ctx, repositories.ListAgentProposalsByThreadRequest{
+		ThreadID:   req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, proposal := range stored {
+		if proposal == nil || proposal.PlanID == nil ||
+			slices.Contains(runs[*proposal.PlanID], proposal.RunID) {
+			continue
+		}
+		runs[*proposal.PlanID] = append(runs[*proposal.PlanID], proposal.RunID)
+	}
+
+	return runs, nil
+}
+
+func planVerdict(
+	verdicts map[pulid.ID]agentshadow.Verdict,
+	plan *agent.AgentPlan,
+	stepRuns []pulid.ID,
+) agentshadow.Verdict {
+	if !plan.Status.Decidable() {
+		return agentshadow.Verdict{}
+	}
+	if verdict := verdicts[plan.RunID]; verdict.Shadow() {
+		return verdict
+	}
+	for _, runID := range stepRuns {
+		if verdict := verdicts[runID]; verdict.Shadow() {
+			return verdict
+		}
+	}
+
+	return agentshadow.Verdict{}
 }
 
 func toAssistantPlan(plan *agent.AgentPlan, hold *services.ProposalHold) services.AssistantPlan {

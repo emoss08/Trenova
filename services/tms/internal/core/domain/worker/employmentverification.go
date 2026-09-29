@@ -44,6 +44,16 @@ const (
 
 func (s EmploymentVerificationStatus) String() string { return string(s) }
 
+func EmploymentVerificationStatusValues() []EmploymentVerificationStatus {
+	return []EmploymentVerificationStatus{
+		VerificationPending,
+		VerificationRequested,
+		VerificationReceived,
+		VerificationNoResponse,
+		VerificationNotApplicable,
+	}
+}
+
 func (s EmploymentVerificationStatus) IsValid() bool {
 	switch s {
 	case VerificationPending, VerificationRequested, VerificationReceived,
@@ -91,6 +101,17 @@ const (
 )
 
 func (m EmploymentVerificationMethod) String() string { return string(m) }
+
+func EmploymentVerificationMethodValues() []EmploymentVerificationMethod {
+	return []EmploymentVerificationMethod{
+		VerificationByEmail,
+		VerificationByFax,
+		VerificationByMail,
+		VerificationByPhone,
+		VerificationByPortal,
+		VerificationByOther,
+	}
+}
 
 func (m EmploymentVerificationMethod) IsValid() bool {
 	switch m {

@@ -25,6 +25,8 @@ type receivableSpec struct {
 	resource    permission.Resource
 	operation   permission.Operation
 	egress      agent.EgressClass
+	alsoEgress  []agent.EgressClass
+	classify    func(serviceports.ToolExecuteParams) serviceports.CallPolicy
 	defaultTier agent.AutonomyTier
 	maxTier     agent.AutonomyTier
 	personOnly  bool
@@ -42,6 +44,7 @@ type receivableSpec struct {
 
 type receivablePlan[R, P any] struct {
 	request func(params *serviceports.ToolExecuteParams) (R, error)
+	settle  func(ctx context.Context, req R, params *serviceports.ToolExecuteParams) error
 	plan    func(ctx context.Context, req R, params *serviceports.ToolExecuteParams) (P, error)
 	refused func(req R) string
 	render  func(req R, plan P) (*agent.ToolPreview, error)
@@ -107,7 +110,7 @@ func (t *receivableTool[R, P]) Policy() serviceports.ToolPolicy {
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   t.spec.defaultTier,
 		MaxTier:       t.spec.maxTier,
-		Egress:        []agent.EgressClass{t.spec.egress},
+		Egress:        append([]agent.EgressClass{t.spec.egress}, t.spec.alsoEgress...),
 		Effect:        agent.ToolEffectChange,
 		Reversible:    t.spec.reversible,
 		Idempotent:    t.spec.idempotent,
@@ -115,6 +118,7 @@ func (t *receivableTool[R, P]) Policy() serviceports.ToolPolicy {
 		Artifact:      t.spec.artifact,
 		Rationale:     t.spec.rationale,
 		Condition:     t.spec.condition,
+		Classify:      t.spec.classify,
 	}
 	if t.spec.taintHold != "" {
 		policy.TaintHold = &serviceports.TaintHold{
@@ -143,12 +147,27 @@ func (t *receivableTool[R, P]) request(params *serviceports.ToolExecuteParams) (
 	return t.steps.request(params)
 }
 
+func (t *receivableTool[R, P]) settled(
+	ctx context.Context,
+	req R,
+	params *serviceports.ToolExecuteParams,
+) error {
+	if t.steps.settle == nil {
+		return nil
+	}
+
+	return t.steps.settle(ctx, req, params)
+}
+
 func (t *receivableTool[R, P]) Validate(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
 	req, err := t.request(&params)
 	if err != nil {
+		return err
+	}
+	if err = t.settled(ctx, req, &params); err != nil {
 		return err
 	}
 	_, err = t.steps.plan(ctx, req, &params)
@@ -163,6 +182,9 @@ func (t *receivableTool[R, P]) Preview(
 	req, err := t.request(&params)
 	if err != nil {
 		return nil, err
+	}
+	if err = t.settled(ctx, req, &params); err != nil {
+		return warnRefusal(toolpreview.Build(t.steps.refused(req)), err)
 	}
 
 	plan, err := t.steps.plan(ctx, req, &params)
@@ -195,6 +217,9 @@ func (t *receivableTool[R, P]) execute(
 
 	req, err := t.steps.request(params)
 	if err != nil {
+		return nil, err
+	}
+	if err = t.settled(ctx, req, params); err != nil {
 		return nil, err
 	}
 

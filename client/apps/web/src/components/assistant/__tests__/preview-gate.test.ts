@@ -151,6 +151,22 @@ describe("preview warnings", () => {
         t,
       ),
     ).toBe("This would not go through as it stands: Rate not found");
+    expect(
+      previewWarningText(
+        {
+          code: "rate_coverage",
+          args: ["No rate agreement covers this lane, so this shipment is priced at zero"],
+          message: "",
+          reasons: [],
+        },
+        t,
+      ),
+    ).toBe(
+      "The rate needs review: No rate agreement covers this lane, so this shipment is priced at zero",
+    );
+    expect(
+      previewWarningTone({ code: "rate_coverage", args: [], message: "", reasons: [] }),
+    ).toBe("warning");
   });
 
   it("shows the server's words for a code this client does not know", () => {

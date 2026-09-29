@@ -32,6 +32,8 @@ const (
 	EntryMethodEDI    = EntryMethod("EDI")
 )
 
+const RateCoverageRuleKey = "rate_coverage"
+
 type FreightTerms string
 
 const (
@@ -39,6 +41,10 @@ const (
 	FreightTermsCollect    = FreightTerms("Collect")
 	FreightTermsThirdParty = FreightTerms("ThirdParty")
 )
+
+func FreightTermsValues() []FreightTerms {
+	return []FreightTerms{FreightTermsPrepaid, FreightTermsCollect, FreightTermsThirdParty}
+}
 
 func (f FreightTerms) IsValid() bool {
 	switch f {

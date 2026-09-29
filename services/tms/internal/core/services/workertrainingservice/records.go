@@ -2,12 +2,10 @@ package workertrainingservice
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -129,47 +127,12 @@ func (s *Service) Assign(
 		zap.String("courseId", req.CourseID.String()),
 	)
 
-	course, err := s.repo.GetCourseByID(ctx, &repositories.GetTrainingCourseByIDRequest{
-		ID:         req.CourseID,
-		TenantInfo: req.TenantInfo,
-	})
+	entity, err := s.PlanAssign(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if course.Status != domaintypes.StatusActive {
-		return nil, errortypes.NewValidationError(
-			"courseId",
-			errortypes.ErrInvalidOperation,
-			"Inactive courses cannot be assigned",
-		)
-	}
-	if _, err = s.loadWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
-		return nil, err
-	}
-
-	now := timeutils.NowUnix()
-	entity := &worker.WorkerTrainingRecord{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		WorkerID:       req.WorkerID,
-		CourseID:       req.CourseID,
-		Status:         worker.TrainingStatusAssigned,
-		AssignedAt:     now,
-		DueAt:          req.DueAt,
-		AssignedByID:   req.UserID,
-		Notes:          strings.TrimSpace(req.Notes),
-	}
-	if entity.DueAt == nil {
-		entity.DueAt = course.DueFor(now)
-	}
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if entity.DueAt != nil && *entity.DueAt < now-secondsPerDay {
-		multiErr.Add("dueAt", errortypes.ErrInvalid, "Due date cannot be in the past")
-	}
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	course := entity.Course
+	entity.Course = nil
 
 	created, err := s.repo.Create(ctx, entity)
 	if err != nil {
@@ -260,54 +223,12 @@ func (s *Service) Complete(
 ) (*worker.WorkerTrainingRecord, error) {
 	log := s.l.With(zap.String("operation", "Complete"))
 
-	record, original, err := s.openRecordFor(ctx, req)
+	plan, err := s.PlanComplete(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	course := record.Course
-
-	completedAt := req.CompletedAt
-	if completedAt <= 0 {
-		completedAt = timeutils.NowUnix()
-	}
-	if completedAt > timeutils.NowUnix()+secondsPerDay {
-		return nil, errortypes.NewValidationError(
-			"completedAt",
-			errortypes.ErrInvalid,
-			"Completion date cannot be in the future",
-		)
-	}
-	passed, err := course.Grade(req.Score)
-	if err != nil {
-		return nil, err
-	}
-	if !req.DocumentID.IsNil() {
-		if err = s.requireWorkerDocument(ctx, req.TenantInfo, record, req.DocumentID); err != nil {
-			return nil, err
-		}
-		record.DocumentID = req.DocumentID
-	}
-
-	record.CompletedAt = &completedAt
-	record.Score = req.Score
-	record.Passed = &passed
-	record.RecordedByID = req.UserID
-	if notes := strings.TrimSpace(req.Notes); notes != "" {
-		record.Notes = notes
-	}
-	if passed {
-		record.Status = worker.TrainingStatusCompleted
-		record.ExpiresAt = course.ExpiryFor(completedAt)
-	} else {
-		record.Status = worker.TrainingStatusFailed
-		record.ExpiresAt = nil
-	}
-
-	multiErr := errortypes.NewMultiError()
-	record.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	record, original, course := plan.After, plan.Before, plan.After.Course
+	passed := record.Passed != nil && *record.Passed
 
 	var saved *worker.WorkerTrainingRecord
 	if original == nil {
@@ -468,30 +389,13 @@ func (s *Service) Waive(
 ) (*worker.WorkerTrainingRecord, error) {
 	log := s.l.With(zap.String("operation", "Waive"), zap.String("id", req.ID.String()))
 
-	original, err := s.loadRecord(ctx, req.TenantInfo, req.ID, req.Version)
+	change, err := s.PlanWaive(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if !original.IsOpen() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only an assigned or in-progress course can be waived",
-		)
-	}
-	reason := strings.TrimSpace(req.Reason)
-	if reason == "" {
-		return nil, errortypes.NewValidationError(
-			"reason",
-			errortypes.ErrRequired,
-			"Say why the course is waived",
-		)
-	}
+	original, updated := change.Before, *change.After
+	reason := updated.WaivedReason
 
-	updated := *original
-	updated.Status = worker.TrainingStatusWaived
-	updated.WaivedReason = reason
-	updated.RecordedByID = req.UserID
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {
 		log.Error("failed to waive training", zap.Error(err))
@@ -513,24 +417,12 @@ func (s *Service) Cancel(
 ) (*worker.WorkerTrainingRecord, error) {
 	log := s.l.With(zap.String("operation", "Cancel"), zap.String("id", req.ID.String()))
 
-	original, err := s.loadRecord(ctx, req.TenantInfo, req.ID, req.Version)
+	change, err := s.PlanCancel(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if !original.IsOpen() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only an assigned or in-progress course can be cancelled",
-		)
-	}
+	original, updated := change.Before, *change.After
 
-	updated := *original
-	updated.Status = worker.TrainingStatusCancelled
-	updated.RecordedByID = req.UserID
-	if reason := strings.TrimSpace(req.Reason); reason != "" {
-		updated.Notes = reason
-	}
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {
 		log.Error("failed to cancel training", zap.Error(err))
@@ -566,23 +458,12 @@ func (s *Service) AttachDocument(
 ) (*worker.WorkerTrainingRecord, error) {
 	log := s.l.With(zap.String("operation", "AttachDocument"), zap.String("id", req.ID.String()))
 
-	original, err := s.loadRecord(ctx, req.TenantInfo, req.ID, 0)
+	change, err := s.PlanAttachDocument(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if original.Status == worker.TrainingStatusCancelled {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Cancelled assignments cannot take documents",
-		)
-	}
-	if err = s.requireWorkerDocument(ctx, req.TenantInfo, original, req.DocumentID); err != nil {
-		return nil, err
-	}
+	original, updated := change.Before, *change.After
 
-	updated := *original
-	updated.DocumentID = req.DocumentID
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {
 		log.Error("failed to attach training document", zap.Error(err))

@@ -337,9 +337,11 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation endBenefitEnrollment":
-    pending: "End benefit enrollment."
+    exempt: attestation
+    reason: "Ending a benefit election is the worker's own choice, with the payroll deduction it stops; an agent must not make it for them."
   "mutation enrollBenefit":
-    pending: "Enroll benefit."
+    exempt: attestation
+    reason: "Enrolling in a benefit is the worker's own election, with payroll deductions it starts; an agent must not make it for them."
   "mutation updateBenefitPlan":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -894,7 +896,7 @@ writes:
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation resolveSettlementDispute":
-    pending: "Resolve settlement dispute."
+    tools: [resolve_settlement_dispute]
   "mutation respondToMyAssignment":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
@@ -905,7 +907,7 @@ writes:
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation reviewDriverExpense":
-    pending: "Review driver expense."
+    tools: [review_driver_expense]
   "mutation revokeWorkerPortalAccess":
     exempt: security
     reason: "Removes a driver's sign-in to the driver portal."
@@ -913,7 +915,7 @@ writes:
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation startSettlementDisputeReview":
-    pending: "Start settlement dispute review."
+    tools: [start_settlement_dispute_review]
   "mutation submitMyExpense":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
@@ -1303,11 +1305,11 @@ writes:
 
   # fleetsafety
   "mutation deleteSafetyViolation":
-    pending: "Delete safety violation."
+    tools: [delete_safety_violation]
   "mutation recordSafetyViolation":
-    pending: "Record safety violation."
+    tools: [record_safety_violation]
   "mutation updateSafetyViolation":
-    pending: "Update safety violation."
+    tools: [update_safety_violation]
 
   # formulatemplate
   "DELETE /api/v1/formula-templates/:templateID/test-cases/:testCaseID":
@@ -1897,23 +1899,26 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation closePerformanceReview":
-    pending: "Close performance review."
+    exempt: attestation
+    reason: "Closing a review is the reviewer's sign-off on a record the worker has acknowledged; an agent drafts, it does not sign."
   "mutation createPerformanceReview":
-    pending: "Create performance review."
+    tools: [start_performance_review]
   "mutation createPerformanceReviewTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation deletePerformanceReview":
-    pending: "Delete performance review."
+    tools: [delete_performance_review]
   "mutation reopenPerformanceReview":
-    pending: "Reopen performance review."
+    exempt: attestation
+    reason: "Reopening a submitted review withdraws the reviewer's signed assessment from the worker; only the reviewer does that."
   "mutation restorePerformanceReviewTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation submitPerformanceReview":
-    pending: "Submit performance review."
+    exempt: attestation
+    reason: "Submitting is the reviewer signing the assessment and sending it to the worker to acknowledge; an agent drafts, it does not sign."
   "mutation updatePerformanceReview":
-    pending: "Update performance review."
+    tools: [draft_performance_review]
   "mutation updatePerformanceReviewTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -1925,30 +1930,34 @@ writes:
 
   # permit
   "POST /api/v1/shipments/:shipmentID/permit-requirements/:requirementID/waive/":
-    pending: "Waive requirement (shipment)."
+    exempt: attestation
+    reason: "Waiving a permit requirement is a named person accepting the compliance risk of moving the load without that state's permit."
   "POST /api/v1/shipments/:shipmentID/permits/":
-    pending: "Create permit (shipment)."
+    tools: [record_shipment_permit]
   "PUT /api/v1/shipments/:shipmentID/permits/:permitID/":
-    pending: "Update permit (shipment)."
+    tools: [update_shipment_permit]
 
   # ptopolicy
   "mutation adjustWorkerPtoBalance":
-    pending: "Adjust worker PTO balance."
+    tools: [adjust_worker_pto_balance]
   "mutation archivePtoPolicy":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation assignWorkerPtoPolicy":
-    pending: "Assign worker PTO policy."
+    exempt: configuration
+    reason: "Which PTO policy a worker accrues under is an HR setting an administrator assigns; requests and balances follow from it."
   "mutation createPtoPolicy":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation endWorkerPtoPolicyAssignment":
-    pending: "End worker PTO policy assignment."
+    exempt: configuration
+    reason: "Which PTO policy a worker accrues under is an HR setting an administrator assigns; requests and balances follow from it."
   "mutation restorePtoPolicy":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation runPtoAccrual":
-    pending: "Run PTO accrual."
+    exempt: infrastructure
+    reason: "Accrual runs on its schedule; this re-runs the job for a period, which is repair work on the ledger rather than a decision."
   "mutation updatePtoPolicy":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -2175,7 +2184,8 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation decideProfileChange":
-    pending: "Decide profile change."
+    exempt: attestation
+    reason: "Approving a driver's own change to their personal or banking details is a person verifying it came from the driver; an agent must not vouch for identity or pay details."
   "mutation updateWorkerPolicy":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -2440,16 +2450,18 @@ writes:
     exempt: counterparty
     reason: "A worker clocking their own time; an agent must not record hours worked for a person."
   "mutation deleteTimeEntry":
-    pending: "Delete time entry."
+    exempt: attestation
+    reason: "Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may change them."
   "mutation generatePayrollExport":
-    pending: "Generate payroll export."
+    tools: [generate_payroll_export]
   "mutation recordTimeEntry":
-    pending: "Record time entry."
+    exempt: attestation
+    reason: "Time clock entries are the wage record a worker's pay is computed from; only the worker or a supervisor who saw the time may enter them."
   "mutation transitionTimesheet":
     exempt: attestation
     reason: "Submitting and approving hours for payroll is a sign-off by the worker and their manager."
   "mutation voidPayrollExport":
-    pending: "Void payroll export."
+    tools: [void_payroll_export]
 
   # tractor
   "mutation bulkUpdateTractorStatus":
@@ -2526,58 +2538,61 @@ writes:
 
   # worker
   "POST /api/v1/workers/":
-    pending: "Create a worker."
+    exempt: attestation
+    reason: "Hiring a worker is an employment decision with its eligibility and qualification checks; a person makes it."
   "mutation approveWorkerPTO":
     tools: [approve_worker_pto]
   "mutation bulkWorkerPTOAction":
-    pending: "Approve, reject or cancel several PTO requests at once."
+    exempt: duplicate
+    reason: "Approves, rejects or cancels several requests at once; approve_worker_pto, reject_worker_pto and cancel_worker_pto each do one."
   "mutation cancelWorkerPTO":
     tools: [cancel_worker_pto]
   "mutation createWorkerPTO":
-    pending: "Create worker PTO."
+    tools: [request_worker_pto]
   "mutation patchWorker":
-    pending: "Update some fields of a worker."
+    exempt: attestation
+    reason: "Changes a worker's employment status, classification or personal record, which are HR decisions a person makes and signs."
   "mutation rejectWorkerPTO":
     tools: [reject_worker_pto]
   "mutation updateWorkerPTO":
-    pending: "Update worker PTO."
+    tools: [update_worker_pto]
 
   # workerchecklist
   "mutation archiveWorkerChecklistTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation cancelWorkerChecklist":
-    pending: "Cancel worker checklist."
+    tools: [cancel_worker_checklist]
   "mutation completeWorkerChecklistItem":
-    pending: "Complete worker checklist item."
+    tools: [update_worker_checklist_item]
   "mutation createWorkerChecklistTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation markWorkerChecklistItemNotApplicable":
-    pending: "Mark worker checklist item not applicable."
+    tools: [update_worker_checklist_item]
   "mutation reopenWorkerChecklistItem":
-    pending: "Reopen worker checklist item."
+    tools: [update_worker_checklist_item]
   "mutation restoreWorkerChecklistTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation skipWorkerChecklistItem":
-    pending: "Skip worker checklist item."
+    tools: [update_worker_checklist_item]
   "mutation startWorkerChecklist":
-    pending: "Start worker checklist."
+    tools: [start_worker_checklist]
   "mutation updateWorkerChecklistTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
 
   # workercredential
   "mutation archiveWorkerCredential":
-    pending: "Archive worker credential."
+    tools: [archive_worker_credential]
   "mutation archiveWorkerCredentialType":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation attachWorkerCredentialDocument":
-    pending: "Attach worker credential document."
+    tools: [attach_worker_credential_document]
   "mutation createWorkerCredential":
-    pending: "Create worker credential."
+    tools: [record_worker_credential]
   "mutation createWorkerCredentialType":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -2585,122 +2600,137 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation updateWorkerCredential":
-    pending: "Update worker credential."
+    tools: [update_worker_credential]
   "mutation updateWorkerCredentialType":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation verifyWorkerCredential":
-    pending: "Verify worker credential."
+    exempt: attestation
+    reason: "Verifying is a person vouching that they checked the credential against the original; an agent records, it does not vouch."
 
   # workerdqf
   "mutation deleteEmploymentVerification":
-    pending: "Delete employment verification."
+    tools: [delete_employment_verification]
   "mutation markEmploymentVerificationRequested":
-    pending: "Mark employment verification requested."
+    tools: [log_employment_verification_request]
   "mutation recordEmploymentVerification":
-    pending: "Record employment verification."
+    tools: [record_employment_verification]
   "mutation recordEmploymentVerificationFollowUp":
-    pending: "Record a follow-up on an employment verification request."
+    tools: [log_employment_verification_request]
   "mutation updateEmploymentVerification":
-    pending: "Update employment verification."
+    tools: [update_employment_verification]
 
   # workerdrugalcohol
   "mutation cancelDotRandomDraw":
-    pending: "Cancel DOT random draw."
+    tools: [cancel_dot_random_draw]
   "mutation cancelDotTest":
-    pending: "Cancel DOT test."
+    tools: [cancel_dot_test]
   "mutation completeClearinghouseQuery":
-    pending: "Complete clearinghouse query."
+    exempt: attestation
+    reason: "A Clearinghouse query's outcome is what FMCSA returned to the person who ran it under the carrier's account; only they record it."
   "mutation createDotRandomPool":
-    pending: "Create DOT random pool."
+    exempt: configuration
+    reason: "A random testing pool sets who is tested and at what annual rate under 49 CFR 382.305; the designated employer representative maintains it."
   "mutation finalizeDotRandomDraw":
-    pending: "Finalize DOT random draw."
+    tools: [finalize_dot_random_draw]
   "mutation recordClearinghouseQuery":
-    pending: "Record clearinghouse query."
+    exempt: attestation
+    reason: "A Clearinghouse query is made under the carrier's FMCSA account with the driver's consent; the person who ran it records it."
   "mutation recordDotTest":
-    pending: "Record DOT test."
+    tools: [schedule_dot_test]
   "mutation recordDotTestResult":
-    pending: "Record DOT test result."
+    exempt: attestation
+    reason: "A test result is what the lab and medical review officer reported; the person who received it records it, and a positive result reaches the Clearinghouse."
   "mutation recordDotViolation":
-    pending: "Record DOT violation."
+    exempt: attestation
+    reason: "A drug or alcohol violation is reported to the FMCSA Clearinghouse and removes the driver from safety-sensitive work; a person records it."
   "mutation runDotRandomDraw":
-    pending: "Run DOT random draw."
+    tools: [run_dot_random_draw]
   "mutation updateDotRandomDrawEntry":
-    pending: "Update DOT random draw entry."
+    tools: [update_dot_random_selection]
   "mutation updateDotRandomPool":
-    pending: "Update DOT random pool."
+    exempt: configuration
+    reason: "A random testing pool sets who is tested and at what annual rate under 49 CFR 382.305; the designated employer representative maintains it."
   "mutation updateDotViolation":
-    pending: "Update DOT violation."
+    exempt: attestation
+    reason: "A drug or alcohol violation and its return-to-duty steps are reported to the FMCSA Clearinghouse; a person records them."
 
   # workeremployment
   "mutation amendWorkerEmploymentEvent":
-    pending: "Amend worker employment event."
+    exempt: attestation
+    reason: "An employment event is a hire, rehire, leave or termination decision on the worker's record; a person makes and amends it."
   "mutation recordWorkerEmploymentEvent":
-    pending: "Record worker employment event."
+    exempt: attestation
+    reason: "An employment event is a hire, rehire, leave or termination decision on the worker's record; a person makes it."
 
   # workerinjury
   "mutation certifyOshaSummary":
     exempt: attestation
     reason: "OSHA requires a company executive to certify the annual injury summary."
   "mutation deleteWorkerInjury":
-    pending: "Delete worker injury."
+    tools: [delete_worker_injury]
   "mutation recordWorkerInjury":
-    pending: "Record worker injury."
+    tools: [record_worker_injury]
   "mutation saveOshaSummary":
-    pending: "Save OSHA summary."
+    exempt: attestation
+    reason: "The OSHA 300A summary is certified by a company executive and posted for employees; the figures are theirs to sign."
   "mutation uncertifyOshaSummary":
     exempt: attestation
     reason: "Withdraws the executive certification of the annual injury summary."
   "mutation updateWorkerInjury":
-    pending: "Update worker injury."
+    tools: [update_worker_injury]
 
   # workerleave
   "mutation closeLeaveCase":
-    pending: "Close leave case."
+    tools: [close_leave_case]
   "mutation decideLeaveCase":
-    pending: "Decide leave case."
+    exempt: attestation
+    reason: "Approving or denying leave, and designating it FMLA, is the employer's notice to the employee under 29 CFR 825.300; a person decides it."
   "mutation deleteLeaveDay":
-    pending: "Delete leave day."
+    tools: [delete_leave_day]
   "mutation openLeaveCase":
-    pending: "Open leave case."
+    tools: [open_leave_case]
   "mutation recordLeaveCertification":
-    pending: "Record leave certification."
+    exempt: attestation
+    reason: "The certification is the health care provider's statement received from the employee; the person who received it records it."
   "mutation recordLeaveDay":
-    pending: "Record leave day."
+    tools: [record_leave_day]
   "mutation requestLeaveCertification":
-    pending: "Request leave certification."
+    tools: [request_leave_certification]
   "mutation updateLeaveCase":
-    pending: "Update leave case."
+    tools: [update_leave_case]
   "mutation updateLeaveControl":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation updateLeaveDay":
-    pending: "Update leave day."
+    tools: [update_leave_day]
 
   # workersafety
   "mutation acknowledgeMyDisciplinaryAction":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation closeWorkerSafetyEvent":
-    pending: "Close worker safety event."
+    tools: [change_worker_safety_event_status]
   "mutation createWorkerSafetyEvent":
-    pending: "Create worker safety event."
+    tools: [open_worker_safety_event]
   "mutation deleteWorkerRecognition":
-    pending: "Delete worker recognition."
+    tools: [delete_worker_recognition]
   "mutation deleteWorkerSafetyEvent":
-    pending: "Delete worker safety event."
+    tools: [delete_worker_safety_event]
   "mutation giveWorkerRecognition":
-    pending: "Give worker recognition."
+    tools: [give_worker_recognition]
   "mutation issueDisciplinaryAction":
-    pending: "Issue disciplinary action."
+    exempt: attestation
+    reason: "Discipline is a manager's decision on an employee's record, which the driver acknowledges in the portal; a person issues it."
   "mutation reopenWorkerSafetyEvent":
-    pending: "Reopen worker safety event."
+    tools: [change_worker_safety_event_status]
   "mutation rescindDisciplinaryAction":
-    pending: "Rescind disciplinary action."
+    exempt: attestation
+    reason: "Rescinding discipline reverses a manager's decision on an employee's record; the person who owns that decision makes it."
   "mutation reviewWorkerSafetyEvent":
-    pending: "Review worker safety event."
+    tools: [change_worker_safety_event_status]
   "mutation updateWorkerSafetyEvent":
-    pending: "Update worker safety event."
+    tools: [update_worker_safety_event]
 
   # workertraining
   "mutation acknowledgeMyTraining":
@@ -2710,17 +2740,17 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation assignRequiredWorkerTraining":
-    pending: "Assign required worker training."
+    tools: [assign_required_worker_training]
   "mutation assignWorkerTraining":
-    pending: "Assign worker training."
+    tools: [assign_worker_training]
   "mutation attachWorkerTrainingDocument":
-    pending: "Attach worker training document."
+    tools: [attach_worker_training_document]
   "mutation bulkAssignTraining":
-    pending: "Bulk assign training."
+    tools: [assign_worker_training]
   "mutation cancelWorkerTraining":
-    pending: "Cancel worker training."
+    tools: [close_worker_training]
   "mutation completeWorkerTraining":
-    pending: "Complete worker training."
+    tools: [record_training_completion]
   "mutation createTrainingCourse":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
@@ -2734,4 +2764,4 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
   "mutation waiveWorkerTraining":
-    pending: "Waive worker training."
+    tools: [close_worker_training]

@@ -96,68 +96,14 @@ func (s *Service) Start(ctx context.Context, req *StartRequest) (*worker.WorkerC
 		zap.String("templateId", req.TemplateID.String()),
 	)
 
-	template, err := s.repo.GetTemplateByID(ctx, &repositories.GetChecklistTemplateByIDRequest{
-		ID:           req.TemplateID,
-		TenantInfo:   req.TenantInfo,
-		IncludeItems: true,
-	})
+	plan, err := s.PlanStart(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if template.Status != "Active" {
-		return nil, errortypes.NewValidationError(
-			"templateId",
-			errortypes.ErrInvalid,
-			"This checklist template is inactive",
-		)
+	if plan.Existing {
+		return plan.Checklist, nil
 	}
-	fromEvent := !req.SourceEventID.IsNil()
-	if !fromEvent && template.Trigger != worker.ChecklistTriggerManual {
-		return nil, errortypes.NewValidationError(
-			"templateId",
-			errortypes.ErrInvalidOperation,
-			"This checklist is started by the employment event it belongs to, not by hand",
-		)
-	}
-
-	existing, err := s.repo.ListForWorker(ctx, &repositories.ListWorkerChecklistsRequest{
-		TenantInfo:    req.TenantInfo,
-		WorkerID:      req.WorkerID,
-		IncludeClosed: fromEvent,
-		IncludeItems:  true,
-	})
-	if err != nil {
-		return nil, err
-	}
-	for _, checklist := range existing {
-		if checklist.TemplateID != template.ID {
-			continue
-		}
-		if fromEvent && checklist.SourceEventID == req.SourceEventID {
-			return checklist, nil
-		}
-		if !fromEvent && checklist.IsOpen() {
-			return checklist, nil
-		}
-	}
-
-	if _, err = s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
-		ID:         req.WorkerID,
-		TenantInfo: req.TenantInfo,
-	}); err != nil {
-		return nil, err
-	}
-
-	startedAt := req.StartedAt
-	if startedAt <= 0 {
-		startedAt = timeutils.NowUnix()
-	}
-	checklist := template.Instantiate(req.WorkerID, startedAt, req.UserID, req.SourceEventID)
-	multiErr := errortypes.NewMultiError()
-	checklist.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	checklist := plan.Checklist
 
 	created, err := s.repo.Create(ctx, checklist)
 	if err != nil {
@@ -285,13 +231,6 @@ func (s *Service) CompleteItem(
 }
 
 func (s *Service) SkipItem(ctx context.Context, req *ItemRequest) (*worker.WorkerChecklist, error) {
-	if strings.TrimSpace(req.Note) == "" {
-		return nil, errortypes.NewValidationError(
-			"note",
-			errortypes.ErrRequired,
-			"Say why this item is being skipped",
-		)
-	}
 	return s.settleItem(ctx, req, worker.ChecklistItemSkipped, "Checklist item skipped")
 }
 
@@ -299,13 +238,6 @@ func (s *Service) MarkItemNotApplicable(
 	ctx context.Context,
 	req *ItemRequest,
 ) (*worker.WorkerChecklist, error) {
-	if strings.TrimSpace(req.Note) == "" {
-		return nil, errortypes.NewValidationError(
-			"note",
-			errortypes.ErrRequired,
-			"Say why this item does not apply",
-		)
-	}
 	return s.settleItem(
 		ctx,
 		req,
@@ -322,67 +254,12 @@ func (s *Service) settleItem(
 ) (*worker.WorkerChecklist, error) {
 	log := s.l.With(zap.String("operation", "SettleItem"), zap.String("itemId", req.ID.String()))
 
-	item, err := s.repo.GetItemByID(ctx, &repositories.GetWorkerChecklistItemByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, err := s.planSettleItem(ctx, req, status)
 	if err != nil {
 		return nil, err
 	}
-	if req.Version > 0 && item.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
-			"Checklist item was changed by someone else. Reload and try again",
-		)
-	}
-	if item.Status.Settled() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"This item is already settled. Reopen it first",
-		)
-	}
-
-	checklist, err := s.repo.GetByID(ctx, &repositories.GetWorkerChecklistByIDRequest{
-		ID:         item.ChecklistID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !checklist.IsOpen() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"This checklist is closed",
-		)
-	}
-
-	if !req.EvidenceDocumentID.IsNil() {
-		doc, docErr := s.documentRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
-			ID:         req.EvidenceDocumentID,
-			TenantInfo: req.TenantInfo,
-		})
-		if docErr != nil {
-			return nil, docErr
-		}
-		if doc.ResourceType != workerResourceType || doc.ResourceID != checklist.WorkerID.String() {
-			return nil, errortypes.NewValidationError(
-				"evidenceDocumentId",
-				errortypes.ErrInvalid,
-				"Document does not belong to this worker",
-			)
-		}
-		item.EvidenceDocumentID = doc.ID
-	}
-
-	now := timeutils.NowUnix()
-	item.Status = status
-	item.CompletedAt = &now
-	item.CompletedByID = req.UserID
-	item.AutoCompleted = false
-	item.Note = strings.TrimSpace(req.Note)
+	*plan.Item.Before = *plan.Item.After
+	item, checklist := plan.Item.Before, plan.Checklist
 
 	if err = s.repo.UpdateItems(ctx, []*worker.WorkerChecklistItem{item}); err != nil {
 		log.Error("failed to settle checklist item", zap.Error(err))
@@ -419,36 +296,17 @@ func (s *Service) ReopenItem(
 ) (*worker.WorkerChecklist, error) {
 	log := s.l.With(zap.String("operation", "ReopenItem"), zap.String("itemId", req.ID.String()))
 
-	item, err := s.repo.GetItemByID(ctx, &repositories.GetWorkerChecklistItemByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, err := s.PlanReopenItem(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if req.Version > 0 && item.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
-			"Checklist item was changed by someone else. Reload and try again",
-		)
-	}
-	checklist, err := s.repo.GetByID(ctx, &repositories.GetWorkerChecklistByIDRequest{
-		ID:         item.ChecklistID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !item.Status.Settled() {
+	checklist := plan.Checklist
+	if !plan.Item.Before.Status.Settled() {
 		return s.Get(ctx, req.TenantInfo, checklist.ID)
 	}
+	*plan.Item.Before = *plan.Item.After
+	item := plan.Item.Before
 
-	item.Status = worker.ChecklistItemPending
-	item.CompletedAt = nil
-	item.CompletedByID = pulid.Nil
-	item.AutoCompleted = false
-	item.EvidenceCredentialID = pulid.Nil
 	if err = s.repo.UpdateItems(ctx, []*worker.WorkerChecklistItem{item}); err != nil {
 		log.Error("failed to reopen checklist item", zap.Error(err))
 		return nil, err
@@ -489,24 +347,14 @@ type CancelRequest struct {
 func (s *Service) Cancel(ctx context.Context, req *CancelRequest) (*worker.WorkerChecklist, error) {
 	log := s.l.With(zap.String("operation", "Cancel"), zap.String("id", req.ID.String()))
 
-	checklist, err := s.repo.GetByID(ctx, &repositories.GetWorkerChecklistByIDRequest{
-		ID:           req.ID,
-		TenantInfo:   req.TenantInfo,
-		IncludeItems: true,
-	})
+	change, err := s.PlanCancel(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if req.Version > 0 && checklist.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
-			"Checklist was changed by someone else. Reload and try again",
-		)
+	if !change.Before.IsOpen() {
+		return change.Before, nil
 	}
-	if !checklist.IsOpen() {
-		return checklist, nil
-	}
+	checklist := change.Before
 
 	return s.cancelChecklist(ctx, checklist, req.Reason, req.TenantInfo, req.UserID, log)
 }

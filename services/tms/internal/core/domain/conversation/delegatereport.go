@@ -86,6 +86,9 @@ type DelegateWrite struct {
 	// Simulated says the agent was in simulation, so the write was
 	// previewed rather than made.
 	Simulated bool `json:"simulated,omitempty"`
+	// ProposalID is the proposal the write was filed as, which names its
+	// card in the conversation.
+	ProposalID pulid.ID `json:"proposalId,omitempty"`
 }
 
 // DelegateDocument is something another agent kept beside the conversation.
@@ -137,9 +140,10 @@ func boundedWrites(writes []DelegateWrite, more int) ([]DelegateWrite, int) {
 				stringutils.CollapseWhitespace(write.Summary),
 				maxWriteSummaryRunes,
 			),
-			Result:    write.Result.Bounded(),
-			Error:     stringutils.Ellipsize(write.Error, maxWriteErrorRunes),
-			Simulated: write.Simulated,
+			Result:     write.Result.Bounded(),
+			Error:      stringutils.Ellipsize(write.Error, maxWriteErrorRunes),
+			Simulated:  write.Simulated,
+			ProposalID: write.ProposalID,
 		})
 	}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -52,27 +53,34 @@ type importCompleter interface {
 }
 
 // createShipmentTool enters a shipment: the customer, the service, the stops
-// in order with their locations and windows, the freight. It takes the same
-// shape the shipment form sends, so what an agent builds from a document is
+// in order with their locations and windows, the freight and how it is rated.
+// It reads an allow-listed draft rather than the record itself, so a model
+// cannot set what the form does not let a person set, and what it builds is
 // validated by exactly the rules a person's entry is.
 type createShipmentTool struct {
 	shipments shipmentCreator
 	imports   importCompleter
+	locations locationZoneReader
 	logger    *zap.Logger
 }
 
-func newCreateShipmentTool(
-	shipments shipmentCreator,
-	imports importCompleter,
-	logger *zap.Logger,
-) serviceports.AgentTool {
+type createShipmentDeps struct {
+	Shipments shipmentCreator
+	Imports   importCompleter
+	Locations locationZoneReader
+	Logger    *zap.Logger
+}
+
+func newCreateShipmentTool(deps createShipmentDeps) serviceports.AgentTool {
+	logger := deps.Logger
 	if logger == nil {
 		logger = zap.NewNop()
 	}
 
 	return &createShipmentTool{
-		shipments: shipments,
-		imports:   imports,
+		shipments: deps.Shipments,
+		imports:   deps.Imports,
+		locations: deps.Locations,
 		logger:    logger.Named("tool.create-shipment"),
 	}
 }
@@ -80,140 +88,185 @@ func newCreateShipmentTool(
 func (t *createShipmentTool) Name() string { return "create_shipment" }
 
 func (t *createShipmentTool) Description() string {
-	return "Enter a new shipment. Give the customer, service type and shipment type by " +
-		"id, the BOL or reference, the freight (pieces, weight, temperature range when " +
-		"it matters), and one move with its stops in travel order: each stop has a " +
-		"location id from list_locations, a type, and a scheduled window. Rate fields " +
-		"are optional; a shipment with none is rated from the customer's agreements. " +
-		"When the shipment comes from an uploaded document, pass sourceDocumentId so " +
-		"the document is linked and its import conversation closed. The pro number is " +
-		"assigned by the system. A BOL must be unique among open shipments, so a copied " +
-		"shipment needs a new BOL or none; ask the person for it rather than reusing one."
+	return "Enter a new shipment. To copy an existing shipment use duplicate_shipment instead, " +
+		"which carries its stops, commodities, charges and rating exactly. Give the customer, " +
+		"service type, shipment type and rating method (formulaTemplateId, from " +
+		"list_formula_templates) by id: the rating method is required, and a shipment nothing " +
+		"can price is refused. Add the freight (pieces, weight, commodities, temperatures " +
+		"when it matters), any accessorial charges, and one move with its stops in travel order: " +
+		"each stop has a location id from list_locations, a type, and a scheduled window in " +
+		"local time at the stop, such as 2026-10-01T08:00. Stops and moves count from 0. For a " +
+		"shipment read from an uploaded document, pass sourceDocumentId to link it and close " +
+		"its import conversation. The pro number is assigned by the system. A " +
+		"BOL must be unique among open shipments, so never reuse one; ask the person for it."
 }
 
 func (t *createShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"shipment": map[string]any{
-				"type":        "object",
-				"description": "The shipment, in the shape the shipment form sends.",
-				"properties": map[string]any{
-					"customerId": map[string]any{
-						"type":        "string",
-						"description": "The customer, from list_customers.",
-					},
-					"serviceTypeId": map[string]any{
-						"type":        "string",
-						"description": "From list_service_types.",
-					},
-					"shipmentTypeId": map[string]any{
-						"type":        "string",
-						"description": "From list_shipment_types.",
-					},
-					"tractorTypeId": map[string]any{
-						"type":        "string",
-						"description": "A tractor equipment type, from list_equipment_types.",
-					},
-					"trailerTypeId": map[string]any{
-						"type":        "string",
-						"description": "A trailer equipment type, from list_equipment_types.",
-					},
-					"bol": map[string]any{
-						"type": "string",
-						"description": "The customer's BOL or reference. It must be unique among " +
-							"open shipments, so never reuse one from another shipment. Optional " +
-							"unless the customer's billing requires a BOL; leave it out when " +
-							"none is known.",
-					},
-					"pieces": map[string]any{"type": "integer"},
-					"weight": map[string]any{"type": "integer", "description": "Pounds."},
-					"temperatureMin": map[string]any{
-						"type":        "integer",
-						"description": "Fahrenheit, for reefer freight.",
-					},
-					"temperatureMax": map[string]any{
-						"type":        "integer",
-						"description": "Fahrenheit, for reefer freight.",
-					},
-					"ratingUnit": map[string]any{
-						"type":        "integer",
-						"description": "Defaults to 1.",
-					},
-					"freightChargeAmount": map[string]any{
-						"type":        "string",
-						"description": "The agreed freight charge as a decimal string, only when the customer gave one.",
-					},
-					"moves": map[string]any{
-						"type":        "array",
-						"description": "Usually one move. Each has its stops in travel order.",
-						"items": map[string]any{
-							"type": "object",
-							"properties": map[string]any{
-								"loaded":   map[string]any{"type": "boolean"},
-								"sequence": map[string]any{"type": "integer"},
-								"stops": map[string]any{
-									"type": "array",
-									"items": map[string]any{
-										"type": "object",
-										"properties": map[string]any{
-											"locationId": map[string]any{"type": "string"},
-											"type": agenttoolschema.Enum(
-												"What happens at the stop.",
-												agenttoolschema.StopTypes,
-											),
-											"scheduleType": agenttoolschema.Enum(
-												"Open for a window, Appointment for a fixed time. Defaults to Open.",
-												agenttoolschema.StopScheduleTypes,
-											),
-											"sequence": map[string]any{
-												"type": "integer",
-											},
-											"scheduledWindowStart": map[string]any{
-												"type":        "integer",
-												"description": "Unix seconds.",
-											},
-											"scheduledWindowEnd": map[string]any{
-												"type":        "integer",
-												"description": "Unix seconds.",
-											},
-											"pieces": map[string]any{
-												"type": "integer",
-											},
-											"weight": map[string]any{
-												"type": "integer",
-											},
-											"addressLine": map[string]any{
-												"type": "string",
-											},
-										},
-										"required": []string{
-											"locationId",
-											"type",
-											"sequence",
-											"scheduledWindowStart",
-										},
-										"additionalProperties": false,
-									},
-								},
-							},
-							"required":             []string{"stops"},
-							"additionalProperties": false,
-						},
-					},
-				},
-				"required":             []string{"customerId", "serviceTypeId", "moves"},
-				"additionalProperties": false,
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			"shipment": shipmentDraftSchema(),
+			"sourceDocumentId": idProperty("The uploaded document this shipment was read from, " +
+				"when there is one: the documentId you read with get_shipment_draft, usually " +
+				"this run's subject or the page."),
+		},
+		toolschema.KeyRequired:             []string{"shipment"},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+const paramAdditionalCharges = "additionalCharges"
+
+func shipmentDraftSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType:        toolschema.TypeObject,
+		toolschema.KeyDescription: "The shipment to enter.",
+		toolschema.KeyProperties: map[string]any{
+			paramCustomerID: idProperty("The customer, from list_customers."),
+			"billToCustomerId": idProperty("Who is billed, when not the customer, from " +
+				"list_customers."),
+			fieldServiceTypeID:  idProperty("From list_service_types."),
+			fieldShipmentTypeID: idProperty("From list_shipment_types."),
+			"formulaTemplateId": idProperty("The rating method that prices the freight, from " +
+				"list_formula_templates. Required: a rate agreement covering the lane may " +
+				"replace it with its own when the shipment is saved."),
+			"baseRate": amountProperty("The rate the rating method multiplies, as a decimal " +
+				"such as 2.45, only when the customer agreed one."),
+			"freightTerms": agenttoolschema.Enum(
+				"Who pays the freight. Defaults to Prepaid.",
+				agenttoolschema.FreightTerms,
+			),
+			previewFieldTractorTypeID: idProperty(
+				"A tractor equipment type, from list_equipment_types.",
+			),
+			previewFieldTrailerTypeID: idProperty(
+				"A trailer equipment type, from list_equipment_types.",
+			),
+			"bol": stringProperty("The customer's BOL or reference. It must be unique among "+
+				"open shipments, so never reuse one from another shipment. Optional unless the "+
+				"customer's billing requires a BOL; leave it out when none is known.", 100),
+			fieldPieces: integerProperty(
+				"The total piece or handling-unit count.",
+				0,
+				1_000_000,
+			),
+			fieldWeight:      integerProperty("Pounds.", 0, 10_000_000),
+			"temperatureMin": integerProperty("Fahrenheit, for reefer freight.", -100, 200),
+			"temperatureMax": integerProperty("Fahrenheit, for reefer freight.", -100, 200),
+			"ratingUnit": integerProperty("How many units the rating method prices. "+
+				"Defaults to 1.", 1, 1_000_000),
+			"moves": map[string]any{
+				toolschema.KeyType: toolschema.TypeArray,
+				toolschema.KeyDescription: "Usually one move, sequence 0. Each has its stops in " +
+					"travel order.",
+				toolschema.KeyMinItems: 1,
+				toolschema.KeyItems:    moveDraftSchema(),
 			},
-			"sourceDocumentId": map[string]any{
-				"type": "string",
-				"description": "The uploaded document this shipment was read from, when there is " +
-					"one: the documentId you read with get_shipment_draft, usually this run's " +
-					"subject or the page.",
+			"commodities": map[string]any{
+				toolschema.KeyType:        toolschema.TypeArray,
+				toolschema.KeyDescription: "What is hauled, one line per commodity.",
+				toolschema.KeyItems:       commodityDraftSchema(),
+			},
+			paramAdditionalCharges: map[string]any{
+				toolschema.KeyType:        toolschema.TypeArray,
+				toolschema.KeyDescription: "Accessorial charges agreed for the shipment.",
+				toolschema.KeyItems:       chargeLineDraftSchema(),
 			},
 		},
-		"required":             []string{"shipment"},
-		"additionalProperties": false,
+		toolschema.KeyRequired: []string{
+			paramCustomerID,
+			fieldServiceTypeID,
+			fieldShipmentTypeID,
+			fieldFormulaTemplateID,
+			"moves",
+		},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func moveDraftSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			"loaded": booleanProperty("False for a deadhead move. Defaults to true."),
+			"sequence": integerProperty("The move's place, counting from 0. Leave it out to "+
+				"take the order given.", 0, 50),
+			"stops": map[string]any{
+				toolschema.KeyType:        toolschema.TypeArray,
+				toolschema.KeyDescription: "The stops in travel order: a pickup first, a delivery last.",
+				toolschema.KeyMinItems:    2,
+				toolschema.KeyItems:       stopDraftSchema(),
+			},
+		},
+		toolschema.KeyRequired:             []string{"stops"},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func stopDraftSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			fieldLocationID: idProperty("The stop's location, from list_locations."),
+			fieldType: agenttoolschema.Enum(
+				"What happens at the stop.",
+				agenttoolschema.StopTypes,
+			),
+			"scheduleType": agenttoolschema.Enum(
+				"Open for a window, Appointment for a fixed time. Defaults to Open.",
+				agenttoolschema.StopScheduleTypes,
+			),
+			"sequence": integerProperty("The stop's place in the move, counting from 0. "+
+				"Leave it out to take the order given.", 0, 100),
+			"scheduledWindowStart": localTimeProperty("When the stop's window opens."),
+			"scheduledWindowEnd": localTimeProperty(
+				"When the stop's window closes, if it has one.",
+			),
+			fieldPieces:   integerProperty("Pieces handled at the stop.", 0, 1_000_000),
+			fieldWeight:   integerProperty("Pounds handled at the stop.", 0, 10_000_000),
+			"addressLine": stringProperty("A dock or suite note for the stop.", 200),
+		},
+		toolschema.KeyRequired: []string{
+			fieldLocationID,
+			fieldType,
+			fieldScheduledWindowStart,
+		},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func commodityDraftSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			"commodityId": idProperty("The commodity, from list_commodities."),
+			fieldPieces:   integerProperty("Pieces of it. Defaults to 1.", 0, 1_000_000),
+			fieldWeight:   integerProperty("Pounds of it.", 0, 10_000_000),
+		},
+		toolschema.KeyRequired:             []string{"commodityId"},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func chargeLineDraftSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			"accessorialChargeId": idProperty("The accessorial, from list_accessorial_charges."),
+			"method": agenttoolschema.Enum(
+				"How the amount is applied: Flat once, PerUnit times the unit, Percentage of "+
+					"the linehaul.",
+				agenttoolschema.AccessorialMethods,
+			),
+			"unit": integerProperty("How many units the charge covers; 1 for a flat charge.", 1,
+				10_000),
+			paramAmount: amountProperty("The charge's amount in major units, as a decimal such " +
+				"as 125.00."),
+		},
+		toolschema.KeyRequired: []string{
+			"accessorialChargeId", "method", "unit", paramAmount,
+		},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -230,6 +283,7 @@ func (t *createShipmentTool) Policy() serviceports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Idempotent:    true,
 		ReadsExternal: agent.ExternalReadNever,
+		Artifact:      shipmentRecordEntity,
 		Rationale: "A new load commits a customer's freight and the money that follows, so " +
 			"no desk books one unattended.",
 	}
@@ -239,18 +293,27 @@ func (t *createShipmentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
+	_, err := t.ExecuteWithResult(ctx, params)
+
+	return err
+}
+
+func (t *createShipmentTool) ExecuteWithResult(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
+) (*agent.ToolExecutionResult, error) {
 	if err := guardExecute(t, params); err != nil {
-		return err
+		return nil, err
 	}
 
-	entity, err := t.draft(&params)
+	entity, err := t.draft(ctx, &params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	created, err := t.shipments.Create(ctx, entity, params.Actor)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if entity.SourceDocumentID != "" && t.imports != nil {
@@ -267,7 +330,7 @@ func (t *createShipmentTool) Execute(
 		}
 	}
 
-	return nil
+	return shipmentResult(resultCreated, created), nil
 }
 
 // Validate runs the create plan the preview runs, so a shipment the service
@@ -281,28 +344,32 @@ func (t *createShipmentTool) Validate(
 }
 
 func (t *createShipmentTool) draft(
+	ctx context.Context,
 	params *serviceports.ToolExecuteParams,
 ) (*shipment.Shipment, error) {
-	entity := new(shipment.Shipment)
-	if err := decodeParam(params.Params, "shipment", entity); err != nil {
+	draft := new(shipmentDraft)
+	if err := decodeParam(params.Params, "shipment", draft); err != nil {
 		return nil, err
 	}
 
-	// The tenant is the actor's, whatever the model wrote; a model cannot
-	// enter a shipment for another organization by naming it.
 	tenantInfo := tenantFrom(*params)
-	entity.ID = pulid.Nil
-	entity.OrganizationID = tenantInfo.OrgID
-	entity.BusinessUnitID = tenantInfo.BuID
-	entity.EnteredByID = params.Actor.UserIDOrNil()
-	entity.Status = shipment.StatusNew
-	scopeShipmentChildren(entity, tenantInfo)
+	zones, err := readLocationZones(
+		ctx, t.locations, tenantInfo, params.Timezone, draft.locationIDs(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := draft.build(tenantInfo, zones)
+	if err != nil {
+		return nil, err
+	}
 
 	if sourceDocumentID := optionalString(
 		params.Params,
 		"sourceDocumentId",
 	); sourceDocumentID != "" {
-		if _, err := pulid.Parse(sourceDocumentID); err != nil {
+		if _, err = pulid.Parse(sourceDocumentID); err != nil {
 			return nil, errortypes.NewValidationError(
 				"sourceDocumentId",
 				errortypes.ErrInvalid,
@@ -313,39 +380,6 @@ func (t *createShipmentTool) draft(
 	}
 
 	return entity, nil
-}
-
-// scopeShipmentChildren stamps the tenant on every move and stop and clears
-// any id the model invented, so children are created under the shipment
-// rather than pointed at rows that may belong to someone else.
-func scopeShipmentChildren(entity *shipment.Shipment, tenantInfo pagination.TenantInfo) {
-	for _, move := range entity.Moves {
-		if move == nil {
-			continue
-		}
-		move.ID = pulid.Nil
-		move.ShipmentID = pulid.Nil
-		move.OrganizationID = tenantInfo.OrgID
-		move.BusinessUnitID = tenantInfo.BuID
-		if move.Status == "" {
-			move.Status = shipment.MoveStatusNew
-		}
-		for _, stop := range move.Stops {
-			if stop == nil {
-				continue
-			}
-			stop.ID = pulid.Nil
-			stop.ShipmentMoveID = pulid.Nil
-			stop.OrganizationID = tenantInfo.OrgID
-			stop.BusinessUnitID = tenantInfo.BuID
-			if stop.Status == "" {
-				stop.Status = shipment.StopStatusNew
-			}
-			if stop.ScheduleType == "" {
-				stop.ScheduleType = shipment.StopScheduleTypeOpen
-			}
-		}
-	}
 }
 
 // updateShipmentTool changes the details of a saved shipment that a person

@@ -86,26 +86,8 @@ func (s *Service) RecordTest(
 		zap.String("workerId", entity.WorkerID.String()),
 	)
 
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
-		ID:         entity.WorkerID,
-		TenantInfo: tenantInfo,
-	}); err != nil {
+	if err := s.prepareRecordTest(ctx, entity, userID); err != nil {
 		return nil, err
-	}
-
-	entity.RecordedByID = userID
-	if entity.OrderedByID.IsNil() {
-		entity.OrderedByID = userID
-	}
-	if err := s.prepareTest(entity); err != nil {
-		return nil, err
-	}
-	if entity.Status == worker.DOTTestStatusCompleted {
-		if err := s.checkOutcomePreconditions(
-			ctx, tenantInfo, entity.WorkerID, entity.TestType, entity.Result,
-		); err != nil {
-			return nil, err
-		}
 	}
 
 	created, err := s.repo.CreateTest(ctx, entity)
@@ -130,6 +112,34 @@ func (s *Service) RecordTest(
 	s.refreshRollupQuietly(ctx, tenantInfo, created.WorkerID)
 
 	return created, nil
+}
+
+func (s *Service) prepareRecordTest(
+	ctx context.Context,
+	entity *worker.WorkerDOTTest,
+	userID pulid.ID,
+) error {
+	tenantInfo := testTenant(entity)
+	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+		ID:         entity.WorkerID,
+		TenantInfo: tenantInfo,
+	}); err != nil {
+		return err
+	}
+
+	entity.RecordedByID = userID
+	if entity.OrderedByID.IsNil() {
+		entity.OrderedByID = userID
+	}
+	if err := s.prepareTest(entity); err != nil {
+		return err
+	}
+	if entity.Status == worker.DOTTestStatusCompleted {
+		return s.checkOutcomePreconditions(
+			ctx, tenantInfo, entity.WorkerID, entity.TestType, entity.Result,
+		)
+	}
+	return nil
 }
 
 // RecordResultRequest carries what the laboratory, the medical review officer
@@ -266,35 +276,13 @@ func (s *Service) CancelTest(
 	reason string,
 	userID pulid.ID,
 ) (*worker.WorkerDOTTest, error) {
-	entity, err := s.repo.GetTestByID(ctx, &repositories.GetWorkerDOTTestByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	change, err := s.PlanCancelTest(ctx, tenantInfo, id, reason)
 	if err != nil {
 		return nil, err
 	}
-
-	if !entity.Status.CanTransitionTo(worker.DOTTestStatusCancelled) {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"A {0} test cannot be cancelled", strings.ToLower(string(entity.Status)),
-		)
-	}
-
 	reason = strings.TrimSpace(reason)
-	if reason == "" {
-		return nil, errortypes.NewValidationError(
-			"reason",
-			errortypes.ErrRequired,
-			"Cancelling a collection needs a reason on the record",
-		)
-	}
-
-	previous := *entity
-	entity.Status = worker.DOTTestStatusCancelled
-	entity.Result = worker.DOTResultCancelled
-	entity.Notes = strings.TrimSpace(entity.Notes + "\nCancelled: " + reason)
+	previous := change.Before
+	entity := change.After
 
 	updated, err := s.repo.UpdateTest(ctx, entity)
 	if err != nil {
@@ -308,7 +296,7 @@ func (s *Service) CancelTest(
 		userID:     userID,
 		tenant:     tenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    reason,
 	})
 	s.publish(ctx, tenantInfo, realtimeTest, permission.OpCancel, updated.ID, userID)

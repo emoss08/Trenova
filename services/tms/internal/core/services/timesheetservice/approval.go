@@ -186,50 +186,11 @@ func (s *Service) GenerateExport(
 	ctx context.Context,
 	req *GenerateExportRequest,
 ) (*worker.PayrollExport, error) {
-	sheets, err := s.repo.ListTimesheets(ctx, &repositories.ListTimesheetsRequest{
-		TenantInfo:     req.TenantInfo,
-		Statuses:       []worker.TimesheetStatus{worker.TimesheetApproved},
-		From:           req.PeriodStart,
-		To:             req.PeriodEnd,
-		UnexportedOnly: true,
-	})
+	plan, err := s.PlanGenerateExport(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if len(sheets) == 0 {
-		return nil, errortypes.NewValidationError(
-			"periodStart",
-			errortypes.ErrInvalidOperation,
-			"There are no approved timesheets waiting in that period",
-		)
-	}
-
-	now := timeutils.NowUnix()
-	export := &worker.PayrollExport{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		Status:         worker.PayrollExportGenerated,
-		PeriodStart:    req.PeriodStart,
-		PeriodEnd:      req.PeriodEnd,
-		GeneratedAt:    &now,
-		GeneratedByID:  req.UserID,
-		Note:           req.Note,
-	}
-
-	ids := make([]pulid.ID, 0, len(sheets))
-	for _, sheet := range sheets {
-		ids = append(ids, sheet.ID)
-		export.RegularMinutes += sheet.RegularMinutes
-		export.OvertimeMinutes += sheet.OvertimeMinutes
-		export.PaidLeaveMinutes += sheet.PaidLeaveMinutes
-	}
-	export.TimesheetCount = int32(len(sheets)) //nolint:gosec // a period of weeks
-
-	multiErr := errortypes.NewMultiError()
-	export.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	export, ids := plan.Export, plan.TimesheetIDs
 
 	created, err := s.repo.CreateExport(ctx, export)
 	if err != nil {
@@ -248,7 +209,7 @@ func (s *Service) GenerateExport(
 	// A sheet somebody reopened between the listing and the stamp is skipped
 	// by the statement rather than locked out from under them, so the run's
 	// totals are corrected to what it actually carried.
-	if stamped != len(sheets) {
+	if stamped != len(ids) {
 		if created, err = s.reconcileExport(ctx, req.TenantInfo, created); err != nil {
 			return nil, err
 		}
@@ -362,32 +323,11 @@ func (s *Service) VoidExport(
 	ctx context.Context,
 	req *VoidExportRequest,
 ) (*worker.PayrollExport, error) {
-	export, err := s.repo.GetExportByID(ctx, &repositories.GetPayrollExportByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanVoidExport(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if export.Status == worker.PayrollExportVoided {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"That run has already been voided",
-		)
-	}
-
-	previous := *export
-	now := timeutils.NowUnix()
-	export.Status = worker.PayrollExportVoided
-	export.VoidedAt = &now
-	export.VoidReason = req.Reason
-
-	multiErr := errortypes.NewMultiError()
-	export.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	previous, export := change.Before, change.After
 
 	if _, err = s.repo.ClearExport(ctx, req.TenantInfo, export.ID); err != nil {
 		return nil, err
@@ -405,7 +345,7 @@ func (s *Service) VoidExport(
 		userID:     req.UserID,
 		tenantInfo: req.TenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    req.Reason,
 	})
 

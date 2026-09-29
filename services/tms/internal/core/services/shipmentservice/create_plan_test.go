@@ -120,3 +120,58 @@ func TestPreviewCreate_RequiresAShipment(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 }
+
+func unpricedCreateService(
+	t *testing.T,
+	entity *shipment.Shipment,
+	disposition tenant.UnratedShipmentDisposition,
+) *service {
+	t.Helper()
+
+	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo.EXPECT().Get(mock.Anything, mock.Anything).
+		Return(&tenant.ShipmentControl{}, nil).
+		Once()
+
+	return &service{
+		l:           zap.NewNop(),
+		repo:        mocks.NewMockShipmentRepository(t),
+		controlRepo: controlRepo,
+		validator:   rateCoverageValidator(t, billingControlWith(t, disposition)),
+		commercial: newTestCommercialCalculator(t,
+			mocks.NewMockFormulaCalculator(t),
+			mocks.NewMockAccessorialChargeRepository(t),
+		),
+		coordinator: newStateCoordinator(),
+	}
+}
+
+func TestPreviewCreate_RefusesAShipmentNothingPrices(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.FormulaTemplateID = pulid.Nil
+	svc := unpricedCreateService(t, entity, "")
+
+	plan, err := svc.PreviewCreate(t.Context(), entity, previewActor(entity))
+
+	require.Nil(t, plan)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	assertErrorField(t, multiErr, "formulaTemplateId")
+}
+
+func TestPreviewCreate_ZeroAndFlagNamesTheUnratedShipment(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.FormulaTemplateID = pulid.Nil
+	svc := unpricedCreateService(t, entity, tenant.UnratedShipmentDispositionZeroAndFlag)
+
+	plan, err := svc.PreviewCreate(t.Context(), entity, previewActor(entity))
+
+	require.NoError(t, err)
+	require.Len(t, plan.Advisories, 1)
+	assert.Equal(t, rateCoverageRuleKey, plan.Advisories[0].RuleKey)
+	assert.Contains(t, plan.Advisories[0].Error(), "priced at zero")
+}

@@ -31,17 +31,13 @@ func TestValidatorValidateCreate_RejectsWeightAboveShipmentControlLimit(t *testi
 		Return(&tenant.ShipmentControl{MaxShipmentWeightLimit: 1000}, nil)
 
 	v := &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			mocks.NewMockCommodityRepository(t),
-			mocks.NewMockHazmatSegregationRuleRepository(t),
-			mocks.NewMockShipmentRepository(t),
-			nil,
-			nil,
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   NewTestCustomerRepository(t),
+			CommodityRepo:  mocks.NewMockCommodityRepository(t),
+			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
+			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
+		}).Build(),
 	}
 
 	multiErr := v.ValidateCreate(t.Context(), entity)
@@ -85,17 +81,13 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 		Once()
 
 	v := &Validator{
-		validator: newValidatorBuilder(
-			nil,
-			controlRepo,
-			NewTestCustomerRepository(t),
-			mocks.NewMockCommodityRepository(t),
-			mocks.NewMockHazmatSegregationRuleRepository(t),
-			shipmentRepo,
-			nil,
-			nil,
-			nil,
-		).Build(),
+		validator: newValidatorBuilder(validatorDeps{
+			ControlRepo:    controlRepo,
+			CustomerRepo:   NewTestCustomerRepository(t),
+			CommodityRepo:  mocks.NewMockCommodityRepository(t),
+			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
+			ShipmentRepo:   shipmentRepo,
+		}).Build(),
 	}
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)

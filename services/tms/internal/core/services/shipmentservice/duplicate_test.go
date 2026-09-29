@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/ratequote"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
@@ -13,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -75,6 +79,14 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 		OverrideDates: true,
 	}
 
+	repo.EXPECT().PlanDuplicate(mock.Anything, req).Return(&repositories.ShipmentDuplicatePlan{
+		Source: &shipment.Shipment{
+			ID:                req.ShipmentID,
+			FormulaTemplateID: pulid.MustNew("fmt_"),
+		},
+		Copies: []*shipment.Shipment{{FormulaTemplateID: pulid.MustNew("fmt_")}},
+	}, nil)
+
 	svc := &service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -114,6 +126,86 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 	require.NotNil(t, resp)
 	assert.Equal(t, "run-1", resp.RunID)
 	assert.Equal(t, temporaltype.TaskQueueSystem.String(), resp.TaskQueue)
+}
+
+func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
+	t.Parallel()
+
+	req := &repositories.BulkDuplicateShipmentRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  pulid.MustNew("org_"),
+			BuID:   pulid.MustNew("bu_"),
+			UserID: pulid.MustNew("usr_"),
+		},
+		ShipmentID: pulid.MustNew("shp_"),
+		Count:      1,
+	}
+	source := &shipment.Shipment{
+		ID:             req.ShipmentID,
+		OrganizationID: req.TenantInfo.OrgID,
+		ProNumber:      "SEED-DET-009",
+		RatingDetail:   &shipment.RatingDetail{Source: string(ratequote.OutcomeNoRateFound)},
+	}
+	plan := &repositories.ShipmentDuplicatePlan{
+		Source: source,
+		Copies: []*shipment.Shipment{{}},
+	}
+
+	for _, tt := range []struct {
+		name        string
+		disposition tenant.UnratedShipmentDisposition
+		refused     bool
+	}{
+		{name: "the default disposition", refused: true},
+		{name: "fall back to a template", disposition: tenant.UnratedShipmentDispositionFallbackFormulaTemplate, refused: true},
+		{name: "zero and flag", disposition: tenant.UnratedShipmentDispositionZeroAndFlag},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := mocks.NewMockShipmentRepository(t)
+			repo.EXPECT().PlanDuplicate(mock.Anything, req).Return(plan, nil)
+			started := false
+			svc := &service{
+				l:            zap.NewNop(),
+				repo:         repo,
+				billingRepo:  billingControlWith(t, tt.disposition),
+				validator:    NewTestValidator(t),
+				auditService: mocks.NewMockAuditService(t),
+				workflowStarter: &fakeShipmentTemporalClient{
+					startWorkflowFunc: func(
+						_ context.Context,
+						options client.StartWorkflowOptions,
+						_ any,
+						_ ...any,
+					) (client.WorkflowRun, error) {
+						started = true
+						return &fakeShipmentWorkflowRun{workflowID: options.ID, runID: "run-1"}, nil
+					},
+				},
+				eventService: noopShipmentEventService{},
+				coordinator:  newStateCoordinator(),
+			}
+
+			_, err := svc.Duplicate(t.Context(), req)
+			preview, previewErr := svc.PreviewDuplicate(t.Context(), req)
+
+			if !tt.refused {
+				require.NoError(t, err)
+				require.NoError(t, previewErr)
+				assert.NotNil(t, preview)
+				assert.True(t, started)
+				return
+			}
+			require.Error(t, err)
+			require.Error(t, previewErr)
+			assert.False(t, started, "nothing is copied once the copy is refused")
+			var validationErr *errortypes.Error
+			require.ErrorAs(t, err, &validationErr)
+			assert.Equal(t, "shipmentId", validationErr.Field)
+			assert.Contains(t, validationErr.Error(), "SEED-DET-009")
+		})
+	}
 }
 
 func TestServiceDuplicate_RejectsInvalidRequest(t *testing.T) {

@@ -210,6 +210,18 @@ func (p PTOType) String() string {
 	return string(p)
 }
 
+func PTOTypeValues() []PTOType {
+	return []PTOType{
+		PTOTypePersonal,
+		PTOTypeVacation,
+		PTOTypeSick,
+		PTOTypeHoliday,
+		PTOTypeBereavement,
+		PTOTypeMaternity,
+		PTOTypePaternity,
+	}
+}
+
 func (p PTOType) IsValid() bool {
 	switch p {
 	case PTOTypePersonal, PTOTypeVacation, PTOTypeSick, PTOTypeHoliday,

@@ -68,15 +68,6 @@ var (
 		worker.PTOStatusRejected,
 		worker.PTOStatusCancelled,
 	})
-	ptoTypes = agenttoolschema.Source("worker.ptoType", []worker.PTOType{
-		worker.PTOTypePersonal,
-		worker.PTOTypeVacation,
-		worker.PTOTypeSick,
-		worker.PTOTypeHoliday,
-		worker.PTOTypeBereavement,
-		worker.PTOTypeMaternity,
-		worker.PTOTypePaternity,
-	})
 	homeWidgetCategories = agenttoolschema.Source("homeLayout.category", []string{
 		homelayout.CategoryWork,
 		homelayout.CategoryPulse,

@@ -8385,7 +8385,7 @@ export type ReindexAiRetrievalSourceMutationVariables = Exact<{
 
 export type ReindexAiRetrievalSourceMutation = { reindexAIRetrievalSource: { ' $fragmentRefs'?: { 'AiRetrievalStatusFieldsFragment': AiRetrievalStatusFieldsFragment } } };
 
-export type AgentRunTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentType: AgentType, agentDefinitionId: string, trigger: AgentRunTrigger, summary: string, subjectType: AgentSubjectType, subjectId: string, status: AgentRunStatus, workflowId: string, modelIdentifier: string, promptVersion: string, startedAt: number | null, completedAt: number | null, errorMessage: string, traceId: string, traceUrl: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentRunTableRowFieldsFragment' };
+export type AgentRunTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentType: AgentType, agentDefinitionId: string, trigger: AgentRunTrigger, summary: string, subjectType: AgentSubjectType, subjectId: string, status: AgentRunStatus, workflowId: string, modelIdentifier: string, promptVersion: string, startedAt: number | null, completedAt: number | null, errorMessage: string, traceId: string, traceUrl: string | null, parentOwnerKind: AgentRunEventOwnerKind | null, delegateCallId: string, version: number, createdAt: number, updatedAt: number, handedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AgentRunTableRowFieldsFragment' };
 
 export type AgentRunTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -16428,6 +16428,12 @@ export const AgentRunTableRowFieldsFragmentDoc = new TypedDocumentString(`
   errorMessage
   traceId
   traceUrl
+  parentOwnerKind
+  delegateCallId
+  handedBy {
+    id
+    name
+  }
   version
   createdAt
   updatedAt
@@ -23908,8 +23914,8 @@ export const AiRetrievalReindexEstimateDocument = {"__meta__":{"kind":"query","n
 export const AiRetrievalFailedEntryTableDocument = {"__meta__":{"kind":"query","name":"AIRetrievalFailedEntryTable","hash":"sha256:f66b10c655b8b92d46cf9375a72fc29311347e8ed92be27582ec46ac36812a05"}} as unknown as TypedDocumentString<AiRetrievalFailedEntryTableQuery, AiRetrievalFailedEntryTableQueryVariables>;
 export const UpdateAiRetrievalSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateAIRetrievalSettings","hash":"sha256:f7dbeff8284e4d9a3415e034e3323fed148e823f8a4cd1686ac3177dea576c4c"}} as unknown as TypedDocumentString<UpdateAiRetrievalSettingsMutation, UpdateAiRetrievalSettingsMutationVariables>;
 export const ReindexAiRetrievalSourceDocument = {"__meta__":{"kind":"mutation","name":"ReindexAIRetrievalSource","hash":"sha256:e12a16a86ab028021de08057a122aca1c4003046b2ebfd026f416b7232e9979c"}} as unknown as TypedDocumentString<ReindexAiRetrievalSourceMutation, ReindexAiRetrievalSourceMutationVariables>;
-export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:bd4c2649fa274bd45001f5123142976a84960ecfad6c95566cbc5f46362e2468"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
-export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:542619e8aa647c0c8e3407b58eb090062f51b06e9e01c659be42f80040f1abd8"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
+export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:cb0c75efc8b293a1beed186c94dbd21763979412b273229f4abfdcaa6dab3224"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
+export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:fe618bd81377c44ff0ac1138eebf30ddca3d60a29672d6b85d8ca6d09fb9eafc"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
 export const AgentToolRuleTableDocument = {"__meta__":{"kind":"query","name":"AgentToolRuleTable","hash":"sha256:408a5464ca8da78c9b4d995f96b6215368d54ed469ba804e9dac583ad637166b"}} as unknown as TypedDocumentString<AgentToolRuleTableQuery, AgentToolRuleTableQueryVariables>;
 export const AgentToolSafetyTableDocument = {"__meta__":{"kind":"query","name":"AgentToolSafetyTable","hash":"sha256:c321454ad00068bb8fa10e406c16cd524b650c40172887bba015721e6194334e"}} as unknown as TypedDocumentString<AgentToolSafetyTableQuery, AgentToolSafetyTableQueryVariables>;
 export const AgentSafetySummaryDocument = {"__meta__":{"kind":"query","name":"AgentSafetySummary","hash":"sha256:f4e64ef49ec0933e10409b183413a900d0c5d7de2c4f1f7239c6a998dbc341b2"}} as unknown as TypedDocumentString<AgentSafetySummaryQuery, AgentSafetySummaryQueryVariables>;

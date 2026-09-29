@@ -42,20 +42,9 @@ func (s *Service) GiveRecognition(
 		zap.String("workerId", entity.WorkerID.String()),
 	)
 
-	wrk, err := s.loadWorker(ctx, recognitionTenant(entity), entity.WorkerID)
+	wrk, err := s.prepareRecognition(ctx, entity, userID)
 	if err != nil {
 		return nil, err
-	}
-	entity.Title = strings.TrimSpace(entity.Title)
-	entity.Message = strings.TrimSpace(entity.Message)
-	entity.AwardedByID = userID
-	if entity.OccurredAt <= 0 {
-		entity.OccurredAt = timeutils.NowUnix()
-	}
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	created, err := s.repo.CreateRecognition(ctx, entity)
@@ -96,6 +85,29 @@ func (s *Service) GiveRecognition(
 	return created, nil
 }
 
+func (s *Service) prepareRecognition(
+	ctx context.Context,
+	entity *worker.WorkerRecognition,
+	userID pulid.ID,
+) (*worker.Worker, error) {
+	wrk, err := s.loadWorker(ctx, recognitionTenant(entity), entity.WorkerID)
+	if err != nil {
+		return nil, err
+	}
+	entity.Title = strings.TrimSpace(entity.Title)
+	entity.Message = strings.TrimSpace(entity.Message)
+	entity.AwardedByID = userID
+	if entity.OccurredAt <= 0 {
+		entity.OccurredAt = timeutils.NowUnix()
+	}
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+	return wrk, nil
+}
+
 func (s *Service) DeleteRecognition(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -104,10 +116,7 @@ func (s *Service) DeleteRecognition(
 ) error {
 	log := s.l.With(zap.String("operation", "DeleteRecognition"), zap.String("id", id.String()))
 
-	original, err := s.repo.GetRecognitionByID(ctx, &repositories.GetWorkerRecognitionByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	original, err := s.PlanDeleteRecognition(ctx, tenantInfo, id)
 	if err != nil {
 		return err
 	}

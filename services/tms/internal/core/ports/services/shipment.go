@@ -440,8 +440,9 @@ type ShipmentRatingOutcome struct {
 }
 
 type ShipmentCreatePlan struct {
-	Shipment *shipment.Shipment
-	Rating   *ShipmentRatingOutcome
+	Shipment   *shipment.Shipment
+	Rating     *ShipmentRatingOutcome
+	Advisories []*errortypes.AdvisoryError
 }
 
 // ShipmentCancelPreview is a shipment before and after a cancellation.

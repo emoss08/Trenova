@@ -110,19 +110,26 @@ func (f *fakeDecider) SignalRun(
 	return nil
 }
 
-type fakeShadow struct{ shadow bool }
+type fakeShadow struct {
+	shadow bool
+	runs   map[pulid.ID]bool
+}
 
 func (f fakeShadow) Organization(context.Context, pagination.TenantInfo) (bool, error) {
 	return f.shadow, nil
 }
 
 func (f fakeShadow) ForRun(
-	context.Context,
-	pagination.TenantInfo,
-	pulid.ID,
+	_ context.Context,
+	_ pagination.TenantInfo,
+	runID pulid.ID,
 ) (agentshadow.Verdict, error) {
 	if f.shadow {
 		return agentshadow.Verdict{Cause: agentshadow.CauseOrganization}, nil
+	}
+	if f.runs[runID] {
+		return agentshadow.Verdict{Cause: agentshadow.CauseDefinition, AgentName: "Shipment Desk"},
+			nil
 	}
 
 	return agentshadow.Verdict{}, nil
@@ -264,4 +271,21 @@ func TestDecide_RefusesWhatCannotBeDecided(t *testing.T) {
 	agentActor.actor.UserID = pulid.Nil
 	_, err = agentActor.svc.Decide(t.Context(), agentActor.req, agentActor.actor)
 	require.ErrorContains(t, err, "human")
+}
+
+// A step filed by a delegate whose shadow switch is on holds the whole plan:
+// approving it would run a write the switch exists to withhold.
+func TestDecide_RefusesAPlanWithAStepFromAnAgentInShadowMode(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, 2, false)
+	delegateRun := pulid.MustNew("arun_")
+	h.steps.steps[1].RunID = delegateRun
+	h.svc.shadow = fakeShadow{runs: map[pulid.ID]bool{delegateRun: true}}
+
+	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
+
+	require.ErrorContains(t, err, "Shipment Desk")
+	assert.Empty(t, h.decider.decided)
+	assert.Empty(t, h.plans.statuses)
 }

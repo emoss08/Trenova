@@ -288,3 +288,27 @@ func TestPromptSnapshots_MemoryGrouping(t *testing.T) {
 			"./internal/core/domain/agentdefinition/ -update",
 	)
 }
+
+func TestPromptSnapshots_AgentsItCanAsk(t *testing.T) {
+	t.Parallel()
+
+	rt := snapshotRuntime(t)
+	definition := snapshotDefinition(agentdefinition.TemplateDispatchAssistant)
+	request := promptContexts()[0].request(definition)
+	request.Context.Delegates = []agentdefinition.RuntimeDelegate{{
+		ID:          snapshotParentID,
+		Name:        "Shipment Desk",
+		Description: "Creates, copies and changes shipments. It holds the shipment tools.",
+		Tools:       []string{"create_shipment", "duplicate_shipment", "get_shipment"},
+	}}
+
+	system := rt.OpenTurn(t.Context(), request).State().System + "\n"
+
+	agentevalgate.Golden(t,
+		filepath.Join(promptSnapshotDir, "DispatchAssistant_chat_delegates.golden"),
+		[]byte(system),
+		*updatePrompts,
+		"go test -tags nofitz -run TestPromptSnapshots "+
+			"./internal/core/domain/agentdefinition/ -update",
+	)
+}

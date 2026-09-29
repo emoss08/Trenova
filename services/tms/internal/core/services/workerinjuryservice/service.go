@@ -217,29 +217,7 @@ func (s *Service) RecordInjury(
 ) (*worker.WorkerInjury, error) {
 	tenantInfo := injuryTenant(entity)
 
-	if _, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
-		ID:         entity.WorkerID,
-		TenantInfo: tenantInfo,
-	}); err != nil {
-		return nil, err
-	}
-
-	entity.RecordedByID = userID
-	if entity.CaseYear <= 0 {
-		entity.CaseYear = yearOf(entity.OccurredAt)
-	}
-	if entity.CaseNumber <= 0 {
-		next, err := s.repo.NextCaseNumber(ctx, &repositories.NextCaseNumberRequest{
-			TenantInfo: tenantInfo,
-			CaseYear:   entity.CaseYear,
-		})
-		if err != nil {
-			return nil, err
-		}
-		entity.CaseNumber = next
-	}
-
-	if err := s.prepare(entity); err != nil {
+	if err := s.prepareRecord(ctx, entity, userID); err != nil {
 		return nil, err
 	}
 
@@ -296,20 +274,11 @@ func (s *Service) UpdateInjury(
 	ctx context.Context,
 	req *UpdateInjuryRequest,
 ) (*worker.WorkerInjury, error) {
-	entity, err := s.repo.GetInjuryByID(ctx, &repositories.GetWorkerInjuryByIDRequest{
-		ID:         req.InjuryID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanUpdateInjury(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	previous := *entity
-	applyInjuryUpdate(entity, req)
-
-	if err = s.prepare(entity); err != nil {
-		return nil, err
-	}
+	previous, entity := change.Before, change.After
 
 	updated, err := s.repo.UpdateInjury(ctx, entity)
 	if err != nil {
@@ -322,7 +291,7 @@ func (s *Service) UpdateInjury(
 		userID:     req.UserID,
 		tenant:     req.TenantInfo,
 		current:    updated,
-		previous:   &previous,
+		previous:   previous,
 		comment:    "Updated case " + caseLabel(updated),
 	})
 	s.publish(ctx, req.TenantInfo, realtimeInjury, permission.OpUpdate, updated.ID, req.UserID)
@@ -338,10 +307,7 @@ func (s *Service) DeleteInjury(
 	id pulid.ID,
 	userID pulid.ID,
 ) error {
-	entity, err := s.repo.GetInjuryByID(ctx, &repositories.GetWorkerInjuryByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	entity, err := s.PlanDeleteInjury(ctx, tenantInfo, id)
 	if err != nil {
 		return err
 	}
@@ -366,7 +332,7 @@ func (s *Service) DeleteInjury(
 	return nil
 }
 
-func applyInjuryUpdate(entity *worker.WorkerInjury, req *UpdateInjuryRequest) {
+func ApplyInjuryUpdate(entity *worker.WorkerInjury, req *UpdateInjuryRequest) {
 	if req.Classification != nil {
 		entity.Classification = *req.Classification
 	}
@@ -409,6 +375,10 @@ func applyInjuryUpdate(entity *worker.WorkerInjury, req *UpdateInjuryRequest) {
 	if req.PrivacyCase != nil {
 		entity.PrivacyCase = *req.PrivacyCase
 	}
+	applyInjuryClaim(entity, req)
+}
+
+func applyInjuryClaim(entity *worker.WorkerInjury, req *UpdateInjuryRequest) {
 	if req.ClaimStatus != nil {
 		entity.ClaimStatus = *req.ClaimStatus
 	}

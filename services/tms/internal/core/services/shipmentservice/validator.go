@@ -29,6 +29,7 @@ type ValidatorParams struct {
 	HazmatSegregationRuleRepo repositories.HazmatSegregationRuleRepository
 	ShipmentRepo              repositories.ShipmentRepository
 	EquipmentTypeRepo         repositories.EquipmentTypeRepository
+	BillingRepo               repositories.BillingControlRepository
 	ModeProfileService        services.ModeProfileService
 	PermitService             services.PermitService
 }
@@ -36,52 +37,67 @@ type ValidatorParams struct {
 type Validator struct {
 	validator      *validationframework.TenantedValidator[*shipment.Shipment]
 	assignmentRepo repositories.AssignmentRepository
+	coverage       rateCoverage
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	builder := newValidatorBuilder(
-		p.DB,
-		p.ControlRepo,
-		p.CustomerRepo,
-		p.CommodityRepo,
-		p.HazmatSegregationRuleRepo,
-		p.ShipmentRepo,
-		p.EquipmentTypeRepo,
-		p.ModeProfileService,
-		p.PermitService,
-	)
+	builder := newValidatorBuilder(validatorDeps{
+		DB:                p.DB,
+		ControlRepo:       p.ControlRepo,
+		CustomerRepo:      p.CustomerRepo,
+		CommodityRepo:     p.CommodityRepo,
+		HazmatRuleRepo:    p.HazmatSegregationRuleRepo,
+		ShipmentRepo:      p.ShipmentRepo,
+		EquipmentTypeRepo: p.EquipmentTypeRepo,
+		BillingRepo:       p.BillingRepo,
+		ProfileService:    p.ModeProfileService,
+		PermitService:     p.PermitService,
+	})
 
 	return &Validator{
 		validator:      builder.Build(),
 		assignmentRepo: p.AssignmentRepo,
+		coverage:       rateCoverage{billing: p.BillingRepo},
 	}
 }
 
+type validatorDeps struct {
+	DB                *postgres.Connection
+	ControlRepo       repositories.ShipmentControlRepository
+	CustomerRepo      repositories.CustomerRepository
+	CommodityRepo     repositories.CommodityRepository
+	HazmatRuleRepo    repositories.HazmatSegregationRuleRepository
+	ShipmentRepo      repositories.ShipmentRepository
+	EquipmentTypeRepo repositories.EquipmentTypeRepository
+	BillingRepo       repositories.BillingControlRepository
+	ProfileService    services.ModeProfileService
+	PermitService     services.PermitService
+}
+
 func newValidatorBuilder(
-	db *postgres.Connection,
-	controlRepo repositories.ShipmentControlRepository,
-	customerRepo repositories.CustomerRepository,
-	commodityRepo repositories.CommodityRepository,
-	hazmatRuleRepo repositories.HazmatSegregationRuleRepository,
-	shipmentRepo repositories.ShipmentRepository,
-	equipmentTypeRepo repositories.EquipmentTypeRepository,
-	profileSvc services.ModeProfileService,
-	permitSvc services.PermitService,
+	deps validatorDeps,
 ) *validationframework.TenantedValidatorBuilder[*shipment.Shipment] {
+	db := deps.DB
 	builder := validationframework.
 		NewTenantedValidatorBuilder[*shipment.Shipment]().
 		WithModelName("Shipment").
 		WithCustomRule(createMoveValidationRule()).
 		WithCustomRule(createStopValidationRule()).
-		WithCustomRule(createAdditionalChargeValidationRule(controlRepo)).
+		WithCustomRule(createAdditionalChargeValidationRule(deps.ControlRepo)).
 		WithCustomRule(createCommodityValidationRule()).
 		WithCustomRule(createShipmentStatusCoordinationRule()).
-		WithCustomRule(createHazmatSegregationRule(controlRepo, commodityRepo, hazmatRuleRepo)).
-		WithCustomRule(createCapabilityPolicyRule(
-			profileSvc, controlRepo, shipmentRepo, equipmentTypeRepo, permitSvc,
+		WithCustomRule(createHazmatSegregationRule(
+			deps.ControlRepo, deps.CommodityRepo, deps.HazmatRuleRepo,
 		)).
-		WithCustomRule(createBOLValidationRule(customerRepo)).
-		WithCustomRule(createRateCoverageRule())
+		WithCustomRule(createCapabilityPolicyRule(
+			deps.ProfileService,
+			deps.ControlRepo,
+			deps.ShipmentRepo,
+			deps.EquipmentTypeRepo,
+			deps.PermitService,
+		)).
+		WithCustomRule(createBOLValidationRule(deps.CustomerRepo)).
+		WithCustomRule(createRateCoverageRule(rateCoverage{billing: deps.BillingRepo}))
 
 	if db == nil {
 		return builder
@@ -255,8 +271,9 @@ func (v *Validator) ValidateUpdateWithOriginalAndAdvisories(
 
 	base := v.validator.ValidateUpdate(ctx, entity)
 	timeline := validateResourceActualTimeline(ctx, v.assignmentRepo, original, entity, false)
+	rating := v.coverage.refuseUnpricing(ctx, original, entity)
 
-	return errortypes.MergeMultiErrors(base, timeline), collectAdvisories(base, timeline)
+	return errortypes.MergeMultiErrors(base, timeline, rating), collectAdvisories(base, timeline)
 }
 
 func createBOLValidationRule(
