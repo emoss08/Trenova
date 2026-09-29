@@ -243,7 +243,7 @@ type shipmentSummaryInput struct {
 	entity   *shipment.Shipment
 	activity *shipmentActivity
 	timezone string
-	workers  *recordGate
+	people   *nestedRedactor
 }
 
 func summarizeShipment(input *shipmentSummaryInput) *shipmentSummary {
@@ -332,7 +332,7 @@ func moveSummary(move *shipment.ShipmentMove, input *shipmentSummaryInput) shipm
 		Status:     string(move.Status),
 		Loaded:     move.Loaded,
 		Distance:   move.Distance,
-		Assignment: assignmentSummary(move.Assignment, input.workers),
+		Assignment: assignmentSummary(move.Assignment, input.people),
 		Carrier:    carrierSummary(move.CarrierAssignment),
 		Stops:      make([]shipmentStopSummary, 0, len(move.Stops)),
 	}
@@ -345,7 +345,7 @@ func moveSummary(move *shipment.ShipmentMove, input *shipmentSummaryInput) shipm
 
 func assignmentSummary(
 	assignment *shipment.Assignment,
-	workers *recordGate,
+	people *nestedRedactor,
 ) *shipmentAssignmentSummary {
 	if assignment == nil {
 		return nil
@@ -358,8 +358,8 @@ func assignmentSummary(
 		TrailerID:         pointerIDString(assignment.TrailerID),
 		PrimaryWorkerID:   pointerIDString(assignment.PrimaryWorkerID),
 		SecondaryWorkerID: pointerIDString(assignment.SecondaryWorkerID),
-		PrimaryWorker:     workers.workerName(assignment.PrimaryWorker),
-		SecondaryWorker:   workers.workerName(assignment.SecondaryWorker),
+		PrimaryWorker:     people.workerName(assignment.PrimaryWorker),
+		SecondaryWorker:   people.workerName(assignment.SecondaryWorker),
 	}
 	if assignment.Tractor != nil {
 		out.Tractor = assignment.Tractor.Code

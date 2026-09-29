@@ -141,21 +141,18 @@ func (t *getShipmentTool) Query(
 	}
 
 	activity := newShipmentActivity(comments, holds)
-	workers := t.access.recordGate(ctx, params, workerRecords)
+	people := t.access.redactor(ctx, params)
 
-	var result any
 	if detail == shipmentDetailFull {
-		result = newShipmentView(entity, activity)
-	} else {
-		result = summarizeShipment(&shipmentSummaryInput{
-			entity:   entity,
-			activity: activity,
-			timezone: params.Timezone,
-			workers:  workers,
-		})
+		return people.withhold(newShipmentView(entity, activity))
 	}
 
-	return workers.withhold(result)
+	return people.annotate(summarizeShipment(&shipmentSummaryInput{
+		entity:   entity,
+		activity: activity,
+		timezone: params.Timezone,
+		people:   people,
+	}))
 }
 
 func shipmentDetailOf(params map[string]any) (shipmentDetail, error) {
