@@ -982,6 +982,211 @@
       }
     },
     {
+      "name": "amend_ifta_return",
+      "description": "Propose opening an amendment of a filed IFTA return, with the reason: a new draft for the same quarter, computed from what is on file now. The filed return is left as it was, and a person finalizes and files the amendment.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "iftaReturnId": {
+            "description": "The IFTA return, from list_ifta_returns. Never guess one. It must be Filed.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "What was wrong with the filed return, at least ten characters, as the auditor will read it.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "iftaReturnId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "ifta_return",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Starts a correction of a return already filed with the jurisdictions; it files nothing, but a person decides to reopen a filing."
+      }
+    },
+    {
+      "name": "amend_rate_agreement_rules",
+      "description": "Propose changing an active rate agreement's lanes from a day: close out the lanes it replaces and add their successors, keeping the old rates in history. Take the lanes' ruleIds from get_rate_agreement. It changes what shipments are charged from that day, so a person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "effectiveFrom": {
+            "description": "The first day the new lanes price shipments. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "lanes": {
+            "description": "The lanes, each priced through a formula template or a rate matrix.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "destinationCity": {
+                  "description": "The destination city, for a CityState destination.",
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                "destinationScopeType": {
+                  "description": "How the destination is named. Defaults to Any.",
+                  "enum": [
+                    "Any",
+                    "Country",
+                    "State",
+                    "Zone",
+                    "CityState",
+                    "Zip3",
+                    "Zip5",
+                    "Location"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "rateAgreement.laneScopeType"
+                },
+                "destinationValue": {
+                  "description": "The destination, read as originValue is.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "direction": {
+                  "description": "Whether the lane also prices the reverse haul. Defaults to Directional.",
+                  "enum": [
+                    "Directional",
+                    "Bidirectional"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "rateAgreement.direction"
+                },
+                "formulaTemplateId": {
+                  "description": "The formula template that prices the lane, from list_formula_templates, with the lane's rate as its base rate. Give this or rateMatrixId.",
+                  "type": "string"
+                },
+                "hazmatOnly": {
+                  "description": "Only hazardous freight rates on this lane.",
+                  "type": "boolean"
+                },
+                "label": {
+                  "description": "A short name for the lane, such as Dallas to Atlanta.",
+                  "maxLength": 150,
+                  "type": "string"
+                },
+                "maxCharge": {
+                  "description": "The most the lane charges, as a decimal.",
+                  "type": "string"
+                },
+                "minCharge": {
+                  "description": "The least the lane charges, as a decimal.",
+                  "type": "string"
+                },
+                "originCity": {
+                  "description": "The origin city, for a CityState origin.",
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                "originScopeType": {
+                  "description": "How the origin is named. Defaults to Any.",
+                  "enum": [
+                    "Any",
+                    "Country",
+                    "State",
+                    "Zone",
+                    "CityState",
+                    "Zip3",
+                    "Zip5",
+                    "Location"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "rateAgreement.laneScopeType"
+                },
+                "originValue": {
+                  "description": "The origin for its scope type: a three-letter country code such as USA, a two-letter state code such as TX (for State and CityState), a postal code (Zip3, Zip5), a location from list_locations, or a rate zone a lane of get_rate_agreement names. Leave it out for Any.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "priority": {
+                  "description": "Which lane wins when two match equally; higher wins.",
+                  "maximum": 1000,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "rate": {
+                  "description": "The lane's rate as a decimal such as 2.35, in what its formula template charges by.",
+                  "type": "string"
+                },
+                "rateMatrixId": {
+                  "description": "The rate matrix that prices the lane, as a lane of get_rate_agreement names it. Give this or formulaTemplateId.",
+                  "type": "string"
+                },
+                "tempControlOnly": {
+                  "description": "Only temperature-controlled freight rates on this lane.",
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          },
+          "supersededRuleIds": {
+            "description": "The lanes this closes out, by ruleId from get_rate_agreement.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "rateAgreementId",
+          "effectiveFrom"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes the rates an agreement prices shipments at; only a person amends a live contract."
+      }
+    },
+    {
       "name": "apply_accounting_inbound_change",
       "description": "Accept an inbound change: one payment the accounting system recorded against documents Trenova sent, shown as Proposed by list_accounting_inbound_changes. Accepting brings it into Trenova on the day it was made, with any credits it used, or marks the settlement it pays as paid, and only while it still matches what is open. The preview shows exactly what would post.",
       "parameters": {
@@ -1235,6 +1440,84 @@
       }
     },
     {
+      "name": "apply_rate_increase",
+      "description": "Propose a general rate increase or decrease on agreements' lane rates, by a percent or a flat amount, from a day. It moves every lane rate on the named agreements, one customer's or carrier's, or every active agreement of a party type. The old rates stay in history. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "agreementIds": {
+            "description": "The agreements to move, from list_rate_agreements; wins over the other scopes.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "carrierId": {
+            "description": "Every active agreement with this carrier, from list_carriers.",
+            "type": "string"
+          },
+          "customerId": {
+            "description": "Every active agreement with this customer, from list_customers.",
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "description": "The first day the new rates price shipments. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "flatChange": {
+            "description": "The change per rating unit, such as 0.10. Give this or percentChange.",
+            "type": "string"
+          },
+          "partyType": {
+            "description": "Every active agreement of this party type, when no agreements, customer or carrier is named.",
+            "enum": [
+              "Customer",
+              "Carrier"
+            ],
+            "type": "string",
+            "x-enumOf": "rateAgreement.partyType"
+          },
+          "percentChange": {
+            "description": "The change in percent, such as 3.5 or -2. Give this or flatChange.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "effectiveFrom"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "gri",
+        "general rate increase",
+        "raise rates",
+        "price increase"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes the rates many agreements charge customers or pay carriers; only a person applies a rate increase."
+      }
+    },
+    {
       "name": "approve_billing_queue_item",
       "description": "Propose approving a billing queue item you have reviewed and found clean. Clean means charges that match the agreement, the documents the customer requires, and no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft.",
       "parameters": {
@@ -1437,6 +1720,49 @@
       }
     },
     {
+      "name": "approve_rate_agreement",
+      "description": "Propose approving a rate agreement in review, which is the moment it starts pricing shipments. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "description": "A note on the review for whoever reads the agreement next.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateAgreementId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Turns on an agreement that prices what customers are charged or carriers are paid; only a person approves one."
+      }
+    },
+    {
       "name": "approve_shift_swap",
       "description": "Approve a shift swap the other worker has accepted, so the day changes hands on the rota. Only a person approves one.",
       "parameters": {
@@ -1520,6 +1846,49 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Books approved time off; the worker is told it was approved but reads no text the model wrote."
+      }
+    },
+    {
+      "name": "archive_rate_agreement",
+      "description": "Propose retiring a rate agreement for good. It is kept because its quotes point at it but never prices again. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "description": "A note on the review for whoever reads the agreement next.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateAgreementId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "archive",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Ends an agreement for good, which changes what customers are charged when it was active; only a person archives one."
       }
     },
     {
@@ -1736,6 +2105,52 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Names who reviews an item inside Trenova; it creates no money and is changed by assigning someone else."
+      }
+    },
+    {
+      "name": "assign_fuel_card",
+      "description": "Assign a fuel card to the tractor or driver that carries it, most often a card a feed discovered. Assigning a suspended card also activates it, and once assigned, resolve_fuel_purchase_import_rows posts the purchases that waited for it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "assignedTractorId": {
+            "description": "The tractor that carries the card, from list_tractors.",
+            "type": "string"
+          },
+          "assignedWorkerId": {
+            "description": "The driver who carries the card, from search_worker or list_workers.",
+            "type": "string"
+          },
+          "fuelCardId": {
+            "description": "The fuel card, from list_fuel_cards. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fuelCardId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fuel_card",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes which tractor a card's purchases count against inside Trenova; nothing is sent, and assigning it again changes it back."
       }
     },
     {
@@ -2369,6 +2784,59 @@
       }
     },
     {
+      "name": "backfill_jurisdiction_miles",
+      "description": "Start a background job that routes every completed move in a quarter that has no state-by-state miles. The IFTA return then stops showing them unattributed. The preview counts the moves and miles first; each move is a billable distance request.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "maxMoves": {
+            "description": "The most moves to route in this run. Defaults to 2000; each is a billable distance request.",
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "quarter": {
+            "description": "The quarter, 1 to 4.",
+            "maximum": 4,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "year": {
+            "description": "The year of the quarter.",
+            "maximum": 2100,
+            "minimum": 2000,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "quarter"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "ifta_return",
+        "operation": "manage",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Routes a quarter's unattributed moves inside Trenova in the background; nothing is sent to a customer or carrier, but each move is a billable request."
+      }
+    },
+    {
       "name": "bill_statement_now",
       "description": "Propose billing a statement customer's open period now, before its cycle closes, with the reason recorded on the run. Shipments you name in exclude stay on the statement for the period's end. The customer's next boundary does not move. A person always decides; read list_open_statements first.",
       "parameters": {
@@ -2887,6 +3355,44 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Cancels every live shipment on the order, which reaches carriers and trading partners; only a person cancels an order."
+      }
+    },
+    {
+      "name": "cancel_report_run",
+      "description": "Cancel a report run the person started that is still queued or running, such as one asked for with the wrong parameters. A finished run is kept as it is.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "runId": {
+            "description": "The report run, from list_report_runs or the result of run_report. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "report",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Stops a report the person asked for from running; nothing is changed or sent, and running the report again gives the same rows."
       }
     },
     {
@@ -3549,6 +4055,44 @@
       }
     },
     {
+      "name": "commit_fuel_purchase_import",
+      "description": "Commit a staged fuel card statement: every row ready to commit becomes a fuel purchase in one step, and rows whose reference is already on file are skipped. Read it with list_fuel_purchase_imports first; rows in error stay behind.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fuelPurchaseImportId": {
+            "description": "The fuel purchase import, from list_fuel_purchase_imports. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fuelPurchaseImportId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fuel_purchase",
+        "operation": "import",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a statement's purchases inside Trenova, which the IFTA return counts; nothing is sent, but undoing it means deleting each purchase."
+      }
+    },
+    {
       "name": "commit_invoice_run",
       "description": "Propose committing an invoice run, which turns each of its proposed invoices into a draft invoice for the customer. A group below the customer's minimum, or whose shipments were invoiced or re-approved elsewhere since it was built, is skipped with a reason. A person always decides.",
       "parameters": {
@@ -3584,6 +4128,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Issues the invoices a run proposes and advances the customers' billing period; only a person commits a run."
+      }
+    },
+    {
+      "name": "commit_rate_import",
+      "description": "Propose applying a reviewed rate sheet to its agreement from the import's day. The lanes it changes and drops are closed out, its new rates take effect, and the old rates stay in history. Read it with list_rate_imports first. It changes what shipments are charged, so a person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "rateImportId": {
+            "description": "The rate import, from list_rate_imports. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateImportId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "rate sheet",
+        "apply",
+        "uploaded",
+        "import"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes the rates an agreement prices shipments at; only a person applies a rate sheet."
       }
     },
     {
@@ -3858,6 +4446,267 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Rewrites the accessorial charges a customer will be invoiced, so it moves money."
+      }
+    },
+    {
+      "name": "correct_fuel_index_price",
+      "description": "Propose correcting a manual price on a custom fuel index that was entered wrong: its day or its price. A price fetched from EIA cannot be corrected. Every surcharge that follows the index prices from it, so a person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fuelIndexPriceId": {
+            "description": "The manual price, from list_fuel_index_prices. Never guess one.",
+            "type": "string"
+          },
+          "price": {
+            "description": "The price per gallon as a decimal such as 3.899.",
+            "type": "string"
+          },
+          "priceDate": {
+            "description": "The day the price applies to, as the index publishes it. YYYY-MM-DD.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fuelIndexPriceId",
+          "priceDate",
+          "price"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fuel_surcharge_program",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves the price every fuel surcharge on this index is computed from, which changes what customers are charged; only a person sets it."
+      }
+    },
+    {
+      "name": "correct_fuel_purchase",
+      "description": "Correct a recorded fuel purchase: the tractor, jurisdiction, day, fuel type, quantity, amount or any other field that was keyed wrong. Fields left out keep their value. A finalized IFTA return keeps its figures until it is reopened or amended.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "cardLastFour": {
+            "description": "The card's last four digits when the card is not on file. Leave it out to keep it.",
+            "maxLength": 4,
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "The ISO currency code. Defaults to USD. Leave it out to keep it.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "fuelCardId": {
+            "description": "The fuel card it was paid with, from list_fuel_cards. Leave it out to keep it.",
+            "type": "string"
+          },
+          "fuelPurchaseId": {
+            "description": "The fuel purchase, from list_fuel_purchases. Never guess one.",
+            "type": "string"
+          },
+          "fuelType": {
+            "description": "The fuel as IFTA classifies it; DEF, Reefer and Other are spend only and never enter the return. Leave it out to keep it.",
+            "enum": [
+              "Diesel",
+              "Gasoline",
+              "Gasohol",
+              "Propane",
+              "CNG",
+              "LNG",
+              "Ethanol",
+              "Methanol",
+              "E85",
+              "M85",
+              "A55",
+              "Biodiesel",
+              "Electricity",
+              "Hydrogen",
+              "DEF",
+              "Reefer",
+              "Other"
+            ],
+            "type": "string",
+            "x-enumOf": "ifta.fuelType"
+          },
+          "jurisdictionId": {
+            "description": "The state or province the fuel was bought in, from list_ifta_jurisdictions; it decides which line of the return the tax-paid gallons credit. Leave it out to keep it.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Anything the person reconciling it should know. Leave it out to keep it.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "odometer": {
+            "description": "The odometer reading at the pump. Leave it out to keep it.",
+            "maximum": 10000000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "purchasedAt": {
+            "description": "When it was bought, as the receipt says. Leave it out to keep it. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "The quantity bought, as a decimal such as 100.5, in quantityUnit. Leave it out to keep it.",
+            "type": "string"
+          },
+          "quantityUnit": {
+            "description": "The unit the quantity is in. Defaults to Gallon. Leave it out to keep it.",
+            "enum": [
+              "Gallon",
+              "Litre"
+            ],
+            "type": "string",
+            "x-enumOf": "fuelPurchase.quantityUnit"
+          },
+          "taxPaid": {
+            "description": "Whether fuel tax was paid at the pump. Defaults to true; bulk or untaxed fuel earns no tax-paid credit. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "totalAmount": {
+            "description": "The total paid as a decimal such as 389.90. Leave it out to keep it.",
+            "type": "string"
+          },
+          "tractorId": {
+            "description": "The tractor the fuel went into, from list_tractors. Leave it out to keep it.",
+            "type": "string"
+          },
+          "transactionReference": {
+            "description": "The receipt or transaction number; a purchase with a reference already on file is refused. Leave it out to keep it.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "unitPrice": {
+            "description": "The price per unit as a decimal such as 3.899. Leave it out to keep it.",
+            "type": "string"
+          },
+          "vendor": {
+            "description": "The truck stop or vendor. Leave it out to keep it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "vendorCity": {
+            "description": "The vendor's city. Leave it out to keep it.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "workerId": {
+            "description": "The driver who bought it, from search_worker or list_workers. Leave it out to take the card's driver. Leave it out to keep it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fuelPurchaseId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fuel_purchase",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A purchase read from a receipt or statement someone outside sent is proposed, since it is a tax record the IFTA return is computed from.",
+        "effect": "change",
+        "artifact": "fuel_purchase",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a fuel purchase inside Trenova; nothing is sent, and a later correction changes it back."
+      }
+    },
+    {
+      "name": "correct_ifta_mileage_entry",
+      "description": "Correct a jurisdiction mileage entry that was keyed wrong: its tractor, state or province, day, miles or notes. Fields left out keep their value. A finalized return keeps its figures until it is reopened or amended.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "iftaMileageEntryId": {
+            "description": "The mileage entry, from list_ifta_mileage_entries. Never guess one.",
+            "type": "string"
+          },
+          "jurisdictionId": {
+            "description": "The state or province the miles were driven in, from list_ifta_jurisdictions. Leave it out to keep it.",
+            "type": "string"
+          },
+          "loaded": {
+            "description": "Whether the tractor was loaded. Defaults to true. Leave it out to keep it.",
+            "type": "boolean"
+          },
+          "miles": {
+            "description": "The miles as a decimal such as 212.5. Leave it out to keep it.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Where the miles came from, such as a trip sheet. Leave it out to keep it.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "shipmentMoveId": {
+            "description": "The move these miles correct, from get_shipment; the entry then replaces the move's routed miles on the return. Leave it out to keep it.",
+            "type": "string"
+          },
+          "tractorId": {
+            "description": "The tractor that drove the miles, from list_tractors. Leave it out to keep it.",
+            "type": "string"
+          },
+          "traveledAt": {
+            "description": "When the miles were driven; it decides the quarter they count in. Leave it out to keep it. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "iftaMileageEntryId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "ifta_jurisdiction_mileage",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "Miles read from a log or a message someone outside sent are proposed, since the IFTA return is computed from them.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes jurisdiction miles inside Trenova; nothing is sent, and a later correction changes them back."
       }
     },
     {
@@ -5521,6 +6370,44 @@
       }
     },
     {
+      "name": "delete_dashboard",
+      "description": "Propose deleting a dashboard the person owns. The reports its tiles show are kept.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "dashboardId": {
+            "description": "The dashboard, from list_dashboards. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dashboardId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "report",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Removes a dashboard colleagues may open and nothing brings it back, so a person always decides."
+      }
+    },
+    {
       "name": "delete_employment_verification",
       "description": "Remove a previous employer filed on the qualification file in error, such as a duplicate. A settled investigation is corrected, not removed.",
       "parameters": {
@@ -5557,6 +6444,120 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Removes a previous employer from the qualification file; the audit trail keeps what was removed."
+      }
+    },
+    {
+      "name": "delete_fuel_purchase",
+      "description": "Propose deleting a fuel purchase recorded in error, such as a receipt entered twice. It is removed outright; a return already generated for its quarter keeps its figures until it is recomputed. To fix a wrong field use correct_fuel_purchase instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fuelPurchaseId": {
+            "description": "The fuel purchase, from list_fuel_purchases. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fuelPurchaseId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fuel_purchase",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Removes a tax record the IFTA return is computed from, and nothing brings it back but entering it again, so a person always decides."
+      }
+    },
+    {
+      "name": "delete_ifta_mileage_entry",
+      "description": "Propose deleting a jurisdiction mileage entry recorded in error, such as a trip sheet entered twice. The next IFTA return no longer counts its miles. To fix a wrong field use correct_ifta_mileage_entry instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "iftaMileageEntryId": {
+            "description": "The mileage entry, from list_ifta_mileage_entries. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "iftaMileageEntryId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "ifta_jurisdiction_mileage",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Removes miles the IFTA return is computed from, and nothing brings them back but entering them again, so a person always decides."
+      }
+    },
+    {
+      "name": "delete_ifta_return",
+      "description": "Delete a draft IFTA return, such as one generated for the wrong quarter. Only a draft can be deleted; generate_ifta_return makes it again.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "iftaReturnId": {
+            "description": "The IFTA return, from list_ifta_returns. Never guess one. It must be a Draft.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "iftaReturnId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "ifta_return",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Removes a draft return inside Trenova that nothing was filed from; generating it again recomputes the same figures."
       }
     },
     {
@@ -5635,6 +6636,87 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Removes a draft review nobody has seen; the audit trail keeps what was removed."
+      }
+    },
+    {
+      "name": "delete_report",
+      "description": "Propose deleting a saved report the person owns. Its schedules stop with it. Built-in reports cannot be deleted; a copy of one made with fork_report can.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "definitionId": {
+            "description": "The saved report, from list_reports. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "definitionId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "report",
+        "operation": "delete",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Removes a saved report colleagues may run and nothing brings it back, so a person always decides."
+      }
+    },
+    {
+      "name": "delete_report_schedule",
+      "description": "Propose removing a report schedule the person set up, so the report stops being emailed. The report itself is kept.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "scheduleId": {
+            "description": "The schedule, from list_report_schedules. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduleId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "scheduled",
+        "unsubscribe",
+        "emailing"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "report",
+        "operation": "export",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Stops a report reaching the people it was scheduled for; nothing brings the schedule back but setting it up again, so a person always decides."
       }
     },
     {
@@ -6058,6 +7140,87 @@
       }
     },
     {
+      "name": "discard_fuel_purchase_import",
+      "description": "Discard a fuel card statement that was staged but should not be committed, such as the wrong month or a file loaded twice. Nothing it holds becomes a purchase, and it can be staged again later.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fuelPurchaseImportId": {
+            "description": "The fuel purchase import, from list_fuel_purchase_imports. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why it is being discarded, for whoever finds it later.",
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fuelPurchaseImportId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fuel_purchase",
+        "operation": "cancel",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Closes a staged statement inside Trenova without adding any purchase; it can be staged again."
+      }
+    },
+    {
+      "name": "discard_rate_import",
+      "description": "Discard a rate sheet that was read and should not be applied, such as last month's file uploaded again. Its agreement is not changed.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "rateImportId": {
+            "description": "The rate import, from list_rate_imports. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateImportId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Closes a staged rate sheet inside Trenova without changing any rate; the sheet can be uploaded again."
+      }
+    },
+    {
       "name": "dismiss_accounting_drift",
       "description": "Dismiss an open drift finding, with the reason, keeping both sides as they are. An agent may dismiss only an amount difference within the reconciliation tolerance, which list_accounting_drift_findings marks as withinTolerance. Anything larger, and any deleted, voided or status difference, is a person's decision.",
       "parameters": {
@@ -6413,6 +7576,296 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Saves the reviewer's draft inside Trenova; the worker sees nothing until the reviewer submits it, and the draft is edited again the same way."
+      }
+    },
+    {
+      "name": "draft_rate_agreement",
+      "description": "Draft a rate agreement with a customer or a carrier from a rate sheet or a quote the person agreed: its code, name, dates, currency and lanes. It is saved as a draft and prices nothing until submit_rate_agreement sends it for review and a person approves it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "agreementType": {
+            "description": "The commercial arrangement. Defaults to Contract.",
+            "enum": [
+              "Contract",
+              "Tariff",
+              "Spot",
+              "Project",
+              "Dedicated"
+            ],
+            "type": "string",
+            "x-enumOf": "rateAgreement.agreementType"
+          },
+          "autoRenew": {
+            "description": "Whether it renews itself at its end.",
+            "type": "boolean"
+          },
+          "carrierId": {
+            "description": "The carrier, from list_carriers, for a Carrier agreement.",
+            "type": "string"
+          },
+          "code": {
+            "description": "A short code for the agreement, unique in the organization, such as ACME-2027.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "contractRef": {
+            "description": "The signed contract's own reference.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "currency": {
+            "description": "The ISO currency code it prices in. Defaults to USD.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "customerId": {
+            "description": "The customer, from list_customers, for a Customer agreement.",
+            "type": "string"
+          },
+          "defaultMaxCharge": {
+            "description": "The most any lane charges, as a decimal.",
+            "type": "string"
+          },
+          "defaultMinCharge": {
+            "description": "The least any lane charges, as a decimal.",
+            "type": "string"
+          },
+          "description": {
+            "description": "What the agreement covers.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "description": "The first day the agreement prices shipments. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "effectiveTo": {
+            "description": "The last day it prices shipments. Leave it out for an open-ended agreement. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "lanes": {
+            "description": "The lanes, each priced through a formula template or a rate matrix.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "destinationCity": {
+                  "description": "The destination city, for a CityState destination.",
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                "destinationScopeType": {
+                  "description": "How the destination is named. Defaults to Any.",
+                  "enum": [
+                    "Any",
+                    "Country",
+                    "State",
+                    "Zone",
+                    "CityState",
+                    "Zip3",
+                    "Zip5",
+                    "Location"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "rateAgreement.laneScopeType"
+                },
+                "destinationValue": {
+                  "description": "The destination, read as originValue is.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "direction": {
+                  "description": "Whether the lane also prices the reverse haul. Defaults to Directional.",
+                  "enum": [
+                    "Directional",
+                    "Bidirectional"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "rateAgreement.direction"
+                },
+                "formulaTemplateId": {
+                  "description": "The formula template that prices the lane, from list_formula_templates, with the lane's rate as its base rate. Give this or rateMatrixId.",
+                  "type": "string"
+                },
+                "hazmatOnly": {
+                  "description": "Only hazardous freight rates on this lane.",
+                  "type": "boolean"
+                },
+                "label": {
+                  "description": "A short name for the lane, such as Dallas to Atlanta.",
+                  "maxLength": 150,
+                  "type": "string"
+                },
+                "maxCharge": {
+                  "description": "The most the lane charges, as a decimal.",
+                  "type": "string"
+                },
+                "minCharge": {
+                  "description": "The least the lane charges, as a decimal.",
+                  "type": "string"
+                },
+                "originCity": {
+                  "description": "The origin city, for a CityState origin.",
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                "originScopeType": {
+                  "description": "How the origin is named. Defaults to Any.",
+                  "enum": [
+                    "Any",
+                    "Country",
+                    "State",
+                    "Zone",
+                    "CityState",
+                    "Zip3",
+                    "Zip5",
+                    "Location"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "rateAgreement.laneScopeType"
+                },
+                "originValue": {
+                  "description": "The origin for its scope type: a three-letter country code such as USA, a two-letter state code such as TX (for State and CityState), a postal code (Zip3, Zip5), a location from list_locations, or a rate zone a lane of get_rate_agreement names. Leave it out for Any.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "priority": {
+                  "description": "Which lane wins when two match equally; higher wins.",
+                  "maximum": 1000,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "rate": {
+                  "description": "The lane's rate as a decimal such as 2.35, in what its formula template charges by.",
+                  "type": "string"
+                },
+                "rateMatrixId": {
+                  "description": "The rate matrix that prices the lane, as a lane of get_rate_agreement names it. Give this or formulaTemplateId.",
+                  "type": "string"
+                },
+                "tempControlOnly": {
+                  "description": "Only temperature-controlled freight rates on this lane.",
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "name": {
+            "description": "The agreement's name.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "partyType": {
+            "description": "Whether it prices what a customer is charged or what a carrier is paid.",
+            "enum": [
+              "Customer",
+              "Carrier"
+            ],
+            "type": "string",
+            "x-enumOf": "rateAgreement.partyType"
+          },
+          "priority": {
+            "description": "Which agreement wins when two price a shipment; higher wins.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "renewalNoticeDays": {
+            "description": "How many days before its end to warn about renewal.",
+            "maximum": 365,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "partyType",
+          "code",
+          "name",
+          "effectiveFrom"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "tariff",
+        "rate sheet",
+        "quote",
+        "pricing"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "An agreement drafted from a rate sheet or a message someone outside sent is proposed, since its lanes are what the organization will charge.",
+        "effect": "change",
+        "artifact": "rate_agreement",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Saves a draft agreement inside Trenova that prices nothing until a person approves it; archive_rate_agreement retires it."
+      }
+    },
+    {
+      "name": "duplicate_rate_agreement",
+      "description": "Copy a rate agreement with its lanes, weight breaks, accessorials and fuel terms into a new draft, to start a renewal. The copy has none of the original's history or approvals; revise_rate_agreement_draft then changes it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "description": "The copy's code. Defaults to the original's with -COPY.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "name": {
+            "description": "The copy's name. Defaults to the original's with (Copy).",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateAgreementId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "duplicate",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "An agreement drafted from a rate sheet or a message someone outside sent is proposed, since its lanes are what the organization will charge.",
+        "effect": "change",
+        "artifact": "rate_agreement",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Saves a draft copy of an agreement inside Trenova that prices nothing until a person approves it."
       }
     },
     {
@@ -7323,6 +8776,59 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Drafts the period's settlements from pay already accrued inside Trenova; nothing is paid until a person approves them, and hands-off approval is only the settlement control's clean-settlement rule."
+      }
+    },
+    {
+      "name": "generate_ifta_return",
+      "description": "Generate a quarter's IFTA fuel tax return as a draft, computed from the jurisdiction miles and fuel purchases on file. It files nothing: a person finalizes and files it. Refused while a draft or finalized return exists for the quarter, and once one is filed; use recompute_ifta_return or amend_ifta_return.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "quarter": {
+            "description": "The quarter, 1 to 4.",
+            "maximum": 4,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "year": {
+            "description": "The year of the quarter.",
+            "maximum": 2100,
+            "minimum": 2000,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "quarter"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "ifta",
+        "fuel tax",
+        "quarterly return",
+        "quarter"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "ifta_return",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Computes a draft return inside Trenova; nothing is filed or sent, and delete_ifta_return removes the draft."
       }
     },
     {
@@ -13116,6 +14622,432 @@
       }
     },
     {
+      "name": "list_fuel_cards",
+      "description": "List the organization's fuel cards with the provider, the last four digits, the status and the tractor or driver each is assigned to. A card a feed discovered is Suspended and unassigned until someone assigns it with assign_fuel_card, and until then its purchases wait in their import. Filters: status (Active|Suspended|Cancelled); provider (Comdata|EFS|WEX|Ramp|Other); text: lastFour, label; date: discoveredAt, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "provider",
+                    "lastFour",
+                    "label",
+                    "discoveredAt",
+                    "createdAt"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_fuel_cards.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_fuel_cards.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "label",
+              "discoveredAt",
+              "createdAt"
+            ],
+            "type": "string",
+            "x-enumOf": "list_fuel_cards.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "fuel_card",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_fuel_index_prices",
+      "description": "List the prices on file for one fuel index, newest first, with the day each applies to and whether a person entered it or it was fetched. Only a manual price on a custom index can be corrected, with correct_fuel_index_price; record_fuel_index_price adds the next one.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "description": "The earliest price day to include, YYYY-MM-DD.",
+            "type": "string"
+          },
+          "fuelIndexId": {
+            "description": "The fuel index, from get_fuel_surcharge_rates. Never guess one.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many prices to return, at most 104.",
+            "type": "integer"
+          },
+          "to": {
+            "description": "The latest price day to include, YYYY-MM-DD.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fuelIndexId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "fuel_surcharge_program",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_fuel_purchase_imports",
+      "description": "List fuel card statements and feed runs staged for import, newest first, with how many rows are ready to commit, already on file, duplicated or in error. A Parsed import waits for commit_fuel_purchase_import or discard_fuel_purchase_import; rows held because a card or tractor was unknown are worked out again with resolve_fuel_purchase_import_rows. Filters: status (Pending|Parsed|Committed|Failed|Discarded): Parsed imports are waiting to be committed; provider (Comdata|EFS|WEX|Ramp|Other); text: fileName; date: stagedAt, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "provider",
+                    "fileName",
+                    "stagedAt",
+                    "createdAt"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_fuel_purchase_imports.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_fuel_purchase_imports.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "stagedAt",
+              "createdAt"
+            ],
+            "type": "string",
+            "x-enumOf": "list_fuel_purchase_imports.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "fuel_purchase_import",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_fuel_purchases",
+      "description": "List fuel bought for tractors, newest first, with where it was bought for IFTA, the fuel type, the gallons and the amount. Each also says whether tax was paid at the pump. Use it to find a purchase to correct with correct_fuel_purchase or delete_fuel_purchase, or to check a receipt was already recorded before record_fuel_purchase. Filters: fuelType (Diesel|Gasoline|Gasohol|Propane|CNG|LNG|Ethanol|Methanol|E85|M85|A55|Biodiesel|Electricity|Hydrogen|DEF|Reefer|Other); source (Manual|CardImport); tractorId (text): from list_tractors; importBatchId (text): from list_fuel_purchase_imports; boolean: taxPaid; date: purchasedAt, createdAt; text: vendor, transactionReference, cardLastFour. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "fuelType",
+                    "source",
+                    "taxPaid",
+                    "purchasedAt",
+                    "vendor",
+                    "transactionReference",
+                    "cardLastFour",
+                    "tractorId",
+                    "importBatchId",
+                    "createdAt"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_fuel_purchases.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow",
+                    "contains",
+                    "startswith",
+                    "endswith"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_fuel_purchases.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "purchasedAt",
+              "createdAt"
+            ],
+            "type": "string",
+            "x-enumOf": "list_fuel_purchases.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "fuel_purchase",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_gl_accounts",
       "description": "List the chart of accounts: each general ledger account's code, name, type and status, with its balances when your data access reaches them. Use it to name the account a journal line posts to or to find an account by code. Filters: status (Active|Inactive); allowManualJe (boolean): accepts manual journal entries; text: accountCode, name; boolean: isSystem; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
@@ -13530,6 +15462,291 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Lists the widgets the caller's home page can show; nothing changes and nothing is sent."
+      }
+    },
+    {
+      "name": "list_ifta_jurisdictions",
+      "description": "List the active states and provinces fuel tax is reported by, with each one's two-letter code and whether it is an IFTA member. Its id is what record_fuel_purchase and record_ifta_mileage_entry take. Narrow by country code, US, CA or MX.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "countryCode": {
+            "description": "Only this country's jurisdictions: US, CA or MX.",
+            "type": "string"
+          },
+          "membersOnly": {
+            "description": "Only IFTA member jurisdictions.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "fuel_purchase",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_ifta_mileage_entries",
+      "description": "List the jurisdiction miles entered by hand or from telematics rather than routed from moves. Each has the tractor, the state or province, the day and the quarter it counts in. correct_ifta_mileage_entry and delete_ifta_mileage_entry take their ids. Filters: source (Manual|RouteCalculation|Telematics); tractorId (text): from list_tractors; jurisdictionId (text): from list_ifta_jurisdictions; number: year, quarter; date: traveledAt; boolean: loaded. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "source",
+                    "year",
+                    "quarter",
+                    "traveledAt",
+                    "tractorId",
+                    "jurisdictionId",
+                    "loaded"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_ifta_mileage_entries.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow",
+                    "contains",
+                    "startswith",
+                    "endswith"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_ifta_mileage_entries.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "year",
+              "quarter",
+              "traveledAt"
+            ],
+            "type": "string",
+            "x-enumOf": "list_ifta_mileage_entries.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "ifta_jurisdiction_mileage",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_ifta_returns",
+      "description": "List the organization's quarterly IFTA fuel tax returns with their status, miles, gallons, the net tax due and how many problems each carries. A Draft is recomputed with recompute_ifta_return or deleted with delete_ifta_return; a Filed return is corrected with amend_ifta_return. Filters: status (Draft|Finalized|Filed); number: year, quarter; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "year",
+                    "quarter",
+                    "createdAt"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_ifta_returns.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "list_ifta_returns.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "year",
+              "quarter",
+              "createdAt"
+            ],
+            "type": "string",
+            "x-enumOf": "list_ifta_returns.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "ifta_return",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
       }
     },
     {
@@ -15152,6 +17369,45 @@
       }
     },
     {
+      "name": "list_rate_imports",
+      "description": "List rate sheets uploaded against rate agreements, newest first, with the agreement and the day the new rates take effect. Each says how many lanes the sheet adds, changes and removes. A Parsed import waits for commit_rate_import or discard_rate_import.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "How many imports to return, at most 50.",
+            "type": "integer"
+          },
+          "rateAgreementId": {
+            "description": "Only the imports against this agreement, from list_rate_agreements.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "rate_agreement",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_recurring_deductions",
       "description": "List drivers' recurring deductions, such as insurance, equipment lease or escrow contributions. Each has the driver, schedule, dates and status. The amount, cap and what has been taken so far show when your data access reaches them.",
       "parameters": {
@@ -15449,6 +17705,55 @@
         },
         "type": "object"
       },
+      "policy": {
+        "kind": "query",
+        "resource": "report",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_report_schedules",
+      "description": "List reports on a schedule: when each runs, in what formats, who it is emailed to, whether it is on and when it runs next. Only the person who set a schedule up can change it with update_report_schedule or remove it with delete_report_schedule; yours says which are theirs.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "definitionId": {
+            "description": "Only the schedules of this saved report, from list_reports.",
+            "type": "string"
+          },
+          "enabledOnly": {
+            "description": "Only schedules that are switched on.",
+            "type": "boolean"
+          },
+          "limit": {
+            "description": "How many schedules to return, at most 50.",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "scheduled",
+        "emailed",
+        "recurring",
+        "subscription"
+      ],
       "policy": {
         "kind": "query",
         "resource": "report",
@@ -17824,12 +20129,14 @@
               "driver_settlement",
               "edi_inbound_file",
               "edi_message",
+              "fuel_purchase",
               "invoice",
               "journal_entry",
               "journal_reversal",
               "location",
               "manual_journal",
               "order",
+              "rate_agreement",
               "rate_matrix",
               "report",
               "service_failure",
@@ -19573,6 +21880,44 @@
       }
     },
     {
+      "name": "recalculate_move_jurisdiction_miles",
+      "description": "Ask the routing provider again for one move's state-by-state miles and replace its jurisdiction rows. Use it when the move's stops changed or the IFTA return shows it unattributed. The move's distance is left as it was. Each run is one billable distance request.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "shipmentMoveId": {
+            "description": "The move, from get_shipment. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "shipmentMoveId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment_move",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Re-derives one move's jurisdiction miles inside Trenova from its stops; nothing is sent to a customer or carrier, and running it again gives the same miles."
+      }
+    },
+    {
       "name": "recalculate_shipment_distance",
       "description": "Work out a shipment's move miles again from its stops through the organization's distance profile and routing provider, and save them. Use it after its stops changed and the miles on the board look wrong. It changes the miles only; the charges follow them the next time the shipment is rated.",
       "parameters": {
@@ -19682,6 +22027,44 @@
         "source": "memory",
         "carriesTaint": false,
         "rationale": "Reads memories earlier runs saved, which carry the taint of the run that wrote them."
+      }
+    },
+    {
+      "name": "recompute_ifta_return",
+      "description": "Recompute a draft IFTA return from the miles, purchases and tax rates on file now, after purchases or mileage were corrected. Only a draft can be recomputed; a finalized return must be reopened by a person first.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "iftaReturnId": {
+            "description": "The IFTA return, from list_ifta_returns. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "iftaReturnId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "ifta_return",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Re-derives a draft return's figures inside Trenova from what is on file; nothing is filed, and running it again gives the same figures."
       }
     },
     {
@@ -19898,6 +22281,290 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Adds a previous employer to the qualification file inside Trenova; nothing is sent to the employer, and it is corrected or removed the same way."
+      }
+    },
+    {
+      "name": "record_fuel_index_price",
+      "description": "Propose recording a published price on a custom fuel index, such as a customer's own index or a rack price the organization tracks. Every fuel surcharge that follows the index prices from it, so a person always decides. EIA indexes are fetched on their own and take no manual price.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fuelIndexId": {
+            "description": "The custom fuel index, from get_fuel_surcharge_rates. Never guess one.",
+            "type": "string"
+          },
+          "price": {
+            "description": "The price per gallon as a decimal such as 3.899.",
+            "type": "string"
+          },
+          "priceDate": {
+            "description": "The day the price applies to, as the index publishes it. YYYY-MM-DD.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fuelIndexId",
+          "priceDate",
+          "price"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "fuel price",
+        "diesel price",
+        "index",
+        "surcharge",
+        "rack",
+        "doe"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "fuel_surcharge_program",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves the price every fuel surcharge on this index is computed from, which changes what customers are charged; only a person sets it."
+      }
+    },
+    {
+      "name": "record_fuel_purchase",
+      "description": "Record fuel bought for a tractor from a receipt or a statement line: where it was bought for IFTA, when, what fuel, how much and what it cost. It is a tax record the quarter's IFTA return is computed from. Check list_fuel_purchases first, since a reference already on file is refused.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "cardLastFour": {
+            "description": "The card's last four digits when the card is not on file.",
+            "maxLength": 4,
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "The ISO currency code. Defaults to USD.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "fuelCardId": {
+            "description": "The fuel card it was paid with, from list_fuel_cards.",
+            "type": "string"
+          },
+          "fuelType": {
+            "description": "The fuel as IFTA classifies it; DEF, Reefer and Other are spend only and never enter the return.",
+            "enum": [
+              "Diesel",
+              "Gasoline",
+              "Gasohol",
+              "Propane",
+              "CNG",
+              "LNG",
+              "Ethanol",
+              "Methanol",
+              "E85",
+              "M85",
+              "A55",
+              "Biodiesel",
+              "Electricity",
+              "Hydrogen",
+              "DEF",
+              "Reefer",
+              "Other"
+            ],
+            "type": "string",
+            "x-enumOf": "ifta.fuelType"
+          },
+          "jurisdictionId": {
+            "description": "The state or province the fuel was bought in, from list_ifta_jurisdictions; it decides which line of the return the tax-paid gallons credit.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Anything the person reconciling it should know.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "odometer": {
+            "description": "The odometer reading at the pump.",
+            "maximum": 10000000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "purchasedAt": {
+            "description": "When it was bought, as the receipt says. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "The quantity bought, as a decimal such as 100.5, in quantityUnit.",
+            "type": "string"
+          },
+          "quantityUnit": {
+            "description": "The unit the quantity is in. Defaults to Gallon.",
+            "enum": [
+              "Gallon",
+              "Litre"
+            ],
+            "type": "string",
+            "x-enumOf": "fuelPurchase.quantityUnit"
+          },
+          "taxPaid": {
+            "description": "Whether fuel tax was paid at the pump. Defaults to true; bulk or untaxed fuel earns no tax-paid credit.",
+            "type": "boolean"
+          },
+          "totalAmount": {
+            "description": "The total paid as a decimal such as 389.90.",
+            "type": "string"
+          },
+          "tractorId": {
+            "description": "The tractor the fuel went into, from list_tractors.",
+            "type": "string"
+          },
+          "transactionReference": {
+            "description": "The receipt or transaction number; a purchase with a reference already on file is refused.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "unitPrice": {
+            "description": "The price per unit as a decimal such as 3.899.",
+            "type": "string"
+          },
+          "vendor": {
+            "description": "The truck stop or vendor.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "vendorCity": {
+            "description": "The vendor's city.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "workerId": {
+            "description": "The driver who bought it, from search_worker or list_workers. Leave it out to take the card's driver.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tractorId",
+          "jurisdictionId",
+          "purchasedAt",
+          "fuelType",
+          "quantity",
+          "totalAmount"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "fuel",
+        "receipt",
+        "diesel",
+        "gallons",
+        "ifta",
+        "pump"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "fuel_purchase",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "A purchase read from a receipt or statement someone outside sent is proposed, since it is a tax record the IFTA return is computed from.",
+        "effect": "change",
+        "artifact": "fuel_purchase",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds a fuel purchase inside Trenova that the next IFTA return counts; nothing is sent, and delete_fuel_purchase removes it."
+      }
+    },
+    {
+      "name": "record_ifta_mileage_entry",
+      "description": "Record miles a tractor drove in one state or province that no routed move carries, or that correct a move's routed miles. They come from a trip sheet or a telematics report, and the quarter's IFTA return counts them.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "jurisdictionId": {
+            "description": "The state or province the miles were driven in, from list_ifta_jurisdictions.",
+            "type": "string"
+          },
+          "loaded": {
+            "description": "Whether the tractor was loaded. Defaults to true.",
+            "type": "boolean"
+          },
+          "miles": {
+            "description": "The miles as a decimal such as 212.5.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "Where the miles came from, such as a trip sheet.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "shipmentMoveId": {
+            "description": "The move these miles correct, from get_shipment; the entry then replaces the move's routed miles on the return.",
+            "type": "string"
+          },
+          "tractorId": {
+            "description": "The tractor that drove the miles, from list_tractors.",
+            "type": "string"
+          },
+          "traveledAt": {
+            "description": "When the miles were driven; it decides the quarter they count in. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tractorId",
+          "jurisdictionId",
+          "traveledAt",
+          "miles"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "ifta",
+        "miles",
+        "trip sheet",
+        "state miles",
+        "jurisdiction"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "ifta_jurisdiction_mileage",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "Miles read from a log or a message someone outside sent are proposed, since the IFTA return is computed from them.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Adds jurisdiction miles inside Trenova that the next IFTA return counts; nothing is sent, and delete_ifta_mileage_entry removes them."
       }
     },
     {
@@ -20897,6 +23564,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Turns down an adjustment an approver was asked to sign off; the approval decision is a person's."
+      }
+    },
+    {
+      "name": "reject_rate_agreement",
+      "description": "Propose sending a rate agreement in review back to draft, with what is wrong with it. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "description": "Why, in a sentence the agreement's owner can act on.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateAgreementId",
+          "comment"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "reject",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Returns an agreement to its author with the reviewer's reason; it prices nothing either way, but the review is a person's decision."
       }
     },
     {
@@ -21996,6 +24707,44 @@
       }
     },
     {
+      "name": "reset_report_fork",
+      "description": "Put a report copied from a built-in one with fork_report back to the built-in's current definition, dropping the person's changes. Its columns, filters and parameters become the built-in's again, as when the built-in improved.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "definitionId": {
+            "description": "The saved report, from list_reports. Never guess one. It must be a copy of a built-in report.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "definitionId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "report",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Rewrites a report the person owns from the built-in catalog; nothing is sent, but the person's changes to it are lost."
+      }
+    },
+    {
       "name": "resolve_accounting_drift",
       "description": "Fix an open drift finding in one direction. PushTrenovaValue sends Trenova's document to the accounting system again: an update, a void, or a new copy of a document deleted there. AdjustTrenova changes Trenova to match the accounting system: a credit or debit memo against the invoice, a void of an invoice gone from it, or the reversal of a payment voided there, none of which is sent back. Only the directions the finding lists under fixes are offered. The preview says exactly what happens.",
       "parameters": {
@@ -22157,6 +24906,44 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Closes a carrier finding inside Trenova."
+      }
+    },
+    {
+      "name": "resolve_fuel_purchase_import_rows",
+      "description": "Work out again the rows a fuel import is still holding, against the cards, tractors and jurisdictions on file now, without fetching the statement again. Run it after assign_fuel_card or once a missing tractor exists. A feed posts the rows that now resolve; an upload waits for commit_fuel_purchase_import.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fuelPurchaseImportId": {
+            "description": "The fuel purchase import, from list_fuel_purchase_imports. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fuelPurchaseImportId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "fuel_purchase_import",
+        "operation": "import",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Re-matches held statement rows inside Trenova and, for a feed, posts the purchases that now resolve; nothing is sent."
       }
     },
     {
@@ -22437,6 +25224,49 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Releases everything held to the organization's books at once, and a person paused it for a reason, so a person approves it; what is sent cannot be called back."
+      }
+    },
+    {
+      "name": "resume_rate_agreement",
+      "description": "Propose putting a suspended rate agreement back in service without another approval round. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "description": "A note on the review for whoever reads the agreement next.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateAgreementId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Turns an agreement back on so it prices shipments again; only a person resumes one."
       }
     },
     {
@@ -22931,6 +25761,228 @@
       }
     },
     {
+      "name": "revise_rate_agreement_draft",
+      "description": "Rewrite a draft rate agreement before it is submitted: its header terms or its lanes. Fields left out keep their value. Only a draft is revised here; an active agreement's lanes change with amend_rate_agreement_rules. Read it with get_rate_agreement first for its lanes' ruleIds.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "agreementType": {
+            "description": "The commercial arrangement. Defaults to Contract.",
+            "enum": [
+              "Contract",
+              "Tariff",
+              "Spot",
+              "Project",
+              "Dedicated"
+            ],
+            "type": "string",
+            "x-enumOf": "rateAgreement.agreementType"
+          },
+          "autoRenew": {
+            "description": "Whether it renews itself at its end.",
+            "type": "boolean"
+          },
+          "code": {
+            "description": "A short code for the agreement, unique in the organization, such as ACME-2027.",
+            "maxLength": 50,
+            "type": "string"
+          },
+          "contractRef": {
+            "description": "The signed contract's own reference.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "currency": {
+            "description": "The ISO currency code it prices in. Defaults to USD.",
+            "maxLength": 3,
+            "type": "string"
+          },
+          "defaultMaxCharge": {
+            "description": "The most any lane charges, as a decimal.",
+            "type": "string"
+          },
+          "defaultMinCharge": {
+            "description": "The least any lane charges, as a decimal.",
+            "type": "string"
+          },
+          "description": {
+            "description": "What the agreement covers.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "description": "The first day the agreement prices shipments. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "effectiveTo": {
+            "description": "The last day it prices shipments. Leave it out for an open-ended agreement. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "lanes": {
+            "description": "Every lane of the revised agreement, replacing its lanes: a lane with ruleId keeps that lane and changes only what it gives, a lane without one is new, and a lane left out is dropped. Leave it out to keep the lanes.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "destinationCity": {
+                  "description": "The destination city, for a CityState destination.",
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                "destinationScopeType": {
+                  "description": "How the destination is named. Defaults to Any.",
+                  "enum": [
+                    "Any",
+                    "Country",
+                    "State",
+                    "Zone",
+                    "CityState",
+                    "Zip3",
+                    "Zip5",
+                    "Location"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "rateAgreement.laneScopeType"
+                },
+                "destinationValue": {
+                  "description": "The destination, read as originValue is.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "direction": {
+                  "description": "Whether the lane also prices the reverse haul. Defaults to Directional.",
+                  "enum": [
+                    "Directional",
+                    "Bidirectional"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "rateAgreement.direction"
+                },
+                "formulaTemplateId": {
+                  "description": "The formula template that prices the lane, from list_formula_templates, with the lane's rate as its base rate. Give this or rateMatrixId.",
+                  "type": "string"
+                },
+                "hazmatOnly": {
+                  "description": "Only hazardous freight rates on this lane.",
+                  "type": "boolean"
+                },
+                "label": {
+                  "description": "A short name for the lane, such as Dallas to Atlanta.",
+                  "maxLength": 150,
+                  "type": "string"
+                },
+                "maxCharge": {
+                  "description": "The most the lane charges, as a decimal.",
+                  "type": "string"
+                },
+                "minCharge": {
+                  "description": "The least the lane charges, as a decimal.",
+                  "type": "string"
+                },
+                "originCity": {
+                  "description": "The origin city, for a CityState origin.",
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                "originScopeType": {
+                  "description": "How the origin is named. Defaults to Any.",
+                  "enum": [
+                    "Any",
+                    "Country",
+                    "State",
+                    "Zone",
+                    "CityState",
+                    "Zip3",
+                    "Zip5",
+                    "Location"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "rateAgreement.laneScopeType"
+                },
+                "originValue": {
+                  "description": "The origin for its scope type: a three-letter country code such as USA, a two-letter state code such as TX (for State and CityState), a postal code (Zip3, Zip5), a location from list_locations, or a rate zone a lane of get_rate_agreement names. Leave it out for Any.",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "priority": {
+                  "description": "Which lane wins when two match equally; higher wins.",
+                  "maximum": 1000,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "rate": {
+                  "description": "The lane's rate as a decimal such as 2.35, in what its formula template charges by.",
+                  "type": "string"
+                },
+                "rateMatrixId": {
+                  "description": "The rate matrix that prices the lane, as a lane of get_rate_agreement names it. Give this or formulaTemplateId.",
+                  "type": "string"
+                },
+                "ruleId": {
+                  "description": "A lane already on the agreement, from get_rate_agreement, to keep and change; leave it out for a new lane.",
+                  "type": "string"
+                },
+                "tempControlOnly": {
+                  "description": "Only temperature-controlled freight rates on this lane.",
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "name": {
+            "description": "The agreement's name.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "priority": {
+            "description": "Which agreement wins when two price a shipment; higher wins.",
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          },
+          "renewalNoticeDays": {
+            "description": "How many days before its end to warn about renewal.",
+            "maximum": 365,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rateAgreementId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "An agreement drafted from a rate sheet or a message someone outside sent is proposed, since its lanes are what the organization will charge.",
+        "effect": "change",
+        "artifact": "rate_agreement",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes a draft agreement inside Trenova that prices nothing yet; a later revision changes it back."
+      }
+    },
+    {
       "name": "run_dot_random_draw",
       "description": "Draw a random testing round from a pool for the period a day falls in, today by default. The pool's rates set how many drivers each substance needs; the names are chosen only when the round is drawn, under a seed nobody sees first, so the preview names no one. The round starts as a draft a person reviews and finalizes with finalize_dot_random_draw, or cancels.",
       "parameters": {
@@ -22978,6 +26030,88 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Draws a draft round inside Trenova; nobody is told and nothing is final until a person finalizes it, and cancel_dot_random_draw withdraws it."
+      }
+    },
+    {
+      "name": "run_rate_simulation",
+      "description": "Replay past shipments against a rate agreement, usually a draft, to see what it would have charged or paid next to what they actually were. It runs in the background and changes no shipment and no rate.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "What it is meant to answer.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "name": {
+            "description": "What the simulation is called, such as Acme renewal against Q3.",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "partyType": {
+            "description": "Which side to replay: what customers are charged or what carriers are paid. Defaults to Customer.",
+            "enum": [
+              "Customer",
+              "Carrier"
+            ],
+            "type": "string",
+            "x-enumOf": "rateSimulation.partyType"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          },
+          "sampleFrom": {
+            "description": "The first ship day to replay. YYYY-MM-DD.",
+            "type": "string"
+          },
+          "sampleLimit": {
+            "description": "The most shipments to replay. Leave it out for every shipment in the window.",
+            "maximum": 50000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sampleTo": {
+            "description": "The last ship day to replay. YYYY-MM-DD.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateAgreementId",
+          "name",
+          "sampleFrom",
+          "sampleTo"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "simulate",
+        "what if",
+        "replay",
+        "backtest",
+        "renewal"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "rate_simulation",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "rate_agreement",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Saves a simulation inside Trenova and replays past shipments in the background; no shipment, rate or invoice changes."
       }
     },
     {
@@ -25157,6 +28291,93 @@
       }
     },
     {
+      "name": "submit_rate_agreement",
+      "description": "Submit a draft rate agreement for review. It prices nothing until a person approves it. Read it with get_rate_agreement first.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "description": "A note on the review for whoever reads the agreement next.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateAgreementId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "submit",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Moves a draft agreement into review inside Trenova; it prices nothing until a person approves it."
+      }
+    },
+    {
+      "name": "suspend_rate_agreement",
+      "description": "Propose suspending an active rate agreement, such as for a customer on credit hold, with the reason. Shipments stop rating against it at once; resume_rate_agreement puts it back. A person always decides.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "description": "Why, in a sentence the agreement's owner can act on.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "rateAgreementId": {
+            "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateAgreementId",
+          "comment"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "rate_agreement",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Stops an agreement pricing shipments, which changes what customers are charged; only a person suspends one."
+      }
+    },
+    {
       "name": "tender_move_to_carriers",
       "description": "Offer an uncovered move to specific carriers at specific rates: broadcast to all of them at once, or sequentially in the order given. Each line names the carrier, the rate and how it is measured (flat or per mile), how long the carrier has to accept, and how the offer is sent. Read shop_carriers first so the rates come from contracts rather than guesses; a rate you cannot source is a reason to raise an exception, not to invent one.",
       "parameters": {
@@ -27118,6 +30339,96 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Changes a saved report colleagues may open; nothing leaves the organization."
+      }
+    },
+    {
+      "name": "update_report_schedule",
+      "description": "Change a report schedule the person set up: when it runs, its zone, the formats, who it is emailed to, or switch it on or off. Fields left out keep their value. The report must exist; list_reports finds its id.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "cronExpression": {
+            "description": "When it runs, as five cron fields, such as \"0 7 * * 1\" for 07:00 every Monday.",
+            "type": "string"
+          },
+          "definitionId": {
+            "description": "The saved report it runs, from list_reports. Leave it out to keep it.",
+            "type": "string"
+          },
+          "emailAttach": {
+            "description": "Attach the file rather than only linking to it.",
+            "type": "boolean"
+          },
+          "emailInline": {
+            "description": "Put the rows in the email body.",
+            "type": "boolean"
+          },
+          "emailRecipients": {
+            "description": "The email addresses it goes to, replacing the list.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "enabled": {
+            "description": "Whether the schedule runs.",
+            "type": "boolean"
+          },
+          "formats": {
+            "description": "Which formats to attach.",
+            "items": {
+              "enum": [
+                "xlsx",
+                "csv",
+                "pdf",
+                "json"
+              ],
+              "type": "string",
+              "x-enumOf": "report.format"
+            },
+            "type": "array"
+          },
+          "scheduleId": {
+            "description": "The schedule, from list_report_schedules. Never guess one.",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The zone the schedule is read in, as an IANA name such as America/New_York.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduleId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "scheduled",
+        "recipients",
+        "emailed",
+        "subscription"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "report",
+        "operation": "export",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes where and when a report is emailed, which may be to addresses outside the organization."
       }
     },
     {

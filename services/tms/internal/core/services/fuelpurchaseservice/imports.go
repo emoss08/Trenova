@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/fuelimport"
@@ -739,71 +738,15 @@ func (s *Service) Commit(
 	ctx context.Context,
 	req *CommitRequest,
 ) (*fuelpurchase.ImportBatch, error) {
-	batch, err := s.repo.GetImportBatchByID(ctx, &repositories.GetImportBatchByIDRequest{
-		ID:          req.BatchID,
-		TenantInfo:  req.TenantInfo,
-		IncludeRows: true,
-	})
+	plan, err := s.PlanCommit(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if batch.Version != req.Version {
-		return nil, dberror.CreateVersionMismatchError("FuelPurchaseImportBatch", batch.ID.String())
-	}
-	if !batch.CanCommit() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"This import is {0} and cannot be committed", strings.ToLower(batch.Status.Label()),
-		)
-	}
-
-	purchases := make([]*fuelpurchase.FuelPurchase, 0, batch.NewRowCount())
-	rowIDByReference := make(map[string]pulid.ID, batch.NewRowCount())
-	multiErr := errortypes.NewMultiError()
-
-	for _, row := range batch.Rows {
-		if !row.WillCommit() {
-			continue
-		}
-		purchase := *row.Parsed
-		purchase.ID = ""
-		purchase.Version = 0
-		purchase.OrganizationID = batch.OrganizationID
-		purchase.BusinessUnitID = batch.BusinessUnitID
-		purchase.Source = fuelpurchase.PurchaseSourceCardImport
-		purchase.ImportBatchID = &batch.ID
-		purchase.CreatedByID = req.UserID
-		if purchase.TransactionReference == "" {
-			purchase.TransactionReference = row.TransactionReference
-		}
-		purchase.Normalize()
-
-		if purchase.TransactionReference == "" {
-			multiErr.WithIndex("rows", row.RowNumber).
-				Add("transactionReference", errortypes.ErrRequired, "Row has no reference")
-			continue
-		}
-		purchase.Validate(multiErr.WithIndex("rows", row.RowNumber))
-
-		purchases = append(purchases, &purchase)
-		rowIDByReference[purchase.TransactionReference] = row.ID
-	}
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-	if len(purchases) == 0 {
-		return nil, errortypes.NewValidationError(
-			"rows",
-			errortypes.ErrInvalid,
-			"Nothing in this import is ready to commit",
-		)
-	}
 
 	result, err := s.repo.CommitImport(ctx, &repositories.CommitImportRequest{
-		Batch:            batch,
-		Purchases:        purchases,
-		RowIDByReference: rowIDByReference,
+		Batch:            plan.Batch,
+		Purchases:        plan.Purchases,
+		RowIDByReference: plan.RowIDByReference,
 		CommittedByID:    req.UserID,
 		CommittedAt:      s.now(),
 	})
@@ -847,27 +790,13 @@ func (s *Service) Discard(
 	ctx context.Context,
 	req *DiscardRequest,
 ) (*fuelpurchase.ImportBatch, error) {
-	batch, err := s.repo.GetImportBatchByID(ctx, &repositories.GetImportBatchByIDRequest{
-		ID:         req.BatchID,
-		TenantInfo: req.TenantInfo,
-	})
+	change, err := s.PlanDiscard(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if batch.Version != req.Version {
-		return nil, dberror.CreateVersionMismatchError("FuelPurchaseImportBatch", batch.ID.String())
-	}
-	if !batch.CanDiscard() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"This import is {0} and cannot be discarded", strings.ToLower(batch.Status.Label()),
-		)
-	}
 
-	previous := *batch
-	batch.Status = fuelpurchase.ImportStatusDiscarded
-	updated, err := s.repo.UpdateImportBatch(ctx, batch)
+	previous := *change.Before
+	updated, err := s.repo.UpdateImportBatch(ctx, change.After)
 	if err != nil {
 		return nil, err
 	}

@@ -35,6 +35,7 @@ func ToolProviders() []any {
 		formulaToolProviders(),
 		tenderingToolProviders(),
 		operationsQueryToolProviders(),
+		fuelRateReadProviders(),
 		workforceQueryToolProviders(),
 	}
 

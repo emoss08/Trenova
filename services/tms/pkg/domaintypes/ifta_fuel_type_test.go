@@ -112,3 +112,15 @@ func TestAllIFTAFuelTypes_ListsEveryFuelInReturnOrder(t *testing.T) {
 	assert.Equal(t, domaintypes.IFTAFuelTypeDiesel, domaintypes.AllIFTAFuelTypes()[0],
 		"callers must receive a copy")
 }
+
+func TestIFTAFuelTypeValues_AreEveryValidFuelType(t *testing.T) {
+	t.Parallel()
+
+	values := domaintypes.IFTAFuelTypeValues()
+	assert.Len(t, values, 17)
+	for _, value := range values {
+		assert.True(t, value.IsValid(), value)
+	}
+	values[0] = domaintypes.IFTAFuelType("Kerosene")
+	assert.Equal(t, domaintypes.IFTAFuelTypeDiesel, domaintypes.IFTAFuelTypeValues()[0])
+}

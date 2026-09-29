@@ -304,7 +304,7 @@ func TestTemplates_DataAccessFollowsWhatEachDeskReads(t *testing.T) {
 	}
 }
 
-func TestTemplates_TheFormulaAssistantIsAChatAgentThatOnlyReads(t *testing.T) {
+func TestTemplates_TheFormulaAssistantIsAChatAgentThatOnlyProposes(t *testing.T) {
 	t.Parallel()
 
 	assistant := agentdefinition.TemplateFormulaAssistant

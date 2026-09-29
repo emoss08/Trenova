@@ -132,53 +132,12 @@ func (s *Service) UpdateSchedule(
 	ctx context.Context,
 	req *SaveScheduleRequest,
 ) (*report.ReportSchedule, error) {
-	existing, err := s.scheduleRepo.GetByID(ctx, &repositories.GetReportScheduleRequest{
-		TenantInfo: req.TenantInfo,
-		ScheduleID: req.ScheduleID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if existing.RunAsID != req.TenantInfo.UserID {
-		return nil, errortypes.NewAuthorizationError(
-			"Only the schedule owner can modify this schedule",
-		)
-	}
-
-	if _, err = s.validateScheduleRequest(ctx, req); err != nil {
-		return nil, err
-	}
-
-	nextRun, err := cronutils.NextRun(req.CronExpression, req.Timezone, timeutils.NowUnix())
+	change, err := s.PlanUpdateSchedule(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	existing.DefinitionID = req.DefinitionID
-	existing.CronExpression = req.CronExpression
-	existing.Timezone = req.Timezone
-	existing.Formats = req.Formats
-	existing.Delivery = req.delivery()
-	// Re-arm on edit: an author changing the condition should not inherit the
-	// suppressed state of the condition they replaced.
-	if !scheduleAlertsEqual(existing.Alert, req.Alert) {
-		existing.AlertFiring = false
-	}
-	existing.Alert = req.Alert
-	existing.Enabled = req.Enabled
-	existing.NextRunAt = nextRun
-	if req.Enabled {
-		existing.ConsecutiveFailures = 0
-	}
-	existing.Version = req.Version
-
-	multiErr := errortypes.NewMultiError()
-	existing.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	return s.scheduleRepo.Update(ctx, existing)
+	return s.scheduleRepo.Update(ctx, change.After)
 }
 
 type GetScheduleRequest struct {
@@ -220,14 +179,8 @@ func (s *Service) ListSchedules(
 }
 
 func (s *Service) DeleteSchedule(ctx context.Context, req *GetScheduleRequest) error {
-	existing, err := s.GetSchedule(ctx, req)
-	if err != nil {
+	if _, err := s.PlanDeleteSchedule(ctx, req); err != nil {
 		return err
-	}
-	if existing.RunAsID != req.TenantInfo.UserID {
-		return errortypes.NewAuthorizationError(
-			"Only the schedule owner can delete this schedule",
-		)
 	}
 
 	return s.scheduleRepo.Delete(ctx, &repositories.GetReportScheduleRequest{

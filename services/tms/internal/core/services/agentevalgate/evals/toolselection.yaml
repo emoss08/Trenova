@@ -486,6 +486,102 @@ cases:
     expect: [change_accounting_backfill]
   - request: assign the bank receipt work item to Maria
     expect: [triage_bank_receipt_work_item]
+  - request: record the diesel receipt from the Love's in Amarillo for tractor 112
+    expect: [record_fuel_purchase]
+  - request: enter this fuel receipt so it counts on the IFTA return
+    expect: [record_fuel_purchase]
+  - request: the gallons on that fuel purchase were keyed wrong, fix them
+    expect: [correct_fuel_purchase]
+  - request: delete the fuel purchase that was entered twice
+    expect: [delete_fuel_purchase]
+  - request: which fuel purchases did tractor 112 make in Texas last month
+    expect: [list_fuel_purchases]
+  - request: give the new Comdata fuel card to tractor 208
+    expect: [assign_fuel_card]
+  - request: which fuel cards are not assigned to a tractor
+    expect: [list_fuel_cards]
+  - request: commit the staged fuel card statement
+    expect: [commit_fuel_purchase_import]
+  - request: discard the fuel statement that was uploaded twice
+    expect: [discard_fuel_purchase_import]
+  - request: the card is assigned now, post the fuel rows the import was holding
+    expect: [resolve_fuel_purchase_import_rows]
+  - request: which fuel statement imports are waiting to be committed
+    expect: [list_fuel_purchase_imports]
+  - request: generate the IFTA return for the third quarter
+    expect: [generate_ifta_return]
+  - request: recompute the draft IFTA return after the fuel corrections
+    expect: [recompute_ifta_return]
+  - request: amend the filed IFTA return, Texas purchases were left out
+    expect: [amend_ifta_return]
+  - request: delete the draft IFTA return made for the wrong quarter
+    expect: [delete_ifta_return]
+  - request: which IFTA returns are still drafts
+    expect: [list_ifta_returns]
+  - request: add the state miles from this trip sheet for the IFTA return
+    expect: [record_ifta_mileage_entry]
+  - request: correct the jurisdiction miles on that mileage entry
+    expect: [correct_ifta_mileage_entry]
+  - request: remove the duplicate IFTA mileage entry
+    expect: [delete_ifta_mileage_entry]
+  - request: which IFTA mileage entries were recorded for tractor 112
+    expect: [list_ifta_mileage_entries]
+  - request: what is the code for the Oklahoma IFTA jurisdiction
+    expect: [list_ifta_jurisdictions]
+  - request: work out the state by state miles for this move again
+    expect: [recalculate_move_jurisdiction_miles]
+  - request: backfill jurisdiction miles for the quarter's unattributed moves
+    expect: [backfill_jurisdiction_miles]
+  - request: draft a rate agreement for Acme from their rate sheet
+    expect: [draft_rate_agreement]
+  - request: change the lanes on the draft rate agreement before it goes for review
+    expect: [revise_rate_agreement_draft]
+  - request: copy last year's Acme contract into a new draft for the renewal
+    expect: [duplicate_rate_agreement]
+  - request: submit the draft rate agreement for approval
+    expect: [submit_rate_agreement]
+  - request: approve the Acme rate agreement so it starts pricing
+    expect: [approve_rate_agreement]
+  - request: reject the rate agreement, the Dallas lane rate is wrong
+    expect: [reject_rate_agreement]
+  - request: suspend the rate agreement while the customer is on credit hold
+    expect: [suspend_rate_agreement]
+  - request: put the suspended rate agreement back in service
+    expect: [resume_rate_agreement]
+  - request: archive the expired rate agreement
+    expect: [archive_rate_agreement]
+  - request: amend the active contract's Dallas lane rate from November 1
+    expect: [amend_rate_agreement_rules]
+  - request: apply a 3.5 percent general rate increase to every customer contract
+    expect: [apply_rate_increase]
+  - request: apply the uploaded rate sheet to its agreement
+    expect: [commit_rate_import]
+  - request: discard the rate sheet import, it is last month's file
+    expect: [discard_rate_import]
+  - request: which rate sheet imports are waiting for review
+    expect: [list_rate_imports]
+  - request: simulate the draft contract against last quarter's shipments
+    expect: [run_rate_simulation]
+  - request: record this week's price on our custom fuel index
+    expect: [record_fuel_index_price]
+  - request: the fuel index price for Monday was entered wrong, correct it
+    expect: [correct_fuel_index_price]
+  - request: which manual prices are on the custom fuel index
+    expect: [list_fuel_index_prices]
+  - request: cancel the report run, I picked the wrong dates
+    expect: [cancel_report_run]
+  - request: delete my saved late deliveries report
+    expect: [delete_report]
+  - request: reset my copy of the built-in report to the original
+    expect: [reset_report_fork]
+  - request: delete the ops dashboard
+    expect: [delete_dashboard]
+  - request: change the weekly report schedule to email the controller too
+    expect: [update_report_schedule]
+  - request: stop emailing the scheduled report
+    expect: [delete_report_schedule, update_report_schedule]
+  - request: which reports are scheduled to be emailed
+    expect: [list_report_schedules]
   - request: log the accident the driver had on I-80 this morning
     expect: [open_worker_safety_event]
   - request: add the roadside violation from the inspection report

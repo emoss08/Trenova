@@ -1,5 +1,5 @@
 {
-  "version": "sha256:1f3bb32a1afa6cd9ed4e0db940c726d652781e1d7fa447505f5050c0caf7f574",
+  "version": "sha256:70cada5e2b9dc931b46a6f25e069fb598df29da8b554dd1123d9461a2c076117",
   "modules": [
     {
       "id": "home",
@@ -15508,6 +15508,15 @@
       }
     },
     {
+      "entity": "fuel_purchase",
+      "label": "Fuel purchase",
+      "path": "/fuel/purchases",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
       "entity": "invoice",
       "label": "Invoice",
       "path": "/billing/invoices",
@@ -15552,6 +15561,15 @@
       "entity": "order",
       "label": "Order",
       "path": "/shipment-management/orders",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
+      "entity": "rate_agreement",
+      "label": "Rate agreement",
+      "path": "/billing/rate-agreements",
       "params": {
         "panelType": "edit",
         "panelEntityId": "{id}"

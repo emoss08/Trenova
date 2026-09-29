@@ -513,6 +513,11 @@ var templateStarters = map[Template][]starterQuestion{
 			"Explain how this shipment's rate was worked out, charge by charge.",
 			"explain_rate",
 		),
+		ask(
+			"Draft a rate agreement",
+			"Draft next year's rate agreement for this customer from its current one.",
+			"duplicate_rate_agreement", "revise_rate_agreement_draft",
+		),
 	},
 }
 

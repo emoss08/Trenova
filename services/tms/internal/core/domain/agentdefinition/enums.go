@@ -211,7 +211,9 @@ func (t Template) Description() string {
 			"and why it failed, says what has to change for it to process, and proposes " +
 			"running it again once that is fixed."
 	case TemplateFormulaAssistant:
-		return "Helps write and explain the rating formulas that price freight."
+		return "Helps write and explain the rating formulas that price freight, drafts and " +
+			"revises rate agreements, and proposes rate changes, rate sheets and fuel index " +
+			"prices for a person to approve."
 	case TemplateBooksKeeper:
 		return "Works out why a document did not reach the accounting system and what fixes " +
 			"it, and retries it once it is fixed."
@@ -616,7 +618,26 @@ func (t Template) StarterInstructions() string {
 			"test_formula_expression. Look up the rate agreements, matrices, accessorial " +
 			"charges and fuel programs a formula draws on before referring to them. You never " +
 			"save or change a formula: the person inserts what you propose, tests it and saves " +
-			"it."
+			"it.\n\n" +
+			"You also keep rate agreements. Draft a new one from a rate sheet or a quote the " +
+			"person agreed with draft_rate_agreement, or copy last year's with " +
+			"duplicate_rate_agreement and change the copy with revise_rate_agreement_draft; " +
+			"read the agreement with get_rate_agreement first for its lanes' ruleIds, and take " +
+			"customers, carriers and locations from list_customers, list_carriers and " +
+			"list_locations. Before a draft goes for review, replay past shipments against it " +
+			"with run_rate_simulation, then submit it with submit_rate_agreement. Approving or " +
+			"rejecting an agreement is its reviewer's decision, never yours. An active " +
+			"agreement's lanes change from a day with amend_rate_agreement_rules; a general " +
+			"rate increase is apply_rate_increase; a reviewed rate sheet from " +
+			"list_rate_imports is applied with commit_rate_import or dropped with " +
+			"discard_rate_import; suspend_rate_agreement, resume_rate_agreement and " +
+			"archive_rate_agreement stop, restart and retire one. A custom fuel index's price " +
+			"is recorded with record_fuel_index_price and fixed with correct_fuel_index_price, " +
+			"read from list_fuel_index_prices. Everything you do here is a proposal a person " +
+			"approves before it runs, and an amendment, a rate increase, a rate sheet, a " +
+			"suspension or a fuel price changes what customers are charged or carriers are " +
+			"paid, so give the reason with it. Never repeat a negotiated rate you did not " +
+			"read, and never guess an id."
 	case TemplateBooksKeeper:
 		return "You keep the accounting system in step with what Trenova posts. A run starts " +
 			"when a document is held or gives up on its way to the books, when the " +
@@ -1261,6 +1282,25 @@ func (t Template) StarterTools() []string {
 			"get_fuel_surcharge_rates",
 			"list_accessorial_charges",
 			"explain_rate",
+			"list_customers",
+			toolListCarriers,
+			"list_locations",
+			"list_rate_imports",
+			"list_fuel_index_prices",
+			"draft_rate_agreement",
+			"revise_rate_agreement_draft",
+			"duplicate_rate_agreement",
+			"submit_rate_agreement",
+			"amend_rate_agreement_rules",
+			"apply_rate_increase",
+			"suspend_rate_agreement",
+			"resume_rate_agreement",
+			"archive_rate_agreement",
+			"commit_rate_import",
+			"discard_rate_import",
+			"run_rate_simulation",
+			"record_fuel_index_price",
+			"correct_fuel_index_price",
 		}
 	case TemplateSettlementsClerk:
 		return settlementsClerkTools()

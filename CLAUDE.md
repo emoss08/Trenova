@@ -325,6 +325,9 @@ allowlist, one level only, same person) is described in
 [docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).
 The ledger, fiscal period and accounting system tools, and who holds them, are in
 [docs/engineering/agent-accounting-tools.md](docs/engineering/agent-accounting-tools.md).
+The fuel purchase, IFTA, rate agreement, rate sheet, fuel index price and report
+administration tools, and who holds them, are in
+[docs/engineering/agent-rates-tools.md](docs/engineering/agent-rates-tools.md).
 The worker safety, compliance, HR, permit and driver pay tools, what is left to a person's
 signature, and who holds them are in
 [docs/engineering/agent-workforce-tools.md](docs/engineering/agent-workforce-tools.md).
