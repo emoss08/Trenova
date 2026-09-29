@@ -75,8 +75,14 @@ the admin Computers tab show how to install the `trenova-capture-msi` build arti
 install command already pointed at that server.
 
 ```powershell
-trenova-capture.exe --server http://localhost:8080 --sign-in --show
+trenova-capture.exe --server http://localhost:5173 --sign-in --show
 ```
+
+`http://localhost:5173` is the web app's Vite server, which passes `/api` on to the API at
+`:8080`; pointing at `:8080` directly works too. Approving the computer opens
+`app.webBaseUrl` + `/capture/pair`, so the API's `app.webBaseUrl` must be the web app's address
+(`http://localhost:5173` in development, `https://cloud.trenova.app` in production); pairing is
+refused while it is unset.
 
 `--server` saves the address for this Windows user (`HKCU\SOFTWARE\Trenova\Capture\ServerUrl`);
 an address under `HKLM\SOFTWARE\Policies\Trenova\Capture` overrides it, and the installer
@@ -99,6 +105,53 @@ in a browser and call `window.trenova.render(<a view>)`:
 ```bash
 TRENOVA_CAPTURE_PREVIEW=/tmp/preview cargo test -p trenova-capture --test preview -- --ignored
 ```
+
+Closing or minimizing the window leaves Trenova Capture running in the notification area; the
+first time each run, a notification says so. While the window is in front, notifications show
+in it instead of from the icon.
+
+### Testing without a scanner
+
+Settings → This computer → "Show test scanners" (or `TestScanner`=1 under
+`HKCU\SOFTWARE\Trenova\Capture`, or `TRENOVA_CAPTURE_TEST_SCANNER=1`) lists four TWAIN
+scanners that exist only in the scan helper. They feed sample freight paperwork, drawn at the
+profile's resolution and colour, through the same path a real scanner's pages take (helper,
+pictures, spool, review, upload, Intake), and they appear in the web app's scanner lists, so a
+scan asked for from a record works too:
+
+| Scanner | Feeds |
+|---|---|
+| Trenova Test Scanner | A three-sheet bill of lading (PRO 1042, barcode on page 1, terms on the back of sheet 1), a Patch T sheet, and a two-sheet delivery receipt (PRO 1043). Other backs are blank, so duplex with blank-page removal gives 7 pages and without it 12. |
+| Trenova Test Scanner (paper jam) | Five sheets that jam after the third; Continue scanning feeds the last two. |
+| Trenova Test Scanner (double feed) | Four sheets that double-feed after the second; Continue scanning feeds the rest. |
+| Trenova Test Scanner (empty feeder) | Nothing, as a scanner with no paper loaded. |
+
+Patch codes and barcodes are reported only when the profile asks for them, as a real scanner
+does. A value of 0 for `TestScanner` under `HKLM\SOFTWARE\Policies\Trenova\Capture` keeps
+them off on a computer. To exercise a real TWAIN driver without hardware, install the TWAIN
+Working Group's data source manager and sample data source (github.com/twain); it is listed
+like any scanner.
+
+### Looking things over before sending
+
+With "Let me look things over before they are sent" on (Settings in the window), a scan or a
+print is held on the computer when it ends, and nothing of it reaches the server until the
+person chooses Send. Until then they see every page, can turn one (the turn travels as
+`X-Capture-Rotation` with the page, which is sent as scanned), take one out, scan more onto the
+end, or discard the lot. A print's pages are only looked at; they are turned or split in Intake.
+
+The pictures come from where the raster exists: the scan helper sends a small (240-pixel) and a
+large (1100-pixel) JPEG after each page's PDF, and the print service writes them beside a job
+it converted from PWG raster (not a job printed as PDF), for its first 200 pages. They are kept
+encrypted in the spool beside the pages and are never sent. The window asks for them as it
+shows pages, and the agent answers only for batches the window lists.
+
+Per-user choices are under `HKCU\SOFTWARE\Trenova\Capture` as DWORDs:
+`RoutineNotifications` (0 hides notifications about things that went well; problems always
+show), and `ReviewBeforeSending` (1 holds scans and prints for review), which
+`ReviewBeforeSending` under `HKLM\SOFTWARE\Policies\Trenova\Capture` decides for everyone on
+the computer. `LastVersion` records the version last run, so the first start after an update
+says so.
 
 The agent keeps its files in `%LOCALAPPDATA%\Trenova\Capture`: `logs\agent.<date>.log` (fourteen
 days; `TRENOVA_CAPTURE_LOG=debug` for more), and `spool\`, where every page waits, encrypted

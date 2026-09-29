@@ -22,6 +22,10 @@ const PRINT_PORT: &str = "PrintPort";
 const AUTO_UPDATE: &str = "AutoUpdate";
 const ROUTINE_NOTIFICATIONS: &str = "RoutineNotifications";
 const LAST_VERSION: &str = "LastVersion";
+const REVIEW_BEFORE_SENDING: &str = "ReviewBeforeSending";
+const TEST_SCANNER: &str = "TestScanner";
+/// Turns the test scanners on for one run, for development.
+const TEST_SCANNER_VARIABLE: &str = "TRENOVA_CAPTURE_TEST_SCANNER";
 const CRYPTOGRAPHY_KEY: &str = "SOFTWARE\\Microsoft\\Cryptography";
 const MACHINE_GUID: &str = "MachineGuid";
 
@@ -172,6 +176,50 @@ pub fn set_routine_notifications(on: bool) -> std::io::Result<()> {
         REG_DWORD,
         &u32::from(on).to_le_bytes(),
     )
+}
+
+/// Whether scans and prints wait for this Windows user to look them over
+/// before they are sent: set by policy (`ReviewBeforeSending` under the
+/// policy key) or by the person. Unset means no.
+pub fn review_before_sending() -> bool {
+    read_dword(HKEY_LOCAL_MACHINE, POLICY_KEY, REVIEW_BEFORE_SENDING)
+        .or_else(|| read_dword(HKEY_CURRENT_USER, KEY, REVIEW_BEFORE_SENDING))
+        .is_some_and(|value| value != 0)
+}
+
+/// Whether an administrator decided review before sending for everyone.
+pub fn review_before_sending_locked() -> bool {
+    read_dword(HKEY_LOCAL_MACHINE, POLICY_KEY, REVIEW_BEFORE_SENDING).is_some()
+}
+
+/// Saves whether this Windows user wants to look things over first.
+pub fn set_review_before_sending(on: bool) -> std::io::Result<()> {
+    set_user_value(
+        REVIEW_BEFORE_SENDING,
+        REG_DWORD,
+        &u32::from(on).to_le_bytes(),
+    )
+}
+
+/// Whether the test scanners are listed: `TestScanner` (a DWORD, 1 for yes)
+/// under this user's key, or `TRENOVA_CAPTURE_TEST_SCANNER=1`. The policy
+/// key can turn them off for everyone with a 0.
+pub fn test_scanner_enabled() -> bool {
+    if read_dword(HKEY_LOCAL_MACHINE, POLICY_KEY, TEST_SCANNER) == Some(0) {
+        return false;
+    }
+    std::env::var(TEST_SCANNER_VARIABLE).is_ok_and(|value| value.trim() == "1")
+        || read_dword(HKEY_CURRENT_USER, KEY, TEST_SCANNER).is_some_and(|value| value != 0)
+}
+
+/// Whether an administrator turned the test scanners off.
+pub fn test_scanner_locked() -> bool {
+    read_dword(HKEY_LOCAL_MACHINE, POLICY_KEY, TEST_SCANNER) == Some(0)
+}
+
+/// Lists the test scanners for this Windows user, or stops listing them.
+pub fn set_test_scanner(on: bool) -> std::io::Result<()> {
+    set_user_value(TEST_SCANNER, REG_DWORD, &u32::from(on).to_le_bytes())
 }
 
 /// The version of Trenova Capture this Windows user last ran.

@@ -14,9 +14,11 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
+use capture_client::spool::PagePictures;
 use capture_protocol::api::{RequestFailureCode, Settings, SourceInfo, SourceProtocol};
 use capture_protocol::helper::{
-    Frame, HelperCommand, HelperEvent, PageMeta, ScanCondition, ScanJob, read_frame, write_message,
+    Frame, HelperCommand, HelperEvent, MAX_PREVIEW_BYTES, PageMeta, ScanCondition, ScanJob,
+    read_frame, write_message,
 };
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
@@ -32,7 +34,12 @@ const CANCEL_GRACE: Duration = Duration::from_secs(15);
 pub enum ScanUpdate {
     Described(SourceInfo),
     Started(Settings),
-    Page { meta: PageMeta, pdf: Vec<u8> },
+    Page {
+        meta: PageMeta,
+        pdf: Vec<u8>,
+        /// Its pictures, when the helper made them.
+        pictures: Option<PagePictures>,
+    },
     End(ScanOutcome),
 }
 
@@ -296,6 +303,27 @@ fn spawn_canceller(
     });
 }
 
+/// One of a page's pictures as read off the pipe.
+enum PictureFrame {
+    Kept(Vec<u8>),
+    /// Larger than a picture may be; dropped while the page is kept.
+    TooLarge,
+}
+
+/// Reads one of a page's pictures: `None` when the helper went away.
+fn read_picture(stdout: &mut impl Read) -> Option<PictureFrame> {
+    match read_frame::<_, HelperEvent>(stdout) {
+        Ok(Some(Frame::Bytes(picture))) if picture.len() <= MAX_PREVIEW_BYTES => {
+            Some(PictureFrame::Kept(picture))
+        }
+        Ok(Some(Frame::Bytes(_))) => {
+            tracing::warn!("the scan helper sent a picture larger than it may");
+            Some(PictureFrame::TooLarge)
+        }
+        _ => None,
+    }
+}
+
 /// Passes a helper's events on, returning how the scan ended, or `None` if
 /// the helper went away without saying.
 fn relay(mut stdout: impl Read, tx: &mpsc::Sender<ScanUpdate>) -> Option<ScanOutcome> {
@@ -313,10 +341,26 @@ fn relay(mut stdout: impl Read, tx: &mpsc::Sender<ScanUpdate>) -> Option<ScanOut
             }
         };
         let update = match event {
-            HelperEvent::Page(meta) => match read_frame::<_, HelperEvent>(&mut stdout) {
-                Ok(Some(Frame::Bytes(pdf))) => ScanUpdate::Page { meta, pdf },
-                _ => return None,
-            },
+            HelperEvent::Page(meta) => {
+                let Ok(Some(Frame::Bytes(pdf))) = read_frame::<_, HelperEvent>(&mut stdout) else {
+                    return None;
+                };
+                let pictures = if meta.preview {
+                    match (read_picture(&mut stdout)?, read_picture(&mut stdout)?) {
+                        (PictureFrame::Kept(thumb), PictureFrame::Kept(view)) => {
+                            Some(PagePictures { thumb, view })
+                        }
+                        _ => None,
+                    }
+                } else {
+                    None
+                };
+                ScanUpdate::Page {
+                    meta,
+                    pdf,
+                    pictures,
+                }
+            }
             HelperEvent::Described { source } => ScanUpdate::Described(source),
             HelperEvent::Started { settings } => ScanUpdate::Started(settings),
             HelperEvent::Finished { .. } => return Some(ScanOutcome::Finished),
@@ -392,6 +436,7 @@ mod tests {
             pixel_type: PixelType::BlackWhite,
             patch_code: None,
             barcodes: Vec::new(),
+            preview: false,
         };
         write_message(&mut pipe, &HelperEvent::Page(meta.clone())).expect("frame");
         write_bytes(&mut pipe, b"%PDF").expect("frame");
@@ -420,6 +465,45 @@ mod tests {
     }
 
     #[test]
+    fn a_page_brings_its_pictures_when_the_helper_says_so() {
+        let meta = PageMeta {
+            index: 1,
+            width_px: 2550,
+            height_px: 3300,
+            dpi: 300,
+            pixel_type: PixelType::BlackWhite,
+            patch_code: None,
+            barcodes: Vec::new(),
+            preview: true,
+        };
+        let mut pipe = Vec::new();
+        write_message(&mut pipe, &HelperEvent::Page(meta.clone())).expect("frame");
+        write_bytes(&mut pipe, b"%PDF").expect("frame");
+        write_bytes(&mut pipe, b"thumb").expect("frame");
+        write_bytes(&mut pipe, b"view").expect("frame");
+        write_message(&mut pipe, &HelperEvent::Page(PageMeta { index: 2, ..meta })).expect("frame");
+        write_bytes(&mut pipe, b"%PDF 2").expect("frame");
+        write_bytes(&mut pipe, &vec![0; MAX_PREVIEW_BYTES + 1]).expect("frame");
+        write_bytes(&mut pipe, b"view 2").expect("frame");
+        write_message(&mut pipe, &HelperEvent::Finished { pages: 2 }).expect("frame");
+
+        let (tx, mut rx) = mpsc::channel(8);
+        let outcome = std::thread::spawn(move || relay(pipe.as_slice(), &tx))
+            .join()
+            .expect("relay");
+        assert!(matches!(
+            rx.try_recv(),
+            Ok(ScanUpdate::Page { pictures: Some(PagePictures { thumb, view }), .. })
+                if thumb == b"thumb" && view == b"view"
+        ));
+        assert!(
+            matches!(rx.try_recv(), Ok(ScanUpdate::Page { pdf, pictures: None, .. }) if pdf == b"%PDF 2"),
+            "a picture too large is dropped and the page kept"
+        );
+        assert_eq!(outcome, Some(ScanOutcome::Finished));
+    }
+
+    #[test]
     fn a_helper_that_dies_mid_page_reports_nothing_it_did_not_finish() {
         let mut pipe = Vec::new();
         write_message(
@@ -432,6 +516,7 @@ mod tests {
                 pixel_type: PixelType::BlackWhite,
                 patch_code: None,
                 barcodes: Vec::new(),
+                preview: false,
             }),
         )
         .expect("frame");

@@ -14,8 +14,12 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 
 [target.'cfg(windows)'.dependencies]
+capture-platform.workspace = true
 capture-twain.workspace = true
 capture-wia.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
 
 [build-dependencies]
 static_vcruntime.workspace = true

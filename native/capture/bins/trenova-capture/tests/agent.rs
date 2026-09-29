@@ -8,6 +8,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use capture_client::spool::{PagePictures, PictureSize};
 use capture_client::{AgentInfo, Credential, MemoryStore, Protector, SecretStore, Server};
 use capture_protocol::api::{Id, PixelType, Settings, SourceInfo, SourceProtocol, TokenPair};
 use capture_protocol::handoff::Inbox;
@@ -24,7 +25,8 @@ use trenova_capture::agent::{
 };
 use trenova_capture::scanners::{ScanOutcome, ScanRun, ScanUpdate, ScannerHost, SourcesFuture};
 use trenova_capture::state::{
-    Attention, Command, Connection, Notice, PrinterAttempt, Shared, Snapshot, Ui, UpdateStatus,
+    Attention, Command, Connection, Notice, Pictures, PicturesRequest, PrinterAttempt, Shared,
+    Snapshot, Ui, UpdateStatus,
 };
 use wiremock::matchers::{body_partial_json, method, path};
 use wiremock::{Mock, MockServer, Request, Respond, ResponseTemplate};
@@ -33,6 +35,7 @@ use wiremock::{Mock, MockServer, Request, Respond, ResponseTemplate};
 struct TestUi {
     notices: Mutex<Vec<Notice>>,
     attention: Mutex<Vec<Attention>>,
+    pictures: Mutex<Vec<Pictures>>,
 }
 
 impl Ui for TestUi {
@@ -48,6 +51,12 @@ impl Ui for TestUi {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .push(attention);
+    }
+    fn pictures(&self, pictures: Pictures) {
+        self.pictures
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push(pictures);
     }
 }
 
@@ -225,9 +234,20 @@ impl ScannerHost for FakeScanner {
                     pixel_type: PixelType::BlackWhite,
                     patch_code: None,
                     barcodes: Vec::new(),
+                    preview: false,
                 };
                 let pdf = format!("%PDF-1.7 page {index} of {}", fastrand_like(index)).into_bytes();
-                let _ = tx.send(ScanUpdate::Page { meta, pdf }).await;
+                let pictures = Some(PagePictures {
+                    thumb: format!("thumb {index}").into_bytes(),
+                    view: format!("view {index}").into_bytes(),
+                });
+                let _ = tx
+                    .send(ScanUpdate::Page {
+                        meta,
+                        pdf,
+                        pictures,
+                    })
+                    .await;
             }
             if let Some(stop) = hold {
                 stop.cancelled().await;
@@ -673,7 +693,7 @@ async fn a_print_left_in_the_inbox_is_sent_whole_to_where_it_was_armed() {
     let running = start(&server, Vec::new());
     running
         .inbox
-        .deliver("Rate confirmation", Some(3), b"%PDF-1.7 printed")
+        .deliver("Rate confirmation", Some(3), b"%PDF-1.7 printed", &[])
         .expect("the service delivers");
 
     until(&running, "the print to be sent", |s, titles| {
@@ -846,6 +866,155 @@ async fn a_lost_connection_is_told_once_and_its_return_is_routine_news() {
         "the print inbox means printing is offered"
     );
     stop(running).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_scan_held_for_review_is_turned_trimmed_and_sent_only_when_released() {
+    let server = server(json!([])).await;
+    let running = start(
+        &server,
+        vec![Script {
+            pages: 3,
+            end: ScanOutcome::Finished,
+        }],
+    );
+    let key = held_scan(&running, 3).await;
+    assert!(
+        running
+            .ui
+            .titles()
+            .iter()
+            .any(|t| t == "Look over the scan before it is sent")
+    );
+    assert!(running.ui.attention().contains(&Attention::Review));
+    let opened = |requests: &[Request]| {
+        requests
+            .iter()
+            .filter(|r| {
+                r.method.as_str() == "POST" && r.url.path() == "/api/v1/capture/device/batches/"
+            })
+            .count()
+    };
+    assert_eq!(
+        opened(&server.received_requests().await.unwrap_or_default()),
+        0,
+        "nothing held leaves the computer"
+    );
+
+    running
+        .commands
+        .send(Command::RotatePage {
+            key: key.clone(),
+            page: 2,
+            degrees: 90,
+        })
+        .expect("turn");
+    running
+        .commands
+        .send(Command::DeletePage {
+            key: key.clone(),
+            page: 1,
+        })
+        .expect("delete");
+    until(&running, "the first page to be gone", |s, _| {
+        s.waiting
+            .iter()
+            .any(|b| b.key == key && b.pictures.len() == 2 && b.pictures[0].rotation == 90)
+    })
+    .await;
+
+    running
+        .commands
+        .send(Command::Pictures(PicturesRequest {
+            key: key.clone(),
+            size: PictureSize::Thumb,
+            pages: vec![1, 2, 3],
+        }))
+        .expect("pictures");
+    let pictures = next_pictures(&running).await;
+    assert_eq!(
+        pictures.pictures,
+        [(1, b"thumb 2".to_vec()), (2, b"thumb 3".to_vec())],
+        "the pages moved up with their pictures; a page that is not there is left out"
+    );
+
+    running
+        .commands
+        .send(Command::SendHeld(key.clone()))
+        .expect("send");
+    until(&running, "the held scan to be sent", |_, titles| {
+        titles.iter().any(|t| t == "2 pages sent to Trenova")
+    })
+    .await;
+    let requests = server.received_requests().await.unwrap_or_default();
+    let turned = requests
+        .iter()
+        .find(|r| r.method.as_str() == "PUT" && r.url.path().ends_with("/pages/1/"))
+        .expect("page 1 sent");
+    assert_eq!(
+        turned
+            .headers
+            .get("x-capture-rotation")
+            .and_then(|v| v.to_str().ok()),
+        Some("90"),
+        "the turn travels with the page"
+    );
+    stop(running).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_held_scan_can_be_discarded() {
+    let server = server(json!([])).await;
+    let running = start(
+        &server,
+        vec![Script {
+            pages: 1,
+            end: ScanOutcome::Finished,
+        }],
+    );
+    let key = held_scan(&running, 1).await;
+    running
+        .commands
+        .send(Command::DiscardHeld(key))
+        .expect("discard");
+    until(&running, "nothing to be waiting", |s, _| {
+        s.waiting.is_empty()
+    })
+    .await;
+    stop(running).await;
+}
+
+/// Turns review on, scans, and waits for the scan to be held with the
+/// pictures of its `pages`; returns its key.
+async fn held_scan(running: &Running, pages: usize) -> String {
+    ready(running).await;
+    running.shared.update(|s| s.review_before_sending = true);
+    running.commands.send(scan_to_intake()).expect("scan");
+    until(running, "the scan to be held", |s, _| {
+        s.scan.is_none()
+            && s.waiting
+                .iter()
+                .any(|b| b.held && b.complete && b.pictures.len() == pages)
+    })
+    .await;
+    running.shared.snapshot().waiting[0].key.clone()
+}
+
+async fn next_pictures(running: &Running) -> Pictures {
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
+    loop {
+        if let Some(pictures) = running
+            .ui
+            .pictures
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .pop()
+        {
+            return pictures;
+        }
+        assert!(tokio::time::Instant::now() < deadline, "no pictures");
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
 }
 
 fn scan_to_intake() -> Command {

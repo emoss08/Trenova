@@ -17,6 +17,7 @@ const (
 	dpiHeader        = "X-Capture-Dpi"
 	patchCodeHeader  = "X-Capture-Patch-Code"
 	barcodeHeader    = "X-Capture-Barcode"
+	rotationHeader   = "X-Capture-Rotation"
 	maxPrintJobBytes = 200 << 20
 	bearerPrefix     = "bearer "
 )
@@ -280,6 +281,7 @@ func (h *Handler) openBatch(c *gin.Context) {
 // @Param X-Capture-Dpi header int false "Resolution the page was scanned at"
 // @Param X-Capture-Patch-Code header string false "Patch sheet the scanner detected"
 // @Param X-Capture-Barcode header string false "A barcode the scanner decoded; repeatable"
+// @Param X-Capture-Rotation header int false "Degrees clockwise the page was turned before sending: 0, 90, 180 or 270"
 // @Success 200 {object} capture.CapturePage
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 409 {object} helpers.ProblemDetail
@@ -313,6 +315,16 @@ func (h *Handler) putPage(c *gin.Context) {
 		}
 	}
 
+	rotation := 0
+	if raw := strings.TrimSpace(c.GetHeader(rotationHeader)); raw != "" {
+		if rotation, err = strconv.Atoi(raw); err != nil {
+			h.eh.HandleError(c, errortypes.NewValidationError("rotation", errortypes.ErrInvalid,
+				"Rotation must be 0, 90, 180 or 270"))
+
+			return
+		}
+	}
+
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, capture.MaxPageBytes+1)
 	page, err := h.service.PutPage(
 		c.Request.Context(),
@@ -324,6 +336,7 @@ func (h *Handler) putPage(c *gin.Context) {
 			DPI:            dpi,
 			PatchCode:      c.GetHeader(patchCodeHeader),
 			DeviceBarcodes: c.Request.Header.Values(barcodeHeader),
+			Rotation:       rotation,
 		},
 	)
 	if err != nil {

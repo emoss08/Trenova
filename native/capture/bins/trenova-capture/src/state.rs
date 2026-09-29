@@ -12,7 +12,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::SystemTime;
 
-use capture_client::spool::RefusedBatch;
+use capture_client::spool::{PictureRef, PictureSize, RefusedBatch};
 use capture_protocol::api::{BatchSource, CaptureProfile, Id, SourceInfo, SourceProtocol};
 use capture_protocol::helper::ScanCondition;
 
@@ -114,6 +114,17 @@ pub struct WaitingBatch {
     pub created_at: i64,
     /// Scanning has ended, so it can be sent in full.
     pub complete: bool,
+    /// Held for the person to look over before it is sent.
+    pub held: bool,
+    /// For a record the person chose in Trenova, rather than intake.
+    pub requested: bool,
+    /// A printed job, sent whole.
+    pub printed: bool,
+    /// None of its pages has reached the server, so they can still be
+    /// turned or taken out while it is held.
+    pub editable: bool,
+    /// Its pages that have pictures.
+    pub pictures: Vec<PictureRef>,
 }
 
 /// Something the person was told, kept for the window.
@@ -156,6 +167,15 @@ pub struct Snapshot {
     pub printing: bool,
     /// The person chose not to be shown routine notifications.
     pub routine_muted: bool,
+    /// Scans and prints wait for the person to look them over before they
+    /// are sent.
+    pub review_before_sending: bool,
+    /// An administrator set review before sending, so the person cannot.
+    pub review_locked: bool,
+    /// The test scanners are listed, for trying scanning without one.
+    pub test_scanner: bool,
+    /// An administrator turned the test scanners off.
+    pub test_scanner_locked: bool,
 }
 
 impl Snapshot {
@@ -226,6 +246,8 @@ pub enum Attention {
     ScanEnded,
     /// The server refused a batch.
     Refused,
+    /// A scan or a print is held for the person to look over.
+    Review,
 }
 
 /// How an attempt to add the Trenova printer ended.
@@ -271,7 +293,48 @@ pub enum Command {
     PrinterSetUp(PrinterAttempt),
     /// Install the release the menu offers.
     Update,
+    /// Turn a page of a held batch by `degrees` clockwise.
+    RotatePage {
+        key: String,
+        page: u32,
+        degrees: i32,
+    },
+    /// Take a page out of a held batch.
+    DeletePage {
+        key: String,
+        page: u32,
+    },
+    /// Send a held batch as it now is.
+    SendHeld(String),
+    /// Delete a held batch and its pages.
+    DiscardHeld(String),
+    /// Scan more pages onto the end of a held batch.
+    ScanMore {
+        key: String,
+        source: String,
+        protocol: SourceProtocol,
+        profile: Option<Id>,
+    },
+    /// Read pages' pictures for the window.
+    Pictures(PicturesRequest),
     Quit,
+}
+
+/// Pages' pictures the window asked for.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PicturesRequest {
+    pub key: String,
+    pub size: PictureSize,
+    pub pages: Vec<u32>,
+}
+
+/// Pictures read for the window, JPEG, by page; a page whose picture could
+/// not be read is left out.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Pictures {
+    pub key: String,
+    pub size: PictureSize,
+    pub pictures: Vec<(u32, Vec<u8>)>,
 }
 
 /// The tray and the window, as the agent sees them.
@@ -283,6 +346,10 @@ pub trait Ui: Send + Sync {
     /// Something happened the window should come forward for.
     fn attention(&self, attention: Attention) {
         let _ = attention;
+    }
+    /// Pictures the window asked for are ready.
+    fn pictures(&self, pictures: Pictures) {
+        let _ = pictures;
     }
 }
 
@@ -337,6 +404,10 @@ impl Shared {
 
     pub fn attention(&self, attention: Attention) {
         self.ui.attention(attention);
+    }
+
+    pub fn pictures(&self, pictures: Pictures) {
+        self.ui.pictures(pictures);
     }
 }
 
