@@ -14,16 +14,20 @@ pub mod prints;
 pub mod updates;
 
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::fmt::Write as _;
 use std::io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime};
 
 use capture_client::pairing::{PairingOutcome, pair};
+use capture_client::spool::{Export, RefusedBatch};
 use capture_client::stream::{self, DeviceEvent};
 use capture_client::uploader::{UploadEvent, Uploader};
 use capture_client::{
     AgentInfo, Api, ApiError, PageMarkers, Protector, SecretStore, Server, Spool, SpoolError,
+    SpooledBatch,
 };
 use capture_protocol::api::{
     Architecture, BatchSource, CaptureProfile, CaptureRequest, DeviceIdentity, DeviceUpdatePolicy,
@@ -41,8 +45,8 @@ use self::prints::Imported;
 pub use self::updates::UpdateStarter;
 use crate::scanners::{ScanOutcome, ScanRun, ScanUpdate, ScannerHost};
 use crate::state::{
-    Command, Connection, Notice, PausedBatch, PrinterAttempt, RECENT, RecentBatch, Severity,
-    Shared, UpdateState, UpdateStatus,
+    ActiveScan, Attention, Command, Connection, Notice, PausedBatch, PrinterAttempt, RECENT,
+    RecentBatch, Severity, Shared, UpdateState, UpdateStatus, WaitingBatch,
 };
 
 /// Where the server address is kept.
@@ -55,6 +59,8 @@ pub trait ServerSetting: Send + Sync {
 
 pub type SecretsFor = dyn Fn(&Server) -> Arc<dyn SecretStore> + Send + Sync;
 pub type Browser = dyn Fn(&str) + Send + Sync;
+/// Shows a folder on this computer, as File Explorer does.
+pub type Reveal = dyn Fn(&Path) + Send + Sync;
 
 /// This computer, as pairing describes it.
 #[derive(Clone, Debug)]
@@ -75,6 +81,7 @@ pub struct Environment {
     pub protector: Arc<dyn Protector>,
     pub server_setting: Arc<dyn ServerSetting>,
     pub browser: Arc<Browser>,
+    pub reveal: Arc<Reveal>,
     /// How long to wait before trying again after being blocked.
     pub recheck_after: Duration,
     /// Starts the updater service.
@@ -176,6 +183,8 @@ struct Agent {
     fetching: bool,
     fetch_again: bool,
     blocked: bool,
+    /// Counts spool reads, so a slow one never overwrites a newer one.
+    spool_reads: Arc<AtomicU64>,
 }
 
 async fn next<T>(rx: Option<&mut mpsc::Receiver<T>>) -> Option<T> {
@@ -225,6 +234,7 @@ pub async fn run(
         fetching: false,
         fetch_again: false,
         blocked: false,
+        spool_reads: Arc::new(AtomicU64::new(0)),
     };
     if let Some(dir) = agent.env.print_inbox.clone() {
         let (tx, rx) = mpsc::channel(16);
@@ -236,8 +246,9 @@ pub async fn run(
         ));
         agent.prints_rx = Some(rx);
     }
-    let failed_dir = agent.spool.failed_dir();
-    agent.shared.update(|s| s.failed_dir = Some(failed_dir));
+    let locked = agent.env.server_setting.locked();
+    agent.shared.update(|s| s.server_locked = locked);
+    agent.refresh_spool();
     agent.check_printer();
     let configured = agent.env.server_setting.load();
     agent.configure(configured.as_deref()).await;
@@ -259,7 +270,7 @@ pub async fn run(
                 None => agent.upload_rx = None,
             },
             imported = next(agent.prints_rx.as_mut()) => match imported {
-                Some(imported) => agent.printed(imported).await,
+                Some(imported) => agent.printed(imported),
                 None => agent.prints_rx = None,
             },
             release = next(agent.releases_rx.as_mut()) => match release {
@@ -293,6 +304,45 @@ fn finish_interrupted(spool: &Spool) {
         }
         Err(err) => tracing::error!(error = %err, "could not read the spool"),
     }
+}
+
+/// A folder name for a saved batch: its label with what Windows forbids in
+/// a file name taken out.
+fn saved_folder_name(batch: &RefusedBatch) -> String {
+    let cleaned: String = batch
+        .label
+        .chars()
+        .map(|c| {
+            if c.is_control() || matches!(c, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*') {
+                ' '
+            } else {
+                c
+            }
+        })
+        .take(60)
+        .collect();
+    let cleaned = cleaned.split_whitespace().collect::<Vec<_>>().join(" ");
+    let cleaned = cleaned.trim_end_matches(['.', ' ']);
+    let what = match batch.source {
+        BatchSource::Print => "print",
+        _ => "scan",
+    };
+    if cleaned.is_empty() {
+        format!("Trenova Capture {what} not sent")
+    } else {
+        format!("{cleaned} {what} not sent")
+    }
+}
+
+/// `parent\name`, or `parent\name (2)` and so on when it is taken.
+fn unused_folder(parent: &Path, name: &str) -> Option<PathBuf> {
+    let first = parent.join(name);
+    if !first.exists() {
+        return Some(first);
+    }
+    (2..1000)
+        .map(|n| parent.join(format!("{name} ({n})")))
+        .find(|path| !path.exists())
 }
 
 fn plural(count: u32, one: &str, many: &str) -> String {
@@ -332,6 +382,7 @@ impl Agent {
                 s.server = None;
                 s.connection = Connection::NeedsServer;
             });
+            self.shared.attention(Attention::SetUp);
             return;
         };
         let server = match Server::parse(url) {
@@ -339,6 +390,7 @@ impl Agent {
             Err(err) => {
                 self.shared
                     .update(|s| s.connection = Connection::NeedsServer);
+                self.shared.attention(Attention::SetUp);
                 self.notify(
                     Severity::Error,
                     "The server address is not valid",
@@ -532,7 +584,160 @@ impl Agent {
             }
             Command::PrinterSetUp(attempt) => self.printer_set_up(attempt),
             Command::Update => self.install_update(true),
+            Command::StopScan => self.stop_scan(),
+            Command::Retry(key) => self.retry(key).await,
+            Command::Discard(key) => self.discard(key).await,
+            Command::Save { key, into } => self.save(key, into).await,
             Command::Quit => {}
+        }
+    }
+
+    fn stop_scan(&mut self) {
+        let Some(active) = &self.active else {
+            return;
+        };
+        active.run.cancel.cancel();
+        self.shared.update(|s| {
+            if let Some(scan) = &mut s.scan {
+                scan.stopping = true;
+            }
+        });
+    }
+
+    /// Reads what is waiting and what was refused, off this task, and shows
+    /// it. A read that finishes after a newer one has started is dropped, so
+    /// what is shown never goes back in time.
+    fn refresh_spool(&self) {
+        let spool = Arc::clone(&self.spool);
+        let shared = Arc::clone(&self.shared);
+        let reads = Arc::clone(&self.spool_reads);
+        let this = reads.fetch_add(1, Ordering::SeqCst) + 1;
+        tokio::spawn(async move {
+            let read = tokio::task::spawn_blocking(move || {
+                Ok::<_, SpoolError>((spool.pending()?, spool.refused()?))
+            })
+            .await;
+            let (pending, refused) = match read {
+                Ok(Ok(read)) => read,
+                Ok(Err(err)) => {
+                    tracing::warn!(error = %err, "could not read the spool");
+                    return;
+                }
+                Err(err) => {
+                    tracing::warn!(error = %err, "reading the spool stopped");
+                    return;
+                }
+            };
+            if reads.load(Ordering::SeqCst) != this {
+                return;
+            }
+            let pages_waiting = pending.iter().map(SpooledBatch::pages_waiting).sum();
+            let waiting = pending
+                .iter()
+                .map(|batch| WaitingBatch {
+                    key: batch.key().to_owned(),
+                    label: batch.label.clone(),
+                    source: batch.input.source,
+                    pages: batch.pages_waiting(),
+                    created_at: batch.created_at,
+                    complete: batch.complete,
+                })
+                .collect();
+            shared.update(|s| {
+                s.pages_waiting = pages_waiting;
+                s.waiting = waiting;
+                s.refused = refused;
+            });
+        });
+    }
+
+    /// Runs a spool change off this task, then shows the spool as it now is.
+    async fn change_spool<T: Send + 'static>(
+        &self,
+        change: impl FnOnce(&Spool) -> Result<T, SpoolError> + Send + 'static,
+    ) -> Result<T, SpoolError> {
+        let spool = Arc::clone(&self.spool);
+        let result = tokio::task::spawn_blocking(move || change(&spool))
+            .await
+            .unwrap_or_else(|err| Err(SpoolError::Io(io::Error::other(err))));
+        self.refresh_spool();
+        result
+    }
+
+    async fn retry(&mut self, key: String) {
+        match self.change_spool(move |spool| spool.retry(&key)).await {
+            Ok(_) => self.wake_uploader(),
+            Err(err) => self.notify(
+                Severity::Error,
+                "It could not be sent again",
+                err.to_string(),
+                None,
+            ),
+        }
+    }
+
+    async fn discard(&mut self, key: String) {
+        if let Err(err) = self.change_spool(move |spool| spool.discard(&key)).await {
+            self.notify(
+                Severity::Error,
+                "It could not be discarded",
+                err.to_string(),
+                None,
+            );
+        }
+    }
+
+    async fn save(&mut self, key: String, into: PathBuf) {
+        let saved = self
+            .change_spool(move |spool| {
+                let batch = spool
+                    .refused()?
+                    .into_iter()
+                    .find(|b| b.key == key)
+                    .ok_or_else(|| SpoolError::Missing(key.clone()))?;
+                std::fs::create_dir_all(&into)?;
+                let folder = unused_folder(&into, &saved_folder_name(&batch)).ok_or_else(|| {
+                    SpoolError::Io(io::Error::other("no free folder name to save it under"))
+                })?;
+                let export = spool.export(&key, &folder)?;
+                Ok::<(PathBuf, Export), SpoolError>((folder, export))
+            })
+            .await;
+        match saved {
+            Ok((folder, export)) => {
+                let written = u32::try_from(export.written.len()).unwrap_or(u32::MAX);
+                let mut body = format!("Saved to {}.", folder.display());
+                if !export.unreadable.is_empty() {
+                    let missing = u32::try_from(export.unreadable.len()).unwrap_or(u32::MAX);
+                    let _ = write!(
+                        body,
+                        " {} could not be read and {} left out.",
+                        plural(missing, "page", "pages"),
+                        if missing == 1 { "was" } else { "were" }
+                    );
+                }
+                (self.env.reveal)(&folder);
+                self.notify(
+                    if export.unreadable.is_empty() {
+                        Severity::Info
+                    } else {
+                        Severity::Warning
+                    },
+                    if written == 0 {
+                        "Nothing could be saved".to_owned()
+                    } else {
+                        format!("{} saved", plural(written, "file", "files"))
+                    },
+                    body,
+                    None,
+                );
+            }
+            Err(err) => self.notify(
+                Severity::Error,
+                "It could not be saved",
+                err.to_string(),
+                None,
+            ),
         }
     }
 
@@ -622,6 +827,7 @@ impl Agent {
                         url: grant.verification_uri_complete.clone(),
                     };
                 });
+                shared.attention(Attention::SignIn);
                 browser(&grant.verification_uri_complete);
                 shared.notify(Notice {
                     title: format!("Approve this computer with code {}", grant.user_code),
@@ -900,8 +1106,15 @@ impl Agent {
         };
         let job = plan::job(&order.source, &order.profile);
         let run = self.env.scanners.scan(&order.source, job);
-        let scanning = format!("Scanning from {label}");
-        self.shared.update(|s| s.scanning = Some(scanning));
+        let scan = ActiveScan {
+            key: key.clone(),
+            label: label.clone(),
+            pages: order.pages,
+            requested: order.request.is_some(),
+            stopping: false,
+        };
+        self.shared.update(|s| s.scan = Some(scan));
+        self.shared.attention(Attention::ScanStarted);
         self.active = Some(Active {
             key,
             label,
@@ -957,12 +1170,12 @@ impl Agent {
         match self.spool.append_page(&active.key, pdf, &markers) {
             Ok(_) => {
                 active.pages += 1;
-                let scanning = format!(
-                    "Scanning from {}: {}",
-                    active.label,
-                    plural(active.pages, "page", "pages")
-                );
-                self.shared.update(|s| s.scanning = Some(scanning));
+                let pages = active.pages;
+                self.shared.update(|s| {
+                    if let Some(scan) = &mut s.scan {
+                        scan.pages = pages;
+                    }
+                });
                 self.wake_uploader();
             }
             Err(err) => {
@@ -989,7 +1202,8 @@ impl Agent {
         let Some(active) = self.active.take() else {
             return;
         };
-        self.shared.update(|s| s.scanning = None);
+        self.shared.update(|s| s.scan = None);
+        let stopped_by_person = active.run.cancel.is_cancelled();
         let request = active.order.request.as_ref().map(|r| r.id.clone());
         let fail = |agent: &Self, code: RequestFailureCode, message: &str| {
             if let Some(id) = &request {
@@ -999,6 +1213,14 @@ impl Agent {
 
         match outcome {
             ScanOutcome::Finished if active.pages > 0 => self.complete(&active.key),
+            ScanOutcome::Finished if stopped_by_person => {
+                self.complete(&active.key);
+                fail(
+                    self,
+                    RequestFailureCode::CanceledByUser,
+                    "The scan was stopped before any page was scanned.",
+                );
+            }
             ScanOutcome::Finished => {
                 self.complete(&active.key);
                 fail(
@@ -1006,14 +1228,12 @@ impl Agent {
                     RequestFailureCode::FeederEmpty,
                     "Nothing was scanned.",
                 );
-                if !active.run.cancel.is_cancelled() {
-                    self.notify(
-                        Severity::Warning,
-                        "Nothing was scanned",
-                        "Check the paper is loaded, then try again.",
-                        None,
-                    );
-                }
+                self.notify(
+                    Severity::Warning,
+                    "Nothing was scanned",
+                    "Check the paper is loaded, then try again.",
+                    None,
+                );
             }
             ScanOutcome::Stopped { condition, message } if active.pages > 0 => {
                 let pages = active.pages;
@@ -1027,12 +1247,15 @@ impl Agent {
                     condition,
                 };
                 self.shared.update(|s| s.paused.push(paused));
+                self.shared.attention(Attention::ScanPaused);
                 self.notify(
                     Severity::Warning,
                     format!("Scanning stopped after {}", plural(pages, "page", "pages")),
-                    format!("{message} Fix it, then choose Continue scanning in the Trenova Capture menu, or Finish to send what was scanned."),
+                    format!("{message} Fix it, then choose Continue scanning in Trenova Capture, or Finish to send what was scanned."),
                     None,
                 );
+                self.start_next();
+                return;
             }
             ScanOutcome::Stopped { condition, message } => {
                 self.complete(&active.key);
@@ -1057,6 +1280,7 @@ impl Agent {
                 }
             }
         }
+        self.shared.attention(Attention::ScanEnded);
         self.start_next();
     }
 
@@ -1091,10 +1315,7 @@ impl Agent {
 
     fn upload_event(&mut self, event: UploadEvent) {
         match event {
-            UploadEvent::Progress(summary) => self.shared.update(|s| {
-                s.pages_waiting = summary.pages_waiting;
-                s.failed = summary.failed;
-            }),
+            UploadEvent::Progress(_) => self.refresh_spool(),
             UploadEvent::Sent {
                 batch_id,
                 pages,
@@ -1114,6 +1335,7 @@ impl Agent {
                     s.recent.push_front(recent);
                     s.recent.truncate(RECENT);
                 });
+                self.refresh_spool();
                 let body = if requested {
                     "They are being filed where you asked. Anything that needs a look waits in Intake."
                 } else {
@@ -1130,16 +1352,22 @@ impl Agent {
                 source,
                 label,
                 reason,
-            } => self.notify(
-                Severity::Error,
-                if source == BatchSource::Print {
-                    "A print could not be sent"
-                } else {
-                    "A scan could not be sent"
-                },
-                format!("{label}: {reason} Its pages are kept in the failed uploads folder."),
-                None,
-            ),
+            } => {
+                self.refresh_spool();
+                self.shared.attention(Attention::Refused);
+                self.notify(
+                    Severity::Error,
+                    if source == BatchSource::Print {
+                        "A print could not be sent"
+                    } else {
+                        "A scan could not be sent"
+                    },
+                    format!(
+                        "{label}: {reason} Its pages are kept on this computer; open Trenova Capture to send them again, save them, or discard them."
+                    ),
+                    None,
+                );
+            }
             UploadEvent::Blocked(err) => self.api_error(&err),
             UploadEvent::Waiting { reason, retry_in } => {
                 tracing::info!(reason, retry_in = ?retry_in, "uploads are waiting");
@@ -1148,7 +1376,7 @@ impl Agent {
     }
 
     /// A printed job reached the spool, or could not be read.
-    async fn printed(&mut self, imported: Imported) {
+    fn printed(&mut self, imported: Imported) {
         match imported {
             Imported::Spooled { name, .. } => {
                 tracing::info!(name, "took a print from the print inbox");
@@ -1162,14 +1390,7 @@ impl Agent {
                         None,
                     );
                 }
-                let spool = Arc::clone(&self.spool);
-                if let Ok(Ok(summary)) = tokio::task::spawn_blocking(move || spool.summary()).await
-                {
-                    self.shared.update(|s| {
-                        s.pages_waiting = summary.pages_waiting;
-                        s.failed = summary.failed;
-                    });
-                }
+                self.refresh_spool();
             }
             Imported::Rejected { name, reason } => self.notify(
                 Severity::Error,

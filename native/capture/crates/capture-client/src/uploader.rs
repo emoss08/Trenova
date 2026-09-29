@@ -86,7 +86,8 @@ impl From<SpoolError> for Step {
             | SpoolError::Complete
             | SpoolError::Corrupt { .. }
             | SpoolError::CorruptDocument
-            | SpoolError::Manifest(_) => Self::Refused(err.to_string()),
+            | SpoolError::Manifest(_)
+            | SpoolError::Exists(_) => Self::Refused(err.to_string()),
         }
     }
 }

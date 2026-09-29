@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5a7306e570cbb1bc6747c162c15bd00d20bc976bc92e39c0dc97cfee410dae2e",
+  "version": "sha256:088500ad2400981bce75b5c9d8e46c4239109bf69c571171af58688c20f3eae2",
   "modules": [
     {
       "id": "home",
@@ -7440,7 +7440,9 @@
         "tray icon",
         "paper jam",
         "Trenova printer",
-        "print to Trenova"
+        "print to Trenova",
+        "not sent",
+        "failed upload"
       ],
       "tasks": [
         {
@@ -7452,7 +7454,7 @@
             "approve code"
           ],
           "steps": [
-            "On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** and run the installer (it needs administrator rights). Then choose Sign in from the Trenova Capture icon in the notification area. It shows an eight-letter code and opens the pairing page.",
+            "On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** and run the installer (it needs administrator rights). Then open Trenova Capture from the Start menu, or select its icon in the notification area, and choose Sign in. It shows an eight-letter code and opens the pairing page.",
             "If the page did not open, open [My scanners](/capture/devices), select **Enter a pairing code**, type the code and select **Look up**.",
             "Check that **The computer asking** is the one in front of you, change **Name it** if you like, and select **Approve**."
           ]
@@ -7463,12 +7465,13 @@
             "scan to intake",
             "tray menu",
             "scan from the computer",
-            "quick scan"
+            "quick scan",
+            "stop a scan"
           ],
           "steps": [
-            "On the paired computer, select the Trenova Capture icon in the notification area.",
-            "Choose Scan to intake, then the scanner, then the scan profile (the organization's default is marked).",
-            "When the scan finishes, a notification says how many pages were sent; select it to open them in [Intake](/intake)."
+            "On the paired computer, open Trenova Capture: select its icon in the notification area, or find it in the Start menu.",
+            "Under Scan to Intake, pick the scanner and its settings (the organization's default is marked), and choose Scan.",
+            "The window counts the pages as they arrive; Stop ends the scan early and sends what was scanned. A notification says how many pages were sent; select it to open them in [Intake](/intake)."
           ]
         },
         {
@@ -7497,8 +7500,24 @@
             "continue scanning"
           ],
           "steps": [
-            "Clear the scanner. The pages scanned before it stopped are kept on the computer.",
-            "From the Trenova Capture icon, choose Continue scanning to add the rest to the same stack, or Finish to send what was scanned as it is."
+            "Trenova Capture opens and says what stopped the scanner. The pages scanned before it stopped are kept on the computer.",
+            "Clear the scanner, then choose Continue scanning to add the rest to the same stack, or Finish and send to send what was scanned as it is."
+          ]
+        },
+        {
+          "title": "Deal with something that was not sent",
+          "keywords": [
+            "not sent",
+            "refused upload",
+            "failed upload",
+            "send again",
+            "save a copy",
+            "discard scan"
+          ],
+          "steps": [
+            "Open Trenova Capture. What Trenova refused is listed under Not sent, with the reason.",
+            "Choose Send again to send it to [Intake](/intake) as a new stack, or Save a copy to write its pages as PDFs to your Downloads folder, so you can upload them another way.",
+            "When you no longer need it, choose Discard and confirm. Its pages are deleted from the computer for good."
           ]
         },
         {
@@ -7515,7 +7534,7 @@
           ]
         }
       ],
-      "notes": "Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the icon's menu shows how many are waiting. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.",
+      "notes": "Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the Trenova Capture window shows what is waiting and why. A notification you missed is kept under Messages in the window. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.",
       "related": [
         "/intake"
       ],

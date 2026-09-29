@@ -15,8 +15,12 @@ path = "src/lib.rs"
 [[bin]]
 name = "trenova-capture"
 path = "src/main.rs"
+# The executable loads WebView2Loader.dll, which only an install puts beside
+# it; its code is tested through the library.
+test = false
 
 [dependencies]
+base64.workspace = true
 bytes.workspace = true
 capture-client.workspace = true
 capture-protocol.workspace = true
@@ -32,6 +36,7 @@ tracing.workspace = true
 capture-platform.workspace = true
 windows-core.workspace = true
 windows-service.workspace = true
+wry.workspace = true
 windows = { workspace = true, features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
