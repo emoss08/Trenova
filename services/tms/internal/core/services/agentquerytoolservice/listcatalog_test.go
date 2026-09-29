@@ -1,8 +1,15 @@
 package agentquerytoolservice
 
 import (
+	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -109,7 +116,7 @@ about to lapse", a different question with a plausible-looking wrong answer.
 func TestListWorkers_CanFilterOnTheProfile(t *testing.T) {
 	t.Parallel()
 
-	spec := specOf(newListWorkersTool(nil))
+	spec := specOf(newListWorkersTool(nil, nil))
 
 	byName := make(map[string]listField, len(spec.fields))
 	for _, field := range spec.fields {
@@ -136,7 +143,7 @@ published with what they mean.
 func TestListWorkers_ExplainsTheEndorsementCodes(t *testing.T) {
 	t.Parallel()
 
-	spec := specOf(newListWorkersTool(nil))
+	spec := specOf(newListWorkersTool(nil, nil))
 
 	var endorsement listField
 	for _, field := range spec.fields {
@@ -177,5 +184,154 @@ func TestFilterCatalog_CoversEveryListTool(t *testing.T) {
 			_, found := resource.Field(field.Name)
 			assert.True(t, found, "%s: %s is not indexed", spec.name, field.Name)
 		}
+	}
+}
+
+type stubTractorList struct {
+	repositories.TractorRepository
+
+	items []*tractor.Tractor
+	last  *repositories.ListTractorsRequest
+}
+
+func (s *stubTractorList) List(
+	_ context.Context,
+	req *repositories.ListTractorsRequest,
+) (*pagination.CursorListResult[*tractor.Tractor], error) {
+	s.last = req
+
+	return &pagination.CursorListResult[*tractor.Tractor]{Items: s.items}, nil
+}
+
+func listedRows[T any](t *testing.T, result any) ([]T, []string) {
+	t.Helper()
+
+	var outcome searchOutcome
+	var withheld []string
+	switch typed := result.(type) {
+	case searchOutcome:
+		outcome = typed
+	case *gatedOutcome:
+		outcome = typed.searchOutcome
+		withheld = typed.Withheld
+	default:
+		require.Failf(t, "unexpected result", "%T", result)
+	}
+
+	rows := make([]T, 0, len(outcome.Items.([]any)))
+	for _, item := range outcome.Items.([]any) {
+		row, ok := item.(T)
+		require.True(t, ok, "%T", item)
+		rows = append(rows, row)
+	}
+
+	return rows, withheld
+}
+
+func TestListTractors_NamesTheDriverOnlyToSomeoneWhoMayReadWorkers(t *testing.T) {
+	t.Parallel()
+
+	unit := &tractor.Tractor{
+		ID:            pulid.MustNew("tr_"),
+		Code:          "T-104",
+		PrimaryWorker: &worker.Worker{FirstName: "Dana", LastName: "Whitfield"},
+	}
+
+	for _, tc := range []struct {
+		name    string
+		allowed bool
+		want    string
+	}{
+		{name: "reads workers", allowed: true, want: "Dana Whitfield"},
+		{name: "does not read workers", allowed: false, want: ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &stubTractorList{items: []*tractor.Tractor{unit}}
+			params := chatParams(map[string]any{}, "")
+			result, err := newListTractorsTool(repo, &fakePermissions{allowed: tc.allowed}).
+				Query(t.Context(), params)
+			require.NoError(t, err)
+
+			rows, _ := listedRows[equipmentRow](t, result)
+			require.Len(t, rows, 1)
+			assert.Equal(t, "T-104", rows[0].Code)
+			assert.Equal(t, tc.want, rows[0].AssignedTo)
+			assert.Equal(t, tc.allowed, repo.last.IncludePrimaryWorker,
+				"a driver nobody may be told about is not loaded")
+		})
+	}
+}
+
+func rosterWorker() *worker.Worker {
+	return &worker.Worker{
+		ID:        pulid.MustNew("wrk_"),
+		FirstName: "Dana",
+		LastName:  "Whitfield",
+		City:      "Joliet",
+		Profile:   &worker.WorkerProfile{Endorsement: worker.EndorsementType("X")},
+	}
+}
+
+func TestListWorkers_WithholdsTheCityBelowTheCeiling(t *testing.T) {
+	t.Parallel()
+
+	tool := newListWorkersTool(&fakeWorkerRepo{items: []*worker.Worker{rosterWorker()}},
+		&fakePermissions{allowed: true})
+
+	result, err := tool.Query(t.Context(),
+		agentParams(map[string]any{}, permission.SensitivityInternal))
+	require.NoError(t, err)
+	rows, withheld := listedRows[workerRow](t, result)
+	require.Len(t, rows, 1)
+	assert.Equal(t, "Dana Whitfield", rows[0].Name)
+	assert.Empty(t, rows[0].City)
+	assert.Equal(t, []string{"city"}, withheld)
+
+	_, err = tool.Query(t.Context(), agentParams(map[string]any{
+		"filters": []any{map[string]any{"field": "city", "operator": "eq", "value": "Joliet"}},
+	}, permission.SensitivityInternal))
+	require.Error(t, err, "filtering on a withheld field would reveal it")
+
+	_, err = tool.Query(t.Context(), agentParams(map[string]any{
+		"filters": []any{map[string]any{
+			"field": "profile.endorsement", "operator": "eq", "value": "X",
+		}},
+	}, permission.SensitivityInternal))
+	require.NoError(t, err, "a profile field is judged by the worker's own classification")
+
+	result, err = tool.Query(t.Context(),
+		agentParams(map[string]any{}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+	rows, withheld = listedRows[workerRow](t, result)
+	assert.Equal(t, "Joliet", rows[0].City)
+	assert.Empty(t, withheld)
+}
+
+func TestSearchWorker_WithholdsTheCityBelowTheCeiling(t *testing.T) {
+	t.Parallel()
+
+	tool := newSearchWorkerTool(&fakeWorkerRepo{items: []*worker.Worker{rosterWorker()}},
+		&fakePermissions{allowed: true})
+
+	for _, tc := range []struct {
+		ceiling  permission.FieldSensitivity
+		city     string
+		withheld []string
+	}{
+		{ceiling: permission.SensitivityInternal, city: "", withheld: []string{"city"}},
+		{ceiling: permission.SensitivityRestricted, city: "Joliet"},
+	} {
+		result, err := tool.Query(t.Context(), agentParams(map[string]any{}, tc.ceiling))
+		require.NoError(t, err)
+
+		gated, ok := result.(*gatedOutcome)
+		require.True(t, ok)
+		rows, ok := gated.Items.([]workerRow)
+		require.True(t, ok)
+		require.Len(t, rows, 1)
+		assert.Equal(t, tc.city, rows[0].City, tc.ceiling)
+		assert.Equal(t, tc.withheld, gated.Withheld, tc.ceiling)
 	}
 }
