@@ -19,7 +19,7 @@ to their agent. The design, and why it is Rust, is in
 | `crates/capture-update` | The release decision and the verified installer download | anywhere |
 | `crates/capture-platform` | DPAPI, Credential Manager, accounts and SIDs, registry, paths, logging, shell | Windows |
 | `bins/trenova-capture-scan` | The per-scan helper, built x64 and x86 | Windows |
-| `bins/trenova-capture` | The tray agent; its core is a library that runs anywhere | Windows |
+| `bins/trenova-capture` | The tray agent and its window; its core, the window's view and its page are a library that runs anywhere | Windows |
 | `bins/trenova-capture-svc` | The print service; its listener, attribution and hand-off are a library that runs anywhere | Windows |
 | `bins/trenova-capture-update` | The updater service; its flow is a library that runs anywhere | Windows |
 | `bins/trenova-capture-release` | The release build's tool: key pair, signed manifest, verification | anywhere |
@@ -75,18 +75,36 @@ the admin Computers tab show how to install the `trenova-capture-msi` build arti
 install command already pointed at that server.
 
 ```powershell
-trenova-capture.exe --server http://localhost:8080 --sign-in
+trenova-capture.exe --server http://localhost:8080 --sign-in --show
 ```
 
 `--server` saves the address for this Windows user (`HKCU\SOFTWARE\Trenova\Capture\ServerUrl`);
 an address under `HKLM\SOFTWARE\Policies\Trenova\Capture` overrides it, and the installer
-writes one to `HKLM\SOFTWARE\Trenova\Capture`. `--sign-in` starts pairing at once. Plain HTTP
-is accepted only for `localhost`.
+writes one to `HKLM\SOFTWARE\Trenova\Capture`. `--sign-in` starts pairing at once, and `--show`
+opens the window (in the copy already running, when there is one; the Start menu shortcut passes
+it). Plain HTTP is accepted only for `localhost`.
+
+The agent loads Microsoft's `WebView2Loader.dll` when it starts, so a build run from `target\`
+needs a copy beside it; the installer puts one there. From `native\capture`:
+
+```powershell
+$loader = Get-ChildItem target\x86_64-pc-windows-msvc\release\build\webview2-com-sys-*\out\x64\WebView2Loader.dll | Sort-Object LastWriteTime | Select-Object -Last 1
+Copy-Item $loader target\x86_64-pc-windows-msvc\release\
+```
+
+The window is a local page (`bins/trenova-capture/ui/`) drawn from a view the agent builds. To
+look at it without Windows, write it and views of it in several states, then open `page.html`
+in a browser and call `window.trenova.render(<a view>)`:
+
+```bash
+TRENOVA_CAPTURE_PREVIEW=/tmp/preview cargo test -p trenova-capture --test preview -- --ignored
+```
 
 The agent keeps its files in `%LOCALAPPDATA%\Trenova\Capture`: `logs\agent.<date>.log` (fourteen
 days; `TRENOVA_CAPTURE_LOG=debug` for more), and `spool\`, where every page waits, encrypted
 with DPAPI, until the server has it. Batches the server refused are kept in `spool\failed\`
-with the reason. The device credential is in Credential Manager as
+with the reason, and listed in the window to send again, save as PDFs, or discard. The window's
+`WebView2` profile is in `WebView2\`. The device credential is in Credential Manager as
 `Trenova Capture/<server host>`.
 
 ## Regenerating the TWAIN bindings

@@ -3,6 +3,8 @@
 //! service left in the inbox is sent whole.
 
 use std::collections::VecDeque;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -22,7 +24,7 @@ use trenova_capture::agent::{
 };
 use trenova_capture::scanners::{ScanOutcome, ScanRun, ScanUpdate, ScannerHost, SourcesFuture};
 use trenova_capture::state::{
-    Command, Connection, Notice, PrinterAttempt, Shared, Snapshot, Ui, UpdateStatus,
+    Attention, Command, Connection, Notice, PrinterAttempt, Shared, Snapshot, Ui, UpdateStatus,
 };
 use wiremock::matchers::{body_partial_json, method, path};
 use wiremock::{Mock, MockServer, Request, Respond, ResponseTemplate};
@@ -30,6 +32,7 @@ use wiremock::{Mock, MockServer, Request, Respond, ResponseTemplate};
 #[derive(Default)]
 struct TestUi {
     notices: Mutex<Vec<Notice>>,
+    attention: Mutex<Vec<Attention>>,
 }
 
 impl Ui for TestUi {
@@ -40,9 +43,22 @@ impl Ui for TestUi {
             .unwrap_or_else(PoisonError::into_inner)
             .push(notice);
     }
+    fn attention(&self, attention: Attention) {
+        self.attention
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push(attention);
+    }
 }
 
 impl TestUi {
+    fn attention(&self) -> Vec<Attention> {
+        self.attention
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
+    }
+
     fn titles(&self) -> Vec<String> {
         self.notices
             .lock()
@@ -146,6 +162,9 @@ struct Script {
 struct FakeScanner {
     scripts: Mutex<VecDeque<Script>>,
     jobs: Mutex<Vec<ScanJob>>,
+    /// Keep scanning after the scripted pages until asked to stop, then
+    /// finish with what was scanned, as a helper does.
+    hold: AtomicBool,
 }
 
 fn fake_source() -> SourceInfo {
@@ -181,6 +200,8 @@ impl ScannerHost for FakeScanner {
             .pop_front()
             .expect("a scripted scan");
         let (tx, updates) = mpsc::channel(8);
+        let cancel = CancellationToken::new();
+        let hold = self.hold.load(Ordering::SeqCst).then(|| cancel.clone());
         tokio::spawn(async move {
             let _ = tx
                 .send(ScanUpdate::Started(Settings {
@@ -201,12 +222,14 @@ impl ScannerHost for FakeScanner {
                 let pdf = format!("%PDF-1.7 page {index} of {}", fastrand_like(index)).into_bytes();
                 let _ = tx.send(ScanUpdate::Page { meta, pdf }).await;
             }
+            if let Some(stop) = hold {
+                stop.cancelled().await;
+                let _ = tx.send(ScanUpdate::End(ScanOutcome::Finished)).await;
+                return;
+            }
             let _ = tx.send(ScanUpdate::End(script.end)).await;
         });
-        ScanRun {
-            updates,
-            cancel: CancellationToken::new(),
-        }
+        ScanRun { updates, cancel }
     }
 }
 
@@ -347,7 +370,8 @@ struct Running {
     inbox: Inbox,
     updater: Arc<FakeUpdater>,
     printer: Arc<FakePrinter>,
-    _dir: tempfile::TempDir,
+    revealed: Arc<Mutex<Vec<PathBuf>>>,
+    dir: tempfile::TempDir,
 }
 
 fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
@@ -355,12 +379,29 @@ fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
 }
 
 fn start_with_printer(server: &MockServer, scripts: Vec<Script>, printer_missing: bool) -> Running {
+    start_with(server, scripts, printer_missing, false)
+}
+
+/// Starts an agent whose scanner keeps scanning until it is stopped.
+fn start_holding(server: &MockServer, scripts: Vec<Script>) -> Running {
+    start_with(server, scripts, false, true)
+}
+
+fn start_with(
+    server: &MockServer,
+    scripts: Vec<Script>,
+    printer_missing: bool,
+    hold: bool,
+) -> Running {
     let dir = tempfile::tempdir().expect("dir");
     let store: Arc<dyn SecretStore> = Arc::new(MemoryStore::with(credential(&server.uri())));
     let scanner = Arc::new(FakeScanner {
         scripts: Mutex::new(scripts.into()),
         jobs: Mutex::new(Vec::new()),
+        hold: AtomicBool::new(hold),
     });
+    let revealed = Arc::new(Mutex::new(Vec::new()));
+    let reveal_into = Arc::clone(&revealed);
     let updater = Arc::new(FakeUpdater::default());
     let printer = Arc::new(FakePrinter::default());
     printer
@@ -384,6 +425,12 @@ fn start_with_printer(server: &MockServer, scripts: Vec<Script>, printer_missing
         protector: Arc::new(Plain),
         server_setting: Arc::new(FixedServer(server.uri())),
         browser: Arc::new(|_| {}),
+        reveal: Arc::new(move |path: &Path| {
+            reveal_into
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .push(path.to_path_buf());
+        }),
         recheck_after: Duration::from_secs(600),
         updater: Arc::clone(&updater) as Arc<dyn UpdateStarter>,
         release_key: Some(release_key()),
@@ -409,7 +456,8 @@ fn start_with_printer(server: &MockServer, scripts: Vec<Script>, printer_missing
         inbox: Inbox::new(inbox_dir),
         updater,
         printer,
-        _dir: dir,
+        revealed,
+        dir,
     }
 }
 
@@ -752,5 +800,245 @@ async fn a_missing_printer_is_offered_and_its_outcome_is_told() {
             && !format!("{:?}", s.menu()).contains("Add the Trenova printer")
     })
     .await;
+    stop(running).await;
+}
+
+fn scan_to_intake() -> Command {
+    Command::Scan {
+        source: "Fake Scanner".into(),
+        protocol: SourceProtocol::Twain,
+        profile: None,
+    }
+}
+
+/// Waits until the agent is online with its scanner listed.
+async fn ready(running: &Running) {
+    until(running, "the agent to be ready", |s, _| {
+        s.connection == Connection::Online && !s.sources.is_empty()
+    })
+    .await;
+}
+
+/// A server that refuses the first batch opened on it, as it would one it
+/// cannot take, and accepts the rest.
+async fn refusing_server() -> MockServer {
+    let server = server(json!([])).await;
+    Mock::given(method("POST"))
+        .and(path("/api/v1/capture/device/batches/"))
+        .respond_with(ResponseTemplate::new(422).set_body_json(json!({
+            "type": "https://api.trenova.test/problems/validation",
+            "title": "Invalid", "status": 422,
+            "detail": "The scanner name is not valid"
+        })))
+        .with_priority(1)
+        .up_to_n_times(1)
+        .mount(&server)
+        .await;
+    server
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_scan_the_person_stops_sends_what_was_scanned() {
+    let server = server(json!([request_json("Fake Scanner")])).await;
+    let running = start_holding(
+        &server,
+        vec![Script {
+            pages: 2,
+            end: ScanOutcome::Finished,
+        }],
+    );
+
+    until(&running, "two pages scanned", |s, _| {
+        s.scan.as_ref().is_some_and(|scan| scan.pages == 2)
+    })
+    .await;
+    let scan = running.shared.snapshot().scan.expect("scanning");
+    assert!(scan.requested);
+    assert!(!scan.stopping);
+    assert!(running.ui.attention().contains(&Attention::ScanStarted));
+
+    running.commands.send(Command::StopScan).expect("stop");
+    until(&running, "the scan to be sent", |s, titles| {
+        s.scan.is_none() && titles.iter().any(|t| t == "2 pages sent to Trenova")
+    })
+    .await;
+    assert!(running.ui.attention().contains(&Attention::ScanEnded));
+    stop(running).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_scan_stopped_before_any_page_tells_the_web_app_it_was_cancelled() {
+    let server = server(json!([request_json("Fake Scanner")])).await;
+    let running = start_holding(
+        &server,
+        vec![Script {
+            pages: 0,
+            end: ScanOutcome::Finished,
+        }],
+    );
+
+    until(&running, "the scan to start", |s, _| s.scan.is_some()).await;
+    running.commands.send(Command::StopScan).expect("stop");
+    until(&running, "the scan to end", |s, _| s.scan.is_none()).await;
+
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
+    loop {
+        let requests = server.received_requests().await.expect("requests");
+        let reported = requests.iter().any(|r| {
+            r.url.path().ends_with("/requests/creq_1/status/")
+                && serde_json::from_slice::<serde_json::Value>(&r.body).expect("json")
+                    ["failureCode"]
+                    == "CANCELED_BY_USER"
+        });
+        if reported {
+            break;
+        }
+        assert!(
+            tokio::time::Instant::now() < deadline,
+            "the request was not reported cancelled"
+        );
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert!(
+        !running
+            .ui
+            .titles()
+            .iter()
+            .any(|t| t == "Nothing was scanned"),
+        "stopping on purpose is not an empty feeder"
+    );
+    stop(running).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_refused_scan_is_listed_and_sent_again_to_intake_when_retried() {
+    let server = refusing_server().await;
+    let running = start(
+        &server,
+        vec![Script {
+            pages: 2,
+            end: ScanOutcome::Finished,
+        }],
+    );
+    ready(&running).await;
+    running.commands.send(scan_to_intake()).expect("scan");
+
+    until(&running, "the batch to be refused", |s, _| {
+        s.refused.len() == 1
+    })
+    .await;
+    let snapshot = running.shared.snapshot();
+    let refused = snapshot.refused[0].clone();
+    assert_eq!(refused.label, "Fake Scanner");
+    assert_eq!(refused.pages, 2);
+    assert!(refused.reason.contains("The scanner name is not valid"));
+    assert!(refused.readable);
+    assert!(snapshot.waiting.is_empty());
+    assert!(running.ui.attention().contains(&Attention::Refused));
+    assert_eq!(
+        snapshot.messages[0].notice.title, "A scan could not be sent",
+        "what the person was told is kept for the window"
+    );
+
+    running
+        .commands
+        .send(Command::Retry(refused.key.clone()))
+        .expect("retry");
+    until(&running, "the retried batch to be sent", |s, titles| {
+        s.refused.is_empty() && titles.iter().any(|t| t == "2 pages sent to Trenova")
+    })
+    .await;
+
+    let requests = server.received_requests().await.expect("requests");
+    let opened: Vec<serde_json::Value> = requests
+        .iter()
+        .filter(|r| {
+            r.method.as_str() == "POST" && r.url.path() == "/api/v1/capture/device/batches/"
+        })
+        .map(|r| serde_json::from_slice(&r.body).expect("json"))
+        .collect();
+    assert_eq!(opened.len(), 2);
+    assert_ne!(
+        opened[0]["clientKey"], opened[1]["clientKey"],
+        "sent again under a new key"
+    );
+    assert!(
+        opened[1]
+            .get("requestId")
+            .is_none_or(serde_json::Value::is_null)
+    );
+    stop(running).await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_refused_scan_can_be_saved_as_pdfs_and_then_discarded() {
+    let server = refusing_server().await;
+    let running = start(
+        &server,
+        vec![Script {
+            pages: 2,
+            end: ScanOutcome::Finished,
+        }],
+    );
+    ready(&running).await;
+    running.commands.send(scan_to_intake()).expect("scan");
+    until(&running, "the batch to be refused", |s, _| {
+        s.refused.len() == 1
+    })
+    .await;
+    let key = running.shared.snapshot().refused[0].key.clone();
+
+    let downloads = running.dir.path().join("Downloads");
+    for _ in 0..2 {
+        running
+            .commands
+            .send(Command::Save {
+                key: key.clone(),
+                into: downloads.clone(),
+            })
+            .expect("save");
+    }
+    until(&running, "both copies to be saved", |_, titles| {
+        titles.iter().filter(|t| *t == "2 files saved").count() == 2
+    })
+    .await;
+    let revealed = running
+        .revealed
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .clone();
+    assert_eq!(
+        revealed,
+        [
+            downloads.join("Fake Scanner scan not sent"),
+            downloads.join("Fake Scanner scan not sent (2)"),
+        ],
+        "a second copy never overwrites the first"
+    );
+    let first = std::fs::read(revealed[0].join("page-0001.pdf")).expect("page");
+    assert!(first.starts_with(b"%PDF-1.7 page 1"));
+    assert_eq!(
+        running.shared.snapshot().refused.len(),
+        1,
+        "saving keeps it"
+    );
+
+    running
+        .commands
+        .send(Command::Discard(key.clone()))
+        .expect("discard");
+    until(&running, "the batch to be discarded", |s, _| {
+        s.refused.is_empty()
+    })
+    .await;
+    assert!(
+        !running
+            .dir
+            .path()
+            .join("spool")
+            .join("failed")
+            .join(&key)
+            .exists()
+    );
     stop(running).await;
 }

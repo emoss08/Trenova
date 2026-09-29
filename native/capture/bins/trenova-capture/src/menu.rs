@@ -3,8 +3,6 @@
 //! The Windows tray only draws what this builds, so what a person sees in
 //! every state is tested here without a desktop.
 
-use std::path::PathBuf;
-
 use capture_protocol::api::{ProfileStatus, SourceProtocol};
 
 use crate::state::{Command, Connection, Snapshot, UpdateStatus};
@@ -15,8 +13,8 @@ pub enum MenuAction {
     Command(Command),
     /// Open a Trenova page in the browser.
     Open(String),
-    /// Open a folder on this computer.
-    OpenFolder(PathBuf),
+    /// Show the Trenova Capture window.
+    OpenWindow,
     /// Add the Trenova printer, with administrator rights.
     AddPrinter,
     /// Ask for the server address.
@@ -52,6 +50,15 @@ fn note(label: impl Into<String>) -> MenuEntry {
     }
 }
 
+/// How many batches the server refused, as a person would say it.
+fn not_sent(count: usize) -> String {
+    if count == 1 {
+        "1 scan or print was not sent".to_owned()
+    } else {
+        format!("{count} scans and prints were not sent")
+    }
+}
+
 fn pages(count: u32) -> String {
     if count == 1 {
         "1 page".to_owned()
@@ -65,15 +72,22 @@ impl Snapshot {
     pub fn status_line(&self) -> String {
         let waiting = (self.pages_waiting > 0)
             .then(|| format!("{} waiting to upload", pages(self.pages_waiting)));
+        let scanning = self.scan.as_ref().map(|scan| {
+            if scan.stopping {
+                format!("Stopping the scan from {}", scan.label)
+            } else {
+                format!("Scanning from {}: {}", scan.label, pages(scan.pages))
+            }
+        });
+        let refused = (!self.refused.is_empty()).then(|| not_sent(self.refused.len()));
         match &self.connection {
             Connection::NeedsServer => "Set the server address to begin".to_owned(),
             Connection::SignedOut => "Not signed in".to_owned(),
             Connection::Pairing { code, .. } => format!("Waiting for approval, code {code}"),
             Connection::Connecting => "Connecting".to_owned(),
-            Connection::Online => self
-                .scanning
-                .clone()
+            Connection::Online => scanning
                 .or(waiting)
+                .or(refused)
                 .unwrap_or_else(|| "Ready".to_owned()),
             Connection::Offline { .. } => match waiting {
                 Some(waiting) => format!("Offline, {waiting}"),
@@ -189,11 +203,18 @@ impl Snapshot {
         };
         menu.push(note(who));
         menu.push(note(self.status_line()));
+        menu.push(item("Open Trenova Capture", MenuAction::OpenWindow));
         menu.extend(self.update_entries());
         menu.push(MenuEntry::Separator);
 
         let online = self.signed_in() && !matches!(self.connection, Connection::Blocked { .. });
-        if online && self.scanning.is_none() {
+        if let Some(scan) = self.scan.as_ref().filter(|scan| !scan.stopping) {
+            menu.push(item(
+                format!("Stop scanning from {}", scan.label),
+                MenuAction::Command(Command::StopScan),
+            ));
+        }
+        if online && self.scan.is_none() {
             menu.push(self.scan_menu());
         }
         for paused in &self.paused {
@@ -241,15 +262,13 @@ impl Snapshot {
         if self.printer_missing {
             menu.push(item("Add the Trenova printer", MenuAction::AddPrinter));
         }
-        if self.failed > 0
-            && let Some(dir) = &self.failed_dir
-        {
+        if !self.refused.is_empty() {
             menu.push(item(
                 format!(
-                    "Open the folder of uploads Trenova refused ({})",
-                    self.failed
+                    "{}: review in Trenova Capture",
+                    not_sent(self.refused.len())
                 ),
-                MenuAction::OpenFolder(dir.clone()),
+                MenuAction::OpenWindow,
             ));
         }
 
@@ -298,6 +317,19 @@ mod tests {
             .collect()
     }
 
+    fn refused(key: &str) -> capture_client::spool::RefusedBatch {
+        capture_client::spool::RefusedBatch {
+            key: key.into(),
+            label: "fi-8170".into(),
+            source: capture_protocol::api::BatchSource::Scan,
+            pages: 2,
+            reason: "the batch was ended".into(),
+            created_at: 0,
+            refused_at: 0,
+            readable: true,
+        }
+    }
+
     fn source(name: &str, protocol: SourceProtocol) -> SourceInfo {
         SourceInfo {
             name: name.into(),
@@ -320,7 +352,11 @@ mod tests {
         assert_eq!(snapshot.status_line(), "Set the server address to begin");
         assert_eq!(
             actions(&snapshot.menu()),
-            vec![MenuAction::SetServer, MenuAction::Quit]
+            vec![
+                MenuAction::OpenWindow,
+                MenuAction::SetServer,
+                MenuAction::Quit
+            ]
         );
     }
 
@@ -346,8 +382,12 @@ mod tests {
         };
         let menu = snapshot.menu();
         assert_eq!(menu[0], note("Jordan Doe, Acme Freight"));
-        let MenuEntry::Submenu { label, entries } = &menu[3] else {
-            panic!("expected the scan menu, got {:?}", menu[3]);
+        assert_eq!(
+            menu[2],
+            item("Open Trenova Capture", MenuAction::OpenWindow)
+        );
+        let MenuEntry::Submenu { label, entries } = &menu[4] else {
+            panic!("expected the scan menu, got {:?}", menu[4]);
         };
         assert_eq!(label, "Scan to intake");
         let MenuEntry::Submenu {
@@ -377,7 +417,13 @@ mod tests {
     fn a_stopped_scan_offers_to_continue_or_finish_and_hides_new_scans_while_scanning() {
         let snapshot = Snapshot {
             connection: Connection::Online,
-            scanning: Some("Scanning from fi-8170: 3 pages".into()),
+            scan: Some(crate::state::ActiveScan {
+                key: "cap-1".into(),
+                label: "fi-8170".into(),
+                pages: 3,
+                requested: false,
+                stopping: false,
+            }),
             paused: vec![PausedBatch {
                 key: "cap-1".into(),
                 label: "fi-8170".into(),
@@ -396,6 +442,24 @@ mod tests {
         let all = actions(&menu);
         assert!(all.contains(&MenuAction::Command(Command::Continue("cap-1".into()))));
         assert!(all.contains(&MenuAction::Command(Command::Finish("cap-1".into()))));
+        assert!(all.contains(&MenuAction::Command(Command::StopScan)));
+    }
+
+    #[test]
+    fn a_scan_being_stopped_says_so_and_is_not_offered_to_stop_again() {
+        let snapshot = Snapshot {
+            connection: Connection::Online,
+            scan: Some(crate::state::ActiveScan {
+                key: "cap-1".into(),
+                label: "fi-8170".into(),
+                pages: 3,
+                requested: true,
+                stopping: true,
+            }),
+            ..Snapshot::default()
+        };
+        assert_eq!(snapshot.status_line(), "Stopping the scan from fi-8170");
+        assert!(!actions(&snapshot.menu()).contains(&MenuAction::Command(Command::StopScan)));
     }
 
     #[test]
@@ -405,8 +469,7 @@ mod tests {
                 reason: "dns".into(),
             },
             pages_waiting: 12,
-            failed: 1,
-            failed_dir: Some(PathBuf::from("C:\\spool\\failed")),
+            refused: vec![refused("cap-9")],
             recent: [RecentBatch {
                 label: "fi-8170".into(),
                 pages: 1,
@@ -425,7 +488,25 @@ mod tests {
         assert!(all.contains(&MenuAction::Open(
             "https://app.acme.com/intake?batch=cbat_1".into()
         )));
-        assert!(all.contains(&MenuAction::OpenFolder(PathBuf::from("C:\\spool\\failed"))));
+        assert!(
+            format!("{:?}", snapshot.menu())
+                .contains("1 scan or print was not sent: review in Trenova Capture")
+        );
+        assert_eq!(
+            all.iter().filter(|a| **a == MenuAction::OpenWindow).count(),
+            2,
+            "the refused batch opens the window, as the top item does"
+        );
+    }
+
+    #[test]
+    fn refused_batches_are_named_when_nothing_else_is_happening() {
+        let snapshot = Snapshot {
+            connection: Connection::Online,
+            refused: vec![refused("cap-1"), refused("cap-2")],
+            ..Snapshot::default()
+        };
+        assert_eq!(snapshot.status_line(), "2 scans and prints were not sent");
     }
 
     #[test]

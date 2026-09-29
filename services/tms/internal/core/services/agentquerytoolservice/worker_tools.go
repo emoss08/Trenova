@@ -192,11 +192,15 @@ func workerDetailFrom(
 }
 
 type searchWorkerTool struct {
-	repo repositories.WorkerRepository
+	repo   repositories.WorkerRepository
+	access fieldAccess
 }
 
-func newSearchWorkerTool(repo repositories.WorkerRepository) serviceports.AgentQueryTool {
-	return &searchWorkerTool{repo: repo}
+func newSearchWorkerTool(
+	repo repositories.WorkerRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return &searchWorkerTool{repo: repo, access: newFieldAccess(permissions)}
 }
 
 func (t *searchWorkerTool) Name() string { return "search_worker" }
@@ -272,12 +276,16 @@ func (t *searchWorkerTool) Query(
 	// The same projection the list tools use, rather than the stored entity.
 	// Returning the entity cost six times the bytes for the same answer and
 	// reported an unrecorded credential as a bare null.
+	gate := t.access.gate(ctx, params, permission.ResourceWorker)
+	showCity := gate.show(workerCityField, workerCityField)
 	rows := make([]workerRow, 0, len(result.Items))
 	for _, item := range result.Items {
-		rows = append(rows, toWorkerRow(item))
+		rows = append(rows, toGatedWorkerRow(item, showCity))
 	}
 
-	return searchResult(criteria, rows, len(rows)), nil
+	outcome := searchResult(criteria, rows, len(rows))
+
+	return gatedResult(&outcome, gate), nil
 }
 
 // workerName is how a person names a driver. Every tool that returns a worker

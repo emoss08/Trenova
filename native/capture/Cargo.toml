@@ -51,6 +51,7 @@ windows = "0.62"
 windows-core = "0.62"
 windows-service = "0.8"
 wiremock = "0.6"
+wry = { version = "0.57", default-features = false }
 winresource = "0.1"
 zeroize = "1.9"
 

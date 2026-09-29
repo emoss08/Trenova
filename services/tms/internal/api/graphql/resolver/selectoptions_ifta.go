@@ -20,7 +20,7 @@ var jurisdictionCountryRank = map[string]int{"US": 0, "CA": 1, "MX": 2}
 // tenant, with no organization column to scope a query by.
 func (r *Resolver) resolveIFTAJurisdictionSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	jurisdictions, err := r.iftaService.ListJurisdictions(
 		ctx,

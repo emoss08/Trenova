@@ -14,7 +14,7 @@ import (
 
 func (r *Resolver) resolveFuelIndexSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -51,7 +51,7 @@ func (r *Resolver) resolveFuelIndexSelectOptions(
 
 func (r *Resolver) resolveFuelSurchargeProgramSelectOptions(
 	ctx context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))
@@ -140,7 +140,7 @@ func fuelSurchargeProgramSelectOption(
 
 func (r *Resolver) resolveIFTAFuelTypeSelectOptions(
 	_ context.Context,
-	req selectOptionsRequest,
+	req *selectOptionsRequest,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.ids) > 0 {
 		items := make([]selectOptionConnectionItem, 0, len(req.ids))

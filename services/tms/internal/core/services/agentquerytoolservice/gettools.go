@@ -38,11 +38,15 @@ type getSpec struct {
 }
 
 type getTool struct {
-	spec getSpec
+	spec   getSpec
+	access fieldAccess
 }
 
-func newGetTool(spec getSpec) serviceports.AgentQueryTool {
-	return &getTool{spec: spec}
+func newGetTool(
+	spec *getSpec,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return &getTool{spec: *spec, access: newFieldAccess(permissions)}
 }
 
 func (t *getTool) Name() string { return t.spec.name }
@@ -97,15 +101,23 @@ func (t *getTool) Query(
 		return nil, err
 	}
 
-	return t.spec.fetch(ctx, id, pagination.TenantInfo{
+	entity, err := t.spec.fetch(ctx, id, pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,
 		UserID: params.Actor.UserID,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return t.access.redactor(ctx, params).withhold(entity)
 }
 
-func newGetCustomerTool(repo repositories.CustomerRepository) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
+func newGetCustomerTool(
+	repo repositories.CustomerRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return newGetTool(&getSpec{
 		name:     "get_customer",
 		entity:   "customer",
 		resource: permission.ResourceCustomer,
@@ -123,11 +135,14 @@ func newGetCustomerTool(repo repositories.CustomerRepository) serviceports.Agent
 				},
 			})
 		},
-	})
+	}, permissions)
 }
 
-func newGetCarrierTool(repo repositories.CarrierRepository) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
+func newGetCarrierTool(
+	repo repositories.CarrierRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return newGetTool(&getSpec{
 		name:     "get_carrier",
 		entity:   "carrier",
 		resource: permission.ResourceCarrier,
@@ -141,11 +156,14 @@ func newGetCarrierTool(repo repositories.CarrierRepository) serviceports.AgentQu
 				TenantInfo: tenant,
 			})
 		},
-	})
+	}, permissions)
 }
 
-func newGetTractorTool(repo repositories.TractorRepository) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
+func newGetTractorTool(
+	repo repositories.TractorRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return newGetTool(&getSpec{
 		name:     "get_tractor",
 		entity:   "tractor",
 		resource: permission.ResourceTractor,
@@ -160,11 +178,14 @@ func newGetTractorTool(repo repositories.TractorRepository) serviceports.AgentQu
 				TractorRelationIncludes: repositories.FullTractorRelationIncludes(),
 			})
 		},
-	})
+	}, permissions)
 }
 
-func newGetTrailerTool(repo repositories.TrailerRepository) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
+func newGetTrailerTool(
+	repo repositories.TrailerRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return newGetTool(&getSpec{
 		name:     "get_trailer",
 		entity:   "trailer",
 		resource: permission.ResourceTrailer,
@@ -178,17 +199,17 @@ func newGetTrailerTool(repo repositories.TrailerRepository) serviceports.AgentQu
 				TenantInfo: tenant,
 			})
 		},
-	})
+	}, permissions)
 }
 
 func getCatalogSpecs() []getSpec {
 	return []getSpec{
-		specOfGet(newGetCustomerTool(nil)),
-		specOfGet(newGetCarrierTool(nil)),
-		specOfGet(newGetTractorTool(nil)),
-		specOfGet(newGetTrailerTool(nil)),
-		specOfGet(newGetDetentionOccurrenceTool(nil)),
-		specOfGet(newGetServiceFailureTool(nil)),
+		specOfGet(newGetCustomerTool(nil, nil)),
+		specOfGet(newGetCarrierTool(nil, nil)),
+		specOfGet(newGetTractorTool(nil, nil)),
+		specOfGet(newGetTrailerTool(nil, nil)),
+		specOfGet(newGetDetentionOccurrenceTool(nil, nil)),
+		specOfGet(newGetServiceFailureTool(nil, nil)),
 	}
 }
 

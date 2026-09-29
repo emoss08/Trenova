@@ -519,6 +519,20 @@ func TestRegistry_RegisterWorkerPTOResource(t *testing.T) {
 	}, ops)
 }
 
+func TestRegistry_ShipmentMoveClassifiesTheExternalDriver(t *testing.T) {
+	t.Parallel()
+
+	reg := NewRegistry()
+	resource := ResourceShipmentMove.String()
+
+	def, ok := reg.Get(resource)
+	require.True(t, ok)
+	assert.Equal(t, SensitivityInternal, def.DefaultSensitivity)
+	assert.Equal(t, SensitivityRestricted, reg.GetFieldSensitivity(resource, "externalDriverPhone"))
+	assert.Equal(t, SensitivityInternal, reg.GetFieldSensitivity(resource, "externalDriverName"))
+	assert.Equal(t, SensitivityInternal, reg.GetFieldSensitivity(resource, "carrierId"))
+}
+
 func TestRegistry_HasHazmatSegregationRuleResource(t *testing.T) {
 	t.Parallel()
 

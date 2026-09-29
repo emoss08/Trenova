@@ -3,7 +3,9 @@
   Trenova Capture for Windows, as one per-machine MSI (WiX v4).
 
   What it installs, in %ProgramFiles%\Trenova\Capture:
-    trenova-capture.exe            the tray agent, started at sign-in
+    trenova-capture.exe            the tray agent, started at sign-in, and its window
+    WebView2Loader.dll             Microsoft's loader for the WebView2 runtime the
+                                   window is drawn in (part of Windows 10 and 11)
     trenova-capture-scan-x64.exe   the scan helpers, one per bitness
     trenova-capture-scan-x86.exe
     trenova-capture-svc.exe        the print service (TrenovaCaptureSvc) behind the
@@ -76,6 +78,10 @@
         <RegistryValue Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
                        Name="Trenova Capture" Type="string" Value="&quot;[#AgentExe]&quot;" />
       </Component>
+      <!-- Loaded by the agent when it starts; it does not start without it. -->
+      <Component Id="WebView2Loader" Guid="a1c2e3f4-0009-4c00-8000-7d2a9f3e6c41" Bitness="always64">
+        <File Source="$(var.StageDir)\WebView2Loader.dll" KeyPath="yes" />
+      </Component>
       <Component Id="ScanHelperX64" Guid="a1c2e3f4-0002-4c00-8000-7d2a9f3e6c41" Bitness="always64">
         <File Source="$(var.StageDir)\trenova-capture-scan-x64.exe" KeyPath="yes" />
       </Component>
@@ -144,7 +150,8 @@
       <Component Id="StartMenuShortcut" Guid="a1c2e3f4-0008-4c00-8000-7d2a9f3e6c41" Bitness="always64">
         <Shortcut Id="AgentShortcut" Name="Trenova Capture"
                   Description="Scan and print into Trenova"
-                  Target="[#AgentExe]" WorkingDirectory="INSTALLFOLDER" Icon="TrenovaIcon" />
+                  Target="[#AgentExe]" Arguments="--show"
+                  WorkingDirectory="INSTALLFOLDER" Icon="TrenovaIcon" />
         <RegistryValue Root="HKCU" Key="SOFTWARE\Trenova\Capture" Name="StartMenuShortcut"
                        Type="integer" Value="1" KeyPath="yes" />
       </Component>

@@ -84,10 +84,12 @@ function renderHome(props: Partial<DeskHomeProps> = {}) {
   );
 }
 
-async function expectSettingOut() {
-  const status = await screen.findByRole("status");
-  expect(status).toHaveTextContent("Opening the desk");
+async function expectHeadlineSkeleton() {
+  const heading = await screen.findByRole("heading", { level: 1 });
+  expect(heading.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+  expect(heading).toHaveTextContent("");
   expect(screen.queryByText(/waiting on you/)).toBeNull();
+  expect(document.querySelector('[data-slot="desk-loading-mark"]')).toBeNull();
 }
 
 beforeEach(() => {
@@ -97,32 +99,32 @@ beforeEach(() => {
   state.summary = { isPending: false, total: 2 };
 });
 
-describe("Desk home while it is set out", () => {
-  it("shows the desk visitor while the agents and conversations load", async () => {
+describe("Desk home headline while its figures load", () => {
+  it("holds the headline as a skeleton while the agents and conversations load", async () => {
     renderHome({ isLoading: true });
 
-    await expectSettingOut();
+    await expectHeadlineSkeleton();
   });
 
-  it("shows the desk visitor while permissions are still arriving", async () => {
+  it("holds the headline as a skeleton while permissions are still arriving", async () => {
     state.permissionsLoading = true;
     renderHome();
 
-    await expectSettingOut();
+    await expectHeadlineSkeleton();
   });
 
   it("waits for the briefing, whose headline would replace the computed one", async () => {
     state.briefing = { settled: false, value: null };
     renderHome();
 
-    await expectSettingOut();
+    await expectHeadlineSkeleton();
   });
 
   it("waits for what is waiting on someone who decides", async () => {
     state.summary.isPending = true;
     renderHome();
 
-    await expectSettingOut();
+    await expectHeadlineSkeleton();
   });
 
   it("does not wait on a decision summary someone may not see", async () => {
@@ -131,13 +133,21 @@ describe("Desk home while it is set out", () => {
     renderHome();
 
     expect(await screen.findByText("Nothing is waiting on you.")).toBeInTheDocument();
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByRole("heading", { level: 1 }).querySelector('[data-slot="skeleton"]')).toBeNull();
+  });
+
+  it("keeps the rest of the page, with the ask box as its own skeleton, while it waits", async () => {
+    renderHome({ isLoading: true });
+
+    await expectHeadlineSkeleton();
+    expect(screen.getByText(/^Good (morning|afternoon|evening)$/).closest("header")).not.toBeNull();
+    expect(document.querySelector('[aria-busy] [data-slot="skeleton"]')).not.toBeNull();
   });
 
   it("opens on the headline its figures support once everything is in", async () => {
     renderHome();
 
     expect(await screen.findByText("2 decisions are waiting on you.")).toBeInTheDocument();
-    expect(screen.queryByText("Opening the desk")).toBeNull();
+    expect(screen.getByRole("heading", { level: 1 }).querySelector('[data-slot="skeleton"]')).toBeNull();
   });
 });

@@ -38,6 +38,9 @@ struct Arguments {
     /// `--sign-in`: start pairing at once, as the installer's "sign in now"
     /// does.
     sign_in: bool,
+    /// `--show`: open the window, as the Start menu shortcut does; in the
+    /// Trenova Capture already running, when there is one.
+    show: bool,
 }
 
 fn arguments() -> Arguments {
@@ -47,6 +50,7 @@ fn arguments() -> Arguments {
         match arg.as_str() {
             "--server" => parsed.server = args.next(),
             "--sign-in" => parsed.sign_in = true,
+            "--show" => parsed.show = true,
             other => tracing::warn!(argument = other, "ignoring an unknown argument"),
         }
     }
@@ -128,6 +132,11 @@ fn environment(data_dir: &Path) -> Environment {
                 tracing::warn!(error = %err, "could not open the browser");
             }
         }),
+        reveal: Arc::new(|folder: &Path| {
+            if let Err(err) = shell::open_folder(folder) {
+                tracing::warn!(error = %err, "could not open the folder");
+            }
+        }),
         recheck_after: RECHECK_AFTER,
         updater: Arc::new(ServiceUpdater),
         release_key: pinned_public_key(),
@@ -171,6 +180,9 @@ pub fn run() -> ExitCode {
         Ok(Some(instance)) => instance,
         Ok(None) => {
             tracing::info!("Trenova Capture is already running in this session");
+            if arguments.show && !crate::tray::show_running_window() {
+                tracing::warn!("the running Trenova Capture could not be asked to show itself");
+            }
             return ExitCode::SUCCESS;
         }
         Err(err) => {
@@ -224,6 +236,9 @@ pub fn run() -> ExitCode {
 
     if arguments.sign_in {
         let _ = commands.send(Command::SignIn);
+    }
+    if arguments.show {
+        ui.show_window();
     }
     tray.run();
 

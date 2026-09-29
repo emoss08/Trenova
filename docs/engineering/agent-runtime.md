@@ -244,13 +244,18 @@ customer, the rating, the commodities and charges, and each stop's window and
 actuals as a local date and time in the stop location's zone (the
 organization's when the location has none, UTC when neither does), with the
 zone named beside it. It names the people on a move and never how to reach
-them. Either way the result is walked before it leaves the tool: every nested
+them. The full record is walked before it leaves the tool, as every
+`newGetTool` result is (`fieldaccess.go`, `nestedRedactor`): every nested
 worker record (an object whose `id` is a worker id) keeps only the fields the
-`worker` resource's sensitivities let the caller see
-(`fieldaccess.go`, `recordGate`), and the fields withheld are listed as
-`worker.<field>` in `withheldByAccess`. Confidential fields are dropped
-without being named. A caller below Restricted on workers therefore never
-reads a driver's email, phone or address, even in the full record.
+`worker` resource's sensitivities let the caller see, and the fields withheld
+are listed as `worker.<field>` in `withheldByAccess`. Confidential fields are
+dropped without being named. A caller below Restricted on workers therefore
+never reads a driver's email, phone or address, even in the full record.
+Nested people are judged by their id prefix, each object by its own rule first:
+a user (an owner, a canceller, a worker's manager) and an organization or
+business unit are reduced to `{id, name}`, and a carrier assignment is gated by
+`shipment_move`, so `externalDriverPhone` (Restricted) is withheld as
+`shipmentMove.externalDriverPhone` below Restricted.
 
 ### Oversight tools
 

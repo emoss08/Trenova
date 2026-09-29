@@ -65,8 +65,14 @@ type listSpec struct {
 	// two is set.
 	fetchIn func(ctx context.Context, opts *pagination.QueryOptions, clk clock) ([]any, error)
 
-	access     fieldAccess
-	fetchGated func(ctx context.Context, opts *pagination.QueryOptions, gate *fieldGate) ([]any, error)
+	access      fieldAccess
+	fetchGated  func(ctx context.Context, opts *pagination.QueryOptions, gate *fieldGate) ([]any, error)
+	gatedField  func(field string) string
+	fetchJoined func(
+		ctx context.Context,
+		opts *pagination.QueryOptions,
+		mayRead func(permission.Resource) bool,
+	) ([]any, error)
 }
 
 type listTool struct {
@@ -251,7 +257,7 @@ func (t *listTool) Query(
 	var gate *fieldGate
 	if t.spec.fetchGated != nil {
 		gate = t.spec.access.gate(ctx, params, t.spec.resource)
-		if err := refuseWithheldFields(params.Params, gate); err != nil {
+		if err := refuseWithheldFields(params.Params, gate, t.spec.gatedField); err != nil {
 			return nil, err
 		}
 	}
@@ -289,6 +295,10 @@ func (t *listTool) Query(
 	switch {
 	case gate != nil:
 		rows, err = t.spec.fetchGated(ctx, opts, gate)
+	case t.spec.fetchJoined != nil:
+		rows, err = t.spec.fetchJoined(ctx, opts, func(resource permission.Resource) bool {
+			return t.spec.access.mayRead(ctx, params, resource)
+		})
 	case t.spec.fetchIn != nil:
 		rows, err = t.spec.fetchIn(ctx, opts, criteria.Clock)
 	default:
@@ -307,7 +317,11 @@ func (t *listTool) Query(
 	return outcome, nil
 }
 
-func refuseWithheldFields(params map[string]any, gate *fieldGate) error {
+func refuseWithheldFields(
+	params map[string]any,
+	gate *fieldGate,
+	gatedField func(string) string,
+) error {
 	fields := make([]string, 0, maxListFilters+1)
 	if entries, ok := params["filters"].([]any); ok {
 		for _, entry := range entries {
@@ -319,7 +333,14 @@ func refuseWithheldFields(params map[string]any, gate *fieldGate) error {
 	fields = append(fields, optionalString(params, "sortBy"))
 
 	for _, field := range fields {
-		if field != "" && !gate.shows(field) {
+		if field == "" {
+			continue
+		}
+		judged := field
+		if gatedField != nil {
+			judged = gatedField(field)
+		}
+		if !gate.shows(judged) {
 			return fmt.Errorf(
 				"%s is withheld at this data access, so it cannot be filtered or sorted on",
 				field,

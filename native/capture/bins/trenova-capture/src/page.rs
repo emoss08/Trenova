@@ -1,0 +1,78 @@
+//! The window's page: one self-contained HTML document, its stylesheet,
+//! script and logo inlined, so nothing is ever loaded from anywhere else.
+
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
+
+use crate::icon::{LOGO, best_for};
+
+const TEMPLATE: &str = include_str!("../ui/page.html");
+const STYLE: &str = include_str!("../ui/style.css");
+const SCRIPT: &str = include_str!("../ui/app.js");
+
+/// The Trenova mark as a data URI, from the largest PNG in the icon file.
+fn logo() -> String {
+    best_for(LOGO, 256)
+        .filter(|image| image.bytes.starts_with(b"\x89PNG"))
+        .map(|image| format!("data:image/png;base64,{}", STANDARD.encode(image.bytes)))
+        .unwrap_or_default()
+}
+
+/// The page, ready to load.
+pub fn html() -> String {
+    TEMPLATE
+        .replacen("/*STYLE*/", STYLE, 1)
+        .replacen("/*SCRIPT*/", SCRIPT, 1)
+        .replacen("/*LOGO*/", &logo(), 1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_page_is_self_contained_and_locked_down() {
+        let page = html();
+        assert!(!page.contains("/*STYLE*/"));
+        assert!(!page.contains("/*SCRIPT*/"));
+        assert!(!page.contains("/*LOGO*/"));
+        assert!(page.contains(
+            "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:"
+        ));
+        assert!(page.contains(r#"src="data:image/png;base64,"#));
+        assert_eq!(
+            page.matches("</script>").count(),
+            1,
+            "the script cannot end early"
+        );
+        assert_eq!(
+            page.matches("</style>").count(),
+            1,
+            "the stylesheet cannot end early"
+        );
+        for outside in ["http://", "https://", "src=\"//", "@import", "url("] {
+            assert!(
+                !page.contains(outside) || outside == "https://" && only_placeholder(&page),
+                "the page reaches outside itself: {outside}"
+            );
+        }
+    }
+
+    /// The only address in the page is the example in the server field.
+    fn only_placeholder(page: &str) -> bool {
+        page.matches("https://").count() == 1 && page.contains("https://tms.example.com")
+    }
+
+    #[test]
+    fn the_script_draws_text_never_markup() {
+        for markup in [
+            "innerHTML",
+            "outerHTML",
+            "insertAdjacentHTML",
+            "document.write",
+            "eval(",
+        ] {
+            assert!(!SCRIPT.contains(markup), "the script uses {markup}");
+        }
+    }
+}

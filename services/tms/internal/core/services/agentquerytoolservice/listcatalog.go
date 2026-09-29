@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/location"
@@ -40,6 +41,11 @@ var (
 	endorsementCodes = []string{"O", "N", "H", "X", "P", "T"}
 	complianceStates = []string{"Compliant", "NonCompliant", "Pending"}
 	cdlClasses       = []string{"A", "B", "C"}
+)
+
+const (
+	workerProfilePath = "profile."
+	workerCityField   = "city"
 )
 
 // endorsementNote spells the codes out.
@@ -82,7 +88,10 @@ type workerRow struct {
 	MedicalCardExpiry optionalDate `json:"medicalCardExpiry"`
 }
 
-func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQueryTool {
+func newListWorkersTool(
+	repo repositories.WorkerRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_workers",
 		entityPlural: "workers",
@@ -131,17 +140,29 @@ func newListWorkersTool(repo repositories.WorkerRepository) serviceports.AgentQu
 			{Name: "profile.medicalCardExpiry", Kind: filterDate, Sortable: true},
 			{Name: "profile.twicExpiry", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		access:     newFieldAccess(permissions),
+		gatedField: workerGatedField,
+		fetchGated: func(
+			ctx context.Context,
+			opts *pagination.QueryOptions,
+			gate *fieldGate,
+		) ([]any, error) {
 			result, err := repo.List(ctx, &repositories.ListWorkersRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
 
+			showCity := gate.show(workerCityField, workerCityField)
+
 			return listRows(result.Items, func(item *worker.Worker) any {
-				return toWorkerRow(item)
+				return toGatedWorkerRow(item, showCity)
 			}), nil
 		},
 	})
+}
+
+func workerGatedField(field string) string {
+	return strings.TrimPrefix(field, workerProfilePath)
 }
 
 type shipmentRow struct {
@@ -274,7 +295,10 @@ func equipmentFields() []listField {
 	}
 }
 
-func newListTractorsTool(repo repositories.TractorRepository) serviceports.AgentQueryTool {
+func newListTractorsTool(
+	repo repositories.TractorRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_tractors",
 		entityPlural: "tractors",
@@ -284,11 +308,17 @@ func newListTractorsTool(repo repositories.TractorRepository) serviceports.Agent
 		resource: permission.ResourceTractor,
 		config:   querybuilder.GetFieldConfiguration((*tractor.Tractor)(nil)),
 		fields:   equipmentFields(),
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		access:   newFieldAccess(permissions),
+		fetchJoined: func(
+			ctx context.Context,
+			opts *pagination.QueryOptions,
+			mayRead func(permission.Resource) bool,
+		) ([]any, error) {
+			nameDrivers := mayRead(permission.ResourceWorker)
 			result, err := repo.List(ctx, &repositories.ListTractorsRequest{
 				Filter: opts,
 				TractorRelationIncludes: repositories.TractorRelationIncludes{
-					IncludePrimaryWorker: true,
+					IncludePrimaryWorker: nameDrivers,
 				},
 			})
 			if err != nil {
@@ -309,7 +339,7 @@ func newListTractorsTool(repo repositories.TractorRepository) serviceports.Agent
 					row.Year = *item.Year
 				}
 				row.RegistrationExpiry = pointerDate(item.RegistrationExpiry)
-				if item.PrimaryWorker != nil {
+				if nameDrivers {
 					row.AssignedTo = workerName(item.PrimaryWorker)
 				}
 
@@ -464,9 +494,9 @@ func newListLocationsTool(repo repositories.LocationRepository) serviceports.Age
 // catalog cannot afford.
 func listCatalogSpecs() []listSpec {
 	return []listSpec{
-		specOf(newListWorkersTool(nil)),
+		specOf(newListWorkersTool(nil, nil)),
 		specOf(newListShipmentsTool(nil)),
-		specOf(newListTractorsTool(nil)),
+		specOf(newListTractorsTool(nil, nil)),
 		specOf(newListTrailersTool(nil)),
 		specOf(newListCustomersTool(nil)),
 		specOf(newListLocationsTool(nil)),
@@ -520,6 +550,15 @@ func toWorkerRow(item *worker.Worker) workerRow {
 		row.FleetCode = item.FleetCode.Code
 	}
 	applyProfile(&row, item.Profile)
+
+	return row
+}
+
+func toGatedWorkerRow(item *worker.Worker, showCity bool) workerRow {
+	row := toWorkerRow(item)
+	if !showCity {
+		row.City = ""
+	}
 
 	return row
 }
