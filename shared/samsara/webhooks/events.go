@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 var (
@@ -427,7 +428,7 @@ func (p *formEventPayload) normalize() FormEventData {
 		TemplateRevisionID:    p.TemplateRevisionID,
 		Status:                p.Status,
 		SubmittedAtTime:       p.SubmittedAtTime,
-		AssignedToRouteStopID: firstNonEmpty(p.AssignedToRouteStopID, p.RouteStopID),
+		AssignedToRouteStopID: stringutils.FirstNonEmpty(p.AssignedToRouteStopID, p.RouteStopID),
 		SubmittedBy:           p.SubmittedBy,
 		ExternalIDs:           p.ExternalIDs,
 		Location:              p.Location,
@@ -498,13 +499,4 @@ func firstMediaURL(records []formMediaRecordRaw) string {
 
 func formatFloat(value float64) string {
 	return strconv.FormatFloat(value, 'f', -1, 64)
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
 }

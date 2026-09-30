@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -67,7 +68,7 @@ func recurringShipmentRowFrom(entity *recurringshipment.RecurringShipment) recur
 		Schedule:         entity.CronExpression,
 		Timezone:         entity.Timezone,
 		AutoGenerate:     entity.AutoGenerate,
-		NextOccurrenceAt: expectedDate(derefInt64(entity.NextOccurrenceAt), "none scheduled"),
+		NextOccurrenceAt: expectedDate(typeutils.ValueOrZero(entity.NextOccurrenceAt), "none scheduled"),
 		GenerationCount:  entity.GenerationCount,
 		LastShipmentID:   pulidString(entity.LastGeneratedShipmentID),
 	}
@@ -279,7 +280,7 @@ func (t *getWorkerScheduleTool) assignments(
 			ShiftAssignmentID: assignment.ID.String(),
 			ShiftTemplateID:   assignment.ShiftTemplateID.String(),
 			EffectiveFrom:     recordedDate(assignment.EffectiveFrom),
-			EffectiveTo:       expectedDate(derefInt64(assignment.EffectiveTo), absentOpenEnded),
+			EffectiveTo:       expectedDate(typeutils.ValueOrZero(assignment.EffectiveTo), absentOpenEnded),
 			CycleOffsetWeeks:  assignment.CycleOffsetWeeks,
 			Notes:             strings.TrimSpace(assignment.Notes),
 		}
@@ -345,7 +346,7 @@ func (t *getWorkerScheduleTool) swaps(
 			CounterpartyWorkerID: pulidString(swap.CounterpartyWorkerID),
 			ShiftDate:            recordedDate(swap.ShiftDate),
 			CounterpartyShiftDate: expectedDate(
-				derefInt64(swap.CounterpartyShiftDate),
+				typeutils.ValueOrZero(swap.CounterpartyShiftDate),
 				"a hand-off",
 			),
 			Reason: strings.TrimSpace(swap.Reason),

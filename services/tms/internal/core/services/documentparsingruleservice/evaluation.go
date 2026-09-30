@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documentparsingrule"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -442,7 +443,7 @@ func findValueByPatterns( //nolint:gocritic // stable API shape
 		if len(matches) > 1 {
 			for _, match := range matches[1:] {
 				if strings.TrimSpace(match) != "" {
-					return strings.TrimSpace(match), firstNonEmpty(matches[0], text)
+					return strings.TrimSpace(match), stringutils.FirstNonEmptyTrimmed(matches[0], text)
 				}
 			}
 		}
@@ -594,15 +595,6 @@ func lineMatchesAny(line string, needles []string) bool {
 		}
 	}
 	return false
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value)
-		}
-	}
-	return ""
 }
 
 func mergeAnalyses(

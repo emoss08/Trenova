@@ -1131,9 +1131,9 @@ func newIntegrationHarness(
 		CustomerLedgerRepo: customerledgerrepository.New(
 			customerledgerrepository.Params{DB: conn, Logger: logger},
 		),
-		Validator:        NewValidator(ValidatorParams{}),
-		AuditService:     noopAuditService{},
-		WorkflowStarter:  starter,
+		Validator:       NewValidator(ValidatorParams{}),
+		AuditService:    noopAuditService{},
+		WorkflowStarter: starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger: zap.NewNop(),
 			RateEngine: rateengine.NewFallbackEngine(
@@ -1142,7 +1142,7 @@ func newIntegrationHarness(
 			),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
-		Generator:         &fakeGenerator{},
+		Generator: &fakeGenerator{},
 		SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
 			TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
 		},
@@ -1203,7 +1203,7 @@ func (h *integrationHarness) buildService(
 			),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
-		Generator:         &fakeGenerator{},
+		Generator: &fakeGenerator{},
 		SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
 			TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
 		},

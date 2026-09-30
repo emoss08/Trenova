@@ -10,6 +10,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -71,7 +72,7 @@ func manualJournalRowFrom(entity *manualjournal.Request, gate *fieldGate) manual
 		FiscalPeriodID: pulidString(entity.RequestedFiscalPeriodID),
 		CurrencyCode:   entity.CurrencyCode,
 		Balanced:       entity.IsBalanced(),
-		ApprovedAt:     expectedDate(derefInt64(entity.ApprovedAt), absentNotApproved),
+		ApprovedAt:     expectedDate(typeutils.ValueOrZero(entity.ApprovedAt), absentNotApproved),
 		PostedBatchID:  pulidString(entity.PostedBatchID),
 	}
 	if gate.show("totalDebit", "totalDebit") {
@@ -217,8 +218,8 @@ func (t *getManualJournalTool) Query(
 	gate := t.access.gate(ctx, params, permission.ResourceManualJournal)
 	view := manualJournalView{
 		manualJournalRow: manualJournalRowFrom(entity, gate),
-		RejectedAt:       expectedDate(derefInt64(entity.RejectedAt), "not rejected"),
-		CancelledAt:      expectedDate(derefInt64(entity.CancelledAt), "not cancelled"),
+		RejectedAt:       expectedDate(typeutils.ValueOrZero(entity.RejectedAt), "not rejected"),
+		CancelledAt:      expectedDate(typeutils.ValueOrZero(entity.CancelledAt), "not cancelled"),
 		Lines:            make([]manualJournalLineRow, 0, min(len(entity.Lines), maxJournalLines)),
 	}
 
@@ -312,10 +313,10 @@ func newListJournalReversalsTool(
 					FiscalPeriodID:         pulidString(item.ResolvedFiscalPeriodID),
 					ReasonCode:             item.ReasonCode,
 					ApprovedAt: expectedDate(
-						derefInt64(item.ApprovedAt),
+						typeutils.ValueOrZero(item.ApprovedAt),
 						absentNotApproved,
 					),
-					PostedAt: expectedDate(derefInt64(item.PostedAt), absentNotPosted),
+					PostedAt: expectedDate(typeutils.ValueOrZero(item.PostedAt), absentNotPosted),
 				}
 				if gate.show("reasonText", "reasonText") {
 					row.ReasonText = item.ReasonText

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // The HR pickers list in memory and filter here. A carrier has a handful of
@@ -57,7 +58,7 @@ func shiftTemplateSelectOptionItem(entity *worker.ShiftTemplate) selectOptionCon
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Name,
-			Description: stringPtr(entity.Code),
+			Description: stringutils.Ptr(entity.Code),
 			Meta: map[string]any{
 				"code":            entity.Code,
 				"color":           entity.Color,
@@ -118,7 +119,7 @@ func workerPolicySelectOptionItem(entity *worker.WorkerPolicy) selectOptionConne
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Title,
-			Description: stringPtr(entity.Code),
+			Description: stringutils.Ptr(entity.Code),
 			Meta: map[string]any{
 				"code":         entity.Code,
 				"versionLabel": entity.VersionLabel,
@@ -184,7 +185,7 @@ func jobPositionSelectOptionItem(entity *worker.JobPosition) selectOptionConnect
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Title,
-			Description: stringPtr(entity.Code),
+			Description: stringutils.Ptr(entity.Code),
 			Meta: map[string]any{
 				"code":              entity.Code,
 				"department":        string(entity.Department),

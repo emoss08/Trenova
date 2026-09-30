@@ -211,3 +211,80 @@ func (o Operation) IsValid() bool {
 	_, ok := Dependencies[o]
 	return ok
 }
+
+// operationDefinitions is the one place an operation's display name and
+// description are written down. The per-resource tables, the standard
+// operation sets, and the list the API hands the UI are all read out of it, so
+// a name cannot come to differ between the registry and the screen that shows
+// it.
+var operationDefinitions = map[Operation]OperationDefinition{
+	OpRead:     {Operation: OpRead, DisplayName: "Read", Description: "View records"},
+	OpCreate:   {Operation: OpCreate, DisplayName: "Create", Description: "Create new records"},
+	OpUpdate:   {Operation: OpUpdate, DisplayName: "Update", Description: "Modify existing records"},
+	OpDelete:   {Operation: OpDelete, DisplayName: "Delete", Description: "Delete records"},
+	OpExport:   {Operation: OpExport, DisplayName: "Export", Description: "Export records to file"},
+	OpImport:   {Operation: OpImport, DisplayName: "Import", Description: "Import records from file"},
+	OpApprove:  {Operation: OpApprove, DisplayName: "Approve", Description: "Approve records"},
+	OpReject:   {Operation: OpReject, DisplayName: "Reject", Description: "Reject records"},
+	OpAssign:   {Operation: OpAssign, DisplayName: "Assign", Description: "Assign to users"},
+	OpUnassign: {Operation: OpUnassign, DisplayName: "Unassign", Description: "Remove assignments"},
+	OpArchive:  {Operation: OpArchive, DisplayName: "Archive", Description: "Archive records"},
+	OpRestore: {
+		Operation:   OpRestore,
+		DisplayName: "Restore",
+		Description: "Restore archived records",
+	},
+	OpSubmit: {Operation: OpSubmit, DisplayName: "Submit", Description: "Submit for processing"},
+	OpCancel: {Operation: OpCancel, DisplayName: "Cancel", Description: "Cancel records"},
+	OpDuplicate: {
+		Operation:   OpDuplicate,
+		DisplayName: "Duplicate",
+		Description: "Create copies",
+	},
+	OpClose:    {Operation: OpClose, DisplayName: "Close", Description: "Close records"},
+	OpLock:     {Operation: OpLock, DisplayName: "Lock", Description: "Lock records"},
+	OpUnlock:   {Operation: OpUnlock, DisplayName: "Unlock", Description: "Unlock records"},
+	OpActivate: {Operation: OpActivate, DisplayName: "Activate", Description: "Activate records"},
+	OpReopen:   {Operation: OpReopen, DisplayName: "Reopen", Description: "Reopen records"},
+	OpPin:      {Operation: OpPin, DisplayName: "Pin", Description: "Pin records"},
+	OpUnpin:    {Operation: OpUnpin, DisplayName: "Unpin", Description: "Unpin records"},
+	OpResolve:  {Operation: OpResolve, DisplayName: "Resolve", Description: "Resolve records"},
+	OpManage:   {Operation: OpManage, DisplayName: "Manage", Description: "Manage records"},
+}
+
+// operations builds a definition slice in the order asked for. It allocates a
+// fresh slice each time, so a caller may append to the result without writing
+// through to the shared table.
+func operations(ops ...Operation) []OperationDefinition {
+	result := make([]OperationDefinition, 0, len(ops))
+	for _, op := range ops {
+		result = append(result, operationDefinitions[op])
+	}
+
+	return result
+}
+
+var (
+	standardOps = operations(OpRead, OpCreate, OpUpdate, OpExport, OpImport)
+
+	readOnlyOps = operations(OpRead)
+
+	standardOpsWithDelete = operations(
+		OpRead, OpCreate, OpUpdate, OpExport, OpImport, OpDelete,
+	)
+)
+
+// listedOperations is the set the permissions screen offers a person to pick
+// from. It is narrower than IsValid: delete is reachable only through a
+// resource that declares it, and the agent-facing operations are granted
+// through role grants rather than chosen by hand.
+var listedOperations = []Operation{
+	OpRead, OpCreate, OpUpdate, OpExport, OpImport,
+	OpApprove, OpReject, OpAssign, OpUnassign,
+	OpArchive, OpRestore, OpSubmit, OpCancel, OpDuplicate,
+	OpClose, OpLock, OpUnlock, OpActivate, OpReopen,
+}
+
+func GetAllOperations() []OperationDefinition {
+	return operations(listedOperations...)
+}

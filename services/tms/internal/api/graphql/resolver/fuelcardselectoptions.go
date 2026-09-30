@@ -70,16 +70,18 @@ func fuelCardSelectOption(entity *fuelpurchase.FuelCard) *gqlmodel.SelectOption 
 		Meta: map[string]any{
 			"provider":  string(entity.Provider),
 			"lastFour":  entity.LastFour,
-			"tractorId": optionalIDPtrString(entity.AssignedTractorID),
-			"workerId":  optionalIDPtrString(entity.AssignedWorkerID),
+			"tractorId": optionalIDMetaFromPtr(entity.AssignedTractorID),
+			"workerId":  optionalIDMetaFromPtr(entity.AssignedWorkerID),
 		},
 	}
 }
 
-func optionalIDPtrString(id *pulid.ID) any {
-	if id == nil {
+// optionalIDMetaFromPtr renders an optional id into a GraphQL meta map, where
+// an unset reference has to arrive as null rather than as "".
+func optionalIDMetaFromPtr(id *pulid.ID) any {
+	if id == nil || id.IsNil() {
 		return nil
 	}
 
-	return optionalIDString(*id)
+	return id.String()
 }

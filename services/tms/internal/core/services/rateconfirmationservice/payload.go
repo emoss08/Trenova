@@ -77,7 +77,7 @@ func stopRows(stops []*shipment.Stop) []documenttemplate.RateConfirmationStopRow
 		row := documenttemplate.RateConfirmationStopRow{
 			Sequence: sequence,
 			Type:     stopTypeLabel(stop.Type),
-			Window:   windowLabel(stop.ScheduledWindowStart, stop.ScheduledWindowEnd),
+			Window:   timeutils.WindowLabelUTC(stop.ScheduledWindowStart, stop.ScheduledWindowEnd),
 			Address:  stop.AddressLine,
 		}
 		if stop.Location != nil {
@@ -101,10 +101,6 @@ func stopTypeLabel(stopType shipment.StopType) string {
 	default:
 		return string(stopType)
 	}
-}
-
-func windowLabel(start int64, end *int64) string {
-	return timeutils.WindowLabelUTC(start, end)
 }
 
 func rateMethodLabel(method shipment.CarrierRateMethod) string {

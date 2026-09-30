@@ -177,11 +177,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		&repositories.GetRecurringShipmentByIDRequest{
-			ID: recurringShipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:            recurringShipmentID,
+			TenantInfo:    pagination.FromAuth(authCtx),
 			ExpandDetails: c.Query("expandDetails") == "true",
 		},
 	)
@@ -307,11 +304,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 	updated, err := h.service.UpdateStatus(
 		c.Request.Context(),
 		&repositories.UpdateRecurringShipmentStatusRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:          pagination.FromAuthAsUser(authCtx),
 			RecurringShipmentID: recurringShipmentID,
 			Status:              req.Status,
 			Version:             req.Version,
@@ -403,11 +396,7 @@ func (h *Handler) generate(c *gin.Context) {
 	result, err := h.service.Generate(
 		c.Request.Context(),
 		&repositories.GenerateRecurringShipmentRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:          pagination.FromAuthAsUser(authCtx),
 			RecurringShipmentID: recurringShipmentID,
 			OccurrenceAt:        req.OccurrenceAt,
 			Trigger:             recurringshipment.RunTriggerManual,
@@ -454,11 +443,7 @@ func (h *Handler) listRuns(c *gin.Context) {
 			return h.service.ListRuns(
 				c.Request.Context(),
 				&repositories.ListRecurringShipmentRunsRequest{
-					TenantInfo: pagination.TenantInfo{
-						OrgID:  authCtx.OrganizationID,
-						BuID:   authCtx.BusinessUnitID,
-						UserID: authCtx.UserID,
-					},
+					TenantInfo:          pagination.FromAuthAsUser(authCtx),
 					RecurringShipmentID: recurringShipmentID,
 					Filter:              req,
 				},
@@ -522,11 +507,8 @@ func (h *Handler) getOption(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		&repositories.GetRecurringShipmentByIDRequest{
-			ID: recurringShipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         recurringShipmentID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {

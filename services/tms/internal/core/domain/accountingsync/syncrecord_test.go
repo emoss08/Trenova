@@ -225,8 +225,8 @@ func TestMarkSyncedClearsTheErrorAndKeepsTheLink(t *testing.T) {
 	assert.Empty(t, record.ErrorCategory)
 	assert.Empty(t, record.ErrorMessage)
 	assert.Equal(t, map[string]string{
-		accountingsync.ExternalRefApplication:    "0",
-		accountingsync.ExternalRefDocument: "146",
+		accountingsync.ExternalRefApplication: "0",
+		accountingsync.ExternalRefDocument:    "146",
 	}, record.ExternalRefs)
 	assert.Equal(t, []string{"acctm_1"}, record.MappingIDs)
 	assert.False(t, record.NeverSent())

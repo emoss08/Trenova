@@ -32,18 +32,18 @@ var (
 type Params struct {
 	fx.In
 
-	Logger      *zap.Logger
-	Cases       repositories.ExtractionEvalCaseRepository
-	Runs        repositories.ExtractionEvalRunRepository
-	Results     repositories.ExtractionEvalResultRepository
-	Corrections repositories.AICorrectionRepository
-	Documents   repositories.DocumentRepository
-	Contents    repositories.DocumentContentRepository
-	Providers   repositories.AIProviderRepository
-	Audit       services.AuditService
-	Retention   repositories.DataRetentionRepository
-	Budget      services.EvaluationBudget         `optional:"true"`
-	Predictor   services.ExtractionPredictor      `optional:"true"`
+	Logger        *zap.Logger
+	Cases         repositories.ExtractionEvalCaseRepository
+	Runs          repositories.ExtractionEvalRunRepository
+	Results       repositories.ExtractionEvalResultRepository
+	Corrections   repositories.AICorrectionRepository
+	Documents     repositories.DocumentRepository
+	Contents      repositories.DocumentContentRepository
+	Providers     repositories.AIProviderRepository
+	Audit         services.AuditService
+	Retention     repositories.DataRetentionRepository
+	Budget        services.EvaluationBudget         `optional:"true"`
+	Predictor     services.ExtractionPredictor      `optional:"true"`
 	Starter       services.ExtractionEvalRunStarter `optional:"true"`
 	Notifications *notificationservice.Service      `optional:"true"`
 }

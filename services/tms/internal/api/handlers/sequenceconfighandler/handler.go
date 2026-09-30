@@ -74,11 +74,7 @@ func (h *Handler) get(c *gin.Context) {
 	doc, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetSequenceConfigRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 	)
 	if err != nil {

@@ -102,7 +102,7 @@ func (s *Service) InviteWorker(
 		return nil, err
 	}
 
-	token, tokenHash, err := newInvitationToken()
+	token, tokenHash, err := tokenutils.New()
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +380,7 @@ func (s *Service) lookupAcceptableInvitation(
 			"An invitation token is required",
 		)
 	}
-	invitation, err := s.portalRepo.GetInvitationByTokenHash(ctx, hashInvitationToken(token))
+	invitation, err := s.portalRepo.GetInvitationByTokenHash(ctx, tokenutils.Hash(token))
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, errortypes.NewValidationError(
@@ -467,7 +467,7 @@ func (s *Service) sendInvitationEmail(
 		Subject:        rendered.Subject,
 		HTML:           rendered.HTML,
 		Text:           rendered.Text,
-		IdempotencyKey: "portal-invite-" + hashInvitationToken(p.InviteURL),
+		IdempotencyKey: "portal-invite-" + tokenutils.Hash(p.InviteURL),
 	}); err != nil {
 		log.Warn("failed to send portal invitation email; share the invite link manually",
 			zap.Error(err))
@@ -475,14 +475,6 @@ func (s *Service) sendInvitationEmail(
 	}
 
 	return true
-}
-
-func newInvitationToken() (token, tokenHash string, err error) {
-	return tokenutils.New()
-}
-
-func hashInvitationToken(token string) string {
-	return tokenutils.Hash(token)
 }
 
 func usernameFromEmail(address string) string {

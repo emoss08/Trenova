@@ -178,11 +178,8 @@ func (h *Handler) getOption(c *gin.Context) {
 	}
 
 	entity, err := h.service.Get(c.Request.Context(), repositories.GetLocationByIDRequest{
-		ID: locationID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		ID:         locationID,
+		TenantInfo: pagination.FromAuth(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -247,11 +244,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetLocationByIDRequest{
-			ID: locationID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         locationID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -325,12 +319,8 @@ func (h *Handler) patch(c *gin.Context) {
 	existing, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetLocationByIDRequest{
-			ID: locationID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			ID:         locationID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 	)
 	if err != nil {

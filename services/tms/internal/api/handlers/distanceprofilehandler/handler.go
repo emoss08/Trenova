@@ -128,11 +128,8 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 	entity, err := h.service.Get(c.Request.Context(), repositories.GetDistanceProfileByIDRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		ID:         id,
+		TenantInfo: pagination.FromAuth(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -187,12 +184,8 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 	existing, err := h.service.Get(c.Request.Context(), repositories.GetDistanceProfileByIDRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         id,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -218,12 +211,8 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 	if err = h.service.Delete(c.Request.Context(), repositories.DeleteDistanceProfileRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         id,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -241,12 +230,8 @@ func (h *Handler) setDefault(c *gin.Context) {
 	updated, err := h.service.SetDefault(
 		c.Request.Context(),
 		repositories.GetDistanceProfileByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 		authCtx.UserID,
 	)

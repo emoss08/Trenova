@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -65,19 +66,19 @@ func newBuilder(
 			"customerId",
 			"customers",
 			"Customer does not exist in your organization",
-			func(a *rateagreement.RateAgreement) pulid.ID { return derefID(a.CustomerID) },
+			func(a *rateagreement.RateAgreement) pulid.ID { return typeutils.DerefID(a.CustomerID) },
 		).
 		WithOptionalReferenceCheck(
 			"carrierId",
 			"carriers",
 			"Carrier does not exist in your organization",
-			func(a *rateagreement.RateAgreement) pulid.ID { return derefID(a.CarrierID) },
+			func(a *rateagreement.RateAgreement) pulid.ID { return typeutils.DerefID(a.CarrierID) },
 		).
 		WithOptionalReferenceCheck(
 			"billToCustomerId",
 			"customers",
 			"Bill-to customer does not exist in your organization",
-			func(a *rateagreement.RateAgreement) pulid.ID { return derefID(a.BillToCustomerID) },
+			func(a *rateagreement.RateAgreement) pulid.ID { return typeutils.DerefID(a.BillToCustomerID) },
 		)
 }
 
@@ -309,14 +310,4 @@ func activationReadinessRule() validationframework.TenantedRule[*rateagreement.R
 
 			return nil
 		})
-}
-
-// derefID reads an optional identifier as the zero-or-value the reference
-// checker expects, since an unset pointer and a nil id mean the same thing to it.
-func derefID(id *pulid.ID) pulid.ID {
-	if id == nil {
-		return pulid.Nil
-	}
-
-	return *id
 }

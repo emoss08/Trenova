@@ -131,10 +131,7 @@ func (h *Handler) match(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	req := &repositories.MatchLaneRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		TenantInfo:       pagination.FromAuth(authCtx),
 		OriginCity:       c.Query("originCity"),
 		OriginState:      c.Query("originState"),
 		DestinationCity:  c.Query("destinationCity"),
@@ -188,11 +185,8 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	entity, err := h.service.Get(c.Request.Context(), repositories.GetRoutingGuideByIDRequest{
-		ID: guideID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		ID:         guideID,
+		TenantInfo: pagination.FromAuth(authCtx),
 		RoutingGuideFilterOptions: repositories.RoutingGuideFilterOptions{
 			IncludeEntries: true,
 		},
@@ -308,12 +302,8 @@ func (h *Handler) delete(c *gin.Context) {
 
 	actor := actorutil.FromAuthContext(authCtx)
 	if err = h.service.Delete(c.Request.Context(), repositories.DeleteRoutingGuideRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
-		ID: guideID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
+		ID:         guideID,
 	}, actor); err != nil {
 		h.eh.HandleError(c, err)
 		return

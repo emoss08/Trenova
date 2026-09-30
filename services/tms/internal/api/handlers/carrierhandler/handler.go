@@ -189,11 +189,8 @@ func (h *Handler) getOption(c *gin.Context) {
 	}
 
 	entity, err := h.service.Get(c.Request.Context(), repositories.GetCarrierByIDRequest{
-		ID: carrierID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		ID:         carrierID,
+		TenantInfo: pagination.FromAuth(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -261,11 +258,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetCarrierByIDRequest{
-			ID: carrierID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         carrierID,
+			TenantInfo: pagination.FromAuth(authCtx),
 			CarrierFilterOptions: repositories.CarrierFilterOptions{
 				IncludeState:             helpers.QueryBool(c, "includeState"),
 				IncludeContacts:          helpers.QueryBool(c, "includeContacts"),
@@ -344,12 +338,8 @@ func (h *Handler) patch(c *gin.Context) {
 	existing, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetCarrierByIDRequest{
-			ID: carrierID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			ID:         carrierID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			CarrierFilterOptions: repositories.CarrierFilterOptions{
 				IncludeContacts:          true,
 				IncludeInsurancePolicies: true,

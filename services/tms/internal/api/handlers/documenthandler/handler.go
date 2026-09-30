@@ -350,11 +350,8 @@ func (h *Handler) getOption(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetDocumentByIDRequest{
-			ID: documentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         documentID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -432,11 +429,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetDocumentByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -511,11 +505,8 @@ func (h *Handler) download(c *gin.Context) {
 	content, err := h.service.GetDownloadContent(
 		c.Request.Context(),
 		repositories.GetDocumentByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -552,11 +543,8 @@ func (h *Handler) view(c *gin.Context) {
 	content, err := h.service.GetViewContent(
 		c.Request.Context(),
 		repositories.GetDocumentByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -593,11 +581,8 @@ func (h *Handler) preview(c *gin.Context) {
 	content, err := h.service.GetPreviewContent(
 		c.Request.Context(),
 		repositories.GetDocumentByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -673,11 +658,7 @@ func (h *Handler) upload(c *gin.Context) {
 	result, err := h.service.Upload(
 		c.Request.Context(),
 		&documentservice.UploadRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:        pagination.FromAuthAsUser(authCtx),
 			Actor:             requestActorFromAuthContext(authCtx),
 			File:              file,
 			ResourceID:        req.ResourceID,
@@ -709,11 +690,7 @@ func (h *Handler) createUploadSession(c *gin.Context) {
 	session, err := h.uploadService.CreateSession(
 		c.Request.Context(),
 		&serviceports.CreateSessionRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:        pagination.FromAuthAsUser(authCtx),
 			Actor:             requestActorFromAuthContext(authCtx),
 			ResourceID:        req.ResourceID,
 			ResourceType:      req.ResourceType,
@@ -741,10 +718,7 @@ func (h *Handler) listActiveUploadSessions(c *gin.Context) {
 	sessions, err := h.uploadService.ListActive(
 		c.Request.Context(),
 		&repositories.ListActiveDocumentUploadSessionsRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:   pagination.FromAuth(authCtx),
 			ResourceID:   helpers.QueryString(c, "resourceId", ""),
 			ResourceType: helpers.QueryString(c, "resourceType", ""),
 		},
@@ -768,11 +742,8 @@ func (h *Handler) getUploadSession(c *gin.Context) {
 	state, err := h.uploadService.GetSessionState(
 		c.Request.Context(),
 		repositories.GetDocumentUploadSessionByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -800,11 +771,7 @@ func (h *Handler) getUploadPartURLs(c *gin.Context) {
 	targets, err := h.uploadService.GetPartUploadTargets(
 		c.Request.Context(),
 		&serviceports.PartRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:  pagination.FromAuthAsUser(authCtx),
 			SessionID:   id,
 			PartNumbers: req.PartNumbers,
 		},
@@ -838,11 +805,7 @@ func (h *Handler) uploadSessionPart(c *gin.Context) {
 	session, err := h.uploadService.UploadPart(
 		c.Request.Context(),
 		&serviceports.UploadPartRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			SessionID:  id,
 			PartNumber: partNumber,
 			Body:       c.Request.Body,
@@ -868,13 +831,9 @@ func (h *Handler) completeUploadSession(c *gin.Context) {
 	session, err := h.uploadService.Complete(
 		c.Request.Context(),
 		&serviceports.CompletionRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
-			Actor:     requestActorFromAuthContext(authCtx),
-			SessionID: id,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			Actor:      requestActorFromAuthContext(authCtx),
+			SessionID:  id,
 		},
 	)
 	if err != nil {
@@ -894,12 +853,8 @@ func (h *Handler) cancelUploadSession(c *gin.Context) {
 	}
 
 	if err = h.uploadService.Cancel(c.Request.Context(), &serviceports.CancelRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
-		SessionID: id,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
+		SessionID:  id,
 	}); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -972,11 +927,7 @@ func (h *Handler) uploadBulk(c *gin.Context) {
 	result, err := h.service.BulkUpload(
 		c.Request.Context(),
 		&documentservice.BulkUploadRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:   pagination.FromAuthAsUser(authCtx),
 			Actor:        requestActorFromAuthContext(authCtx),
 			Files:        files,
 			ResourceID:   req.ResourceID,
@@ -1019,11 +970,8 @@ func (h *Handler) delete(c *gin.Context) {
 	err = h.service.Delete(
 		c.Request.Context(),
 		repositories.DeleteDocumentRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		authCtx.UserID,
 	)
@@ -1074,13 +1022,9 @@ func (h *Handler) bulkDelete(c *gin.Context) {
 	result, err := h.service.BulkDelete(
 		c.Request.Context(),
 		&documentservice.BulkDeleteRequest{
-			IDs: ids,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
-			UserID: authCtx.UserID,
+			IDs:        ids,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			UserID:     authCtx.UserID,
 		},
 	)
 	if err != nil {
@@ -1136,10 +1080,7 @@ func (h *Handler) getByResource(c *gin.Context) {
 	documents, err := h.service.GetByResource(
 		c.Request.Context(),
 		&repositories.GetDocumentsByResourceRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:          pagination.FromAuth(authCtx),
 			ResourceID:          resourceID,
 			ResourceType:        resourceType,
 			IncludeDocumentType: helpers.QueryBool(c, "includeDocumentType", false),
@@ -1393,11 +1334,7 @@ func (h *Handler) openImportAssistantThread(c *gin.Context) {
 	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
 		&serviceports.OpenPageThreadRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:  pagination.FromAuthAsUser(authCtx),
 			Origin:      conversation.ThreadOriginImport,
 			SubjectType: agent.SubjectDocument,
 			SubjectID:   documentID,

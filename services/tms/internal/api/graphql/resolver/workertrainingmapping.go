@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -157,5 +158,5 @@ func nullDecimalPtr(value decimal.NullDecimal) *string {
 	if !value.Valid {
 		return nil
 	}
-	return stringPtr(value.Decimal.StringFixed(2))
+	return stringutils.Ptr(value.Decimal.StringFixed(2))
 }

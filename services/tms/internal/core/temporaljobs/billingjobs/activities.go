@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -98,7 +99,7 @@ func (a *Activities) AutoPostInvoiceActivity(
 	if current.Status == invoice.StatusPosted || current.Status == invoice.StatusVoided {
 		return &AutoPostInvoiceResult{
 			InvoiceID:     current.ID,
-			PostedAt:      derefInt64(current.PostedAt),
+			PostedAt:      typeutils.ValueOrZero(current.PostedAt),
 			CompletedAt:   timeutils.NowUnix(),
 			AlreadyPosted: true,
 			Voided:        current.Status == invoice.StatusVoided,
@@ -123,7 +124,7 @@ func (a *Activities) AutoPostInvoiceActivity(
 
 	return &AutoPostInvoiceResult{
 		InvoiceID:   posted.ID,
-		PostedAt:    derefInt64(posted.PostedAt),
+		PostedAt:    typeutils.ValueOrZero(posted.PostedAt),
 		CompletedAt: timeutils.NowUnix(),
 	}, nil
 }
@@ -316,14 +317,6 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		DocumentID:  documentID,
 		CompletedAt: timeutils.NowUnix(),
 	}, nil
-}
-
-func derefInt64(value *int64) int64 {
-	if value == nil {
-		return 0
-	}
-
-	return *value
 }
 
 func (a *Activities) invoicePDFLineageID(

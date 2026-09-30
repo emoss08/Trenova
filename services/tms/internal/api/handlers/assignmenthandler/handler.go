@@ -130,10 +130,7 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		&repositories.GetAssignmentByIDRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:   pagination.FromAuth(authCtx),
 			AssignmentID: assignmentID,
 		},
 	)
@@ -233,11 +230,7 @@ func (h *Handler) unassign(c *gin.Context) {
 	if err = h.service.Unassign(
 		c.Request.Context(),
 		&repositories.UnassignShipmentMoveRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			ShipmentMoveID: moveID,
 		},
 	); err != nil {

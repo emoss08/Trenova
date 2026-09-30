@@ -226,11 +226,7 @@ func (h *Handler) cancel(c *gin.Context) {
 	if err = h.service.Cancel(
 		c.Request.Context(),
 		&repositories.CancelCarrierAssignmentRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			ShipmentMoveID: moveID,
 			Reason:         body.Reason,
 		},

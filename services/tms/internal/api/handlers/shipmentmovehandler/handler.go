@@ -115,12 +115,9 @@ func (h *Handler) updateStatus(c *gin.Context) {
 	entity, err := h.service.UpdateStatus(
 		c.Request.Context(),
 		&repositories.UpdateMoveStatusRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
-			MoveID: moveID,
-			Status: shipment.MoveStatus(body.Status),
+			TenantInfo: pagination.FromAuth(authCtx),
+			MoveID:     moveID,
+			Status:     shipment.MoveStatus(body.Status),
 		},
 	)
 	if err != nil {
@@ -155,12 +152,9 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	entities, err := h.service.BulkUpdateStatus(
 		c.Request.Context(),
 		&repositories.BulkUpdateMoveStatusRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
-			MoveIDs: body.MoveIDs,
-			Status:  shipment.MoveStatus(body.Status),
+			TenantInfo: pagination.FromAuth(authCtx),
+			MoveIDs:    body.MoveIDs,
+			Status:     shipment.MoveStatus(body.Status),
 		},
 	)
 	if err != nil {
@@ -209,11 +203,7 @@ func (h *Handler) recordStopActual(c *gin.Context) {
 	entity, err := h.service.RecordStopActual(
 		c.Request.Context(),
 		&repositories.RecordStopActualRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			MoveID:     moveID,
 			StopID:     stopID,
 			Action:     repositories.StopActualAction(body.Action),
@@ -257,10 +247,7 @@ func (h *Handler) splitMove(c *gin.Context) {
 	}
 
 	entity, err := h.service.SplitMove(c.Request.Context(), &repositories.SplitMoveRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		TenantInfo:            pagination.FromAuth(authCtx),
 		MoveID:                moveID,
 		NewDeliveryLocationID: body.NewDeliveryLocationID,
 		SplitPickupTimes:      body.SplitPickupTimes,

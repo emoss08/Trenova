@@ -10,6 +10,7 @@ import (
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func refuseNonDraftUpdate(entity *invoice.Invoice) error {
@@ -38,13 +39,13 @@ func applyDraftUpdate(entity *invoice.Invoice, req *servicesports.UpdateInvoiceD
 		entity.EmailBodySnapshot = strings.TrimSpace(*req.EmailBody)
 	}
 	if req.EmailTo != nil {
-		entity.EmailToSnapshot = normalizeRecipients(*req.EmailTo)
+		entity.EmailToSnapshot = stringutils.NormalizeEmailList(*req.EmailTo)
 	}
 	if req.EmailCC != nil {
-		entity.EmailCCSnapshot = normalizeRecipients(*req.EmailCC)
+		entity.EmailCCSnapshot = stringutils.NormalizeEmailList(*req.EmailCC)
 	}
 	if req.EmailBCC != nil {
-		entity.EmailBCCSnapshot = normalizeRecipients(*req.EmailBCC)
+		entity.EmailBCCSnapshot = stringutils.NormalizeEmailList(*req.EmailBCC)
 	}
 }
 

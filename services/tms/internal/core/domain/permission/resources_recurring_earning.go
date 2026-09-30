@@ -1,0 +1,60 @@
+package permission
+
+func (r *Registry) registerRecurringEarningResource() {
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceRecurringEarning.String(),
+		DisplayName:        "Recurring Earning",
+		Description:        "Recurring driver earning schedules such as per diem and bonuses",
+		Category:           "Payroll",
+		Operations:         standardOpsWithDelete,
+		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"businessUnitId":  SensitivityInternal,
+			"createdAt":       SensitivityInternal,
+			"createdById":     SensitivityInternal,
+			"currencyCode":    SensitivityInternal,
+			"description":     SensitivityInternal,
+			"endDate":         SensitivityInternal,
+			"frequency":       SensitivityInternal,
+			"id":              SensitivityInternal,
+			"kind":            SensitivityInternal,
+			"organizationId":  SensitivityInternal,
+			"payCodeId":       SensitivityInternal,
+			"startDate":       SensitivityInternal,
+			"status":          SensitivityInternal,
+			"updatedAt":       SensitivityInternal,
+			"version":         SensitivityInternal,
+			"workerId":        SensitivityInternal,
+			"amountMinor":     SensitivityRestricted,
+			"paidToDateMinor": SensitivityRestricted,
+			"totalCapMinor":   SensitivityRestricted,
+		},
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourcePayCode.String(),
+		DisplayName:        "Pay Code",
+		Description:        "Carrier-defined earning and deduction codes with GL account mappings",
+		Category:           "Payroll",
+		Operations:         standardOpsWithDelete,
+		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"businessUnitId":        SensitivityInternal,
+			"code":                  SensitivityInternal,
+			"countsTowardGuarantee": SensitivityInternal,
+			"createdAt":             SensitivityInternal,
+			"description":           SensitivityInternal,
+			"direction":             SensitivityInternal,
+			fieldGLAccountID:        SensitivityInternal,
+			"id":                    SensitivityInternal,
+			"isSystem":              SensitivityInternal,
+			"name":                  SensitivityInternal,
+			"organizationId":        SensitivityInternal,
+			"status":                SensitivityInternal,
+			"taxable":               SensitivityInternal,
+			"updatedAt":             SensitivityInternal,
+			"version":               SensitivityInternal,
+			"defaultAmountMinor":    SensitivityRestricted,
+		},
+	})
+}

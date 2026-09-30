@@ -156,11 +156,8 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 	entity, err := h.service.Get(c.Request.Context(), repositories.GetTrailerByIDRequest{
-		ID: trailerID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		ID:         trailerID,
+		TenantInfo: pagination.FromAuth(authCtx),
 		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
 			IncludeLastKnownLocation: true,
 			IncludeCustomFields:      true,
@@ -222,11 +219,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetTrailerByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 			TrailerRelationIncludes: repositories.TrailerRelationIncludes{
 				IncludeLastKnownLocation: true,
 				IncludeCustomFields:      true,
@@ -340,12 +334,8 @@ func (h *Handler) patch(c *gin.Context) {
 	}
 
 	existing, err := h.service.Get(c.Request.Context(), repositories.GetTrailerByIDRequest{
-		ID: trailerID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         trailerID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
 			IncludeLastKnownLocation: true,
 			IncludeCustomFields:      true,

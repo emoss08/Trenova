@@ -39,13 +39,13 @@ type ListAICorrectionsForAccuracyRequest struct {
 }
 
 type ListAICorrectionsForTrainingRequest struct {
-	TenantInfo      pagination.TenantInfo
-	Task            aicorrection.Task
-	CapturedFrom    int64
-	CapturedTo      int64
+	TenantInfo       pagination.TenantInfo
+	Task             aicorrection.Task
+	CapturedFrom     int64
+	CapturedTo       int64
 	BeforeCapturedAt int64
 	BeforeID         pulid.ID
-	Limit           int
+	Limit            int
 }
 
 type TotalAICorrectionsByProviderRequest struct {

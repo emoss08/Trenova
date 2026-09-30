@@ -189,11 +189,8 @@ func (h *Handler) getOption(c *gin.Context) {
 	}
 
 	entity, err := h.service.Get(c.Request.Context(), repositories.GetGLAccountByIDRequest{
-		ID: glAccountID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		ID:         glAccountID,
+		TenantInfo: pagination.FromAuth(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -257,11 +254,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetGLAccountByIDRequest{
-			ID: glAccountID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         glAccountID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -331,12 +325,8 @@ func (h *Handler) patch(c *gin.Context) {
 	existing, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetGLAccountByIDRequest{
-			ID: glAccountID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			ID:         glAccountID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 	)
 	if err != nil {
@@ -419,12 +409,8 @@ func (h *Handler) delete(c *gin.Context) {
 	}
 
 	if err = h.service.Delete(c.Request.Context(), repositories.DeleteGLAccountRequest{
-		ID: glAccountID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         glAccountID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {
 		h.eh.HandleError(c, err)
 		return

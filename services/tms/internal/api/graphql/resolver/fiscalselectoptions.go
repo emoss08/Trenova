@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *Resolver) resolveFiscalYearSelectOptions(
@@ -97,7 +98,7 @@ func fiscalYearSelectOption(entity *fiscalyear.FiscalYear) *gqlmodel.SelectOptio
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Name,
-		Description: stringPtr(strconv.Itoa(entity.Year)),
+		Description: stringutils.Ptr(strconv.Itoa(entity.Year)),
 		Meta: map[string]any{
 			"year":      entity.Year,
 			"status":    string(entity.Status),

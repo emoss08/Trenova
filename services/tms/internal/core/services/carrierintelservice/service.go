@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/restx"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -131,7 +132,7 @@ func New(p Params) *Service {
 		publisher:       p.Publisher,
 		interactiveWait: p.Config.CarrierIntelligence.GetInteractiveWait(),
 		breaker:         newCircuitBreaker(),
-		now:             nowUnix,
+		now:             timeutils.NowUnix,
 	}
 
 	if p.CarrierService != nil {

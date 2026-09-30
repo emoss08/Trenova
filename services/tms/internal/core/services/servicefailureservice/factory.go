@@ -136,10 +136,3 @@ func detectedFailureNote(entity *servicefailure.ServiceFailure) string {
 		entity.LateMinutes,
 	)
 }
-
-func optionalIDString(id *pulid.ID) string {
-	if id == nil || id.IsNil() {
-		return ""
-	}
-	return id.String()
-}

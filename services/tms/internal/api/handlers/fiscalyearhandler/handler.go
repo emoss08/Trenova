@@ -157,11 +157,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetFiscalYearByIDRequest{
-			ID: fiscalYearID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         fiscalYearID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -183,11 +180,8 @@ func (h *Handler) closeBlockers(c *gin.Context) {
 	result, err := h.service.GetCloseBlockers(
 		c.Request.Context(),
 		repositories.GetFiscalYearByIDRequest{
-			ID: fiscalYearID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         fiscalYearID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -222,11 +216,8 @@ func (h *Handler) closePreview(c *gin.Context) {
 	plan, err = h.service.GetClosePreview(
 		c.Request.Context(),
 		repositories.GetFiscalYearByIDRequest{
-			ID: fiscalYearID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         fiscalYearID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -271,12 +262,8 @@ func (h *Handler) reopen(c *gin.Context) {
 	}
 
 	entity, err := h.service.Reopen(c.Request.Context(), repositories.ReopenFiscalYearRequest{
-		ID: fiscalYearID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:           fiscalYearID,
+		TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		ReopenReason: payload.ReopenReason,
 	}, authCtx.UserID)
 	if err != nil {
@@ -386,12 +373,8 @@ func (h *Handler) patch(c *gin.Context) {
 	existing, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetFiscalYearByIDRequest{
-			ID: fiscalYearID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			ID:         fiscalYearID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 	)
 	if err != nil {
@@ -434,12 +417,8 @@ func (h *Handler) delete(c *gin.Context) {
 	}
 
 	if err = h.service.Delete(c.Request.Context(), repositories.DeleteFiscalYearRequest{
-		ID: fiscalYearID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         fiscalYearID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -470,12 +449,8 @@ func (h *Handler) close(c *gin.Context) {
 	}
 
 	entity, err := h.service.Close(c.Request.Context(), repositories.CloseFiscalYearRequest{
-		ID: fiscalYearID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         fiscalYearID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -507,12 +482,8 @@ func (h *Handler) activate(c *gin.Context) {
 	}
 
 	entity, err := h.service.Activate(c.Request.Context(), repositories.ActivateFiscalYearRequest{
-		ID: fiscalYearID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         fiscalYearID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)

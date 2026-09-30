@@ -114,9 +114,9 @@ func TestCreatePurchaseDocumentWritesABill(t *testing.T) {
 	assert.Equal(t, "210", result.ExternalID)
 	assert.Equal(t, "CINV-778", result.DocNumber)
 	assert.Equal(t, map[string]string{
-		accountingsync.ExternalRefDocument: "210",
-		accountingsync.ExternalRefDocumentType:                    "Bill",
-		accountingsync.ExternalRefURL:                             conn.env.AppBaseURL() + "/app/bill?txnId=210",
+		accountingsync.ExternalRefDocument:     "210",
+		accountingsync.ExternalRefDocumentType: "Bill",
+		accountingsync.ExternalRefURL:          conn.env.AppBaseURL() + "/app/bill?txnId=210",
 	}, result.Refs)
 	assert.Equal(t, result.Refs[accountingsync.ExternalRefURL],
 		conn.DocumentURL(accountingsync.SyncObjectCarrierBill, "210"))

@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -780,7 +781,7 @@ func (t *listCollectionsWorklistTool) Query(
 			Disputed:        item.IsDisputed,
 			HasShortPay:     item.HasShortPay,
 			DisputeReason:   item.OpenDisputeReasonCode,
-			DisputeOpenedAt: expectedDate(derefInt64(item.DisputeOpenedAt), "no open dispute"),
+			DisputeOpenedAt: expectedDate(typeutils.ValueOrZero(item.DisputeOpenedAt), "no open dispute"),
 		}
 		if showAmounts {
 			row.Open = minorText(item.OpenAmountMinor)
@@ -1087,12 +1088,12 @@ func (t *getJournalEntryTool) Query(
 		journalEntryRow: journalEntryRowFrom(entry, gate),
 		FiscalPeriodID:  entry.FiscalPeriodID.String(),
 		ReferenceID:     entry.ReferenceID,
-		PostedAt:        expectedDate(derefInt64(entry.PostedAt), absentNotPosted),
-		ApprovedAt:      expectedDate(derefInt64(entry.ApprovedAt), absentNotApproved),
-		RejectedAt:      expectedDate(derefInt64(entry.RejectedAt), "not rejected"),
+		PostedAt:        expectedDate(typeutils.ValueOrZero(entry.PostedAt), absentNotPosted),
+		ApprovedAt:      expectedDate(typeutils.ValueOrZero(entry.ApprovedAt), absentNotApproved),
+		RejectedAt:      expectedDate(typeutils.ValueOrZero(entry.RejectedAt), "not rejected"),
 		ReversalOfID:    pulidString(entry.ReversalOfID),
 		ReversedByID:    pulidString(entry.ReversedByID),
-		ReversalDate:    expectedDate(derefInt64(entry.ReversalDate), "not reversed"),
+		ReversalDate:    expectedDate(typeutils.ValueOrZero(entry.ReversalDate), "not reversed"),
 		LineCount:       len(entry.Lines),
 		LinesTruncated:  truncated,
 		Lines:           make([]journalLineRow, 0, len(lines)),
@@ -1343,9 +1344,9 @@ func newListFiscalPeriodsTool(
 					StartDate:    recordedDate(item.StartDate),
 					EndDate:      recordedDate(item.EndDate),
 					Adjusting:    item.IsAdjusting,
-					LockedAt:     expectedDate(derefInt64(item.LockedAt), "not locked"),
-					ClosedAt:     expectedDate(derefInt64(item.ClosedAt), "not closed"),
-					ReopenedAt:   expectedDate(derefInt64(item.ReopenedAt), "never reopened"),
+					LockedAt:     expectedDate(typeutils.ValueOrZero(item.LockedAt), "not locked"),
+					ClosedAt:     expectedDate(typeutils.ValueOrZero(item.ClosedAt), "not closed"),
+					ReopenedAt:   expectedDate(typeutils.ValueOrZero(item.ReopenedAt), "never reopened"),
 				}
 				if item.ReopenReason != "" && gate.show("reopenReason", "reopenReason") {
 					row.ReopenReason = item.ReopenReason

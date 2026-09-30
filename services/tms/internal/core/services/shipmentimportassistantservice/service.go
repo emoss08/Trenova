@@ -753,11 +753,11 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 	) (string, []serviceports.ShipmentImportAction) {
 		key := args.Str("field_key")
 		return fmt.Sprintf(
-				`{"accepted":"%q"}`,
-				key,
-			), []serviceports.ShipmentImportAction{
-				{Type: "accept_field", FieldKey: key},
-			}
+			`{"accepted":"%q"}`,
+			key,
+		), []serviceports.ShipmentImportAction{
+			{Type: "accept_field", FieldKey: key},
+		}
 	},
 
 	"accept_all_confident": func(
@@ -779,12 +779,12 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 	) (string, []serviceports.ShipmentImportAction) {
 		key, value := args.Str("field_key"), args.Str("value")
 		return fmt.Sprintf(
-				`{"set":"%q","value":"%q"}`,
-				key,
-				value,
-			), []serviceports.ShipmentImportAction{
-				{Type: "set_field", FieldKey: key, Value: value},
-			}
+			`{"set":"%q","value":"%q"}`,
+			key,
+			value,
+		), []serviceports.ShipmentImportAction{
+			{Type: "set_field", FieldKey: key, Value: value},
+		}
 	},
 
 	"set_required_field": func(
@@ -795,17 +795,17 @@ var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
 	) (string, []serviceports.ShipmentImportAction) {
 		key, entityID, label := args.Str("field_key"), args.Str("entity_id"), args.Str("label")
 		return fmt.Sprintf(
-				`{"set_required":"%q","entity_id":"%q"}`,
-				key,
-				entityID,
-			), []serviceports.ShipmentImportAction{
-				{
-					Type:     "set_required_field",
-					FieldKey: key,
-					Value:    entityID,
-					Metadata: map[string]any{"label": label},
-				},
-			}
+			`{"set_required":"%q","entity_id":"%q"}`,
+			key,
+			entityID,
+		), []serviceports.ShipmentImportAction{
+			{
+				Type:     "set_required_field",
+				FieldKey: key,
+				Value:    entityID,
+				Metadata: map[string]any{"label": label},
+			},
+		}
 	},
 
 	"search_customers": func(

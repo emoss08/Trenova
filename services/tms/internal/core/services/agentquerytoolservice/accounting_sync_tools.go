@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 type accountingStatusReader interface {
@@ -283,9 +284,9 @@ func accountingSyncStatusRowFrom(
 	row.Mode = string(conn.Mode())
 	row.Granularity = string(conn.Granularity())
 	row.OpeningBalancesSent = conn.SentOpeningBalances()
-	row.StartDate = expectedDate(derefInt64(conn.SyncStartDate), absentNotChosen)
+	row.StartDate = expectedDate(typeutils.ValueOrZero(conn.SyncStartDate), absentNotChosen)
 	row.AutomaticSending = conn.IsSyncing() && conn.AutoSync
-	row.PausedOn = expectedDate(derefInt64(conn.PausedAt), absentNotPaused)
+	row.PausedOn = expectedDate(typeutils.ValueOrZero(conn.PausedAt), absentNotPaused)
 	row.PausedReason = conn.PausedReason
 	row.WhatThisMeans = accountingStatusMeaning(status, conn.Status)
 

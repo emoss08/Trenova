@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -378,7 +379,7 @@ func tenderStops(payload *edi.LoadTenderPayload) []tenderStopRow {
 				State:       stop.LocationStateCode,
 				PostalCode:  stop.LocationPostalCode,
 				WindowOpens: recordedDate(stop.ScheduledWindowStart),
-				WindowEnds:  expectedDate(derefInt64(stop.ScheduledWindowEnd), absentNoWindowEnd),
+				WindowEnds:  expectedDate(typeutils.ValueOrZero(stop.ScheduledWindowEnd), absentNoWindowEnd),
 				Pieces:      stop.Pieces,
 				Weight:      stop.Weight,
 			})
@@ -561,7 +562,7 @@ func (t *listEDIMessagesTool) Query(
 			DeliveryStatus:   string(message.DeliveryStatus),
 			DeliveryAttempts: message.DeliveryAttempts,
 			DeliveryError:    message.DeliveryLastError,
-			SentAt:           expectedDate(derefInt64(message.DeliverySentAt), "not sent"),
+			SentAt:           expectedDate(typeutils.ValueOrZero(message.DeliverySentAt), "not sent"),
 			InterchangeCtrl:  message.InterchangeControlNumber,
 			RawPurged:        message.RawPurgedAt != nil,
 		}

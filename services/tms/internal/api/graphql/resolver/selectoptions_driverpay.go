@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *Resolver) resolvePayCodeSelectOptions(
@@ -53,7 +54,7 @@ func payCodeSelectOptionItem(entity *driverpay.PayCode) selectOptionConnectionIt
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Code,
-			Description: stringPtr(entity.Name),
+			Description: stringutils.Ptr(entity.Name),
 			Meta: map[string]any{
 				"code":                  entity.Code,
 				"name":                  entity.Name,
@@ -113,7 +114,7 @@ func payProfileSelectOptionItem(entity *driverpay.PayProfile) selectOptionConnec
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Name,
-			Description: stringPtr(entity.Description),
+			Description: stringutils.Ptr(entity.Description),
 			Meta: map[string]any{
 				"classification": string(entity.Classification),
 				"currencyCode":   entity.CurrencyCode,

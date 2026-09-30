@@ -157,11 +157,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetCustomFieldDefinitionByIDRequest{
-			ID: definitionID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         definitionID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -271,12 +268,8 @@ func (h *Handler) patch(c *gin.Context) {
 	existing, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetCustomFieldDefinitionByIDRequest{
-			ID: definitionID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			ID:         definitionID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 	)
 	if err != nil {
@@ -318,11 +311,8 @@ func (h *Handler) delete(c *gin.Context) {
 	}
 
 	err = h.service.Delete(c.Request.Context(), repositories.GetCustomFieldDefinitionByIDRequest{
-		ID: definitionID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		ID:         definitionID,
+		TenantInfo: pagination.FromAuth(authCtx),
 	}, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -369,10 +359,7 @@ func (h *Handler) getByResourceType(c *gin.Context) {
 	definitions, err := h.service.GetActiveByResourceType(
 		c.Request.Context(),
 		repositories.GetActiveByResourceTypeRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:   pagination.FromAuth(authCtx),
 			ResourceType: resourceType,
 		},
 	)

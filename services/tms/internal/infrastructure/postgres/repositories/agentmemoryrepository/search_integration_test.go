@@ -82,7 +82,7 @@ func TestSearch_FindsAMemoryByItsWordsNotTheWholePhrase(t *testing.T) {
 	customerID := pulid.MustNew("cus_")
 
 	dock := f.record(ctx, t, &agent.Memory{
-		Content: "The dock closes at four on Fridays; book the appointment before noon.",
+		Content:     "The dock closes at four on Fridays; book the appointment before noon.",
 		SubjectType: agent.MemorySubjectCustomer, SubjectID: &customerID,
 		SubjectLabel: "Acme Foods",
 	})

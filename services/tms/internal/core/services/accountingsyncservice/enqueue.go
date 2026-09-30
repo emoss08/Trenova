@@ -254,7 +254,7 @@ func JournalDayRequest(
 		TenantInfo:   tenantInfo,
 		ObjectType:   accountingsync.SyncObjectJournalSummary,
 		ObjectID:     pulid.ID(accountingsync.JournalDayID(accountingDate, loc)),
-		ObjectNumber: accountingsync.JournalDayNumber(accountingDate, loc),
+		ObjectNumber: timeutils.FormatCalendarDate(accountingDate, loc),
 		Operation:    accountingsync.SyncOperationCreate,
 		Revision:     1,
 		DocumentDate: timeutils.DayStart(accountingDate, loc),

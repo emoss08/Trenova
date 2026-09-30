@@ -105,12 +105,8 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	entity, err := h.service.Get(c.Request.Context(), &serviceports.GetManualJournalRequest{
-		RequestID: requestID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		RequestID:  requestID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -183,12 +179,8 @@ func (h *Handler) submit(c *gin.Context) {
 		c,
 		func(ctx *gin.Context, authCtx *authctx.AuthContext, requestID pulid.ID) (*manualjournal.Request, error) {
 			return h.service.Submit(ctx.Request.Context(), &serviceports.GetManualJournalRequest{
-				RequestID: requestID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID:  authCtx.OrganizationID,
-					BuID:   authCtx.BusinessUnitID,
-					UserID: authCtx.UserID,
-				},
+				RequestID:  requestID,
+				TenantInfo: pagination.FromAuthAsUser(authCtx),
 			}, actorutil.FromAuthContext(authCtx))
 		},
 	)
@@ -199,12 +191,8 @@ func (h *Handler) approve(c *gin.Context) {
 		c,
 		func(ctx *gin.Context, authCtx *authctx.AuthContext, requestID pulid.ID) (*manualjournal.Request, error) {
 			return h.service.Approve(ctx.Request.Context(), &serviceports.GetManualJournalRequest{
-				RequestID: requestID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID:  authCtx.OrganizationID,
-					BuID:   authCtx.BusinessUnitID,
-					UserID: authCtx.UserID,
-				},
+				RequestID:  requestID,
+				TenantInfo: pagination.FromAuthAsUser(authCtx),
 			}, actorutil.FromAuthContext(authCtx))
 		},
 	)
@@ -215,12 +203,8 @@ func (h *Handler) post(c *gin.Context) {
 		c,
 		func(ctx *gin.Context, authCtx *authctx.AuthContext, requestID pulid.ID) (*manualjournal.Request, error) {
 			return h.service.Post(ctx.Request.Context(), &serviceports.GetManualJournalRequest{
-				RequestID: requestID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID:  authCtx.OrganizationID,
-					BuID:   authCtx.BusinessUnitID,
-					UserID: authCtx.UserID,
-				},
+				RequestID:  requestID,
+				TenantInfo: pagination.FromAuthAsUser(authCtx),
 			}, actorutil.FromAuthContext(authCtx))
 		},
 	)
@@ -242,13 +226,9 @@ func (h *Handler) reject(c *gin.Context) {
 	}
 
 	entity, err := h.service.Reject(c.Request.Context(), &serviceports.RejectManualJournalRequest{
-		RequestID: requestID,
-		Reason:    body.Reason,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		RequestID:  requestID,
+		Reason:     body.Reason,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -274,13 +254,9 @@ func (h *Handler) cancel(c *gin.Context) {
 	}
 
 	entity, err := h.service.Cancel(c.Request.Context(), &serviceports.CancelManualJournalRequest{
-		RequestID: requestID,
-		Reason:    body.Reason,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		RequestID:  requestID,
+		Reason:     body.Reason,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		h.eh.HandleError(c, err)

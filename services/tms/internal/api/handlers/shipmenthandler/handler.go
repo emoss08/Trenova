@@ -418,11 +418,8 @@ func (h *Handler) getPermitAssessment(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		&repositories.GetShipmentByIDRequest{
-			ID: shipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         shipmentID,
+			TenantInfo: pagination.FromAuth(authCtx),
 			ShipmentOptions: repositories.ShipmentOptions{
 				ExpandShipmentDetails: true,
 			},
@@ -468,11 +465,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		&repositories.GetShipmentByIDRequest{
-			ID: shipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         shipmentID,
+			TenantInfo: pagination.FromAuth(authCtx),
 			ShipmentOptions: repositories.ShipmentOptions{
 				ExpandShipmentDetails: helpers.QueryBool(c, "expandShipmentDetails"),
 				Status:                helpers.QueryString(c, "status"),
@@ -832,10 +826,7 @@ func (h *Handler) getDelayedShipments(c *gin.Context) {
 	entities, err := h.service.GetDelayedShipments(
 		c.Request.Context(),
 		&repositories.GetDelayedShipmentsRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -863,10 +854,7 @@ func (h *Handler) delayShipments(c *gin.Context) {
 	entities, err := h.service.DelayShipments(
 		c.Request.Context(),
 		&repositories.DelayShipmentsRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -895,10 +883,7 @@ func (h *Handler) getAutoCancelableShipments(c *gin.Context) {
 	entities, err := h.service.GetAutoCancelableShipments(
 		c.Request.Context(),
 		&repositories.GetAutoCancelableShipmentsRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -926,10 +911,7 @@ func (h *Handler) autoCancelShipments(c *gin.Context) {
 	entities, err := h.service.AutoCancelShipments(
 		c.Request.Context(),
 		&repositories.AutoCancelShipmentsRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -966,10 +948,7 @@ func (h *Handler) cancel(c *gin.Context) {
 
 	req := &repositories.CancelShipmentRequest{
 		ShipmentID: shipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		TenantInfo: pagination.FromAuth(authCtx),
 	}
 	if err = c.ShouldBindJSON(req); err != nil && !errors.Is(err, io.EOF) {
 		h.eh.HandleError(c, err)
@@ -1016,10 +995,7 @@ func (h *Handler) autoRate(c *gin.Context) {
 
 	req := &services.AutoRateShipmentRequest{
 		ShipmentID: shipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		TenantInfo: pagination.FromAuth(authCtx),
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
@@ -1058,10 +1034,7 @@ func (h *Handler) uncancel(c *gin.Context) {
 
 	req := &repositories.UncancelShipmentRequest{
 		ShipmentID: shipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		TenantInfo: pagination.FromAuth(authCtx),
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
@@ -1099,10 +1072,7 @@ func (h *Handler) transferOwnership(c *gin.Context) {
 
 	req := &repositories.TransferOwnershipRequest{
 		ShipmentID: shipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		TenantInfo: pagination.FromAuth(authCtx),
 	}
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)

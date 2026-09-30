@@ -90,11 +90,7 @@ func (h *Handler) exportDashboard(c *gin.Context) {
 		c.Request.Context(),
 		&reportingservice.ExportDashboardRequest{
 			Request: reportingservice.Request{
-				TenantInfo: pagination.TenantInfo{
-					OrgID:  authCtx.OrganizationID,
-					BuID:   authCtx.BusinessUnitID,
-					UserID: authCtx.UserID,
-				},
+				TenantInfo: pagination.FromAuthAsUser(authCtx),
 			},
 			DashboardID:  dashboardID,
 			FilterValues: body.FilterValues,
@@ -143,11 +139,7 @@ func (h *Handler) downloadRun(c *gin.Context) {
 		c.Request.Context(),
 		&reportingservice.GetRunRequest{
 			Request: reportingservice.Request{
-				TenantInfo: pagination.TenantInfo{
-					OrgID:  authCtx.OrganizationID,
-					BuID:   authCtx.BusinessUnitID,
-					UserID: authCtx.UserID,
-				},
+				TenantInfo: pagination.FromAuthAsUser(authCtx),
 			},
 			RunID: runID,
 		},

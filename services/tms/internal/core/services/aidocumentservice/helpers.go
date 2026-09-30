@@ -85,16 +85,6 @@ func derivedConflicts(
 	return derived
 }
 
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if trimmed := strings.TrimSpace(value); trimmed != "" {
-			return trimmed
-		}
-	}
-
-	return ""
-}
-
 func normalizeReviewStatus(status string) string {
 	switch strings.TrimSpace(strings.ToLower(status)) {
 	case "ready":

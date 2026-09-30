@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 // The catalog is a curated set, not blanket coverage. There are well over a
@@ -244,9 +245,9 @@ func toShipmentRow(item *shipment.Shipment) shipmentRow {
 	if item.TotalChargeAmount.Valid {
 		row.TotalCharge = item.TotalChargeAmount.Decimal.String()
 	}
-	row.ActualShipDate = expectedDate(derefInt64(item.ActualShipDate), "not shipped yet")
+	row.ActualShipDate = expectedDate(typeutils.ValueOrZero(item.ActualShipDate), "not shipped yet")
 	row.ActualDeliveryDate = expectedDate(
-		derefInt64(item.ActualDeliveryDate), "not delivered yet")
+		typeutils.ValueOrZero(item.ActualDeliveryDate), "not delivered yet")
 	if item.Customer != nil {
 		row.Customer = item.Customer.Name
 	}

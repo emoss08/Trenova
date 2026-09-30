@@ -377,7 +377,7 @@ func bestMatch(callable, added []serviceports.AgentToolDescriptor) string {
 
 func writeToolLines(b *strings.Builder, descriptors []serviceports.AgentToolDescriptor) {
 	for _, descriptor := range descriptors {
-		fmt.Fprintf(b, "- %s: %s\n", descriptor.Name, firstSentence(descriptor.Description))
+		fmt.Fprintf(b, "- %s: %s\n", descriptor.Name, stringutils.FirstSentence(descriptor.Description))
 	}
 }
 
@@ -431,7 +431,7 @@ func (s *Service) unheldRefusal(set *toolSet, name string) string {
 		b.WriteString(" Tools this agent holds that may do the job, now callable:\n")
 		for _, descriptor := range nearest {
 			s.load(set, descriptor.Name)
-			fmt.Fprintf(&b, "- %s: %s\n", descriptor.Name, firstSentence(descriptor.Description))
+			fmt.Fprintf(&b, "- %s: %s\n", descriptor.Name, stringutils.FirstSentence(descriptor.Description))
 		}
 		return b.String()
 	}
@@ -650,10 +650,6 @@ func toSpec(descriptor serviceports.AgentToolDescriptor) serviceports.ToolSpec {
 		Description: descriptor.Description,
 		Parameters:  descriptor.Parameters,
 	}
-}
-
-func firstSentence(text string) string {
-	return stringutils.FirstSentence(text)
 }
 
 // withoutSelfScoped drops the tools that act on a person's own records. A run

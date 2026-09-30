@@ -375,4 +375,3 @@ func TestWriteOffJournalIsStampedWhenItIsWrittenNotOnItsAccountingDate(t *testin
 	require.NotNil(t, journal.PostedAt)
 	assert.GreaterOrEqual(t, *journal.PostedAt, writtenAfter)
 }
-

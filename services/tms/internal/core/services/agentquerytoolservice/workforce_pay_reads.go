@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -269,7 +270,7 @@ func newListDriverExpensesTool(
 					IncurredOn: recordedDate(expense.IncurredDate),
 					HasReceipt: expense.ReceiptDocumentID != nil,
 					ReviewNote: gatedText(gate, "reviewNote", expense.ReviewNote),
-					ReviewedAt: expectedDate(derefInt64(expense.ReviewedAt), absentNotResolved),
+					ReviewedAt: expectedDate(typeutils.ValueOrZero(expense.ReviewedAt), absentNotResolved),
 				}
 				if description := gatedText(gate, wfFieldDescription,
 					expense.Description); description != "" {
@@ -339,7 +340,7 @@ func newListPayrollExportsTool(
 					OvertimeMinutes:  run.OvertimeMinutes,
 					PaidLeaveMinutes: run.PaidLeaveMinutes,
 					GeneratedAt:      pointerDate(run.GeneratedAt),
-					VoidedAt:         expectedDate(derefInt64(run.VoidedAt), absentNotVoided),
+					VoidedAt:         expectedDate(typeutils.ValueOrZero(run.VoidedAt), absentNotVoided),
 					VoidReason:       gatedText(gate, "voidReason", run.VoidReason),
 				})
 			}

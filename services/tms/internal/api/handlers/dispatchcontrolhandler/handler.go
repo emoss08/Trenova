@@ -72,11 +72,7 @@ func (h *Handler) get(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity, err := h.service.Get(c.Request.Context(), repositories.GetDispatchControlRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)

@@ -88,11 +88,7 @@ func (h *Handler) start(c *gin.Context) {
 			SubjectType:  body.SubjectType,
 			SubjectID:    body.SubjectID,
 			Trigger:      agent.RunTriggerManual,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		},
 		&actor,
 	)

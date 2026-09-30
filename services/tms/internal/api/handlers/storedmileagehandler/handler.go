@@ -77,11 +77,8 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 	entity, err := h.service.Get(c.Request.Context(), repositories.GetStoredMileageByIDRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		ID:         id,
+		TenantInfo: pagination.FromAuth(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -98,12 +95,8 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 	if err = h.service.Deactivate(c.Request.Context(), repositories.DeleteStoredMileageRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         id,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {
 		h.eh.HandleError(c, err)
 		return

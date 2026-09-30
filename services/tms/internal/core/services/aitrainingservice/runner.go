@@ -246,10 +246,10 @@ func (r *Runner) writeExamples(
 		}
 
 		page, err := r.corrections.ListForTraining(ctx, &repositories.ListAICorrectionsForTrainingRequest{
-			TenantInfo:      job.tenant,
-			Task:            job.export.Task,
-			CapturedFrom:    job.export.CapturedFrom,
-			CapturedTo:      job.export.CapturedTo,
+			TenantInfo:       job.tenant,
+			Task:             job.export.Task,
+			CapturedFrom:     job.export.CapturedFrom,
+			CapturedTo:       job.export.CapturedTo,
 			BeforeCapturedAt: beforeCapturedAt,
 			BeforeID:         beforeID,
 			Limit:            correctionPageSize,

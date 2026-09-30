@@ -25,6 +25,17 @@ func DedupeStrings(items []string) []string {
 	return out
 }
 
+// DedupeSorted returns the distinct, non-blank members of items in ascending
+// order. Callers that render the result into a stable place — a rendered
+// document, a warning list — need the order to be the same on every run, which
+// DedupeStrings does not promise because it keeps the order it was given.
+func DedupeSorted(items []string) []string {
+	out := DedupeStrings(items)
+	slices.Sort(out)
+
+	return out
+}
+
 func AppendIfMissing(items []string, value string) []string {
 	if slices.Contains(items, value) {
 		return items

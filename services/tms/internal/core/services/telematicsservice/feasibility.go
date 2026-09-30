@@ -3,6 +3,7 @@ package telematicsservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/shared/intutils"
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
@@ -145,7 +146,7 @@ func evaluateDriver(
 			result.Reasons = append(result.Reasons, fmt.Sprintf(
 				"Needs %s of drive time; %s remaining",
 				formatMsShort(required),
-				formatMsShort(minInt64(state.DriveRemainingMs, state.ShiftRemainingMs)),
+				formatMsShort(intutils.Min(state.DriveRemainingMs, state.ShiftRemainingMs)),
 			))
 			return result
 		}
@@ -216,11 +217,4 @@ func formatMsShort(ms int64) string {
 	hours := ms / 3_600_000
 	minutes := (ms % 3_600_000) / 60_000
 	return fmt.Sprintf("%dh %02dm", hours, minutes)
-}
-
-func minInt64(a, b int64) int64 {
-	if a < b {
-		return a
-	}
-	return b
 }

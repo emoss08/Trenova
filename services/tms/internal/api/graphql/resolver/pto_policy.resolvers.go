@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
 )
@@ -286,7 +287,7 @@ func (r *pTOAvailabilityResolver) FloorDays(ctx context.Context, obj *ptoledgers
 }
 
 func (r *pTOAvailabilityResolver) Message(ctx context.Context, obj *ptoledgerservice.AvailabilityResult) (*string, error) {
-	return stringPtr(obj.Message), nil
+	return stringutils.Ptr(obj.Message), nil
 }
 
 func (r *pTOBalanceSummaryResolver) TotalBalanceDays(ctx context.Context, obj *repositories.PTOBalanceSummary) (string, error) {
@@ -608,7 +609,7 @@ func (r *workerPTOLedgerEntryResolver) BalanceAfterDays(ctx context.Context, obj
 }
 
 func (r *workerPTOLedgerEntryResolver) PeriodKey(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error) {
-	return stringPtr(obj.PeriodKey), nil
+	return stringutils.Ptr(obj.PeriodKey), nil
 }
 
 func (r *workerPTOLedgerEntryResolver) SourcePTOID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error) {
@@ -628,7 +629,7 @@ func (r *workerPTOLedgerEntryResolver) CreatedByID(ctx context.Context, obj *wor
 }
 
 func (r *workerPTOLedgerEntryResolver) Note(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error) {
-	return stringPtr(obj.Note), nil
+	return stringutils.Ptr(obj.Note), nil
 }
 
 func (r *workerPTOPolicyAssignmentResolver) PTOPolicy(ctx context.Context, obj *worker.WorkerPTOPolicyAssignment) (*worker.PTOPolicy, error) {

@@ -97,11 +97,7 @@ func (h *Handler) update(c *gin.Context) {
 			ShadowMode:             body.ShadowMode,
 			BillingAgentEnabled:    body.BillingAgentEnabled,
 			DecisionTimeoutSeconds: body.DecisionTimeoutSeconds,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:             pagination.FromAuthAsUser(authCtx),
 		},
 		&actor,
 	)

@@ -43,10 +43,7 @@ func (h *Handler) getCommentCount(c *gin.Context) {
 		c.Request.Context(),
 		&repositories.GetShipmentCommentCountRequest{
 			ShipmentID: shipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -226,10 +223,7 @@ func (h *Handler) deleteComment(c *gin.Context) {
 		&services.DeleteShipmentCommentRequest{
 			ShipmentID: shipmentID,
 			CommentID:  commentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx)); err != nil {
 		h.eh.HandleError(c, err)

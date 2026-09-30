@@ -52,7 +52,7 @@ func dailyJournal() *services.AccountingJournalDocument {
 				Description:       "Accounts payable",
 				PartyKind:         services.AccountingJournalVendor,
 				PartyExternalID:   "91",
-				},
+			},
 		},
 	}
 }

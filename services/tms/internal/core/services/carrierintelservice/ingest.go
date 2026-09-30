@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -138,7 +139,7 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 		SubjectType:    in.subject.SubjectType,
 		SubjectID:      in.subject.SubjectID,
 		CarrierID:      in.subject.CarrierID,
-		DOTNumber:      firstNonEmpty(profile.DOTNumber(), in.subject.DOTNumber),
+		DOTNumber:      stringutils.FirstNonEmptyTrimmed(profile.DOTNumber(), in.subject.DOTNumber),
 		DocketNumber:   docketOf(profile, in.subject),
 		Provider:       in.bound.provider,
 		ProviderRef:    result.ProviderRef,
@@ -335,15 +336,6 @@ func nextReviewState(
 		return current.ReviewState
 	}
 	return carrierintel.ReviewStateNeedsReview
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, v := range values {
-		if strings.TrimSpace(v) != "" {
-			return strings.TrimSpace(v)
-		}
-	}
-	return ""
 }
 
 func docketOf(profile *carrierintel.Profile, subject repositories.CarrierIntelSubject) string {

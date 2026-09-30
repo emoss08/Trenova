@@ -559,8 +559,6 @@ func optionalInt(value *int64) string {
 	return strconv.FormatInt(*value, 10)
 }
 
-func boolean(value bool) string { return strconv.FormatBool(value) }
-
 func utc(value int64) string {
 	if value <= 0 {
 		return ""
@@ -636,7 +634,7 @@ var exportColumns = []exportColumn{
 		}
 		return strconv.Itoa(*r.Attempt)
 	}},
-	{"failover", func(r *exportRow) string { return boolean(r.Failover) }},
+	{"failover", func(r *exportRow) string { return strconv.FormatBool(r.Failover) }},
 	{"input_tokens", func(r *exportRow) string { return strconv.Itoa(r.InputTokens) }},
 	{"output_tokens", func(r *exportRow) string { return strconv.Itoa(r.OutputTokens) }},
 	{"reasoning_tokens", func(r *exportRow) string { return strconv.Itoa(r.ReasoningTokens) }},
@@ -657,9 +655,13 @@ var exportColumns = []exportColumn{
 	{"held_by", func(r *exportRow) string { return compact(r.HeldBy) }},
 	{"reason", func(r *exportRow) string { return text(r.Reason) }},
 	{"arguments", func(r *exportRow) string { return compact(r.Arguments) }},
-	{"arguments_withheld", func(r *exportRow) string { return boolean(r.ArgumentsWithheld) }},
+	{"arguments_withheld", func(r *exportRow) string {
+		return strconv.FormatBool(r.ArgumentsWithheld)
+	}},
 	{"redacted_paths", func(r *exportRow) string { return compact(r.RedactedPaths) }},
-	{"arguments_truncated", func(r *exportRow) string { return boolean(r.ArgumentsTruncated) }},
+	{"arguments_truncated", func(r *exportRow) string {
+		return strconv.FormatBool(r.ArgumentsTruncated)
+	}},
 	{"result_summary", func(r *exportRow) string { return text(r.ResultSummary) }},
 	{"entity_type", func(r *exportRow) string { return text(r.EntityType) }},
 	{"entity_id", func(r *exportRow) string { return text(r.EntityID) }},
@@ -667,11 +669,11 @@ var exportColumns = []exportColumn{
 	{"version_after", func(r *exportRow) string { return optionalInt(r.VersionAfter) }},
 	{"window_start", func(r *exportRow) string { return integer(r.WindowStart) }},
 	{"window_end", func(r *exportRow) string { return integer(r.WindowEnd) }},
-	{"tainted", func(r *exportRow) string { return boolean(r.Tainted) }},
+	{"tainted", func(r *exportRow) string { return strconv.FormatBool(r.Tainted) }},
 	{"taint", func(r *exportRow) string { return compact(r.Taint) }},
-	{"external_content", func(r *exportRow) string { return boolean(r.ExternalContent) }},
-	{"simulated", func(r *exportRow) string { return boolean(r.Simulated) }},
-	{"reconstructed", func(r *exportRow) string { return boolean(r.Reconstructed) }},
+	{"external_content", func(r *exportRow) string { return strconv.FormatBool(r.ExternalContent) }},
+	{"simulated", func(r *exportRow) string { return strconv.FormatBool(r.Simulated) }},
+	{"reconstructed", func(r *exportRow) string { return strconv.FormatBool(r.Reconstructed) }},
 	{"source_key", func(r *exportRow) string { return text(r.SourceKey) }},
 	{"audit_entry_ids", func(r *exportRow) string { return compact(r.AuditEntryIDs) }},
 	{"prev_hash", func(r *exportRow) string { return text(r.PrevHash) }},

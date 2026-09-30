@@ -3,6 +3,7 @@ package sim
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"math"
 	"net/http"
 	"sort"
@@ -52,7 +53,7 @@ func parseStatTypes(request *http.Request) ([]string, error) {
 		}
 		out = append(out, statType)
 	}
-	return uniqueStrings(out), nil
+	return sliceutils.DedupeStrings(out), nil
 }
 
 func encodeStatsFeedCursor(at time.Time, offset int) string {

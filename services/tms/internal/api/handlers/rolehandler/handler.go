@@ -138,11 +138,8 @@ func (h *Handler) get(c *gin.Context) {
 	role, err := h.service.GetRoleByID(
 		c.Request.Context(),
 		repositories.GetRoleByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {

@@ -357,10 +357,7 @@ func (h *Handler) simulateVersion(c *gin.Context) {
 	result, err := h.service.SimulateVersion(
 		c.Request.Context(),
 		&serviceports.DocumentParsingSimulationRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:          pagination.FromAuth(authCtx),
 			VersionID:           versionID,
 			FileName:            req.FileName,
 			Text:                req.Text,

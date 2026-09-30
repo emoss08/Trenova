@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -261,7 +262,7 @@ func (r *portalTrainingResolver) Status(ctx context.Context, obj *driverportalse
 }
 
 func (r *portalTrainingResolver) Score(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error) {
-	return stringPtr(obj.Score), nil
+	return stringutils.Ptr(obj.Score), nil
 }
 
 func (r *queryResolver) TrainingCourses(ctx context.Context, input gqlmodel.TrainingCoursesInput) (*gqlmodel.TrainingCourseConnection, error) {

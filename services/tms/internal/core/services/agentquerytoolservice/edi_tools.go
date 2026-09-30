@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -160,7 +161,7 @@ func ediInboundFileRowFrom(file *edi.EDIInboundFile) ediInboundFileRow {
 		ControlNumber:    file.InterchangeControlNumber,
 		SenderID:         file.ISASenderID,
 		ReceivedAt:       recordedDate(file.ReceivedAt),
-		ProcessedAt:      expectedDate(derefInt64(file.ProcessedAt), absentNotProcessed),
+		ProcessedAt:      expectedDate(typeutils.ValueOrZero(file.ProcessedAt), absentNotProcessed),
 		RawPurged:        file.RawPurgedAt != nil,
 	}
 	if file.Partner != nil {
@@ -509,7 +510,7 @@ func ediTransferRowFrom(transfer *edi.EDITransfer) ediTransferRow {
 		RejectionReason:  transfer.RejectionReason,
 		FailureReason:    transfer.FailureReason,
 		SubmittedAt:      recordedDate(transfer.SubmittedAt),
-		ProcessedAt:      expectedDate(derefInt64(transfer.ProcessedAt), absentNotProcessed),
+		ProcessedAt:      expectedDate(typeutils.ValueOrZero(transfer.ProcessedAt), absentNotProcessed),
 	}
 	for _, move := range transfer.TenderPayload.Moves {
 		row.StopCount += len(move.Stops)

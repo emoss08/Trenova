@@ -60,15 +60,11 @@ func (h *Handler) compose(c *gin.Context) {
 
 	actor := requestActor(authCtx)
 	result, err := h.service.Compose(c.Request.Context(), &tablequeryservice.ComposeRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
-		Actor:    &actor,
-		Resource: permission.Resource(c.Param("resource")),
-		Prompt:   body.Prompt,
-		Current:  body.Current,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
+		Actor:      &actor,
+		Resource:   permission.Resource(c.Param("resource")),
+		Prompt:     body.Prompt,
+		Current:    body.Current,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)

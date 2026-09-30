@@ -1,9 +1,9 @@
 package invoiceservice
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
-	"context"
 	"image"
 	"image/color"
 	"regexp"
@@ -2018,4 +2018,3 @@ func TestCreateInvoiceJournalPostingSkipsWithoutAFiscalPeriodRepository(t *testi
 		require.NoError(t, err)
 	})
 }
-

@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"math"
 	"net/http"
 	"sort"
@@ -247,7 +248,7 @@ func (l *LiveSimulator) driverDayFormSubmissions(
 	dayKey := day.Format("2006-01-02")
 	entry := ctx.Roster[driverID]
 	vehicleID := strings.TrimSpace(entry.VehicleID)
-	driverName := firstNonEmpty(entry.Name, driverID)
+	driverName := stringutils.FirstNonEmptyTrimmed(entry.Name, driverID)
 	dayCtx := l.buildDailyEventContext(driverID, vehicleID, day)
 	workSpan := dayCtx.DrivingEnd.Sub(dayCtx.DrivingStart)
 	if workSpan <= 0 {
@@ -703,7 +704,7 @@ func filterFormSubmissions(
 
 	out := make([]Record, 0, len(records))
 	for _, record := range records {
-		updatedAt := firstNonEmpty(
+		updatedAt := stringutils.FirstNonEmptyTrimmed(
 			stringValue(record, "updatedAtTime"),
 			stringValue(record, "submittedAtTime"),
 			stringValue(record, "createdAtTime"),
@@ -724,11 +725,11 @@ func filterFormSubmissions(
 
 func sortFormSubmissions(records []Record) {
 	sort.Slice(records, func(i, j int) bool {
-		left := firstNonEmpty(
+		left := stringutils.FirstNonEmptyTrimmed(
 			stringValue(records[i], "submittedAtTime"),
 			stringValue(records[i], "updatedAtTime"),
 		)
-		right := firstNonEmpty(
+		right := stringutils.FirstNonEmptyTrimmed(
 			stringValue(records[j], "submittedAtTime"),
 			stringValue(records[j], "updatedAtTime"),
 		)
