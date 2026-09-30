@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 /*
@@ -94,7 +95,7 @@ func projectTable(entity string, declared []string, rows []any) tableProjection 
 			}
 		}
 		if recordEntity != "" {
-			if id := stringOf(record[recordIDKey]); id != "" {
+			if id := typeutils.StringOfTrimmed(record[recordIDKey]); id != "" {
 				row[recordIDKey] = id
 			}
 		}

@@ -2,6 +2,7 @@ package tenderservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/shared/tokenutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -50,7 +51,7 @@ func (s *Service) resolveToken(
 		return nil, nil, invalidTokenError()
 	}
 
-	token, err := s.repo.GetTokenByHash(ctx, HashOfferToken(rawToken))
+	token, err := s.repo.GetTokenByHash(ctx, tokenutils.Hash(rawToken))
 	if err != nil {
 		return nil, nil, err
 	}

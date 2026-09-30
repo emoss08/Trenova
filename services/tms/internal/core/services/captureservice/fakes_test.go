@@ -67,6 +67,7 @@ type world struct {
 	uploaded    map[pulid.ID][]byte
 	published   []string
 	audited     []string
+	references  map[string]pulid.ID
 	notified    []*notification.Notification
 }
 
@@ -122,6 +123,7 @@ func (w *world) service() *Service {
 		notifications: &fakeNotifier{w},
 		realtime:      &fakeRealtime{w},
 		audit:         &fakeAudit{w: w},
+		shipments:     &fakeShipments{w: w},
 	}
 }
 
@@ -1113,4 +1115,31 @@ func (f *fakeAudit) LogAction(params *services.LogActionParams, opts ...services
 	f.w.audited = append(f.w.audited, string(params.Operation)+":"+entry.Comment)
 
 	return nil
+}
+
+// fakeShipments finds a shipment by any reference the test registered.
+type fakeShipments struct{ w *world }
+
+func (f *fakeShipments) FindByReference(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	reference string,
+) (pulid.ID, bool, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	id, ok := f.w.references[reference]
+
+	return id, ok, nil
+}
+
+func (f *fakeShipments) ShipmentExists(_ context.Context, _ pagination.TenantInfo, id pulid.ID) (bool, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	for _, known := range f.w.references {
+		if known == id {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

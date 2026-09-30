@@ -73,12 +73,8 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	req := &repositories.ListShipmentEventsRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
-		Limit: parseLimit(c.Query("limit")),
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
+		Limit:      parseLimit(c.Query("limit")),
 	}
 
 	if raw := strings.TrimSpace(c.Query("shipmentId")); raw != "" {

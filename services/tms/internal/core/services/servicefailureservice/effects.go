@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/zap"
 )
 
@@ -126,7 +127,7 @@ func serviceFailureLifecycleMetadata(
 	metadata := serviceFailureMetadata(current, actor)
 	if previous != nil {
 		metadata["previousStatus"] = string(previous.Status)
-		metadata["previousReasonCodeId"] = optionalIDString(previous.ReasonCodeID)
+		metadata["previousReasonCodeId"] = typeutils.IDStringOrEmpty(previous.ReasonCodeID)
 		if previous.ReasonCode != nil {
 			metadata["previousReasonCode"] = previous.ReasonCode.Code
 			metadata["previousReasonLabel"] = previous.ReasonCode.Label
@@ -151,7 +152,7 @@ func serviceFailureMetadata(
 	metadata["source"] = string(entity.Source)
 	metadata["status"] = string(entity.Status)
 	metadata["lateMinutes"] = entity.LateMinutes
-	metadata["reasonCodeId"] = optionalIDString(entity.ReasonCodeID)
+	metadata["reasonCodeId"] = typeutils.IDStringOrEmpty(entity.ReasonCodeID)
 	metadata["x12StatusCode"] = entity.X12StatusCodeOverride
 	metadata["x12ReasonCode"] = entity.X12ReasonCodeOverride
 	if entity.Stop != nil {

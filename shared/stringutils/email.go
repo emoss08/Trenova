@@ -17,6 +17,14 @@ func NormalizeEmailAddresses(values []string) []string {
 	return result
 }
 
+// NormalizeEmailList normalizes each address and drops blanks and
+// duplicates, keeping the order the addresses were given in. It is the
+// []string counterpart to SplitEmailList, for callers that already hold a
+// list rather than a free-form field.
+func NormalizeEmailList(values []string) []string {
+	return dedupeAddresses(NormalizeEmailAddresses(values))
+}
+
 // SplitEmailList parses a free-form recipient list separated by commas,
 // semicolons, newlines, or tabs into normalized, deduplicated addresses.
 func SplitEmailList(raw string) []string {
@@ -28,10 +36,13 @@ func SplitEmailList(raw string) []string {
 		return r == ',' || r == ';' || r == '\n' || r == '\t'
 	})
 
-	normalized := NormalizeEmailAddresses(parts)
-	result := make([]string, 0, len(normalized))
-	seen := make(map[string]struct{}, len(normalized))
-	for _, item := range normalized {
+	return dedupeAddresses(NormalizeEmailAddresses(parts))
+}
+
+func dedupeAddresses(values []string) []string {
+	result := make([]string, 0, len(values))
+	seen := make(map[string]struct{}, len(values))
+	for _, item := range values {
 		if _, ok := seen[item]; ok {
 			continue
 		}

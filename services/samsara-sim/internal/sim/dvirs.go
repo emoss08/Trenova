@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/emoss08/trenova/shared/stringutils"
 	"math"
 	"net/http"
 	"sort"
@@ -138,7 +139,7 @@ func (l *LiveSimulator) Dvirs(
 		for day := startDay; !day.After(endDay); day = day.Add(24 * time.Hour) {
 			driverDay := dvirDriverDay{
 				DriverID:   driverID,
-				DriverName: firstNonEmpty(entry.Name, driverID),
+				DriverName: stringutils.FirstNonEmptyTrimmed(entry.Name, driverID),
 				VehicleID:  vehicleID,
 				Day:        day,
 			}

@@ -145,11 +145,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetServiceFailureReasonCodeByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -219,11 +216,8 @@ func (h *Handler) patch(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetServiceFailureReasonCodeByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {

@@ -146,11 +146,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
 		&repositories.GetServiceFailureByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         id,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -165,10 +162,7 @@ func (h *Handler) createManual(c *gin.Context) {
 	_, err := h.service.CreateManual(
 		c.Request.Context(),
 		&services.CreateManualServiceFailureRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -188,10 +182,7 @@ func (h *Handler) evaluateShipment(c *gin.Context) {
 	result, err := h.service.EvaluateShipment(
 		c.Request.Context(),
 		&services.EvaluateShipmentServiceFailuresRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 			ShipmentID: shipmentID,
 			Force:      c.Query("force") == "true",
 		},
@@ -220,10 +211,7 @@ func (h *Handler) evaluateStop(c *gin.Context) {
 	result, err := h.service.EvaluateStop(
 		c.Request.Context(),
 		&services.EvaluateStopServiceFailuresRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:     pagination.FromAuth(authCtx),
 			ShipmentID:     shipmentID,
 			ShipmentMoveID: moveID,
 			StopID:         stopID,
@@ -378,10 +366,7 @@ func (h *Handler) buildEDI214Payload(c *gin.Context) {
 	result, err := h.ediService.BuildShipmentStatusPayloadForServiceFailure(
 		c.Request.Context(),
 		&services.BuildServiceFailureEDIPayloadRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:       pagination.FromAuth(authCtx),
 			ServiceFailureID: id,
 		},
 	)
@@ -446,10 +431,7 @@ func (h *Handler) edi214Status(c *gin.Context) {
 	status, err := h.ediService.GetServiceFailure214Status(
 		c.Request.Context(),
 		repositories.GetServiceFailure214StatusRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:       pagination.FromAuth(authCtx),
 			ServiceFailureID: id,
 		},
 	)

@@ -428,11 +428,15 @@ input CaptureBatchesInput {
   source: CaptureSource
   "Only the caller's own batches, even when they could see everybody's."
   mine: Boolean
-  "Only batches scanned into this record."
+  "Only stacks for this record: scanned into it, or with a document filed or suggested onto it."
   targetType: String
   targetId: ID
-  "Words from the scanner, print job or device name."
+  "Finds a stack by scanner or print job, the computer that sent it, whose it is, a code on one of its pages, or the PRO or bill of lading number of a shipment it is for."
   query: String
+  "Only stacks that arrived at or after this time."
+  createdFrom: Timestamp
+  "Only stacks that arrived at or before this time."
+  createdTo: Timestamp
 }
 
 input CaptureItemLayoutInput {

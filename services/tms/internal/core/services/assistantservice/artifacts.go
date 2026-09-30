@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/zap"
 )
 
@@ -531,16 +532,16 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 // reader it is the same thing arrived at a different way — except that this
 // one opens rather than being a snapshot.
 func composedViewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
-	path := stringOf(result["path"])
+	path := typeutils.StringOfTrimmed(result["path"])
 	if path == "" {
 		return nil
 	}
 
-	entity := stringOf(result["entity"])
+	entity := typeutils.StringOfTrimmed(result["entity"])
 	payload := map[string]any{
 		"entity":      entity,
 		"path":        path,
-		"explanation": stringOf(result["explanation"]),
+		"explanation": typeutils.StringOfTrimmed(result["explanation"]),
 		"terms":       stringsOf(result["terms"]),
 		"filterCount": result["filterCount"],
 		"unresolved":  result["unresolved"],
@@ -565,7 +566,7 @@ func composedViewArtifact(callID string, result map[string]any) *assistantartifa
 // person puts next to the invoice line they are disputing.
 func rateArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
 	// Nothing to explain is a sentence, not a ledger of zeroes.
-	if stringOf(result["note"]) != "" {
+	if typeutils.StringOfTrimmed(result["note"]) != "" {
 		return nil
 	}
 	components, _ := result["components"].([]any)
@@ -574,11 +575,11 @@ func rateArtifact(callID string, result map[string]any) *assistantartifact.Artif
 	}
 
 	payload := map[string]any{
-		"shipmentId": stringOf(result["shipmentId"]),
-		"side":       stringOf(result["side"]),
-		"currency":   stringOf(result["currency"]),
+		"shipmentId": typeutils.StringOfTrimmed(result["shipmentId"]),
+		"side":       typeutils.StringOfTrimmed(result["side"]),
+		"currency":   typeutils.StringOfTrimmed(result["currency"]),
 		"winner":     result["winner"],
-		"tieBreak":   stringOf(result["tieBreak"]),
+		"tieBreak":   typeutils.StringOfTrimmed(result["tieBreak"]),
 		"rejected":   result["rejected"],
 		"components": components,
 		"guardrails": result["guardrails"],
@@ -620,7 +621,7 @@ func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Ar
 		"changes":   changes,
 		"totals":    totals,
 		"truncated": result["truncated"],
-		"note":      stringOf(result["note"]),
+		"note":      typeutils.StringOfTrimmed(result["note"]),
 	}
 	// The changes are already sorted by risk and then by size, so halving the
 	// list drops the smallest movements rather than an arbitrary tail.
@@ -642,12 +643,12 @@ func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Ar
 // there once, and the one read back from history is a card with a link, so
 // reopening a conversation never drags anybody anywhere.
 func navigationArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
-	path := stringOf(result["path"])
+	path := typeutils.StringOfTrimmed(result["path"])
 	if !assistantartifact.IsAppPath(path) {
 		return nil
 	}
 
-	name := stringOf(result["name"])
+	name := typeutils.StringOfTrimmed(result["name"])
 
 	return &assistantartifact.Artifact{
 		Kind:   assistantartifact.KindNavigation,
@@ -656,8 +657,8 @@ func navigationArtifact(callID string, result map[string]any) *assistantartifact
 		Payload: map[string]any{
 			"path":     path,
 			"name":     name,
-			"location": stringOf(result["location"]),
-			"page":     stringOf(result["page"]),
+			"location": typeutils.StringOfTrimmed(result["location"]),
+			"page":     typeutils.StringOfTrimmed(result["page"]),
 		},
 		SourceToolCallID: callID,
 	}
@@ -669,7 +670,7 @@ func navigationPath(artifact *assistantartifact.Artifact) string {
 		return ""
 	}
 
-	return stringOf(artifact.Payload["path"])
+	return typeutils.StringOfTrimmed(artifact.Payload["path"])
 }
 
 func draftEditArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
@@ -723,7 +724,7 @@ func draftEditOf(artifact *assistantartifact.Artifact) *pagedraft.Edit {
 
 func runDiffTitle(result map[string]any) string {
 	side, _ := result["after"].(map[string]any)
-	if name := stringOf(side["reportName"]); name != "" {
+	if name := typeutils.StringOfTrimmed(side["reportName"]); name != "" {
 		return name + " — what changed"
 	}
 
@@ -750,19 +751,20 @@ func stringsOf(value any) []string {
 func previewArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
 	rows, _ := result["rows"].([]any)
 	payload := map[string]any{
-		"name":      stringOf(result["name"]),
-		"dataset":   stringOf(result["dataset"]),
+		"name":      typeutils.StringOfTrimmed(result["name"]),
+		"dataset":   typeutils.StringOfTrimmed(result["dataset"]),
 		"columns":   result["columns"],
 		"rowCount":  result["rowCount"],
 		"rows":      rows,
 		"totals":    result["totals"],
-		"truncated": boolOf(result["truncated"]),
+		"truncated": typeutils.BoolOf(result["truncated"]),
 	}
 	fitRows(payload, "rows")
 
-	title := stringOf(result["name"])
+	title := typeutils.StringOfTrimmed(result["name"])
 	if title == "" {
-		title = "Preview of " + stringutils.HumanizeSnakeCase(stringOf(result["dataset"]))
+		title = "Preview of " +
+			stringutils.HumanizeSnakeCase(typeutils.StringOfTrimmed(result["dataset"]))
 	}
 
 	return &assistantartifact.Artifact{
@@ -775,27 +777,27 @@ func previewArtifact(callID string, result map[string]any) *assistantartifact.Ar
 }
 
 func runArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
-	runID := stringOf(result["runId"])
+	runID := typeutils.StringOfTrimmed(result["runId"])
 	if runID == "" {
 		return nil
 	}
 
 	payload := map[string]any{
 		"runId":        runID,
-		"reportKey":    stringOf(result["reportKey"]),
-		"definitionId": stringOf(result["definitionId"]),
-		"reportName":   stringOf(result["reportName"]),
-		"status":       stringOf(result["status"]),
-		"finished":     boolOf(result["finished"]),
-		"format":       stringOf(result["format"]),
+		"reportKey":    typeutils.StringOfTrimmed(result["reportKey"]),
+		"definitionId": typeutils.StringOfTrimmed(result["definitionId"]),
+		"reportName":   typeutils.StringOfTrimmed(result["reportName"]),
+		"status":       typeutils.StringOfTrimmed(result["status"]),
+		"finished":     typeutils.BoolOf(result["finished"]),
+		"format":       typeutils.StringOfTrimmed(result["format"]),
 		"rowCount":     result["rowCount"],
-		"truncated":    boolOf(result["truncated"]),
+		"truncated":    typeutils.BoolOf(result["truncated"]),
 	}
 
-	title := stringOf(result["reportName"])
+	title := typeutils.StringOfTrimmed(result["reportName"])
 	if title == "" {
 		title = stringutils.CapitalizeFirst(
-			stringutils.HumanizeSnakeCase(stringOf(result["reportKey"])),
+			stringutils.HumanizeSnakeCase(typeutils.StringOfTrimmed(result["reportKey"])),
 		)
 	}
 	if title == "" {
@@ -803,8 +805,11 @@ func runArtifact(callID string, result map[string]any) *assistantartifact.Artifa
 	}
 
 	return &assistantartifact.Artifact{
-		Kind:             assistantartifact.KindReportRun,
-		Status:           runStatus(boolOf(result["finished"]), stringOf(result["status"])),
+		Kind: assistantartifact.KindReportRun,
+		Status: runStatus(
+			typeutils.BoolOf(result["finished"]),
+			typeutils.StringOfTrimmed(result["status"]),
+		),
 		Title:            artifactTitle(title),
 		Payload:          payload,
 		SourceToolCallID: callID,
@@ -837,7 +842,7 @@ func entityCardArtifact(
 	document jsonDocument,
 ) *assistantartifact.Artifact {
 	result := document.fields
-	if stringOf(result["id"]) == "" {
+	if typeutils.StringOfTrimmed(result["id"]) == "" {
 		return nil
 	}
 
@@ -849,7 +854,7 @@ func entityCardArtifact(
 	}
 	// Where the record opens, from the same registry the app's own links
 	// use, so the card leads to the record rather than only describing it.
-	if path, ok := productguide.RecordPath(entity, stringOf(result["id"])); ok {
+	if path, ok := productguide.RecordPath(entity, typeutils.StringOfTrimmed(result["id"])); ok {
 		payload["path"] = path
 	}
 	if payloadSize(payload) > assistantartifact.MaxPayloadBytes {
@@ -887,11 +892,11 @@ func draftArtifact(proposal *agent.AgentProposal) *assistantartifact.Artifact {
 	}
 	subject := ""
 	if spec.subjectKey != "" {
-		subject = stringOf(proposal.ToolParams[spec.subjectKey])
+		subject = typeutils.StringOfTrimmed(proposal.ToolParams[spec.subjectKey])
 		payload["subject"] = subject
 	}
 	if spec.bodyKey != "" {
-		payload["body"] = stringOf(proposal.ToolParams[spec.bodyKey])
+		payload["body"] = typeutils.StringOfTrimmed(proposal.ToolParams[spec.bodyKey])
 	}
 	if spec.toKey != "" {
 		payload["to"] = proposal.ToolParams[spec.toKey]
@@ -1071,18 +1076,6 @@ func artifactTitle(title string) string {
 	}
 
 	return stringutils.TruncateRunes(title, maxArtifactTitleRunes)
-}
-
-func stringOf(value any) string {
-	s, _ := value.(string)
-
-	return strings.TrimSpace(s)
-}
-
-func boolOf(value any) bool {
-	b, _ := value.(bool)
-
-	return b
 }
 
 func toAssistantArtifact(artifact *assistantartifact.Artifact) services.AssistantArtifact {

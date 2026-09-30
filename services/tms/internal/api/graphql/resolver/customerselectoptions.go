@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *Resolver) resolveCustomerSelectOptions(
@@ -57,7 +58,7 @@ func customerSelectOption(entity *customer.Customer) *gqlmodel.SelectOption {
 	return &gqlmodel.SelectOption{
 		ID:          entity.ID.String(),
 		Label:       entity.Name,
-		Description: stringPtr(entity.Code),
+		Description: stringutils.Ptr(entity.Code),
 		Meta: map[string]any{
 			"code":   entity.Code,
 			"status": string(entity.Status),

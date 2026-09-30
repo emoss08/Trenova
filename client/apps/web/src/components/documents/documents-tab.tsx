@@ -18,7 +18,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CaptureButton, CaptureRequestsPanel, useCaptureKind } from "./capture/capture-panel";
+import {
+  CaptureButton,
+  CaptureRequestsPanel,
+  CaptureStacksPanel,
+  useCaptureKind,
+} from "./capture/capture-panel";
 import { DocumentBulkActionDock } from "./document-bulk-action-dock";
 import { DocumentIntelligenceDialog } from "./document-intelligence-dialog";
 import { DocumentList } from "./document-list";
@@ -513,6 +518,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
       />
 
       {captureKind !== null && <CaptureRequestsPanel kind={captureKind} recordId={resourceId} />}
+      {captureKind !== null && <CaptureStacksPanel kind={captureKind} recordId={resourceId} />}
 
       {isShipment && (
         <Autocomplete<DocumentType, Record<string, any>>

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -69,7 +70,7 @@ func captureDeviceSelectOptionItem(
 		&gqlmodel.SelectOption{
 			ID:          device.ID.String(),
 			Label:       device.Name,
-			Description: stringPtr(device.MachineName),
+			Description: stringutils.Ptr(device.MachineName),
 			Meta: map[string]any{
 				"isOnline":   device.IsOnline(now),
 				"lastSeenAt": device.LastSeenAt,
@@ -112,7 +113,7 @@ func captureProfileSelectOptionItem(profile *capture.CaptureProfile) selectOptio
 		&gqlmodel.SelectOption{
 			ID:          profile.ID.String(),
 			Label:       profile.Name,
-			Description: stringPtr(profile.Description),
+			Description: stringutils.Ptr(profile.Description),
 			Meta: map[string]any{
 				captureMetaIsDefault: profile.IsDefault,
 				"dpi":                profile.DPI,

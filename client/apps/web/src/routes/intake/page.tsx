@@ -45,7 +45,7 @@ function countFilter(filter: IntakeFilter) {
  * and whatever is typed in the search: the rail's loud count.
  */
 function waitingFilter(filter: IntakeFilter) {
-  return countFilter({ ...filter, view: "waiting", query: "" });
+  return countFilter({ ...filter, view: "waiting", query: "", received: "any" });
 }
 
 export const prefetch: RoutePrefetch = ({ request }) => {
@@ -196,6 +196,8 @@ export function IntakePage() {
             onSearchChange={setSearch}
             sort={filter.sort}
             onSortChange={(sort) => setFilter({ ...filter, sort })}
+            received={filter.received}
+            onReceivedChange={(received) => setFilter({ ...filter, received })}
             onOpen={openBatch}
             empty={
               searching

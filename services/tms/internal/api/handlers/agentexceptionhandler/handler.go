@@ -107,11 +107,7 @@ func (h *Handler) resolve(c *gin.Context) {
 			ID:              exceptionID,
 			ResolutionState: body.ResolutionState,
 			ResolutionNotes: body.ResolutionNotes,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:      pagination.FromAuthAsUser(authCtx),
 		},
 		&actor,
 	)

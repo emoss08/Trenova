@@ -62,12 +62,12 @@ func newHorizonFixture(
 
 func horizonControls() (*dispatchcontrol.DispatchControl, Policy) {
 	return &dispatchcontrol.DispatchControl{
-			PlanningMode:             dispatchcontrol.PlanningModeHorizon,
-			HorizonMaxMovesPerDriver: 3,
-		}, Policy{
-			Enabled: true,
-			Tier:    agent.TierPropose,
-		}
+		PlanningMode:             dispatchcontrol.PlanningModeHorizon,
+		HorizonMaxMovesPerDriver: 3,
+	}, Policy{
+		Enabled: true,
+		Tier:    agent.TierPropose,
+	}
 }
 
 func TestBuildHorizonPlan_GroupsChainedMovesIntoOneTour(t *testing.T) {

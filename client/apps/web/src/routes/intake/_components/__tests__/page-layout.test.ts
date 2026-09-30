@@ -9,6 +9,8 @@ import {
   mergeWithNext,
   movePage,
   newDocumentFrom,
+  pageOrder,
+  pagePlace,
   rotate,
   splitAfter,
   toEditInput,
@@ -218,5 +220,21 @@ describe("dropPosition", () => {
 
   it("goes nowhere when dropped on a filed page", () => {
     expect(dropPosition(layout, "p1")).toBeNull();
+  });
+});
+
+describe("reading order", () => {
+  it("goes document by document, then the pages set aside", () => {
+    const layout = layoutFromBatch(batch());
+    const order = pageOrder(layout);
+    expect(order.slice(0, 4)).toEqual(["p3", "p4", "p6", "p7"]);
+    expect(order.slice(4)).toEqual(layout.loose);
+  });
+
+  it("says which document a page is in and where", () => {
+    const layout = layoutFromBatch(batch());
+    expect(pagePlace(layout, "p7")).toEqual({ document: 2, index: 2, of: 2 });
+    expect(pagePlace(layout, layout.loose[0]!)).toMatchObject({ document: null, index: 1 });
+    expect(pagePlace(layout, "nope")).toBeNull();
   });
 });

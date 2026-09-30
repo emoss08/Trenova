@@ -86,10 +86,7 @@ func (h *Handler) getHold(c *gin.Context) {
 		&repositories.GetShipmentHoldByIDRequest{
 			HoldID:     holdID,
 			ShipmentID: shipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -232,10 +229,7 @@ func (h *Handler) releaseHold(c *gin.Context) {
 		&repositories.ReleaseShipmentHoldRequest{
 			HoldID:     holdID,
 			ShipmentID: shipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)

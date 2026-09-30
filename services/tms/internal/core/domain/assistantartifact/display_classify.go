@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 // longTextRunes is the length past which a string is prose rather than a
@@ -406,11 +407,12 @@ func listType(values []any) (DisplayType, bool) {
 func isMetric(object map[string]any) bool {
 	_, hasValue := object["value"]
 
-	return stringOf(object[labelKey]) != "" && hasValue
+	return typeutils.StringOfTrimmed(object[labelKey]) != "" && hasValue
 }
 
 func isLink(object map[string]any) bool {
-	return stringOf(object[labelKey]) != "" && stringOf(object[pathKey]) != ""
+	return typeutils.StringOfTrimmed(object[labelKey]) != "" &&
+		typeutils.StringOfTrimmed(object[pathKey]) != ""
 }
 
 // metricsOf keeps what a measurement says: its name, its value and its unit.
@@ -427,8 +429,8 @@ func metricsOf(value any) []map[string]any {
 		if !ok {
 			continue
 		}
-		metric := map[string]any{labelKey: stringOf(object[labelKey]), "value": figure}
-		if unit := stringOf(object["unit"]); unit != "" {
+		metric := map[string]any{labelKey: typeutils.StringOfTrimmed(object[labelKey]), "value": figure}
+		if unit := typeutils.StringOfTrimmed(object["unit"]); unit != "" {
 			metric["unit"] = unit
 		}
 		out = append(out, metric)
@@ -443,12 +445,12 @@ func linksOf(value any) []map[string]any {
 	out := make([]map[string]any, 0, len(entries))
 	for _, entry := range entries {
 		object, ok := entry.(map[string]any)
-		if !ok || !isLink(object) || !IsAppPath(stringOf(object[pathKey])) {
+		if !ok || !isLink(object) || !IsAppPath(typeutils.StringOfTrimmed(object[pathKey])) {
 			continue
 		}
 		link := map[string]any{
-			labelKey: stringOf(object[labelKey]),
-			pathKey:  stringOf(object[pathKey]),
+			labelKey: typeutils.StringOfTrimmed(object[labelKey]),
+			pathKey:  typeutils.StringOfTrimmed(object[pathKey]),
 		}
 		if count, isCount := object["count"].(float64); isCount && count > 0 {
 			link["count"] = count
@@ -707,10 +709,4 @@ func RecordLabel(record map[string]any) string {
 	first, last := ReadableString(record["firstName"]), ReadableString(record["lastName"])
 
 	return strings.TrimSpace(first + " " + last)
-}
-
-func stringOf(value any) string {
-	s, _ := value.(string)
-
-	return strings.TrimSpace(s)
 }

@@ -32,8 +32,10 @@ import (
 const (
 	maxFileNameLength   = 200
 	filingFailedMessage = "The document could not be filed. Try again, or file it from intake."
-	itemActionFiled     = "item.filed"
-	itemActionEdited    = "items.edited"
+	// maxBatchSearchLength bounds what the queue search matches on.
+	maxBatchSearchLength = 100
+	itemActionFiled      = "item.filed"
+	itemActionEdited     = "items.edited"
 )
 
 // coverSheetByID reads a cover sheet, reporting whether it still exists.
@@ -142,6 +144,10 @@ type ListBatchesInput struct {
 	Mine       bool     `json:"mine"`
 	TargetType string   `json:"targetType"`
 	TargetID   pulid.ID `json:"targetId"`
+	// Search is what the person typed into the queue's search.
+	Search      string `json:"search"`
+	CreatedFrom int64  `json:"createdFrom"`
+	CreatedTo   int64  `json:"createdTo"`
 }
 
 // ListBatches is the intake queue. A person whose data scope is their own
@@ -155,13 +161,21 @@ func (s *Service) ListBatches(
 		return nil, err
 	}
 
+	if in.CreatedFrom > 0 && in.CreatedTo > 0 && in.CreatedFrom > in.CreatedTo {
+		return nil, errortypes.NewValidationError("createdTo", errortypes.ErrInvalid,
+			"The end of the range must not be before its start")
+	}
+
 	req := &repositories.ListCaptureBatchesRequest{
-		Filter:     in.Filter,
-		Cursor:     in.Cursor,
-		Statuses:   in.Statuses,
-		Source:     in.Source,
-		TargetType: in.TargetType,
-		TargetID:   in.TargetID,
+		Filter:      in.Filter,
+		Cursor:      in.Cursor,
+		Statuses:    in.Statuses,
+		Source:      in.Source,
+		TargetType:  in.TargetType,
+		TargetID:    in.TargetID,
+		Search:      stringutils.TruncateRunes(strings.TrimSpace(in.Search), maxBatchSearchLength),
+		CreatedFrom: in.CreatedFrom,
+		CreatedTo:   in.CreatedTo,
 	}
 	if in.Mine || !seesEveryone(result) {
 		req.UserID = in.TenantInfo.UserID

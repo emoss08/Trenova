@@ -99,10 +99,7 @@ func (h *Handler) listByMove(c *gin.Context) {
 	entities, err := h.service.ListByMove(
 		c.Request.Context(),
 		&repositories.ListRateConfirmationsByMoveRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:     pagination.FromAuth(authCtx),
 			ShipmentMoveID: moveID,
 		},
 	)
@@ -188,10 +185,7 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		&repositories.GetRateConfirmationByIDRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:         pagination.FromAuth(authCtx),
 			RateConfirmationID: rateConfirmationID,
 		},
 	)

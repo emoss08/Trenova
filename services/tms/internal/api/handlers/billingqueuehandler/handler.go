@@ -198,10 +198,7 @@ func (h *Handler) stats(c *gin.Context) {
 	stats, err := h.service.GetStats(
 		c.Request.Context(),
 		&repositories.GetBillingQueueStatsRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -237,11 +234,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
 		&repositories.GetBillingQueueItemByIDRequest{
-			ItemID: itemID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ItemID:                itemID,
+			TenantInfo:            pagination.FromAuth(authCtx),
 			ExpandShipmentDetails: helpers.QueryBool(c, "expandShipmentDetails"),
 		},
 	)
@@ -290,10 +284,7 @@ func (h *Handler) transfer(c *gin.Context) {
 		&services.TransferToBillingRequest{
 			ShipmentID: req.ShipmentID,
 			BillType:   req.BillType,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -343,12 +334,9 @@ func (h *Handler) assign(c *gin.Context) {
 	updated, err := h.service.AssignBiller(
 		c.Request.Context(),
 		&services.AssignBillerRequest{
-			ItemID:   itemID,
-			BillerID: req.BillerID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ItemID:     itemID,
+			BillerID:   req.BillerID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -430,10 +418,7 @@ func (h *Handler) updateCharges(c *gin.Context) {
 			AdditionalCharges: req.AdditionalCharges,
 
 			ConvertAmountSplitsToPercent: req.ConvertAmountSplitsToPercent,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:                   pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -494,10 +479,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 			ExceptionNotes:      req.ExceptionNotes,
 			ReviewNotes:         req.ReviewNotes,
 			CancelReason:        req.CancelReason,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:          pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -525,11 +507,8 @@ func (h *Handler) listFilterPresets(c *gin.Context) {
 	presets, err := h.presetRepo.ListByUserID(
 		c.Request.Context(),
 		&repositories.ListBillingQueueFilterPresetsRequest{
-			UserID: authCtx.UserID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			UserID:     authCtx.UserID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -678,12 +657,9 @@ func (h *Handler) deleteFilterPreset(c *gin.Context) {
 	err = h.presetRepo.Delete(
 		c.Request.Context(),
 		&repositories.DeleteBillingQueueFilterPresetRequest{
-			PresetID: presetID,
-			UserID:   authCtx.UserID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			PresetID:   presetID,
+			UserID:     authCtx.UserID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -740,11 +716,7 @@ func (h *Handler) reassignCharge(c *gin.Context) {
 			ChargeKind:         req.ChargeKind,
 			AdditionalChargeID: req.AdditionalChargeID,
 			Allocations:        req.Allocations,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:         pagination.FromAuthAsUser(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)

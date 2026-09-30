@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -453,7 +454,7 @@ func (t *listWorkerPayAssignmentsTool) Query(
 			ID:            assignment.ID.String(),
 			PayProfileID:  assignment.PayProfileID.String(),
 			EffectiveFrom: recordedDate(assignment.EffectiveFrom),
-			EffectiveTo:   expectedDate(derefInt64(assignment.EffectiveTo), absentOpenEnded),
+			EffectiveTo:   expectedDate(typeutils.ValueOrZero(assignment.EffectiveTo), absentOpenEnded),
 			InForce: assignment.EffectiveFrom <= now &&
 				(assignment.EffectiveTo == nil || *assignment.EffectiveTo > now),
 			Notes: assignment.Notes,
@@ -539,7 +540,7 @@ func (t *listEscrowAccountsTool) Query(
 			Worker:     workerName(account.Worker),
 			Status:     string(account.Status),
 			OpenedDate: recordedDate(account.OpenedDate),
-			ClosedDate: expectedDate(derefInt64(account.ClosedDate), absentNotClosed),
+			ClosedDate: expectedDate(typeutils.ValueOrZero(account.ClosedDate), absentNotClosed),
 			Currency:   account.CurrencyCode,
 		}
 		if showBalance {
@@ -720,7 +721,7 @@ func (t *listRecurringDeductionsTool) Query(
 			PayCodeID:       deduction.PayCodeID.String(),
 			EscrowAccountID: pointerIDString(deduction.EscrowAccountID),
 			StartDate:       recordedDate(deduction.StartDate),
-			EndDate:         expectedDate(derefInt64(deduction.EndDate), absentOpenEnded),
+			EndDate:         expectedDate(typeutils.ValueOrZero(deduction.EndDate), absentOpenEnded),
 			Currency:        deduction.CurrencyCode,
 		}
 		if showAmounts && gate.show(fieldCap, withheldAmounts) &&
@@ -794,7 +795,7 @@ func (t *listRecurringEarningsTool) Query(
 			Description: earning.Description,
 			PayCodeID:   earning.PayCodeID.String(),
 			StartDate:   recordedDate(earning.StartDate),
-			EndDate:     expectedDate(derefInt64(earning.EndDate), absentOpenEnded),
+			EndDate:     expectedDate(typeutils.ValueOrZero(earning.EndDate), absentOpenEnded),
 			Currency:    earning.CurrencyCode,
 		}
 		if showAmounts && gate.show(fieldCap, withheldAmounts) &&

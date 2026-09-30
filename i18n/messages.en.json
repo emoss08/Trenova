@@ -17922,6 +17922,15 @@
       "routes/hazardous-material"
     ]
   },
+  "Any time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Any value — or comma-separated choices": {
     "sites": 1,
     "scope": [
@@ -20419,15 +20428,6 @@
     ]
   },
   "As it was captured": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/intake"
-    ]
-  },
-  "As it was captured. It will be filed turned {0}° clockwise.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -57838,6 +57838,15 @@
       "routes/intake"
     ]
   },
+  "Document {0}, page {1} of {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Documentation": {
     "sites": 2,
     "scope": [
@@ -73614,6 +73623,15 @@
       "service/documentservice"
     ]
   },
+  "File document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "File documents": {
     "sites": 1,
     "scope": [
@@ -73771,6 +73789,15 @@
     "areas": [
       "domain/document",
       "domain/documentupload"
+    ]
+  },
+  "File the document you are on, once it has a record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "File the next thing you print to Trenova here": {
@@ -75135,6 +75162,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Fit to width": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Five fields: minute, hour, day-of-month, month, day-of-week.": {
@@ -86223,7 +86259,7 @@
     ]
   },
   "Intake": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -91982,22 +92018,24 @@
     ]
   },
   "Last 30 days": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Last 7 days": {
     "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
-      "routes/hos.tsx"
+      "routes/intake"
+    ]
+  },
+  "Last 7 days": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/hos.tsx",
+      "routes/intake"
     ]
   },
   "Last 90 days": {
@@ -103779,6 +103817,24 @@
       "apps/web/lib"
     ]
   },
+  "Move to the next document in the open stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Move to the previous document in the open stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Move unassigned": {
     "sites": 2,
     "scope": [
@@ -106832,6 +106888,15 @@
       "packages/shared/lib"
     ]
   },
+  "Next document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Next frame": {
     "sites": 1,
     "scope": [
@@ -106889,12 +106954,14 @@
     ]
   },
   "Next page": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/insights",
+      "routes/intake",
       "routes/shipment"
     ]
   },
@@ -132802,6 +132869,15 @@
       "domain/edi"
     ]
   },
+  "Previous document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Previous employers": {
     "sites": 1,
     "scope": [
@@ -132867,12 +132943,14 @@
     ]
   },
   "Previous page": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/insights",
+      "routes/intake",
       "routes/shipment"
     ]
   },
@@ -140336,7 +140414,7 @@
     ]
   },
   "Received": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -140346,7 +140424,8 @@
       "domain/worker",
       "packages/shared/components",
       "routes/edi",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/intake"
     ]
   },
   "Received At": {
@@ -151025,7 +151104,7 @@
     ]
   },
   "Rotate left": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -151034,7 +151113,7 @@
     ]
   },
   "Rotate right": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -154098,6 +154177,15 @@
       "routes/admin"
     ]
   },
+  "Save how the pages divide into documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Save keys": {
     "sites": 1,
     "scope": [
@@ -154226,11 +154314,12 @@
     ]
   },
   "Save split": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/intake"
     ]
   },
@@ -154340,15 +154429,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Save the split before filing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/intake"
     ]
   },
   "Save the template before adding scenarios": {
@@ -156073,6 +156153,15 @@
       "routes/billing-queue"
     ]
   },
+  "Search PRO, barcode, scanner, computer or person": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Search actions…": {
     "sites": 1,
     "scope": [
@@ -156815,15 +156904,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Search scanner, print job or device": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/intake"
     ]
   },
   "Search scope": {
@@ -162075,7 +162155,7 @@
     ]
   },
   "Set aside": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -165640,6 +165720,24 @@
       "routes/inbox"
     ]
   },
+  "Show the page after in a page preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Show the page before in a page preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Show the results in the email": {
     "sites": 1,
     "scope": [
@@ -168682,6 +168780,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Stacks in Intake": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Staff": {
@@ -179469,14 +179576,15 @@
     ]
   },
   "The end of the range must not be before its start": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/aiaudit",
-      "routes/agent-control"
+      "routes/agent-control",
+      "service/captureservice"
     ]
   },
   "The end of the sample must be after its start": {
@@ -184548,6 +184656,15 @@
       "routes/worker"
     ]
   },
+  "The stack changed while you were working. Reload it and file again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "The stack could not be read": {
     "sites": 2,
     "scope": [
@@ -185965,6 +186082,15 @@
     ],
     "areas": [
       "service/journalposting"
+    ]
+  },
+  "The {0} most recent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The {0} protocol has no embedding endpoint": {
@@ -188795,6 +188921,15 @@
       "apps/web/components"
     ]
   },
+  "This page could not be shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This page has no assistant conversation": {
     "sites": 1,
     "scope": [
@@ -191573,7 +191708,7 @@
     ]
   },
   "Today": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -191588,6 +191723,7 @@
       "routes/desk",
       "routes/dispatch-console",
       "routes/inbox",
+      "routes/intake",
       "routes/late-charges",
       "routes/scheduling",
       "routes/shipment",
@@ -195255,6 +195391,15 @@
       "domain/shipmentimportchat"
     ]
   },
+  "Turn document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Turn documents on before re-indexing them.": {
     "sites": 1,
     "scope": [
@@ -195272,6 +195417,15 @@
     "areas": [
       "apps/web/components",
       "routes/worker"
+    ]
+  },
+  "Turn every page of the document you are on a quarter to the right": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Turn extensions on or off, change their settings and test them": {
@@ -195416,6 +195570,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Turned {0}° clockwise, as it will be filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Turning a request down needs a reason": {
@@ -210505,7 +210668,7 @@
       "service/invoiceshareservice"
     ]
   },
-  "You changed how the pages divide. Save the split to file these documents.": {
+  "You changed how the pages divide. Filing saves the change first, or save it now and keep working.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -212029,20 +212192,22 @@
     ]
   },
   "Zoom in": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/intake",
       "routes/shipment"
     ]
   },
   "Zoom out": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/intake",
       "routes/shipment"
     ]
   },
@@ -218389,11 +218554,12 @@
     ]
   },
   "{0, plural, one {# page} other {# pages}}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/intake"
     ]
   },
@@ -222542,7 +222708,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -222551,6 +222717,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/dispatch-console",
+      "routes/intake",
       "routes/scheduling",
       "routes/time-attendance"
     ]

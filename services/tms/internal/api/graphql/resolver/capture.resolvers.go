@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 func (r *captureBatchResolver) User(ctx context.Context, obj *capture.CaptureBatch) (*tenant.User, error) {
@@ -494,13 +495,15 @@ func (r *queryResolver) CaptureBatches(ctx context.Context, input gqlmodel.Captu
 			TenantInfo: tenant,
 			Cursor:     cursor,
 			UseCursor:  true,
-			Query:      stringutils.FromPtr(input.Query),
 			Sort:       captureBatchSort(input.Sort),
 		},
-		Cursor:     cursor,
-		Statuses:   input.Statuses,
-		Mine:       input.Mine != nil && *input.Mine,
-		TargetType: stringutils.FromPtr(input.TargetType),
+		Cursor:      cursor,
+		Statuses:    input.Statuses,
+		Mine:        input.Mine != nil && *input.Mine,
+		TargetType:  stringutils.FromPtr(input.TargetType),
+		Search:      stringutils.FromPtr(input.Query),
+		CreatedFrom: int64(typeutils.ValueOrZero(input.CreatedFrom)),
+		CreatedTo:   int64(typeutils.ValueOrZero(input.CreatedTo)),
 	}
 	if input.Source != nil {
 		in.Source = *input.Source

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *Resolver) resolveWorkerCredentialTypeSelectOptions(
@@ -54,7 +55,7 @@ func workerCredentialTypeSelectOptionItem(
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Name,
-			Description: stringPtr(entity.Description),
+			Description: stringutils.Ptr(entity.Description),
 			Meta: map[string]any{
 				"code":             entity.Code,
 				"category":         string(entity.Category),
@@ -126,7 +127,7 @@ func trainingCourseSelectOptionItem(entity *worker.TrainingCourse) selectOptionC
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Name,
-			Description: stringPtr(entity.Description),
+			Description: stringutils.Ptr(entity.Description),
 			Meta:        meta,
 		},
 		entity.CreatedAt,
@@ -179,7 +180,7 @@ func performanceReviewTemplateSelectOptionItem(
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Name,
-			Description: stringPtr(entity.Description),
+			Description: stringutils.Ptr(entity.Description),
 			Meta: map[string]any{
 				"code":          entity.Code,
 				"isDefault":     entity.IsDefault,
@@ -233,7 +234,7 @@ func ptoPolicySelectOptionItem(entity *worker.PTOPolicy) selectOptionConnectionI
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Name,
-			Description: stringPtr(entity.Description),
+			Description: stringutils.Ptr(entity.Description),
 			Meta: map[string]any{
 				"code":             entity.Code,
 				"isDefault":        entity.IsDefault,
@@ -287,7 +288,7 @@ func benefitPlanSelectOptionItem(entity *driverpay.BenefitPlan) selectOptionConn
 		&gqlmodel.SelectOption{
 			ID:          entity.ID.String(),
 			Label:       entity.Name,
-			Description: stringPtr(entity.Description),
+			Description: stringutils.Ptr(entity.Description),
 			Meta: map[string]any{
 				"code":              entity.Code,
 				"planType":          string(entity.PlanType),

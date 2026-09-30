@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/emoss08/trenova/shared/stringutils"
 	"math"
 	"net/http"
 	"sort"
@@ -124,7 +125,7 @@ func (l *LiveSimulator) HOSDailyLogs(
 		vehicleID := strings.TrimSpace(entry.VehicleID)
 		ctx := dailyLogDriverContext{
 			DriverID:   driverID,
-			DriverName: firstNonEmpty(entry.Name, driverID),
+			DriverName: stringutils.FirstNonEmptyTrimmed(entry.Name, driverID),
 			VehicleID:  vehicleID,
 			Timeline: l.driverTimelineSegments(
 				driverID,

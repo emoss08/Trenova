@@ -118,7 +118,7 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	pages := NewPageRepository(p)
 	pg, inserted, err := pages.Insert(ctx, &capture.CapturePage{OrganizationID: orgID, BusinessUnitID: buID, BatchID: b.ID,
 		Sequence: 1, StoragePath: "s", ChecksumSHA256: "c", ByteSize: 1, ContentType: "application/pdf",
-		Markers: capture.PageMarkers{PatchCode: "T"}})
+		Markers: capture.PageMarkers{PatchCode: "T", DeviceBarcodes: []string{"PRO 77120"}}})
 	require.NoError(t, err)
 	assert.True(t, inserted)
 	again, inserted, err := pages.Insert(ctx, &capture.CapturePage{OrganizationID: orgID, BusinessUnitID: buID, BatchID: b.ID,
@@ -178,6 +178,32 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	assert.GreaterOrEqual(t, *bl.TotalCount, 1)
 	require.NotEmpty(t, bl.Items)
 	assert.NotNil(t, bl.Items[0].CaptureDevice, "the queue row carries its device")
+
+	search := func(term string) []pulid.ID {
+		t.Helper()
+		found, searchErr := batches.ListCursor(ctx, &repositories.ListCaptureBatchesRequest{
+			Filter: &pagination.QueryOptions{TenantInfo: ti, Cursor: cursor, UseCursor: true},
+			Cursor: cursor,
+			Search: term,
+		})
+		require.NoError(t, searchErr)
+		ids := make([]pulid.ID, 0, len(found.Items))
+		for _, item := range found.Items {
+			ids = append(ids, item.ID)
+		}
+
+		return ids
+	}
+	assert.Contains(t, search("77120"), b.ID, "a code on a page finds its stack")
+	assert.Contains(t, search(dev.MachineName), b.ID, "the computer that sent it finds a stack")
+	assert.NotContains(t, search("7_120"), b.ID, "search terms are matched literally")
+	outside, err := batches.ListCursor(ctx, &repositories.ListCaptureBatchesRequest{
+		Filter:      &pagination.QueryOptions{TenantInfo: ti, Cursor: cursor, UseCursor: true},
+		Cursor:      cursor,
+		CreatedFrom: b.CreatedAt + 1_000_000,
+	})
+	require.NoError(t, err)
+	assert.Empty(t, outside.Items, "a stack before the range is left out")
 
 	sheets := NewCoverSheetRepository(p)
 	cs := &capture.CaptureCoverSheet{OrganizationID: orgID, BusinessUnitID: buID, TokenHash: "h" + pulid.MustNew("x_").String(),

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -178,14 +179,14 @@ func newListWorkerSafetyEventsTool(
 					Preventable: event.Preventable,
 					Points:      event.Points,
 					PointsExpireAt: expectedDate(
-						derefInt64(event.PointsExpireAt),
+						typeutils.ValueOrZero(event.PointsExpireAt),
 						absentNotExpiring,
 					),
 					InspectionResult: string(event.InspectionResult),
 					OutOfService:     event.OutOfService,
 					ShipmentID:       pulidString(event.ShipmentID),
 					Resolution:       gatedText(gate, wfFieldResolution, event.Resolution),
-					ClosedAt:         expectedDate(derefInt64(event.ClosedAt), absentNotClosed),
+					ClosedAt:         expectedDate(typeutils.ValueOrZero(event.ClosedAt), absentNotClosed),
 					Violations:       byEvent[event.ID],
 				})
 			}
@@ -275,7 +276,7 @@ func newListDOTTestsTool(
 					Status:         string(test.Status),
 					Result:         string(test.Result),
 					IsDOT:          test.IsDOT,
-					ScheduledAt:    expectedDate(derefInt64(test.ScheduledAt), absentNotScheduled),
+					ScheduledAt:    expectedDate(typeutils.ValueOrZero(test.ScheduledAt), absentNotScheduled),
 					CollectedAt:    pointerDate(test.CollectedAt),
 					CollectionSite: test.CollectionSite,
 					Reason:         gatedText(gate, wfFieldReason, test.Reason),
@@ -330,7 +331,7 @@ func toRandomDrawRow(draw *worker.DOTRandomDraw) randomDrawRow {
 		DrugSelected:    draw.DrugSelected,
 		AlcoholSelected: draw.AlcoholSelected,
 		DrawnAt:         recordedDate(draw.DrawnAt),
-		FinalizedAt:     expectedDate(derefInt64(draw.FinalizedAt), absentNotFinal),
+		FinalizedAt:     expectedDate(typeutils.ValueOrZero(draw.FinalizedAt), absentNotFinal),
 	}
 	if draw.Pool != nil {
 		row.Pool = draw.Pool.Name
@@ -478,7 +479,7 @@ func newGetDOTRandomDrawTool(
 					Rank:         entry.Rank,
 					Status:       string(entry.Status),
 					NotifiedAt:   pointerDate(entry.NotifiedAt),
-					CompletedAt:  expectedDate(derefInt64(entry.CompletedAt), absentNotCompleted),
+					CompletedAt:  expectedDate(typeutils.ValueOrZero(entry.CompletedAt), absentNotCompleted),
 					TestID:       pulidString(entry.TestID),
 					ExcuseReason: entry.ExcuseReason,
 				})

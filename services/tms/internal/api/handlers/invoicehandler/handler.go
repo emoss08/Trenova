@@ -201,11 +201,8 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetInvoiceByIDRequest{
-		ID: invoiceID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		ID:         invoiceID,
+		TenantInfo: pagination.FromAuth(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -228,10 +225,7 @@ func (h *Handler) createFromShipments(c *gin.Context) {
 		&services.CreateInvoiceFromShipmentsRequest{
 			ShipmentIDs:    req.ShipmentIDs,
 			OffCycleReason: req.OffCycleReason,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:     pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -256,10 +250,7 @@ func (h *Handler) createFromOrder(c *gin.Context) {
 		&services.CreateInvoiceFromOrderRequest{
 			OrderID:        req.OrderID,
 			OffCycleReason: req.OffCycleReason,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:     pagination.FromAuth(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -459,11 +450,8 @@ func (h *Handler) post(c *gin.Context) {
 	updated, err := h.service.Post(
 		c.Request.Context(),
 		&services.PostInvoiceRequest{
-			InvoiceID: invoiceID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			InvoiceID:   invoiceID,
+			TenantInfo:  pagination.FromAuth(authCtx),
 			TriggeredBy: "manual",
 		},
 		actorutil.FromAuthContext(authCtx),

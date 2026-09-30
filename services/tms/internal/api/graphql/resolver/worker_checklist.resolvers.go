@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerchecklistservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -338,7 +339,7 @@ func (r *workerChecklistTemplateItemResolver) DocumentTypeName(ctx context.Conte
 	if obj.DocumentType == nil {
 		return nil, nil //nolint:nilnil // no document type attached
 	}
-	return stringPtr(obj.DocumentType.Name), nil
+	return stringutils.Ptr(obj.DocumentType.Name), nil
 }
 
 func (r *Resolver) WorkerChecklist() generated.WorkerChecklistResolver {

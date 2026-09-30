@@ -926,3 +926,55 @@ func TestDiscardingADocumentLeavesTheRestAndIsAudited(t *testing.T) {
 	assert.Equal(t, capture.BatchReady, settled.Status)
 	assert.Contains(t, w.audited, "delete:Discarded a captured document")
 }
+
+func TestABarcodeOnThePagesSuggestsItsShipment(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	shipmentID := w.addRecord(permission.ResourceShipment.String())
+	w.references = map[string]pulid.ID{"PRO 1042": shipmentID}
+	s := w.service()
+	principal := principalFor(t, s, pair(t, w, s))
+
+	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "b", Source: capture.SourceScan})
+	require.NoError(t, err)
+	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2)}
+	for i, data := range pages {
+		in := &PutPageInput{BatchID: batch.ID, Sequence: i + 1, Body: bytes.NewReader(data)}
+		if i == 1 {
+			in.DeviceBarcodes = []string{"unknown", "PRO 1042"}
+		}
+		_, err = s.PutPage(t.Context(), principal, in)
+		require.NoError(t, err)
+	}
+	_, err = s.SealBatch(t.Context(), principal, &SealBatchInput{
+		BatchID: batch.ID, PageCount: 2, ManifestDigest: ManifestDigest([]string{
+			hashutils.SHA256BytesHex(pages[0]), hashutils.SHA256BytesHex(pages[1]),
+		}),
+	})
+	require.NoError(t, err)
+
+	result, err := s.ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	require.NoError(t, err)
+
+	items := w.itemsOf(batch.ID)
+	require.Len(t, items, 1)
+	assert.Equal(t, capture.SuggestionClassifier, items[0].SuggestionSource)
+	require.NotNil(t, items[0].SuggestedID)
+	assert.Equal(t, shipmentID, *items[0].SuggestedID)
+	assert.Equal(t, barcodeReason, items[0].SuggestionReason)
+	assert.Empty(t, result.AutoFile, "a barcode is offered to a person, never filed on its own")
+}
+
+func TestTheQueueRefusesARangeThatEndsBeforeItStarts(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	s := w.service()
+	_, err := s.ListBatches(t.Context(), &ListBatchesInput{
+		TenantInfo: w.tenant, Filter: &pagination.QueryOptions{TenantInfo: w.tenant},
+		CreatedFrom: 200, CreatedTo: 100,
+	})
+	var validation *errortypes.Error
+	assert.ErrorAs(t, err, &validation)
+}

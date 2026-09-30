@@ -159,11 +159,8 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetFiscalPeriodByIDRequest{
-			ID: fiscalPeriodID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         fiscalPeriodID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -185,11 +182,8 @@ func (h *Handler) closeBlockers(c *gin.Context) {
 	result, err := h.service.GetCloseBlockers(
 		c.Request.Context(),
 		repositories.GetFiscalPeriodByIDRequest{
-			ID: fiscalPeriodID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			ID:         fiscalPeriodID,
+			TenantInfo: pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -299,12 +293,8 @@ func (h *Handler) patch(c *gin.Context) {
 	existing, err := h.service.Get(
 		c.Request.Context(),
 		repositories.GetFiscalPeriodByIDRequest{
-			ID: fiscalPeriodID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			ID:         fiscalPeriodID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 	)
 	if err != nil {
@@ -347,12 +337,8 @@ func (h *Handler) delete(c *gin.Context) {
 	}
 
 	if err = h.service.Delete(c.Request.Context(), repositories.DeleteFiscalPeriodRequest{
-		ID: fiscalPeriodID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         fiscalPeriodID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -383,12 +369,8 @@ func (h *Handler) close(c *gin.Context) {
 	}
 
 	entity, err := h.service.Close(c.Request.Context(), repositories.CloseFiscalPeriodRequest{
-		ID: fiscalPeriodID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         fiscalPeriodID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -432,12 +414,8 @@ func (h *Handler) reopen(c *gin.Context) {
 	}
 
 	entity, err := h.service.Reopen(c.Request.Context(), repositories.ReopenFiscalPeriodRequest{
-		ID: fiscalPeriodID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:           fiscalPeriodID,
+		TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		ReopenReason: payload.ReopenReason,
 	}, authCtx.UserID)
 	if err != nil {
@@ -470,12 +448,8 @@ func (h *Handler) lock(c *gin.Context) {
 	}
 
 	entity, err := h.service.Lock(c.Request.Context(), &repositories.LockFiscalPeriodRequest{
-		ID: fiscalPeriodID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         fiscalPeriodID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -507,12 +481,8 @@ func (h *Handler) unlock(c *gin.Context) {
 	}
 
 	entity, err := h.service.Unlock(c.Request.Context(), repositories.UnlockFiscalPeriodRequest{
-		ID: fiscalPeriodID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         fiscalPeriodID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -544,12 +514,8 @@ func (h *Handler) activate(c *gin.Context) {
 	}
 
 	entity, err := h.service.Activate(c.Request.Context(), repositories.ActivateFiscalPeriodRequest{
-		ID: fiscalPeriodID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		ID:         fiscalPeriodID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)

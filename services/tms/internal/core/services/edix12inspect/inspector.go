@@ -130,10 +130,10 @@ func separatorsFromISA(rawX12 string) (X12Separators, bool) {
 
 func separatorsFromEnvelope(envelope *edi.X12EnvelopeSettings) X12Separators {
 	return X12Separators{
-		Element:    firstNonEmpty(envelope.ElementSeparator, defaultElementSeparator),
-		Segment:    firstNonEmpty(envelope.SegmentTerminator, defaultSegmentTerminator),
-		Component:  firstNonEmpty(envelope.ComponentSeparator, defaultComponentSeparator),
-		Repetition: firstNonEmpty(envelope.RepetitionSeparator, defaultRepetitionSeparator),
+		Element:    separatorOrDefault(envelope.ElementSeparator, defaultElementSeparator),
+		Segment:    separatorOrDefault(envelope.SegmentTerminator, defaultSegmentTerminator),
+		Component:  separatorOrDefault(envelope.ComponentSeparator, defaultComponentSeparator),
+		Repetition: separatorOrDefault(envelope.RepetitionSeparator, defaultRepetitionSeparator),
 		Source:     SeparatorSourceEnvelope,
 	}
 }
@@ -495,10 +495,16 @@ func separatorsEqual(left, right *X12Separators) bool {
 		left.Repetition == right.Repetition
 }
 
-func firstNonEmpty(value, fallback string) string {
+// separatorOrDefault reads a delimiter declared by an envelope, falling back
+// to the standard one when the envelope omits it. It tests for the empty
+// string rather than for blankness, because a space is a legal X12 element,
+// segment, or component separator and trimming one would silently substitute
+// the default for a delimiter the trading partner actually chose.
+func separatorOrDefault(value, fallback string) string {
 	if value != "" {
 		return value
 	}
+
 	return fallback
 }
 

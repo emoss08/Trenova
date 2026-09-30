@@ -123,7 +123,7 @@ func TestSavePaymentWritesTheShortPayCreditThenLinksItInThePayment(t *testing.T)
 	require.NoError(t, err)
 	assert.Equal(t, "147", result.ExternalID)
 	assert.Equal(t, map[string]string{
-		accountingsync.ExternalRefDocument:              "147",
+		accountingsync.ExternalRefDocument:               "147",
 		accountingsync.ExternalRefShortPayPrefix + "145": "146",
 	}, result.Refs)
 
@@ -303,7 +303,7 @@ func TestVoidPaymentAlsoRemovesItsShortPayCredits(t *testing.T) {
 		Kind:       accountingsync.SyncObjectCustomerPayment,
 		ExternalID: "147",
 		Refs: map[string]string{
-			accountingsync.ExternalRefDocument:              "147",
+			accountingsync.ExternalRefDocument:               "147",
 			accountingsync.ExternalRefShortPayPrefix + "145": "146",
 		},
 	})

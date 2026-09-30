@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const tractorIDSource = "from list_tractors"
@@ -224,7 +225,7 @@ func newListFuelCardsTool(repo repositories.FuelPurchaseRepository) serviceports
 					Status:           string(item.Status),
 					Unassigned:       item.IsUnassigned(),
 					DiscoveredByFeed: item.WasDiscovered(),
-					ExpiresAt:        expectedDate(derefInt64(item.ExpiresAt), "no expiry on file"),
+					ExpiresAt:        expectedDate(typeutils.ValueOrZero(item.ExpiresAt), "no expiry on file"),
 				}
 				if item.AssignedTractorID != nil {
 					row.AssignedTractorID = pulidString(*item.AssignedTractorID)
@@ -268,8 +269,8 @@ func fuelImportRowFrom(item *fuelpurchase.ImportBatch) fuelImportRow {
 		RowCount:       item.RowCount,
 		ErrorCount:     item.ErrorCount,
 		CommittedCount: item.CommittedCount,
-		StagedAt:       expectedDate(derefInt64(item.StagedAt), "not staged"),
-		CommittedAt:    expectedDate(derefInt64(item.CommittedAt), "not committed"),
+		StagedAt:       expectedDate(typeutils.ValueOrZero(item.StagedAt), "not staged"),
+		CommittedAt:    expectedDate(typeutils.ValueOrZero(item.CommittedAt), "not committed"),
 		Error:          item.Error,
 	}
 	if item.Summary != nil {
@@ -559,8 +560,8 @@ func newListIFTAReturnsTool(repo repositories.IFTARepository) serviceports.Agent
 					CurrencyCode:     item.CurrencyCode,
 					Problems:         len(item.Problems),
 					BlockingProblems: len(item.BlockingProblems()),
-					FinalizedAt:      expectedDate(derefInt64(item.FinalizedAt), "not finalized"),
-					FiledAt:          expectedDate(derefInt64(item.FiledAt), "not filed"),
+					FinalizedAt:      expectedDate(typeutils.ValueOrZero(item.FinalizedAt), "not finalized"),
+					FiledAt:          expectedDate(typeutils.ValueOrZero(item.FiledAt), "not filed"),
 				}
 			}), nil
 		},
@@ -736,7 +737,7 @@ func (t *listRateImportsTool) Query(
 			EffectiveFrom:   recordedDate(item.EffectiveFrom),
 			RowCount:        item.RowCount,
 			ErrorCount:      item.ErrorCount,
-			CommittedAt:     expectedDate(derefInt64(item.CommittedAt), "not committed"),
+			CommittedAt:     expectedDate(typeutils.ValueOrZero(item.CommittedAt), "not committed"),
 			Error:           item.Error,
 		}
 		if item.Summary != nil {

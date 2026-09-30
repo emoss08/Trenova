@@ -102,10 +102,7 @@ func (h *Handler) get(c *gin.Context) {
 	entity, err := h.service.GetByID(
 		c.Request.Context(),
 		repositories.GetRoleAssignmentByIDRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:       pagination.FromAuth(authCtx),
 			RoleAssignmentID: roleAssignmentID,
 			ExpandRoles:      helpers.QueryBool(c, "expandRoles", false),
 		},

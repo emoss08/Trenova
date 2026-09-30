@@ -1484,17 +1484,21 @@ export type CaptureBatchStatus =
 
 export type CaptureBatchesInput = {
   after?: string | null | undefined;
+  /** Only stacks that arrived at or after this time. */
+  createdFrom?: number | null | undefined;
+  /** Only stacks that arrived at or before this time. */
+  createdTo?: number | null | undefined;
   first?: number | null | undefined;
   /** Only the caller's own batches, even when they could see everybody's. */
   mine?: boolean | null | undefined;
-  /** Words from the scanner, print job or device name. */
+  /** Finds a stack by scanner or print job, the computer that sent it, whose it is, a code on one of its pages, or the PRO or bill of lading number of a shipment it is for. */
   query?: string | null | undefined;
   sort?: CaptureBatchSort | null | undefined;
   source?: CaptureSource | null | undefined;
   /** Only these statuses; empty is every status. */
   statuses?: Array<CaptureBatchStatus> | null | undefined;
   targetId?: string | number | null | undefined;
-  /** Only batches scanned into this record. */
+  /** Only stacks for this record: scanned into it, or with a document filed or suggested onto it. */
   targetType?: string | null | undefined;
 };
 

@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/restx"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -48,8 +47,6 @@ type NotificationSender interface {
 		req repositories.ExistsRecentNotificationRequest,
 	) (bool, error)
 }
-
-func nowUnix() int64 { return timeutils.NowUnix() }
 
 type boundProvider struct {
 	provider   integration.Type

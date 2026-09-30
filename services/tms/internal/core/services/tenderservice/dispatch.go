@@ -404,9 +404,6 @@ func (s *Service) offerResponseURL(token, action string) string {
 }
 
 // HashOfferToken derives the stored lookup hash for a raw token.
-func HashOfferToken(token string) string {
-	return tokenutils.Hash(token)
-}
 
 func rateMethodLabel(method shipment.CarrierRateMethod) string {
 	return method.Label()

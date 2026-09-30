@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *mutationResolver) PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error) {
@@ -345,11 +346,11 @@ func (r *workerPTOResolver) CancelledByID(ctx context.Context, obj *worker.Worke
 }
 
 func (r *workerPTOResolver) RejectionReason(ctx context.Context, obj *worker.WorkerPTO) (*string, error) {
-	return stringPtr(obj.RejectionReason), nil
+	return stringutils.Ptr(obj.RejectionReason), nil
 }
 
 func (r *workerPTOResolver) CancellationReason(ctx context.Context, obj *worker.WorkerPTO) (*string, error) {
-	return stringPtr(obj.CancellationReason), nil
+	return stringutils.Ptr(obj.CancellationReason), nil
 }
 
 func (r *workerPTOResolver) Days(ctx context.Context, obj *worker.WorkerPTO) (string, error) {

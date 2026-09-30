@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type SyncMode string
@@ -193,10 +192,6 @@ func JournalDayID(day int64, loc *time.Location) string {
 
 func JournalOpeningID(startDate int64, loc *time.Location) string {
 	return JournalOpeningPrefix + dayKey(startDate, loc)
-}
-
-func JournalDayNumber(day int64, loc *time.Location) string {
-	return timeutils.FormatCalendarDate(day, loc)
 }
 
 func dayKey(day int64, loc *time.Location) string {

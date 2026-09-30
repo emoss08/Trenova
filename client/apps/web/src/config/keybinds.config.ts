@@ -157,4 +157,52 @@ export const keybindGroups: KeybindGroup[] = [
       },
     ],
   },
+  {
+    id: "intake",
+    label: "Intake",
+    keybinds: [
+      {
+        id: "intake-next-document",
+        label: "Next document",
+        keys: ["J"],
+        description: "Move to the next document in the open stack",
+      },
+      {
+        id: "intake-previous-document",
+        label: "Previous document",
+        keys: ["K"],
+        description: "Move to the previous document in the open stack",
+      },
+      {
+        id: "intake-file-document",
+        label: "File document",
+        keys: ["F"],
+        description: "File the document you are on, once it has a record",
+      },
+      {
+        id: "intake-turn-document",
+        label: "Turn document",
+        keys: ["R"],
+        description: "Turn every page of the document you are on a quarter to the right",
+      },
+      {
+        id: "intake-save-split",
+        label: "Save split",
+        keys: ["S"],
+        description: "Save how the pages divide into documents",
+      },
+      {
+        id: "intake-page-previous",
+        label: "Previous page",
+        keys: ["←"],
+        description: "Show the page before in a page preview",
+      },
+      {
+        id: "intake-page-next",
+        label: "Next page",
+        keys: ["→"],
+        description: "Show the page after in a page preview",
+      },
+    ],
+  },
 ];

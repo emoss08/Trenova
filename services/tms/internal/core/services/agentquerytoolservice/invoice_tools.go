@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const maxInvoiceLines = 100
@@ -162,9 +163,9 @@ func invoiceDetailFrom(entity *invoice.Invoice, gate *fieldGate) invoiceDetail {
 		InvoiceDate:      recordedDate(entity.InvoiceDate),
 		DueDate:          pointerDate(entity.DueDate),
 		ServiceDate:      pointerDate(entity.ServiceDate),
-		PostedAt:         expectedDate(derefInt64(entity.PostedAt), absentNotPosted),
-		SentAt:           expectedDate(derefInt64(entity.SentAt), "not sent"),
-		VoidedAt:         expectedDate(derefInt64(entity.VoidedAt), absentNotVoided),
+		PostedAt:         expectedDate(typeutils.ValueOrZero(entity.PostedAt), absentNotPosted),
+		SentAt:           expectedDate(typeutils.ValueOrZero(entity.SentAt), "not sent"),
+		VoidedAt:         expectedDate(typeutils.ValueOrZero(entity.VoidedAt), absentNotVoided),
 		Adjustment:       entity.IsAdjustmentArtifact,
 		Supersedes:       pulidString(entity.SupersedesInvoiceID),
 		SupersededBy:     pulidString(entity.SupersededByInvoiceID),

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -200,10 +201,10 @@ func newListWorkerLeaveCasesTool(
 					Reason:              gatedText(gate, wfFieldReason, leave.Reason),
 					RequestedAt:         recordedDate(leave.RequestedAt),
 					StartsAt:            recordedDate(leave.StartsAt),
-					EndsAt:              expectedDate(derefInt64(leave.EndsAt), absentOpenEnded),
+					EndsAt:              expectedDate(typeutils.ValueOrZero(leave.EndsAt), absentOpenEnded),
 					CertificationStatus: string(leave.CertificationStatus),
 					CertificationDueAt: expectedDate(
-						derefInt64(leave.CertificationDueAt),
+						typeutils.ValueOrZero(leave.CertificationDueAt),
 						absentNotDue,
 					),
 					Days: make([]leaveDayRow, 0, len(leave.Entries)),
@@ -275,9 +276,9 @@ func newListWorkerTrainingTool(
 					CourseID:    record.CourseID.String(),
 					Status:      string(record.Status),
 					AssignedAt:  recordedDate(record.AssignedAt),
-					DueAt:       expectedDate(derefInt64(record.DueAt), absentNotDue),
-					CompletedAt: expectedDate(derefInt64(record.CompletedAt), absentNotCompleted),
-					ExpiresAt:   expectedDate(derefInt64(record.ExpiresAt), absentNotExpiring),
+					DueAt:       expectedDate(typeutils.ValueOrZero(record.DueAt), absentNotDue),
+					CompletedAt: expectedDate(typeutils.ValueOrZero(record.CompletedAt), absentNotCompleted),
+					ExpiresAt:   expectedDate(typeutils.ValueOrZero(record.ExpiresAt), absentNotExpiring),
 					Score:       decimalText(record.Score),
 					Passed:      boolRef(record.Passed),
 				}
@@ -422,7 +423,7 @@ func newListWorkerChecklistsTool(
 					Kind:      string(checklist.Kind),
 					Status:    string(checklist.Status),
 					StartedAt: recordedDate(checklist.StartedAt),
-					DueAt:     expectedDate(derefInt64(checklist.DueAt), absentNotDue),
+					DueAt:     expectedDate(typeutils.ValueOrZero(checklist.DueAt), absentNotDue),
 					Items:     make([]checklistItemRow, 0, len(checklist.Items)),
 				}
 				for _, item := range checklist.Items {
@@ -432,8 +433,8 @@ func newListWorkerChecklistsTool(
 						Kind:        string(item.Kind),
 						Required:    item.Required,
 						Status:      string(item.Status),
-						DueAt:       expectedDate(derefInt64(item.DueAt), absentNotDue),
-						CompletedAt: expectedDate(derefInt64(item.CompletedAt), absentNotCompleted),
+						DueAt:       expectedDate(typeutils.ValueOrZero(item.DueAt), absentNotDue),
+						CompletedAt: expectedDate(typeutils.ValueOrZero(item.CompletedAt), absentNotCompleted),
 						Note:        gatedText(gate, "note", item.Note),
 					})
 				}
@@ -657,11 +658,11 @@ func newListEmploymentVerificationsTool(
 					Status:            string(entry.Status),
 					Method:            string(entry.Method),
 					RequestedAt: expectedDate(
-						derefInt64(entry.RequestedAt),
+						typeutils.ValueOrZero(entry.RequestedAt),
 						absentNotRequested,
 					),
 					ResponseReceivedAt: expectedDate(
-						derefInt64(entry.ResponseReceivedAt),
+						typeutils.ValueOrZero(entry.ResponseReceivedAt),
 						absentNotReceived,
 					),
 					FollowUpCount:            entry.FollowUpCount,
@@ -745,7 +746,7 @@ func newListWorkerCredentialsTool(
 					IssuingAuthority: credential.IssuingAuthority,
 					IssuedAt:         pointerDate(credential.IssuedAt),
 					ExpiresAt: expectedDate(
-						derefInt64(credential.ExpiresAt),
+						typeutils.ValueOrZero(credential.ExpiresAt),
 						absentNotExpiring,
 					),
 					Verified:    credential.IsVerified(),
@@ -866,7 +867,7 @@ func newListWorkerInjuriesTool(
 					Status:         string(injury.Status),
 					OccurredAt:     recordedDate(injury.OccurredAt),
 					ReturnedToWorkAt: expectedDate(
-						derefInt64(injury.ReturnedToWorkAt),
+						typeutils.ValueOrZero(injury.ReturnedToWorkAt),
 						absentNotReturned,
 					),
 					DaysAway:       injury.DaysAway,

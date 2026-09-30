@@ -142,12 +142,8 @@ func (h *Handler) createDraft(c *gin.Context) {
 	resp, err := h.service.CreateDraft(
 		c.Request.Context(),
 		&services.CreateDraftInvoiceAdjustmentRequest{
-			InvoiceID: body.InvoiceID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			InvoiceID:  body.InvoiceID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -196,11 +192,7 @@ func (h *Handler) previewDraft(c *gin.Context) {
 		c.Request.Context(),
 		&services.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -222,11 +214,7 @@ func (h *Handler) submitDraft(c *gin.Context) {
 		c.Request.Context(),
 		&services.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -403,10 +391,7 @@ func (h *Handler) get(c *gin.Context) {
 		c.Request.Context(),
 		&services.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:   pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -425,10 +410,7 @@ func (h *Handler) approve(c *gin.Context) {
 	}
 	resp, err := h.service.Approve(c.Request.Context(), &services.ApproveInvoiceAdjustmentRequest{
 		AdjustmentID: adjustmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		TenantInfo:   pagination.FromAuth(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -454,10 +436,7 @@ func (h *Handler) reject(c *gin.Context) {
 	resp, err := h.service.Reject(c.Request.Context(), &services.RejectInvoiceAdjustmentRequest{
 		AdjustmentID: adjustmentID,
 		Reason:       body.Reason,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		TenantInfo:   pagination.FromAuth(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -477,10 +456,7 @@ func (h *Handler) lineage(c *gin.Context) {
 		c.Request.Context(),
 		&services.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:   pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -491,10 +467,7 @@ func (h *Handler) lineage(c *gin.Context) {
 		c.Request.Context(),
 		&services.GetInvoiceAdjustmentLineageRequest{
 			CorrectionGroupID: detail.CorrectionGroupID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:        pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {
@@ -515,10 +488,7 @@ func (h *Handler) groupLineage(c *gin.Context) {
 		c.Request.Context(),
 		&services.GetInvoiceAdjustmentLineageRequest{
 			CorrectionGroupID: groupID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
+			TenantInfo:        pagination.FromAuth(authCtx),
 		},
 	)
 	if err != nil {

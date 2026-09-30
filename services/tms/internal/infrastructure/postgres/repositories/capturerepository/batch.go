@@ -5,6 +5,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -12,11 +15,19 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const maxMaintenanceBatch = 500
+
+// pageCodeMatch is true when any code on a page, the scanner's or the
+// server's, matches the pattern.
+const pageCodeMatch = "EXISTS (SELECT 1 FROM jsonb_array_elements_text(" +
+	"COALESCE({}->'deviceBarcodes', '[]'::jsonb) || COALESCE({}->'readCodes', '[]'::jsonb)" +
+	") AS code WHERE code ILIKE ?)"
 
 type batchRepository struct {
 	db *postgres.Connection
@@ -157,7 +168,7 @@ func (r *batchRepository) ListCursor(
 		total, err := dba.NewSelect().
 			Model((*capture.CaptureBatch)(nil)).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return narrowBatches(querybuilder.ApplyFiltersWithoutSort(
+				return r.narrowBatches(querybuilder.ApplyFiltersWithoutSort(
 					sq, alias, req.Filter, (*capture.CaptureBatch)(nil),
 				), req)
 			}).
@@ -185,13 +196,13 @@ func (r *batchRepository) ListCursor(
 				return sq, err
 			}
 
-			return narrowBatches(sq, req), nil
+			return r.narrowBatches(sq, req), nil
 		},
 	})
 }
 
 // narrowBatches applies the queue's own filters on top of the generic ones.
-func narrowBatches(
+func (r *batchRepository) narrowBatches(
 	q *bun.SelectQuery,
 	req *repositories.ListCaptureBatchesRequest,
 ) *bun.SelectQuery {
@@ -205,11 +216,124 @@ func narrowBatches(
 	if req.UserID.IsNotNil() {
 		q = q.Where(cols.UserID.Eq(), req.UserID)
 	}
-	if req.TargetType != "" && req.TargetID.IsNotNil() {
-		q = q.Where(cols.TargetType.Eq(), req.TargetType).Where(cols.TargetID.Eq(), req.TargetID)
+	if req.TargetType != "" && req.TargetID.IsNotNil() && req.Filter != nil {
+		q = r.forRecord(q, req.Filter.TenantInfo, req.TargetType, req.TargetID)
+	}
+	if req.CreatedFrom > 0 {
+		q = q.Where(cols.CreatedAt.Gte(), req.CreatedFrom)
+	}
+	if req.CreatedTo > 0 {
+		q = q.Where(cols.CreatedAt.Lte(), req.CreatedTo)
+	}
+	if req.Search != "" && req.Filter != nil {
+		q = r.searchBatches(q, req.Filter.TenantInfo, req.Search)
 	}
 
 	return q
+}
+
+// forRecord keeps the stacks for one record: scanned into it, or with a
+// document filed or suggested onto it.
+func (r *batchRepository) forRecord(
+	q *bun.SelectQuery,
+	ti pagination.TenantInfo,
+	resourceType string,
+	resourceID pulid.ID,
+) *bun.SelectQuery {
+	batch := buncolgen.CaptureBatchColumns
+	item := buncolgen.CaptureItemColumns
+	items := buncolgen.CaptureItemScopeTenant(r.db.DB().NewSelect().
+		Model((*capture.CaptureItem)(nil)).
+		ColumnExpr("1").
+		Where(item.BatchID.EqColumn(batch.ID)).
+		Where(item.Status.NotEq(), capture.ItemDiscarded).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereGroup(" OR ", func(filed *bun.SelectQuery) *bun.SelectQuery {
+				return filed.Where(item.FiledType.Eq(), resourceType).Where(item.FiledID.Eq(), resourceID)
+			}).WhereGroup(" OR ", func(suggested *bun.SelectQuery) *bun.SelectQuery {
+				return suggested.Where(item.SuggestedType.Eq(), resourceType).
+					Where(item.SuggestedID.Eq(), resourceID)
+			})
+		}), ti)
+
+	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.WhereGroup(" OR ", func(target *bun.SelectQuery) *bun.SelectQuery {
+			return target.Where(batch.TargetType.Eq(), resourceType).Where(batch.TargetID.Eq(), resourceID)
+		}).WhereOr("EXISTS (?)", items)
+	})
+}
+
+// searchBatches keeps the stacks that match a term anywhere a person would
+// look for one: its scanner or print job, the computer that sent it, whose it
+// is, a code on one of its pages, or a shipment it is for or went onto.
+func (r *batchRepository) searchBatches(
+	q *bun.SelectQuery,
+	ti pagination.TenantInfo,
+	term string,
+) *bun.SelectQuery {
+	pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
+	batch := buncolgen.CaptureBatchColumns
+	device := buncolgen.CaptureDeviceColumns
+	user := buncolgen.UserColumns
+	page := buncolgen.CapturePageColumns
+	item := buncolgen.CaptureItemColumns
+	shipment := buncolgen.ShipmentColumns
+	db := r.db.DB()
+
+	devices := buncolgen.CaptureDeviceScopeTenant(db.NewSelect().
+		Model((*capture.CaptureDevice)(nil)).
+		ColumnExpr("1").
+		Where(device.ID.EqColumn(batch.DeviceID)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where(device.Name.ILike(), pattern).
+				WhereOr(device.MachineName.ILike(), pattern)
+		}), ti)
+
+	people := db.NewSelect().
+		Model((*tenant.User)(nil)).
+		ColumnExpr("1").
+		Where(user.ID.EqColumn(batch.UserID)).
+		Where(user.Name.ILike(), pattern)
+
+	codes := buncolgen.CapturePageScopeTenant(db.NewSelect().
+		Model((*capture.CapturePage)(nil)).
+		ColumnExpr("1").
+		Where(page.BatchID.EqColumn(batch.ID)).
+		Where(page.Markers.Expr(pageCodeMatch), pattern), ti)
+
+	routed := buncolgen.CaptureItemScopeTenant(db.NewSelect().
+		Model((*capture.CaptureItem)(nil)).
+		Column(item.FiledID.String()).
+		Where(item.BatchID.EqColumn(batch.ID)).
+		Where(item.FiledType.Eq(), permission.ResourceShipment), ti).
+		UnionAll(buncolgen.CaptureItemScopeTenant(db.NewSelect().
+			Model((*capture.CaptureItem)(nil)).
+			Column(item.SuggestedID.String()).
+			Where(item.BatchID.EqColumn(batch.ID)).
+			Where(item.SuggestedType.Eq(), permission.ResourceShipment), ti))
+
+	shipments := buncolgen.ShipmentScopeTenant(db.NewSelect().
+		Model((*shipmentdomain.Shipment)(nil)).
+		ColumnExpr("1").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where(shipment.ProNumber.ILike(), pattern).
+				WhereOr(shipment.BOL.ILike(), pattern)
+		}).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereGroup(" OR ", func(target *bun.SelectQuery) *bun.SelectQuery {
+				return target.Where(batch.TargetType.Eq(), permission.ResourceShipment).
+					Where(shipment.ID.EqColumn(batch.TargetID))
+			}).WhereOr(shipment.ID.In(), routed)
+		}), ti)
+
+	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.Where(batch.JobName.ILike(), pattern).
+			WhereOr(batch.SourceName.ILike(), pattern).
+			WhereOr("EXISTS (?)", devices).
+			WhereOr("EXISTS (?)", people).
+			WhereOr("EXISTS (?)", codes).
+			WhereOr("EXISTS (?)", shipments)
+	})
 }
 
 func (r *batchRepository) ListStale(

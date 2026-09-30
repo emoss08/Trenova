@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"os"
 	"sort"
 	"strings"
@@ -78,7 +79,7 @@ func NewScriptEngine(path, mode, timezone string) *ScriptEngine {
 	engine := &ScriptEngine{
 		path:     strings.TrimSpace(path),
 		mode:     normalizeScriptMode(mode),
-		timezone: firstNonEmpty(strings.TrimSpace(timezone), "UTC"),
+		timezone: stringutils.FirstNonEmptyTrimmed(strings.TrimSpace(timezone), "UTC"),
 	}
 	return engine
 }
@@ -117,7 +118,7 @@ func (s *ScriptEngine) Reload() error {
 		return ErrScriptConfigInvalid
 	}
 
-	locationName := firstNonEmpty(strings.TrimSpace(payload.Timezone), s.timezone)
+	locationName := stringutils.FirstNonEmptyTrimmed(strings.TrimSpace(payload.Timezone), s.timezone)
 	location, err := time.LoadLocation(locationName)
 	if err != nil {
 		s.loaded = false
@@ -195,7 +196,7 @@ func compileScenario(
 			EventType: eventType,
 			Offset:    offset,
 			Duration:  time.Duration(item.DurationMs) * time.Millisecond,
-			Severity:  firstNonEmpty(strings.TrimSpace(item.Severity), "info"),
+			Severity:  stringutils.FirstNonEmptyTrimmed(strings.TrimSpace(item.Severity), "info"),
 			Metadata:  item.Metadata,
 			Index:     idx,
 		})

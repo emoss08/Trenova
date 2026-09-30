@@ -88,15 +88,11 @@ func (h *Handler) subscribe(c *gin.Context) {
 	subscription, err := h.service.Subscribe(
 		c.Request.Context(),
 		&repositories.SavePushSubscriptionRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
-			Endpoint:  req.Endpoint,
-			P256dh:    req.P256dh,
-			Auth:      req.Auth,
-			UserAgent: c.Request.UserAgent(),
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			Endpoint:   req.Endpoint,
+			P256dh:     req.P256dh,
+			Auth:       req.Auth,
+			UserAgent:  c.Request.UserAgent(),
 		},
 	)
 	if err != nil {

@@ -277,7 +277,7 @@ func (f *resultStore) SkipPending(
 
 type correctionStore struct {
 	repositories.AICorrectionRepository
-	items map[pulid.ID]*aicorrection.Correction
+	items       map[pulid.ID]*aicorrection.Correction
 	since       int64
 	rows        []*aicorrection.Correction
 	weekly      []aicorrection.WeekTotal

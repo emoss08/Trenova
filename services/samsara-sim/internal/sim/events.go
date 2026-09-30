@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"sort"
 	"strings"
 	"time"
@@ -422,7 +423,7 @@ func eventDriverPayload(event *SimEvent, ctx *webhookEmissionContext) map[string
 	}
 	return map[string]any{
 		"id":   driverID,
-		"name": firstNonEmpty(ctx.Roster[driverID].Name, driverID),
+		"name": stringutils.FirstNonEmptyTrimmed(ctx.Roster[driverID].Name, driverID),
 	}
 }
 
@@ -840,7 +841,7 @@ func buildSimEventID(
 		"evt-%s-%s-%s-%s-%d",
 		dayStart.UTC().Format("20060102"),
 		strings.TrimSpace(driverID),
-		firstNonEmpty(strings.TrimSpace(vehicleID), "none"),
+		stringutils.FirstNonEmptyTrimmed(strings.TrimSpace(vehicleID), "none"),
 		cleanEventType,
 		index,
 	)

@@ -130,7 +130,7 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 	}
 
 	request := &services.CarrierIntelSearchRequest{
-		State:  firstNonEmpty(query.State, query.OriginState),
+		State:  stringutils.FirstNonEmptyTrimmed(query.State, query.OriginState),
 		Limit:  limit,
 		Offset: max(query.Offset, 0),
 	}

@@ -84,11 +84,3 @@ func (d optionalDate) MarshalJSON() ([]byte, error) {
 
 	return strconv.AppendInt(nil, d.seconds, 10), nil
 }
-
-func derefInt64(value *int64) int64 {
-	if value == nil {
-		return 0
-	}
-
-	return *value
-}

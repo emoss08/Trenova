@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -182,7 +183,7 @@ func (s *Service) applyNarrations(params applyParams) {
 		}
 
 		params.into[finding.DedupeKey] = Narration{
-			Headline: firstNonEmpty(
+			Headline: stringutils.FirstNonEmpty(
 				trim(narrated.Headline, insight.MaxHeadlineLength),
 				finding.Headline,
 			),
@@ -250,16 +251,6 @@ func trim(value string, limit int) string {
 	}
 
 	return strings.TrimSpace(string(runes[:limit]))
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return value
-		}
-	}
-
-	return ""
 }
 
 // chunk yields successive slices of at most size elements.

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 // Kind is the control a field takes when a person edits it.
@@ -116,7 +117,7 @@ func fieldFrom(name string, property map[string]any, required bool) Field {
 	field := Field{
 		Name:        name,
 		Label:       stringutils.HumanizeCamelCaseSentence(name),
-		Description: stringOf(property["description"]),
+		Description: typeutils.StringOf(property["description"]),
 		Required:    required,
 		Options:     []string{},
 		Minimum:     numberOf(property["minimum"]),
@@ -215,12 +216,6 @@ func optionsOf(raw any) []string {
 	}
 
 	return nil
-}
-
-func stringOf(raw any) string {
-	text, _ := raw.(string)
-
-	return text
 }
 
 func numberOf(raw any) *float64 {

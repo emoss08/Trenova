@@ -112,11 +112,7 @@ func (h *Handler) resolve(c *gin.Context) {
 			Decision:      body.Decision,
 			Modifications: body.Modifications,
 			ReasonCode:    body.ReasonCode,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:    pagination.FromAuthAsUser(authCtx),
 		},
 		&actor,
 	)

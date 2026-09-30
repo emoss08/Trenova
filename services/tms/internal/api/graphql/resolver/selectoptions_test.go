@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -377,7 +378,7 @@ func TestSelectOptions_EDIConnectionSelectOptionsFiltersActive(t *testing.T) {
 
 	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
 		Resource: gqlmodel.SelectOptionResourceEDIConnection,
-		Query:    stringPtr("Acme"),
+		Query:    stringutils.Ptr("Acme"),
 	})
 	require.NoError(t, err)
 

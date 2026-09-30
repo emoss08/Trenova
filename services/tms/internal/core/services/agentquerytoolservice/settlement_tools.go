@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -468,12 +469,12 @@ func driverSettlementViewFrom(
 ) driverSettlementView {
 	view := driverSettlementView{
 		driverSettlementRow: driverSettlementRowFrom(entity, gate),
-		SubmittedAt:         expectedDate(derefInt64(entity.SubmittedAt), absentNotSubmitted),
-		ApprovedAt:          expectedDate(derefInt64(entity.ApprovedAt), absentNotApproved),
-		PostedAt:            expectedDate(derefInt64(entity.PostedAt), absentNotPosted),
-		PaidAt:              expectedDate(derefInt64(entity.PaidAt), absentNotPaid),
+		SubmittedAt:         expectedDate(typeutils.ValueOrZero(entity.SubmittedAt), absentNotSubmitted),
+		ApprovedAt:          expectedDate(typeutils.ValueOrZero(entity.ApprovedAt), absentNotApproved),
+		PostedAt:            expectedDate(typeutils.ValueOrZero(entity.PostedAt), absentNotPosted),
+		PaidAt:              expectedDate(typeutils.ValueOrZero(entity.PaidAt), absentNotPaid),
 		PaymentMethod:       entity.PaymentMethod,
-		VoidedAt:            expectedDate(derefInt64(entity.VoidedAt), absentNotVoided),
+		VoidedAt:            expectedDate(typeutils.ValueOrZero(entity.VoidedAt), absentNotVoided),
 		Exceptions:          make([]settlementExceptionRow, 0, len(entity.Exceptions)),
 		LineCount:           len(entity.Lines),
 	}
@@ -874,7 +875,7 @@ func (t *getSettlementDisputeTool) Query(
 		Category:         string(dispute.Category),
 		OpenedAt:         recordedDate(dispute.CreatedAt),
 		ResolutionLineID: pointerIDString(dispute.ResolutionLineID),
-		ResolvedAt:       expectedDate(derefInt64(dispute.ResolvedAt), absentNotResolved),
+		ResolvedAt:       expectedDate(typeutils.ValueOrZero(dispute.ResolvedAt), absentNotResolved),
 	}
 	if dispute.Settlement != nil {
 		view.SettlementNumber = dispute.Settlement.SettlementNumber
@@ -1127,11 +1128,11 @@ func (t *getCarrierSettlementTool) Query(
 	view := carrierSettlementView{
 		carrierSettlementRow: carrierSettlementRowFrom(entity, gate),
 		Notes:                entity.Notes,
-		SubmittedAt:          expectedDate(derefInt64(entity.SubmittedAt), absentNotSubmitted),
-		ApprovedAt:           expectedDate(derefInt64(entity.ApprovedAt), absentNotApproved),
-		PostedAt:             expectedDate(derefInt64(entity.PostedAt), absentNotPosted),
-		PaidAt:               expectedDate(derefInt64(entity.PaidAt), absentNotPaid),
-		VoidedAt:             expectedDate(derefInt64(entity.VoidedAt), absentNotVoided),
+		SubmittedAt:          expectedDate(typeutils.ValueOrZero(entity.SubmittedAt), absentNotSubmitted),
+		ApprovedAt:           expectedDate(typeutils.ValueOrZero(entity.ApprovedAt), absentNotApproved),
+		PostedAt:             expectedDate(typeutils.ValueOrZero(entity.PostedAt), absentNotPosted),
+		PaidAt:               expectedDate(typeutils.ValueOrZero(entity.PaidAt), absentNotPaid),
+		VoidedAt:             expectedDate(typeutils.ValueOrZero(entity.VoidedAt), absentNotVoided),
 		VoidReason:           entity.VoidReason,
 		LineCount:            len(entity.Lines),
 	}
@@ -1297,7 +1298,7 @@ func (t *listCarrierInvoiceMatchesTool) Query(
 			SettlementID:   pointerIDString(match.CarrierSettlementID),
 			Currency:       match.CurrencyCode,
 			ResolutionNote: match.ResolutionNote,
-			ResolvedAt:     expectedDate(derefInt64(match.ResolvedAt), absentNotResolved),
+			ResolvedAt:     expectedDate(typeutils.ValueOrZero(match.ResolvedAt), absentNotResolved),
 			CreatedAt:      recordedDate(match.CreatedAt),
 		}
 		if match.Carrier != nil {
@@ -1443,7 +1444,7 @@ func (t *listEDICarrierInvoicesTool) Query(
 			Reconciliation:    string(invoice.ReconciliationStatus),
 			ProNumber:         invoice.ProNumber,
 			ShipmentReference: invoice.ShipmentReference,
-			InvoiceDate:       expectedDate(derefInt64(invoice.InvoiceDate), "not dated"),
+			InvoiceDate:       expectedDate(typeutils.ValueOrZero(invoice.InvoiceDate), "not dated"),
 			Currency:          invoice.CurrencyCode,
 		}
 		if invoice.CarrierID.IsNotNil() {

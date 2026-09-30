@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -178,7 +179,7 @@ func rateAgreementRowFrom(entity *rateagreement.RateAgreement, gate *fieldGate) 
 		Priority:      entity.Priority,
 		ContractRef:   entity.ContractRef,
 		EffectiveFrom: recordedDate(entity.EffectiveFrom),
-		EffectiveTo:   expectedDate(derefInt64(entity.EffectiveTo), absentOpenEnded),
+		EffectiveTo:   expectedDate(typeutils.ValueOrZero(entity.EffectiveTo), absentOpenEnded),
 		AutoRenew:     entity.AutoRenew,
 		Currency:      entity.Currency,
 	}
@@ -458,8 +459,8 @@ func (t *getRateAgreementTool) Query(
 		BillToCustomerID:  pointerIDString(entity.BillToCustomerID),
 		RenewalNoticeDays: entity.RenewalNoticeDays,
 		RoundingMode:      string(entity.RoundingMode),
-		SubmittedAt:       expectedDate(derefInt64(entity.SubmittedAt), absentNotSubmitted),
-		ApprovedAt:        expectedDate(derefInt64(entity.ApprovedAt), absentNotApproved),
+		SubmittedAt:       expectedDate(typeutils.ValueOrZero(entity.SubmittedAt), absentNotSubmitted),
+		ApprovedAt:        expectedDate(typeutils.ValueOrZero(entity.ApprovedAt), absentNotApproved),
 		RuleCount:         len(entity.Rules),
 		AccessorialCount:  len(entity.Accessorials),
 	}
@@ -471,7 +472,7 @@ func (t *getRateAgreementTool) Query(
 		view.CurrentVersion = &rateVersionRow{
 			VersionNumber: version.VersionNumber,
 			EffectiveFrom: recordedDate(version.EffectiveFrom),
-			EffectiveTo:   expectedDate(derefInt64(version.EffectiveTo), "current"),
+			EffectiveTo:   expectedDate(typeutils.ValueOrZero(version.EffectiveTo), "current"),
 		}
 		if version.ChangeMessage != "" && gate.show("changeMessage", "changeMessage") {
 			view.CurrentVersion.ChangeMessage = version.ChangeMessage
@@ -522,7 +523,7 @@ func (t *getRateAgreementTool) rules(
 			Direction:     string(rule.Direction),
 			Priority:      rule.Priority,
 			EffectiveFrom: recordedDate(rule.EffectiveFrom),
-			EffectiveTo:   expectedDate(derefInt64(rule.EffectiveTo), absentOpenEnded),
+			EffectiveTo:   expectedDate(typeutils.ValueOrZero(rule.EffectiveTo), absentOpenEnded),
 			HazmatOnly:    rule.HazmatOnly,
 			TempOnly:      rule.TempControlOnly,
 			FormulaID:     pointerIDString(rule.FormulaTemplateID),
@@ -592,7 +593,10 @@ func (t *getRateAgreementTool) accessorials(
 			AutoApply:           accessorial.AutoApply,
 			FreeUnits:           accessorial.FreeUnits,
 			EffectiveFrom:       pointerDate(accessorial.EffectiveFrom),
-			EffectiveTo:         expectedDate(derefInt64(accessorial.EffectiveTo), absentOpenEnded),
+			EffectiveTo: expectedDate(
+				typeutils.ValueOrZero(accessorial.EffectiveTo),
+				absentOpenEnded,
+			),
 		}
 		if showAmount {
 			row.Amount = accessorial.Amount.String()

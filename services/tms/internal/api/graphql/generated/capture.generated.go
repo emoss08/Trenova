@@ -4946,7 +4946,7 @@ func (ec *executionContext) unmarshalInputCaptureBatchesInput(ctx context.Contex
 		asMap["sort"] = "Newest"
 	}
 
-	fieldsInOrder := [...]string{"first", "after", "sort", "statuses", "source", "mine", "targetType", "targetId", "query"}
+	fieldsInOrder := [...]string{"first", "after", "sort", "statuses", "source", "mine", "targetType", "targetId", "query", "createdFrom", "createdTo"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5016,6 +5016,20 @@ func (ec *executionContext) unmarshalInputCaptureBatchesInput(ctx context.Contex
 				return it, err
 			}
 			it.Query = data
+		case "createdFrom":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdFrom"))
+			data, err := ec.unmarshalOTimestamp2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedFrom = data
+		case "createdTo":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdTo"))
+			data, err := ec.unmarshalOTimestamp2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedTo = data
 		}
 	}
 	return it, nil

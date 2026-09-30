@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingtransfercriteria"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -151,7 +152,7 @@ func candidateRow(decision *serviceports.BillingTransferDecision) billingTransfe
 		ProNumber:     decision.ProNumber,
 		Status:        string(decision.Status),
 		Customer:      decision.CustomerName,
-		DeliveredAt:   expectedDate(derefInt64(decision.DeliveredAt), "not delivered yet"),
+		DeliveredAt:   expectedDate(typeutils.ValueOrZero(decision.DeliveredAt), "not delivered yet"),
 		WouldDo:       string(decision.Outcome),
 		CanTransfer:   decision.Outcome.Transfers(),
 		FailureCode:   string(decision.FailureCode),

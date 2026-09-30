@@ -4,6 +4,7 @@ import {
   INTAKE_VIEWS,
   batchFilter,
   parseIntakeFilter,
+  receivedSince,
   viewStatuses,
   writeIntakeFilter,
 } from "../queue-filter";
@@ -48,6 +49,7 @@ describe("the queue's address", () => {
       mine: true,
       query: "  PRO 88  ",
       sort: "ExpiringSoonest" as const,
+      received: "week" as const,
     };
     const written = writeIntakeFilter(new URLSearchParams("batch=cbat_1"), filter);
     expect(written.get("batch")).toBe("cbat_1");
@@ -64,6 +66,20 @@ describe("the queue's address", () => {
       mine: false,
       query: null,
       sort: "Newest",
+      createdFrom: null,
+    });
+  });
+
+  it("counts a received window back from midnight, so the request holds all day", () => {
+    const morning = new Date(2026, 8, 29, 8, 30).getTime();
+    const evening = new Date(2026, 8, 29, 21, 5).getTime();
+    const midnight = new Date(2026, 8, 29).getTime() / 1000;
+    expect(receivedSince("today", morning)).toBe(midnight);
+    expect(receivedSince("today", evening)).toBe(midnight);
+    expect(receivedSince("week", morning)).toBe(new Date(2026, 8, 23).getTime() / 1000);
+    expect(receivedSince("any", morning)).toBeNull();
+    expect(batchFilter({ ...DEFAULT_INTAKE_FILTER, received: "today" }, evening)).toMatchObject({
+      createdFrom: midnight,
     });
   });
 });

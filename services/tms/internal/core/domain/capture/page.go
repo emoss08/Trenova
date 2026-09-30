@@ -58,12 +58,21 @@ type PageMarkers struct {
 	PatchCode string `json:"patchCode,omitempty"`
 	// DeviceBarcodes are the barcodes the scanner's own driver decoded.
 	DeviceBarcodes []string `json:"deviceBarcodes,omitempty"`
+	// ReadCodes are the codes the server read off the page that are not
+	// cover sheets: a QR code printed on a bill of lading, say.
+	ReadCodes []string `json:"readCodes,omitempty"`
 	// CoverSheetID is set when the server read a cover sheet on this page and
 	// found it genuine for this organization.
 	CoverSheetID *pulid.ID `json:"coverSheetId,omitempty"`
 	// UnrecognizedCoverSheet is a page that looked like a cover sheet but did
 	// not verify. It still divides the stack; it routes nothing.
 	UnrecognizedCoverSheet bool `json:"unrecognizedCoverSheet,omitempty"`
+}
+
+// Codes are every code found on the page, the scanner's first.
+func (m PageMarkers) Codes() []string {
+	return append(append(make([]string, 0, len(m.DeviceBarcodes)+len(m.ReadCodes)),
+		m.DeviceBarcodes...), m.ReadCodes...)
 }
 
 // IsBlank reports whether the page carries nothing worth keeping.

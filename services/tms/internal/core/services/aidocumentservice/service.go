@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -308,8 +309,12 @@ func (s *Service) describePoll(
 		return result
 	case serviceports.BackgroundFailed:
 		result.Status = serviceports.AIBackgroundExtractionStatusFailed
-		result.FailureCode = firstNonEmpty(outcome.FailureCode, result.RawStatus, "failed")
-		result.FailureMessage = firstNonEmpty(
+		result.FailureCode = stringutils.FirstNonEmptyTrimmed(
+			outcome.FailureCode,
+			result.RawStatus,
+			"failed",
+		)
+		result.FailureMessage = stringutils.FirstNonEmptyTrimmed(
 			outcome.FailureMessage,
 			"The AI provider ended the extraction without a result",
 		)

@@ -55,12 +55,8 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	favorites, err := h.service.List(c.Request.Context(), &repositories.ListPageFavoritesRequest{
-		UserID: authCtx.UserID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		UserID:     authCtx.UserID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -98,14 +94,10 @@ func (h *Handler) toggle(c *gin.Context) {
 	}
 
 	result, err := h.service.Toggle(c.Request.Context(), &pagefavoriteservice.ToggleRequest{
-		PageURL:   req.PageURL,
-		PageTitle: req.PageTitle,
-		UserID:    authCtx.UserID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		PageURL:    req.PageURL,
+		PageTitle:  req.PageTitle,
+		UserID:     authCtx.UserID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)

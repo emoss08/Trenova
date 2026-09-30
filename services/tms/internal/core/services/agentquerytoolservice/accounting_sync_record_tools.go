@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -131,7 +132,7 @@ func accountingSyncRecordRowFrom(
 		DocumentDate:   pointerDate(record.DocumentDate),
 		QueuedOn:       recordedDate(record.QueuedAt),
 		NextAttemptOn:  expectedDate(0, absentNotScheduled),
-		SyncedOn:       expectedDate(derefInt64(record.SyncedAt), absentNotSynced),
+		SyncedOn:       expectedDate(typeutils.ValueOrZero(record.SyncedAt), absentNotSynced),
 		ExternalNumber: record.ExternalDocNumber,
 		ExternalURL:    record.ExternalURL,
 		SkippedReason:  record.SkippedReason,
@@ -140,7 +141,7 @@ func accountingSyncRecordRowFrom(
 			record.Status != accountingsync.SyncStatusInFlight,
 	}
 	if record.Status.Dispatchable() {
-		row.NextAttemptOn = expectedDate(derefInt64(record.NextAttemptAt), absentNotScheduled)
+		row.NextAttemptOn = expectedDate(typeutils.ValueOrZero(record.NextAttemptAt), absentNotScheduled)
 	}
 
 	return row

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -57,13 +58,13 @@ func newValidator(
 			"assignedWorkerId",
 			"workers",
 			"Assigned worker does not exist in your organization",
-			func(c *fuelpurchase.FuelCard) pulid.ID { return derefID(c.AssignedWorkerID) },
+			func(c *fuelpurchase.FuelCard) pulid.ID { return typeutils.DerefID(c.AssignedWorkerID) },
 		).
 		WithOptionalReferenceCheck(
 			"assignedTractorId",
 			"tractors",
 			"Assigned tractor does not exist in your organization",
-			func(c *fuelpurchase.FuelCard) pulid.ID { return derefID(c.AssignedTractorID) },
+			func(c *fuelpurchase.FuelCard) pulid.ID { return typeutils.DerefID(c.AssignedTractorID) },
 		).
 		WithCustomRule(uniqueCardRule(cards))
 	if references != nil {
@@ -71,13 +72,6 @@ func newValidator(
 	}
 
 	return &Validator{cards: builder.Build()}
-}
-
-func derefID(id *pulid.ID) pulid.ID {
-	if id == nil {
-		return ""
-	}
-	return *id
 }
 
 func uniqueCardRule(cards CardFinder) validationframework.TenantedRule[*fuelpurchase.FuelCard] {

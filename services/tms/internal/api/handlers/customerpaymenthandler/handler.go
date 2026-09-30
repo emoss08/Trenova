@@ -111,12 +111,8 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	entity, err := h.service.Get(c.Request.Context(), &serviceports.GetCustomerPaymentRequest{
-		PaymentID: paymentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		PaymentID:  paymentID,
+		TenantInfo: pagination.FromAuthAsUser(authCtx),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)

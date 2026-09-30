@@ -1,12 +1,16 @@
 package sim
 
 import (
+	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"hash/fnv"
 	"math"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -537,7 +541,7 @@ func (l *LiveSimulator) routeLifecycleForRecord(
 	routeID := recordID(route)
 	driverID := nestedString(route, "driver", "id")
 	vehicleID := nestedString(route, "vehicle", "id")
-	seedKey := firstNonEmpty(routeID, driverID, vehicleID)
+	seedKey := stringutils.FirstNonEmptyTrimmed(routeID, driverID, vehicleID)
 	if seedKey == "" {
 		seedKey = "route"
 	}
@@ -614,7 +618,7 @@ func (l *LiveSimulator) routeLifecycleFrame(
 	vehicleID string,
 	seedKey string,
 ) routeLifecycleFrame {
-	period := l.routeLoopTargetPeriod(firstNonEmpty(vehicleID, seedKey))
+	period := l.routeLoopTargetPeriod(stringutils.FirstNonEmptyTrimmed(vehicleID, seedKey))
 	if period < 6*time.Hour {
 		period = 6 * time.Hour
 	}
@@ -1488,7 +1492,7 @@ func (l *LiveSimulator) loadDriverRoster() map[string]driverRoster {
 		if entry.Name == "" {
 			entry.Name = nestedString(record, "driver", "name")
 		}
-		entry.VehicleID = firstNonEmpty(entry.VehicleID, vehicleID)
+		entry.VehicleID = stringutils.FirstNonEmptyTrimmed(entry.VehicleID, vehicleID)
 		roster[driverID] = entry
 	}
 
@@ -1500,8 +1504,14 @@ func (l *LiveSimulator) loadDriverRoster() map[string]driverRoster {
 				continue
 			}
 			entry := roster[driverID]
-			entry.VehicleID = firstNonEmpty(entry.VehicleID, nestedString(route, "vehicle", "id"))
-			entry.Name = firstNonEmpty(entry.Name, nestedString(route, "driver", "name"))
+			entry.VehicleID = stringutils.FirstNonEmptyTrimmed(
+				entry.VehicleID,
+				nestedString(route, "vehicle", "id"),
+			)
+			entry.Name = stringutils.FirstNonEmptyTrimmed(
+				entry.Name,
+				nestedString(route, "driver", "name"),
+			)
 			roster[driverID] = entry
 		}
 	}
@@ -1576,7 +1586,7 @@ func (l *LiveSimulator) listKnownVehicleIDs() []string {
 		candidates = append(candidates, id)
 	}
 	sort.Strings(candidates)
-	return uniqueStrings(candidates)
+	return sliceutils.DedupeStrings(candidates)
 }
 
 func (l *LiveSimulator) driverByVehicleMap() map[string]string {
@@ -1601,7 +1611,7 @@ func (l *LiveSimulator) vehicleEventsForWindow(
 	windowStart time.Time,
 	windowEnd time.Time,
 ) map[string][]SimEvent {
-	ids := uniqueStrings(vehicleIDs)
+	ids := sliceutils.DedupeStrings(vehicleIDs)
 	out := make(map[string][]SimEvent, len(ids))
 	for _, vehicleID := range ids {
 		driverID := strings.TrimSpace(driverByVehicle[vehicleID])
@@ -2248,7 +2258,7 @@ func selectVehicleIDs(
 			}
 		}
 		sort.Strings(selected)
-		return uniqueStrings(selected)
+		return sliceutils.DedupeStrings(selected)
 	}
 
 	selected := make([]string, 0, len(templates)+len(waypoints)+len(assets))
@@ -2264,7 +2274,7 @@ func selectVehicleIDs(
 		}
 	}
 	sort.Strings(selected)
-	return uniqueStrings(selected)
+	return sliceutils.DedupeStrings(selected)
 }
 
 func selectDriverIDs(
@@ -2281,7 +2291,7 @@ func selectDriverIDs(
 			}
 		}
 		sort.Strings(selected)
-		return uniqueStrings(selected)
+		return sliceutils.DedupeStrings(selected)
 	}
 
 	selected := make([]string, 0, len(templates)+len(roster))
@@ -2292,23 +2302,7 @@ func selectDriverIDs(
 		selected = append(selected, id)
 	}
 	sort.Strings(selected)
-	return uniqueStrings(selected)
-}
-
-func uniqueStrings(values []string) []string {
-	if len(values) == 0 {
-		return []string{}
-	}
-	result := make([]string, 0, len(values))
-	seen := map[string]struct{}{}
-	for _, value := range values {
-		if _, ok := seen[value]; ok {
-			continue
-		}
-		seen[value] = struct{}{}
-		result = append(result, value)
-	}
-	return result
+	return sliceutils.DedupeStrings(selected)
 }
 
 func dynamicFuelPercent(
@@ -2336,7 +2330,7 @@ func dynamicEngineSeconds(
 		baseValue = int64(5_000_000 + hashFactor*2_000_000)
 	}
 	increment := int64(now.Sub(startedAt).Seconds() * (0.72 + hashFactor*0.35))
-	return baseValue + maxInt64(increment, 0)
+	return baseValue + intutils.Max(increment, 0)
 }
 
 func dynamicOdometerMeters(
@@ -2350,7 +2344,7 @@ func dynamicOdometerMeters(
 		baseValue = int64(180_000_000 + hashFactor*240_000_000)
 	}
 	traveled := int64(now.Sub(startedAt).Seconds() * (11.5 + hashFactor*7.5))
-	return baseValue + maxInt64(traveled, 0)
+	return baseValue + intutils.Max(traveled, 0)
 }
 
 func dynamicBatteryMilliVolts(base Record, now time.Time, hashFactor float64) int64 {
@@ -2385,7 +2379,7 @@ func vehicleWebhookPayload(vehicleID string, assets map[string]Record) map[strin
 	}
 	if asset, ok := assets[vehicleID]; ok {
 		vehicle["licensePlate"] = stringValue(asset, "licensePlate")
-		vehicle["vin"] = firstNonEmpty(
+		vehicle["vin"] = stringutils.FirstNonEmptyTrimmed(
 			stringValue(asset, "vin"),
 			stringValue(asset, "serialNumber"),
 		)
@@ -2565,13 +2559,6 @@ func maxFloat64(left, right float64) float64 {
 	return right
 }
 
-func maxInt64(left, right int64) int64 {
-	if left >= right {
-		return left
-	}
-	return right
-}
-
 func maxDuration(left, right time.Duration) time.Duration {
 	if left >= right {
 		return left
@@ -2587,16 +2574,6 @@ func clampInt64(value, lower, upper int64) int64 {
 		return upper
 	}
 	return value
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		clean := strings.TrimSpace(value)
-		if clean != "" {
-			return clean
-		}
-	}
-	return ""
 }
 
 func ternary(condition bool, left, right string) string {

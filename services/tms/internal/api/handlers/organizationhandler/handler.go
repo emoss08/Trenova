@@ -239,11 +239,7 @@ func (h *Handler) uploadLogo(c *gin.Context) {
 	updatedEntity, err := h.service.UploadLogo(
 		c.Request.Context(),
 		&services.UploadLogoRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			OrganizationID: orgID,
 			File:           file,
 		},
@@ -279,10 +275,7 @@ func (h *Handler) getLogoURL(c *gin.Context) {
 	}
 
 	resp, err := h.service.GetLogoURL(c.Request.Context(), services.GetLogoURLRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		TenantInfo:     pagination.FromAuth(authCtx),
 		OrganizationID: orgID,
 	})
 	if err != nil {
@@ -317,11 +310,7 @@ func (h *Handler) deleteLogo(c *gin.Context) {
 	updatedEntity, err := h.service.DeleteLogo(
 		c.Request.Context(),
 		services.DeleteLogoRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			OrganizationID: orgID,
 		},
 	)

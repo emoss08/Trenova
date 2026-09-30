@@ -146,12 +146,12 @@ func planFor(
 
 func autoExecuteControls() (*dispatchcontrol.DispatchControl, Policy) {
 	return &dispatchcontrol.DispatchControl{
-			AutoAssignConfidenceThreshold: decimal.NewFromFloat(0.85),
-		}, Policy{
-			Enabled:    true,
-			Tier:       agent.TierAutoExecute,
-			ShadowMode: false,
-		}
+		AutoAssignConfidenceThreshold: decimal.NewFromFloat(0.85),
+	}, Policy{
+		Enabled:    true,
+		Tier:       agent.TierAutoExecute,
+		ShadowMode: false,
+	}
 }
 
 func TestBuildPlan_AutoExecutesOnlyAboveTheConfidenceThreshold(t *testing.T) {

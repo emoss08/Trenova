@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -527,15 +529,18 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 	event := d.base(&o)
 	event.SourceKey = sourceKey("event", row.ID.String())
 	event.OccurredAt = at
-	event.CallID = firstNonEmpty(row.CallID, stringOf(payload[delegateOrCallKey(row.Kind)]))
+	event.CallID = stringutils.FirstNonEmpty(
+		row.CallID,
+		typeutils.StringOf(payload[delegateOrCallKey(row.Kind)]),
+	)
 	event.StepKey = row.StepKey
 	event.Reconstructed = at == row.OccurredAt
-	delegateCall := stringOf(payload[payloadKeyDelegateCall])
+	delegateCall := typeutils.StringOf(payload[payloadKeyDelegateCall])
 	if delegateCall != "" {
 		event.DelegateCallID = delegateCall
 		event.ParentOwnerID = row.OwnerID
 	}
-	if agentID := pulid.ID(stringOf(payload[payloadKeyAgentID])); pulid.LooksLike(
+	if agentID := pulid.ID(typeutils.StringOf(payload[payloadKeyAgentID])); pulid.LooksLike(
 		agentID.String(),
 	) {
 		event.AgentDefinitionID = agentID
@@ -555,9 +560,9 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 		}
 		event.Kind = aiaudit.KindToolRefused
 		event.Outcome = aiaudit.OutcomeRefused
-		event.ToolName = stringOf(payload[payloadKeyName])
+		event.ToolName = typeutils.StringOf(payload[payloadKeyName])
 		event.Reason = d.redactor.Text(
-			stringOf(payload[payloadKeyContent]),
+			typeutils.StringOf(payload[payloadKeyContent]),
 			aiaudit.MaxReasonLength,
 		)
 		if policy, ok := d.redactor.Policy(event.ToolName); ok {
@@ -570,12 +575,15 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 	case serviceports.AssistantEventDelegateFinished:
 		event.Kind = aiaudit.KindDelegationEnded
 		event.Outcome = delegateOutcome(
-			conversation.DelegateStatus(stringOf(payload[payloadKeyStatus])),
+			conversation.DelegateStatus(typeutils.StringOf(payload[payloadKeyStatus])),
 		)
 		event.ToolName = delegateToolName
-		event.Reason = d.redactor.Text(stringOf(payload[payloadKeyReason]), aiaudit.MaxReasonLength)
+		event.Reason = d.redactor.Text(
+			typeutils.StringOf(payload[payloadKeyReason]),
+			aiaudit.MaxReasonLength,
+		)
 		event.ResultSummary = d.redactor.Text(
-			stringOf(payload[payloadKeyReply]),
+			typeutils.StringOf(payload[payloadKeyReply]),
 			aiaudit.MaxResultSummaryLength,
 		)
 	default:
@@ -750,7 +758,7 @@ func (d *deriver) proposalExecution(
 	event.Tier = string(proposal.AutonomyTier)
 	event.HeldBy = slices.Clone(proposal.HeldBy)
 	event.EgressClass = string(proposal.EgressClass)
-	event.TraceID = firstNonEmpty(proposal.TraceID, event.TraceID)
+	event.TraceID = stringutils.FirstNonEmpty(proposal.TraceID, event.TraceID)
 	event.SpanID = proposal.SpanID
 	event.Simulated = kind == aiaudit.KindProposalSimulated
 	withTaint(event, proposal.Tainted, proposal.Taint)
@@ -905,22 +913,6 @@ func firstPositive(values ...int64) int64 {
 	}
 
 	return 0
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-
-	return ""
-}
-
-func stringOf(value any) string {
-	text, _ := value.(string)
-
-	return text
 }
 
 func int64Of(value any) int64 {

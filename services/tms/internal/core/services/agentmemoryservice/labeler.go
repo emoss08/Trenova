@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 )
 
@@ -53,7 +54,7 @@ func (l *repositoryLabeler) Label(
 			return "", err
 		}
 
-		return firstNonEmpty(entity.Name, entity.Code), nil
+		return stringutils.FirstNonEmpty(entity.Name, entity.Code), nil
 	case agent.MemorySubjectLocation:
 		entity, err := l.locations.GetByID(ctx, repositories.GetLocationByIDRequest{
 			ID:         ref.ID,
@@ -63,7 +64,7 @@ func (l *repositoryLabeler) Label(
 			return "", err
 		}
 
-		return firstNonEmpty(entity.Name, entity.Code), nil
+		return stringutils.FirstNonEmpty(entity.Name, entity.Code), nil
 	case agent.MemorySubjectWorker:
 		entity, err := l.workers.GetByID(ctx, repositories.GetWorkerByIDRequest{
 			ID:         ref.ID,
@@ -83,18 +84,8 @@ func (l *repositoryLabeler) Label(
 			return "", err
 		}
 
-		return firstNonEmpty(entity.Name, entity.DBAName), nil
+		return stringutils.FirstNonEmpty(entity.Name, entity.DBAName), nil
 	default:
 		return "", fmt.Errorf("%q is not a subject a memory can be about", ref.Type)
 	}
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if trimmed := strings.TrimSpace(value); trimmed != "" {
-			return trimmed
-		}
-	}
-
-	return ""
 }

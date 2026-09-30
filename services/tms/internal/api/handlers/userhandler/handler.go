@@ -220,11 +220,7 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetUserByIDRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		TenantInfo:         pagination.FromAuthAsUser(authCtx),
 		LookupUserID:       userID,
 		IncludeMemberships: helpers.QueryBool(c, "includeMemberships", false),
 	})
@@ -249,11 +245,7 @@ func (h *Handler) me(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetUserByIDRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		TenantInfo:         pagination.FromAuthAsUser(authCtx),
 		IncludeMemberships: true,
 	})
 	if err != nil {
@@ -284,11 +276,7 @@ func (h *Handler) getOption(c *gin.Context) {
 	}
 
 	entity, err := h.service.GetByID(c.Request.Context(), repositories.GetUserByIDRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		TenantInfo:   pagination.FromAuthAsUser(authCtx),
 		LookupUserID: userID,
 	})
 	if err != nil {

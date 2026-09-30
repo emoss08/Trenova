@@ -47,11 +47,8 @@ func (h *Handler) globalSearch(c *gin.Context) {
 	}
 
 	result, err := h.service.Search(c.Request.Context(), &serviceports.GlobalSearchRequest{
-		Query: strings.TrimSpace(c.Query("query")),
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
-		},
+		Query:      strings.TrimSpace(c.Query("query")),
+		TenantInfo: pagination.FromAuth(authCtx),
 		Principal: serviceports.PrincipalInfo{
 			Type:     serviceports.PrincipalType(authCtx.PrincipalType),
 			ID:       authCtx.PrincipalID,

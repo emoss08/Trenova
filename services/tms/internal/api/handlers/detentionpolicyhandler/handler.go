@@ -145,12 +145,8 @@ func (h *Handler) get(c *gin.Context) {
 		c.Request.Context(),
 		&repositories.GetDetentionPolicyByIDRequest{
 			DetentionPolicyID: policyID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
-			IncludeTiers: true,
+			TenantInfo:        pagination.FromAuthAsUser(authCtx),
+			IncludeTiers:      true,
 		},
 	)
 	if err != nil {
@@ -262,11 +258,7 @@ func (h *Handler) delete(c *gin.Context) {
 
 	if err = h.service.Delete(c.Request.Context(), &repositories.GetDetentionPolicyByIDRequest{
 		DetentionPolicyID: policyID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		TenantInfo:        pagination.FromAuthAsUser(authCtx),
 	}, authCtx.UserID); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -330,11 +322,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		c.Request.Context(),
 		&repositories.GetDetentionPolicyByIDRequest{
 			DetentionPolicyID: policyID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
-			},
+			TenantInfo:        pagination.FromAuthAsUser(authCtx),
 		},
 	)
 	if err != nil {

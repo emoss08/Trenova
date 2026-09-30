@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -322,7 +323,7 @@ func (r *workerCredentialTypeResolver) ProfileField(ctx context.Context, obj *wo
 	if !obj.ProfileField.IsSet() {
 		return nil, nil //nolint:nilnil // absent field renders as null
 	}
-	return stringPtr(obj.ProfileField.String()), nil
+	return stringutils.Ptr(obj.ProfileField.String()), nil
 }
 
 func (r *workerCredentialTypeResolver) ActiveCredentialCount(ctx context.Context, obj *worker.WorkerCredentialType) (int, error) {

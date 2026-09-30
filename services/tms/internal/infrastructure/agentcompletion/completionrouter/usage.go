@@ -102,7 +102,7 @@ func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 		row.SubjectID = subject.ID
 	}
 	if attempt.outcome != nil {
-		row.Model = firstNonEmpty(attempt.outcome.Model, row.Model)
+		row.Model = stringutils.FirstNonEmpty(attempt.outcome.Model, row.Model)
 		row.InputTokens = attempt.outcome.InputTokens
 		row.OutputTokens = attempt.outcome.OutputTokens
 		row.ReasoningTokens = attempt.outcome.ReasoningTokens
@@ -192,14 +192,4 @@ func streamedOutcome(provider *aiprovider.Provider, streamed chatStream, cause e
 		OutputTokens:    llmtokens.Estimate(streamed.text) + reasoning,
 		ReasoningTokens: reasoning,
 	}
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-
-	return ""
 }

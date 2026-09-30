@@ -108,7 +108,6 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 
 	tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	
 
 	const day = int64(1_900_000_000)
 	const next = day + 86_400

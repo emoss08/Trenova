@@ -247,21 +247,21 @@ func snapshotMemories() ([]*agent.Memory, []agent.MemorySubject) {
 	outside.Tainted = true
 
 	return []*agent.Memory{
-			memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
-				"The yard closes at 18:00."),
-			holdFix,
-			long,
-			assignFix,
-			memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
-				"Quote every lane in US dollars."),
-			outside,
-			dockRule,
-			aboutCustomer,
-			customerRule,
-		}, []agent.MemorySubject{
-			{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
-			{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
-		}
+		memory("amem_01JSNAPSHOTMEMORY00000008", agent.MemoryKindFact,
+			"The yard closes at 18:00."),
+		holdFix,
+		long,
+		assignFix,
+		memory("amem_01JSNAPSHOTMEMORY00000009", agent.MemoryKindInstruction,
+			"Quote every lane in US dollars."),
+		outside,
+		dockRule,
+		aboutCustomer,
+		customerRule,
+	}, []agent.MemorySubject{
+		{Type: agent.MemorySubjectCustomer, ID: customer, Relation: agent.MemoryRelationDirect},
+		{Type: agent.MemorySubjectLocation, ID: location, Relation: agent.MemoryRelationRelated},
+	}
 }
 
 func TestPromptSnapshots_MemoryGrouping(t *testing.T) {

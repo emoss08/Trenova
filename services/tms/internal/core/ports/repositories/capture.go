@@ -170,9 +170,19 @@ type ListCaptureBatchesRequest struct {
 	Source   capture.Source           `json:"source"`
 	// UserID limits the queue to one person's batches. The service sets it
 	// whenever the caller's data scope is their own records.
-	UserID     pulid.ID `json:"userId"`
+	UserID pulid.ID `json:"userId"`
+	// TargetType and TargetID keep the stacks for one record: scanned into
+	// it, or with a document filed or suggested onto it.
 	TargetType string   `json:"targetType"`
 	TargetID   pulid.ID `json:"targetId"`
+	// Search finds a stack by its scanner or print job, the computer that
+	// sent it, the person it belongs to, a code on one of its pages, or the
+	// PRO or bill of lading number of a shipment it is for or was filed onto.
+	Search string `json:"search"`
+	// CreatedFrom and CreatedTo bound when the stack arrived, in Unix
+	// seconds, inclusive; zero leaves that side open.
+	CreatedFrom int64 `json:"createdFrom"`
+	CreatedTo   int64 `json:"createdTo"`
 }
 
 // ListStaleCaptureBatchesRequest finds batches stuck in a status longer than

@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/emoss08/trenova/shared/stringutils"
 	"strings"
 	"time"
 )
@@ -88,7 +89,7 @@ func (l *LiveSimulator) routeContextByVehicleMap() map[string]routeWebhookContex
 			RouteName:        stringValue(route, "name"),
 			RouteExternalIDs: externalIDsFromRecord(route),
 			DriverID:         driverID,
-			DriverName: firstNonEmpty(
+			DriverName: stringutils.FirstNonEmptyTrimmed(
 				nestedString(route, "driver", "name"),
 				roster[driverID].Name,
 				driverID,

@@ -22,6 +22,18 @@ func TestNormalizeEmailAddresses(t *testing.T) {
 	)
 }
 
+func TestNormalizeEmailList(t *testing.T) {
+	t.Parallel()
+
+	require.Empty(t, NormalizeEmailList(nil))
+	require.Equal(
+		t,
+		[]string{"ops@example.com", "billing@example.com"},
+		NormalizeEmailList([]string{" Ops@Example.COM ", "", "billing@example.com", "ops@example.com"}),
+		"a list keeps the order it was given in, having dropped blanks and repeats",
+	)
+}
+
 func TestFormatEmailAddress(t *testing.T) {
 	t.Parallel()
 

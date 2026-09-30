@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/emoss08/trenova/shared/stringutils"
 	"net/http"
 	"sort"
 	"strings"
@@ -96,7 +97,7 @@ func (l *LiveSimulator) hosViolationRecord(
 		"violationStartTime": event.StartsAt.UTC().Format(time.RFC3339),
 		"driver": map[string]any{
 			"id":   driverID,
-			"name": firstNonEmpty(roster[driverID].Name, driverID),
+			"name": stringutils.FirstNonEmptyTrimmed(roster[driverID].Name, driverID),
 		},
 		"day": map[string]any{
 			"startTime": workdayStart.UTC().Format(time.RFC3339),
