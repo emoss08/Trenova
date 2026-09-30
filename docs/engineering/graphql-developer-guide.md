@@ -90,7 +90,9 @@ extend type Mutation {
 
 ### 2. Backend Generation
 
-Run gqlgen after schema or resolver contract changes:
+Run the generator after schema or resolver contract changes. `task gqlgen` binds the schema
+with gqlgen and writes models, resolver stubs, and one executor package per schema file (see
+[GraphQL Executor](graphql-executor.md)); do not run `go tool gqlgen generate` directly:
 
 ```bash
 cd services/tms
@@ -104,7 +106,7 @@ cd services/tms
 task gqlgen-check
 ```
 
-`task generate` runs `go generate ./...`; it does not replace gqlgen.
+`task generate` runs `go generate ./...`; it does not replace `task gqlgen`.
 
 ### 3. Resolver Shape
 
@@ -300,7 +302,7 @@ git diff --check
 ## Common Mistakes
 
 - Adding GraphQL schema and forgetting `projection.yml`. The generator requires every field to resolve to a column, an inferred relation, or a declared override; a resolver-computed or deprecated field needs a `virtuals` entry or generation aborts. See [Generated Artifacts](generated-artifacts.md).
-- Adding GraphQL schema and forgetting gqlgen.
+- Adding GraphQL schema and forgetting `task gqlgen`.
 - Adding client operations and forgetting to sync the backend persisted manifest.
 - Calling repositories directly from resolvers.
 - Duplicating REST validation in GraphQL instead of calling services.

@@ -288,12 +288,11 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          # gqlgen's model plugin can miss the models_gen.go it just wrote when
-          # the schema adds a model, so the first pass fails and the second
-          # succeeds. This mirrors the retry in services/tms/Taskfile.yml.
-          go tool gqlgen generate || go tool gqlgen generate
-          # follow-schema layout writes one file per schema, so a new schema file
-          # produces a new *untracked* generated file that git diff cannot see.
+          # The same generator `task gqlgen` runs: models, resolver stubs and
+          # the sharded executor, followed by a build of the result.
+          go run ./internal/api/graphql/gqlexec/gen
+          # Each schema file gets its own executor package, so a new schema file
+          # produces new *untracked* generated files that git diff cannot see.
           PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver"
           if [ -n "$(git status --porcelain -- $PATHS)" ]; then
             echo "::error::GraphQL server code is stale - run 'task gqlgen' and commit"

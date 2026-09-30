@@ -29,7 +29,7 @@ task run-watch          # Run API server with hot reload (air)
 task test               # Run unit tests
 task test-integration   # Run integration tests (requires Docker)
 task lint               # Run golangci-lint
-task gqlgen             # Regenerate GraphQL server code from internal/api/graphql/schema/*.graphqls
+task gqlgen             # Regenerate GraphQL models, resolver stubs and the sharded executor (never `go tool gqlgen generate`)
 task gqlschema-diff     # Report GraphQL schema changes vs origin/master; fails on breaking changes
 task db-migrate         # Run database migrations
 task db-seed            # Seed database (auto-regenerates seed IDs)
@@ -293,9 +293,9 @@ record link means regenerating it** (`pnpm --filter @trenova/web guide:generate`
 otherwise. Record links are built from one registry, `client/apps/web/src/config/record-links.ts`
 (`recordPath`), never by hand. Read [docs/engineering/product-guide.md](docs/engineering/product-guide.md).
 
-## GraphQL (gqlgen)
+## GraphQL (gqlgen + gqlexec)
 
-- Schema lives in `services/tms/internal/api/graphql/schema/*.graphqls`; regenerate with `task gqlgen` (it retries once, because gqlgen can miss the `models_gen.go` it just wrote when a schema adds a model).
+- Schema lives in `services/tms/internal/api/graphql/schema/*.graphqls`; regenerate with `task gqlgen`. It runs `internal/api/graphql/gqlexec/gen`, which keeps gqlgen's binder, models and resolver stubs but writes the executor as one package per schema file (`internal/api/graphql/generated/exec/<file>exec`) on a shared runtime (`internal/api/graphql/gqlexec`). Never run `go tool gqlgen generate`; it writes gqlgen's single-package executor and breaks the build. Read [docs/engineering/graphql-executor.md](docs/engineering/graphql-executor.md) before changing the generator or runtime.
 - When a domain struct field uses an initialism (`ShipmentBOL`, `DOTNumber`, `PTOType`), add the initialism to `go_initialisms` in `gqlgen.yml` rather than a per-field `fieldName:` override. Keep initialisms to 3+ letters: 2-letter ones (`AR`, `PO`, `MC`, `CC`) prefix-match SCREAMING enum values and mangle their Go constants (`DETENTION_POLICY` became `DetentionPOLicy`), so those few fields keep explicit overrides.
 - Bind GraphQL enums to their domain type in `gqlgen.yml` (`RotaDayState: model: ...worker.RotaDayState`) when the string values match; that removes the need for a conversion resolver.
 - Every root resolver must reach a permission check or be listed, with a reason, in `internal/api/graphql/authzlint`; self-scoped operations are named `My<Thing>`. `task gqlschema-diff` fails on breaking schema changes; swapping a field between wire-compatible scalars (`Int`↔`Timestamp`, `String`↔`Decimal`) is reported as dangerous, not breaking.

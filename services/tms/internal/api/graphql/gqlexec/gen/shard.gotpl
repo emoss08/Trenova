@@ -1,0 +1,435 @@
+{{ reserveImport "context" }}
+{{ reserveImport "errors" }}
+{{ reserveImport "fmt" }}
+{{ reserveImport "github.com/vektah/gqlparser/v2/ast" }}
+{{ reserveImport "github.com/99designs/gqlgen/graphql" }}
+{{ reserveImport $.Runtime }}
+
+var Shard = &gqlexec.Shard{
+	Name: {{ quote $.Name }},
+	{{- if $.Objects }}
+	Objects: []*gqlexec.Object{
+		{{- range $o := $.Objects }}
+		{Name: {{ quote $o.Name }}, Implementors: {{ $o.Implementors }}{{ if $o.Root }}, Root: true{{ end }}},
+		{{- end }}
+	},
+	{{- end }}
+	{{- if $.FieldSets }}
+	Fields: []gqlexec.Fields{
+		{{- range $set := $.FieldSets }}
+		{Object: {{ quote $set.Object.Name }}, Fields: []*gqlexec.Field{
+			{{- range $fd := $set.Fields }}
+			{{ template "field" $fd }},
+			{{- end }}
+		}},
+		{{- end }}
+	},
+	{{- end }}
+	{{- if $.Abstracts }}
+	Abstracts: []gqlexec.Abstract{
+		{{- range $i := $.Abstracts }}
+		{Name: {{ quote $i.Name }}, Marshal: marshalAbstract{{ $i.Name }}},
+		{{- end }}
+	},
+	{{- end }}
+	{{- if $.Inputs }}
+	Inputs: []gqlexec.Input{
+		{{- range $in := $.Inputs }}
+		{Name: {{ quote $in.Name }}, Unmarshal: gqlexec.Unmarshal(unmarshalInput{{ $in.Name }})},
+		{{- end }}
+	},
+	{{- end }}
+	{{- if $.Resolvers }}
+	Resolvers: []gqlexec.ResolverRequirement{
+		{{- range $r := $.Resolvers }}
+		{Root: {{ quote $r.Root }}, Check: func(r any) bool { _, ok := r.({{ $r.Name }}); return ok }},
+		{{- end }}
+	},
+	{{- end }}
+}
+
+{{- range $r := $.Resolvers }}
+
+type {{ $r.Name }} interface {
+	{{- range $f := $r.Fields }}
+	{{ $f.GoFieldName }}{{ $f.ShortResolverDeclaration }}
+	{{- end }}
+}
+{{- end }}
+
+{{- if $.ChildErrs }}
+
+var (
+	{{- range $e := $.ChildErrs }}
+	{{ $e.Var }} = errors.New({{ quote $e.Msg }})
+	{{- end }}
+)
+{{- end }}
+
+{{- range $i := $.Abstracts }}
+
+func marshalAbstract{{ $i.Name }}(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
+	switch obj := v.(type) {
+	case nil:
+		return graphql.Null
+	{{- range $impl := $i.Implementors }}
+	case {{ $impl.Type | ref }}:
+		{{- if $impl.CanBeNil }}
+		if obj == nil {
+			return graphql.Null
+		}
+		{{- end }}
+		return ec.MarshalType(ctx, sel, {{ quote $impl.Name }}, {{ if $impl.TakeRef }}&{{ end }}obj)
+	{{- end }}
+	default:
+		if typedObj, ok := obj.(graphql.Marshaler); ok {
+			return typedObj
+		}
+		panic(fmt.Errorf("unexpected type %T; non-generated variants of {{ $i.Name }} must implement graphql.Marshaler", obj))
+	}
+}
+{{- end }}
+
+{{- range $f := $.ArgFields }}
+
+func {{ $f.ArgsFunc }}(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, {{ len $f.Args }})
+	{{- range $i, $arg := $f.Args }}
+	arg{{ $i }}, err := graphql.ProcessArgField(ctx, rawArgs, {{ $arg.Name | quote }},
+		func(ctx context.Context, v any) ({{ $arg.TypeReference.GO | ref }}, error) {
+			return {{ $arg.TypeReference.UnmarshalFunc }}(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args[{{ $arg.Name | quote }}] = arg{{ $i }}
+	{{- end }}
+	return args, nil
+}
+{{- end }}
+
+{{- range $input := $.Inputs }}
+{{- $it := "it" }}
+{{- if $input.PointersInUnmarshalInput }}
+{{- $it = "&it" }}
+{{- end }}
+
+func unmarshalInput{{ $input.Name }}(ctx context.Context, ec *gqlexec.Exec, obj any) ({{ if $input.PointersInUnmarshalInput }}*{{ end }}{{ $input.Type | ref }}, error) {
+	var it {{ $input.Type | ref }}
+	if obj == nil {
+		return {{ $it }}, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+	{{- range $field := $input.Fields }}
+	{{- if notNil "Default" $field }}
+	if _, present := asMap[{{ $field.Name | quote }}]; !present {
+		asMap[{{ $field.Name | quote }}] = {{ $field.Default | dump }}
+	}
+	{{- end }}
+	{{- end }}
+
+	fieldsInOrder := [...]string{ {{ range $input.Fields }}{{ quote .Name }},{{ end }} }
+	{{- if $input.IsMap }}
+	it = make(map[string]any, len(asMap))
+	{{- end }}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		{{- range $field := $input.Fields }}
+		case {{ $field.Name | quote }}:
+			{{- $lhs := (printf "it.%s" $field.GoFieldName) }}
+			{{- if $input.IsMap }}
+			{{- $lhs = (printf "it[%q]" $field.Name) }}
+			{{- end }}
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField({{ $field.Name | quote }}))
+			data, err := {{ $field.TypeReference.UnmarshalFunc }}(ctx, ec, v)
+			if err != nil {
+				return {{ $it }}, err
+			}
+			{{- if $field.IsResolver }}
+			if err = gqlexec.Resolver[resolver{{ ucFirst $input.Name }}](ec, {{ quote (ucFirst $input.Name) }}).{{ $field.GoFieldName }}(ctx, &it, data); err != nil {
+				return {{ $it }}, err
+			}
+			{{- else if $field.TypeReference.IsOmittable }}
+			{{ $lhs }} = graphql.OmittableOf(data)
+			{{- else }}
+			{{ $lhs }} = data
+			{{- end }}
+		{{- end }}
+		}
+	}
+	return {{ $it }}, nil
+}
+{{- end }}
+
+{{- range $input := $.ForeignInputs }}
+
+func unmarshalInput{{ $input.Name }}(ctx context.Context, ec *gqlexec.Exec, obj any) ({{ if $input.PointersInUnmarshalInput }}*{{ end }}{{ $input.Type | ref }}, error) {
+	return gqlexec.UnmarshalInput[{{ if $input.PointersInUnmarshalInput }}*{{ end }}{{ $input.Type | ref }}](ctx, ec, {{ quote $input.Name }}, obj)
+}
+{{- end }}
+
+{{- range $type := $.Enums }}
+{{- $enum := $type.GO }}
+{{- if $type.IsNilable }}
+{{- $enum = $type.GO.Elem }}
+{{- end }}
+
+var (
+	{{ enumUnmarshal $type }} = map[string]{{ $enum | ref }}{
+		{{- range $value := $type.EnumValues }}
+		{{ quote $value.Definition.Name }}: {{ $value.Object | obj }},
+		{{- end }}
+	}
+	{{ enumMarshal $type }} = map[{{ $enum | ref }}]string{
+		{{- range $value := $type.EnumValues }}
+		{{ $value.Object | obj }}: {{ quote $value.Definition.Name }},
+		{{- end }}
+	}
+)
+{{- end }}
+
+{{- range $type := $.Unmarshals }}
+
+func {{ $type.UnmarshalFunc }}(ctx context.Context, ec *gqlexec.Exec, v any) ({{ $type.GO | ref }}, error) {
+	{{- if and $type.IsNilable (not $type.GQL.NonNull) (not $type.IsPtrToPtr) }}
+	if v == nil {
+		return nil, nil
+	}
+	{{- end }}
+	{{- if or $type.IsPtrToSlice $type.IsPtrToIntf }}
+	res, err := {{ $type.Elem.UnmarshalFunc }}(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+	{{- else if $type.IsSlice }}
+	return gqlexec.UnmarshalList(ctx, ec, v, {{ $type.Elem.UnmarshalFunc }})
+	{{- else if and $type.IsPtrToPtr (not $type.Unmarshaler) (not $type.IsMarshaler) }}
+	var pres {{ $type.Elem.GO | ref }}
+	if v != nil {
+		res, err := {{ $type.Elem.UnmarshalFunc }}(ctx, ec, v)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		pres = res
+	}
+	return &pres, nil
+	{{- else if $type.Unmarshaler }}
+	{{- if $type.HasEnumValues }}
+	tmp, err := {{ $type.Unmarshaler | call }}(v)
+	res := {{ enumUnmarshal $type }}[tmp]
+	{{- else if $type.CastType }}
+	{{- if $type.IsContext }}
+	tmp, err := {{ $type.Unmarshaler | call }}(ctx, v)
+	{{- else }}
+	tmp, err := {{ $type.Unmarshaler | call }}(v)
+	{{- end }}
+	{{- if and $type.IsNilable $type.Elem }}
+	res := {{ $type.Elem.GO | ref }}(tmp)
+	{{- else }}
+	res := {{ $type.GO | ref }}(tmp)
+	{{- end }}
+	{{- else }}
+	{{- if $type.IsContext }}
+	res, err := {{ $type.Unmarshaler | call }}(ctx, v)
+	{{- else }}
+	res, err := {{ $type.Unmarshaler | call }}(v)
+	{{- end }}
+	{{- end }}
+	{{- if and $type.IsTargetNilable (not $type.IsNilable) }}
+	return *res, graphql.ErrorOnPath(ctx, err)
+	{{- else if and (not $type.IsTargetNilable) $type.IsNilable }}
+	return &res, graphql.ErrorOnPath(ctx, err)
+	{{- else }}
+	return res, graphql.ErrorOnPath(ctx, err)
+	{{- end }}
+	{{- else if $type.IsMarshaler }}
+	{{- if and $type.IsNilable $type.Elem }}
+	var res = new({{ $type.Elem.GO | ref }})
+	{{- else }}
+	var res {{ $type.GO | ref }}
+	{{- end }}
+	{{- if $type.IsContext }}
+	err := res.UnmarshalGQLContext(ctx, v)
+	{{- else }}
+	err := res.UnmarshalGQL(v)
+	{{- end }}
+	return res, graphql.ErrorOnPath(ctx, err)
+	{{- else }}
+	res, err := unmarshalInput{{ $type.GQL.Name }}(ctx, ec, v)
+	{{- if and $type.IsNilable (not $type.IsMap) (not $type.PointersInUnmarshalInput) }}
+	return &res, graphql.ErrorOnPath(ctx, err)
+	{{- else if and (not $type.IsNilable) $type.PointersInUnmarshalInput }}
+	return *res, graphql.ErrorOnPath(ctx, err)
+	{{- else }}
+	return res, graphql.ErrorOnPath(ctx, err)
+	{{- end }}
+	{{- end }}
+}
+{{- end }}
+
+{{- range $type := $.Marshals }}
+
+func {{ $type.MarshalFunc }}(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v {{ $type.GO | ref }}) graphql.Marshaler {
+	{{- if or $type.IsPtrToSlice $type.IsPtrToIntf }}
+	if v == nil {
+		return graphql.Null
+	}
+	return {{ $type.Elem.MarshalFunc }}(ctx, ec, sel, *v)
+	{{- else if $type.IsSlice }}
+	return gqlexec.List[{{ $type.GO.Elem | ref }}]{
+		Elem: {{ $type.Elem.MarshalFunc }},
+		{{- if $type.GQL.NonNull }}
+		NonNull: true,
+		{{- end }}
+		{{- if $type.Elem.GQL.NonNull }}
+		NonNullElem: true,
+		{{- end }}
+		{{- if $type.IsScalar }}
+		Scalar: true,
+		{{- end }}
+	}.Marshal(ctx, ec, sel, v)
+	{{- else if and $type.IsPtrToPtr (not $type.Unmarshaler) (not $type.IsMarshaler) }}
+	if v == nil {
+		return graphql.Null
+	}
+	return {{ $type.Elem.MarshalFunc }}(ctx, ec, sel, *v)
+	{{- else }}
+	{{- if $type.IsNilable }}
+	if v == nil {
+		{{- if $type.GQL.NonNull }}
+		gqlexec.NullViolation(ctx)
+		{{- end }}
+		return graphql.Null
+	}
+	{{- end }}
+	{{- if $type.IsMarshaler }}
+	{{- if $type.IsContext }}
+	return graphql.WrapContextMarshaler(ctx, v)
+	{{- else }}
+	return v
+	{{- end }}
+	{{- else if $type.Marshaler }}
+	{{- $v := "v" }}
+	{{- if and $type.IsTargetNilable (not $type.IsNilable) }}
+	{{- $v = "&v" }}
+	{{- else if and (not $type.IsTargetNilable) $type.IsNilable }}
+	{{- $v = "*v" }}
+	{{- end }}
+	{{- if $type.HasEnumValues }}
+	{{- $v = printf "%v[%v]" (enumMarshal $type) $v }}
+	{{- else if $type.CastType }}
+	{{- $v = printf "%v(%v)" ($type.CastType | ref) $v }}
+	{{- end }}
+	res := {{ $type.Marshaler | call }}({{ $v }})
+	{{- if $type.GQL.NonNull }}
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	{{- end }}
+	{{- if $type.IsContext }}
+	return graphql.WrapContextMarshaler(ctx, res)
+	{{- else }}
+	return res
+	{{- end }}
+	{{- else if $type.IsRoot }}
+	return ec.MarshalRoot(ctx, sel, {{ quote $type.Definition.Name }})
+	{{- else }}
+	return ec.MarshalType(ctx, sel, {{ quote $type.Definition.Name }}, {{ if not $type.IsNilable }}&{{ end }}v)
+	{{- end }}
+	{{- end }}
+}
+{{- end }}
+
+{{ define "field" }}
+{{- $f := .F -}}
+{
+	Name: {{ quote $f.Name }},
+	{{- if $f.TypeReference.GQL.NonNull }}
+	NonNull: true,
+	{{- end }}
+	{{- if $f.IsMethod }}
+	IsMethod: true,
+	{{- end }}
+	{{- if $f.IsResolver }}
+	IsResolver: true,
+	{{- end }}
+	{{- if $f.IsConcurrent }}
+	Concurrent: true,
+	{{- end }}
+	{{- if .HasChild }}
+	HasChild: true,
+	{{- end }}
+	{{- if .ChildType }}
+	ChildType: {{ quote .ChildType }},
+	{{- end }}
+	{{- if .ChildErr }}
+	ChildErr: {{ .ChildErr }},
+	{{- end }}
+	{{- if $f.Args }}
+	Args: {{ $f.ArgsFunc }},
+	{{- end }}
+	{{- if $f.TypeReference.IsRoot }}
+	RootValue: func() any {
+		{{- if $f.TypeReference.IsPtr }}
+		return &{{ $f.TypeReference.Elem.GO | ref }}{}
+		{{- else }}
+		return {{ $f.TypeReference.GO | ref }}{}
+		{{- end }}
+	},
+	{{- else }}
+	Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+		{{- if not $f.Object.Root }}
+		obj := o.({{ $f.Object.Reference | ref }})
+		{{- end }}
+		{{- if and (or $f.IsResolver $f.IsMethod) $f.Args }}
+		fc := graphql.GetFieldContext(ctx)
+		{{- end }}
+		{{- if $f.IsResolver }}
+		return gqlexec.Resolver[{{ .Iface }}](ec, {{ quote .Root }}).{{ $f.GoFieldName }}({{ $f.CallArgs }})
+		{{- else if $f.IsMap }}
+		switch v := {{ $f.GoReceiverName }}[{{ $f.Name | quote }}].(type) {
+		case {{ $f.TypeReference.GO | ref }}:
+			return v, nil
+		case {{ $f.TypeReference.Elem.GO | ref }}:
+			return &v, nil
+		case nil:
+			return ({{ $f.TypeReference.GO | ref }})(nil), nil
+		default:
+			return nil, fmt.Errorf("unexpected type %T for field %s", v, {{ $f.Name | quote }})
+		}
+		{{- else if $f.IsMethod }}
+		{{- if $f.HasHaser }}
+		if !{{ $f.GoReceiverName }}.{{ $f.HaserMethodName }}() {
+			return nil, nil
+		}
+		{{- end }}
+		{{- if $f.VOkFunc }}
+		v, ok := {{ $f.GoReceiverName }}.{{ $f.GoFieldName }}({{ $f.CallArgs }})
+		if !ok {
+			return nil, nil
+		}
+		return v, nil
+		{{- else if $f.NoErr }}
+		return {{ $f.GoReceiverName }}.{{ $f.GoFieldName }}({{ $f.CallArgs }}), nil
+		{{- else }}
+		return {{ $f.GoReceiverName }}.{{ $f.GoFieldName }}({{ $f.CallArgs }})
+		{{- end }}
+		{{- else if $f.IsVariable }}
+		{{- if $f.HasHaser }}
+		if !{{ $f.GoReceiverName }}.{{ $f.HaserMethodName }}() {
+			return nil, nil
+		}
+		{{- end }}
+		return {{ $f.GoReceiverName }}.{{ $f.GoFieldName }}, nil
+		{{- end }}
+	},
+	{{- end }}
+	Marshal: gqlexec.Marshal({{ $f.TypeReference.MarshalFunc }}),
+}
+{{- end }}

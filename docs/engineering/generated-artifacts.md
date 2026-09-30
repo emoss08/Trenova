@@ -15,7 +15,7 @@ covers how to build a resource; this covers what breaks afterwards.
 are relative to `services/tms`:
 
 ```bash
-go tool gqlgen generate || go tool gqlgen generate   # see "gqlgen" below for the retry
+go run ./internal/api/graphql/gqlexec/gen                           # same as `task gqlgen`; see "GraphQL server code" below
 git status --porcelain -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver
 
 go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhelpers/seed_ids_gen.go
@@ -158,14 +158,22 @@ longer find their tool. Fix the description rather than the floor. The flag goes
 package. The job also runs the prompt-injection red-team suite; see
 [agent-evals.md](agent-evals.md) for what it proves and its known gaps.
 
-## gqlgen
+## GraphQL server code
 
-- The model plugin can miss the `models_gen.go` it just wrote when a schema adds a model, so
-  the first pass fails and the second succeeds. `task gqlgen` and CI both retry once. A
-  single failure is not a real failure; two in a row is.
-- `follow-schema` layout writes one file per schema file, so a new schema file produces a new
-  **untracked** file. `git diff` cannot see it. Check with `git status --porcelain`, which is
-  what CI does — a local `git diff` will tell you everything is fine when it is not.
+- `task gqlgen` runs `internal/api/graphql/gqlexec/gen`, not gqlgen's CLI. It uses gqlgen's
+  binder and model/resolver plugins, then writes the executor as one package per schema file
+  under `internal/api/graphql/generated/exec/`. Never run `go tool gqlgen generate`: it writes
+  gqlgen's single-package executor next to the sharded one and the build fails with duplicate
+  declarations. See [GraphQL Executor](graphql-executor.md).
+- It runs in one pass. The old retry for a model gqlgen had just written is gone, because the
+  generator reloads packages after the model plugin runs. If generation fails it puts the
+  previous executor and `models_gen.go` back, so a failed run leaves a buildable tree.
+- A new schema file produces a new **untracked** executor package. `git diff` cannot see
+  it. Check with `git status --porcelain`, which is what CI does — a local `git diff` will
+  tell you everything is fine when it is not.
+- The generator refuses gqlgen features the executor does not implement (subscriptions,
+  runtime directives, batch resolvers, complexity functions) and names the field. Adding one
+  means extending `gqlexec`, not working around the error.
 - Field naming comes from `go_initialisms` in `gqlgen.yml`. Keep entries to three letters or
   more: two-letter ones (`AR`, `PO`, `MC`, `CC`) prefix-match SCREAMING enum values and
   mangle the generated constants (`DETENTION_POLICY` became `DetentionPOLicy`). Those few

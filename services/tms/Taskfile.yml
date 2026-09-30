@@ -42,10 +42,9 @@ vars:
   # per command (`task run-watch LOW_RESOURCE=true`) or for every command by
   # exporting LOW_RESOURCE=true in your shell profile.
   #
-  # The generated GraphQL executor is one ~20 MB package. Compiling it alone
-  # peaks at ~7.1 GB with four compiler threads, ~5.7 GB with one, and ~5.1 GB
-  # with one thread and GOGC=50, at roughly twice the wall time of the first.
-  # By default Go also compiles one package per core alongside it. The mode
+  # By default Go compiles one package per core, each with its own compiler
+  # threads, so the largest packages (the GraphQL resolver package, the test
+  # mocks the service helpers import) set the peak together. The mode
   # therefore compiles LOW_RESOURCE_JOBS packages at a time with that many
   # threads each (-p and GOMAXPROCS), runs the GC harder (GOGC), caps
   # golangci-lint and the test runners the same way, debounces air, and starts
@@ -271,33 +270,23 @@ tasks:
         GOMAXPROCS="$GO_GENERATE_CONCURRENCY" GOFLAGS="${GOFLAGS:-} -p=$GO_GENERATE_CONCURRENCY" go generate ./...
 
   gqlgen:
-    desc: Generate GraphQL server code
+    desc: Generate GraphQL server code (models, resolver stubs and the sharded executor)
     cmds:
-      - |
-        # gqlgen's model plugin writes models_gen.go and then reloads its own
-        # package cache. When the schema introduces a new model that reload can
-        # miss the file it just wrote, so BuildData fails with "merging type
-        # systems failed" -- after the previous exec output has already been
-        # deleted. The retry loads the models from disk and completes.
-        if ! go tool gqlgen generate; then
-          echo "gqlgen: first pass failed, retrying against regenerated models" >&2
-          if ! go tool gqlgen generate; then
-            # Generated output is not hand-edited, so restoring it is safe and
-            # leaves a compilable tree. Resolvers hold hand-written code and are
-            # deliberately left alone.
-            echo "gqlgen: generation failed, restoring committed generated code" >&2
-            git checkout -- internal/api/graphql/generated internal/api/graphql/gqlmodel
-            exit 1
-          fi
-        fi
+      # gqlexec reads gqlgen.yml, binds the schema with gqlgen's own binder and
+      # writes models, resolver stubs, and one executor package per schema file
+      # under internal/api/graphql/generated/exec. It restores the previous
+      # output if generation fails, then builds the result. Do not run
+      # `go tool gqlgen generate`: it writes gqlgen's single-package executor
+      # next to the sharded one and the build breaks.
+      - go run ./internal/api/graphql/gqlexec/gen
 
   gqlgen-check:
     desc: Check GraphQL server generated code is up to date
     cmds:
       - task: gqlgen
       - |
-        # follow-schema layout writes one file per schema, so a new schema file
-        # produces a new *untracked* generated file. git diff cannot see those,
+        # Each schema file gets its own executor package, so a new schema file
+        # produces new *untracked* generated files. git diff cannot see those,
         # so check porcelain status instead.
         PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver"
         if [ -z "$(git status --porcelain -- $PATHS)" ]; then
