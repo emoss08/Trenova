@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 70 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 72 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 259 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-953 writes: 496 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
+955 writes: 498 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 375 |
-| Exempt | 578 |
-| — Security | 70 |
+| Exempt | 580 |
+| — Security | 72 |
 | — Configuration | 259 |
 | — User preference | 27 |
 | — Infrastructure | 46 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 42 |
 | — Duplicate | 4 |
 | **Pending** | **0** |
-| Total | 953 |
+| Total | 955 |
 
 Of the 375 writes an agent should be able to make, 375 have a tool (100%).
 
@@ -130,7 +130,7 @@ The writes no tool performs yet, and what the tool would do.
 | --- | --- | --- | --- | --- |
 | accessorialcharge | 3 | 0 | 3 | 0 |
 | accountingcontrol | 1 | 0 | 1 | 0 |
-| accountingsync | 29 | 20 | 9 | 0 |
+| accountingsync | 31 | 20 | 11 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
 | agent | 12 | 2 | 10 | 0 |
@@ -325,6 +325,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation changeAccountingBackfill` | Tool: `change_accounting_backfill` |
 | `mutation checkAccountingConnection` | Tool: `check_accounting_connection` |
 | `mutation checkAccountingDrift` | Tool: `check_accounting_drift` |
+| `mutation chooseAccountingCompany` | Exempt, security: Finishes the OAuth sign-in by choosing the company the authorization is for; a person holds the grant, never an agent. |
 | `mutation chooseAccountingSyncMode` | Exempt, configuration: Chooses what the organization's accounting connection sends during setup; an administrator owns the connection and it is fixed once sync is enabled. |
 | `mutation clearAccountingMapping` | Tool: `clear_accounting_mapping` |
 | `mutation completeAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
@@ -334,6 +335,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation disconnectAccountingSystem` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation dismissAccountingDrift` | Tool: `dismiss_accounting_drift` |
 | `mutation enableAccountingSync` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
+| `mutation finishAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation ignoreAccountingInboundChange` | Tool: `ignore_accounting_inbound_change` |
 | `mutation pauseAccountingSync` | Tool: `pause_accounting_sync` |
 | `mutation redateAccountingSync` | Tool: `redate_accounting_sync` |
@@ -355,7 +357,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/webhooks/accounting/:provider/`<br>accountingwebhookhandler.receive | Exempt, infrastructure: An inbound webhook a provider calls with a signed token, not a person. |
+| `POST /api/v1/webhooks/accounting/:provider/`<br>accountingwebhookhandler.receive<br>also `POST /api/v1/webhooks/accounting/:provider/:app/` | Exempt, infrastructure: An inbound webhook a provider calls with a signed token, not a person. |
 
 ### accounttype
 

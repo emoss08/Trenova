@@ -356,7 +356,7 @@ func TestListAccountingSyncRecords_RefusesWhatItCannotFilterOn(t *testing.T) {
 	tool := newListAccountingSyncRecordsTool(ledger)
 
 	for _, extra := range []map[string]any{
-		{"system": "Xero"},
+		{"system": "NetSuite"},
 		{"status": []any{"Stuck"}},
 		{"documentType": "Bill"},
 		{"errorCategory": "Timeout"},

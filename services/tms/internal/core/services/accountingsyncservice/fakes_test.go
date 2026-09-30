@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -837,7 +838,7 @@ func (f *fakeMappingStore) set(
 			TargetType:      target.TargetType,
 			TrenovaObjectID: target.ObjectID,
 			TrenovaKey:      target.Key,
-			ProviderKind:    target.TargetType.ProviderKind(),
+			ProviderKind:    profileKind(conn.IntegrationType, target.TargetType),
 		}
 		f.rows[identity] = row
 	}
@@ -866,7 +867,7 @@ func (f *fakeMappingStore) ensure(
 			TrenovaObjectID: req.ObjectID,
 			TrenovaKey:      req.Key,
 			TargetLabel:     string(req.TargetType) + " " + req.Key,
-			ProviderKind:    req.TargetType.ProviderKind(),
+			ProviderKind:    profileKind(integration.TypeQuickBooksOnline, req.TargetType),
 			State:           accountingsync.MappingStateUnmatched,
 		}
 		f.rows[identity] = row
@@ -1122,7 +1123,11 @@ func (f *fakeWriter) DocumentLimits() services.AccountingDocumentLimits {
 	return f.limits
 }
 
-func (f *fakeWriter) DocumentURL(kind accountingsync.SyncObjectType, externalID string) string {
+func (f *fakeWriter) DocumentURL(
+	_ services.AccountingDocumentAuth,
+	kind accountingsync.SyncObjectType,
+	externalID string,
+) string {
 	return "https://qbo.test/" + string(kind) + "/" + externalID
 }
 
@@ -1241,13 +1246,13 @@ func (f *fakeWriter) CreateBillPayment(
 	return f.record("CreateBillPayment", doc)
 }
 
-func (f *fakeWriter) FindSalesDocument(
+func (f *fakeWriter) FindDocument(
 	_ context.Context,
 	req *services.AccountingFindDocumentRequest,
 ) (*services.AccountingDocumentResult, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.calls = append(f.calls, writerCall{method: "FindSalesDocument", doc: req})
+	f.calls = append(f.calls, writerCall{method: "FindDocument", doc: req})
 	id, ok := f.found[req.DocNumber]
 	if !ok {
 		return nil, false, nil
@@ -1669,4 +1674,15 @@ func (f *fakeRates) Convert(
 		Converted:    amount.Mul(rate),
 		Date:         day,
 	}, nil
+}
+
+func profileKind(
+	typ integration.Type,
+	target accountingsync.MappingTargetType,
+) accountingsync.ReferenceKind {
+	if typ == "" {
+		typ = integration.TypeQuickBooksOnline
+	}
+	profile := accountingsync.MustProfile(typ)
+	return profile.KindFor(target)
 }

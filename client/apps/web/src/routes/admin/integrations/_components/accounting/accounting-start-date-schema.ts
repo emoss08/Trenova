@@ -19,19 +19,26 @@ export function accountingStartDateSchema(latestAllowed: number) {
   });
 }
 
-export const accountingModeSchema = z.object({
-  mode: z.enum(ACCOUNTING_SYNC_MODES, { error: "Choose what is sent" }),
-  granularity: z.enum(ACCOUNTING_LEDGER_GRANULARITIES, {
-    error: "Choose how journal entries are sent",
-  }),
-});
+export function accountingModeSchema(ledgerAvailable: boolean) {
+  return z.object({
+    mode: z
+      .enum(ACCOUNTING_SYNC_MODES, { error: "Choose what is sent" })
+      .refine((value) => ledgerAvailable || value !== "Ledger", {
+        error: "This accounting system cannot receive journal entries",
+      }),
+    granularity: z.enum(ACCOUNTING_LEDGER_GRANULARITIES, {
+      error: "Choose how journal entries are sent",
+    }),
+  });
+}
 
-export type AccountingModeValues = z.infer<typeof accountingModeSchema>;
+export type AccountingModeValues = z.infer<ReturnType<typeof accountingModeSchema>>;
 
-export function accountingModeInput(values: AccountingModeValues) {
+export function accountingModeInput(values: AccountingModeValues, ledgerAvailable: boolean) {
+  const mode = ledgerAvailable ? values.mode : "Document";
   return {
-    mode: values.mode,
-    granularity: values.mode === "Ledger" ? values.granularity : null,
+    mode,
+    granularity: mode === "Ledger" ? values.granularity : null,
   };
 }
 

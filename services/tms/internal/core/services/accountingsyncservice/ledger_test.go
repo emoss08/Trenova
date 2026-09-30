@@ -50,10 +50,10 @@ func (h *harness) mapLedger(accts ledgerAccounts, customerID pulid.ID) ledgerMap
 		control.DefaultRevenueAccountID = accts.revenue
 		control.DefaultAPAccountID = accts.ap
 	})
-	h.references.account("qb-ar", accountingsync.AccountTypeReceivable)
+	h.references.account("qb-ar", accountingsync.AccountClassReceivable)
 	h.references.account("qb-income", "Income")
 	h.references.account("qb-bank", "Bank")
-	h.references.account("qb-ap", accountingsync.AccountTypePayable)
+	h.references.account("qb-ap", accountingsync.AccountClassPayable)
 	return ledgerMappings{
 		ar:      h.confirm(glTarget(accts.ar, "GL account 1100 Accounts receivable"), "qb-ar"),
 		revenue: h.confirm(roleTarget(accountingsync.AccountRoleRevenue, "Revenue"), "qb-income"),

@@ -2,7 +2,6 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
@@ -150,7 +149,7 @@ func (t *getAccountingSyncStatusTool) SearchTerms() []string {
 func (t *getAccountingSyncStatusTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		"system": agenttoolschema.Enum(
-			"The accounting system. Example: \"QuickBooksOnline\".",
+			"The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
 			agenttoolschema.AccountingSystems,
 		),
 	}, "system")
@@ -170,7 +169,7 @@ func (t *getAccountingSyncStatusTool) Query(
 
 	system := integration.Type(optionalString(params.Params, "system"))
 	if !accountingsync.SupportsAccountingSync(system) {
-		return nil, fmt.Errorf("system must be %q", integration.TypeQuickBooksOnline)
+		return nil, agenttoolschema.ErrAccountingSystem()
 	}
 
 	tenant := tenantOf(params)

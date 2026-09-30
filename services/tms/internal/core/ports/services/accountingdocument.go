@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/shopspring/decimal"
@@ -10,6 +11,18 @@ import (
 type AccountingDocumentAuth struct {
 	RealmID     string
 	AccessToken string
+	CompanyCode string
+}
+
+func DocumentAuthFor(
+	conn *accountingsync.AccountingConnection,
+	accessToken string,
+) AccountingDocumentAuth {
+	return AccountingDocumentAuth{
+		RealmID:     conn.ExternalRealmID,
+		AccessToken: accessToken,
+		CompanyCode: conn.ExternalShortCode,
+	}
 }
 
 type AccountingDocumentLimits struct {
@@ -17,15 +30,17 @@ type AccountingDocumentLimits struct {
 	SupportsDebitMemo       bool
 	CanVoidCreditMemo       bool
 	CanVoidPurchaseDocument bool
+	IdempotencyWindow       time.Duration
 }
 
 type AccountingDocumentLine struct {
-	Description    string
-	ItemExternalID string
-	Quantity       decimal.Decimal
-	UnitPrice      decimal.Decimal
-	Amount         decimal.Decimal
-	ServiceDate    string
+	Description       string
+	ItemExternalID    string
+	AccountExternalID string
+	Quantity          decimal.Decimal
+	UnitPrice         decimal.Decimal
+	Amount            decimal.Decimal
+	ServiceDate       string
 }
 
 type AccountingSalesDocument struct {
@@ -57,21 +72,22 @@ type AccountingPaymentApplication struct {
 }
 
 type AccountingPaymentDocument struct {
-	Auth                     AccountingDocumentAuth
-	RequestID                string
-	ExternalID               string
-	CustomerExternalID       string
-	TxnDate                  string
-	CurrencyCode             string
-	ExchangeRate             decimal.Decimal
-	PaymentMethodExternalID  string
-	DepositAccountExternalID string
-	ReferenceNumber          string
-	PrivateNote              string
-	TotalAmount              decimal.Decimal
-	Applications             []AccountingPaymentApplication
-	ShortPayItemExternalID   string
-	Refs                     map[string]string
+	Auth                      AccountingDocumentAuth
+	RequestID                 string
+	ExternalID                string
+	CustomerExternalID        string
+	TxnDate                   string
+	CurrencyCode              string
+	ExchangeRate              decimal.Decimal
+	PaymentMethodExternalID   string
+	DepositAccountExternalID  string
+	ReferenceNumber           string
+	PrivateNote               string
+	ShortPayAccountExternalID string
+	TotalAmount               decimal.Decimal
+	Applications              []AccountingPaymentApplication
+	ShortPayItemExternalID    string
+	Refs                      map[string]string
 }
 
 type AccountingCreditApplicationDocument struct {
@@ -149,9 +165,16 @@ type AccountingDocumentRef struct {
 }
 
 type AccountingFindDocumentRequest struct {
-	Auth      AccountingDocumentAuth
-	Kind      accountingsync.SyncObjectType
-	DocNumber string
+	Auth                   AccountingDocumentAuth
+	Kind                   accountingsync.SyncObjectType
+	DocNumber              string
+	CounterpartyExternalID string
+	TxnDate                string
+	Total                  decimal.Decimal
+	RequestID              string
+	AppliesToExternalIDs   []string
+	CreditExternalID       string
+	Credit                 bool
 }
 
 type AccountingDocumentResult struct {
@@ -162,7 +185,11 @@ type AccountingDocumentResult struct {
 
 type AccountingDocumentWriter interface {
 	DocumentLimits() AccountingDocumentLimits
-	DocumentURL(kind accountingsync.SyncObjectType, externalID string) string
+	DocumentURL(
+		auth AccountingDocumentAuth,
+		kind accountingsync.SyncObjectType,
+		externalID string,
+	) string
 	ClassifyDocumentError(err error) *accountingsync.SyncError
 	UpsertCustomer(
 		ctx context.Context,
@@ -208,7 +235,7 @@ type AccountingDocumentWriter interface {
 		ctx context.Context,
 		ref *AccountingDocumentRef,
 	) (*AccountingDocumentResult, error)
-	FindSalesDocument(
+	FindDocument(
 		ctx context.Context,
 		req *AccountingFindDocumentRequest,
 	) (*AccountingDocumentResult, bool, error)

@@ -1,0 +1,8 @@
+{
+  "Type": null,
+  "Title": "Unauthorized",
+  "Status": 401,
+  "Detail": "TokenExpired: token expired at 09/29/2026 10:00:00",
+  "Instance": "5b2c1f4e-1c3d-4b5a-9e8f-7a6b5c4d3e2f",
+  "Extensions": {}
+}

@@ -104,7 +104,7 @@ type accountingMappingDetail struct {
 
 func accountingSystemParam() map[string]any {
 	return agenttoolschema.Enum(
-		"The accounting system. Example: \"QuickBooksOnline\".",
+		"The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
 		agenttoolschema.AccountingSystems,
 	)
 }
@@ -112,7 +112,7 @@ func accountingSystemParam() map[string]any {
 func requireAccountingSystem(params map[string]any) (integration.Type, error) {
 	system := integration.Type(optionalString(params, paramAccountingSystem))
 	if !accountingsync.SupportsAccountingSync(system) {
-		return "", fmt.Errorf("system must be %q", integration.TypeQuickBooksOnline)
+		return "", agenttoolschema.ErrAccountingSystem()
 	}
 	return system, nil
 }

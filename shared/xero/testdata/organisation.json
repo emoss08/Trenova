@@ -1,0 +1,39 @@
+{
+  "Id": "a1b2c3d4-0000-4000-8000-000000000001",
+  "Status": "OK",
+  "ProviderName": "Trenova",
+  "DateTimeUTC": "/Date(1790000000000)/",
+  "Organisations": [
+    {
+      "APIKey": "",
+      "Name": "Acme Freight Ltd",
+      "LegalName": "Acme Freight Limited",
+      "PaysTax": true,
+      "Version": "US",
+      "OrganisationType": "COMPANY",
+      "BaseCurrency": "usd",
+      "CountryCode": "US",
+      "IsDemoCompany": false,
+      "OrganisationStatus": "ACTIVE",
+      "FinancialYearEndDay": 31,
+      "FinancialYearEndMonth": 12,
+      "SalesTaxBasis": "ACCRUALS",
+      "SalesTaxPeriod": "QUARTERLY",
+      "DefaultSalesTax": "Tax Exclusive",
+      "DefaultPurchasesTax": "Tax Exclusive",
+      "PeriodLockDate": "/Date(1782777600000+0000)/",
+      "CreatedDateUTC": "/Date(1573755038314+0000)/",
+      "OrganisationEntityType": "COMPANY",
+      "Timezone": "EASTERNSTANDARDTIME",
+      "ShortCode": "!mJ4Tp",
+      "OrganisationID": "4c7e1f20-3b5a-4d8e-9f10-2a3b4c5d6e7f",
+      "Edition": "BUSINESS",
+      "Class": "PREMIUM",
+      "LineOfBusiness": "Freight",
+      "Addresses": [],
+      "Phones": [],
+      "ExternalLinks": [],
+      "PaymentTerms": {}
+    }
+  ]
+}

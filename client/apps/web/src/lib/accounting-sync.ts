@@ -262,10 +262,20 @@ const CONNECTION_PHASES: Record<AccountingConnectionStatus, StatusPhase> = {
 
 const AUTHORIZE_HOSTS: Record<AccountingSystem, readonly string[]> = {
   QuickBooksOnline: ["appcenter.intuit.com"],
+  Xero: ["login.xero.com"],
+};
+
+export const ACCOUNTING_SYSTEMS: readonly AccountingSystem[] = ["QuickBooksOnline", "Xero"];
+
+export const DEFAULT_ACCOUNTING_SYSTEM: AccountingSystem = "QuickBooksOnline";
+
+export type AccountingSystemCandidate = {
+  system: AccountingSystem;
+  connection: { status: AccountingConnectionStatus; connectedAt: number } | null | undefined;
 };
 
 export type AccountingCallback =
-  | { kind: "authorized"; code: string; state: string; realmId: string }
+  | { kind: "authorized"; code: string; state: string; realmId: string | null }
   | { kind: "denied" }
   | { kind: "provider-error"; error: string }
   | { kind: "incomplete" };
@@ -297,7 +307,29 @@ export function isTrustedAuthorizeUrl(system: AccountingSystem, value: string): 
   );
 }
 
-export function readAccountingCallback(params: URLSearchParams): AccountingCallback {
+export function resolveAccountingSystem(
+  candidates: readonly AccountingSystemCandidate[],
+): AccountingSystem {
+  let latest: AccountingSystemCandidate | null = null;
+  for (const candidate of candidates) {
+    const connection = candidate.connection;
+    if (!connection) {
+      continue;
+    }
+    if (hasLiveAccountingConnection(connection)) {
+      return candidate.system;
+    }
+    if (latest === null || connection.connectedAt > (latest.connection?.connectedAt ?? 0)) {
+      latest = candidate;
+    }
+  }
+  return latest?.system ?? DEFAULT_ACCOUNTING_SYSTEM;
+}
+
+export function readAccountingCallback(
+  params: URLSearchParams,
+  options: { requireCompany: boolean },
+): AccountingCallback {
   const error = params.get("error")?.trim() ?? "";
   if (error === "access_denied") {
     return { kind: "denied" };
@@ -309,18 +341,25 @@ export function readAccountingCallback(params: URLSearchParams): AccountingCallb
   const code = params.get("code")?.trim() ?? "";
   const state = params.get("state")?.trim() ?? "";
   const realmId = params.get("realmId")?.trim() ?? "";
-  if (code === "" || state === "" || realmId === "") {
+  if (code === "" || state === "" || (options.requireCompany && realmId === "")) {
     return { kind: "incomplete" };
   }
 
-  return { kind: "authorized", code, state, realmId };
+  return { kind: "authorized", code, state, realmId: realmId === "" ? null : realmId };
+}
+
+export function hasReconnectDeadline(absoluteExpiresAt: number): boolean {
+  return absoluteExpiresAt > 0;
 }
 
 export function reconnectDeadlineNear(
   absoluteExpiresAt: number,
   nowSeconds = Math.floor(Date.now() / 1000),
 ): boolean {
-  return absoluteExpiresAt - nowSeconds <= ACCOUNTING_RECONNECT_WARNING_SECONDS;
+  return (
+    hasReconnectDeadline(absoluteExpiresAt) &&
+    absoluteExpiresAt - nowSeconds <= ACCOUNTING_RECONNECT_WARNING_SECONDS
+  );
 }
 
 export function accountingSetupPath(system: AccountingSystem): string {

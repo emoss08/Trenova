@@ -1685,7 +1685,7 @@
         "Sync ledger"
       ],
       "description": "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.",
-      "summary": "The sync ledger lists every document Trenova sends to QuickBooks Online and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.\n\nWhen the connection sends journal entries instead of documents, the ledger lists one record for each posted journal entry, or one **Daily summary** per day, and the **Opening balances** entry when it was sent. A day's summary is sent again whenever an entry is posted to that day later, and a day whose entries net to nothing removes its summary from QuickBooks.",
+      "summary": "The sync ledger lists every document Trenova sends to the accounting system (QuickBooks Online or Xero) and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.\n\nWhen a QuickBooks Online connection sends journal entries instead of documents, the ledger lists one record for each posted journal entry, or one **Daily summary** per day, and the **Opening balances** entry when it was sent. A day's summary is sent again whenever an entry is posted to that day later, and a day whose entries net to nothing removes its summary from QuickBooks.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1709,11 +1709,14 @@
         "vendor credit",
         "journal entry not in QuickBooks",
         "daily summary",
-        "opening balances entry"
+        "opening balances entry",
+        "Xero sync",
+        "invoice not in Xero",
+        "Xero not updating"
       ],
       "tasks": [
         {
-          "title": "Fix a document that did not reach QuickBooks",
+          "title": "Fix a document that did not reach the accounting system",
           "keywords": [
             "sync failed",
             "held document",
@@ -1723,12 +1726,12 @@
           ],
           "steps": [
             "Open [Sync ledger](/accounting/sync) and select **Needs attention** in the strip.",
-            "Open the record. Its reason says what to do, such as mapping a charge code to a QuickBooks item on the [Mappings](/accounting/sync/mappings) page.",
+            "Open the record. Its reason says what to do, such as mapping a charge code to a QuickBooks item or a Xero account on the [Mappings](/accounting/sync/mappings) page.",
             "Fix what the reason names, then select **Retry now**. To retry every record held for the same reason, select **Retry these** beside the reason under **Needs attention**."
           ]
         },
         {
-          "title": "Fix a settlement that did not reach QuickBooks",
+          "title": "Fix a settlement that did not reach the accounting system",
           "keywords": [
             "carrier bill held",
             "settlement not synced",
@@ -1737,8 +1740,8 @@
           ],
           "steps": [
             "Open [Sync ledger](/accounting/sync) and open the settlement's record.",
-            "When its reason names a GL account, map that account to a QuickBooks account on the [Mappings](/accounting/sync/mappings) page (filter by **GL accounts**). When it names a carrier or an owner-operator, map them to the existing QuickBooks vendor, or let Trenova create one.",
-            "Select **Retry now**. A settlement's payment waits for its bill and follows once the bill is in QuickBooks."
+            "When its reason names a GL account, map that account to an account in the books on the [Mappings](/accounting/sync/mappings) page (filter by **GL accounts**). When it names a carrier or an owner-operator, map them to the existing vendor (a supplier contact in Xero), or let Trenova create one.",
+            "Select **Retry now**. A settlement's payment waits for its bill and follows once the bill is in the books."
           ]
         },
         {
@@ -1766,7 +1769,7 @@
           ],
           "steps": [
             "Open [Sync ledger](/accounting/sync) and open the record held for a closed period.",
-            "Select **Send on first open day**. The document goes out dated on the day after the closing date in QuickBooks, and its note in QuickBooks keeps Trenova's date. This is offered only while Trenova's closed-period policy is to post to the next open period; otherwise reopen the period in QuickBooks, then select **Retry now**."
+            "Select **Send on first open day**. The document goes out dated on the day after the closing date in the books (the lock date in Xero), and its note there keeps Trenova's date. This is offered only while Trenova's closed-period policy is to post to the next open period; otherwise reopen the period in the accounting system, then select **Retry now**."
           ]
         },
         {
@@ -1780,7 +1783,7 @@
           ],
           "steps": [
             "Open [Sync ledger](/accounting/sync) and open the record whose reason names a currency.",
-            "When the reason says the books are kept in one currency, turn on multicurrency in QuickBooks, then select **Retry now**.",
+            "When the reason says the books are kept in one currency, turn on multicurrency in the accounting system, then select **Retry now**.",
             "When the reason says Trenova has no exchange rate for a day, connect OANDA under [Accounting controls](/admin/accounting-control) so the rate can be fetched, then select **Retry now**. The rate the books received is shown on the invoice, payment or settlement as **Exchange rate**, with the day it was quoted."
           ]
         },
@@ -1813,7 +1816,8 @@
           "keywords": [
             "stop syncing",
             "month-end close",
-            "hold QuickBooks sync"
+            "hold QuickBooks sync",
+            "hold Xero sync"
           ],
           "steps": [
             "Open [Sync ledger](/accounting/sync) and select **Pause sending**. Add a reason if you like, then select **Pause sending** again to confirm.",
@@ -1833,7 +1837,7 @@
           ]
         }
       ],
-      "notes": "Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing and resuming need update access; a backfill needs manage access to the accounting integration. A document that fails for a temporary reason is retried on its own, backing off from 30 seconds to 6 hours, and is marked failed after 8 tries. Invoices, customer payments, customers, carrier and driver settlements, carriers and workers show where they stand in QuickBooks Online on their own pages, with a link back to this ledger.",
+      "notes": "Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing and resuming need update access; a backfill needs manage access to the accounting integration. A document that fails for a temporary reason is retried on its own, backing off from 30 seconds to 6 hours, and is marked failed after 8 tries. Invoices, customer payments, customers, carrier and driver settlements, carriers and workers show where they stand in the accounting system on their own pages, with a link back to this ledger.",
       "related": [
         "/accounting/sync/mappings",
         "/accounting/sync/inbound",
@@ -1853,8 +1857,8 @@
         "Accounting sync",
         "Drift findings"
       ],
-      "description": "Drift findings lists the documents Trenova sent to QuickBooks Online that differ there now: a total someone edited, a document deleted or voided in QuickBooks, a document voided in Trenova but still live in QuickBooks, or a customer's open balance that no longer adds up to the same figure on both sides.",
-      "summary": "Drift findings lists the documents Trenova sent to QuickBooks Online that differ there now: a total someone edited, a document deleted or voided in QuickBooks, a document voided in Trenova but still live in QuickBooks, or a customer's open balance that no longer adds up to the same figure on both sides. Each finding shows both values, who changed the document in QuickBooks and when, and whether an amount difference is within the reconciliation tolerance.\n\nTrenova compares every synced document dated in an open or locked period each night, and compares a document again within minutes when QuickBooks reports it changed. A finding closes on its own once both sides agree again. A document with a change still on its way to QuickBooks is left out until that change is sent.\n\nWhen the connection sends journal entries, the check also compares each QuickBooks account's balance with the Trenova accounts mapped to it. A **Different account balance** finding lists those Trenova accounts and their balances. It cannot be pushed or adjusted as a whole: find the entry made in QuickBooks by hand, or the one missing from it, and correct that entry. Accounts are not compared while journal entries are still waiting to be sent, or when Trenova and QuickBooks keep different home currencies.\n\nThe strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the table to it.",
+      "description": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online or Xero) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides.",
+      "summary": "Drift findings lists the documents Trenova sent to the accounting system (QuickBooks Online or Xero) that differ there now: a total someone edited, a document deleted or voided in the books, a document voided in Trenova but still live in the books, or a customer's open balance that no longer adds up to the same figure on both sides. Each finding shows both values, when the document was changed in the books and, for QuickBooks Online, who changed it, and whether an amount difference is within the reconciliation tolerance.\n\nTrenova compares every synced document dated in an open or locked period each night, and compares a document again within minutes when the accounting system reports it changed. A finding closes on its own once both sides agree again. A document with a change still on its way to the books is left out until that change is sent.\n\nWhen a QuickBooks Online connection sends journal entries, the check also compares each QuickBooks account's balance with the Trenova accounts mapped to it. A **Different account balance** finding lists those Trenova accounts and their balances. It cannot be pushed or adjusted as a whole: find the entry made in QuickBooks by hand, or the one missing from it, and correct that entry. Accounts are not compared while journal entries are still waiting to be sent, or when Trenova and QuickBooks keep different home currencies.\n\nThe strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the table to it.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1874,35 +1878,41 @@
         "customer balance differs",
         "sync mismatch",
         "account balance differs",
-        "trial balance does not match QuickBooks"
+        "trial balance does not match QuickBooks",
+        "Xero drift",
+        "invoice changed in Xero",
+        "invoice voided in Xero",
+        "Xero does not match"
       ],
       "tasks": [
         {
-          "title": "Send Trenova's value to QuickBooks",
+          "title": "Send Trenova's value to the accounting system",
           "keywords": [
             "push to QuickBooks",
             "overwrite QuickBooks",
+            "push to Xero",
             "restore deleted invoice",
             "send again"
           ],
           "steps": [
             "Open [Drift findings](/accounting/sync/drift) and open the finding.",
-            "Select **Push Trenova's value**. The preview says what is sent: an update of the total, a void, or a new copy of a document deleted or voided in QuickBooks.",
-            "Select **Push Trenova's value** again to confirm. The finding closes once the next check finds QuickBooks matches Trenova."
+            "Select **Push Trenova's value**. The preview says what is sent: an update of the total, a void, or a new copy of a document deleted or voided in the books.",
+            "Select **Push Trenova's value** again to confirm. The finding closes once the next check finds the books match Trenova."
           ]
         },
         {
-          "title": "Match Trenova to QuickBooks",
+          "title": "Match Trenova to the accounting system",
           "keywords": [
             "adjust Trenova",
             "credit memo to match",
             "void to match",
-            "reverse payment deleted in QuickBooks"
+            "reverse payment deleted in QuickBooks",
+            "reverse payment deleted in Xero"
           ],
           "steps": [
             "Open [Drift findings](/accounting/sync/drift) and open the finding.",
-            "Select **Adjust Trenova**. The preview says what is posted: a credit memo or a debit memo against the invoice for the difference, a void of an invoice gone from QuickBooks, or the reversal of a payment voided there.",
-            "Select **Adjust Trenova** again to confirm. What is posted is not sent back to QuickBooks, because QuickBooks already has it."
+            "Select **Adjust Trenova**. The preview says what is posted: a credit memo or a debit memo against the invoice for the difference, a void of an invoice gone from the books, or the reversal of a payment voided there.",
+            "Select **Adjust Trenova** again to confirm. What is posted is not sent back to the accounting system, because the books already have it."
           ]
         },
         {
@@ -1919,7 +1929,7 @@
           ]
         },
         {
-          "title": "Check QuickBooks now",
+          "title": "Check the accounting system now",
           "keywords": [
             "reconcile now",
             "compare now",
@@ -1931,7 +1941,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to accounting sync; fixing and dismissing need update access. Adjusting Trenova also needs permission to change invoices, or customer payments for a reversal. Adjust Trenova is offered for invoices and debit memos, and for customer payments voided or deleted in QuickBooks; settlements, credit memos and customer balances offer only Push Trenova's value or Dismiss, and account balances offer only Dismiss. An invoice with payments or credits applied cannot be voided to match until they are unapplied. Agents may dismiss only an amount difference within the reconciliation tolerance.",
+      "notes": "Viewing the page needs read access to accounting sync; fixing and dismissing need update access. Adjusting Trenova also needs permission to change invoices, or customer payments for a reversal. Adjust Trenova is offered for invoices and debit memos, and for customer payments voided or deleted in the books; settlements, credit memos and customer balances offer only Push Trenova's value or Dismiss, and account balances offer only Dismiss. An invoice with payments or credits applied cannot be voided to match until they are unapplied. Agents may dismiss only an amount difference within the reconciliation tolerance.",
       "related": [
         "/accounting/sync",
         "/accounting/sync/inbound",
@@ -1951,7 +1961,7 @@
         "Payments from the books"
       ],
       "description": "Payments recorded in {0} against invoices and settlements Trenova sent, and whether each was brought into Trenova.",
-      "summary": "Payments from the books lists the payments someone recorded in QuickBooks Online against invoices and settlements Trenova sent: customer payments that pay invoices, and bill payments that pay carrier or owner-operator settlements. Trenova reads them every few minutes, and as soon as QuickBooks tells it something changed. Each one says what it pays and whether it was brought into Trenova, so the invoice or settlement shows as paid here too.\n\nPayments Trenova sent itself are never read back. A payment waits for a person when it does not match cleanly, such as one that pays more than is open, pays documents Trenova did not send, pays a settlement only in part, or falls in a period that is not open; its reason says which. What happens to the rest follows the choice for payments recorded in QuickBooks Online in the integration's sync settings.\n\nThe strip at the top counts payments **Waiting for you**, **Just read**, and those **Applied** or **Ignored** in the last seven days; selecting a figure filters the table to it.",
+      "summary": "Payments from the books lists the payments someone recorded in the accounting system (QuickBooks Online or Xero) against invoices and settlements Trenova sent: customer payments that pay invoices, and bill payments that pay carrier or owner-operator settlements. Trenova reads them every few minutes, and as soon as QuickBooks Online tells it something changed. Each one says what it pays and whether it was brought into Trenova, so the invoice or settlement shows as paid here too.\n\nPayments Trenova sent itself are never read back. A payment waits for a person when it does not match cleanly, such as one that pays more than is open, pays documents Trenova did not send, pays a settlement only in part, or falls in a period that is not open; its reason says which. What happens to the rest follows the choice for payments recorded in the books in the integration's sync settings.\n\nThe strip at the top counts payments **Waiting for you**, **Just read**, and those **Applied** or **Ignored** in the last seven days; selecting a figure filters the table to it.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1969,21 +1979,26 @@
         "inbound payments",
         "two-way sync",
         "invoice paid in books",
-        "settlement paid in books"
+        "settlement paid in books",
+        "Xero payments",
+        "payment entered in Xero",
+        "customer paid in Xero",
+        "bill paid in Xero"
       ],
       "tasks": [
         {
-          "title": "Apply a payment recorded in QuickBooks",
+          "title": "Apply a payment recorded in the accounting system",
           "keywords": [
             "bring payment into Trenova",
             "mark invoice paid",
             "settlement paid in QuickBooks",
+            "settlement paid in Xero",
             "receive payment"
           ],
           "steps": [
             "Open [Payments from the books](/accounting/sync/inbound) and select **Waiting for you** in the strip.",
             "Open the payment. **Applying it posts** shows each invoice or settlement it pays and any cash left on the customer's account as unapplied.",
-            "Select **Apply in Trenova**. A customer payment is posted and applied to its invoices, with its credit memos applied first; a bill payment marks its settlement paid on the day it was paid in QuickBooks."
+            "Select **Apply in Trenova**. A customer payment is posted and applied to its invoices, with its credit memos applied first; a bill payment marks its settlement paid on the day it was paid in the books."
           ]
         },
         {
@@ -2000,7 +2015,7 @@
           ]
         },
         {
-          "title": "Choose what happens to payments recorded in QuickBooks",
+          "title": "Choose what happens to payments recorded in the accounting system",
           "keywords": [
             "automatic payments",
             "apply automatically",
@@ -2008,13 +2023,13 @@
             "inbound payment policy"
           ],
           "steps": [
-            "Open [Integrations](/admin/integrations) and open the QuickBooks Online card.",
-            "Under **Sync settings**, choose what happens to payments recorded in QuickBooks Online: **Wait for someone to apply them**, **Apply them automatically**, or **Leave them out of Trenova**.",
+            "Open [Integrations](/admin/integrations) and open the card of the connected accounting system (QuickBooks Online or Xero).",
+            "Under **Sync settings**, choose what happens to payments recorded there: **Wait for someone to apply them**, **Apply them automatically**, or **Leave them out of Trenova**.",
             "Select **Save**."
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to accounting sync; applying and ignoring need update access, and applying also needs permission to post customer payments or to mark the settlement paid. A payment applied here cannot be voided or changed from Trenova while it pays more than one document, because QuickBooks holds it as one payment; change it in QuickBooks instead. A payment voided in QuickBooks before it was applied is marked **Voided in the books**.",
+      "notes": "Viewing the page needs read access to accounting sync; applying and ignoring need update access, and applying also needs permission to post customer payments or to mark the settlement paid. A payment applied here cannot be voided or changed from Trenova while it pays more than one document, because the books hold it as one payment; change it in the accounting system instead. A payment voided or deleted in the books before it was applied is marked **Voided in the books**.",
       "related": [
         "/accounting/sync",
         "/admin/integrations"
@@ -2032,8 +2047,8 @@
         "Accounting sync",
         "Mappings"
       ],
-      "description": "Accounting mappings say which QuickBooks Online account, item, customer and vendor each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods.",
-      "summary": "Accounting mappings say which QuickBooks Online account, item, customer and vendor each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods. When the connection sends journal entries, every active GL account can be mapped, and each account that carries posted entries needs a QuickBooks account before its entries are sent; an account without its own mapping falls back to the account role it plays.\n\nTrenova reads the QuickBooks company's records and proposes a match where it is sure enough. A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed** mappings; selecting a figure filters the list to it.",
+      "description": "Accounting mappings say which account, item, customer and vendor in the accounting system each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods.",
+      "summary": "Accounting mappings say which account, item, customer and vendor in the accounting system each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods. Xero invoice lines carry an account, so for Xero, line types, accessorial charges and the write-off are mapped to accounts; Xero has no payment terms or payment methods to map, and only the deposit account and the freight line's account are required. When a QuickBooks Online connection sends journal entries, every active GL account can be mapped, and each account that carries posted entries needs a QuickBooks account before its entries are sent; an account without its own mapping falls back to the account role it plays.\n\nTrenova reads the connected company's records and proposes a match where it is sure enough. A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed** mappings; selecting a figure filters the list to it.",
       "requires": [
         {
           "resource": "accounting_integration",
@@ -2049,7 +2064,10 @@
         "QuickBooks items",
         "map customers to QuickBooks",
         "map carriers to vendors",
-        "accounting sync setup"
+        "accounting sync setup",
+        "Xero mappings",
+        "Xero account codes",
+        "map customers to Xero contacts"
       ],
       "tasks": [
         {
@@ -2071,11 +2089,12 @@
             "change mapping",
             "wrong account",
             "remap customer",
-            "pick QuickBooks record"
+            "pick QuickBooks record",
+            "pick Xero account"
           ],
           "steps": [
             "Open [Mappings](/accounting/sync/mappings) and select the mapping on the left. Use **Search mappings** or **Every kind** to narrow the list.",
-            "Under **Other records Trenova considered**, select **Use** beside the right record, or search the QuickBooks Online records below it and select **Use**.",
+            "Under **Other records Trenova considered**, select **Use** beside the right record, or search the accounting system's records below it and select **Use**.",
             "The mapping is confirmed with the record you chose."
           ]
         },
@@ -2093,28 +2112,30 @@
           ]
         },
         {
-          "title": "Create a missing item, customer or vendor in QuickBooks",
+          "title": "Create a missing item, customer or vendor in the accounting system",
           "keywords": [
             "add item to QuickBooks",
             "create vendor",
-            "create customer in QuickBooks"
+            "create customer in QuickBooks",
+            "create contact in Xero"
           ],
           "steps": [
             "Open [Mappings](/accounting/sync/mappings) and select an accessorial charge, line type, customer or carrier mapping that has no match.",
             "At the bottom of the mapping, check the name Trenova will create it under, then select the create button.",
-            "Trenova creates the record and confirms the mapping. Items are created with the confirmed revenue account as their income account, so confirm that account first."
+            "Trenova creates the record and confirms the mapping. Items are created with the confirmed revenue account as their income account, so confirm that account first. In Xero, customers and carriers are created as contacts; a mapping that points at an account offers no create button."
           ]
         },
         {
-          "title": "Read QuickBooks again",
+          "title": "Read the accounting system again",
           "keywords": [
             "refresh chart of accounts",
             "pull new accounts",
-            "reload QuickBooks records"
+            "reload QuickBooks records",
+            "reload Xero records"
           ],
           "steps": [
             "Open [Mappings](/accounting/sync/mappings).",
-            "Select the button that reads QuickBooks Online again, beside when it was last read. The proposals update when the read finishes."
+            "Select the button that reads the accounting system again, beside when it was last read. The proposals update when the read finishes."
           ]
         },
         {
@@ -2129,7 +2150,7 @@
           ]
         }
       ],
-      "notes": "Viewing mappings needs read access to the accounting integration; confirming, choosing, clearing, creating records and reading QuickBooks again need update access. Accounts, terms and payment methods are the bookkeeper's and are never created from Trenova. QuickBooks is read again every day on its own. A mapping Trenova proposed from a model's suggestion is never ticked by default.",
+      "notes": "Viewing mappings needs read access to the accounting integration; confirming, choosing, clearing, creating records and reading the accounting system again need update access. Accounts, terms and payment methods are the bookkeeper's and are never created from Trenova. The accounting system is read again every day on its own. A mapping Trenova proposed from a model's suggestion is never ticked by default.",
       "related": [
         "/admin/integrations"
       ],
@@ -4749,7 +4770,7 @@
         "Integrations"
       ],
       "description": "Connect the outside services Trenova works with: mileage, telematics, email, fuel prices and carrier data.",
-      "summary": "Integrations is where administrators connect the outside services Trenova works with. Each service is a card grouped by category (such as Email, Telematics, Mapping & Routing, Weather, Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its description, links to its docs, a button to open its settings and a switch showing whether it is connected. Services include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), and QuickBooks Online (accounting). Some cards describe planned providers that cannot be configured yet.",
+      "summary": "Integrations is where administrators connect the outside services Trenova works with. Each service is a card grouped by category (such as Email, Telematics, Mapping & Routing, Weather, Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its description, links to its docs, a button to open its settings and a switch showing whether it is connected. Services include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), and QuickBooks Online and Xero (accounting). Some cards describe planned providers that cannot be configured yet. An organization keeps its books in one accounting system at a time.",
       "requires": [
         {
           "resource": "integration",
@@ -4776,7 +4797,12 @@
         "Intuit",
         "ledger mode",
         "send journal entries",
-        "opening balances"
+        "opening balances",
+        "Xero",
+        "Xero organisation",
+        "Xero app",
+        "Xero webhook key",
+        "choose organisation"
       ],
       "tasks": [
         {
@@ -4912,6 +4938,60 @@
           ]
         },
         {
+          "title": "Connect Xero",
+          "keywords": [
+            "Xero setup",
+            "connect Xero",
+            "Xero sign in",
+            "Xero organisation",
+            "accounting sync with Xero"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and open the Xero card. When QuickBooks Online is still connected, disconnect it first: an organization sends to one accounting system at a time.",
+            "Select the connect button. Trenova sends you to Xero's own page; sign in there and allow access to the organisation to connect. Trenova never sees the Xero password.",
+            "Xero sends you back to Trenova. When the sign-in allowed more than one organisation, Trenova asks you to **Choose the organisation**: select the one whose books this Trenova organization keeps, then **Connect this organisation**. Trenova gives up its access to the others. The choice has to be made within a few minutes; after that, start the connection again.",
+            "Trenova shows the organisation it connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books closed through** (Xero's lock date). Check it is the right one, then select **Continue**.",
+            "On **What is sent**, keep **Send documents**. Xero cannot receive Trenova's journal entries, because its manual journals cannot post to receivable, payable or bank accounts or name a customer or supplier, so the journal entry option is shown as unavailable with that reason. Select **Continue**.",
+            "On **Match records**, Trenova reads the organisation's accounts, items, contacts and proposes a match for each Trenova record. Xero invoice lines carry an account, so each charge type is matched to a revenue account rather than an item; the freight line's account and the deposit account are required. Xero has no payment terms or payment methods to match.",
+            "Select **Finish setup**, choose the **Start date**, then select **Start sending**, as for QuickBooks Online. Xero's authorization has no fixed end date, so there is no date to reconnect by."
+          ]
+        },
+        {
+          "title": "Use your own Xero app",
+          "keywords": [
+            "Xero app keys",
+            "Xero developer portal",
+            "client ID",
+            "client secret",
+            "redirect URI",
+            "Xero webhook key",
+            "self-hosted Xero"
+          ],
+          "steps": [
+            "On the Xero developer portal, create a Web app.",
+            "Open [Integrations](/admin/integrations) and open the Xero card. When this server has no Xero app of its own the keys form is already open; otherwise select **Use your own app**.",
+            "Copy the **Redirect URI** into the app's redirect URIs on the Xero developer portal exactly as written.",
+            "Enter the **Client ID** and **Client secret** from the app, then select **Save keys**. Xero has no sandbox, so there is no environment to choose; development uses Xero's demo company. Trenova checks the keys with Xero before saving them.",
+            "To have Xero tell Trenova about changes, select **Change keys**, copy the address under **Webhook endpoint (optional)**, which is specific to your app, into the app's webhooks on the Xero developer portal, enter the app's webhook key in the webhook key field and select **Save keys** again.",
+            "To go back to the server's app select **Remove**. While an organisation is connected, only the client secret and webhook key can change."
+          ]
+        },
+        {
+          "title": "Check or disconnect Xero",
+          "keywords": [
+            "Xero not syncing",
+            "Xero connection failing",
+            "reconnect Xero",
+            "disconnect Xero"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and open the Xero card to see the connection's status, when it was **Last checked** and its **Last successful call**.",
+            "Select **Check now** to test the connection immediately.",
+            "When Xero no longer accepts Trenova's access, select **Reconnect** and approve the same organisation on Xero's page.",
+            "To stop, select **Disconnect** and confirm. Nothing already in Xero is changed."
+          ]
+        },
+        {
           "title": "Check or disconnect QuickBooks Online",
           "keywords": [
             "QuickBooks not syncing",
@@ -4927,7 +5007,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent, choosing the start date and changing the sync settings. A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
+      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent, choosing the start date and changing the sync settings. Seeing, connecting and disconnecting Xero need the same access as QuickBooks Online. A QuickBooks company or Xero organisation can be connected to only one Trenova organization at a time, and a Trenova organization sends to only one accounting system at a time: disconnect one before connecting the other. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
       "related": [
         "/accounting/sync",
         "/admin/inbound-mailboxes",
@@ -4938,7 +5018,8 @@
         "/accounting/sync/mappings"
       ],
       "covers": [
-        "/admin/integrations/quickbooks/callback"
+        "/admin/integrations/quickbooks/callback",
+        "/admin/integrations/xero/callback"
       ],
       "createAction": null,
       "inNavigation": true

@@ -9,13 +9,15 @@ import {
   AccountingReferenceObjectsDocument,
   AccountingSyncStatusDocument,
   AccountingSyncStatusFieldsFragmentDoc,
+  AccountingProviderProfileFieldsFragmentDoc,
   CheckAccountingConnectionDocument,
+  ChooseAccountingCompanyDocument,
   ClearAccountingMappingDocument,
-  CompleteAccountingAuthorizationDocument,
   CompleteAccountingSetupDocument,
   ConfirmAccountingMappingsDocument,
   CreateAccountingReferenceRecordDocument,
   DisconnectAccountingSystemDocument,
+  FinishAccountingAuthorizationDocument,
   RefreshAccountingReferenceDataDocument,
   RejectAccountingMappingDocument,
   RemoveAccountingAppDocument,
@@ -27,9 +29,11 @@ import {
   type AccountingMappingFieldsFragment,
   type AccountingMappingFilterInput,
   type AccountingMappingTargetType,
+  type AccountingProviderProfileFieldsFragment,
   type AccountingReferenceKind,
   type AccountingReferenceObjectFieldsFragment,
   type AccountingSystem,
+  type ChooseAccountingCompanyInput,
   type CompleteAccountingAuthorizationInput,
   type ConfirmAccountingMappingInput,
   type CreateAccountingReferenceRecordInput,
@@ -72,13 +76,26 @@ export type AccountingAuthorizationStart =
   StartAccountingAuthorizationMutation["startAccountingAuthorization"];
 export type AccountingAppSettings = AccountingAppSettingsFieldsFragment;
 export type AccountingAppCredential = NonNullable<AccountingAppSettings["tenantApp"]>;
+export type AccountingProviderProfile = AccountingProviderProfileFieldsFragment;
 export type AccountingSyncStatus = {
   integrationType: AccountingSystem;
   providerName: string;
+  profile: AccountingProviderProfile;
   available: boolean;
   app: AccountingAppSettings;
   connection: AccountingConnection | null;
 };
+
+export type AccountingCompanyChoice = { id: string; name: string };
+export type AccountingAuthorizationResult =
+  | { kind: "connected"; connection: AccountingConnection }
+  | { kind: "none" }
+  | {
+      kind: "choose";
+      companies: AccountingCompanyChoice[];
+      choiceToken: string;
+      choiceExpiresAt: number | null;
+    };
 
 type RequestOptions = { signal?: AbortSignal };
 
@@ -89,6 +106,7 @@ function toAccountingSyncStatus(
   return {
     integrationType: status.integrationType,
     providerName: status.providerName,
+    profile: getFragmentData(AccountingProviderProfileFieldsFragmentDoc, status.profile),
     available: status.available,
     app: getFragmentData(AccountingAppSettingsFieldsFragmentDoc, status.app),
     connection: status.connection
@@ -143,18 +161,41 @@ export async function startAccountingAuthorization(
   return data.startAccountingAuthorization;
 }
 
-export async function completeAccountingAuthorization(
+export async function finishAccountingAuthorization(
   input: CompleteAccountingAuthorizationInput,
-): Promise<AccountingConnection> {
+): Promise<AccountingAuthorizationResult> {
   const data = await requestGraphQL({
-    document: CompleteAccountingAuthorizationDocument,
-    operationName: "CompleteAccountingAuthorization",
+    document: FinishAccountingAuthorizationDocument,
+    operationName: "FinishAccountingAuthorization",
     variables: { input },
   });
-  return getFragmentData(
-    AccountingConnectionFieldsFragmentDoc,
-    data.completeAccountingAuthorization,
-  );
+  const result = data.finishAccountingAuthorization;
+  if (result.connection) {
+    return {
+      kind: "connected",
+      connection: getFragmentData(AccountingConnectionFieldsFragmentDoc, result.connection),
+    };
+  }
+  if (result.companies.length === 0 || !result.choiceToken) {
+    return { kind: "none" };
+  }
+  return {
+    kind: "choose",
+    companies: result.companies,
+    choiceToken: result.choiceToken,
+    choiceExpiresAt: result.choiceExpiresAt,
+  };
+}
+
+export async function chooseAccountingCompany(
+  input: ChooseAccountingCompanyInput,
+): Promise<AccountingConnection> {
+  const data = await requestGraphQL({
+    document: ChooseAccountingCompanyDocument,
+    operationName: "ChooseAccountingCompany",
+    variables: { input },
+  });
+  return getFragmentData(AccountingConnectionFieldsFragmentDoc, data.chooseAccountingCompany);
 }
 
 export async function disconnectAccountingSystem(

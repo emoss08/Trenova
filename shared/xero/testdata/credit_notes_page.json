@@ -1,0 +1,39 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "CreditNotes": [
+    {
+      "CreditNoteID": "7f8b6e4a-2d3c-4b1a-9e8f-6a5b4c3d2e1f",
+      "CreditNoteNumber": "CN-0007",
+      "Type": "ACCRECCREDIT",
+      "Reference": "Rate correction PRO 55012",
+      "Contact": {
+        "ContactID": "bd2270c3-8706-4c11-9cfb-000b551c3f51",
+        "Name": "Globex Shipping"
+      },
+      "Date": "/Date(1790208000000+0000)/",
+      "Status": "AUTHORISED",
+      "LineAmountTypes": "NoTax",
+      "SubTotal": 250.0,
+      "TotalTax": 0.0,
+      "Total": 250.0,
+      "UpdatedDateUTC": "/Date(1790298030000+0000)/",
+      "CurrencyCode": "USD",
+      "CurrencyRate": 1.0,
+      "RemainingCredit": 150.0,
+      "Allocations": [
+        {
+          "AllocationID": "b6c3a2d1-9f8e-4d7c-8b6a-5e4f3d2c1b0a",
+          "Amount": 100.0,
+          "Date": "/Date(1790294400000+0000)/",
+          "Invoice": {
+            "InvoiceID": "fee88eea-f2aa-4a71-a372-33d6d83d3c45",
+            "InvoiceNumber": "INV-1001"
+          }
+        }
+      ],
+      "Payments": [],
+      "HasAttachments": false
+    }
+  ]
+}

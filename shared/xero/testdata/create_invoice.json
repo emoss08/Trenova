@@ -1,0 +1,46 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Invoices": [
+    {
+      "Type": "ACCREC",
+      "InvoiceID": "fee88eea-f2aa-4a71-a372-33d6d83d3c45",
+      "InvoiceNumber": "INV-1001",
+      "Reference": "PRO 55012",
+      "Payments": [],
+      "CreditNotes": [],
+      "AmountDue": 1450.25,
+      "AmountPaid": 0,
+      "AmountCredited": 0,
+      "CurrencyRate": 1.0,
+      "IsDiscounted": false,
+      "HasAttachments": false,
+      "HasErrors": false,
+      "Contact": {
+        "ContactID": "bd2270c3-8706-4c11-9cfb-000b551c3f51",
+        "Name": "Globex Shipping"
+      },
+      "DateString": "2026-09-24T00:00:00",
+      "Date": "/Date(1790208000000+0000)/",
+      "DueDateString": "2026-10-24T00:00:00",
+      "DueDate": "/Date(1792800000000+0000)/",
+      "Status": "AUTHORISED",
+      "LineAmountTypes": "NoTax",
+      "LineItems": [
+        {
+          "Description": "Linehaul Chicago to Dallas",
+          "UnitAmount": 1450.25,
+          "LineAmount": 1450.25,
+          "AccountCode": "200",
+          "Quantity": 1.0,
+          "LineItemID": "5f7a0e24-1c1f-4b8e-a1f4-2f2e8d6b7c01"
+        }
+      ],
+      "SubTotal": 1450.25,
+      "TotalTax": 0.0,
+      "Total": 1450.25,
+      "UpdatedDateUTC": "/Date(1790298030000+0000)/",
+      "CurrencyCode": "USD"
+    }
+  ]
+}

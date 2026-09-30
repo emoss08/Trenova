@@ -166,10 +166,6 @@ func (a *AccountingAppCredential) BeforeAppendModel(_ context.Context, query bun
 }
 
 func WebhookPath(typ integration.Type) string {
-	switch typ { //nolint:exhaustive // only accounting systems take webhooks here
-	case integration.TypeQuickBooksOnline:
-		return "/webhooks/accounting/quickbooks/"
-	default:
-		return ""
-	}
+	profile := MustProfile(typ)
+	return profile.WebhookPath()
 }

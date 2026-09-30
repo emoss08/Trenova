@@ -117,10 +117,27 @@ func (s *Service) EnsureMapping(
 		return row, err
 	}
 
+	conn, err := s.connections.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+		TenantInfo: req.TenantInfo,
+		ID:         req.ConnectionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	profile := accountingsync.MustProfile(conn.IntegrationType)
+	if !profile.OffersKey(req.TargetType, req.Key) {
+		return nil, errortypes.NewValidationError(
+			"targetType",
+			errortypes.ErrInvalid,
+			"{0} does not use this mapping",
+			profile.Name,
+		)
+	}
 	t, err := s.targetFor(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+	t.Kind = profile.KindFor(t.TargetType)
 	if _, err = s.mappings.CreateMissing(ctx, []*accountingsync.AccountingMapping{{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
@@ -129,7 +146,7 @@ func (s *Service) EnsureMapping(
 		TrenovaObjectID: t.ObjectID,
 		TrenovaKey:      t.Key,
 		TargetLabel:     t.Label,
-		ProviderKind:    t.TargetType.ProviderKind(),
+		ProviderKind:    t.Kind,
 		State:           accountingsync.MappingStateUnmatched,
 		Signals:         accountingsync.MappingSignals{},
 	}}); err != nil {

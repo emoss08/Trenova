@@ -1,0 +1,58 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Accounts": [
+    {
+      "AccountID": "562555f2-8cde-4ce9-8203-0363922537a4",
+      "Code": "090",
+      "Name": "Business Bank Account",
+      "Status": "ACTIVE",
+      "Type": "BANK",
+      "TaxType": "NONE",
+      "Class": "ASSET",
+      "EnablePaymentsToAccount": false,
+      "ShowInExpenseClaims": false,
+      "BankAccountNumber": "121212",
+      "BankAccountType": "BANK",
+      "CurrencyCode": "USD",
+      "ReportingCode": "ASS",
+      "HasAttachments": false,
+      "UpdatedDateUTC": "/Date(1573755038314+0000)/",
+      "AddToWatchlist": false
+    },
+    {
+      "AccountID": "5040915e-8ce7-4177-8d08-fde416232f18",
+      "Code": "610",
+      "Name": "Accounts Receivable",
+      "Status": "ACTIVE",
+      "Type": "CURRENT",
+      "TaxType": "NONE",
+      "Class": "ASSET",
+      "SystemAccount": "DEBTORS",
+      "EnablePaymentsToAccount": false,
+      "UpdatedDateUTC": "/Date(1573755038314+0000)/"
+    },
+    {
+      "AccountID": "4281c446-efb4-445d-9b42-c1d3bca1a3e5",
+      "Code": "800",
+      "Name": "Accounts Payable",
+      "Status": "ACTIVE",
+      "Type": "CURRLIAB",
+      "TaxType": "NONE",
+      "Class": "LIABILITY",
+      "SystemAccount": "CREDITORS",
+      "UpdatedDateUTC": "/Date(1573755038314+0000)/"
+    },
+    {
+      "AccountID": "e0a3a8f4-9a61-4b5e-bd0a-7a3c9c4f5a11",
+      "Code": "200",
+      "Name": "Freight Revenue",
+      "Status": "ARCHIVED",
+      "Type": "REVENUE",
+      "TaxType": "NONE",
+      "Class": "REVENUE",
+      "EnablePaymentsToAccount": true,
+      "UpdatedDateUTC": "/Date(1790208000000+0000)/"
+    }
+  ]
+}

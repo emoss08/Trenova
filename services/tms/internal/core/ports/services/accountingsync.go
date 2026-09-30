@@ -12,6 +12,7 @@ import (
 type AccountingSyncStatus struct {
 	IntegrationType integration.Type
 	ProviderName    string
+	Profile         accountingsync.ProviderProfile
 	Available       bool
 	App             *AccountingAppSettings
 	Connection      *accountingsync.AccountingConnection
@@ -63,6 +64,21 @@ type CompleteAccountingAuthorizationRequest struct {
 	RealmID         string
 }
 
+type AccountingAuthorizationCompletion struct {
+	Connection      *accountingsync.AccountingConnection
+	Companies       []AccountingCompany
+	ChoiceToken     string
+	ChoiceExpiresAt int64
+}
+
+type ChooseAccountingCompanyRequest struct {
+	TenantInfo      pagination.TenantInfo
+	UserID          pulid.ID
+	IntegrationType integration.Type
+	ChoiceToken     string
+	CompanyID       string
+}
+
 type DisconnectAccountingRequest struct {
 	TenantInfo      pagination.TenantInfo
 	UserID          pulid.ID
@@ -71,6 +87,7 @@ type DisconnectAccountingRequest struct {
 
 type ReceiveAccountingWebhookRequest struct {
 	IntegrationType integration.Type
+	AppID           string
 	Signature       string
 	Body            []byte
 }
@@ -94,6 +111,10 @@ type AccountingConnectionService interface {
 	CompleteAuthorization(
 		ctx context.Context,
 		req *CompleteAccountingAuthorizationRequest,
+	) (*AccountingAuthorizationCompletion, error)
+	ChooseCompany(
+		ctx context.Context,
+		req *ChooseAccountingCompanyRequest,
 	) (*accountingsync.AccountingConnection, error)
 	Disconnect(
 		ctx context.Context,

@@ -43,6 +43,7 @@ const (
 
 type target struct {
 	TargetType  accountingsync.MappingTargetType
+	Kind        accountingsync.ReferenceKind
 	ObjectID    pulid.ID
 	Key         string
 	Label       string
@@ -146,16 +147,31 @@ var termSynonyms = map[string][]string{
 	string(customer.PaymentTermDueOnReceipt): {"Due on receipt", "Due upon receipt"},
 }
 
-var roleAccountTypes = map[string][]string{
-	accountingsync.AccountRoleAR:                      {accountingsync.AccountTypeReceivable},
-	accountingsync.AccountRoleRevenue:                 {"Income", "Other Income"},
-	accountingsync.AccountRoleDeposit:                 {"Bank"},
-	accountingsync.AccountRoleWriteOff:                {"Expense", "Other Expense"},
-	accountingsync.AccountRoleAP:                      {accountingsync.AccountTypePayable},
-	accountingsync.AccountRolePurchasedTransportation: {"Cost of Goods Sold", "Expense"},
+var roleAccountClasses = map[string][]accountingsync.AccountClass{
+	accountingsync.AccountRoleAR: {accountingsync.AccountClassReceivable},
+	accountingsync.AccountRoleRevenue: {
+		accountingsync.AccountClassIncome,
+		accountingsync.AccountClassOtherIncome,
+	},
+	accountingsync.AccountRoleDeposit: {
+		accountingsync.AccountClassBank,
+		accountingsync.AccountClassUndepositedFunds,
+	},
+	accountingsync.AccountRoleWriteOff: {
+		accountingsync.AccountClassExpense,
+		accountingsync.AccountClassOtherExpense,
+	},
+	accountingsync.AccountRoleAP: {accountingsync.AccountClassPayable},
+	accountingsync.AccountRolePurchasedTransportation: {
+		accountingsync.AccountClassCostOfSales,
+		accountingsync.AccountClassExpense,
+	},
 }
 
-const undepositedFundsSubType = "UndepositedFunds"
+var lineAccountClasses = []accountingsync.AccountClass{
+	accountingsync.AccountClassIncome,
+	accountingsync.AccountClassOtherIncome,
+}
 
 var dedicatedTypeRoles = map[string]struct{}{
 	accountingsync.AccountRoleAR:      {},
@@ -164,20 +180,31 @@ var dedicatedTypeRoles = map[string]struct{}{
 }
 
 func eligibleForRole(role string, ref *accountingsync.AccountingReferenceObject) bool {
-	if role == accountingsync.AccountRoleDeposit && ref.AccountSubType == undepositedFundsSubType {
-		return true
+	return slices.Contains(roleAccountClasses[role], ref.AccountClass)
+}
+
+func accountClassesFor(t *target) []accountingsync.AccountClass {
+	switch t.TargetType { //nolint:exhaustive // only targets that pick an account have a class rule
+	case accountingsync.TargetAccountRole:
+		return roleAccountClasses[t.Key]
+	case accountingsync.TargetLineType, accountingsync.TargetAccessorialCharge:
+		return lineAccountClasses
+	case accountingsync.TargetItemRole:
+		return roleAccountClasses[accountingsync.AccountRoleWriteOff]
+	default:
+		return nil
 	}
-	return slices.Contains(roleAccountTypes[role], ref.AccountType)
 }
 
 func eligible(t *target, ref *accountingsync.AccountingReferenceObject) bool {
-	if ref.Kind != t.TargetType.ProviderKind() || !ref.Usable() {
+	if ref.Kind != t.Kind || !ref.Usable() {
 		return false
 	}
-	if t.TargetType == accountingsync.TargetAccountRole {
-		return eligibleForRole(t.Key, ref)
+	if ref.Kind != accountingsync.ReferenceKindAccount {
+		return true
 	}
-	return true
+	classes := accountClassesFor(t)
+	return len(classes) == 0 || slices.Contains(classes, ref.AccountClass)
 }
 
 func score(

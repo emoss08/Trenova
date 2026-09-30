@@ -224,6 +224,25 @@ func (c *Connector) Revoke(ctx context.Context, token string) error {
 	return c.oauth.Revoke(ctx, token)
 }
 
+func (c *Connector) Companies(
+	_ context.Context,
+	_ *services.AccountingTokenGrant,
+	callbackRealmID string,
+) ([]services.AccountingCompany, error) {
+	if callbackRealmID == "" {
+		return nil, errors.New("QuickBooks did not name the company that was authorized")
+	}
+	return []services.AccountingCompany{{ID: callbackRealmID}}, nil
+}
+
+func (c *Connector) ReleaseCompanies(
+	context.Context,
+	*services.AccountingTokenGrant,
+	[]services.AccountingCompany,
+) error {
+	return nil
+}
+
 func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,

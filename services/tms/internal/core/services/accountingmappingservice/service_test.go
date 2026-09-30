@@ -43,11 +43,12 @@ type harness struct {
 
 func account(externalID, name, accountType string) *accountingsync.AccountingReferenceObject {
 	return &accountingsync.AccountingReferenceObject{
-		Kind:        accountingsync.ReferenceKindAccount,
-		ExternalID:  externalID,
-		Name:        name,
-		AccountType: accountType,
-		Active:      true,
+		Kind:         accountingsync.ReferenceKindAccount,
+		ExternalID:   externalID,
+		Name:         name,
+		AccountType:  accountType,
+		AccountClass: classOf(accountType),
+		Active:       true,
 	}
 }
 

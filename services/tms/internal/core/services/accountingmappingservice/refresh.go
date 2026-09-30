@@ -40,6 +40,10 @@ func (s *Service) PullReference(
 	if !ok {
 		return nil, errReferenceUnsupported
 	}
+	profile := accountingsync.MustProfile(session.Connection.IntegrationType)
+	if !profile.Has(kind) {
+		return &services.AccountingReferencePull{Kind: kind}, nil
+	}
 
 	seenAt := timeutils.NowUnix()
 	pull := &services.AccountingReferencePull{Kind: kind}
@@ -100,7 +104,7 @@ func (s *Service) Rescore(
 	if err != nil {
 		return nil, err
 	}
-	targets, err := s.listTargets(ctx, tenantInfo, conn.SendsLedger())
+	targets, err := s.listTargets(ctx, tenantInfo, conn)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +120,7 @@ func (s *Service) Rescore(
 			TrenovaObjectID: t.ObjectID,
 			TrenovaKey:      t.Key,
 			TargetLabel:     t.Label,
-			ProviderKind:    t.TargetType.ProviderKind(),
+			ProviderKind:    t.Kind,
 			State:           accountingsync.MappingStateUnmatched,
 			Signals:         accountingsync.MappingSignals{},
 		})
@@ -226,7 +230,7 @@ func (r *referenceSet) rescore(row *accountingsync.AccountingMapping, t *target)
 	row.TargetLabel = t.Label
 	proposalChanged := false
 	if row.Rescorable() {
-		kind := row.TargetType.ProviderKind()
+		kind := t.Kind
 		proposal := score(t, r.byKind[kind], r.indexes[kind])
 		if !row.KeepsModelPick(proposal) {
 			proposalChanged = row.ApplyProposal(proposal)

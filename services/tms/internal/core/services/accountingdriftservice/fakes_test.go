@@ -110,7 +110,11 @@ func (f *fakeReader) ReadDocuments(
 	return out, nil
 }
 
-func (f *fakeReader) DocumentURL(kind accountingsync.SyncObjectType, externalID string) string {
+func (f *fakeReader) DocumentURL(
+	_ services.AccountingDocumentAuth,
+	kind accountingsync.SyncObjectType,
+	externalID string,
+) string {
 	return "https://books.example/" + string(kind) + "/" + externalID
 }
 
@@ -126,8 +130,12 @@ type readerConnector struct {
 	services.AccountingDocumentWriter
 }
 
-func (r readerConnector) DocumentURL(kind accountingsync.SyncObjectType, externalID string) string {
-	return r.fakeReader.DocumentURL(kind, externalID)
+func (r readerConnector) DocumentURL(
+	_ services.AccountingDocumentAuth,
+	kind accountingsync.SyncObjectType,
+	externalID string,
+) string {
+	return r.fakeReader.DocumentURL(services.AccountingDocumentAuth{}, kind, externalID)
 }
 
 func (r readerConnector) ClassifyDocumentError(err error) *accountingsync.SyncError {

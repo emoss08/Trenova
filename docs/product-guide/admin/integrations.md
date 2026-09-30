@@ -1,6 +1,6 @@
 ---
 path: /admin/integrations
-aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit, ledger mode, send journal entries, opening balances]
+aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit, ledger mode, send journal entries, opening balances, Xero, Xero organisation, Xero app, Xero webhook key, choose organisation]
 related:
   - /accounting/sync
   - /admin/inbound-mailboxes
@@ -11,6 +11,7 @@ related:
   - /accounting/sync/mappings
 covers:
   - /admin/integrations/quickbooks/callback
+  - /admin/integrations/xero/callback
 ---
 
 ## What it's for
@@ -20,8 +21,9 @@ Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its descript
 its docs, a button to open its settings and a switch showing whether it is connected. Services
 include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and
 routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel
-card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), and QuickBooks Online
-(accounting). Some cards describe planned providers that cannot be configured yet.
+card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), and QuickBooks Online and Xero
+(accounting). Some cards describe planned providers that cannot be configured yet. An
+organization keeps its books in one accounting system at a time.
 
 ## Tasks
 
@@ -143,6 +145,57 @@ Keywords: Intuit app keys, client ID, client secret, redirect URI, QuickBooks de
 5. To change the keys later select **Change keys**; to go back to the server's app select
    **Remove**. While a company is connected, only the client secret and verifier token can change.
 
+### Connect Xero
+Keywords: Xero setup, connect Xero, Xero sign in, Xero organisation, accounting sync with Xero
+1. Open [Integrations](/admin/integrations) and open the Xero card. When QuickBooks Online is
+   still connected, disconnect it first: an organization sends to one accounting system at a time.
+2. Select the connect button. Trenova sends you to Xero's own page; sign in there and allow access
+   to the organisation to connect. Trenova never sees the Xero password.
+3. Xero sends you back to Trenova. When the sign-in allowed more than one organisation, Trenova
+   asks you to **Choose the organisation**: select the one whose books this Trenova organization
+   keeps, then **Connect this organisation**. Trenova gives up its access to the others. The
+   choice has to be made within a few minutes; after that, start the connection again.
+4. Trenova shows the organisation it connected: its name, legal name, country, **Home currency**,
+   **Multicurrency** and **Books closed through** (Xero's lock date). Check it is the right one,
+   then select **Continue**.
+5. On **What is sent**, keep **Send documents**. Xero cannot receive Trenova's journal entries,
+   because its manual journals cannot post to receivable, payable or bank accounts or name a
+   customer or supplier, so the journal entry option is shown as unavailable with that reason.
+   Select **Continue**.
+6. On **Match records**, Trenova reads the organisation's accounts, items, contacts and proposes a
+   match for each Trenova record. Xero invoice lines carry an account, so each charge type is
+   matched to a revenue account rather than an item; the freight line's account and the deposit
+   account are required. Xero has no payment terms or payment methods to match.
+7. Select **Finish setup**, choose the **Start date**, then select **Start sending**, as for
+   QuickBooks Online. Xero's authorization has no fixed end date, so there is no date to
+   reconnect by.
+
+### Use your own Xero app
+Keywords: Xero app keys, Xero developer portal, client ID, client secret, redirect URI, Xero webhook key, self-hosted Xero
+1. On the Xero developer portal, create a Web app.
+2. Open [Integrations](/admin/integrations) and open the Xero card. When this server has no Xero
+   app of its own the keys form is already open; otherwise select **Use your own app**.
+3. Copy the **Redirect URI** into the app's redirect URIs on the Xero developer portal exactly as
+   written.
+4. Enter the **Client ID** and **Client secret** from the app, then select **Save keys**. Xero has
+   no sandbox, so there is no environment to choose; development uses Xero's demo company.
+   Trenova checks the keys with Xero before saving them.
+5. To have Xero tell Trenova about changes, select **Change keys**, copy the address under
+   **Webhook endpoint (optional)**, which is specific to your app, into the app's webhooks on the
+   Xero developer portal, enter the app's webhook key in the webhook key field and select **Save
+   keys** again.
+6. To go back to the server's app select **Remove**. While an organisation is connected, only the
+   client secret and webhook key can change.
+
+### Check or disconnect Xero
+Keywords: Xero not syncing, Xero connection failing, reconnect Xero, disconnect Xero
+1. Open [Integrations](/admin/integrations) and open the Xero card to see the connection's status,
+   when it was **Last checked** and its **Last successful call**.
+2. Select **Check now** to test the connection immediately.
+3. When Xero no longer accepts Trenova's access, select **Reconnect** and approve the same
+   organisation on Xero's page.
+4. To stop, select **Disconnect** and confirm. Nothing already in Xero is changed.
+
 ### Check or disconnect QuickBooks Online
 Keywords: QuickBooks not syncing, QuickBooks connection failing, reconnect QuickBooks, revoke QuickBooks
 1. Open [Integrations](/admin/integrations) and open the QuickBooks Online card to see the
@@ -163,5 +216,8 @@ Seeing the QuickBooks Online connection needs read access to the accounting inte
 update access, and connecting, reconnecting or disconnecting needs manage access and must be done
 by a signed-in person, as do saving or removing the Intuit app keys, choosing what is sent,
 choosing the start date and changing the sync settings.
-A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an
+Seeing, connecting and disconnecting Xero need the same access as QuickBooks Online.
+A QuickBooks company or Xero organisation can be connected to only one Trenova organization at a
+time, and a Trenova organization sends to only one accounting system at a time: disconnect one
+before connecting the other. When the connection fails or its authorization is about to run out, Watchtower raises an
 item that links back here.

@@ -1,0 +1,15 @@
+{
+  "ErrorNumber": 10,
+  "Type": "ValidationException",
+  "Message": "A validation exception occurred",
+  "Elements": [
+    {
+      "InvoiceNumber": "INV-1001",
+      "ValidationErrors": [
+        {
+          "Message": "Invoice # must be unique."
+        }
+      ]
+    }
+  ]
+}

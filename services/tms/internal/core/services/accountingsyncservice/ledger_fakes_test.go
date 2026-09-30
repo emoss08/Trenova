@@ -146,15 +146,15 @@ func newFakeReferences() *fakeReferences {
 	return &fakeReferences{rows: map[string]*accountingsync.AccountingReferenceObject{}}
 }
 
-func (f *fakeReferences) account(externalID, accountType string) {
+func (f *fakeReferences) account(externalID string, class accountingsync.AccountClass) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.rows[externalID] = &accountingsync.AccountingReferenceObject{
-		Kind:        accountingsync.ReferenceKindAccount,
-		ExternalID:  externalID,
-		Name:        externalID,
-		AccountType: accountType,
-		Active:      true,
+		Kind:         accountingsync.ReferenceKindAccount,
+		ExternalID:   externalID,
+		Name:         externalID,
+		AccountClass: class,
+		Active:       true,
 	}
 }
 

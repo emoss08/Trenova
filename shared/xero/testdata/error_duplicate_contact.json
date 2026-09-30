@@ -1,0 +1,15 @@
+{
+  "ErrorNumber": 10,
+  "Type": "ValidationException",
+  "Message": "A validation exception occurred",
+  "Elements": [
+    {
+      "Name": "Globex Shipping",
+      "ValidationErrors": [
+        {
+          "Message": "The contact name Globex Shipping is already assigned to another contact. The contact name must be unique across all active contacts."
+        }
+      ]
+    }
+  ]
+}

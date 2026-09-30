@@ -172,6 +172,7 @@ export function useAccountingSyncSetupActions(
 
 export function useAccountingModeAction(
   vendor: AccountingVendor,
+  ledgerAvailable: boolean,
   form?: UseFormReturn<AccountingModeValues>,
 ) {
   const t = useT();
@@ -181,7 +182,7 @@ export function useAccountingModeAction(
     mutationFn: (values: AccountingModeValues) =>
       chooseAccountingSyncMode({
         integrationType: vendor.system,
-        ...accountingModeInput(values),
+        ...accountingModeInput(values, ledgerAvailable),
       }),
     form,
     resourceName: vendor.name,

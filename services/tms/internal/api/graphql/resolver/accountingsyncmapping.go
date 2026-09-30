@@ -11,7 +11,43 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
+
+func errAccountingCompanyChoiceUnsupported() error {
+	return errortypes.NewBusinessError(
+		"The sign-in authorized several companies. Reload the page and connect again to choose one.",
+	)
+}
+
+func (r *mutationResolver) finishAccountingAuthorization(
+	ctx context.Context,
+	input gqlmodel.CompleteAccountingAuthorizationInput,
+) (*services.AccountingAuthorizationCompletion, error) {
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceAccountingIntegration,
+		permission.OpManage,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+
+	return r.accountingConnections.CompleteAuthorization(
+		ctx,
+		&services.CompleteAccountingAuthorizationRequest{
+			TenantInfo:      tenantInfo(authCtx),
+			UserID:          authCtx.UserID,
+			IntegrationType: input.IntegrationType,
+			State:           input.State,
+			Code:            input.Code,
+			RealmID:         typeutils.ValueOrZero(input.RealmID),
+		},
+	)
+}
 
 func errAccountingNeedsAPerson() error {
 	return errortypes.NewAuthorizationError(

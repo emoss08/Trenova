@@ -340,6 +340,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCarrierSourcingSearchInput,
 		ec.unmarshalInputChangeAccountingBackfillInput,
 		ec.unmarshalInputChargeAllocationInput,
+		ec.unmarshalInputChooseAccountingCompanyInput,
 		ec.unmarshalInputChooseAccountingSyncModeInput,
 		ec.unmarshalInputClockInput,
 		ec.unmarshalInputCompleteAccountingAuthorizationInput,
@@ -839,6 +840,7 @@ extend type Query {
 	{Name: "../schema/accounting_sync.graphqls", Input: `"An accounting system Trenova keeps its books in step with."
 enum AccountingSystem {
   QuickBooksOnline
+  Xero
 }
 
 "How the link to the accounting system is doing right now."
@@ -1201,10 +1203,33 @@ type AccountingAppSettings {
   tenantApp: AccountingAppCredential
 }
 
+"What an accounting system supports, which decides the steps and choices setup offers."
+type AccountingProviderProfile {
+  "The name of the app a person registers with the provider."
+  appName: String!
+  "What the provider calls the key webhooks are signed with."
+  webhookKeyLabel: String!
+  "The environments the provider's apps run in."
+  environments: [AccountingAppEnvironment!]!
+  "Whether journal entries can be sent to this system."
+  ledgerAvailable: Boolean!
+  "Why journal entries cannot be sent. Absent when they can."
+  ledgerUnavailableReason: String
+  "Whether the provider names the company in the sign-in callback."
+  callbackCarriesCompany: Boolean!
+  "The web app path the provider sends people back to."
+  callbackPath: String!
+  "What an invoice line is mapped to in this system."
+  lineKind: AccountingReferenceKind!
+  "The kinds of records Trenova reads from this system."
+  referenceKinds: [AccountingReferenceKind!]!
+}
+
 "What an organization's link to one accounting system looks like."
 type AccountingSyncStatus {
   integrationType: AccountingSystem!
   providerName: String!
+  profile: AccountingProviderProfile!
   "Whether the organization can connect now: there is an app to connect through and a web address to return to."
   available: Boolean!
   app: AccountingAppSettings!
@@ -1591,7 +1616,41 @@ input CompleteAccountingAuthorizationInput {
   integrationType: AccountingSystem!
   state: String!
   code: String!
-  realmId: String!
+  "The company the provider named in its callback. Required only for systems whose callback carries one."
+  realmId: String
+}
+
+"A company the person authorized, offered when one sign-in authorized several."
+type AccountingCompany {
+  "The company's ID in the accounting system."
+  id: ID!
+  name: String!
+}
+
+"""
+What finishing a sign-in produced.
+
+When the sign-in authorized one company, it is connected and returned. When it authorized
+several, nothing is connected yet: the person picks one with chooseAccountingCompany before
+choiceExpiresAt.
+"""
+type CompleteAccountingAuthorizationPayload {
+  "The connection, when the sign-in authorized a single company."
+  connection: AccountingConnection
+  "The companies to choose between. Empty when a connection was made."
+  companies: [AccountingCompany!]!
+  "Passed to chooseAccountingCompany. Absent when a connection was made."
+  choiceToken: String
+  "When the choice lapses and the sign-in has to be started again."
+  choiceExpiresAt: Timestamp
+}
+
+input ChooseAccountingCompanyInput {
+  integrationType: AccountingSystem!
+  "The token finishAccountingAuthorization returned."
+  choiceToken: String!
+  "The ID of one of the offered companies."
+  companyId: ID!
 }
 
 "What happens to a payment recorded in the accounting system against documents Trenova sent."
@@ -2006,6 +2065,11 @@ extend type Mutation {
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
   "Finishes connecting with what the provider returned. Only the person who started it can finish it."
   completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
+    @deprecated(reason: "Use finishAccountingAuthorization, which can offer a choice of companies")
+  "Finishes connecting with what the provider returned, or offers the companies to choose between when the sign-in authorized several. Only the person who started it can finish it."
+  finishAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): CompleteAccountingAuthorizationPayload!
+  "Connects the company the person chose after a sign-in that authorized several. The choice can be made once; the other companies are released."
+  chooseAccountingCompany(input: ChooseAccountingCompanyInput!): AccountingConnection!
   "Disconnects the accounting system and revokes Trenova's access to it."
   disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
   "Checks the connection now instead of waiting for the next scheduled check."
@@ -28502,6 +28566,16 @@ func (ec *executionContext) childFields_AccountingBackfill(ctx context.Context, 
 	return nil, fmt.Errorf("no field named %q was found under type AccountingBackfill", field.Name)
 }
 
+func (ec *executionContext) childFields_AccountingCompany(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingCompany_id(ctx, field)
+	case "name":
+		return ec.fieldContext_AccountingCompany_name(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingCompany", field.Name)
+}
+
 func (ec *executionContext) childFields_AccountingConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -29056,6 +29130,30 @@ func (ec *executionContext) childFields_AccountingMappingSummary(ctx context.Con
 	return nil, fmt.Errorf("no field named %q was found under type AccountingMappingSummary", field.Name)
 }
 
+func (ec *executionContext) childFields_AccountingProviderProfile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "appName":
+		return ec.fieldContext_AccountingProviderProfile_appName(ctx, field)
+	case "webhookKeyLabel":
+		return ec.fieldContext_AccountingProviderProfile_webhookKeyLabel(ctx, field)
+	case "environments":
+		return ec.fieldContext_AccountingProviderProfile_environments(ctx, field)
+	case "ledgerAvailable":
+		return ec.fieldContext_AccountingProviderProfile_ledgerAvailable(ctx, field)
+	case "ledgerUnavailableReason":
+		return ec.fieldContext_AccountingProviderProfile_ledgerUnavailableReason(ctx, field)
+	case "callbackCarriesCompany":
+		return ec.fieldContext_AccountingProviderProfile_callbackCarriesCompany(ctx, field)
+	case "callbackPath":
+		return ec.fieldContext_AccountingProviderProfile_callbackPath(ctx, field)
+	case "lineKind":
+		return ec.fieldContext_AccountingProviderProfile_lineKind(ctx, field)
+	case "referenceKinds":
+		return ec.fieldContext_AccountingProviderProfile_referenceKinds(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingProviderProfile", field.Name)
+}
+
 func (ec *executionContext) childFields_AccountingReferenceObject(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -29256,6 +29354,8 @@ func (ec *executionContext) childFields_AccountingSyncStatus(ctx context.Context
 		return ec.fieldContext_AccountingSyncStatus_integrationType(ctx, field)
 	case "providerName":
 		return ec.fieldContext_AccountingSyncStatus_providerName(ctx, field)
+	case "profile":
+		return ec.fieldContext_AccountingSyncStatus_profile(ctx, field)
 	case "available":
 		return ec.fieldContext_AccountingSyncStatus_available(ctx, field)
 	case "app":
@@ -34628,6 +34728,20 @@ func (ec *executionContext) childFields_CommodityEdge(ctx context.Context, field
 		return ec.fieldContext_CommodityEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CommodityEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_CompleteAccountingAuthorizationPayload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "connection":
+		return ec.fieldContext_CompleteAccountingAuthorizationPayload_connection(ctx, field)
+	case "companies":
+		return ec.fieldContext_CompleteAccountingAuthorizationPayload_companies(ctx, field)
+	case "choiceToken":
+		return ec.fieldContext_CompleteAccountingAuthorizationPayload_choiceToken(ctx, field)
+	case "choiceExpiresAt":
+		return ec.fieldContext_CompleteAccountingAuthorizationPayload_choiceExpiresAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CompleteAccountingAuthorizationPayload", field.Name)
 }
 
 func (ec *executionContext) childFields_CostCategory(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

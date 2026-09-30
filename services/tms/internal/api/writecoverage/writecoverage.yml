@@ -44,6 +44,9 @@ writes:
   "mutation completeAccountingAuthorization":
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
+  "mutation chooseAccountingCompany":
+    exempt: security
+    reason: "Finishes the OAuth sign-in by choosing the company the authorization is for; a person holds the grant, never an agent."
   "mutation completeAccountingSetup":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -59,6 +62,9 @@ writes:
   "mutation enableAccountingSync":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation finishAccountingAuthorization":
+    exempt: security
+    reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
   "mutation ignoreAccountingInboundChange":
     tools: [ignore_accounting_inbound_change]
   "mutation pauseAccountingSync":

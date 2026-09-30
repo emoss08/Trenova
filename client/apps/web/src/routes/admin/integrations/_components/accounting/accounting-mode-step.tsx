@@ -1,12 +1,15 @@
 import { SelectField } from "@/components/fields/select-field";
 import { ACCOUNTING_LEDGER_GRANULARITIES, ACCOUNTING_SYNC_MODES } from "@/lib/accounting-sync";
-import type { AccountingConnection } from "@/lib/graphql/accounting-sync";
+import type {
+  AccountingConnection,
+  AccountingProviderProfile,
+} from "@/lib/graphql/accounting-sync";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type {
   AccountingLedgerGranularity,
   AccountingSyncMode,
 } from "@trenova/graphql/generated/graphql";
-import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -18,21 +21,29 @@ import { useAccountingModeAction } from "./use-accounting-connection";
 
 type AccountingModeStepProps = {
   vendor: AccountingVendor;
+  profile: AccountingProviderProfile;
   connection: AccountingConnection;
   canManage: boolean;
 };
 
-export function AccountingModeStep({ vendor, connection, canManage }: AccountingModeStepProps) {
+export function AccountingModeStep({
+  vendor,
+  profile,
+  connection,
+  canManage,
+}: AccountingModeStepProps) {
   const t = useT();
+  const ledgerAvailable = profile.ledgerAvailable;
+  const schema = useMemo(() => accountingModeSchema(ledgerAvailable), [ledgerAvailable]);
   const form = useForm<AccountingModeValues>({
-    resolver: zodResolver(accountingModeSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
-      mode: connection.syncMode,
+      mode: ledgerAvailable ? connection.syncMode : "Document",
       granularity: connection.ledgerGranularity ?? "Detailed",
     },
   });
   const { control, handleSubmit } = form;
-  const choose = useAccountingModeAction(vendor, form);
+  const choose = useAccountingModeAction(vendor, ledgerAvailable, form);
   const mode = useWatch({ control, name: "mode" });
   const granularity = useWatch({ control, name: "granularity" });
 
@@ -76,11 +87,16 @@ export function AccountingModeStep({ vendor, connection, canManage }: Accounting
             options={ACCOUNTING_SYNC_MODES.map((value) => ({
               value,
               label: modeLabels[value],
+              disabled: value === "Ledger" && !ledgerAvailable,
+              description:
+                value === "Ledger" && !ledgerAvailable
+                  ? t("Not available for {0}", vendor.name)
+                  : undefined,
             }))}
             isReadOnly={!canManage}
           />
         </FormControl>
-        {mode === "Ledger" ? (
+        {mode === "Ledger" && ledgerAvailable ? (
           <FormControl>
             <SelectField
               name="granularity"
@@ -102,7 +118,17 @@ export function AccountingModeStep({ vendor, connection, canManage }: Accounting
           </FormControl>
         ) : null}
       </FormGroup>
-      {mode === "Ledger" ? (
+      {!ledgerAvailable ? (
+        <Alert size="sm" variant="info">
+          <AlertTitle>{t("Journal entries cannot be sent to {0}", vendor.name)}</AlertTitle>
+          <AlertDescription>
+            {profile.ledgerUnavailableReason
+              ? t(profile.ledgerUnavailableReason)
+              : t("{0} can only receive documents.", vendor.name)}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {mode === "Ledger" && ledgerAvailable ? (
         <Alert size="sm">
           <AlertDescription>
             {t(

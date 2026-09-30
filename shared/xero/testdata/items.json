@@ -1,0 +1,35 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Items": [
+    {
+      "ItemID": "9a59a63d-e3fe-4a41-b3a4-d1a5b6a1bb13",
+      "Code": "LINEHAUL",
+      "Description": "Linehaul freight",
+      "UpdatedDateUTC": "/Date(1790208000000+0000)/",
+      "PurchaseDetails": {},
+      "SalesDetails": {
+        "UnitPrice": 1500.0,
+        "AccountCode": "200",
+        "TaxType": "NONE"
+      },
+      "Name": "Linehaul",
+      "IsTrackedAsInventory": false,
+      "IsSold": true,
+      "IsPurchased": false
+    },
+    {
+      "ItemID": "c8d3f1a2-5b6e-4f7a-8c9d-0e1f2a3b4c5d",
+      "Code": "FSC",
+      "Description": "Fuel surcharge",
+      "UpdatedDateUTC": "/Date(1790208000000+0000)/",
+      "PurchaseDetails": {},
+      "SalesDetails": {
+        "AccountCode": "200"
+      },
+      "Name": "Fuel surcharge",
+      "IsSold": true,
+      "IsPurchased": false
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Payments": [
+    {
+      "PaymentID": "b26fd49a-cbae-470a-a8f8-bcbc119e0379",
+      "Date": "/Date(1790294400000+0000)/",
+      "BankAmount": 500.0,
+      "Amount": 500.0,
+      "Reference": "ACH 7781",
+      "CurrencyRate": 1.0,
+      "PaymentType": "ACCRECPAYMENT",
+      "Status": "DELETED",
+      "UpdatedDateUTC": "/Date(1790298030000+0000)/",
+      "HasAccount": true,
+      "IsReconciled": false,
+      "Account": {
+        "AccountID": "562555f2-8cde-4ce9-8203-0363922537a4",
+        "Code": "090"
+      },
+      "Invoice": {
+        "Type": "ACCREC",
+        "InvoiceID": "fee88eea-f2aa-4a71-a372-33d6d83d3c45",
+        "InvoiceNumber": "INV-1001",
+        "Contact": {
+          "ContactID": "bd2270c3-8706-4c11-9cfb-000b551c3f51",
+          "Name": "Globex Shipping"
+        },
+        "CurrencyCode": "USD"
+      },
+      "HasValidationErrors": false
+    }
+  ]
+}

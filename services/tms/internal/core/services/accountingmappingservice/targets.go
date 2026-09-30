@@ -111,6 +111,31 @@ func mappingIdentity(m *accountingsync.AccountingMapping) string {
 func (s *Service) listTargets(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
+	conn *accountingsync.AccountingConnection,
+) ([]*target, error) {
+	all, err := s.allTargets(ctx, tenantInfo, conn.SendsLedger())
+	if err != nil {
+		return nil, err
+	}
+	profile := accountingsync.MustProfile(conn.IntegrationType)
+	return offeredTargets(&profile, all), nil
+}
+
+func offeredTargets(profile *accountingsync.ProviderProfile, all []*target) []*target {
+	offered := make([]*target, 0, len(all))
+	for _, t := range all {
+		if !profile.OffersKey(t.TargetType, t.Key) {
+			continue
+		}
+		t.Kind = profile.KindFor(t.TargetType)
+		offered = append(offered, t)
+	}
+	return offered
+}
+
+func (s *Service) allTargets(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
 	ledger bool,
 ) ([]*target, error) {
 	targets := make([]*target, 0, 64)

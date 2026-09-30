@@ -21,6 +21,7 @@ const (
 	TypeCarrierOK          = Type("CarrierOK")
 	TypeFMCSAQCMobile      = Type("FMCSAQCMobile")
 	TypeQuickBooksOnline   = Type("QuickBooksOnline")
+	TypeXero               = Type("Xero")
 	// TypeMotive     Type = "Motive"
 )
 
@@ -62,7 +63,8 @@ func (v Type) IsValid() bool {
 		TypeRampFuel,
 		TypeCarrierOK,
 		TypeFMCSAQCMobile,
-		TypeQuickBooksOnline:
+		TypeQuickBooksOnline,
+		TypeXero:
 		return true
 	default:
 		return false

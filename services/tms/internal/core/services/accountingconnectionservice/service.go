@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"regexp"
-	"slices"
-	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -19,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -33,12 +30,11 @@ import (
 )
 
 const (
-	authorizationStateTTL       = 10 * time.Minute
-	accessTokenRefreshWindow    = int64(5 * 60)
-	HealthCheckInterval         = int64(15 * 60)
-	defaultRefreshTokenLifetime = int64(100 * 24 * 60 * 60)
-	accessTokenField            = "access_token"
-	refreshTokenField           = "refresh_token"
+	authorizationStateTTL    = 10 * time.Minute
+	accessTokenRefreshWindow = int64(5 * 60)
+	HealthCheckInterval      = int64(15 * 60)
+	accessTokenField         = "access_token"
+	refreshTokenField        = "refresh_token"
 )
 
 var realmIDPattern = regexp.MustCompile(`^[A-Za-z0-9-]{1,100}$`)
@@ -118,6 +114,7 @@ func (s *Service) Status(
 	status := &services.AccountingSyncStatus{
 		IntegrationType: typ,
 		ProviderName:    accountingsync.ProviderName(typ),
+		Profile:         accountingsync.MustProfile(typ),
 		Available:       settings.ActiveSource != "" && settings.RedirectURL != "",
 		App:             settings,
 	}
@@ -147,6 +144,9 @@ func (s *Service) StartAuthorization(
 	name := accountingsync.ProviderName(req.IntegrationType)
 	if provider.RedirectURL() == "" {
 		return nil, errNoRedirect(name)
+	}
+	if err = s.ensureNoOtherSystem(ctx, req.TenantInfo, req.IntegrationType); err != nil {
+		return nil, err
 	}
 	app, err := s.appForTenant(ctx, req.TenantInfo, provider)
 	if err != nil {
@@ -189,110 +189,6 @@ func (s *Service) StartAuthorization(
 	}, nil
 }
 
-func validateCompletion(req *services.CompleteAccountingAuthorizationRequest) error {
-	multiErr := errortypes.NewMultiError()
-	if strings.TrimSpace(req.State) == "" {
-		multiErr.Add("state", errortypes.ErrRequired, "The connection request is missing its state")
-	}
-	if strings.TrimSpace(req.Code) == "" {
-		multiErr.Add("code", errortypes.ErrRequired, "The authorization code is missing")
-	}
-	if !realmIDPattern.MatchString(req.RealmID) {
-		multiErr.Add(
-			"realmId",
-			errortypes.ErrInvalid,
-			"The company id returned by the provider is not valid",
-		)
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
-}
-
-func (s *Service) CompleteAuthorization(
-	ctx context.Context,
-	req *services.CompleteAccountingAuthorizationRequest,
-) (*accountingsync.AccountingConnection, error) {
-	if err := validateCompletion(req); err != nil {
-		return nil, err
-	}
-	accountingProvider, err := s.provider(req.IntegrationType)
-	if err != nil {
-		return nil, err
-	}
-	provider := accountingsync.ProviderName(req.IntegrationType)
-
-	state, err := s.takeState(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	app, err := s.appForTenant(ctx, req.TenantInfo, accountingProvider)
-	if err != nil {
-		return nil, err
-	}
-	identity := app.Identity()
-	if state.AppSource != identity.Source || state.AppFingerprint != identity.Fingerprint {
-		return nil, errortypes.NewValidationError(
-			"state",
-			errortypes.ErrInvalid,
-			"The {0} app keys changed while you were signing in. Start the connection again.",
-			provider,
-		)
-	}
-	connector, err := accountingProvider.Bind(app)
-	if err != nil {
-		return nil, err
-	}
-
-	grant, err := connector.ExchangeCode(ctx, req.Code)
-	if err != nil {
-		return nil, errortypes.NewBusinessError("{0} did not accept the authorization. Try connecting again.", provider).
-			WithInternal(err)
-	}
-
-	facts, err := connector.CompanyFacts(ctx, req.RealmID, grant.AccessToken)
-	if err != nil {
-		s.revokeQuietly(ctx, connector, grant.RefreshToken)
-		return nil, errortypes.NewBusinessError("Connected, but {0} would not describe the company. Try connecting again.", provider).
-			WithInternal(err)
-	}
-
-	if err = s.ensureRealmIsFree(ctx, req, connector, grant); err != nil {
-		return nil, err
-	}
-
-	now := timeutils.NowUnix()
-	conn, previous, err := s.saveConnection(ctx, &connectionSave{
-		req:      req,
-		grant:    grant,
-		facts:    facts,
-		app:      identity,
-		provider: provider,
-		now:      now,
-	})
-	if err != nil {
-		if dberror.IsUniqueConstraintViolation(err) {
-			s.revokeQuietly(ctx, connector, grant.RefreshToken)
-			return nil, errRealmTaken(provider)
-		}
-		return nil, err
-	}
-
-	s.syncIntegrationFlag(ctx, conn)
-	s.logAudit(
-		conn,
-		req.UserID,
-		previous,
-		"Connected "+provider+" company "+conn.ExternalCompanyName,
-	)
-	s.afterHealthChange(ctx, accountingsync.ConnectionStatusDisconnected, conn, now)
-	s.publishInvalidation(ctx, conn, req.UserID)
-	s.requestReferenceRefresh(ctx, conn)
-
-	return conn, nil
-}
-
 func (s *Service) requestReferenceRefresh(
 	ctx context.Context,
 	conn *accountingsync.AccountingConnection,
@@ -307,136 +203,6 @@ func (s *Service) requestReferenceRefresh(
 		s.l.Warn("could not start the reference data refresh after connecting",
 			zap.String("connectionId", conn.ID.String()), zap.Error(err))
 	}
-}
-
-func (s *Service) takeState(
-	ctx context.Context,
-	req *services.CompleteAccountingAuthorizationRequest,
-) (*repositories.AccountingOAuthState, error) {
-	state, err := s.states.Take(ctx, tokenutils.Hash(req.State))
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewValidationError(
-				"state",
-				errortypes.ErrInvalid,
-				"This connection request expired or was already used. Start the connection again.",
-			)
-		}
-		return nil, err
-	}
-	if state.UserID != req.UserID ||
-		state.OrganizationID != req.TenantInfo.OrgID ||
-		state.BusinessUnitID != req.TenantInfo.BuID ||
-		state.IntegrationType != req.IntegrationType {
-		return nil, errortypes.NewAuthorizationError(
-			"This connection was started by someone else. Start the connection again from your own account.",
-		)
-	}
-
-	return state, nil
-}
-
-type connectionSave struct {
-	req      *services.CompleteAccountingAuthorizationRequest
-	grant    *services.AccountingTokenGrant
-	facts    *accountingsync.CompanyFacts
-	app      accountingsync.AppIdentity
-	provider string
-	now      int64
-}
-
-func (s *Service) saveConnection(
-	ctx context.Context,
-	in *connectionSave,
-) (*accountingsync.AccountingConnection, map[string]any, error) {
-	req, grant, facts, provider, now := in.req, in.grant, in.facts, in.provider, in.now
-	var conn *accountingsync.AccountingConnection
-	var previous map[string]any
-	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		existing, lockErr := s.connections.LockByTypeWithTokens(
-			txCtx,
-			repositories.GetAccountingConnectionRequest{
-				TenantInfo:      req.TenantInfo,
-				IntegrationType: req.IntegrationType,
-			},
-		)
-		if lockErr != nil && !errortypes.IsNotFoundError(lockErr) {
-			return lockErr
-		}
-
-		if existing == nil {
-			conn = &accountingsync.AccountingConnection{
-				ID:              pulid.MustNew("acctc_"),
-				OrganizationID:  req.TenantInfo.OrgID,
-				BusinessUnitID:  req.TenantInfo.BuID,
-				IntegrationType: req.IntegrationType,
-				ExternalRealmID: req.RealmID,
-			}
-			conn.BindApp(in.app)
-			if sealErr := s.connect(conn, req.UserID, grant, facts, now); sealErr != nil {
-				return sealErr
-			}
-			_, createErr := s.connections.Create(txCtx, conn)
-			return createErr
-		}
-
-		if existing.IsActive() && existing.ExternalRealmID != req.RealmID {
-			return errortypes.NewBusinessError(
-				"Disconnect {0} before connecting a different {1} company.",
-				existing.ExternalCompanyName,
-				provider,
-			)
-		}
-
-		previous = jsonutils.MustToJSON(existing)
-		existing.ExternalRealmID = req.RealmID
-		existing.BindApp(in.app)
-		if sealErr := s.connect(existing, req.UserID, grant, facts, now); sealErr != nil {
-			return sealErr
-		}
-		if _, updateErr := s.connections.Update(txCtx, existing); updateErr != nil {
-			return updateErr
-		}
-		if storeErr := s.connections.StoreTokens(txCtx, tokensOf(existing, now)); storeErr != nil {
-			return storeErr
-		}
-		conn = existing
-		return nil
-	})
-	return conn, previous, err
-}
-
-func errRealmTaken(provider string) error {
-	return errortypes.NewBusinessError(
-		"This {0} company is already connected to another Trenova organization. Disconnect it there first.",
-		provider,
-	)
-}
-
-func (s *Service) ensureRealmIsFree(
-	ctx context.Context,
-	req *services.CompleteAccountingAuthorizationRequest,
-	connector services.AccountingConnector,
-	grant *services.AccountingTokenGrant,
-) error {
-	holders, err := s.connections.ListHoldingRealm(
-		ctx,
-		repositories.ListAccountingConnectionsByRealmRequest{
-			IntegrationType: req.IntegrationType,
-			RealmIDs:        []string{req.RealmID},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	for _, holder := range holders {
-		if holder.OrganizationID != req.TenantInfo.OrgID ||
-			holder.BusinessUnitID != req.TenantInfo.BuID {
-			s.revokeQuietly(ctx, connector, grant.RefreshToken)
-			return errRealmTaken(accountingsync.ProviderName(req.IntegrationType))
-		}
-	}
-	return nil
 }
 
 func (s *Service) connect(
@@ -856,105 +622,6 @@ func (s *Service) CheckDue(
 	return sweep, nil
 }
 
-func (s *Service) ReceiveWebhook(
-	ctx context.Context,
-	req *services.ReceiveAccountingWebhookRequest,
-) error {
-	provider, err := s.provider(req.IntegrationType)
-	if err != nil {
-		return err
-	}
-
-	realms, err := provider.WebhookRealmIDs(req.Body)
-	if err != nil {
-		return errortypes.NewValidationError(
-			"body",
-			errortypes.ErrInvalid,
-			"The webhook body could not be read",
-		)
-	}
-	holders, err := s.connections.ListHoldingRealm(
-		ctx,
-		repositories.ListAccountingConnectionsByRealmRequest{
-			IntegrationType: req.IntegrationType,
-			RealmIDs:        realms,
-		},
-	)
-	if err != nil {
-		return err
-	}
-	if len(holders) == 0 {
-		s.l.Debug("webhook for companies with no connection", zap.Int("realms", len(realms)))
-		return nil
-	}
-
-	verified := s.verifiedRealms(ctx, provider, holders, req)
-	if len(verified) == 0 {
-		return errortypes.NewAuthenticationError("The webhook signature did not verify")
-	}
-
-	if _, err = s.connections.MarkWebhookReceived(
-		ctx,
-		repositories.MarkAccountingWebhookRequest{
-			IntegrationType: req.IntegrationType,
-			RealmIDs:        verified,
-			ReceivedAt:      timeutils.NowUnix(),
-		},
-	); err != nil {
-		return err
-	}
-
-	s.pollChanged(ctx, holders, verified)
-	return nil
-}
-
-func (s *Service) pollChanged(
-	ctx context.Context,
-	holders []*accountingsync.AccountingConnection,
-	verified []string,
-) {
-	if s.poller == nil {
-		return
-	}
-	for _, holder := range holders {
-		if !slices.Contains(verified, holder.ExternalRealmID) || !holder.ReadsChanges() {
-			continue
-		}
-		tenant := pagination.TenantInfo{OrgID: holder.OrganizationID, BuID: holder.BusinessUnitID}
-		if err := s.poller.PollNow(ctx, tenant, holder.ID); err != nil {
-			s.l.Warn("failed to wake the change reader after a webhook",
-				zap.String("connectionId", holder.ID.String()), zap.Error(err))
-		}
-	}
-}
-
-func (s *Service) verifiedRealms(
-	ctx context.Context,
-	provider services.AccountingProvider,
-	holders []*accountingsync.AccountingConnection,
-	req *services.ReceiveAccountingWebhookRequest,
-) []string {
-	byApp := make(map[string]bool, len(holders))
-	verified := make([]string, 0, len(holders))
-	for _, holder := range holders {
-		app, err := s.appForConnection(ctx, provider, holder)
-		if err != nil {
-			continue
-		}
-		key := string(app.Source) + ":" + app.Identity().Fingerprint
-		ok, seen := byApp[key]
-		if !seen {
-			connector, bindErr := provider.Bind(app)
-			ok = bindErr == nil && connector.VerifyWebhook(req.Signature, req.Body) == nil
-			byApp[key] = ok
-		}
-		if ok {
-			verified = append(verified, holder.ExternalRealmID)
-		}
-	}
-	return verified
-}
-
 func (s *Service) afterHealthChange(
 	ctx context.Context,
 	before accountingsync.ConnectionStatus,
@@ -1172,7 +839,9 @@ func (s *Service) seal(
 
 	refreshLifetime := int64(grant.RefreshTokenTTL / time.Second)
 	if refreshLifetime <= 0 {
-		refreshLifetime = defaultRefreshTokenLifetime
+		refreshLifetime = int64(
+			accountingsync.MustProfile(conn.IntegrationType).RefreshTokenLifetime / time.Second,
+		)
 	}
 
 	return accountingsync.TokenGrant{

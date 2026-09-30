@@ -116,10 +116,11 @@ func (s *Service) Summary(
 	tenantInfo pagination.TenantInfo,
 	integrationType integration.Type,
 ) (*services.AccountingMappingSummary, error) {
+	profile := accountingsync.MustProfile(integrationType)
 	summary := &services.AccountingMappingSummary{
 		IntegrationType: integrationType,
-		ProviderName:    accountingsync.ProviderName(integrationType),
-		RequiredTotal:   requiredTargetCount(),
+		ProviderName:    profile.Name,
+		RequiredTotal:   len(profile.RequiredTargets()),
 	}
 	conn, err := s.connectionFor(ctx, tenantInfo, integrationType)
 	if err != nil {
@@ -161,18 +162,6 @@ func (s *Service) Summary(
 		summary.RequiredConfirmed == summary.RequiredTotal
 
 	return summary, nil
-}
-
-func requiredTargetCount() int {
-	count := 0
-	for _, targetType := range accountingsync.AllMappingTargetTypes() {
-		for _, key := range targetType.Keys() {
-			if accountingsync.IsRequiredTarget(targetType, key) {
-				count++
-			}
-		}
-	}
-	return count
 }
 
 func groupCounts(counts []repositories.AccountingMappingCount) []services.AccountingMappingGroup {

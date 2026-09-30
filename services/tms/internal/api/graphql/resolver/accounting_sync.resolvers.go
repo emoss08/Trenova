@@ -339,6 +339,21 @@ func (r *mutationResolver) StartAccountingAuthorization(ctx context.Context, int
 }
 
 func (r *mutationResolver) CompleteAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsync.AccountingConnection, error) {
+	completion, err := r.finishAccountingAuthorization(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	if completion.Connection == nil {
+		return nil, errAccountingCompanyChoiceUnsupported()
+	}
+	return completion.Connection, nil
+}
+
+func (r *mutationResolver) FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*services.AccountingAuthorizationCompletion, error) {
+	return r.finishAccountingAuthorization(ctx, input)
+}
+
+func (r *mutationResolver) ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -347,13 +362,12 @@ func (r *mutationResolver) CompleteAccountingAuthorization(ctx context.Context, 
 		return nil, errAccountingNeedsAPerson()
 	}
 
-	return r.accountingConnections.CompleteAuthorization(ctx, &services.CompleteAccountingAuthorizationRequest{
+	return r.accountingConnections.ChooseCompany(ctx, &services.ChooseAccountingCompanyRequest{
 		TenantInfo:      tenantInfo(authCtx),
 		UserID:          authCtx.UserID,
 		IntegrationType: input.IntegrationType,
-		State:           input.State,
-		Code:            input.Code,
-		RealmID:         input.RealmID,
+		ChoiceToken:     input.ChoiceToken,
+		CompanyID:       input.CompanyID,
 	})
 }
 

@@ -6,8 +6,15 @@ import { ExternalLink } from "@/components/link";
 import { SectionPanel } from "@/components/section-panel";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { accountingWebhookUrl } from "@/lib/accounting-sync";
-import type { AccountingAppSettings, AccountingConnection } from "@/lib/graphql/accounting-sync";
-import type { AccountingAppEnvironment } from "@trenova/graphql/generated/graphql";
+import type {
+  AccountingAppSettings,
+  AccountingConnection,
+  AccountingProviderProfile,
+} from "@/lib/graphql/accounting-sync";
+import type {
+  AccountingAppEnvironment,
+  AccountingSystem,
+} from "@trenova/graphql/generated/graphql";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import {
   AlertDialog,
@@ -26,13 +33,13 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { Label } from "@trenova/shared/components/ui/label";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { toSentenceFragment } from "@trenova/shared/lib/utils";
 import { CheckIcon, CopyIcon, KeyRoundIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AccountingVendor } from "./accounting-vendors";
 import {
-  ACCOUNTING_APP_ENVIRONMENTS,
   accountingAppFormDefaults,
   accountingAppFormSchema,
   type AccountingAppFormValues,
@@ -42,12 +49,22 @@ import { useAccountingAppActions } from "./use-accounting-connection";
 type AccountingAppKeysProps = {
   vendor: AccountingVendor;
   app: AccountingAppSettings;
+  profile: AccountingProviderProfile;
   connection: AccountingConnection | null;
   canManage: boolean;
 };
 
-export function AccountingAppKeys({ vendor, app, connection, canManage }: AccountingAppKeysProps) {
+export function AccountingAppKeys({
+  vendor,
+  app,
+  profile,
+  connection,
+  canManage,
+}: AccountingAppKeysProps) {
   const t = useT();
+  const appName = t(profile.appName);
+  const webhookKeyLabel = t(profile.webhookKeyLabel);
+  const choosesEnvironment = profile.environments.length > 1;
   const [editing, setEditing] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const { remove } = useAccountingAppActions(vendor);
@@ -66,7 +83,7 @@ export function AccountingAppKeys({ vendor, app, connection, canManage }: Accoun
 
   return (
     <SectionPanel
-      title={vendor.appName}
+      title={appName}
       icon={<KeyRoundIcon />}
       hint={
         app.activeSource === "Tenant"
@@ -80,8 +97,9 @@ export function AccountingAppKeys({ vendor, app, connection, canManage }: Accoun
         {noApp ? (
           <p className="text-foreground-muted text-sm">
             {t(
-              "This Trenova server has no {0} of its own, so this organization connects through one it registers with Intuit. Create an app on the Intuit developer portal and enter its keys below.",
-              vendor.appName,
+              "This Trenova server has no {0} of its own, so this organization connects through one it registers with {1}. Create an app on the {1} developer portal and enter its keys below.",
+              appName,
+              vendor.developer,
             )}
           </p>
         ) : null}
@@ -91,12 +109,14 @@ export function AccountingAppKeys({ vendor, app, connection, canManage }: Accoun
             <DescriptionItem label={t("Client ID")}>
               <span className="font-mono text-xs break-all">{tenantApp.clientId}</span>
             </DescriptionItem>
-            <DescriptionItem label={t("Environment")}>
-              <Badge variant={environmentAccents[tenantApp.environment]}>
-                {environmentLabels[tenantApp.environment]}
-              </Badge>
-            </DescriptionItem>
-            <DescriptionItem label={t("Webhook verifier token")}>
+            {choosesEnvironment ? (
+              <DescriptionItem label={t("Environment")}>
+                <Badge variant={environmentAccents[tenantApp.environment]}>
+                  {environmentLabels[tenantApp.environment]}
+                </Badge>
+              </DescriptionItem>
+            ) : null}
+            <DescriptionItem label={webhookKeyLabel}>
               {tenantApp.hasWebhookVerifier ? t("Saved") : t("Not set")}
             </DescriptionItem>
             <DescriptionItem label={t("Last changed")} numeric>
@@ -107,13 +127,18 @@ export function AccountingAppKeys({ vendor, app, connection, canManage }: Accoun
 
         {!noApp && !tenantApp && !showForm ? (
           <p className="text-foreground-muted text-sm">
-            {app.instanceEnvironment
+            {app.instanceEnvironment && choosesEnvironment
               ? t(
-                  "Connects through the {0} this server is configured with ({1}). Use your own app instead if your organization registers one with Intuit.",
-                  vendor.appName,
+                  "Connects through the {0} this server is configured with ({1}). Use your own app instead if your organization registers one with {2}.",
+                  appName,
                   environmentLabels[app.instanceEnvironment],
+                  vendor.developer,
                 )
-              : t("Connects through the {0} this server is configured with.", vendor.appName)}
+              : t(
+                  "Connects through the {0} this server is configured with. Use your own app instead if your organization registers one with {1}.",
+                  appName,
+                  vendor.developer,
+                )}
           </p>
         ) : null}
 
@@ -132,6 +157,7 @@ export function AccountingAppKeys({ vendor, app, connection, canManage }: Accoun
           <AccountingAppKeysForm
             vendor={vendor}
             app={app}
+            profile={profile}
             locked={connectedThroughTenant}
             onDone={noApp ? undefined : () => setEditing(false)}
           />
@@ -150,8 +176,9 @@ export function AccountingAppKeys({ vendor, app, connection, canManage }: Accoun
             {connectedThroughTenant ? (
               <p className="text-foreground-muted text-xs">
                 {t(
-                  "While {0} is connected, only the client secret and webhook verifier token can change.",
+                  "While {0} is connected, only the client secret and {1} can change.",
                   connection?.externalCompanyName || vendor.name,
+                  toSentenceFragment(webhookKeyLabel),
                 )}
               </p>
             ) : null}
@@ -185,7 +212,7 @@ export function AccountingAppKeys({ vendor, app, connection, canManage }: Accoun
             <AlertDescription>
               {t(
                 "Someone with manage access to the accounting integration has to enter the {0} keys.",
-                vendor.appName,
+                appName,
               )}
             </AlertDescription>
           </Alert>
@@ -195,16 +222,16 @@ export function AccountingAppKeys({ vendor, app, connection, canManage }: Accoun
       <AlertDialog open={confirmRemove} onOpenChange={setConfirmRemove}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("Remove the {0} keys?", vendor.appName)}</AlertDialogTitle>
+            <AlertDialogTitle>{t("Remove the {0} keys?", appName)}</AlertDialogTitle>
             <AlertDialogDescription>
               {app.instanceAppAvailable
                 ? t(
                     "The next connection goes through this server's {0} instead. You can enter your keys again later.",
-                    vendor.appName,
+                    appName,
                   )
                 : t(
                     "This server has no {0} of its own, so nobody can connect {1} until keys are entered again.",
-                    vendor.appName,
+                    appName,
                     vendor.name,
                   )}
             </AlertDialogDescription>
@@ -243,19 +270,23 @@ function isLive(connection: AccountingConnection): boolean {
 function AccountingAppKeysForm({
   vendor,
   app,
+  profile,
   locked,
   onDone,
 }: {
   vendor: AccountingVendor;
   app: AccountingAppSettings;
+  profile: AccountingProviderProfile;
   locked: boolean;
   onDone?: () => void;
 }) {
   const t = useT();
   const saved = app.tenantApp;
+  const environments = profile.environments;
+  const webhookKeyLabel = t(profile.webhookKeyLabel);
   const form = useForm<AccountingAppFormValues>({
-    resolver: zodResolver(accountingAppFormSchema(saved)),
-    defaultValues: accountingAppFormDefaults(saved),
+    resolver: zodResolver(accountingAppFormSchema(saved, environments)),
+    defaultValues: accountingAppFormDefaults(saved, environments),
   });
   const { control, handleSubmit, reset } = form;
   const environmentLabels: Record<AccountingAppEnvironment, string> = {
@@ -287,22 +318,24 @@ function AccountingAppKeysForm({
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <AccountingAppRegistration vendor={vendor} app={app} />
+      <AccountingAppRegistration vendor={vendor} app={app} webhookKeyLabel={webhookKeyLabel} />
       <FormGroup cols={2}>
-        <FormControl>
-          <SelectField
-            name="environment"
-            control={control}
-            label={t("Environment")}
-            isReadOnly={locked}
-            options={ACCOUNTING_APP_ENVIRONMENTS.map((environment) => ({
-              value: environment,
-              label: environmentLabels[environment],
-              description: environmentDescriptions[environment],
-            }))}
-          />
-        </FormControl>
-        <FormControl>
+        {environments.length > 1 ? (
+          <FormControl>
+            <SelectField
+              name="environment"
+              control={control}
+              label={t("Environment")}
+              isReadOnly={locked}
+              options={environments.map((environment) => ({
+                value: environment,
+                label: environmentLabels[environment],
+                description: environmentDescriptions[environment],
+              }))}
+            />
+          </FormControl>
+        ) : null}
+        <FormControl cols={environments.length > 1 ? undefined : "full"}>
           <InputField
             name="clientId"
             control={control}
@@ -319,16 +352,22 @@ function AccountingAppKeysForm({
             label={t("Client secret")}
             autoComplete="new-password"
             placeholder={saved ? t("Saved. Leave blank to keep it.") : undefined}
-            description={t(
-              "Stored encrypted and never shown again. Enter it again whenever the client ID or environment changes.",
-            )}
+            description={
+              environments.length > 1
+                ? t(
+                    "Stored encrypted and never shown again. Enter it again whenever the client ID or environment changes.",
+                  )
+                : t(
+                    "Stored encrypted and never shown again. Enter it again whenever the client ID changes.",
+                  )
+            }
           />
         </FormControl>
         <FormControl cols="full">
           <SensitiveField
             name="webhookVerifierToken"
             control={control}
-            label={t("Webhook verifier token (optional)")}
+            label={t("{0} (optional)", webhookKeyLabel)}
             autoComplete="new-password"
             placeholder={
               saved?.hasWebhookVerifier ? t("Saved. Leave blank to keep it.") : undefined
@@ -344,7 +383,7 @@ function AccountingAppKeysForm({
             <CheckboxField
               name="clearWebhookVerifierToken"
               control={control}
-              label={t("Remove the saved webhook verifier token")}
+              label={t("Remove the saved {0}", toSentenceFragment(webhookKeyLabel))}
             />
           </FormControl>
         ) : null}
@@ -355,7 +394,11 @@ function AccountingAppKeysForm({
             {t("Cancel")}
           </Button>
         ) : null}
-        <Button type="submit" isLoading={save.isPending} loadingText={t("Checking with Intuit...")}>
+        <Button
+          type="submit"
+          isLoading={save.isPending}
+          loadingText={t("Checking with {0}...", vendor.developer)}
+        >
           {t("Save keys")}
         </Button>
       </div>
@@ -366,34 +409,62 @@ function AccountingAppKeysForm({
 function AccountingAppRegistration({
   vendor,
   app,
+  webhookKeyLabel,
 }: {
   vendor: AccountingVendor;
   app: AccountingAppSettings;
+  webhookKeyLabel: string;
 }) {
   const t = useT();
-  const webhookUrl = accountingWebhookUrl(app.webhookPath);
+  const appWebhookPath = app.tenantApp ? app.webhookPath : "";
+  const webhookUrl = accountingWebhookUrl(appWebhookPath);
+  const steps: Record<AccountingSystem, { create: string; redirect: string; keys: string }> = {
+    QuickBooksOnline: {
+      create: t(
+        "Create an app on the Intuit developer portal with the com.intuit.quickbooks.accounting scope.",
+      ),
+      redirect: t(
+        "Under Keys and credentials, add the redirect URI below exactly as written. Development keys accept http://localhost; production keys need https.",
+      ),
+      keys: t("Copy the client ID and client secret for the same environment into this form."),
+    },
+    Xero: {
+      create: t("Create a Web app on the Xero developer portal."),
+      redirect: t(
+        "Under Configuration, add the redirect URI below exactly as written. Xero accepts http://localhost while developing; anything else needs https.",
+      ),
+      keys: t("Copy the client ID, generate a client secret, and enter both in this form."),
+    },
+  };
+  const step = steps[vendor.system];
 
   return (
     <div className="space-y-3 rounded-md border p-3">
       <ol className="text-foreground-muted list-decimal space-y-1 pl-4 text-sm">
         <li>
-          {t(
-            "Create an app on the Intuit developer portal with the com.intuit.quickbooks.accounting scope.",
-          )}{" "}
+          {step.create}{" "}
           <ExternalLink href={vendor.developerPortalUrl} className="text-sm">
-            {t("Open the Intuit developer portal")}
+            {t("Open the {0} developer portal", vendor.developer)}
           </ExternalLink>
         </li>
+        <li>{step.redirect}</li>
         <li>
-          {t(
-            "Under Keys and credentials, add the redirect URI below exactly as written. Development keys accept http://localhost; production keys need https.",
-          )}
-        </li>
-        <li>
-          {t("Copy the client ID and client secret for the same environment into this form.")}{" "}
+          {step.keys}{" "}
           <ExternalLink href={vendor.appKeysHelpUrl} className="text-sm">
             {t("Where to find them")}
           </ExternalLink>
+        </li>
+        <li>
+          {webhookUrl
+            ? t(
+                "To have {0} tell Trenova about changes, add the webhook endpoint below to the app's webhooks and enter its {1} here.",
+                vendor.name,
+                toSentenceFragment(webhookKeyLabel),
+              )
+            : t(
+                "To have {0} tell Trenova about changes, save the keys first: the webhook endpoint for your app appears here once they are saved.",
+                vendor.name,
+              )}
         </li>
       </ol>
       {app.redirectUrl ? <CopyRow label={t("Redirect URI")} value={app.redirectUrl} /> : null}

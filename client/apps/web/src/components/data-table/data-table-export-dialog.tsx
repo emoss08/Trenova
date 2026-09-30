@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Label } from "@trenova/shared/components/ui/label";
-import { cn } from "@trenova/shared/lib/utils";
 import {
   buildCsv,
   buildExportColumns,
@@ -27,33 +26,7 @@ import type {
 } from "@trenova/shared/types/data-table";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-
-function ChoiceButton({
-  selected,
-  onClick,
-  children,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onClick}
-      className={cn(
-        "flex flex-1 cursor-pointer flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left text-sm transition-colors",
-        selected
-          ? "border-brand-border bg-surface-selected"
-          : "border-border hover:border-border-strong hover:bg-surface-hover",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
+import { ChoiceButton } from "@/components/choice-button";
 
 type DataTableExportDialogProps<TData extends Record<string, any>> = {
   open: boolean;
@@ -144,9 +117,7 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
         </DialogHeader>
         <div className="flex flex-col gap-4 pb-2">
           <div className="flex flex-col gap-2">
-            <Label className="text-muted-foreground text-xs font-medium">
-              {t("Rows")}
-            </Label>
+            <Label className="text-muted-foreground text-xs font-medium">{t("Rows")}</Label>
             <div className="flex gap-2" role="radiogroup" aria-label={t("Export scope")}>
               <ChoiceButton selected={scope === "all"} onClick={() => setScope("all")}>
                 <span className="font-medium">{t("All matching")}</span>
@@ -173,9 +144,7 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label className="text-muted-foreground text-xs font-medium">
-              {t("Columns")}
-            </Label>
+            <Label className="text-muted-foreground text-xs font-medium">{t("Columns")}</Label>
             <div className="flex gap-2" role="radiogroup" aria-label={t("Export columns")}>
               <ChoiceButton
                 selected={columnsMode === "visible"}

@@ -152,7 +152,7 @@ func (s *Service) salesRef(
 		}
 	}
 
-	found, ok, err := sess.writer.FindSalesDocument(ctx, &services.AccountingFindDocumentRequest{
+	found, ok, err := sess.writer.FindDocument(ctx, &services.AccountingFindDocumentRequest{
 		Auth:      sess.auth,
 		Kind:      objectType,
 		DocNumber: inv.Number,
@@ -226,7 +226,14 @@ func (s *Service) pushSales(
 		doc.Refs = target.ExternalRefs
 		written, err = sess.writer.UpdateSalesDocument(ctx, doc)
 	} else {
-		written, err = sess.writer.CreateSalesDocument(ctx, doc)
+		written, err = s.createAdopting(ctx, sess, record, &services.AccountingFindDocumentRequest{
+			DocNumber:              doc.DocNumber,
+			CounterpartyExternalID: customerID,
+			TxnDate:                doc.TxnDate,
+			Total:                  salesTotal(doc.Lines),
+		}, func() (*services.AccountingDocumentResult, error) {
+			return sess.writer.CreateSalesDocument(ctx, doc)
+		})
 	}
 	if err != nil {
 		return partial(written), err
@@ -282,7 +289,8 @@ func (s *Service) salesDocument(
 	if inv.DueDate != nil && record.ObjectType != accountingsync.SyncObjectCreditMemo {
 		doc.DueDate = timeutils.FormatCalendarDate(*inv.DueDate, sess.loc)
 	}
-	if inv.PaymentTerm != "" && record.ObjectType != accountingsync.SyncObjectCreditMemo {
+	if inv.PaymentTerm != "" && record.ObjectType != accountingsync.SyncObjectCreditMemo &&
+		sess.profile.Offers(accountingsync.TargetPaymentTerm) {
 		term, err := res.optional(ctx, mappingTarget{
 			TargetType: accountingsync.TargetPaymentTerm,
 			Key:        string(inv.PaymentTerm),
@@ -297,17 +305,18 @@ func (s *Service) salesDocument(
 		if line == nil || line.Amount.IsZero() {
 			continue
 		}
-		itemID, err := res.require(ctx, lineTarget(line))
-		if err != nil {
-			return nil, err
+		target := lineTarget(line)
+		externalID, refErr := res.require(ctx, target)
+		if refErr != nil {
+			return nil, refErr
 		}
 		entry := services.AccountingDocumentLine{
-			Description:    line.Description,
-			ItemExternalID: itemID,
-			Quantity:       line.Quantity.Abs(),
-			UnitPrice:      line.UnitPrice.Mul(sign),
-			Amount:         line.Amount.Mul(sign),
+			Description: line.Description,
+			Quantity:    line.Quantity.Abs(),
+			UnitPrice:   line.UnitPrice.Mul(sign),
+			Amount:      line.Amount.Mul(sign),
 		}
+		setLineRef(&entry, sess.profile.KindFor(target.TargetType), externalID)
 		if inv.ServiceDate != nil {
 			entry.ServiceDate = timeutils.FormatCalendarDate(*inv.ServiceDate, sess.loc)
 		}
@@ -324,6 +333,18 @@ func (s *Service) salesDocument(
 		}
 	}
 	return doc, nil
+}
+
+func setLineRef(
+	line *services.AccountingDocumentLine,
+	kind accountingsync.ReferenceKind,
+	externalID string,
+) {
+	if kind == accountingsync.ReferenceKindAccount {
+		line.AccountExternalID = externalID
+		return
+	}
+	line.ItemExternalID = externalID
 }
 
 func lineTarget(line *invoice.InvoiceLine) mappingTarget {
@@ -611,7 +632,21 @@ func (s *Service) pushPayment(
 		return nil, err
 	}
 
-	written, err := sess.writer.SavePayment(ctx, doc)
+	save := func() (*services.AccountingDocumentResult, error) {
+		return sess.writer.SavePayment(ctx, doc)
+	}
+	var written *services.AccountingDocumentResult
+	if doc.ExternalID == "" {
+		written, err = s.createAdopting(ctx, sess, record, &services.AccountingFindDocumentRequest{
+			DocNumber:              doc.ReferenceNumber,
+			CounterpartyExternalID: doc.CustomerExternalID,
+			TxnDate:                doc.TxnDate,
+			Total:                  doc.TotalAmount,
+			AppliesToExternalIDs:   appliedInvoices(doc.Applications),
+		}, save)
+	} else {
+		written, err = save()
+	}
 	if err != nil {
 		return partial(written), err
 	}
@@ -642,7 +677,11 @@ func (s *Service) paymentRefs(
 	if err != nil {
 		return paymentExternalRefs{}, err
 	}
-	method, err := res.require(ctx, mappingTarget{
+	refs := paymentExternalRefs{customer: customerID, deposit: deposit}
+	if !sess.profile.Offers(accountingsync.TargetPaymentMethod) {
+		return refs, nil
+	}
+	refs.method, err = res.require(ctx, mappingTarget{
 		TargetType: accountingsync.TargetPaymentMethod,
 		Key:        string(payment.PaymentMethod),
 		Label:      paymentMethodLabel(payment.PaymentMethod),
@@ -650,7 +689,7 @@ func (s *Service) paymentRefs(
 	if err != nil {
 		return paymentExternalRefs{}, err
 	}
-	return paymentExternalRefs{customer: customerID, deposit: deposit, method: method}, nil
+	return refs, nil
 }
 
 func paymentNote(payment *customerpayment.Payment) string {
@@ -715,17 +754,27 @@ func (s *Service) paymentApplications(
 		doc.Applications = append(doc.Applications, entry)
 	}
 
-	if shortPaid {
-		item, itemErr := res.require(ctx, mappingTarget{
-			TargetType: accountingsync.TargetItemRole,
-			Key:        accountingsync.ItemRoleShortPayWriteOff,
-			Label:      "The short-pay write-off item",
-		})
-		if itemErr != nil {
-			return itemErr
-		}
-		doc.ShortPayItemExternalID = item
+	if !shortPaid {
+		return nil
 	}
+	kind := sess.profile.KindFor(accountingsync.TargetItemRole)
+	label := "The short-pay write-off item"
+	if kind == accountingsync.ReferenceKindAccount {
+		label = "The short-pay write-off account"
+	}
+	writeOff, err := res.require(ctx, mappingTarget{
+		TargetType: accountingsync.TargetItemRole,
+		Key:        accountingsync.ItemRoleShortPayWriteOff,
+		Label:      label,
+	})
+	if err != nil {
+		return err
+	}
+	if kind == accountingsync.ReferenceKindAccount {
+		doc.ShortPayAccountExternalID = writeOff
+		return nil
+	}
+	doc.ShortPayItemExternalID = writeOff
 	return nil
 }
 
@@ -867,7 +916,15 @@ func (s *Service) pushCreditApplication(
 		PrivateNote: "Applies " + memo.Number + " to " + target.Number +
 			sentDateNote(record, app.AccountingDate, sess.loc),
 	}
-	written, err := sess.writer.CreateCreditApplication(ctx, doc)
+	written, err := s.createAdopting(ctx, sess, record, &services.AccountingFindDocumentRequest{
+		CounterpartyExternalID: customerID,
+		TxnDate:                doc.TxnDate,
+		Total:                  doc.Amount,
+		AppliesToExternalIDs:   []string{invoiceID},
+		CreditExternalID:       memoID,
+	}, func() (*services.AccountingDocumentResult, error) {
+		return sess.writer.CreateCreditApplication(ctx, doc)
+	})
 	if err != nil {
 		return partial(written), err
 	}

@@ -3,6 +3,7 @@ package qboconnector
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -68,7 +69,10 @@ func (c *Connector) CreatePurchaseDocument(
 		Refs: map[string]string{
 			accountingsync.ExternalRefDocument:     created.ID,
 			accountingsync.ExternalRefDocumentType: string(kind),
-			accountingsync.ExternalRefURL:          c.appURL(kind.AppPath(), created.ID),
+			accountingsync.ExternalRefCreditDocument: strconv.FormatBool(
+				kind == quickbooks.TxnVendorCredit,
+			),
+			accountingsync.ExternalRefURL: c.appURL(kind.AppPath(), created.ID),
 		},
 	}, nil
 }

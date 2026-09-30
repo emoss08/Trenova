@@ -1537,6 +1537,14 @@ type ChargeAllocationInput struct {
 	Version          *int                            `json:"version,omitempty"`
 }
 
+type ChooseAccountingCompanyInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+	// The token finishAccountingAuthorization returned.
+	ChoiceToken string `json:"choiceToken"`
+	// The ID of one of the offered companies.
+	CompanyID string `json:"companyId"`
+}
+
 // Chooses what a connection sends, before its mappings.
 type ChooseAccountingSyncModeInput struct {
 	IntegrationType integration.Type        `json:"integrationType"`
@@ -1570,7 +1578,8 @@ type CompleteAccountingAuthorizationInput struct {
 	IntegrationType integration.Type `json:"integrationType"`
 	State           string           `json:"state"`
 	Code            string           `json:"code"`
-	RealmID         string           `json:"realmId"`
+	// The company the provider named in its callback. Required only for systems whose callback carries one.
+	RealmID *string `json:"realmId,omitempty"`
 }
 
 type CompleteClearinghouseQueryInput struct {

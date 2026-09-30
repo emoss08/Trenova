@@ -131,7 +131,7 @@ func TestGetAccountingSyncStatus_RefusesUnknownSystemsAndForeignTenants(t *testi
 	t.Parallel()
 
 	tool := newGetAccountingSyncStatusTool(&fakeAccountingStatus{}, &fakeSyncLedger{}, nil)
-	_, err := tool.Query(t.Context(), accountingQueryParams("Xero"))
+	_, err := tool.Query(t.Context(), accountingQueryParams("NetSuite"))
 	require.Error(t, err)
 
 	params := accountingQueryParams("QuickBooksOnline")

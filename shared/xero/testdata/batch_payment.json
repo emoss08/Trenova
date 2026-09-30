@@ -1,0 +1,36 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "BatchPayments": [
+    {
+      "Account": {
+        "AccountID": "562555f2-8cde-4ce9-8203-0363922537a4"
+      },
+      "Reference": "Carrier run 2026-09-25",
+      "BatchPaymentID": "d318c343-208e-49fe-b04a-45642349bcf1",
+      "DateString": "2026-09-25T00:00:00",
+      "Date": "/Date(1790294400000+0000)/",
+      "Payments": [
+        {
+          "Invoice": {
+            "InvoiceID": "0032c6e3-7b1e-4b0f-9c7e-2f6d2b5b8a11"
+          },
+          "PaymentID": "b26fd49a-cbae-470a-a8f8-bcbc119e0379",
+          "Amount": 900.0
+        },
+        {
+          "Invoice": {
+            "InvoiceID": "fee88eea-f2aa-4a71-a372-33d6d83d3c45"
+          },
+          "PaymentID": "6b1ad2c4-3e5f-4a7b-9c0d-1e2f3a4b5c6d",
+          "Amount": 450.5
+        }
+      ],
+      "Type": "PAYBATCH",
+      "Status": "AUTHORISED",
+      "TotalAmount": 1350.5,
+      "UpdatedDateUTC": "/Date(1790298030000+0000)/",
+      "IsReconciled": "false"
+    }
+  ]
+}

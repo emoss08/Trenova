@@ -31,6 +31,7 @@ type pushSession struct {
 	auth              services.AccountingDocumentAuth
 	loc               *time.Location
 	providerName      string
+	profile           accountingsync.ProviderProfile
 	limits            services.AccountingDocumentLimits
 	control           *tenant.AccountingControl
 	redatesToNextOpen bool
@@ -106,16 +107,14 @@ func (s *Service) openSession(
 	}
 
 	return &pushSession{
-		tenant:   tenantInfo,
-		conn:     session.Connection,
-		writer:   writer,
-		journals: journals,
-		auth: services.AccountingDocumentAuth{
-			RealmID:     session.Connection.ExternalRealmID,
-			AccessToken: session.AccessToken,
-		},
+		tenant:            tenantInfo,
+		conn:              session.Connection,
+		writer:            writer,
+		journals:          journals,
+		auth:              services.DocumentAuthFor(session.Connection, session.AccessToken),
 		loc:               loc,
 		providerName:      accountingsync.ProviderName(conn.IntegrationType),
+		profile:           accountingsync.MustProfile(conn.IntegrationType),
 		limits:            writer.DocumentLimits(),
 		control:           control,
 		redatesToNextOpen: control.ClosedPeriodPostingPolicy == tenant.ClosedPeriodPostingPolicyPostToNextOpen,
@@ -370,7 +369,11 @@ func finishedResult(
 	if written != nil {
 		result.ExternalID = written.ExternalID
 		result.ExternalDocNumber = written.DocNumber
-		result.ExternalURL = sess.writer.DocumentURL(record.ObjectType, written.ExternalID)
+		result.ExternalURL = sess.writer.DocumentURL(
+			sess.auth,
+			record.ObjectType,
+			written.ExternalID,
+		)
 	}
 	return &pushResult{result: result, refs: refs}, nil
 }

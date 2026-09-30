@@ -3,6 +3,7 @@ package accountingsync_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
@@ -43,7 +44,8 @@ func TestConnectSetsHealthyStateAndAbsoluteExpiry(t *testing.T) {
 	assert.True(t, conn.HasTokens())
 	assert.Equal(t, now, conn.ConnectedAt)
 	require.NotNil(t, conn.LastSuccessAt)
-	assert.Equal(t, now+accountingsync.RefreshTokenAbsoluteLifetime, conn.RefreshTokenAbsoluteExpiresAt)
+	absolute := accountingsync.MustProfile(conn.IntegrationType).RefreshTokenAbsoluteLifetime
+	assert.Equal(t, now+int64(absolute/time.Second), conn.RefreshTokenAbsoluteExpiresAt)
 
 	multiErr := errortypes.NewMultiError()
 	conn.Validate(multiErr)
@@ -111,7 +113,8 @@ func TestReconnectAfterDisconnectClearsDisconnectFields(t *testing.T) {
 	assert.Equal(t, accountingsync.ConnectionStatusConnected, conn.Status)
 	assert.True(t, conn.DisconnectedByID.IsNil())
 	assert.Nil(t, conn.DisconnectedAt)
-	assert.Equal(t, now+100+accountingsync.RefreshTokenAbsoluteLifetime, conn.RefreshTokenAbsoluteExpiresAt)
+	absolute := accountingsync.MustProfile(conn.IntegrationType).RefreshTokenAbsoluteLifetime
+	assert.Equal(t, now+100+int64(absolute/time.Second), conn.RefreshTokenAbsoluteExpiresAt)
 }
 
 func TestExpiryWindows(t *testing.T) {

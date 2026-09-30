@@ -1,9 +1,13 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { useAccountingDriftActions } from "@/hooks/use-accounting-drift-actions";
 import { usePermission } from "@/hooks/use-permission";
-import { ACCOUNTING_SYNC_PATH, accountingSetupPath } from "@/lib/accounting-sync";
+import { useConnectedAccountingSystem } from "@/hooks/use-connected-accounting-system";
+import {
+  ACCOUNTING_SYNC_PATH,
+  accountingSetupPath,
+  DEFAULT_ACCOUNTING_SYSTEM,
+} from "@/lib/accounting-sync";
 import { queries } from "@/lib/queries";
-import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -15,17 +19,23 @@ import { lazy } from "react";
 import { Link } from "react-router";
 import { DriftNotices, DriftSummary, DriftSummarySkeleton } from "./_components/drift-summary";
 
-const SYSTEM: AccountingSystem = "QuickBooksOnline";
-
 const Table = lazy(() => import("./_components/drift-table"));
 
 export function AccountingDriftPage() {
   const t = useT();
-  const syncSummary = useQuery(queries.accountingSync.syncSummary(SYSTEM));
-  const overviewQuery = useQuery(queries.accountingSync.driftOverview(SYSTEM));
+  const resolved = useConnectedAccountingSystem("syncSummary");
+  const system = resolved.system ?? DEFAULT_ACCOUNTING_SYSTEM;
+  const syncSummary = useQuery({
+    ...queries.accountingSync.syncSummary(system),
+    enabled: resolved.system !== null,
+  });
+  const overviewQuery = useQuery({
+    ...queries.accountingSync.driftOverview(system),
+    enabled: resolved.system !== null,
+  });
   const { allowed: canUpdate } = usePermission(Resource.AccountingSync, Operation.Update);
   const actions = useAccountingDriftActions();
-  const providerName = syncSummary.data?.providerName ?? "QuickBooks Online";
+  const providerName = syncSummary.data?.providerName ?? t("the accounting system");
   const connection = syncSummary.data?.connection ?? null;
   const overview = overviewQuery.data;
   const syncing = connection?.syncEnabledAt != null;
@@ -57,7 +67,7 @@ export function AccountingDriftPage() {
                 size="sm"
                 isLoading={actions.check.isPending}
                 loadingText={t("Starting...")}
-                onClick={() => actions.check.mutate(SYSTEM)}
+                onClick={() => actions.check.mutate(system)}
               >
                 {t("Check now")}
               </Button>
@@ -66,8 +76,10 @@ export function AccountingDriftPage() {
         ),
       }}
     >
-      {overviewQuery.isLoading || syncSummary.isLoading ? <DriftSummarySkeleton /> : null}
-      {overviewQuery.isError ? (
+      {resolved.isLoading || overviewQuery.isLoading || syncSummary.isLoading ? (
+        <DriftSummarySkeleton />
+      ) : null}
+      {resolved.isError || overviewQuery.isError ? (
         <Alert size="sm" variant="destructive">
           <AlertDescription className="flex items-center justify-between gap-3">
             <span>{t("Drift findings could not be loaded.")}</span>
@@ -75,7 +87,7 @@ export function AccountingDriftPage() {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => void overviewQuery.refetch()}
+              onClick={() => (resolved.isError ? resolved.retry() : void overviewQuery.refetch())}
             >
               {t("Retry")}
             </Button>
@@ -93,7 +105,7 @@ export function AccountingDriftPage() {
                   )
                 : t("{0} is not connected yet.", providerName)}
             </span>
-            <Button type="button" size="sm" render={<Link to={accountingSetupPath(SYSTEM)} />}>
+            <Button type="button" size="sm" render={<Link to={accountingSetupPath(system)} />}>
               {connection ? t("Finish setup") : t("Connect {0}", providerName)}
             </Button>
           </AlertDescription>
@@ -106,11 +118,13 @@ export function AccountingDriftPage() {
         </>
       ) : null}
       <DataTableLazyComponent>
-        <Table
-          system={SYSTEM}
-          providerName={providerName}
-          toleranceMinor={overview?.toleranceMinor ?? 0}
-        />
+        {resolved.system ? (
+          <Table
+            system={resolved.system}
+            providerName={providerName}
+            toleranceMinor={overview?.toleranceMinor ?? 0}
+          />
+        ) : null}
       </DataTableLazyComponent>
     </PageLayout>
   );

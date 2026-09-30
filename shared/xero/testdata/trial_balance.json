@@ -1,0 +1,228 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Reports": [
+    {
+      "ReportID": "TrialBalance",
+      "ReportName": "Trial Balance",
+      "ReportType": "TrialBalance",
+      "ReportTitles": [
+        "Trial Balance",
+        "Acme Freight Ltd",
+        "As at 30 September 2026"
+      ],
+      "ReportDate": "30 September 2026",
+      "UpdatedDateUTC": "/Date(1790300000000)/",
+      "Rows": [
+        {
+          "RowType": "Header",
+          "Cells": [
+            {
+              "Value": "Account"
+            },
+            {
+              "Value": "Debit"
+            },
+            {
+              "Value": "Credit"
+            },
+            {
+              "Value": "YTD Debit"
+            },
+            {
+              "Value": "YTD Credit"
+            }
+          ]
+        },
+        {
+          "RowType": "Section",
+          "Title": "Revenue",
+          "Rows": [
+            {
+              "RowType": "Row",
+              "Cells": [
+                {
+                  "Value": "Freight Revenue (200)",
+                  "Attributes": [
+                    {
+                      "Value": "e0a3a8f4-9a61-4b5e-bd0a-7a3c9c4f5a11",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "",
+                  "Attributes": [
+                    {
+                      "Value": "e0a3a8f4-9a61-4b5e-bd0a-7a3c9c4f5a11",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "1,500.00",
+                  "Attributes": [
+                    {
+                      "Value": "e0a3a8f4-9a61-4b5e-bd0a-7a3c9c4f5a11",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "",
+                  "Attributes": [
+                    {
+                      "Value": "e0a3a8f4-9a61-4b5e-bd0a-7a3c9c4f5a11",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "12,345.67",
+                  "Attributes": [
+                    {
+                      "Value": "e0a3a8f4-9a61-4b5e-bd0a-7a3c9c4f5a11",
+                      "Id": "account"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "RowType": "Section",
+          "Title": "Assets",
+          "Rows": [
+            {
+              "RowType": "Row",
+              "Cells": [
+                {
+                  "Value": "Accounts Receivable (610)",
+                  "Attributes": [
+                    {
+                      "Value": "5040915e-8ce7-4177-8d08-fde416232f18",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "1500.00",
+                  "Attributes": [
+                    {
+                      "Value": "5040915e-8ce7-4177-8d08-fde416232f18",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "",
+                  "Attributes": [
+                    {
+                      "Value": "5040915e-8ce7-4177-8d08-fde416232f18",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "12345.67",
+                  "Attributes": [
+                    {
+                      "Value": "5040915e-8ce7-4177-8d08-fde416232f18",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "",
+                  "Attributes": [
+                    {
+                      "Value": "5040915e-8ce7-4177-8d08-fde416232f18",
+                      "Id": "account"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "RowType": "Row",
+              "Cells": [
+                {
+                  "Value": "Business Bank Account (090)",
+                  "Attributes": [
+                    {
+                      "Value": "562555f2-8cde-4ce9-8203-0363922537a4",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "0.00",
+                  "Attributes": [
+                    {
+                      "Value": "562555f2-8cde-4ce9-8203-0363922537a4",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "0.00",
+                  "Attributes": [
+                    {
+                      "Value": "562555f2-8cde-4ce9-8203-0363922537a4",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "2500.00",
+                  "Attributes": [
+                    {
+                      "Value": "562555f2-8cde-4ce9-8203-0363922537a4",
+                      "Id": "account"
+                    }
+                  ]
+                },
+                {
+                  "Value": "0.00",
+                  "Attributes": [
+                    {
+                      "Value": "562555f2-8cde-4ce9-8203-0363922537a4",
+                      "Id": "account"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "RowType": "Section",
+          "Title": "",
+          "Rows": [
+            {
+              "RowType": "SummaryRow",
+              "Cells": [
+                {
+                  "Value": "Total"
+                },
+                {
+                  "Value": "1500.00"
+                },
+                {
+                  "Value": "1500.00"
+                },
+                {
+                  "Value": "14845.67"
+                },
+                {
+                  "Value": "12345.67"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

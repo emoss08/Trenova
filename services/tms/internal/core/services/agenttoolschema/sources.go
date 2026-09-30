@@ -1,10 +1,12 @@
 package agenttoolschema
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -52,7 +54,7 @@ var (
 
 	AccountingSystems = Source(
 		"integration.accountingSystem",
-		[]integration.Type{integration.TypeQuickBooksOnline},
+		accountingsync.AccountingSystems(),
 	)
 	MappingTargetTypes = Source(
 		"accountingSync.mappingTargetType",
@@ -97,3 +99,7 @@ var (
 		),
 	)
 )
+
+func ErrAccountingSystem() error {
+	return fmt.Errorf("system must be one of %s", strings.Join(AccountingSystems.Names(), ", "))
+}

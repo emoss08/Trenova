@@ -188,6 +188,7 @@ func roleRow(f *mappingFixture, key string) *accountingsync.AccountingMapping {
 		TargetType:     accountingsync.TargetAccountRole,
 		TrenovaKey:     key,
 		TargetLabel:    key,
+		ProviderKind:   accountingsync.ReferenceKindAccount,
 		State:          accountingsync.MappingStateUnmatched,
 	}
 }
@@ -326,6 +327,7 @@ func TestMappingRepository_ListConnectionFiltersAndCounts(t *testing.T) {
 		TargetType:      accountingsync.TargetCustomer,
 		TrenovaObjectID: pulid.MustNew("cus_"),
 		TargetLabel:     "Peak Distributing",
+		ProviderKind:    accountingsync.ReferenceKindCustomer,
 		State:           accountingsync.MappingStateUnmatched,
 	}
 	_, err := f.mappings.CreateMissing(f.ctx, []*accountingsync.AccountingMapping{

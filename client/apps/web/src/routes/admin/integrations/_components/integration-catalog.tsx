@@ -47,7 +47,8 @@ import {
   WEXFuelIntegrationModal,
 } from "./fuel/fuel-integration-modals";
 import { PCMilerIntegrationModal } from "./pcmiler/pcmiler-integration-modal";
-import { QuickBooksIntegrationModal } from "./accounting/accounting-integration-modal";
+import { AccountingIntegrationModal } from "./accounting/accounting-integration-modal";
+import { accountingVendors } from "./accounting/accounting-vendors";
 import { PostmarkIntegrationModal } from "./postmark/postmark-integration-modal";
 import { ResendIntegrationModal } from "./resend/resend-integration-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
@@ -448,12 +449,16 @@ export function IntegrationCatalogCard() {
         open={searchParams.type === "FMCSAQCMobile"}
         onOpenChange={setModalOpen("FMCSAQCMobile")}
       />
-      <QuickBooksIntegrationModal
-        open={searchParams.type === "QuickBooksOnline"}
-        onOpenChange={setModalOpen("QuickBooksOnline")}
-        justConnected={searchParams.setup === "connected"}
-        onReviewed={() => void setSearchParams({ setup: null })}
-      />
+      {accountingVendors.map((vendor) => (
+        <AccountingIntegrationModal
+          key={vendor.system}
+          vendor={vendor}
+          open={searchParams.type === vendor.system}
+          onOpenChange={setModalOpen(vendor.system)}
+          justConnected={searchParams.type === vendor.system && searchParams.setup === "connected"}
+          onReviewed={() => void setSearchParams({ setup: null })}
+        />
+      ))}
     </>
   );
 }

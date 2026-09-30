@@ -42,6 +42,10 @@ var messageFields = map[string]struct{}{
 	"Label":       {},
 	"Summary":     {},
 	"Subject":     {},
+
+	"AppName":                 {},
+	"WebhookKeyLabel":         {},
+	"LedgerUnavailableReason": {},
 }
 
 var labelMethods = map[string]struct{}{

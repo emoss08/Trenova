@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -256,16 +257,27 @@ func TestMappingValidationKeysEachTargetOneWay(t *testing.T) {
 func TestTargetTypesMapToTheirProviderKind(t *testing.T) {
 	t.Parallel()
 
+	qbo := accountingsync.MustProfile(integration.TypeQuickBooksOnline)
 	for _, target := range accountingsync.AllMappingTargetTypes() {
-		assert.True(t, target.ProviderKind().IsValid(), target)
+		assert.True(t, qbo.KindFor(target).IsValid(), target)
 		if target.KeyedByObject() {
 			assert.Empty(t, target.Keys(), target)
 		} else {
 			assert.NotEmpty(t, target.Keys(), target)
 		}
 	}
-	assert.Equal(t, accountingsync.ReferenceKindVendor, accountingsync.TargetCarrier.ProviderKind())
-	assert.Equal(t, accountingsync.ReferenceKindItem, accountingsync.TargetAccessorialCharge.ProviderKind())
+	assert.Equal(t, accountingsync.ReferenceKindVendor, qbo.KindFor(accountingsync.TargetCarrier))
+	assert.Equal(t, accountingsync.ReferenceKindItem, qbo.KindFor(accountingsync.TargetAccessorialCharge))
+
+	xero := accountingsync.MustProfile(integration.TypeXero)
+	assert.Equal(t, accountingsync.ReferenceKindAccount, xero.KindFor(accountingsync.TargetAccessorialCharge))
+	assert.Equal(t, accountingsync.ReferenceKindAccount, xero.KindFor(accountingsync.TargetLineType))
+	assert.False(t, xero.Offers(accountingsync.TargetPaymentTerm))
+	assert.False(t, xero.Offers(accountingsync.TargetPaymentMethod))
+	assert.False(t, xero.OffersKey(accountingsync.TargetAccountRole, accountingsync.AccountRoleAR))
+	assert.True(t, xero.IsRequiredTarget(accountingsync.TargetAccountRole, accountingsync.AccountRoleDeposit))
+	assert.False(t, xero.SupportsMode(accountingsync.SyncModeLedger))
+	assert.True(t, xero.SupportsMode(accountingsync.SyncModeDocument))
 }
 
 func TestReferenceObjectUsability(t *testing.T) {

@@ -1,0 +1,11 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "BatchPayments": [
+    {
+      "BatchPaymentID": "d318c343-208e-49fe-b04a-45642349bcf1",
+      "Status": "DELETED",
+      "TotalAmount": 1350.5
+    }
+  ]
+}

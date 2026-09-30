@@ -362,20 +362,20 @@ func TestDocumentURLPointsAtTheRightScreen(t *testing.T) {
 	conn := newConnector(t, config.QuickBooksConfig{Environment: "sandbox"})
 	assert.Equal(t,
 		"https://app.sandbox.qbo.intuit.com/app/invoice?txnId=145",
-		conn.DocumentURL(accountingsync.SyncObjectDebitMemo, "145"),
+		conn.DocumentURL(services.AccountingDocumentAuth{}, accountingsync.SyncObjectDebitMemo, "145"),
 	)
 	assert.Equal(t,
 		"https://app.sandbox.qbo.intuit.com/app/recvpayment?txnId=148",
-		conn.DocumentURL(accountingsync.SyncObjectCreditApplication, "148"),
+		conn.DocumentURL(services.AccountingDocumentAuth{}, accountingsync.SyncObjectCreditApplication, "148"),
 	)
 	assert.Equal(t,
 		"https://app.sandbox.qbo.intuit.com/app/customerdetail?nameId=58",
-		conn.DocumentURL(accountingsync.SyncObjectCustomer, "58"),
+		conn.DocumentURL(services.AccountingDocumentAuth{}, accountingsync.SyncObjectCustomer, "58"),
 	)
 	assert.Equal(t,
 		"https://app.sandbox.qbo.intuit.com/app/journal?txnId=212",
-		conn.DocumentURL(accountingsync.SyncObjectJournalSummary, "212"),
+		conn.DocumentURL(services.AccountingDocumentAuth{}, accountingsync.SyncObjectJournalSummary, "212"),
 	)
-	assert.Empty(t, conn.DocumentURL(accountingsync.SyncObjectInvoice, " "))
+	assert.Empty(t, conn.DocumentURL(services.AccountingDocumentAuth{}, accountingsync.SyncObjectInvoice, " "))
 	assert.Equal(t, quickbooks.MaxDocNumberLength, conn.DocumentLimits().MaxDocNumberLength)
 }

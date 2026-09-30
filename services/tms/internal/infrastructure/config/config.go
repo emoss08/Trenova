@@ -307,10 +307,10 @@ type PasswordResetConfig struct {
 	// https://app.example.com. The server cannot infer it from the request without
 	// trusting a Host header an attacker controls, which is how reset links end up
 	// pointing at somebody else's domain.
-	BaseURL string `mapstructure:"baseUrl"            validate:"omitempty,url"`
+	BaseURL string `mapstructure:"baseUrl" validate:"omitempty,url"`
 	// TokenTTL is how long a link stays redeemable. Short by default: a reset link is
 	// a bearer credential sitting in a mailbox.
-	TokenTTL time.Duration `mapstructure:"tokenTtl"           validate:"omitempty,min=0"`
+	TokenTTL time.Duration `mapstructure:"tokenTtl" validate:"omitempty,min=0"`
 	// MaxRequestsPerHour caps how many links one account can be sent in an hour, so
 	// the endpoint cannot be used to flood somebody's inbox.
 	MaxRequestsPerHour int `mapstructure:"maxRequestsPerHour" validate:"omitempty,min=1"`
@@ -793,7 +793,7 @@ type AIConfig struct {
 	// many organizations sets it false, because otherwise any of their
 	// administrators can make the server call into its own network.
 	PrivateNetworkProviders *bool `mapstructure:"privateNetworkProviders"`
-	MaxRetries              int   `mapstructure:"maxRetries"        validate:"omitempty,min=0,max=10"`
+	MaxRetries              int   `mapstructure:"maxRetries"              validate:"omitempty,min=0,max=10"`
 
 	// DocumentExtraction lets a model classify and extract uploaded
 	// documents. Off by default; the OCR pipeline below runs either way.
@@ -1789,6 +1789,32 @@ type Config struct {
 
 type AccountingConfig struct {
 	QuickBooks QuickBooksConfig `mapstructure:"quickbooks"`
+	Xero       XeroConfig       `mapstructure:"xero"`
+}
+
+type XeroConfig struct {
+	ClientID     string `mapstructure:"clientId"`
+	ClientSecret string `mapstructure:"clientSecret"`
+	WebhookKey   string `mapstructure:"webhookKey"`
+	RedirectURL  string `mapstructure:"redirectUrl"  validate:"omitempty,url"`
+}
+
+const xeroCallbackPath = "/admin/integrations/xero/callback"
+
+func (c *XeroConfig) GetRedirectURL(app *AppConfig) string {
+	if c.RedirectURL != "" {
+		return c.RedirectURL
+	}
+	if base := app.GetWebBaseURL(); base != "" {
+		return base + xeroCallbackPath
+	}
+	return ""
+}
+
+func (c *XeroConfig) IsConfigured(app *AppConfig) bool {
+	return strings.TrimSpace(c.ClientID) != "" &&
+		strings.TrimSpace(c.ClientSecret) != "" &&
+		c.GetRedirectURL(app) != ""
 }
 
 type QuickBooksConfig struct {

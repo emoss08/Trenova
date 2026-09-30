@@ -1,20 +1,22 @@
 ---
 path: /accounting/sync/mappings
-aliases: [QuickBooks mappings, chart of accounts mapping, account mapping, map accounts, QuickBooks items, map customers to QuickBooks, map carriers to vendors, accounting sync setup]
+aliases: [QuickBooks mappings, chart of accounts mapping, account mapping, map accounts, QuickBooks items, map customers to QuickBooks, map carriers to vendors, accounting sync setup, Xero mappings, Xero account codes, map customers to Xero contacts]
 related:
   - /admin/integrations
 ---
 
 ## What it's for
-Accounting mappings say which QuickBooks Online account, item, customer and vendor each Trenova
-record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off,
+Accounting mappings say which account, item, customer and vendor in the accounting system each
+Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off,
 accounts payable and purchased transportation), invoice line types, accessorial charges, the
-short-pay write-off item, customers, carriers, payment terms and payment methods. When the
-connection sends journal entries, every active GL account can be mapped, and each account that
+short-pay write-off item, customers, carriers, payment terms and payment methods. Xero invoice lines carry an account, so
+for Xero, line types, accessorial charges and the write-off are mapped to accounts; Xero has no
+payment terms or payment methods to map, and only the deposit account and the freight line's
+account are required. When a QuickBooks Online connection sends journal entries, every active GL account can be mapped, and each account that
 carries posted entries needs a QuickBooks account before its entries are sent; an account without
 its own mapping falls back to the account role it plays.
 
-Trenova reads the QuickBooks company's records and proposes a match where it is sure enough.
+Trenova reads the connected company's records and proposes a match where it is sure enough.
 A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The
 strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed**
 mappings; selecting a figure filters the list to it.
@@ -29,11 +31,11 @@ Keywords: accept suggested matches, approve mappings, bulk confirm
 3. Select the confirm button above the list; it names how many are ticked.
 
 ### Choose a different record
-Keywords: change mapping, wrong account, remap customer, pick QuickBooks record
+Keywords: change mapping, wrong account, remap customer, pick QuickBooks record, pick Xero account
 1. Open [Mappings](/accounting/sync/mappings) and select the mapping on the left. Use **Search
    mappings** or **Every kind** to narrow the list.
 2. Under **Other records Trenova considered**, select **Use** beside the right record, or search
-   the QuickBooks Online records below it and select **Use**.
+   the accounting system's records below it and select **Use**.
 3. The mapping is confirmed with the record you chose.
 
 ### Turn down or clear a mapping
@@ -43,19 +45,21 @@ Keywords: reject proposal, unmap, remove mapping
 3. Select **Clear** to remove the chosen record so the mapping is unmatched again; Trenova will
    not propose that record for it again either.
 
-### Create a missing item, customer or vendor in QuickBooks
-Keywords: add item to QuickBooks, create vendor, create customer in QuickBooks
+### Create a missing item, customer or vendor in the accounting system
+Keywords: add item to QuickBooks, create vendor, create customer in QuickBooks, create contact in Xero
 1. Open [Mappings](/accounting/sync/mappings) and select an accessorial charge, line type,
    customer or carrier mapping that has no match.
 2. At the bottom of the mapping, check the name Trenova will create it under, then select the
    create button.
 3. Trenova creates the record and confirms the mapping. Items are created with the confirmed
-   revenue account as their income account, so confirm that account first.
+   revenue account as their income account, so confirm that account first. In Xero, customers
+   and carriers are created as contacts; a mapping that points at an account offers no create
+   button.
 
-### Read QuickBooks again
-Keywords: refresh chart of accounts, pull new accounts, reload QuickBooks records
+### Read the accounting system again
+Keywords: refresh chart of accounts, pull new accounts, reload QuickBooks records, reload Xero records
 1. Open [Mappings](/accounting/sync/mappings).
-2. Select the button that reads QuickBooks Online again, beside when it was last read. The
+2. Select the button that reads the accounting system again, beside when it was last read. The
    proposals update when the read finishes.
 
 ### Finish setup
@@ -65,6 +69,6 @@ Keywords: complete accounting setup, done mapping
 
 ## Notes
 Viewing mappings needs read access to the accounting integration; confirming, choosing, clearing,
-creating records and reading QuickBooks again need update access. Accounts, terms and payment
-methods are the bookkeeper's and are never created from Trenova. QuickBooks is read again every
-day on its own. A mapping Trenova proposed from a model's suggestion is never ticked by default.
+creating records and reading the accounting system again need update access. Accounts, terms and payment
+methods are the bookkeeper's and are never created from Trenova. The accounting system is read
+again every day on its own. A mapping Trenova proposed from a model's suggestion is never ticked by default.

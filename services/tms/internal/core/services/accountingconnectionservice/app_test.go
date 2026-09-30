@@ -396,7 +396,7 @@ func TestReceiveWebhookForUnknownCompaniesIsIgnored(t *testing.T) {
 	h.connector.webhookRealms = []string{"nobody"}
 	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), &services.ReceiveAccountingWebhookRequest{
 		IntegrationType: integration.TypeQuickBooksOnline,
-		Signature:       "anything",
+		Signature:       instanceVerifier,
 		Body:            []byte("[]"),
 	}))
 }

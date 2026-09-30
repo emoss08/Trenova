@@ -1,0 +1,50 @@
+{
+  "Id": "x",
+  "Status": "OK",
+  "Contacts": [
+    {
+      "ContactID": "bd2270c3-8706-4c11-9cfb-000b551c3f51",
+      "ContactNumber": "CUST-1001",
+      "ContactStatus": "ACTIVE",
+      "Name": "Globex Shipping",
+      "FirstName": "Hank",
+      "LastName": "Scorpio",
+      "EmailAddress": "ap@globex.example",
+      "TaxNumber": "12-3456789",
+      "Addresses": [
+        {
+          "AddressType": "POBOX",
+          "AddressLine1": "PO Box 42",
+          "City": "Cypress Creek",
+          "Region": "OR",
+          "PostalCode": "97000",
+          "Country": "USA"
+        },
+        {
+          "AddressType": "STREET"
+        }
+      ],
+      "Phones": [],
+      "UpdatedDateUTC": "/Date(1790208000000+0000)/",
+      "ContactGroups": [],
+      "IsSupplier": false,
+      "IsCustomer": true,
+      "DefaultCurrency": "USD",
+      "HasAttachments": false
+    },
+    {
+      "ContactID": "3e5f7a9b-1c2d-4e6f-8a0b-2c4d6e8f0a1b",
+      "ContactStatus": "ARCHIVED",
+      "Name": "Initech Carriers",
+      "IsSupplier": true,
+      "IsCustomer": false,
+      "UpdatedDateUTC": "/Date(1790121600000+0000)/"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 1000,
+    "pageCount": 2,
+    "itemCount": 1002
+  }
+}
