@@ -288,7 +288,7 @@ describe("the approval box in a conversation", () => {
     serve([serverProposal()]);
     renderThread(true);
 
-    await user.click(await screen.findByRole("button", { name: "Tell the agent instead" }));
+    await user.click(await screen.findByRole("button", { name: "Tell the agent" }));
     await user.type(screen.getByLabelText(/What should the agent do instead/), "Wait for April");
     await user.click(screen.getByRole("button", { name: "Send to the agent" }));
 

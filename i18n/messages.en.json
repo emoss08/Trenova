@@ -54218,7 +54218,7 @@
     ]
   },
   "Details": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -163330,12 +163330,11 @@
     ]
   },
   "Severity": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control",
       "routes/carrier-monitoring",
       "routes/worker"
@@ -170891,7 +170890,7 @@
     ]
   },
   "Step {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -174491,16 +174490,7 @@
       "go/other"
     ]
   },
-  "Tell the agent about": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Tell the agent instead": {
+  "Tell the agent": {
     "sites": 2,
     "scope": [
       "ts"
@@ -174508,6 +174498,15 @@
     "areas": [
       "apps/web/components",
       "apps/web/config"
+    ]
+  },
+  "Tell the agent about": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Tell the agent what to change, or why not…": {
@@ -218433,11 +218432,12 @@
     ]
   },
   "{0, plural, one {# change} other {# changes}}": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/agent-control",
       "routes/carrier"

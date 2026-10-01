@@ -740,3 +740,12 @@ export function presentProposal(proposal: AssistantProposal): ProposalView {
     reversible: view.reversible,
   };
 }
+
+/**
+ * Whether the client words this tool's proposals itself. One it does not is
+ * summed up as "Run … with the values below", which says nothing a surface
+ * holding the tool's own preview could not say better.
+ */
+export function hasPresenter(toolName: string): boolean {
+  return Object.hasOwn(PRESENTERS, toolName);
+}

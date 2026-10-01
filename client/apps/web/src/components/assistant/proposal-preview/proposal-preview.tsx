@@ -37,6 +37,7 @@ import { MessagePreview } from "./message-preview";
 import { MoneyPreview } from "./money-preview";
 import { operationLabel, previewRecordPath } from "./preview-format";
 import {
+  previewNeedsAttention,
   previewWarningText,
   previewWarningTone,
   visibleWarnings,
@@ -265,6 +266,7 @@ export function PreviewLoadState<T>({
   changed,
   density = "full",
   fallback,
+  loading,
   children,
 }: {
   query: {
@@ -276,6 +278,8 @@ export function PreviewLoadState<T>({
   changed: boolean;
   density?: PreviewDensity;
   fallback?: ReactNode;
+  /** What stands in while the first read runs; a skeleton unless the surface shows its own. */
+  loading?: ReactNode;
   children: (data: T) => ReactNode;
 }) {
   if (query.data !== undefined) {
@@ -295,7 +299,36 @@ export function PreviewLoadState<T>({
     );
   }
 
-  return <PreviewSkeleton density={density} />;
+  return loading === undefined ? <PreviewSkeleton density={density} /> : loading;
+}
+
+/**
+ * What a decider has to see before answering, whatever else is folded away:
+ * the record moved since the proposal, and every warning the write carries,
+ * a refusal reason by reason with its way forward.
+ */
+export function PreviewAttention({
+  preview,
+  inPlan = false,
+  wouldFail,
+}: {
+  preview: ProposalPreviewData;
+  inPlan?: boolean;
+  wouldFail?: WouldFailActions;
+}) {
+  if (!previewNeedsAttention(preview, { inPlan })) {
+    return null;
+  }
+  const warnings = visibleWarnings(preview.warnings, { inPlan });
+
+  return (
+    <>
+      {preview.stale && <StaleNotice missing={preview.staleness?.missing === true} />}
+      {warnings.map((warning, index) => (
+        <WarningAlert key={`${warning.code}-${index}`} warning={warning} wouldFail={wouldFail} />
+      ))}
+    </>
+  );
 }
 
 function RecordHeader({ change, tool }: { change: PreviewRecordChange; tool: string }) {
@@ -406,12 +439,19 @@ export function ProposalPreview({
   preview,
   density = "full",
   inPlan = false,
+  attention = true,
   wouldFail,
 }: {
   preview: ProposalPreviewData;
   density?: PreviewDensity;
   /** Inside a plan the step draws its own dependency note and the plan its own staleness. */
   inPlan?: boolean;
+  /**
+   * Whether the preview leads with what needs the decider's attention. A
+   * surface that keeps the record changes folded draws `PreviewAttention`
+   * itself, where it stays in view, and turns it off here.
+   */
+  attention?: boolean;
   /** What the surface offers when the write would be refused; nothing when it cannot act. */
   wouldFail?: WouldFailActions;
 }) {
@@ -423,11 +463,10 @@ export function ProposalPreview({
     density === "compact" &&
     (preview.changes.length > COMPACT_RECORDS ||
       preview.changes.some((change) => change.fields.length > COMPACT_FIELDS));
-  const warnings = visibleWarnings(preview.warnings, { inPlan });
 
   return (
     <div className="flex min-w-0 flex-col gap-3" data-slot="proposal-preview">
-      {preview.stale && <StaleNotice missing={preview.staleness?.missing === true} />}
+      {attention && <PreviewAttention preview={preview} inPlan={inPlan} wouldFail={wouldFail} />}
       {preview.coverage === "Unavailable" && (
         <Alert size="sm" variant="warning">
           <TriangleAlertIcon />
@@ -438,9 +477,6 @@ export function ProposalPreview({
           </AlertDescription>
         </Alert>
       )}
-      {warnings.map((warning, index) => (
-        <WarningAlert key={`${warning.code}-${index}`} warning={warning} wouldFail={wouldFail} />
-      ))}
 
       {preview.changes.length === 0 ? (
         <p className="text-foreground-muted text-xs">{t("Nothing would change.")}</p>
