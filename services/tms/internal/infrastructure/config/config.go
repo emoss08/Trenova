@@ -1639,9 +1639,10 @@ func (c *UpdateConfig) GetGitHubRepo() string {
 }
 
 type PlatformConfig struct {
-	Mode         PlatformMode               `mapstructure:"mode"         validate:"omitempty,oneof=community self_hosted development cloud enterprise"`
-	InstanceID   string                     `mapstructure:"instanceId"`
-	ControlPlane PlatformControlPlaneConfig `mapstructure:"controlPlane"`
+	Mode                  PlatformMode               `mapstructure:"mode"                  validate:"omitempty,oneof=community self_hosted development cloud enterprise"`
+	InstanceID            string                     `mapstructure:"instanceId"`
+	ControlPlane          PlatformControlPlaneConfig `mapstructure:"controlPlane"`
+	ReferenceDataStewards []string                   `mapstructure:"referenceDataStewards"`
 }
 
 func (c *PlatformConfig) IsCloudBacked() bool {

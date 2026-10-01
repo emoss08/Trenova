@@ -12,6 +12,11 @@ app:
 
 platform:
   mode: self_hosted # community/self_hosted/development/cloud/enterprise
+  # Organization IDs allowed to change reference data every tenant shares (IFTA tax rates,
+  # jurisdiction rules). Required in cloud mode or with the control plane enabled, where no
+  # tenant may change it otherwise.
+  # Self-hosted installs may leave it empty: every organization there belongs to the operator.
+  referenceDataStewards: []
   instanceId: "" # Set from TRENOVA_INSTANCE_ID when control plane is enabled
   controlPlane:
     enabled: false

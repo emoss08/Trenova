@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,23 +20,34 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Repo         repositories.JurisdictionRuleRepository
-	AuditService services.AuditService
-	Logger       *zap.Logger
+	Repo          repositories.JurisdictionRuleRepository
+	AuditService  services.AuditService
+	ReferenceData *referencedataguard.Guard
+	Logger        *zap.Logger
 }
 
 type service struct {
-	repo         repositories.JurisdictionRuleRepository
-	auditService services.AuditService
-	l            *zap.Logger
+	repo          repositories.JurisdictionRuleRepository
+	auditService  services.AuditService
+	referenceData *referencedataguard.Guard
+	l             *zap.Logger
 }
 
 func NewService(p ServiceParams) services.JurisdictionRuleService {
 	return &service{
-		repo:         p.Repo,
-		auditService: p.AuditService,
-		l:            p.Logger.Named("service.jurisdiction-rule"),
+		repo:          p.Repo,
+		auditService:  p.AuditService,
+		referenceData: p.ReferenceData,
+		l:             p.Logger.Named("service.jurisdiction-rule"),
 	}
+}
+
+func (s *service) requireSteward(actor *services.RequestActor) error {
+	if actor == nil {
+		return s.referenceData.RequireSteward(pulid.Nil)
+	}
+
+	return s.referenceData.RequireSteward(actor.OrganizationID)
 }
 
 func (s *service) List(
@@ -64,6 +76,10 @@ func (s *service) Create(
 	entity *jurisdictionrule.JurisdictionRule,
 	actor *services.RequestActor,
 ) (*jurisdictionrule.JurisdictionRule, error) {
+	if err := s.requireSteward(actor); err != nil {
+		return nil, err
+	}
+
 	// A new row has not been checked against anything yet, whatever the caller
 	// claims. Verification is earned through Verify, which records who did it
 	// and when.
@@ -97,6 +113,10 @@ func (s *service) Update(
 	entity *jurisdictionrule.JurisdictionRule,
 	actor *services.RequestActor,
 ) (*jurisdictionrule.JurisdictionRule, error) {
+	if err := s.requireSteward(actor); err != nil {
+		return nil, err
+	}
+
 	previous, err := s.repo.GetByID(ctx, &repositories.GetJurisdictionRuleByIDRequest{
 		RuleID: entity.ID,
 	})
@@ -179,6 +199,10 @@ func (s *service) Verify(
 	ctx context.Context,
 	req *services.VerifyJurisdictionRuleRequest,
 ) (*jurisdictionrule.JurisdictionRule, error) {
+	if err := s.requireSteward(req.Actor); err != nil {
+		return nil, err
+	}
+
 	multiErr := errortypes.NewMultiError()
 
 	switch req.State {

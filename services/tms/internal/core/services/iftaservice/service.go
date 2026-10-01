@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -34,48 +35,52 @@ type FuelAccumulator interface {
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Repo         repositories.IFTARepository
-	Fuel         repositories.FuelPurchaseRepository
-	TractorRepo  repositories.TractorRepository
-	OrgCacheRepo repositories.OrganizationCacheRepository
-	AuditService services.AuditService
-	Realtime     services.RealtimeService `optional:"true"`
+	Logger        *zap.Logger
+	Repo          repositories.IFTARepository
+	Fuel          repositories.FuelPurchaseRepository
+	TractorRepo   repositories.TractorRepository
+	OrgCacheRepo  repositories.OrganizationCacheRepository
+	AuditService  services.AuditService
+	ReferenceData *referencedataguard.Guard
+	Realtime      services.RealtimeService `optional:"true"`
 }
 
 type Service struct {
-	l            *zap.Logger
-	repo         repositories.IFTARepository
-	fuel         FuelAccumulator
-	tractorRepo  repositories.TractorRepository
-	orgCacheRepo repositories.OrganizationCacheRepository
-	auditService services.AuditService
-	realtime     services.RealtimeService
-	now          func() int64
+	l             *zap.Logger
+	repo          repositories.IFTARepository
+	fuel          FuelAccumulator
+	tractorRepo   repositories.TractorRepository
+	orgCacheRepo  repositories.OrganizationCacheRepository
+	auditService  services.AuditService
+	referenceData *referencedataguard.Guard
+	realtime      services.RealtimeService
+	now           func() int64
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.ifta"),
-		repo:         p.Repo,
-		fuel:         p.Fuel,
-		tractorRepo:  p.TractorRepo,
-		orgCacheRepo: p.OrgCacheRepo,
-		auditService: p.AuditService,
-		realtime:     p.Realtime,
-		now:          timeutils.NowUnix,
+		l:             p.Logger.Named("service.ifta"),
+		repo:          p.Repo,
+		fuel:          p.Fuel,
+		tractorRepo:   p.TractorRepo,
+		orgCacheRepo:  p.OrgCacheRepo,
+		auditService:  p.AuditService,
+		referenceData: p.ReferenceData,
+		realtime:      p.Realtime,
+		now:           timeutils.NowUnix,
 	}
 }
 
 type Deps struct {
-	Logger       *zap.Logger
-	Repo         repositories.IFTARepository
-	Fuel         FuelAccumulator
-	TractorRepo  repositories.TractorRepository
-	OrgCacheRepo repositories.OrganizationCacheRepository
-	AuditService services.AuditService
-	Realtime     services.RealtimeService
-	Now          func() int64
+	Logger        *zap.Logger
+	Repo          repositories.IFTARepository
+	Fuel          FuelAccumulator
+	TractorRepo   repositories.TractorRepository
+	OrgCacheRepo  repositories.OrganizationCacheRepository
+	AuditService  services.AuditService
+	ReferenceData *referencedataguard.Guard
+	Realtime      services.RealtimeService
+	Now           func() int64
 }
 
 func NewWithDeps(d Deps) *Service {
@@ -88,14 +93,15 @@ func NewWithDeps(d Deps) *Service {
 		now = timeutils.NowUnix
 	}
 	return &Service{
-		l:            logger.Named("service.ifta"),
-		repo:         d.Repo,
-		fuel:         d.Fuel,
-		tractorRepo:  d.TractorRepo,
-		orgCacheRepo: d.OrgCacheRepo,
-		auditService: d.AuditService,
-		realtime:     d.Realtime,
-		now:          now,
+		l:             logger.Named("service.ifta"),
+		repo:          d.Repo,
+		fuel:          d.Fuel,
+		tractorRepo:   d.TractorRepo,
+		orgCacheRepo:  d.OrgCacheRepo,
+		auditService:  d.AuditService,
+		referenceData: d.ReferenceData,
+		realtime:      d.Realtime,
+		now:           now,
 	}
 }
 
