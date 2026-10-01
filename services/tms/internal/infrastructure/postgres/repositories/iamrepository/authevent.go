@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -42,28 +41,9 @@ func (r *authEventRepository) Create(ctx context.Context, event *iam.AuthEvent) 
 
 func (r *authEventRepository) DeleteBefore(ctx context.Context, before int64) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "delete authentication events past the retention period for every organization")
-
-	var deleted int64
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if err := postgres.EnableAuditRetention(ctx, tx); err != nil {
-			return err
-		}
-
-		result, err := tx.NewDelete().
+	return postgres.DeleteUnderAuditRetention(ctx, r.db, func(tx bun.Tx) *bun.DeleteQuery {
+		return tx.NewDelete().
 			Model((*iam.AuthEvent)(nil)).
-			Where(buncolgen.AuthEventColumns.OccurredAt.Lt(), before).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-
-		deleted, err = result.RowsAffected()
-		return err
+			Where(buncolgen.AuthEventColumns.OccurredAt.Lt(), before)
 	})
-	if err != nil {
-		r.l.Error("failed to delete expired auth events", zap.Error(err))
-		return 0, err
-	}
-
-	return deleted, nil
 }

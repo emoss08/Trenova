@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -325,35 +324,15 @@ func (r *repository) DeleteAuditEntries(
 	req repositories.DeleteAuditEntriesRequest,
 ) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "delete audit entries past an organization's retention during the retention sweep")
-	log := r.l.With(zap.String("operation", "DeleteAuditEntries"))
 	cols := buncolgen.EntryColumns
-
-	var totalDeleted int64
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if err := postgres.EnableAuditRetention(ctx, tx); err != nil {
-			return err
-		}
-
-		result, err := tx.NewDelete().Model((*audit.Entry)(nil)).
+	return postgres.DeleteUnderAuditRetention(ctx, r.db, func(tx bun.Tx) *bun.DeleteQuery {
+		return tx.NewDelete().Model((*audit.Entry)(nil)).
 			Where(cols.OrganizationID.Eq(), req.OrgID).
 			Where(cols.BusinessUnitID.Eq(), req.BuID).
 			Where(cols.Timestamp.Lt(), req.Before).
 			WhereGroup(" AND ", func(q *bun.DeleteQuery) *bun.DeleteQuery {
 				return q.Where(cols.Critical.IsFalse()).
 					WhereOr(cols.Timestamp.Lt(), req.CriticalBefore)
-			}).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-
-		totalDeleted, err = result.RowsAffected()
-		return err
+			})
 	})
-	if err != nil {
-		log.Error("failed to delete audit entries", zap.Error(err))
-		return 0, err
-	}
-
-	return totalDeleted, nil
 }

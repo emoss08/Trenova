@@ -296,6 +296,11 @@ func runsInScopedTransaction(body *ast.BlockStmt, recv string, fields map[string
 		return !connectionUsedBefore(body.List[:len(body.List)-1], recv, fields)
 	}
 
+	if pkg, isIdent := sel.X.(*ast.Ident); isIdent && pkg.Name == "postgres" &&
+		sel.Sel.Name == "DeleteUnderAuditRetention" {
+		return !connectionUsedBefore(body.List[:len(body.List)-1], recv, fields)
+	}
+
 	if sel.Sel.Name == "WithTx" || sel.Sel.Name == "RunScoped" || sel.Sel.Name == "RunDetached" {
 		if inner, isSel := sel.X.(*ast.SelectorExpr); isSel && fields[inner.Sel.Name] {
 			return !connectionUsedBefore(body.List[:len(body.List)-1], recv, fields)
