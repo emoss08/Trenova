@@ -277,13 +277,21 @@ func (h *Handler) get(c *gin.Context) {
 }
 
 func (h *Handler) getBillingProfile(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
 	customerID, err := pulid.MustParse(c.Param("customerID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	entity, err := h.service.GetBillingProfile(c.Request.Context(), customerID)
+	entity, err := h.service.GetBillingProfile(
+		c.Request.Context(),
+		repositories.GetCustomerBillingProfileRequest{
+			CustomerID: customerID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

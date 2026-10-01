@@ -139,7 +139,16 @@ func (s *Service) resolveProgramID(
 		}
 	}
 
-	profile, err := s.customerRepo.GetBillingProfile(ctx, req.Shipment.CustomerID)
+	profile, err := s.customerRepo.GetBillingProfile(
+		ctx,
+		repositories.GetCustomerBillingProfileRequest{
+			CustomerID: req.Shipment.CustomerID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: req.Shipment.OrganizationID,
+				BuID:  req.Shipment.BusinessUnitID,
+			},
+		},
+	)
 	if err != nil {
 		log.Warn("failed to load customer billing profile for fuel surcharge", zap.Error(err))
 		return pulid.Nil, false

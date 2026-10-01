@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -229,23 +228,26 @@ func (r *repository) GetByID(
 
 func (r *repository) GetBillingProfile(
 	ctx context.Context,
-	cusID pulid.ID,
+	req repositories.GetCustomerBillingProfileRequest,
 ) (*customer.CustomerBillingProfile, error) {
 	log := r.l.With(
 		zap.String("operation", "getBillingProfile"),
-		zap.String("customerID", cusID.String()),
+		zap.String("customerID", req.CustomerID.String()),
 	)
 
 	entity := new(customer.CustomerBillingProfile)
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
-		Where("cbp.customer_id = ?", cusID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CustomerBillingProfileScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.CustomerBillingProfileColumns.CustomerID.Eq(), req.CustomerID)
+		}).
 		Relation("DocumentTypes").
 		Scan(ctx)
 	if err != nil {
 		log.Error("failed to get billing profile", zap.Error(err))
-		return nil, err
+		return nil, dberror.HandleNotFoundError(err, "Customer billing profile")
 	}
 
 	return entity, nil
