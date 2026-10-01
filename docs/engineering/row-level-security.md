@@ -185,14 +185,33 @@ switch to `enforce` and watch for `Refused database access` errors.
 
 ## Rolling out
 
-1. `trenova db rls generate-key`; store the key; set `database.rls` with
-   `mode: observe` and `database.migrator` to the role that owns the tables.
-2. `trenova db migrate` (installs the key and reconciles policies and grants).
-3. `trenova db rls provision-roles` creates the application and system login
-   roles from `database.user` and `database.system`.
-4. Point the application at the new `database.user`, run in `observe` until
-   `rls_scope_events_total{outcome="observed"}` stays at zero, then `enforce`.
-5. GTC reads every tenant: give its role `trenova_rls_bypass` (or run it as the
+`observe` is a dry run only while the application still connects as a role that
+bypasses row-level security. The driver signs every scope and reports the
+access `enforce` would refuse, but PostgreSQL lets it through. Connected as the
+tenant-bound application role, PostgreSQL itself refuses an unscoped statement
+on a tenant table (`no tenant scope is set for this transaction`) whatever the
+mode, so switch roles and enforcement together.
+
+1. `trenova db rls generate-key`; store the key; set `database.rls.scopeKeyId`,
+   `database.rls.scopeKey` and `mode: observe`, and set `database.migrator` to
+   the role that owns the tables. Leave `database.user` as it is.
+2. `trenova db migrate` installs the key and reconciles policies and grants.
+   Every role that already held table privileges, the current application role
+   included, becomes a member of `trenova_rls_bypass`, so nothing is refused yet.
+3. Create the login roles. `provision-roles` reads the application role from
+   `database.user`, so run it with the new role's name and password in the
+   environment:
+   `TRENOVA_DATABASE_USER=trenova_app TRENOVA_DATABASE_PASSWORD=<app> trenova db rls provision-roles`
+   (with `database.system` set to the system role).
+4. Deploy in `observe`, still connected as the existing role, and exercise
+   sign-in, the main pages, public links, webhooks and a full day of schedules.
+   Each unscoped call site is logged once at warn with its two calling frames.
+   Fix every one until `trenova_db_rls_scope_events_total{outcome="observed"}`
+   stays at zero.
+5. Switch `database.user` to the application role and `mode` to `enforce` in the
+   same deploy. Startup refuses `enforce` while the application role can bypass
+   row-level security, owns a table, or the key is not installed.
+6. GTC reads every tenant: give its role `trenova_rls_bypass` (or run it as the
    system role); logical decoding ignores policies but its snapshot does not.
 
 Rolling back is setting `mode: off` (no driver, no per-method transactions) or
