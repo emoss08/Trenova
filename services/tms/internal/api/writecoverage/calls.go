@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -45,43 +44,6 @@ func indexPackage(dir string, receivers ...string) (*receiverIndex, error) {
 		return nil, fmt.Errorf("read %s: %w", dir, err)
 	}
 
-	index := newReceiverIndex(receivers)
-	fset := token.NewFileSet()
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		if err = index.parse(fset, filepath.Join(dir, entry.Name())); err != nil {
-			return nil, err
-		}
-	}
-
-	return index, nil
-}
-
-func indexTree(dir string, skip map[string]struct{}, receivers ...string) (*receiverIndex, error) {
-	index := newReceiverIndex(receivers)
-	fset := token.NewFileSet()
-	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if entry.IsDir() {
-			if _, skipped := skip[entry.Name()]; skipped && path != dir {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		return index.parse(fset, path)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("walk %s: %w", dir, err)
-	}
-
-	return index, nil
-}
-
-func newReceiverIndex(receivers []string) *receiverIndex {
 	index := &receiverIndex{
 		receivers: make(map[string]struct{}, len(receivers)),
 		fields:    make(map[string]string),
@@ -90,20 +52,23 @@ func newReceiverIndex(receivers []string) *receiverIndex {
 	for _, receiver := range receivers {
 		index.receivers[receiver] = struct{}{}
 	}
-	return index
-}
 
-func (x *receiverIndex) parse(fset *token.FileSet, path string) error {
-	name := filepath.Base(path)
-	if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
-		return nil
+	fset := token.NewFileSet()
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+
+		path := filepath.Join(dir, name)
+		file, parseErr := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
+		if parseErr != nil {
+			return nil, fmt.Errorf("parse %s: %w", path, parseErr)
+		}
+		index.add(file)
 	}
-	file, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
-	if err != nil {
-		return fmt.Errorf("parse %s: %w", path, err)
-	}
-	x.add(file)
-	return nil
+
+	return index, nil
 }
 
 func (x *receiverIndex) add(file *ast.File) {

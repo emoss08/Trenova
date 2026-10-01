@@ -168,7 +168,8 @@ package. The job also runs the prompt-injection red-team suite; see
   declarations. See [GraphQL Executor](graphql-executor.md).
 - It runs in one pass. The old retry for a model gqlgen had just written is gone, because the
   generator reloads packages after the model plugin runs. If generation fails it puts the
-  previous executor and `models_gen.go` back, so a failed run leaves a buildable tree.
+  previous executor, `models_gen.go` and resolver files back, so a failed run leaves a
+  buildable tree.
 - A new schema file produces a new **untracked** executor package. `git diff` cannot see
   it. Check with `git status --porcelain`, which is what CI does — a local `git diff` will
   tell you everything is fine when it is not.

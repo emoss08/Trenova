@@ -49,9 +49,9 @@ Use:
 
 Resolver rules:
 
-- Inject needed services through `services/tms/internal/api/graphql/resolver/base/resolver.go`.
+- Inject needed services through `services/tms/internal/api/graphql/resolver/resolver.go`.
 - Call existing service methods; do not call repositories directly unless that is already the established service boundary for that domain.
-- Mirror REST permission checks using `RequirePermission`.
+- Mirror REST permission checks using `requirePermission`.
 - Build `pagination.TenantInfo` from the GraphQL auth context.
 - Parse IDs with `pulid.MustParse`.
 - Reuse existing mapping helpers where present.
@@ -103,8 +103,8 @@ Current files involved:
 | Layer | File |
 | --- | --- |
 | Backend schema | `services/tms/internal/api/graphql/schema/select_options.graphqls` |
-| Backend resolver registry and mappers | `services/tms/internal/api/graphql/resolver/base/selectoptions.go` |
-| Backend generated resolver shim | `services/tms/internal/api/graphql/resolver/selectoptionsresolver/select_options.resolvers.go` |
+| Backend resolver registry and mappers | `services/tms/internal/api/graphql/resolver/select_options.go` |
+| Backend generated resolver shim | `services/tms/internal/api/graphql/resolver/select_options.resolvers.go` |
 | Client operation | `client/src/graphql/operations/select-options/options.graphql` |
 | Client runtime helper | `client/src/lib/graphql/select-options.ts` |
 | Client wrappers | `client/src/components/autocomplete-fields.tsx` |
@@ -130,7 +130,7 @@ Before adding a resource, answer these questions:
    }
    ```
 
-2. Add any missing service dependency to `services/tms/internal/api/graphql/resolver/base/resolver.go`.
+2. Add any missing service dependency to `services/tms/internal/api/graphql/resolver/resolver.go`.
 
    Follow the existing resolver dependency-injection pattern. The resolver should call services, not repositories. If the service does not have the method you need, add the method at the service/repository boundary first instead of writing query logic in GraphQL.
 
@@ -237,7 +237,7 @@ Before adding a resource, answer these questions:
 
    If the existing select-options repository query uses explicit columns, include `created_at` along with `id` and the display fields used by the mapper. Keep the query tenant scoping and filters exactly aligned with REST behavior.
 
-7. Add backend tests in `services/tms/internal/api/graphql/resolver/base/selectoptions_test.go`.
+7. Add backend tests in `services/tms/internal/api/graphql/resolver/select_options_test.go`.
 
    Cover:
 
@@ -406,7 +406,7 @@ pnpm lint
 ### Short Checklist
 
 1. Add the enum value to `SelectOptionResource` in `services/tms/internal/api/graphql/schema/select_options.graphqls`.
-2. Add a resolver registry entry in `services/tms/internal/api/graphql/resolver/base/selectoptions.go`.
+2. Add a resolver registry entry in `services/tms/internal/api/graphql/resolver/select_options.go`.
 3. Route through the existing service method for search and through service `Get` or an existing service batch helper for `ids`.
 4. Preserve REST permission policy. Use auth-only tenant scoping only for REST resources that already behave that way; set a registry read permission for resources that require `read`.
 5. Add a mapper that fills the generic label/description/meta fields without exposing a richer domain object.
@@ -475,7 +475,7 @@ Suggested focused commands:
 
 ```bash
 cd services/tms
-go test ./internal/api/graphql/resolver/...
+go test ./internal/api/graphql/resolver
 go test ./internal/api/graphql/...
 go test ./internal/bootstrap
 

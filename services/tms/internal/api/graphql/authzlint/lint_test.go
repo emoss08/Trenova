@@ -12,52 +12,52 @@ import (
 const resolverDir = "../resolver"
 
 var authOnlyAllowlist = map[string]string{
-	"QueryResolver.SelectOptions": "select options are deliberately readable by every " +
+	"queryResolver.SelectOptions": "select options are deliberately readable by every " +
 		"authenticated user in the tenant: forms on pages a user cannot open still need " +
 		"their dropdowns, and the payload is id, label and display metadata only",
 
-	"QueryResolver.Notifications":               "returns only the calling user's own notifications",
-	"QueryResolver.NotificationUnreadCount":     "returns only the calling user's own notifications",
-	"MutationResolver.MarkNotificationsRead":    "acts only on the calling user's own notifications",
-	"MutationResolver.MarkNotificationsUnread":  "acts only on the calling user's own notifications",
-	"MutationResolver.MarkAllNotificationsRead": "acts only on the calling user's own notifications",
-	"MutationResolver.DismissNotifications":     "acts only on the calling user's own notifications",
-	"MutationResolver.RestoreNotifications":     "acts only on the calling user's own notifications",
+	"queryResolver.Notifications":               "returns only the calling user's own notifications",
+	"queryResolver.NotificationUnreadCount":     "returns only the calling user's own notifications",
+	"mutationResolver.MarkNotificationsRead":    "acts only on the calling user's own notifications",
+	"mutationResolver.MarkNotificationsUnread":  "acts only on the calling user's own notifications",
+	"mutationResolver.MarkAllNotificationsRead": "acts only on the calling user's own notifications",
+	"mutationResolver.DismissNotifications":     "acts only on the calling user's own notifications",
+	"mutationResolver.RestoreNotifications":     "acts only on the calling user's own notifications",
 
-	"QueryResolver.SidebarPreferences":          "returns only the calling user's own preferences",
-	"QueryResolver.SidebarCustomizationOptions": "returns only the calling user's own preferences",
-	"MutationResolver.UpdateSidebarPreferences": "acts only on the calling user's own preferences",
+	"queryResolver.SidebarPreferences":          "returns only the calling user's own preferences",
+	"queryResolver.SidebarCustomizationOptions": "returns only the calling user's own preferences",
+	"mutationResolver.UpdateSidebarPreferences": "acts only on the calling user's own preferences",
 
-	"QueryResolver.HomeLayout":          "returns only the calling user's own home layout",
-	"QueryResolver.HomeWidgetCatalog":   "static catalog of widgets; carries no resource data",
-	"MutationResolver.UpdateHomeLayout": "acts only on the calling user's own home layout",
-	"MutationResolver.ResetHomeLayout":  "acts only on the calling user's own home layout",
+	"queryResolver.HomeLayout":          "returns only the calling user's own home layout",
+	"queryResolver.HomeWidgetCatalog":   "static catalog of widgets; carries no resource data",
+	"mutationResolver.UpdateHomeLayout": "acts only on the calling user's own home layout",
+	"mutationResolver.ResetHomeLayout":  "acts only on the calling user's own home layout",
 
-	"QueryResolver.TableConfiguration":              "table layouts are UI preferences, not resource data",
-	"QueryResolver.TableConfigurations":             "table layouts are UI preferences, not resource data",
-	"QueryResolver.DefaultTableConfiguration":       "table layouts are UI preferences, not resource data",
-	"MutationResolver.CreateTableConfiguration":     "table layouts are UI preferences, not resource data",
-	"MutationResolver.UpdateTableConfiguration":     "table layouts are UI preferences, not resource data",
-	"MutationResolver.PatchTableConfiguration":      "table layouts are UI preferences, not resource data",
-	"MutationResolver.DeleteTableConfiguration":     "table layouts are UI preferences, not resource data",
-	"MutationResolver.SetDefaultTableConfiguration": "table layouts are UI preferences, not resource data",
+	"queryResolver.TableConfiguration":              "table layouts are UI preferences, not resource data",
+	"queryResolver.TableConfigurations":             "table layouts are UI preferences, not resource data",
+	"queryResolver.DefaultTableConfiguration":       "table layouts are UI preferences, not resource data",
+	"mutationResolver.CreateTableConfiguration":     "table layouts are UI preferences, not resource data",
+	"mutationResolver.UpdateTableConfiguration":     "table layouts are UI preferences, not resource data",
+	"mutationResolver.PatchTableConfiguration":      "table layouts are UI preferences, not resource data",
+	"mutationResolver.DeleteTableConfiguration":     "table layouts are UI preferences, not resource data",
+	"mutationResolver.SetDefaultTableConfiguration": "table layouts are UI preferences, not resource data",
 
-	"QueryResolver.CaptureAgentRelease": "public release metadata, served unauthenticated at " +
+	"queryResolver.CaptureAgentRelease": "public release metadata, served unauthenticated at " +
 		"/api/v1/capture/releases/latest; carries no tenant data",
 
-	"QueryResolver.TelematicsStatus": "org-wide integration health indicator shown in the " +
+	"queryResolver.TelematicsStatus": "org-wide integration health indicator shown in the " +
 		"application shell; carries no resource data",
 
-	"QueryResolver.MyAIFeedback": "returns only the caller's own ratings of AI output; " +
+	"queryResolver.MyAIFeedback": "returns only the caller's own ratings of AI output; " +
 		"no one else's rating is ever read",
-	"MutationResolver.SetMyAIFeedback": "rates AI output for the caller only; the service " +
+	"mutationResolver.SetMyAIFeedback": "rates AI output for the caller only; the service " +
 		"refuses a target the caller could not read (their own thread or briefing, " +
 		"insight:read, watchtower:read plus the item source's read)",
-	"MutationResolver.ClearMyAIFeedback": "removes only the caller's own rating; the delete " +
+	"mutationResolver.ClearMyAIFeedback": "removes only the caller's own rating; the delete " +
 		"is scoped to the caller's user id",
 
-	"MutationResolver.CreateSettlementDispute":   "a driver disputing their own settlement",
-	"MutationResolver.WithdrawSettlementDispute": "a driver withdrawing their own dispute",
+	"mutationResolver.CreateSettlementDispute":   "a driver disputing their own settlement",
+	"mutationResolver.WithdrawSettlementDispute": "a driver withdrawing their own dispute",
 }
 
 var selfScopedName = regexp.MustCompile(`(^|[a-z])My[A-Z]`)
@@ -167,10 +167,10 @@ func TestAgentSafetyResolversAreAuthorized(t *testing.T) {
 	}
 
 	for _, key := range []string{
-		"QueryResolver.AgentToolPolicies",
-		"QueryResolver.AgentToolPolicyConnection",
-		"QueryResolver.AgentSafetySummary",
-		"QueryResolver.AgentSafety",
+		"queryResolver.AgentToolPolicies",
+		"queryResolver.AgentToolPolicyConnection",
+		"queryResolver.AgentSafetySummary",
+		"queryResolver.AgentSafety",
 	} {
 		verdict, ok := verdicts[key]
 		require.True(t, ok, "%s is not a root resolver", key)
@@ -195,18 +195,18 @@ func TestAgentAccessResolversAreAuthorized(t *testing.T) {
 	}
 
 	for _, key := range []string{
-		"QueryResolver.MyAgents",
-		"QueryResolver.SuggestedAgentAudience",
-		"MutationResolver.SetAgentAccess",
-		"MutationResolver.SetRoleAgentAccess",
-		"MutationResolver.DecideMyProposal",
+		"queryResolver.MyAgents",
+		"queryResolver.SuggestedAgentAudience",
+		"mutationResolver.SetAgentAccess",
+		"mutationResolver.SetRoleAgentAccess",
+		"mutationResolver.DecideMyProposal",
 		// Self-scoped by name, so it would pass on authentication alone. It
 		// runs the plan's writes, so it must hold assistant:update before the
 		// service checks the thread is the caller's and the agent is theirs.
-		"MutationResolver.DecideMyPlan",
-		"QueryResolver.AgentAccessPreview",
-		"QueryResolver.PendingDecisions",
-		"QueryResolver.PendingDecisionSummary",
+		"mutationResolver.DecideMyPlan",
+		"queryResolver.AgentAccessPreview",
+		"queryResolver.PendingDecisions",
+		"queryResolver.PendingDecisionSummary",
 	} {
 		verdict, ok := verdicts[key]
 		require.True(t, ok, "%s is not a root resolver", key)
@@ -228,16 +228,16 @@ func TestAgentQualityResolversAreAuthorized(t *testing.T) {
 	}
 
 	for _, key := range []string{
-		"QueryResolver.AgentQualityOverview",
-		"QueryResolver.AgentQuality",
-		"QueryResolver.AgentQualityAgents",
-		"QueryResolver.AgentWorstRatedAnswers",
-		"QueryResolver.AgentSuiteRuns",
-		"QueryResolver.AgentSuiteRun",
-		"QueryResolver.AgentSuiteRunCases",
-		"QueryResolver.AgentQualityControl",
-		"MutationResolver.RunAgentSuite",
-		"MutationResolver.UpdateAgentQualityControl",
+		"queryResolver.AgentQualityOverview",
+		"queryResolver.AgentQuality",
+		"queryResolver.AgentQualityAgents",
+		"queryResolver.AgentWorstRatedAnswers",
+		"queryResolver.AgentSuiteRuns",
+		"queryResolver.AgentSuiteRun",
+		"queryResolver.AgentSuiteRunCases",
+		"queryResolver.AgentQualityControl",
+		"mutationResolver.RunAgentSuite",
+		"mutationResolver.UpdateAgentQualityControl",
 	} {
 		verdict, ok := verdicts[key]
 		require.True(t, ok, "%s is not a root resolver", key)

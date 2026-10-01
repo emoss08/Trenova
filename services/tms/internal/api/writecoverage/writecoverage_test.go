@@ -116,7 +116,7 @@ func TestEnumerationFindsBothSurfaces(t *testing.T) {
 	create := writeByKey(t, report.Writes, "mutation createShipment")
 	assert.Equal(t, writecoverage.KindMutation, create.Kind)
 	assert.Equal(t, "shipment", create.Domain)
-	assert.Equal(t, "MutationResolver.CreateShipment", create.Handler)
+	assert.Equal(t, "mutationResolver.CreateShipment", create.Handler)
 	assert.Contains(t, twinRoutes(create), "POST /api/v1/shipments/",
 		"the REST create reaches the same service call and is merged into the mutation")
 
@@ -167,7 +167,7 @@ func sampleWrites() []writecoverage.Write {
 			Kind:   writecoverage.KindMutation,
 			Domain: "thing",
 			Endpoint: writecoverage.Endpoint{
-				Handler: "MutationResolver.CreateThing",
+				Handler: "mutationResolver.CreateThing",
 				Calls:   []string{"things.Service.Create"},
 			},
 			Twins: []writecoverage.Endpoint{{

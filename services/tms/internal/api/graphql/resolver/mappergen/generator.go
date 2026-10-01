@@ -7,7 +7,6 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -402,36 +401,28 @@ func exprString(expr ast.Expr) string {
 }
 
 func loadExistingFunctions(resolverDir string) (map[string]struct{}, error) {
+	matches, err := filepath.Glob(filepath.Join(resolverDir, "*.go"))
+	if err != nil {
+		return nil, fmt.Errorf("globbing resolver files: %w", err)
+	}
+	sort.Strings(matches)
+
 	existing := map[string]struct{}{}
 	fset := token.NewFileSet()
-	err := filepath.WalkDir(resolverDir, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
+	for _, match := range matches {
+		if strings.HasSuffix(filepath.Base(match), "_gen.go") {
+			continue
 		}
-		name := entry.Name()
-		if entry.IsDir() {
-			if path != resolverDir &&
-				(name == "mappers" || name == "mappergen" || name == "testdata") {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_gen.go") {
-			return nil
-		}
-		file, parseErr := parser.ParseFile(fset, path, nil, 0)
+		file, parseErr := parser.ParseFile(fset, match, nil, 0)
 		if parseErr != nil {
-			return fmt.Errorf("parsing resolver file %q: %w", path, parseErr)
+			return nil, fmt.Errorf("parsing resolver file %q: %w", match, parseErr)
 		}
 		for _, decl := range file.Decls {
-			if fn, ok := decl.(*ast.FuncDecl); ok {
-				existing[lowerFirst(fn.Name.Name)] = struct{}{}
+			fn, ok := decl.(*ast.FuncDecl)
+			if ok {
+				existing[fn.Name.Name] = struct{}{}
 			}
 		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("walking resolver files: %w", err)
 	}
 
 	return existing, nil

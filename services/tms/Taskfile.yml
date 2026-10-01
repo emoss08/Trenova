@@ -273,11 +273,9 @@ tasks:
     desc: Generate GraphQL server code (models, resolver stubs and the sharded executor)
     cmds:
       # gqlexec reads gqlgen.yml, binds the schema with gqlgen's own binder and
-      # writes the models, one executor package per schema file under
-      # internal/api/graphql/generated/exec, and one resolver package per schema
-      # file under internal/api/graphql/resolver (types, the root composition,
-      # and stubs or signature updates in the hand-written resolvers). It
-      # restores the previous executor if generation fails, then builds the result. Do not run
+      # writes models, resolver stubs, and one executor package per schema file
+      # under internal/api/graphql/generated/exec. It restores the previous
+      # output if generation fails, then builds the result. Do not run
       # `go tool gqlgen generate`: it writes gqlgen's single-package executor
       # next to the sharded one and the build breaks.
       - go run ./internal/api/graphql/gqlexec/gen

@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/base"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,8 +25,8 @@ func newServer(t *testing.T) *handler.Server {
 	t.Helper()
 
 	capacity := 12
-	root := resolver.New(base.Params{
-		Trucks: []*model.Truck{
+	root := resolver.New(
+		[]*model.Truck{
 			{
 				ID:       "t1",
 				Name:     "Kenworth",
@@ -39,11 +38,11 @@ func newServer(t *testing.T) *handler.Server {
 			{ID: "t2", Name: "Peterbilt", Status: model.StatusActive, Tags: []string{}},
 			{ID: "t3", Name: "Mack", Status: model.StatusInactive, Tags: []string{}},
 		},
-		Drivers: []*model.Driver{
+		[]*model.Driver{
 			{ID: "d1", Name: "Ada", Rating: 4.5, TruckID: "t1"},
 			{ID: "d2", Name: "Grace", Rating: 5, TruckID: "missing"},
 		},
-	})
+	)
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: root}))
 	srv.AddTransport(transport.POST{})
