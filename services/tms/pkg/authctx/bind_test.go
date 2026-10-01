@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -241,4 +242,34 @@ func TestBindJSON_LeavesSliceElementsToTheirOwners(t *testing.T) {
 
 	require.NoError(t, authctx.BindJSON(bindContext(t, body), ac, req))
 	assert.Equal(t, sibling, req.Lines[0].OrganizationID)
+}
+
+func TestBindJSON_ReportsTheForeignTenantItRefused(t *testing.T) {
+	t.Parallel()
+
+	ac := bindAuthContext()
+	foreign := pulid.MustNew("org_")
+	c := bindContext(t, `{"orgId":"`+foreign.String()+`"}`)
+	tracker := tenantboundary.NewTracker()
+	c.Set(tenantboundary.GinContextKey, tracker)
+
+	require.Error(t, authctx.BindJSON(c, ac, new(bindAltEntity)))
+
+	violations := tracker.Violations()
+	require.Len(t, violations, 1)
+	assert.Equal(t, tenantboundary.SourceRequestBody, violations[0].Source)
+	assert.Equal(t, "OrgID", violations[0].Field)
+	assert.Equal(t, foreign, violations[0].OrganizationID)
+}
+
+func TestBindJSON_ReportsNothingForTheSessionTenant(t *testing.T) {
+	t.Parallel()
+
+	ac := bindAuthContext()
+	c := bindContext(t, `{"organizationId":"`+ac.OrganizationID.String()+`"}`)
+	tracker := tenantboundary.NewTracker()
+	c.Set(tenantboundary.GinContextKey, tracker)
+
+	require.NoError(t, authctx.BindJSON(c, ac, new(bindEntity)))
+	assert.Empty(t, tracker.Violations())
 }

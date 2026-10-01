@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +29,8 @@ func BindJSON(c *gin.Context, authCtx *AuthContext, req any) error {
 		return err
 	}
 
-	if tenantMismatch(elem, authCtx, 0) {
+	if violation, mismatch := tenantMismatch(elem, authCtx, 0); mismatch {
+		tenantboundary.Report(c, violation)
 		return errortypes.NewAuthorizationError(
 			"The request belongs to a different organization than your session",
 		)
@@ -58,23 +60,37 @@ func structElem(req any) (reflect.Value, bool) {
 	return elem, true
 }
 
-func tenantMismatch(elem reflect.Value, authCtx *AuthContext, depth int) bool {
-	if fieldMismatch(elem, organizationIDFields, authCtx.OrganizationID) ||
-		fieldMismatch(elem, businessUnitIDFields, authCtx.BusinessUnitID) {
-		return true
+func tenantMismatch(
+	elem reflect.Value,
+	authCtx *AuthContext,
+	depth int,
+) (tenantboundary.Violation, bool) {
+	if field, got, ok := fieldMismatch(elem, organizationIDFields, authCtx.OrganizationID); ok {
+		return tenantboundary.Violation{
+			Source:         tenantboundary.SourceRequestBody,
+			Field:          field,
+			OrganizationID: got,
+		}, true
+	}
+	if field, got, ok := fieldMismatch(elem, businessUnitIDFields, authCtx.BusinessUnitID); ok {
+		return tenantboundary.Violation{
+			Source:         tenantboundary.SourceRequestBody,
+			Field:          field,
+			BusinessUnitID: got,
+		}, true
 	}
 
 	if depth >= maxTenantDepth {
-		return false
+		return tenantboundary.Violation{}, false
 	}
 
 	for _, nested := range nestedStructs(elem) {
-		if tenantMismatch(nested, authCtx, depth+1) {
-			return true
+		if violation, ok := tenantMismatch(nested, authCtx, depth+1); ok {
+			return violation, true
 		}
 	}
 
-	return false
+	return tenantboundary.Violation{}, false
 }
 
 func stampTenant(elem reflect.Value, authCtx *AuthContext, depth int) {
@@ -124,15 +140,15 @@ func nestedStructs(elem reflect.Value) []reflect.Value {
 	return nested
 }
 
-func fieldMismatch(elem reflect.Value, names []string, want pulid.ID) bool {
+func fieldMismatch(elem reflect.Value, names []string, want pulid.ID) (string, pulid.ID, bool) {
 	for _, name := range names {
 		got := pulidField(elem, name)
 		if !got.IsNil() && got != want {
-			return true
+			return name, got, true
 		}
 	}
 
-	return false
+	return "", pulid.Nil, false
 }
 
 func pulidField(elem reflect.Value, name string) pulid.ID {

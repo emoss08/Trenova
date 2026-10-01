@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -380,4 +383,27 @@ func TestErrorHandler_Middleware_MultipleErrors(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestErrorHandler_HandleError_RowLevelSecurityViolationIsForbiddenAndReported(t *testing.T) {
+	t.Parallel()
+
+	handler := newTestErrorHandler(false)
+	ctx := testutil.NewGinTestContext()
+	tracker := tenantboundary.NewTracker()
+	ctx.Context.Set(tenantboundary.GinContextKey, tracker)
+
+	handler.HandleError(ctx.Context, &pgconn.PgError{
+		Code:    pgerrcode.InsufficientPrivilege,
+		Message: `new row violates row-level security policy for table "shipments"`,
+	})
+
+	assert.Equal(t, http.StatusForbidden, ctx.ResponseCode())
+	var problem helpers.ProblemDetail
+	require.NoError(t, ctx.ResponseJSON(&problem))
+	assert.NotContains(t, problem.Detail, "row-level security")
+
+	violations := tracker.Violations()
+	require.Len(t, violations, 1)
+	assert.Equal(t, tenantboundary.SourceDatabasePolicy, violations[0].Source)
 }

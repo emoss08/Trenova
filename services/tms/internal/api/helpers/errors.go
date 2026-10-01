@@ -8,6 +8,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -65,6 +68,11 @@ func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 		)
 		c.Abort()
 		return
+	}
+
+	if dberror.IsRowLevelSecurityViolation(err) {
+		tenantboundary.Report(c, tenantboundary.Violation{Source: tenantboundary.SourceDatabasePolicy})
+		err = errortypes.NewAuthorizationError("insufficient permissions").WithInternal(err)
 	}
 
 	problemType := h.classifier.Classify(err)

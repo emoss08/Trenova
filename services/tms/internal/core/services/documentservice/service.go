@@ -588,6 +588,7 @@ func (s *Service) GetDownloadURL(
 		return "", errortypes.NewDatabaseError("Failed to generate download URL").WithInternal(err)
 	}
 
+	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessDownload, documentChannelPresignedURL)
 	return url, nil
 }
 
@@ -615,6 +616,7 @@ func (s *Service) GetViewURL(
 		return "", errortypes.NewDatabaseError("Failed to generate view URL").WithInternal(err)
 	}
 
+	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessView, documentChannelPresignedURL)
 	return url, nil
 }
 
@@ -632,6 +634,7 @@ func (s *Service) GetDownloadContent(
 		return nil, err
 	}
 
+	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessDownload, documentChannelContent)
 	return &DocumentContent{
 		Document:           doc,
 		Body:               io.NopCloser(bytes.NewReader(body)),
@@ -655,6 +658,7 @@ func (s *Service) GetViewContent(
 		return nil, err
 	}
 
+	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessView, documentChannelContent)
 	return &DocumentContent{
 		Document:           doc,
 		Body:               io.NopCloser(bytes.NewReader(body)),

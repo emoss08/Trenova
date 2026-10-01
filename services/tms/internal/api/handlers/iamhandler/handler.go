@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -116,6 +117,11 @@ func (h *Handler) tenantInfo(c *gin.Context) (pagination.TenantInfo, bool) {
 		return pagination.TenantInfo{}, false
 	}
 	if orgID != authCtx.OrganizationID {
+		tenantboundary.Report(c, tenantboundary.Violation{
+			Source:         tenantboundary.SourcePath,
+			Field:          "id",
+			OrganizationID: orgID,
+		})
 		h.eh.HandleError(c, errortypes.NewNotFoundError("Organization not found"))
 		return pagination.TenantInfo{}, false
 	}
