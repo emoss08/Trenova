@@ -44,6 +44,12 @@ func (s *Service) DispatchOffer(
 	// duplicate send harmless, while a lost send would otherwise burn the
 	// carrier's whole TTL in silence.
 	if offer.Status == tender.OfferStatusSent && offer.ExpiresAt != nil {
+		if offer.IsExpiredAt(timeutils.NowUnix()) {
+			return &portservices.TenderDispatchResult{
+				Delivered: true,
+				ExpiresAt: *offer.ExpiresAt,
+			}, nil
+		}
 		if err = s.deliverOffer(ctx, tenantInfo, offer, *offer.ExpiresAt); err != nil {
 			return s.dispatchDeliveryOutcome(ctx, tenantInfo, offer, err)
 		}

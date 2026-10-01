@@ -167,7 +167,8 @@ func (s *Service) planResponse(
 	}
 
 	if offer.Tender == nil || offer.Tender.Status != tender.StatusActive ||
-		offer.Status != tender.OfferStatusSent {
+		offer.Status != tender.OfferStatusSent ||
+		offer.IsExpiredAt(timeutils.NowUnix()) {
 		return offer, ErrOfferNoLongerAvailable
 	}
 

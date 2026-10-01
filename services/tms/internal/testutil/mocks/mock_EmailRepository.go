@@ -242,6 +242,80 @@ func (_c *MockEmailRepository_CreateMessage_Call) RunAndReturn(run func(context1
 	return _c
 }
 
+// CreateMessageOnce provides a mock function for the type MockEmailRepository
+func (_mock *MockEmailRepository) CreateMessageOnce(context1 context.Context, message *email.Message) (*email.Message, bool, error) {
+	ret := _mock.Called(context1, message)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateMessageOnce")
+	}
+
+	var r0 *email.Message
+	var r1 bool
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *email.Message) (*email.Message, bool, error)); ok {
+		return returnFunc(context1, message)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *email.Message) *email.Message); ok {
+		r0 = returnFunc(context1, message)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*email.Message)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *email.Message) bool); ok {
+		r1 = returnFunc(context1, message)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, *email.Message) error); ok {
+		r2 = returnFunc(context1, message)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockEmailRepository_CreateMessageOnce_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateMessageOnce'
+type MockEmailRepository_CreateMessageOnce_Call struct {
+	*mock.Call
+}
+
+// CreateMessageOnce is a helper method to define mock.On call
+//   - context1 context.Context
+//   - message *email.Message
+func (_e *MockEmailRepository_Expecter) CreateMessageOnce(context1 any, message any) *MockEmailRepository_CreateMessageOnce_Call {
+	return &MockEmailRepository_CreateMessageOnce_Call{Call: _e.mock.On("CreateMessageOnce", context1, message)}
+}
+
+func (_c *MockEmailRepository_CreateMessageOnce_Call) Run(run func(context1 context.Context, message *email.Message)) *MockEmailRepository_CreateMessageOnce_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *email.Message
+		if args[1] != nil {
+			arg1 = args[1].(*email.Message)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEmailRepository_CreateMessageOnce_Call) Return(message1 *email.Message, created bool, err error) *MockEmailRepository_CreateMessageOnce_Call {
+	_c.Call.Return(message1, created, err)
+	return _c
+}
+
+func (_c *MockEmailRepository_CreateMessageOnce_Call) RunAndReturn(run func(context1 context.Context, message *email.Message) (*email.Message, bool, error)) *MockEmailRepository_CreateMessageOnce_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateProfile provides a mock function for the type MockEmailRepository
 func (_mock *MockEmailRepository) CreateProfile(context1 context.Context, profile *email.Profile) (*email.Profile, error) {
 	ret := _mock.Called(context1, profile)

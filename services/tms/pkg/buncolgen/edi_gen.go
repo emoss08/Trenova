@@ -2117,6 +2117,7 @@ var EDIMessageColumns = struct {
 	AckReceivedAt            Column // "ack_received_at" → qualified: "emsg.ack_received_at"
 	AckLastError             Column // "ack_last_error" → qualified: "emsg.ack_last_error"
 	GeneratedByID            Column // "generated_by_id" → qualified: "emsg.generated_by_id"
+	IdempotencyKey           Column // "idempotency_key" → qualified: "emsg.idempotency_key"
 	GeneratedAt              Column // "generated_at" → qualified: "emsg.generated_at"
 	Version                  Column // "version" → qualified: "emsg.version"
 	CreatedAt                Column // "created_at" → qualified: "emsg.created_at"
@@ -2161,6 +2162,7 @@ var EDIMessageColumns = struct {
 	AckReceivedAt:            NewColumn("ack_received_at", "emsg"),
 	AckLastError:             NewColumn("ack_last_error", "emsg"),
 	GeneratedByID:            NewColumn("generated_by_id", "emsg"),
+	IdempotencyKey:           NewColumn("idempotency_key", "emsg"),
 	GeneratedAt:              NewColumn("generated_at", "emsg"),
 	Version:                  NewColumn("version", "emsg"),
 	CreatedAt:                NewColumn("created_at", "emsg"),
@@ -2259,6 +2261,7 @@ var EDIMessageInsertableColumns = []string{
 	"ack_received_at",
 	"ack_last_error",
 	"generated_by_id",
+	"idempotency_key",
 	"generated_at",
 	"version",
 	"created_at",

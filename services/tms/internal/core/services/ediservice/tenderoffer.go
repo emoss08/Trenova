@@ -88,12 +88,17 @@ func (s *Service) SendTenderOffer(
 		CarrierSCAC:                   carrierOfferSCAC(offer, channel),
 		GeneratedByID:                 req.TenantInfo.UserID,
 		SuppressTenderRecipientUpsert: true,
+		IdempotencyKey:                TenderOfferDocumentKey(offer.ID),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &services.SendTenderOfferEDIResult{MessageID: message.ID}, nil
+}
+
+func TenderOfferDocumentKey(offerID pulid.ID) string {
+	return "tender-offer-204-" + offerID.String()
 }
 
 func (s *Service) resolveCarrierEDIChannel(

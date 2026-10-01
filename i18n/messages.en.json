@@ -83728,7 +83728,7 @@
     ]
   },
   "Idempotency key cannot be longer than 255 characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -188128,6 +188128,15 @@
       "routes/worker"
     ]
   },
+  "This email was already sent to different recipients under the same idempotency key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/emailservice"
+    ]
+  },
   "This employment": {
     "sites": 1,
     "scope": [
@@ -188514,6 +188523,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "This idempotency key already names a {0} document, not a {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/ediservice"
     ]
   },
   "This import has already been {0}": {

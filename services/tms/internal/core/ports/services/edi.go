@@ -69,6 +69,7 @@ type GenerateEDIDocumentRequest struct {
 	GeneratedByID                 pulid.ID              `json:"-"`
 	DisableDeliveryQueue          bool                  `json:"-"`
 	SuppressTenderRecipientUpsert bool                  `json:"-"`
+	IdempotencyKey                string                `json:"-"`
 }
 
 type ServiceFailure214LifecycleRequest struct {

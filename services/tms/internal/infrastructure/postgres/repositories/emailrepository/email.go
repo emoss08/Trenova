@@ -381,6 +381,50 @@ func (r *repository) CreateMessage(
 	})
 }
 
+func (r *repository) CreateMessageOnce(
+	ctx context.Context,
+	entity *email.Message,
+) (*email.Message, bool, error) {
+	type outcome struct {
+		message *email.Message
+		created bool
+	}
+	result, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (outcome, error) {
+		res, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			On("CONFLICT (organization_id, business_unit_id, idempotency_key) DO NOTHING").
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return outcome{}, err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return outcome{}, err
+		}
+		if rows > 0 {
+			return outcome{message: entity, created: true}, nil
+		}
+
+		existing := new(email.Message)
+		err = r.db.DBForContext(ctx).NewSelect().
+			Model(existing).
+			Where("em.organization_id = ?", entity.OrganizationID).
+			Where("em.business_unit_id = ?", entity.BusinessUnitID).
+			Where("em.idempotency_key = ?", entity.IdempotencyKey).
+			Scan(ctx)
+		if err != nil {
+			return outcome{}, dberror.HandleNotFoundError(err, "EmailMessage")
+		}
+		return outcome{message: existing}, nil
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	return result.message, result.created, nil
+}
+
 func (r *repository) UpdateMessage(
 	ctx context.Context,
 	entity *email.Message,

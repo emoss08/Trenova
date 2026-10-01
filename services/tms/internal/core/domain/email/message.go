@@ -2,6 +2,7 @@ package email
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -49,6 +50,15 @@ type Message struct {
 	BusinessUnit *tenant.BusinessUnit `json:"-"                     bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-"                     bun:"rel:belongs-to,join:organization_id=id"`
 	Attachments  []*Attachment        `json:"attachments,omitempty" bun:"rel:has-many,join:id=message_id"`
+
+	Replayed bool `json:"-" bun:"-"`
+}
+
+func (m *Message) SameRecipientsAs(other *Message) bool {
+	return m.Purpose == other.Purpose &&
+		slices.Equal(m.ToRecipients, other.ToRecipients) &&
+		slices.Equal(m.CCRecipients, other.CCRecipients) &&
+		slices.Equal(m.BCCRecipients, other.BCCRecipients)
 }
 
 func (m *Message) GetTableName() string {
