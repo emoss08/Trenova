@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net/url"
 	"testing"
 	"time"
 
@@ -506,8 +507,46 @@ func TestConfig_GetDSN(t *testing.T) {
 			},
 		}
 		dsn := c.GetDSN("p@ss w0rd!")
-		assert.Contains(t, dsn, "p%40ss+w0rd%21")
 		assert.Contains(t, dsn, "sslmode=require")
+
+		parsed, err := url.Parse(dsn)
+		require.NoError(t, err)
+		password, ok := parsed.User.Password()
+		require.True(t, ok)
+		assert.Equal(t, "p@ss w0rd!", password)
+		assert.Equal(t, "admin", parsed.User.Username())
+		assert.Equal(t, "db.example.com:5433", parsed.Host)
+	})
+
+	t.Run("credentials survive the round trip", func(t *testing.T) {
+		t.Parallel()
+
+		for _, password := range []string{
+			"YwK2IXpEm9eAUpix+8exRW/oMZL==",
+			"with space",
+			"colon:at@slash/hash#question?percent%amp&",
+			"plus+literal",
+		} {
+			c := &Config{
+				App: AppConfig{Name: "trenova"},
+				Database: DatabaseConfig{
+					User:    "trenova app",
+					Host:    "localhost",
+					Port:    5432,
+					Name:    "trenova",
+					SSLMode: "disable",
+				},
+			}
+
+			parsed, err := url.Parse(c.GetDSN(password))
+			require.NoError(t, err, password)
+			got, ok := parsed.User.Password()
+			require.True(t, ok, password)
+			assert.Equal(t, password, got)
+			assert.Equal(t, "trenova app", parsed.User.Username())
+			assert.Equal(t, "/trenova", parsed.Path)
+			assert.Equal(t, "disable", parsed.Query().Get("sslmode"))
+		}
 	})
 }
 

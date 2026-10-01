@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/base64"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -96,8 +97,15 @@ func TestGetDSNForRole(t *testing.T) {
 	cfg.Database.SSLMode = "require"
 	cfg.Database.Password = "app"
 
-	dsn := cfg.GetDSNForRole(DatabaseRole{User: "trenova_system", Password: "p@ss word"})
-	assert.Contains(t, dsn, "postgres://trenova_system:p%40ss+word@db.internal:5432/trenova?sslmode=require")
+	dsn := cfg.GetDSNForRole(DatabaseRole{User: "trenova_system", Password: "p@ss word+1"})
+	assert.True(t, strings.HasPrefix(dsn, "postgres://trenova_system:"), dsn)
+	assert.Contains(t, dsn, "@db.internal:5432/trenova?sslmode=require")
+
+	parsed, err := url.Parse(dsn)
+	require.NoError(t, err)
+	password, ok := parsed.User.Password()
+	require.True(t, ok)
+	assert.Equal(t, "p@ss word+1", password, "a space or plus in a password must reach Postgres unchanged")
 
 	assert.Equal(t, cfg.GetDSN(cfg.Database.Password), cfg.GetMigrationDSN())
 }
