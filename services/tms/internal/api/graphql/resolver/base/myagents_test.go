@@ -1,0 +1,74 @@
+package base
+
+import (
+	"testing"
+
+	"github.com/emoss08/trenova/internal/api/graphql/generated"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/vektah/gqlparser/v2/ast"
+)
+
+/*
+myAgents is read by everyone who may use the assistant, not by the people who
+administer agents. MyAgent carries only what a picker shows and what a person
+asks with: an agent's instructions, guardrails, tool tiers, budget, provider
+and allowlist are an administrator's. Its delegates are served only as MyAgent
+again, and only those the reader may use. A field added here is a field every
+assistant user can read.
+*/
+func TestMyAgent_ExposesOnlyChatFacingFields(t *testing.T) {
+	t.Parallel()
+
+	schema := generated.NewExecutableSchema(generated.Config{}).Schema()
+	myAgent := schema.Types["MyAgent"]
+	require.NotNil(t, myAgent, "the schema declares MyAgent")
+
+	fields := make([]string, 0, len(myAgent.Fields))
+	for _, field := range myAgent.Fields {
+		fields = append(fields, field.Name)
+	}
+
+	assert.ElementsMatch(t, []string{
+		"id",
+		"name",
+		"description",
+		"template",
+		"icon",
+		"accent",
+		"toolNames",
+		"systemKey",
+		"starters",
+		"delegates",
+	}, fields)
+
+	var delegates *ast.FieldDefinition
+	for _, field := range myAgent.Fields {
+		if field.Name == "delegates" {
+			delegates = field
+		}
+	}
+	require.NotNil(t, delegates)
+	assert.Equal(t, "MyAgent", delegates.Type.Name(),
+		"a delegate is shown as the reader sees an agent, never as an administrator does")
+}
+
+// myAgents takes a closed set of filters, never a free filter over agents: a
+// filter on a field the reader is not shown would let them probe it.
+func TestMyAgentsInput_TakesNoFreeFilter(t *testing.T) {
+	t.Parallel()
+
+	schema := generated.NewExecutableSchema(generated.Config{}).Schema()
+	input := schema.Types["MyAgentsInput"]
+	require.NotNil(t, input)
+
+	fields := make([]string, 0, len(input.Fields))
+	for _, field := range input.Fields {
+		fields = append(fields, field.Name)
+	}
+
+	assert.ElementsMatch(t,
+		[]string{"first", "after", "search", "origin", "excludeIds", "ids"},
+		fields,
+	)
+}

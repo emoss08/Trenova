@@ -1,0 +1,11 @@
+{{ reserveImport "context" }}
+{{ reserveImport "fmt" }}
+
+{{- range $t := $.Types }}
+{{- range $f := $t.Fields }}
+
+func (r *{{ $t.Name }}) {{ $f.GoFieldName }}{{ $f.ShortResolverDeclaration }} {
+	panic(fmt.Errorf("not implemented: {{ $f.GoFieldName }} - {{ $f.Name }}"))
+}
+{{- end }}
+{{- end }}

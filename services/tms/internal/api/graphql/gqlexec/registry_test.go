@@ -34,7 +34,7 @@ func registryShards() []*Shard {
 			},
 			Fields: []Fields{
 				{Object: "Thing", Fields: []*Field{{Name: "id"}, {Name: "name"}}},
-				{Object: "Query", Fields: []*Field{{Name: "thing"}}},
+				{Object: "Query", Fields: []*Field{{Name: "thing"}, {Name: "__schema"}, {Name: "__type"}}},
 			},
 			Abstracts: []Abstract{{Name: "Named"}, {Name: "Any"}},
 			Resolvers: []ResolverRequirement{{

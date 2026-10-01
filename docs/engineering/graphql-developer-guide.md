@@ -108,11 +108,34 @@ task gqlgen-check
 
 `task generate` runs `go generate ./...`; it does not replace `task gqlgen`.
 
-### 3. Resolver Shape
+### 3. Where Resolvers Live
+
+Each schema file has its own resolver package. `schema/equipment_type.graphqls` resolves in
+`resolver/equipmenttyperesolver/`. `task gqlgen` maintains three things:
+
+- `equipment_type.resolvers.go`: the hand-written methods. A new field gets a stub that
+  panics with "not implemented". When a field's arguments change, the method's signature is
+  rewritten and its body is kept. A method whose field was removed is reported by name and
+  left for you to delete.
+- `resolvers.generated.go`: the receiver types (`QueryResolver`, `MutationResolver`,
+  `EquipmentTypeResolver`, …). Each embeds `*base.Resolver`.
+- `resolver/resolver.generated.go`: the root `resolver.Resolver` that fx provides. It
+  composes every package's types into the interfaces the executor calls.
+
+Keep a helper next to the resolvers that use it. Move it to `resolver/base` only when a
+second schema file needs it. `base` also holds the `Resolver` struct, its services and
+repositories (`r.EquipmentTypeService`), and the permission helpers. A new dependency is a
+field on `base.Resolver` plus a line in `base.New`. Test fakes shared between packages live
+in `resolver/resolvertest`, which only tests import.
+
+A small package compiles in a second or two. A change to one schema file's resolvers
+recompiles that package and the generated root, not every resolver in the API.
+
+### 4. Resolver Shape
 
 Resolvers should be thin:
 
-1. Call `r.requirePermission(ctx, resource, operation)`.
+1. Call `r.RequirePermission(ctx, resource, operation)`.
 2. Convert GraphQL input into the service/repository request shape.
 3. Call the existing service.
 4. Return domain objects or connection wrappers.
@@ -121,7 +144,7 @@ For list queries, use the shared GraphQL mapping helper for `DataTableConnection
 
 For mutations, preserve REST behavior by using the same service methods REST uses. Do not duplicate validation or workflow rules in the resolver.
 
-### 4. Projection
+### 5. Projection
 
 For table lists, preserve GraphQL field selection. The resolver should derive requested `edges.node` fields and pass columns into the repository. The repository should fall back to full columns only when no projection was provided.
 
@@ -131,7 +154,7 @@ The goal is:
 - REST callers keep their existing response behavior.
 - Cursor values come from DB-projected sort values, not from partially hydrated structs.
 
-### 5. Client Operation Documents
+### 6. Client Operation Documents
 
 Add operations under:
 
@@ -178,7 +201,7 @@ mutation CreateEquipmentType($input: EquipmentTypeInput!) {
 
 Prefer fragments when the same row shape is used by list, get, create, update, and patch operations.
 
-### 6. Client Codegen
+### 7. Client Codegen
 
 Run:
 
@@ -202,7 +225,7 @@ pnpm graphql:codegen:check
 
 The backend embeds the persisted manifest. Rebuild or restart the backend after persisted operation changes.
 
-### 7. Table Wiring
+### 8. Table Wiring
 
 Create a table GraphQL config near related table configs:
 
@@ -244,7 +267,7 @@ Then pass it to `DataTable`:
 
 Keep `link` while REST fallback/export behavior still depends on it.
 
-### 8. Mutation Wiring
+### 9. Mutation Wiring
 
 Add domain service methods that call generated documents through `requestGraphQL`:
 

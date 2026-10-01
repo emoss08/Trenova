@@ -273,9 +273,11 @@ tasks:
     desc: Generate GraphQL server code (models, resolver stubs and the sharded executor)
     cmds:
       # gqlexec reads gqlgen.yml, binds the schema with gqlgen's own binder and
-      # writes models, resolver stubs, and one executor package per schema file
-      # under internal/api/graphql/generated/exec. It restores the previous
-      # output if generation fails, then builds the result. Do not run
+      # writes the models, one executor package per schema file under
+      # internal/api/graphql/generated/exec, and one resolver package per schema
+      # file under internal/api/graphql/resolver (types, the root composition,
+      # and stubs or signature updates in the hand-written resolvers). It
+      # restores the previous executor if generation fails, then builds the result. Do not run
       # `go tool gqlgen generate`: it writes gqlgen's single-package executor
       # next to the sharded one and the build breaks.
       - go run ./internal/api/graphql/gqlexec/gen
@@ -284,11 +286,12 @@ tasks:
     desc: Check GraphQL server generated code is up to date
     cmds:
       - task: gqlgen
+      - cd internal/api/graphql/gqlexec/internal/e2e && go run github.com/emoss08/trenova/internal/api/graphql/gqlexec/gen
       - |
         # Each schema file gets its own executor package, so a new schema file
         # produces new *untracked* generated files. git diff cannot see those,
         # so check porcelain status instead.
-        PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver"
+        PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e"
         if [ -z "$(git status --porcelain -- $PATHS)" ]; then
           echo "GraphQL server generated code is up to date"
         else

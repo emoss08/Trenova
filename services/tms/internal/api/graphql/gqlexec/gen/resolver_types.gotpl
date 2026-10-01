@@ -1,0 +1,6 @@
+{{ reserveImport $.BaseImport }}
+
+{{- range $t := $.Types }}
+
+type {{ $t.Name }} struct{ *{{ lookupImport $.BaseImport }}.Resolver }
+{{- end }}

@@ -2,6 +2,7 @@ package gqlexec
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -14,7 +15,18 @@ type (
 
 func Marshal[T any](marshal TypedMarshal[T]) MarshalFunc {
 	return func(ctx context.Context, ec *Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
-		return marshal(ctx, ec, sel, v.(T))
+		typed, ok := v.(T)
+		if !ok {
+			var want T
+			graphql.AddErrorf(
+				ctx,
+				`unexpected type %T from middleware/directive chain, should be %T`,
+				v,
+				want,
+			)
+			return graphql.Null
+		}
+		return marshal(ctx, ec, sel, typed)
 	}
 }
 
@@ -26,7 +38,11 @@ func Unmarshal[T any](unmarshal TypedUnmarshal[T]) UnmarshalFunc {
 
 func UnmarshalInput[T any](ctx context.Context, ec *Exec, typeName string, v any) (T, error) {
 	res, err := ec.UnmarshalInput(ctx, typeName, v)
-	return res.(T), err
+	typed, ok := res.(T)
+	if !ok {
+		return typed, fmt.Errorf("gqlexec: input %s decoded to %T, want %T", typeName, res, typed)
+	}
+	return typed, err
 }
 
 type List[T any] struct {
@@ -85,9 +101,9 @@ func UnmarshalList[T any](
 	vSlice := graphql.CoerceList(v)
 	res := make([]T, len(vSlice))
 	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		elemCtx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
 		var err error
-		if res[i], err = elem(ctx, ec, vSlice[i]); err != nil {
+		if res[i], err = elem(elemCtx, ec, vSlice[i]); err != nil {
 			return nil, err
 		}
 	}

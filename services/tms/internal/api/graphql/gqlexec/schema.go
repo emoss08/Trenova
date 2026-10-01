@@ -29,7 +29,9 @@ type Schema struct {
 
 func NewSchema(cfg SchemaConfig) *Schema {
 	s := &Schema{
-		state:       &graphql.ExecutableSchemaState[struct{}, struct{}, struct{}]{SchemaData: cfg.Override},
+		state: &graphql.ExecutableSchemaState[struct{}, struct{}, struct{}]{
+			SchemaData: cfg.Override,
+		},
 		parsed:      cfg.Parsed,
 		reg:         cfg.Registry,
 		resolvers:   cfg.Resolvers,
@@ -116,6 +118,7 @@ func (s *Schema) Exec(ctx context.Context) graphql.ResponseHandler {
 			data.MarshalGQL(&buf)
 			return &graphql.Response{Data: buf.Bytes()}
 		}
+	case ast.Subscription:
 	}
 
 	return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))

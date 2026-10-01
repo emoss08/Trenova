@@ -22,7 +22,7 @@ const (
 	KindRoute    = Kind("route")
 
 	mutationPrefix   = "mutation "
-	mutationReceiver = "mutationResolver"
+	mutationReceiver = "MutationResolver"
 	resolverReceiver = "Resolver"
 	handlerReceiver  = "Handler"
 	handlerSuffix    = "handler"
@@ -37,6 +37,13 @@ var (
 		http.MethodDelete: {},
 	}
 	handlerMethod = regexp.MustCompile(`\(\*?` + handlerReceiver + `\)\.(\w+)`)
+
+	resolverSkippedDirs = map[string]struct{}{
+		"mappergen":    {},
+		"mappers":      {},
+		"resolvertest": {},
+		"testdata":     {},
+	}
 )
 
 type Route struct {
@@ -100,7 +107,7 @@ func enumerateMutations(schemaDir, resolverDir string) ([]Write, error) {
 		return nil, fmt.Errorf("schema in %s declares no Mutation type", schemaDir)
 	}
 
-	index, err := indexPackage(resolverDir, resolverReceiver, mutationReceiver)
+	index, err := indexTree(resolverDir, resolverSkippedDirs, resolverReceiver, mutationReceiver)
 	if err != nil {
 		return nil, err
 	}

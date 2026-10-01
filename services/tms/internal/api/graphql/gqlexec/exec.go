@@ -3,9 +3,10 @@ package gqlexec
 import (
 	"context"
 	"fmt"
-	"math"
 	"strconv"
 	"sync/atomic"
+
+	"github.com/emoss08/trenova/shared/intutils"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -21,7 +22,12 @@ func (ec *Exec) WorkerLimit() int64 {
 }
 
 func Resolver[T any](ec *Exec, root string) T {
-	return ec.schema.resolvers[root]().(T)
+	resolver, ok := ec.schema.resolvers[root]().(T)
+	if !ok {
+		var want T
+		panic(fmt.Sprintf("gqlexec: resolver %s does not implement %T", root, want))
+	}
+	return resolver
 }
 
 func (ec *Exec) MarshalType(
@@ -39,7 +45,11 @@ func (ec *Exec) MarshalType(
 	panic(fmt.Sprintf("gqlexec: no executor for type %q", typeName))
 }
 
-func (ec *Exec) MarshalRoot(ctx context.Context, sel ast.SelectionSet, typeName string) graphql.Marshaler {
+func (ec *Exec) MarshalRoot(
+	ctx context.Context,
+	sel ast.SelectionSet,
+	typeName string,
+) graphql.Marshaler {
 	return ec.execObject(ctx, sel, ec.schema.reg.objects[typeName], nil)
 }
 
@@ -49,6 +59,16 @@ func (ec *Exec) UnmarshalInput(ctx context.Context, typeName string, v any) (any
 		panic(fmt.Sprintf("gqlexec: no unmarshaler for input %q", typeName))
 	}
 	return unmarshal(ctx, ec, v)
+}
+
+type objectRun struct {
+	ec       *Exec
+	ctx      context.Context
+	obj      *Object
+	v        any
+	out      *graphql.FieldSet
+	deferred *graphql.FieldSet
+	views    map[string]*graphql.FieldSetView
 }
 
 func (ec *Exec) execObject(
@@ -62,13 +82,19 @@ func (ec *Exec) execObject(
 		ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{Object: obj.Name})
 	}
 
-	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	run := &objectRun{
+		ec:       ec,
+		ctx:      ctx,
+		obj:      obj,
+		v:        v,
+		out:      graphql.NewFieldSet(fields),
+		deferred: graphql.NewFieldSet(nil),
+		views:    make(map[string]*graphql.FieldSetView),
+	}
 
 	for i, field := range fields {
 		if field.Name == "__typename" {
-			out.Values[i] = graphql.MarshalString(obj.Name)
+			run.out.Values[i] = graphql.MarshalString(obj.Name)
 			continue
 		}
 
@@ -77,84 +103,98 @@ func (ec *Exec) execObject(
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 
-		if !f.Concurrent {
-			if obj.Root {
-				out.Values[i] = ec.RootResolverMiddleware(
-					rootFieldContext(ctx, field),
-					func(ctx context.Context) graphql.Marshaler {
-						return ec.resolveField(ctx, obj, f, field, nil)
-					},
-				)
-			} else {
-				out.Values[i] = ec.resolveField(ctx, obj, f, field, v)
-			}
-			if invalid(f, out.Values[i]) {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-			continue
-		}
-
-		innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-				}
-			}()
-			res = ec.resolveField(ctx, obj, f, field, v)
-			if invalid(f, res) {
-				atomic.AddUint32(&fs.Invalids, 1)
-			}
-			return res
-		}
-
-		if obj.Root {
-			innerCtx := rootFieldContext(ctx, field)
-			out.Concurrently(i, func(context.Context) graphql.Marshaler {
-				return ec.RootResolverMiddleware(innerCtx, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, out)
-				})
+		switch {
+		case !f.Concurrent:
+			run.serial(i, f, field)
+		case obj.Root:
+			run.concurrentRoot(i, f, field)
+		case field.IsDeferred():
+			run.deferField(i, f, field)
+		default:
+			run.out.Concurrently(i, func(ctx context.Context) graphql.Marshaler {
+				return run.guarded(ctx, run.out, f, field)
 			})
-			continue
 		}
-
-		if field.IsDeferred() {
-			deferredFieldSet.AddField(field)
-			fieldIndex := len(deferredFieldSet.Values) - 1
-			deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-				return innerFunc(ctx, deferredFieldSet)
-			})
-			for _, deferrable := range field.Deferrables {
-				view, ok := deferLabelToView[deferrable.Label]
-				if !ok {
-					view = deferredFieldSet.NewView()
-					deferLabelToView[deferrable.Label] = view
-				}
-				view.AddIndices(fieldIndex)
-			}
-			out.Values[i] = graphql.Null
-			continue
-		}
-
-		out.Concurrently(i, func(ctx context.Context) graphql.Marshaler {
-			return innerFunc(ctx, out)
-		})
 	}
 
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
+	run.out.Dispatch(ctx)
+	if run.out.Invalids > 0 {
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, intutils.SafeToInt32(len(run.views)))
 
 	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
+		Defers:   run.views,
 		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
+		FieldSet: run.deferred,
 		Context:  ctx,
 	})
 
-	return out
+	return run.out
+}
+
+func (r *objectRun) serial(i int, f *Field, field graphql.CollectedField) {
+	if r.obj.Root {
+		r.out.Values[i] = r.ec.RootResolverMiddleware(
+			rootFieldContext(r.ctx, field),
+			func(ctx context.Context) graphql.Marshaler {
+				return r.ec.resolveField(ctx, r.obj, f, field, nil)
+			},
+		)
+	} else {
+		r.out.Values[i] = r.ec.resolveField(r.ctx, r.obj, f, field, r.v)
+	}
+	if invalid(f, r.out.Values[i]) {
+		atomic.AddUint32(&r.out.Invalids, 1)
+	}
+}
+
+func (r *objectRun) concurrentRoot(i int, f *Field, field graphql.CollectedField) {
+	innerCtx := rootFieldContext(r.ctx, field)
+	r.out.Concurrently(i, func(context.Context) graphql.Marshaler {
+		return r.ec.RootResolverMiddleware(
+			innerCtx,
+			func(ctx context.Context) graphql.Marshaler {
+				return r.guarded(ctx, r.out, f, field)
+			},
+		)
+	})
+}
+
+func (r *objectRun) deferField(i int, f *Field, field graphql.CollectedField) {
+	r.deferred.AddField(field)
+	fieldIndex := len(r.deferred.Values) - 1
+	r.deferred.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+		return r.guarded(ctx, r.deferred, f, field)
+	})
+	for _, deferrable := range field.Deferrables {
+		view, ok := r.views[deferrable.Label]
+		if !ok {
+			view = r.deferred.NewView()
+			r.views[deferrable.Label] = view
+		}
+		view.AddIndices(fieldIndex)
+	}
+	r.out.Values[i] = graphql.Null
+}
+
+func (r *objectRun) guarded(
+	ctx context.Context,
+	fs *graphql.FieldSet,
+	f *Field,
+	field graphql.CollectedField,
+) (res graphql.Marshaler) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			r.ec.Error(ctx, r.ec.Recover(ctx, rec))
+		}
+	}()
+	res = r.ec.resolveField(ctx, r.obj, f, field, r.v)
+	if invalid(f, res) {
+		atomic.AddUint32(&fs.Invalids, 1)
+	}
+	return res
 }
 
 func rootFieldContext(ctx context.Context, field graphql.CollectedField) context.Context {

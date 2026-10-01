@@ -353,7 +353,7 @@ GraphQL types and there is no parallel model to keep in step.
 `rollbackDocumentTemplate`, `assign/unassignDocumentTemplate`,
 `sendTestMessageTemplate`.
 
-Every resolver opens with `r.requirePermission(...)`. Publish and rollback take
+Every resolver opens with `r.RequirePermission(...)`. Publish and rollback take
 `OpActivate` rather than `OpUpdate`, because editing a draft changes nothing a
 customer sees and activating one changes every document the organization sends
 from that moment.

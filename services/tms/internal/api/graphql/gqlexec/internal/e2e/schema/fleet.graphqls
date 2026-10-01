@@ -1,0 +1,51 @@
+interface Node {
+  id: ID!
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+type Owner {
+  id: ID!
+  name: String!
+}
+
+type Truck implements Node {
+  id: ID!
+  name: String!
+  status: Status!
+  owner: Owner
+  displayName: String!
+  tags: [String!]!
+  capacity: Int
+  loadCount(since: Int = 7): Int!
+  failing: String!
+  nullableFailing: String
+}
+
+input TruckFilter {
+  status: Status = ACTIVE
+  nameContains: String
+  page: PageInput
+}
+
+input RenameTruckInput {
+  id: ID!
+  name: String!
+  note: String @goField(omittable: true)
+}
+
+type Query {
+  node(id: ID!): Node
+  trucks(filter: TruckFilter): [Truck!]!
+  truck(id: ID!): Truck
+  search(text: String!): [SearchResult!]!
+  panics: String
+  echoFilter(filter: TruckFilter!): String!
+}
+
+type Mutation {
+  renameTruck(input: RenameTruckInput!): Truck!
+}

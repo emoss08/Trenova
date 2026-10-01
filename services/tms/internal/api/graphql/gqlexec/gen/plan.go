@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"path"
 	"path/filepath"
 	"sort"
@@ -119,14 +120,17 @@ func buildPlan(data *codegen.Data, runtimeImport string) (*rootData, error) {
 	root := &rootData{
 		Data:        data,
 		Runtime:     runtimeImport,
-		WorkerLimit: int64(data.Config.Exec.WorkerLimit),
+		WorkerLimit: workerLimit(data.Config.Exec.WorkerLimit),
 		Roots:       resolverRoots(data),
 	}
 	for _, s := range p.shards {
 		s.finalize()
 		root.Shards = append(root.Shards, s)
 	}
-	sort.Slice(root.Shards, func(i, j int) bool { return root.Shards[i].Name < root.Shards[j].Name })
+	sort.Slice(
+		root.Shards,
+		func(i, j int) bool { return root.Shards[i].Name < root.Shards[j].Name },
+	)
 
 	return root, nil
 }
@@ -354,9 +358,15 @@ func (s *shardData) finalize() {
 	sort.Slice(s.FieldSets, func(i, j int) bool {
 		return s.FieldSets[i].Object.Name < s.FieldSets[j].Object.Name
 	})
-	sort.Slice(s.Abstracts, func(i, j int) bool { return s.Abstracts[i].Name < s.Abstracts[j].Name })
+	sort.Slice(
+		s.Abstracts,
+		func(i, j int) bool { return s.Abstracts[i].Name < s.Abstracts[j].Name },
+	)
 	sort.Slice(s.Inputs, func(i, j int) bool { return s.Inputs[i].Name < s.Inputs[j].Name })
-	sort.Slice(s.Resolvers, func(i, j int) bool { return s.Resolvers[i].Name < s.Resolvers[j].Name })
+	sort.Slice(
+		s.Resolvers,
+		func(i, j int) bool { return s.Resolvers[i].Name < s.Resolvers[j].Name },
+	)
 	s.Marshals = sortedRefs(s.marshals)
 	s.Unmarshals = sortedRefs(s.unmarshals)
 	s.Enums = sortedRefs(s.enums)
@@ -380,4 +390,11 @@ func enumKey(t *config.TypeReference) string {
 		return t.Elem().UniquenessKey()
 	}
 	return t.UniquenessKey()
+}
+
+func workerLimit(limit uint) int64 {
+	if limit > math.MaxInt64 {
+		return math.MaxInt64
+	}
+	return int64(limit)
 }
