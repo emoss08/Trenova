@@ -43,10 +43,14 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 		return err
 	}
 
-	if mdn.Signed {
-		if err = s.verifyAS2MDNSignature(ctx, message, req); err != nil {
-			return err
-		}
+	if err = s.authenticateAS2MDN(ctx, message, mdn, req); err != nil {
+		s.l.Warn(
+			"rejected AS2 MDN that could not be authenticated",
+			zap.String("messageId", message.ID.String()),
+			zap.String("organizationId", message.OrganizationID.String()),
+			zap.Error(err),
+		)
+		return err
 	}
 
 	if message.DeliveryStatus == edi.MessageDeliveryStatusSent {
@@ -102,33 +106,57 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 
 var errAS2MICMismatch = errors.New("AS2 MDN MIC does not match the transmitted content")
 
-func (s *Service) verifyAS2MDNSignature(
+func (s *Service) authenticateAS2MDN(
 	ctx context.Context,
 	message *edi.EDIMessage,
+	mdn *as2.ParsedMDN,
 	req *ApplyAS2MDNRequest,
 ) error {
-	profile, err := s.deliveryProfileForMessage(ctx, message)
+	cfg, err := s.as2ConfigForMessage(ctx, message)
 	if err != nil {
 		return err
+	}
+
+	if cfg.PartnerSigningCertificate != nil {
+		if !mdn.Signed {
+			return errortypes.NewAuthenticationError(
+				"AS2 MDN must be signed with the partner's signing certificate",
+			)
+		}
+		if _, err = as2.ParseMDN(
+			req.ContentType,
+			req.Body,
+			cfg.PartnerSigningCertificate,
+		); err != nil {
+			return errortypes.NewAuthenticationError(
+				"AS2 MDN signature verification failed",
+			).WithInternal(err)
+		}
+		return nil
+	}
+
+	if message.AS2MIC != "" && mdn.ReceivedContentMIC != "" &&
+		as2.MICMatches(message.AS2MIC, mdn.ReceivedContentMIC) {
+		return nil
+	}
+
+	return errortypes.NewAuthenticationError(
+		"AS2 MDN could not be authenticated: it is not signed with a configured partner certificate and does not carry the transmitted content's MIC",
+	)
+}
+
+func (s *Service) as2ConfigForMessage(
+	ctx context.Context,
+	message *edi.EDIMessage,
+) (*editransport.AS2Config, error) {
+	profile, err := s.deliveryProfileForMessage(ctx, message)
+	if err != nil {
+		return nil, err
 	}
 	secrets, err := s.ProfileTransportSecrets(profile)
 	if err != nil {
-		return err
-	}
-	cfg, err := editransport.AS2ConfigFromProfile(profile, secrets)
-	if err != nil {
-		return err
-	}
-	if cfg.PartnerSigningCertificate == nil {
-		return nil
-	}
-	if _, err = as2.ParseMDN(
-		req.ContentType,
-		req.Body,
-		cfg.PartnerSigningCertificate,
-	); err != nil {
-		return fmt.Errorf("AS2 MDN signature verification failed: %w", err)
+		return nil, err
 	}
 
-	return nil
+	return editransport.AS2ConfigFromProfile(profile, secrets)
 }
