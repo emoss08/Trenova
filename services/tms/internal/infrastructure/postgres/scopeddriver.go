@@ -46,7 +46,9 @@ var (
 	ErrSystemScopeReason = errors.New(
 		"database access refused: dbscope.WithSystem requires a reason",
 	)
-	errUnsupportedDriverConn = errors.New("postgres driver connection does not support scoped access")
+	errUnsupportedDriverConn = errors.New(
+		"postgres driver connection does not support scoped access",
+	)
 )
 
 type scopeEvent struct {
@@ -58,7 +60,7 @@ type scopeEvent struct {
 }
 
 type scopeReporter interface {
-	Report(ctx context.Context, event scopeEvent)
+	Report(ctx context.Context, event *scopeEvent)
 }
 
 type scopedConnectorConfig struct {
@@ -257,7 +259,12 @@ func (cn *scopedConn) guardStatement(ctx context.Context) error {
 		return c.checkSystemScope(ctx, scope, scopeEventSystemStatement)
 	}
 
-	return c.refuseOrObserve(ctx, scopeEventUnscopedStmt, scope.Reason(), ErrStatementOutsideTransaction)
+	return c.refuseOrObserve(
+		ctx,
+		scopeEventUnscopedStmt,
+		scope.Reason(),
+		ErrStatementOutsideTransaction,
+	)
 }
 
 func (cn *scopedConn) Ping(ctx context.Context) error {
@@ -342,7 +349,7 @@ func (c *scopedConnector) report(ctx context.Context, event, outcome, reason str
 		caller = callerOutsideDatabaseLayer()
 	}
 
-	c.reporter.Report(ctx, scopeEvent{
+	c.reporter.Report(ctx, &scopeEvent{
 		Pool:    c.pool,
 		Event:   event,
 		Outcome: outcome,
@@ -364,11 +371,10 @@ func beginCommand(opts driver.TxOptions) (string, error) {
 		command += " ISOLATION LEVEL REPEATABLE READ"
 	case sql.LevelSerializable:
 		command += " ISOLATION LEVEL SERIALIZABLE"
+	case sql.LevelWriteCommitted, sql.LevelSnapshot, sql.LevelLinearizable:
+		return "", unsupportedIsolation(opts)
 	default:
-		return "", fmt.Errorf(
-			"postgres: unsupported transaction isolation: %s",
-			sql.IsolationLevel(opts.Isolation).String(),
-		)
+		return "", unsupportedIsolation(opts)
 	}
 
 	if opts.ReadOnly {
@@ -376,6 +382,13 @@ func beginCommand(opts driver.TxOptions) (string, error) {
 	}
 
 	return command, nil
+}
+
+func unsupportedIsolation(opts driver.TxOptions) error {
+	return fmt.Errorf(
+		"postgres: unsupported transaction isolation: %s",
+		sql.IsolationLevel(opts.Isolation).String(),
+	)
 }
 
 const callerSearchDepth = 32

@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	tenantRoleName       = "trenova_tenant"
-	bypassRoleName       = "trenova_rls_bypass"
+	rlsTenantRole        = "trenova_tenant"
+	rlsOverrideRole      = "trenova_rls_bypass"
 	maxDistinctScopeLogs = 10_000
 	verifyRolesReason    = "verify row-level security roles at startup"
 )
@@ -32,10 +32,10 @@ var (
 		"row-level security is enforced but the application database role can bypass it",
 	)
 	ErrRLSRoleNotTenant = errors.New(
-		"row-level security is enforced but the application database role is not a member of " + tenantRoleName,
+		"row-level security is enforced but the application database role is not a member of " + rlsTenantRole,
 	)
 	ErrRLSSystemRoleCannotBypass = errors.New(
-		"the system database role is not a member of " + bypassRoleName,
+		"the system database role is not a member of " + rlsOverrideRole,
 	)
 	ErrRLSScopeKeyNotInstalled = errors.New(
 		"the row-level security scope key is not installed in the database; run the migrations with database.rls configured",
@@ -48,15 +48,15 @@ type rlsRuntime struct {
 	reporter *scopeLogReporter
 }
 
+func rlsConfigured(cfg *config.Config) bool {
+	return cfg != nil && cfg.Database.GetDialect().IsPostgres() && cfg.Database.RLS.Enabled()
+}
+
 func newRLSRuntime(
 	cfg *config.Config,
 	logger *observability.ContextLogger,
 	registry *metrics.Registry,
 ) (*rlsRuntime, error) {
-	if cfg == nil || !cfg.Database.GetDialect().IsPostgres() || !cfg.Database.RLS.Enabled() {
-		return nil, nil
-	}
-
 	key, err := cfg.Database.RLS.DecodeScopeKey()
 	if err != nil {
 		return nil, err
@@ -115,12 +115,13 @@ func newScopeLogReporter(
 	return &scopeLogReporter{logger: logger, metrics: registry}
 }
 
-func (r *scopeLogReporter) Report(ctx context.Context, event scopeEvent) {
+func (r *scopeLogReporter) Report(ctx context.Context, event *scopeEvent) {
 	if r.metrics != nil && r.metrics.Database != nil {
 		r.metrics.Database.RecordRLSScopeEvent(string(event.Pool), event.Event, event.Outcome)
 	}
 
-	if r.logger == nil || (event.Event == scopeEventTenantTx && event.Outcome == scopeOutcomeAllowed) {
+	if r.logger == nil ||
+		(event.Event == scopeEventTenantTx && event.Outcome == scopeOutcomeAllowed) {
 		return
 	}
 
@@ -135,7 +136,10 @@ func (r *scopeLogReporter) Report(ctx context.Context, event scopeEvent) {
 	}
 
 	if event.Outcome == scopeOutcomeRefused {
-		r.logger.Error(ctx, "Refused database access outside its row-level security scope", fields...)
+		r.logger.Error(
+			ctx,
+			"Refused database access outside its row-level security scope",
+			fields...)
 		return
 	}
 
@@ -153,12 +157,14 @@ func (r *scopeLogReporter) Report(ctx context.Context, event scopeEvent) {
 	}
 }
 
-func (r *scopeLogReporter) firstSighting(event scopeEvent) bool {
+func (r *scopeLogReporter) firstSighting(event *scopeEvent) bool {
 	if r.distinct.Load() >= maxDistinctScopeLogs {
 		return false
 	}
 
-	key := string(event.Pool) + "|" + event.Event + "|" + event.Outcome + "|" + event.Reason + "|" + event.Caller
+	key := string(
+		event.Pool,
+	) + "|" + event.Event + "|" + event.Outcome + "|" + event.Reason + "|" + event.Caller
 	if _, loaded := r.seen.LoadOrStore(key, struct{}{}); loaded {
 		return false
 	}
@@ -168,11 +174,7 @@ func (r *scopeLogReporter) firstSighting(event scopeEvent) bool {
 	return true
 }
 
-func (c *Connection) openSystemDB() (*sql.DB, error) {
-	if c.rls == nil || !c.cfg.Database.System.Configured() {
-		return nil, nil
-	}
-
+func (c *Connection) openSystemDB() *sql.DB {
 	role := c.cfg.Database.System
 	sqldb := sql.OpenDB(c.rls.connector(
 		c.cfg.GetDSNForRole(role),
@@ -189,18 +191,17 @@ func (c *Connection) openSystemDB() (*sql.DB, error) {
 		sqldb.SetConnMaxIdleTime(c.settings.connMaxIdleTime)
 	}
 
-	return sqldb, nil
+	return sqldb
 }
 
 func (c *Connection) connectSystem(ctx context.Context) error {
-	sqldb, err := c.openSystemDB()
-	if err != nil || sqldb == nil {
-		return err
+	if c.rls == nil || !c.cfg.Database.System.Configured() {
+		return nil
 	}
 
-	c.system = c.withHooks(bun.NewDB(sqldb, pgdialect.New()))
+	c.system = c.withHooks(bun.NewDB(c.openSystemDB(), pgdialect.New()))
 	registerModels(c.system)
-	if err = c.system.PingContext(ctx); err != nil {
+	if err := c.system.PingContext(ctx); err != nil {
 		return fmt.Errorf("failed to ping system database pool: %w", err)
 	}
 
@@ -221,8 +222,8 @@ SELECT
 	r.rolname AS name,
 	r.rolsuper AS superuser,
 	r.rolbypassrls AS bypass_rls,
-	EXISTS (SELECT 1 FROM pg_roles b WHERE b.rolname = '` + bypassRoleName + `' AND pg_has_role(r.oid, b.oid, 'MEMBER')) AS bypass_member,
-	EXISTS (SELECT 1 FROM pg_roles t WHERE t.rolname = '` + tenantRoleName + `' AND pg_has_role(r.oid, t.oid, 'MEMBER')) AS tenant_member,
+	EXISTS (SELECT 1 FROM pg_roles b WHERE b.rolname = '` + rlsOverrideRole + `' AND pg_has_role(r.oid, b.oid, 'MEMBER')) AS bypass_member,
+	EXISTS (SELECT 1 FROM pg_roles t WHERE t.rolname = '` + rlsTenantRole + `' AND pg_has_role(r.oid, t.oid, 'MEMBER')) AS tenant_member,
 	EXISTS (
 		SELECT 1
 		FROM pg_class c
@@ -245,30 +246,40 @@ func (c *Connection) verifyRLS(ctx context.Context) error {
 	})
 
 	var attrs roleAttributes
-	err := c.db.RunInTx(probe, &sql.TxOptions{ReadOnly: true}, func(ctx context.Context, tx bun.Tx) error {
-		if err := tx.NewRaw(roleAttributesQuery).Scan(ctx, &attrs); err != nil {
-			return fmt.Errorf("read application role attributes: %w", err)
-		}
+	err := c.db.RunInTx(
+		probe,
+		&sql.TxOptions{ReadOnly: true},
+		func(ctx context.Context, tx bun.Tx) error {
+			if err := tx.NewRaw(roleAttributesQuery).Scan(ctx, &attrs); err != nil {
+				return fmt.Errorf("read application role attributes: %w", err)
+			}
 
-		var orgID string
-		if err := tx.NewRaw("SELECT trenova_rls.org_id()").Scan(ctx, &orgID); err != nil {
-			return fmt.Errorf("%w: %w", ErrRLSScopeKeyNotInstalled, err)
-		}
+			var orgID string
+			if err := tx.NewRaw("SELECT trenova_rls.org_id()").Scan(ctx, &orgID); err != nil {
+				return fmt.Errorf("%w: %w", ErrRLSScopeKeyNotInstalled, err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return c.rlsProblem(ctx, err)
 	}
 
 	if attrs.Superuser || attrs.BypassRLS || attrs.BypassMember || attrs.OwnsTables {
-		if err = c.rlsProblem(ctx, fmt.Errorf("%w (role %q)", ErrRLSRoleCannotBypass, attrs.Name)); err != nil {
+		if err = c.rlsProblem(
+			ctx,
+			fmt.Errorf("%w (role %q)", ErrRLSRoleCannotBypass, attrs.Name),
+		); err != nil {
 			return err
 		}
 	}
 
 	if !attrs.TenantMember {
-		if err = c.rlsProblem(ctx, fmt.Errorf("%w (role %q)", ErrRLSRoleNotTenant, attrs.Name)); err != nil {
+		if err = c.rlsProblem(
+			ctx,
+			fmt.Errorf("%w (role %q)", ErrRLSRoleNotTenant, attrs.Name),
+		); err != nil {
 			return err
 		}
 	}
@@ -282,12 +293,16 @@ func (c *Connection) verifySystemRole(ctx context.Context) error {
 	}
 
 	var attrs roleAttributes
-	if err := c.system.NewRaw(roleAttributesQuery).Scan(dbscope.WithSystem(ctx, verifyRolesReason), &attrs); err != nil {
+	if err := c.system.NewRaw(roleAttributesQuery).
+		Scan(dbscope.WithSystem(ctx, verifyRolesReason), &attrs); err != nil {
 		return c.rlsProblem(ctx, fmt.Errorf("read system role attributes: %w", err))
 	}
 
 	if !attrs.Superuser && !attrs.BypassMember {
-		return c.rlsProblem(ctx, fmt.Errorf("%w (role %q)", ErrRLSSystemRoleCannotBypass, attrs.Name))
+		return c.rlsProblem(
+			ctx,
+			fmt.Errorf("%w (role %q)", ErrRLSSystemRoleCannotBypass, attrs.Name),
+		)
 	}
 
 	return nil

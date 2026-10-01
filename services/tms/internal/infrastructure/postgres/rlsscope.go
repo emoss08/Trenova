@@ -77,7 +77,23 @@ func (s *scopeSigner) token(tenant dbscope.Tenant) (string, error) {
 	expires := strconv.FormatInt(s.now().Add(s.ttl).Unix(), 10)
 
 	var b strings.Builder
-	b.Grow(len(scopeTokenVersion) + len(s.keyID) + len(org) + len(bu) + len(user) + len(expires) + 6 + hex.EncodedLen(sha256.Size))
+	b.Grow(
+		len(
+			scopeTokenVersion,
+		) + len(
+			s.keyID,
+		) + len(
+			org,
+		) + len(
+			bu,
+		) + len(
+			user,
+		) + len(
+			expires,
+		) + 6 + hex.EncodedLen(
+			sha256.Size,
+		),
+	)
 	b.WriteString(scopeTokenVersion)
 	b.WriteByte('.')
 	b.WriteString(s.keyID)
@@ -101,10 +117,6 @@ func (s *scopeSigner) token(tenant dbscope.Tenant) (string, error) {
 	}
 
 	return token, nil
-}
-
-func (s *scopeSigner) pads() scopePads {
-	return deriveScopePads(s.key)
 }
 
 func deriveScopePads(key []byte) scopePads {

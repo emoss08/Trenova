@@ -10,6 +10,12 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	rlsLabelPool    = "pool"
+	rlsLabelEvent   = "event"
+	rlsLabelOutcome = "outcome"
+)
+
 type Database struct {
 	Base
 	concurrencyTotal *prometheus.CounterVec
@@ -54,7 +60,7 @@ func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 			Name:      "rls_scope_events_total",
 			Help:      "Total number of row-level security scope decisions by pool, event, and outcome",
 		},
-		[]string{"pool", "event", "outcome"},
+		[]string{rlsLabelPool, rlsLabelEvent, rlsLabelOutcome},
 	)
 
 	m.mustRegister(m.concurrencyTotal, m.operatorActions, m.rlsScopeEvents)

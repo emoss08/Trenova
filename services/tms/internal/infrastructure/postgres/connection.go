@@ -93,9 +93,13 @@ func newConnection(p ConnectionParams, settings connectionSettings) (*Connection
 		p.Logger.With(zap.String("component", settings.component)),
 	)
 
-	rls, err := newRLSRuntime(p.Config, logger, p.Metrics)
-	if err != nil {
-		return nil, err
+	var rls *rlsRuntime
+	if rlsConfigured(p.Config) {
+		runtime, err := newRLSRuntime(p.Config, logger, p.Metrics)
+		if err != nil {
+			return nil, err
+		}
+		rls = runtime
 	}
 
 	conn := &Connection{
@@ -218,6 +222,10 @@ func (c *Connection) connect(ctx context.Context) error {
 	)
 
 	return nil
+}
+
+func (c *Connection) ScopedTransactions() bool {
+	return c != nil && c.rls != nil
 }
 
 func (c *Connection) rlsMode() string {

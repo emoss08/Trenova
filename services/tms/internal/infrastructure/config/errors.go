@@ -9,8 +9,12 @@ var (
 	ErrRLSScopeKeyIDInvalid = errors.New(
 		"database.rls.scopeKeyId must be 1-32 characters of letters, digits, '_' or '-'",
 	)
-	ErrRLSScopeKeyRequired   = errors.New("database.rls.scopeKey is required when row-level security is on")
-	ErrRLSScopeKeyInvalid    = errors.New("database.rls.scopeKey must be base64 encoding at least 32 random bytes")
+	ErrRLSScopeKeyRequired = errors.New(
+		"database.rls.scopeKey is required when row-level security is on",
+	)
+	ErrRLSScopeKeyInvalid = errors.New(
+		"database.rls.scopeKey must be base64 encoding at least 32 random bytes",
+	)
 	ErrRLSSystemRoleRequired = errors.New(
 		"database.rls.mode=enforce requires database.system.user and database.system.password",
 	)

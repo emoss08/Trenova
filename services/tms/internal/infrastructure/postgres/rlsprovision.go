@@ -22,7 +22,11 @@ type RLSProvisionResult struct {
 	PoliciesAdded int
 }
 
-func ProvisionRLS(ctx context.Context, db bun.IDB, cfg *config.Config) (*RLSProvisionResult, error) {
+func ProvisionRLS(
+	ctx context.Context,
+	db bun.IDB,
+	cfg *config.Config,
+) (*RLSProvisionResult, error) {
 	result := new(RLSProvisionResult)
 	if cfg == nil || !cfg.Database.GetDialect().IsPostgres() {
 		return result, nil
@@ -43,7 +47,12 @@ func ProvisionRLS(ctx context.Context, db bun.IDB, cfg *config.Config) (*RLSProv
 		return nil, err
 	}
 
-	if err = InstallRLSScopeKey(ctx, db, strings.TrimSpace(cfg.Database.RLS.ScopeKeyID), key); err != nil {
+	if err = InstallRLSScopeKey(
+		ctx,
+		db,
+		strings.TrimSpace(cfg.Database.RLS.ScopeKeyID),
+		key,
+	); err != nil {
 		return nil, err
 	}
 	result.KeyInstalled = true
@@ -121,7 +130,11 @@ type ProvisionRLSRolesParams struct {
 	System RLSLoginRole
 }
 
-func ProvisionRLSRoles(ctx context.Context, db bun.IDB, params ProvisionRLSRolesParams) ([]string, error) {
+func ProvisionRLSRoles(
+	ctx context.Context,
+	db bun.IDB,
+	params ProvisionRLSRolesParams,
+) ([]string, error) {
 	app := strings.TrimSpace(params.App.User)
 	system := strings.TrimSpace(params.System.User)
 
@@ -147,20 +160,20 @@ func ProvisionRLSRoles(ctx context.Context, db bun.IDB, params ProvisionRLSRoles
 		member   string
 		excluded string
 	}{
-		{name: app, verifier: appVerifier, member: tenantRoleName, excluded: bypassRoleName},
-		{name: system, verifier: systemVerifier, member: bypassRoleName, excluded: tenantRoleName},
+		{name: app, verifier: appVerifier, member: rlsTenantRole, excluded: rlsOverrideRole},
+		{name: system, verifier: systemVerifier, member: rlsOverrideRole, excluded: rlsTenantRole},
 	}
 
 	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		for _, role := range roles {
-			if _, err := tx.NewRaw(
+			if _, execErr := tx.NewRaw(
 				provisionLoginRoleSQL,
 				role.name,
 				role.verifier,
 				role.member,
 				role.excluded,
-			).Exec(ctx); err != nil {
-				return fmt.Errorf("provision database role %q: %w", role.name, err)
+			).Exec(ctx); execErr != nil {
+				return fmt.Errorf("provision database role %q: %w", role.name, execErr)
 			}
 		}
 

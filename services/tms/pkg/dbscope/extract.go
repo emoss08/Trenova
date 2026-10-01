@@ -20,10 +20,7 @@ var (
 )
 
 func TenantOf(values ...any) (Tenant, bool) {
-	var (
-		found    Tenant
-		resolved bool
-	)
+	var acc tenantAccumulator
 
 	for _, value := range values {
 		if value == nil {
@@ -31,47 +28,43 @@ func TenantOf(values ...any) (Tenant, bool) {
 		}
 
 		tenant, ok, conflict := tenantOfValue(reflect.ValueOf(value), 0)
-		if conflict {
+		if conflict || (ok && !acc.add(tenant)) {
 			return Tenant{}, false
 		}
-		if !ok {
-			continue
-		}
-		if resolved && !sameTenant(found, tenant) {
-			return Tenant{}, false
-		}
-		if !resolved || found.UserID.IsNil() {
-			found = tenant
-		}
-		resolved = true
 	}
 
-	return found, resolved
+	return acc.tenant, acc.resolved
 }
 
-func tenantOfValue(v reflect.Value, depth int) (Tenant, bool, bool) {
-	for v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
-		if v.IsNil() {
-			return Tenant{}, false, false
-		}
-		if v.Type().Implements(tenantScopedType) {
-			if scoped, ok := v.Interface().(TenantScoped); ok {
-				tenant := scoped.DBTenant()
-				return tenant, tenant.Valid(), false
-			}
-		}
-		v = v.Elem()
+type tenantAccumulator struct {
+	tenant   Tenant
+	resolved bool
+}
+
+func (a *tenantAccumulator) add(tenant Tenant) bool {
+	if a.resolved && !sameTenant(a.tenant, tenant) {
+		return false
+	}
+	if !a.resolved || a.tenant.UserID.IsNil() {
+		a.tenant = tenant
+	}
+	a.resolved = true
+
+	return true
+}
+
+func tenantOfValue(v reflect.Value, depth int) (tenant Tenant, ok, conflict bool) {
+	v, tenant, ok, done := unwrapScoped(v)
+	if done {
+		return tenant, ok, false
 	}
 
 	if v.Kind() != reflect.Struct {
 		return Tenant{}, false, false
 	}
 
-	if v.CanInterface() && v.Type().Implements(tenantScopedType) {
-		if scoped, ok := v.Interface().(TenantScoped); ok {
-			tenant := scoped.DBTenant()
-			return tenant, tenant.Valid(), false
-		}
+	if tenant, ok = explicitTenant(v); ok {
+		return tenant, true, false
 	}
 
 	direct := Tenant{
@@ -87,42 +80,67 @@ func tenantOfValue(v reflect.Value, depth int) (Tenant, bool, bool) {
 		return Tenant{}, false, false
 	}
 
-	var (
-		found    Tenant
-		resolved bool
-	)
-	typ := v.Type()
-	for i := range v.NumField() {
-		field := typ.Field(i)
-		if !field.IsExported() || field.Type == pulidType {
-			continue
-		}
+	return nestedTenant(v, depth)
+}
 
-		kind := field.Type.Kind()
-		if kind == reflect.Pointer {
-			kind = field.Type.Elem().Kind()
+func unwrapScoped(v reflect.Value) (unwrapped reflect.Value, tenant Tenant, ok, done bool) {
+	for v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
+		if v.IsNil() {
+			return v, Tenant{}, false, true
 		}
-		if kind != reflect.Struct {
-			continue
+		if tenant, ok = explicitTenant(v); ok {
+			return v, tenant, true, true
 		}
-
-		tenant, ok, conflict := tenantOfValue(v.Field(i), depth+1)
-		if conflict {
-			return Tenant{}, false, true
-		}
-		if !ok {
-			continue
-		}
-		if resolved && !sameTenant(found, tenant) {
-			return Tenant{}, false, true
-		}
-		if !resolved || found.UserID.IsNil() {
-			found = tenant
-		}
-		resolved = true
+		v = v.Elem()
 	}
 
-	return found, resolved, false
+	return v, Tenant{}, false, false
+}
+
+func explicitTenant(v reflect.Value) (Tenant, bool) {
+	if !v.CanInterface() || !v.Type().Implements(tenantScopedType) {
+		return Tenant{}, false
+	}
+
+	scoped, ok := v.Interface().(TenantScoped)
+	if !ok {
+		return Tenant{}, false
+	}
+
+	tenant := scoped.DBTenant()
+
+	return tenant, tenant.Valid()
+}
+
+func nestedTenant(v reflect.Value, depth int) (tenant Tenant, ok, conflict bool) {
+	var acc tenantAccumulator
+	typ := v.Type()
+
+	for i := range v.NumField() {
+		if field := typ.Field(i); !holdsStruct(&field) {
+			continue
+		}
+
+		found, fieldOK, fieldConflict := tenantOfValue(v.Field(i), depth+1)
+		if fieldConflict || (fieldOK && !acc.add(found)) {
+			return Tenant{}, false, true
+		}
+	}
+
+	return acc.tenant, acc.resolved, false
+}
+
+func holdsStruct(field *reflect.StructField) bool {
+	if !field.IsExported() || field.Type == pulidType {
+		return false
+	}
+
+	kind := field.Type.Kind()
+	if kind == reflect.Pointer {
+		kind = field.Type.Elem().Kind()
+	}
+
+	return kind == reflect.Struct
 }
 
 func sameTenant(a, b Tenant) bool {

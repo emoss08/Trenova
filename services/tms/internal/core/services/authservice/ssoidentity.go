@@ -51,7 +51,7 @@ type ssoUserLookup struct {
 
 func identityFromOIDCClaims(
 	issuer string,
-	claims oidcClaims,
+	claims *oidcClaims,
 	provider tenant.SSOProvider,
 ) ssoIdentity {
 	return ssoIdentity{

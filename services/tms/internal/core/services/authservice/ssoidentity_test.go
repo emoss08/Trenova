@@ -222,14 +222,14 @@ func TestIdentityFromOIDCClaims(t *testing.T) {
 	t.Run("generic providers trust only a verified email and never fall back", func(t *testing.T) {
 		t.Parallel()
 
-		identity := identityFromOIDCClaims(testIssuer, oidcClaims{
+		identity := identityFromOIDCClaims(testIssuer, &oidcClaims{
 			Subject:           "okta|1",
 			PreferredUsername: "victim@example.com",
 		}, tenant.SSOProviderOkta)
 		assert.Empty(t, identity.Email)
 		assert.False(t, identity.EmailTrusted)
 
-		identity = identityFromOIDCClaims(testIssuer, oidcClaims{
+		identity = identityFromOIDCClaims(testIssuer, &oidcClaims{
 			Subject:       "okta|1",
 			Email:         "Person@Example.com",
 			EmailVerified: oidcBool{set: true, value: true},
@@ -241,7 +241,7 @@ func TestIdentityFromOIDCClaims(t *testing.T) {
 	t.Run("microsoft uses the tenant-checked username", func(t *testing.T) {
 		t.Parallel()
 
-		identity := identityFromOIDCClaims(testIssuer, oidcClaims{
+		identity := identityFromOIDCClaims(testIssuer, &oidcClaims{
 			Subject:           "aad|1",
 			PreferredUsername: "Person@Carrier.example",
 		}, tenant.SSOProviderAzureAD)

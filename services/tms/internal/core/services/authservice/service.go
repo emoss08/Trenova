@@ -382,7 +382,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 
 	usr, err := s.resolveSSOUser(ctx, &ssoUserLookup{
 		Config:      ssoConfig,
-		Identity:    identityFromOIDCClaims(idToken.Issuer, claims, ssoConfig.Provider),
+		Identity:    identityFromOIDCClaims(idToken.Issuer, &claims, ssoConfig.Provider),
 		DisplayName: displayName,
 	})
 	if err != nil {

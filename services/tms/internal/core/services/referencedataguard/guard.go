@@ -43,7 +43,7 @@ func FromPlatform(platform *config.PlatformConfig) (*Guard, error) {
 		requireListed: platform.GetMode() == config.PlatformModeCloud ||
 			platform.IsCloudBacked() ||
 			len(stewards) > 0,
-		stewards:      stewards,
+		stewards: stewards,
 	}, nil
 }
 

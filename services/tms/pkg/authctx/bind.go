@@ -93,7 +93,10 @@ func stampTenant(elem reflect.Value, authCtx *AuthContext, depth int) {
 		stampTenant(nested, authCtx, depth+1)
 	}
 
-	if tenant := elem.FieldByName("TenantInfo"); tenant.IsValid() && tenant.Kind() == reflect.Struct {
+	if tenant := elem.FieldByName(
+		"TenantInfo",
+	); tenant.IsValid() &&
+		tenant.Kind() == reflect.Struct {
 		setPulidField(tenant, "UserID", authCtx.UserID)
 	}
 }
@@ -108,16 +111,13 @@ func nestedStructs(elem reflect.Value) []reflect.Value {
 		}
 
 		field := elem.Field(i)
-		switch field.Kind() {
-		case reflect.Struct:
-			if field.Type() != pulidType {
-				nested = append(nested, field)
-			}
-		case reflect.Pointer:
-			if !field.IsNil() && field.Elem().Kind() == reflect.Struct {
-				nested = append(nested, field.Elem())
-			}
-		default:
+		if field.Kind() == reflect.Struct && field.Type() != pulidType {
+			nested = append(nested, field)
+			continue
+		}
+		if field.Kind() == reflect.Pointer && !field.IsNil() &&
+			field.Elem().Kind() == reflect.Struct {
+			nested = append(nested, field.Elem())
 		}
 	}
 

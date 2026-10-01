@@ -55,14 +55,18 @@ type Violation struct {
 	Field    string
 }
 
-func (v Violation) Key() string {
+func (v *Violation) Key() string {
 	return v.Function + ":" + v.Method + ":" + v.Target
 }
 
-func (v Violation) String() string {
+func (v *Violation) String() string {
 	return fmt.Sprintf(
 		"%s: %s calls %s into %s, whose field %s a request can set; bind with authctx.BindJSON instead",
-		v.Position, v.Function, v.Method, v.Target, v.Field,
+		v.Position,
+		v.Function,
+		v.Method,
+		v.Target,
+		v.Field,
 	)
 }
 
@@ -82,7 +86,7 @@ func Check(dir string, patterns ...string) ([]Violation, error) {
 	violations := make([]Violation, 0)
 	for _, pkg := range pkgs {
 		if len(pkg.Errors) > 0 {
-			return nil, fmt.Errorf("package %s: %v", pkg.PkgPath, pkg.Errors[0])
+			return nil, fmt.Errorf("package %s: %w", pkg.PkgPath, pkg.Errors[0])
 		}
 		for _, file := range pkg.Syntax {
 			violations = append(violations, checkFile(pkg, file)...)
@@ -107,18 +111,18 @@ func checkFile(pkg *packages.Package, file *ast.File) []Violation {
 
 		funcName := functionName(fn)
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
-			call, ok := node.(*ast.CallExpr)
-			if !ok || len(call.Args) == 0 {
+			call, isCall := node.(*ast.CallExpr)
+			if !isCall || len(call.Args) == 0 {
 				return true
 			}
 
-			sel, ok := call.Fun.(*ast.SelectorExpr)
-			if !ok {
+			sel, isSelector := call.Fun.(*ast.SelectorExpr)
+			if !isSelector {
 				return true
 			}
 
-			kind, ok := bindMethods[sel.Sel.Name]
-			if !ok || !isGinContext(pkg.TypesInfo.TypeOf(sel.X)) {
+			kind, known := bindMethods[sel.Sel.Name]
+			if !known || !isGinContext(pkg.TypesInfo.TypeOf(sel.X)) {
 				return true
 			}
 
@@ -194,6 +198,8 @@ func bindable(tag reflect.StructTag, kind bindKind) bool {
 		return jsonOpen
 	case bindForm:
 		return formOpen
+	case bindAny:
+		return jsonOpen || formOpen
 	default:
 		return jsonOpen || formOpen
 	}

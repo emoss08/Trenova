@@ -42,7 +42,7 @@ func TestScopeSigner_TokenVerifiesWithDerivedPads(t *testing.T) {
 		require.Len(t, parts, 7)
 		assert.Equal(t, []string{"v1", "k1", tenant.OrganizationID.String(), tenant.BusinessUnitID.String(), tenant.UserID.String(), "1700000060"}, parts[:6])
 
-		pads := signer.pads()
+		pads := deriveScopePads(signer.key)
 		inner := sha256.Sum256(append(append([]byte{}, pads.Inner...), []byte(strings.Join(parts[:6], "."))...))
 		outer := sha256.Sum256(append(append([]byte{}, pads.Outer...), inner[:]...))
 		assert.Equal(t, hex.EncodeToString(outer[:]), parts[6], "key size %d", size)

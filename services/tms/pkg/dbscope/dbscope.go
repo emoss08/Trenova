@@ -21,6 +21,8 @@ func (k Kind) String() string {
 		return "tenant"
 	case KindSystem:
 		return "system"
+	case KindNone:
+		return "none"
 	default:
 		return "none"
 	}

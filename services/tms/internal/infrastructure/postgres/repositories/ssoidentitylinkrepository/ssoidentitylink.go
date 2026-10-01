@@ -74,7 +74,11 @@ func (r *repository) GetByUser(
 }
 
 func (r *repository) Create(ctx context.Context, link *tenant.SSOIdentityLink) error {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(link).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(link).
+		Returning("*").
+		Exec(ctx); err != nil {
 		r.l.Error("failed to create sso identity link", zap.Error(err))
 		return err
 	}
