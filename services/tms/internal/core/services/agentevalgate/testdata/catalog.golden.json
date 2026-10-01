@@ -27367,7 +27367,7 @@
     },
     {
       "name": "retry_accounting_sync",
-      "description": "Send documents that did not reach the accounting system again. Name the records by syncRecordIds, or retry every record that last failed for the given errorCategories, such as Transient and RateLimited after an outage. Only Blocked, DeadLettered and Retrying records are retried; a document waiting for a person to release it stays waiting. Retry only once the cause in the record's resolution is fixed or the failure was temporary: a record whose cause still stands is refused again. The accounting system recognizes a repeat, so nothing is entered twice.",
+      "description": "Send documents that did not reach the accounting system again. Name the records by syncRecordIds, or retry every record that last failed for the given errorCategories, such as Transient and RateLimited after an outage. Run on its own, the categories are read when it runs; proposed, they become the records they name then, at most 50, which the person approving may untick, and only those are retried. Only Blocked, DeadLettered and Retrying records are retried; a document waiting for a person to release it stays waiting. Retry only once the cause in the record's resolution is fixed or the failure was temporary: a record whose cause still stands is refused again. The accounting system recognizes a repeat, so nothing is entered twice.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -27400,7 +27400,8 @@
               "type": "string"
             },
             "maxItems": 50,
-            "type": "array"
+            "type": "array",
+            "x-subsetOf": "accounting_sync"
           },
           "system": {
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",

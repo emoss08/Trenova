@@ -276,6 +276,18 @@ array-of-ids parameter as a subset of one permission resource's records with
   own call stays in the thread as it sent it, and the ledger key is taken from it. A
   selection that cannot be resolved is refused to the model with the reason.
 
+  `retry_accounting_sync` takes `errorCategories` as criteria beside its `syncRecordIds`
+  subset, and pins them only when the call is filed for a person: it implements
+  `ToolProposalSelectionResolver`, which the dispatch activity asks once the tier is decided
+  and only when that tier is not Automatic. A proposed call naming categories alone becomes
+  the Blocked, DeadLettered and Retrying records that last failed that way then, at most 50,
+  with the categories kept beside them to say why they were chosen; the categories only
+  narrow those ids when the approval runs, never add to them, so a record that fails after
+  the proposal is left for another retry. The preview says how many other records that
+  failed that way it leaves and is then `Partial`. An approval that names no records (one
+  filed before pinning) is refused and asked to be proposed again. An automatic retry has no
+  approval to keep faith with, so it still reads its categories when it runs, with no cap.
+
   The other record-subset tools keep ids only: `attach_order_shipments` (its records come
   from `search_shipments`, a general search, and the order's own rules decide membership),
   `release_accounting_sync` (a person-only send to the books from a general list; releasing

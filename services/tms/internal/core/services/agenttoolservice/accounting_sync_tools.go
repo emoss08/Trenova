@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -55,6 +57,10 @@ type accountingSyncOperator interface {
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 	) (*accountingsync.AccountingSyncRecord, error)
+	ListRecords(
+		ctx context.Context,
+		req *serviceports.ListAccountingSyncRecordsRequest,
+	) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error)
 	Retry(ctx context.Context, req *serviceports.RetryAccountingSyncRequest) (int64, error)
 	Skip(
 		ctx context.Context,
@@ -192,6 +198,14 @@ func syncEnums[T ~string](
 	return sliceutils.Dedupe(out), nil
 }
 
+var _ serviceports.ToolProposalSelectionResolver = (*retryAccountingSyncTool)(nil)
+
+var errUnpinnedRetry = errortypes.NewBusinessError(
+	"retry_accounting_sync runs from an approval only on the records a person approved, and " +
+		"this proposal names none; propose it again so the records its error categories " +
+		"resolve to are listed",
+)
+
 type retryAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
@@ -211,11 +225,14 @@ func (t *retryAccountingSyncTool) Name() string { return "retry_accounting_sync"
 func (t *retryAccountingSyncTool) Description() string {
 	return "Send documents that did not reach the accounting system again. Name the records " +
 		"by syncRecordIds, or retry every record that last failed for the given " +
-		"errorCategories, such as Transient and RateLimited after an outage. Only Blocked, " +
-		"DeadLettered and Retrying records are retried; a document waiting for a person to " +
-		"release it stays waiting. Retry only once the cause in the record's resolution is " +
-		"fixed or the failure was temporary: a record whose cause still stands is refused " +
-		"again. The accounting system recognizes a repeat, so nothing is entered twice."
+		"errorCategories, such as Transient and RateLimited after an outage. Run on its own, " +
+		"the categories are read when it runs; proposed, they become the records they name " +
+		"then, at most 50, which the person approving may untick, and only those are " +
+		"retried. Only Blocked, DeadLettered and Retrying records are retried; a document " +
+		"waiting for a person to release it stays waiting. Retry only once the cause in the " +
+		"record's resolution is fixed or the failure was temporary: a record whose cause " +
+		"still stands is refused again. The accounting system recognizes a repeat, so " +
+		"nothing is entered twice."
 }
 
 func (t *retryAccountingSyncTool) SearchTerms() []string {
@@ -229,14 +246,17 @@ func (t *retryAccountingSyncTool) Prerequisites() []string {
 func (t *retryAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramAccountingSystem: accountingSystemSchema(),
-		paramSyncRecordIDs: jsonschemautils.DescribedArray(
-			fmt.Sprintf(
-				"Up to %d sync record ids, from list_accounting_sync_records or "+
-					"get_record_accounting_sync_state.",
+		paramSyncRecordIDs: toolschema.RecordSubset(
+			permission.ResourceAccountingSync.String(),
+			jsonschemautils.DescribedArray(
+				fmt.Sprintf(
+					"Up to %d sync record ids, from list_accounting_sync_records or "+
+						"get_record_accounting_sync_state.",
+					maxSyncRetryIDs,
+				),
+				jsonschemautils.String(0),
 				maxSyncRetryIDs,
 			),
-			jsonschemautils.String(0),
-			maxSyncRetryIDs,
 		),
 		paramSyncErrorCategories: jsonschemautils.DescribedArray(
 			"Retry every retryable record that last failed for one of these reasons.",
@@ -301,6 +321,9 @@ func (t *retryAccountingSyncTool) plan(
 			"Name the records to retry, or the error categories whose records to retry",
 		)
 	}
+	if len(ids) == 0 && params.ApprovedFromProposal() {
+		return nil, errUnpinnedRetry
+	}
 
 	tenant := tenantFrom(*params)
 	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
@@ -320,6 +343,9 @@ func (t *retryAccountingSyncTool) plan(
 				syncDocumentLabel(record),
 				string(record.Status),
 			)
+		}
+		if len(categories) > 0 && !slices.Contains(categories, record.ErrorCategory) {
+			continue
 		}
 		records = append(records, record)
 	}
@@ -343,6 +369,94 @@ func (t *retryAccountingSyncTool) Validate(
 ) error {
 	_, err := t.plan(ctx, &params)
 	return err
+}
+
+func (t *retryAccountingSyncTool) ResolveProposalSelection(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolProposalSelectionResolver interface passes params by value
+) (map[string]any, error) {
+	if _, named := params.Params[paramSyncRecordIDs]; named {
+		return params.Params, nil
+	}
+	if err := guardPreview(t, &params); err != nil {
+		return nil, err
+	}
+	system, err := accountingSystemFrom(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	categories, err := syncEnums(
+		params.Params,
+		paramSyncErrorCategories,
+		accountingsync.SyncErrorCategory.IsValid,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(categories) == 0 {
+		return params.Params, nil
+	}
+
+	candidates := retryCandidatesRequest(tenantFrom(params), system, categories)
+	candidates.Cursor.Limit = maxSyncRetryIDs
+	page, err := t.sync.ListRecords(ctx, candidates)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]any, 0, len(page.Items))
+	for _, record := range page.Items {
+		if record != nil {
+			ids = append(ids, record.ID.String())
+		}
+	}
+	if len(ids) == 0 {
+		return nil, errortypes.NewBusinessError(
+			"No Blocked, DeadLettered or Retrying record last failed as {0}; "+
+				"get_accounting_sync_status shows what is waiting",
+			joinCategories(categories),
+		)
+	}
+
+	pinned := make(map[string]any, len(params.Params)+1)
+	maps.Copy(pinned, params.Params)
+	pinned[paramSyncRecordIDs] = ids
+
+	return pinned, nil
+}
+
+func (t *retryAccountingSyncTool) waitingCount(
+	ctx context.Context,
+	req *serviceports.RetryAccountingSyncRequest,
+) (int, error) {
+	candidates := retryCandidatesRequest(req.TenantInfo, req.IntegrationType, req.ErrorCategories)
+	candidates.Cursor.Limit = 1
+	candidates.Cursor.IncludeTotalCount = true
+	page, err := t.sync.ListRecords(ctx, candidates)
+	if err != nil {
+		return 0, err
+	}
+	if page.TotalCount == nil {
+		return len(page.Items), nil
+	}
+
+	return *page.TotalCount, nil
+}
+
+func retryCandidatesRequest(
+	tenant pagination.TenantInfo,
+	system integration.Type,
+	categories []accountingsync.SyncErrorCategory,
+) *serviceports.ListAccountingSyncRecordsRequest {
+	return &serviceports.ListAccountingSyncRecordsRequest{
+		TenantInfo:      tenant,
+		IntegrationType: system,
+		Statuses:        accountingsync.RetryableSyncStatuses(),
+		ErrorCategories: categories,
+	}
+}
+
+func joinCategories(categories []accountingsync.SyncErrorCategory) string {
+	return strings.Join(sliceutils.Strings(categories), " or ")
 }
 
 func (t *retryAccountingSyncTool) Execute(

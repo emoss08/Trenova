@@ -1,6 +1,7 @@
 package accountingsync_test
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -438,4 +439,16 @@ func TestReflectSkipsARecordTheProviderAlreadyHas(t *testing.T) {
 	skipped := queuedRecord(t, false)
 	require.NoError(t, skipped.Skip(actor, "entered by hand"))
 	assert.Empty(t, skipped.ReflectedIn(), "a plain skip is not reflected anywhere")
+}
+
+func TestRetryableSyncStatusesAreTheOnesRetryAccepts(t *testing.T) {
+	t.Parallel()
+
+	for _, status := range accountingsync.AllSyncStatuses() {
+		assert.Equalf(t,
+			status.Retryable(),
+			slices.Contains(accountingsync.RetryableSyncStatuses(), status),
+			"%s", status,
+		)
+	}
 }

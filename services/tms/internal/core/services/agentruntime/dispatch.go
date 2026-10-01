@@ -156,13 +156,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			ctx, runToolParams(req, p.idempotencyKey, call.Arguments),
 		)
 		if rErr != nil {
-			return refusedOutcome(
-				aitrace.OutcomeInvalid,
-				rErr.Error(),
-				"Tool %q was not proposed or run: its selection could not be resolved to "+
-					"records: %s\nFix the call and try again.",
-				call.Name, rErr.Error(),
-			)
+			return unresolvedSelection(call.Name, "proposed or run", rErr)
 		}
 		call.Arguments = resolved
 	}
@@ -176,6 +170,18 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Taint:      decisionTaint(p.taint, p.afterExternal),
 	})
 	tier, heldForExternal := afterExternalContent(decision.Tier, p.afterExternal)
+	if tier != agent.TierAutoExecute {
+		if pinner, pins := tool.(serviceports.ToolProposalSelectionResolver); pins {
+			pinned, pErr := pinner.ResolveProposalSelection(
+				ctx, runToolParams(req, p.idempotencyKey, call.Arguments),
+			)
+			if pErr != nil {
+				return unresolvedSelection(call.Name, "proposed", pErr)
+			}
+			call.Arguments = pinned
+			p.call = call
+		}
+	}
 	action := &serviceports.PendingAction{
 		ToolName:  call.Name,
 		Arguments: call.Arguments,
@@ -287,6 +293,16 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 
 	return s.executeAction(ctx, actionParams{dispatchParams: p, tool: tool, action: action})
+}
+
+func unresolvedSelection(toolName, verb string, err error) toolOutcome {
+	return refusedOutcome(
+		aitrace.OutcomeInvalid,
+		err.Error(),
+		"Tool %q was not %s: its selection could not be resolved to records: %s\n"+
+			"Fix the call and try again.",
+		toolName, verb, err.Error(),
+	)
 }
 
 func runToolParams(

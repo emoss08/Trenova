@@ -133,7 +133,7 @@ func (t *retryAccountingSyncTool) Preview(
 		return refusedSync("Would send documents to the accounting system again.", err)
 	}
 
-	if len(plan.records) == 0 {
+	if len(plan.req.IDs) == 0 {
 		waiting := 0
 		for _, group := range plan.summary.Attention {
 			if slices.Contains(plan.req.ErrorCategories, group.ErrorCategory) {
@@ -144,7 +144,7 @@ func (t *retryAccountingSyncTool) Preview(
 			"Would send to %s again every record that last failed as %s; %d are blocked or "+
 				"gave up that way now, plus any still retrying.",
 			plan.summary.ProviderName,
-			strings.Join(sliceutils.Strings(plan.req.ErrorCategories), " or "),
+			joinCategories(plan.req.ErrorCategories),
 			waiting,
 		))
 		preview.Partial = true
@@ -169,12 +169,33 @@ func (t *retryAccountingSyncTool) Preview(
 		changes = append(changes, change)
 	}
 
-	return toolpreview.Build(fmt.Sprintf(
+	summary := fmt.Sprintf(
 		"Would send %s to %s again; the accounting system recognizes a repeat, so nothing "+
 			"is entered twice.",
 		countOf(len(plan.records), "document"),
 		plan.summary.ProviderName,
-	), changes...), nil
+	)
+	left := 0
+	if len(plan.req.ErrorCategories) > 0 {
+		waiting, wErr := t.waitingCount(ctx, plan.req)
+		if wErr != nil {
+			return nil, wErr
+		}
+		left = max(waiting-len(plan.records), 0)
+	}
+	if left > 0 {
+		summary += fmt.Sprintf(
+			" It leaves %s that last failed as %s for another retry.",
+			countOf(left, "other record"),
+			joinCategories(plan.req.ErrorCategories),
+		)
+	}
+	preview := toolpreview.Build(summary, changes...)
+	if left > 0 {
+		preview.Partial = true
+	}
+
+	return preview, nil
 }
 
 func (t *skipAccountingSyncTool) Preview(

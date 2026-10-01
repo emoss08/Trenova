@@ -339,6 +339,10 @@ func (s SyncStatus) Retryable() bool {
 	return s == SyncStatusBlocked || s == SyncStatusDeadLettered || s == SyncStatusRetrying
 }
 
+func RetryableSyncStatuses() []SyncStatus {
+	return []SyncStatus{SyncStatusRetrying, SyncStatusBlocked, SyncStatusDeadLettered}
+}
+
 func AllSyncStatuses() []SyncStatus {
 	return []SyncStatus{
 		SyncStatusQueued,
