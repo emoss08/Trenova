@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -54,10 +53,10 @@ func withCheckers[T validationframework.TenantedEntity](
 
 	return builder.
 		WithUniquenessChecker(
-			validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return db.DB() }),
+			validationframework.NewBunUniquenessCheckerScoped(db),
 		).
 		WithReferenceChecker(
-			validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return db.DB() }),
+			validationframework.NewBunReferenceCheckerScoped(db),
 		)
 }
 
@@ -214,34 +213,36 @@ func newSingleOrgDefaultRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if !entity.IsOrgDefault {
+			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+				if !entity.IsOrgDefault {
+					return nil
+				}
+
+				query := db.DBForContext(ctx).NewSelect().
+					Table("document_templates").
+					ColumnExpr("1").
+					Where("organization_id = ?", valCtx.OrganizationID).
+					Where("business_unit_id = ?", valCtx.BusinessUnitID).
+					Where("kind = ?", entity.Kind).
+					Where("is_org_default = TRUE")
+
+				if valCtx.EntityID.IsNotNil() {
+					query = query.Where("id != ?", valCtx.EntityID)
+				}
+
+				exists, err := query.Exists(ctx)
+				if err != nil {
+					return err
+				}
+
+				if exists {
+					multiErr.Add("isOrgDefault", errortypes.ErrInvalid,
+						"Another template is already the organization default for this kind. "+
+							"Clear that one first.")
+				}
+
 				return nil
-			}
-
-			query := db.DB().NewSelect().
-				Table("document_templates").
-				ColumnExpr("1").
-				Where("organization_id = ?", valCtx.OrganizationID).
-				Where("business_unit_id = ?", valCtx.BusinessUnitID).
-				Where("kind = ?", entity.Kind).
-				Where("is_org_default = TRUE")
-
-			if valCtx.EntityID.IsNotNil() {
-				query = query.Where("id != ?", valCtx.EntityID)
-			}
-
-			exists, err := query.Exists(ctx)
-			if err != nil {
-				return err
-			}
-
-			if exists {
-				multiErr.Add("isOrgDefault", errortypes.ErrInvalid,
-					"Another template is already the organization default for this kind. "+
-						"Clear that one first.")
-			}
-
-			return nil
+			})
 		})
 }
 

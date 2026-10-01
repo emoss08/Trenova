@@ -226,9 +226,7 @@ func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity := new(accessorialcharge.AccessorialCharge)
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -268,9 +266,7 @@ func (h *Handler) update(c *gin.Context) {
 
 	entity := new(accessorialcharge.AccessorialCharge)
 	entity.ID = accessorialChargeID
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -325,7 +321,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	if err = c.ShouldBindJSON(existing); err != nil {
+	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -73,65 +74,71 @@ func (r *repository) FleetRatings(
 	ctx context.Context,
 	req *repositories.FleetSafetyRequest,
 ) ([]repositories.FleetSafetyRatingRow, error) {
-	rows := make([]repositories.FleetSafetyRatingRow, 0, 4)
-	if err := r.rosterScope(ctx, req).
-		ColumnExpr("wrkp.safety_rating AS rating").
-		ColumnExpr("COUNT(*) AS workers").
-		ColumnExpr("COALESCE(SUM(wrkp.safety_score), 0) AS total_score").
-		GroupExpr("wrkp.safety_rating").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to count fleet safety ratings", zap.Error(err))
-		return nil, fmt.Errorf("count fleet safety ratings: %w", err)
-	}
-	return rows, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyRatingRow, error) {
+		rows := make([]repositories.FleetSafetyRatingRow, 0, 4)
+		if err := r.rosterScope(ctx, req).
+			ColumnExpr("wrkp.safety_rating AS rating").
+			ColumnExpr("COUNT(*) AS workers").
+			ColumnExpr("COALESCE(SUM(wrkp.safety_score), 0) AS total_score").
+			GroupExpr("wrkp.safety_rating").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to count fleet safety ratings", zap.Error(err))
+			return nil, fmt.Errorf("count fleet safety ratings: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 func (r *repository) FleetTerminals(
 	ctx context.Context,
 	req *repositories.FleetSafetyRequest,
 ) ([]repositories.FleetSafetyTerminalRow, error) {
-	rows := make([]repositories.FleetSafetyTerminalRow, 0, 8)
-	if err := r.rosterScope(ctx, req).
-		Join("LEFT JOIN fleet_codes AS fc").
-		JoinOn("fc.id = wrk.fleet_code_id").
-		JoinOn("fc.organization_id = wrk.organization_id").
-		JoinOn("fc.business_unit_id = wrk.business_unit_id").
-		ColumnExpr("COALESCE(wrk.fleet_code_id, '') AS fleet_code_id").
-		ColumnExpr("COALESCE(fc.code, '') AS fleet_code_code").
-		ColumnExpr("COALESCE(fc.description, '') AS fleet_code_description").
-		ColumnExpr("COALESCE(fc.color, '') AS fleet_code_color").
-		ColumnExpr("COUNT(*) AS workers").
-		ColumnExpr("COUNT(*) FILTER (WHERE wrkp.safety_rating = 'AtRisk') AS at_risk").
-		ColumnExpr("COUNT(*) FILTER (WHERE wrkp.safety_rating = 'Watch') AS watch").
-		ColumnExpr("COALESCE(SUM(wrkp.safety_score), 0) AS total_score").
-		GroupExpr("wrk.fleet_code_id, fc.code, fc.description, fc.color").
-		OrderExpr("at_risk DESC, workers DESC").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to group fleet safety by terminal", zap.Error(err))
-		return nil, fmt.Errorf("group fleet safety by terminal: %w", err)
-	}
-	return rows, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyTerminalRow, error) {
+		rows := make([]repositories.FleetSafetyTerminalRow, 0, 8)
+		if err := r.rosterScope(ctx, req).
+			Join("LEFT JOIN fleet_codes AS fc").
+			JoinOn("fc.id = wrk.fleet_code_id").
+			JoinOn("fc.organization_id = wrk.organization_id").
+			JoinOn("fc.business_unit_id = wrk.business_unit_id").
+			ColumnExpr("COALESCE(wrk.fleet_code_id, '') AS fleet_code_id").
+			ColumnExpr("COALESCE(fc.code, '') AS fleet_code_code").
+			ColumnExpr("COALESCE(fc.description, '') AS fleet_code_description").
+			ColumnExpr("COALESCE(fc.color, '') AS fleet_code_color").
+			ColumnExpr("COUNT(*) AS workers").
+			ColumnExpr("COUNT(*) FILTER (WHERE wrkp.safety_rating = 'AtRisk') AS at_risk").
+			ColumnExpr("COUNT(*) FILTER (WHERE wrkp.safety_rating = 'Watch') AS watch").
+			ColumnExpr("COALESCE(SUM(wrkp.safety_score), 0) AS total_score").
+			GroupExpr("wrk.fleet_code_id, fc.code, fc.description, fc.color").
+			OrderExpr("at_risk DESC, workers DESC").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to group fleet safety by terminal", zap.Error(err))
+			return nil, fmt.Errorf("group fleet safety by terminal: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 func (r *repository) FleetKinds(
 	ctx context.Context,
 	req *repositories.FleetSafetyRequest,
 ) ([]repositories.FleetSafetyKindRow, error) {
-	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
-	rows := make([]repositories.FleetSafetyKindRow, 0, 5)
-	if err := r.eventScope(ctx, req, since).
-		ColumnExpr("wsev.kind AS kind").
-		ColumnExpr("COUNT(*) AS events").
-		ColumnExpr("COALESCE(SUM(wsev.points), 0) AS points").
-		ColumnExpr("COUNT(*) FILTER (WHERE wsev.preventable) AS preventable").
-		ColumnExpr(outOfServiceCount).
-		ColumnExpr("COUNT(*) FILTER (WHERE wsev.status <> 'Closed') AS open_events").
-		GroupExpr("wsev.kind").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to group fleet safety by kind", zap.Error(err))
-		return nil, fmt.Errorf("group fleet safety by kind: %w", err)
-	}
-	return rows, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyKindRow, error) {
+		since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
+		rows := make([]repositories.FleetSafetyKindRow, 0, 5)
+		if err := r.eventScope(ctx, req, since).
+			ColumnExpr("wsev.kind AS kind").
+			ColumnExpr("COUNT(*) AS events").
+			ColumnExpr("COALESCE(SUM(wsev.points), 0) AS points").
+			ColumnExpr("COUNT(*) FILTER (WHERE wsev.preventable) AS preventable").
+			ColumnExpr(outOfServiceCount).
+			ColumnExpr("COUNT(*) FILTER (WHERE wsev.status <> 'Closed') AS open_events").
+			GroupExpr("wsev.kind").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to group fleet safety by kind", zap.Error(err))
+			return nil, fmt.Errorf("group fleet safety by kind: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 // csaBucketExpr sorts an event into the FMCSA's recency buckets: 0 inside six
@@ -149,26 +156,28 @@ func (r *repository) FleetBasics(
 	ctx context.Context,
 	req *repositories.FleetSafetyRequest,
 ) ([]repositories.FleetSafetyBasicRow, error) {
-	since := timeutils.AddMonthsUTC(req.Now, -worker.SafetyPointsRetentionMonths)
-	rows := make([]repositories.FleetSafetyBasicRow, 0, 16)
-	bucket := csaBucketExpr(req.Now)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyBasicRow, error) {
+		since := timeutils.AddMonthsUTC(req.Now, -worker.SafetyPointsRetentionMonths)
+		rows := make([]repositories.FleetSafetyBasicRow, 0, 16)
+		bucket := csaBucketExpr(req.Now)
 
-	if err := r.eventScope(ctx, req, since).
-		Join("JOIN worker_safety_violations AS wsvi").
-		JoinOn("wsvi.safety_event_id = wsev.id").
-		JoinOn("wsvi.organization_id = wsev.organization_id").
-		JoinOn("wsvi.business_unit_id = wsev.business_unit_id").
-		ColumnExpr("wsvi.basic AS basic").
-		ColumnExpr(bucket+" AS bucket").
-		ColumnExpr("COUNT(*) AS violations").
-		ColumnExpr("COALESCE(SUM(wsvi.severity_weight), 0) AS severity_sum").
-		ColumnExpr("COUNT(*) FILTER (WHERE wsvi.out_of_service) AS out_of_service").
-		GroupExpr("wsvi.basic, "+bucket).
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to group fleet safety by BASIC", zap.Error(err))
-		return nil, fmt.Errorf("group fleet safety by BASIC: %w", err)
-	}
-	return rows, nil
+		if err := r.eventScope(ctx, req, since).
+			Join("JOIN worker_safety_violations AS wsvi").
+			JoinOn("wsvi.safety_event_id = wsev.id").
+			JoinOn("wsvi.organization_id = wsev.organization_id").
+			JoinOn("wsvi.business_unit_id = wsev.business_unit_id").
+			ColumnExpr("wsvi.basic AS basic").
+			ColumnExpr(bucket+" AS bucket").
+			ColumnExpr("COUNT(*) AS violations").
+			ColumnExpr("COALESCE(SUM(wsvi.severity_weight), 0) AS severity_sum").
+			ColumnExpr("COUNT(*) FILTER (WHERE wsvi.out_of_service) AS out_of_service").
+			GroupExpr("wsvi.basic, "+bucket).
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to group fleet safety by BASIC", zap.Error(err))
+			return nil, fmt.Errorf("group fleet safety by BASIC: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 // FleetEventBasics is the fallback for events nobody keyed violations into.
@@ -178,116 +187,122 @@ func (r *repository) FleetEventBasics(
 	ctx context.Context,
 	req *repositories.FleetSafetyRequest,
 ) ([]repositories.FleetSafetyEventBasicRow, error) {
-	since := timeutils.AddMonthsUTC(req.Now, -worker.SafetyPointsRetentionMonths)
-	rows := make([]repositories.FleetSafetyEventBasicRow, 0, 16)
-	bucket := csaBucketExpr(req.Now)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyEventBasicRow, error) {
+		since := timeutils.AddMonthsUTC(req.Now, -worker.SafetyPointsRetentionMonths)
+		rows := make([]repositories.FleetSafetyEventBasicRow, 0, 16)
+		bucket := csaBucketExpr(req.Now)
 
-	if err := r.eventScope(ctx, req, since).
-		Where(
-			"NOT EXISTS (SELECT 1 FROM worker_safety_violations wsvi"+
-				" WHERE wsvi.safety_event_id = wsev.id"+
-				" AND wsvi.organization_id = wsev.organization_id"+
-				" AND wsvi.business_unit_id = wsev.business_unit_id)",
-		).
-		ColumnExpr("wsev.kind AS kind").
-		// The column is an enum; coalescing it straight against '' asks the
-		// database to read '' as a result, which it refuses. Text first.
-		ColumnExpr("COALESCE(CAST(wsev.inspection_result AS TEXT), '') AS inspection_result").
-		ColumnExpr(bucket+" AS bucket").
-		ColumnExpr("COUNT(*) AS events").
-		ColumnExpr("COALESCE(SUM(wsev.points), 0) AS points").
-		ColumnExpr(outOfServiceCount).
-		GroupExpr("wsev.kind, wsev.inspection_result, "+bucket).
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to group fleet safety events by BASIC", zap.Error(err))
-		return nil, fmt.Errorf("group fleet safety events by BASIC: %w", err)
-	}
-	return rows, nil
+		if err := r.eventScope(ctx, req, since).
+			Where(
+				"NOT EXISTS (SELECT 1 FROM worker_safety_violations wsvi"+
+					" WHERE wsvi.safety_event_id = wsev.id"+
+					" AND wsvi.organization_id = wsev.organization_id"+
+					" AND wsvi.business_unit_id = wsev.business_unit_id)",
+			).
+			ColumnExpr("wsev.kind AS kind").
+			// The column is an enum; coalescing it straight against '' asks the
+			// database to read '' as a result, which it refuses. Text first.
+			ColumnExpr("COALESCE(CAST(wsev.inspection_result AS TEXT), '') AS inspection_result").
+			ColumnExpr(bucket+" AS bucket").
+			ColumnExpr("COUNT(*) AS events").
+			ColumnExpr("COALESCE(SUM(wsev.points), 0) AS points").
+			ColumnExpr(outOfServiceCount).
+			GroupExpr("wsev.kind, wsev.inspection_result, "+bucket).
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to group fleet safety events by BASIC", zap.Error(err))
+			return nil, fmt.Errorf("group fleet safety events by BASIC: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 func (r *repository) FleetTrend(
 	ctx context.Context,
 	req *repositories.FleetSafetyRequest,
 ) ([]repositories.FleetSafetyTrendRow, error) {
-	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
-	rows := make([]repositories.FleetSafetyTrendRow, 0, 24)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyTrendRow, error) {
+		since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
+		rows := make([]repositories.FleetSafetyTrendRow, 0, 24)
 
-	// Bucketing by UTC month in SQL keeps the trend a single scan. Months are
-	// what a safety meeting talks in, and the day boundary an org's timezone
-	// would move is not worth a second query. The dialect spells the truncation
-	// so the query is not Postgres-only.
-	period := dbdialect.MonthStartEpochFromBun(r.db.DBForContext(ctx), "wsev.occurred_at")
+		// Bucketing by UTC month in SQL keeps the trend a single scan. Months are
+		// what a safety meeting talks in, and the day boundary an org's timezone
+		// would move is not worth a second query. The dialect spells the truncation
+		// so the query is not Postgres-only.
+		period := dbdialect.MonthStartEpochFromBun(r.db.DBForContext(ctx), "wsev.occurred_at")
 
-	if err := r.eventScope(ctx, req, since).
-		ColumnExpr(period+" AS period_start").
-		ColumnExpr("COUNT(*) AS events").
-		ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Accident') AS accidents").
-		ColumnExpr(
-			"COUNT(*) FILTER (WHERE wsev.kind = 'Accident' AND wsev.preventable) AS preventable",
-		).
-		ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Citation') AS citations").
-		ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Inspection') AS inspections").
-		ColumnExpr(outOfServiceCount).
-		ColumnExpr("COALESCE(SUM(wsev.points), 0) AS points").
-		GroupExpr(period).
-		OrderExpr("period_start").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to build fleet safety trend", zap.Error(err))
-		return nil, fmt.Errorf("build fleet safety trend: %w", err)
-	}
-	return rows, nil
+		if err := r.eventScope(ctx, req, since).
+			ColumnExpr(period+" AS period_start").
+			ColumnExpr("COUNT(*) AS events").
+			ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Accident') AS accidents").
+			ColumnExpr(
+				"COUNT(*) FILTER (WHERE wsev.kind = 'Accident' AND wsev.preventable) AS preventable",
+			).
+			ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Citation') AS citations").
+			ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Inspection') AS inspections").
+			ColumnExpr(outOfServiceCount).
+			ColumnExpr("COALESCE(SUM(wsev.points), 0) AS points").
+			GroupExpr(period).
+			OrderExpr("period_start").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to build fleet safety trend", zap.Error(err))
+			return nil, fmt.Errorf("build fleet safety trend: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 func (r *repository) FleetRanking(
 	ctx context.Context,
 	req *repositories.FleetSafetyRequest,
 ) ([]repositories.FleetSafetyRankRow, error) {
-	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
-	rows := make([]repositories.FleetSafetyRankRow, 0, 32)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyRankRow, error) {
+		since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
+		rows := make([]repositories.FleetSafetyRankRow, 0, 32)
 
-	// Active points are not cached on the profile — they roll off on a date
-	// rather than on a write — so they are summed here, once, over the same
-	// scan that produces the ranking.
-	if err := r.rosterScope(ctx, req).
-		Join("LEFT JOIN fleet_codes AS fc").
-		JoinOn("fc.id = wrk.fleet_code_id").
-		JoinOn("fc.organization_id = wrk.organization_id").
-		JoinOn("fc.business_unit_id = wrk.business_unit_id").
-		Join("LEFT JOIN worker_safety_events AS wsev").
-		JoinOn("wsev.worker_id = wrk.id").
-		JoinOn("wsev.organization_id = wrk.organization_id").
-		JoinOn("wsev.business_unit_id = wrk.business_unit_id").
-		ColumnExpr("wrk.id AS worker_id").
-		ColumnExpr("wrk.first_name AS first_name").
-		ColumnExpr("wrk.last_name AS last_name").
-		ColumnExpr("COALESCE(wrk.fleet_code_id, '') AS fleet_code_id").
-		ColumnExpr("COALESCE(fc.code, '') AS fleet_code_code").
-		ColumnExpr("COALESCE(fc.color, '') AS fleet_code_color").
-		ColumnExpr("wrkp.safety_rating AS rating").
-		ColumnExpr("wrkp.safety_score AS score").
-		ColumnExpr(
-			"COALESCE(SUM(wsev.points) FILTER (WHERE wsev.points > 0"+
-				" AND (wsev.points_expire_at IS NULL OR wsev.points_expire_at > ?)), 0) AS active_points",
-			req.Now,
-		).
-		ColumnExpr("COUNT(wsev.id) FILTER (WHERE wsev.occurred_at >= ?) AS events", since).
-		ColumnExpr(
-			"MAX(wsev.occurred_at) FILTER (WHERE wsev.kind IN ('Accident', 'Incident', 'Citation')) AS last_event_at",
-		).
-		GroupExpr(
-			"wrk.id, wrk.first_name, wrk.last_name, wrk.fleet_code_id,"+
-				" fc.code, fc.color, wrkp.safety_rating, wrkp.safety_score",
-		).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			if req.RankBest {
-				return sq.OrderExpr("score DESC, active_points ASC, last_name ASC")
-			}
-			return sq.OrderExpr("score ASC, active_points DESC, last_name ASC")
-		}).
-		Limit(req.RankLimit).
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to rank fleet safety", zap.Error(err))
-		return nil, fmt.Errorf("rank fleet safety: %w", err)
-	}
-	return rows, nil
+		// Active points are not cached on the profile — they roll off on a date
+		// rather than on a write — so they are summed here, once, over the same
+		// scan that produces the ranking.
+		if err := r.rosterScope(ctx, req).
+			Join("LEFT JOIN fleet_codes AS fc").
+			JoinOn("fc.id = wrk.fleet_code_id").
+			JoinOn("fc.organization_id = wrk.organization_id").
+			JoinOn("fc.business_unit_id = wrk.business_unit_id").
+			Join("LEFT JOIN worker_safety_events AS wsev").
+			JoinOn("wsev.worker_id = wrk.id").
+			JoinOn("wsev.organization_id = wrk.organization_id").
+			JoinOn("wsev.business_unit_id = wrk.business_unit_id").
+			ColumnExpr("wrk.id AS worker_id").
+			ColumnExpr("wrk.first_name AS first_name").
+			ColumnExpr("wrk.last_name AS last_name").
+			ColumnExpr("COALESCE(wrk.fleet_code_id, '') AS fleet_code_id").
+			ColumnExpr("COALESCE(fc.code, '') AS fleet_code_code").
+			ColumnExpr("COALESCE(fc.color, '') AS fleet_code_color").
+			ColumnExpr("wrkp.safety_rating AS rating").
+			ColumnExpr("wrkp.safety_score AS score").
+			ColumnExpr(
+				"COALESCE(SUM(wsev.points) FILTER (WHERE wsev.points > 0"+
+					" AND (wsev.points_expire_at IS NULL OR wsev.points_expire_at > ?)), 0) AS active_points",
+				req.Now,
+			).
+			ColumnExpr("COUNT(wsev.id) FILTER (WHERE wsev.occurred_at >= ?) AS events", since).
+			ColumnExpr(
+				"MAX(wsev.occurred_at) FILTER (WHERE wsev.kind IN ('Accident', 'Incident', 'Citation')) AS last_event_at",
+			).
+			GroupExpr(
+				"wrk.id, wrk.first_name, wrk.last_name, wrk.fleet_code_id,"+
+					" fc.code, fc.color, wrkp.safety_rating, wrkp.safety_score",
+			).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				if req.RankBest {
+					return sq.OrderExpr("score DESC, active_points ASC, last_name ASC")
+				}
+				return sq.OrderExpr("score ASC, active_points DESC, last_name ASC")
+			}).
+			Limit(req.RankLimit).
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to rank fleet safety", zap.Error(err))
+			return nil, fmt.Errorf("rank fleet safety: %w", err)
+		}
+		return rows, nil
+	})
 }

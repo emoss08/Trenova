@@ -439,6 +439,14 @@ func createDatabaseFromTemplate(
 func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
 	t.Helper()
 
+	ctx, db, _, cleanup := SetupTestDBWithDSN(t)
+
+	return ctx, db, cleanup
+}
+
+func SetupTestDBWithDSN(t *testing.T) (context.Context, *bun.DB, string, func()) {
+	t.Helper()
+
 	chdirToServiceRoot(t)
 
 	env, err := getSharedSeedEnv()
@@ -455,7 +463,8 @@ func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
 		require.NoError(t, err, "failed to create isolated test database")
 	}
 
-	db := openBunDB(replaceDatabase(env.adminDSN, dbName), 2)
+	dsn := replaceDatabase(env.adminDSN, dbName)
+	db := openBunDB(dsn, 2)
 	if pingErr := db.PingContext(ctx); pingErr != nil {
 		cancel()
 		require.NoError(t, pingErr, "failed to ping isolated test database")
@@ -492,7 +501,7 @@ func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
 		cancel()
 	}
 
-	return ctx, db, cleanup
+	return ctx, db, dsn, cleanup
 }
 
 func BeginTx(t *testing.T, ctx context.Context, db *bun.DB) (context.Context, bun.Tx) {

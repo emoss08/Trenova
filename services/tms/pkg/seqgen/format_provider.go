@@ -37,13 +37,15 @@ func (p *formatProvider) GetFormat(
 	orgID, buID pulid.ID,
 ) (*tenant.SequenceFormat, error) {
 	cfg := new(tenant.SequenceConfig)
-	err := p.db.DB().NewSelect().
-		Model(cfg).
-		Where("sequence_type = ?", sequenceType).
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Limit(1).
-		Scan(ctx)
+	err := p.db.RunDetached(ctx, true, func(ctx context.Context) error {
+		return p.db.DBForContext(ctx).NewSelect().
+			Model(cfg).
+			Where("sequence_type = ?", sequenceType).
+			Where("organization_id = ?", orgID).
+			Where("business_unit_id = ?", buID).
+			Limit(1).
+			Scan(ctx)
+	})
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
 			return tenant.DefaultSequenceFormat(sequenceType)

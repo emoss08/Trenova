@@ -175,12 +175,18 @@ func (r *testRoleRepo) CreateAssignment(
 	return err
 }
 
-func (r *testRoleRepo) DeleteAssignment(ctx context.Context, id pulid.ID) error {
+func (r *testRoleRepo) DeleteAssignment(
+	ctx context.Context,
+	req repositories.DeleteRoleAssignmentRequest,
+) (*permission.UserRoleAssignment, error) {
+	deleted := new(permission.UserRoleAssignment)
 	_, err := r.db.NewDelete().
-		Model((*permission.UserRoleAssignment)(nil)).
-		Where("id = ?", id).
+		Model(deleted).
+		Where("id = ?", req.AssignmentID).
+		Where("organization_id = ?", req.OrganizationID).
+		Returning("*").
 		Exec(ctx)
-	return err
+	return deleted, err
 }
 
 func (r *testRoleRepo) CreateResourcePermission(
@@ -206,10 +212,14 @@ func (r *testRoleRepo) UpdateResourcePermission(
 	return err
 }
 
-func (r *testRoleRepo) DeleteResourcePermission(ctx context.Context, id pulid.ID) error {
+func (r *testRoleRepo) DeleteResourcePermission(
+	ctx context.Context,
+	req repositories.DeleteResourcePermissionRequest,
+) error {
 	_, err := r.db.NewDelete().
 		Model((*permission.ResourcePermission)(nil)).
-		Where("id = ?", id).
+		Where("id = ?", req.PermissionID).
+		Where("role_id = ?", req.RoleID).
 		Exec(ctx)
 	return err
 }

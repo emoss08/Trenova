@@ -2,6 +2,8 @@ package tenderservice
 
 import (
 	"context"
+
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/tokenutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
@@ -46,23 +48,27 @@ type PublicOfferView struct {
 func (s *Service) resolveToken(
 	ctx context.Context,
 	rawToken string,
-) (*tender.TenderOfferToken, *tender.TenderOffer, error) {
+) (context.Context, *tender.TenderOfferToken, *tender.TenderOffer, error) {
 	if rawToken == "" {
-		return nil, nil, invalidTokenError()
+		return ctx, nil, nil, invalidTokenError()
 	}
 
 	token, err := s.repo.GetTokenByHash(ctx, tokenutils.Hash(rawToken))
 	if err != nil {
-		return nil, nil, err
+		return ctx, nil, nil, err
 	}
 	if token == nil || !token.IsUsable(timeutils.NowUnix()) {
-		return nil, nil, invalidTokenError()
+		return ctx, nil, nil, invalidTokenError()
 	}
 
 	tenantInfo := pagination.TenantInfo{
 		OrgID: token.OrganizationID,
 		BuID:  token.BusinessUnitID,
 	}
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: token.OrganizationID,
+		BusinessUnitID: token.BusinessUnitID,
+	})
 	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       token.TenderOfferID,
@@ -70,12 +76,12 @@ func (s *Service) resolveToken(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil, invalidTokenError()
+			return ctx, nil, nil, invalidTokenError()
 		}
-		return nil, nil, err
+		return ctx, nil, nil, err
 	}
 
-	return token, offer, nil
+	return ctx, token, offer, nil
 }
 
 // PreviewByToken renders the offer for the public page. It NEVER mutates:
@@ -85,7 +91,7 @@ func (s *Service) PreviewByToken(
 	ctx context.Context,
 	rawToken string,
 ) (*PublicOfferView, error) {
-	token, offer, err := s.resolveToken(ctx, rawToken)
+	ctx, token, offer, err := s.resolveToken(ctx, rawToken)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +141,7 @@ func (s *Service) RespondByToken(
 		)
 	}
 
-	token, offer, err := s.resolveToken(ctx, rawToken)
+	ctx, token, offer, err := s.resolveToken(ctx, rawToken)
 	if err != nil {
 		return err
 	}

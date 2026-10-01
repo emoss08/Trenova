@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -78,8 +79,9 @@ func TestLogin_Success(t *testing.T) {
 			CurrentOrganizationID: orgID,
 			EmailAddress:          "test@example.com",
 		},
-		ExpiresAt: 9999999999,
-		SessionID: sessionID.String(),
+		ExpiresAt:    9999999999,
+		SessionID:    sessionID.String(),
+		SessionToken: sessionID.String() + ".opaque-session-secret",
 	}, nil)
 
 	_, r := newTestHandler(svc)
@@ -109,7 +111,7 @@ func TestLogin_Success(t *testing.T) {
 	for _, c := range cookies {
 		if c.Name == "session_id" {
 			found = true
-			assert.Equal(t, sessionID.String(), c.Value)
+			assert.Equal(t, sessionID.String()+".opaque-session-secret", c.Value)
 			assert.True(t, c.HttpOnly)
 		}
 		assert.NotEqual(t, "csrf_token", c.Name)
@@ -123,7 +125,7 @@ func TestCSRFToken_Success(t *testing.T) {
 	sessionID := pulid.MustNew("ses_")
 
 	svc := mocks.NewMockAuthService(t)
-	svc.On("ValidateSession", mock.Anything, sessionID).Return(&session.Session{
+	svc.On("AuthenticateSession", mock.Anything, sessionID.String()).Return(&session.Session{
 		ID: sessionID,
 	}, nil)
 
@@ -222,7 +224,9 @@ func TestLogout_Success(t *testing.T) {
 	sessionID := pulid.MustNew("ses_")
 
 	svc := mocks.NewMockAuthService(t)
-	svc.On("Logout", mock.Anything, mock.Anything).Return(nil)
+	svc.On("AuthenticateSession", mock.Anything, sessionID.String()).
+		Return(&session.Session{ID: sessionID}, nil)
+	svc.On("Logout", mock.Anything, sessionID).Return(nil)
 
 	_, r := newTestHandler(svc)
 
@@ -235,7 +239,7 @@ func TestLogout_Success(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
-	svc.AssertCalled(t, "Logout", mock.Anything, mock.Anything)
+	svc.AssertCalled(t, "Logout", mock.Anything, sessionID)
 
 	cookies := w.Result().Cookies()
 	for _, c := range cookies {
@@ -266,7 +270,7 @@ func TestValidateSession_Valid(t *testing.T) {
 	sessionID := pulid.MustNew("ses_")
 
 	svc := mocks.NewMockAuthService(t)
-	svc.On("ValidateSession", mock.Anything, mock.Anything).
+	svc.On("AuthenticateSession", mock.Anything, mock.Anything).
 		Return(&session.Session{ID: sessionID}, nil)
 
 	_, r := newTestHandler(svc)
@@ -311,7 +315,7 @@ func TestValidateSession_InvalidSession(t *testing.T) {
 	sessionID := pulid.MustNew("ses_")
 
 	svc := mocks.NewMockAuthService(t)
-	svc.On("ValidateSession", mock.Anything, mock.Anything).
+	svc.On("AuthenticateSession", mock.Anything, mock.Anything).
 		Return(nil, errors.New("session expired"))
 
 	_, r := newTestHandler(svc)
@@ -330,4 +334,24 @@ func TestValidateSession_InvalidSession(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	assert.False(t, resp["valid"])
+}
+
+func TestLogout_RefusesACookieThatDoesNotAuthenticate(t *testing.T) {
+	t.Parallel()
+
+	sessionID := pulid.MustNew("ses_")
+
+	svc := mocks.NewMockAuthService(t)
+	svc.On("AuthenticateSession", mock.Anything, sessionID.String()).
+		Return(nil, errortypes.NewAuthenticationError("Session is invalid. Please login again."))
+
+	_, r := newTestHandler(svc)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: sessionID.String()})
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	svc.AssertNotCalled(t, "Logout", mock.Anything, mock.Anything)
 }

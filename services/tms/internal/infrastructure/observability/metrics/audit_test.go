@@ -161,3 +161,22 @@ func TestAudit_SetDLQSize(t *testing.T) {
 		m.SetDLQSize(42)
 	})
 }
+
+func TestAudit_RecordSecurityEvents(t *testing.T) {
+	t.Parallel()
+
+	registry := prometheus.NewRegistry()
+	m := NewAudit(registry, zap.NewNop(), true)
+
+	assert.NotPanics(t, func() {
+		m.RecordCriticalBuffered(2)
+		m.RecordSecurityEvent("auth", true)
+		m.RecordSecurityEvent("auth", false)
+	})
+
+	disabled := NewAudit(nil, zap.NewNop(), false)
+	assert.NotPanics(t, func() {
+		disabled.RecordCriticalBuffered(1)
+		disabled.RecordSecurityEvent("auth", true)
+	})
+}

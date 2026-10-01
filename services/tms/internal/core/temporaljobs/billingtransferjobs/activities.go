@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -324,7 +325,10 @@ func (a *Activities) ReconcileZombieRunsActivity(
 		activity.RecordHeartbeat(ctx, run.ID.String())
 
 		finalized, finErr := a.runRepo.Finalize(
-			ctx,
+			dbscope.WithTenant(ctx, dbscope.Tenant{
+				OrganizationID: run.OrganizationID,
+				BusinessUnitID: run.BusinessUnitID,
+			}),
 			&repositories.FinalizeBillingTransferRunRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID: run.OrganizationID,

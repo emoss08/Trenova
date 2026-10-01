@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -37,64 +38,70 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentDecisionByIDRequest,
 ) (*agent.AgentDecision, error) {
-	log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
+		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
 
-	entity := new(agent.AgentDecision)
-	cols := buncolgen.AgentDecisionColumns
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentDecisionScopeTenant(sq, *req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get agent decision", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "AgentDecision")
-	}
+		entity := new(agent.AgentDecision)
+		cols := buncolgen.AgentDecisionColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentDecisionScopeTenant(sq, *req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get agent decision", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "AgentDecision")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *agent.AgentDecision,
 ) (*agent.AgentDecision, error) {
-	log := r.l.With(zap.String("operation", "Create"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
+		log := r.l.With(zap.String("operation", "Create"))
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to create agent decision", zap.Error(err))
-		return nil, err
-	}
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			log.Error("failed to create agent decision", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) ListByProposals(
 	ctx context.Context,
 	req repositories.ListAgentDecisionsByProposalsRequest,
 ) ([]*agent.AgentDecision, error) {
-	if len(req.ProposalIDs) == 0 {
-		return []*agent.AgentDecision{}, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
+		if len(req.ProposalIDs) == 0 {
+			return []*agent.AgentDecision{}, nil
+		}
 
-	cols := buncolgen.AgentDecisionColumns
-	rows := make([]*agent.AgentDecision, 0, len(req.ProposalIDs))
+		cols := buncolgen.AgentDecisionColumns
+		rows := make([]*agent.AgentDecision, 0, len(req.ProposalIDs))
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&rows).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentDecisionScopeTenant(sq, req.TenantInfo).
-				Where(cols.ProposalID.In(), bun.In(req.ProposalIDs))
-		}).
-		OrderExpr(cols.CreatedAt.OrderDesc()).
-		Scan(ctx); err != nil {
-		r.l.Error("failed to list decisions by proposals", zap.Error(err))
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&rows).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentDecisionScopeTenant(sq, req.TenantInfo).
+					Where(cols.ProposalID.In(), bun.In(req.ProposalIDs))
+			}).
+			OrderExpr(cols.CreatedAt.OrderDesc()).
+			Scan(ctx); err != nil {
+			r.l.Error("failed to list decisions by proposals", zap.Error(err))
 
-		return nil, fmt.Errorf("list decisions by proposals: %w", err)
-	}
+			return nil, fmt.Errorf("list decisions by proposals: %w", err)
+		}
 
-	return rows, nil
+		return rows, nil
+	})
 }

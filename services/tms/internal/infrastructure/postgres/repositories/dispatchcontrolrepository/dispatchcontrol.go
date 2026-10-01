@@ -6,8 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -37,113 +39,121 @@ func (r *repository) GetByOrgID(
 	ctx context.Context,
 	req repositories.GetDispatchControlRequest,
 ) (*dispatchcontrol.DispatchControl, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByOrgID"),
-		zap.String("orgId", req.TenantInfo.OrgID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByOrgID"),
+			zap.String("orgId", req.TenantInfo.OrgID.String()),
+		)
 
-	entity := new(dispatchcontrol.DispatchControl)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where("dc.organization_id = ?", req.TenantInfo.OrgID).
-		Where("dc.business_unit_id = ?", req.TenantInfo.BuID).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get dispatch control", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "DispatchControl")
-	}
+		entity := new(dispatchcontrol.DispatchControl)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("dc.organization_id = ?", req.TenantInfo.OrgID).
+			Where("dc.business_unit_id = ?", req.TenantInfo.BuID).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get dispatch control", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "DispatchControl")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *dispatchcontrol.DispatchControl,
 ) (*dispatchcontrol.DispatchControl, error) {
-	log := r.l.With(
-		zap.String("operation", "Create"),
-		zap.String("orgId", entity.OrganizationID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
+		log := r.l.With(
+			zap.String("operation", "Create"),
+			zap.String("orgId", entity.OrganizationID.String()),
+		)
 
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		log.Error("failed to create dispatch control", zap.Error(err))
-		return nil, err
-	}
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			log.Error("failed to create dispatch control", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *dispatchcontrol.DispatchControl,
 ) (*dispatchcontrol.DispatchControl, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
+		)
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", ov).
-		OmitZero().
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update dispatch control", zap.Error(err))
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			OmitZero().
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update dispatch control", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(results, "DispatchControl", entity.ID.String()); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(results, "DispatchControl", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetOrCreate(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 ) (*dispatchcontrol.DispatchControl, error) {
-	log := r.l.With(
-		zap.String("operation", "GetOrCreate"),
-		zap.String("orgId", orgID.String()),
-	)
-
-	newEntity := dispatchcontrol.NewDefaultDispatchControl(orgID, buID)
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(newEntity).
-		On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
-		Exec(ctx); err != nil {
-		log.Error("failed to create default dispatch control", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"Dispatch control is busy. Retry the request.",
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
+		log := r.l.With(
+			zap.String("operation", "GetOrCreate"),
+			zap.String("orgId", orgID.String()),
 		)
-	}
 
-	entity := new(dispatchcontrol.DispatchControl)
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where("dc.organization_id = ?", orgID).
-		Where("dc.business_unit_id = ?", buID).
-		Scan(ctx); err != nil {
-		log.Error("failed to get dispatch control", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "DispatchControl")
-	}
+		newEntity := dispatchcontrol.NewDefaultDispatchControl(orgID, buID)
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(newEntity).
+			On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
+			Exec(ctx); err != nil {
+			log.Error("failed to create default dispatch control", zap.Error(err))
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Dispatch control is busy. Retry the request.",
+			)
+		}
 
-	return entity, nil
+		entity := new(dispatchcontrol.DispatchControl)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("dc.organization_id = ?", orgID).
+			Where("dc.business_unit_id = ?", buID).
+			Scan(ctx); err != nil {
+			log.Error("failed to get dispatch control", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "DispatchControl")
+		}
+
+		return entity, nil
+	})
 }
 
 type horizonTenantRow struct {
@@ -154,28 +164,31 @@ type horizonTenantRow struct {
 func (r *repository) ListHorizonPlanningTenants(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
-	cols := buncolgen.DispatchControlColumns
+	ctx = dbscope.WithSystem(ctx, "list organizations with horizon planning on")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
+		cols := buncolgen.DispatchControlColumns
 
-	rows := make([]horizonTenantRow, 0)
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*dispatchcontrol.DispatchControl)(nil)).
-		Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
-		Where(cols.EnableAutoAssignment.Eq(), true).
-		Where(cols.PlanningMode.Eq(), dispatchcontrol.PlanningModeHorizon).
-		Order(cols.OrganizationID.OrderAsc()).
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to list horizon planning tenants", zap.Error(err))
-		return nil, err
-	}
+		rows := make([]horizonTenantRow, 0)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*dispatchcontrol.DispatchControl)(nil)).
+			Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
+			Where(cols.EnableAutoAssignment.Eq(), true).
+			Where(cols.PlanningMode.Eq(), dispatchcontrol.PlanningModeHorizon).
+			Order(cols.OrganizationID.OrderAsc()).
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to list horizon planning tenants", zap.Error(err))
+			return nil, err
+		}
 
-	tenants := make([]pagination.TenantInfo, 0, len(rows))
-	for _, row := range rows {
-		tenants = append(tenants, pagination.TenantInfo{
-			OrgID: row.OrganizationID,
-			BuID:  row.BusinessUnitID,
-		})
-	}
+		tenants := make([]pagination.TenantInfo, 0, len(rows))
+		for _, row := range rows {
+			tenants = append(tenants, pagination.TenantInfo{
+				OrgID: row.OrganizationID,
+				BuID:  row.BusinessUnitID,
+			})
+		}
 
-	return tenants, nil
+		return tenants, nil
+	})
 }

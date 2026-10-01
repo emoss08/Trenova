@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -66,27 +67,29 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListOrdersRequest,
 ) (*pagination.ListResult[*order.Order], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*order.Order], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*order.Order, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count orders", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*order.Order, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count orders", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*order.Order]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*order.Order]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -126,73 +129,77 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListOrdersConnectionRequest,
 ) (*pagination.CursorListResult[*order.Order], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*order.Order], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*order.Order)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*order.Order)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count orders", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*order.Order]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*order.Order) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyOrderColumns(sq, req.OrderColumns)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count orders", zap.Error(err))
+			log.Error("failed to scan orders", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*order.Order]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*order.Order) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyOrderColumns(sq, req.OrderColumns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan orders", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *order.Order,
 ) (*order.Order, error) {
-	log := r.l.With(
-		zap.String("operation", "Create"),
-		zap.String("orderNumber", entity.OrderNumber),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*order.Order, error) {
+		log := r.l.With(
+			zap.String("operation", "Create"),
+			zap.String("orderNumber", entity.OrderNumber),
+		)
 
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		log.Error("failed to create order", zap.Error(err))
-		return nil, err
-	}
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			log.Error("failed to create order", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) CreateInTx(
@@ -212,87 +219,91 @@ func (r *repository) Update(
 	ctx context.Context,
 	entity *order.Order,
 ) (*order.Order, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("orderNumber", entity.OrderNumber),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*order.Order, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("orderNumber", entity.OrderNumber),
+		)
 
-	ov := entity.Version
-	entity.Version++
-	cols := buncolgen.OrderColumns
+		ov := entity.Version
+		entity.Version++
+		cols := buncolgen.OrderColumns
 
-	// Explicit column list: cleared optional fields (PO, BOL, owner, quote amounts)
-	// must persist as NULL rather than being dropped from the SET clause, and the
-	// derived columns (status, total_amount) plus the immutable order_number are
-	// never written through the generic update.
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		Column(
-			cols.CustomerID.Name,
-			cols.OwnerID.Name,
-			cols.PONumber.Name,
-			cols.BOL.Name,
-			cols.CurrencyCode.Name,
-			cols.QuotedAmount.Name,
-			cols.BaseAmount.Name,
-			cols.Version.Name,
-			cols.UpdatedAt.Name,
-		).
-		WherePK().
-		Where(cols.Version.Eq(), ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update order", zap.Error(err))
-		return nil, err
-	}
+		// Explicit column list: cleared optional fields (PO, BOL, owner, quote amounts)
+		// must persist as NULL rather than being dropped from the SET clause, and the
+		// derived columns (status, total_amount) plus the immutable order_number are
+		// never written through the generic update.
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			Column(
+				cols.CustomerID.Name,
+				cols.OwnerID.Name,
+				cols.PONumber.Name,
+				cols.BOL.Name,
+				cols.CurrencyCode.Name,
+				cols.QuotedAmount.Name,
+				cols.BaseAmount.Name,
+				cols.Version.Name,
+				cols.UpdatedAt.Name,
+			).
+			WherePK().
+			Where(cols.Version.Eq(), ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update order", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(results, "Order", entity.ID.String()); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(results, "Order", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
 	req *repositories.UpdateOrderStatusRequest,
 ) (*order.Order, error) {
-	log := r.l.With(
-		zap.String("operation", "UpdateStatus"),
-		zap.String("id", req.OrderID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*order.Order, error) {
+		log := r.l.With(
+			zap.String("operation", "UpdateStatus"),
+			zap.String("id", req.OrderID.String()),
+		)
 
-	entity := &order.Order{
-		ID:             req.OrderID,
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		Status:         req.Status,
-		Version:        req.Version + 1,
-	}
-	cols := buncolgen.OrderColumns
+		entity := &order.Order{
+			ID:             req.OrderID,
+			OrganizationID: req.TenantInfo.OrgID,
+			BusinessUnitID: req.TenantInfo.BuID,
+			Status:         req.Status,
+			Version:        req.Version + 1,
+		}
+		cols := buncolgen.OrderColumns
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(cols.Version.Eq(), req.Version).
-		Set(cols.Status.Set(), req.Status).
-		Set(cols.Version.Set(), req.Version+1).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update order status", zap.Error(err))
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(cols.Version.Eq(), req.Version).
+			Set(cols.Status.Set(), req.Status).
+			Set(cols.Version.Set(), req.Version+1).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update order status", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(results, "Order", req.OrderID.String()); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(results, "Order", req.OrderID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetShipmentStatuses(
@@ -300,24 +311,26 @@ func (r *repository) GetShipmentStatuses(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 ) ([]shipment.Status, error) {
-	statuses := make([]shipment.Status, 0)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]shipment.Status, error) {
+		statuses := make([]shipment.Status, 0)
 
-	cols := buncolgen.ShipmentColumns
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		Column("status").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentScopeTenant(sq, tenantInfo).
-				Where(cols.OrderID.Eq(), orderID)
-		}).
-		Scan(ctx, &statuses)
-	if err != nil {
-		r.l.Error("failed to get shipment statuses for order", zap.Error(err))
-		return nil, err
-	}
+		cols := buncolgen.ShipmentColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			Column("status").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ShipmentScopeTenant(sq, tenantInfo).
+					Where(cols.OrderID.Eq(), orderID)
+			}).
+			Scan(ctx, &statuses)
+		if err != nil {
+			r.l.Error("failed to get shipment statuses for order", zap.Error(err))
+			return nil, err
+		}
 
-	return statuses, nil
+		return statuses, nil
+	})
 }
 
 func (r *repository) AttachShipments(
@@ -326,32 +339,34 @@ func (r *repository) AttachShipments(
 	orderID pulid.ID,
 	shipmentIDs []pulid.ID,
 ) (int64, error) {
-	if len(shipmentIDs) == 0 {
-		return 0, nil
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		if len(shipmentIDs) == 0 {
+			return 0, nil
+		}
 
-	cols := buncolgen.ShipmentColumns
-	result, err := r.db.DBForContext(ctx).NewUpdate().
-		Model((*shipment.Shipment)(nil)).
-		Set("order_id = ?", orderID).
-		WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.ShipmentScopeTenantUpdate(sq, tenantInfo).
-				Where(cols.ID.In(), bun.List(shipmentIDs)).
-				Where(cols.Status.Ne(), shipment.StatusCanceled).
-				Where(cols.Status.Ne(), shipment.StatusInvoiced)
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to attach shipments to order", zap.Error(err))
-		return 0, err
-	}
+		cols := buncolgen.ShipmentColumns
+		result, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*shipment.Shipment)(nil)).
+			Set("order_id = ?", orderID).
+			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.ShipmentScopeTenantUpdate(sq, tenantInfo).
+					Where(cols.ID.In(), bun.List(shipmentIDs)).
+					Where(cols.Status.Ne(), shipment.StatusCanceled).
+					Where(cols.Status.Ne(), shipment.StatusInvoiced)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to attach shipments to order", zap.Error(err))
+			return 0, err
+		}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return 0, err
+		}
 
-	return affected, nil
+		return affected, nil
+	})
 }
 
 func (r *repository) DetachShipment(
@@ -361,28 +376,30 @@ func (r *repository) DetachShipment(
 	shipmentID pulid.ID,
 	newOrderID pulid.ID,
 ) (int64, error) {
-	cols := buncolgen.ShipmentColumns
-	result, err := r.db.DBForContext(ctx).NewUpdate().
-		Model((*shipment.Shipment)(nil)).
-		Set("order_id = ?", newOrderID).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.ShipmentScopeTenantUpdate(uq, tenantInfo).
-				Where(cols.ID.Eq(), shipmentID).
-				Where(cols.OrderID.Eq(), orderID).
-				Where(cols.Status.Ne(), shipment.StatusInvoiced)
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to detach shipment from order", zap.Error(err))
-		return 0, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		cols := buncolgen.ShipmentColumns
+		result, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*shipment.Shipment)(nil)).
+			Set("order_id = ?", newOrderID).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.ShipmentScopeTenantUpdate(uq, tenantInfo).
+					Where(cols.ID.Eq(), shipmentID).
+					Where(cols.OrderID.Eq(), orderID).
+					Where(cols.Status.Ne(), shipment.StatusInvoiced)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to detach shipment from order", zap.Error(err))
+			return 0, err
+		}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return 0, err
+		}
 
-	return affected, nil
+		return affected, nil
+	})
 }
 
 func (r *repository) GetShipmentAttachRefs(
@@ -390,26 +407,28 @@ func (r *repository) GetShipmentAttachRefs(
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
 ) ([]repositories.ShipmentAttachRef, error) {
-	if len(shipmentIDs) == 0 {
-		return nil, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.ShipmentAttachRef, error) {
+		if len(shipmentIDs) == 0 {
+			return nil, nil
+		}
 
-	refs := make([]repositories.ShipmentAttachRef, 0, len(shipmentIDs))
-	cols := buncolgen.ShipmentColumns
-	err := r.db.DBForContext(ctx).NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		Column("id", "order_id", "customer_id", "status").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentScopeTenant(sq, tenantInfo).
-				Where(cols.ID.In(), bun.List(shipmentIDs))
-		}).
-		Scan(ctx, &refs)
-	if err != nil {
-		r.l.Error("failed to load shipment attach refs", zap.Error(err))
-		return nil, err
-	}
+		refs := make([]repositories.ShipmentAttachRef, 0, len(shipmentIDs))
+		cols := buncolgen.ShipmentColumns
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			Column("id", "order_id", "customer_id", "status").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ShipmentScopeTenant(sq, tenantInfo).
+					Where(cols.ID.In(), bun.List(shipmentIDs))
+			}).
+			Scan(ctx, &refs)
+		if err != nil {
+			r.l.Error("failed to load shipment attach refs", zap.Error(err))
+			return nil, err
+		}
 
-	return refs, nil
+		return refs, nil
+	})
 }
 
 func (r *repository) DeleteIfEmpty(
@@ -417,98 +436,106 @@ func (r *repository) DeleteIfEmpty(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 ) (int64, error) {
-	cols := buncolgen.OrderColumns
-	result, err := r.db.DBForContext(ctx).NewDelete().
-		Model((*order.Order)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.OrderScopeTenantDelete(dq, tenantInfo).
-				Where(cols.ID.Eq(), orderID)
-		}).
-		Where("NOT EXISTS (SELECT 1 FROM shipments s WHERE s.order_id = ord.id AND s.organization_id = ord.organization_id AND s.business_unit_id = ord.business_unit_id)").
-		Where("NOT EXISTS (SELECT 1 FROM order_charges oc WHERE oc.order_id = ord.id AND oc.organization_id = ord.organization_id AND oc.business_unit_id = ord.business_unit_id)").
-		Where("NOT EXISTS (SELECT 1 FROM invoices inv WHERE inv.order_id = ord.id AND inv.organization_id = ord.organization_id AND inv.business_unit_id = ord.business_unit_id)").
-		Where("NOT EXISTS (SELECT 1 FROM billing_queue_items bqi WHERE bqi.order_id = ord.id AND bqi.organization_id = ord.organization_id AND bqi.business_unit_id = ord.business_unit_id)").
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to delete empty order", zap.Error(err))
-		return 0, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		cols := buncolgen.OrderColumns
+		result, err := r.db.DBForContext(ctx).NewDelete().
+			Model((*order.Order)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return buncolgen.OrderScopeTenantDelete(dq, tenantInfo).
+					Where(cols.ID.Eq(), orderID)
+			}).
+			Where("NOT EXISTS (SELECT 1 FROM shipments s WHERE s.order_id = ord.id AND s.organization_id = ord.organization_id AND s.business_unit_id = ord.business_unit_id)").
+			Where("NOT EXISTS (SELECT 1 FROM order_charges oc WHERE oc.order_id = ord.id AND oc.organization_id = ord.organization_id AND oc.business_unit_id = ord.business_unit_id)").
+			Where("NOT EXISTS (SELECT 1 FROM invoices inv WHERE inv.order_id = ord.id AND inv.organization_id = ord.organization_id AND inv.business_unit_id = ord.business_unit_id)").
+			Where("NOT EXISTS (SELECT 1 FROM billing_queue_items bqi WHERE bqi.order_id = ord.id AND bqi.organization_id = ord.organization_id AND bqi.business_unit_id = ord.business_unit_id)").
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to delete empty order", zap.Error(err))
+			return 0, err
+		}
 
-	return result.RowsAffected()
+		return result.RowsAffected()
+	})
 }
 
 func (r *repository) AddCharge(
 	ctx context.Context,
 	entity *order.OrderCharge,
 ) (*order.OrderCharge, error) {
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		r.l.Error("failed to add order charge", zap.Error(err))
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*order.OrderCharge, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			r.l.Error("failed to add order charge", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) RemoveCharge(
 	ctx context.Context,
 	req *repositories.RemoveOrderChargeRequest,
 ) (int64, error) {
-	if req == nil {
-		return 0, ErrOrderChargeRequestNil
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		if req == nil {
+			return 0, ErrOrderChargeRequestNil
+		}
 
-	cols := buncolgen.OrderChargeColumns
-	result, err := r.db.DBForContext(ctx).NewDelete().
-		Model((*order.OrderCharge)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.OrderChargeScopeTenantDelete(dq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ChargeID).
-				Where(cols.OrderID.Eq(), req.OrderID).
-				Where(cols.InvoiceID.IsNull()).
-				Where(noInvoicedShareExpr)
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to remove order charge", zap.Error(err))
-		return 0, err
-	}
+		cols := buncolgen.OrderChargeColumns
+		result, err := r.db.DBForContext(ctx).NewDelete().
+			Model((*order.OrderCharge)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return buncolgen.OrderChargeScopeTenantDelete(dq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ChargeID).
+					Where(cols.OrderID.Eq(), req.OrderID).
+					Where(cols.InvoiceID.IsNull()).
+					Where(noInvoicedShareExpr)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to remove order charge", zap.Error(err))
+			return 0, err
+		}
 
-	return result.RowsAffected()
+		return result.RowsAffected()
+	})
 }
 
 func (r *repository) UpdateCharge(
 	ctx context.Context,
 	entity *order.OrderCharge,
 ) (int64, error) {
-	ov := entity.Version
-	entity.Version++
-	cols := buncolgen.OrderChargeColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		ov := entity.Version
+		entity.Version++
+		cols := buncolgen.OrderChargeColumns
 
-	result, err := r.db.DBForContext(ctx).NewUpdate().
-		Model(entity).
-		Column(
-			cols.Description.Name,
-			cols.Amount.Name,
-			cols.Version.Name,
-			cols.UpdatedAt.Name,
-		).
-		WherePK().
-		Where(cols.Version.Eq(), ov).
-		Where(cols.OrderID.Eq(), entity.OrderID).
-		Where(cols.InvoiceID.IsNull()).
-		Where(noInvoicedShareExpr).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to update order charge", zap.Error(err))
-		return 0, err
-	}
+		result, err := r.db.DBForContext(ctx).NewUpdate().
+			Model(entity).
+			Column(
+				cols.Description.Name,
+				cols.Amount.Name,
+				cols.Version.Name,
+				cols.UpdatedAt.Name,
+			).
+			WherePK().
+			Where(cols.Version.Eq(), ov).
+			Where(cols.OrderID.Eq(), entity.OrderID).
+			Where(cols.InvoiceID.IsNull()).
+			Where(noInvoicedShareExpr).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to update order charge", zap.Error(err))
+			return 0, err
+		}
 
-	return result.RowsAffected()
+		return result.RowsAffected()
+	})
 }
 
 func (r *repository) ListCharges(
@@ -516,23 +543,25 @@ func (r *repository) ListCharges(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 ) ([]*order.OrderCharge, error) {
-	charges := make([]*order.OrderCharge, 0)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*order.OrderCharge, error) {
+		charges := make([]*order.OrderCharge, 0)
 
-	cols := buncolgen.OrderChargeColumns
-	err := r.db.DBForContext(ctx).NewSelect().
-		Model(&charges).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.OrderChargeScopeTenant(sq, tenantInfo).
-				Where(cols.OrderID.Eq(), orderID)
-		}).
-		Order(cols.CreatedAt.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list order charges", zap.Error(err))
-		return nil, err
-	}
+		cols := buncolgen.OrderChargeColumns
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model(&charges).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.OrderChargeScopeTenant(sq, tenantInfo).
+					Where(cols.OrderID.Eq(), orderID)
+			}).
+			Order(cols.CreatedAt.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list order charges", zap.Error(err))
+			return nil, err
+		}
 
-	return charges, nil
+		return charges, nil
+	})
 }
 
 func (r *repository) ListUninvoicedCharges(
@@ -540,24 +569,26 @@ func (r *repository) ListUninvoicedCharges(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 ) ([]*order.OrderCharge, error) {
-	charges := make([]*order.OrderCharge, 0)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*order.OrderCharge, error) {
+		charges := make([]*order.OrderCharge, 0)
 
-	cols := buncolgen.OrderChargeColumns
-	err := r.db.DBForContext(ctx).NewSelect().
-		Model(&charges).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.OrderChargeScopeTenant(sq, tenantInfo).
-				Where(cols.OrderID.Eq(), orderID).
-				Where(cols.InvoiceID.IsNull())
-		}).
-		Order(cols.CreatedAt.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list uninvoiced order charges", zap.Error(err))
-		return nil, err
-	}
+		cols := buncolgen.OrderChargeColumns
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model(&charges).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.OrderChargeScopeTenant(sq, tenantInfo).
+					Where(cols.OrderID.Eq(), orderID).
+					Where(cols.InvoiceID.IsNull())
+			}).
+			Order(cols.CreatedAt.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list uninvoiced order charges", zap.Error(err))
+			return nil, err
+		}
 
-	return charges, nil
+		return charges, nil
+	})
 }
 
 // noInvoicedShareExpr guards a charge edit: once any payer's share of a charge is
@@ -574,37 +605,38 @@ func (r *repository) ListUninvoicedChargeSharesForPayer(
 	ctx context.Context,
 	req *repositories.ListUninvoicedChargeSharesRequest,
 ) ([]*order.OrderCharge, error) {
-	if req == nil {
-		return nil, ErrOrderChargeRequestNil
-	}
-	charges := make([]*order.OrderCharge, 0)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*order.OrderCharge, error) {
+		if req == nil {
+			return nil, ErrOrderChargeRequestNil
+		}
+		charges := make([]*order.OrderCharge, 0)
 
-	cols := buncolgen.OrderChargeColumns
-	chal := buncolgen.ChargeAllocationColumns
-	err := r.db.DBForContext(ctx).NewSelect().
-		Model(&charges).
-		RelationWithOpts(buncolgen.OrderChargeRelations.Allocations, bun.RelationOpts{
-			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(chal.Sequence.OrderAsc(), chal.ID.OrderAsc())
-			},
-		}).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.OrderChargeScopeTenant(sq, req.TenantInfo).
-				Where(cols.OrderID.Eq(), req.OrderID).
-				Where(cols.InvoicedAt.IsNull()).
-				WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-					return inner.
-						WhereGroup(" AND ", func(unallocated *bun.SelectQuery) *bun.SelectQuery {
-							return unallocated.
-								Where(cols.InvoiceID.IsNull()).
-								Where(`NOT EXISTS (
+		cols := buncolgen.OrderChargeColumns
+		chal := buncolgen.ChargeAllocationColumns
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model(&charges).
+			RelationWithOpts(buncolgen.OrderChargeRelations.Allocations, bun.RelationOpts{
+				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Order(chal.Sequence.OrderAsc(), chal.ID.OrderAsc())
+				},
+			}).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.OrderChargeScopeTenant(sq, req.TenantInfo).
+					Where(cols.OrderID.Eq(), req.OrderID).
+					Where(cols.InvoicedAt.IsNull()).
+					WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+						return inner.
+							WhereGroup(" AND ", func(unallocated *bun.SelectQuery) *bun.SelectQuery {
+								return unallocated.
+									Where(cols.InvoiceID.IsNull()).
+									Where(`NOT EXISTS (
 									SELECT 1 FROM charge_allocations AS chal
 									WHERE chal.order_charge_id = ordchg.id
 									  AND chal.organization_id = ordchg.organization_id
 									  AND chal.business_unit_id = ordchg.business_unit_id
 								)`)
-						}).
-						WhereOr(`EXISTS (
+							}).
+							WhereOr(`EXISTS (
 							SELECT 1 FROM charge_allocations AS chal
 							WHERE chal.order_charge_id = ordchg.id
 							  AND chal.organization_id = ordchg.organization_id
@@ -612,16 +644,17 @@ func (r *repository) ListUninvoicedChargeSharesForPayer(
 							  AND chal.bill_to_customer_id = ?
 							  AND chal.invoice_id IS NULL
 						)`, req.PayerID)
-				})
-		}).
-		Order(cols.CreatedAt.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list uninvoiced order charge shares", zap.Error(err))
-		return nil, err
-	}
+					})
+			}).
+			Order(cols.CreatedAt.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list uninvoiced order charge shares", zap.Error(err))
+			return nil, err
+		}
 
-	return charges, nil
+		return charges, nil
+	})
 }
 
 // ClearChargesInvoice releases the charges a voided invoice carried. Charges
@@ -631,101 +664,107 @@ func (r *repository) ClearChargesInvoice(
 	ctx context.Context,
 	req *repositories.ClearOrderChargesInvoiceRequest,
 ) (int64, error) {
-	if req == nil || req.InvoiceID.IsNil() {
-		return 0, nil
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		if req == nil || req.InvoiceID.IsNil() {
+			return 0, nil
+		}
 
-	cols := buncolgen.OrderChargeColumns
-	result, err := r.db.DBForContext(ctx).NewUpdate().
-		Model((*order.OrderCharge)(nil)).
-		Set(cols.InvoiceID.SetNull()).
-		Set(cols.InvoicedAt.SetNull()).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.OrderChargeScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.InvoiceID.Eq(), req.InvoiceID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to clear order charges invoice", zap.Error(err))
-		return 0, err
-	}
+		cols := buncolgen.OrderChargeColumns
+		result, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*order.OrderCharge)(nil)).
+			Set(cols.InvoiceID.SetNull()).
+			Set(cols.InvoicedAt.SetNull()).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.OrderChargeScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.InvoiceID.Eq(), req.InvoiceID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to clear order charges invoice", zap.Error(err))
+			return 0, err
+		}
 
-	return result.RowsAffected()
+		return result.RowsAffected()
+	})
 }
 
 func (r *repository) MarkChargesFullyInvoicedWhereComplete(
 	ctx context.Context,
 	req *repositories.MarkChargesFullyInvoicedRequest,
 ) (int64, error) {
-	if req == nil {
-		return 0, ErrOrderChargeRequestEmpty
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		if req == nil {
+			return 0, ErrOrderChargeRequestEmpty
+		}
 
-	cols := buncolgen.OrderChargeColumns
-	result, err := r.db.DBForContext(ctx).NewUpdate().
-		Model((*order.OrderCharge)(nil)).
-		Set(cols.InvoicedAt.Set(), req.InvoicedAt).
-		Set(cols.InvoiceID.SetExpr("COALESCE({}, ?)"), req.InvoiceID).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.OrderChargeScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.OrderID.Eq(), req.OrderID).
-				Where(cols.InvoicedAt.IsNull()).
-				Where(`EXISTS (
+		cols := buncolgen.OrderChargeColumns
+		result, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*order.OrderCharge)(nil)).
+			Set(cols.InvoicedAt.Set(), req.InvoicedAt).
+			Set(cols.InvoiceID.SetExpr("COALESCE({}, ?)"), req.InvoiceID).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.OrderChargeScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.OrderID.Eq(), req.OrderID).
+					Where(cols.InvoicedAt.IsNull()).
+					Where(`EXISTS (
 					SELECT 1 FROM charge_allocations AS chal
 					WHERE chal.order_charge_id = ordchg.id
 					  AND chal.organization_id = ordchg.organization_id
 					  AND chal.business_unit_id = ordchg.business_unit_id
 				)`).
-				Where(`NOT EXISTS (
+					Where(`NOT EXISTS (
 					SELECT 1 FROM charge_allocations AS chal
 					WHERE chal.order_charge_id = ordchg.id
 					  AND chal.organization_id = ordchg.organization_id
 					  AND chal.business_unit_id = ordchg.business_unit_id
 					  AND chal.invoice_id IS NULL
 				)`)
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to mark order charges fully invoiced", zap.Error(err))
-		return 0, err
-	}
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to mark order charges fully invoiced", zap.Error(err))
+			return 0, err
+		}
 
-	return result.RowsAffected()
+		return result.RowsAffected()
+	})
 }
 
 func (r *repository) MarkChargesInvoiced(
 	ctx context.Context,
 	req *repositories.MarkOrderChargesInvoicedRequest,
 ) (int64, error) {
-	if req == nil {
-		return 0, ErrOrderChargeRequestEmpty
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		if req == nil {
+			return 0, ErrOrderChargeRequestEmpty
+		}
 
-	if len(req.ChargeIDs) == 0 {
-		return 0, nil
-	}
+		if len(req.ChargeIDs) == 0 {
+			return 0, nil
+		}
 
-	cols := buncolgen.OrderChargeColumns
-	result, err := r.db.DBForContext(ctx).NewUpdate().
-		Model((*order.OrderCharge)(nil)).
-		Set(cols.InvoiceID.Set(), req.InvoiceID).
-		Set(cols.InvoicedAt.Set(), req.InvoicedAt).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.OrderChargeScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.OrderID.Eq(), req.OrderID).
-				Where(cols.ID.In(), bun.List(req.ChargeIDs)).
-				Where(cols.InvoiceID.IsNull())
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to mark order charges invoiced", zap.Error(err))
-		return 0, err
-	}
+		cols := buncolgen.OrderChargeColumns
+		result, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*order.OrderCharge)(nil)).
+			Set(cols.InvoiceID.Set(), req.InvoiceID).
+			Set(cols.InvoicedAt.Set(), req.InvoicedAt).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.OrderChargeScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.OrderID.Eq(), req.OrderID).
+					Where(cols.ID.In(), bun.List(req.ChargeIDs)).
+					Where(cols.InvoiceID.IsNull())
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to mark order charges invoiced", zap.Error(err))
+			return 0, err
+		}
 
-	return result.RowsAffected()
+		return result.RowsAffected()
+	})
 }
 
 func (r *repository) RecalculateTotal(
@@ -733,131 +772,139 @@ func (r *repository) RecalculateTotal(
 	tenantInfo pagination.TenantInfo,
 	orderID pulid.ID,
 ) error {
-	cols := buncolgen.OrderColumns
-	sc := buncolgen.ShipmentColumns
-	cc := buncolgen.OrderChargeColumns
-	db := r.db.DBForContext(ctx)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		cols := buncolgen.OrderColumns
+		sc := buncolgen.ShipmentColumns
+		cc := buncolgen.OrderChargeColumns
+		db := r.db.DBForContext(ctx)
 
-	legTotal := db.NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		ColumnExpr("COALESCE(SUM(?), 0)", bun.Ident(sc.TotalChargeAmount.Name)).
-		Apply(buncolgen.ShipmentApplyTenant(tenantInfo)).
-		Where(sc.OrderID.Eq(), orderID).
-		Where(sc.Status.Ne(), shipment.StatusCanceled)
+		legTotal := db.NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			ColumnExpr("COALESCE(SUM(?), 0)", bun.Ident(sc.TotalChargeAmount.Name)).
+			Apply(buncolgen.ShipmentApplyTenant(tenantInfo)).
+			Where(sc.OrderID.Eq(), orderID).
+			Where(sc.Status.Ne(), shipment.StatusCanceled)
 
-	chargeTotal := db.NewSelect().
-		Model((*order.OrderCharge)(nil)).
-		ColumnExpr("COALESCE(SUM(?), 0)", bun.Ident(cc.Amount.Name)).
-		Apply(buncolgen.OrderChargeApplyTenant(tenantInfo)).
-		Where(cc.OrderID.Eq(), orderID)
+		chargeTotal := db.NewSelect().
+			Model((*order.OrderCharge)(nil)).
+			ColumnExpr("COALESCE(SUM(?), 0)", bun.Ident(cc.Amount.Name)).
+			Apply(buncolgen.OrderChargeApplyTenant(tenantInfo)).
+			Where(cc.OrderID.Eq(), orderID)
 
-	_, err := db.NewUpdate().
-		Model((*order.Order)(nil)).
-		Set(cols.TotalAmount.SetExpr("(?) + (?)"), legTotal, chargeTotal).
-		Set(cols.Version.Inc(1)).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.OrderScopeTenantUpdate(uq, tenantInfo).
-				Where(cols.ID.Eq(), orderID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to recalculate order total", zap.Error(err))
-		return err
-	}
+		_, err := db.NewUpdate().
+			Model((*order.Order)(nil)).
+			Set(cols.TotalAmount.SetExpr("(?) + (?)"), legTotal, chargeTotal).
+			Set(cols.Version.Inc(1)).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.OrderScopeTenantUpdate(uq, tenantInfo).
+					Where(cols.ID.Eq(), orderID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to recalculate order total", zap.Error(err))
+			return err
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetOrderByIDRequest,
 ) (*order.Order, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.ID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*order.Order, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.ID.String()),
+		)
 
-	entity := new(order.Order)
-	cols := buncolgen.OrderColumns
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.OrderScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
-		})
+		entity := new(order.Order)
+		cols := buncolgen.OrderColumns
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.OrderScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			})
 
-	if req.IncludeShipment {
-		q = q.Relation("Shipments").Relation("Customer").Relation("Charges")
-	}
+		if req.IncludeShipment {
+			q = q.Relation("Shipments").Relation("Customer").Relation("Charges")
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		log.Error("failed to get order", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "Order")
-	}
+		if err := q.Scan(ctx); err != nil {
+			log.Error("failed to get order", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "Order")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
 	req repositories.GetOrdersByIDsRequest,
 ) ([]*order.Order, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByIDs"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*order.Order, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByIDs"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*order.Order, 0, len(req.OrderIDs))
-	cols := buncolgen.OrderColumns
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.OrderScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.In(), bun.List(req.OrderIDs))
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get orders", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "Order")
-	}
+		entities := make([]*order.Order, 0, len(req.OrderIDs))
+		cols := buncolgen.OrderColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.OrderScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.In(), bun.List(req.OrderIDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get orders", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "Order")
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.OrderSelectOptionsRequest,
 ) (*pagination.ListResult[*order.Order], error) {
-	cols := buncolgen.OrderColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*order.Order], error) {
+		cols := buncolgen.OrderColumns
 
-	return dbhelper.SelectOptions[*order.Order](
-		ctx,
-		r.db.DBForContext(ctx),
-		req.SelectQueryRequest,
-		&dbhelper.SelectOptionsConfig{
-			ColumnRefs: []buncolgen.Column{
-				cols.ID,
-				cols.OrderNumber,
-				cols.Status,
+		return dbhelper.SelectOptions[*order.Order](
+			ctx,
+			r.db.DBForContext(ctx),
+			req.SelectQueryRequest,
+			&dbhelper.SelectOptionsConfig{
+				ColumnRefs: []buncolgen.Column{
+					cols.ID,
+					cols.OrderNumber,
+					cols.Status,
+				},
+				OrgColumnRef:     &cols.OrganizationID,
+				BuColumnRef:      &cols.BusinessUnitID,
+				EntityName:       "Order",
+				SearchColumnRefs: []buncolgen.Column{cols.OrderNumber, cols.PONumber, cols.BOL},
+				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+					if req.AttachableOnly {
+						q = q.Where(cols.Status.Ne(), order.StatusBilled).
+							Where(cols.Status.Ne(), order.StatusClosed).
+							Where(cols.Status.Ne(), order.StatusCanceled)
+					}
+					if !req.CustomerID.IsNil() {
+						q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
+					}
+					return q
+				},
 			},
-			OrgColumnRef:     &cols.OrganizationID,
-			BuColumnRef:      &cols.BusinessUnitID,
-			EntityName:       "Order",
-			SearchColumnRefs: []buncolgen.Column{cols.OrderNumber, cols.PONumber, cols.BOL},
-			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				if req.AttachableOnly {
-					q = q.Where(cols.Status.Ne(), order.StatusBilled).
-						Where(cols.Status.Ne(), order.StatusClosed).
-						Where(cols.Status.Ne(), order.StatusCanceled)
-				}
-				if !req.CustomerID.IsNil() {
-					q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
-				}
-				return q
-			},
-		},
-	)
+		)
+	})
 }

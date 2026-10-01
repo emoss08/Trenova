@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -57,25 +58,27 @@ func (r *repository) CountStatsByIDs(
 	ctx context.Context,
 	req *repositories.GetFormulaTemplateStatsRequest,
 ) (map[pulid.ID]repositories.TemplateStats, error) {
-	stats := make(map[pulid.ID]repositories.TemplateStats, len(req.TemplateIDs))
-	if len(req.TemplateIDs) == 0 {
-		return stats, nil
-	}
-
-	log := r.l.With(zap.String("operation", "CountStatsByIDs"))
-
-	var rows []statsRow
-	if err := statsQuery(r.db.DBForContext(ctx).NewSelect(), req).Scan(ctx, &rows); err != nil {
-		log.Error("failed to count formula template stats", zap.Error(err))
-		return nil, err
-	}
-
-	for _, row := range rows {
-		stats[row.ID] = repositories.TemplateStats{
-			UsageCount:    row.UsageCount,
-			ScenarioCount: row.ScenarioCount,
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]repositories.TemplateStats, error) {
+		stats := make(map[pulid.ID]repositories.TemplateStats, len(req.TemplateIDs))
+		if len(req.TemplateIDs) == 0 {
+			return stats, nil
 		}
-	}
 
-	return stats, nil
+		log := r.l.With(zap.String("operation", "CountStatsByIDs"))
+
+		var rows []statsRow
+		if err := statsQuery(r.db.DBForContext(ctx).NewSelect(), req).Scan(ctx, &rows); err != nil {
+			log.Error("failed to count formula template stats", zap.Error(err))
+			return nil, err
+		}
+
+		for _, row := range rows {
+			stats[row.ID] = repositories.TemplateStats{
+				UsageCount:    row.UsageCount,
+				ScenarioCount: row.ScenarioCount,
+			}
+		}
+
+		return stats, nil
+	})
 }

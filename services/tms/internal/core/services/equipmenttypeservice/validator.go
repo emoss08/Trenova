@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -26,7 +25,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*equipmenttype.EquipmentType]().
 			WithModelName("Equipment Type").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() })).
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
 			WithUniqueField(
 				"code",
 				"code",

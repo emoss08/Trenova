@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -166,7 +167,8 @@ func (a *Activities) CredentialExpirySweepActivity(
 
 	for workerID, tenantInfo := range state.touchedWorkers {
 		state.result.WorkersChecked++
-		if _, err := a.credentials.RefreshCompliance(ctx, tenantInfo, workerID); err != nil {
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+		if _, err := a.credentials.RefreshCompliance(tenantCtx, tenantInfo, workerID); err != nil {
 			a.logger.Warn("failed to refresh compliance after sweep",
 				zap.String("workerId", workerID.String()),
 				zap.Error(err))
@@ -204,8 +206,9 @@ func (s *sweepState) recordDueDriver(
 func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 	for workerID, driver := range state.dueDrivers {
 		state.result.DriversRaised++
+		tenantCtx := dbscope.WithTenant(ctx, driver.tenantInfo.DBTenant())
 		if a.watchtower != nil {
-			a.watchtower.Upsert(ctx, watchtowersources.DescribeExpiringCredentials(
+			a.watchtower.Upsert(tenantCtx, watchtowersources.DescribeExpiringCredentials(
 				watchtowersources.ExpiringCredentials{
 					TenantInfo: driver.tenantInfo,
 					WorkerID:   workerID,
@@ -215,7 +218,7 @@ func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 				},
 			))
 		}
-		services.PublishAgentEvent(ctx, a.publisher, services.AgentEvent{
+		services.PublishAgentEvent(tenantCtx, a.publisher, services.AgentEvent{
 			Kind:       agent.EventWorkerCredentialExpiring,
 			SubjectID:  workerID,
 			TenantInfo: driver.tenantInfo,
@@ -235,6 +238,7 @@ func (a *Activities) sweepCredential(
 		OrgID: cred.OrganizationID,
 		BuID:  cred.BusinessUnitID,
 	}
+	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	state.touchedWorkers[cred.WorkerID] = tenantInfo
 
 	daysLeft := worker.DaysUntil(*cred.ExpiresAt, state.now)
@@ -247,12 +251,12 @@ func (a *Activities) sweepCredential(
 	}
 	state.recordDueDriver(cred, tenantInfo, daysLeft)
 
-	remindDrivers, err := a.driverRemindersEnabled(ctx, tenantInfo, state.remindersByOrg)
+	remindDrivers, err := a.driverRemindersEnabled(tenantCtx, tenantInfo, state.remindersByOrg)
 	if err != nil {
 		return err
 	}
 	if remindDrivers && !cred.Worker.UserID.IsNil() {
-		sent, notifyErr := a.notifyDriver(ctx, tenantInfo, cred, daysLeft)
+		sent, notifyErr := a.notifyDriver(tenantCtx, tenantInfo, cred, daysLeft)
 		if notifyErr != nil {
 			return notifyErr
 		}
@@ -262,7 +266,7 @@ func (a *Activities) sweepCredential(
 	}
 
 	if daysLeft <= 0 {
-		sent, alertErr := a.alertCompliance(ctx, tenantInfo, cred, daysLeft, true)
+		sent, alertErr := a.alertCompliance(tenantCtx, tenantInfo, cred, daysLeft, true)
 		if alertErr != nil {
 			return alertErr
 		}
@@ -273,7 +277,7 @@ func (a *Activities) sweepCredential(
 	}
 
 	if cred.CredentialType.IsRequired && step <= 14 {
-		sent, alertErr := a.alertCompliance(ctx, tenantInfo, cred, daysLeft, false)
+		sent, alertErr := a.alertCompliance(tenantCtx, tenantInfo, cred, daysLeft, false)
 		if alertErr != nil {
 			return alertErr
 		}

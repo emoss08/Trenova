@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/uptrace/bun"
@@ -72,34 +73,36 @@ func (r *repository) RotaWorkers(
 	ctx context.Context,
 	req *repositories.RotaQuery,
 ) ([]repositories.RotaWorkerRow, error) {
-	rows := make([]repositories.RotaWorkerRow, 0, 32)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.RotaWorkerRow, error) {
+		rows := make([]repositories.RotaWorkerRow, 0, 32)
 
-	if err := r.rosterScope(ctx, req).
-		Join("LEFT JOIN fleet_codes AS fc").
-		JoinOn("fc.id = wrk.fleet_code_id").
-		JoinOn("fc.organization_id = wrk.organization_id").
-		JoinOn("fc.business_unit_id = wrk.business_unit_id").
-		Join("LEFT JOIN worker_shift_assignments AS wsa").
-		JoinOn("wsa.worker_id = wrk.id").
-		JoinOn("wsa.organization_id = wrk.organization_id").
-		JoinOn("wsa.business_unit_id = wrk.business_unit_id").
-		JoinOn("wsa.effective_from <= ?", req.WeekEnd).
-		JoinOn("(wsa.effective_to IS NULL OR wsa.effective_to >= ?)", req.WeekStart).
-		ColumnExpr("wrk.id AS worker_id").
-		ColumnExpr("wrk.first_name AS first_name").
-		ColumnExpr("wrk.last_name AS last_name").
-		ColumnExpr("COALESCE(fc.code, '') AS fleet_code").
-		ColumnExpr("COALESCE(fc.color, '') AS fleet_color").
-		ColumnExpr("COALESCE(wsa.shift_template_id, '') AS shift_template_id").
-		ColumnExpr("COALESCE(wsa.cycle_offset_weeks, 0) AS cycle_offset_weeks").
-		OrderExpr("wrk.last_name, wrk.first_name").
-		Limit(limitOr(req.Limit, defaultRotaPageSize)).
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to read rota workers", zap.Error(err))
-		return nil, fmt.Errorf("read rota workers: %w", err)
-	}
+		if err := r.rosterScope(ctx, req).
+			Join("LEFT JOIN fleet_codes AS fc").
+			JoinOn("fc.id = wrk.fleet_code_id").
+			JoinOn("fc.organization_id = wrk.organization_id").
+			JoinOn("fc.business_unit_id = wrk.business_unit_id").
+			Join("LEFT JOIN worker_shift_assignments AS wsa").
+			JoinOn("wsa.worker_id = wrk.id").
+			JoinOn("wsa.organization_id = wrk.organization_id").
+			JoinOn("wsa.business_unit_id = wrk.business_unit_id").
+			JoinOn("wsa.effective_from <= ?", req.WeekEnd).
+			JoinOn("(wsa.effective_to IS NULL OR wsa.effective_to >= ?)", req.WeekStart).
+			ColumnExpr("wrk.id AS worker_id").
+			ColumnExpr("wrk.first_name AS first_name").
+			ColumnExpr("wrk.last_name AS last_name").
+			ColumnExpr("COALESCE(fc.code, '') AS fleet_code").
+			ColumnExpr("COALESCE(fc.color, '') AS fleet_color").
+			ColumnExpr("COALESCE(wsa.shift_template_id, '') AS shift_template_id").
+			ColumnExpr("COALESCE(wsa.cycle_offset_weeks, 0) AS cycle_offset_weeks").
+			OrderExpr("wrk.last_name, wrk.first_name").
+			Limit(limitOr(req.Limit, defaultRotaPageSize)).
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to read rota workers", zap.Error(err))
+			return nil, fmt.Errorf("read rota workers: %w", err)
+		}
 
-	return rows, nil
+		return rows, nil
+	})
 }
 
 // RotaTimeOffRanges is the approved time off overlapping the week. Ranges
@@ -109,28 +112,30 @@ func (r *repository) RotaTimeOffRanges(
 	ctx context.Context,
 	req *repositories.RotaQuery,
 ) ([]repositories.RotaRangeRow, error) {
-	rows := make([]repositories.RotaRangeRow, 0, 16)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.RotaRangeRow, error) {
+		rows := make([]repositories.RotaRangeRow, 0, 16)
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*worker.WorkerPTO)(nil)).
-		With("roster", r.rosterScope(ctx, req).ColumnExpr("wrk.id AS worker_id")).
-		Join("JOIN roster").
-		JoinOn("roster.worker_id = wpto.worker_id").
-		Where("wpto.organization_id = ?", req.TenantInfo.OrgID).
-		Where("wpto.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("wpto.status = ?", "Approved").
-		Where("wpto.start_date < ?", req.WeekEnd).
-		Where("wpto.end_date >= ?", req.WeekStart).
-		ColumnExpr("wpto.worker_id AS worker_id").
-		ColumnExpr("wpto.start_date AS starts_at").
-		ColumnExpr("wpto.end_date AS ends_at").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to read rota time off", zap.Error(err))
-		return nil, fmt.Errorf("read rota time off: %w", err)
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*worker.WorkerPTO)(nil)).
+			With("roster", r.rosterScope(ctx, req).ColumnExpr("wrk.id AS worker_id")).
+			Join("JOIN roster").
+			JoinOn("roster.worker_id = wpto.worker_id").
+			Where("wpto.organization_id = ?", req.TenantInfo.OrgID).
+			Where("wpto.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("wpto.status = ?", "Approved").
+			Where("wpto.start_date < ?", req.WeekEnd).
+			Where("wpto.end_date >= ?", req.WeekStart).
+			ColumnExpr("wpto.worker_id AS worker_id").
+			ColumnExpr("wpto.start_date AS starts_at").
+			ColumnExpr("wpto.end_date AS ends_at").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to read rota time off", zap.Error(err))
+			return nil, fmt.Errorf("read rota time off: %w", err)
+		}
 
-	return rows, nil
+		return rows, nil
+	})
 }
 
 // RotaLeaveRanges is the same over open leave cases. A case with no end date
@@ -140,28 +145,30 @@ func (r *repository) RotaLeaveRanges(
 	ctx context.Context,
 	req *repositories.RotaQuery,
 ) ([]repositories.RotaRangeRow, error) {
-	rows := make([]repositories.RotaRangeRow, 0, 16)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.RotaRangeRow, error) {
+		rows := make([]repositories.RotaRangeRow, 0, 16)
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*worker.WorkerLeaveCase)(nil)).
-		With("roster", r.rosterScope(ctx, req).ColumnExpr("wrk.id AS worker_id")).
-		Join("JOIN roster").
-		JoinOn("roster.worker_id = wlc.worker_id").
-		Where("wlc.organization_id = ?", req.TenantInfo.OrgID).
-		Where("wlc.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("wlc.status = ?", "Approved").
-		Where("wlc.starts_at < ?", req.WeekEnd).
-		Where("(wlc.ends_at IS NULL OR wlc.ends_at >= ?)", req.WeekStart).
-		ColumnExpr("wlc.worker_id AS worker_id").
-		ColumnExpr("wlc.starts_at AS starts_at").
-		ColumnExpr("COALESCE(wlc.ends_at, 0) AS ends_at").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to read rota leave", zap.Error(err))
-		return nil, fmt.Errorf("read rota leave: %w", err)
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*worker.WorkerLeaveCase)(nil)).
+			With("roster", r.rosterScope(ctx, req).ColumnExpr("wrk.id AS worker_id")).
+			Join("JOIN roster").
+			JoinOn("roster.worker_id = wlc.worker_id").
+			Where("wlc.organization_id = ?", req.TenantInfo.OrgID).
+			Where("wlc.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("wlc.status = ?", "Approved").
+			Where("wlc.starts_at < ?", req.WeekEnd).
+			Where("(wlc.ends_at IS NULL OR wlc.ends_at >= ?)", req.WeekStart).
+			ColumnExpr("wlc.worker_id AS worker_id").
+			ColumnExpr("wlc.starts_at AS starts_at").
+			ColumnExpr("COALESCE(wlc.ends_at, 0) AS ends_at").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to read rota leave", zap.Error(err))
+			return nil, fmt.Errorf("read rota leave: %w", err)
+		}
 
-	return rows, nil
+		return rows, nil
+	})
 }
 
 // RotaAssignedDays counts the work dispatch has already put on each day. The
@@ -171,28 +178,30 @@ func (r *repository) RotaAssignedDays(
 	ctx context.Context,
 	req *repositories.RotaQuery,
 ) ([]repositories.RotaDayRow, error) {
-	rows := make([]repositories.RotaDayRow, 0, 32)
-	dayStart := dayStartExpr("asn.created_at")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.RotaDayRow, error) {
+		rows := make([]repositories.RotaDayRow, 0, 32)
+		dayStart := dayStartExpr("asn.created_at")
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		TableExpr("assignments AS asn").
-		With("roster", r.rosterScope(ctx, req).ColumnExpr("wrk.id AS worker_id")).
-		Join("JOIN roster").
-		JoinOn("roster.worker_id = asn.primary_worker_id").
-		Where("asn.organization_id = ?", req.TenantInfo.OrgID).
-		Where("asn.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("asn.archived_at IS NULL").
-		Where(dayStart+" >= ?", req.WeekStart).
-		Where(dayStart+" < ?", req.WeekEnd).
-		ColumnExpr("asn.primary_worker_id AS worker_id").
-		ColumnExpr(dayStart+" AS day_start").
-		ColumnExpr("COUNT(*) AS count").
-		GroupExpr("asn.primary_worker_id, "+dayStart).
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to read rota assignments", zap.Error(err))
-		return nil, fmt.Errorf("read rota assignments: %w", err)
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			TableExpr("assignments AS asn").
+			With("roster", r.rosterScope(ctx, req).ColumnExpr("wrk.id AS worker_id")).
+			Join("JOIN roster").
+			JoinOn("roster.worker_id = asn.primary_worker_id").
+			Where("asn.organization_id = ?", req.TenantInfo.OrgID).
+			Where("asn.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("asn.archived_at IS NULL").
+			Where(dayStart+" >= ?", req.WeekStart).
+			Where(dayStart+" < ?", req.WeekEnd).
+			ColumnExpr("asn.primary_worker_id AS worker_id").
+			ColumnExpr(dayStart+" AS day_start").
+			ColumnExpr("COUNT(*) AS count").
+			GroupExpr("asn.primary_worker_id, "+dayStart).
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to read rota assignments", zap.Error(err))
+			return nil, fmt.Errorf("read rota assignments: %w", err)
+		}
 
-	return rows, nil
+		return rows, nil
+	})
 }

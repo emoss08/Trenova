@@ -1,0 +1,107 @@
+package dbscope
+
+import (
+	"context"
+	"strings"
+
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+type Kind uint8
+
+const (
+	KindNone Kind = iota
+	KindTenant
+	KindSystem
+)
+
+func (k Kind) String() string {
+	switch k {
+	case KindTenant:
+		return "tenant"
+	case KindSystem:
+		return "system"
+	case KindNone:
+		return "none"
+	default:
+		return "none"
+	}
+}
+
+type Tenant struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	UserID         pulid.ID
+}
+
+func (t Tenant) Valid() bool {
+	return !t.OrganizationID.IsNil() && !t.BusinessUnitID.IsNil()
+}
+
+type Scope struct {
+	kind   Kind
+	tenant Tenant
+	reason string
+}
+
+func (s Scope) Kind() Kind {
+	return s.kind
+}
+
+func (s Scope) Tenant() (Tenant, bool) {
+	return s.tenant, s.kind == KindTenant
+}
+
+func (s Scope) Reason() string {
+	return s.reason
+}
+
+func (s Scope) Matches(other Scope) bool {
+	if s.kind == KindSystem && other.kind == KindSystem {
+		return true
+	}
+
+	return s == other
+}
+
+const GinContextKey = "trenova.dbscope"
+
+type scopeKey struct{}
+
+func TenantScope(tenant Tenant) Scope {
+	return Scope{kind: KindTenant, tenant: tenant}
+}
+
+func WithTenant(ctx context.Context, tenant Tenant) context.Context {
+	return context.WithValue(ctx, scopeKey{}, TenantScope(tenant))
+}
+
+func WithSystem(ctx context.Context, reason string) context.Context {
+	return context.WithValue(
+		ctx,
+		scopeKey{},
+		Scope{kind: KindSystem, reason: strings.TrimSpace(reason)},
+	)
+}
+
+func From(ctx context.Context) Scope {
+	if ctx == nil {
+		return Scope{}
+	}
+
+	if scope, ok := ctx.Value(scopeKey{}).(Scope); ok {
+		return scope
+	}
+
+	scope, _ := ctx.Value(GinContextKey).(Scope)
+
+	return scope
+}
+
+func TenantFrom(ctx context.Context) (Tenant, bool) {
+	return From(ctx).Tenant()
+}
+
+func IsSystem(ctx context.Context) bool {
+	return From(ctx).kind == KindSystem
+}

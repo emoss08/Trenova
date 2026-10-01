@@ -186,8 +186,7 @@ func (h *Handler) getRuleSet(c *gin.Context) {
 func (h *Handler) createRuleSet(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	entity := new(documentparsingrule.RuleSet)
-	authctx.AddContextToRequest(authCtx, entity)
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -207,8 +206,7 @@ func (h *Handler) updateRuleSet(c *gin.Context) {
 		return
 	}
 	entity := new(documentparsingrule.RuleSet)
-	authctx.AddContextToRequest(authCtx, entity)
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -282,8 +280,7 @@ func (h *Handler) createVersion(c *gin.Context) {
 		return
 	}
 	entity := new(documentparsingrule.RuleVersion)
-	authctx.AddContextToRequest(authCtx, entity)
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -304,8 +301,7 @@ func (h *Handler) updateVersion(c *gin.Context) {
 		return
 	}
 	entity := new(documentparsingrule.RuleVersion)
-	authctx.AddContextToRequest(authCtx, entity)
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -412,7 +408,6 @@ func (h *Handler) getFixture(c *gin.Context) {
 func (h *Handler) saveFixture(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	entity := new(documentparsingrule.Fixture)
-	authctx.AddContextToRequest(authCtx, entity)
 	isCreate := c.Param("fixtureID") == ""
 	var fixtureID pulid.ID
 	if rawFixtureID := c.Param("fixtureID"); rawFixtureID != "" {
@@ -432,7 +427,7 @@ func (h *Handler) saveFixture(c *gin.Context) {
 		}
 		ruleSetID = id
 	}
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

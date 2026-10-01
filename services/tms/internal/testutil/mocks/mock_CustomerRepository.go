@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -178,8 +177,8 @@ func (_c *MockCustomerRepository_Create_Call) RunAndReturn(run func(ctx context.
 }
 
 // GetBillingProfile provides a mock function for the type MockCustomerRepository
-func (_mock *MockCustomerRepository) GetBillingProfile(ctx context.Context, cusID pulid.ID) (*customer.CustomerBillingProfile, error) {
-	ret := _mock.Called(ctx, cusID)
+func (_mock *MockCustomerRepository) GetBillingProfile(ctx context.Context, req repositories.GetCustomerBillingProfileRequest) (*customer.CustomerBillingProfile, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBillingProfile")
@@ -187,18 +186,18 @@ func (_mock *MockCustomerRepository) GetBillingProfile(ctx context.Context, cusI
 
 	var r0 *customer.CustomerBillingProfile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*customer.CustomerBillingProfile, error)); ok {
-		return returnFunc(ctx, cusID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCustomerBillingProfileRequest) (*customer.CustomerBillingProfile, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *customer.CustomerBillingProfile); ok {
-		r0 = returnFunc(ctx, cusID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCustomerBillingProfileRequest) *customer.CustomerBillingProfile); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*customer.CustomerBillingProfile)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
-		r1 = returnFunc(ctx, cusID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetCustomerBillingProfileRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -212,20 +211,20 @@ type MockCustomerRepository_GetBillingProfile_Call struct {
 
 // GetBillingProfile is a helper method to define mock.On call
 //   - ctx context.Context
-//   - cusID pulid.ID
-func (_e *MockCustomerRepository_Expecter) GetBillingProfile(ctx any, cusID any) *MockCustomerRepository_GetBillingProfile_Call {
-	return &MockCustomerRepository_GetBillingProfile_Call{Call: _e.mock.On("GetBillingProfile", ctx, cusID)}
+//   - req repositories.GetCustomerBillingProfileRequest
+func (_e *MockCustomerRepository_Expecter) GetBillingProfile(ctx any, req any) *MockCustomerRepository_GetBillingProfile_Call {
+	return &MockCustomerRepository_GetBillingProfile_Call{Call: _e.mock.On("GetBillingProfile", ctx, req)}
 }
 
-func (_c *MockCustomerRepository_GetBillingProfile_Call) Run(run func(ctx context.Context, cusID pulid.ID)) *MockCustomerRepository_GetBillingProfile_Call {
+func (_c *MockCustomerRepository_GetBillingProfile_Call) Run(run func(ctx context.Context, req repositories.GetCustomerBillingProfileRequest)) *MockCustomerRepository_GetBillingProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 pulid.ID
+		var arg1 repositories.GetCustomerBillingProfileRequest
 		if args[1] != nil {
-			arg1 = args[1].(pulid.ID)
+			arg1 = args[1].(repositories.GetCustomerBillingProfileRequest)
 		}
 		run(
 			arg0,
@@ -240,7 +239,7 @@ func (_c *MockCustomerRepository_GetBillingProfile_Call) Return(customerBillingP
 	return _c
 }
 
-func (_c *MockCustomerRepository_GetBillingProfile_Call) RunAndReturn(run func(ctx context.Context, cusID pulid.ID) (*customer.CustomerBillingProfile, error)) *MockCustomerRepository_GetBillingProfile_Call {
+func (_c *MockCustomerRepository_GetBillingProfile_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetCustomerBillingProfileRequest) (*customer.CustomerBillingProfile, error)) *MockCustomerRepository_GetBillingProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }

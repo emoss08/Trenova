@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -26,7 +25,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*documentpacketrule.DocumentPacketRule]().
 			WithModelName("Document Packet Rule").
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() })).
+			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
 			Build(),
 	}
 }

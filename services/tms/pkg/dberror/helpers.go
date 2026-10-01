@@ -163,6 +163,16 @@ func IsCheckConstraintViolation(err error) bool {
 	return ExtractCode(err) == pgerrcode.CheckViolation
 }
 
+func IsRowLevelSecurityViolation(err error) bool {
+	details, ok := extractPostgresErrorDetails(err)
+	if !ok {
+		return false
+	}
+
+	return details.code == pgerrcode.InsufficientPrivilege &&
+		strings.Contains(details.message, "row-level security")
+}
+
 func IsRetryableTransactionError(err error) bool {
 	if errors.Is(err, context.DeadlineExceeded) {
 		return true
@@ -231,6 +241,7 @@ func ExtractCodeName(err error) string {
 type postgresErrorDetails struct {
 	code       string
 	constraint string
+	message    string
 }
 
 func extractPostgresErrorDetails(err error) (postgresErrorDetails, bool) {
@@ -238,6 +249,7 @@ func extractPostgresErrorDetails(err error) (postgresErrorDetails, bool) {
 		return postgresErrorDetails{
 			code:       pgErr.Code,
 			constraint: pgErr.ConstraintName,
+			message:    pgErr.Message,
 		}, true
 	}
 
@@ -246,6 +258,7 @@ func extractPostgresErrorDetails(err error) (postgresErrorDetails, bool) {
 		return postgresErrorDetails{
 			code:       pgDriverErr.Field('C'),
 			constraint: pgDriverErr.Field('n'),
+			message:    pgDriverErr.Field('M'),
 		}, true
 	}
 

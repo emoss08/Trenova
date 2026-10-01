@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -27,8 +26,8 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*customer.Customer]().
 			WithModelName("Customer").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() })).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() })).
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
 			WithUniqueField(
 				"code",
 				"code",
@@ -39,7 +38,7 @@ func NewValidator(p ValidatorParams) *Validator {
 				"stateId",
 				"State does not exist",
 				func(c *customer.Customer) pulid.ID { return c.StateID },
-				validationframework.NewUSStateReferenceCheck(func() bun.IDB { return p.DB.DB() }),
+				validationframework.NewUSStateReferenceCheck(p.DB),
 			).
 			Build(),
 	}

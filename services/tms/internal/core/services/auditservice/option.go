@@ -1,6 +1,7 @@
 package auditservice
 
 import (
+	"context"
 	"maps"
 	"strings"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -220,4 +222,31 @@ func BuildBulkLogEntries[T validationframework.TenantedEntity](
 	}
 
 	return entries
+}
+
+func WithRequest(ctx context.Context) services.LogOption {
+	return func(entry *audit.Entry) error {
+		meta, ok := requestmeta.From(ctx)
+		if !ok {
+			return nil
+		}
+
+		if entry.IPAddress == "" {
+			entry.IPAddress = meta.ClientIP
+		}
+		if entry.UserAgent == "" {
+			entry.UserAgent = meta.UserAgent
+		}
+		if entry.CorrelationID == "" {
+			entry.CorrelationID = meta.RequestID
+		}
+		if meta.RequestID != "" {
+			if entry.Metadata == nil {
+				entry.Metadata = make(map[string]any)
+			}
+			entry.Metadata["requestId"] = meta.RequestID
+		}
+
+		return nil
+	}
 }

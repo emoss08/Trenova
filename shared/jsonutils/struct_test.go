@@ -142,3 +142,20 @@ func TestMustToJSON(t *testing.T) {
 		})
 	})
 }
+
+func TestToJSONDocument(t *testing.T) {
+	t.Parallel()
+
+	object, err := jsonutils.ToJSONDocument(struct {
+		Name string `json:"name"`
+	}{Name: "ops"})
+	require.NoError(t, err)
+	assert.Equal(t, map[string]any{"name": "ops"}, object)
+
+	list, err := jsonutils.ToJSONDocument([]string{"a", "b"})
+	require.NoError(t, err)
+	assert.Equal(t, map[string]any{"value": []any{"a", "b"}}, list)
+
+	_, err = jsonutils.ToJSONDocument(make(chan int))
+	require.Error(t, err)
+}

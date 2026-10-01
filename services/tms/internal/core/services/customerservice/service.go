@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -140,9 +139,9 @@ func (s *Service) SelectOptions(
 
 func (s *Service) GetBillingProfile(
 	ctx context.Context,
-	cusID pulid.ID,
+	req repositories.GetCustomerBillingProfileRequest,
 ) (*customer.CustomerBillingProfile, error) {
-	return s.repo.GetBillingProfile(ctx, cusID)
+	return s.repo.GetBillingProfile(ctx, req)
 }
 
 func (s *Service) BulkUpdateStatus(

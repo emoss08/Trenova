@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/lanequery"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -55,86 +57,89 @@ func (r *repository) GetNetworkPulse(
 	since int64,
 	laneLimit int,
 ) (*repositories.NetworkPulseCounts, error) {
-	counts := &repositories.NetworkPulseCounts{Lanes: []repositories.NetworkPulseLane{}}
+	ctx = dbscope.WithSystem(ctx, "compute the instance-wide network pulse across every organization")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.NetworkPulseCounts, error) {
+		counts := &repositories.NetworkPulseCounts{Lanes: []repositories.NetworkPulseLane{}}
 
-	var inMotion struct {
-		LoadsInMotion int `bun:"loads_in_motion"`
-	}
-	if err := r.db.DB().NewSelect().
-		TableExpr("shipments sp").
-		ColumnExpr("COUNT(*)::int AS loads_in_motion").
-		Where("sp.status = ?", shipment.StatusInTransit).
-		Scan(ctx, &inMotion); err != nil {
-		r.l.Error("failed to count loads in motion", zap.Error(err))
-		return nil, err
-	}
-	counts.LoadsInMotion = inMotion.LoadsInMotion
+		var inMotion struct {
+			LoadsInMotion int `bun:"loads_in_motion"`
+		}
+		if err := r.db.DBForContext(ctx).NewSelect().
+			TableExpr("shipments sp").
+			ColumnExpr("COUNT(*)::int AS loads_in_motion").
+			Where("sp.status = ?", shipment.StatusInTransit).
+			Scan(ctx, &inMotion); err != nil {
+			r.l.Error("failed to count loads in motion", zap.Error(err))
+			return nil, err
+		}
+		counts.LoadsInMotion = inMotion.LoadsInMotion
 
-	var onTime struct {
-		OnTimeCount int `bun:"on_time_count"`
-		OnTimeTotal int `bun:"on_time_total"`
-	}
-	if err := r.db.DB().NewSelect().
-		TableExpr("stops stp").
-		ColumnExpr("COUNT(*)::int AS on_time_total").
-		ColumnExpr(
-			"COUNT(*) FILTER ("+
-				"WHERE stp.actual_arrival <= "+
-				"COALESCE(stp.scheduled_window_end, stp.scheduled_window_start)"+
-				")::int AS on_time_count",
-		).
-		Where("stp.status = ?", shipment.StopStatusCompleted).
-		Where("stp.type IN (?)", bun.List([]shipment.StopType{
-			shipment.StopTypeDelivery,
-			shipment.StopTypeSplitDelivery,
-		})).
-		Where("stp.actual_arrival IS NOT NULL").
-		Where("stp.actual_arrival >= ?", since).
-		Where("stp.scheduled_window_start > 0").
-		Scan(ctx, &onTime); err != nil {
-		r.l.Error("failed to score on-time deliveries", zap.Error(err))
-		return nil, err
-	}
-	counts.OnTimeCount = onTime.OnTimeCount
-	counts.OnTimeTotal = onTime.OnTimeTotal
+		var onTime struct {
+			OnTimeCount int `bun:"on_time_count"`
+			OnTimeTotal int `bun:"on_time_total"`
+		}
+		if err := r.db.DBForContext(ctx).NewSelect().
+			TableExpr("stops stp").
+			ColumnExpr("COUNT(*)::int AS on_time_total").
+			ColumnExpr(
+				"COUNT(*) FILTER ("+
+					"WHERE stp.actual_arrival <= "+
+					"COALESCE(stp.scheduled_window_end, stp.scheduled_window_start)"+
+					")::int AS on_time_count",
+			).
+			Where("stp.status = ?", shipment.StopStatusCompleted).
+			Where("stp.type IN (?)", bun.List([]shipment.StopType{
+				shipment.StopTypeDelivery,
+				shipment.StopTypeSplitDelivery,
+			})).
+			Where("stp.actual_arrival IS NOT NULL").
+			Where("stp.actual_arrival >= ?", since).
+			Where("stp.scheduled_window_start > 0").
+			Scan(ctx, &onTime); err != nil {
+			r.l.Error("failed to score on-time deliveries", zap.Error(err))
+			return nil, err
+		}
+		counts.OnTimeCount = onTime.OnTimeCount
+		counts.OnTimeTotal = onTime.OnTimeTotal
 
-	if laneLimit <= 0 {
+		if laneLimit <= 0 {
+			return counts, nil
+		}
+
+		laneRows := make([]struct {
+			OriginState      string `bun:"origin_state"`
+			DestinationState string `bun:"destination_state"`
+			Status           string `bun:"status"`
+			Count            int    `bun:"count"`
+		}, 0, laneLimit)
+
+		cols := buncolgen.ShipmentColumns
+		if err := lanequery.New(r.db.DBForContext(ctx), lanequery.Options{
+			ShipmentFilter: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where(cols.Status.In(), bun.List(activeLaneStatuses))
+			},
+			GroupByStatus: true,
+		}).
+			OrderExpr(lanequery.CountColumn+" DESC").
+			OrderExpr(lanequery.OriginStateColumn+" ASC").
+			OrderExpr(lanequery.DestinationStateColumn+" ASC").
+			OrderExpr(lanequery.StatusColumn+" ASC").
+			Limit(laneLimit).
+			Scan(ctx, &laneRows); err != nil {
+			r.l.Error("failed to load active lanes", zap.Error(err))
+			return nil, err
+		}
+
+		counts.Lanes = make([]repositories.NetworkPulseLane, 0, len(laneRows))
+		for _, row := range laneRows {
+			counts.Lanes = append(counts.Lanes, repositories.NetworkPulseLane{
+				OriginState:      row.OriginState,
+				DestinationState: row.DestinationState,
+				Status:           row.Status,
+				Count:            row.Count,
+			})
+		}
+
 		return counts, nil
-	}
-
-	laneRows := make([]struct {
-		OriginState      string `bun:"origin_state"`
-		DestinationState string `bun:"destination_state"`
-		Status           string `bun:"status"`
-		Count            int    `bun:"count"`
-	}, 0, laneLimit)
-
-	cols := buncolgen.ShipmentColumns
-	if err := lanequery.New(r.db.DB(), lanequery.Options{
-		ShipmentFilter: func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where(cols.Status.In(), bun.List(activeLaneStatuses))
-		},
-		GroupByStatus: true,
-	}).
-		OrderExpr(lanequery.CountColumn+" DESC").
-		OrderExpr(lanequery.OriginStateColumn+" ASC").
-		OrderExpr(lanequery.DestinationStateColumn+" ASC").
-		OrderExpr(lanequery.StatusColumn+" ASC").
-		Limit(laneLimit).
-		Scan(ctx, &laneRows); err != nil {
-		r.l.Error("failed to load active lanes", zap.Error(err))
-		return nil, err
-	}
-
-	counts.Lanes = make([]repositories.NetworkPulseLane, 0, len(laneRows))
-	for _, row := range laneRows {
-		counts.Lanes = append(counts.Lanes, repositories.NetworkPulseLane{
-			OriginState:      row.OriginState,
-			DestinationState: row.DestinationState,
-			Status:           row.Status,
-			Count:            row.Count,
-		})
-	}
-
-	return counts, nil
+	})
 }

@@ -134,7 +134,7 @@ func (h *Handler) createPermit(c *gin.Context) {
 	}
 
 	entity := new(permit.Permit)
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -190,7 +190,7 @@ func (h *Handler) updatePermit(c *gin.Context) {
 	}
 
 	entity := new(permit.Permit)
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

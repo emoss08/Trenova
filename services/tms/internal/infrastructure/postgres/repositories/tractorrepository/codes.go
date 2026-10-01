@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -33,44 +34,46 @@ func (r *repository) GetByCodes(
 	ctx context.Context,
 	req repositories.GetTractorsByCodesRequest,
 ) (map[string]*tractor.Tractor, error) {
-	codes := normalizeLookupKeys(req.Codes)
-	plates := normalizeLookupKeys(req.LicensePlates)
-	if len(codes) == 0 && len(plates) == 0 {
-		return map[string]*tractor.Tractor{}, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]*tractor.Tractor, error) {
+		codes := normalizeLookupKeys(req.Codes)
+		plates := normalizeLookupKeys(req.LicensePlates)
+		if len(codes) == 0 && len(plates) == 0 {
+			return map[string]*tractor.Tractor{}, nil
+		}
 
-	cols := buncolgen.TractorColumns
-	entities := make([]*tractor.Tractor, 0, len(codes)+len(plates))
+		cols := buncolgen.TractorColumns
+		entities := make([]*tractor.Tractor, 0, len(codes)+len(plates))
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		ColumnExpr(buncolgen.TractorTable.All()).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.TractorScopeTenant(sq, req.TenantInfo).
-				WhereGroup(" AND ", func(oq *bun.SelectQuery) *bun.SelectQuery {
-					if len(codes) > 0 {
-						oq = oq.Where(cols.Code.Expr("UPPER({}) IN (?)"), bun.In(codes))
-					}
-					if len(plates) > 0 {
-						oq = oq.WhereOr(
-							cols.LicensePlateNumber.Expr("UPPER({}) IN (?)"),
-							bun.In(plates),
-						)
-					}
-					return oq
-				})
-		}).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to get tractors by code", zap.Error(err))
-		return nil, fmt.Errorf("get tractors by codes: %w", err)
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			ColumnExpr(buncolgen.TractorTable.All()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.TractorScopeTenant(sq, req.TenantInfo).
+					WhereGroup(" AND ", func(oq *bun.SelectQuery) *bun.SelectQuery {
+						if len(codes) > 0 {
+							oq = oq.Where(cols.Code.Expr("UPPER({}) IN (?)"), bun.In(codes))
+						}
+						if len(plates) > 0 {
+							oq = oq.WhereOr(
+								cols.LicensePlateNumber.Expr("UPPER({}) IN (?)"),
+								bun.In(plates),
+							)
+						}
+						return oq
+					})
+			}).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to get tractors by code", zap.Error(err))
+			return nil, fmt.Errorf("get tractors by codes: %w", err)
+		}
 
-	byCode := make(map[string]*tractor.Tractor, len(entities))
-	for _, entity := range entities {
-		byCode[strings.ToUpper(strings.TrimSpace(entity.Code))] = entity
-	}
+		byCode := make(map[string]*tractor.Tractor, len(entities))
+		for _, entity := range entities {
+			byCode[strings.ToUpper(strings.TrimSpace(entity.Code))] = entity
+		}
 
-	return byCode, nil
+		return byCode, nil
+	})
 }

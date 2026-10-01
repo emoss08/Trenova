@@ -7807,15 +7807,6 @@
       "domain/integration"
     ]
   },
-  "API documentation for Trenova TMS. Protected routes accept either a Bearer token in the Authorization header or an authenticated session cookie.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "API key": {
     "sites": 2,
     "scope": [
@@ -8118,7 +8109,34 @@
       "service/ediservice"
     ]
   },
+  "AS2 MDN could not be authenticated: it is not signed with a configured partner certificate and does not carry the transmitted content's MIC": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/ediservice"
+    ]
+  },
   "AS2 MDN does not reference an original message": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/ediservice"
+    ]
+  },
+  "AS2 MDN must be signed with the partner's signing certificate": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/ediservice"
+    ]
+  },
+  "AS2 MDN signature verification failed": {
     "sites": 1,
     "scope": [
       "go"
@@ -17539,6 +17557,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Another active AS2 profile already uses this local and partner AS2 ID pair": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/ediservice"
     ]
   },
   "Another app is using the microphone. Close it and try again.": {
@@ -45673,7 +45700,7 @@
     ]
   },
   "Create new records": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -70037,7 +70064,7 @@
     ]
   },
   "Export records to file": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -84215,7 +84242,7 @@
     ]
   },
   "Import records from file": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -87605,15 +87632,6 @@
     ],
     "areas": [
       "service/userservice"
-    ]
-  },
-  "Invalid session ID": {
-    "sites": 3,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
     ]
   },
   "Invalid settlement": {
@@ -98081,6 +98099,15 @@
       "routes/worker"
     ]
   },
+  "Manage records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Manage roles and permissions for your organization": {
     "sites": 1,
     "scope": [
@@ -102662,7 +102689,7 @@
     ]
   },
   "Modify existing records": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -107363,7 +107390,7 @@
     ]
   },
   "No Trenova user exists for this {0} account": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -122251,6 +122278,15 @@
       "domain/carrierintel"
     ]
   },
+  "Organization not found": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Organization pairing": {
     "sites": 1,
     "scope": [
@@ -130096,6 +130132,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Pin records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Pin right": {
@@ -147809,6 +147854,15 @@
       "domain/permission"
     ]
   },
+  "Resolve records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Resolve required mappings before accepting and creating the receiving shipment.": {
     "sites": 1,
     "scope": [
@@ -153354,7 +153408,7 @@
     ]
   },
   "SSO is not configured": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -153372,7 +153426,7 @@
     ]
   },
   "SSO login session is invalid or expired": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -162091,8 +162145,17 @@
       "service/authservice"
     ]
   },
+  "Session is invalid. Please login again.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/authservice"
+    ]
+  },
   "Session not found": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -163401,6 +163464,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Shared reference data can only be changed by the platform operator": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/referencedataguard"
     ]
   },
   "Shared with": {
@@ -183617,6 +183689,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The request belongs to a different organization than your session": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The request the agent composed. Required: this is the substance of the message.": {
     "sites": 1,
     "scope": [
@@ -186544,6 +186625,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This Trenova user is already linked to a different {0} account": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/authservice"
     ]
   },
   "This accessorial is already priced by the agreement": {
@@ -194577,15 +194667,6 @@
       "service/editransport"
     ]
   },
-  "Trenova TMS API": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Trenova accounts in this balance": {
     "sites": 1,
     "scope": [
@@ -197605,6 +197686,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Unpin records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Unpinned": {
@@ -202105,7 +202195,7 @@
     ]
   },
   "View records": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -215337,6 +215427,15 @@
       "routes/agent-control"
     ]
   },
+  "insufficient permissions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/helpers"
+    ]
+  },
   "invalid OANDA base URL": {
     "sites": 1,
     "scope": [
@@ -221154,6 +221253,15 @@
       "apps/web/components"
     ]
   },
+  "{0} has not verified this account's email address, so it cannot be matched to a Trenova user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/authservice"
+    ]
+  },
   "{0} has set up a Dash account for you. Dash is where you will see your assigned loads, submit expenses, and check your pay.": {
     "sites": 2,
     "scope": [
@@ -221197,6 +221305,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} identity token did not identify the account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/authservice"
     ]
   },
   "{0} identity token is invalid": {

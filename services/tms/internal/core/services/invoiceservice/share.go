@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/fileutils"
@@ -37,6 +38,10 @@ func (s *Service) DownloadSharedDocument(
 	if share.RevokedAt != nil || share.ExpiresAt <= now {
 		return nil, errortypes.NewNotFoundError("Document link is no longer available")
 	}
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: share.OrganizationID,
+		BusinessUnitID: share.BusinessUnitID,
+	})
 	content, err := s.documentService.GetDownloadContent(ctx, repositories.GetDocumentByIDRequest{
 		ID: share.DocumentID,
 		TenantInfo: pagination.TenantInfo{

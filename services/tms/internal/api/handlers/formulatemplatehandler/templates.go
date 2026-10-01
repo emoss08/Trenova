@@ -203,7 +203,7 @@ func (h *Handler) create(c *gin.Context) {
 	entity.OrganizationID = authCtx.OrganizationID
 	entity.BusinessUnitID = authCtx.BusinessUnitID
 
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -244,7 +244,7 @@ func (h *Handler) update(c *gin.Context) {
 	entity.OrganizationID = authCtx.OrganizationID
 	entity.BusinessUnitID = authCtx.BusinessUnitID
 
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -367,7 +367,7 @@ func (h *Handler) patch(c *gin.Context) {
 	// A partial update never moves status; that belongs to the review
 	// workflow, so whatever the body says about it is dropped here.
 	status := existing.Status
-	if err = c.ShouldBindJSON(existing); err != nil {
+	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

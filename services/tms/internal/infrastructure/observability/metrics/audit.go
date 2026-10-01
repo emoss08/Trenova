@@ -21,6 +21,8 @@ type Audit struct {
 	dlqRetryTotal     *prometheus.CounterVec
 	directInsertTotal prometheus.Counter
 	fallbackTotal     prometheus.Counter
+	criticalBuffered  prometheus.Counter
+	securityEvents    *prometheus.CounterVec
 	flushDuration     prometheus.Histogram
 	batchSize         prometheus.Histogram
 }
@@ -90,6 +92,20 @@ func NewAudit(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 		Help:      "Total number of audit entries inserted via fallback (buffer push failed)",
 	})
 
+	m.criticalBuffered = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: Namespace,
+		Subsystem: "audit",
+		Name:      "critical_buffered_total",
+		Help:      "Total number of critical audit entries buffered because the direct insert failed",
+	})
+
+	m.securityEvents = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: Namespace,
+		Subsystem: "audit",
+		Name:      "security_event_total",
+		Help:      "Total number of security events recorded, by kind and outcome of the write",
+	}, []string{"kind", "status"})
+
 	m.flushDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: Namespace,
 		Subsystem: "audit",
@@ -115,6 +131,8 @@ func NewAudit(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 		m.dlqRetryTotal,
 		m.directInsertTotal,
 		m.fallbackTotal,
+		m.criticalBuffered,
+		m.securityEvents,
 		m.flushDuration,
 		m.batchSize,
 	)
@@ -174,4 +192,18 @@ func (m *Audit) SetBufferSize(size int64) {
 
 func (m *Audit) SetDLQSize(size int64) {
 	m.ifEnabled(func() { m.dlqSize.Set(float64(size)) })
+}
+
+func (m *Audit) RecordCriticalBuffered(count int) {
+	m.ifEnabled(func() { m.criticalBuffered.Add(float64(count)) })
+}
+
+func (m *Audit) RecordSecurityEvent(kind string, success bool) {
+	m.ifEnabled(func() {
+		status := metricStatusSuccess
+		if !success {
+			status = metricStatusFailure
+		}
+		m.securityEvents.WithLabelValues(kind, status).Inc()
+	})
 }

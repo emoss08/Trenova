@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
 
@@ -198,12 +199,16 @@ func (a *Activities) InboundMessageRetentionActivity(
 		activity.RecordHeartbeat(ctx, org.ID.String())
 
 		tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+		tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
 		for range inboundRetentionPasses {
-			deleted, pErr := a.purger.PurgeSettled(ctx, inboundmessageservice.PurgeSettledRequest{
-				TenantInfo: tenant,
-				Before:     before,
-				Limit:      inboundRetentionBatch,
-			})
+			deleted, pErr := a.purger.PurgeSettled(
+				tenantCtx,
+				inboundmessageservice.PurgeSettledRequest{
+					TenantInfo: tenant,
+					Before:     before,
+					Limit:      inboundRetentionBatch,
+				},
+			)
 			if pErr != nil {
 				a.l.Warn("inbound retention failed for an organization",
 					zap.String("organizationId", org.ID.String()), zap.Error(pErr))

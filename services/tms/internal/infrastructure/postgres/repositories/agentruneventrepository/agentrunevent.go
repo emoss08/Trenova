@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,23 +46,25 @@ func (r *repository) Append(
 	ctx context.Context,
 	req repositories.AppendAgentRunEventsRequest,
 ) error {
-	if len(req.Events) == 0 {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if len(req.Events) == 0 {
+			return nil
+		}
+
+		_, err := r.db.DBForContext(ctx).NewInsert().
+			Model(&req.Events).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to append agent run events",
+				zap.Int("events", len(req.Events)),
+				zap.Error(err),
+			)
+
+			return fmt.Errorf("append agent run events: %w", err)
+		}
+
 		return nil
-	}
-
-	_, err := r.db.DBForContext(ctx).NewInsert().
-		Model(&req.Events).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to append agent run events",
-			zap.Int("events", len(req.Events)),
-			zap.Error(err),
-		)
-
-		return fmt.Errorf("append agent run events: %w", err)
-	}
-
-	return nil
+	})
 }
 
 // NextSequence is where a writer resumes counting.
@@ -75,124 +78,130 @@ func (r *repository) NextSequence(
 	ownerKind string,
 	ownerID pulid.ID,
 ) (int, error) {
-	cols := buncolgen.AgentRunEventColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := buncolgen.AgentRunEventColumns
 
-	var highest int
-	err := r.db.DBForContext(ctx).NewSelect().
-		Model((*agent.AgentRunEvent)(nil)).
-		ColumnExpr("COALESCE(MAX(?), 0)", bun.Ident(cols.Sequence.String())).
-		Apply(buncolgen.AgentRunEventApplyTenant(tenantInfo)).
-		Where(cols.OwnerKind.Eq(), ownerKind).
-		Where(cols.OwnerID.Eq(), ownerID).
-		Scan(ctx, &highest)
-	if err != nil {
-		r.l.Error("failed to read the next event sequence",
-			zap.String("owner", ownerID.String()),
-			zap.Error(err),
-		)
+		var highest int
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model((*agent.AgentRunEvent)(nil)).
+			ColumnExpr("COALESCE(MAX(?), 0)", bun.Ident(cols.Sequence.String())).
+			Apply(buncolgen.AgentRunEventApplyTenant(tenantInfo)).
+			Where(cols.OwnerKind.Eq(), ownerKind).
+			Where(cols.OwnerID.Eq(), ownerID).
+			Scan(ctx, &highest)
+		if err != nil {
+			r.l.Error("failed to read the next event sequence",
+				zap.String("owner", ownerID.String()),
+				zap.Error(err),
+			)
 
-		return 0, fmt.Errorf("read next agent run event sequence: %w", err)
-	}
+			return 0, fmt.Errorf("read next agent run event sequence: %w", err)
+		}
 
-	return highest + 1, nil
+		return highest + 1, nil
+	})
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req repositories.ListAgentRunEventsRequest,
 ) ([]*agent.AgentRunEvent, error) {
-	cols := buncolgen.AgentRunEventColumns
-	events := make([]*agent.AgentRunEvent, 0, 32)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
+		cols := buncolgen.AgentRunEventColumns
+		events := make([]*agent.AgentRunEvent, 0, 32)
 
-	q := r.db.DBForContext(ctx).NewSelect().
-		Model(&events).
-		Apply(buncolgen.AgentRunEventApplyTenant(req.TenantInfo)).
-		Where(cols.OwnerKind.Eq(), req.OwnerKind).
-		Where(cols.OwnerID.Eq(), req.OwnerID).
-		Order(cols.Sequence.OrderAsc())
+		q := r.db.DBForContext(ctx).NewSelect().
+			Model(&events).
+			Apply(buncolgen.AgentRunEventApplyTenant(req.TenantInfo)).
+			Where(cols.OwnerKind.Eq(), req.OwnerKind).
+			Where(cols.OwnerID.Eq(), req.OwnerID).
+			Order(cols.Sequence.OrderAsc())
 
-	if req.After > 0 {
-		q = q.Where(cols.Sequence.Gt(), req.After)
-	}
+		if req.After > 0 {
+			q = q.Where(cols.Sequence.Gt(), req.After)
+		}
 
-	if req.Limit > 0 {
-		q = q.Limit(req.Limit)
-	}
+		if req.Limit > 0 {
+			q = q.Limit(req.Limit)
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		r.l.Error("failed to list agent run events",
-			zap.String("owner", req.OwnerID.String()),
-			zap.Error(err),
-		)
+		if err := q.Scan(ctx); err != nil {
+			r.l.Error("failed to list agent run events",
+				zap.String("owner", req.OwnerID.String()),
+				zap.Error(err),
+			)
 
-		return nil, fmt.Errorf("list agent run events: %w", err)
-	}
+			return nil, fmt.Errorf("list agent run events: %w", err)
+		}
 
-	return events, nil
+		return events, nil
+	})
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListAgentRunEventConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
-	log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
+		log := r.l.With(zap.String("operation", "ListConnection"))
 
-	dba := r.db.DBForContext(ctx)
+		dba := r.db.DBForContext(ctx)
 
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.NewSelect().
-			Model((*agent.AgentRunEvent)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = querybuilder.ApplyFiltersWithoutSort(
-					sq,
-					buncolgen.AgentRunEventTable.Alias,
-					req.Filter,
-					(*agent.AgentRunEvent)(nil),
-				)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.NewSelect().
+				Model((*agent.AgentRunEvent)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = querybuilder.ApplyFiltersWithoutSort(
+						sq,
+						buncolgen.AgentRunEventTable.Alias,
+						req.Filter,
+						(*agent.AgentRunEvent)(nil),
+					)
 
-				return ownedBy(sq, req.OwnerKind).
-					Apply(buncolgen.AgentRunEventApplyTenant(req.Filter.TenantInfo))
-			}).
-			Count(ctx)
-		if err != nil {
-			log.Error("failed to count agent run events", zap.Error(err))
+					return ownedBy(sq, req.OwnerKind).
+						Apply(buncolgen.AgentRunEventApplyTenant(req.Filter.TenantInfo))
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count agent run events", zap.Error(err))
 
-			return nil, fmt.Errorf("count agent run events: %w", err)
-		}
-
-		totalCount = &total
-	}
-
-	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*agent.AgentRunEvent]{
-		Filter:     req.Filter,
-		Cursor:     req.Cursor,
-		TotalCount: totalCount,
-		Query: func(entities *[]*agent.AgentRunEvent) *bun.SelectQuery {
-			q := dba.NewSelect().Model(entities)
-			if len(req.Columns) > 0 {
-				q = q.Column(req.Columns...)
+				return nil, fmt.Errorf("count agent run events: %w", err)
 			}
 
-			return q
-		},
-		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-			return querybuilder.ApplyCursorFilters(
-				ownedBy(sq, req.OwnerKind),
-				buncolgen.AgentRunEventTable.Alias,
-				req.Filter,
-				req.Cursor,
-				(*agent.AgentRunEvent)(nil),
-			)
-		},
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*agent.AgentRunEvent]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: totalCount,
+			Query: func(entities *[]*agent.AgentRunEvent) *bun.SelectQuery {
+				q := dba.NewSelect().Model(entities)
+				if len(req.Columns) > 0 {
+					q = q.Column(req.Columns...)
+				}
+
+				return q
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return querybuilder.ApplyCursorFilters(
+					ownedBy(sq, req.OwnerKind),
+					buncolgen.AgentRunEventTable.Alias,
+					req.Filter,
+					req.Cursor,
+					(*agent.AgentRunEvent)(nil),
+				)
+			},
+		})
+		if err != nil {
+			log.Error("failed to list agent run events", zap.Error(err))
+
+			return nil, fmt.Errorf("list agent run events: %w", err)
+		}
+
+		return result, nil
 	})
-	if err != nil {
-		log.Error("failed to list agent run events", zap.Error(err))
-
-		return nil, fmt.Errorf("list agent run events: %w", err)
-	}
-
-	return result, nil
 }
 
 // ownedBy keeps a list to one kind of owner, when one is named.
@@ -210,29 +219,31 @@ func (r *repository) Prune(
 	ctx context.Context,
 	req repositories.PruneAgentRunEventsRequest,
 ) (int, error) {
-	cols := buncolgen.AgentRunEventColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := buncolgen.AgentRunEventColumns
 
-	dba := r.db.DBForContext(ctx)
-	doomed := dba.NewSelect().
-		Model((*agent.AgentRunEvent)(nil)).
-		Column(cols.ID.String()).
-		Where(cols.CreatedAt.Lt(), req.Before).
-		Limit(req.Limit)
+		dba := r.db.DBForContext(ctx)
+		doomed := dba.NewSelect().
+			Model((*agent.AgentRunEvent)(nil)).
+			Column(cols.ID.String()).
+			Where(cols.CreatedAt.Lt(), req.Before).
+			Limit(req.Limit)
 
-	result, err := dba.NewDelete().
-		Model((*agent.AgentRunEvent)(nil)).
-		Where(cols.ID.In(), doomed).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to prune agent run events", zap.Error(err))
+		result, err := dba.NewDelete().
+			Model((*agent.AgentRunEvent)(nil)).
+			Where(cols.ID.In(), doomed).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to prune agent run events", zap.Error(err))
 
-		return 0, fmt.Errorf("prune agent run events: %w", err)
-	}
+			return 0, fmt.Errorf("prune agent run events: %w", err)
+		}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("prune agent run events: %w", err)
-	}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return 0, fmt.Errorf("prune agent run events: %w", err)
+		}
 
-	return int(affected), nil
+		return int(affected), nil
+	})
 }

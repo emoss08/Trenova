@@ -32,6 +32,7 @@ type SSOLoginState struct {
 	Provider         tenant.SSOProvider `json:"provider"`
 	ProviderID       pulid.ID           `json:"providerId"`
 	OrganizationID   pulid.ID           `json:"organizationId"`
+	BusinessUnitID   pulid.ID           `json:"businessUnitId"`
 	OrganizationSlug string             `json:"organizationSlug"`
 	CodeVerifier     string             `json:"codeVerifier"`
 	Nonce            string             `json:"nonce"`

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,51 +41,55 @@ func (r *repository) ListSourceContextSchemas(
 	ctx context.Context,
 	req *repositories.ListEDISourceContextSchemasRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextSchema], error) {
-	entities := make([]*edi.EDISourceContextSchema, 0, req.Filter.Pagination.SafeLimit())
-	cols := buncolgen.EDISourceContextSchemaColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDISourceContextSchema], error) {
+		entities := make([]*edi.EDISourceContextSchema, 0, req.Filter.Pagination.SafeLimit())
+		cols := buncolgen.EDISourceContextSchemaColumns
 
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-			return filterSourceContextSchemasQuery(query, req)
-		}).
-		OrderExpr(
-			cols.OrganizationID.IsNotNull() + " DESC, " +
-				cols.SchemaVersion.OrderDesc() + ", " +
-				cols.CreatedAt.OrderDesc(),
-		).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &pagination.ListResult[*edi.EDISourceContextSchema]{
-		Items: entities,
-		Total: total,
-	}, nil
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
+				return filterSourceContextSchemasQuery(query, req)
+			}).
+			OrderExpr(
+				cols.OrganizationID.IsNotNull() + " DESC, " +
+					cols.SchemaVersion.OrderDesc() + ", " +
+					cols.CreatedAt.OrderDesc(),
+			).
+			Limit(req.Filter.Pagination.SafeLimit()).
+			Offset(req.Filter.Pagination.SafeOffset()).
+			ScanAndCount(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return &pagination.ListResult[*edi.EDISourceContextSchema]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) GetSourceContextSchema(
 	ctx context.Context,
 	req repositories.GetEDISourceContextSchemaRequest,
 ) (*edi.EDISourceContextSchema, error) {
-	entity := new(edi.EDISourceContextSchema)
-	cols := buncolgen.EDISourceContextSchemaColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDISourceContextSchema, error) {
+		entity := new(edi.EDISourceContextSchema)
+		cols := buncolgen.EDISourceContextSchemaColumns
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where(cols.ID.Eq(), req.ID).
-		Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-			return sourceContextSchemaTenantScope(query, req.TenantInfo)
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "EDISourceContextSchema")
-	}
-	return entity, nil
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(cols.ID.Eq(), req.ID).
+			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
+				return sourceContextSchemaTenantScope(query, req.TenantInfo)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "EDISourceContextSchema")
+		}
+		return entity, nil
+	})
 }
 
 //nolint:gocritic // EDI repository request structs are passed by value consistently.
@@ -92,30 +97,32 @@ func (r *repository) GetActiveSourceContextSchema(
 	ctx context.Context,
 	req repositories.GetActiveEDISourceContextSchemaRequest,
 ) (*edi.EDISourceContextSchema, error) {
-	entity := new(edi.EDISourceContextSchema)
-	cols := buncolgen.EDISourceContextSchemaColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDISourceContextSchema, error) {
+		entity := new(edi.EDISourceContextSchema)
+		cols := buncolgen.EDISourceContextSchemaColumns
 
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where(cols.Standard.Eq(), req.Standard).
-		Where(cols.TransactionSet.Eq(), req.TransactionSet).
-		Where(cols.Direction.Eq(), req.Direction).
-		Where(cols.X12Version.Eq(), req.X12Version).
-		Where(cols.ContextKey.Eq(), stringutils.FirstNonEmpty(req.ContextKey, "loadTender")).
-		Where(cols.Status.Eq(), edi.SourceContextFieldStatusActive).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sourceContextSchemaTenantScope(sq, req.TenantInfo)
-		}).
-		OrderExpr(cols.OrganizationID.IsNotNull() + " DESC, " + cols.SchemaVersion.OrderDesc()).
-		Limit(1)
-	if req.SchemaVersion > 0 {
-		query = query.Where(cols.SchemaVersion.Eq(), req.SchemaVersion)
-	}
-	if err := query.Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "EDISourceContextSchema")
-	}
-	return entity, nil
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(cols.Standard.Eq(), req.Standard).
+			Where(cols.TransactionSet.Eq(), req.TransactionSet).
+			Where(cols.Direction.Eq(), req.Direction).
+			Where(cols.X12Version.Eq(), req.X12Version).
+			Where(cols.ContextKey.Eq(), stringutils.FirstNonEmpty(req.ContextKey, "loadTender")).
+			Where(cols.Status.Eq(), edi.SourceContextFieldStatusActive).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sourceContextSchemaTenantScope(sq, req.TenantInfo)
+			}).
+			OrderExpr(cols.OrganizationID.IsNotNull() + " DESC, " + cols.SchemaVersion.OrderDesc()).
+			Limit(1)
+		if req.SchemaVersion > 0 {
+			query = query.Where(cols.SchemaVersion.Eq(), req.SchemaVersion)
+		}
+		if err := query.Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "EDISourceContextSchema")
+		}
+		return entity, nil
+	})
 }
 
 func (r *repository) ListSourceContextFields(
@@ -143,27 +150,29 @@ func (r *repository) searchSourceContextFields(
 	ctx context.Context,
 	req *repositories.ListEDISourceContextFieldsRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
-	entities := make([]*edi.EDISourceContextField, 0, req.Filter.Pagination.SafeLimit())
-	fieldCols := buncolgen.EDISourceContextFieldColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDISourceContextField], error) {
+		entities := make([]*edi.EDISourceContextField, 0, req.Filter.Pagination.SafeLimit())
+		fieldCols := buncolgen.EDISourceContextFieldColumns
 
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Join(sourceContextSchemaJoin()).
-		Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-			return filterSourceContextFieldsQuery(query, req)
-		}).
-		Order(fieldCols.Path.OrderAsc(), fieldCols.RepeatPath.OrderAsc()).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &pagination.ListResult[*edi.EDISourceContextField]{
-		Items: entities,
-		Total: total,
-	}, nil
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Join(sourceContextSchemaJoin()).
+			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
+				return filterSourceContextFieldsQuery(query, req)
+			}).
+			Order(fieldCols.Path.OrderAsc(), fieldCols.RepeatPath.OrderAsc()).
+			Limit(req.Filter.Pagination.SafeLimit()).
+			Offset(req.Filter.Pagination.SafeOffset()).
+			ScanAndCount(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return &pagination.ListResult[*edi.EDISourceContextField]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func filterSourceContextSchemasQuery(

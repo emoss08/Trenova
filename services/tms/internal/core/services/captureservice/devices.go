@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -131,6 +132,14 @@ var errInvalidDeviceToken = errortypes.NewAuthenticationError("The device creden
 
 // Authenticate resolves an access token to its device. Every failure reads
 // the same, so the endpoint says nothing about why a token was refused.
+func deviceScope(ctx context.Context, device *capture.CaptureDevice) context.Context {
+	return dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: device.OrganizationID,
+		BusinessUnitID: device.BusinessUnitID,
+		UserID:         device.UserID,
+	})
+}
+
 func (s *Service) Authenticate(
 	ctx context.Context,
 	accessToken string,
@@ -148,6 +157,7 @@ func (s *Service) Authenticate(
 
 		return nil, err
 	}
+	ctx = deviceScope(ctx, device)
 
 	now := timeutils.NowUnix()
 	if !device.IsActive() || now >= device.AccessTokenExpiresAt {
@@ -184,6 +194,7 @@ func (s *Service) Refresh(ctx context.Context, req *RefreshRequest) (*TokenPair,
 
 		return nil, s.handleRefreshMiss(ctx, hash)
 	}
+	ctx = deviceScope(ctx, device)
 
 	now := timeutils.NowUnix()
 	if !device.IsActive() {
@@ -270,6 +281,7 @@ func (s *Service) handleRefreshMiss(ctx context.Context, hash string) error {
 
 		return err
 	}
+	ctx = deviceScope(ctx, device)
 
 	if device.IsActive() {
 		s.l.Warn("capture device refresh token reused; revoking device",

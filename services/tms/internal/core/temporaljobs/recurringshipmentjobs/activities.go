@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -100,8 +101,9 @@ func (a *Activities) dispatchSeries(
 		BuID:   series.BusinessUnitID,
 		UserID: series.EnteredByID,
 	}
+	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
-	generation, err := a.repo.Generate(ctx, &repositories.GenerateRecurringShipmentRequest{
+	generation, err := a.repo.Generate(tenantCtx, &repositories.GenerateRecurringShipmentRequest{
 		TenantInfo:          tenantInfo,
 		RecurringShipmentID: series.ID,
 		Trigger:             recurringshipment.RunTriggerAuto,
@@ -110,7 +112,7 @@ func (a *Activities) dispatchSeries(
 	if err != nil {
 		log.Error("recurring shipment generation failed", zap.Error(err))
 		result.Failed++
-		a.recordFailure(ctx, series, tenantInfo, err)
+		a.recordFailure(tenantCtx, series, tenantInfo, err)
 		return
 	}
 
@@ -119,7 +121,7 @@ func (a *Activities) dispatchSeries(
 		if generation.Run != nil &&
 			generation.Run.Status == recurringshipment.RunStatusSkipped &&
 			generation.Series != nil {
-			a.notifySeriesOwner(ctx, generation.Series,
+			a.notifySeriesOwner(tenantCtx, generation.Series,
 				eventTypeOccurrenceSkipped,
 				"Recurring shipment occurrence skipped",
 				fmt.Sprintf(
@@ -127,7 +129,7 @@ func (a *Activities) dispatchSeries(
 					generation.Series.Name, generation.Run.Detail,
 				))
 		}
-		a.notifyIfExpired(ctx, generation.Series)
+		a.notifyIfExpired(tenantCtx, generation.Series)
 		return
 	}
 
@@ -151,7 +153,7 @@ func (a *Activities) dispatchSeries(
 	}
 
 	if publishErr := realtimeinvalidation.Publish(
-		ctx,
+		tenantCtx,
 		a.realtime,
 		&realtimeinvalidation.PublishParams{
 			OrganizationID: generation.Shipment.OrganizationID,
@@ -165,7 +167,7 @@ func (a *Activities) dispatchSeries(
 		log.Warn("failed to publish generated shipment invalidation", zap.Error(publishErr))
 	}
 
-	a.notifyIfExpired(ctx, generation.Series)
+	a.notifyIfExpired(tenantCtx, generation.Series)
 }
 
 func (a *Activities) recordFailure(

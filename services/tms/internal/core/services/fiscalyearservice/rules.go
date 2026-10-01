@@ -127,49 +127,51 @@ func createCurrentYearRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.IsCurrent && entity.Status != fiscalyear.StatusOpen {
-				multiErr.Add(
-					"status",
-					errortypes.ErrInvalid,
-					"Current fiscal year must have status 'Open'",
-				)
-			}
+			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+				if entity.IsCurrent && entity.Status != fiscalyear.StatusOpen {
+					multiErr.Add(
+						"status",
+						errortypes.ErrInvalid,
+						"Current fiscal year must have status 'Open'",
+					)
+				}
 
-			if !entity.IsCurrent {
+				if !entity.IsCurrent {
+					return nil
+				}
+
+				q := db.DBForContext(ctx).NewSelect().
+					Model((*fiscalyear.FiscalYear)(nil)).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.Where("fy.organization_id = ?", valCtx.OrganizationID).
+							Where("fy.business_unit_id = ?", valCtx.BusinessUnitID).
+							Where("fy.is_current = ?", true)
+					})
+
+				if valCtx.IsUpdate() {
+					q = q.Where("fy.id != ?", entity.ID)
+				}
+
+				count, err := q.Count(ctx)
+				if err != nil {
+					multiErr.Add(
+						"__all__",
+						errortypes.ErrSystemError,
+						"Failed to check current year uniqueness",
+					)
+					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				}
+
+				if count > 0 {
+					multiErr.Add(
+						"isCurrent",
+						errortypes.ErrInvalid,
+						"Another fiscal year is already marked as current. Only one fiscal year can be current at a time.",
+					)
+				}
+
 				return nil
-			}
-
-			q := db.DB().NewSelect().
-				Model((*fiscalyear.FiscalYear)(nil)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("fy.organization_id = ?", valCtx.OrganizationID).
-						Where("fy.business_unit_id = ?", valCtx.BusinessUnitID).
-						Where("fy.is_current = ?", true)
-				})
-
-			if valCtx.IsUpdate() {
-				q = q.Where("fy.id != ?", entity.ID)
-			}
-
-			count, err := q.Count(ctx)
-			if err != nil {
-				multiErr.Add(
-					"__all__",
-					errortypes.ErrSystemError,
-					"Failed to check current year uniqueness",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-			}
-
-			if count > 0 {
-				multiErr.Add(
-					"isCurrent",
-					errortypes.ErrInvalid,
-					"Another fiscal year is already marked as current. Only one fiscal year can be current at a time.",
-				)
-			}
-
-			return nil
+			})
 		})
 }
 
@@ -186,42 +188,44 @@ func createOverlappingYearsRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			q := db.DB().NewSelect().
-				Model((*fiscalyear.FiscalYear)(nil)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("fy.organization_id = ?", valCtx.OrganizationID).
-						Where("fy.business_unit_id = ?", valCtx.BusinessUnitID).
-						Where("start_date <= ?", entity.EndDate).
-						Where("end_date >= ?", entity.StartDate)
-				})
+			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+				q := db.DBForContext(ctx).NewSelect().
+					Model((*fiscalyear.FiscalYear)(nil)).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.Where("fy.organization_id = ?", valCtx.OrganizationID).
+							Where("fy.business_unit_id = ?", valCtx.BusinessUnitID).
+							Where("start_date <= ?", entity.EndDate).
+							Where("end_date >= ?", entity.StartDate)
+					})
 
-			if valCtx.IsUpdate() {
-				q = q.Where("fy.id != ?", entity.ID)
-			}
+				if valCtx.IsUpdate() {
+					q = q.Where("fy.id != ?", entity.ID)
+				}
 
-			count, err := q.Count(ctx)
-			if err != nil {
-				multiErr.Add(
-					"__all__",
-					errortypes.ErrSystemError,
-					"Failed to check for overlapping fiscal years",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-			}
+				count, err := q.Count(ctx)
+				if err != nil {
+					multiErr.Add(
+						"__all__",
+						errortypes.ErrSystemError,
+						"Failed to check for overlapping fiscal years",
+					)
+					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				}
 
-			if count > 0 {
-				multiErr.Add(
-					"startDate",
-					errortypes.ErrInvalid,
-					"This fiscal year's date range overlaps with an existing fiscal year",
-				)
-				multiErr.Add(
-					"endDate",
-					errortypes.ErrInvalid,
-					"This fiscal year's date range overlaps with an existing fiscal year",
-				)
-			}
+				if count > 0 {
+					multiErr.Add(
+						"startDate",
+						errortypes.ErrInvalid,
+						"This fiscal year's date range overlaps with an existing fiscal year",
+					)
+					multiErr.Add(
+						"endDate",
+						errortypes.ErrInvalid,
+						"This fiscal year's date range overlaps with an existing fiscal year",
+					)
+				}
 
-			return nil
+				return nil
+			})
 		})
 }

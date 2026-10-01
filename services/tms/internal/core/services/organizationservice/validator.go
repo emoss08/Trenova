@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/uptrace/bun"
@@ -62,15 +63,36 @@ func NewValidator(p ValidatorParams) *Validator {
 
 	if p.DB != nil {
 		builder.WithUniquenessChecker(
-			validationframework.NewBunUniquenessCheckerLazy(
-				func() bun.IDB { return p.DB.DB() },
-			),
+			validationframework.NewBunUniquenessCheckerScoped(businessUnitWide{conn: p.DB}),
 		)
 	}
 
 	return &Validator{
 		validator: builder.Build(),
 	}
+}
+
+type businessUnitWide struct {
+	conn *postgres.Connection
+}
+
+func (b businessUnitWide) DBForContext(ctx context.Context) bun.IDB {
+	return b.conn.DBForContext(businessUnitWideScope(ctx))
+}
+
+func (b businessUnitWide) RunScoped(
+	ctx context.Context,
+	readOnly bool,
+	fn func(context.Context) error,
+) error {
+	return b.conn.RunScoped(businessUnitWideScope(ctx), readOnly, fn)
+}
+
+func businessUnitWideScope(ctx context.Context) context.Context {
+	return dbscope.WithSystem(
+		ctx,
+		"check organization names, SCAC and DOT numbers and login slugs across the business unit",
+	)
 }
 
 func validateOperatingCapabilities(

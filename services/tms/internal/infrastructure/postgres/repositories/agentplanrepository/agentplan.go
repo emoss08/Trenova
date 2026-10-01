@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -41,59 +43,65 @@ func (r *repository) Create(
 	ctx context.Context,
 	entity *agent.AgentPlan,
 ) (*agent.AgentPlan, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		r.l.Error("failed to create agent plan", zap.Error(err))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			r.l.Error("failed to create agent plan", zap.Error(err))
 
-		return nil, fmt.Errorf("create agent plan: %w", err)
-	}
+			return nil, fmt.Errorf("create agent plan: %w", err)
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
 	req repositories.ListAgentPlansByIDsRequest,
 ) ([]*agent.AgentPlan, error) {
-	if len(req.IDs) == 0 {
-		return []*agent.AgentPlan{}, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentPlan, error) {
+		if len(req.IDs) == 0 {
+			return []*agent.AgentPlan{}, nil
+		}
 
-	cols := buncolgen.AgentPlanColumns
-	plans := make([]*agent.AgentPlan, 0, len(req.IDs))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&plans).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.In(), bun.In(req.IDs))
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list agent plans by ids: %w", err)
-	}
+		cols := buncolgen.AgentPlanColumns
+		plans := make([]*agent.AgentPlan, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&plans).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.In(), bun.In(req.IDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list agent plans by ids: %w", err)
+		}
 
-	return plans, nil
+		return plans, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentPlanByIDRequest,
 ) (*agent.AgentPlan, error) {
-	entity := new(agent.AgentPlan)
-	cols := buncolgen.AgentPlanColumns
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "AgentPlan")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
+		entity := new(agent.AgentPlan)
+		cols := buncolgen.AgentPlanColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "AgentPlan")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // ListByThread finds the plans of every run a conversation started, oldest
@@ -102,106 +110,110 @@ func (r *repository) ListByThread(
 	ctx context.Context,
 	req repositories.ListAgentPlansByThreadRequest,
 ) ([]*agent.AgentPlan, error) {
-	cols := buncolgen.AgentPlanColumns
-	runs := buncolgen.AgentRunColumns
-	plans := make([]*agent.AgentPlan, 0)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentPlan, error) {
+		cols := buncolgen.AgentPlanColumns
+		runs := buncolgen.AgentRunColumns
+		plans := make([]*agent.AgentPlan, 0)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&plans).
-		Join("JOIN agent_runs AS ar ON "+runs.ID.Qualified()+" = "+cols.RunID.Qualified()+
-			" AND "+runs.OrganizationID.Qualified()+" = "+cols.OrganizationID.Qualified()+
-			" AND "+runs.BusinessUnitID.Qualified()+" = "+cols.BusinessUnitID.Qualified()).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
-				Where(runs.SubjectType.Qualified()+" = ?", agent.SubjectAssistantThread).
-				Where(runs.SubjectID.Qualified()+" = ?", req.ThreadID)
-		}).
-		OrderExpr(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list agent plans for thread", zap.Error(err))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&plans).
+			Join("JOIN agent_runs AS ar ON "+runs.ID.Qualified()+" = "+cols.RunID.Qualified()+
+				" AND "+runs.OrganizationID.Qualified()+" = "+cols.OrganizationID.Qualified()+
+				" AND "+runs.BusinessUnitID.Qualified()+" = "+cols.BusinessUnitID.Qualified()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
+					Where(runs.SubjectType.Qualified()+" = ?", agent.SubjectAssistantThread).
+					Where(runs.SubjectID.Qualified()+" = ?", req.ThreadID)
+			}).
+			OrderExpr(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list agent plans for thread", zap.Error(err))
 
-		return nil, fmt.Errorf("list agent plans by thread: %w", err)
-	}
+			return nil, fmt.Errorf("list agent plans by thread: %w", err)
+		}
 
-	return plans, nil
+		return plans, nil
+	})
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListAgentPlanConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentPlan], error) {
-	log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentPlan], error) {
+		log := r.l.With(zap.String("operation", "ListConnection"))
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*agent.AgentPlan)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = querybuilder.ApplyFiltersWithoutSort(
-					sq,
-					buncolgen.AgentPlanTable.Alias,
-					req.Filter,
-					(*agent.AgentPlan)(nil),
-				)
-				sq = sq.Apply(buncolgen.AgentPlanApplyTenant(req.Filter.TenantInfo))
-				if req.ExcludeShadowDefinitions {
-					sq = excludeShadowDefinitions(sq)
-				}
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*agent.AgentPlan)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = querybuilder.ApplyFiltersWithoutSort(
+						sq,
+						buncolgen.AgentPlanTable.Alias,
+						req.Filter,
+						(*agent.AgentPlan)(nil),
+					)
+					sq = sq.Apply(buncolgen.AgentPlanApplyTenant(req.Filter.TenantInfo))
+					if req.ExcludeShadowDefinitions {
+						sq = excludeShadowDefinitions(sq)
+					}
 
-				return sq
-			}).
-			Count(ctx)
+					return sq
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count agent plans", zap.Error(err))
+
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*agent.AgentPlan]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*agent.AgentPlan) *bun.SelectQuery {
+					q := dba.NewSelect().Model(entities)
+					if len(req.Columns) > 0 {
+						q = q.Column(req.Columns...)
+					}
+
+					return q
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFilters(
+						sq,
+						buncolgen.AgentPlanTable.Alias,
+						req.Filter,
+						req.Cursor,
+						(*agent.AgentPlan)(nil),
+					)
+					if applyErr != nil {
+						return nil, applyErr
+					}
+					if req.ExcludeShadowDefinitions {
+						sq = excludeShadowDefinitions(sq)
+					}
+
+					return sq, nil
+				},
+			})
 		if err != nil {
-			log.Error("failed to count agent plans", zap.Error(err))
+			log.Error("failed to list agent plans", zap.Error(err))
 
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*agent.AgentPlan]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*agent.AgentPlan) *bun.SelectQuery {
-				q := dba.NewSelect().Model(entities)
-				if len(req.Columns) > 0 {
-					q = q.Column(req.Columns...)
-				}
-
-				return q
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					buncolgen.AgentPlanTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*agent.AgentPlan)(nil),
-				)
-				if applyErr != nil {
-					return nil, applyErr
-				}
-				if req.ExcludeShadowDefinitions {
-					sq = excludeShadowDefinitions(sq)
-				}
-
-				return sq, nil
-			},
-		})
-	if err != nil {
-		log.Error("failed to list agent plans", zap.Error(err))
-
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 // excludeShadowDefinitions hides plans whose agent is in shadow, with the
@@ -238,95 +250,102 @@ func (r *repository) UpdateStatus(
 	ctx context.Context,
 	req repositories.UpdateAgentPlanStatusRequest,
 ) (*agent.AgentPlan, error) {
-	entity := new(agent.AgentPlan)
-	cols := buncolgen.AgentPlanColumns
-	query := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			scoped := buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
-			if req.FromStatus != "" {
-				scoped = scoped.Where(cols.Status.Eq(), req.FromStatus)
-			}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
+		entity := new(agent.AgentPlan)
+		cols := buncolgen.AgentPlanColumns
+		query := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				scoped := buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+				if req.FromStatus != "" {
+					scoped = scoped.Where(cols.Status.Eq(), req.FromStatus)
+				}
 
-			return scoped
-		}).
-		Set(cols.Status.Set(), req.Status).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Set(cols.Version.Inc(1))
-	if req.DecidedByUserID.IsNotNil() {
-		query = query.
-			Set(cols.DecidedByUserID.Set(), req.DecidedByUserID).
-			Set(cols.DecidedAt.Set(), req.DecidedAt)
-	}
+				return scoped
+			}).
+			Set(cols.Status.Set(), req.Status).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(cols.Version.Inc(1))
+		if req.DecidedByUserID.IsNotNil() {
+			query = query.
+				Set(cols.DecidedByUserID.Set(), req.DecidedByUserID).
+				Set(cols.DecidedAt.Set(), req.DecidedAt)
+		}
 
-	results, err := query.Returning("*").Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("update agent plan status: %w", err)
-	}
-	if err = dberror.CheckRowsAffected(results, "AgentPlan", req.ID.String()); err != nil {
-		return nil, err
-	}
+		results, err := query.Returning("*").Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("update agent plan status: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(results, "AgentPlan", req.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) RecordProgress(
 	ctx context.Context,
 	req repositories.RecordAgentPlanProgressRequest,
 ) (*agent.AgentPlan, error) {
-	entity := new(agent.AgentPlan)
-	cols := buncolgen.AgentPlanColumns
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
-		}).
-		Set(cols.Status.Set(), req.Status).
-		Set(cols.CompletedSteps.Set(), req.CompletedSteps).
-		Set(cols.FailedStep.Set(), req.FailedStep).
-		Set(cols.FailureError.Set(), req.FailureError).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Set(cols.Version.Inc(1)).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("record agent plan progress: %w", err)
-	}
-	if err = dberror.CheckRowsAffected(results, "AgentPlan", req.ID.String()); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
+		entity := new(agent.AgentPlan)
+		cols := buncolgen.AgentPlanColumns
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Set(cols.Status.Set(), req.Status).
+			Set(cols.CompletedSteps.Set(), req.CompletedSteps).
+			Set(cols.FailedStep.Set(), req.FailedStep).
+			Set(cols.FailureError.Set(), req.FailureError).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(cols.Version.Inc(1)).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("record agent plan progress: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(results, "AgentPlan", req.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) ExpirePending(
 	ctx context.Context,
 	req repositories.ExpireAgentPlansRequest,
 ) (int, error) {
-	cols := buncolgen.AgentPlanColumns
-	results, err := r.db.DB().
-		NewUpdate().
-		Model((*agent.AgentPlan)(nil)).
-		Where(cols.Status.Eq(), agent.PlanStatusPending).
-		Where(cols.ExpiresAt.IsNotNull()).
-		Where(cols.ExpiresAt.Lte(), req.Before).
-		Set(cols.Status.Set(), agent.PlanStatusExpired).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to expire pending agent plans", zap.Error(err))
+	ctx = dbscope.WithSystem(ctx, "expire stale agent plans across every organization")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := buncolgen.AgentPlanColumns
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*agent.AgentPlan)(nil)).
+			Where(cols.Status.Eq(), agent.PlanStatusPending).
+			Where(cols.ExpiresAt.IsNotNull()).
+			Where(cols.ExpiresAt.Lte(), req.Before).
+			Set(cols.Status.Set(), agent.PlanStatusExpired).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to expire pending agent plans", zap.Error(err))
 
-		return 0, err
-	}
+			return 0, err
+		}
 
-	affected, err := results.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
+		affected, err := results.RowsAffected()
+		if err != nil {
+			return 0, err
+		}
 
-	return int(affected), nil
+		return int(affected), nil
+	})
 }

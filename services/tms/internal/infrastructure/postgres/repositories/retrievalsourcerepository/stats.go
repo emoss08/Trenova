@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/uptrace/bun"
@@ -63,75 +64,79 @@ func (r *repository) CountSources(
 	ctx context.Context,
 	req repositories.CountRetrievalSourcesRequest,
 ) (int, error) {
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return 0, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		if err := validateTenant(req.TenantInfo); err != nil {
+			return 0, err
+		}
 
-	table, err := sourceTableFor(req.SourceType)
-	if err != nil {
-		return 0, err
-	}
+		table, err := sourceTableFor(req.SourceType)
+		if err != nil {
+			return 0, err
+		}
 
-	count, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(table.model).
-		Apply(table.applyTenant(req.TenantInfo)).
-		Count(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("count %s sources: %w", req.SourceType, err)
-	}
+		count, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(table.model).
+			Apply(table.applyTenant(req.TenantInfo)).
+			Count(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("count %s sources: %w", req.SourceType, err)
+		}
 
-	return count, nil
+		return count, nil
+	})
 }
 
 func (r *repository) AverageSourceChars(
 	ctx context.Context,
 	req repositories.AverageRetrievalSourceCharsRequest,
 ) (repositories.RetrievalSourceChars, error) {
-	var out repositories.RetrievalSourceChars
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (repositories.RetrievalSourceChars, error) {
+		var out repositories.RetrievalSourceChars
 
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return out, err
-	}
+		if err := validateTenant(req.TenantInfo); err != nil {
+			return out, err
+		}
 
-	table, err := sourceTableFor(req.SourceType)
-	if err != nil {
-		return out, err
-	}
-	chars, ok := sourceChars[req.SourceType]
-	if !ok {
-		return out, fmt.Errorf(
-			"%w: source type %q has no text to measure",
-			airetrieval.ErrInvalidStorageRequest,
-			req.SourceType,
-		)
-	}
+		table, err := sourceTableFor(req.SourceType)
+		if err != nil {
+			return out, err
+		}
+		chars, ok := sourceChars[req.SourceType]
+		if !ok {
+			return out, fmt.Errorf(
+				"%w: source type %q has no text to measure",
+				airetrieval.ErrInvalidStorageRequest,
+				req.SourceType,
+			)
+		}
 
-	sample := req.Sample
-	if sample <= 0 {
-		sample = defaultCharsSample
-	}
-	sample = intutils.Clamp(sample, 1, maxCharsSample)
+		sample := req.Sample
+		if sample <= 0 {
+			sample = defaultCharsSample
+		}
+		sample = intutils.Clamp(sample, 1, maxCharsSample)
 
-	dba := r.db.DBForContext(ctx)
-	newest := dba.NewSelect().
-		Model(table.model).
-		Apply(chars).
-		Apply(table.applyTenant(req.TenantInfo)).
-		OrderExpr(table.id.OrderDesc()).
-		Limit(sample)
+		dba := r.db.DBForContext(ctx)
+		newest := dba.NewSelect().
+			Model(table.model).
+			Apply(chars).
+			Apply(table.applyTenant(req.TenantInfo)).
+			OrderExpr(table.id.OrderDesc()).
+			Limit(sample)
 
-	if err = dba.NewSelect().
-		TableExpr("(?) AS "+charsSampleAlias, newest).
-		ColumnExpr(buncolgen.Count("sampled")).
-		ColumnExpr("COALESCE(AVG("+charsSampleAlias+"."+charsColumn+"), 0) AS average_chars").
-		Scan(ctx, &out); err != nil {
-		return repositories.RetrievalSourceChars{}, fmt.Errorf(
-			"measure %s text: %w",
-			req.SourceType,
-			err,
-		)
-	}
+		if err = dba.NewSelect().
+			TableExpr("(?) AS "+charsSampleAlias, newest).
+			ColumnExpr(buncolgen.Count("sampled")).
+			ColumnExpr("COALESCE(AVG("+charsSampleAlias+"."+charsColumn+"), 0) AS average_chars").
+			Scan(ctx, &out); err != nil {
+			return repositories.RetrievalSourceChars{}, fmt.Errorf(
+				"measure %s text: %w",
+				req.SourceType,
+				err,
+			)
+		}
 
-	return out, nil
+		return out, nil
+	})
 }

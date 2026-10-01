@@ -26,7 +26,7 @@ type stubCustomerRepo struct {
 
 func (s *stubCustomerRepo) GetBillingProfile(
 	context.Context,
-	pulid.ID,
+	repositories.GetCustomerBillingProfileRequest,
 ) (*customer.CustomerBillingProfile, error) {
 	return s.profile, s.err
 }

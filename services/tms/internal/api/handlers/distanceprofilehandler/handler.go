@@ -141,11 +141,11 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	entity := new(distanceprofile.DistanceProfile)
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	authctx.AddContextToRequest(authCtx, entity)
+
 	created, err := h.service.Create(c.Request.Context(), entity, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -163,11 +163,11 @@ func (h *Handler) update(c *gin.Context) {
 	}
 	entity := new(distanceprofile.DistanceProfile)
 	entity.ID = id
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	authctx.AddContextToRequest(authCtx, entity)
+
 	updated, err := h.service.Update(c.Request.Context(), entity, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -191,7 +191,7 @@ func (h *Handler) patch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if err = c.ShouldBindJSON(existing); err != nil {
+	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

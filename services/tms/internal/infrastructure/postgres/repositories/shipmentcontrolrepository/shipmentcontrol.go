@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -35,23 +37,25 @@ func (r *repository) Get(
 	ctx context.Context,
 	req repositories.GetShipmentControlRequest,
 ) (*tenant.ShipmentControl, error) {
-	log := r.l.With(
-		zap.String("operation", "Get"),
-		zap.String("orgID", req.TenantInfo.OrgID.String()),
-		zap.String("buID", req.TenantInfo.BuID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.ShipmentControl, error) {
+		log := r.l.With(
+			zap.String("operation", "Get"),
+			zap.String("orgID", req.TenantInfo.OrgID.String()),
+			zap.String("buID", req.TenantInfo.BuID.String()),
+		)
 
-	entity := new(tenant.ShipmentControl)
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model(entity).
-		Where("sc.organization_id = ?", req.TenantInfo.OrgID).
-		Where("sc.business_unit_id = ?", req.TenantInfo.BuID).
-		Scan(ctx); err != nil {
-		log.Error("failed to get shipment control", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "ShipmentControl")
-	}
+		entity := new(tenant.ShipmentControl)
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model(entity).
+			Where("sc.organization_id = ?", req.TenantInfo.OrgID).
+			Where("sc.business_unit_id = ?", req.TenantInfo.BuID).
+			Scan(ctx); err != nil {
+			log.Error("failed to get shipment control", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "ShipmentControl")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // ListDetentionEngineTenants enumerates the tenants that have opted into the
@@ -61,61 +65,66 @@ func (r *repository) ListDetentionEngineTenants(
 	ctx context.Context,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
-	rows := make([]tenant.ShipmentControl, 0, 16)
+	ctx = dbscope.WithSystem(ctx, "list organizations with the detention engine on")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
+		rows := make([]tenant.ShipmentControl, 0, 16)
 
-	q := r.db.DBForContext(ctx).NewSelect().
-		Model(&rows).
-		Column("sc.organization_id", "sc.business_unit_id").
-		Where("sc.use_detention_policy_engine = TRUE").
-		Order("sc.organization_id ASC")
+		q := r.db.DBForContext(ctx).NewSelect().
+			Model(&rows).
+			Column("sc.organization_id", "sc.business_unit_id").
+			Where("sc.use_detention_policy_engine = TRUE").
+			Order("sc.organization_id ASC")
 
-	if limit > 0 {
-		q = q.Limit(limit)
-	}
+		if limit > 0 {
+			q = q.Limit(limit)
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		r.l.Error("failed to list detention engine tenants", zap.Error(err))
-		return nil, err
-	}
+		if err := q.Scan(ctx); err != nil {
+			r.l.Error("failed to list detention engine tenants", zap.Error(err))
+			return nil, err
+		}
 
-	tenants := make([]pagination.TenantInfo, 0, len(rows))
-	for i := range rows {
-		tenants = append(tenants, pagination.TenantInfo{
-			OrgID: rows[i].OrganizationID,
-			BuID:  rows[i].BusinessUnitID,
-		})
-	}
+		tenants := make([]pagination.TenantInfo, 0, len(rows))
+		for i := range rows {
+			tenants = append(tenants, pagination.TenantInfo{
+				OrgID: rows[i].OrganizationID,
+				BuID:  rows[i].BusinessUnitID,
+			})
+		}
 
-	return tenants, nil
+		return tenants, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *tenant.ShipmentControl,
 ) (*tenant.ShipmentControl, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("orgID", entity.OrganizationID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.ShipmentControl, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("orgID", entity.OrganizationID.String()),
+		)
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	result, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update shipment control", zap.Error(err))
-		return nil, err
-	}
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update shipment control", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(result, "ShipmentControl", entity.ID.String()); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(result, "ShipmentControl", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }

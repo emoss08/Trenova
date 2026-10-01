@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -177,97 +178,99 @@ func (r *templateRepository) Resolve(
 	ctx context.Context,
 	req *repositories.ResolveDocumentTemplateRequest,
 ) (*repositories.ResolvedTemplateRow, error) {
-	log := r.l.With(
-		zap.String("operation", "Resolve"),
-		zap.String("kind", string(req.Kind)),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ResolvedTemplateRow, error) {
+		log := r.l.With(
+			zap.String("operation", "Resolve"),
+			zap.String("kind", string(req.Kind)),
+		)
 
-	vCols := buncolgen.DocumentTemplateVersionColumns
-	tCols := buncolgen.DocumentTemplateColumns
-	aCols := buncolgen.DocumentTemplateAssignmentColumns
+		vCols := buncolgen.DocumentTemplateVersionColumns
+		tCols := buncolgen.DocumentTemplateColumns
+		aCols := buncolgen.DocumentTemplateAssignmentColumns
 
-	scoped := req.CustomerID != nil && !req.CustomerID.IsNil()
+		scoped := req.CustomerID != nil && !req.CustomerID.IsNil()
 
-	row := new(resolvedScan)
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*documenttemplate.DocumentTemplateVersion)(nil)).
-		ColumnExpr(vCols.ID.As("version_id")).
-		ColumnExpr(vCols.OrganizationID.As("organization_id")).
-		ColumnExpr(vCols.BusinessUnitID.As("business_unit_id")).
-		ColumnExpr(vCols.TemplateID.As("template_id")).
-		ColumnExpr(vCols.SourceVersionID.As("source_version_id")).
-		ColumnExpr(vCols.VersionNumber.As("version_number")).
-		ColumnExpr(vCols.Status.As("status")).
-		ColumnExpr(vCols.Subject.Expr("COALESCE({}, '') AS subject")).
-		ColumnExpr(vCols.BodyHTML.Expr("COALESCE({}, '') AS body_html")).
-		ColumnExpr(vCols.BodyText.Expr("COALESCE({}, '') AS body_text")).
-		ColumnExpr(vCols.CSSContent.Expr("COALESCE({}, '') AS css_content")).
-		ColumnExpr(vCols.HeaderHTML.Expr("COALESCE({}, '') AS header_html")).
-		ColumnExpr(vCols.FooterHTML.Expr("COALESCE({}, '') AS footer_html")).
-		ColumnExpr(vCols.PageSize.As("page_size")).
-		ColumnExpr(vCols.Orientation.As("orientation")).
-		ColumnExpr(vCols.MarginTop.As("margin_top")).
-		ColumnExpr(vCols.MarginBottom.As("margin_bottom")).
-		ColumnExpr(vCols.MarginLeft.As("margin_left")).
-		ColumnExpr(vCols.MarginRight.As("margin_right")).
-		ColumnExpr(vCols.ContentHash.As("content_hash")).
-		ColumnExpr(vCols.StarterHash.Expr("COALESCE({}, '') AS starter_hash")).
-		ColumnExpr(vCols.PublishNotes.Expr("COALESCE({}, '') AS publish_notes")).
-		ColumnExpr(vCols.PublishedByID.As("published_by_id")).
-		ColumnExpr(vCols.PublishedAt.As("published_at")).
-		ColumnExpr(vCols.Version.As("version_lock")).
-		ColumnExpr(vCols.CreatedAt.As("created_at")).
-		ColumnExpr(vCols.UpdatedAt.As("updated_at")).
-		ColumnExpr(tCols.Code.As("template_code")).
-		ColumnExpr(tCols.Name.As("template_name")).
-		ColumnExpr(tCols.Description.Expr("COALESCE({}, '') AS template_description")).
-		ColumnExpr(tCols.Kind.As("template_kind")).
-		ColumnExpr(tCols.IsOrgDefault.As("template_is_org_default")).
-		ColumnExpr(tCols.Version.As("template_version_lock")).
-		ColumnExpr(tCols.CreatedAt.As("template_created_at")).
-		ColumnExpr(tCols.UpdatedAt.As("template_updated_at")).
-		Join(resolveTemplateJoin)
-
-	if scoped {
-		q = q.
-			ColumnExpr(aCols.ID.As("assignment_id")).
-			Join(resolveAssignmentJoin, *req.CustomerID)
-	} else {
-		// No customer in scope: the assignment tier cannot apply, so the join is
-		// left out rather than made harmless. NULL keeps the projection stable.
-		q = q.ColumnExpr("NULL AS assignment_id")
-	}
-
-	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		sq = buncolgen.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
-			Where(vCols.Status.Eq(), documenttemplate.VersionStatusActive).
-			Where(tCols.Kind.Eq(), req.Kind)
+		row := new(resolvedScan)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*documenttemplate.DocumentTemplateVersion)(nil)).
+			ColumnExpr(vCols.ID.As("version_id")).
+			ColumnExpr(vCols.OrganizationID.As("organization_id")).
+			ColumnExpr(vCols.BusinessUnitID.As("business_unit_id")).
+			ColumnExpr(vCols.TemplateID.As("template_id")).
+			ColumnExpr(vCols.SourceVersionID.As("source_version_id")).
+			ColumnExpr(vCols.VersionNumber.As("version_number")).
+			ColumnExpr(vCols.Status.As("status")).
+			ColumnExpr(vCols.Subject.Expr("COALESCE({}, '') AS subject")).
+			ColumnExpr(vCols.BodyHTML.Expr("COALESCE({}, '') AS body_html")).
+			ColumnExpr(vCols.BodyText.Expr("COALESCE({}, '') AS body_text")).
+			ColumnExpr(vCols.CSSContent.Expr("COALESCE({}, '') AS css_content")).
+			ColumnExpr(vCols.HeaderHTML.Expr("COALESCE({}, '') AS header_html")).
+			ColumnExpr(vCols.FooterHTML.Expr("COALESCE({}, '') AS footer_html")).
+			ColumnExpr(vCols.PageSize.As("page_size")).
+			ColumnExpr(vCols.Orientation.As("orientation")).
+			ColumnExpr(vCols.MarginTop.As("margin_top")).
+			ColumnExpr(vCols.MarginBottom.As("margin_bottom")).
+			ColumnExpr(vCols.MarginLeft.As("margin_left")).
+			ColumnExpr(vCols.MarginRight.As("margin_right")).
+			ColumnExpr(vCols.ContentHash.As("content_hash")).
+			ColumnExpr(vCols.StarterHash.Expr("COALESCE({}, '') AS starter_hash")).
+			ColumnExpr(vCols.PublishNotes.Expr("COALESCE({}, '') AS publish_notes")).
+			ColumnExpr(vCols.PublishedByID.As("published_by_id")).
+			ColumnExpr(vCols.PublishedAt.As("published_at")).
+			ColumnExpr(vCols.Version.As("version_lock")).
+			ColumnExpr(vCols.CreatedAt.As("created_at")).
+			ColumnExpr(vCols.UpdatedAt.As("updated_at")).
+			ColumnExpr(tCols.Code.As("template_code")).
+			ColumnExpr(tCols.Name.As("template_name")).
+			ColumnExpr(tCols.Description.Expr("COALESCE({}, '') AS template_description")).
+			ColumnExpr(tCols.Kind.As("template_kind")).
+			ColumnExpr(tCols.IsOrgDefault.As("template_is_org_default")).
+			ColumnExpr(tCols.Version.As("template_version_lock")).
+			ColumnExpr(tCols.CreatedAt.As("template_created_at")).
+			ColumnExpr(tCols.UpdatedAt.As("template_updated_at")).
+			Join(resolveTemplateJoin)
 
 		if scoped {
-			return sq.WhereGroup(" AND ", func(iq *bun.SelectQuery) *bun.SelectQuery {
-				return iq.
-					WhereOr(aCols.ID.IsNotNull()).
-					WhereOr(tCols.IsOrgDefault.IsTrue())
-			})
+			q = q.
+				ColumnExpr(aCols.ID.As("assignment_id")).
+				Join(resolveAssignmentJoin, *req.CustomerID)
+		} else {
+			// No customer in scope: the assignment tier cannot apply, so the join is
+			// left out rather than made harmless. NULL keeps the projection stable.
+			q = q.ColumnExpr("NULL AS assignment_id")
 		}
 
-		return sq.Where(tCols.IsOrgDefault.IsTrue())
+		q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
+				Where(vCols.Status.Eq(), documenttemplate.VersionStatusActive).
+				Where(tCols.Kind.Eq(), req.Kind)
+
+			if scoped {
+				return sq.WhereGroup(" AND ", func(iq *bun.SelectQuery) *bun.SelectQuery {
+					return iq.
+						WhereOr(aCols.ID.IsNotNull()).
+						WhereOr(tCols.IsOrgDefault.IsTrue())
+				})
+			}
+
+			return sq.Where(tCols.IsOrgDefault.IsTrue())
+		})
+
+		if scoped {
+			q = q.OrderExpr(resolveOrder)
+		}
+
+		if err := q.Limit(1).Scan(ctx, row); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				// Nothing customized: the built-in is the third tier, so no row is a
+				// result, not a failure. The service renders the embedded starter.
+				return nil, nil //nolint:nilnil // no row means "use the built-in"
+			}
+			log.Error("failed to resolve document template", zap.Error(err))
+			return nil, err
+		}
+
+		return row.toRow(), nil
 	})
-
-	if scoped {
-		q = q.OrderExpr(resolveOrder)
-	}
-
-	if err := q.Limit(1).Scan(ctx, row); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// Nothing customized: the built-in is the third tier, so no row is a
-			// result, not a failure. The service renders the embedded starter.
-			return nil, nil //nolint:nilnil // no row means "use the built-in"
-		}
-		log.Error("failed to resolve document template", zap.Error(err))
-		return nil, err
-	}
-
-	return row.toRow(), nil
 }

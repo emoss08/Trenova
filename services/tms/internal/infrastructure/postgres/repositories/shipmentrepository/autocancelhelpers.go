@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -21,14 +23,16 @@ func (r *repository) GetAutoCancelableShipments(
 	req *repositories.GetAutoCancelableShipmentsRequest,
 	thresholdDays int8,
 ) ([]*shipment.Shipment, error) {
-	return r.getAutoCancelableShipments(
-		ctx,
-		r.db.DBForContext(ctx),
-		req.TenantInfo,
-		thresholdDays,
-		timeutils.NowUnix(),
-		req.Limit,
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		return r.getAutoCancelableShipments(
+			ctx,
+			r.db.DBForContext(ctx),
+			req.TenantInfo,
+			thresholdDays,
+			timeutils.NowUnix(),
+			req.Limit,
+		)
+	})
 }
 
 func (r *repository) AutoCancelShipments(
@@ -36,144 +40,152 @@ func (r *repository) AutoCancelShipments(
 	req *repositories.AutoCancelShipmentsRequest,
 	thresholdDays int8,
 ) ([]*shipment.Shipment, error) {
-	currentTime := timeutils.NowUnix()
-	entities := make([]*shipment.Shipment, 0)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		currentTime := timeutils.NowUnix()
+		entities := make([]*shipment.Shipment, 0)
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		var err error
-		entities, err = r.getAutoCancelableShipments(
-			c,
-			tx,
-			req.TenantInfo,
-			thresholdDays,
-			currentTime,
-			req.Limit,
-		)
-		if err != nil || len(entities) == 0 {
-			return err
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			var err error
+			entities, err = r.getAutoCancelableShipments(
+				c,
+				tx,
+				req.TenantInfo,
+				thresholdDays,
+				currentTime,
+				req.Limit,
+			)
+			if err != nil || len(entities) == 0 {
+				return err
+			}
+
+			cols := buncolgen.ShipmentColumns
+			for _, entity := range entities {
+				if _, err = tx.NewUpdate().
+					Model((*shipment.Shipment)(nil)).
+					Set(cols.Status.Set(), shipment.StatusCanceled).
+					Set(cols.CanceledAt.Set(), currentTime).
+					Set(cols.CanceledByID.Set(), pulid.Nil).
+					Set(cols.CancelReason.Set(), autoCancelReason).
+					Set(cols.UpdatedAt.Set(), currentTime).
+					Where(cols.ID.Eq(), entity.ID).
+					Exec(c); err != nil {
+					return err
+				}
+
+				if err = r.cancelShipmentComponents(c, tx, entity.ID); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
 
-		cols := buncolgen.ShipmentColumns
 		for _, entity := range entities {
-			if _, err = tx.NewUpdate().
-				Model((*shipment.Shipment)(nil)).
-				Set(cols.Status.Set(), shipment.StatusCanceled).
-				Set(cols.CanceledAt.Set(), currentTime).
-				Set(cols.CanceledByID.Set(), pulid.Nil).
-				Set(cols.CancelReason.Set(), autoCancelReason).
-				Set(cols.UpdatedAt.Set(), currentTime).
-				Where(cols.ID.Eq(), entity.ID).
-				Exec(c); err != nil {
-				return err
-			}
-
-			if err = r.cancelShipmentComponents(c, tx, entity.ID); err != nil {
-				return err
-			}
+			entity.Status = shipment.StatusCanceled
+			entity.CanceledAt = &currentTime
+			entity.CanceledByID = pulid.Nil
+			entity.CancelReason = autoCancelReason
+			entity.UpdatedAt = currentTime
 		}
 
-		return nil
+		return entities, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entity := range entities {
-		entity.Status = shipment.StatusCanceled
-		entity.CanceledAt = &currentTime
-		entity.CanceledByID = pulid.Nil
-		entity.CancelReason = autoCancelReason
-		entity.UpdatedAt = currentTime
-	}
-
-	return entities, nil
 }
 
 func (r *repository) RunAutoCancelShipments(ctx context.Context) ([]*shipment.Shipment, error) {
-	currentTime := timeutils.NowUnix()
-	entities := make([]*shipment.Shipment, 0)
+	ctx = dbscope.WithSystem(ctx, "cancel expired shipments across every organization")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		currentTime := timeutils.NowUnix()
+		entities := make([]*shipment.Shipment, 0)
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		var err error
-		entities, err = r.getGloballyAutoCancelableShipments(c, tx, currentTime)
-		if err != nil || len(entities) == 0 {
-			return err
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			var err error
+			entities, err = r.getGloballyAutoCancelableShipments(c, tx, currentTime)
+			if err != nil || len(entities) == 0 {
+				return err
+			}
+
+			cols := buncolgen.ShipmentColumns
+
+			for _, entity := range entities {
+				if _, err = tx.NewUpdate().
+					Model((*shipment.Shipment)(nil)).
+					Set(cols.Status.Set(), shipment.StatusCanceled).
+					Set(cols.CanceledAt.Set(), currentTime).
+					Set(cols.CanceledByID.SetNull()).
+					Set(cols.CancelReason.Set(), autoCancelReason).
+					Set(cols.UpdatedAt.Set(), currentTime).
+					Where(cols.ID.Eq(), entity.ID).
+					Exec(c); err != nil {
+					return err
+				}
+
+				if err = r.cancelShipmentComponents(c, tx, entity.ID); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
-
-		cols := buncolgen.ShipmentColumns
 
 		for _, entity := range entities {
-			if _, err = tx.NewUpdate().
-				Model((*shipment.Shipment)(nil)).
-				Set(cols.Status.Set(), shipment.StatusCanceled).
-				Set(cols.CanceledAt.Set(), currentTime).
-				Set(cols.CanceledByID.SetNull()).
-				Set(cols.CancelReason.Set(), autoCancelReason).
-				Set(cols.UpdatedAt.Set(), currentTime).
-				Where(cols.ID.Eq(), entity.ID).
-				Exec(c); err != nil {
-				return err
-			}
-
-			if err = r.cancelShipmentComponents(c, tx, entity.ID); err != nil {
-				return err
-			}
+			entity.Status = shipment.StatusCanceled
+			entity.CanceledAt = &currentTime
+			entity.CanceledByID = pulid.Nil
+			entity.CancelReason = autoCancelReason
+			entity.UpdatedAt = currentTime
 		}
 
-		return nil
+		return entities, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entity := range entities {
-		entity.Status = shipment.StatusCanceled
-		entity.CanceledAt = &currentTime
-		entity.CanceledByID = pulid.Nil
-		entity.CancelReason = autoCancelReason
-		entity.UpdatedAt = currentTime
-	}
-
-	return entities, nil
 }
 
 func (r *repository) ListAutoCancelShipmentTenants(
 	ctx context.Context,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
-	if limit <= 0 {
-		limit = 100
-	}
+	ctx = dbscope.WithSystem(ctx, "list organizations with automatic shipment cancellation on")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
+		if limit <= 0 {
+			limit = 100
+		}
 
-	type tenantRow struct {
-		OrganizationID pulid.ID `bun:"organization_id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
+		type tenantRow struct {
+			OrganizationID pulid.ID `bun:"organization_id"`
+			BusinessUnitID pulid.ID `bun:"business_unit_id"`
+		}
 
-	rows := make([]tenantRow, 0, limit)
-	cols := buncolgen.ShipmentControlColumns
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		TableExpr(buncolgen.ShipmentControlTable.Name+" AS sc").
-		Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
-		Where(cols.AutoCancelShipments.Eq(), true).
-		Order(cols.OrganizationID.OrderAsc()).
-		Order(cols.BusinessUnitID.OrderAsc()).
-		Limit(limit).
-		Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
+		rows := make([]tenantRow, 0, limit)
+		cols := buncolgen.ShipmentControlColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			TableExpr(buncolgen.ShipmentControlTable.Name+" AS sc").
+			Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
+			Where(cols.AutoCancelShipments.Eq(), true).
+			Order(cols.OrganizationID.OrderAsc()).
+			Order(cols.BusinessUnitID.OrderAsc()).
+			Limit(limit).
+			Scan(ctx, &rows)
+		if err != nil {
+			return nil, err
+		}
 
-	tenants := make([]pagination.TenantInfo, 0, len(rows))
-	for _, row := range rows {
-		tenants = append(tenants, pagination.TenantInfo{
-			OrgID: row.OrganizationID,
-			BuID:  row.BusinessUnitID,
-		})
-	}
+		tenants := make([]pagination.TenantInfo, 0, len(rows))
+		for _, row := range rows {
+			tenants = append(tenants, pagination.TenantInfo{
+				OrgID: row.OrganizationID,
+				BuID:  row.BusinessUnitID,
+			})
+		}
 
-	return tenants, nil
+		return tenants, nil
+	})
 }
 
 func (r *repository) RunAutoCancelShipmentsForTenant(
@@ -181,58 +193,60 @@ func (r *repository) RunAutoCancelShipmentsForTenant(
 	tenantInfo pagination.TenantInfo,
 	limit int,
 ) ([]*shipment.Shipment, error) {
-	currentTime := timeutils.NowUnix()
-	entities := make([]*shipment.Shipment, 0)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		currentTime := timeutils.NowUnix()
+		entities := make([]*shipment.Shipment, 0)
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		var err error
-		entities, err = r.getAutoCancelableShipmentsForTenant(
-			c,
-			tx,
-			tenantInfo,
-			currentTime,
-			limit,
-		)
-		if err != nil || len(entities) == 0 {
-			return err
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			var err error
+			entities, err = r.getAutoCancelableShipmentsForTenant(
+				c,
+				tx,
+				tenantInfo,
+				currentTime,
+				limit,
+			)
+			if err != nil || len(entities) == 0 {
+				return err
+			}
+
+			cols := buncolgen.ShipmentColumns
+			for _, entity := range entities {
+				if _, err = tx.NewUpdate().
+					Model((*shipment.Shipment)(nil)).
+					Set(cols.Status.Set(), shipment.StatusCanceled).
+					Set(cols.CanceledAt.Set(), currentTime).
+					Set(cols.CanceledByID.SetNull()).
+					Set(cols.CancelReason.Set(), autoCancelReason).
+					Set(cols.UpdatedAt.Set(), currentTime).
+					Where(cols.ID.Eq(), entity.ID).
+					Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+					Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+					Exec(c); err != nil {
+					return err
+				}
+
+				if err = r.cancelShipmentComponents(c, tx, entity.ID); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
 
-		cols := buncolgen.ShipmentColumns
 		for _, entity := range entities {
-			if _, err = tx.NewUpdate().
-				Model((*shipment.Shipment)(nil)).
-				Set(cols.Status.Set(), shipment.StatusCanceled).
-				Set(cols.CanceledAt.Set(), currentTime).
-				Set(cols.CanceledByID.SetNull()).
-				Set(cols.CancelReason.Set(), autoCancelReason).
-				Set(cols.UpdatedAt.Set(), currentTime).
-				Where(cols.ID.Eq(), entity.ID).
-				Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-				Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-				Exec(c); err != nil {
-				return err
-			}
-
-			if err = r.cancelShipmentComponents(c, tx, entity.ID); err != nil {
-				return err
-			}
+			entity.Status = shipment.StatusCanceled
+			entity.CanceledAt = &currentTime
+			entity.CanceledByID = pulid.Nil
+			entity.CancelReason = autoCancelReason
+			entity.UpdatedAt = currentTime
 		}
 
-		return nil
+		return entities, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entity := range entities {
-		entity.Status = shipment.StatusCanceled
-		entity.CanceledAt = &currentTime
-		entity.CanceledByID = pulid.Nil
-		entity.CancelReason = autoCancelReason
-		entity.UpdatedAt = currentTime
-	}
-
-	return entities, nil
 }
 
 func (r *repository) getAutoCancelableShipments(

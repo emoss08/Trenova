@@ -44,6 +44,16 @@ type ListRoleConnectionRequest struct {
 	RoleColumns []string                 `json:"-"`
 }
 
+type DeleteRoleAssignmentRequest struct {
+	AssignmentID   pulid.ID
+	OrganizationID pulid.ID
+}
+
+type DeleteResourcePermissionRequest struct {
+	PermissionID pulid.ID
+	RoleID       pulid.ID
+}
+
 type GetRoleByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -83,10 +93,13 @@ type RoleRepository interface {
 		userID, orgID pulid.ID,
 	) ([]*permission.UserRoleAssignment, error)
 	CreateAssignment(ctx context.Context, assignment *permission.UserRoleAssignment) error
-	DeleteAssignment(ctx context.Context, assignmentID pulid.ID) error
+	DeleteAssignment(
+		ctx context.Context,
+		req DeleteRoleAssignmentRequest,
+	) (*permission.UserRoleAssignment, error)
 	CreateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
 	UpdateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
-	DeleteResourcePermission(ctx context.Context, resourceID pulid.ID) error
+	DeleteResourcePermission(ctx context.Context, req DeleteResourcePermissionRequest) error
 	GetResourcePermissionsByRoleID(
 		ctx context.Context,
 		roleID pulid.ID,

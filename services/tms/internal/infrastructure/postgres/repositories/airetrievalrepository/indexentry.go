@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -48,157 +49,161 @@ func (r *repository) MarkStale(
 	ctx context.Context,
 	req *repositories.MarkAIRetrievalStaleRequest,
 ) (int, error) {
-	if req == nil {
-		return 0, invalid("marking sources stale needs a request")
-	}
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return 0, err
-	}
-	if !req.SourceType.IsValid() {
-		return 0, invalid("source type %q is not one retrieval indexes", req.SourceType)
-	}
-	if len(req.SourceIDs) > maxStaleSourcesPerCall {
-		return 0, invalid("at most %d sources per call", maxStaleSourcesPerCall)
-	}
-	if len(req.ModelKeys) > maxModelKeysPerCall {
-		return 0, invalid("at most %d model keys per call", maxModelKeysPerCall)
-	}
-	for _, key := range req.ModelKeys {
-		if err := validateModelKey(key); err != nil {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		if req == nil {
+			return 0, invalid("marking sources stale needs a request")
+		}
+		if err := validateTenant(req.TenantInfo); err != nil {
 			return 0, err
 		}
-	}
-
-	sourceIDs := sliceutils.Dedupe(req.SourceIDs)
-	modelKeys := sliceutils.Dedupe(req.ModelKeys)
-	if slices.ContainsFunc(sourceIDs, pulid.ID.IsNil) {
-		return 0, invalid("a source id is required")
-	}
-	if len(sourceIDs) == 0 || len(modelKeys) == 0 {
-		return 0, nil
-	}
-	slices.Sort(sourceIDs)
-	slices.Sort(modelKeys)
-
-	now := req.Now
-	if now == 0 {
-		now = timeutils.NowUnix()
-	}
-
-	entries := make([]*airetrieval.IndexEntry, 0, len(sourceIDs)*len(modelKeys))
-	for _, modelKey := range modelKeys {
-		for _, sourceID := range sourceIDs {
-			entries = append(entries, &airetrieval.IndexEntry{
-				OrganizationID: req.TenantInfo.OrgID,
-				BusinessUnitID: req.TenantInfo.BuID,
-				SourceType:     req.SourceType,
-				SourceID:       sourceID,
-				ModelKey:       modelKey,
-				Status:         airetrieval.IndexStatusPending,
-				Generation:     1,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			})
+		if !req.SourceType.IsValid() {
+			return 0, invalid("source type %q is not one retrieval indexes", req.SourceType)
 		}
-	}
+		if len(req.SourceIDs) > maxStaleSourcesPerCall {
+			return 0, invalid("at most %d sources per call", maxStaleSourcesPerCall)
+		}
+		if len(req.ModelKeys) > maxModelKeysPerCall {
+			return 0, invalid("at most %d model keys per call", maxModelKeysPerCall)
+		}
+		for _, key := range req.ModelKeys {
+			if err := validateModelKey(key); err != nil {
+				return 0, err
+			}
+		}
 
-	cols := buncolgen.IndexEntryColumns
-	res, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(&entries).
-		On(conflictTarget(buncolgen.IndexEntryTable)+" DO UPDATE").
-		Set(cols.Status.Set(), airetrieval.IndexStatusPending).
-		Set(cols.Generation.IncConflict(1)).
-		Set(cols.Attempts.Set(), 0).
-		Set(cols.LastError.SetNull()).
-		Set(cols.NextAttemptAt.SetNull()).
-		Set(cols.UpdatedAt.SetExcluded()).
-		Exec(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("mark retrieval sources stale: %w", err)
-	}
+		sourceIDs := sliceutils.Dedupe(req.SourceIDs)
+		modelKeys := sliceutils.Dedupe(req.ModelKeys)
+		if slices.ContainsFunc(sourceIDs, pulid.ID.IsNil) {
+			return 0, invalid("a source id is required")
+		}
+		if len(sourceIDs) == 0 || len(modelKeys) == 0 {
+			return 0, nil
+		}
+		slices.Sort(sourceIDs)
+		slices.Sort(modelKeys)
 
-	return rowsAffected(res)
+		now := req.Now
+		if now == 0 {
+			now = timeutils.NowUnix()
+		}
+
+		entries := make([]*airetrieval.IndexEntry, 0, len(sourceIDs)*len(modelKeys))
+		for _, modelKey := range modelKeys {
+			for _, sourceID := range sourceIDs {
+				entries = append(entries, &airetrieval.IndexEntry{
+					OrganizationID: req.TenantInfo.OrgID,
+					BusinessUnitID: req.TenantInfo.BuID,
+					SourceType:     req.SourceType,
+					SourceID:       sourceID,
+					ModelKey:       modelKey,
+					Status:         airetrieval.IndexStatusPending,
+					Generation:     1,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				})
+			}
+		}
+
+		cols := buncolgen.IndexEntryColumns
+		res, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&entries).
+			On(conflictTarget(buncolgen.IndexEntryTable)+" DO UPDATE").
+			Set(cols.Status.Set(), airetrieval.IndexStatusPending).
+			Set(cols.Generation.IncConflict(1)).
+			Set(cols.Attempts.Set(), 0).
+			Set(cols.LastError.SetNull()).
+			Set(cols.NextAttemptAt.SetNull()).
+			Set(cols.UpdatedAt.SetExcluded()).
+			Exec(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("mark retrieval sources stale: %w", err)
+		}
+
+		return rowsAffected(res)
+	})
 }
 
 func (r *repository) ClaimIndexEntries(
 	ctx context.Context,
 	req *repositories.ClaimIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
-	if req == nil {
-		return nil, invalid("claiming index entries needs a request")
-	}
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return nil, err
-	}
-	if err := validateModelKey(req.ModelKey); err != nil {
-		return nil, err
-	}
-	if err := validateSourceTypes(req.SourceTypes); err != nil {
-		return nil, err
-	}
-
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultClaimLimit
-	}
-	limit = intutils.Clamp(limit, 1, maxClaimLimit)
-
-	lease := req.Lease
-	if lease <= 0 {
-		lease = defaultClaimLease
-	}
-	lease = min(max(lease, time.Second), maxClaimLease)
-
-	now := req.Now
-	if now == 0 {
-		now = timeutils.NowUnix()
-	}
-
-	cols := buncolgen.IndexEntryColumns
-	dba := r.db.DBForContext(ctx)
-
-	picked := dba.NewSelect().
-		Model((*airetrieval.IndexEntry)(nil)).
-		Column(buncolgen.IndexEntryTable.PrimaryKey...).
-		Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
-		Where(cols.ModelKey.Eq(), req.ModelKey).
-		Where(cols.Status.Eq(), airetrieval.IndexStatusPending).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Where(cols.LeaseExpiresAt.IsNull()).WhereOr(cols.LeaseExpiresAt.Lte(), now)
-		}).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Where(cols.NextAttemptAt.IsNull()).WhereOr(cols.NextAttemptAt.Lte(), now)
-		}).
-		OrderExpr(cols.UpdatedAt.OrderAsc()).
-		OrderExpr(cols.SourceID.OrderAsc()).
-		Limit(limit).
-		For("UPDATE SKIP LOCKED")
-	if len(req.SourceTypes) > 0 {
-		picked = picked.Where(cols.SourceType.In(), bun.List(req.SourceTypes))
-	}
-
-	entries := make([]*airetrieval.IndexEntry, 0, limit)
-	if err := dba.NewUpdate().
-		Model((*airetrieval.IndexEntry)(nil)).
-		Set(cols.LeaseExpiresAt.Set(), now+int64(lease/time.Second)).
-		Set(cols.Attempts.Inc(1)).
-		Set(cols.LastAttemptAt.Set(), now).
-		Set(cols.UpdatedAt.Set(), now).
-		Where(indexEntryKeyTuple()+" IN (?)", picked).
-		Returning(buncolgen.IndexEntryTable.All()).
-		Scan(ctx, &entries); err != nil {
-		return nil, fmt.Errorf("claim index entries: %w", err)
-	}
-
-	slices.SortFunc(entries, func(a, b *airetrieval.IndexEntry) int {
-		if c := strings.Compare(a.SourceType.String(), b.SourceType.String()); c != 0 {
-			return c
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*airetrieval.IndexEntry, error) {
+		if req == nil {
+			return nil, invalid("claiming index entries needs a request")
 		}
-		return strings.Compare(a.SourceID.String(), b.SourceID.String())
-	})
+		if err := validateTenant(req.TenantInfo); err != nil {
+			return nil, err
+		}
+		if err := validateModelKey(req.ModelKey); err != nil {
+			return nil, err
+		}
+		if err := validateSourceTypes(req.SourceTypes); err != nil {
+			return nil, err
+		}
 
-	return entries, nil
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultClaimLimit
+		}
+		limit = intutils.Clamp(limit, 1, maxClaimLimit)
+
+		lease := req.Lease
+		if lease <= 0 {
+			lease = defaultClaimLease
+		}
+		lease = min(max(lease, time.Second), maxClaimLease)
+
+		now := req.Now
+		if now == 0 {
+			now = timeutils.NowUnix()
+		}
+
+		cols := buncolgen.IndexEntryColumns
+		dba := r.db.DBForContext(ctx)
+
+		picked := dba.NewSelect().
+			Model((*airetrieval.IndexEntry)(nil)).
+			Column(buncolgen.IndexEntryTable.PrimaryKey...).
+			Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+			Where(cols.ModelKey.Eq(), req.ModelKey).
+			Where(cols.Status.Eq(), airetrieval.IndexStatusPending).
+			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where(cols.LeaseExpiresAt.IsNull()).WhereOr(cols.LeaseExpiresAt.Lte(), now)
+			}).
+			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where(cols.NextAttemptAt.IsNull()).WhereOr(cols.NextAttemptAt.Lte(), now)
+			}).
+			OrderExpr(cols.UpdatedAt.OrderAsc()).
+			OrderExpr(cols.SourceID.OrderAsc()).
+			Limit(limit).
+			For("UPDATE SKIP LOCKED")
+		if len(req.SourceTypes) > 0 {
+			picked = picked.Where(cols.SourceType.In(), bun.List(req.SourceTypes))
+		}
+
+		entries := make([]*airetrieval.IndexEntry, 0, limit)
+		if err := dba.NewUpdate().
+			Model((*airetrieval.IndexEntry)(nil)).
+			Set(cols.LeaseExpiresAt.Set(), now+int64(lease/time.Second)).
+			Set(cols.Attempts.Inc(1)).
+			Set(cols.LastAttemptAt.Set(), now).
+			Set(cols.UpdatedAt.Set(), now).
+			Where(indexEntryKeyTuple()+" IN (?)", picked).
+			Returning(buncolgen.IndexEntryTable.All()).
+			Scan(ctx, &entries); err != nil {
+			return nil, fmt.Errorf("claim index entries: %w", err)
+		}
+
+		slices.SortFunc(entries, func(a, b *airetrieval.IndexEntry) int {
+			if c := strings.Compare(a.SourceType.String(), b.SourceType.String()); c != 0 {
+				return c
+			}
+			return strings.Compare(a.SourceID.String(), b.SourceID.String())
+		})
+
+		return entries, nil
+	})
 }
 
 func indexEntryKeyTuple() string {
@@ -350,40 +355,42 @@ func (r *repository) markEntries(
 	req repositories.MarkIndexEntriesRequest,
 	status airetrieval.IndexStatus,
 ) (repositories.MarkIndexEntriesResult, error) {
-	var result repositories.MarkIndexEntriesResult
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.MarkIndexEntriesResult, error) {
+		var result repositories.MarkIndexEntriesResult
 
-	rows, err := outcomeRows(req, status)
-	if err != nil || len(rows) == 0 {
-		return result, err
-	}
-
-	now := req.Now
-	if now == 0 {
-		now = timeutils.NowUnix()
-	}
-
-	err = r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		res, txErr := applyOutcome(tx, rows, status, now).Exec(ctx)
-		if txErr != nil {
-			return fmt.Errorf("record index outcomes: %w", txErr)
+		rows, err := outcomeRows(req, status)
+		if err != nil || len(rows) == 0 {
+			return result, err
 		}
-		if result.Applied, txErr = rowsAffected(res); txErr != nil {
+
+		now := req.Now
+		if now == 0 {
+			now = timeutils.NowUnix()
+		}
+
+		err = r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+			res, txErr := applyOutcome(tx, rows, status, now).Exec(ctx)
+			if txErr != nil {
+				return fmt.Errorf("record index outcomes: %w", txErr)
+			}
+			if result.Applied, txErr = rowsAffected(res); txErr != nil {
+				return txErr
+			}
+
+			res, txErr = releaseSuperseded(tx, rows, now).Exec(ctx)
+			if txErr != nil {
+				return fmt.Errorf("release superseded index entries: %w", txErr)
+			}
+			result.Superseded, txErr = rowsAffected(res)
+
 			return txErr
+		})
+		if err != nil {
+			return repositories.MarkIndexEntriesResult{}, err
 		}
 
-		res, txErr = releaseSuperseded(tx, rows, now).Exec(ctx)
-		if txErr != nil {
-			return fmt.Errorf("release superseded index entries: %w", txErr)
-		}
-		result.Superseded, txErr = rowsAffected(res)
-
-		return txErr
+		return result, nil
 	})
-	if err != nil {
-		return repositories.MarkIndexEntriesResult{}, err
-	}
-
-	return result, nil
 }
 
 func applyOutcome(
@@ -444,37 +451,39 @@ func (r *repository) CountIndexEntries(
 	ctx context.Context,
 	req repositories.CountIndexEntriesRequest,
 ) ([]repositories.IndexEntryCount, error) {
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return nil, err
-	}
-	if err := validateModelKey(req.ModelKey); err != nil {
-		return nil, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.IndexEntryCount, error) {
+		if err := validateTenant(req.TenantInfo); err != nil {
+			return nil, err
+		}
+		if err := validateModelKey(req.ModelKey); err != nil {
+			return nil, err
+		}
 
-	cols := buncolgen.IndexEntryColumns
-	counts := make(
-		[]repositories.IndexEntryCount,
-		0,
-		len(airetrieval.AllSourceTypes())*len(airetrieval.AllIndexStatuses()),
-	)
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*airetrieval.IndexEntry)(nil)).
-		Column(cols.SourceType.String(), cols.Status.String()).
-		ColumnExpr(buncolgen.Count("count")).
-		ColumnExpr(buncolgen.Max(cols.IndexedAt, "last_indexed_at")).
-		ColumnExpr(buncolgen.Max(cols.LastAttemptAt, "last_attempt_at")).
-		Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
-		Where(cols.ModelKey.Eq(), req.ModelKey).
-		GroupExpr(cols.SourceType.Qualified()).
-		GroupExpr(cols.Status.Qualified()).
-		OrderExpr(cols.SourceType.OrderAsc()).
-		OrderExpr(cols.Status.OrderAsc()).
-		Scan(ctx, &counts); err != nil {
-		return nil, fmt.Errorf("count index entries: %w", err)
-	}
+		cols := buncolgen.IndexEntryColumns
+		counts := make(
+			[]repositories.IndexEntryCount,
+			0,
+			len(airetrieval.AllSourceTypes())*len(airetrieval.AllIndexStatuses()),
+		)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*airetrieval.IndexEntry)(nil)).
+			Column(cols.SourceType.String(), cols.Status.String()).
+			ColumnExpr(buncolgen.Count("count")).
+			ColumnExpr(buncolgen.Max(cols.IndexedAt, "last_indexed_at")).
+			ColumnExpr(buncolgen.Max(cols.LastAttemptAt, "last_attempt_at")).
+			Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+			Where(cols.ModelKey.Eq(), req.ModelKey).
+			GroupExpr(cols.SourceType.Qualified()).
+			GroupExpr(cols.Status.Qualified()).
+			OrderExpr(cols.SourceType.OrderAsc()).
+			OrderExpr(cols.Status.OrderAsc()).
+			Scan(ctx, &counts); err != nil {
+			return nil, fmt.Errorf("count index entries: %w", err)
+		}
 
-	return counts, nil
+		return counts, nil
+	})
 }
 
 type sourceTable struct {
@@ -517,175 +526,181 @@ func (r *repository) FindStaleSources(
 	ctx context.Context,
 	req *repositories.FindStaleAIRetrievalSourcesRequest,
 ) ([]pulid.ID, error) {
-	if req == nil {
-		return nil, invalid("finding stale sources needs a request")
-	}
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return nil, err
-	}
-	if err := validateModelKey(req.ModelKey); err != nil {
-		return nil, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		if req == nil {
+			return nil, invalid("finding stale sources needs a request")
+		}
+		if err := validateTenant(req.TenantInfo); err != nil {
+			return nil, err
+		}
+		if err := validateModelKey(req.ModelKey); err != nil {
+			return nil, err
+		}
 
-	table, ok := sourceTables[req.SourceType]
-	if !ok {
-		return nil, invalid("source type %q is not one retrieval indexes", req.SourceType)
-	}
+		table, ok := sourceTables[req.SourceType]
+		if !ok {
+			return nil, invalid("source type %q is not one retrieval indexes", req.SourceType)
+		}
 
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultStaleLimit
-	}
-	limit = intutils.Clamp(limit, 1, maxStaleLimit)
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultStaleLimit
+		}
+		limit = intutils.Clamp(limit, 1, maxStaleLimit)
 
-	entry := buncolgen.IndexEntryColumns
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(table.model).
-		ColumnExpr(table.id.Qualified()).
-		Apply(table.applyTenant(req.TenantInfo)).
-		Join("LEFT JOIN "+buncolgen.IndexEntryTable.As(buncolgen.IndexEntryTable.Alias)).
-		JoinOn(entry.OrganizationID.EqColumn(table.organizationID)).
-		JoinOn(entry.BusinessUnitID.EqColumn(table.businessUnitID)).
-		JoinOn(entry.SourceID.EqColumn(table.id)).
-		JoinOn(entry.SourceType.Eq(), req.SourceType).
-		JoinOn(entry.ModelKey.Eq(), req.ModelKey).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(entry.SourceID.IsNull()).
-				WhereOr(
-					buncolgen.Expr(
-						"{0} IN (?) AND {1} >= COALESCE({2}, 0)",
-						entry.Status, table.updatedAt, entry.IndexedAt,
-					),
-					bun.List([]airetrieval.IndexStatus{
-						airetrieval.IndexStatusIndexed,
-						airetrieval.IndexStatusSkipped,
-					}),
-				).
-				WhereOr(
-					buncolgen.Expr(
-						"{0} = ? AND {1} >= COALESCE({2}, 0)",
-						entry.Status, table.updatedAt, entry.LastAttemptAt,
-					),
-					airetrieval.IndexStatusFailed,
-				)
-		}).
-		OrderExpr(table.id.OrderAsc()).
-		Limit(limit)
-	if req.AfterID.IsNotNil() {
-		q = q.Where(table.id.Gt(), req.AfterID)
-	}
+		entry := buncolgen.IndexEntryColumns
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(table.model).
+			ColumnExpr(table.id.Qualified()).
+			Apply(table.applyTenant(req.TenantInfo)).
+			Join("LEFT JOIN "+buncolgen.IndexEntryTable.As(buncolgen.IndexEntryTable.Alias)).
+			JoinOn(entry.OrganizationID.EqColumn(table.organizationID)).
+			JoinOn(entry.BusinessUnitID.EqColumn(table.businessUnitID)).
+			JoinOn(entry.SourceID.EqColumn(table.id)).
+			JoinOn(entry.SourceType.Eq(), req.SourceType).
+			JoinOn(entry.ModelKey.Eq(), req.ModelKey).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where(entry.SourceID.IsNull()).
+					WhereOr(
+						buncolgen.Expr(
+							"{0} IN (?) AND {1} >= COALESCE({2}, 0)",
+							entry.Status, table.updatedAt, entry.IndexedAt,
+						),
+						bun.List([]airetrieval.IndexStatus{
+							airetrieval.IndexStatusIndexed,
+							airetrieval.IndexStatusSkipped,
+						}),
+					).
+					WhereOr(
+						buncolgen.Expr(
+							"{0} = ? AND {1} >= COALESCE({2}, 0)",
+							entry.Status, table.updatedAt, entry.LastAttemptAt,
+						),
+						airetrieval.IndexStatusFailed,
+					)
+			}).
+			OrderExpr(table.id.OrderAsc()).
+			Limit(limit)
+		if req.AfterID.IsNotNil() {
+			q = q.Where(table.id.Gt(), req.AfterID)
+		}
 
-	ids := make([]pulid.ID, 0, limit)
-	if err := q.Scan(ctx, &ids); err != nil {
-		return nil, fmt.Errorf("find stale %s sources: %w", req.SourceType, err)
-	}
+		ids := make([]pulid.ID, 0, limit)
+		if err := q.Scan(ctx, &ids); err != nil {
+			return nil, fmt.Errorf("find stale %s sources: %w", req.SourceType, err)
+		}
 
-	return ids, nil
+		return ids, nil
+	})
 }
 
 func (r *repository) AverageIndexChunks(
 	ctx context.Context,
 	req *repositories.AverageIndexChunksRequest,
 ) (repositories.IndexChunkAverage, error) {
-	var average repositories.IndexChunkAverage
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (repositories.IndexChunkAverage, error) {
+		var average repositories.IndexChunkAverage
 
-	if req == nil {
-		return average, invalid("an average of index chunks needs a request")
-	}
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return average, err
-	}
-	if err := validateModelKey(req.ModelKey); err != nil {
-		return average, err
-	}
-	if !req.SourceType.IsValid() {
-		return average, invalid("source type %q is not one retrieval indexes", req.SourceType)
-	}
+		if req == nil {
+			return average, invalid("an average of index chunks needs a request")
+		}
+		if err := validateTenant(req.TenantInfo); err != nil {
+			return average, err
+		}
+		if err := validateModelKey(req.ModelKey); err != nil {
+			return average, err
+		}
+		if !req.SourceType.IsValid() {
+			return average, invalid("source type %q is not one retrieval indexes", req.SourceType)
+		}
 
-	cols := buncolgen.IndexEntryColumns
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*airetrieval.IndexEntry)(nil)).
-		ColumnExpr(buncolgen.Count("entries")).
-		ColumnExpr(cols.ChunkCount.Expr("COALESCE(AVG({}), 0) AS average_chunks")).
-		Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
-		Where(cols.SourceType.Eq(), req.SourceType).
-		Where(cols.ModelKey.Eq(), req.ModelKey).
-		Where(cols.Status.Eq(), airetrieval.IndexStatusIndexed).
-		Where(cols.ChunkCount.Gt(), 0).
-		Scan(ctx, &average); err != nil {
-		return repositories.IndexChunkAverage{}, fmt.Errorf(
-			"average %s chunks per source: %w",
-			req.SourceType,
-			err,
-		)
-	}
+		cols := buncolgen.IndexEntryColumns
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*airetrieval.IndexEntry)(nil)).
+			ColumnExpr(buncolgen.Count("entries")).
+			ColumnExpr(cols.ChunkCount.Expr("COALESCE(AVG({}), 0) AS average_chunks")).
+			Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+			Where(cols.SourceType.Eq(), req.SourceType).
+			Where(cols.ModelKey.Eq(), req.ModelKey).
+			Where(cols.Status.Eq(), airetrieval.IndexStatusIndexed).
+			Where(cols.ChunkCount.Gt(), 0).
+			Scan(ctx, &average); err != nil {
+			return repositories.IndexChunkAverage{}, fmt.Errorf(
+				"average %s chunks per source: %w",
+				req.SourceType,
+				err,
+			)
+		}
 
-	return average, nil
+		return average, nil
+	})
 }
 
 func (r *repository) ListErroredIndexEntries(
 	ctx context.Context,
 	req *repositories.ListErroredIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
-	if req == nil {
-		return nil, invalid("a list of failed index entries needs a request")
-	}
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return nil, err
-	}
-	if req.SourceType != "" && !req.SourceType.IsValid() {
-		return nil, invalid("source type %q is not one retrieval indexes", req.SourceType)
-	}
-	if len(req.ModelKeys) > maxModelKeysPerCall {
-		return nil, invalid("at most %d model keys per call", maxModelKeysPerCall)
-	}
-	for _, key := range req.ModelKeys {
-		if err := validateModelKey(key); err != nil {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*airetrieval.IndexEntry, error) {
+		if req == nil {
+			return nil, invalid("a list of failed index entries needs a request")
+		}
+		if err := validateTenant(req.TenantInfo); err != nil {
 			return nil, err
 		}
-	}
+		if req.SourceType != "" && !req.SourceType.IsValid() {
+			return nil, invalid("source type %q is not one retrieval indexes", req.SourceType)
+		}
+		if len(req.ModelKeys) > maxModelKeysPerCall {
+			return nil, invalid("at most %d model keys per call", maxModelKeysPerCall)
+		}
+		for _, key := range req.ModelKeys {
+			if err := validateModelKey(key); err != nil {
+				return nil, err
+			}
+		}
 
-	modelKeys := sliceutils.Dedupe(req.ModelKeys)
-	if len(modelKeys) == 0 {
-		return []*airetrieval.IndexEntry{}, nil
-	}
+		modelKeys := sliceutils.Dedupe(req.ModelKeys)
+		if len(modelKeys) == 0 {
+			return []*airetrieval.IndexEntry{}, nil
+		}
 
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultErroredLimit
-	}
-	limit = intutils.Clamp(limit, 1, maxErroredLimit)
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultErroredLimit
+		}
+		limit = intutils.Clamp(limit, 1, maxErroredLimit)
 
-	cols := buncolgen.IndexEntryColumns
-	entries := make([]*airetrieval.IndexEntry, 0, limit)
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entries).
-		Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
-		Where(cols.ModelKey.In(), bun.List(modelKeys)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(cols.Status.Eq(), airetrieval.IndexStatusFailed).
-				WhereOr(
-					buncolgen.Expr("{0} = ? AND {1} IS NOT NULL", cols.Status, cols.LastError),
-					airetrieval.IndexStatusPending,
-				)
-		}).
-		OrderExpr(cols.LastAttemptAt.Expr("{} DESC NULLS LAST")).
-		OrderExpr(cols.SourceType.OrderAsc()).
-		OrderExpr(cols.SourceID.OrderAsc()).
-		OrderExpr(cols.ModelKey.OrderAsc()).
-		Limit(limit)
-	if req.SourceType != "" {
-		q = q.Where(cols.SourceType.Eq(), req.SourceType)
-	}
+		cols := buncolgen.IndexEntryColumns
+		entries := make([]*airetrieval.IndexEntry, 0, limit)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entries).
+			Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+			Where(cols.ModelKey.In(), bun.List(modelKeys)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where(cols.Status.Eq(), airetrieval.IndexStatusFailed).
+					WhereOr(
+						buncolgen.Expr("{0} = ? AND {1} IS NOT NULL", cols.Status, cols.LastError),
+						airetrieval.IndexStatusPending,
+					)
+			}).
+			OrderExpr(cols.LastAttemptAt.Expr("{} DESC NULLS LAST")).
+			OrderExpr(cols.SourceType.OrderAsc()).
+			OrderExpr(cols.SourceID.OrderAsc()).
+			OrderExpr(cols.ModelKey.OrderAsc()).
+			Limit(limit)
+		if req.SourceType != "" {
+			q = q.Where(cols.SourceType.Eq(), req.SourceType)
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		return nil, fmt.Errorf("list errored index entries: %w", err)
-	}
+		if err := q.Scan(ctx); err != nil {
+			return nil, fmt.Errorf("list errored index entries: %w", err)
+		}
 
-	return entries, nil
+		return entries, nil
+	})
 }

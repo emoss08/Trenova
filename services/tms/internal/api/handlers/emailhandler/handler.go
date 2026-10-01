@@ -201,8 +201,7 @@ func (h *Handler) getProfile(c *gin.Context) {
 func (h *Handler) createProfile(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	profile := new(email.Profile)
-	authctx.AddContextToRequest(authCtx, profile)
-	if err := c.ShouldBindJSON(profile); err != nil {
+	if err := authctx.BindJSON(c, authCtx, profile); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -224,8 +223,7 @@ func (h *Handler) updateProfile(c *gin.Context) {
 		return
 	}
 	profile := new(email.Profile)
-	authctx.AddContextToRequest(authCtx, profile)
-	if err = c.ShouldBindJSON(profile); err != nil {
+	if err = authctx.BindJSON(c, authCtx, profile); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -352,7 +350,7 @@ func (h *Handler) listSuppressions(c *gin.Context) {
 func (h *Handler) createSuppression(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	suppression := new(email.Suppression)
-	if err := c.ShouldBindJSON(suppression); err != nil {
+	if err := authctx.BindJSON(c, authCtx, suppression); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

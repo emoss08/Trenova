@@ -155,6 +155,7 @@ type RouterParams struct {
 	ControlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
 	RateLimiter                     *middleware.RateLimiter
 	PermissionMiddleware            *middleware.PermissionMiddleware
+	TenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
 	ErrorHandler                    *helpers.ErrorHandler
 	OrganizationHandler             *organizationhandler.Handler
 	DataRetentionHandler            *dataretentionhandler.Handler
@@ -291,6 +292,7 @@ type Router struct {
 	controlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
 	rateLimiter                     *middleware.RateLimiter
 	permissionMiddleware            *middleware.PermissionMiddleware
+	tenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
 	cfg                             *config.Config
 	errorHandler                    *helpers.ErrorHandler
 	organizationHandler             *organizationhandler.Handler
@@ -431,6 +433,7 @@ func NewRouter(p RouterParams) *Router {
 		controlPlaneAccessMiddleware:    p.ControlPlaneAccessMiddleware,
 		rateLimiter:                     p.RateLimiter,
 		permissionMiddleware:            p.PermissionMiddleware,
+		tenantBoundaryMiddleware:        p.TenantBoundaryMiddleware,
 		errorHandler:                    p.ErrorHandler,
 		organizationHandler:             p.OrganizationHandler,
 		dataRetentionHandler:            p.DataRetentionHandler,
@@ -596,6 +599,8 @@ func (r *Router) setupMiddleware() {
 	r.s.router.Use(middleware.NewSecurityHeadersMiddleware(r.cfg))
 	r.s.router.Use(gin.Recovery())
 	r.s.router.Use(requestid.New())
+	r.s.router.Use(middleware.NewRequestMetaMiddleware())
+	r.s.router.Use(r.tenantBoundaryMiddleware.Track())
 	r.s.router.Use(middleware.NewCSRFBrowserGuard(r.cfg, r.errorHandler, r.l).Guard())
 	r.s.router.Use(
 		gzip.Gzip(

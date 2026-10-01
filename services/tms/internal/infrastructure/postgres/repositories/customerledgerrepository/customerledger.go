@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerledger"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -49,38 +50,40 @@ func (r *repository) AppendEntries(
 	ctx context.Context,
 	entries []*customerledger.CustomerLedgerEntry,
 ) error {
-	if len(entries) == 0 {
-		return nil
-	}
-	records := make([]*entryRecord, 0, len(entries))
-	for _, entry := range entries {
-		if entry == nil {
-			continue
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if len(entries) == 0 {
+			return nil
 		}
-		records = append(
-			records,
-			&entryRecord{
-				ID:               entry.ID.String(),
-				OrganizationID:   entry.OrganizationID.String(),
-				BusinessUnitID:   entry.BusinessUnitID.String(),
-				CustomerID:       entry.CustomerID.String(),
-				SourceObjectType: entry.SourceObjectType,
-				SourceObjectID:   entry.SourceObjectID,
-				SourceEventType:  entry.SourceEventType,
-				RelatedInvoiceID: entry.RelatedInvoiceID.String(),
-				DocumentNumber:   entry.DocumentNumber,
-				TransactionDate:  entry.TransactionDate,
-				LineNumber:       entry.LineNumber,
-				AmountMinor:      entry.AmountMinor,
-				CreatedByID:      entry.CreatedByID.String(),
-			},
-		)
-	}
-	if len(records) == 0 {
-		return nil
-	}
-	_, err := r.db.DBForContext(ctx).NewInsert().Model(&records).Exec(ctx)
-	return err
+		records := make([]*entryRecord, 0, len(entries))
+		for _, entry := range entries {
+			if entry == nil {
+				continue
+			}
+			records = append(
+				records,
+				&entryRecord{
+					ID:               entry.ID.String(),
+					OrganizationID:   entry.OrganizationID.String(),
+					BusinessUnitID:   entry.BusinessUnitID.String(),
+					CustomerID:       entry.CustomerID.String(),
+					SourceObjectType: entry.SourceObjectType,
+					SourceObjectID:   entry.SourceObjectID,
+					SourceEventType:  entry.SourceEventType,
+					RelatedInvoiceID: entry.RelatedInvoiceID.String(),
+					DocumentNumber:   entry.DocumentNumber,
+					TransactionDate:  entry.TransactionDate,
+					LineNumber:       entry.LineNumber,
+					AmountMinor:      entry.AmountMinor,
+					CreatedByID:      entry.CreatedByID.String(),
+				},
+			)
+		}
+		if len(records) == 0 {
+			return nil
+		}
+		_, err := r.db.DBForContext(ctx).NewInsert().Model(&records).Exec(ctx)
+		return err
+	})
 }
 
 // SumBalanceAsOf totals every subledger row up to the date. This is the figure a
@@ -90,19 +93,21 @@ func (r *repository) SumBalanceAsOf(
 	ctx context.Context,
 	req repositories.SumCustomerLedgerBalanceRequest,
 ) (int64, error) {
-	var total int64
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		TableExpr("customer_ledger_entries AS cle").
-		ColumnExpr("COALESCE(SUM(cle.amount_minor), 0)").
-		Where("cle.organization_id = ?", req.TenantInfo.OrgID).
-		Where("cle.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("cle.transaction_date <= ?", req.AsOfDate).
-		Scan(ctx, &total)
-	if err != nil {
-		r.l.Error("failed to sum customer ledger balance", zap.Error(err))
-		return 0, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		var total int64
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			TableExpr("customer_ledger_entries AS cle").
+			ColumnExpr("COALESCE(SUM(cle.amount_minor), 0)").
+			Where("cle.organization_id = ?", req.TenantInfo.OrgID).
+			Where("cle.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("cle.transaction_date <= ?", req.AsOfDate).
+			Scan(ctx, &total)
+		if err != nil {
+			r.l.Error("failed to sum customer ledger balance", zap.Error(err))
+			return 0, err
+		}
 
-	return total, nil
+		return total, nil
+	})
 }

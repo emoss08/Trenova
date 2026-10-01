@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
@@ -31,6 +32,7 @@ type Params struct {
 	PolicyCache repositories.AccessPolicyCacheRepository
 	Encryption  *encryptionservice.Service
 	Validator   *Validator
+	Auditor     services.SecurityAuditor
 	Logger      *zap.Logger
 }
 
@@ -39,6 +41,7 @@ type service struct {
 	policyCache repositories.AccessPolicyCacheRepository
 	enc         *encryptionservice.Service
 	validator   *Validator
+	auditor     services.SecurityAuditor
 	l           *zap.Logger
 }
 
@@ -48,6 +51,7 @@ func New(p Params) services.IAMService {
 		policyCache: p.PolicyCache,
 		enc:         p.Encryption,
 		validator:   p.Validator,
+		auditor:     p.Auditor,
 		l:           p.Logger.Named("service.iam"),
 	}
 }
@@ -68,7 +72,21 @@ func (s *service) CreateIdentityProvider(
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.CreateIdentityProvider(ctx, entity)
+
+	created, err := s.repo.CreateIdentityProvider(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceIdentityProvider,
+		resourceID: created.ID,
+		operation:  permission.OpCreate,
+		after:      created,
+		comment:    "Identity provider created",
+	})
+	return created, nil
 }
 
 func (s *service) UpdateIdentityProvider(
@@ -88,11 +106,27 @@ func (s *service) UpdateIdentityProvider(
 	}
 	entity.ID = id
 	entity.Version = existing.Version
-	if strings.TrimSpace(req.OIDCClientSecret) == "" {
+	secretChanged := strings.TrimSpace(req.OIDCClientSecret) != ""
+	if !secretChanged {
 		entity.OIDCClientSecret = existing.OIDCClientSecret
 	}
 
-	return s.repo.UpdateIdentityProvider(ctx, entity)
+	updated, err := s.repo.UpdateIdentityProvider(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceIdentityProvider,
+		resourceID: id,
+		operation:  permission.OpUpdate,
+		before:     existing,
+		after:      updated,
+		comment:    "Identity provider updated",
+		metadata:   map[string]any{"clientSecretChanged": secretChanged},
+	})
+	return updated, nil
 }
 
 func (s *service) DeleteIdentityProvider(
@@ -100,7 +134,24 @@ func (s *service) DeleteIdentityProvider(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) error {
-	return s.repo.DeleteIdentityProvider(ctx, tenantInfo, id)
+	existing, err := s.repo.GetIdentityProvider(ctx, tenantInfo, id)
+	if err != nil {
+		return err
+	}
+
+	if err = s.repo.DeleteIdentityProvider(ctx, tenantInfo, id); err != nil {
+		return err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceIdentityProvider,
+		resourceID: id,
+		operation:  permission.OpDelete,
+		before:     existing,
+		comment:    "Identity provider deleted",
+	})
+	return nil
 }
 
 func (s *service) identityProviderFromRequest(
@@ -253,7 +304,21 @@ func (s *service) CreateSCIMDirectory(
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
 	entity.TenantSlug = strings.TrimSpace(entity.TenantSlug)
-	return s.repo.CreateSCIMDirectory(ctx, entity)
+
+	created, err := s.repo.CreateSCIMDirectory(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: created.ID,
+		operation:  permission.OpCreate,
+		after:      created,
+		comment:    "SCIM directory created",
+	})
+	return created, nil
 }
 
 func (s *service) UpdateSCIMDirectory(
@@ -262,11 +327,34 @@ func (s *service) UpdateSCIMDirectory(
 	id pulid.ID,
 	entity *iam.SCIMDirectory,
 ) (*iam.SCIMDirectory, error) {
+	existing, err := s.repo.GetSCIMDirectory(ctx, repositories.GetSCIMDirectoryRequest{
+		ID:         id,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	entity.ID = id
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
 	entity.TenantSlug = strings.TrimSpace(entity.TenantSlug)
-	return s.repo.UpdateSCIMDirectory(ctx, entity)
+
+	updated, err := s.repo.UpdateSCIMDirectory(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: id,
+		operation:  permission.OpUpdate,
+		before:     existing,
+		after:      updated,
+		comment:    "SCIM directory updated",
+	})
+	return updated, nil
 }
 
 func (s *service) DeleteSCIMDirectory(
@@ -274,7 +362,27 @@ func (s *service) DeleteSCIMDirectory(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) error {
-	return s.repo.DeleteSCIMDirectory(ctx, tenantInfo, id)
+	existing, err := s.repo.GetSCIMDirectory(ctx, repositories.GetSCIMDirectoryRequest{
+		ID:         id,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err = s.repo.DeleteSCIMDirectory(ctx, tenantInfo, id); err != nil {
+		return err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: id,
+		operation:  permission.OpDelete,
+		before:     existing,
+		comment:    "SCIM directory deleted",
+	})
+	return nil
 }
 
 func (s *service) ListSCIMTokens(
@@ -324,6 +432,19 @@ func (s *service) CreateSCIMToken(
 	if err != nil {
 		return nil, err
 	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: pagination.TenantInfo{OrgID: orgID},
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: directoryID,
+		operation:  permission.OpUpdate,
+		after:      saved,
+		comment:    "SCIM token created",
+		metadata: map[string]any{
+			metadataTokenID:     saved.ID.String(),
+			metadataTokenPrefix: saved.Prefix,
+		},
+	})
 	return &services.SCIMTokenCreateResponse{
 		SCIMToken: saved,
 		Token:     generated.token,
@@ -334,7 +455,24 @@ func (s *service) RevokeSCIMToken(
 	ctx context.Context,
 	orgID, tokenID pulid.ID,
 ) (*iam.SCIMToken, error) {
-	return s.repo.RevokeSCIMToken(ctx, orgID, tokenID)
+	revoked, err := s.repo.RevokeSCIMToken(ctx, orgID, tokenID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: pagination.TenantInfo{OrgID: orgID},
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: revoked.DirectoryID,
+		operation:  permission.OpUpdate,
+		after:      revoked,
+		comment:    "SCIM token revoked",
+		metadata: map[string]any{
+			metadataTokenID:     revoked.ID.String(),
+			metadataTokenPrefix: revoked.Prefix,
+		},
+	})
+	return revoked, nil
 }
 
 type generatedSCIMToken struct {
@@ -387,7 +525,22 @@ func (s *service) CreateSCIMGroupRoleMapping(
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
 	entity.DirectoryID = directoryID
-	return s.repo.CreateSCIMGroupRoleMapping(ctx, entity)
+
+	created, err := s.repo.CreateSCIMGroupRoleMapping(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: directoryID,
+		operation:  permission.OpUpdate,
+		after:      created,
+		comment:    "SCIM group mapped to a role",
+		metadata:   map[string]any{metadataMappingID: created.ID.String()},
+	})
+	return created, nil
 }
 
 func (s *service) UpdateSCIMGroupRoleMapping(
@@ -399,7 +552,22 @@ func (s *service) UpdateSCIMGroupRoleMapping(
 	entity.ID = id
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
-	return s.repo.UpdateSCIMGroupRoleMapping(ctx, entity)
+
+	updated, err := s.repo.UpdateSCIMGroupRoleMapping(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: updated.DirectoryID,
+		operation:  permission.OpUpdate,
+		after:      updated,
+		comment:    "SCIM group role mapping updated",
+		metadata:   map[string]any{metadataMappingID: id.String()},
+	})
+	return updated, nil
 }
 
 func (s *service) DeleteSCIMGroupRoleMapping(
@@ -407,7 +575,19 @@ func (s *service) DeleteSCIMGroupRoleMapping(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) error {
-	return s.repo.DeleteSCIMGroupRoleMapping(ctx, tenantInfo, id)
+	if err := s.repo.DeleteSCIMGroupRoleMapping(ctx, tenantInfo, id); err != nil {
+		return err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: id,
+		operation:  permission.OpUpdate,
+		comment:    "SCIM group role mapping deleted",
+		metadata:   map[string]any{metadataMappingID: id.String()},
+	})
+	return nil
 }
 
 func (s *service) ListProvisioningAuditRecords(
@@ -442,6 +622,14 @@ func (s *service) CreateAccessPolicy(
 		return nil, err
 	}
 	s.invalidateAccessPolicyCache(ctx, tenantInfo)
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceAccessPolicy,
+		resourceID: created.ID,
+		operation:  permission.OpCreate,
+		after:      created,
+		comment:    "Access policy created",
+	})
 	return created, nil
 }
 
@@ -463,6 +651,14 @@ func (s *service) UpdateAccessPolicy(
 		return nil, err
 	}
 	s.invalidateAccessPolicyCache(ctx, tenantInfo)
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceAccessPolicy,
+		resourceID: id,
+		operation:  permission.OpUpdate,
+		after:      updated,
+		comment:    "Access policy updated",
+	})
 	return updated, nil
 }
 
@@ -482,6 +678,13 @@ func (s *service) DeleteAccessPolicy(
 		return err
 	}
 	s.invalidateAccessPolicyCache(ctx, tenantInfo)
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceAccessPolicy,
+		resourceID: id,
+		operation:  permission.OpDelete,
+		comment:    "Access policy deleted",
+	})
 	return nil
 }
 

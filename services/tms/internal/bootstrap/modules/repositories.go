@@ -209,6 +209,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/sidebarpreferencerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoconfigrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoidentitylinkrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/storedmileagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tableconfigurationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcaallowlistrepository"
@@ -244,7 +245,9 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	tenantprovisioningrepository.New,
 	organizationrepository.New,
 	iamrepository.New,
+	iamrepository.NewAuthEventRepository,
 	ssoconfigrepository.New,
+	ssoidentitylinkrepository.New,
 	userrepository.New,
 	formulatemplaterepository.New,
 	formulatemplatetestcaserepository.New,

@@ -2,6 +2,7 @@ package fiscalperiodservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -10,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -34,8 +34,8 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*fiscalperiod.FiscalPeriod]().
 			WithModelName("FiscalPeriod").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() })).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() })).
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
 			WithReferenceCheck(
 				"fiscalYearId",
 				"fiscal_years",
@@ -134,6 +134,11 @@ func (v *Validator) ValidateClose(
 	return multiErr
 }
 
+var (
+	errManualJournalBlockers = errors.New("read manual journal close blockers")
+	errJournalSourceBlockers = errors.New("read journal source close blockers")
+)
+
 func (v *Validator) validateAccountingCloseBlockers(
 	ctx context.Context,
 	entity *fiscalperiod.FiscalPeriod,
@@ -143,8 +148,9 @@ func (v *Validator) validateAccountingCloseBlockers(
 		return
 	}
 
-	var pendingManualCount int
-	if err := v.db.DBForContext(ctx).NewRaw(`
+	var pendingManualCount, pendingSourceCount int
+	err := v.db.RunScoped(ctx, true, func(ctx context.Context) error {
+		if err := v.db.DBForContext(ctx).NewRaw(`
 		SELECT COUNT(*)
 		FROM manual_journal_requests
 		WHERE organization_id = ?
@@ -152,24 +158,10 @@ func (v *Validator) validateAccountingCloseBlockers(
 		  AND requested_fiscal_period_id = ?
 		  AND status IN ('PendingApproval', 'Approved')
 	`, entity.OrganizationID, entity.BusinessUnitID, entity.ID).Scan(ctx, &pendingManualCount); err != nil {
-		multiErr.Add(
-			"accounting",
-			errortypes.ErrSystemError,
-			"Failed to validate manual journal close blockers",
-		)
-		return
-	}
-	if pendingManualCount > 0 {
-		multiErr.Add(
-			"accounting",
-			errortypes.ErrInvalidOperation,
-			"Cannot close fiscal period while {0} manual journal requests are pending posting or approval",
-			pendingManualCount,
-		)
-	}
+			return errManualJournalBlockers
+		}
 
-	var pendingSourceCount int
-	if err := v.db.DBForContext(ctx).NewRaw(`
+		if err := v.db.DBForContext(ctx).NewRaw(`
 		SELECT COUNT(*)
 		FROM journal_sources js
 		JOIN journal_batches jb
@@ -181,12 +173,35 @@ func (v *Validator) validateAccountingCloseBlockers(
 		  AND jb.fiscal_period_id = ?
 		  AND js.status <> 'Posted'
 	`, entity.OrganizationID, entity.BusinessUnitID, entity.ID).Scan(ctx, &pendingSourceCount); err != nil {
+			return errJournalSourceBlockers
+		}
+
+		return nil
+	})
+	switch {
+	case errors.Is(err, errJournalSourceBlockers):
 		multiErr.Add(
 			"accounting",
 			errortypes.ErrSystemError,
 			"Failed to validate journal source close blockers",
 		)
 		return
+	case err != nil:
+		multiErr.Add(
+			"accounting",
+			errortypes.ErrSystemError,
+			"Failed to validate manual journal close blockers",
+		)
+		return
+	}
+
+	if pendingManualCount > 0 {
+		multiErr.Add(
+			"accounting",
+			errortypes.ErrInvalidOperation,
+			"Cannot close fiscal period while {0} manual journal requests are pending posting or approval",
+			pendingManualCount,
+		)
 	}
 	if pendingSourceCount > 0 {
 		multiErr.Add(

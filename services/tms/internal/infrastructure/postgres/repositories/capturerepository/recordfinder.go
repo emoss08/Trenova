@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -102,46 +103,50 @@ func (f *recordFinder) Exists(
 	resourceType string,
 	id pulid.ID,
 ) (bool, error) {
-	kind, err := lookupKind(resourceType)
-	if err != nil {
-		return false, err
-	}
+	return dbtx.Read(ctx, f.db, func(ctx context.Context) (bool, error) {
+		kind, err := lookupKind(resourceType)
+		if err != nil {
+			return false, err
+		}
 
-	return f.db.DBForContext(ctx).
-		NewSelect().
-		Model(kind.model()).
-		Apply(kind.tenant(tenantInfo)).
-		Where(kind.id.Eq(), id).
-		Exists(ctx)
+		return f.db.DBForContext(ctx).
+			NewSelect().
+			Model(kind.model()).
+			Apply(kind.tenant(tenantInfo)).
+			Where(kind.id.Eq(), id).
+			Exists(ctx)
+	})
 }
 
 func (f *recordFinder) Labels(
 	ctx context.Context,
 	req *repositories.ListCaptureRecordLabelsRequest,
 ) ([]*repositories.CaptureRecordLabel, error) {
-	kind, err := lookupKind(req.ResourceType)
-	if err != nil {
-		return nil, err
-	}
-	if len(req.IDs) == 0 {
-		return []*repositories.CaptureRecordLabel{}, nil
-	}
+	return dbtx.Read(ctx, f.db, func(ctx context.Context) ([]*repositories.CaptureRecordLabel, error) {
+		kind, err := lookupKind(req.ResourceType)
+		if err != nil {
+			return nil, err
+		}
+		if len(req.IDs) == 0 {
+			return []*repositories.CaptureRecordLabel{}, nil
+		}
 
-	labels := make([]*repositories.CaptureRecordLabel, 0, len(req.IDs))
-	if err = f.db.DBForContext(ctx).
-		NewSelect().
-		Model(kind.model()).
-		ColumnExpr(kind.id.As("id")).
-		ColumnExpr(kind.title+" AS title").
-		ColumnExpr(kind.subtitle+" AS subtitle").
-		Apply(kind.tenant(req.TenantInfo)).
-		Where(kind.id.In(), bun.List(req.IDs)).
-		Scan(ctx, &labels); err != nil {
-		return nil, err
-	}
-	for _, label := range labels {
-		label.ResourceType = req.ResourceType
-	}
+		labels := make([]*repositories.CaptureRecordLabel, 0, len(req.IDs))
+		if err = f.db.DBForContext(ctx).
+			NewSelect().
+			Model(kind.model()).
+			ColumnExpr(kind.id.As("id")).
+			ColumnExpr(kind.title+" AS title").
+			ColumnExpr(kind.subtitle+" AS subtitle").
+			Apply(kind.tenant(req.TenantInfo)).
+			Where(kind.id.In(), bun.List(req.IDs)).
+			Scan(ctx, &labels); err != nil {
+			return nil, err
+		}
+		for _, label := range labels {
+			label.ResourceType = req.ResourceType
+		}
 
-	return labels, nil
+		return labels, nil
+	})
 }

@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -130,7 +132,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 func (h *Handler) get(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	orgID, err := pulid.MustParse(c.Param("id"))
+	orgID, err := currentOrganizationParam(c, authCtx)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -169,7 +171,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) update(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	orgID, err := pulid.MustParse(c.Param("id"))
+	orgID, err := currentOrganizationParam(c, authCtx)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -189,11 +191,10 @@ func (h *Handler) update(c *gin.Context) {
 
 	entity := new(tenant.Organization)
 	entity.ID = orgID
-	entity.BusinessUnitID = authCtx.BusinessUnitID
 	entity.BrokerageEnabled = current.BrokerageEnabled
 	entity.AssetOperationsEnabled = current.AssetOperationsEnabled
 
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -224,7 +225,7 @@ func (h *Handler) update(c *gin.Context) {
 func (h *Handler) uploadLogo(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	orgID, err := pulid.MustParse(c.Param("id"))
+	orgID, err := currentOrganizationParam(c, authCtx)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -268,7 +269,7 @@ func (h *Handler) uploadLogo(c *gin.Context) {
 func (h *Handler) getLogoURL(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	orgID, err := pulid.MustParse(c.Param("id"))
+	orgID, err := currentOrganizationParam(c, authCtx)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -301,7 +302,7 @@ func (h *Handler) getLogoURL(c *gin.Context) {
 func (h *Handler) deleteLogo(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	orgID, err := pulid.MustParse(c.Param("id"))
+	orgID, err := currentOrganizationParam(c, authCtx)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -323,7 +324,9 @@ func (h *Handler) deleteLogo(c *gin.Context) {
 }
 
 func (h *Handler) getMicrosoftSSOConfig(c *gin.Context) {
-	orgID, err := pulid.MustParse(c.Param("id"))
+	authCtx := authctx.GetAuthContext(c)
+
+	orgID, err := currentOrganizationParam(c, authCtx)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -341,14 +344,14 @@ func (h *Handler) getMicrosoftSSOConfig(c *gin.Context) {
 func (h *Handler) upsertMicrosoftSSOConfig(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	orgID, err := pulid.MustParse(c.Param("id"))
+	orgID, err := currentOrganizationParam(c, authCtx)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
 	req := new(services.MicrosoftSSOConfig)
-	if err = c.ShouldBindJSON(req); err != nil {
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -373,7 +376,9 @@ func (h *Handler) upsertMicrosoftSSOConfig(c *gin.Context) {
 }
 
 func (h *Handler) getOktaSSOConfig(c *gin.Context) {
-	orgID, err := pulid.MustParse(c.Param("id"))
+	authCtx := authctx.GetAuthContext(c)
+
+	orgID, err := currentOrganizationParam(c, authCtx)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -391,14 +396,14 @@ func (h *Handler) getOktaSSOConfig(c *gin.Context) {
 func (h *Handler) upsertOktaSSOConfig(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	orgID, err := pulid.MustParse(c.Param("id"))
+	orgID, err := currentOrganizationParam(c, authCtx)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
 	req := new(services.OktaSSOConfig)
-	if err = c.ShouldBindJSON(req); err != nil {
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -420,4 +425,22 @@ func (h *Handler) upsertOktaSSOConfig(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func currentOrganizationParam(c *gin.Context, authCtx *authctx.AuthContext) (pulid.ID, error) {
+	orgID, err := pulid.MustParse(c.Param("id"))
+	if err != nil {
+		return pulid.Nil, err
+	}
+
+	if orgID != authCtx.OrganizationID {
+		tenantboundary.Report(c, tenantboundary.Violation{
+			Source:         tenantboundary.SourcePath,
+			Field:          "id",
+			OrganizationID: orgID,
+		})
+		return pulid.Nil, errortypes.NewNotFoundError("Organization not found")
+	}
+
+	return orgID, nil
 }

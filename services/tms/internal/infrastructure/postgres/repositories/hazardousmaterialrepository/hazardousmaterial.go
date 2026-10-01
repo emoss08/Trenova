@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -60,54 +61,58 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListHazardousMaterialsRequest,
 ) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*hazardousmaterial.HazardousMaterial, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count hazardous materials", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*hazardousmaterial.HazardousMaterial, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count hazardous materials", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*hazardousmaterial.HazardousMaterial]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*hazardousmaterial.HazardousMaterial]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetHazardousMaterialByIDRequest,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.ID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*hazardousmaterial.HazardousMaterial, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.ID.String()),
+		)
 
-	entity := new(hazardousmaterial.HazardousMaterial)
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("hm.id = ?", req.ID).
-				Where("hm.organization_id = ?", req.TenantInfo.OrgID).
-				Where("hm.business_unit_id = ?", req.TenantInfo.BuID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get hazardous material", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "HazardousMaterial")
-	}
+		entity := new(hazardousmaterial.HazardousMaterial)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("hm.id = ?", req.ID).
+					Where("hm.organization_id = ?", req.TenantInfo.OrgID).
+					Where("hm.business_unit_id = ?", req.TenantInfo.BuID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get hazardous material", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "HazardousMaterial")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -150,208 +155,220 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListHazardousMaterialConnectionRequest,
 ) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*hazardousmaterial.HazardousMaterial], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*hazardousmaterial.HazardousMaterial)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*hazardousmaterial.HazardousMaterial)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count hazardous materials", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*hazardousmaterial.HazardousMaterial]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*hazardousmaterial.HazardousMaterial) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyHazardousMaterialColumns(sq, req.HazardousMaterialColumns)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count hazardous materials", zap.Error(err))
+			log.Error("failed to scan hazardous materials", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*hazardousmaterial.HazardousMaterial]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*hazardousmaterial.HazardousMaterial) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyHazardousMaterialColumns(sq, req.HazardousMaterialColumns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan hazardous materials", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *hazardousmaterial.HazardousMaterial,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	log := r.l.With(
-		zap.String("operation", "Create"),
-		zap.String("name", entity.Name),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*hazardousmaterial.HazardousMaterial, error) {
+		log := r.l.With(
+			zap.String("operation", "Create"),
+			zap.String("name", entity.Name),
+		)
 
-	if entity.Code == "" {
-		generatedCode, genErr := r.generateCode(ctx, entity)
-		if genErr != nil {
-			log.Error("failed to generate code", zap.Error(genErr))
-			return nil, fmt.Errorf("failed to generate code: %w", genErr)
+		if entity.Code == "" {
+			generatedCode, genErr := r.generateCode(ctx, entity)
+			if genErr != nil {
+				log.Error("failed to generate code", zap.Error(genErr))
+				return nil, fmt.Errorf("failed to generate code: %w", genErr)
+			}
+
+			entity.Code = generatedCode
 		}
 
-		entity.Code = generatedCode
-	}
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			log.Error("failed to create hazardous material", zap.Error(err))
+			return nil, err
+		}
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to create hazardous material", zap.Error(err))
-		return nil, err
-	}
-
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *hazardousmaterial.HazardousMaterial,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*hazardousmaterial.HazardousMaterial, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
+		)
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DB().
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", ov).
-		OmitZero().
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update hazardous material", zap.Error(err))
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			OmitZero().
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update hazardous material", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(
-		results,
-		"HazardousMaterial",
-		entity.ID.String(),
-	); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"HazardousMaterial",
+			entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateHazardousMaterialStatusRequest,
 ) ([]*hazardousmaterial.HazardousMaterial, error) {
-	log := r.l.With(
-		zap.String("operation", "BulkUpdateStatus"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*hazardousmaterial.HazardousMaterial, error) {
+		log := r.l.With(
+			zap.String("operation", "BulkUpdateStatus"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*hazardousmaterial.HazardousMaterial, 0, len(req.HazardousMaterialIDs))
-	results, err := r.db.DB().
-		NewUpdate().
-		Model(&entities).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("hm.organization_id = ?", req.TenantInfo.OrgID).
-				Where("hm.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("hm.id IN (?)", bun.List(req.HazardousMaterialIDs))
-		}).
-		Set("status = ?", req.Status).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to bulk update hazardous material status", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*hazardousmaterial.HazardousMaterial, 0, len(req.HazardousMaterialIDs))
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(&entities).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.Where("hm.organization_id = ?", req.TenantInfo.OrgID).
+					Where("hm.business_unit_id = ?", req.TenantInfo.BuID).
+					Where("hm.id IN (?)", bun.List(req.HazardousMaterialIDs))
+			}).
+			Set("status = ?", req.Status).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to bulk update hazardous material status", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckBulkRowsAffected(
-		results,
-		"HazardousMaterial",
-		req.HazardousMaterialIDs,
-	); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckBulkRowsAffected(
+			results,
+			"HazardousMaterial",
+			req.HazardousMaterialIDs,
+		); err != nil {
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
 	req repositories.GetHazardousMaterialsByIDsRequest,
 ) ([]*hazardousmaterial.HazardousMaterial, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByIDs"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*hazardousmaterial.HazardousMaterial, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByIDs"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*hazardousmaterial.HazardousMaterial, 0, len(req.HazardousMaterialIDs))
-	err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("hm.organization_id = ?", req.TenantInfo.OrgID).
-				Where("hm.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("hm.id IN (?)", bun.List(req.HazardousMaterialIDs))
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get hazardous materials", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "HazardousMaterial")
-	}
+		entities := make([]*hazardousmaterial.HazardousMaterial, 0, len(req.HazardousMaterialIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("hm.organization_id = ?", req.TenantInfo.OrgID).
+					Where("hm.business_unit_id = ?", req.TenantInfo.BuID).
+					Where("hm.id IN (?)", bun.List(req.HazardousMaterialIDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get hazardous materials", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "HazardousMaterial")
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.HazardousMaterialSelectOptionsRequest,
 ) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
-	return dbhelper.SelectOptions[*hazardousmaterial.HazardousMaterial](
-		ctx,
-		r.db.DB(),
-		req.SelectQueryRequest,
-		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				"id",
-				"name",
-				"class",
-				"packing_group",
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
+		return dbhelper.SelectOptions[*hazardousmaterial.HazardousMaterial](
+			ctx,
+			r.db.DBForContext(ctx),
+			req.SelectQueryRequest,
+			&dbhelper.SelectOptionsConfig{
+				Columns: []string{
+					"id",
+					"name",
+					"class",
+					"packing_group",
+				},
+				OrgColumn: "hm.organization_id",
+				BuColumn:  "hm.business_unit_id",
+				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Where("hm.status = ?", domaintypes.StatusActive)
+				},
+				EntityName: "HazardousMaterial",
+				SearchColumns: []string{
+					"hm.name",
+					"hm.description",
+				},
 			},
-			OrgColumn: "hm.organization_id",
-			BuColumn:  "hm.business_unit_id",
-			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("hm.status = ?", domaintypes.StatusActive)
-			},
-			EntityName: "HazardousMaterial",
-			SearchColumns: []string{
-				"hm.name",
-				"hm.description",
-			},
-		},
-	)
+		)
+	})
 }
 
 func abbreviateName(name string, maxLength int) string {
@@ -402,16 +419,18 @@ func (r *repository) codeExists(
 	code string,
 	orgID, buID pulid.ID,
 ) (bool, error) {
-	exists, err := r.db.DB().NewSelect().
-		Model((*hazardousmaterial.HazardousMaterial)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("code = ?", code).
-				Where("organization_id = ?", orgID).
-				Where("business_unit_id = ?", buID)
-		}).
-		Exists(ctx)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		exists, err := r.db.DBForContext(ctx).NewSelect().
+			Model((*hazardousmaterial.HazardousMaterial)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("code = ?", code).
+					Where("organization_id = ?", orgID).
+					Where("business_unit_id = ?", buID)
+			}).
+			Exists(ctx)
 
-	return exists, err
+		return exists, err
+	})
 }
 
 func (r *repository) generateCode(

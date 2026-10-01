@@ -26,7 +26,7 @@ func (h *Handler) registerDocumentRoutes(documents *gin.RouterGroup) {
 func (h *Handler) previewDocument(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(ediservice.PreviewEDIDocumentRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -46,7 +46,7 @@ func (h *Handler) previewDocument(c *gin.Context) {
 func (h *Handler) generateDocument(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(ediservice.GenerateEDIDocumentRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

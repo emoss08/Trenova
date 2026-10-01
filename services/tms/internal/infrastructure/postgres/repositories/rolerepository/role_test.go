@@ -198,12 +198,18 @@ func (r *testRepository) CreateAssignment(
 	return err
 }
 
-func (r *testRepository) DeleteAssignment(ctx context.Context, id pulid.ID) error {
+func (r *testRepository) DeleteAssignment(
+	ctx context.Context,
+	req repositories.DeleteRoleAssignmentRequest,
+) (*permission.UserRoleAssignment, error) {
+	deleted := new(permission.UserRoleAssignment)
 	_, err := r.db.NewDelete().
-		Model((*permission.UserRoleAssignment)(nil)).
-		Where("id = ?", id).
+		Model(deleted).
+		Where("id = ?", req.AssignmentID).
+		Where("organization_id = ?", req.OrganizationID).
+		Returning("*").
 		Exec(ctx)
-	return err
+	return deleted, err
 }
 
 func (r *testRepository) CreateResourcePermission(
@@ -228,10 +234,14 @@ func (r *testRepository) UpdateResourcePermission(
 	return err
 }
 
-func (r *testRepository) DeleteResourcePermission(ctx context.Context, id pulid.ID) error {
+func (r *testRepository) DeleteResourcePermission(
+	ctx context.Context,
+	req repositories.DeleteResourcePermissionRequest,
+) error {
 	_, err := r.db.NewDelete().
 		Model((*permission.ResourcePermission)(nil)).
-		Where("id = ?", id).
+		Where("id = ?", req.PermissionID).
+		Where("role_id = ?", req.RoleID).
 		Exec(ctx)
 	return err
 }
@@ -572,7 +582,10 @@ func TestRoleRepository_RoleAssignments_Integration(t *testing.T) {
 	})
 
 	t.Run("delete assignment", func(t *testing.T) {
-		err := repo.DeleteAssignment(tc.Ctx, assignment.ID)
+		_, err := repo.DeleteAssignment(tc.Ctx, repositories.DeleteRoleAssignmentRequest{
+			AssignmentID:   assignment.ID,
+			OrganizationID: orgID,
+		})
 		require.NoError(t, err)
 
 		assignments, err := repo.GetUserRoleAssignments(tc.Ctx, userID, orgID)
@@ -844,7 +857,10 @@ func TestRoleRepository_ResourcePermissions_Integration(t *testing.T) {
 	})
 
 	t.Run("delete resource permission", func(t *testing.T) {
-		err := repo.DeleteResourcePermission(tc.Ctx, rp.ID)
+		err := repo.DeleteResourcePermission(tc.Ctx, repositories.DeleteResourcePermissionRequest{
+			PermissionID: rp.ID,
+			RoleID:       role.ID,
+		})
 		require.NoError(t, err)
 
 		permissions, err := repo.GetResourcePermissionsByRoleID(tc.Ctx, role.ID)

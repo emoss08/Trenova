@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -51,93 +52,101 @@ func (r *driftFindingRepository) Create(
 	ctx context.Context,
 	entity *accountingsync.AccountingDriftFinding,
 ) (*accountingsync.AccountingDriftFinding, error) {
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		return nil, fmt.Errorf("create accounting drift finding: %w", err)
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingDriftFinding, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("create accounting drift finding: %w", err)
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *driftFindingRepository) Update(
 	ctx context.Context,
 	entity *accountingsync.AccountingDriftFinding,
 ) (*accountingsync.AccountingDriftFinding, error) {
-	cols := buncolgen.AccountingDriftFindingColumns
-	ov := entity.Version
-	entity.Version++
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingDriftFinding, error) {
+		cols := buncolgen.AccountingDriftFindingColumns
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		ExcludeColumn(cols.CreatedAt.Bare()).
-		WherePK().
-		Where(cols.Version.Eq(), ov).
-		Exec(ctx)
-	if err != nil {
-		entity.Version = ov
-		return nil, err
-	}
-	if err = dberror.CheckRowsAffected(
-		results,
-		driftFindingEntity,
-		entity.ID.String(),
-	); err != nil {
-		entity.Version = ov
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			ExcludeColumn(cols.CreatedAt.Bare()).
+			WherePK().
+			Where(cols.Version.Eq(), ov).
+			Exec(ctx)
+		if err != nil {
+			entity.Version = ov
+			return nil, err
+		}
+		if err = dberror.CheckRowsAffected(
+			results,
+			driftFindingEntity,
+			entity.ID.String(),
+		); err != nil {
+			entity.Version = ov
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *driftFindingRepository) GetByID(
 	ctx context.Context,
 	req repositories.GetAccountingDriftFindingRequest,
 ) (*accountingsync.AccountingDriftFinding, error) {
-	entity := new(accountingsync.AccountingDriftFinding)
-	cols := buncolgen.AccountingDriftFindingColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingDriftFinding, error) {
+		entity := new(accountingsync.AccountingDriftFinding)
+		cols := buncolgen.AccountingDriftFindingColumns
 
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
-		Where(cols.ID.Eq(), req.ID)
-	if req.ForUpdate {
-		query = query.For("UPDATE")
-	}
-	if err := query.Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, driftFindingEntity)
-	}
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
+			Where(cols.ID.Eq(), req.ID)
+		if req.ForUpdate {
+			query = query.For("UPDATE")
+		}
+		if err := query.Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, driftFindingEntity)
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *driftFindingRepository) ListOpen(
 	ctx context.Context,
 	req *repositories.ListOpenAccountingDriftFindingsRequest,
 ) ([]*accountingsync.AccountingDriftFinding, error) {
-	entities := make([]*accountingsync.AccountingDriftFinding, 0, len(req.ObjectIDs))
-	if len(req.ObjectIDs) == 0 {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingDriftFinding, error) {
+		entities := make([]*accountingsync.AccountingDriftFinding, 0, len(req.ObjectIDs))
+		if len(req.ObjectIDs) == 0 {
+			return entities, nil
+		}
+
+		cols := buncolgen.AccountingDriftFindingColumns
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
+			Where(cols.ConnectionID.Eq(), req.ConnectionID).
+			Where(cols.Status.Eq(), accountingsync.DriftStatusOpen).
+			Where(cols.ObjectID.In(), bun.List(req.ObjectIDs)).
+			For("UPDATE").
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
 		return entities, nil
-	}
-
-	cols := buncolgen.AccountingDriftFindingColumns
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
-		Where(cols.ConnectionID.Eq(), req.ConnectionID).
-		Where(cols.Status.Eq(), accountingsync.DriftStatusOpen).
-		Where(cols.ObjectID.In(), bun.List(req.ObjectIDs)).
-		For("UPDATE").
-		Scan(ctx); err != nil {
-		return nil, err
-	}
-
-	return entities, nil
+	})
 }
 
 func (r *driftFindingRepository) applyListFilters(
@@ -176,148 +185,154 @@ func (r *driftFindingRepository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListAccountingDriftFindingsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
-	log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error) {
+		log := r.l.With(zap.String("operation", "ListConnection"))
 
-	if req.Filter != nil && len(req.Filter.Sort) == 0 {
-		req.Filter.Sort = []domaintypes.SortField{
-			{Field: driftFindingDetectedSort, Direction: dbtype.SortDirectionDesc},
+		if req.Filter != nil && len(req.Filter.Sort) == 0 {
+			req.Filter.Sort = []domaintypes.SortField{
+				{Field: driftFindingDetectedSort, Direction: dbtype.SortDirectionDesc},
+			}
 		}
-	}
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*accountingsync.AccountingDriftFinding)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = querybuilder.ApplyFiltersWithoutSort(
-					sq,
-					buncolgen.AccountingDriftFindingTable.Alias,
-					req.Filter,
-					(*accountingsync.AccountingDriftFinding)(nil),
-				)
-				return r.applyListFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*accountingsync.AccountingDriftFinding)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = querybuilder.ApplyFiltersWithoutSort(
+						sq,
+						buncolgen.AccountingDriftFindingTable.Alias,
+						req.Filter,
+						(*accountingsync.AccountingDriftFinding)(nil),
+					)
+					return r.applyListFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count accounting drift findings", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*accountingsync.AccountingDriftFinding]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(items *[]*accountingsync.AccountingDriftFinding) *bun.SelectQuery {
+					return dba.NewSelect().
+						Model(items).
+						ColumnExpr(buncolgen.AccountingDriftFindingTable.All())
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFilters(
+						sq,
+						buncolgen.AccountingDriftFindingTable.Alias,
+						req.Filter,
+						req.Cursor,
+						(*accountingsync.AccountingDriftFinding)(nil),
+					)
+					if applyErr != nil {
+						return sq, applyErr
+					}
+					return r.applyListFilters(sq, req), nil
+				},
+			},
+		)
 		if err != nil {
-			log.Error("failed to count accounting drift findings", zap.Error(err))
+			log.Error("failed to list accounting drift findings", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*accountingsync.AccountingDriftFinding]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(items *[]*accountingsync.AccountingDriftFinding) *bun.SelectQuery {
-				return dba.NewSelect().
-					Model(items).
-					ColumnExpr(buncolgen.AccountingDriftFindingTable.All())
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					buncolgen.AccountingDriftFindingTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*accountingsync.AccountingDriftFinding)(nil),
-				)
-				if applyErr != nil {
-					return sq, applyErr
-				}
-				return r.applyListFilters(sq, req), nil
-			},
-		},
-	)
-	if err != nil {
-		log.Error("failed to list accounting drift findings", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *driftFindingRepository) Summarize(
 	ctx context.Context,
 	req *repositories.SummarizeAccountingDriftRequest,
 ) (*repositories.AccountingDriftSummary, error) {
-	cols := buncolgen.AccountingDriftFindingColumns
-	summary := new(repositories.AccountingDriftSummary)
-	open := accountingsync.DriftStatusOpen
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.AccountingDriftSummary, error) {
+		cols := buncolgen.AccountingDriftFindingColumns
+		summary := new(repositories.AccountingDriftSummary)
+		open := accountingsync.DriftStatusOpen
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*accountingsync.AccountingDriftFinding)(nil)).
-		ColumnExpr(buncolgen.CountFilter("open", cols.Status.Eq()), open).
-		ColumnExpr(
-			buncolgen.CountFilter("amount_open", cols.Status.Eq(), cols.Kind.Eq()),
-			open,
-			accountingsync.DriftAmountMismatch,
-		).
-		ColumnExpr(
-			buncolgen.CountFilter("gone_open", cols.Status.Eq(), cols.Kind.In()),
-			open,
-			bun.List([]accountingsync.DriftKind{
-				accountingsync.DriftDeletedInProvider,
-				accountingsync.DriftVoidedInProvider,
-			}),
-		).
-		ColumnExpr(
-			buncolgen.CountFilter("status_open", cols.Status.Eq(), cols.Kind.Eq()),
-			open,
-			accountingsync.DriftStatusMismatch,
-		).
-		ColumnExpr(
-			buncolgen.CountFilter("balance_open", cols.Status.Eq(), cols.Kind.Eq()),
-			open,
-			accountingsync.DriftCustomerBalanceMismatch,
-		).
-		ColumnExpr(
-			buncolgen.CountFilter("resolved_since", cols.Status.Eq(), cols.ResolvedAt.Gte()),
-			accountingsync.DriftStatusResolved,
-			req.ResolvedSince,
-		).
-		Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
-		Where(cols.ConnectionID.Eq(), req.ConnectionID).
-		Scan(ctx, summary); err != nil {
-		return nil, err
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*accountingsync.AccountingDriftFinding)(nil)).
+			ColumnExpr(buncolgen.CountFilter("open", cols.Status.Eq()), open).
+			ColumnExpr(
+				buncolgen.CountFilter("amount_open", cols.Status.Eq(), cols.Kind.Eq()),
+				open,
+				accountingsync.DriftAmountMismatch,
+			).
+			ColumnExpr(
+				buncolgen.CountFilter("gone_open", cols.Status.Eq(), cols.Kind.In()),
+				open,
+				bun.List([]accountingsync.DriftKind{
+					accountingsync.DriftDeletedInProvider,
+					accountingsync.DriftVoidedInProvider,
+				}),
+			).
+			ColumnExpr(
+				buncolgen.CountFilter("status_open", cols.Status.Eq(), cols.Kind.Eq()),
+				open,
+				accountingsync.DriftStatusMismatch,
+			).
+			ColumnExpr(
+				buncolgen.CountFilter("balance_open", cols.Status.Eq(), cols.Kind.Eq()),
+				open,
+				accountingsync.DriftCustomerBalanceMismatch,
+			).
+			ColumnExpr(
+				buncolgen.CountFilter("resolved_since", cols.Status.Eq(), cols.ResolvedAt.Gte()),
+				accountingsync.DriftStatusResolved,
+				req.ResolvedSince,
+			).
+			Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
+			Where(cols.ConnectionID.Eq(), req.ConnectionID).
+			Scan(ctx, summary); err != nil {
+			return nil, err
+		}
 
-	return summary, nil
+		return summary, nil
+	})
 }
 
 func (r *driftFindingRepository) ListAttention(
 	ctx context.Context,
 	req *repositories.ListAccountingDriftAttentionRequest,
 ) ([]repositories.AccountingDriftAttentionGroup, error) {
-	cols := buncolgen.AccountingDriftFindingColumns
-	groups := make(
-		[]repositories.AccountingDriftAttentionGroup,
-		0,
-		len(accountingsync.AllDriftKinds()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AccountingDriftAttentionGroup, error) {
+		cols := buncolgen.AccountingDriftFindingColumns
+		groups := make(
+			[]repositories.AccountingDriftAttentionGroup,
+			0,
+			len(accountingsync.AllDriftKinds()),
+		)
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*accountingsync.AccountingDriftFinding)(nil)).
-		ColumnExpr(cols.Kind.As("kind")).
-		ColumnExpr(buncolgen.Count("count")).
-		ColumnExpr(buncolgen.Min(cols.DetectedAt, "oldest_detected_at")).
-		ColumnExpr(buncolgen.Min(cols.ID, "sample_id")).
-		Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
-		Where(cols.ConnectionID.Eq(), req.ConnectionID).
-		Where(cols.Status.Eq(), accountingsync.DriftStatusOpen).
-		Where(cols.DetectedAt.Lte(), req.DetectedBefore).
-		GroupExpr(cols.Kind.Qualified()).
-		OrderExpr("count DESC").
-		OrderExpr("oldest_detected_at ASC").
-		Scan(ctx, &groups); err != nil {
-		return nil, err
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*accountingsync.AccountingDriftFinding)(nil)).
+			ColumnExpr(cols.Kind.As("kind")).
+			ColumnExpr(buncolgen.Count("count")).
+			ColumnExpr(buncolgen.Min(cols.DetectedAt, "oldest_detected_at")).
+			ColumnExpr(buncolgen.Min(cols.ID, "sample_id")).
+			Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
+			Where(cols.ConnectionID.Eq(), req.ConnectionID).
+			Where(cols.Status.Eq(), accountingsync.DriftStatusOpen).
+			Where(cols.DetectedAt.Lte(), req.DetectedBefore).
+			GroupExpr(cols.Kind.Qualified()).
+			OrderExpr("count DESC").
+			OrderExpr("oldest_detected_at ASC").
+			Scan(ctx, &groups); err != nil {
+			return nil, err
+		}
 
-	return groups, nil
+		return groups, nil
+	})
 }

@@ -546,3 +546,18 @@ func TestExtractCodeName(t *testing.T) {
 	)
 	assert.Equal(t, "", ExtractCodeName(errors.New("generic error")))
 }
+
+func TestIsRowLevelSecurityViolation(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, IsRowLevelSecurityViolation(fmt.Errorf("insert: %w", &pgconn.PgError{
+		Code:    pgerrcode.InsufficientPrivilege,
+		Message: `new row violates row-level security policy for table "shipments"`,
+	})))
+	assert.False(t, IsRowLevelSecurityViolation(&pgconn.PgError{
+		Code:    pgerrcode.InsufficientPrivilege,
+		Message: "permission denied for table audit_entries",
+	}))
+	assert.False(t, IsRowLevelSecurityViolation(&pgconn.PgError{Code: pgerrcode.UniqueViolation}))
+	assert.False(t, IsRowLevelSecurityViolation(errors.New("plain")))
+}

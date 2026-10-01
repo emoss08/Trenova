@@ -3,7 +3,7 @@ package pagination
 import "github.com/emoss08/trenova/pkg/domaintypes"
 
 type QueryOptions struct {
-	TenantInfo       TenantInfo
+	TenantInfo       TenantInfo `form:"-"`
 	Pagination       Info
 	Query            string                        `json:"query"            form:"query"`
 	FieldFilters     []domaintypes.FieldFilter     `json:"fieldFilters"`

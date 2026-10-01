@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -394,6 +395,7 @@ func (s *Service) generateExternalTenderResponse(
 		BuID:   transfer.TargetBusinessUnitID,
 		UserID: actorID,
 	}
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	profile, err := s.EnsureOutboundDocumentProfile(
 		ctx,
 		tenantInfo,

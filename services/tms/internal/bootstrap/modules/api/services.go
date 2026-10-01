@@ -49,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/autheventservice"
 	"github.com/emoss08/trenova/internal/core/services/authservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptbatchservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
@@ -176,6 +177,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
+	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	reportingcompiler "github.com/emoss08/trenova/internal/core/services/reporting/compiler"
 	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
@@ -259,6 +261,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	trailerservice.New,
 	workerservice.New,
 	auditservice.New,
+	auditservice.NewSecurityAuditor,
+	autheventservice.New,
 	datatransformer.New,
 	workflowstarter.New,
 	workflowstarter.NewSignalStarter,
@@ -542,6 +546,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	modeprofileservice.NewService,
 	permitservice.NewService,
 	jurisdictionruleservice.NewService,
+	referencedataguard.New,
 	detentionservice.New,
 	accountingconnectionservice.New,
 	func(s *accountingconnectionservice.Service) services.AccountingConnectionService { return s },

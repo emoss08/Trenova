@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/migrator"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/fatih/color"
 	"github.com/uptrace/bun"
@@ -26,6 +27,7 @@ type Manager struct {
 	db       *bun.DB
 	migrator DatabaseMigrator
 	seeder   Seeder
+	cfg      *config.Config
 }
 
 type ManagerParams struct {
@@ -80,6 +82,7 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 		db:       db,
 		migrator: mig,
 		seeder:   engine,
+		cfg:      cfg.Config,
 	}, nil
 }
 
@@ -104,7 +107,7 @@ func createDB(cfg *config.Config) (*bun.DB, error) {
 }
 
 func openSQLDB(cfg *config.Config) (*sql.DB, schema.Dialect, error) {
-	dsn := cfg.GetDSN(cfg.Database.Password)
+	dsn := cfg.GetMigrationDSN()
 
 	if cfg.Database.GetDialect().IsSQLite() {
 		sqldb, err := sql.Open("sqlite", dsn)
@@ -171,7 +174,34 @@ func (m *Manager) Migrate(ctx context.Context, opts common.OperationOptions) err
 		return fmt.Errorf("migration failed: %s", result.Message)
 	}
 
+	if err = m.provisionRLS(ctx, opts); err != nil {
+		return err
+	}
+
 	return m.reconcileSeeds(ctx, opts)
+}
+
+func (m *Manager) provisionRLS(ctx context.Context, opts common.OperationOptions) error {
+	if opts.DryRun || m.cfg == nil || !m.cfg.Database.GetDialect().IsPostgres() {
+		return nil
+	}
+
+	result, err := postgres.ProvisionRLS(ctx, m.db, m.cfg)
+	if err != nil {
+		return fmt.Errorf("provision row-level security after migrating: %w", err)
+	}
+
+	if result.PoliciesAdded > 0 {
+		color.Yellow(
+			"🔐 Applied tenant isolation policies to %d table(s) that a migration left unprotected",
+			result.PoliciesAdded,
+		)
+	}
+	if result.KeyInstalled {
+		color.Green("🔐 Row-level security scope key %q is installed", m.cfg.Database.RLS.ScopeKeyID)
+	}
+
+	return nil
 }
 
 func (m *Manager) reconcileSeeds(ctx context.Context, opts common.OperationOptions) error {

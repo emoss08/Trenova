@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,24 +40,26 @@ func (r *repository) GetCurrent(
 	ctx context.Context,
 	req repositories.GetCurrentEquipmentContinuityRequest,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
-	entity := new(equipmentcontinuity.EquipmentContinuity)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where("ec.organization_id = ?", req.TenantInfo.OrgID).
-		Where("ec.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("ec.equipment_type = ?", req.EquipmentType).
-		Where("ec.equipment_id = ?", req.EquipmentID).
-		Where("ec.is_current = ?", true).
-		Scan(ctx)
-	if err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*equipmentcontinuity.EquipmentContinuity, error) {
+		entity := new(equipmentcontinuity.EquipmentContinuity)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("ec.organization_id = ?", req.TenantInfo.OrgID).
+			Where("ec.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("ec.equipment_type = ?", req.EquipmentType).
+			Where("ec.equipment_id = ?", req.EquipmentID).
+			Where("ec.is_current = ?", true).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+			}
+			return nil, err
 		}
-		return nil, err
-	}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
@@ -104,56 +107,60 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	id pulid.ID,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
-	entity := new(equipmentcontinuity.EquipmentContinuity)
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where("ec.id = ?", id).
-		Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Equipment continuity")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*equipmentcontinuity.EquipmentContinuity, error) {
+		entity := new(equipmentcontinuity.EquipmentContinuity)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("ec.id = ?", id).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Equipment continuity")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Advance(
 	ctx context.Context,
 	req repositories.CreateEquipmentContinuityRequest,
 ) (*equipmentcontinuity.EquipmentContinuity, error) {
-	current, err := r.GetCurrent(ctx, repositories.GetCurrentEquipmentContinuityRequest{
-		TenantInfo:    req.TenantInfo,
-		EquipmentType: req.EquipmentType,
-		EquipmentID:   req.EquipmentID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if current != nil {
-		if err = r.supersede(ctx, current); err != nil {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*equipmentcontinuity.EquipmentContinuity, error) {
+		current, err := r.GetCurrent(ctx, repositories.GetCurrentEquipmentContinuityRequest{
+			TenantInfo:    req.TenantInfo,
+			EquipmentType: req.EquipmentType,
+			EquipmentID:   req.EquipmentID,
+		})
+		if err != nil {
 			return nil, err
 		}
-	}
 
-	entity := &equipmentcontinuity.EquipmentContinuity{
-		OrganizationID:       req.TenantInfo.OrgID,
-		BusinessUnitID:       req.TenantInfo.BuID,
-		EquipmentType:        req.EquipmentType,
-		EquipmentID:          req.EquipmentID,
-		CurrentLocationID:    req.CurrentLocationID,
-		PreviousContinuityID: previousID(current),
-		SourceType:           req.SourceType,
-		SourceShipmentID:     req.SourceShipmentID,
-		SourceShipmentMoveID: req.SourceShipmentMoveID,
-		SourceAssignmentID:   req.SourceAssignmentID,
-		IsCurrent:            true,
-	}
+		if current != nil {
+			if err = r.supersede(ctx, current); err != nil {
+				return nil, err
+			}
+		}
 
-	if _, err = r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-		return nil, fmt.Errorf("create equipment continuity: %w", err)
-	}
+		entity := &equipmentcontinuity.EquipmentContinuity{
+			OrganizationID:       req.TenantInfo.OrgID,
+			BusinessUnitID:       req.TenantInfo.BuID,
+			EquipmentType:        req.EquipmentType,
+			EquipmentID:          req.EquipmentID,
+			CurrentLocationID:    req.CurrentLocationID,
+			PreviousContinuityID: previousID(current),
+			SourceType:           req.SourceType,
+			SourceShipmentID:     req.SourceShipmentID,
+			SourceShipmentMoveID: req.SourceShipmentMoveID,
+			SourceAssignmentID:   req.SourceAssignmentID,
+			IsCurrent:            true,
+		}
 
-	return entity, nil
+		if _, err = r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("create equipment continuity: %w", err)
+		}
+
+		return entity, nil
+	})
 }
 
 func (r *repository) RollbackCurrentByMove(
@@ -180,99 +187,105 @@ func (r *repository) RollbackCurrentByShipment(
 	ctx context.Context,
 	req repositories.RollbackEquipmentContinuityByShipmentRequest,
 ) error {
-	rows := make([]*equipmentcontinuity.EquipmentContinuity, 0)
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&rows).
-		Where("ec.organization_id = ?", req.TenantInfo.OrgID).
-		Where("ec.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("ec.source_shipment_id = ?", req.ShipmentID).
-		Where("ec.is_current = ?", true).
-		Scan(ctx); err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil
-		}
-		return err
-	}
-
-	for _, row := range rows {
-		if err := r.rollbackRow(ctx, row); err != nil {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		rows := make([]*equipmentcontinuity.EquipmentContinuity, 0)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&rows).
+			Where("ec.organization_id = ?", req.TenantInfo.OrgID).
+			Where("ec.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("ec.source_shipment_id = ?", req.ShipmentID).
+			Where("ec.is_current = ?", true).
+			Scan(ctx); err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil
+			}
 			return err
 		}
-	}
 
-	return nil
+		for _, row := range rows {
+			if err := r.rollbackRow(ctx, row); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func (r *repository) rollbackRow(
 	ctx context.Context,
 	current *equipmentcontinuity.EquipmentContinuity,
 ) error {
-	if current == nil {
-		return nil
-	}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if current == nil {
+			return nil
+		}
 
-	if err := r.supersede(ctx, current); err != nil {
-		return err
-	}
+		if err := r.supersede(ctx, current); err != nil {
+			return err
+		}
 
-	if current.PreviousContinuityID.IsNil() {
-		return nil
-	}
+		if current.PreviousContinuityID.IsNil() {
+			return nil
+		}
 
-	previous, err := r.GetByID(ctx, current.PreviousContinuityID)
-	if err != nil {
-		return err
-	}
+		previous, err := r.GetByID(ctx, current.PreviousContinuityID)
+		if err != nil {
+			return err
+		}
 
-	now := timeutils.NowUnix()
-	ov := previous.Version
-	previous.Version++
-	previous.IsCurrent = true
-	previous.SupersededAt = nil
-	previous.UpdatedAt = now
+		now := timeutils.NowUnix()
+		ov := previous.Version
+		previous.Version++
+		previous.IsCurrent = true
+		previous.SupersededAt = nil
+		previous.UpdatedAt = now
 
-	result, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(previous).
-		Column("is_current", "superseded_at", "version", "updated_at").
-		Where("id = ?", previous.ID).
-		Where("version = ?", ov).
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("restore previous equipment continuity: %w", err)
-	}
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(previous).
+			Column("is_current", "superseded_at", "version", "updated_at").
+			Where("id = ?", previous.ID).
+			Where("version = ?", ov).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("restore previous equipment continuity: %w", err)
+		}
 
-	return dberror.CheckRowsAffected(result, "Equipment continuity", previous.ID.String())
+		return dberror.CheckRowsAffected(result, "Equipment continuity", previous.ID.String())
+	})
 }
 
 func (r *repository) supersede(
 	ctx context.Context,
 	entity *equipmentcontinuity.EquipmentContinuity,
 ) error {
-	if entity == nil || !entity.IsCurrent {
-		return nil
-	}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if entity == nil || !entity.IsCurrent {
+			return nil
+		}
 
-	now := timeutils.NowUnix()
-	ov := entity.Version
-	entity.Version++
-	entity.IsCurrent = false
-	entity.SupersededAt = &now
-	entity.UpdatedAt = now
+		now := timeutils.NowUnix()
+		ov := entity.Version
+		entity.Version++
+		entity.IsCurrent = false
+		entity.SupersededAt = &now
+		entity.UpdatedAt = now
 
-	result, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		Column("is_current", "superseded_at", "version", "updated_at").
-		Where("id = ?", entity.ID).
-		Where("version = ?", ov).
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("supersede equipment continuity: %w", err)
-	}
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			Column("is_current", "superseded_at", "version", "updated_at").
+			Where("id = ?", entity.ID).
+			Where("version = ?", ov).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("supersede equipment continuity: %w", err)
+		}
 
-	return dberror.CheckRowsAffected(result, "Equipment continuity", entity.ID.String())
+		return dberror.CheckRowsAffected(result, "Equipment continuity", entity.ID.String())
+	})
 }
 
 func previousID(entity *equipmentcontinuity.EquipmentContinuity) pulid.ID {
@@ -287,31 +300,33 @@ func (r *repository) isEffectiveRow(
 	ctx context.Context,
 	entity *equipmentcontinuity.EquipmentContinuity,
 ) (bool, error) {
-	if entity == nil {
-		return false, nil
-	}
-
-	switch entity.SourceType {
-	case equipmentcontinuity.SourceTypeManualLocate:
-		return true, nil
-	case equipmentcontinuity.SourceTypeAssignment:
-		if entity.SourceShipmentMoveID.IsNil() {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		if entity == nil {
 			return false, nil
 		}
 
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Table("shipment_moves").
-			Where("id = ?", entity.SourceShipmentMoveID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("status = ?", "Completed").
-			Count(ctx)
-		if err != nil {
-			return false, err
+		switch entity.SourceType {
+		case equipmentcontinuity.SourceTypeManualLocate:
+			return true, nil
+		case equipmentcontinuity.SourceTypeAssignment:
+			if entity.SourceShipmentMoveID.IsNil() {
+				return false, nil
+			}
+
+			count, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Table("shipment_moves").
+				Where("id = ?", entity.SourceShipmentMoveID).
+				Where("organization_id = ?", entity.OrganizationID).
+				Where("business_unit_id = ?", entity.BusinessUnitID).
+				Where("status = ?", "Completed").
+				Count(ctx)
+			if err != nil {
+				return false, err
+			}
+			return count > 0, nil
+		default:
+			return false, nil
 		}
-		return count > 0, nil
-	default:
-		return false, nil
-	}
+	})
 }

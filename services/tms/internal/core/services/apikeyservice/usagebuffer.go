@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,6 +35,8 @@ type usageEntry struct {
 }
 
 type usageMetadata struct {
+	orgID             pulid.ID
+	buID              pulid.ID
 	lastUsedAt        int64
 	lastUsedIP        string
 	lastUsedUserAgent string
@@ -156,6 +159,8 @@ func (b *UsageBuffer) RecordUsage(event services.APIKeyUsageEvent) {
 	metadata, ok := b.lastUsed[event.APIKeyID]
 	if !ok || occurredAt.After(metadata.occurredAt) {
 		b.lastUsed[event.APIKeyID] = &usageMetadata{
+			orgID:             event.OrganizationID,
+			buID:              event.BusinessUnitID,
 			lastUsedAt:        occurredAt.Unix(),
 			lastUsedIP:        clampString(event.IPAddress, maxIPAddressLength),
 			lastUsedUserAgent: clampString(event.UserAgent, maxUserAgentLength),
@@ -228,7 +233,10 @@ func (b *UsageBuffer) flush(parent context.Context) error {
 			return firstNonNil(firstErr, err)
 		}
 
-		ctx, cancel := context.WithTimeout(parent, b.writeTimeout)
+		ctx, cancel := context.WithTimeout(
+			usageScope(parent, item.entry.orgID, item.entry.buID),
+			b.writeTimeout,
+		)
 		err := b.repo.IncrementDailyUsage(
 			ctx,
 			item.key.apiKeyID,
@@ -259,7 +267,10 @@ func (b *UsageBuffer) flush(parent context.Context) error {
 			return firstNonNil(firstErr, err)
 		}
 
-		ctx, cancel := context.WithTimeout(parent, b.writeTimeout)
+		ctx, cancel := context.WithTimeout(
+			usageScope(parent, item.metadata.orgID, item.metadata.buID),
+			b.writeTimeout,
+		)
 		err := b.repo.UpdateUsage(ctx, item.apiKeyID, repositories.APIKeyUsageMetadata{
 			LastUsedAt:        item.metadata.lastUsedAt,
 			LastUsedIP:        item.metadata.lastUsedIP,
@@ -281,6 +292,10 @@ func (b *UsageBuffer) flush(parent context.Context) error {
 	}
 
 	return firstErr
+}
+
+func usageScope(ctx context.Context, orgID, buID pulid.ID) context.Context {
+	return dbscope.WithTenant(ctx, dbscope.Tenant{OrganizationID: orgID, BusinessUnitID: buID})
 }
 
 func (b *UsageBuffer) snapshot() ([]countFlushItem, []metadataFlushItem) {

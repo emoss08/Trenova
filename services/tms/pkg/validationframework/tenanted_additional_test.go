@@ -483,14 +483,28 @@ func TestBunUniquenessChecker_NilDB(t *testing.T) {
 	assert.Contains(t, err.Error(), "database connection is not initialized")
 }
 
-func TestBunUniquenessCheckerLazy(t *testing.T) {
+type recordingScopedDB struct {
+	readOnly []bool
+}
+
+func (r *recordingScopedDB) DBForContext(context.Context) bun.IDB { return nil }
+
+func (r *recordingScopedDB) RunScoped(
+	ctx context.Context,
+	readOnly bool,
+	fn func(context.Context) error,
+) error {
+	r.readOnly = append(r.readOnly, readOnly)
+	return fn(ctx)
+}
+
+func TestBunUniquenessCheckerScoped(t *testing.T) {
 	t.Parallel()
 
-	getter := DBGetter(func() bun.IDB { return nil })
-	checker := NewBunUniquenessCheckerLazy(getter)
+	checker := NewBunUniquenessCheckerScoped(&recordingScopedDB{})
 
 	require.NotNil(t, checker)
-	assert.NotNil(t, checker.dbGetter)
+	assert.NotNil(t, checker.source.scoped)
 }
 
 func TestBunReferenceChecker_Validations(t *testing.T) {
@@ -532,14 +546,13 @@ func TestBunReferenceChecker_Validations(t *testing.T) {
 	})
 }
 
-func TestBunReferenceCheckerLazy(t *testing.T) {
+func TestBunReferenceCheckerScoped(t *testing.T) {
 	t.Parallel()
 
-	getter := DBGetter(func() bun.IDB { return nil })
-	checker := NewBunReferenceCheckerLazy(getter)
+	checker := NewBunReferenceCheckerScoped(&recordingScopedDB{})
 
 	require.NotNil(t, checker)
-	assert.NotNil(t, checker.dbGetter)
+	assert.NotNil(t, checker.source.scoped)
 }
 
 func TestTenantedValidator_DateAfter_ValidEndAfterStart(t *testing.T) {
@@ -1059,10 +1072,12 @@ func TestBunUniquenessChecker_EmptyFieldsValidation(t *testing.T) {
 	assert.Contains(t, err.Error(), "at least one field is required")
 }
 
-func TestBunUniquenessCheckerLazy_NilDBFromGetter(t *testing.T) {
+func TestBunUniquenessCheckerScoped_RunsReadOnlyAndRejectsAMissingDB(t *testing.T) {
 	t.Parallel()
 
-	checker := NewBunUniquenessCheckerLazy(func() bun.IDB { return nil })
+	conn := &recordingScopedDB{}
+	checker := NewBunUniquenessCheckerScoped(conn)
+	defer func() { assert.Equal(t, []bool{true}, conn.readOnly) }()
 
 	req := &UniquenessRequest{
 		TableName: "test_table",
@@ -1074,10 +1089,12 @@ func TestBunUniquenessCheckerLazy_NilDBFromGetter(t *testing.T) {
 	assert.Contains(t, err.Error(), "database connection is not initialized")
 }
 
-func TestBunReferenceCheckerLazy_NilDBFromGetter(t *testing.T) {
+func TestBunReferenceCheckerScoped_RunsReadOnlyAndRejectsAMissingDB(t *testing.T) {
 	t.Parallel()
 
-	checker := NewBunReferenceCheckerLazy(func() bun.IDB { return nil })
+	conn := &recordingScopedDB{}
+	checker := NewBunReferenceCheckerScoped(conn)
+	defer func() { assert.Equal(t, []bool{true}, conn.readOnly) }()
 
 	req := &ReferenceRequest{
 		TableName: "test_table",

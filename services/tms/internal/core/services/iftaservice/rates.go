@@ -102,6 +102,9 @@ func (s *Service) UpsertTaxRates(
 	ctx context.Context,
 	req *UpsertTaxRatesRequest,
 ) ([]*ifta.TaxRate, error) {
+	if err := s.referenceData.RequireSteward(req.TenantInfo.OrgID); err != nil {
+		return nil, err
+	}
 	if len(req.Rates) == 0 {
 		return nil, errortypes.NewValidationError(
 			ratesField,
@@ -136,6 +139,10 @@ func (s *Service) UpsertTaxRates(
 }
 
 func (s *Service) DeleteTaxRate(ctx context.Context, req *DeleteTaxRateRequest) error {
+	if err := s.referenceData.RequireSteward(req.TenantInfo.OrgID); err != nil {
+		return err
+	}
+
 	existing, err := s.repo.GetTaxRateByID(ctx, req.ID)
 	if err != nil {
 		return err

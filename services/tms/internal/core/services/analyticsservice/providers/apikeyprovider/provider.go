@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -86,43 +87,45 @@ func (p *Provider) getTotalKeys(
 	orgID, buID pulid.ID,
 	tz string,
 ) (*TotalKeysCard, error) {
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-	}
+	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*TotalKeysCard, error) {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
+		}
 
-	total, err := p.db.DB().NewSelect().
-		Model((*apikey.Key)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("ak.organization_id = ?", orgID).
-				Where("ak.business_unit_id = ?", buID)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
-	}
+		total, err := p.db.DBForContext(ctx).NewSelect().
+			Model((*apikey.Key)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where("ak.organization_id = ?", orgID).
+					Where("ak.business_unit_id = ?", buID)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	now := time.Now().In(loc)
-	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc).Unix()
+		now := time.Now().In(loc)
+		monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc).Unix()
 
-	newThisMonth, err := p.db.DB().NewSelect().
-		Model((*apikey.Key)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("ak.organization_id = ?", orgID).
-				Where("ak.business_unit_id = ?", buID).
-				Where("ak.created_at >= ?", monthStart)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
-	}
+		newThisMonth, err := p.db.DBForContext(ctx).NewSelect().
+			Model((*apikey.Key)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where("ak.organization_id = ?", orgID).
+					Where("ak.business_unit_id = ?", buID).
+					Where("ak.created_at >= ?", monthStart)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	return &TotalKeysCard{
-		Count:        total,
-		NewThisMonth: newThisMonth,
-	}, nil
+		return &TotalKeysCard{
+			Count:        total,
+			NewThisMonth: newThisMonth,
+		}, nil
+	})
 }
 
 func (p *Provider) getActiveKeys(
@@ -130,28 +133,30 @@ func (p *Provider) getActiveKeys(
 	orgID, buID pulid.ID,
 	total int,
 ) (*ActiveKeysCard, error) {
-	count, err := p.db.DB().NewSelect().
-		Model((*apikey.Key)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("ak.organization_id = ?", orgID).
-				Where("ak.business_unit_id = ?", buID).
-				Where("ak.status = ?", apikey.StatusActive)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
-	}
+	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*ActiveKeysCard, error) {
+		count, err := p.db.DBForContext(ctx).NewSelect().
+			Model((*apikey.Key)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where("ak.organization_id = ?", orgID).
+					Where("ak.business_unit_id = ?", buID).
+					Where("ak.status = ?", apikey.StatusActive)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	var pct float64
-	if total > 0 {
-		pct = math.Round(float64(count)/float64(total)*1000) / 10
-	}
+		var pct float64
+		if total > 0 {
+			pct = math.Round(float64(count)/float64(total)*1000) / 10
+		}
 
-	return &ActiveKeysCard{
-		Count:          count,
-		PercentOfTotal: pct,
-	}, nil
+		return &ActiveKeysCard{
+			Count:          count,
+			PercentOfTotal: pct,
+		}, nil
+	})
 }
 
 func (p *Provider) getRevokedKeys(
@@ -159,28 +164,30 @@ func (p *Provider) getRevokedKeys(
 	orgID, buID pulid.ID,
 	total int,
 ) (*RevokedKeysCard, error) {
-	count, err := p.db.DB().NewSelect().
-		Model((*apikey.Key)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("ak.organization_id = ?", orgID).
-				Where("ak.business_unit_id = ?", buID).
-				Where("ak.status = ?", apikey.StatusRevoked)
-		}).
-		Count(ctx)
-	if err != nil {
-		return nil, err
-	}
+	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*RevokedKeysCard, error) {
+		count, err := p.db.DBForContext(ctx).NewSelect().
+			Model((*apikey.Key)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where("ak.organization_id = ?", orgID).
+					Where("ak.business_unit_id = ?", buID).
+					Where("ak.status = ?", apikey.StatusRevoked)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	var pct float64
-	if total > 0 {
-		pct = math.Round(float64(count)/float64(total)*1000) / 10
-	}
+		var pct float64
+		if total > 0 {
+			pct = math.Round(float64(count)/float64(total)*1000) / 10
+		}
 
-	return &RevokedKeysCard{
-		Count:          count,
-		PercentOfTotal: pct,
-	}, nil
+		return &RevokedKeysCard{
+			Count:          count,
+			PercentOfTotal: pct,
+		}, nil
+	})
 }
 
 func (p *Provider) getRequests30d(
@@ -188,65 +195,67 @@ func (p *Provider) getRequests30d(
 	orgID, buID pulid.ID,
 	tz string,
 ) (*Requests30dCard, error) {
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-	}
+	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*Requests30dCard, error) {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
+		}
 
-	now := time.Now().In(loc)
-	thirtyDaysAgo := now.AddDate(0, 0, -30)
-	cutoff := time.Date(
-		thirtyDaysAgo.Year(),
-		thirtyDaysAgo.Month(),
-		thirtyDaysAgo.Day(),
-		0,
-		0,
-		0,
-		0,
-		loc,
-	)
+		now := time.Now().In(loc)
+		thirtyDaysAgo := now.AddDate(0, 0, -30)
+		cutoff := time.Date(
+			thirtyDaysAgo.Year(),
+			thirtyDaysAgo.Month(),
+			thirtyDaysAgo.Day(),
+			0,
+			0,
+			0,
+			0,
+			loc,
+		)
 
-	type dailyRow struct {
-		Day   time.Time `bun:"day"`
-		Total int64     `bun:"total"`
-	}
+		type dailyRow struct {
+			Day   time.Time `bun:"day"`
+			Total int64     `bun:"total"`
+		}
 
-	rows := make([]dailyRow, 0)
-	err = p.db.DB().NewSelect().
-		TableExpr("api_key_usage_daily u").
-		ColumnExpr("u.usage_date AS day").
-		ColumnExpr("SUM(u.request_count) AS total").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("u.organization_id = ?", orgID).
-				Where("u.business_unit_id = ?", buID).
-				Where("u.usage_date >= ?", cutoff.Format("2006-01-02"))
-		}).
-		GroupExpr("u.usage_date").
-		OrderExpr("u.usage_date ASC").
-		Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
+		rows := make([]dailyRow, 0)
+		err = p.db.DBForContext(ctx).NewSelect().
+			TableExpr("api_key_usage_daily u").
+			ColumnExpr("u.usage_date AS day").
+			ColumnExpr("SUM(u.request_count) AS total").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where("u.organization_id = ?", orgID).
+					Where("u.business_unit_id = ?", buID).
+					Where("u.usage_date >= ?", cutoff.Format("2006-01-02"))
+			}).
+			GroupExpr("u.usage_date").
+			OrderExpr("u.usage_date ASC").
+			Scan(ctx, &rows)
+		if err != nil {
+			return nil, err
+		}
 
-	rowMap := make(map[string]int64, len(rows))
-	var grandTotal int64
-	for _, row := range rows {
-		grandTotal += row.Total
-		rowMap[row.Day.Format("2006-01-02")] = row.Total
-	}
+		rowMap := make(map[string]int64, len(rows))
+		var grandTotal int64
+		for _, row := range rows {
+			grandTotal += row.Total
+			rowMap[row.Day.Format("2006-01-02")] = row.Total
+		}
 
-	sparkline := make([]*SparklinePoint, 0, 31)
-	for d := cutoff; !d.After(now); d = d.AddDate(0, 0, 1) {
-		key := d.Format("2006-01-02")
-		sparkline = append(sparkline, &SparklinePoint{
-			Day:   d.Format("Jan 2"),
-			Value: rowMap[key],
-		})
-	}
+		sparkline := make([]*SparklinePoint, 0, 31)
+		for d := cutoff; !d.After(now); d = d.AddDate(0, 0, 1) {
+			key := d.Format("2006-01-02")
+			sparkline = append(sparkline, &SparklinePoint{
+				Day:   d.Format("Jan 2"),
+				Value: rowMap[key],
+			})
+		}
 
-	return &Requests30dCard{
-		Total:     grandTotal,
-		Sparkline: sparkline,
-	}, nil
+		return &Requests30dCard{
+			Total:     grandTotal,
+			Sparkline: sparkline,
+		}, nil
+	})
 }

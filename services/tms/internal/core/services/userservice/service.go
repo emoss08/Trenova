@@ -4,6 +4,7 @@ import (
 	"context"
 	"mime/multipart"
 
+	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -29,6 +30,7 @@ type Params struct {
 	RoleRepository    repositories.RoleRepository
 	SessionRepository repositories.SessionRepository
 	AuditService      services.AuditService
+	Auditor           services.SecurityAuditor
 	Realtime          services.RealtimeService
 	Storage           storage.Client
 	Config            *config.Config
@@ -41,6 +43,7 @@ type Service struct {
 	roleRepo     repositories.RoleRepository
 	sr           repositories.SessionRepository
 	auditService services.AuditService
+	auditor      services.SecurityAuditor
 	realtime     services.RealtimeService
 	storage      storage.Client
 	storageCfg   *config.StorageConfig
@@ -54,6 +57,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		repo:         p.Repo,
 		roleRepo:     p.RoleRepository,
 		auditService: p.AuditService,
+		auditor:      p.Auditor,
 		realtime:     p.Realtime,
 		storage:      p.Storage,
 		storageCfg:   p.Config.GetStorageConfig(),
@@ -532,7 +536,12 @@ func (s *Service) ChangeMyPassword(
 		PreviousState:  jsonutils.MustToJSON(&original),
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
-	}, auditservice.WithComment("User password updated")); err != nil {
+		Critical:       true,
+	},
+		auditservice.WithComment("User password updated"),
+		auditservice.WithCategory(audit.CategoryUser),
+		auditservice.WithRequest(ctx),
+	); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 		return nil, err
 	}
@@ -604,6 +613,7 @@ func (s *Service) Update(
 	},
 		auditservice.WithComment("User updated"),
 		auditservice.WithDiff(original, updatedEntity),
+		auditservice.WithRequest(ctx),
 	); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 		return nil, err
@@ -636,6 +646,11 @@ func (s *Service) ReplaceOrganizationMemberships(
 	actorID, userID, organizationID, businessUnitID pulid.ID,
 	organizationIDs []pulid.ID,
 ) ([]*tenant.OrganizationMembership, error) {
+	previous, err := s.repo.ListOrganizationMemberships(ctx, userID, businessUnitID)
+	if err != nil {
+		return nil, err
+	}
+
 	memberships, err := s.repo.ReplaceOrganizationMemberships(
 		ctx,
 		repositories.ReplaceOrganizationMembershipsRequest{
@@ -648,6 +663,15 @@ func (s *Service) ReplaceOrganizationMemberships(
 	if err != nil {
 		return nil, err
 	}
+
+	s.recordMembershipChange(ctx, &membershipChange{
+		actorID:        actorID,
+		userID:         userID,
+		organizationID: organizationID,
+		businessUnitID: businessUnitID,
+		before:         previous,
+		after:          memberships,
+	})
 
 	if err = realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
 		OrganizationID: organizationID,

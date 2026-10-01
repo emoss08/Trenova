@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -53,7 +54,8 @@ func (a *Activities) DrugAlcoholSweepActivity(
 			OrgID: ref.OrganizationID,
 			BuID:  ref.BusinessUnitID,
 		}
-		standing, rErr := a.drugAlcohol.RefreshRollup(ctx, tenantInfo, ref.WorkerID)
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+		standing, rErr := a.drugAlcohol.RefreshRollup(tenantCtx, tenantInfo, ref.WorkerID)
 		if rErr != nil {
 			result.Failed++
 			a.logger.Warn("failed to refresh drug and alcohol rollup after sweep",
@@ -64,7 +66,7 @@ func (a *Activities) DrugAlcoholSweepActivity(
 		if standing.Status.Blocks() {
 			result.Prohibited++
 		}
-		activity.RecordHeartbeat(ctx, result.WorkersChecked)
+		activity.RecordHeartbeat(tenantCtx, result.WorkersChecked)
 	}
 
 	return result, nil

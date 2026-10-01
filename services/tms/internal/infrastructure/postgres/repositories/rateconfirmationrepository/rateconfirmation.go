@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -43,24 +45,26 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req *repositories.GetRateConfirmationByIDRequest,
 ) (*rateconfirmation.RateConfirmation, error) {
-	cols := buncolgen.RateConfirmationColumns
-	entity := new(rateconfirmation.RateConfirmation)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Relation("Carrier").
-		Relation("CarrierAssignment").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateConfirmationScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.RateConfirmationID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to get rate confirmation", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "Rate confirmation")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateconfirmation.RateConfirmation, error) {
+		cols := buncolgen.RateConfirmationColumns
+		entity := new(rateconfirmation.RateConfirmation)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Relation("Carrier").
+			Relation("CarrierAssignment").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateConfirmationScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.RateConfirmationID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to get rate confirmation", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "Rate confirmation")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetActiveByAssignmentID(
@@ -68,50 +72,54 @@ func (r *repository) GetActiveByAssignmentID(
 	tenantInfo pagination.TenantInfo,
 	assignmentID pulid.ID,
 ) (*rateconfirmation.RateConfirmation, error) {
-	cols := buncolgen.RateConfirmationColumns
-	entity := new(rateconfirmation.RateConfirmation)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateConfirmationScopeTenant(sq, tenantInfo).
-				Where(cols.CarrierAssignmentID.Eq(), assignmentID).
-				Where(cols.Status.Ne(), rateconfirmation.StatusVoided)
-		}).
-		Scan(ctx)
-	if err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateconfirmation.RateConfirmation, error) {
+		cols := buncolgen.RateConfirmationColumns
+		entity := new(rateconfirmation.RateConfirmation)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateConfirmationScopeTenant(sq, tenantInfo).
+					Where(cols.CarrierAssignmentID.Eq(), assignmentID).
+					Where(cols.Status.Ne(), rateconfirmation.StatusVoided)
+			}).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+			}
+			r.l.Error("failed to get active rate confirmation", zap.Error(err))
+			return nil, err
 		}
-		r.l.Error("failed to get active rate confirmation", zap.Error(err))
-		return nil, err
-	}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) ListByMoveID(
 	ctx context.Context,
 	req *repositories.ListRateConfirmationsByMoveRequest,
 ) ([]*rateconfirmation.RateConfirmation, error) {
-	cols := buncolgen.RateConfirmationColumns
-	entities := make([]*rateconfirmation.RateConfirmation, 0, 4)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Relation("Carrier").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateConfirmationScopeTenant(sq, req.TenantInfo).
-				Where(cols.ShipmentMoveID.Eq(), req.ShipmentMoveID)
-		}).
-		Order(cols.Revision.OrderDesc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list rate confirmations", zap.Error(err))
-		return nil, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rateconfirmation.RateConfirmation, error) {
+		cols := buncolgen.RateConfirmationColumns
+		entities := make([]*rateconfirmation.RateConfirmation, 0, 4)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Relation("Carrier").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateConfirmationScopeTenant(sq, req.TenantInfo).
+					Where(cols.ShipmentMoveID.Eq(), req.ShipmentMoveID)
+			}).
+			Order(cols.Revision.OrderDesc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list rate confirmations", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) MaxRevisionForAssignment(
@@ -119,88 +127,96 @@ func (r *repository) MaxRevisionForAssignment(
 	tenantInfo pagination.TenantInfo,
 	assignmentID pulid.ID,
 ) (int64, error) {
-	cols := buncolgen.RateConfirmationColumns
-	var maxRevision sql.NullInt64
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*rateconfirmation.RateConfirmation)(nil)).
-		ColumnExpr("MAX(revision)").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateConfirmationScopeTenant(sq, tenantInfo).
-				Where(cols.CarrierAssignmentID.Eq(), assignmentID)
-		}).
-		Scan(ctx, &maxRevision)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		r.l.Error("failed to resolve max rate confirmation revision", zap.Error(err))
-		return 0, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		cols := buncolgen.RateConfirmationColumns
+		var maxRevision sql.NullInt64
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*rateconfirmation.RateConfirmation)(nil)).
+			ColumnExpr("MAX(revision)").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateConfirmationScopeTenant(sq, tenantInfo).
+					Where(cols.CarrierAssignmentID.Eq(), assignmentID)
+			}).
+			Scan(ctx, &maxRevision)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			r.l.Error("failed to resolve max rate confirmation revision", zap.Error(err))
+			return 0, err
+		}
 
-	if !maxRevision.Valid {
-		return 0, nil
-	}
-	return maxRevision.Int64, nil
+		if !maxRevision.Valid {
+			return 0, nil
+		}
+		return maxRevision.Int64, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *rateconfirmation.RateConfirmation,
 ) (*rateconfirmation.RateConfirmation, error) {
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		r.l.Error("failed to create rate confirmation", zap.Error(err))
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateconfirmation.RateConfirmation, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			r.l.Error("failed to create rate confirmation", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *rateconfirmation.RateConfirmation,
 ) (*rateconfirmation.RateConfirmation, error) {
-	ov := entity.Version
-	entity.Version++
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateconfirmation.RateConfirmation, error) {
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to update rate confirmation", zap.Error(err))
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to update rate confirmation", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(
-		results,
-		"Rate confirmation",
-		entity.ID.String(),
-	); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Rate confirmation",
+			entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) CreateToken(
 	ctx context.Context,
 	entity *rateconfirmation.RateConfirmationToken,
 ) (*rateconfirmation.RateConfirmationToken, error) {
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		r.l.Error("failed to create rate confirmation token", zap.Error(err))
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*rateconfirmation.RateConfirmationToken, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			r.l.Error("failed to create rate confirmation token", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // GetTokenByHash resolves a public token. It is deliberately not
@@ -210,22 +226,25 @@ func (r *repository) GetTokenByHash(
 	ctx context.Context,
 	tokenHash string,
 ) (*rateconfirmation.RateConfirmationToken, error) {
-	cols := buncolgen.RateConfirmationTokenColumns
-	entity := new(rateconfirmation.RateConfirmationToken)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where(cols.TokenHash.Eq(), tokenHash).
-		Scan(ctx)
-	if err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil, nil //nolint:nilnil // nil token represents an optional absence
+	ctx = dbscope.WithSystem(ctx, "resolve a public rate confirmation link before its tenant is known")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateconfirmation.RateConfirmationToken, error) {
+		cols := buncolgen.RateConfirmationTokenColumns
+		entity := new(rateconfirmation.RateConfirmationToken)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(cols.TokenHash.Eq(), tokenHash).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil, nil //nolint:nilnil // nil token represents an optional absence
+			}
+			r.l.Error("failed to get rate confirmation token", zap.Error(err))
+			return nil, err
 		}
-		r.l.Error("failed to get rate confirmation token", zap.Error(err))
-		return nil, err
-	}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // MarkTokenUsed is the single-use gate for public sign links: the conditional
@@ -234,30 +253,32 @@ func (r *repository) MarkTokenUsed(
 	ctx context.Context,
 	req *repositories.MarkRateConfirmationTokenUsedRequest,
 ) (bool, error) {
-	cols := buncolgen.RateConfirmationTokenColumns
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model((*rateconfirmation.RateConfirmationToken)(nil)).
-		Set("used_at = ?", req.UsedAt).
-		Set("updated_at = ?", timeutils.NowUnix()).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.RateConfirmationTokenScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.TokenID).
-				Where(cols.UsedAt.IsNull()).
-				Where(cols.RevokedAt.IsNull())
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to mark rate confirmation token used", zap.Error(err))
-		return false, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		cols := buncolgen.RateConfirmationTokenColumns
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*rateconfirmation.RateConfirmationToken)(nil)).
+			Set("used_at = ?", req.UsedAt).
+			Set("updated_at = ?", timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.RateConfirmationTokenScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.TokenID).
+					Where(cols.UsedAt.IsNull()).
+					Where(cols.RevokedAt.IsNull())
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to mark rate confirmation token used", zap.Error(err))
+			return false, err
+		}
 
-	affected, err := results.RowsAffected()
-	if err != nil {
-		return false, err
-	}
+		affected, err := results.RowsAffected()
+		if err != nil {
+			return false, err
+		}
 
-	return affected > 0, nil
+		return affected > 0, nil
+	})
 }
 
 func (r *repository) RevokeTokensForRateConfirmation(
@@ -266,23 +287,25 @@ func (r *repository) RevokeTokensForRateConfirmation(
 	rateConfirmationID pulid.ID,
 	revokedAt int64,
 ) error {
-	cols := buncolgen.RateConfirmationTokenColumns
-	_, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model((*rateconfirmation.RateConfirmationToken)(nil)).
-		Set("revoked_at = ?", revokedAt).
-		Set("updated_at = ?", timeutils.NowUnix()).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.RateConfirmationTokenScopeTenantUpdate(uq, tenantInfo).
-				Where(cols.RateConfirmationID.Eq(), rateConfirmationID).
-				Where(cols.RevokedAt.IsNull()).
-				Where(cols.UsedAt.IsNull())
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to revoke rate confirmation tokens", zap.Error(err))
-	}
-	return err
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		cols := buncolgen.RateConfirmationTokenColumns
+		_, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*rateconfirmation.RateConfirmationToken)(nil)).
+			Set("revoked_at = ?", revokedAt).
+			Set("updated_at = ?", timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.RateConfirmationTokenScopeTenantUpdate(uq, tenantInfo).
+					Where(cols.RateConfirmationID.Eq(), rateConfirmationID).
+					Where(cols.RevokedAt.IsNull()).
+					Where(cols.UsedAt.IsNull())
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to revoke rate confirmation tokens", zap.Error(err))
+		}
+		return err
+	})
 }
 
 // PurgeDeadSignTokens deletes signing links that can no longer authorize
@@ -293,31 +316,34 @@ func (r *repository) PurgeDeadSignTokens(
 	ctx context.Context,
 	req repositories.PurgeDeadTokensRequest,
 ) (int64, error) {
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultTokenPurgeLimit
-	}
+	ctx = dbscope.WithSystem(ctx, "purge dead rate confirmation tokens across every organization")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultTokenPurgeLimit
+		}
 
-	cols := buncolgen.RateConfirmationTokenColumns
-	deadAt := buncolgen.Expr(
-		"COALESCE({0}, {1}, {2})", cols.UsedAt, cols.RevokedAt, cols.ExpiresAt,
-	)
-	dba := r.db.DBForContext(ctx)
+		cols := buncolgen.RateConfirmationTokenColumns
+		deadAt := buncolgen.Expr(
+			"COALESCE({0}, {1}, {2})", cols.UsedAt, cols.RevokedAt, cols.ExpiresAt,
+		)
+		dba := r.db.DBForContext(ctx)
 
-	dead := dba.NewSelect().
-		Model((*rateconfirmation.RateConfirmationToken)(nil)).
-		Column(cols.ID.Bare()).
-		Where(deadAt+" < ?", req.DeadBefore).
-		Limit(limit)
+		dead := dba.NewSelect().
+			Model((*rateconfirmation.RateConfirmationToken)(nil)).
+			Column(cols.ID.Bare()).
+			Where(deadAt+" < ?", req.DeadBefore).
+			Limit(limit)
 
-	result, err := dba.NewDelete().
-		Model((*rateconfirmation.RateConfirmationToken)(nil)).
-		Where(cols.ID.Expr("{} IN (?)"), dead).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to purge dead rate confirmation tokens", zap.Error(err))
-		return 0, err
-	}
+		result, err := dba.NewDelete().
+			Model((*rateconfirmation.RateConfirmationToken)(nil)).
+			Where(cols.ID.Expr("{} IN (?)"), dead).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to purge dead rate confirmation tokens", zap.Error(err))
+			return 0, err
+		}
 
-	return result.RowsAffected()
+		return result.RowsAffected()
+	})
 }

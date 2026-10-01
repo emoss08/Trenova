@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -58,21 +59,23 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListAgentRunRequest,
 ) (*pagination.ListResult[*agent.AgentRun], error) {
-	log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*agent.AgentRun], error) {
+		log := r.l.With(zap.String("operation", "List"))
 
-	entities := make([]*agent.AgentRun, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count agent runs", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*agent.AgentRun, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count agent runs", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*agent.AgentRun]{Items: entities, Total: total}, nil
+		return &pagination.ListResult[*agent.AgentRun]{Items: entities, Total: total}, nil
+	})
 }
 
 func (r *repository) applyTotalCountFilters(
@@ -114,197 +117,211 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListAgentRunConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRun], error) {
-	log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRun], error) {
+		log := r.l.With(zap.String("operation", "ListConnection"))
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*agent.AgentRun)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*agent.AgentRun)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count agent runs", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*agent.AgentRun]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*agent.AgentRun) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyAgentRunColumns(sq, req.Columns)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count agent runs", zap.Error(err))
+			log.Error("failed to scan agent runs", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*agent.AgentRun]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*agent.AgentRun) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyAgentRunColumns(sq, req.Columns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan agent runs", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
 	req repositories.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
-	if len(req.IDs) == 0 {
-		return []*agent.AgentRun{}, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
+		if len(req.IDs) == 0 {
+			return []*agent.AgentRun{}, nil
+		}
 
-	cols := buncolgen.AgentRunColumns
-	runs := make([]*agent.AgentRun, 0, len(req.IDs))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&runs).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.In(), bun.In(req.IDs))
-		}).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list agent runs by ids", zap.Error(err))
+		cols := buncolgen.AgentRunColumns
+		runs := make([]*agent.AgentRun, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&runs).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.In(), bun.In(req.IDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list agent runs by ids", zap.Error(err))
 
-		return nil, fmt.Errorf("list agent runs by ids: %w", err)
-	}
+			return nil, fmt.Errorf("list agent runs by ids: %w", err)
+		}
 
-	return runs, nil
+		return runs, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
-	log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentRun, error) {
+		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
 
-	entity := new(agent.AgentRun)
-	cols := buncolgen.AgentRunColumns
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentRunScopeTenant(sq, *req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get agent run", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "AgentRun")
-	}
+		entity := new(agent.AgentRun)
+		cols := buncolgen.AgentRunColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentRunScopeTenant(sq, *req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get agent run", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "AgentRun")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *agent.AgentRun,
 ) (*agent.AgentRun, error) {
-	log := r.l.With(zap.String("operation", "Create"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentRun, error) {
+		log := r.l.With(zap.String("operation", "Create"))
 
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to create agent run", zap.Error(err))
-		return nil, err
-	}
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			log.Error("failed to create agent run", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *agent.AgentRun,
 ) (*agent.AgentRun, error) {
-	log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentRun, error) {
+		log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
 
-	ov := entity.Version
-	entity.Version++
-	cols := buncolgen.AgentRunColumns
+		ov := entity.Version
+		entity.Version++
+		cols := buncolgen.AgentRunColumns
 
-	results, err := r.db.DB().
-		NewUpdate().
-		Model(entity).WherePK().
-		Where(cols.Version.Eq(), ov).
-		OmitZero().
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update agent run", zap.Error(err))
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).WherePK().
+			Where(cols.Version.Eq(), ov).
+			OmitZero().
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update agent run", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(results, "AgentRun", entity.ID.String()); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(results, "AgentRun", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) CountOpen(
 	ctx context.Context,
 	req repositories.CountOpenAgentRunsRequest,
 ) (int, error) {
-	cols := buncolgen.AgentRunColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := buncolgen.AgentRunColumns
 
-	count, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*agent.AgentRun)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
-				Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
-				Where(cols.Status.NotIn(), bun.In([]agent.RunStatus{
-					agent.RunStatusCompleted,
-					agent.RunStatusShadowCompleted,
-					agent.RunStatusFailed,
-				}))
-			if req.SubjectID.IsNotNil() {
-				sq = sq.Where(cols.SubjectID.Eq(), req.SubjectID)
-			}
+		count, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*agent.AgentRun)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
+					Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
+					Where(cols.Status.NotIn(), bun.In([]agent.RunStatus{
+						agent.RunStatusCompleted,
+						agent.RunStatusShadowCompleted,
+						agent.RunStatusFailed,
+					}))
+				if req.SubjectID.IsNotNil() {
+					sq = sq.Where(cols.SubjectID.Eq(), req.SubjectID)
+				}
 
-			return sq
-		}).
-		Count(ctx)
-	if err != nil {
-		r.l.Error("failed to count open agent runs", zap.Error(err))
-		return 0, err
-	}
+				return sq
+			}).
+			Count(ctx)
+		if err != nil {
+			r.l.Error("failed to count open agent runs", zap.Error(err))
+			return 0, err
+		}
 
-	return count, nil
+		return count, nil
+	})
 }
 
 func (r *repository) CountSince(
 	ctx context.Context,
 	req repositories.CountAgentRunsSinceRequest,
 ) (int, error) {
-	cols := buncolgen.AgentRunColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := buncolgen.AgentRunColumns
 
-	count, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*agent.AgentRun)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
-				Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
-				Where(cols.CreatedAt.Gte(), req.Since)
-		}).
-		Count(ctx)
-	if err != nil {
-		r.l.Error("failed to count agent runs since", zap.Error(err))
+		count, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*agent.AgentRun)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
+					Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
+					Where(cols.CreatedAt.Gte(), req.Since)
+			}).
+			Count(ctx)
+		if err != nil {
+			r.l.Error("failed to count agent runs since", zap.Error(err))
 
-		return 0, fmt.Errorf("count agent runs since: %w", err)
-	}
+			return 0, fmt.Errorf("count agent runs since: %w", err)
+		}
 
-	return count, nil
+		return count, nil
+	})
 }

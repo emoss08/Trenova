@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -28,10 +27,10 @@ func NewValidator(p ValidatorParams) *Validator {
 			NewTenantedValidatorBuilder[*costingcontrol.CostingControl]().
 			WithModelName("CostingControl").
 			WithUniquenessChecker(
-				validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() }),
+				validationframework.NewBunUniquenessCheckerScoped(p.DB),
 			).
 			WithReferenceChecker(
-				validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() }),
+				validationframework.NewBunReferenceCheckerScoped(p.DB),
 			).
 			WithCustomRule(createGLActualsRule()).
 			Build(),
@@ -39,10 +38,10 @@ func NewValidator(p ValidatorParams) *Validator {
 			NewTenantedValidatorBuilder[*costingcontrol.CostCategory]().
 			WithModelName("CostCategory").
 			WithUniquenessChecker(
-				validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() }),
+				validationframework.NewBunUniquenessCheckerScoped(p.DB),
 			).
 			WithReferenceChecker(
-				validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() }),
+				validationframework.NewBunReferenceCheckerScoped(p.DB),
 			).
 			Build(),
 	}

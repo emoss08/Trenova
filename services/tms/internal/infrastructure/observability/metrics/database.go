@@ -10,10 +10,17 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	rlsLabelPool    = "pool"
+	rlsLabelEvent   = "event"
+	rlsLabelOutcome = "outcome"
+)
+
 type Database struct {
 	Base
 	concurrencyTotal *prometheus.CounterVec
 	operatorActions  *prometheus.CounterVec
+	rlsScopeEvents   *prometheus.CounterVec
 	stats            func() sql.DBStats
 }
 
@@ -46,7 +53,17 @@ func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 		[]string{"action", "outcome"},
 	)
 
-	m.mustRegister(m.concurrencyTotal, m.operatorActions)
+	m.rlsScopeEvents = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: "db",
+			Name:      "rls_scope_events_total",
+			Help:      "Total number of row-level security scope decisions by pool, event, and outcome",
+		},
+		[]string{rlsLabelPool, rlsLabelEvent, rlsLabelOutcome},
+	)
+
+	m.mustRegister(m.concurrencyTotal, m.operatorActions, m.rlsScopeEvents)
 
 	return m
 }
@@ -120,6 +137,16 @@ func (m *Database) RecordOperatorAction(action, outcome string) {
 	m.ifEnabled(func() {
 		m.operatorActions.WithLabelValues(
 			normalizeMetricLabel(action),
+			normalizeMetricLabel(outcome),
+		).Inc()
+	})
+}
+
+func (m *Database) RecordRLSScopeEvent(pool, event, outcome string) {
+	m.ifEnabled(func() {
+		m.rlsScopeEvents.WithLabelValues(
+			normalizeMetricLabel(pool),
+			normalizeMetricLabel(event),
 			normalizeMetricLabel(outcome),
 		).Inc()
 	})

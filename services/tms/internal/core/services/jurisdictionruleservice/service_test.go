@@ -8,7 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -79,7 +82,32 @@ func newService(t *testing.T, repo repositories.JurisdictionRuleRepository) *ser
 		Return(nil).
 		Maybe()
 
-	return &service{repo: repo, auditService: auditService, l: zap.NewNop()}
+	return &service{
+		repo:          repo,
+		auditService:  auditService,
+		referenceData: selfHostedGuard(t),
+		l:             zap.NewNop(),
+	}
+}
+
+func selfHostedGuard(t *testing.T) *referencedataguard.Guard {
+	t.Helper()
+
+	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
+		Mode: config.PlatformModeSelfHosted,
+	})
+	require.NoError(t, err)
+
+	return guard
+}
+
+func operatorActor() *services.RequestActor {
+	return &services.RequestActor{
+		PrincipalType:  services.PrincipalTypeUser,
+		UserID:         pulid.MustNew("usr_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
 }
 
 // Verification is earned, never asserted by the caller. A create that could
@@ -93,7 +121,7 @@ func TestCreate_AlwaysLandsUnverified(t *testing.T) {
 	verifiedAt := int64(1700000000)
 	entity.VerifiedAt = &verifiedAt
 
-	created, err := svc.Create(t.Context(), entity, nil)
+	created, err := svc.Create(t.Context(), entity, operatorActor())
 	require.NoError(t, err)
 
 	assert.Equal(t, jurisdictionrule.VerificationUnverified, created.VerificationState)
@@ -112,7 +140,7 @@ func TestUpdate_ChangingALimitResetsVerification(t *testing.T) {
 	edited.ID = stored.ID
 	edited.MaxWidthFeet = 12.0
 
-	updated, err := svc.Update(t.Context(), edited, nil)
+	updated, err := svc.Update(t.Context(), edited, operatorActor())
 	require.NoError(t, err)
 
 	assert.Equal(t, jurisdictionrule.VerificationUnverified, updated.VerificationState)
@@ -133,7 +161,7 @@ func TestUpdate_EditingOnlyTheSourceKeepsVerification(t *testing.T) {
 	edited.SourceNote = "Corrected the citation to the current statute revision"
 	edited.SourceURL = "https://example.gov/statute"
 
-	updated, err := svc.Update(t.Context(), edited, nil)
+	updated, err := svc.Update(t.Context(), edited, operatorActor())
 	require.NoError(t, err)
 
 	assert.Equal(t, jurisdictionrule.VerificationVerified, updated.VerificationState)
@@ -164,7 +192,7 @@ func TestUpdate_EveryGovernedFieldResetsVerification(t *testing.T) {
 			edited.ID = stored.ID
 			mutate(edited)
 
-			updated, err := svc.Update(t.Context(), edited, nil)
+			updated, err := svc.Update(t.Context(), edited, operatorActor())
 			require.NoError(t, err)
 			assert.Equal(t, jurisdictionrule.VerificationUnverified, updated.VerificationState)
 		})
@@ -176,6 +204,7 @@ func TestVerify_RequiresATraceableNote(t *testing.T) {
 
 	_, err := svc.Verify(t.Context(), &services.VerifyJurisdictionRuleRequest{
 		RuleID:     pulid.MustNew("jrl_"),
+		Actor:      operatorActor(),
 		State:      jurisdictionrule.VerificationVerified,
 		SourceNote: "checked",
 	})
@@ -191,6 +220,7 @@ func TestVerify_RejectsMarkingARowUnverified(t *testing.T) {
 
 	_, err := svc.Verify(t.Context(), &services.VerifyJurisdictionRuleRequest{
 		RuleID:     pulid.MustNew("jrl_"),
+		Actor:      operatorActor(),
 		State:      jurisdictionrule.VerificationUnverified,
 		SourceNote: "Checked against the state permit office handbook",
 	})
@@ -204,6 +234,7 @@ func TestVerify_AcceptsDisputed(t *testing.T) {
 
 	_, err := svc.Verify(t.Context(), &services.VerifyJurisdictionRuleRequest{
 		RuleID:     pulid.MustNew("jrl_"),
+		Actor:      operatorActor(),
 		State:      jurisdictionrule.VerificationDisputed,
 		SourceNote: "State permit office contradicts this width; escalated",
 	})
@@ -228,12 +259,13 @@ func TestLogAction_LeavesTenantUnsetForGlobalData(t *testing.T) {
 		})
 
 	svc := &service{
-		repo:         &repoStub{},
-		auditService: auditService,
-		l:            zap.NewNop(),
+		repo:          &repoStub{},
+		auditService:  auditService,
+		referenceData: selfHostedGuard(t),
+		l:             zap.NewNop(),
 	}
 
-	_, err := svc.Create(t.Context(), validRule(), nil)
+	_, err := svc.Create(t.Context(), validRule(), operatorActor())
 	require.NoError(t, err)
 
 	require.NotNil(t, captured)
@@ -241,4 +273,45 @@ func TestLogAction_LeavesTenantUnsetForGlobalData(t *testing.T) {
 	assert.True(t, captured.Critical, "a global limit change must outlive ordinary retention")
 	assert.True(t, captured.OrganizationID.IsNil())
 	assert.True(t, captured.BusinessUnitID.IsNil())
+}
+
+func TestWrites_AreRefusedForATenantThatIsNotAStewardInCloudMode(t *testing.T) {
+	steward := pulid.MustNew("org_")
+	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
+		Mode:                  config.PlatformModeCloud,
+		ReferenceDataStewards: []string{steward.String()},
+	})
+	require.NoError(t, err)
+
+	repo := &repoStub{stored: validRule()}
+	svc := newService(t, repo)
+	svc.referenceData = guard
+
+	tenant := operatorActor()
+
+	_, err = svc.Create(t.Context(), validRule(), tenant)
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+
+	_, err = svc.Update(t.Context(), validRule(), tenant)
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+
+	_, err = svc.Verify(t.Context(), &services.VerifyJurisdictionRuleRequest{
+		RuleID:     pulid.MustNew("jrl_"),
+		Actor:      tenant,
+		State:      jurisdictionrule.VerificationVerified,
+		SourceNote: "Checked against the state permit office handbook",
+	})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+
+	assert.Nil(t, repo.created)
+	assert.Nil(t, repo.updated)
+	assert.Nil(t, repo.verify)
+
+	stewardActor := operatorActor()
+	stewardActor.OrganizationID = steward
+	_, err = svc.Create(t.Context(), validRule(), stewardActor)
+	require.NoError(t, err)
 }

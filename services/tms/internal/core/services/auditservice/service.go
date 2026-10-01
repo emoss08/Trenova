@@ -2,6 +2,7 @@ package auditservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -136,11 +137,12 @@ func (s *service) LogAction(params *services.LogActionParams, opts ...services.L
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry}); err != nil {
-			s.logger.Error("failed to insert critical audit entry",
+			s.logger.Error("failed to insert critical audit entry, buffering it",
 				zap.Error(err),
 				zap.String("resource", string(params.Resource)),
+				zap.String("entryID", entry.ID.String()),
 			)
-			return fmt.Errorf("failed to insert critical audit entry: %w", err)
+			return s.bufferCriticalEntries([]*audit.Entry{entry}, err)
 		}
 		s.metrics.Audit.RecordDirectInsert()
 		s.publishRealtimeInvalidation(ctx, []*audit.Entry{entry})
@@ -186,11 +188,11 @@ func (s *service) LogActions(bulkEntries []services.BulkLogEntry) error {
 		return fmt.Errorf("all %d audit entries failed validation/sanitization", len(bulkEntries))
 	}
 
-	s.insertCriticalEntries(criticalEntries)
+	criticalErr := s.insertCriticalEntries(criticalEntries)
 
 	s.pushNonCriticalEntries(nonCriticalEntries)
 
-	return nil
+	return criticalErr
 }
 
 func (s *service) buildBulkAuditEntries(
@@ -272,24 +274,47 @@ func resolveAuditPrincipal(params *services.LogActionParams) (services.Principal
 	return services.PrincipalTypeUser, params.UserID
 }
 
-func (s *service) insertCriticalEntries(criticalEntries []*audit.Entry) {
+func (s *service) insertCriticalEntries(criticalEntries []*audit.Entry) error {
 	if len(criticalEntries) == 0 {
-		return
+		return nil
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := s.repo.InsertAuditEntries(ctx, criticalEntries); err != nil {
-		s.logger.Error("failed to insert critical audit entries",
+		s.logger.Error("failed to insert critical audit entries, buffering them",
 			zap.Error(err),
 			zap.Int("count", len(criticalEntries)),
 		)
-		return
+		return s.bufferCriticalEntries(criticalEntries, err)
 	}
 
 	s.metrics.Audit.RecordDirectInsert()
 	s.publishRealtimeInvalidation(ctx, criticalEntries)
+	return nil
+}
+
+func (s *service) bufferCriticalEntries(entries []*audit.Entry, insertErr error) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := s.bufferRepo.PushBatch(ctx, entries); err != nil {
+		s.metrics.Audit.RecordBufferPushFailure()
+		ids := make([]string, 0, len(entries))
+		for _, entry := range entries {
+			ids = append(ids, entry.ID.String())
+		}
+		s.logger.Error("critical audit entries could not be stored or buffered",
+			zap.Error(err),
+			zap.NamedError("insertError", insertErr),
+			zap.Strings("entryIDs", ids),
+		)
+		return fmt.Errorf("failed to record critical audit entry: %w", errors.Join(insertErr, err))
+	}
+
+	s.metrics.Audit.RecordCriticalBuffered(len(entries))
+	return nil
 }
 
 func (s *service) pushNonCriticalEntries(nonCriticalEntries []*audit.Entry) {

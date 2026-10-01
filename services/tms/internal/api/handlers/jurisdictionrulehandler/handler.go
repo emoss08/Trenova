@@ -320,7 +320,7 @@ func (h *Handler) createOverride(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity := new(jurisdictionrule.Override)
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -360,7 +360,7 @@ func (h *Handler) updateOverride(c *gin.Context) {
 	}
 
 	entity := new(jurisdictionrule.Override)
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

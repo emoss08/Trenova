@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -59,61 +60,65 @@ func (r *repository) GetControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*worker.LeaveControl, error) {
-	entity := new(worker.LeaveControl)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.LeaveControlScopeTenant(sq, tenantInfo)
-		}).
-		Limit(1).
-		Scan(ctx)
-	if err == nil {
-		return entity, nil
-	}
-	if !errors.Is(err, sql.ErrNoRows) {
-		r.l.Error("failed to read leave control", zap.Error(err))
-		return nil, fmt.Errorf("read leave control: %w", err)
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.LeaveControl, error) {
+		entity := new(worker.LeaveControl)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.LeaveControlScopeTenant(sq, tenantInfo)
+			}).
+			Limit(1).
+			Scan(ctx)
+		if err == nil {
+			return entity, nil
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			r.l.Error("failed to read leave control", zap.Error(err))
+			return nil, fmt.Errorf("read leave control: %w", err)
+		}
 
-	created := worker.DefaultLeaveControl()
-	created.OrganizationID = tenantInfo.OrgID
-	created.BusinessUnitID = tenantInfo.BuID
-	if _, iErr := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(created).
-		On("CONFLICT DO NOTHING").
-		Exec(ctx); iErr != nil {
-		r.l.Error("failed to seed leave control", zap.Error(iErr))
-		return nil, fmt.Errorf("seed leave control: %w", iErr)
-	}
+		created := worker.DefaultLeaveControl()
+		created.OrganizationID = tenantInfo.OrgID
+		created.BusinessUnitID = tenantInfo.BuID
+		if _, iErr := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(created).
+			On("CONFLICT DO NOTHING").
+			Exec(ctx); iErr != nil {
+			r.l.Error("failed to seed leave control", zap.Error(iErr))
+			return nil, fmt.Errorf("seed leave control: %w", iErr)
+		}
 
-	return created, nil
+		return created, nil
+	})
 }
 
 func (r *repository) UpdateControl(
 	ctx context.Context,
 	entity *worker.LeaveControl,
 ) (*worker.LeaveControl, error) {
-	ov := entity.Version
-	entity.Version++
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.LeaveControl, error) {
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(buncolgen.LeaveControlColumns.Version.Eq(), ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to update leave control", zap.Error(err))
-		return nil, fmt.Errorf("update leave control: %w", err)
-	}
-	if err = dberror.CheckRowsAffected(results, "LeaveControl", entity.ID.String()); err != nil {
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(buncolgen.LeaveControlColumns.Version.Eq(), ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to update leave control", zap.Error(err))
+			return nil, fmt.Errorf("update leave control: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(results, "LeaveControl", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // caseFilter is the one place the case predicates live, so a count and a list
@@ -151,267 +156,289 @@ func (r *repository) ListCases(
 	ctx context.Context,
 	req *repositories.ListLeaveCasesRequest,
 ) ([]*worker.WorkerLeaveCase, error) {
-	cols := buncolgen.WorkerLeaveCaseColumns
-	entities := make([]*worker.WorkerLeaveCase, 0, 8)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerLeaveCase, error) {
+		cols := buncolgen.WorkerLeaveCaseColumns
+		entities := make([]*worker.WorkerLeaveCase, 0, 8)
 
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", caseFilter(req)).
-		Order(cols.StartsAt.OrderDesc()).
-		Limit(limitOr(req.Limit, defaultCasePageSize))
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", caseFilter(req)).
+			Order(cols.StartsAt.OrderDesc()).
+			Limit(limitOr(req.Limit, defaultCasePageSize))
 
-	if req.IncludeWorker {
-		q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Worker)
-	}
-	if req.IncludeDocument {
-		q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Document)
-	}
-	if req.IncludeEntries {
-		q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Entries)
-	}
+		if req.IncludeWorker {
+			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Worker)
+		}
+		if req.IncludeDocument {
+			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Document)
+		}
+		if req.IncludeEntries {
+			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Entries)
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		r.l.Error("failed to list leave cases", zap.Error(err))
-		return nil, fmt.Errorf("list leave cases: %w", err)
-	}
+		if err := q.Scan(ctx); err != nil {
+			r.l.Error("failed to list leave cases", zap.Error(err))
+			return nil, fmt.Errorf("list leave cases: %w", err)
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) CountCases(
 	ctx context.Context,
 	req *repositories.ListLeaveCasesRequest,
 ) (int, error) {
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*worker.WorkerLeaveCase)(nil)).
-		WhereGroup(" AND ", caseFilter(req)).
-		Count(ctx)
-	if err != nil {
-		r.l.Error("failed to count leave cases", zap.Error(err))
-		return 0, fmt.Errorf("count leave cases: %w", err)
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*worker.WorkerLeaveCase)(nil)).
+			WhereGroup(" AND ", caseFilter(req)).
+			Count(ctx)
+		if err != nil {
+			r.l.Error("failed to count leave cases", zap.Error(err))
+			return 0, fmt.Errorf("count leave cases: %w", err)
+		}
 
-	return total, nil
+		return total, nil
+	})
 }
 
 func (r *repository) GetCaseByID(
 	ctx context.Context,
 	req *repositories.GetLeaveCaseByIDRequest,
 ) (*worker.WorkerLeaveCase, error) {
-	entity := new(worker.WorkerLeaveCase)
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.WorkerLeaveCaseScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.WorkerLeaveCaseColumns.ID.Eq(), req.ID)
-		})
-	if req.IncludeDocument {
-		q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Document)
-	}
-	if req.IncludeEntries {
-		q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Entries)
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveCase, error) {
+		entity := new(worker.WorkerLeaveCase)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.WorkerLeaveCaseScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.WorkerLeaveCaseColumns.ID.Eq(), req.ID)
+			})
+		if req.IncludeDocument {
+			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Document)
+		}
+		if req.IncludeEntries {
+			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Entries)
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "WorkerLeaveCase")
-	}
+		if err := q.Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "WorkerLeaveCase")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) CreateCase(
 	ctx context.Context,
 	entity *worker.WorkerLeaveCase,
 ) (*worker.WorkerLeaveCase, error) {
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		r.l.Error("failed to create leave case", zap.Error(err))
-		return nil, fmt.Errorf("create leave case: %w", err)
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveCase, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			r.l.Error("failed to create leave case", zap.Error(err))
+			return nil, fmt.Errorf("create leave case: %w", err)
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) UpdateCase(
 	ctx context.Context,
 	entity *worker.WorkerLeaveCase,
 ) (*worker.WorkerLeaveCase, error) {
-	ov := entity.Version
-	entity.Version++
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveCase, error) {
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(buncolgen.WorkerLeaveCaseColumns.Version.Eq(), ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to update leave case", zap.Error(err))
-		return nil, fmt.Errorf("update leave case: %w", err)
-	}
-	if err = dberror.CheckRowsAffected(results, "WorkerLeaveCase", entity.ID.String()); err != nil {
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(buncolgen.WorkerLeaveCaseColumns.Version.Eq(), ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to update leave case", zap.Error(err))
+			return nil, fmt.Errorf("update leave case: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(results, "WorkerLeaveCase", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) ListEntries(
 	ctx context.Context,
 	req *repositories.ListLeaveEntriesRequest,
 ) ([]*worker.WorkerLeaveEntry, error) {
-	cols := buncolgen.WorkerLeaveEntryColumns
-	entities := make([]*worker.WorkerLeaveEntry, 0, 32)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerLeaveEntry, error) {
+		cols := buncolgen.WorkerLeaveEntryColumns
+		entities := make([]*worker.WorkerLeaveEntry, 0, 32)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo)
-			if !req.WorkerID.IsNil() {
-				sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-			}
-			if !req.LeaveCaseID.IsNil() {
-				sq = sq.Where(cols.LeaveCaseID.Eq(), req.LeaveCaseID)
-			}
-			if req.Since > 0 {
-				sq = sq.Where(cols.UsedOn.Gte(), req.Since)
-			}
-			return sq
-		}).
-		Order(cols.UsedOn.OrderDesc()).
-		Limit(limitOr(req.Limit, defaultEntryPageSize)).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list leave entries", zap.Error(err))
-		return nil, fmt.Errorf("list leave entries: %w", err)
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = buncolgen.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo)
+				if !req.WorkerID.IsNil() {
+					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
+				}
+				if !req.LeaveCaseID.IsNil() {
+					sq = sq.Where(cols.LeaveCaseID.Eq(), req.LeaveCaseID)
+				}
+				if req.Since > 0 {
+					sq = sq.Where(cols.UsedOn.Gte(), req.Since)
+				}
+				return sq
+			}).
+			Order(cols.UsedOn.OrderDesc()).
+			Limit(limitOr(req.Limit, defaultEntryPageSize)).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list leave entries", zap.Error(err))
+			return nil, fmt.Errorf("list leave entries: %w", err)
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) ListEntriesByCaseIDs(
 	ctx context.Context,
 	req *repositories.ListLeaveEntriesByCaseIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
-	cols := buncolgen.WorkerLeaveEntryColumns
-	entities := make([]*worker.WorkerLeaveEntry, 0, len(req.LeaveCaseIDs)*32)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
+		cols := buncolgen.WorkerLeaveEntryColumns
+		entities := make([]*worker.WorkerLeaveEntry, 0, len(req.LeaveCaseIDs)*32)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
-				Where(cols.LeaveCaseID.In(), bun.List(req.LeaveCaseIDs))
-		}).
-		Order(cols.UsedOn.OrderDesc()).
-		Limit(len(req.LeaveCaseIDs) * defaultEntryPageSize).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list leave entries by cases", zap.Error(err))
-		return nil, fmt.Errorf("list leave entries by cases: %w", err)
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
+					Where(cols.LeaveCaseID.In(), bun.List(req.LeaveCaseIDs))
+			}).
+			Order(cols.UsedOn.OrderDesc()).
+			Limit(len(req.LeaveCaseIDs) * defaultEntryPageSize).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list leave entries by cases", zap.Error(err))
+			return nil, fmt.Errorf("list leave entries by cases: %w", err)
+		}
 
-	return sliceutils.GroupBy(entities, func(e *worker.WorkerLeaveEntry) pulid.ID {
-		return e.LeaveCaseID
-	}), nil
+		return sliceutils.GroupBy(entities, func(e *worker.WorkerLeaveEntry) pulid.ID {
+			return e.LeaveCaseID
+		}), nil
+	})
 }
 
 func (r *repository) GetEntryByID(
 	ctx context.Context,
 	req *repositories.GetLeaveEntryByIDRequest,
 ) (*worker.WorkerLeaveEntry, error) {
-	entity := new(worker.WorkerLeaveEntry)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "WorkerLeaveEntry")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveEntry, error) {
+		entity := new(worker.WorkerLeaveEntry)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "WorkerLeaveEntry")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) CreateEntry(
 	ctx context.Context,
 	entity *worker.WorkerLeaveEntry,
 ) (*worker.WorkerLeaveEntry, error) {
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		if dberror.IsUniqueConstraintViolation(err) {
-			return nil, errortypes.NewValidationError(
-				"usedOn",
-				errortypes.ErrDuplicate,
-				"That day is already recorded against this case; edit it instead",
-			)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveEntry, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			if dberror.IsUniqueConstraintViolation(err) {
+				return nil, errortypes.NewValidationError(
+					"usedOn",
+					errortypes.ErrDuplicate,
+					"That day is already recorded against this case; edit it instead",
+				)
+			}
+			r.l.Error("failed to create leave entry", zap.Error(err))
+			return nil, fmt.Errorf("create leave entry: %w", err)
 		}
-		r.l.Error("failed to create leave entry", zap.Error(err))
-		return nil, fmt.Errorf("create leave entry: %w", err)
-	}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) UpdateEntry(
 	ctx context.Context,
 	entity *worker.WorkerLeaveEntry,
 ) (*worker.WorkerLeaveEntry, error) {
-	ov := entity.Version
-	entity.Version++
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerLeaveEntry, error) {
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(buncolgen.WorkerLeaveEntryColumns.Version.Eq(), ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to update leave entry", zap.Error(err))
-		return nil, fmt.Errorf("update leave entry: %w", err)
-	}
-	if err = dberror.CheckRowsAffected(
-		results,
-		"WorkerLeaveEntry",
-		entity.ID.String(),
-	); err != nil {
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(buncolgen.WorkerLeaveEntryColumns.Version.Eq(), ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to update leave entry", zap.Error(err))
+			return nil, fmt.Errorf("update leave entry: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"WorkerLeaveEntry",
+			entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) DeleteEntry(
 	ctx context.Context,
 	req *repositories.GetLeaveEntryByIDRequest,
 ) error {
-	results, err := r.db.DBForContext(ctx).
-		NewDelete().
-		Model((*worker.WorkerLeaveEntry)(nil)).
-		Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.WorkerLeaveEntryScopeTenantDelete(dq, req.TenantInfo).
-				Where(buncolgen.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to delete leave entry", zap.Error(err))
-		return fmt.Errorf("delete leave entry: %w", err)
-	}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		results, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*worker.WorkerLeaveEntry)(nil)).
+			Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return buncolgen.WorkerLeaveEntryScopeTenantDelete(dq, req.TenantInfo).
+					Where(buncolgen.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to delete leave entry", zap.Error(err))
+			return fmt.Errorf("delete leave entry: %w", err)
+		}
 
-	return dberror.CheckRowsAffected(results, "WorkerLeaveEntry", req.ID.String())
+		return dberror.CheckRowsAffected(results, "WorkerLeaveEntry", req.ID.String())
+	})
 }

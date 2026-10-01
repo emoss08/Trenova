@@ -78,9 +78,7 @@ func (h *Handler) update(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity := new(tenant.InvoiceAdjustmentControl)
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

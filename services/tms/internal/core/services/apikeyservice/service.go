@@ -24,6 +24,7 @@ type Params struct {
 	Logger   *zap.Logger
 	Repo     repositories.APIKeyRepository
 	Registry *permission.Registry
+	Auditor  services.SecurityAuditor
 
 	Config *config.Config
 }
@@ -32,6 +33,7 @@ type Service struct {
 	l        *zap.Logger
 	repo     repositories.APIKeyRepository
 	registry *permission.Registry
+	auditor  services.SecurityAuditor
 	cfg      *config.Config
 }
 
@@ -40,6 +42,7 @@ func New(p Params) *Service {
 		l:        p.Logger.Named("service.api-key"),
 		repo:     p.Repo,
 		registry: p.Registry,
+		auditor:  p.Auditor,
 		cfg:      p.Config,
 	}
 }
@@ -131,8 +134,18 @@ func (s *Service) CreateAPIKey(
 	}
 	key.Permissions = perms
 
+	resp := s.mapAPIKeyResponse(key)
+	s.recordChange(ctx, &keyChange{
+		tenantInfo: tenantInfo,
+		actorID:    userID,
+		key:        key,
+		operation:  permission.OpCreate,
+		after:      resp,
+		comment:    "API key created",
+	})
+
 	return &services.APIKeySecretResponse{
-		APIKeyResponse: s.mapAPIKeyResponse(key),
+		APIKeyResponse: resp,
 		Token:          generated.Token(),
 	}, nil
 }
@@ -170,6 +183,7 @@ func (s *Service) UpdateAPIKey(
 	if err != nil {
 		return nil, err
 	}
+	before := s.mapAPIKeyResponse(key)
 
 	expiresAt, err := s.resolveUpdateExpiry(req.ExpiresAt)
 	if err != nil {
@@ -186,6 +200,15 @@ func (s *Service) UpdateAPIKey(
 	key.Permissions = perms
 
 	resp := s.mapAPIKeyResponse(key)
+	s.recordChange(ctx, &keyChange{
+		tenantInfo: tenantInfo,
+		actorID:    tenantInfo.UserID,
+		key:        key,
+		operation:  permission.OpUpdate,
+		before:     before,
+		after:      resp,
+		comment:    "API key updated",
+	})
 	return &resp, nil
 }
 
@@ -198,6 +221,8 @@ func (s *Service) RotateAPIKey(
 	if err != nil {
 		return nil, err
 	}
+
+	before := s.mapAPIKeyResponse(key)
 
 	generated, err := apikey.GenerateAPIKeySecret()
 	if err != nil {
@@ -218,6 +243,15 @@ func (s *Service) RotateAPIKey(
 	}
 
 	resp := s.mapAPIKeyResponse(key)
+	s.recordChange(ctx, &keyChange{
+		tenantInfo: tenantInfo,
+		actorID:    tenantInfo.UserID,
+		key:        key,
+		operation:  permission.OpUpdate,
+		before:     before,
+		after:      resp,
+		comment:    "API key secret rotated",
+	})
 	return &services.APIKeySecretResponse{
 		APIKeyResponse: resp,
 		Token:          generated.Token(),
@@ -234,6 +268,8 @@ func (s *Service) RevokeAPIKey(
 		return nil, err
 	}
 
+	before := s.mapAPIKeyResponse(key)
+
 	key.Status = apikey.StatusRevoked
 	key.RevokedByID = userID
 	key.RevokedAt = timeutils.NowUnix()
@@ -242,6 +278,15 @@ func (s *Service) RevokeAPIKey(
 	}
 
 	resp := s.mapAPIKeyResponse(key)
+	s.recordChange(ctx, &keyChange{
+		tenantInfo: tenantInfo,
+		actorID:    userID,
+		key:        key,
+		operation:  permission.OpUpdate,
+		before:     before,
+		after:      resp,
+		comment:    "API key revoked",
+	})
 	return &resp, nil
 }
 

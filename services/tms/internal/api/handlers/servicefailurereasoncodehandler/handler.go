@@ -163,8 +163,7 @@ func (h *Handler) create(c *gin.Context) {
 	// binding so a body that omits the field still creates a usable code, while
 	// one that sends false is honoured.
 	entity.Active = true
-	authctx.AddContextToRequest(authCtx, entity)
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -189,8 +188,7 @@ func (h *Handler) update(c *gin.Context) {
 	}
 	entity := new(servicefailure.ReasonCode)
 	entity.ID = id
-	authctx.AddContextToRequest(authCtx, entity)
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -224,7 +222,7 @@ func (h *Handler) patch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

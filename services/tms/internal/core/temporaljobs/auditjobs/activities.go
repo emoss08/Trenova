@@ -8,6 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -31,6 +32,7 @@ type ActivitiesParams struct {
 	AuditRepository         repositories.AuditRepository
 	AuditBufferRepository   repositories.AuditBufferRepository
 	AuditDLQRepository      repositories.AuditDLQRepository
+	AuthEventRepository     repositories.AuthEventRepository
 	DataRetentionRepository repositories.DataRetentionRepository
 	RealtimeService         services.RealtimeService
 	Metrics                 *metrics.Registry
@@ -40,6 +42,7 @@ type Activities struct {
 	ar      repositories.AuditRepository
 	abr     repositories.AuditBufferRepository
 	adlq    repositories.AuditDLQRepository
+	aer     repositories.AuthEventRepository
 	dr      repositories.DataRetentionRepository
 	rt      services.RealtimeService
 	metrics *metrics.Registry
@@ -50,6 +53,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		ar:      p.AuditRepository,
 		abr:     p.AuditBufferRepository,
 		adlq:    p.AuditDLQRepository,
+		aer:     p.AuthEventRepository,
 		dr:      p.DataRetentionRepository,
 		rt:      p.RealtimeService,
 		metrics: p.Metrics,
@@ -61,6 +65,19 @@ func (a *Activities) DeleteAuditEntriesActivity(
 ) (*DeleteAuditEntriesResult, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Starting audit entries deletion activity")
+
+	activity.RecordHeartbeat(ctx, "deleting expired authentication events")
+	authEventsDeleted, err := a.aer.DeleteBefore(
+		ctx,
+		time.Now().AddDate(0, 0, -iam.AuthEventRetentionDays).Unix(),
+	)
+	if err != nil {
+		logger.Error("Failed to delete expired authentication events", "error", err)
+		return nil, temporaltype.NewRetryableError(
+			"Failed to delete expired authentication events",
+			err,
+		).ToTemporalError()
+	}
 
 	activity.RecordHeartbeat(ctx, "fetching data retention entities")
 	entities, err := a.dr.List(ctx)
@@ -75,14 +92,17 @@ func (a *Activities) DeleteAuditEntriesActivity(
 	if entities.Total == 0 {
 		logger.Info("No data retention entities found, skipping deletion")
 		return &DeleteAuditEntriesResult{
-			TotalDeleted: 0,
-			Result:       "No data retention entities configured",
+			TotalDeleted:      0,
+			AuthEventsDeleted: int(authEventsDeleted),
+			Result:            "No data retention entities configured",
 		}, nil
 	}
 
 	totalDeleted := 0
 	deletedOrgIDs := make([]pulid.ID, 0, entities.Total)
 	failedOrgIDs := make([]pulid.ID, 0)
+
+	criticalFloor := time.Now().AddDate(0, 0, -audit.CriticalRetentionDays).Unix()
 
 	for _, entity := range entities.Items {
 		if entity.AuditRetentionPeriod <= 0 {
@@ -94,6 +114,7 @@ func (a *Activities) DeleteAuditEntriesActivity(
 		}
 
 		timestamp := time.Now().AddDate(0, 0, -entity.AuditRetentionPeriod).Unix()
+		criticalBefore := min(timestamp, criticalFloor)
 
 		activity.RecordHeartbeat(
 			ctx,
@@ -101,9 +122,10 @@ func (a *Activities) DeleteAuditEntriesActivity(
 		)
 
 		deletedRows, drErr := a.ar.DeleteAuditEntries(ctx, repositories.DeleteAuditEntriesRequest{
-			OrgID:  entity.OrganizationID,
-			BuID:   entity.BusinessUnitID,
-			Before: timestamp,
+			OrgID:          entity.OrganizationID,
+			BuID:           entity.BusinessUnitID,
+			Before:         timestamp,
+			CriticalBefore: criticalBefore,
 		})
 		if drErr != nil {
 			logger.Error("Failed to delete audit entries for organization",
@@ -151,8 +173,9 @@ func (a *Activities) DeleteAuditEntriesActivity(
 	)
 
 	return &DeleteAuditEntriesResult{
-		TotalDeleted: totalDeleted,
-		Result:       result,
+		TotalDeleted:      totalDeleted,
+		AuthEventsDeleted: int(authEventsDeleted),
+		Result:            result,
 	}, nil
 }
 

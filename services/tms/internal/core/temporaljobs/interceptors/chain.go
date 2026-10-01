@@ -14,7 +14,7 @@ type ChainParams struct {
 }
 
 func BuildWorkerInterceptorChain(p ChainParams) []interceptor.WorkerInterceptor {
-	var workerInterceptors []interceptor.WorkerInterceptor
+	workerInterceptors := []interceptor.WorkerInterceptor{NewTenantScopeInterceptor()}
 
 	if p.MetricsHandler != nil && p.MetricsHandler.IsEnabled() {
 		metricsInterceptor := NewMetricsInterceptor(p.MetricsHandler)

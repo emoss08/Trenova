@@ -211,9 +211,7 @@ func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity := new(fiscalperiod.FiscalPeriod)
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -251,9 +249,7 @@ func (h *Handler) update(c *gin.Context) {
 
 	entity := new(fiscalperiod.FiscalPeriod)
 	entity.ID = fiscalPeriodID
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -302,7 +298,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	if err = c.ShouldBindJSON(existing); err != nil {
+	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

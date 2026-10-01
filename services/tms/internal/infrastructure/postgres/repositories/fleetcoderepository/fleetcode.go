@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -58,27 +59,29 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListFleetCodesRequest,
 ) (*pagination.ListResult[*fleetcode.FleetCode], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fleetcode.FleetCode], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*fleetcode.FleetCode, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count fleet codes", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*fleetcode.FleetCode, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count fleet codes", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*fleetcode.FleetCode]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*fleetcode.FleetCode]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -118,147 +121,157 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListFleetCodeConnectionRequest,
 ) (*pagination.CursorListResult[*fleetcode.FleetCode], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fleetcode.FleetCode], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*fleetcode.FleetCode)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*fleetcode.FleetCode)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count fleet codes", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*fleetcode.FleetCode]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*fleetcode.FleetCode) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyFleetCodeColumns(sq, req.FleetCodeColumns)
+						}).
+						Relation("Manager")
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count fleet codes", zap.Error(err))
+			log.Error("failed to scan fleet codes", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*fleetcode.FleetCode]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*fleetcode.FleetCode) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyFleetCodeColumns(sq, req.FleetCodeColumns)
-					}).
-					Relation("Manager")
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan fleet codes", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *fleetcode.FleetCode,
 ) (*fleetcode.FleetCode, error) {
-	log := r.l.With(
-		zap.String("operation", "Create"),
-		zap.String("code", entity.Code),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fleetcode.FleetCode, error) {
+		log := r.l.With(
+			zap.String("operation", "Create"),
+			zap.String("code", entity.Code),
+		)
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to create fleet code", zap.Error(err))
-		return nil, err
-	}
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			log.Error("failed to create fleet code", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *fleetcode.FleetCode,
 ) (*fleetcode.FleetCode, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fleetcode.FleetCode, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
+		)
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DB().
-		NewUpdate().
-		Model(entity).WherePK().
-		Where("version = ?", ov).
-		OmitZero().
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update fleet code", zap.Error(err))
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).WherePK().
+			Where("version = ?", ov).
+			OmitZero().
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update fleet code", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(results, "FleetCode", entity.ID.String()); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(results, "FleetCode", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetFleetCodeByIDRequest,
 ) (*fleetcode.FleetCode, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.ID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fleetcode.FleetCode, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.ID.String()),
+		)
 
-	entity := new(fleetcode.FleetCode)
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("fc.id = ?", req.ID).
-				Where("fc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("fc.business_unit_id = ?", req.TenantInfo.BuID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get fleet code", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "FleetCode")
-	}
+		entity := new(fleetcode.FleetCode)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("fc.id = ?", req.ID).
+					Where("fc.organization_id = ?", req.TenantInfo.OrgID).
+					Where("fc.business_unit_id = ?", req.TenantInfo.BuID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get fleet code", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "FleetCode")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*fleetcode.FleetCode], error) {
-	return dbhelper.SelectOptions[*fleetcode.FleetCode](
-		ctx,
-		r.db.DB(),
-		req,
-		&dbhelper.SelectOptionsConfig{
-			Columns:       []string{"id", "code", "description", "status", "manager_id"},
-			OrgColumn:     "fc.organization_id",
-			BuColumn:      "fc.business_unit_id",
-			SearchColumns: []string{"fc.code", "fc.description"},
-			EntityName:    "FleetCode",
-			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("fc.status = ?", domaintypes.StatusActive).Relation("Manager")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fleetcode.FleetCode], error) {
+		return dbhelper.SelectOptions[*fleetcode.FleetCode](
+			ctx,
+			r.db.DBForContext(ctx),
+			req,
+			&dbhelper.SelectOptionsConfig{
+				Columns:       []string{"id", "code", "description", "status", "manager_id"},
+				OrgColumn:     "fc.organization_id",
+				BuColumn:      "fc.business_unit_id",
+				SearchColumns: []string{"fc.code", "fc.description"},
+				EntityName:    "FleetCode",
+				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Where("fc.status = ?", domaintypes.StatusActive).Relation("Manager")
+				},
 			},
-		},
-	)
+		)
+	})
 }

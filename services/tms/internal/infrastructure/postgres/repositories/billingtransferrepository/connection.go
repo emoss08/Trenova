@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,61 +34,63 @@ func (r *repository) ListItems(
 	ctx context.Context,
 	req *repositories.ListBillingTransferRunItemsRequest,
 ) (*pagination.CursorListResult[*billingtransfer.BillingTransferRunItem], error) {
-	log := r.l.With(zap.String("operation", "ListItems"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*billingtransfer.BillingTransferRunItem], error) {
+		log := r.l.With(zap.String("operation", "ListItems"))
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*billingtransfer.BillingTransferRunItem)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = querybuilder.ApplyFiltersWithoutSort(
-					sq,
-					buncolgen.BillingTransferRunItemTable.Alias,
-					req.Filter,
-					(*billingtransfer.BillingTransferRunItem)(nil),
-				)
-				return runItemScope(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*billingtransfer.BillingTransferRunItem)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = querybuilder.ApplyFiltersWithoutSort(
+						sq,
+						buncolgen.BillingTransferRunItemTable.Alias,
+						req.Filter,
+						(*billingtransfer.BillingTransferRunItem)(nil),
+					)
+					return runItemScope(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count billing transfer run items", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*billingtransfer.BillingTransferRunItem]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*billingtransfer.BillingTransferRunItem) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						ColumnExpr(buncolgen.BillingTransferRunItemTable.All())
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					sq, applyErr := querybuilder.ApplyCursorFilters(
+						sq,
+						buncolgen.BillingTransferRunItemTable.Alias,
+						req.Filter,
+						req.Cursor,
+						(*billingtransfer.BillingTransferRunItem)(nil),
+					)
+					if applyErr != nil {
+						return nil, applyErr
+					}
+					return runItemScope(sq, req), nil
+				},
+			})
 		if err != nil {
-			log.Error("failed to count billing transfer run items", zap.Error(err))
+			log.Error("failed to list billing transfer run items", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*billingtransfer.BillingTransferRunItem]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*billingtransfer.BillingTransferRunItem) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					ColumnExpr(buncolgen.BillingTransferRunItemTable.All())
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				sq, applyErr := querybuilder.ApplyCursorFilters(
-					sq,
-					buncolgen.BillingTransferRunItemTable.Alias,
-					req.Filter,
-					req.Cursor,
-					(*billingtransfer.BillingTransferRunItem)(nil),
-				)
-				if applyErr != nil {
-					return nil, applyErr
-				}
-				return runItemScope(sq, req), nil
-			},
-		})
-	if err != nil {
-		log.Error("failed to list billing transfer run items", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }

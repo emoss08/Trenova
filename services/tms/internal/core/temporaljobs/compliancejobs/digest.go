@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -163,7 +164,8 @@ func (a *Activities) collectCredentialObligations(
 				OrgID: cred.OrganizationID,
 				BuID:  cred.BusinessUnitID,
 			}
-			control, due, cErr := a.digestControl(ctx, state, tenantInfo)
+			tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+			control, due, cErr := a.digestControl(tenantCtx, state, tenantInfo)
 			if cErr != nil {
 				return cErr
 			}
@@ -233,7 +235,8 @@ func (a *Activities) collectTrainingList(
 				OrgID: record.OrganizationID,
 				BuID:  record.BusinessUnitID,
 			}
-			control, due, cErr := a.digestControl(ctx, state, tenantInfo)
+			tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+			control, due, cErr := a.digestControl(tenantCtx, state, tenantInfo)
 			if cErr != nil {
 				return cErr
 			}
@@ -285,7 +288,8 @@ func (a *Activities) flushDigests(ctx context.Context, state *digestState) {
 		if len(bucket.items) == 0 {
 			continue
 		}
-		sent, err := a.sendDigest(ctx, state, workerID, bucket)
+		tenantCtx := dbscope.WithTenant(ctx, bucket.tenantInfo.DBTenant())
+		sent, err := a.sendDigest(tenantCtx, state, workerID, bucket)
 		switch {
 		case err != nil:
 			state.result.Failed++

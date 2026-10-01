@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -53,18 +54,20 @@ func (r *usageRepository) Reserve(
 	ctx context.Context,
 	params repositories.ReserveExtensionRequestParams,
 ) (bool, error) {
-	result, err := buildReserve(r.db.DBForContext(ctx), params).Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to reserve agent extension request", zap.Error(err))
-		return false, fmt.Errorf("reserve agent extension request: %w", err)
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		result, err := buildReserve(r.db.DBForContext(ctx), params).Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to reserve agent extension request", zap.Error(err))
+			return false, fmt.Errorf("reserve agent extension request: %w", err)
+		}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return false, fmt.Errorf("reserve agent extension request rows affected: %w", err)
-	}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return false, fmt.Errorf("reserve agent extension request rows affected: %w", err)
+		}
 
-	return affected == 1, nil
+		return affected == 1, nil
+	})
 }
 
 func buildRecordOutcome(
@@ -97,12 +100,14 @@ func (r *usageRepository) RecordOutcome(
 	ctx context.Context,
 	params repositories.RecordExtensionOutcomeParams,
 ) error {
-	if _, err := buildRecordOutcome(r.db.DBForContext(ctx), params).Exec(ctx); err != nil {
-		r.l.Error("failed to record agent extension outcome", zap.Error(err))
-		return fmt.Errorf("record agent extension outcome: %w", err)
-	}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if _, err := buildRecordOutcome(r.db.DBForContext(ctx), params).Exec(ctx); err != nil {
+			r.l.Error("failed to record agent extension outcome", zap.Error(err))
+			return fmt.Errorf("record agent extension outcome: %w", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 type usageTotals struct {
@@ -142,21 +147,23 @@ func (r *usageRepository) Summarize(
 	ctx context.Context,
 	params repositories.SummarizeExtensionUsageParams,
 ) (map[agentextension.Type]agentextension.UsageSummary, error) {
-	rows := make([]usageTotals, 0, len(agentextension.AllTypes()))
-	if err := buildSummarize(r.db.DBForContext(ctx), params).Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to summarize agent extension usage", zap.Error(err))
-		return nil, fmt.Errorf("summarize agent extension usage: %w", err)
-	}
-
-	summaries := make(map[agentextension.Type]agentextension.UsageSummary, len(rows))
-	for idx := range rows {
-		summaries[rows[idx].ExtensionType] = agentextension.UsageSummary{
-			RequestsToday:     rows[idx].RequestsToday,
-			RequestsThisMonth: rows[idx].RequestsThisMonth,
-			FailuresThisMonth: rows[idx].FailuresThisMonth,
-			CostThisMonthUSD:  rows[idx].CostThisMonth,
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[agentextension.Type]agentextension.UsageSummary, error) {
+		rows := make([]usageTotals, 0, len(agentextension.AllTypes()))
+		if err := buildSummarize(r.db.DBForContext(ctx), params).Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to summarize agent extension usage", zap.Error(err))
+			return nil, fmt.Errorf("summarize agent extension usage: %w", err)
 		}
-	}
 
-	return summaries, nil
+		summaries := make(map[agentextension.Type]agentextension.UsageSummary, len(rows))
+		for idx := range rows {
+			summaries[rows[idx].ExtensionType] = agentextension.UsageSummary{
+				RequestsToday:     rows[idx].RequestsToday,
+				RequestsThisMonth: rows[idx].RequestsThisMonth,
+				FailuresThisMonth: rows[idx].FailuresThisMonth,
+				CostThisMonthUSD:  rows[idx].CostThisMonth,
+			}
+		}
+
+		return summaries, nil
+	})
 }

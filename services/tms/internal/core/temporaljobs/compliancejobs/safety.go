@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -55,13 +56,14 @@ func (a *Activities) SafetyRollupSweepActivity(
 			OrgID: ref.OrganizationID,
 			BuID:  ref.BusinessUnitID,
 		}
-		if _, rErr := a.safety.RefreshRollup(ctx, tenantInfo, ref.WorkerID); rErr != nil {
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+		if _, rErr := a.safety.RefreshRollup(tenantCtx, tenantInfo, ref.WorkerID); rErr != nil {
 			result.Failed++
 			a.logger.Warn("failed to refresh safety rollup after sweep",
 				zap.String("workerId", ref.WorkerID.String()),
 				zap.Error(rErr))
 		}
-		activity.RecordHeartbeat(ctx, result.WorkersChecked)
+		activity.RecordHeartbeat(tenantCtx, result.WorkersChecked)
 	}
 
 	return result, nil

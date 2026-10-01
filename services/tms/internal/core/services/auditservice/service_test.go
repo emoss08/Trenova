@@ -231,7 +231,7 @@ func TestLogAction_Critical_DirectInsert(t *testing.T) {
 	bufferRepo.AssertNotCalled(t, "Push", mock.Anything, mock.Anything)
 }
 
-func TestLogAction_Critical_InsertError(t *testing.T) {
+func TestLogAction_Critical_InsertError_Buffered(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockAuditRepository)
@@ -240,6 +240,28 @@ func TestLogAction_Critical_InsertError(t *testing.T) {
 
 	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
 		Return(errors.New("db error"))
+	bufferRepo.On("PushBatch", mock.Anything, mock.MatchedBy(func(entries []*audit.Entry) bool {
+		return len(entries) == 1 && entries[0].Critical
+	})).Return(nil)
+
+	params := validLogActionParams()
+	params.Critical = true
+
+	require.NoError(t, srv.LogAction(params))
+	bufferRepo.AssertExpectations(t)
+}
+
+func TestLogAction_Critical_InsertAndBufferFail(t *testing.T) {
+	t.Parallel()
+
+	repo := new(mockAuditRepository)
+	bufferRepo := new(mockBufferRepository)
+	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+
+	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
+		Return(errors.New("db error"))
+	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).
+		Return(errors.New("redis error"))
 
 	params := validLogActionParams()
 	params.Critical = true
@@ -247,7 +269,9 @@ func TestLogAction_Critical_InsertError(t *testing.T) {
 	err := srv.LogAction(params)
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to insert critical audit entry")
+	assert.Contains(t, err.Error(), "failed to record critical audit entry")
+	assert.Contains(t, err.Error(), "db error")
+	assert.Contains(t, err.Error(), "redis error")
 }
 
 func TestLogAction_NonCritical_BufferFails_FallbackSuccess(t *testing.T) {
@@ -474,7 +498,7 @@ func TestLogActions_NonCritical_BufferFails_FallbackFails(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestLogActions_CriticalInsertError(t *testing.T) {
+func TestLogActions_CriticalInsertError_Buffered(t *testing.T) {
 	t.Parallel()
 
 	repo := new(mockAuditRepository)
@@ -483,17 +507,31 @@ func TestLogActions_CriticalInsertError(t *testing.T) {
 
 	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
 		Return(errors.New("db error"))
+	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).Return(nil)
 
 	params := validLogActionParams()
 	params.Critical = true
 
-	entries := []services.BulkLogEntry{
-		{Params: params},
-	}
+	require.NoError(t, srv.LogActions([]services.BulkLogEntry{{Params: params}}))
+	bufferRepo.AssertExpectations(t)
+}
 
-	err := srv.LogActions(entries)
+func TestLogActions_CriticalInsertAndBufferFail(t *testing.T) {
+	t.Parallel()
 
-	require.NoError(t, err)
+	repo := new(mockAuditRepository)
+	bufferRepo := new(mockBufferRepository)
+	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+
+	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
+		Return(errors.New("db error"))
+	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).
+		Return(errors.New("redis error"))
+
+	params := validLogActionParams()
+	params.Critical = true
+
+	require.Error(t, srv.LogActions([]services.BulkLogEntry{{Params: params}}))
 }
 
 func TestLogActions_InvalidEntry_Skipped(t *testing.T) {

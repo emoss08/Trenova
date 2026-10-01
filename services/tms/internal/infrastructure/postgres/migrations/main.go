@@ -76,7 +76,7 @@ func Setup() *migrate.Migrations {
 func Run(ctx context.Context, db *bun.DB) error {
 	migrations := Setup()
 
-	migrator := migrate.NewMigrator(db, migrations)
+	migrator := migrate.NewMigrator(db, migrations, migrate.WithMarkAppliedOnSuccess(true))
 
 	// Create migrations table if it doesn't exist
 	if err := migrator.Init(ctx); err != nil {
@@ -102,7 +102,7 @@ func Run(ctx context.Context, db *bun.DB) error {
 func Reset(ctx context.Context, db *bun.DB) error {
 	migrations := Setup()
 
-	migrator := migrate.NewMigrator(db, migrations)
+	migrator := migrate.NewMigrator(db, migrations, migrate.WithMarkAppliedOnSuccess(true))
 
 	// Create migrations table if it doesn't exist
 	if err := migrator.Init(ctx); err != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -55,27 +56,29 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListLocationCategoriesRequest,
 ) (*pagination.ListResult[*locationcategory.LocationCategory], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*locationcategory.LocationCategory], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*locationcategory.LocationCategory, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count location categories", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*locationcategory.LocationCategory, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count location categories", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*locationcategory.LocationCategory]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*locationcategory.LocationCategory]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -115,147 +118,157 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListLocationCategoryConnectionRequest,
 ) (*pagination.CursorListResult[*locationcategory.LocationCategory], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*locationcategory.LocationCategory], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*locationcategory.LocationCategory)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*locationcategory.LocationCategory)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count location categories", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*locationcategory.LocationCategory]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*locationcategory.LocationCategory) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyLocationCategoryColumns(sq, req.LocationCategoryColumns)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count location categories", zap.Error(err))
+			log.Error("failed to scan location categories", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*locationcategory.LocationCategory]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*locationcategory.LocationCategory) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyLocationCategoryColumns(sq, req.LocationCategoryColumns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan location categories", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *locationcategory.LocationCategory,
 ) (*locationcategory.LocationCategory, error) {
-	log := r.l.With(
-		zap.String("operation", "Create"),
-		zap.String("name", entity.Name),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*locationcategory.LocationCategory, error) {
+		log := r.l.With(
+			zap.String("operation", "Create"),
+			zap.String("name", entity.Name),
+		)
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to create location category", zap.Error(err))
-		return nil, err
-	}
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			log.Error("failed to create location category", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *locationcategory.LocationCategory,
 ) (*locationcategory.LocationCategory, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*locationcategory.LocationCategory, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
+		)
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DB().
-		NewUpdate().
-		Model(entity).WherePK().
-		Where("version = ?", ov).
-		OmitZero().
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update location category", zap.Error(err))
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).WherePK().
+			Where("version = ?", ov).
+			OmitZero().
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update location category", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(
-		results,
-		"LocationCategory",
-		entity.ID.String(),
-	); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"LocationCategory",
+			entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetLocationCategoryByIDRequest,
 ) (*locationcategory.LocationCategory, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.ID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*locationcategory.LocationCategory, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.ID.String()),
+		)
 
-	entity := new(locationcategory.LocationCategory)
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("lc.id = ?", req.ID).
-				Where("lc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("lc.business_unit_id = ?", req.TenantInfo.BuID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get location category", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "LocationCategory")
-	}
+		entity := new(locationcategory.LocationCategory)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("lc.id = ?", req.ID).
+					Where("lc.organization_id = ?", req.TenantInfo.OrgID).
+					Where("lc.business_unit_id = ?", req.TenantInfo.BuID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get location category", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "LocationCategory")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*locationcategory.LocationCategory], error) {
-	return dbhelper.SelectOptions[*locationcategory.LocationCategory](
-		ctx,
-		r.db.DB(),
-		req,
-		&dbhelper.SelectOptionsConfig{
-			Columns:       []string{"id", "name", "description", "type", "color"},
-			OrgColumn:     "lc.organization_id",
-			BuColumn:      "lc.business_unit_id",
-			EntityName:    "LocationCategory",
-			SearchColumns: []string{"lc.name", "lc.description"},
-		},
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*locationcategory.LocationCategory], error) {
+		return dbhelper.SelectOptions[*locationcategory.LocationCategory](
+			ctx,
+			r.db.DBForContext(ctx),
+			req,
+			&dbhelper.SelectOptionsConfig{
+				Columns:       []string{"id", "name", "description", "type", "color"},
+				OrgColumn:     "lc.organization_id",
+				BuColumn:      "lc.business_unit_id",
+				EntityName:    "LocationCategory",
+				SearchColumns: []string{"lc.name", "lc.description"},
+			},
+		)
+	})
 }

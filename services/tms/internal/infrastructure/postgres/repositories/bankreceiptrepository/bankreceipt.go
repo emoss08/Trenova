@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -54,65 +55,72 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetBankReceiptByIDRequest,
 ) (*bankreceipt.BankReceipt, error) {
-	entity := new(bankreceipt.BankReceipt)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where("br.id = ?", req.ID).
-		Where("br.organization_id = ?", req.TenantInfo.OrgID).
-		Where("br.business_unit_id = ?", req.TenantInfo.BuID).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "BankReceipt")
-	}
-	return entity, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*bankreceipt.BankReceipt, error) {
+		entity := new(bankreceipt.BankReceipt)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("br.id = ?", req.ID).
+			Where("br.organization_id = ?", req.TenantInfo.OrgID).
+			Where("br.business_unit_id = ?", req.TenantInfo.BuID).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "BankReceipt")
+		}
+		return entity, nil
+	})
 }
 
 func (r *repository) ListByImportBatchID(
 	ctx context.Context,
 	req repositories.ListBankReceiptsByImportBatchRequest,
 ) ([]*bankreceipt.BankReceipt, error) {
-	items := make([]*bankreceipt.BankReceipt, 0)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&items).
-		Where("br.import_batch_id = ?", req.BatchID).
-		Where("br.organization_id = ?", req.TenantInfo.OrgID).
-		Where("br.business_unit_id = ?", req.TenantInfo.BuID).
-		Order("br.receipt_date ASC").
-		Order("br.created_at ASC").
-		Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list bank receipts by import batch: %w", err)
-	}
-	return items, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bankreceipt.BankReceipt, error) {
+		items := make([]*bankreceipt.BankReceipt, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&items).
+			Where("br.import_batch_id = ?", req.BatchID).
+			Where("br.organization_id = ?", req.TenantInfo.OrgID).
+			Where("br.business_unit_id = ?", req.TenantInfo.BuID).
+			Order("br.receipt_date ASC").
+			Order("br.created_at ASC").
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list bank receipts by import batch: %w", err)
+		}
+		return items, nil
+	})
 }
 
 func (r *repository) ListExceptions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*bankreceipt.BankReceipt, error) {
-	items := make([]*bankreceipt.BankReceipt, 0)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&items).
-		Where("br.organization_id = ?", tenantInfo.OrgID).
-		Where("br.business_unit_id = ?", tenantInfo.BuID).
-		Where("br.status = ?", bankreceipt.StatusException).
-		Order("br.receipt_date DESC").
-		Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list bank receipt exceptions: %w", err)
-	}
-	return items, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bankreceipt.BankReceipt, error) {
+		items := make([]*bankreceipt.BankReceipt, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&items).
+			Where("br.organization_id = ?", tenantInfo.OrgID).
+			Where("br.business_unit_id = ?", tenantInfo.BuID).
+			Where("br.status = ?", bankreceipt.StatusException).
+			Order("br.receipt_date DESC").
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list bank receipt exceptions: %w", err)
+		}
+		return items, nil
+	})
 }
 
 func (r *repository) GetSummary(
 	ctx context.Context,
 	req repositories.GetBankReceiptSummaryRequest,
 ) (*repositories.BankReceiptReconciliationSummary, error) {
-	rec := new(summaryRecord)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.BankReceiptReconciliationSummary, error) {
+		rec := new(summaryRecord)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			COALESCE(SUM(CASE WHEN br.status = 'Imported' THEN 1 ELSE 0 END), 0) AS imported_count,
 			COALESCE(SUM(CASE WHEN br.status = 'Imported' THEN br.amount_minor ELSE 0 END), 0) AS imported_amount,
@@ -136,87 +144,92 @@ func (r *repository) GetSummary(
 		  AND br.business_unit_id = ?
 		  AND br.receipt_date <= ?
 	`, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate).Scan(ctx, rec)
-	if err != nil {
-		return nil, fmt.Errorf("get bank receipt summary: %w", err)
-	}
-	return &repositories.BankReceiptReconciliationSummary{
-		AsOfDate:              req.AsOfDate,
-		ImportedCount:         rec.ImportedCount,
-		ImportedAmount:        rec.ImportedAmount,
-		MatchedCount:          rec.MatchedCount,
-		MatchedAmount:         rec.MatchedAmount,
-		ExceptionCount:        rec.ExceptionCount,
-		ExceptionAmount:       rec.ExceptionAmount,
-		ActiveWorkItemCount:   rec.ActiveWorkItemCount,
-		AssignedWorkItemCount: rec.AssignedWorkItemCount,
-		InReviewWorkItemCount: rec.InReviewWorkItemCount,
-		ExceptionAging: repositories.BankReceiptExceptionAging{
-			CurrentCount:    rec.CurrentCount,
-			CurrentAmount:   rec.CurrentAmount,
-			Days1To3Count:   rec.Days1To3Count,
-			Days1To3Amount:  rec.Days1To3Amount,
-			Days4To7Count:   rec.Days4To7Count,
-			Days4To7Amount:  rec.Days4To7Amount,
-			DaysOver7Count:  rec.DaysOver7Count,
-			DaysOver7Amount: rec.DaysOver7Amount,
-		},
-	}, nil
+		if err != nil {
+			return nil, fmt.Errorf("get bank receipt summary: %w", err)
+		}
+		return &repositories.BankReceiptReconciliationSummary{
+			AsOfDate:              req.AsOfDate,
+			ImportedCount:         rec.ImportedCount,
+			ImportedAmount:        rec.ImportedAmount,
+			MatchedCount:          rec.MatchedCount,
+			MatchedAmount:         rec.MatchedAmount,
+			ExceptionCount:        rec.ExceptionCount,
+			ExceptionAmount:       rec.ExceptionAmount,
+			ActiveWorkItemCount:   rec.ActiveWorkItemCount,
+			AssignedWorkItemCount: rec.AssignedWorkItemCount,
+			InReviewWorkItemCount: rec.InReviewWorkItemCount,
+			ExceptionAging: repositories.BankReceiptExceptionAging{
+				CurrentCount:    rec.CurrentCount,
+				CurrentAmount:   rec.CurrentAmount,
+				Days1To3Count:   rec.Days1To3Count,
+				Days1To3Amount:  rec.Days1To3Amount,
+				Days4To7Count:   rec.Days4To7Count,
+				Days4To7Amount:  rec.Days4To7Amount,
+				DaysOver7Count:  rec.DaysOver7Count,
+				DaysOver7Amount: rec.DaysOver7Amount,
+			},
+		}, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *bankreceipt.BankReceipt,
 ) (*bankreceipt.BankReceipt, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-		return nil, fmt.Errorf("create bank receipt: %w", err)
-	}
-	return r.GetByID(
-		ctx,
-		repositories.GetBankReceiptByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceipt.BankReceipt, error) {
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("create bank receipt: %w", err)
+		}
+		return r.GetByID(
+			ctx,
+			repositories.GetBankReceiptByIDRequest{
+				ID: entity.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
 			},
-		},
-	)
+		)
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *bankreceipt.BankReceipt,
 ) (*bankreceipt.BankReceipt, error) {
-	entity.UpdatedAt = timeutils.NowUnix()
-	res, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		Where("id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Where("version = ?", entity.Version).
-		Set("status = ?", entity.Status).
-		Set("matched_customer_payment_id = ?", entity.MatchedCustomerPaymentID).
-		Set("matched_at = ?", entity.MatchedAt).
-		Set("matched_by_id = ?", entity.MatchedByID).
-		Set("exception_reason = ?", entity.ExceptionReason).
-		Set("updated_by_id = ?", entity.UpdatedByID).
-		Set("updated_at = ?", entity.UpdatedAt).
-		Set("version = version + 1").
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("update bank receipt: %w", err)
-	}
-	if err = dberror.CheckRowsAffected(res, "BankReceipt", entity.ID.String()); err != nil {
-		return nil, err
-	}
-	return r.GetByID(
-		ctx,
-		repositories.GetBankReceiptByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceipt.BankReceipt, error) {
+		entity.UpdatedAt = timeutils.NowUnix()
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			Where("id = ?", entity.ID).
+			Where("organization_id = ?", entity.OrganizationID).
+			Where("business_unit_id = ?", entity.BusinessUnitID).
+			Where("version = ?", entity.Version).
+			Set("status = ?", entity.Status).
+			Set("matched_customer_payment_id = ?", entity.MatchedCustomerPaymentID).
+			Set("matched_at = ?", entity.MatchedAt).
+			Set("matched_by_id = ?", entity.MatchedByID).
+			Set("exception_reason = ?", entity.ExceptionReason).
+			Set("updated_by_id = ?", entity.UpdatedByID).
+			Set("updated_at = ?", entity.UpdatedAt).
+			Set("version = version + 1").
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("update bank receipt: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(res, "BankReceipt", entity.ID.String()); err != nil {
+			return nil, err
+		}
+		return r.GetByID(
+			ctx,
+			repositories.GetBankReceiptByIDRequest{
+				ID: entity.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
 			},
-		},
-	)
+		)
+	})
 }

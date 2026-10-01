@@ -60,7 +60,7 @@ func TestCSRFMiddleware_AllowsSessionUnsafeMethodWithToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	router := newCSRFMiddlewareRouter(t, authctx.PrincipalTypeUser)
-	token := csrfutil.Token("session-value", "test-session-secret")
+	token := csrfutil.Token(csrfTestSessionID.String(), "test-session-secret")
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", nil)
@@ -141,6 +141,8 @@ func TestCSRFBrowserGuard_RejectsMissingOriginAndRefererWithSessionCookie(t *tes
 	assert.Equal(t, http.StatusForbidden, w.Code)
 }
 
+var csrfTestSessionID = pulid.MustNew("ses_")
+
 func newCSRFMiddlewareRouter(t *testing.T, principalType string) *gin.Engine {
 	t.Helper()
 
@@ -179,12 +181,12 @@ func newCSRFMiddlewareRouter(t *testing.T, principalType string) *gin.Engine {
 				pulid.MustNew("org_"),
 			)
 		default:
-			authctx.SetAuthContext(
-				c,
-				pulid.MustNew("usr_"),
-				pulid.MustNew("bu_"),
-				pulid.MustNew("org_"),
-			)
+			authctx.SetSessionAuthContext(c, authctx.SessionAuthContextParams{
+				SessionID:      csrfTestSessionID,
+				UserID:         pulid.MustNew("usr_"),
+				BusinessUnitID: pulid.MustNew("bu_"),
+				OrganizationID: pulid.MustNew("org_"),
+			})
 		}
 		c.Next()
 	})
@@ -233,4 +235,19 @@ func newCSRFBrowserGuardRouter(t *testing.T, mode string) *gin.Engine {
 	})
 
 	return router
+}
+
+func TestCSRFMiddleware_RejectsTokenMintedForAnotherSession(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	router := newCSRFMiddlewareRouter(t, authctx.PrincipalTypeUser)
+	token := csrfutil.Token(pulid.MustNew("ses_").String(), "test-session-secret")
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("X-CSRF-Token", token)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
 }

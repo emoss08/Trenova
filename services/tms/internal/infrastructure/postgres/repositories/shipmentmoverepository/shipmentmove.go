@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -137,87 +138,91 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req *repositories.GetMoveByIDRequest,
 ) (*shipment.ShipmentMove, error) {
-	sm := buncolgen.ShipmentMoveColumns
-	stp := buncolgen.StopColumns
-	entity := new(shipment.ShipmentMove)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentMove, error) {
+		sm := buncolgen.ShipmentMoveColumns
+		stp := buncolgen.StopColumns
+		entity := new(shipment.ShipmentMove)
 
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where(sm.ID.Eq(), req.MoveID).
-		Where(sm.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(sm.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(sm.ID.Eq(), req.MoveID).
+			Where(sm.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(sm.BusinessUnitID.Eq(), req.TenantInfo.BuID)
 
-	if req.ForUpdate {
-		query = query.For("UPDATE")
-	}
-
-	if req.ExpandMoveDetails {
-		query = query.
-			RelationWithOpts(buncolgen.ShipmentMoveRelations.Stops, bun.RelationOpts{
-				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(stp.Sequence.OrderAsc()).
-						Relation(buncolgen.StopRelations.Location).
-						Relation(buncolgen.Rel(buncolgen.StopRelations.Location, buncolgen.LocationRelations.State))
-				},
-			})
-	}
-
-	if err := query.Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Shipment move")
-	}
-
-	if req.ExpandMoveDetails {
-		if err := r.hydrateActiveAssignments(
-			ctx,
-			req.TenantInfo,
-			[]*shipment.ShipmentMove{entity},
-		); err != nil {
-			return nil, err
+		if req.ForUpdate {
+			query = query.For("UPDATE")
 		}
-	}
 
-	return entity, nil
+		if req.ExpandMoveDetails {
+			query = query.
+				RelationWithOpts(buncolgen.ShipmentMoveRelations.Stops, bun.RelationOpts{
+					Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.Order(stp.Sequence.OrderAsc()).
+							Relation(buncolgen.StopRelations.Location).
+							Relation(buncolgen.Rel(buncolgen.StopRelations.Location, buncolgen.LocationRelations.State))
+					},
+				})
+		}
+
+		if err := query.Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Shipment move")
+		}
+
+		if req.ExpandMoveDetails {
+			if err := r.hydrateActiveAssignments(
+				ctx,
+				req.TenantInfo,
+				[]*shipment.ShipmentMove{entity},
+			); err != nil {
+				return nil, err
+			}
+		}
+
+		return entity, nil
+	})
 }
 
 func (r *repository) GetMovesByShipmentID(
 	ctx context.Context,
 	req *repositories.GetMovesByShipmentIDRequest,
 ) ([]*shipment.ShipmentMove, error) {
-	sm := buncolgen.ShipmentMoveColumns
-	stp := buncolgen.StopColumns
-	entities := make([]*shipment.ShipmentMove, 0)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentMove, error) {
+		sm := buncolgen.ShipmentMoveColumns
+		stp := buncolgen.StopColumns
+		entities := make([]*shipment.ShipmentMove, 0)
 
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Where(sm.ShipmentID.Eq(), req.ShipmentID).
-		Where(sm.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(sm.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		Order(sm.Sequence.OrderAsc())
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Where(sm.ShipmentID.Eq(), req.ShipmentID).
+			Where(sm.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(sm.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+			Order(sm.Sequence.OrderAsc())
 
-	if req.ExpandMoveDetails {
-		query = query.
-			RelationWithOpts(buncolgen.ShipmentMoveRelations.Stops, bun.RelationOpts{
-				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(stp.Sequence.OrderAsc()).
-						Relation(buncolgen.StopRelations.Location).
-						Relation(buncolgen.Rel(buncolgen.StopRelations.Location, buncolgen.LocationRelations.State))
-				},
-			})
-	}
-
-	if err := query.Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Shipment moves")
-	}
-
-	if req.ExpandMoveDetails {
-		if err := r.hydrateActiveAssignments(ctx, req.TenantInfo, entities); err != nil {
-			return nil, err
+		if req.ExpandMoveDetails {
+			query = query.
+				RelationWithOpts(buncolgen.ShipmentMoveRelations.Stops, bun.RelationOpts{
+					Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.Order(stp.Sequence.OrderAsc()).
+							Relation(buncolgen.StopRelations.Location).
+							Relation(buncolgen.Rel(buncolgen.StopRelations.Location, buncolgen.LocationRelations.State))
+					},
+				})
 		}
-	}
 
-	return entities, nil
+		if err := query.Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Shipment moves")
+		}
+
+		if req.ExpandMoveDetails {
+			if err := r.hydrateActiveAssignments(ctx, req.TenantInfo, entities); err != nil {
+				return nil, err
+			}
+		}
+
+		return entities, nil
+	})
 }
 
 func (r *repository) hydrateActiveAssignments(
@@ -225,55 +230,57 @@ func (r *repository) hydrateActiveAssignments(
 	tenantInfo pagination.TenantInfo,
 	moves []*shipment.ShipmentMove,
 ) error {
-	a := buncolgen.AssignmentColumns
-	moveIDs := make([]pulid.ID, 0, len(moves))
-	moveByID := make(map[pulid.ID]*shipment.ShipmentMove, len(moves))
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		a := buncolgen.AssignmentColumns
+		moveIDs := make([]pulid.ID, 0, len(moves))
+		moveByID := make(map[pulid.ID]*shipment.ShipmentMove, len(moves))
 
-	for _, move := range moves {
-		if move == nil || move.ID.IsNil() {
-			continue
+		for _, move := range moves {
+			if move == nil || move.ID.IsNil() {
+				continue
+			}
+
+			moveIDs = append(moveIDs, move.ID)
+			moveByID[move.ID] = move
+			move.Assignment = nil
 		}
 
-		moveIDs = append(moveIDs, move.ID)
-		moveByID[move.ID] = move
-		move.Assignment = nil
-	}
-
-	if len(moveIDs) == 0 {
-		return nil
-	}
-
-	assignments := make([]*shipment.Assignment, 0, len(moveIDs))
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&assignments).
-		Where(a.ShipmentMoveID.In(), bun.List(moveIDs)).
-		Where(a.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(a.BusinessUnitID.Eq(), tenantInfo.BuID).
-		Where(a.ArchivedAt.IsNull()).
-		Relation(buncolgen.AssignmentRelations.Tractor).
-		Relation(buncolgen.AssignmentRelations.Trailer).
-		Relation(buncolgen.AssignmentRelations.PrimaryWorker).
-		Relation(buncolgen.AssignmentRelations.SecondaryWorker).
-		Scan(ctx); err != nil {
-		if dberror.IsNotFoundError(err) {
+		if len(moveIDs) == 0 {
 			return nil
 		}
 
-		return fmt.Errorf("load move assignments: %w", err)
-	}
+		assignments := make([]*shipment.Assignment, 0, len(moveIDs))
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&assignments).
+			Where(a.ShipmentMoveID.In(), bun.List(moveIDs)).
+			Where(a.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(a.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Where(a.ArchivedAt.IsNull()).
+			Relation(buncolgen.AssignmentRelations.Tractor).
+			Relation(buncolgen.AssignmentRelations.Trailer).
+			Relation(buncolgen.AssignmentRelations.PrimaryWorker).
+			Relation(buncolgen.AssignmentRelations.SecondaryWorker).
+			Scan(ctx); err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil
+			}
 
-	for _, assignment := range assignments {
-		if assignment == nil {
-			continue
+			return fmt.Errorf("load move assignments: %w", err)
 		}
 
-		if move := moveByID[assignment.ShipmentMoveID]; move != nil {
-			move.Assignment = assignment
-		}
-	}
+		for _, assignment := range assignments {
+			if assignment == nil {
+				continue
+			}
 
-	return r.hydrateActiveCarrierAssignments(ctx, tenantInfo, moveIDs, moveByID)
+			if move := moveByID[assignment.ShipmentMoveID]; move != nil {
+				move.Assignment = assignment
+			}
+		}
+
+		return r.hydrateActiveCarrierAssignments(ctx, tenantInfo, moveIDs, moveByID)
+	})
 }
 
 func (r *repository) hydrateActiveCarrierAssignments(
@@ -282,82 +289,86 @@ func (r *repository) hydrateActiveCarrierAssignments(
 	moveIDs []pulid.ID,
 	moveByID map[pulid.ID]*shipment.ShipmentMove,
 ) error {
-	casn := buncolgen.CarrierAssignmentColumns
+	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
+		casn := buncolgen.CarrierAssignmentColumns
 
-	for _, move := range moveByID {
-		move.CarrierAssignment = nil
-	}
-
-	carrierAssignments := make([]*shipment.CarrierAssignment, 0, len(moveIDs))
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&carrierAssignments).
-		Where(casn.ShipmentMoveID.In(), bun.List(moveIDs)).
-		Where(casn.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(casn.BusinessUnitID.Eq(), tenantInfo.BuID).
-		Where(casn.Status.Ne(), shipment.CarrierAssignmentStatusCanceled).
-		Relation(buncolgen.CarrierAssignmentRelations.Carrier).
-		Relation(buncolgen.CarrierAssignmentRelations.Accessorials).
-		Scan(ctx); err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil
+		for _, move := range moveByID {
+			move.CarrierAssignment = nil
 		}
 
-		return fmt.Errorf("load move carrier assignments: %w", err)
-	}
+		carrierAssignments := make([]*shipment.CarrierAssignment, 0, len(moveIDs))
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&carrierAssignments).
+			Where(casn.ShipmentMoveID.In(), bun.List(moveIDs)).
+			Where(casn.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(casn.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Where(casn.Status.Ne(), shipment.CarrierAssignmentStatusCanceled).
+			Relation(buncolgen.CarrierAssignmentRelations.Carrier).
+			Relation(buncolgen.CarrierAssignmentRelations.Accessorials).
+			Scan(ctx); err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil
+			}
 
-	for _, carrierAssignment := range carrierAssignments {
-		if carrierAssignment == nil {
-			continue
+			return fmt.Errorf("load move carrier assignments: %w", err)
 		}
 
-		if move := moveByID[carrierAssignment.ShipmentMoveID]; move != nil {
-			move.CarrierAssignment = carrierAssignment
-		}
-	}
+		for _, carrierAssignment := range carrierAssignments {
+			if carrierAssignment == nil {
+				continue
+			}
 
-	return nil
+			if move := moveByID[carrierAssignment.ShipmentMoveID]; move != nil {
+				move.CarrierAssignment = carrierAssignment
+			}
+		}
+
+		return nil
+	})
 }
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
 	req *repositories.UpdateMoveStatusRequest,
 ) (*shipment.ShipmentMove, error) {
-	sm := buncolgen.ShipmentMoveColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentMove, error) {
+		sm := buncolgen.ShipmentMoveColumns
 
-	move, err := r.GetByID(ctx, &repositories.GetMoveByIDRequest{
-		MoveID:            req.MoveID,
-		TenantInfo:        req.TenantInfo,
-		ExpandMoveDetails: false,
-	})
-	if err != nil {
-		return nil, err
-	}
+		move, err := r.GetByID(ctx, &repositories.GetMoveByIDRequest{
+			MoveID:            req.MoveID,
+			TenantInfo:        req.TenantInfo,
+			ExpandMoveDetails: false,
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	ov := move.Version
-	move.Status = req.Status
-	move.Version++
+		ov := move.Version
+		move.Status = req.Status
+		move.Version++
 
-	results, err := r.db.DBForContext(ctx).NewUpdate().
-		Model(move).
-		Column(sm.Status.String(), sm.Version.String(), sm.UpdatedAt.String()).
-		Where(sm.ID.Eq(), move.ID).
-		Where(sm.OrganizationID.Eq(), move.OrganizationID).
-		Where(sm.BusinessUnitID.Eq(), move.BusinessUnitID).
-		Where(sm.Version.Eq(), ov).
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("update shipment move status %s: %w", move.ID, err)
-	}
+		results, err := r.db.DBForContext(ctx).NewUpdate().
+			Model(move).
+			Column(sm.Status.String(), sm.Version.String(), sm.UpdatedAt.String()).
+			Where(sm.ID.Eq(), move.ID).
+			Where(sm.OrganizationID.Eq(), move.OrganizationID).
+			Where(sm.BusinessUnitID.Eq(), move.BusinessUnitID).
+			Where(sm.Version.Eq(), ov).
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("update shipment move status %s: %w", move.ID, err)
+		}
 
-	if err = dberror.CheckRowsAffected(results, "Shipment move", move.ID.String()); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(results, "Shipment move", move.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return r.GetByID(ctx, &repositories.GetMoveByIDRequest{
-		MoveID:            req.MoveID,
-		TenantInfo:        req.TenantInfo,
-		ExpandMoveDetails: true,
+		return r.GetByID(ctx, &repositories.GetMoveByIDRequest{
+			MoveID:            req.MoveID,
+			TenantInfo:        req.TenantInfo,
+			ExpandMoveDetails: true,
+		})
 	})
 }
 
@@ -366,34 +377,36 @@ func (r *repository) UpdateStopActuals(
 	tenantInfo pagination.TenantInfo,
 	stop *shipment.Stop,
 ) (*shipment.Stop, error) {
-	cols := buncolgen.StopColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Stop, error) {
+		cols := buncolgen.StopColumns
 
-	ov := stop.Version
-	stop.Version++
+		ov := stop.Version
+		stop.Version++
 
-	results, err := r.db.DBForContext(ctx).NewUpdate().
-		Model(stop).
-		Column(
-			cols.ActualArrival.String(),
-			cols.ActualDeparture.String(),
-			cols.Status.String(),
-			cols.Version.String(),
-			cols.UpdatedAt.String(),
-		).
-		Where(cols.ID.Eq(), stop.ID).
-		Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-		Where(cols.Version.Eq(), ov).
-		Exec(ctx)
-	if err != nil {
-		stop.Version = ov
-		return nil, fmt.Errorf("update stop actuals %s: %w", stop.ID, err)
-	}
-	if err = dberror.CheckRowsAffected(results, "Stop", stop.ID.String()); err != nil {
-		stop.Version = ov
-		return nil, err
-	}
-	return stop, nil
+		results, err := r.db.DBForContext(ctx).NewUpdate().
+			Model(stop).
+			Column(
+				cols.ActualArrival.String(),
+				cols.ActualDeparture.String(),
+				cols.Status.String(),
+				cols.Version.String(),
+				cols.UpdatedAt.String(),
+			).
+			Where(cols.ID.Eq(), stop.ID).
+			Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Where(cols.Version.Eq(), ov).
+			Exec(ctx)
+		if err != nil {
+			stop.Version = ov
+			return nil, fmt.Errorf("update stop actuals %s: %w", stop.ID, err)
+		}
+		if err = dberror.CheckRowsAffected(results, "Stop", stop.ID.String()); err != nil {
+			stop.Version = ov
+			return nil, err
+		}
+		return stop, nil
+	})
 }
 
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
@@ -401,111 +414,115 @@ func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateMoveStatusRequest,
 ) ([]*shipment.ShipmentMove, error) {
-	sm := buncolgen.ShipmentMoveColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentMove, error) {
+		sm := buncolgen.ShipmentMoveColumns
 
-	if len(req.MoveIDs) == 0 {
-		return []*shipment.ShipmentMove{}, nil
-	}
-
-	entities := make([]*shipment.ShipmentMove, 0, len(req.MoveIDs))
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		for _, moveID := range req.MoveIDs {
-			move, err := r.GetByID(c, &repositories.GetMoveByIDRequest{
-				MoveID:            moveID,
-				TenantInfo:        req.TenantInfo,
-				ExpandMoveDetails: false,
-			})
-			if err != nil {
-				return err
-			}
-
-			ov := move.Version
-			move.Status = req.Status
-			move.Version++
-
-			results, err := tx.NewUpdate().
-				Model(move).
-				Column(sm.Status.String(), sm.Version.String(), sm.UpdatedAt.String()).
-				Where(sm.ID.Eq(), move.ID).
-				Where(sm.OrganizationID.Eq(), move.OrganizationID).
-				Where(sm.BusinessUnitID.Eq(), move.BusinessUnitID).
-				Where(sm.Version.Eq(), ov).
-				Exec(c)
-			if err != nil {
-				return fmt.Errorf("bulk update shipment move status %s: %w", move.ID, err)
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results,
-				"Shipment move",
-				move.ID.String(),
-			); err != nil {
-				return err
-			}
-
-			entities = append(entities, move)
+		if len(req.MoveIDs) == 0 {
+			return []*shipment.ShipmentMove{}, nil
 		}
 
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
+		entities := make([]*shipment.ShipmentMove, 0, len(req.MoveIDs))
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			for _, moveID := range req.MoveIDs {
+				move, err := r.GetByID(c, &repositories.GetMoveByIDRequest{
+					MoveID:            moveID,
+					TenantInfo:        req.TenantInfo,
+					ExpandMoveDetails: false,
+				})
+				if err != nil {
+					return err
+				}
 
-	result := make([]*shipment.ShipmentMove, 0, len(req.MoveIDs))
-	for _, moveID := range req.MoveIDs {
-		move, err := r.GetByID(ctx, &repositories.GetMoveByIDRequest{
-			MoveID:            moveID,
-			TenantInfo:        req.TenantInfo,
-			ExpandMoveDetails: true,
+				ov := move.Version
+				move.Status = req.Status
+				move.Version++
+
+				results, err := tx.NewUpdate().
+					Model(move).
+					Column(sm.Status.String(), sm.Version.String(), sm.UpdatedAt.String()).
+					Where(sm.ID.Eq(), move.ID).
+					Where(sm.OrganizationID.Eq(), move.OrganizationID).
+					Where(sm.BusinessUnitID.Eq(), move.BusinessUnitID).
+					Where(sm.Version.Eq(), ov).
+					Exec(c)
+				if err != nil {
+					return fmt.Errorf("bulk update shipment move status %s: %w", move.ID, err)
+				}
+
+				if err = dberror.CheckRowsAffected(
+					results,
+					"Shipment move",
+					move.ID.String(),
+				); err != nil {
+					return err
+				}
+
+				entities = append(entities, move)
+			}
+
+			return nil
 		})
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, move)
-	}
 
-	return result, nil
+		result := make([]*shipment.ShipmentMove, 0, len(req.MoveIDs))
+		for _, moveID := range req.MoveIDs {
+			move, err := r.GetByID(ctx, &repositories.GetMoveByIDRequest{
+				MoveID:            moveID,
+				TenantInfo:        req.TenantInfo,
+				ExpandMoveDetails: true,
+			})
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, move)
+		}
+
+		return result, nil
+	})
 }
 
 func (r *repository) SplitMove(
 	ctx context.Context,
 	req *repositories.SplitMoveRequest,
 ) (*repositories.SplitMoveResponse, error) {
-	var response *repositories.SplitMoveResponse
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		originalMove, err := r.GetByID(c, &repositories.GetMoveByIDRequest{
-			MoveID:            req.MoveID,
-			TenantInfo:        req.TenantInfo,
-			ExpandMoveDetails: true,
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.SplitMoveResponse, error) {
+		var response *repositories.SplitMoveResponse
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			originalMove, err := r.GetByID(c, &repositories.GetMoveByIDRequest{
+				MoveID:            req.MoveID,
+				TenantInfo:        req.TenantInfo,
+				ExpandMoveDetails: true,
+			})
+			if err != nil {
+				return err
+			}
+
+			split := shipment.PlanMoveSplit(originalMove, req.Spec())
+
+			if err = r.shiftSubsequentMoveSequences(c, tx, originalMove); err != nil {
+				return err
+			}
+
+			if err = r.updateOriginalMoveForSplit(c, tx, originalMove, split.RelayStop); err != nil {
+				return err
+			}
+
+			newMove, err := r.insertSplitMove(c, tx, split.NewMove)
+			if err != nil {
+				return err
+			}
+
+			response, err = r.loadSplitMoveResponse(c, tx, req.TenantInfo, originalMove.ID, newMove.ID)
+			return err
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		split := shipment.PlanMoveSplit(originalMove, req.Spec())
-
-		if err = r.shiftSubsequentMoveSequences(c, tx, originalMove); err != nil {
-			return err
-		}
-
-		if err = r.updateOriginalMoveForSplit(c, tx, originalMove, split.RelayStop); err != nil {
-			return err
-		}
-
-		newMove, err := r.insertSplitMove(c, tx, split.NewMove)
-		if err != nil {
-			return err
-		}
-
-		response, err = r.loadSplitMoveResponse(c, tx, req.TenantInfo, originalMove.ID, newMove.ID)
-		return err
+		return response, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
 }
 
 func (r *repository) getExistingMoves(

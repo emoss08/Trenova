@@ -3306,6 +3306,188 @@ var SSOConfigFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// SSOIdentityLink — table "sso_identity_links", alias "ssoil"
+// ---------------------------------------------------------------------------
+
+// SSOIdentityLinkTable holds the table name, alias, and primary key columns
+// for the "sso_identity_links" table. The alias "ssoil" is used in all generated
+// SQL fragments (e.g. "ssoil.id = ?").
+var SSOIdentityLinkTable = TableInfo{
+	Name:       "sso_identity_links",
+	Alias:      "ssoil",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// SSOIdentityLinkColumns provides type-safe column references for the "sso_identity_links" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(SSOIdentityLinkColumns.ID.String())
+//	// SELECT ssoil.id FROM sso_identity_links AS ssoil
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(SSOIdentityLinkColumns.ID.Eq(), id)           // WHERE ssoil.id = ?
+//	q.Order(SSOIdentityLinkColumns.CreatedAt.OrderDesc())  // ORDER BY ssoil.created_at DESC
+var SSOIdentityLinkColumns = struct {
+	ID             Column // "id" → qualified: "ssoil.id"
+	OrganizationID Column // "organization_id" → qualified: "ssoil.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "ssoil.business_unit_id"
+	SSOConfigID    Column // "sso_config_id" → qualified: "ssoil.sso_config_id"
+	UserID         Column // "user_id" → qualified: "ssoil.user_id"
+	Issuer         Column // "issuer" → qualified: "ssoil.issuer"
+	Subject        Column // "subject" → qualified: "ssoil.subject"
+	EmailAtLink    Column // "email_at_link" → qualified: "ssoil.email_at_link"
+	LastLoginAt    Column // "last_login_at" → qualified: "ssoil.last_login_at"
+	CreatedAt      Column // "created_at" → qualified: "ssoil.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "ssoil.updated_at"
+}{
+	ID:             NewColumn("id", "ssoil"),
+	OrganizationID: NewColumn("organization_id", "ssoil"),
+	BusinessUnitID: NewColumn("business_unit_id", "ssoil"),
+	SSOConfigID:    NewColumn("sso_config_id", "ssoil"),
+	UserID:         NewColumn("user_id", "ssoil"),
+	Issuer:         NewColumn("issuer", "ssoil"),
+	Subject:        NewColumn("subject", "ssoil"),
+	EmailAtLink:    NewColumn("email_at_link", "ssoil"),
+	LastLoginAt:    NewColumn("last_login_at", "ssoil"),
+	CreatedAt:      NewColumn("created_at", "ssoil"),
+	UpdatedAt:      NewColumn("updated_at", "ssoil"),
+}
+
+// SSOIdentityLinkFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by SSOIdentityLink.GetStaticFieldMap().
+var SSOIdentityLinkFieldMap = map[string]string{
+	"id":             "id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"ssoConfigId":    "sso_config_id",
+	"userId":         "user_id",
+	"issuer":         "issuer",
+	"subject":        "subject",
+	"emailAtLink":    "email_at_link",
+	"lastLoginAt":    "last_login_at",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// SSOIdentityLinkInsertableColumns lists column names suitable for INSERT statements on the "sso_identity_links" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var SSOIdentityLinkInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"sso_config_id",
+	"user_id",
+	"issuer",
+	"subject",
+	"email_at_link",
+	"last_login_at",
+	"created_at",
+	"updated_at",
+}
+
+// SSOIdentityLinkScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ssoil.organization_id = ? AND ssoil.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.SSOIdentityLinkScopeTenant(sq, ti).
+//		Where(buncolgen.SSOIdentityLinkColumns.ID.Eq(), id)
+func SSOIdentityLinkScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, SSOIdentityLinkColumns.OrganizationID, SSOIdentityLinkColumns.BusinessUnitID, ti)
+}
+
+// SSOIdentityLinkScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.SSOIdentityLinkScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.SSOIdentityLinkColumns.ID.In(), bun.List(ids))
+//	})
+func SSOIdentityLinkScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, SSOIdentityLinkColumns.OrganizationID, SSOIdentityLinkColumns.BusinessUnitID, ti)
+}
+
+// SSOIdentityLinkScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.SSOIdentityLinkScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.SSOIdentityLinkColumns.ID.Eq(), id)
+//	})
+func SSOIdentityLinkScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, SSOIdentityLinkColumns.OrganizationID, SSOIdentityLinkColumns.BusinessUnitID, ti)
+}
+
+// SSOIdentityLinkApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.SSOIdentityLinkApplyTenant(tenantInfo))
+func SSOIdentityLinkApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(SSOIdentityLinkColumns.OrganizationID, SSOIdentityLinkColumns.BusinessUnitID, ti)
+}
+
+// SSOIdentityLinkFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "sso_identity_links" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	SSOIdentityLinkFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var SSOIdentityLinkFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	SSOConfigID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ssoConfigId" → DB: "sso_config_id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	Issuer         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "issuer" → DB: "issuer"
+	Subject        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subject" → DB: "subject"
+	EmailAtLink    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailAtLink" → DB: "email_at_link"
+	LastLoginAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastLoginAt" → DB: "last_login_at"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	SSOConfigID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ssoConfigId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
+	},
+	Issuer: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("issuer", op, value)
+	},
+	Subject: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subject", op, value)
+	},
+	EmailAtLink: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("emailAtLink", op, value)
+	},
+	LastLoginAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastLoginAt", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Sequence — table "sequences", alias "seq"
 // ---------------------------------------------------------------------------
 

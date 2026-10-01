@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -65,225 +66,237 @@ func (r *repository) Upsert(
 	ctx context.Context,
 	entity *aicorrection.Correction,
 ) (*aicorrection.Correction, error) {
-	cols := buncolgen.CorrectionColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aicorrection.Correction, error) {
+		cols := buncolgen.CorrectionColumns
 
-	_, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		On(uniqueSource()).
-		Set(cols.Task.SetExcluded()).
-		Set(cols.DocumentID.SetExcluded()).
-		Set(cols.SubjectType.SetExcluded()).
-		Set(cols.SubjectID.SetExcluded()).
-		Set(cols.CapturedByID.SetExcluded()).
-		Set(cols.DocumentKind.SetExcluded()).
-		Set(cols.DocumentFingerprint.SetExcluded()).
-		Set(cols.ExtractionModel.SetExcluded()).
-		Set(cols.ExtractionProviderID.SetExcluded()).
-		Set(cols.PredictedConfidence.SetExcluded()).
-		Set(cols.Predicted.SetExcluded()).
-		Set(cols.Confirmed.SetExcluded()).
-		Set(cols.FieldResults.SetExcluded()).
-		Set(cols.ScoredCount.SetExcluded()).
-		Set(cols.CorrectCount.SetExcluded()).
-		Set(cols.CorrectedCount.SetExcluded()).
-		Set(cols.MissedCount.SetExcluded()).
-		Set(cols.UnconfirmedCount.SetExcluded()).
-		Set(cols.UnscoredCount.SetExcluded()).
-		Set(cols.CapturedAt.SetExcluded()).
-		Set(cols.Version.IncConflict(1)).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to upsert ai correction",
-			zap.String("sourceType", entity.SourceType.String()),
-			zap.String("sourceId", entity.SourceID.String()),
-			zap.Error(err),
-		)
+		_, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			On(uniqueSource()).
+			Set(cols.Task.SetExcluded()).
+			Set(cols.DocumentID.SetExcluded()).
+			Set(cols.SubjectType.SetExcluded()).
+			Set(cols.SubjectID.SetExcluded()).
+			Set(cols.CapturedByID.SetExcluded()).
+			Set(cols.DocumentKind.SetExcluded()).
+			Set(cols.DocumentFingerprint.SetExcluded()).
+			Set(cols.ExtractionModel.SetExcluded()).
+			Set(cols.ExtractionProviderID.SetExcluded()).
+			Set(cols.PredictedConfidence.SetExcluded()).
+			Set(cols.Predicted.SetExcluded()).
+			Set(cols.Confirmed.SetExcluded()).
+			Set(cols.FieldResults.SetExcluded()).
+			Set(cols.ScoredCount.SetExcluded()).
+			Set(cols.CorrectCount.SetExcluded()).
+			Set(cols.CorrectedCount.SetExcluded()).
+			Set(cols.MissedCount.SetExcluded()).
+			Set(cols.UnconfirmedCount.SetExcluded()).
+			Set(cols.UnscoredCount.SetExcluded()).
+			Set(cols.CapturedAt.SetExcluded()).
+			Set(cols.Version.IncConflict(1)).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to upsert ai correction",
+				zap.String("sourceType", entity.SourceType.String()),
+				zap.String("sourceId", entity.SourceID.String()),
+				zap.Error(err),
+			)
 
-		return nil, fmt.Errorf("upsert ai correction: %w", err)
-	}
+			return nil, fmt.Errorf("upsert ai correction: %w", err)
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) PurgeBefore(
 	ctx context.Context,
 	req repositories.PurgeAICorrectionsRequest,
 ) (int64, error) {
-	cols := buncolgen.CorrectionColumns
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultPurgeLimit
-	}
-	if limit > maxPurgeLimit {
-		limit = maxPurgeLimit
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		cols := buncolgen.CorrectionColumns
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultPurgeLimit
+		}
+		if limit > maxPurgeLimit {
+			limit = maxPurgeLimit
+		}
 
-	dba := r.db.DBForContext(ctx)
-	expired := dba.NewSelect().
-		Model((*aicorrection.Correction)(nil)).
-		Column(cols.ID.Bare()).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
-				Where(cols.CreatedAt.Lt(), req.Before)
-		}).
-		OrderExpr(cols.CreatedAt.OrderAsc()).
-		Limit(limit)
+		dba := r.db.DBForContext(ctx)
+		expired := dba.NewSelect().
+			Model((*aicorrection.Correction)(nil)).
+			Column(cols.ID.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+					Where(cols.CreatedAt.Lt(), req.Before)
+			}).
+			OrderExpr(cols.CreatedAt.OrderAsc()).
+			Limit(limit)
 
-	res, err := dba.NewDelete().
-		Model((*aicorrection.Correction)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.CorrectionScopeTenantDelete(dq, req.TenantInfo).
-				Where(cols.ID.In(), expired)
-		}).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to purge expired ai corrections", zap.Error(err))
+		res, err := dba.NewDelete().
+			Model((*aicorrection.Correction)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return buncolgen.CorrectionScopeTenantDelete(dq, req.TenantInfo).
+					Where(cols.ID.In(), expired)
+			}).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to purge expired ai corrections", zap.Error(err))
 
-		return 0, fmt.Errorf("purge expired ai corrections: %w", err)
-	}
+			return 0, fmt.Errorf("purge expired ai corrections: %w", err)
+		}
 
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("purge expired ai corrections rows: %w", err)
-	}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return 0, fmt.Errorf("purge expired ai corrections rows: %w", err)
+		}
 
-	return rows, nil
+		return rows, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetAICorrectionRequest,
 ) (*aicorrection.Correction, error) {
-	entity := new(aicorrection.Correction)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.CorrectionColumns.ID.Eq(), req.ID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, correctionEntity)
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aicorrection.Correction, error) {
+		entity := new(aicorrection.Correction)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.CorrectionColumns.ID.Eq(), req.ID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, correctionEntity)
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetLatestByDocument(
 	ctx context.Context,
 	req *repositories.GetLatestAICorrectionByDocumentRequest,
 ) (*aicorrection.Correction, error) {
-	cols := buncolgen.CorrectionColumns
-	entity := new(aicorrection.Correction)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
-				Where(cols.Task.Eq(), req.Task).
-				Where(cols.DocumentID.Eq(), req.DocumentID)
-		}).
-		Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderDesc()).
-		Limit(1).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, correctionEntity)
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aicorrection.Correction, error) {
+		cols := buncolgen.CorrectionColumns
+		entity := new(aicorrection.Correction)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+					Where(cols.Task.Eq(), req.Task).
+					Where(cols.DocumentID.Eq(), req.DocumentID)
+			}).
+			Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderDesc()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, correctionEntity)
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListAICorrectionConnectionRequest,
 ) (*pagination.CursorListResult[*aicorrection.Correction], error) {
-	dba := r.db.DBForContext(ctx)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*aicorrection.Correction], error) {
+		dba := r.db.DBForContext(ctx)
 
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.NewSelect().
-			Model((*aicorrection.Correction)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = querybuilder.ApplyFiltersWithoutSort(
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.NewSelect().
+				Model((*aicorrection.Correction)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = querybuilder.ApplyFiltersWithoutSort(
+						sq,
+						buncolgen.CorrectionTable.Alias,
+						req.Filter,
+						(*aicorrection.Correction)(nil),
+					)
+
+					return sq.Apply(buncolgen.CorrectionApplyTenant(req.Filter.TenantInfo))
+				}).
+				Count(ctx)
+			if err != nil {
+				r.l.Error("failed to count ai corrections", zap.Error(err))
+
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*aicorrection.Correction]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: totalCount,
+			Query: func(entities *[]*aicorrection.Correction) *bun.SelectQuery {
+				q := dba.NewSelect().Model(entities)
+				if len(req.Columns) > 0 {
+					q = q.Column(req.Columns...)
+				}
+
+				return q
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return querybuilder.ApplyCursorFilters(
 					sq,
 					buncolgen.CorrectionTable.Alias,
 					req.Filter,
+					req.Cursor,
 					(*aicorrection.Correction)(nil),
 				)
-
-				return sq.Apply(buncolgen.CorrectionApplyTenant(req.Filter.TenantInfo))
-			}).
-			Count(ctx)
+			},
+		})
 		if err != nil {
-			r.l.Error("failed to count ai corrections", zap.Error(err))
+			r.l.Error("failed to list ai corrections", zap.Error(err))
 
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*aicorrection.Correction]{
-		Filter:     req.Filter,
-		Cursor:     req.Cursor,
-		TotalCount: totalCount,
-		Query: func(entities *[]*aicorrection.Correction) *bun.SelectQuery {
-			q := dba.NewSelect().Model(entities)
-			if len(req.Columns) > 0 {
-				q = q.Column(req.Columns...)
-			}
-
-			return q
-		},
-		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-			return querybuilder.ApplyCursorFilters(
-				sq,
-				buncolgen.CorrectionTable.Alias,
-				req.Filter,
-				req.Cursor,
-				(*aicorrection.Correction)(nil),
-			)
-		},
+		return result, nil
 	})
-	if err != nil {
-		r.l.Error("failed to list ai corrections", zap.Error(err))
-
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func (r *repository) TotalsByProvider(
 	ctx context.Context,
 	req *repositories.TotalAICorrectionsByProviderRequest,
 ) ([]repositories.AICorrectionProviderTotal, error) {
-	cols := buncolgen.CorrectionColumns
-	totals := make([]repositories.AICorrectionProviderTotal, 0, 2)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*aicorrection.Correction)(nil)).
-		ColumnExpr(cols.ExtractionProviderID.Expr("{} = ? AS candidate"), req.ProviderID).
-		ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
-		ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
-				Where(cols.Task.Eq(), req.Task).
-				Where(cols.CapturedAt.Gte(), req.Since).
-				Where(cols.ExtractionProviderID.IsNotNull())
-		}).
-		GroupExpr("candidate").
-		Scan(ctx, &totals)
-	if err != nil {
-		r.l.Error("failed to total ai corrections by provider", zap.Error(err))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AICorrectionProviderTotal, error) {
+		cols := buncolgen.CorrectionColumns
+		totals := make([]repositories.AICorrectionProviderTotal, 0, 2)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*aicorrection.Correction)(nil)).
+			ColumnExpr(cols.ExtractionProviderID.Expr("{} = ? AS candidate"), req.ProviderID).
+			ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
+			ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+					Where(cols.Task.Eq(), req.Task).
+					Where(cols.CapturedAt.Gte(), req.Since).
+					Where(cols.ExtractionProviderID.IsNotNull())
+			}).
+			GroupExpr("candidate").
+			Scan(ctx, &totals)
+		if err != nil {
+			r.l.Error("failed to total ai corrections by provider", zap.Error(err))
 
-		return nil, fmt.Errorf("total ai corrections by provider: %w", err)
-	}
+			return nil, fmt.Errorf("total ai corrections by provider: %w", err)
+		}
 
-	return totals, nil
+		return totals, nil
+	})
 }
 
 const (
@@ -315,35 +328,37 @@ func (r *repository) weeklyTotals(
 	since int64,
 	scope func(*bun.SelectQuery) *bun.SelectQuery,
 ) ([]aicorrection.WeekTotal, error) {
-	cols := buncolgen.CorrectionColumns
-	totals := make([]aicorrection.WeekTotal, 0, aicorrection.TrendWeeks)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*aicorrection.Correction)(nil)).
-		ColumnExpr(cols.ExtractionProviderID.Expr("{} AS provider_id")).
-		ColumnExpr(
-			cols.CapturedAt.Expr("{} - (({} - ?) % ?) AS week_start"),
-			firstMondayEpoch,
-			secondsPerWeek,
-		).
-		ColumnExpr(buncolgen.Count("corrections")).
-		ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
-		ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return scope(sq).
-				Where(cols.Task.Eq(), task).
-				Where(cols.CapturedAt.Gte(), since).
-				Where(cols.ExtractionProviderID.IsNotNull())
-		}).
-		GroupExpr("provider_id, week_start").
-		Scan(ctx, &totals)
-	if err != nil {
-		r.l.Error("failed to total ai corrections by week and provider", zap.Error(err))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aicorrection.WeekTotal, error) {
+		cols := buncolgen.CorrectionColumns
+		totals := make([]aicorrection.WeekTotal, 0, aicorrection.TrendWeeks)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*aicorrection.Correction)(nil)).
+			ColumnExpr(cols.ExtractionProviderID.Expr("{} AS provider_id")).
+			ColumnExpr(
+				cols.CapturedAt.Expr("{} - (({} - ?) % ?) AS week_start"),
+				firstMondayEpoch,
+				secondsPerWeek,
+			).
+			ColumnExpr(buncolgen.Count("corrections")).
+			ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
+			ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return scope(sq).
+					Where(cols.Task.Eq(), task).
+					Where(cols.CapturedAt.Gte(), since).
+					Where(cols.ExtractionProviderID.IsNotNull())
+			}).
+			GroupExpr("provider_id, week_start").
+			Scan(ctx, &totals)
+		if err != nil {
+			r.l.Error("failed to total ai corrections by week and provider", zap.Error(err))
 
-		return nil, fmt.Errorf("total ai corrections by week and provider: %w", err)
-	}
+			return nil, fmt.Errorf("total ai corrections by week and provider: %w", err)
+		}
 
-	return totals, nil
+		return totals, nil
+	})
 }
 
 func (r *repository) trainingConsent(ctx context.Context) *bun.SelectQuery {
@@ -386,127 +401,133 @@ func (r *repository) CountTrainable(
 	ctx context.Context,
 	req *repositories.CountTrainableAICorrectionsRequest,
 ) (int, error) {
-	cols := buncolgen.CorrectionColumns
-	capPerOrganization := req.PerOrganizationCap
-	if capPerOrganization <= 0 {
-		return 0, errortypes.NewValidationError(
-			"perOrganizationCap",
-			errortypes.ErrInvalid,
-			"The per-organization cap must be positive",
-		)
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := buncolgen.CorrectionColumns
+		capPerOrganization := req.PerOrganizationCap
+		if capPerOrganization <= 0 {
+			return 0, errortypes.NewValidationError(
+				"perOrganizationCap",
+				errortypes.ErrInvalid,
+				"The per-organization cap must be positive",
+			)
+		}
 
-	db := r.db.DBForContext(ctx)
-	perOrganization := db.NewSelect().
-		Model((*aicorrection.Correction)(nil)).
-		ColumnExpr("COUNT(*) AS examples").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.trainable(ctx, sq, req.Task, req.CapturedFrom, req.CapturedTo).
-				Where("EXISTS (?)", r.trainingConsent(ctx))
-		}).
-		GroupExpr(cols.OrganizationID.Qualified() + ", " + cols.BusinessUnitID.Qualified())
+		db := r.db.DBForContext(ctx)
+		perOrganization := db.NewSelect().
+			Model((*aicorrection.Correction)(nil)).
+			ColumnExpr("COUNT(*) AS examples").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.trainable(ctx, sq, req.Task, req.CapturedFrom, req.CapturedTo).
+					Where("EXISTS (?)", r.trainingConsent(ctx))
+			}).
+			GroupExpr(cols.OrganizationID.Qualified() + ", " + cols.BusinessUnitID.Qualified())
 
-	var total int
-	err := db.NewSelect().
-		TableExpr("(?) AS per_organization", perOrganization).
-		ColumnExpr("COALESCE(SUM(LEAST(per_organization.examples, ?)), 0)", capPerOrganization).
-		Scan(ctx, &total)
-	if err != nil {
-		r.l.Error("failed to count trainable ai corrections", zap.Error(err))
+		var total int
+		err := db.NewSelect().
+			TableExpr("(?) AS per_organization", perOrganization).
+			ColumnExpr("COALESCE(SUM(LEAST(per_organization.examples, ?)), 0)", capPerOrganization).
+			Scan(ctx, &total)
+		if err != nil {
+			r.l.Error("failed to count trainable ai corrections", zap.Error(err))
 
-		return 0, fmt.Errorf("count trainable ai corrections: %w", err)
-	}
+			return 0, fmt.Errorf("count trainable ai corrections: %w", err)
+		}
 
-	return total, nil
+		return total, nil
+	})
 }
 
 func (r *repository) ListForAccuracy(
 	ctx context.Context,
 	req repositories.ListAICorrectionsForAccuracyRequest,
 ) ([]*aicorrection.Correction, error) {
-	cols := buncolgen.CorrectionColumns
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultAccuracyLimit
-	}
-	limit = min(limit, maxAccuracyLimit)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aicorrection.Correction, error) {
+		cols := buncolgen.CorrectionColumns
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultAccuracyLimit
+		}
+		limit = min(limit, maxAccuracyLimit)
 
-	entities := make([]*aicorrection.Correction, 0, min(limit, defaultAccuracyLimit))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Column(
-			cols.ID.Bare(),
-			cols.DocumentKind.Bare(),
-			cols.ExtractionModel.Bare(),
-			cols.ExtractionProviderID.Bare(),
-			cols.FieldResults.Bare(),
-			cols.ScoredCount.Bare(),
-			cols.CorrectCount.Bare(),
-			cols.CorrectedCount.Bare(),
-			cols.MissedCount.Bare(),
-			cols.UnconfirmedCount.Bare(),
-			cols.UnscoredCount.Bare(),
-			cols.CapturedAt.Bare(),
-		).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
-				Where(cols.Task.Eq(), req.Task).
-				Where(cols.CapturedAt.Gte(), req.Since)
-		}).
-		Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderAsc()).
-		Limit(limit).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list ai corrections for accuracy", zap.Error(err))
+		entities := make([]*aicorrection.Correction, 0, min(limit, defaultAccuracyLimit))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Column(
+				cols.ID.Bare(),
+				cols.DocumentKind.Bare(),
+				cols.ExtractionModel.Bare(),
+				cols.ExtractionProviderID.Bare(),
+				cols.FieldResults.Bare(),
+				cols.ScoredCount.Bare(),
+				cols.CorrectCount.Bare(),
+				cols.CorrectedCount.Bare(),
+				cols.MissedCount.Bare(),
+				cols.UnconfirmedCount.Bare(),
+				cols.UnscoredCount.Bare(),
+				cols.CapturedAt.Bare(),
+			).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+					Where(cols.Task.Eq(), req.Task).
+					Where(cols.CapturedAt.Gte(), req.Since)
+			}).
+			Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderAsc()).
+			Limit(limit).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list ai corrections for accuracy", zap.Error(err))
 
-		return nil, fmt.Errorf("list ai corrections for accuracy: %w", err)
-	}
+			return nil, fmt.Errorf("list ai corrections for accuracy: %w", err)
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) ListForTraining(
 	ctx context.Context,
 	req *repositories.ListAICorrectionsForTrainingRequest,
 ) ([]*aicorrection.Correction, error) {
-	cols := buncolgen.CorrectionColumns
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultTrainingLimit
-	}
-	limit = min(limit, maxTrainingLimit)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*aicorrection.Correction, error) {
+		cols := buncolgen.CorrectionColumns
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultTrainingLimit
+		}
+		limit = min(limit, maxTrainingLimit)
 
-	entities := make([]*aicorrection.Correction, 0, limit)
-	err := r.db.DBForContext(ctx).NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = r.trainable(
-				ctx,
-				buncolgen.CorrectionScopeTenant(sq, req.TenantInfo),
-				req.Task,
-				req.CapturedFrom,
-				req.CapturedTo,
-			)
-			if req.BeforeID.IsNotNil() {
-				sq = sq.WhereGroup(" AND ", func(cq *bun.SelectQuery) *bun.SelectQuery {
-					return cq.Where(cols.CapturedAt.Lt(), req.BeforeCapturedAt).
-						WhereGroup(" OR ", func(tq *bun.SelectQuery) *bun.SelectQuery {
-							return tq.Where(cols.CapturedAt.Eq(), req.BeforeCapturedAt).
-								Where(cols.ID.Lt(), req.BeforeID)
-						})
-				})
-			}
-			return sq
-		}).
-		Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderDesc()).
-		Limit(limit).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list ai corrections for training", zap.Error(err))
+		entities := make([]*aicorrection.Correction, 0, limit)
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = r.trainable(
+					ctx,
+					buncolgen.CorrectionScopeTenant(sq, req.TenantInfo),
+					req.Task,
+					req.CapturedFrom,
+					req.CapturedTo,
+				)
+				if req.BeforeID.IsNotNil() {
+					sq = sq.WhereGroup(" AND ", func(cq *bun.SelectQuery) *bun.SelectQuery {
+						return cq.Where(cols.CapturedAt.Lt(), req.BeforeCapturedAt).
+							WhereGroup(" OR ", func(tq *bun.SelectQuery) *bun.SelectQuery {
+								return tq.Where(cols.CapturedAt.Eq(), req.BeforeCapturedAt).
+									Where(cols.ID.Lt(), req.BeforeID)
+							})
+					})
+				}
+				return sq
+			}).
+			Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderDesc()).
+			Limit(limit).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list ai corrections for training", zap.Error(err))
 
-		return nil, fmt.Errorf("list ai corrections for training: %w", err)
-	}
+			return nil, fmt.Errorf("list ai corrections for training: %w", err)
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }

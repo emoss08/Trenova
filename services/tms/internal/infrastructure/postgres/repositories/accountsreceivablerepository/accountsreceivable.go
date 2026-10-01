@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -67,8 +68,9 @@ func (r *repository) ListCustomerLedger(
 	ctx context.Context,
 	req repositories.ListCustomerLedgerRequest,
 ) ([]*repositories.ARLedgerEntry, error) {
-	entries := make([]*repositories.ARLedgerEntry, 0)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARLedgerEntry, error) {
+		entries := make([]*repositories.ARLedgerEntry, 0)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT customer_id, transaction_date, source_event_type AS event_type, document_number, source_object_type, source_object_id, amount_minor, COALESCE(related_invoice_id, '') AS related_invoice_id
 		FROM customer_ledger_entries
 		WHERE organization_id = ?
@@ -76,18 +78,20 @@ func (r *repository) ListCustomerLedger(
 		  AND customer_id = ?
 		ORDER BY transaction_date ASC, line_number ASC
 	`, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID).Scan(ctx, &entries)
-	if err != nil {
-		return nil, err
-	}
-	return entries, nil
+		if err != nil {
+			return nil, err
+		}
+		return entries, nil
+	})
 }
 
 func (r *repository) ListARAging(
 	ctx context.Context,
 	req repositories.ListARAgingRequest,
 ) ([]*repositories.ARCustomerAgingRow, error) {
-	records := make([]*agingRowRecord, 0)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARCustomerAgingRow, error) {
+		records := make([]*agingRowRecord, 0)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			inv.customer_id,
 			inv.bill_to_name AS customer_name,
@@ -106,33 +110,35 @@ func (r *repository) ListARAging(
 		GROUP BY inv.customer_id, inv.bill_to_name
 		ORDER BY inv.bill_to_name ASC
 	`, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID).Scan(ctx, &records)
-	if err != nil {
-		return nil, err
-	}
-	rows := make([]*repositories.ARCustomerAgingRow, 0, len(records))
-	for _, rec := range records {
-		rows = append(rows, &repositories.ARCustomerAgingRow{
-			CustomerID:   pulid.ID(rec.CustomerID),
-			CustomerName: rec.CustomerName,
-			Buckets: repositories.ARAgingBucketTotals{
-				CurrentMinor:    rec.CurrentMinor,
-				Days1To30Minor:  rec.Days1To30Minor,
-				Days31To60Minor: rec.Days31To60Minor,
-				Days61To90Minor: rec.Days61To90Minor,
-				DaysOver90Minor: rec.DaysOver90Minor,
-				TotalOpenMinor:  rec.TotalOpenMinor,
-			},
-		})
-	}
-	return rows, nil
+		if err != nil {
+			return nil, err
+		}
+		rows := make([]*repositories.ARCustomerAgingRow, 0, len(records))
+		for _, rec := range records {
+			rows = append(rows, &repositories.ARCustomerAgingRow{
+				CustomerID:   pulid.ID(rec.CustomerID),
+				CustomerName: rec.CustomerName,
+				Buckets: repositories.ARAgingBucketTotals{
+					CurrentMinor:    rec.CurrentMinor,
+					Days1To30Minor:  rec.Days1To30Minor,
+					Days31To60Minor: rec.Days31To60Minor,
+					Days61To90Minor: rec.Days61To90Minor,
+					DaysOver90Minor: rec.DaysOver90Minor,
+					TotalOpenMinor:  rec.TotalOpenMinor,
+				},
+			})
+		}
+		return rows, nil
+	})
 }
 
 func (r *repository) ListOpenItems(
 	ctx context.Context,
 	req repositories.ListAROpenItemsRequest,
 ) ([]*repositories.AROpenItem, error) {
-	records := make([]*openItemRecord, 0)
-	query := `
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.AROpenItem, error) {
+		records := make([]*openItemRecord, 0)
+		query := `
 		SELECT
 			inv.id AS invoice_id,
 			inv.customer_id,
@@ -172,54 +178,56 @@ func (r *repository) ListOpenItems(
 		  AND inv.status = 'Posted'
 		  AND inv.bill_type IN ('Invoice', 'DebitMemo')
 		  AND inv.total_amount_minor > inv.applied_amount_minor`
-	args := []any{req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID}
-	if !req.CustomerID.IsNil() {
-		query += `
+		args := []any{req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID}
+		if !req.CustomerID.IsNil() {
+			query += `
 		  AND inv.customer_id = ?`
-		args = append(args, req.CustomerID)
-	}
-	query += `
+			args = append(args, req.CustomerID)
+		}
+		query += `
 		ORDER BY inv.due_date ASC NULLS FIRST, inv.invoice_date ASC, inv.number ASC`
 
-	err := r.db.DBForContext(ctx).NewRaw(query, args...).Scan(ctx, &records)
-	if err != nil {
-		return nil, fmt.Errorf("list ar open items: %w", err)
-	}
+		err := r.db.DBForContext(ctx).NewRaw(query, args...).Scan(ctx, &records)
+		if err != nil {
+			return nil, fmt.Errorf("list ar open items: %w", err)
+		}
 
-	items := make([]*repositories.AROpenItem, 0, len(records))
-	for _, rec := range records {
-		items = append(items, &repositories.AROpenItem{
-			InvoiceID:          pulid.ID(rec.InvoiceID),
-			CustomerID:         pulid.ID(rec.CustomerID),
-			CustomerName:       rec.CustomerName,
-			InvoiceNumber:      rec.InvoiceNumber,
-			BillType:           rec.BillType,
-			InvoiceDate:        rec.InvoiceDate,
-			DueDate:            rec.DueDate,
-			CurrencyCode:       rec.CurrencyCode,
-			ShipmentProNumber:  rec.ShipmentProNumber,
-			ShipmentBOL:        rec.ShipmentBOL,
-			TotalAmountMinor:   rec.TotalAmountMinor,
-			AppliedAmountMinor: rec.AppliedAmountMinor,
-			OpenAmountMinor:    rec.OpenAmountMinor,
-			DaysPastDue:        rec.DaysPastDue,
-			SettlementStatus:   rec.SettlementStatus,
-			DisputeStatus:      rec.DisputeStatus,
-			HasShortPay:        rec.HasShortPay,
-		})
-	}
+		items := make([]*repositories.AROpenItem, 0, len(records))
+		for _, rec := range records {
+			items = append(items, &repositories.AROpenItem{
+				InvoiceID:          pulid.ID(rec.InvoiceID),
+				CustomerID:         pulid.ID(rec.CustomerID),
+				CustomerName:       rec.CustomerName,
+				InvoiceNumber:      rec.InvoiceNumber,
+				BillType:           rec.BillType,
+				InvoiceDate:        rec.InvoiceDate,
+				DueDate:            rec.DueDate,
+				CurrencyCode:       rec.CurrencyCode,
+				ShipmentProNumber:  rec.ShipmentProNumber,
+				ShipmentBOL:        rec.ShipmentBOL,
+				TotalAmountMinor:   rec.TotalAmountMinor,
+				AppliedAmountMinor: rec.AppliedAmountMinor,
+				OpenAmountMinor:    rec.OpenAmountMinor,
+				DaysPastDue:        rec.DaysPastDue,
+				SettlementStatus:   rec.SettlementStatus,
+				DisputeStatus:      rec.DisputeStatus,
+				HasShortPay:        rec.HasShortPay,
+			})
+		}
 
-	return items, nil
+		return items, nil
+	})
 }
 
 func (r *repository) GetCustomerName(
 	ctx context.Context,
 	req repositories.GetARCustomerNameRequest,
 ) (string, error) {
-	var row struct {
-		Name string `bun:"name"`
-	}
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (string, error) {
+		var row struct {
+			Name string `bun:"name"`
+		}
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT cus.name
 		FROM customers cus
 		WHERE cus.organization_id = ?
@@ -227,19 +235,21 @@ func (r *repository) GetCustomerName(
 		  AND cus.id = ?
 		LIMIT 1
 	`, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID).Scan(ctx, &row)
-	if err != nil {
-		return "", dberror.HandleNotFoundError(err, "Customer")
-	}
+		if err != nil {
+			return "", dberror.HandleNotFoundError(err, "Customer")
+		}
 
-	return row.Name, nil
+		return row.Name, nil
+	})
 }
 
 func (r *repository) GetCustomerAging(
 	ctx context.Context,
 	req repositories.GetARCustomerAgingRequest,
 ) (*repositories.ARCustomerAgingRow, error) {
-	records := make([]*agingRowRecord, 0, 1)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARCustomerAgingRow, error) {
+		records := make([]*agingRowRecord, 0, 1)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			inv.customer_id,
 			inv.bill_to_name AS customer_name,
@@ -258,24 +268,25 @@ func (r *repository) GetCustomerAging(
 		  AND inv.total_amount_minor > inv.applied_amount_minor
 		GROUP BY inv.customer_id, inv.bill_to_name
 	`, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID).Scan(ctx, &records)
-	if err != nil {
-		return nil, fmt.Errorf("get customer ar aging: %w", err)
-	}
-	if len(records) == 0 {
-		return &repositories.ARCustomerAgingRow{CustomerID: req.CustomerID}, nil
-	}
+		if err != nil {
+			return nil, fmt.Errorf("get customer ar aging: %w", err)
+		}
+		if len(records) == 0 {
+			return &repositories.ARCustomerAgingRow{CustomerID: req.CustomerID}, nil
+		}
 
-	rec := records[0]
-	return &repositories.ARCustomerAgingRow{
-		CustomerID:   pulid.ID(rec.CustomerID),
-		CustomerName: rec.CustomerName,
-		Buckets: repositories.ARAgingBucketTotals{
-			CurrentMinor:    rec.CurrentMinor,
-			Days1To30Minor:  rec.Days1To30Minor,
-			Days31To60Minor: rec.Days31To60Minor,
-			Days61To90Minor: rec.Days61To90Minor,
-			DaysOver90Minor: rec.DaysOver90Minor,
-			TotalOpenMinor:  rec.TotalOpenMinor,
-		},
-	}, nil
+		rec := records[0]
+		return &repositories.ARCustomerAgingRow{
+			CustomerID:   pulid.ID(rec.CustomerID),
+			CustomerName: rec.CustomerName,
+			Buckets: repositories.ARAgingBucketTotals{
+				CurrentMinor:    rec.CurrentMinor,
+				Days1To30Minor:  rec.Days1To30Minor,
+				Days31To60Minor: rec.Days31To60Minor,
+				Days61To90Minor: rec.Days61To90Minor,
+				DaysOver90Minor: rec.DaysOver90Minor,
+				TotalOpenMinor:  rec.TotalOpenMinor,
+			},
+		}, nil
+	})
 }

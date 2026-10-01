@@ -117,7 +117,7 @@ func (h *Handler) selectSources(c *gin.Context) {
 func (h *Handler) importBatch(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
 	req := new(serviceports.ImportBankReceiptBatchRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, auth, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

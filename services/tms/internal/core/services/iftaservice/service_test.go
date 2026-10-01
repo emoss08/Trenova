@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
+	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -471,12 +473,13 @@ func newHarness(t *testing.T) *harness {
 		Maybe()
 
 	h.svc = iftaservice.NewWithDeps(iftaservice.Deps{
-		Repo:         h.repo,
-		Fuel:         h.fuel,
-		TractorRepo:  tractors,
-		OrgCacheRepo: orgs,
-		AuditService: audit,
-		Now:          func() int64 { return h.now },
+		Repo:          h.repo,
+		Fuel:          h.fuel,
+		TractorRepo:   tractors,
+		OrgCacheRepo:  orgs,
+		AuditService:  audit,
+		ReferenceData: selfHostedReferenceGuard(t),
+		Now:           func() int64 { return h.now },
 	})
 
 	return h
@@ -955,4 +958,54 @@ func TestUpsertTaxRates_ValidatesEachRowAndRejectsDuplicates(t *testing.T) {
 		TenantInfo: h.tenant, UserID: h.userID,
 	})
 	assertValidationField(t, err, "rates")
+}
+
+func selfHostedReferenceGuard(t *testing.T) *referencedataguard.Guard {
+	t.Helper()
+
+	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
+		Mode: config.PlatformModeSelfHosted,
+	})
+	require.NoError(t, err)
+
+	return guard
+}
+
+func TestTaxRateWrites_AreRefusedForATenantThatIsNotAStewardInCloudMode(t *testing.T) {
+	t.Parallel()
+
+	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
+		Mode:                  config.PlatformModeCloud,
+		ReferenceDataStewards: []string{pulid.MustNew("org_").String()},
+	})
+	require.NoError(t, err)
+
+	h := newHarness(t)
+	svc := iftaservice.NewWithDeps(iftaservice.Deps{
+		Repo:          h.repo,
+		ReferenceData: guard,
+	})
+
+	_, err = svc.UpsertTaxRates(t.Context(), &iftaservice.UpsertTaxRatesRequest{
+		TenantInfo: h.tenant,
+		UserID:     h.userID,
+		Rates: []*ifta.TaxRate{{
+			JurisdictionID: h.tx.ID,
+			Year:           2026,
+			Quarter:        2,
+			FuelType:       diesel,
+			RatePerGallon:  dec("0.21"),
+		}},
+	})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+
+	err = svc.DeleteTaxRate(t.Context(), &iftaservice.DeleteTaxRateRequest{
+		TenantInfo: h.tenant,
+		ID:         pulid.MustNew("iftr_"),
+		Version:    1,
+		UserID:     h.userID,
+	})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
 }

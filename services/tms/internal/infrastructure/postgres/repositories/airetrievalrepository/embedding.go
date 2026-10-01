@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/pgvector/pgvector-go"
@@ -56,32 +57,34 @@ func (r *repository) ListChunkHashes(
 	ctx context.Context,
 	req *repositories.ListEmbeddingChunkHashesRequest,
 ) ([]repositories.EmbeddingChunkHash, error) {
-	if req == nil {
-		return nil, invalid("listing chunk hashes needs a request")
-	}
-	if err := validateSource(&req.Source); err != nil {
-		return nil, err
-	}
-	if err := validateModelKey(req.ModelKey); err != nil {
-		return nil, err
-	}
-	if err := r.requireVector(ctx); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.EmbeddingChunkHash, error) {
+		if req == nil {
+			return nil, invalid("listing chunk hashes needs a request")
+		}
+		if err := validateSource(&req.Source); err != nil {
+			return nil, err
+		}
+		if err := validateModelKey(req.ModelKey); err != nil {
+			return nil, err
+		}
+		if err := r.requireVector(ctx); err != nil {
+			return nil, err
+		}
 
-	cols := buncolgen.EmbeddingColumns
-	hashes := make([]repositories.EmbeddingChunkHash, 0)
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*airetrieval.Embedding)(nil)).
-		Column(cols.ChunkIndex.String(), cols.ContentHash.String()).
-		Apply(embeddingSourceScope(&req.Source, req.ModelKey)).
-		OrderExpr(cols.ChunkIndex.OrderAsc()).
-		Scan(ctx, &hashes); err != nil {
-		return nil, fmt.Errorf("list embedding chunk hashes: %w", err)
-	}
+		cols := buncolgen.EmbeddingColumns
+		hashes := make([]repositories.EmbeddingChunkHash, 0)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*airetrieval.Embedding)(nil)).
+			Column(cols.ChunkIndex.String(), cols.ContentHash.String()).
+			Apply(embeddingSourceScope(&req.Source, req.ModelKey)).
+			OrderExpr(cols.ChunkIndex.OrderAsc()).
+			Scan(ctx, &hashes); err != nil {
+			return nil, fmt.Errorf("list embedding chunk hashes: %w", err)
+		}
 
-	return hashes, nil
+		return hashes, nil
+	})
 }
 
 func validateReplace(req *repositories.ReplaceEmbeddingChunksRequest) error {
@@ -128,43 +131,45 @@ func (r *repository) ReplaceChunks(
 	ctx context.Context,
 	req *repositories.ReplaceEmbeddingChunksRequest,
 ) (repositories.ReplaceEmbeddingChunksResult, error) {
-	var result repositories.ReplaceEmbeddingChunksResult
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.ReplaceEmbeddingChunksResult, error) {
+		var result repositories.ReplaceEmbeddingChunksResult
 
-	if err := validateReplace(req); err != nil {
-		return result, err
-	}
-	if err := r.requireVector(ctx); err != nil {
-		return result, err
-	}
+		if err := validateReplace(req); err != nil {
+			return result, err
+		}
+		if err := r.requireVector(ctx); err != nil {
+			return result, err
+		}
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		stored, err := r.storedChunks(ctx, tx, req)
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+			stored, err := r.storedChunks(ctx, tx, req)
+			if err != nil {
+				return err
+			}
+
+			rows, unchanged, err := planChunkWrites(req, stored, timeutils.NowUnix())
+			if err != nil {
+				return err
+			}
+			result.Unchanged = unchanged
+
+			if result.Removed, err = r.removeChunksNotIn(ctx, tx, req); err != nil {
+				return err
+			}
+
+			if len(rows) == 0 {
+				return nil
+			}
+
+			result.Written, err = r.upsertChunks(ctx, tx, rows)
+			return err
+		})
 		if err != nil {
-			return err
+			return repositories.ReplaceEmbeddingChunksResult{}, err
 		}
 
-		rows, unchanged, err := planChunkWrites(req, stored, timeutils.NowUnix())
-		if err != nil {
-			return err
-		}
-		result.Unchanged = unchanged
-
-		if result.Removed, err = r.removeChunksNotIn(ctx, tx, req); err != nil {
-			return err
-		}
-
-		if len(rows) == 0 {
-			return nil
-		}
-
-		result.Written, err = r.upsertChunks(ctx, tx, rows)
-		return err
+		return result, nil
 	})
-	if err != nil {
-		return repositories.ReplaceEmbeddingChunksResult{}, err
-	}
-
-	return result, nil
 }
 
 func (r *repository) storedChunks(
@@ -306,59 +311,61 @@ func (r *repository) DeleteSource(
 	ctx context.Context,
 	source *repositories.AIRetrievalSourceRef,
 ) (repositories.DeleteAIRetrievalSourceResult, error) {
-	var result repositories.DeleteAIRetrievalSourceResult
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.DeleteAIRetrievalSourceResult, error) {
+		var result repositories.DeleteAIRetrievalSourceResult
 
-	if err := validateSource(source); err != nil {
-		return result, err
-	}
-
-	vectorReady, err := r.vectorReady(ctx)
-	if err != nil {
-		return result, err
-	}
-
-	err = r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		entries := buncolgen.IndexEntryColumns
-		res, txErr := tx.NewDelete().
-			Model((*airetrieval.IndexEntry)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.IndexEntryScopeTenantDelete(dq, source.TenantInfo).
-					Where(entries.SourceType.Eq(), source.SourceType).
-					Where(entries.SourceID.Eq(), source.SourceID)
-			}).
-			Exec(ctx)
-		if txErr != nil {
-			return fmt.Errorf("delete index entries: %w", txErr)
+		if err := validateSource(source); err != nil {
+			return result, err
 		}
-		if result.IndexEntries, txErr = rowsAffected(res); txErr != nil {
+
+		vectorReady, err := r.vectorReady(ctx)
+		if err != nil {
+			return result, err
+		}
+
+		err = r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+			entries := buncolgen.IndexEntryColumns
+			res, txErr := tx.NewDelete().
+				Model((*airetrieval.IndexEntry)(nil)).
+				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+					return buncolgen.IndexEntryScopeTenantDelete(dq, source.TenantInfo).
+						Where(entries.SourceType.Eq(), source.SourceType).
+						Where(entries.SourceID.Eq(), source.SourceID)
+				}).
+				Exec(ctx)
+			if txErr != nil {
+				return fmt.Errorf("delete index entries: %w", txErr)
+			}
+			if result.IndexEntries, txErr = rowsAffected(res); txErr != nil {
+				return txErr
+			}
+
+			if !vectorReady {
+				return nil
+			}
+
+			embeddings := buncolgen.EmbeddingColumns
+			res, txErr = tx.NewDelete().
+				Model((*airetrieval.Embedding)(nil)).
+				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+					return buncolgen.EmbeddingScopeTenantDelete(dq, source.TenantInfo).
+						Where(embeddings.SourceType.Eq(), source.SourceType).
+						Where(embeddings.SourceID.Eq(), source.SourceID)
+				}).
+				Exec(ctx)
+			if txErr != nil {
+				return fmt.Errorf("delete embeddings: %w", txErr)
+			}
+			result.Embeddings, txErr = rowsAffected(res)
+
 			return txErr
+		})
+		if err != nil {
+			return repositories.DeleteAIRetrievalSourceResult{}, err
 		}
 
-		if !vectorReady {
-			return nil
-		}
-
-		embeddings := buncolgen.EmbeddingColumns
-		res, txErr = tx.NewDelete().
-			Model((*airetrieval.Embedding)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.EmbeddingScopeTenantDelete(dq, source.TenantInfo).
-					Where(embeddings.SourceType.Eq(), source.SourceType).
-					Where(embeddings.SourceID.Eq(), source.SourceID)
-			}).
-			Exec(ctx)
-		if txErr != nil {
-			return fmt.Errorf("delete embeddings: %w", txErr)
-		}
-		result.Embeddings, txErr = rowsAffected(res)
-
-		return txErr
+		return result, nil
 	})
-	if err != nil {
-		return repositories.DeleteAIRetrievalSourceResult{}, err
-	}
-
-	return result, nil
 }
 
 type searchPlan struct {
@@ -419,41 +426,43 @@ func (r *repository) Search(
 	ctx context.Context,
 	req *repositories.VectorSearchRequest,
 ) ([]repositories.VectorSearchHit, error) {
-	plan, err := planSearch(req)
-	if err != nil {
-		return nil, err
-	}
-	if err = r.requireVector(ctx); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.VectorSearchHit, error) {
+		plan, err := planSearch(req)
+		if err != nil {
+			return nil, err
+		}
+		if err = r.requireVector(ctx); err != nil {
+			return nil, err
+		}
 
-	hits := make([]repositories.VectorSearchHit, 0, plan.limit)
-	err = r.db.WithTx(
-		ctx,
-		ports.TxOptions{ReadOnly: true},
-		func(ctx context.Context, tx bun.Tx) error {
-			if _, txErr := tx.ExecContext(ctx, setIterativeScan); txErr != nil {
-				return fmt.Errorf("enable iterative index scan: %w", txErr)
-			}
-			if _, txErr := tx.ExecContext(
-				ctx,
-				setEfSearchStatement+strconv.Itoa(plan.efSearch),
-			); txErr != nil {
-				return fmt.Errorf("set index search breadth: %w", txErr)
-			}
+		hits := make([]repositories.VectorSearchHit, 0, plan.limit)
+		err = r.db.WithTx(
+			ctx,
+			ports.TxOptions{ReadOnly: true},
+			func(ctx context.Context, tx bun.Tx) error {
+				if _, txErr := tx.ExecContext(ctx, setIterativeScan); txErr != nil {
+					return fmt.Errorf("enable iterative index scan: %w", txErr)
+				}
+				if _, txErr := tx.ExecContext(
+					ctx,
+					setEfSearchStatement+strconv.Itoa(plan.efSearch),
+				); txErr != nil {
+					return fmt.Errorf("set index search breadth: %w", txErr)
+				}
 
-			if txErr := searchQuery(tx, req, plan).Scan(ctx, &hits); txErr != nil {
-				return fmt.Errorf("search embeddings: %w", txErr)
-			}
+				if txErr := searchQuery(tx, req, plan).Scan(ctx, &hits); txErr != nil {
+					return fmt.Errorf("search embeddings: %w", txErr)
+				}
 
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
+				return nil
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
 
-	return hits, nil
+		return hits, nil
+	})
 }
 
 func searchQuery(

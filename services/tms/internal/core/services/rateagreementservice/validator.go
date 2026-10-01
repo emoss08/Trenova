@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -51,7 +50,7 @@ func newBuilder(
 
 	return builder.
 		WithUniquenessChecker(
-			validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return db.DB() }),
+			validationframework.NewBunUniquenessCheckerScoped(db),
 		).
 		WithUniqueField(
 			"code",
@@ -60,7 +59,7 @@ func newBuilder(
 			func(a *rateagreement.RateAgreement) any { return a.Code },
 		).
 		WithReferenceChecker(
-			validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return db.DB() }),
+			validationframework.NewBunReferenceCheckerScoped(db),
 		).
 		WithOptionalReferenceCheck(
 			"customerId",

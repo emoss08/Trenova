@@ -8,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -36,77 +38,86 @@ var conflictTarget = "CONFLICT (" +
 	strings.Join(buncolgen.ProposalBaselineTable.PrimaryKey, ", ") + ") DO NOTHING"
 
 func (r *repository) Create(ctx context.Context, baseline *agent.ProposalBaseline) error {
-	if _, err := r.db.DBForContext(ctx).NewInsert().
-		Model(baseline).
-		On(conflictTarget).
-		Exec(ctx); err != nil {
-		return fmt.Errorf("keep the proposal baseline: %w", err)
-	}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if _, err := r.db.DBForContext(ctx).NewInsert().
+			Model(baseline).
+			On(conflictTarget).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("keep the proposal baseline: %w", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *repository) GetByProposal(
 	ctx context.Context,
 	req repositories.GetProposalBaselineRequest,
 ) (*agent.ProposalBaseline, error) {
-	baseline := new(agent.ProposalBaseline)
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model(baseline).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return scope(q, req.TenantInfo).
-				Where(buncolgen.ProposalBaselineColumns.ProposalID.Eq(), req.ProposalID)
-		}).
-		Limit(1).
-		Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "ProposalBaseline")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.ProposalBaseline, error) {
+		baseline := new(agent.ProposalBaseline)
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model(baseline).
+			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return scope(q, req.TenantInfo).
+					Where(buncolgen.ProposalBaselineColumns.ProposalID.Eq(), req.ProposalID)
+			}).
+			Limit(1).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "ProposalBaseline")
+		}
 
-	return baseline, nil
+		return baseline, nil
+	})
 }
 
 func (r *repository) ListByProposals(
 	ctx context.Context,
 	req repositories.ListProposalBaselinesRequest,
 ) ([]*agent.ProposalBaseline, error) {
-	rows := make([]*agent.ProposalBaseline, 0, len(req.ProposalIDs))
-	if len(req.ProposalIDs) == 0 {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ProposalBaseline, error) {
+		rows := make([]*agent.ProposalBaseline, 0, len(req.ProposalIDs))
+		if len(req.ProposalIDs) == 0 {
+			return rows, nil
+		}
+
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model(&rows).
+			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return scope(q, req.TenantInfo).
+					Where(buncolgen.ProposalBaselineColumns.ProposalID.In(), bun.List(req.ProposalIDs))
+			}).
+			Scan(ctx); err != nil {
+			return nil, fmt.Errorf("list proposal baselines: %w", err)
+		}
+
 		return rows, nil
-	}
-
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model(&rows).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return scope(q, req.TenantInfo).
-				Where(buncolgen.ProposalBaselineColumns.ProposalID.In(), bun.List(req.ProposalIDs))
-		}).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("list proposal baselines: %w", err)
-	}
-
-	return rows, nil
+	})
 }
 
 func (r *repository) PurgeOrphans(
 	ctx context.Context,
 	req repositories.PurgeOrphanProposalBaselinesRequest,
 ) (int, error) {
-	limit := req.Limit
-	if limit <= 0 {
-		limit = DefaultPurgeLimit
-	}
+	ctx = dbscope.WithSystem(ctx, "purge orphaned proposal baselines across every organization")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		limit := req.Limit
+		if limit <= 0 {
+			limit = DefaultPurgeLimit
+		}
 
-	result, err := purgeQuery(r.db.DBForContext(ctx), req.Before, limit).Exec(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("purge orphaned proposal baselines: %w", err)
-	}
+		result, err := purgeQuery(r.db.DBForContext(ctx), req.Before, limit).Exec(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("purge orphaned proposal baselines: %w", err)
+		}
 
-	purged, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("count purged proposal baselines: %w", err)
-	}
+		purged, err := result.RowsAffected()
+		if err != nil {
+			return 0, fmt.Errorf("count purged proposal baselines: %w", err)
+		}
 
-	return int(purged), nil
+		return int(purged), nil
+	})
 }
 
 // purgeQuery deletes baselines older than before that no proposal row names.

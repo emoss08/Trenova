@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -57,29 +58,31 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListCustomFieldDefinitionsRequest,
 ) (*pagination.ListResult[*customfield.CustomFieldDefinition], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*customfield.CustomFieldDefinition], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*customfield.CustomFieldDefinition, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).
-		Order("cfd.display_order ASC", "cfd.created_at DESC").
-		ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count custom field definitions", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*customfield.CustomFieldDefinition, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).
+			Order("cfd.display_order ASC", "cfd.created_at DESC").
+			ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count custom field definitions", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*customfield.CustomFieldDefinition]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*customfield.CustomFieldDefinition]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -122,214 +125,228 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListCustomFieldDefinitionConnectionRequest,
 ) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*customfield.CustomFieldDefinition], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*customfield.CustomFieldDefinition)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*customfield.CustomFieldDefinition)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count custom field definitions", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*customfield.CustomFieldDefinition]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*customfield.CustomFieldDefinition) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyCustomFieldDefinitionColumns(
+								sq,
+								req.CustomFieldDefinitionColumns,
+							)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count custom field definitions", zap.Error(err))
+			log.Error("failed to scan custom field definitions", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*customfield.CustomFieldDefinition]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*customfield.CustomFieldDefinition) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyCustomFieldDefinitionColumns(
-							sq,
-							req.CustomFieldDefinitionColumns,
-						)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan custom field definitions", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetCustomFieldDefinitionByIDRequest,
 ) (*customfield.CustomFieldDefinition, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.ID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customfield.CustomFieldDefinition, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.ID.String()),
+		)
 
-	entity := new(customfield.CustomFieldDefinition)
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("cfd.id = ?", req.ID).
-				Where("cfd.organization_id = ?", req.TenantInfo.OrgID).
-				Where("cfd.business_unit_id = ?", req.TenantInfo.BuID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get custom field definition", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "CustomFieldDefinition")
-	}
+		entity := new(customfield.CustomFieldDefinition)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("cfd.id = ?", req.ID).
+					Where("cfd.organization_id = ?", req.TenantInfo.OrgID).
+					Where("cfd.business_unit_id = ?", req.TenantInfo.BuID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get custom field definition", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "CustomFieldDefinition")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetActiveByResourceType(
 	ctx context.Context,
 	req repositories.GetActiveByResourceTypeRequest,
 ) ([]*customfield.CustomFieldDefinition, error) {
-	log := r.l.With(
-		zap.String("operation", "GetActiveByResourceType"),
-		zap.String("resourceType", req.ResourceType),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customfield.CustomFieldDefinition, error) {
+		log := r.l.With(
+			zap.String("operation", "GetActiveByResourceType"),
+			zap.String("resourceType", req.ResourceType),
+		)
 
-	entities := make([]*customfield.CustomFieldDefinition, 0)
-	err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("cfd.organization_id = ?", req.TenantInfo.OrgID).
-				Where("cfd.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("cfd.resource_type = ?", req.ResourceType).
-				Where("cfd.is_active = ?", true)
-		}).
-		Order("cfd.display_order ASC").
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get active custom field definitions by resource type", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*customfield.CustomFieldDefinition, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("cfd.organization_id = ?", req.TenantInfo.OrgID).
+					Where("cfd.business_unit_id = ?", req.TenantInfo.BuID).
+					Where("cfd.resource_type = ?", req.ResourceType).
+					Where("cfd.is_active = ?", true)
+			}).
+			Order("cfd.display_order ASC").
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get active custom field definitions by resource type", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *customfield.CustomFieldDefinition,
 ) (*customfield.CustomFieldDefinition, error) {
-	log := r.l.With(
-		zap.String("operation", "Create"),
-		zap.String("name", entity.Name),
-		zap.String("resourceType", entity.ResourceType),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customfield.CustomFieldDefinition, error) {
+		log := r.l.With(
+			zap.String("operation", "Create"),
+			zap.String("name", entity.Name),
+			zap.String("resourceType", entity.ResourceType),
+		)
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to create custom field definition", zap.Error(err))
-		return nil, err
-	}
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			log.Error("failed to create custom field definition", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *customfield.CustomFieldDefinition,
 ) (*customfield.CustomFieldDefinition, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customfield.CustomFieldDefinition, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
+		)
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DB().
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update custom field definition", zap.Error(err))
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update custom field definition", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(
-		results,
-		"CustomFieldDefinition",
-		entity.ID.String(),
-	); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"CustomFieldDefinition",
+			entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Delete(
 	ctx context.Context,
 	req repositories.GetCustomFieldDefinitionByIDRequest,
 ) error {
-	log := r.l.With(
-		zap.String("operation", "Delete"),
-		zap.String("id", req.ID.String()),
-	)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		log := r.l.With(
+			zap.String("operation", "Delete"),
+			zap.String("id", req.ID.String()),
+		)
 
-	results, err := r.db.DB().
-		NewDelete().
-		Model((*customfield.CustomFieldDefinition)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return dq.Where("id = ?", req.ID).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to delete custom field definition", zap.Error(err))
-		return err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*customfield.CustomFieldDefinition)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return dq.Where("id = ?", req.ID).
+					Where("organization_id = ?", req.TenantInfo.OrgID).
+					Where("business_unit_id = ?", req.TenantInfo.BuID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to delete custom field definition", zap.Error(err))
+			return err
+		}
 
-	return dberror.CheckRowsAffected(results, "CustomFieldDefinition", req.ID.String())
+		return dberror.CheckRowsAffected(results, "CustomFieldDefinition", req.ID.String())
+	})
 }
 
 func (r *repository) CountByResourceType(
 	ctx context.Context,
 	req repositories.CountByResourceTypeRequest,
 ) (int, error) {
-	log := r.l.With(
-		zap.String("operation", "CountByResourceType"),
-		zap.String("resourceType", req.ResourceType),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		log := r.l.With(
+			zap.String("operation", "CountByResourceType"),
+			zap.String("resourceType", req.ResourceType),
+		)
 
-	count, err := r.db.DB().
-		NewSelect().
-		Model((*customfield.CustomFieldDefinition)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("cfd.organization_id = ?", req.TenantInfo.OrgID).
-				Where("cfd.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("cfd.resource_type = ?", req.ResourceType)
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to count custom field definitions by resource type", zap.Error(err))
-		return 0, err
-	}
+		count, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*customfield.CustomFieldDefinition)(nil)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("cfd.organization_id = ?", req.TenantInfo.OrgID).
+					Where("cfd.business_unit_id = ?", req.TenantInfo.BuID).
+					Where("cfd.resource_type = ?", req.ResourceType)
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count custom field definitions by resource type", zap.Error(err))
+			return 0, err
+		}
 
-	return count, nil
+		return count, nil
+	})
 }

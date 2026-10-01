@@ -115,7 +115,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) create(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
 	req := new(serviceports.CreateJournalReversalRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, auth, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -270,45 +271,47 @@ func (r *repository) attachAgreements(
 	tenantInfo pagination.TenantInfo,
 	rules []*rateagreement.RateAgreementRule,
 ) error {
-	if len(rules) == 0 {
-		return nil
-	}
-
-	ids := make([]pulid.ID, 0, len(rules))
-	seen := make(map[pulid.ID]struct{}, len(rules))
-	for _, rule := range rules {
-		if _, dup := seen[rule.RateAgreementID]; dup {
-			continue
+	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
+		if len(rules) == 0 {
+			return nil
 		}
-		seen[rule.RateAgreementID] = struct{}{}
-		ids = append(ids, rule.RateAgreementID)
-	}
 
-	cols := buncolgen.RateAgreementColumns
-	agreements := make([]*rateagreement.RateAgreement, 0, len(ids))
+		ids := make([]pulid.ID, 0, len(rules))
+		seen := make(map[pulid.ID]struct{}, len(rules))
+		for _, rule := range rules {
+			if _, dup := seen[rule.RateAgreementID]; dup {
+				continue
+			}
+			seen[rule.RateAgreementID] = struct{}{}
+			ids = append(ids, rule.RateAgreementID)
+		}
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&agreements).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateAgreementScopeTenant(sq, tenantInfo).
-				Where(cols.ID.In(), bun.List(ids))
-		}).
-		Scan(ctx)
-	if err != nil {
-		return err
-	}
+		cols := buncolgen.RateAgreementColumns
+		agreements := make([]*rateagreement.RateAgreement, 0, len(ids))
 
-	byID := make(map[pulid.ID]*rateagreement.RateAgreement, len(agreements))
-	for _, agreement := range agreements {
-		byID[agreement.ID] = agreement
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&agreements).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateAgreementScopeTenant(sq, tenantInfo).
+					Where(cols.ID.In(), bun.List(ids))
+			}).
+			Scan(ctx)
+		if err != nil {
+			return err
+		}
 
-	for _, rule := range rules {
-		rule.Agreement = byID[rule.RateAgreementID]
-	}
+		byID := make(map[pulid.ID]*rateagreement.RateAgreement, len(agreements))
+		for _, agreement := range agreements {
+			byID[agreement.ID] = agreement
+		}
 
-	return nil
+		for _, rule := range rules {
+			rule.Agreement = byID[rule.RateAgreementID]
+		}
+
+		return nil
+	})
 }
 
 // mergeCandidates combines the two result sets, dropping duplicates.

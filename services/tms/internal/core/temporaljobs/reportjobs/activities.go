@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -355,12 +356,14 @@ func (a *Activities) ExecuteAndRenderActivity(
 		return nil, classifyCompileError(err)
 	}
 
-	if err = reportingcompiler.PreflightCost(ctx, a.reportingDB.DB(), compiled,
-		reportingcompiler.CostLimits{
-			MaxEstimatedCost: a.cfg.GetExplainCostLimit(),
-			MaxEstimatedRows: a.cfg.GetExplainRowLimit(),
-		},
-	); err != nil {
+	if err = a.reportingDB.RunScoped(ctx, true, func(ctx context.Context) error {
+		return reportingcompiler.PreflightCost(ctx, a.reportingDB.DBForContext(ctx), compiled,
+			reportingcompiler.CostLimits{
+				MaxEstimatedCost: a.cfg.GetExplainCostLimit(),
+				MaxEstimatedRows: a.cfg.GetExplainRowLimit(),
+			},
+		)
+	}); err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
 			err.Error(), ErrTypeReportTooExpensive, err,
 		)
@@ -768,6 +771,13 @@ func (a *Activities) emitInvalidation(ctx context.Context, run *report.ReportRun
 	}
 }
 
+func runScope(ctx context.Context, run *report.ReportRun) context.Context {
+	return dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: run.OrganizationID,
+		BusinessUnitID: run.BusinessUnitID,
+	})
+}
+
 func (a *Activities) CleanupExpiredArtifactsActivity(
 	ctx context.Context,
 ) (*CleanupExpiredResult, error) {
@@ -820,7 +830,7 @@ func (a *Activities) CleanupExpiredArtifactsActivity(
 			}
 
 			run.Status = report.RunStatusExpired
-			if _, err = a.runRepo.Update(ctx, run); err != nil {
+			if _, err = a.runRepo.Update(runScope(ctx, run), run); err != nil {
 				a.l.Warn("failed to mark report run expired",
 					zap.String("runId", run.ID.String()), zap.Error(err))
 				continue
@@ -855,7 +865,7 @@ func (a *Activities) ReconcileZombieRunsActivity(
 			Message: "The run was abandoned without completing and has been marked failed",
 		}
 		run.CompletedAt = timeutils.NowUnix()
-		if _, err = a.runRepo.Update(ctx, run); err != nil {
+		if _, err = a.runRepo.Update(runScope(ctx, run), run); err != nil {
 			a.l.Warn("failed to fail zombie report run",
 				zap.String("runId", run.ID.String()), zap.Error(err))
 			continue

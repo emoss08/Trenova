@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -1011,12 +1012,16 @@ func (s *Service) incrementStoredMileageHit(
 	if storedMileageID.IsNil() || ports.IsReadOnly(ctx) {
 		return
 	}
+	tenantInfo := pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}
 	go func() {
-		ctx := context.WithoutCancel(context.Background())
-		if err := s.storedMileageRepo.IncrementHit(ctx, storedMileageID, pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		}); err != nil {
+		ctx := dbscope.WithTenant(
+			context.WithoutCancel(context.Background()),
+			tenantInfo.DBTenant(),
+		)
+		if err := s.storedMileageRepo.IncrementHit(ctx, storedMileageID, tenantInfo); err != nil {
 			s.l.Warn("failed to increment stored mileage hit", zap.Error(err))
 		}
 	}()

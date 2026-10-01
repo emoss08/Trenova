@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +57,7 @@ func TestRequireAuth_ValidSession(t *testing.T) {
 	sessionID := pulid.MustNew("ses_")
 
 	authSvc := mocks.NewMockAuthService(t)
-	authSvc.On("ValidateSession", mock.Anything, sessionID).Return(&session.Session{
+	authSvc.On("AuthenticateSession", mock.Anything, sessionID.String()).Return(&session.Session{
 		ID:             sessionID,
 		UserID:         userID,
 		BusinessUnitID: buID,
@@ -112,7 +113,7 @@ func TestRequireAuth_NoCookie(t *testing.T) {
 
 	assert.False(t, handlerCalled)
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-	authSvc.AssertNotCalled(t, "ValidateSession")
+	authSvc.AssertNotCalled(t, "AuthenticateSession")
 }
 
 func TestRequireAuth_InvalidSessionID(t *testing.T) {
@@ -121,6 +122,8 @@ func TestRequireAuth_InvalidSessionID(t *testing.T) {
 
 	cfg := newTestAuthConfig()
 	authSvc := mocks.NewMockAuthService(t)
+	authSvc.On("AuthenticateSession", mock.Anything, "short").
+		Return(nil, errortypes.NewAuthenticationError("Session is invalid. Please login again."))
 	am := newAuthMiddleware(cfg, authSvc)
 
 	handlerCalled := false
@@ -137,7 +140,7 @@ func TestRequireAuth_InvalidSessionID(t *testing.T) {
 
 	assert.False(t, handlerCalled)
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-	authSvc.AssertNotCalled(t, "ValidateSession")
+	authSvc.AssertExpectations(t)
 }
 
 func TestRequireAuth_SessionValidationFails(t *testing.T) {
@@ -148,7 +151,7 @@ func TestRequireAuth_SessionValidationFails(t *testing.T) {
 	sessionID := pulid.MustNew("ses_")
 
 	authSvc := mocks.NewMockAuthService(t)
-	authSvc.On("ValidateSession", mock.Anything, sessionID).
+	authSvc.On("AuthenticateSession", mock.Anything, sessionID.String()).
 		Return(nil, errors.New("session expired"))
 
 	am := newAuthMiddleware(cfg, authSvc)
@@ -250,6 +253,6 @@ func TestRequireAuth_BearerTakesPrecedenceOverSessionCookie(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	authSvc.AssertNotCalled(t, "ValidateSession", mock.Anything, sessionID)
+	authSvc.AssertNotCalled(t, "AuthenticateSession", mock.Anything, sessionID.String())
 	authSvc.AssertExpectations(t)
 }

@@ -530,7 +530,7 @@ func (h *Handler) void(c *gin.Context) {
 func (h *Handler) createMemo(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(services.CreateMemoRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

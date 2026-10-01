@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -84,7 +85,8 @@ func (a *Activities) WriteDueBriefingsActivity(
 		activity.RecordHeartbeat(ctx, org.ID.String())
 
 		tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-		due, dErr := a.isDue(ctx, tenantInfo, now)
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+		due, dErr := a.isDue(tenantCtx, tenantInfo, now)
 		if dErr != nil {
 			a.l.Warn("could not decide whether a briefing is due",
 				zap.String("organization", org.ID.String()),
@@ -99,7 +101,7 @@ func (a *Activities) WriteDueBriefingsActivity(
 		}
 
 		result.OrganizationsDue++
-		written, wErr := a.briefings.WriteForDay(ctx, services.WriteBriefingRequest{
+		written, wErr := a.briefings.WriteForDay(tenantCtx, services.WriteBriefingRequest{
 			TenantInfo: tenantInfo,
 			Now:        now,
 		})
@@ -143,7 +145,8 @@ func (a *Activities) ListDueOrganizationsActivity(
 		activity.RecordHeartbeat(ctx, org.ID.String())
 
 		tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-		due, dErr := a.isDue(ctx, tenantInfo, input.Now)
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+		due, dErr := a.isDue(tenantCtx, tenantInfo, input.Now)
 		if dErr != nil {
 			a.l.Warn("could not decide whether a briefing is due",
 				zap.String("organization", org.ID.String()),

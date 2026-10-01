@@ -34,6 +34,11 @@ type GetCustomerByIDRequest struct {
 	CustomerFilterOptions ` form:"customerFilterOptions"`
 }
 
+type GetCustomerBillingProfileRequest struct {
+	CustomerID pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type BulkUpdateCustomerStatusRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
 	CustomerIDs []pulid.ID            `json:"customerIds"`
@@ -146,7 +151,7 @@ type CustomerRepository interface {
 	) ([]*customer.Customer, error)
 	GetBillingProfile(
 		ctx context.Context,
-		cusID pulid.ID,
+		req GetCustomerBillingProfileRequest,
 	) (*customer.CustomerBillingProfile, error)
 	Create(
 		ctx context.Context,

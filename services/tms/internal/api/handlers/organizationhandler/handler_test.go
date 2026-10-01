@@ -605,3 +605,84 @@ func TestOrganizationHandler_DeleteLogo_Success(t *testing.T) {
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, "", resp["logoUrl"])
 }
+
+func TestOrganizationHandler_RejectsAnotherOrganizationID(t *testing.T) {
+	t.Parallel()
+
+	otherOrgID := pulid.MustNew("org_")
+
+	cases := []struct {
+		name   string
+		method string
+		path   string
+		body   map[string]any
+	}{
+		{name: "get", method: http.MethodGet, path: ""},
+		{name: "update", method: http.MethodPut, path: "", body: map[string]any{"name": "Taken"}},
+		{name: "get logo", method: http.MethodGet, path: "/logo"},
+		{name: "delete logo", method: http.MethodDelete, path: "/logo"},
+		{name: "get microsoft sso", method: http.MethodGet, path: "/microsoft-sso"},
+		{
+			name:   "upsert microsoft sso",
+			method: http.MethodPut,
+			path:   "/microsoft-sso",
+			body:   map[string]any{"enabled": true},
+		},
+		{name: "get okta sso", method: http.MethodGet, path: "/okta-sso"},
+		{
+			name:   "upsert okta sso",
+			method: http.MethodPut,
+			path:   "/okta-sso",
+			body:   map[string]any{"enabled": true},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := mocks.NewMockOrganizationRepository(t)
+			handler := setupOrganizationHandler(t, repo, &mockStorageClient{})
+
+			ginCtx := testutil.NewGinTestContext().
+				WithMethod(tc.method).
+				WithPath("/api/v1/organizations/" + otherOrgID.String() + tc.path).
+				WithDefaultAuthContext()
+			if tc.body != nil {
+				ginCtx = ginCtx.WithJSONBody(tc.body)
+			}
+
+			handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+			ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+			assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
+		})
+	}
+}
+
+func TestOrganizationHandler_Update_RejectsForeignBusinessUnit(t *testing.T) {
+	t.Parallel()
+
+	orgID := testutil.TestOrgID
+
+	repo := mocks.NewMockOrganizationRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.Organization{ID: orgID, BusinessUnitID: testutil.TestBuID}, nil)
+
+	handler := setupOrganizationHandler(t, repo, &mockStorageClient{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPut).
+		WithPath("/api/v1/organizations/" + orgID.String()).
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"id":             pulid.MustNew("org_").String(),
+			"businessUnitId": pulid.MustNew("bu_").String(),
+			"name":           "Moved",
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
+}

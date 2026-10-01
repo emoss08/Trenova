@@ -213,20 +213,31 @@ func (_c *MockRoleRepository_CreateResourcePermission_Call) RunAndReturn(run fun
 }
 
 // DeleteAssignment provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) DeleteAssignment(ctx context.Context, assignmentID pulid.ID) error {
-	ret := _mock.Called(ctx, assignmentID)
+func (_mock *MockRoleRepository) DeleteAssignment(ctx context.Context, req repositories.DeleteRoleAssignmentRequest) (*permission.UserRoleAssignment, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteAssignment")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) error); ok {
-		r0 = returnFunc(ctx, assignmentID)
-	} else {
-		r0 = ret.Error(0)
+	var r0 *permission.UserRoleAssignment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.DeleteRoleAssignmentRequest) (*permission.UserRoleAssignment, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.DeleteRoleAssignmentRequest) *permission.UserRoleAssignment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*permission.UserRoleAssignment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.DeleteRoleAssignmentRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockRoleRepository_DeleteAssignment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAssignment'
@@ -236,20 +247,20 @@ type MockRoleRepository_DeleteAssignment_Call struct {
 
 // DeleteAssignment is a helper method to define mock.On call
 //   - ctx context.Context
-//   - assignmentID pulid.ID
-func (_e *MockRoleRepository_Expecter) DeleteAssignment(ctx any, assignmentID any) *MockRoleRepository_DeleteAssignment_Call {
-	return &MockRoleRepository_DeleteAssignment_Call{Call: _e.mock.On("DeleteAssignment", ctx, assignmentID)}
+//   - req repositories.DeleteRoleAssignmentRequest
+func (_e *MockRoleRepository_Expecter) DeleteAssignment(ctx any, req any) *MockRoleRepository_DeleteAssignment_Call {
+	return &MockRoleRepository_DeleteAssignment_Call{Call: _e.mock.On("DeleteAssignment", ctx, req)}
 }
 
-func (_c *MockRoleRepository_DeleteAssignment_Call) Run(run func(ctx context.Context, assignmentID pulid.ID)) *MockRoleRepository_DeleteAssignment_Call {
+func (_c *MockRoleRepository_DeleteAssignment_Call) Run(run func(ctx context.Context, req repositories.DeleteRoleAssignmentRequest)) *MockRoleRepository_DeleteAssignment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 pulid.ID
+		var arg1 repositories.DeleteRoleAssignmentRequest
 		if args[1] != nil {
-			arg1 = args[1].(pulid.ID)
+			arg1 = args[1].(repositories.DeleteRoleAssignmentRequest)
 		}
 		run(
 			arg0,
@@ -259,27 +270,27 @@ func (_c *MockRoleRepository_DeleteAssignment_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockRoleRepository_DeleteAssignment_Call) Return(err error) *MockRoleRepository_DeleteAssignment_Call {
-	_c.Call.Return(err)
+func (_c *MockRoleRepository_DeleteAssignment_Call) Return(userRoleAssignment *permission.UserRoleAssignment, err error) *MockRoleRepository_DeleteAssignment_Call {
+	_c.Call.Return(userRoleAssignment, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_DeleteAssignment_Call) RunAndReturn(run func(ctx context.Context, assignmentID pulid.ID) error) *MockRoleRepository_DeleteAssignment_Call {
+func (_c *MockRoleRepository_DeleteAssignment_Call) RunAndReturn(run func(ctx context.Context, req repositories.DeleteRoleAssignmentRequest) (*permission.UserRoleAssignment, error)) *MockRoleRepository_DeleteAssignment_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteResourcePermission provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) DeleteResourcePermission(ctx context.Context, resourceID pulid.ID) error {
-	ret := _mock.Called(ctx, resourceID)
+func (_mock *MockRoleRepository) DeleteResourcePermission(ctx context.Context, req repositories.DeleteResourcePermissionRequest) error {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteResourcePermission")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) error); ok {
-		r0 = returnFunc(ctx, resourceID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.DeleteResourcePermissionRequest) error); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -293,20 +304,20 @@ type MockRoleRepository_DeleteResourcePermission_Call struct {
 
 // DeleteResourcePermission is a helper method to define mock.On call
 //   - ctx context.Context
-//   - resourceID pulid.ID
-func (_e *MockRoleRepository_Expecter) DeleteResourcePermission(ctx any, resourceID any) *MockRoleRepository_DeleteResourcePermission_Call {
-	return &MockRoleRepository_DeleteResourcePermission_Call{Call: _e.mock.On("DeleteResourcePermission", ctx, resourceID)}
+//   - req repositories.DeleteResourcePermissionRequest
+func (_e *MockRoleRepository_Expecter) DeleteResourcePermission(ctx any, req any) *MockRoleRepository_DeleteResourcePermission_Call {
+	return &MockRoleRepository_DeleteResourcePermission_Call{Call: _e.mock.On("DeleteResourcePermission", ctx, req)}
 }
 
-func (_c *MockRoleRepository_DeleteResourcePermission_Call) Run(run func(ctx context.Context, resourceID pulid.ID)) *MockRoleRepository_DeleteResourcePermission_Call {
+func (_c *MockRoleRepository_DeleteResourcePermission_Call) Run(run func(ctx context.Context, req repositories.DeleteResourcePermissionRequest)) *MockRoleRepository_DeleteResourcePermission_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 pulid.ID
+		var arg1 repositories.DeleteResourcePermissionRequest
 		if args[1] != nil {
-			arg1 = args[1].(pulid.ID)
+			arg1 = args[1].(repositories.DeleteResourcePermissionRequest)
 		}
 		run(
 			arg0,
@@ -321,7 +332,7 @@ func (_c *MockRoleRepository_DeleteResourcePermission_Call) Return(err error) *M
 	return _c
 }
 
-func (_c *MockRoleRepository_DeleteResourcePermission_Call) RunAndReturn(run func(ctx context.Context, resourceID pulid.ID) error) *MockRoleRepository_DeleteResourcePermission_Call {
+func (_c *MockRoleRepository_DeleteResourcePermission_Call) RunAndReturn(run func(ctx context.Context, req repositories.DeleteResourcePermissionRequest) error) *MockRoleRepository_DeleteResourcePermission_Call {
 	_c.Call.Return(run)
 	return _c
 }

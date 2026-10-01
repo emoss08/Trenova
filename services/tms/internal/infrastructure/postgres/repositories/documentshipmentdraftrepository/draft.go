@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,46 +40,50 @@ func (r *repository) GetByDocumentID(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*documentshipmentdraft.DocumentShipmentDraft, error) {
-	entity := new(documentshipmentdraft.DocumentShipmentDraft)
-	cols := buncolgen.DocumentShipmentDraftColumns
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DocumentShipmentDraftScopeTenant(sq, tenantInfo).
-				Where(cols.DocumentID.Eq(), documentID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Document shipment draft")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentshipmentdraft.DocumentShipmentDraft, error) {
+		entity := new(documentshipmentdraft.DocumentShipmentDraft)
+		cols := buncolgen.DocumentShipmentDraftColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DocumentShipmentDraftScopeTenant(sq, tenantInfo).
+					Where(cols.DocumentID.Eq(), documentID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Document shipment draft")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Upsert(
 	ctx context.Context,
 	entity *documentshipmentdraft.DocumentShipmentDraft,
 ) (*documentshipmentdraft.DocumentShipmentDraft, error) {
-	cols := buncolgen.DocumentShipmentDraftColumns
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		On(`CONFLICT ("document_id", "organization_id", "business_unit_id") DO UPDATE`).
-		Set(cols.Status.SetExcluded()).
-		Set(cols.DocumentKind.SetExcluded()).
-		Set(cols.Confidence.SetExcluded()).
-		Set(cols.DraftData.SetExcluded()).
-		Set(cols.FailureCode.SetExcluded()).
-		Set(cols.FailureMessage.SetExcluded()).
-		Set(cols.AttachedShipmentID.SetExpr("COALESCE(EXCLUDED.attached_shipment_id, dsd.attached_shipment_id)")).
-		Set(cols.AttachedAt.SetExpr("COALESCE(EXCLUDED.attached_at, dsd.attached_at)")).
-		Set(cols.AttachedByID.SetExpr("COALESCE(EXCLUDED.attached_by_id, dsd.attached_by_id)")).
-		Set(cols.UpdatedAt.SetExcluded()).
-		Returning("*").
-		Exec(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Document shipment draft")
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentshipmentdraft.DocumentShipmentDraft, error) {
+		cols := buncolgen.DocumentShipmentDraftColumns
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			On(`CONFLICT ("document_id", "organization_id", "business_unit_id") DO UPDATE`).
+			Set(cols.Status.SetExcluded()).
+			Set(cols.DocumentKind.SetExcluded()).
+			Set(cols.Confidence.SetExcluded()).
+			Set(cols.DraftData.SetExcluded()).
+			Set(cols.FailureCode.SetExcluded()).
+			Set(cols.FailureMessage.SetExcluded()).
+			Set(cols.AttachedShipmentID.SetExpr("COALESCE(EXCLUDED.attached_shipment_id, dsd.attached_shipment_id)")).
+			Set(cols.AttachedAt.SetExpr("COALESCE(EXCLUDED.attached_at, dsd.attached_at)")).
+			Set(cols.AttachedByID.SetExpr("COALESCE(EXCLUDED.attached_by_id, dsd.attached_by_id)")).
+			Set(cols.UpdatedAt.SetExcluded()).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Document shipment draft")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }

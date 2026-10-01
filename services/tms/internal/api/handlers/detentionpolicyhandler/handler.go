@@ -175,9 +175,7 @@ func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity := new(detention.DetentionPolicy)
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -218,9 +216,7 @@ func (h *Handler) update(c *gin.Context) {
 
 	entity := new(detention.DetentionPolicy)
 	entity.ID = policyID
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -354,7 +350,7 @@ func (h *Handler) preview(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	req := new(previewRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

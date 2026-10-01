@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -68,32 +69,34 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListJournalReversalsRequest,
 ) (*pagination.ListResult[*journalreversal.Reversal], error) {
-	records := make([]*reversalRecord, 0, req.Filter.Pagination.SafeLimit())
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&records).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFilters(
-				sq,
-				buncolgen.ReversalTable.Alias,
-				req.Filter,
-				(*journalreversal.Reversal)(nil),
-			)
-		}).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset())
-	if len(req.Filter.Sort) == 0 {
-		query = query.Order(buncolgen.ReversalColumns.CreatedAt.OrderDesc())
-	}
-	total, err := query.ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
-	}
-	items := make([]*journalreversal.Reversal, 0, len(records))
-	for _, rec := range records {
-		items = append(items, mapReversal(rec))
-	}
-	return &pagination.ListResult[*journalreversal.Reversal]{Items: items, Total: total}, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*journalreversal.Reversal], error) {
+		records := make([]*reversalRecord, 0, req.Filter.Pagination.SafeLimit())
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&records).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return querybuilder.ApplyFilters(
+					sq,
+					buncolgen.ReversalTable.Alias,
+					req.Filter,
+					(*journalreversal.Reversal)(nil),
+				)
+			}).
+			Limit(req.Filter.Pagination.SafeLimit()).
+			Offset(req.Filter.Pagination.SafeOffset())
+		if len(req.Filter.Sort) == 0 {
+			query = query.Order(buncolgen.ReversalColumns.CreatedAt.OrderDesc())
+		}
+		total, err := query.ScanAndCount(ctx)
+		if err != nil {
+			return nil, err
+		}
+		items := make([]*journalreversal.Reversal, 0, len(records))
+		for _, rec := range records {
+			items = append(items, mapReversal(rec))
+		}
+		return &pagination.ListResult[*journalreversal.Reversal]{Items: items, Total: total}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -125,128 +128,136 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListJournalReversalConnectionRequest,
 ) (*pagination.CursorListResult[*journalreversal.Reversal], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*journalreversal.Reversal], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*journalreversal.Reversal)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*journalreversal.Reversal)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count journal reversals", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*journalreversal.Reversal]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: totalCount,
+			Query: func(entities *[]*journalreversal.Reversal) *bun.SelectQuery {
+				return dba.NewSelect().Model(entities)
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
 		if err != nil {
-			log.Error("failed to count journal reversals", zap.Error(err))
+			log.Error("failed to scan journal reversals", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*journalreversal.Reversal]{
-		Filter:     req.Filter,
-		Cursor:     req.Cursor,
-		TotalCount: totalCount,
-		Query: func(entities *[]*journalreversal.Reversal) *bun.SelectQuery {
-			return dba.NewSelect().Model(entities)
-		},
-		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-			return r.applyCursorPageFilters(sq, req)
-		},
+		return result, nil
 	})
-	if err != nil {
-		log.Error("failed to scan journal reversals", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetJournalReversalByIDRequest,
 ) (*journalreversal.Reversal, error) {
-	rec := new(reversalRecord)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(rec).
-		Where("jr.id = ?", req.ID).
-		Where("jr.organization_id = ?", req.TenantInfo.OrgID).
-		Where("jr.business_unit_id = ?", req.TenantInfo.BuID).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "JournalReversal")
-	}
-	return mapReversal(rec), nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalreversal.Reversal, error) {
+		rec := new(reversalRecord)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(rec).
+			Where("jr.id = ?", req.ID).
+			Where("jr.organization_id = ?", req.TenantInfo.OrgID).
+			Where("jr.business_unit_id = ?", req.TenantInfo.BuID).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "JournalReversal")
+		}
+		return mapReversal(rec), nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *journalreversal.Reversal,
 ) (*journalreversal.Reversal, error) {
-	if entity.ID.IsNil() {
-		entity.ID = pulid.MustNew("jrev_")
-	}
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(toRecord(entity)).Exec(ctx); err != nil {
-		return nil, err
-	}
-	return r.GetByID(
-		ctx,
-		repositories.GetJournalReversalByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*journalreversal.Reversal, error) {
+		if entity.ID.IsNil() {
+			entity.ID = pulid.MustNew("jrev_")
+		}
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(toRecord(entity)).Exec(ctx); err != nil {
+			return nil, err
+		}
+		return r.GetByID(
+			ctx,
+			repositories.GetJournalReversalByIDRequest{
+				ID: entity.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
 			},
-		},
-	)
+		)
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *journalreversal.Reversal,
 ) (*journalreversal.Reversal, error) {
-	_, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(toRecord(entity)).
-		Where("id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Where("version = ?", entity.Version).
-		Set("reversal_journal_entry_id = ?", entity.ReversalJournalEntryID).
-		Set("posted_batch_id = ?", entity.PostedBatchID).
-		Set("status = ?", entity.Status).
-		Set("resolved_fiscal_year_id = ?", entity.ResolvedFiscalYearID).
-		Set("resolved_fiscal_period_id = ?", entity.ResolvedFiscalPeriodID).
-		Set("approved_by_id = ?", entity.ApprovedByID).
-		Set("approved_at = ?", entity.ApprovedAt).
-		Set("rejected_by_id = ?", entity.RejectedByID).
-		Set("rejected_at = ?", entity.RejectedAt).
-		Set("rejection_reason = ?", entity.RejectionReason).
-		Set("cancelled_by_id = ?", entity.CancelledByID).
-		Set("cancelled_at = ?", entity.CancelledAt).
-		Set("cancel_reason = ?", entity.CancelReason).
-		Set("posted_by_id = ?", entity.PostedByID).
-		Set("posted_at = ?", entity.PostedAt).
-		Set("version = version + 1").
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return r.GetByID(
-		ctx,
-		repositories.GetJournalReversalByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*journalreversal.Reversal, error) {
+		_, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(toRecord(entity)).
+			Where("id = ?", entity.ID).
+			Where("organization_id = ?", entity.OrganizationID).
+			Where("business_unit_id = ?", entity.BusinessUnitID).
+			Where("version = ?", entity.Version).
+			Set("reversal_journal_entry_id = ?", entity.ReversalJournalEntryID).
+			Set("posted_batch_id = ?", entity.PostedBatchID).
+			Set("status = ?", entity.Status).
+			Set("resolved_fiscal_year_id = ?", entity.ResolvedFiscalYearID).
+			Set("resolved_fiscal_period_id = ?", entity.ResolvedFiscalPeriodID).
+			Set("approved_by_id = ?", entity.ApprovedByID).
+			Set("approved_at = ?", entity.ApprovedAt).
+			Set("rejected_by_id = ?", entity.RejectedByID).
+			Set("rejected_at = ?", entity.RejectedAt).
+			Set("rejection_reason = ?", entity.RejectionReason).
+			Set("cancelled_by_id = ?", entity.CancelledByID).
+			Set("cancelled_at = ?", entity.CancelledAt).
+			Set("cancel_reason = ?", entity.CancelReason).
+			Set("posted_by_id = ?", entity.PostedByID).
+			Set("posted_at = ?", entity.PostedAt).
+			Set("version = version + 1").
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return r.GetByID(
+			ctx,
+			repositories.GetJournalReversalByIDRequest{
+				ID: entity.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
 			},
-		},
-	)
+		)
+	})
 }
 
 func toRecord(entity *journalreversal.Reversal) *reversalRecord {

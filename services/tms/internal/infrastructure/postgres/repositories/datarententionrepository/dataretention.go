@@ -6,8 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -36,109 +38,118 @@ func New(p Params) repositories.DataRetentionRepository {
 func (r *repository) List(
 	ctx context.Context,
 ) (*pagination.ListResult[*tenant.DataRetention], error) {
-	log := r.l.With(zap.String("operation", "List"))
+	ctx = dbscope.WithSystem(ctx, "read every organization's retention settings for retention sweeps")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error) {
+		log := r.l.With(zap.String("operation", "List"))
 
-	entities := make([]*tenant.DataRetention, 0)
-	total, err := r.db.DB().NewSelect().Model(&entities).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count data retentions", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*tenant.DataRetention, 0)
+		total, err := r.db.DBForContext(ctx).NewSelect().Model(&entities).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count data retentions", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*tenant.DataRetention]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*tenant.DataRetention]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) Get(
 	ctx context.Context,
 	req repositories.GetDataRetentionRequest,
 ) (*tenant.DataRetention, error) {
-	entity := new(tenant.DataRetention)
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("dr.organization_id = ?", req.OrgID).
-				Where("dr.business_unit_id = ?", req.BuID)
-		}).Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Data Retention")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DataRetention, error) {
+		entity := new(tenant.DataRetention)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("dr.organization_id = ?", req.OrgID).
+					Where("dr.business_unit_id = ?", req.BuID)
+			}).Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Data Retention")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *tenant.DataRetention,
 ) (*tenant.DataRetention, error) {
-	log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DataRetention, error) {
+		log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	result, err := r.db.DB().
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update data retention", zap.Error(err))
-		return nil, err
-	}
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update data retention", zap.Error(err))
+			return nil, err
+		}
 
-	roErr := dberror.CheckRowsAffected(result, "DataRetention", entity.ID.String())
-	if roErr != nil {
-		log.Error("failed to check rows affected", zap.Error(roErr))
-		return nil, roErr
-	}
+		roErr := dberror.CheckRowsAffected(result, "DataRetention", entity.ID.String())
+		if roErr != nil {
+			log.Error("failed to check rows affected", zap.Error(roErr))
+			return nil, roErr
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Upsert(
 	ctx context.Context,
 	entity *tenant.DataRetention,
 ) (*tenant.DataRetention, error) {
-	log := r.l.With(zap.String("operation", "Upsert"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DataRetention, error) {
+		log := r.l.With(zap.String("operation", "Upsert"))
 
-	existing, err := r.Get(ctx, repositories.GetDataRetentionRequest{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
+		existing, err := r.Get(ctx, repositories.GetDataRetentionRequest{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		})
+		if err == nil {
+			existing.AuditRetentionPeriod = entity.AuditRetentionPeriod
+			existing.EDIInboundFileRetentionPeriod = entity.EDIInboundFileRetentionPeriod
+			existing.EDIMessageRetentionPeriod = entity.EDIMessageRetentionPeriod
+			existing.AgentEvalCaseRetentionPeriod = entity.AgentEvalCaseRetentionPeriod
+			existing.AIFeedbackRetentionPeriod = entity.AIFeedbackRetentionPeriod
+			existing.AIAuditRetentionPeriod = entity.AIAuditRetentionPeriod
+			existing.AICorrectionRetentionPeriod = entity.AICorrectionRetentionPeriod
+			return r.Update(ctx, existing)
+		}
+		if !dberror.IsNotFoundError(err) {
+			return nil, err
+		}
+
+		if _, err = r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			On(`CONFLICT ("organization_id") DO UPDATE`).
+			Set("audit_retention_period = EXCLUDED.audit_retention_period").
+			Set("edi_inbound_file_retention_period = EXCLUDED.edi_inbound_file_retention_period").
+			Set("edi_message_retention_period = EXCLUDED.edi_message_retention_period").
+			Set(buncolgen.DataRetentionColumns.AgentEvalCaseRetentionPeriod.SetExcluded()).
+			Set(buncolgen.DataRetentionColumns.AIFeedbackRetentionPeriod.SetExcluded()).
+			Set(buncolgen.DataRetentionColumns.AIAuditRetentionPeriod.SetExcluded()).
+			Set(buncolgen.DataRetentionColumns.AICorrectionRetentionPeriod.SetExcluded()).
+			Returning("*").
+			Exec(ctx); err != nil {
+			log.Error("failed to upsert data retention", zap.Error(err))
+			return nil, err
+		}
+		return entity, nil
 	})
-	if err == nil {
-		existing.AuditRetentionPeriod = entity.AuditRetentionPeriod
-		existing.EDIInboundFileRetentionPeriod = entity.EDIInboundFileRetentionPeriod
-		existing.EDIMessageRetentionPeriod = entity.EDIMessageRetentionPeriod
-		existing.AgentEvalCaseRetentionPeriod = entity.AgentEvalCaseRetentionPeriod
-		existing.AIFeedbackRetentionPeriod = entity.AIFeedbackRetentionPeriod
-		existing.AIAuditRetentionPeriod = entity.AIAuditRetentionPeriod
-		existing.AICorrectionRetentionPeriod = entity.AICorrectionRetentionPeriod
-		return r.Update(ctx, existing)
-	}
-	if !dberror.IsNotFoundError(err) {
-		return nil, err
-	}
-
-	if _, err = r.db.DB().
-		NewInsert().
-		Model(entity).
-		On(`CONFLICT ("organization_id") DO UPDATE`).
-		Set("audit_retention_period = EXCLUDED.audit_retention_period").
-		Set("edi_inbound_file_retention_period = EXCLUDED.edi_inbound_file_retention_period").
-		Set("edi_message_retention_period = EXCLUDED.edi_message_retention_period").
-		Set(buncolgen.DataRetentionColumns.AgentEvalCaseRetentionPeriod.SetExcluded()).
-		Set(buncolgen.DataRetentionColumns.AIFeedbackRetentionPeriod.SetExcluded()).
-		Set(buncolgen.DataRetentionColumns.AIAuditRetentionPeriod.SetExcluded()).
-		Set(buncolgen.DataRetentionColumns.AICorrectionRetentionPeriod.SetExcluded()).
-		Returning("*").
-		Exec(ctx); err != nil {
-		log.Error("failed to upsert data retention", zap.Error(err))
-		return nil, err
-	}
-	return entity, nil
 }

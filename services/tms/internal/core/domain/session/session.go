@@ -14,6 +14,7 @@ const DefaultTTL = 30 * 24 * time.Hour
 
 type Session struct {
 	ID                    pulid.ID   `json:"id"`
+	SecretHash            string     `json:"secretHash,omitempty"`
 	UserID                pulid.ID   `json:"userId"`
 	BusinessUnitID        pulid.ID   `json:"businessUnitId"`
 	OrganizationID        pulid.ID   `json:"organizationId"`

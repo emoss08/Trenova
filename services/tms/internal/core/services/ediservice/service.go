@@ -196,6 +196,12 @@ func mapEDICommunicationProfileConstraint(err error) error {
 			errortypes.ErrDuplicate,
 			"EDI communication profile with this name already exists",
 		)
+	case "uq_edi_communication_profiles_active_as2_identifiers":
+		multiErr.Add(
+			"config.localAS2Id",
+			errortypes.ErrDuplicate,
+			"Another active AS2 profile already uses this local and partner AS2 ID pair",
+		)
 	default:
 		return err
 	}

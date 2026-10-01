@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -288,7 +289,11 @@ func (a *Activities) KickAccountingDriftActivity(ctx context.Context) (*KickDrif
 	connections, err := a.eachDriftConnection(
 		ctx,
 		func(tenant pagination.TenantInfo, connectionID pulid.ID) error {
-			if checkErr := a.driftChecker.CheckNow(ctx, tenant, connectionID); checkErr != nil {
+			if checkErr := a.driftChecker.CheckNow(
+				dbscope.WithTenant(ctx, tenant.DBTenant()),
+				tenant,
+				connectionID,
+			); checkErr != nil {
 				return checkErr
 			}
 			result.Started++
@@ -306,11 +311,15 @@ func (a *Activities) AnnounceAccountingReconciliationActivity(
 	connections, err := a.eachDriftConnection(
 		ctx,
 		func(tenant pagination.TenantInfo, connectionID pulid.ID) error {
-			services.PublishAgentEvent(ctx, a.publisher, services.AgentEvent{
-				Kind:       agent.EventAccountingReconciliationDue,
-				SubjectID:  connectionID,
-				TenantInfo: tenant,
-			})
+			services.PublishAgentEvent(
+				dbscope.WithTenant(ctx, tenant.DBTenant()),
+				a.publisher,
+				services.AgentEvent{
+					Kind:       agent.EventAccountingReconciliationDue,
+					SubjectID:  connectionID,
+					TenantInfo: tenant,
+				},
+			)
 			return nil
 		},
 	)

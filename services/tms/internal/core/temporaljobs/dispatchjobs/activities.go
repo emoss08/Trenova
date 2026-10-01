@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -66,7 +67,7 @@ func (a *Activities) HorizonPlanSweepActivity(
 	}
 
 	for _, tenant := range tenants {
-		outcome := a.planTenant(ctx, tenant)
+		outcome := a.planTenant(dbscope.WithTenant(ctx, tenant.DBTenant()), tenant)
 		result.TenantOutcomes = append(result.TenantOutcomes, outcome)
 
 		if outcome.Error != "" {

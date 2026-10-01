@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -107,198 +108,212 @@ func (r *occurrenceRepository) List(
 	ctx context.Context,
 	req *repositories.ListDetentionOccurrencesRequest,
 ) (*pagination.ListResult[*detention.DetentionOccurrence], error) {
-	log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*detention.DetentionOccurrence], error) {
+		log := r.l.With(zap.String("operation", "List"))
 
-	entities := make([]*detention.DetentionOccurrence, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(withOccurrenceNames).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count detention occurrences", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*detention.DetentionOccurrence, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(withOccurrenceNames).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count detention occurrences", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*detention.DetentionOccurrence]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*detention.DetentionOccurrence]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *occurrenceRepository) GetByID(
 	ctx context.Context,
 	req *repositories.GetDetentionOccurrenceByIDRequest,
 ) (*detention.DetentionOccurrence, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.OccurrenceID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.OccurrenceID.String()),
+		)
 
-	cols := buncolgen.DetentionOccurrenceColumns
-	entity := new(detention.DetentionOccurrence)
+		cols := buncolgen.DetentionOccurrenceColumns
+		entity := new(detention.DetentionOccurrence)
 
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Apply(withOccurrenceNames).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.OccurrenceID)
-		})
-
-	if req.IncludeEvidence {
-		q = q.Relation(buncolgen.DetentionOccurrenceRelations.Evidence,
-			func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(buncolgen.DetentionEvidenceColumns.Sequence.OrderAsc())
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Apply(withOccurrenceNames).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.OccurrenceID)
 			})
-	}
 
-	if req.IncludeNotices {
-		q = q.Relation(buncolgen.DetentionOccurrenceRelations.Notices,
-			func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(buncolgen.DetentionNoticeColumns.CreatedAt.OrderAsc())
-			})
-	}
+		if req.IncludeEvidence {
+			q = q.Relation(buncolgen.DetentionOccurrenceRelations.Evidence,
+				func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Order(buncolgen.DetentionEvidenceColumns.Sequence.OrderAsc())
+				})
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		log.Error("failed to get detention occurrence", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "DetentionOccurrence")
-	}
+		if req.IncludeNotices {
+			q = q.Relation(buncolgen.DetentionOccurrenceRelations.Notices,
+				func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Order(buncolgen.DetentionNoticeColumns.CreatedAt.OrderAsc())
+				})
+		}
 
-	return entity, nil
+		if err := q.Scan(ctx); err != nil {
+			log.Error("failed to get detention occurrence", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "DetentionOccurrence")
+		}
+
+		return entity, nil
+	})
 }
 
 func (r *occurrenceRepository) GetByStop(
 	ctx context.Context,
 	req *repositories.GetOccurrenceByStopRequest,
 ) (*detention.DetentionOccurrence, error) {
-	cols := buncolgen.DetentionOccurrenceColumns
-	entity := new(detention.DetentionOccurrence)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
+		cols := buncolgen.DetentionOccurrenceColumns
+		entity := new(detention.DetentionOccurrence)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
-				Where(cols.StopID.Eq(), req.StopID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil, nil
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+					Where(cols.StopID.Eq(), req.StopID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil, nil
+			}
+			r.l.Error("failed to get detention occurrence by stop", zap.Error(err))
+			return nil, err
 		}
-		r.l.Error("failed to get detention occurrence by stop", zap.Error(err))
-		return nil, err
-	}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *occurrenceRepository) GetByShipment(
 	ctx context.Context,
 	req *repositories.GetOccurrencesByShipmentRequest,
 ) ([]*detention.DetentionOccurrence, error) {
-	cols := buncolgen.DetentionOccurrenceColumns
-	entities := make([]*detention.DetentionOccurrence, 0, 4)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
+		cols := buncolgen.DetentionOccurrenceColumns
+		entities := make([]*detention.DetentionOccurrence, 0, 4)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(withOccurrenceNames).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
-				Where(cols.ShipmentID.Eq(), req.ShipmentID)
-		}).
-		Order(cols.ClockStartAt.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list detention occurrences for shipment", zap.Error(err))
-		return nil, err
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(withOccurrenceNames).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+					Where(cols.ShipmentID.Eq(), req.ShipmentID)
+			}).
+			Order(cols.ClockStartAt.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list detention occurrences for shipment", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *occurrenceRepository) ListOpen(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*detention.DetentionOccurrence, error) {
-	cols := buncolgen.DetentionOccurrenceColumns
-	entities := make([]*detention.DetentionOccurrence, 0, 32)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
+		cols := buncolgen.DetentionOccurrenceColumns
+		entities := make([]*detention.DetentionOccurrence, 0, 32)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(withOccurrenceNames).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionOccurrenceScopeTenant(sq, tenantInfo).
-				Where(cols.IsOpen.IsTrue()).
-				Where(cols.Status.Ne(), detention.OccurrenceStatusBilled)
-		}).
-		Order(cols.FreeTimeExpiresAt.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list open detention occurrences", zap.Error(err))
-		return nil, err
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(withOccurrenceNames).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionOccurrenceScopeTenant(sq, tenantInfo).
+					Where(cols.IsOpen.IsTrue()).
+					Where(cols.Status.Ne(), detention.OccurrenceStatusBilled)
+			}).
+			Order(cols.FreeTimeExpiresAt.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list open detention occurrences", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *occurrenceRepository) ListBillingHoldsByShipments(
 	ctx context.Context,
 	req *repositories.ListDetentionBillingHoldsRequest,
 ) ([]*detention.DetentionOccurrence, error) {
-	if req == nil || len(req.ShipmentIDs) == 0 {
-		return []*detention.DetentionOccurrence{}, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
+		if req == nil || len(req.ShipmentIDs) == 0 {
+			return []*detention.DetentionOccurrence{}, nil
+		}
 
-	cols := buncolgen.DetentionOccurrenceColumns
-	entities := make([]*detention.DetentionOccurrence, 0, len(req.ShipmentIDs))
+		cols := buncolgen.DetentionOccurrenceColumns
+		entities := make([]*detention.DetentionOccurrence, 0, len(req.ShipmentIDs))
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(withOccurrenceNames).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return applyBillingHold(buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo)).
-				Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
-		}).
-		Order(cols.ShipmentID.OrderAsc(), cols.ClockStartAt.OrderAsc(), cols.ID.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list detention billing holds by shipment", zap.Error(err))
-		return nil, err
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(withOccurrenceNames).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return applyBillingHold(buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo)).
+					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
+			}).
+			Order(cols.ShipmentID.OrderAsc(), cols.ClockStartAt.OrderAsc(), cols.ID.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list detention billing holds by shipment", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *occurrenceRepository) ListBillingHolds(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*detention.DetentionOccurrence, error) {
-	cols := buncolgen.DetentionOccurrenceColumns
-	entities := make([]*detention.DetentionOccurrence, 0, 16)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
+		cols := buncolgen.DetentionOccurrenceColumns
+		entities := make([]*detention.DetentionOccurrence, 0, 16)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(withOccurrenceNames).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return applyBillingHold(buncolgen.DetentionOccurrenceScopeTenant(sq, tenantInfo))
-		}).
-		Order(cols.ClockStartAt.OrderAsc(), cols.ID.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list detention billing holds", zap.Error(err))
-		return nil, err
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(withOccurrenceNames).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return applyBillingHold(buncolgen.DetentionOccurrenceScopeTenant(sq, tenantInfo))
+			}).
+			Order(cols.ClockStartAt.OrderAsc(), cols.ID.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list detention billing holds", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func applyBillingHold(q *bun.SelectQuery) *bun.SelectQuery {
@@ -313,34 +328,36 @@ func (r *occurrenceRepository) ListByAdditionalCharges(
 	ctx context.Context,
 	req *repositories.ListOccurrencesByChargesRequest,
 ) ([]*detention.DetentionOccurrence, error) {
-	if req == nil || len(req.ChargeIDs) == 0 || len(req.ShipmentIDs) == 0 {
-		return []*detention.DetentionOccurrence{}, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
+		if req == nil || len(req.ChargeIDs) == 0 || len(req.ShipmentIDs) == 0 {
+			return []*detention.DetentionOccurrence{}, nil
+		}
 
-	cols := buncolgen.DetentionOccurrenceColumns
-	entities := make([]*detention.DetentionOccurrence, 0, len(req.ChargeIDs))
+		cols := buncolgen.DetentionOccurrenceColumns
+		entities := make([]*detention.DetentionOccurrence, 0, len(req.ChargeIDs))
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
-				Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
-				Where(cols.AdditionalChargeID.In(), bun.List(req.ChargeIDs)).
-				Where(cols.Status.In(), bun.List([]detention.OccurrenceStatus{
-					detention.OccurrenceStatusPending,
-					detention.OccurrenceStatusApproved,
-					detention.OccurrenceStatusBilled,
-				}))
-		}).
-		Order(cols.ShipmentID.OrderAsc(), cols.ClockStartAt.OrderAsc(), cols.ID.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list detention occurrences by charge", zap.Error(err))
-		return nil, err
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
+					Where(cols.AdditionalChargeID.In(), bun.List(req.ChargeIDs)).
+					Where(cols.Status.In(), bun.List([]detention.OccurrenceStatus{
+						detention.OccurrenceStatusPending,
+						detention.OccurrenceStatusApproved,
+						detention.OccurrenceStatusBilled,
+					}))
+			}).
+			Order(cols.ShipmentID.OrderAsc(), cols.ClockStartAt.OrderAsc(), cols.ID.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list detention occurrences by charge", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 // ListNoticesDue powers the pre-breach alerting sweep: occurrences whose notice
@@ -349,27 +366,29 @@ func (r *occurrenceRepository) ListNoticesDue(
 	ctx context.Context,
 	req *repositories.ListNoticesDueRequest,
 ) ([]*detention.DetentionOccurrence, error) {
-	cols := buncolgen.DetentionOccurrenceColumns
-	entities := make([]*detention.DetentionOccurrence, 0, 32)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
+		cols := buncolgen.DetentionOccurrenceColumns
+		entities := make([]*detention.DetentionOccurrence, 0, 32)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(withOccurrenceNames).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
-				Where(cols.NotificationStatus.Eq(), detention.NotificationStatusPending).
-				Where(cols.NoticeDueAt.IsNotNull()).
-				Where(cols.NoticeDueAt.Lte(), req.Before)
-		}).
-		Order(cols.NoticeDueAt.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list detention notices due", zap.Error(err))
-		return nil, err
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(withOccurrenceNames).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+					Where(cols.NotificationStatus.Eq(), detention.NotificationStatusPending).
+					Where(cols.NoticeDueAt.IsNotNull()).
+					Where(cols.NoticeDueAt.Lte(), req.Before)
+			}).
+			Order(cols.NoticeDueAt.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list detention notices due", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 // Upsert writes the occurrence keyed on its stop. Recalculation runs on every
@@ -378,72 +397,76 @@ func (r *occurrenceRepository) Upsert(
 	ctx context.Context,
 	entity *detention.DetentionOccurrence,
 ) (*detention.DetentionOccurrence, error) {
-	log := r.l.With(
-		zap.String("operation", "Upsert"),
-		zap.String("stopId", entity.StopID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
+		log := r.l.With(
+			zap.String("operation", "Upsert"),
+			zap.String("stopId", entity.StopID.String()),
+		)
 
-	existing, err := r.GetByStop(ctx, &repositories.GetOccurrenceByStopRequest{
-		StopID: entity.StopID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if existing == nil {
-		if _, iErr := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); iErr != nil {
-			log.Error("failed to insert detention occurrence", zap.Error(iErr))
-			return nil, iErr
+		existing, err := r.GetByStop(ctx, &repositories.GetOccurrenceByStopRequest{
+			StopID: entity.StopID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		})
+		if err != nil {
+			return nil, err
 		}
-		return entity, nil
-	}
 
-	entity.ID = existing.ID
-	entity.CreatedAt = existing.CreatedAt
-	entity.Version = existing.Version
+		if existing == nil {
+			if _, iErr := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(ctx); iErr != nil {
+				log.Error("failed to insert detention occurrence", zap.Error(iErr))
+				return nil, iErr
+			}
+			return entity, nil
+		}
 
-	return r.Update(ctx, entity)
+		entity.ID = existing.ID
+		entity.CreatedAt = existing.CreatedAt
+		entity.Version = existing.Version
+
+		return r.Update(ctx, entity)
+	})
 }
 
 func (r *occurrenceRepository) Update(
 	ctx context.Context,
 	entity *detention.DetentionOccurrence,
 ) (*detention.DetentionOccurrence, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
+		)
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update detention occurrence", zap.Error(err))
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update detention occurrence", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(
-		results, "DetentionOccurrence", entity.ID.String(),
-	); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(
+			results, "DetentionOccurrence", entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // ShipmentAccrued totals what detention has already been booked against a
@@ -452,28 +475,30 @@ func (r *occurrenceRepository) ShipmentAccrued(
 	ctx context.Context,
 	req *repositories.GetOccurrencesByShipmentRequest,
 ) (decimal.Decimal, error) {
-	cols := buncolgen.DetentionOccurrenceColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
+		cols := buncolgen.DetentionOccurrenceColumns
 
-	var total decimal.NullDecimal
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*detention.DetentionOccurrence)(nil)).
-		ColumnExpr("COALESCE(SUM(?), 0)", bun.Safe(cols.BillableAmount.Qualified())).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
-				Where(cols.ShipmentID.Eq(), req.ShipmentID)
-		}).
-		Scan(ctx, &total)
-	if err != nil {
-		r.l.Error("failed to total shipment detention accrual", zap.Error(err))
-		return decimal.Zero, err
-	}
+		var total decimal.NullDecimal
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*detention.DetentionOccurrence)(nil)).
+			ColumnExpr("COALESCE(SUM(?), 0)", bun.Safe(cols.BillableAmount.Qualified())).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+					Where(cols.ShipmentID.Eq(), req.ShipmentID)
+			}).
+			Scan(ctx, &total)
+		if err != nil {
+			r.l.Error("failed to total shipment detention accrual", zap.Error(err))
+			return decimal.Zero, err
+		}
 
-	if !total.Valid {
-		return decimal.Zero, nil
-	}
+		if !total.Valid {
+			return decimal.Zero, nil
+		}
 
-	return total.Decimal, nil
+		return total.Decimal, nil
+	})
 }
 
 func (r *occurrenceRepository) LinkCharges(

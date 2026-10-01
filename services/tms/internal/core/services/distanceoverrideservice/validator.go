@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,8 +29,8 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*distanceoverride.DistanceOverride]().
 			WithModelName("DistanceOverride").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() })).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() })).
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
 			WithCustomReferenceCheck(
 				"originLocationId",
 				"Origin location does not exist in your organization",
@@ -66,21 +67,23 @@ func createLocationCheck(
 	db *postgres.Connection,
 ) validationframework.CustomReferenceCheckFunc {
 	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
-		if refID.IsNil() {
-			return true, nil
-		}
+		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
+			if refID.IsNil() {
+				return true, nil
+			}
 
-		exists, err := db.DB().NewSelect().
-			TableExpr("locations").
-			ColumnExpr("1").
-			Where("id = ?", refID).
-			Where("organization_id = ?", orgID).
-			Where("business_unit_id = ?", buID).
-			Exists(ctx)
-		if err != nil {
-			return false, err
-		}
-		return exists, nil
+			exists, err := db.DBForContext(ctx).NewSelect().
+				TableExpr("locations").
+				ColumnExpr("1").
+				Where("id = ?", refID).
+				Where("organization_id = ?", orgID).
+				Where("business_unit_id = ?", buID).
+				Exists(ctx)
+			if err != nil {
+				return false, err
+			}
+			return exists, nil
+		})
 	}
 }
 
@@ -88,21 +91,23 @@ func createCustomerCheck(
 	db *postgres.Connection,
 ) validationframework.CustomReferenceCheckFunc {
 	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
-		if refID.IsNil() {
-			return true, nil
-		}
+		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
+			if refID.IsNil() {
+				return true, nil
+			}
 
-		exists, err := db.DB().NewSelect().
-			TableExpr("customers").
-			ColumnExpr("1").
-			Where("id = ?", refID).
-			Where("organization_id = ?", orgID).
-			Where("business_unit_id = ?", buID).
-			Exists(ctx)
-		if err != nil {
-			return false, err
-		}
-		return exists, nil
+			exists, err := db.DBForContext(ctx).NewSelect().
+				TableExpr("customers").
+				ColumnExpr("1").
+				Where("id = ?", refID).
+				Where("organization_id = ?", orgID).
+				Where("business_unit_id = ?", buID).
+				Exists(ctx)
+			if err != nil {
+				return false, err
+			}
+			return exists, nil
+		})
 	}
 }
 
@@ -223,41 +228,43 @@ func createUniqueRouteRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.RouteSignature == "" {
-				entity.RouteSignature = entity.BuildRouteSignature()
-			}
+			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+				if entity.RouteSignature == "" {
+					entity.RouteSignature = entity.BuildRouteSignature()
+				}
 
-			q := db.DB().NewSelect().
-				Model((*distanceoverride.DistanceOverride)(nil)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("diso.organization_id = ?", valCtx.OrganizationID).
-						Where("diso.business_unit_id = ?", valCtx.BusinessUnitID).
-						Where("diso.route_signature = ?", entity.RouteSignature)
-				})
+				q := db.DBForContext(ctx).NewSelect().
+					Model((*distanceoverride.DistanceOverride)(nil)).
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.Where("diso.organization_id = ?", valCtx.OrganizationID).
+							Where("diso.business_unit_id = ?", valCtx.BusinessUnitID).
+							Where("diso.route_signature = ?", entity.RouteSignature)
+					})
 
-			if valCtx.IsUpdate() {
-				q = q.Where("diso.id != ?", entity.ID)
-			}
+				if valCtx.IsUpdate() {
+					q = q.Where("diso.id != ?", entity.ID)
+				}
 
-			count, err := q.Count(ctx)
-			if err != nil {
-				multiErr.Add(
-					"__all__",
-					errortypes.ErrSystemError,
-					"Failed to validate distance override route uniqueness",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-			}
+				count, err := q.Count(ctx)
+				if err != nil {
+					multiErr.Add(
+						"__all__",
+						errortypes.ErrSystemError,
+						"Failed to validate distance override route uniqueness",
+					)
+					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				}
 
-			if count > 0 {
-				multiErr.Add(
-					"intermediateStops",
-					errortypes.ErrDuplicate,
-					"Distance override with this route already exists",
-				)
-			}
+				if count > 0 {
+					multiErr.Add(
+						"intermediateStops",
+						errortypes.ErrDuplicate,
+						"Distance override with this route already exists",
+					)
+				}
 
-			return nil
+				return nil
+			})
 		})
 }
 

@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -44,7 +43,7 @@ func newBuilder(
 
 	return builder.
 		WithUniquenessChecker(
-			validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return db.DB() }),
+			validationframework.NewBunUniquenessCheckerScoped(db),
 		).
 		WithUniqueField(
 			"code",

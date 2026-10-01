@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -55,8 +56,9 @@ func (r *repository) GetBalanceOverview(
 	ctx context.Context,
 	req repositories.GetARAnalyticsRequest,
 ) (*repositories.ARBalanceOverview, error) {
-	rec := new(balanceOverviewRecord)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARBalanceOverview, error) {
+		rec := new(balanceOverviewRecord)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			COALESCE(SUM(inv.total_amount_minor - inv.applied_amount_minor), 0) AS total_open_minor,
 			COALESCE(SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END), 0) AS overdue_minor,
@@ -80,39 +82,40 @@ func (r *repository) GetBalanceOverview(
 		FROM invoices inv
 		WHERE inv.organization_id = ?
 		  AND inv.business_unit_id = ?`+openInvoicePredicate,
-		req.AsOfDate,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.AsOfDate,
-		req.AsOfDate, req.AsOfDate,
-		req.AsOfDate,
-		req.AsOfDate, req.AsOfDate,
-		req.AsOfDate, req.AsOfDate,
-		req.AsOfDate, req.AsOfDate,
-		req.AsOfDate, req.AsOfDate,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-	).Scan(ctx, rec)
-	if err != nil {
-		return nil, fmt.Errorf("get ar balance overview: %w", err)
-	}
+			req.AsOfDate,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.AsOfDate,
+			req.AsOfDate, req.AsOfDate,
+			req.AsOfDate,
+			req.AsOfDate, req.AsOfDate,
+			req.AsOfDate, req.AsOfDate,
+			req.AsOfDate, req.AsOfDate,
+			req.AsOfDate, req.AsOfDate,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+		).Scan(ctx, rec)
+		if err != nil {
+			return nil, fmt.Errorf("get ar balance overview: %w", err)
+		}
 
-	return &repositories.ARBalanceOverview{
-		TotalOpenMinor:       rec.TotalOpenMinor,
-		OverdueMinor:         rec.OverdueMinor,
-		UnappliedCashMinor:   rec.UnappliedCashMinor,
-		DisputedOpenMinor:    rec.DisputedOpenMinor,
-		OpenInvoiceCount:     rec.OpenInvoiceCount,
-		OverdueInvoiceCount:  rec.OverdueInvoiceCount,
-		DisputedInvoiceCount: rec.DisputedInvoiceCount,
-		AvgDaysPastDue:       rec.AvgDaysPastDue,
-		Buckets: repositories.ARAgingBucketTotals{
-			CurrentMinor:    rec.CurrentMinor,
-			Days1To30Minor:  rec.Days1To30Minor,
-			Days31To60Minor: rec.Days31To60Minor,
-			Days61To90Minor: rec.Days61To90Minor,
-			DaysOver90Minor: rec.DaysOver90Minor,
-			TotalOpenMinor:  rec.TotalOpenMinor,
-		},
-	}, nil
+		return &repositories.ARBalanceOverview{
+			TotalOpenMinor:       rec.TotalOpenMinor,
+			OverdueMinor:         rec.OverdueMinor,
+			UnappliedCashMinor:   rec.UnappliedCashMinor,
+			DisputedOpenMinor:    rec.DisputedOpenMinor,
+			OpenInvoiceCount:     rec.OpenInvoiceCount,
+			OverdueInvoiceCount:  rec.OverdueInvoiceCount,
+			DisputedInvoiceCount: rec.DisputedInvoiceCount,
+			AvgDaysPastDue:       rec.AvgDaysPastDue,
+			Buckets: repositories.ARAgingBucketTotals{
+				CurrentMinor:    rec.CurrentMinor,
+				Days1To30Minor:  rec.Days1To30Minor,
+				Days31To60Minor: rec.Days31To60Minor,
+				Days61To90Minor: rec.Days61To90Minor,
+				DaysOver90Minor: rec.DaysOver90Minor,
+				TotalOpenMinor:  rec.TotalOpenMinor,
+			},
+		}, nil
+	})
 }
 
 type paymentStatsRecord struct {
@@ -128,9 +131,10 @@ func (r *repository) GetPaymentStats(
 	ctx context.Context,
 	req repositories.GetARAnalyticsRequest,
 ) (*repositories.ARPaymentStats, error) {
-	dayStart := req.AsOfDate - (req.AsOfDate % secondsPerDay)
-	rec := new(paymentStatsRecord)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARPaymentStats, error) {
+		dayStart := req.AsOfDate - (req.AsOfDate % secondsPerDay)
+		rec := new(paymentStatsRecord)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			COALESCE(SUM(cp.amount_minor) FILTER (WHERE cp.status = 'Posted' AND cp.payment_date >= ?), 0) AS posted_today_minor,
 			COUNT(*) FILTER (WHERE cp.status = 'Posted' AND cp.payment_date >= ?) AS posted_today_count,
@@ -141,22 +145,23 @@ func (r *repository) GetPaymentStats(
 		FROM customer_payments cp
 		WHERE cp.organization_id = ?
 		  AND cp.business_unit_id = ?`,
-		dayStart, dayStart,
-		req.AsOfDate-30*secondsPerDay, req.AsOfDate-30*secondsPerDay,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-	).Scan(ctx, rec)
-	if err != nil {
-		return nil, fmt.Errorf("get ar payment stats: %w", err)
-	}
+			dayStart, dayStart,
+			req.AsOfDate-30*secondsPerDay, req.AsOfDate-30*secondsPerDay,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+		).Scan(ctx, rec)
+		if err != nil {
+			return nil, fmt.Errorf("get ar payment stats: %w", err)
+		}
 
-	return &repositories.ARPaymentStats{
-		PostedTodayMinor:      rec.PostedTodayMinor,
-		PostedTodayCount:      rec.PostedTodayCount,
-		UnappliedCashMinor:    rec.UnappliedCashMinor,
-		UnappliedPaymentCount: rec.UnappliedPaymentCount,
-		ReversedLast30Minor:   rec.ReversedLast30Minor,
-		ReversedLast30Count:   rec.ReversedLast30Count,
-	}, nil
+		return &repositories.ARPaymentStats{
+			PostedTodayMinor:      rec.PostedTodayMinor,
+			PostedTodayCount:      rec.PostedTodayCount,
+			UnappliedCashMinor:    rec.UnappliedCashMinor,
+			UnappliedPaymentCount: rec.UnappliedPaymentCount,
+			ReversedLast30Minor:   rec.ReversedLast30Minor,
+			ReversedLast30Count:   rec.ReversedLast30Count,
+		}, nil
+	})
 }
 
 type balancePointRecord struct {
@@ -169,8 +174,9 @@ func (r *repository) ListBalanceSeries(
 	ctx context.Context,
 	req repositories.ListARSeriesRequest,
 ) ([]*repositories.ARBalancePoint, error) {
-	records := make([]*balancePointRecord, 0, req.Weeks)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARBalancePoint, error) {
+		records := make([]*balancePointRecord, 0, req.Weeks)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		WITH points AS (
 			SELECT (?::BIGINT - (n * ?::BIGINT))::BIGINT AS period_end
 			FROM generate_series(0, ?::INT - 1) AS n
@@ -201,24 +207,25 @@ func (r *repository) ListBalanceSeries(
 			), 0) AS billed_minor
 		FROM points p
 		ORDER BY p.period_end ASC`,
-		req.AsOfDate, secondsPerWeek, req.Weeks,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		trailingDSOWindow,
-	).Scan(ctx, &records)
-	if err != nil {
-		return nil, fmt.Errorf("list ar balance series: %w", err)
-	}
+			req.AsOfDate, secondsPerWeek, req.Weeks,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			trailingDSOWindow,
+		).Scan(ctx, &records)
+		if err != nil {
+			return nil, fmt.Errorf("list ar balance series: %w", err)
+		}
 
-	points := make([]*repositories.ARBalancePoint, 0, len(records))
-	for _, rec := range records {
-		points = append(points, &repositories.ARBalancePoint{
-			PeriodEnd:      rec.PeriodEnd,
-			ARBalanceMinor: rec.ARBalanceMinor,
-			BilledMinor:    rec.BilledMinor,
-		})
-	}
-	return points, nil
+		points := make([]*repositories.ARBalancePoint, 0, len(records))
+		for _, rec := range records {
+			points = append(points, &repositories.ARBalancePoint{
+				PeriodEnd:      rec.PeriodEnd,
+				ARBalanceMinor: rec.ARBalanceMinor,
+				BilledMinor:    rec.BilledMinor,
+			})
+		}
+		return points, nil
+	})
 }
 
 type agingTrendRecord struct {
@@ -235,8 +242,9 @@ func (r *repository) ListAgingTrend(
 	ctx context.Context,
 	req repositories.ListARSeriesRequest,
 ) ([]*repositories.ARAgingTrendPoint, error) {
-	records := make([]*agingTrendRecord, 0, req.Weeks)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARAgingTrendPoint, error) {
+		records := make([]*agingTrendRecord, 0, req.Weeks)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		WITH points AS (
 			SELECT (?::BIGINT - (n * ?::BIGINT))::BIGINT AS period_end
 			FROM generate_series(0, ?::INT - 1) AS n
@@ -268,28 +276,29 @@ func (r *repository) ListAgingTrend(
 		 AND oi.open_minor > 0
 		GROUP BY p.period_end
 		ORDER BY p.period_end ASC`,
-		req.AsOfDate, secondsPerWeek, req.Weeks,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-	).Scan(ctx, &records)
-	if err != nil {
-		return nil, fmt.Errorf("list ar aging trend: %w", err)
-	}
+			req.AsOfDate, secondsPerWeek, req.Weeks,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+		).Scan(ctx, &records)
+		if err != nil {
+			return nil, fmt.Errorf("list ar aging trend: %w", err)
+		}
 
-	points := make([]*repositories.ARAgingTrendPoint, 0, len(records))
-	for _, rec := range records {
-		points = append(points, &repositories.ARAgingTrendPoint{
-			PeriodEnd: rec.PeriodEnd,
-			Buckets: repositories.ARAgingBucketTotals{
-				CurrentMinor:    rec.CurrentMinor,
-				Days1To30Minor:  rec.Days1To30Minor,
-				Days31To60Minor: rec.Days31To60Minor,
-				Days61To90Minor: rec.Days61To90Minor,
-				DaysOver90Minor: rec.DaysOver90Minor,
-				TotalOpenMinor:  rec.TotalOpenMinor,
-			},
-		})
-	}
-	return points, nil
+		points := make([]*repositories.ARAgingTrendPoint, 0, len(records))
+		for _, rec := range records {
+			points = append(points, &repositories.ARAgingTrendPoint{
+				PeriodEnd: rec.PeriodEnd,
+				Buckets: repositories.ARAgingBucketTotals{
+					CurrentMinor:    rec.CurrentMinor,
+					Days1To30Minor:  rec.Days1To30Minor,
+					Days31To60Minor: rec.Days31To60Minor,
+					Days61To90Minor: rec.Days61To90Minor,
+					DaysOver90Minor: rec.DaysOver90Minor,
+					TotalOpenMinor:  rec.TotalOpenMinor,
+				},
+			})
+		}
+		return points, nil
+	})
 }
 
 type cashFlowRecord struct {
@@ -304,8 +313,9 @@ func (r *repository) ListCashFlow(
 	ctx context.Context,
 	req repositories.ListARCashFlowRequest,
 ) ([]*repositories.ARCashFlowPoint, error) {
-	records := make([]*cashFlowRecord, 0, req.PastWeeks+req.FutureWeeks)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARCashFlowPoint, error) {
+		records := make([]*cashFlowRecord, 0, req.PastWeeks+req.FutureWeeks)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		WITH weeks AS (
 			SELECT (?::BIGINT + (n * ?::BIGINT))::BIGINT AS week_start
 			FROM generate_series(-?::INT, ?::INT - 1) AS n
@@ -345,27 +355,28 @@ func (r *repository) ListCashFlow(
 			(w.week_start >= ?::BIGINT) AS is_forecast
 		FROM weeks w
 		ORDER BY w.week_start ASC`,
-		req.AsOfDate, secondsPerWeek, req.PastWeeks, req.FutureWeeks,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
-		req.AsOfDate,
-	).Scan(ctx, &records)
-	if err != nil {
-		return nil, fmt.Errorf("list ar cash flow: %w", err)
-	}
+			req.AsOfDate, secondsPerWeek, req.PastWeeks, req.FutureWeeks,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID, secondsPerWeek,
+			req.AsOfDate,
+		).Scan(ctx, &records)
+		if err != nil {
+			return nil, fmt.Errorf("list ar cash flow: %w", err)
+		}
 
-	points := make([]*repositories.ARCashFlowPoint, 0, len(records))
-	for _, rec := range records {
-		points = append(points, &repositories.ARCashFlowPoint{
-			WeekStart:     rec.WeekStart,
-			ExpectedMinor: rec.ExpectedMinor,
-			OpenDueMinor:  rec.OpenDueMinor,
-			ActualMinor:   rec.ActualMinor,
-			IsForecast:    rec.IsForecast,
-		})
-	}
-	return points, nil
+		points := make([]*repositories.ARCashFlowPoint, 0, len(records))
+		for _, rec := range records {
+			points = append(points, &repositories.ARCashFlowPoint{
+				WeekStart:     rec.WeekStart,
+				ExpectedMinor: rec.ExpectedMinor,
+				OpenDueMinor:  rec.OpenDueMinor,
+				ActualMinor:   rec.ActualMinor,
+				IsForecast:    rec.IsForecast,
+			})
+		}
+		return points, nil
+	})
 }
 
 type collectionTotalsRecord struct {
@@ -504,41 +515,43 @@ func (r *repository) GetCollectionTotals(
 	ctx context.Context,
 	req repositories.GetARCollectionMetricsRequest,
 ) (*repositories.ARCollectionTotals, error) {
-	periodStart := req.AsOfDate - int64(req.PeriodDays)*secondsPerDay
-	rec := new(collectionTotalsRecord)
-	err := r.db.DBForContext(ctx).NewRaw(collectionTotalsSQL,
-		periodStart, req.AsOfDate,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-	).Scan(ctx, rec)
-	if err != nil {
-		return nil, fmt.Errorf("get ar collection totals: %w", err)
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARCollectionTotals, error) {
+		periodStart := req.AsOfDate - int64(req.PeriodDays)*secondsPerDay
+		rec := new(collectionTotalsRecord)
+		err := r.db.DBForContext(ctx).NewRaw(collectionTotalsSQL,
+			periodStart, req.AsOfDate,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+		).Scan(ctx, rec)
+		if err != nil {
+			return nil, fmt.Errorf("get ar collection totals: %w", err)
+		}
 
-	return &repositories.ARCollectionTotals{
-		PeriodStart:              periodStart,
-		PeriodEnd:                req.AsOfDate,
-		BeginningOpenMinor:       rec.BeginningOpenMinor,
-		EndingOpenMinor:          rec.EndingOpenMinor,
-		EndingCurrentMinor:       rec.EndingCurrentMinor,
-		CreditSalesMinor:         rec.CreditSalesMinor,
-		CollectedMinor:           rec.CollectedMinor,
-		AvgDaysToPay:             rec.AvgDaysToPay,
-		ShortPayMinor:            rec.ShortPayMinor,
-		ShortPayApplicationCount: rec.ShortPayApplicationCount,
-		ApplicationCount:         rec.ApplicationCount,
-		DisputedInvoiceCount:     rec.DisputedInvoiceCount,
-		PostedInvoiceCount:       rec.PostedInvoiceCount,
-	}, nil
+		return &repositories.ARCollectionTotals{
+			PeriodStart:              periodStart,
+			PeriodEnd:                req.AsOfDate,
+			BeginningOpenMinor:       rec.BeginningOpenMinor,
+			EndingOpenMinor:          rec.EndingOpenMinor,
+			EndingCurrentMinor:       rec.EndingCurrentMinor,
+			CreditSalesMinor:         rec.CreditSalesMinor,
+			CollectedMinor:           rec.CollectedMinor,
+			AvgDaysToPay:             rec.AvgDaysToPay,
+			ShortPayMinor:            rec.ShortPayMinor,
+			ShortPayApplicationCount: rec.ShortPayApplicationCount,
+			ApplicationCount:         rec.ApplicationCount,
+			DisputedInvoiceCount:     rec.DisputedInvoiceCount,
+			PostedInvoiceCount:       rec.PostedInvoiceCount,
+		}, nil
+	})
 }
 
 type topOverdueRecord struct {
@@ -554,8 +567,9 @@ func (r *repository) ListTopOverdueCustomers(
 	ctx context.Context,
 	req repositories.ListARTopOverdueCustomersRequest,
 ) ([]*repositories.ARTopOverdueCustomer, error) {
-	records := make([]*topOverdueRecord, 0, req.Limit)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARTopOverdueCustomer, error) {
+		records := make([]*topOverdueRecord, 0, req.Limit)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			inv.customer_id,
 			inv.bill_to_name AS customer_name,
@@ -570,27 +584,28 @@ func (r *repository) ListTopOverdueCustomers(
 		HAVING SUM(CASE WHEN inv.due_date IS NOT NULL AND inv.due_date < ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) > 0
 		ORDER BY overdue_minor DESC
 		LIMIT ?`,
-		req.AsOfDate, req.AsOfDate, req.AsOfDate,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.AsOfDate,
-		req.Limit,
-	).Scan(ctx, &records)
-	if err != nil {
-		return nil, fmt.Errorf("list ar top overdue customers: %w", err)
-	}
+			req.AsOfDate, req.AsOfDate, req.AsOfDate,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.AsOfDate,
+			req.Limit,
+		).Scan(ctx, &records)
+		if err != nil {
+			return nil, fmt.Errorf("list ar top overdue customers: %w", err)
+		}
 
-	items := make([]*repositories.ARTopOverdueCustomer, 0, len(records))
-	for _, rec := range records {
-		items = append(items, &repositories.ARTopOverdueCustomer{
-			CustomerID:        pulid.ID(rec.CustomerID),
-			CustomerName:      rec.CustomerName,
-			OverdueMinor:      rec.OverdueMinor,
-			TotalOpenMinor:    rec.TotalOpenMinor,
-			OldestDaysPastDue: rec.OldestDaysPastDue,
-			OpenInvoiceCount:  rec.OpenInvoiceCount,
-		})
-	}
-	return items, nil
+		items := make([]*repositories.ARTopOverdueCustomer, 0, len(records))
+		for _, rec := range records {
+			items = append(items, &repositories.ARTopOverdueCustomer{
+				CustomerID:        pulid.ID(rec.CustomerID),
+				CustomerName:      rec.CustomerName,
+				OverdueMinor:      rec.OverdueMinor,
+				TotalOpenMinor:    rec.TotalOpenMinor,
+				OldestDaysPastDue: rec.OldestDaysPastDue,
+				OpenInvoiceCount:  rec.OpenInvoiceCount,
+			})
+		}
+		return items, nil
+	})
 }
 
 type worklistRecord struct {
@@ -612,8 +627,9 @@ func (r *repository) ListCollectionsWorklist(
 	ctx context.Context,
 	req repositories.ListARCollectionsWorklistRequest,
 ) ([]*repositories.ARCollectionsWorklistItem, error) {
-	records := make([]*worklistRecord, 0, req.Limit)
-	err := r.db.DBForContext(ctx).NewRaw(`
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*repositories.ARCollectionsWorklistItem, error) {
+		records := make([]*worklistRecord, 0, req.Limit)
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT *
 		FROM (
 			SELECT
@@ -663,33 +679,34 @@ func (r *repository) ListCollectionsWorklist(
 		   OR items.has_short_pay
 		ORDER BY items.days_past_due DESC, items.open_amount_minor DESC
 		LIMIT ?`,
-		req.AsOfDate, req.AsOfDate,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID,
-		req.Limit,
-	).Scan(ctx, &records)
-	if err != nil {
-		return nil, fmt.Errorf("list ar collections worklist: %w", err)
-	}
+			req.AsOfDate, req.AsOfDate,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID,
+			req.Limit,
+		).Scan(ctx, &records)
+		if err != nil {
+			return nil, fmt.Errorf("list ar collections worklist: %w", err)
+		}
 
-	items := make([]*repositories.ARCollectionsWorklistItem, 0, len(records))
-	for _, rec := range records {
-		items = append(items, &repositories.ARCollectionsWorklistItem{
-			InvoiceID:       pulid.ID(rec.InvoiceID),
-			CustomerID:      pulid.ID(rec.CustomerID),
-			CustomerName:    rec.CustomerName,
-			InvoiceNumber:   rec.InvoiceNumber,
-			DueDate:         rec.DueDate,
-			OpenAmountMinor: rec.OpenAmountMinor,
-			DaysPastDue:     rec.DaysPastDue,
-			IsDisputed:      rec.IsDisputed,
-			HasShortPay:     rec.HasShortPay,
+		items := make([]*repositories.ARCollectionsWorklistItem, 0, len(records))
+		for _, rec := range records {
+			items = append(items, &repositories.ARCollectionsWorklistItem{
+				InvoiceID:       pulid.ID(rec.InvoiceID),
+				CustomerID:      pulid.ID(rec.CustomerID),
+				CustomerName:    rec.CustomerName,
+				InvoiceNumber:   rec.InvoiceNumber,
+				DueDate:         rec.DueDate,
+				OpenAmountMinor: rec.OpenAmountMinor,
+				DaysPastDue:     rec.DaysPastDue,
+				IsDisputed:      rec.IsDisputed,
+				HasShortPay:     rec.HasShortPay,
 
-			OpenDisputeReasonCode: rec.OpenDisputeReasonCode,
-			DisputedAmountMinor:   rec.DisputedAmountMinor,
-			DisputeOpenedAt:       rec.DisputeOpenedAt,
-		})
-	}
-	return items, nil
+				OpenDisputeReasonCode: rec.OpenDisputeReasonCode,
+				DisputedAmountMinor:   rec.DisputedAmountMinor,
+				DisputeOpenedAt:       rec.DisputeOpenedAt,
+			})
+		}
+		return items, nil
+	})
 }
 
 type customerSnapshotRecord struct {
@@ -829,61 +846,63 @@ func (r *repository) GetCustomerSnapshot(
 	ctx context.Context,
 	req repositories.GetARCustomerSnapshotRequest,
 ) (*repositories.ARCustomerSnapshot, error) {
-	aging, err := r.GetCustomerAging(ctx, repositories.GetARCustomerAgingRequest(req))
-	if err != nil {
-		return nil, err
-	}
-
-	rec := new(customerSnapshotRecord)
-	err = r.db.DBForContext(ctx).NewRaw(customerSnapshotSQL,
-		req.AsOfDate, req.AsOfDate,
-		req.AsOfDate, trailingYearWindow,
-		req.AsOfDate, trailingDSOWindow, req.AsOfDate, req.AsOfDate,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID,
-	).Scan(ctx, rec)
-	if err != nil {
-		return nil, fmt.Errorf("get ar customer snapshot: %w", err)
-	}
-
-	monthly := make([]*monthlyCollectionRecord, 0, 12)
-	err = r.db.DBForContext(ctx).NewRaw(customerMonthlyCollectionsSQL,
-		req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID,
-		req.AsOfDate, trailingYearWindow,
-	).Scan(ctx, &monthly)
-	if err != nil {
-		return nil, fmt.Errorf("get ar customer monthly collections: %w", err)
-	}
-
-	points := make([]*repositories.ARMonthlyCollectionPoint, 0, len(monthly))
-	for _, m := range monthly {
-		points = append(points, &repositories.ARMonthlyCollectionPoint{
-			MonthStart:  m.MonthStart,
-			AmountMinor: m.AmountMinor,
-		})
-	}
-
-	snapshot := &repositories.ARCustomerSnapshot{
-		CustomerID:            req.CustomerID,
-		CustomerName:          rec.CustomerName,
-		UnappliedCashMinor:    rec.UnappliedCashMinor,
-		CreditLimitMinor:      rec.CreditLimitMinor,
-		HasCreditLimit:        rec.HasCreditLimit,
-		OpenInvoiceCount:      rec.OpenInvoiceCount,
-		OldestOpenInvoiceDate: rec.OldestOpenInvoiceDate,
-		OldestDaysPastDue:     rec.OldestDaysPastDue,
-		LastPaymentDate:       rec.LastPaymentDate,
-		LastPaymentMinor:      rec.LastPaymentMinor,
-		AvgDaysToPay:          rec.AvgDaysToPay,
-		BilledTrailing91Minor: rec.BilledTrailing91Minor,
-		MonthlyCollections:    points,
-	}
-	if aging != nil {
-		snapshot.Buckets = aging.Buckets
-		snapshot.TotalOpenMinor = aging.Buckets.TotalOpenMinor
-		snapshot.OverdueMinor = aging.Buckets.TotalOpenMinor - aging.Buckets.CurrentMinor
-		if snapshot.CustomerName == "" {
-			snapshot.CustomerName = aging.CustomerName
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ARCustomerSnapshot, error) {
+		aging, err := r.GetCustomerAging(ctx, repositories.GetARCustomerAgingRequest(req))
+		if err != nil {
+			return nil, err
 		}
-	}
-	return snapshot, nil
+
+		rec := new(customerSnapshotRecord)
+		err = r.db.DBForContext(ctx).NewRaw(customerSnapshotSQL,
+			req.AsOfDate, req.AsOfDate,
+			req.AsOfDate, trailingYearWindow,
+			req.AsOfDate, trailingDSOWindow, req.AsOfDate, req.AsOfDate,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID,
+		).Scan(ctx, rec)
+		if err != nil {
+			return nil, fmt.Errorf("get ar customer snapshot: %w", err)
+		}
+
+		monthly := make([]*monthlyCollectionRecord, 0, 12)
+		err = r.db.DBForContext(ctx).NewRaw(customerMonthlyCollectionsSQL,
+			req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID,
+			req.AsOfDate, trailingYearWindow,
+		).Scan(ctx, &monthly)
+		if err != nil {
+			return nil, fmt.Errorf("get ar customer monthly collections: %w", err)
+		}
+
+		points := make([]*repositories.ARMonthlyCollectionPoint, 0, len(monthly))
+		for _, m := range monthly {
+			points = append(points, &repositories.ARMonthlyCollectionPoint{
+				MonthStart:  m.MonthStart,
+				AmountMinor: m.AmountMinor,
+			})
+		}
+
+		snapshot := &repositories.ARCustomerSnapshot{
+			CustomerID:            req.CustomerID,
+			CustomerName:          rec.CustomerName,
+			UnappliedCashMinor:    rec.UnappliedCashMinor,
+			CreditLimitMinor:      rec.CreditLimitMinor,
+			HasCreditLimit:        rec.HasCreditLimit,
+			OpenInvoiceCount:      rec.OpenInvoiceCount,
+			OldestOpenInvoiceDate: rec.OldestOpenInvoiceDate,
+			OldestDaysPastDue:     rec.OldestDaysPastDue,
+			LastPaymentDate:       rec.LastPaymentDate,
+			LastPaymentMinor:      rec.LastPaymentMinor,
+			AvgDaysToPay:          rec.AvgDaysToPay,
+			BilledTrailing91Minor: rec.BilledTrailing91Minor,
+			MonthlyCollections:    points,
+		}
+		if aging != nil {
+			snapshot.Buckets = aging.Buckets
+			snapshot.TotalOpenMinor = aging.Buckets.TotalOpenMinor
+			snapshot.OverdueMinor = aging.Buckets.TotalOpenMinor - aging.Buckets.CurrentMinor
+			if snapshot.CustomerName == "" {
+				snapshot.CustomerName = aging.CustomerName
+			}
+		}
+		return snapshot, nil
+	})
 }

@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -27,8 +27,8 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*fleetcode.FleetCode]().
 			WithModelName("FleetCode").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() })).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() })).
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
 			WithUniqueField(
 				"code",
 				"code",
@@ -49,16 +49,18 @@ func createUserOrganizationCheck(
 	db *postgres.Connection,
 ) validationframework.CustomReferenceCheckFunc {
 	return func(ctx context.Context, orgID, _ pulid.ID, refID pulid.ID) (bool, error) {
-		exists, err := db.DB().NewSelect().
-			TableExpr("user_organization_memberships").
-			ColumnExpr("1").
-			Where("user_id = ?", refID).
-			Where("organization_id = ?", orgID).
-			Exists(ctx)
-		if err != nil {
-			return false, err
-		}
-		return exists, nil
+		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
+			exists, err := db.DBForContext(ctx).NewSelect().
+				TableExpr("user_organization_memberships").
+				ColumnExpr("1").
+				Where("user_id = ?", refID).
+				Where("organization_id = ?", orgID).
+				Exists(ctx)
+			if err != nil {
+				return false, err
+			}
+			return exists, nil
+		})
 	}
 }
 

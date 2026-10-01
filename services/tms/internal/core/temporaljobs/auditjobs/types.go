@@ -28,8 +28,9 @@ type AuditBufferStatus struct {
 }
 
 type DeleteAuditEntriesResult struct {
-	TotalDeleted int    `json:"totalDeleted,omitempty"`
-	Result       string `json:"result,omitempty"`
+	TotalDeleted      int    `json:"totalDeleted,omitempty"`
+	AuthEventsDeleted int    `json:"authEventsDeleted,omitempty"`
+	Result            string `json:"result,omitempty"`
 }
 
 type FlushFromRedisResult struct {

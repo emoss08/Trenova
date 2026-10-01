@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -395,7 +396,7 @@ func (p *Projector) project(
 	inserted := 0
 	var failures []error
 	for _, rows := range tenants {
-		events, err := p.deriveTenant(ctx, rows)
+		events, err := p.deriveTenant(dbscope.WithTenant(ctx, rows.tenant.DBTenant()), rows)
 		if err != nil {
 			failures = append(failures, fmt.Errorf("derive AI audit rows for %s: %w",
 				rows.tenant.OrgID, err))

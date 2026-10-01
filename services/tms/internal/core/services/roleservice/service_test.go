@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
+	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -33,6 +34,7 @@ type testServiceDeps struct {
 	rbacRepo   *rbactest.Repository
 	permCache  *mocks.MockPermissionCacheRepository
 	permEngine *mocks.MockPermissionEngine
+	audit      *securityaudittest.Recorder
 	svc        *Service
 }
 
@@ -44,6 +46,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 	permCache := mocks.NewMockPermissionCacheRepository(t)
 	permEngine := mocks.NewMockPermissionEngine(t)
 	logger := zap.NewNop()
+	recorder := &securityaudittest.Recorder{}
 
 	svc := &Service{
 		l:          logger.Named("test.role"),
@@ -53,6 +56,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 		permEngine: permEngine,
 		validator:  newStubValidator(),
 		registry:   permission.NewRegistry(),
+		auditor:    recorder,
 	}
 
 	return &testServiceDeps{
@@ -60,6 +64,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 		rbacRepo:   rbacRepo,
 		permCache:  permCache,
 		permEngine: permEngine,
+		audit:      recorder,
 		svc:        svc,
 	}
 }
@@ -326,7 +331,16 @@ func TestUnassignRole_Success(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	assignmentID := pulid.MustNew("ura_")
 
-	deps.roleRepo.On("DeleteAssignment", ctx, assignmentID).Return(nil)
+	userID := pulid.MustNew("usr_")
+	deps.roleRepo.On("DeleteAssignment", ctx, repositories.DeleteRoleAssignmentRequest{
+		AssignmentID:   assignmentID,
+		OrganizationID: orgID,
+	}).Return(&permission.UserRoleAssignment{
+		ID:             assignmentID,
+		UserID:         userID,
+		OrganizationID: orgID,
+	}, nil)
+	deps.permEngine.On("InvalidateUser", ctx, userID, orgID).Return(nil)
 
 	err := deps.svc.UnassignRole(ctx, UnassignRoleRequest{
 		ActorID:        actorID,
@@ -470,7 +484,10 @@ func TestDeleteResourcePermission_Success(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.roleRepo.On("DeleteResourcePermission", ctx, permID).Return(nil)
+	deps.roleRepo.On("DeleteResourcePermission", ctx, repositories.DeleteResourcePermissionRequest{
+		PermissionID: permID,
+		RoleID:       roleID,
+	}).Return(nil)
 	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
 	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
@@ -933,7 +950,10 @@ func TestUnassignRole_Error(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	assignmentID := pulid.MustNew("ura_")
 
-	deps.roleRepo.On("DeleteAssignment", ctx, assignmentID).Return(errors.New("database error"))
+	deps.roleRepo.On("DeleteAssignment", ctx, repositories.DeleteRoleAssignmentRequest{
+		AssignmentID:   assignmentID,
+		OrganizationID: orgID,
+	}).Return(nil, errors.New("database error"))
 
 	err := deps.svc.UnassignRole(ctx, UnassignRoleRequest{
 		ActorID:        actorID,
@@ -1376,7 +1396,10 @@ func TestDeleteResourcePermission_NotFoundError(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.roleRepo.On("DeleteResourcePermission", ctx, permID).Return(errors.New("not found"))
+	deps.roleRepo.On("DeleteResourcePermission", ctx, repositories.DeleteResourcePermissionRequest{
+		PermissionID: permID,
+		RoleID:       roleID,
+	}).Return(errors.New("not found"))
 
 	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
 

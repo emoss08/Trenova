@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,6 +34,7 @@ func (s *Service) ProcessWebhook(
 	if err != nil {
 		return err
 	}
+	ctx = dbscope.WithTenant(ctx, cfg.TenantInfo.DBTenant())
 
 	if strings.TrimSpace(cfg.WebhookSecret) == "" {
 		return errortypes.NewValidationError(

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -54,34 +55,36 @@ func (r *repository) LookupCells(
 	ctx context.Context,
 	req *repositories.LookupRateMatrixCellsRequest,
 ) ([]*ratematrix.RateMatrixCell, error) {
-	log := r.l.With(
-		zap.String("operation", "LookupCells"),
-		zap.String("matrixId", req.RateMatrixID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrix.RateMatrixCell, error) {
+		log := r.l.With(
+			zap.String("operation", "LookupCells"),
+			zap.String("matrixId", req.RateMatrixID.String()),
+		)
 
-	cols := buncolgen.RateMatrixCellColumns
-	entities := make([]*ratematrix.RateMatrixCell, 0, len(req.Axes)*2)
+		cols := buncolgen.RateMatrixCellColumns
+		entities := make([]*ratematrix.RateMatrixCell, 0, len(req.Axes)*2)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-				Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = buncolgen.RateMatrixCellScopeTenant(sq, req.TenantInfo).
+					Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
 
-			for _, axis := range req.Axes {
-				sq = applyAxisFilter(sq, axis)
-			}
+				for _, axis := range req.Axes {
+					sq = applyAxisFilter(sq, axis)
+				}
 
-			return sq
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to look up rate matrix cells", zap.Error(err))
-		return nil, err
-	}
+				return sq
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to look up rate matrix cells", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func applyAxisFilter(
@@ -121,37 +124,39 @@ func (r *repository) ListCells(
 	ctx context.Context,
 	req *repositories.ListRateMatrixCellsRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
-	log := r.l.With(
-		zap.String("operation", "ListCells"),
-		zap.String("matrixId", req.RateMatrixID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
+		log := r.l.With(
+			zap.String("operation", "ListCells"),
+			zap.String("matrixId", req.RateMatrixID.String()),
+		)
 
-	cols := buncolgen.RateMatrixCellColumns
-	entities := make([]*ratematrix.RateMatrixCell, 0, req.Filter.Pagination.SafeLimit())
+		cols := buncolgen.RateMatrixCellColumns
+		entities := make([]*ratematrix.RateMatrixCell, 0, req.Filter.Pagination.SafeLimit())
 
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-				Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
-		}).
-		Order(cols.D0Key.OrderAsc()).
-		Order(cols.D1Key.OrderAsc()).
-		Order(cols.D2Min.OrderAsc()).
-		Order(cols.D3Min.OrderAsc()).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to list rate matrix cells", zap.Error(err))
-		return nil, err
-	}
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateMatrixCellScopeTenant(sq, req.TenantInfo).
+					Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
+			}).
+			Order(cols.D0Key.OrderAsc()).
+			Order(cols.D1Key.OrderAsc()).
+			Order(cols.D2Min.OrderAsc()).
+			Order(cols.D3Min.OrderAsc()).
+			Limit(req.Filter.Pagination.SafeLimit()).
+			Offset(req.Filter.Pagination.SafeOffset()).
+			ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to list rate matrix cells", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*ratematrix.RateMatrixCell]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*ratematrix.RateMatrixCell]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 // ReplaceCells swaps a matrix's entire cell set in one transaction.
@@ -167,74 +172,78 @@ func (r *repository) ReplaceCells(
 	ctx context.Context,
 	req *repositories.ReplaceRateMatrixCellsRequest,
 ) error {
-	log := r.l.With(
-		zap.String("operation", "ReplaceCells"),
-		zap.String("matrixId", req.RateMatrixID.String()),
-		zap.Int("cells", len(req.Cells)),
-	)
-
-	cols := buncolgen.RateMatrixCellColumns
-
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		if _, dErr := r.db.DBForContext(c).
-			NewDelete().
-			Model((*ratematrix.RateMatrixCell)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.RateMatrixCellScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
-			}).
-			Exec(c); dErr != nil {
-			return dErr
-		}
-
-		for _, cell := range req.Cells {
-			if cell == nil {
-				continue
-			}
-			cell.ID = pulid.Nil
-			cell.RateMatrixID = req.RateMatrixID
-			cell.OrganizationID = req.TenantInfo.OrgID
-			cell.BusinessUnitID = req.TenantInfo.BuID
-		}
-
-		if iErr := r.insertCellBatches(c, req.Cells); iErr != nil {
-			return iErr
-		}
-
-		return r.bumpMatrixVersion(c, req)
-	})
-	if err != nil {
-		log.Error("failed to replace rate matrix cells", zap.Error(err))
-		return dberror.MapRetryableTransactionError(
-			err,
-			"Rate matrix is busy. Retry the request.",
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		log := r.l.With(
+			zap.String("operation", "ReplaceCells"),
+			zap.String("matrixId", req.RateMatrixID.String()),
+			zap.Int("cells", len(req.Cells)),
 		)
-	}
 
-	return nil
+		cols := buncolgen.RateMatrixCellColumns
+
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			if _, dErr := r.db.DBForContext(c).
+				NewDelete().
+				Model((*ratematrix.RateMatrixCell)(nil)).
+				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+					return buncolgen.RateMatrixCellScopeTenantDelete(dq, req.TenantInfo).
+						Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
+				}).
+				Exec(c); dErr != nil {
+				return dErr
+			}
+
+			for _, cell := range req.Cells {
+				if cell == nil {
+					continue
+				}
+				cell.ID = pulid.Nil
+				cell.RateMatrixID = req.RateMatrixID
+				cell.OrganizationID = req.TenantInfo.OrgID
+				cell.BusinessUnitID = req.TenantInfo.BuID
+			}
+
+			if iErr := r.insertCellBatches(c, req.Cells); iErr != nil {
+				return iErr
+			}
+
+			return r.bumpMatrixVersion(c, req)
+		})
+		if err != nil {
+			log.Error("failed to replace rate matrix cells", zap.Error(err))
+			return dberror.MapRetryableTransactionError(
+				err,
+				"Rate matrix is busy. Retry the request.",
+			)
+		}
+
+		return nil
+	})
 }
 
 func (r *repository) insertCellBatches(
 	ctx context.Context,
 	cells []*ratematrix.RateMatrixCell,
 ) error {
-	for start := 0; start < len(cells); start += cellInsertBatch {
-		end := min(start+cellInsertBatch, len(cells))
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		for start := 0; start < len(cells); start += cellInsertBatch {
+			end := min(start+cellInsertBatch, len(cells))
 
-		batch := cells[start:end]
-		if len(batch) == 0 {
-			continue
+			batch := cells[start:end]
+			if len(batch) == 0 {
+				continue
+			}
+
+			if _, err := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(&batch).
+				Exec(ctx); err != nil {
+				return err
+			}
 		}
 
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&batch).
-			Exec(ctx); err != nil {
-			return err
-		}
-	}
-
-	return nil
+		return nil
+	})
 }
 
 // GetLookupData reads every matrix a formula's lookup() or lookup2() call
@@ -249,72 +258,74 @@ func (r *repository) GetLookupData(
 	ctx context.Context,
 	req *repositories.GetRateMatrixLookupDataRequest,
 ) ([]*repositories.RateMatrixLookupData, error) {
-	log := r.l.With(zap.String("operation", "GetLookupData"))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.RateMatrixLookupData, error) {
+		log := r.l.With(zap.String("operation", "GetLookupData"))
 
-	matrixCols := buncolgen.RateMatrixColumns
-	dimCols := buncolgen.RateMatrixDimensionColumns
+		matrixCols := buncolgen.RateMatrixColumns
+		dimCols := buncolgen.RateMatrixDimensionColumns
 
-	matrices := make([]*ratematrix.RateMatrix, 0, 8)
+		matrices := make([]*ratematrix.RateMatrix, 0, 8)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&matrices).
-		Relation(buncolgen.Rel(buncolgen.RateMatrixRelations.Dimensions), orderDimensions).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateMatrixScopeTenant(sq, req.TenantInfo).
-				Where(matrixCols.Status.Eq(), domaintypes.StatusActive).
-				Where(
-					"(SELECT count(*) FROM rate_matrix_dimensions AS rmd WHERE " +
-						dimCols.RateMatrixID.Qualified() + " = " + matrixCols.ID.Qualified() +
-						" AND " + dimCols.OrganizationID.Qualified() + " = " + matrixCols.OrganizationID.Qualified() +
-						") IN (1, 2)",
-				)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to load lookup matrices", zap.Error(err))
-		return nil, err
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&matrices).
+			Relation(buncolgen.Rel(buncolgen.RateMatrixRelations.Dimensions), orderDimensions).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateMatrixScopeTenant(sq, req.TenantInfo).
+					Where(matrixCols.Status.Eq(), domaintypes.StatusActive).
+					Where(
+						"(SELECT count(*) FROM rate_matrix_dimensions AS rmd WHERE " +
+							dimCols.RateMatrixID.Qualified() + " = " + matrixCols.ID.Qualified() +
+							" AND " + dimCols.OrganizationID.Qualified() + " = " + matrixCols.OrganizationID.Qualified() +
+							") IN (1, 2)",
+					)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to load lookup matrices", zap.Error(err))
+			return nil, err
+		}
 
-	if len(matrices) == 0 {
-		return nil, nil
-	}
+		if len(matrices) == 0 {
+			return nil, nil
+		}
 
-	matrixIDs := make([]pulid.ID, 0, len(matrices))
-	for _, matrix := range matrices {
-		matrixIDs = append(matrixIDs, matrix.ID)
-	}
+		matrixIDs := make([]pulid.ID, 0, len(matrices))
+		for _, matrix := range matrices {
+			matrixIDs = append(matrixIDs, matrix.ID)
+		}
 
-	cellCols := buncolgen.RateMatrixCellColumns
-	cells := make([]*ratematrix.RateMatrixCell, 0, len(matrices)*16)
+		cellCols := buncolgen.RateMatrixCellColumns
+		cells := make([]*ratematrix.RateMatrixCell, 0, len(matrices)*16)
 
-	err = r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&cells).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-				Where(cellCols.RateMatrixID.In(), bun.List(matrixIDs))
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to load lookup matrix cells", zap.Error(err))
-		return nil, err
-	}
+		err = r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&cells).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateMatrixCellScopeTenant(sq, req.TenantInfo).
+					Where(cellCols.RateMatrixID.In(), bun.List(matrixIDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to load lookup matrix cells", zap.Error(err))
+			return nil, err
+		}
 
-	cellsByMatrix := make(map[pulid.ID][]*ratematrix.RateMatrixCell, len(matrices))
-	for _, cell := range cells {
-		cellsByMatrix[cell.RateMatrixID] = append(cellsByMatrix[cell.RateMatrixID], cell)
-	}
+		cellsByMatrix := make(map[pulid.ID][]*ratematrix.RateMatrixCell, len(matrices))
+		for _, cell := range cells {
+			cellsByMatrix[cell.RateMatrixID] = append(cellsByMatrix[cell.RateMatrixID], cell)
+		}
 
-	data := make([]*repositories.RateMatrixLookupData, 0, len(matrices))
-	for _, matrix := range matrices {
-		data = append(data, &repositories.RateMatrixLookupData{
-			Matrix: matrix,
-			Cells:  cellsByMatrix[matrix.ID],
-		})
-	}
+		data := make([]*repositories.RateMatrixLookupData, 0, len(matrices))
+		for _, matrix := range matrices {
+			data = append(data, &repositories.RateMatrixLookupData{
+				Matrix: matrix,
+				Cells:  cellsByMatrix[matrix.ID],
+			})
+		}
 
-	return data, nil
+		return data, nil
+	})
 }
 
 // bumpMatrixVersion records that the matrix's content changed even though no
@@ -324,18 +335,20 @@ func (r *repository) bumpMatrixVersion(
 	ctx context.Context,
 	req *repositories.ReplaceRateMatrixCellsRequest,
 ) error {
-	matrixCols := buncolgen.RateMatrixColumns
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		matrixCols := buncolgen.RateMatrixColumns
 
-	_, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model((*ratematrix.RateMatrix)(nil)).
-		Set("? = ? + 1", bun.Ident(matrixCols.Version.Name), bun.Ident(matrixCols.Version.Name)).
-		Set(matrixCols.UpdatedAt.Set(), timeutils.NowUnix()).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.RateMatrixScopeTenantUpdate(uq, req.TenantInfo).
-				Where(matrixCols.ID.Eq(), req.RateMatrixID)
-		}).
-		Exec(ctx)
+		_, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*ratematrix.RateMatrix)(nil)).
+			Set("? = ? + 1", bun.Ident(matrixCols.Version.Name), bun.Ident(matrixCols.Version.Name)).
+			Set(matrixCols.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.RateMatrixScopeTenantUpdate(uq, req.TenantInfo).
+					Where(matrixCols.ID.Eq(), req.RateMatrixID)
+			}).
+			Exec(ctx)
 
-	return err
+		return err
+	})
 }

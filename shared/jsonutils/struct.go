@@ -47,3 +47,21 @@ func MustToJSON(v any) map[string]any {
 	}
 	return m
 }
+
+func ToJSONDocument(v any) (map[string]any, error) {
+	jsonBytes, err := sonic.Marshal(v)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal to JSON document: %w", err)
+	}
+
+	var decoded any
+	if err = sonic.Unmarshal(jsonBytes, &decoded); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON document: %w", err)
+	}
+
+	if document, ok := decoded.(map[string]any); ok {
+		return document, nil
+	}
+
+	return map[string]any{"value": decoded}, nil
+}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/pkg/dbdialect"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -119,13 +120,15 @@ func (p *CapabilityProbe) Refresh(ctx context.Context) (dbdialect.Capabilities, 
 	return p.probeLocked(ctx)
 }
 
+const capabilityProbeReason = "probe the database server's installed extensions"
+
 func (p *CapabilityProbe) probeLocked(ctx context.Context) (dbdialect.Capabilities, error) {
-	db := p.db.DB()
-	if db == nil {
+	if p.db.DB() == nil {
 		return dbdialect.Capabilities{}, ErrDatabaseConnectionNotInitialized
 	}
 
-	caps, err := dbdialect.ProbeCapabilities(ctx, db)
+	ctx = dbscope.WithSystem(ctx, capabilityProbeReason)
+	caps, err := dbdialect.ProbeCapabilities(ctx, p.db.DBForContext(ctx))
 	if err != nil {
 		return dbdialect.Capabilities{}, err
 	}

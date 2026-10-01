@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,29 +20,31 @@ const (
 )
 
 func (r *repository) allJurisdictions(ctx context.Context) ([]*ifta.Jurisdiction, error) {
-	cached, err := r.jurisdictionCache.GetAll(ctx)
-	if err == nil && len(cached) > 0 {
-		return cached, nil
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*ifta.Jurisdiction, error) {
+		cached, err := r.jurisdictionCache.GetAll(ctx)
+		if err == nil && len(cached) > 0 {
+			return cached, nil
+		}
 
-	cols := buncolgen.JurisdictionColumns
-	entities := make([]*ifta.Jurisdiction, 0, defaultJurisdictionCount)
-	if err = r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Order(cols.SortOrder.OrderAsc()).
-		Order(cols.CountryCode.OrderAsc()).
-		Order(cols.Code.OrderAsc()).
-		Scan(ctx); err != nil {
-		r.l.Error("failed to load ifta jurisdictions", zap.Error(err))
-		return nil, fmt.Errorf("load ifta jurisdictions: %w", err)
-	}
+		cols := buncolgen.JurisdictionColumns
+		entities := make([]*ifta.Jurisdiction, 0, defaultJurisdictionCount)
+		if err = r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Order(cols.SortOrder.OrderAsc()).
+			Order(cols.CountryCode.OrderAsc()).
+			Order(cols.Code.OrderAsc()).
+			Scan(ctx); err != nil {
+			r.l.Error("failed to load ifta jurisdictions", zap.Error(err))
+			return nil, fmt.Errorf("load ifta jurisdictions: %w", err)
+		}
 
-	if cacheErr := r.jurisdictionCache.Set(ctx, entities); cacheErr != nil {
-		r.l.Warn("failed to populate ifta jurisdiction cache", zap.Error(cacheErr))
-	}
+		if cacheErr := r.jurisdictionCache.Set(ctx, entities); cacheErr != nil {
+			r.l.Warn("failed to populate ifta jurisdiction cache", zap.Error(cacheErr))
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) ListJurisdictions(

@@ -3,6 +3,8 @@ package glaccountservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -271,13 +273,15 @@ func (s *Service) validateDelete(
 		)
 	}
 
-	childCount, err := s.db.DB().NewSelect().
-		TableExpr("gl_accounts").
-		Where("parent_id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Where("status = ?", domaintypes.StatusActive).
-		Count(ctx)
+	childCount, err := dbtx.Read(ctx, s.db, func(ctx context.Context) (int, error) {
+		return s.db.DBForContext(ctx).NewSelect().
+			TableExpr("gl_accounts").
+			Where("parent_id = ?", entity.ID).
+			Where("organization_id = ?", entity.OrganizationID).
+			Where("business_unit_id = ?", entity.BusinessUnitID).
+			Where("status = ?", domaintypes.StatusActive).
+			Count(ctx)
+	})
 	if err != nil {
 		return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 	}

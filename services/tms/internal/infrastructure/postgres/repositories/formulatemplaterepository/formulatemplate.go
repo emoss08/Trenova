@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -85,27 +86,29 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListFormulaTemplatesRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*formulatemplate.FormulaTemplate, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count formula templates", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*formulatemplate.FormulaTemplate, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count formula templates", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*formulatemplate.FormulaTemplate]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*formulatemplate.FormulaTemplate]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -145,110 +148,116 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListFormulaTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*formulatemplate.FormulaTemplate)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*formulatemplate.FormulaTemplate)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count formula templates", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*formulatemplate.FormulaTemplate]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*formulatemplate.FormulaTemplate) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyFormulaTemplateColumns(sq, req.FormulaTemplateColumns)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count formula templates", zap.Error(err))
+			log.Error("failed to scan formula templates", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*formulatemplate.FormulaTemplate]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*formulatemplate.FormulaTemplate) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyFormulaTemplateColumns(sq, req.FormulaTemplateColumns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan formula templates", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *formulatemplate.FormulaTemplate,
 ) (*formulatemplate.FormulaTemplate, error) {
-	log := r.l.With(
-		zap.String("operation", "Create"),
-		zap.String("name", entity.Name),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*formulatemplate.FormulaTemplate, error) {
+		log := r.l.With(
+			zap.String("operation", "Create"),
+			zap.String("name", entity.Name),
+		)
 
-	_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
-	if err != nil {
-		if dberror.IsUniqueConstraintViolation(err) {
-			return nil, duplicateTemplateName(entity.Name)
+		_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
+		if err != nil {
+			if dberror.IsUniqueConstraintViolation(err) {
+				return nil, duplicateTemplateName(entity.Name)
+			}
+			log.Error("failed to create formula template", zap.Error(err))
+			return nil, err
 		}
-		log.Error("failed to create formula template", zap.Error(err))
-		return nil, err
-	}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
 	entity *formulatemplate.FormulaTemplate,
 ) (*formulatemplate.FormulaTemplate, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*formulatemplate.FormulaTemplate, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
+		)
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	query := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(buncolgen.FormulaTemplateColumns.Version.Eq(), ov).
-		OmitZero()
+		query := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(buncolgen.FormulaTemplateColumns.Version.Eq(), ov).
+			OmitZero()
 
-	results, err := applyClearableColumns(query, entity).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		if dberror.IsUniqueConstraintViolation(err) {
-			return nil, duplicateTemplateName(entity.Name)
+		results, err := applyClearableColumns(query, entity).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			if dberror.IsUniqueConstraintViolation(err) {
+				return nil, duplicateTemplateName(entity.Name)
+			}
+			log.Error("failed to update formula template", zap.Error(err))
+			return nil, err
 		}
-		log.Error("failed to update formula template", zap.Error(err))
-		return nil, err
-	}
 
-	if err = dberror.CheckRowsAffected(results, "FormulaTemplate", entity.ID.String()); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(results, "FormulaTemplate", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func applyClearableColumns(
@@ -273,172 +282,182 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetFormulaTemplateByIDRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("templateID", req.TemplateID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*formulatemplate.FormulaTemplate, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("templateID", req.TemplateID.String()),
+		)
 
-	entity := new(formulatemplate.FormulaTemplate)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.FormulaTemplateColumns.ID.Eq(), req.TemplateID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get formula template", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "FormulaTemplate")
-	}
+		entity := new(formulatemplate.FormulaTemplate)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.FormulaTemplateColumns.ID.Eq(), req.TemplateID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get formula template", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "FormulaTemplate")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
 	req repositories.GetFormulaTemplatesByIDsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByIDs"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByIDs"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.TemplateIDs))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get formula templates", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "FormulaTemplate")
-	}
+		entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.TemplateIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get formula templates", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "FormulaTemplate")
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) FindByNames(
 	ctx context.Context,
 	req repositories.GetFormulaTemplatesByNamesRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
-	log := r.l.With(
-		zap.String("operation", "FindByNames"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
+		log := r.l.With(
+			zap.String("operation", "FindByNames"),
+			zap.Any("request", req),
+		)
 
-	if len(req.Names) == 0 {
-		return []*formulatemplate.FormulaTemplate{}, nil
-	}
+		if len(req.Names) == 0 {
+			return []*formulatemplate.FormulaTemplate{}, nil
+		}
 
-	entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.Names))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.FormulaTemplateColumns.Name.In(), bun.List(req.Names))
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to find formula templates by names", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.Names))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.FormulaTemplateColumns.Name.In(), bun.List(req.Names))
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to find formula templates by names", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateFormulaTemplateStatusRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
-	log := r.l.With(
-		zap.String("operation", "BulkUpdateStatus"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
+		log := r.l.With(
+			zap.String("operation", "BulkUpdateStatus"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.TemplateIDs))
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(&entities).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.FormulaTemplateScopeTenantUpdate(uq, req.TenantInfo).
-				Where(buncolgen.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
-		}).
-		Set("status = ?", req.Status).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to bulk update formula template status", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*formulatemplate.FormulaTemplate, 0, len(req.TemplateIDs))
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(&entities).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.FormulaTemplateScopeTenantUpdate(uq, req.TenantInfo).
+					Where(buncolgen.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
+			}).
+			Set("status = ?", req.Status).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to bulk update formula template status", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckBulkRowsAffected(
-		results,
-		"FormulaTemplate",
-		req.TemplateIDs,
-	); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckBulkRowsAffected(
+			results,
+			"FormulaTemplate",
+			req.TemplateIDs,
+		); err != nil {
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) BulkDuplicate(
 	ctx context.Context,
 	req *repositories.BulkDuplicateFormulaTemplateRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
-	log := r.l.With(
-		zap.String("operation", "BulkDuplicate"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
+		log := r.l.With(
+			zap.String("operation", "BulkDuplicate"),
+			zap.Any("request", req),
+		)
 
-	entities, err := r.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
-		TemplateIDs: req.TemplateIDs,
-		TenantInfo:  req.TenantInfo,
+		entities, err := r.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
+			TemplateIDs: req.TemplateIDs,
+			TenantInfo:  req.TenantInfo,
+		})
+		if err != nil {
+			log.Error("failed to get formula template", zap.Error(err))
+			return nil, err
+		}
+
+		newEntities := make([]*formulatemplate.FormulaTemplate, 0, len(entities))
+		taken, err := r.namesLike(ctx, req.TenantInfo, entities)
+		if err != nil {
+			log.Error("failed to read existing template names", zap.Error(err))
+			return nil, err
+		}
+
+		for _, e := range entities {
+			name := nextAvailableName(taken, e.Name+" (Copy)")
+			taken[name] = struct{}{}
+			seed := formulatemplate.SeedFromTemplate(e)
+			seed.Name = name
+			newEntities = append(newEntities, seed.Build())
+		}
+
+		results, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&newEntities).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to bulk insert formula templates", zap.Error(err))
+			return nil, err
+		}
+
+		if err = dberror.CheckBulkRowsAffected(
+			results,
+			"FormulaTemplate",
+			req.TemplateIDs,
+		); err != nil {
+			return nil, err
+		}
+
+		return newEntities, nil
 	})
-	if err != nil {
-		log.Error("failed to get formula template", zap.Error(err))
-		return nil, err
-	}
-
-	newEntities := make([]*formulatemplate.FormulaTemplate, 0, len(entities))
-	taken, err := r.namesLike(ctx, req.TenantInfo, entities)
-	if err != nil {
-		log.Error("failed to read existing template names", zap.Error(err))
-		return nil, err
-	}
-
-	for _, e := range entities {
-		name := nextAvailableName(taken, e.Name+" (Copy)")
-		taken[name] = struct{}{}
-		seed := formulatemplate.SeedFromTemplate(e)
-		seed.Name = name
-		newEntities = append(newEntities, seed.Build())
-	}
-
-	results, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(&newEntities).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to bulk insert formula templates", zap.Error(err))
-		return nil, err
-	}
-
-	if err = dberror.CheckBulkRowsAffected(
-		results,
-		"FormulaTemplate",
-		req.TemplateIDs,
-	); err != nil {
-		return nil, err
-	}
-
-	return newEntities, nil
 }
 
 // namesLike collects every template name in the tenant that starts with a
@@ -448,35 +467,37 @@ func (r *repository) namesLike(
 	tenantInfo pagination.TenantInfo,
 	sources []*formulatemplate.FormulaTemplate,
 ) (map[string]struct{}, error) {
-	taken := make(map[string]struct{}, len(sources))
-	if len(sources) == 0 {
-		return taken, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]struct{}, error) {
+		taken := make(map[string]struct{}, len(sources))
+		if len(sources) == 0 {
+			return taken, nil
+		}
 
-	ft := buncolgen.FormulaTemplateColumns
-	var names []string
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*formulatemplate.FormulaTemplate)(nil)).
-		Column(ft.Name.String()).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.FormulaTemplateScopeTenant(sq, tenantInfo)
-			return sq.WhereGroup(" AND ", func(orGroup *bun.SelectQuery) *bun.SelectQuery {
-				for _, source := range sources {
-					orGroup = orGroup.WhereOr(ft.Name.Like(), source.Name+" (Copy%")
-				}
-				return orGroup
+		ft := buncolgen.FormulaTemplateColumns
+		var names []string
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*formulatemplate.FormulaTemplate)(nil)).
+			Column(ft.Name.String()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = buncolgen.FormulaTemplateScopeTenant(sq, tenantInfo)
+				return sq.WhereGroup(" AND ", func(orGroup *bun.SelectQuery) *bun.SelectQuery {
+					for _, source := range sources {
+						orGroup = orGroup.WhereOr(ft.Name.Like(), source.Name+" (Copy%")
+					}
+					return orGroup
+				})
 			})
-		})
-	if err := query.Scan(ctx, &names); err != nil {
-		return nil, err
-	}
+		if err := query.Scan(ctx, &names); err != nil {
+			return nil, err
+		}
 
-	for _, name := range names {
-		taken[name] = struct{}{}
-	}
+		for _, name := range names {
+			taken[name] = struct{}{}
+		}
 
-	return taken, nil
+		return taken, nil
+	})
 }
 
 // nextAvailableName returns base when it is free, otherwise "base 2",
@@ -499,96 +520,100 @@ func (r *repository) CountUsages(
 	ctx context.Context,
 	req *repositories.GetTemplateUsageRequest,
 ) (*repositories.GetTemplateUsageResponse, error) {
-	log := r.l.With(
-		zap.String("operation", "CountUsages"),
-		zap.String("templateID", req.TemplateID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.GetTemplateUsageResponse, error) {
+		log := r.l.With(
+			zap.String("operation", "CountUsages"),
+			zap.String("templateID", req.TemplateID.String()),
+		)
 
-	type usageResult struct {
-		Type  string `bun:"type"`
-		Count int    `bun:"count"`
-	}
-
-	shipmentUsage := r.usageCount(ctx, req, "shipment",
-		buncolgen.ShipmentTable,
-		buncolgen.ShipmentColumns.FormulaTemplateID,
-		buncolgen.ShipmentScopeTenant,
-	)
-	matrixUsage := r.usageCount(ctx, req, "rate_matrix",
-		buncolgen.RateMatrixTable,
-		buncolgen.RateMatrixColumns.FormulaTemplateID,
-		buncolgen.RateMatrixScopeTenant,
-	)
-	ruleUsage := r.usageCount(ctx, req, "rate_agreement_rule",
-		buncolgen.RateAgreementRuleTable,
-		buncolgen.RateAgreementRuleColumns.FormulaTemplateID,
-		buncolgen.RateAgreementRuleScopeTenant,
-	)
-	agreementAccessorialUsage := r.usageCount(ctx, req, "rate_agreement_accessorial",
-		buncolgen.RateAgreementAccessorialTable,
-		buncolgen.RateAgreementAccessorialColumns.FormulaTemplateID,
-		buncolgen.RateAgreementAccessorialScopeTenant,
-	)
-
-	var results []usageResult
-	err := r.db.DBForContext(ctx).NewSelect().
-		TableExpr("(?) AS shipment_usage", shipmentUsage).
-		UnionAll(matrixUsage).
-		UnionAll(ruleUsage).
-		UnionAll(agreementAccessorialUsage).
-		Scan(ctx, &results)
-	if err != nil {
-		log.Error("failed to count usages", zap.Error(err))
-		return nil, err
-	}
-
-	usages := make([]repositories.TemplateUsageCount, 0, len(results))
-	inUse := false
-	for _, res := range results {
-		if res.Count > 0 {
-			inUse = true
-			usages = append(usages, repositories.TemplateUsageCount{
-				Type:  res.Type,
-				Count: res.Count,
-			})
+		type usageResult struct {
+			Type  string `bun:"type"`
+			Count int    `bun:"count"`
 		}
-	}
 
-	return &repositories.GetTemplateUsageResponse{
-		InUse:  inUse,
-		Usages: usages,
-	}, nil
+		shipmentUsage := r.usageCount(ctx, req, "shipment",
+			buncolgen.ShipmentTable,
+			buncolgen.ShipmentColumns.FormulaTemplateID,
+			buncolgen.ShipmentScopeTenant,
+		)
+		matrixUsage := r.usageCount(ctx, req, "rate_matrix",
+			buncolgen.RateMatrixTable,
+			buncolgen.RateMatrixColumns.FormulaTemplateID,
+			buncolgen.RateMatrixScopeTenant,
+		)
+		ruleUsage := r.usageCount(ctx, req, "rate_agreement_rule",
+			buncolgen.RateAgreementRuleTable,
+			buncolgen.RateAgreementRuleColumns.FormulaTemplateID,
+			buncolgen.RateAgreementRuleScopeTenant,
+		)
+		agreementAccessorialUsage := r.usageCount(ctx, req, "rate_agreement_accessorial",
+			buncolgen.RateAgreementAccessorialTable,
+			buncolgen.RateAgreementAccessorialColumns.FormulaTemplateID,
+			buncolgen.RateAgreementAccessorialScopeTenant,
+		)
+
+		var results []usageResult
+		err := r.db.DBForContext(ctx).NewSelect().
+			TableExpr("(?) AS shipment_usage", shipmentUsage).
+			UnionAll(matrixUsage).
+			UnionAll(ruleUsage).
+			UnionAll(agreementAccessorialUsage).
+			Scan(ctx, &results)
+		if err != nil {
+			log.Error("failed to count usages", zap.Error(err))
+			return nil, err
+		}
+
+		usages := make([]repositories.TemplateUsageCount, 0, len(results))
+		inUse := false
+		for _, res := range results {
+			if res.Count > 0 {
+				inUse = true
+				usages = append(usages, repositories.TemplateUsageCount{
+					Type:  res.Type,
+					Count: res.Count,
+				})
+			}
+		}
+
+		return &repositories.GetTemplateUsageResponse{
+			InUse:  inUse,
+			Usages: usages,
+		}, nil
+	})
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.FormulaTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
-	cols := buncolgen.FormulaTemplateColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
+		cols := buncolgen.FormulaTemplateColumns
 
-	return dbhelper.SelectOptions[*formulatemplate.FormulaTemplate](
-		ctx,
-		r.db.DBForContext(ctx),
-		req.SelectQueryRequest,
-		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				cols.ID.Name,
-				cols.Name.Name,
-				cols.Description.Name,
-				cols.Expression.Name,
+		return dbhelper.SelectOptions[*formulatemplate.FormulaTemplate](
+			ctx,
+			r.db.DBForContext(ctx),
+			req.SelectQueryRequest,
+			&dbhelper.SelectOptionsConfig{
+				Columns: []string{
+					cols.ID.Name,
+					cols.Name.Name,
+					cols.Description.Name,
+					cols.Expression.Name,
+				},
+				OrgColumn: cols.OrganizationID.Qualified(),
+				BuColumn:  cols.BusinessUnitID.Qualified(),
+				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Where(cols.Status.Eq(), formulatemplate.StatusActive.String())
+				},
+				EntityName: "FormulaTemplate",
+				SearchColumns: []string{
+					cols.Name.Qualified(),
+					cols.Description.Qualified(),
+				},
 			},
-			OrgColumn: cols.OrganizationID.Qualified(),
-			BuColumn:  cols.BusinessUnitID.Qualified(),
-			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where(cols.Status.Eq(), formulatemplate.StatusActive.String())
-			},
-			EntityName: "FormulaTemplate",
-			SearchColumns: []string{
-				cols.Name.Qualified(),
-				cols.Description.Qualified(),
-			},
-		},
-	)
+		)
+	})
 }
 
 func duplicateTemplateName(name string) error {

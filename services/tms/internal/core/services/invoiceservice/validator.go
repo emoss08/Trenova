@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/money"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -45,7 +44,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		l: p.Logger.Named("validator.invoice"),
 		validator: validationframework.NewTenantedValidatorBuilder[*invoice.Invoice]().
 			WithModelName("Invoice").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() })).
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
 			Build(),
 		accountingRepo:   p.AccountingRepo,
 		fiscalPeriodRepo: p.FiscalPeriodRepo,
