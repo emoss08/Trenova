@@ -113,6 +113,21 @@ func (g *GinTestContext) WithDefaultAuthContext() *GinTestContext {
 	return g.WithAuthContext(TestUserID, TestOrgID, TestBuID)
 }
 
+func (g *GinTestContext) WithDefaultSessionAuthContext(sessionID pulid.ID) *GinTestContext {
+	params := authctx.SessionAuthContextParams{
+		SessionID:      sessionID,
+		UserID:         TestUserID,
+		BusinessUnitID: TestBuID,
+		OrganizationID: TestOrgID,
+	}
+	authctx.SetSessionAuthContext(g.Context, params)
+	g.Engine.Use(func(c *gin.Context) {
+		authctx.SetSessionAuthContext(c, params)
+		c.Next()
+	})
+	return g
+}
+
 func (g *GinTestContext) WithParam(key, value string) *GinTestContext {
 	g.Context.Params = append(g.Context.Params, gin.Param{Key: key, Value: value})
 	return g

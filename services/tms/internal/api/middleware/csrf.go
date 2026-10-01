@@ -63,14 +63,14 @@ func (m *CSRFMiddleware) RequireToken() gin.HandlerFunc {
 			return
 		}
 
-		sessionID, err := c.Cookie(m.cfg.Security.Session.Name)
-		if err != nil || sessionID == "" {
+		if authCtx.SessionID.IsNil() {
 			m.reject(c)
 			return
 		}
 
 		token := c.GetHeader(m.cfg.Security.CSRF.HeaderName)
-		if token == "" || !csrf.Verify(token, sessionID, m.cfg.Security.Session.Secret) {
+		if token == "" ||
+			!csrf.Verify(token, authCtx.SessionID.String(), m.cfg.Security.Session.Secret) {
 			m.reject(c)
 			return
 		}

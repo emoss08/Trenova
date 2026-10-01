@@ -1083,8 +1083,7 @@ func TestUserHandler_SwitchOrganization_Success(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/users/me/switch-organization/").
-		WithDefaultAuthContext().
-		WithHeader("Cookie", "trenova_session="+sessionID.String()).
+		WithDefaultSessionAuthContext(sessionID).
 		WithJSONBody(map[string]any{
 			"organizationId": targetOrgID.String(),
 		})
@@ -1114,7 +1113,7 @@ func TestUserHandler_SwitchOrganization_NoCookie(t *testing.T) {
 	assert.True(t, ginCtx.ResponseCode() >= 400)
 }
 
-func TestUserHandler_SwitchOrganization_InvalidSessionID(t *testing.T) {
+func TestUserHandler_SwitchOrganization_RequiresASessionPrincipal(t *testing.T) {
 	t.Parallel()
 
 	handler := setupUserHandler(t, setupOptions{})
@@ -1123,7 +1122,6 @@ func TestUserHandler_SwitchOrganization_InvalidSessionID(t *testing.T) {
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/users/me/switch-organization/").
 		WithDefaultAuthContext().
-		WithHeader("Cookie", "trenova_session=invalid-session-id").
 		WithJSONBody(map[string]any{
 			"organizationId": pulid.MustNew("org_").String(),
 		})
@@ -1143,8 +1141,7 @@ func TestUserHandler_SwitchOrganization_BadJSON(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/users/me/switch-organization/").
-		WithDefaultAuthContext().
-		WithHeader("Cookie", "trenova_session="+sessionID.String()).
+		WithDefaultSessionAuthContext(sessionID).
 		WithBody("{invalid json")
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -1162,8 +1159,7 @@ func TestUserHandler_SwitchOrganization_InvalidOrgID(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/users/me/switch-organization/").
-		WithDefaultAuthContext().
-		WithHeader("Cookie", "trenova_session="+sessionID.String()).
+		WithDefaultSessionAuthContext(sessionID).
 		WithJSONBody(map[string]any{
 			"organizationId": "not-a-valid-pulid",
 		})
@@ -1188,8 +1184,7 @@ func TestUserHandler_SwitchOrganization_ServiceError(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/users/me/switch-organization/").
-		WithDefaultAuthContext().
-		WithHeader("Cookie", "trenova_session="+sessionID.String()).
+		WithDefaultSessionAuthContext(sessionID).
 		WithJSONBody(map[string]any{
 			"organizationId": targetOrgID.String(),
 		})

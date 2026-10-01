@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -512,6 +513,32 @@ func (s *Service) ValidateSession(
 	return sess, nil
 }
 
+func (s *Service) AuthenticateSession(
+	ctx context.Context,
+	token string,
+) (*session.Session, error) {
+	sessionID, secret, err := sessiontoken.Parse(token)
+	if err != nil {
+		return nil, errortypes.NewAuthenticationError("Session is invalid. Please login again.")
+	}
+
+	sess, err := s.ValidateSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !sessiontoken.Matches(secret, sess.SecretHash) {
+		s.l.Warn(
+			"rejected a session cookie whose secret does not match the session",
+			zap.String("sessionID", sessionID.String()),
+			zap.String("userID", sess.UserID.String()),
+		)
+		return nil, errortypes.NewAuthenticationError("Session is invalid. Please login again.")
+	}
+
+	return sess, nil
+}
+
 func (s *Service) ListAuthorizedSessionRoles(
 	ctx context.Context,
 	sessionID pulid.ID,
@@ -714,7 +741,7 @@ func (s *Service) createSession(
 	ctx context.Context,
 	user *tenant.User,
 	authn loginSessionContext,
-) (*session.Session, error) {
+) (*session.Session, string, error) {
 	expiresAt := timeutils.NowUnix() + int64(session.DefaultTTL.Seconds())
 
 	tenantInfo := pagination.TenantInfo{
@@ -725,7 +752,7 @@ func (s *Service) createSession(
 
 	isPortalUser, err := s.portalRepo.ExistsWorkerForUser(ctx, tenantInfo)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	sess := session.NewSession(&session.NewSessionRequest{
@@ -745,11 +772,17 @@ func (s *Service) createSession(
 		RiskDecisionID:        authn.RiskDecisionID,
 	})
 
-	if err := s.sr.Create(ctx, sess); err != nil {
-		return nil, err
+	issued, err := sessiontoken.Issue(sess.ID)
+	if err != nil {
+		return nil, "", err
+	}
+	sess.SecretHash = issued.SecretHash
+
+	if err = s.sr.Create(ctx, sess); err != nil {
+		return nil, "", err
 	}
 
-	return sess, nil
+	return sess, issued.Token, nil
 }
 
 func (s *Service) createLoginResponse(
@@ -757,7 +790,7 @@ func (s *Service) createLoginResponse(
 	user *tenant.User,
 	authn loginSessionContext,
 ) (*services.LoginResponse, error) {
-	sess, err := s.createSession(ctx, user, authn)
+	sess, token, err := s.createSession(ctx, user, authn)
 	if err != nil {
 		return nil, err
 	}
@@ -776,6 +809,7 @@ func (s *Service) createLoginResponse(
 		User:                  user,
 		ExpiresAt:             sess.ExpiresAt,
 		SessionID:             sess.ID.String(),
+		SessionToken:          token,
 		AuthProvider:          sess.AuthProvider,
 		ExternalIdentityID:    sess.ExternalIdentityID,
 		AuthenticatorAAL:      sess.AuthenticatorAAL,

@@ -372,7 +372,7 @@ func TestControlPlaneAccessMiddleware_AccountShellRoutesStillRequireAuth(t *test
 	router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/me/permissions", nil))
 
 	require.Equal(t, http.StatusUnauthorized, recorder.Code)
-	authService.AssertNotCalled(t, "ValidateSession")
+	authService.AssertNotCalled(t, "AuthenticateSession")
 	authService.AssertNotCalled(t, "AuthenticateAPIKey")
 }
 

@@ -766,20 +766,14 @@ func (h *Handler) replaceOrganizationMemberships(c *gin.Context) {
 // @Failure 500 {object} helpers.ProblemDetail
 // @Router /users/me/switch-organization/ [post]
 func (h *Handler) switchOrganization(c *gin.Context) {
-	sessionIDStr, err := c.Cookie(h.cfg.Security.Session.Name)
-	if err != nil || sessionIDStr == "" {
+	sessionID := authctx.GetAuthContext(c).SessionID
+	if sessionID.IsNil() {
 		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
 		return
 	}
 
-	sessionID, err := pulid.MustParse(sessionIDStr)
-	if err != nil {
-		h.eh.HandleError(c, errortypes.NewAuthenticationError("Invalid session ID"))
-		return
-	}
-
 	var req SwitchOrganizationRequest
-	if err = c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

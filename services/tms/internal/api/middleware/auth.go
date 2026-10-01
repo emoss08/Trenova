@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -71,13 +70,7 @@ func (m *AuthMiddleware) authenticateWithSession(c *gin.Context) error {
 		return errNoCookie
 	}
 
-	sessionID, err := pulid.MustParse(cookie)
-	if err != nil {
-		m.clearSessionCookie(c)
-		return err
-	}
-
-	sess, err := m.service.ValidateSession(c.Request.Context(), sessionID)
+	sess, err := m.service.AuthenticateSession(c.Request.Context(), cookie)
 	if err != nil {
 		m.clearSessionCookie(c)
 		return err

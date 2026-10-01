@@ -23,6 +23,7 @@ type LoginResponse struct {
 	User                   *tenant.User  `json:"user"`
 	ExpiresAt              int64         `json:"expiresAt"`
 	SessionID              string        `json:"sessionId"`
+	SessionToken           string        `json:"-"`
 	CSRFToken              string        `json:"csrfToken,omitempty"`
 	AuthProvider           string        `json:"authProvider,omitempty"`
 	ExternalIdentityID     string        `json:"externalIdentityId,omitempty"`
@@ -182,6 +183,7 @@ type AuthService interface {
 	) (*SSOCallbackResponse, error)
 	GetSSOLoginState(ctx context.Context, state string) (*repositories.SSOLoginState, error)
 	ValidateSession(ctx context.Context, sessionID pulid.ID) (*session.Session, error)
+	AuthenticateSession(ctx context.Context, token string) (*session.Session, error)
 	ListAuthorizedSessionRoles(
 		ctx context.Context,
 		sessionID pulid.ID,

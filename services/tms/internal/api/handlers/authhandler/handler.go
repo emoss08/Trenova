@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -69,12 +70,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 func (h *Handler) listAuthorizedSessionRoles(c *gin.Context) {
-	sessionID, ok := h.sessionIDFromCookie(c)
+	sess, ok := h.sessionFromCookie(c)
 	if !ok {
 		return
 	}
 
-	resp, err := h.service.ListAuthorizedSessionRoles(c.Request.Context(), sessionID)
+	resp, err := h.service.ListAuthorizedSessionRoles(c.Request.Context(), sess.ID)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -84,7 +85,7 @@ func (h *Handler) listAuthorizedSessionRoles(c *gin.Context) {
 }
 
 func (h *Handler) activateSessionRoles(c *gin.Context) {
-	sessionID, ok := h.sessionIDFromCookie(c)
+	sess, ok := h.sessionFromCookie(c)
 	if !ok {
 		return
 	}
@@ -94,7 +95,7 @@ func (h *Handler) activateSessionRoles(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	req.SessionID = sessionID
+	req.SessionID = sess.ID
 
 	resp, err := h.service.ActivateSessionRoles(c.Request.Context(), req)
 	if err != nil {
@@ -137,7 +138,7 @@ func (h *Handler) login(c *gin.Context) {
 		resp.User.CurrentOrganizationID,
 	)
 
-	h.setSessionCookie(c, resp.SessionID, resp.ExpiresAt)
+	h.setSessionCookie(c, resp.SessionToken, resp.ExpiresAt)
 	resp.CSRFToken = csrf.Token(resp.SessionID, h.cfg.Security.Session.Secret)
 
 	c.JSON(http.StatusOK, resp)
@@ -151,20 +152,14 @@ func (h *Handler) login(c *gin.Context) {
 // @Failure 401 {object} helpers.ProblemDetail
 // @Router /auth/logout [post]
 func (h *Handler) logout(c *gin.Context) {
-	sessionIDstr, err := c.Cookie(h.cfg.Security.Session.Name)
-	if err != nil || sessionIDstr == "" {
-		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
+	sess, ok := h.sessionFromCookie(c)
+	if !ok {
+		h.clearSessionCookie(c)
 		return
 	}
 
-	sessionID, err := pulid.MustParse(sessionIDstr)
-	if err != nil {
-		h.eh.HandleError(c, errortypes.NewAuthenticationError("Invalid session ID"))
-		return
-	}
-
-	if err = h.service.Logout(c.Request.Context(), sessionID); err != nil {
-		h.l.Warn("logout failed", zap.String("sessionID", sessionID.String()), zap.Error(err))
+	if err := h.service.Logout(c.Request.Context(), sess.ID); err != nil {
+		h.l.Warn("logout failed", zap.String("sessionID", sess.ID.String()), zap.Error(err))
 	}
 
 	h.clearSessionCookie(c)
@@ -181,19 +176,13 @@ func (h *Handler) logout(c *gin.Context) {
 // @Failure 401 {object} gin.H
 // @Router /auth/validate-session [post]
 func (h *Handler) validateSession(c *gin.Context) {
-	sessionIDstr, err := c.Cookie(h.cfg.Security.Session.Name)
-	if err != nil || sessionIDstr == "" {
+	token, err := c.Cookie(h.cfg.Security.Session.Name)
+	if err != nil || token == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"valid": false})
 		return
 	}
 
-	sessionID, err := pulid.MustParse(sessionIDstr)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"valid": false})
-		return
-	}
-
-	_, err = h.service.ValidateSession(c.Request.Context(), sessionID)
+	_, err = h.service.AuthenticateSession(c.Request.Context(), token)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"valid": false})
 		return
@@ -203,37 +192,31 @@ func (h *Handler) validateSession(c *gin.Context) {
 }
 
 func (h *Handler) csrfToken(c *gin.Context) {
-	sessionID, ok := h.sessionIDFromCookie(c)
+	sess, ok := h.sessionFromCookie(c)
 	if !ok {
-		return
-	}
-	sessionIDstr := sessionID.String()
-
-	if _, err := h.service.ValidateSession(c.Request.Context(), sessionID); err != nil {
-		h.eh.HandleError(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"csrfToken":  csrf.Token(sessionIDstr, h.cfg.Security.Session.Secret),
+		"csrfToken":  csrf.Token(sess.ID.String(), h.cfg.Security.Session.Secret),
 		"headerName": h.cfg.Security.CSRF.HeaderName,
 	})
 }
 
-func (h *Handler) sessionIDFromCookie(c *gin.Context) (pulid.ID, bool) {
-	sessionIDstr, err := c.Cookie(h.cfg.Security.Session.Name)
-	if err != nil || sessionIDstr == "" {
+func (h *Handler) sessionFromCookie(c *gin.Context) (*session.Session, bool) {
+	token, err := c.Cookie(h.cfg.Security.Session.Name)
+	if err != nil || token == "" {
 		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
-		return "", false
+		return nil, false
 	}
 
-	sessionID, err := pulid.MustParse(sessionIDstr)
+	sess, err := h.service.AuthenticateSession(c.Request.Context(), token)
 	if err != nil {
-		h.eh.HandleError(c, errortypes.NewAuthenticationError("Invalid session ID"))
-		return "", false
+		h.eh.HandleError(c, err)
+		return nil, false
 	}
 
-	return sessionID, true
+	return sess, true
 }
 
 func (h *Handler) getTenantLoginMetadata(c *gin.Context) {
@@ -353,7 +336,7 @@ func (h *Handler) ssoCallback(provider tenant.SSOProvider) gin.HandlerFunc {
 			return
 		}
 
-		h.setSessionCookie(c, resp.LoginResponse.SessionID, resp.LoginResponse.ExpiresAt)
+		h.setSessionCookie(c, resp.LoginResponse.SessionToken, resp.LoginResponse.ExpiresAt)
 		c.Redirect(http.StatusFound, resp.RedirectTo)
 	}
 }
