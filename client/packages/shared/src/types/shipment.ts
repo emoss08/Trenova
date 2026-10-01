@@ -693,6 +693,7 @@ const shipmentBaseSchema = z.object({
   entryMethod: shipmentEntryMethodSchema.optional(),
   proNumber: optionalStringSchema,
   bol: nullableStringSchema,
+  externalReference: nullableStringSchema,
   cancelReason: optionalStringSchema,
   otherChargeAmount: decimalStringSchema.default(0),
   freightChargeAmount: decimalStringSchema.default(0),

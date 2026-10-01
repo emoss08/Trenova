@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -123,6 +124,7 @@ func (s *Service) buildTargetShipment(
 		TenderStatus:        new(shipment.TenderStatusAccepted),
 		EntryMethod:         shipment.EntryMethodEDI,
 		BOL:                 payload.BOL,
+		ExternalReference:   externalShipmentReference(payload.RatingDetail),
 		Pieces:              payload.Pieces,
 		Weight:              payload.Weight,
 		TemperatureMin:      payload.TemperatureMin,
@@ -216,4 +218,12 @@ func (s *Service) buildTargetShipment(
 	}
 
 	return target, nil
+}
+
+func externalShipmentReference(ratingDetail map[string]any) string {
+	reference, _ := ratingDetail["externalShipmentId"].(string)
+	return stringutils.TruncateRunes(
+		strings.TrimSpace(reference),
+		shipment.MaxExternalReferenceLength,
+	)
 }

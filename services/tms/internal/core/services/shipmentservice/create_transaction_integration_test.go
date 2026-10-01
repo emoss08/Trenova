@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -76,4 +78,73 @@ func TestCreateIntegration_RollsBackEverythingWhenALaterStepFails(t *testing.T) 
 		Count(ctx)
 	require.NoError(t, err)
 	assert.Zero(t, orphanOrders, "the auto-created order is rolled back too")
+}
+
+func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *testing.T) {
+	t.Parallel()
+
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	svc, _, controlRepo, _, tenantInfo, fixture, data := newIntegrationShipmentService(t, ctx, db)
+	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
+		sc.CheckHazmatSegregation = false
+		sc.CheckForDuplicateBOLs = false
+	})
+	actor := internaltestutil.NewSessionActor(data.User.ID, tenantInfo.OrgID, tenantInfo.BuID)
+
+	first := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
+	first.BOL = "BOL-EXTREF-1"
+	first.ExternalReference = " PO-7781 "
+	created, err := svc.Create(ctx, first, actor)
+	require.NoError(t, err)
+	assert.Equal(t, "PO-7781", created.ExternalReference)
+
+	repeat := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
+	repeat.BOL = "BOL-EXTREF-2"
+	repeat.ExternalReference = "po-7781"
+	_, err = svc.Create(ctx, repeat, actor)
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	require.NotEmpty(t, multiErr.Errors)
+	assert.Equal(t, "externalReference", multiErr.Errors[0].Field)
+	assert.Contains(t, multiErr.Error(), created.ProNumber)
+
+	_, err = db.NewInsert().Model(&shipment.Shipment{
+		ID:                pulid.MustNew("shp_"),
+		OrganizationID:    tenantInfo.OrgID,
+		BusinessUnitID:    tenantInfo.BuID,
+		ServiceTypeID:     created.ServiceTypeID,
+		ShipmentTypeID:    created.ShipmentTypeID,
+		CustomerID:        created.CustomerID,
+		FormulaTemplateID: created.FormulaTemplateID,
+		ProNumber:         "PRO-RACE-EXTREF",
+		ExternalReference: "Po-7781",
+		Status:            shipment.StatusNew,
+	}).Exec(ctx)
+	require.Error(t, err, "the unique index holds even when the check is raced")
+	assert.Nil(t, externalReferenceConflict(errors.New("unrelated"), repeat))
+	require.Error(t, externalReferenceConflict(err, repeat))
+
+	_, err = db.NewUpdate().
+		Model((*shipment.Shipment)(nil)).
+		Set("status = ?", shipment.StatusCanceled).
+		Where("id = ?", created.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = db.NewInsert().Model(&shipment.Shipment{
+		ID:                pulid.MustNew("shp_"),
+		OrganizationID:    tenantInfo.OrgID,
+		BusinessUnitID:    tenantInfo.BuID,
+		ServiceTypeID:     created.ServiceTypeID,
+		ShipmentTypeID:    created.ShipmentTypeID,
+		CustomerID:        created.CustomerID,
+		FormulaTemplateID: created.FormulaTemplateID,
+		ProNumber:         "PRO-REBOOK-EXTREF",
+		ExternalReference: "PO-7781",
+		Status:            shipment.StatusNew,
+	}).Exec(ctx)
+	require.NoError(t, err, "a canceled shipment releases its reference")
 }

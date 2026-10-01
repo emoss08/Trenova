@@ -2,6 +2,9 @@ package shipmentrepository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -890,6 +893,46 @@ func (r *repository) TransferOwnership(
 
 		return entity, nil
 	})
+}
+
+func (r *repository) FindByExternalReference(
+	ctx context.Context,
+	req *repositories.ExternalReferenceCheckRequest,
+) (*repositories.DuplicateBOLResult, error) {
+	reference := strings.TrimSpace(req.ExternalReference)
+	if reference == "" || req.CustomerID.IsNil() {
+		return nil, nil //nolint:nilnil // no reference never collides
+	}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*repositories.DuplicateBOLResult, error) {
+			sp := buncolgen.ShipmentColumns
+			found := new(repositories.DuplicateBOLResult)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				Column(sp.ID.Bare(), sp.ProNumber.Bare()).
+				Model((*shipment.Shipment)(nil)).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					sq = buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+						Where(sp.CustomerID.Eq(), req.CustomerID).
+						Where(sp.ExternalReference.Expr("lower({})")+" = lower(?)", reference).
+						Where(sp.Status.Ne(), shipment.StatusCanceled)
+					if req.ShipmentID.IsNotNil() {
+						sq = sq.Where(sp.ID.Ne(), req.ShipmentID)
+					}
+					return sq
+				}).
+				Limit(1)
+			if err := query.Scan(ctx, found); err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return nil, nil
+				}
+				return nil, err
+			}
+			return found, nil
+		},
+	)
 }
 
 func (r *repository) CheckForDuplicateBOLs(

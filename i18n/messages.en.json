@@ -17748,6 +17748,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Another live shipment for this customer now uses this shipment's customer reference; change one of them before restoring this shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
   "Another mailbox already listens on this address": {
     "sites": 1,
     "scope": [
@@ -48261,6 +48270,42 @@
       "domain/documenttemplate"
     ]
   },
+  "Customer reference": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Customer reference cannot be longer than 100 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipment"
+    ]
+  },
+  "Customer reference {0} is already used by another shipment for this customer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
+  "Customer reference {0} is already used by shipment {1} for this customer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
+    ]
+  },
   "Customer short pay": {
     "sites": 1,
     "scope": [
@@ -65102,6 +65147,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Enter customer reference": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Enter days": {
@@ -178912,6 +178966,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "The customer's own order or load number. No other live shipment for this customer can use the same one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "The customer's purchase order number, shown on their invoice.": {

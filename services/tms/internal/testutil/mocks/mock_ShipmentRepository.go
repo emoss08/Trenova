@@ -2171,3 +2171,21 @@ func (_c *MockShipmentRepository_PlanDuplicate_Call) RunAndReturn(run func(ctx c
 	_c.Call.Return(run)
 	return _c
 }
+
+// FindByExternalReference provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) FindByExternalReference(ctx context.Context, req *repositories.ExternalReferenceCheckRequest) (*repositories.DuplicateBOLResult, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByExternalReference")
+	}
+
+	var r0 *repositories.DuplicateBOLResult
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ExternalReferenceCheckRequest) (*repositories.DuplicateBOLResult, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*repositories.DuplicateBOLResult)
+	}
+	return r0, ret.Error(1)
+}

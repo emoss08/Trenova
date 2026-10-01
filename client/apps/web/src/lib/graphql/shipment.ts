@@ -678,6 +678,7 @@ function toShipmentInput(
     entryMethod: payload.entryMethod,
     proNumber: payload.proNumber,
     bol: payload.bol,
+    externalReference: payload.externalReference || undefined,
     cancelReason: payload.cancelReason,
     otherChargeAmount: String(payload.otherChargeAmount ?? "0"),
     freightChargeAmount: String(payload.freightChargeAmount ?? "0"),

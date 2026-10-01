@@ -6625,6 +6625,11 @@
                 "description": "The customer, from list_customers.",
                 "type": "string"
               },
+              "externalReference": {
+                "description": "The customer's own order or load number, as it appears on their tender, email or rate confirmation. One live shipment per customer may carry it, so a second booking of the same order is refused; leave it out when the customer gave none.",
+                "maxLength": 100,
+                "type": "string"
+              },
               "formulaTemplateId": {
                 "description": "The rating method that prices the freight, from list_formula_templates. Required: a rate agreement covering the lane may replace it with its own when the shipment is saved.",
                 "type": "string"

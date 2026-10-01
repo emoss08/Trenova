@@ -1806,6 +1806,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
+				Name:     "externalReference",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.Shipment)
+					return obj.ExternalReference, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
 				Name:     "cancelReason",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -11465,7 +11474,7 @@ func unmarshalInputShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 		asMap["commodities"] = []any{}
 	}
 
-	fieldsInOrder := [...]string{"sourceDocumentId", "serviceTypeId", "shipmentTypeId", "customerId", "billToCustomerId", "freightTerms", "tractorTypeId", "trailerTypeId", "ownerId", "enteredById", "canceledById", "formulaTemplateId", "consolidationGroupId", "orderId", "status", "tenderStatus", "entryMethod", "proNumber", "bol", "cancelReason", "otherChargeAmount", "freightChargeAmount", "baseRate", "totalChargeAmount", "pieces", "weight", "temperatureMin", "temperatureMax", "actualDeliveryDate", "actualShipDate", "canceledAt", "billingTransferStatus", "transferredToBillingAt", "markedReadyToBillAt", "billedAt", "ratingUnit", "fuelSurchargeLocked", "rateOverrideReason", "version", "moves", "additionalCharges", "commodities", "freightAllocations"}
+	fieldsInOrder := [...]string{"sourceDocumentId", "serviceTypeId", "shipmentTypeId", "customerId", "billToCustomerId", "freightTerms", "tractorTypeId", "trailerTypeId", "ownerId", "enteredById", "canceledById", "formulaTemplateId", "consolidationGroupId", "orderId", "status", "tenderStatus", "entryMethod", "proNumber", "bol", "externalReference", "cancelReason", "otherChargeAmount", "freightChargeAmount", "baseRate", "totalChargeAmount", "pieces", "weight", "temperatureMin", "temperatureMax", "actualDeliveryDate", "actualShipDate", "canceledAt", "billingTransferStatus", "transferredToBillingAt", "markedReadyToBillAt", "billedAt", "ratingUnit", "fuelSurchargeLocked", "rateOverrideReason", "version", "moves", "additionalCharges", "commodities", "freightAllocations"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -11605,6 +11614,13 @@ func unmarshalInputShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 				return it, err
 			}
 			it.BOL = data
+		case "externalReference":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalReference"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExternalReference = data
 		case "cancelReason":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cancelReason"))
 			data, err := unmarshalOString2ᚖstring(ctx, ec, v)

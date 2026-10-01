@@ -20757,6 +20757,10 @@ func init() {
 				FieldMapKey: "bol",
 			},
 			{
+				Name:        "externalReference",
+				FieldMapKey: "externalReference",
+			},
+			{
 				Name:        "cancelReason",
 				FieldMapKey: "cancelReason",
 			},

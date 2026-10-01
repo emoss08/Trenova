@@ -64,6 +64,7 @@ const getDefaultValues = (): ShipmentCreateInput => {
   return {
     status: "New",
     bol: "",
+    externalReference: "",
     serviceTypeId: "",
     shipmentTypeId: "",
     customerId: "",

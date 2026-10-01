@@ -106,6 +106,9 @@ func (s *service) prepareCreate(
 	); err != nil {
 		return nil, err
 	}
+	if err = s.checkExternalReference(ctx, entity); err != nil {
+		return nil, err
+	}
 
 	return &createPreparation{rating: rating, advisories: advisories}, nil
 }

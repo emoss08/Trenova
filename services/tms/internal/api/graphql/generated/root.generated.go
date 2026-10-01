@@ -23636,6 +23636,8 @@ type Shipment {
   entryMethod: ShipmentEntryMethod
   proNumber: String!
   bol: String
+  "The customer's own identifier for the load, such as an EDI 204 shipment ID or an order number; unique per customer among live shipments."
+  externalReference: String
   cancelReason: String!
   otherChargeAmount: Decimal!
   freightChargeAmount: Decimal!
@@ -25031,6 +25033,8 @@ input ShipmentInput {
   entryMethod: ShipmentEntryMethod = Manual
   proNumber: String
   bol: String
+  "The customer's own identifier for the load. A second live shipment for the same customer with this reference is refused."
+  externalReference: String
   cancelReason: String
   otherChargeAmount: Decimal = "0"
   freightChargeAmount: Decimal = "0"

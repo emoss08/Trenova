@@ -318,6 +318,7 @@ fragment ShipmentFields on Shipment {
   entryMethod
   proNumber
   bol
+  externalReference
   cancelReason
   otherChargeAmount
   freightChargeAmount

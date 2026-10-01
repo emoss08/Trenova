@@ -148,6 +148,7 @@ func shipmentFromInput(
 		EntryMethod:          entryMethod,
 		ProNumber:            base.StringValue(input.ProNumber),
 		BOL:                  base.StringValue(input.BOL),
+		ExternalReference:    base.StringValue(input.ExternalReference),
 		CancelReason:         base.StringValue(input.CancelReason),
 		OtherChargeAmount:    otherChargeAmount,
 		FreightChargeAmount:  freightChargeAmount,

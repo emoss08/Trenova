@@ -23,6 +23,7 @@ type shipmentDraft struct {
 	TractorTypeID     string            `json:"tractorTypeId"`
 	TrailerTypeID     string            `json:"trailerTypeId"`
 	BOL               string            `json:"bol"`
+	ExternalReference string            `json:"externalReference"`
 	Pieces            *int64            `json:"pieces"`
 	Weight            *int64            `json:"weight"`
 	TemperatureMin    *int16            `json:"temperatureMin"`
@@ -161,6 +162,7 @@ func (d *shipmentDraft) build(
 		TrailerTypeID:     read.id("trailerTypeId", d.TrailerTypeID),
 		BaseRate:          read.decimal("baseRate", d.BaseRate),
 		BOL:               strings.TrimSpace(d.BOL),
+		ExternalReference: strings.TrimSpace(d.ExternalReference),
 		Pieces:            d.Pieces,
 		Weight:            d.Weight,
 		TemperatureMin:    d.TemperatureMin,

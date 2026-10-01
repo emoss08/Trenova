@@ -425,6 +425,13 @@ type ShipmentDuplicateWorkflowResponse struct {
 	SubmittedAt int64  `json:"submittedAt"`
 }
 
+type ExternalReferenceCheckRequest struct {
+	TenantInfo        pagination.TenantInfo
+	CustomerID        pulid.ID
+	ExternalReference string
+	ShipmentID        pulid.ID
+}
+
 type DuplicateBOLResult struct {
 	ID        pulid.ID `bun:"id"`
 	ProNumber string   `bun:"pro_number"`
@@ -588,6 +595,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *TransferOwnershipRequest,
 	) (*shipment.Shipment, error)
+	FindByExternalReference(
+		ctx context.Context,
+		req *ExternalReferenceCheckRequest,
+	) (*DuplicateBOLResult, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,
 		req *DuplicateBOLCheckRequest,

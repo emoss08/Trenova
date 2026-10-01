@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -302,6 +303,9 @@ func (s *service) Create(
 		return txErr
 	})
 	if err != nil {
+		if mapped := externalReferenceConflict(err, entity); mapped != nil {
+			return nil, mapped
+		}
 		log.Error("failed to create shipment", zap.Error(err))
 		return nil, err
 	}
@@ -503,9 +507,15 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	if err = s.checkDuplicateBOLsWithControl(ctx, control, req); err != nil {
 		return nil, err
 	}
+	if err = s.checkExternalReference(ctx, entity); err != nil {
+		return nil, err
+	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
+		if mapped := externalReferenceConflict(err, entity); mapped != nil {
+			return nil, mapped
+		}
 		s.l.Error("failed to update shipment", zap.Error(err))
 		return nil, err
 	}
@@ -1109,6 +1119,16 @@ func (s *service) Uncancel(
 
 	updatedEntity, err := s.repo.Uncancel(ctx, req)
 	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) &&
+			dberror.ExtractConstraintName(err) == externalReferenceConstraint {
+			multiErr := errortypes.NewMultiError()
+			multiErr.Add(
+				"externalReference",
+				errortypes.ErrDuplicate,
+				"Another live shipment for this customer now uses this shipment's customer reference; change one of them before restoring this shipment",
+			)
+			return nil, multiErr
+		}
 		log.Error("failed to uncancel shipment", zap.Error(err))
 		return nil, err
 	}

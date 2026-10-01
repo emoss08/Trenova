@@ -1307,6 +1307,7 @@ var ShipmentColumns = struct {
 	EntryMethod               Column // "entry_method" → qualified: "sp.entry_method"
 	ProNumber                 Column // "pro_number" → qualified: "sp.pro_number"
 	BOL                       Column // "bol" → qualified: "sp.bol"
+	ExternalReference         Column // "external_reference" → qualified: "sp.external_reference"
 	CancelReason              Column // "cancel_reason" → qualified: "sp.cancel_reason"
 	OtherChargeAmount         Column // "other_charge_amount" → qualified: "sp.other_charge_amount"
 	FreightChargeAmount       Column // "freight_charge_amount" → qualified: "sp.freight_charge_amount"
@@ -1367,6 +1368,7 @@ var ShipmentColumns = struct {
 	EntryMethod:               NewColumn("entry_method", "sp"),
 	ProNumber:                 NewColumn("pro_number", "sp"),
 	BOL:                       NewColumn("bol", "sp"),
+	ExternalReference:         NewColumn("external_reference", "sp"),
 	CancelReason:              NewColumn("cancel_reason", "sp"),
 	OtherChargeAmount:         NewColumn("other_charge_amount", "sp"),
 	FreightChargeAmount:       NewColumn("freight_charge_amount", "sp"),
@@ -1433,6 +1435,7 @@ var ShipmentFieldMap = map[string]string{
 	"entryMethod":               "entry_method",
 	"proNumber":                 "pro_number",
 	"bol":                       "bol",
+	"externalReference":         "external_reference",
 	"cancelReason":              "cancel_reason",
 	"otherChargeAmount":         "other_charge_amount",
 	"freightChargeAmount":       "freight_charge_amount",
@@ -1495,6 +1498,7 @@ var ShipmentInsertableColumns = []string{
 	"entry_method",
 	"pro_number",
 	"bol",
+	"external_reference",
 	"cancel_reason",
 	"other_charge_amount",
 	"freight_charge_amount",
@@ -1647,6 +1651,7 @@ var ShipmentFilter = struct {
 	EntryMethod               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "entryMethod" → DB: "entry_method"
 	ProNumber                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proNumber" → DB: "pro_number"
 	BOL                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bol" → DB: "bol"
+	ExternalReference         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalReference" → DB: "external_reference"
 	CancelReason              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
 	OtherChargeAmount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "otherChargeAmount" → DB: "other_charge_amount"
 	FreightChargeAmount       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freightChargeAmount" → DB: "freight_charge_amount"
@@ -1742,6 +1747,9 @@ var ShipmentFilter = struct {
 	},
 	BOL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("bol", op, value)
+	},
+	ExternalReference: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalReference", op, value)
 	},
 	CancelReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("cancelReason", op, value)
