@@ -37,6 +37,7 @@ type AgentDecision struct {
 	Decision        DecisionType   `json:"decision"        bun:"decision,type:agent_decision_type_enum,notnull"`
 	Modifications   map[string]any `json:"modifications"   bun:"modifications,type:JSONB,nullzero"`
 	ReasonCode      string         `json:"reasonCode"      bun:"reason_code,type:VARCHAR(100),notnull"`
+	Note            string         `json:"note"            bun:"note,type:TEXT,nullzero"`
 	// TraceID is the trace the decision was made in.
 	TraceID string `json:"traceId" bun:"trace_id,type:VARCHAR(32),nullzero"`
 	// Preview is what the decider was shown of the write, filtered for them,
@@ -79,6 +80,15 @@ func (d *AgentDecision) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(int64(0)).Error("Preview target version cannot be negative"),
 		),
 	))
+
+	if err := CheckDecisionNote(d.Note); err != nil {
+		multiErr.Add(
+			"note",
+			errortypes.ErrInvalid,
+			"A note to the agent can be at most {0} characters",
+			MaxDecisionNoteLength,
+		)
+	}
 
 	if d.PreviewReviewed && d.PreviewDigest == "" {
 		multiErr.Add(

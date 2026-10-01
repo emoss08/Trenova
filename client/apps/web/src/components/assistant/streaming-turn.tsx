@@ -19,8 +19,6 @@ import {
 import { currentActivity, segmentStep, stepsFromSegments, type ToolStep } from "./activity";
 import { askRequestsFromSteps, type ThreadAskRequest } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
-import { decisionRequestsFromSteps, type DecisionRequestRef } from "./decision-requests";
-import { RequestedDecision } from "./requested-decision";
 import { ReportRunCard } from "./report-run-card";
 import { reportRunOrigins, type ThreadReportRun } from "./report-runs";
 import { ToolActivity } from "./tool-activity";
@@ -41,14 +39,11 @@ import { DeskThinking, useThinkingPresence } from "./voice/desk-thinking";
  */
 export function StreamingTurn({
   turn,
-  threadId,
   onRetry,
   onDismiss,
   onAnswer,
   onOpenArtifact,
 }: {
-  /** The conversation the turn is on, for the cards it puts back in front of the person. */
-  threadId?: string;
   /**
    * Answering a question the live turn asked, before the turn is saved.
    * Absent where the conversation can no longer continue.
@@ -124,7 +119,6 @@ export function StreamingTurn({
                 <ToolActivity steps={group.steps} live />
                 <StepOutputs
                   outputs={outputs.forSteps(group.steps)}
-                  threadId={threadId}
                   onAnswer={onAnswer}
                   onOpenArtifact={onOpenArtifact}
                 />
@@ -134,7 +128,6 @@ export function StreamingTurn({
           {!active && answer !== "" && <SourcesFooter sources={sources} />}
           <StepOutputs
             outputs={outputs.unplaced}
-            threadId={threadId}
             onAnswer={onAnswer}
             onOpenArtifact={onOpenArtifact}
           />
@@ -171,10 +164,9 @@ type StepOutput = {
   artifacts: AssistantArtifactEvent[];
   runs: ThreadReportRun[];
   asks: ThreadAskRequest[];
-  decisions: DecisionRequestRef[];
 };
 
-const NO_OUTPUT: StepOutput = { artifacts: [], runs: [], asks: [], decisions: [] };
+const NO_OUTPUT: StepOutput = { artifacts: [], runs: [], asks: [] };
 
 /**
  * What each step produced besides its result: the artifacts it published,
@@ -191,9 +183,6 @@ function outputsByStep(
   const known = new Set(steps.map((step) => step.id));
   const runs = reportRunOrigins(steps);
   const asks = new Map(askRequestsFromSteps(steps).map((ask) => [ask.callId, ask]));
-  const decisions = new Map(
-    decisionRequestsFromSteps(steps).map((request) => [request.callId, request]),
-  );
   const artifactsByStep = new Map<string, AssistantArtifactEvent[]>();
   const unplaced: AssistantArtifactEvent[] = [];
 
@@ -210,17 +199,13 @@ function outputsByStep(
 
   return {
     forSteps: (group) => {
-      const output: StepOutput = { artifacts: [], runs: [], asks: [], decisions: [] };
+      const output: StepOutput = { artifacts: [], runs: [], asks: [] };
       for (const step of group) {
         output.artifacts.push(...(artifactsByStep.get(step.id) ?? []));
         output.runs.push(...(runs.get(step.id) ?? []));
         const ask = asks.get(step.id);
         if (ask) {
           output.asks.push(ask);
-        }
-        const decision = decisions.get(step.id);
-        if (decision) {
-          output.decisions.push(decision);
         }
       }
       return output;
@@ -232,12 +217,10 @@ function outputsByStep(
 /** A step's artifacts, report runs and questions, in the order the saved thread shows them. */
 function StepOutputs({
   outputs,
-  threadId,
   onAnswer,
   onOpenArtifact,
 }: {
   outputs: StepOutput;
-  threadId?: string;
   onAnswer?: (value: string) => void;
   onOpenArtifact?: (id: string) => void;
 }) {
@@ -252,10 +235,6 @@ function StepOutputs({
       {outputs.asks.map((ask) => (
         <ChoicePrompt key={ask.callId} request={ask} answered={false} onAnswer={onAnswer} />
       ))}
-      {threadId !== undefined &&
-        outputs.decisions.map((request) => (
-          <RequestedDecision key={request.callId} request={request} threadId={threadId} />
-        ))}
     </>
   );
 }

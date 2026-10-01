@@ -35,6 +35,7 @@ import {
 } from "./composer-commands";
 import { composerHint } from "./composer-hint";
 import { ComposerHints } from "./composer-hints";
+import { FloatingSlot } from "./floating-slot";
 import { DictationControl } from "./dictation-control";
 import { ModelPicker } from "./model-picker";
 import type { Suggestion } from "./suggestions";
@@ -523,362 +524,343 @@ export function Composer({
     // The composer floats on the panel rather than sitting in a bar beneath it,
     // so the thread runs to the bottom and the last lines fade under the box
     // instead of stopping at a rule.
-    <div ref={ref} className="pointer-events-none absolute inset-x-0 bottom-0 z-10">
-      <div
-        aria-hidden
-        className={cn(
-          "from-popover pointer-events-none bg-gradient-to-t to-transparent",
-          compact ? "h-6" : "h-10",
-        )}
-      />
-      <div
-        className={cn(
-          "bg-popover pointer-events-auto",
-          compact ? "px-3 pt-0.5 pb-1.5" : "px-4 pt-0.5 pb-2.5",
-        )}
-      >
-        <div className={cn("mx-auto flex flex-col gap-1", !compact && "max-w-3xl")}>
-          {notice}
-          <div className="relative">
-            {/* The words lifting out of the box as it is sent: the one moment
+    <FloatingSlot ref={ref} compact={compact}>
+      {notice}
+      <div className="relative">
+        {/* The words lifting out of the box as it is sent: the one moment
                 the composer moves on its own account, so sending reads as the
                 message leaving rather than the text being deleted. */}
-            <AnimatePresence>
-              {ghost !== null && !reduceMotion && (
-                <m.p
-                  key={ghost.id}
-                  aria-hidden
-                  initial={{ opacity: 1, y: 0 }}
-                  animate={{ opacity: 0, y: -28 }}
-                  transition={{ duration: 0.34, ease: EASE_SETTLE }}
-                  onAnimationComplete={() =>
-                    setGhost((current) => (current?.id === ghost.id ? null : current))
-                  }
-                  style={{ top: ghost.top }}
-                  className="text-foreground pointer-events-none absolute inset-x-0 z-10 truncate px-3 py-2.5 text-sm"
-                >
-                  {ghost.text}
-                </m.p>
-              )}
-            </AnimatePresence>
-
-            <div
-              data-slot="composer"
-              data-disabled={disabled || undefined}
-              data-dragging={dragging || undefined}
-              onKeyDownCapture={onKeyDownCapture}
-              onDragOver={(event) => {
-                if (!canAttach) return;
-                event.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={(event) => {
-                const next = event.relatedTarget;
-                if (next instanceof Node && event.currentTarget.contains(next)) return;
-                setDragging(false);
-              }}
-              onDrop={(event) => {
-                if (!canAttach) return;
-                event.preventDefault();
-                setDragging(false);
-                takeFiles(event.dataTransfer.files);
-              }}
-              className={cn(
-                "ui-field ui-container-focus-ring group/composer relative flex flex-col overflow-hidden rounded-lg",
-                "data-disabled:opacity-60",
-                "data-dragging:border-brand data-dragging:border-dashed",
-              )}
+        <AnimatePresence>
+          {ghost !== null && !reduceMotion && (
+            <m.p
+              key={ghost.id}
+              aria-hidden
+              initial={{ opacity: 1, y: 0 }}
+              animate={{ opacity: 0, y: -28 }}
+              transition={{ duration: 0.34, ease: EASE_SETTLE }}
+              onAnimationComplete={() =>
+                setGhost((current) => (current?.id === ghost.id ? null : current))
+              }
+              style={{ top: ghost.top }}
+              className="text-foreground pointer-events-none absolute inset-x-0 z-10 truncate px-3 py-2.5 text-sm"
             >
-              <AnimatePresence initial={false}>
-                {commandsOpen && (
-                  <m.div
-                    key="commands"
-                    initial={reduceMotion ? false : { opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.18, ease: EASE_SETTLE }}
-                    className="border-border-subtle overflow-hidden border-b"
-                  >
-                    <ul
-                      ref={listRef}
-                      id={listId}
-                      role="listbox"
-                      aria-label={t("Starter questions")}
-                      className="scrollbar-overlay max-h-60 overflow-y-auto py-1"
-                    >
-                      {commands.map((entry, index) => (
-                        <CommandRow
-                          key={entry.kind === "command" ? entry.label : entry.prompt}
-                          id={optionId(listId, index)}
-                          entry={entry}
-                          heading={
-                            index === 0 || commands[index - 1].kind !== entry.kind
-                              ? entry.kind === "command"
-                                ? t("Commands")
-                                : t("Starter questions")
-                              : null
-                          }
-                          selected={index === highlighted}
-                          onHover={() => setHighlighted(index)}
-                          onChoose={() => chooseEntry(entry)}
-                        />
-                      ))}
-                    </ul>
-                  </m.div>
-                )}
-                {mentionsOpen && (
-                  <m.div
-                    key="mentions"
-                    initial={reduceMotion ? false : { opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.18, ease: EASE_SETTLE }}
-                    className="border-border-subtle overflow-hidden border-b"
-                  >
-                    <ul
-                      ref={listRef}
-                      id={mentionListId}
-                      role="listbox"
-                      aria-label={t("Records")}
-                      className="scrollbar-overlay max-h-60 overflow-y-auto py-1"
-                    >
-                      {mentionResults.map((candidate, index) => (
-                        <li
-                          key={`${candidate.type}:${candidate.id}`}
-                          id={optionId(mentionListId, index)}
-                          role="option"
-                          aria-selected={index === mentionHighlighted}
-                          onMouseEnter={() => setMentionHighlighted(index)}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => pickMention(candidate)}
-                          className={cn(
-                            "mx-1 flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-sm transition-colors",
-                            index === mentionHighlighted && "bg-surface-hover",
-                          )}
-                        >
-                          <AtSignIcon className="text-foreground-subtle size-3.5 shrink-0" />
-                          <span className="min-w-0 truncate">{candidate.label}</span>
-                          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-                            {candidate.type.replaceAll("_", " ")}
-                            {candidate.subtitle ? ` · ${candidate.subtitle}` : ""}
-                          </span>
-                          {index === mentionHighlighted && (
-                            <CornerDownLeftIcon className="text-foreground-subtle ml-auto size-3 shrink-0" />
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </m.div>
-                )}
-              </AnimatePresence>
+              {ghost.text}
+            </m.p>
+          )}
+        </AnimatePresence>
 
-              {attachments.length > 0 && (
+        <div
+          data-slot="composer"
+          data-disabled={disabled || undefined}
+          data-dragging={dragging || undefined}
+          onKeyDownCapture={onKeyDownCapture}
+          onDragOver={(event) => {
+            if (!canAttach) return;
+            event.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={(event) => {
+            const next = event.relatedTarget;
+            if (next instanceof Node && event.currentTarget.contains(next)) return;
+            setDragging(false);
+          }}
+          onDrop={(event) => {
+            if (!canAttach) return;
+            event.preventDefault();
+            setDragging(false);
+            takeFiles(event.dataTransfer.files);
+          }}
+          className={cn(
+            "ui-field ui-container-focus-ring group/composer relative flex flex-col overflow-hidden rounded-lg",
+            "data-disabled:opacity-60",
+            "data-dragging:border-brand data-dragging:border-dashed",
+          )}
+        >
+          <AnimatePresence initial={false}>
+            {commandsOpen && (
+              <m.div
+                key="commands"
+                initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.18, ease: EASE_SETTLE }}
+                className="border-border-subtle overflow-hidden border-b"
+              >
                 <ul
-                  aria-label={t("Attached files")}
-                  className="flex flex-wrap gap-1.5 px-2.5 pt-2.5"
+                  ref={listRef}
+                  id={listId}
+                  role="listbox"
+                  aria-label={t("Starter questions")}
+                  className="scrollbar-overlay max-h-60 overflow-y-auto py-1"
                 >
-                  <AnimatePresence initial={false}>
-                    {attachments.map((attachment) => (
-                      <AttachmentChip
-                        key={attachment.id}
-                        attachment={attachment}
-                        onRemove={
-                          onRemoveAttachment ? () => onRemoveAttachment(attachment.id) : undefined
-                        }
-                      />
-                    ))}
-                  </AnimatePresence>
+                  {commands.map((entry, index) => (
+                    <CommandRow
+                      key={entry.kind === "command" ? entry.label : entry.prompt}
+                      id={optionId(listId, index)}
+                      entry={entry}
+                      heading={
+                        index === 0 || commands[index - 1].kind !== entry.kind
+                          ? entry.kind === "command"
+                            ? t("Commands")
+                            : t("Starter questions")
+                          : null
+                      }
+                      selected={index === highlighted}
+                      onHover={() => setHighlighted(index)}
+                      onChoose={() => chooseEntry(entry)}
+                    />
+                  ))}
                 </ul>
+              </m.div>
+            )}
+            {mentionsOpen && (
+              <m.div
+                key="mentions"
+                initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.18, ease: EASE_SETTLE }}
+                className="border-border-subtle overflow-hidden border-b"
+              >
+                <ul
+                  ref={listRef}
+                  id={mentionListId}
+                  role="listbox"
+                  aria-label={t("Records")}
+                  className="scrollbar-overlay max-h-60 overflow-y-auto py-1"
+                >
+                  {mentionResults.map((candidate, index) => (
+                    <li
+                      key={`${candidate.type}:${candidate.id}`}
+                      id={optionId(mentionListId, index)}
+                      role="option"
+                      aria-selected={index === mentionHighlighted}
+                      onMouseEnter={() => setMentionHighlighted(index)}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => pickMention(candidate)}
+                      className={cn(
+                        "mx-1 flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-sm transition-colors",
+                        index === mentionHighlighted && "bg-surface-hover",
+                      )}
+                    >
+                      <AtSignIcon className="text-foreground-subtle size-3.5 shrink-0" />
+                      <span className="min-w-0 truncate">{candidate.label}</span>
+                      <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+                        {candidate.type.replaceAll("_", " ")}
+                        {candidate.subtitle ? ` · ${candidate.subtitle}` : ""}
+                      </span>
+                      {index === mentionHighlighted && (
+                        <CornerDownLeftIcon className="text-foreground-subtle ml-auto size-3 shrink-0" />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </m.div>
+            )}
+          </AnimatePresence>
+
+          {attachments.length > 0 && (
+            <ul aria-label={t("Attached files")} className="flex flex-wrap gap-1.5 px-2.5 pt-2.5">
+              <AnimatePresence initial={false}>
+                {attachments.map((attachment) => (
+                  <AttachmentChip
+                    key={attachment.id}
+                    attachment={attachment}
+                    onRemove={
+                      onRemoveAttachment ? () => onRemoveAttachment(attachment.id) : undefined
+                    }
+                  />
+                ))}
+              </AnimatePresence>
+            </ul>
+          )}
+
+          <Textarea
+            ref={textareaRef}
+            value={draft}
+            onChange={(event) => {
+              // Typing takes the box back from the microphone: what is on
+              // screen stays, and the recogniser stops writing into it.
+              releaseDictation();
+              if (dictation.issue !== null) {
+                dictation.dismissIssue();
+              }
+              onDraftChange(event.target.value);
+              setCaret(event.target.selectionStart ?? event.target.value.length);
+            }}
+            onSelect={syncCaret}
+            onClick={syncCaret}
+            onKeyUp={syncCaret}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            onKeyDown={onKeyDown}
+            onPaste={onPaste}
+            placeholder={
+              disabled
+                ? (disabledReason ?? placeholder)
+                : dictation.phase === "listening" && draft === ""
+                  ? t("Listening…")
+                  : placeholder
+            }
+            disabled={disabled}
+            minRows={1}
+            maxRows={compact ? 5 : 8}
+            aria-label={t("Message the assistant")}
+            aria-controls={commandsOpen ? listId : mentionsOpen ? mentionListId : undefined}
+            aria-expanded={commandsOpen || mentionsOpen || undefined}
+            aria-activedescendant={
+              mentionsOpen
+                ? optionId(mentionListId, mentionHighlighted)
+                : commandsOpen
+                  ? optionId(listId, highlighted)
+                  : undefined
+            }
+            // The box around it carries the one focus ring and the one
+            // disabled treatment, so the field's own are switched off.
+            className="resize-none border-0 bg-transparent px-3 pt-2.5 pb-1 text-sm [--ring-width:0px] disabled:bg-transparent disabled:opacity-100 md:text-sm"
+          />
+
+          {hint !== "" && (
+            <p className="text-foreground-subtle animate-rise px-3 pb-1 font-mono text-xs">
+              {hint}
+            </p>
+          )}
+
+          <div className="flex items-center gap-1 px-1.5 pb-1.5">
+            <div className="flex min-w-0 flex-1 items-center gap-0.5">
+              {onAttachFiles && (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="sr-only"
+                    tabIndex={-1}
+                    aria-hidden
+                    onChange={(event) => {
+                      takeFiles(event.target.files);
+                      event.target.value = "";
+                    }}
+                  />
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          className="text-foreground-muted hover:text-foreground rounded-full"
+                          disabled={!canAttach}
+                          onClick={() => fileInputRef.current?.click()}
+                          aria-label={t("Attach a file")}
+                        />
+                      }
+                    >
+                      <PaperclipIcon className="size-4" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {attachments.length >= MAX_ATTACHMENTS
+                        ? t("Up to {0} files per message", MAX_ATTACHMENTS)
+                        : t("Attach a file")}
+                    </TooltipContent>
+                  </Tooltip>
+                </>
               )}
 
-              <Textarea
-                ref={textareaRef}
-                value={draft}
-                onChange={(event) => {
-                  // Typing takes the box back from the microphone: what is on
-                  // screen stays, and the recogniser stops writing into it.
-                  releaseDictation();
-                  if (dictation.issue !== null) {
-                    dictation.dismissIssue();
-                  }
-                  onDraftChange(event.target.value);
-                  setCaret(event.target.selectionStart ?? event.target.value.length);
-                }}
-                onSelect={syncCaret}
-                onClick={syncCaret}
-                onKeyUp={syncCaret}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                onKeyDown={onKeyDown}
-                onPaste={onPaste}
-                placeholder={
-                  disabled
-                    ? (disabledReason ?? placeholder)
-                    : dictation.phase === "listening" && draft === ""
-                      ? t("Listening…")
-                      : placeholder
-                }
+              <DictationControl
+                availability={dictation.availability}
+                phase={dictation.phase}
+                issue={dictation.issue}
+                stream={dictation.stream}
                 disabled={disabled}
-                minRows={1}
-                maxRows={compact ? 5 : 8}
-                aria-label={t("Message the assistant")}
-                aria-controls={commandsOpen ? listId : mentionsOpen ? mentionListId : undefined}
-                aria-expanded={commandsOpen || mentionsOpen || undefined}
-                aria-activedescendant={
-                  mentionsOpen
-                    ? optionId(mentionListId, mentionHighlighted)
-                    : commandsOpen
-                      ? optionId(listId, highlighted)
-                      : undefined
-                }
-                // The box around it carries the one focus ring and the one
-                // disabled treatment, so the field's own are switched off.
-                className="resize-none border-0 bg-transparent px-3 pt-2.5 pb-1 text-sm [--ring-width:0px] disabled:bg-transparent disabled:opacity-100 md:text-sm"
+                onToggle={dictation.toggleFromDraft}
               />
 
-              {hint !== "" && (
-                <p className="text-foreground-subtle animate-rise px-3 pb-1 font-mono text-xs">
-                  {hint}
-                </p>
+              {pageContext && onToggleContext && (
+                <ContextChip
+                  context={pageContext}
+                  included={contextIncluded}
+                  compact={compact}
+                  onToggle={onToggleContext}
+                />
               )}
 
-              <div className="flex items-center gap-1 px-1.5 pb-1.5">
-                <div className="flex min-w-0 flex-1 items-center gap-0.5">
-                  {onAttachFiles && (
-                    <>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        className="sr-only"
-                        tabIndex={-1}
-                        aria-hidden
-                        onChange={(event) => {
-                          takeFiles(event.target.files);
-                          event.target.value = "";
-                        }}
-                      />
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <Button
-                              size="icon-sm"
-                              variant="ghost"
-                              className="text-foreground-muted hover:text-foreground rounded-full"
-                              disabled={!canAttach}
-                              onClick={() => fileInputRef.current?.click()}
-                              aria-label={t("Attach a file")}
-                            />
-                          }
-                        >
-                          <PaperclipIcon className="size-4" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {attachments.length >= MAX_ATTACHMENTS
-                            ? t("Up to {0} files per message", MAX_ATTACHMENTS)
-                            : t("Attach a file")}
-                        </TooltipContent>
-                      </Tooltip>
-                    </>
-                  )}
-
-                  <DictationControl
-                    availability={dictation.availability}
-                    phase={dictation.phase}
-                    issue={dictation.issue}
-                    stream={dictation.stream}
-                    disabled={disabled}
-                    onToggle={dictation.toggleFromDraft}
+              {agent && onPickAgent && (
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        type="button"
+                        onClick={onPickAgent}
+                        aria-label={t("Ask a different agent")}
+                        className={cn(
+                          "ui-focus-ring ui-press text-foreground-muted hover:text-foreground hover:bg-surface-hover inline-flex h-7 min-w-0 shrink items-center gap-1.5 rounded-full px-1 text-xs",
+                          !compact && "max-w-44 pr-2",
+                        )}
+                      >
+                        <AgentTile agent={agent} size="xs" />
+                        {!compact && <span className="truncate">{agent.name}</span>}
+                      </button>
+                    }
                   />
+                  <TooltipContent>
+                    {compact
+                      ? t("Asking {0}. Click to ask a different agent.", agent.name)
+                      : t("Ask a different agent")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
 
-                  {pageContext && onToggleContext && (
-                    <ContextChip
-                      context={pageContext}
-                      included={contextIncluded}
-                      compact={compact}
-                      onToggle={onToggleContext}
-                    />
-                  )}
+            <div className="flex shrink-0 items-center gap-1">
+              {onPickProvider && (
+                <ModelPicker
+                  options={providers}
+                  value={providerId}
+                  onChange={onPickProvider}
+                  disabled={disabled || active}
+                  compact={compact}
+                />
+              )}
 
-                  {agent && onPickAgent && (
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <button
-                            type="button"
-                            onClick={onPickAgent}
-                            aria-label={t("Ask a different agent")}
-                            className={cn(
-                              "ui-focus-ring ui-press text-foreground-muted hover:text-foreground hover:bg-surface-hover inline-flex h-7 min-w-0 shrink items-center gap-1.5 rounded-full px-1 text-xs",
-                              !compact && "max-w-44 pr-2",
-                            )}
-                          >
-                            <AgentTile agent={agent} size="xs" />
-                            {!compact && <span className="truncate">{agent.name}</span>}
-                          </button>
-                        }
-                      />
-                      <TooltipContent>
-                        {compact
-                          ? t("Asking {0}. Click to ask a different agent.", agent.name)
-                          : t("Ask a different agent")}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1">
-                  {onPickProvider && (
-                    <ModelPicker
-                      options={providers}
-                      value={providerId}
-                      onChange={onPickProvider}
-                      disabled={disabled || active}
-                      compact={compact}
-                    />
-                  )}
-
-                  <SendControl
-                    active={active}
-                    armed={canSend || commandsOpen}
-                    confirming={confirming}
-                    uploading={uploading}
-                    onSend={submit}
-                    onStop={onStop}
-                  />
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {dragging && (
-                  <m.div
-                    key="drop"
-                    aria-hidden
-                    initial={reduceMotion ? false : { opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.12, ease: EASE_SWIFT }}
-                    className="bg-field text-foreground-muted pointer-events-none absolute inset-0 flex items-center justify-center gap-2 text-sm"
-                  >
-                    <PaperclipIcon className="size-4" />
-                    {t("Drop to attach")}
-                  </m.div>
-                )}
-              </AnimatePresence>
+              <SendControl
+                active={active}
+                armed={canSend || commandsOpen}
+                confirming={confirming}
+                uploading={uploading}
+                onSend={submit}
+                onStop={onStop}
+              />
             </div>
           </div>
 
-          <ComposerHints
-            kind={hintKind}
-            issue={dictation.issue}
-            onDismissIssue={dictation.dismissIssue}
-            canMention={onSearchMentions !== undefined}
-            canAttach={onAttachFiles !== undefined}
-            canDictate={dictation.supported}
-          />
+          <AnimatePresence>
+            {dragging && (
+              <m.div
+                key="drop"
+                aria-hidden
+                initial={reduceMotion ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.12, ease: EASE_SWIFT }}
+                className="bg-field text-foreground-muted pointer-events-none absolute inset-0 flex items-center justify-center gap-2 text-sm"
+              >
+                <PaperclipIcon className="size-4" />
+                {t("Drop to attach")}
+              </m.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-    </div>
+
+      <ComposerHints
+        kind={hintKind}
+        issue={dictation.issue}
+        onDismissIssue={dictation.dismissIssue}
+        canMention={onSearchMentions !== undefined}
+        canAttach={onAttachFiles !== undefined}
+        canDictate={dictation.supported}
+      />
+    </FloatingSlot>
   );
 }
 

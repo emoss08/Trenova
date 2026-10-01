@@ -1,9 +1,8 @@
 import type { ToolStep } from "./activity";
-import type { ToolExchange } from "./thread-view";
 
 /**
- * A waiting decision the assistant put back in front of the person: one
- * proposal, several of one tool shown as one card, or a plan.
+ * A waiting decision the assistant asked the person to make now: one
+ * proposal, several of one tool decided together, or a plan.
  */
 export type DecisionRequestRef = {
   callId: string;
@@ -63,24 +62,11 @@ function collect(
 }
 
 /**
- * The cards a saved turn asked the person to decide. The runtime answers
- * request_decision itself and only succeeds for what is still waiting in this
- * conversation, so a call that failed shows nothing.
+ * The decisions a live turn asked the person to make now, read from its
+ * finished request_decision calls. The runtime answers the call itself and
+ * succeeds only for what is still waiting, so a call that failed asks for
+ * nothing; each moves the approval box to its decision.
  */
-export function decisionRequestsFrom(tools: readonly ToolExchange[]): DecisionRequestRef[] {
-  return collect(
-    tools
-      .filter(
-        (exchange) =>
-          exchange.call.name === REQUEST_DECISION_TOOL &&
-          exchange.result !== null &&
-          !exchange.result.toolFailed,
-      )
-      .map((exchange) => ({ callId: exchange.call.id, args: exchange.call.arguments })),
-  );
-}
-
-/** The same cards, read out of a turn that is still streaming. */
 export function decisionRequestsFromSteps(steps: readonly ToolStep[]): DecisionRequestRef[] {
   return collect(
     steps

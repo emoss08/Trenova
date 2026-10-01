@@ -230,6 +230,9 @@ func (s *Service) Decide(
 			"Plans cannot be decided: no decision service is wired",
 		)
 	}
+	if err := agent.CheckDecisionNote(agent.NormalizeDecisionNote(req.Note)); err != nil {
+		return nil, err
+	}
 
 	plan, err := s.plans.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
 		ID:         req.PlanID,
@@ -687,6 +690,7 @@ func (s *Service) runStep(
 		ProposalID: step.ID,
 		Decision:   agent.DecisionAccepted,
 		ReasonCode: planReason(r.req.ReasonCode, r.plan.ID),
+		Note:       r.req.Note,
 		TenantInfo: r.req.TenantInfo,
 		WithinPlan: true,
 	}
@@ -830,6 +834,7 @@ func (s *Service) rejectSteps(
 			ProposalID: step.ID,
 			Decision:   agent.DecisionRejected,
 			ReasonCode: planReason(req.ReasonCode, req.PlanID),
+			Note:       req.Note,
 			TenantInfo: req.TenantInfo,
 			WithinPlan: true,
 		}

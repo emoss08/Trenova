@@ -265,7 +265,7 @@ Changes only the records of the person using the agent.
 | Arrange home layout (`arrange_home_layout`) | The caller's own records | Automatic | — | — | Changes only the caller's own home page. |
 | Publish artifact (`publish_artifact`) | The caller's own records | Automatic | — | — | Publishes a document into the caller's own conversation, where only they read it. |
 | Remove home widget (`remove_home_widget`) | The caller's own records | Automatic | — | — | Changes only the caller's own home page. |
-| Request decision (`request_decision`) | The caller's own records | Automatic | — | — | Shows the person, in their own conversation, the card of a proposal already waiting on them; it decides nothing and changes no record. |
+| Request decision (`request_decision`) | The caller's own records | Automatic | — | — | Opens, in the person's own conversation, the approval box on a proposal already waiting on them; it decides nothing and changes no record. |
 
 ## Inside the organization
 

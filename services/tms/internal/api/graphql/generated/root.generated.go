@@ -5217,6 +5217,8 @@ type AgentDecision {
   "Modifications carry tool-specific parameter overrides captured at decision time."
   modifications: JSON
   reasonCode: String!
+  "What the decider told the agent with the decision; empty when they said nothing."
+  note: String!
   "The trace the decision was made in. Empty for a decision recorded before traces were kept."
   traceId: String!
   "The decision's trace in the tracing backend, when one is configured and the decision has a trace."
@@ -5508,6 +5510,8 @@ input AgentProposalDecisionInput {
   reasonCode: String!
   "The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed."
   previewDigest: String
+  "What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions."
+  note: String
 }
 
 input AgentPlanDecisionInput {
@@ -5516,6 +5520,8 @@ input AgentPlanDecisionInput {
   reasonCode: String!
   "The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded."
   previewDigest: String
+  "What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision."
+  note: String
 }
 
 input AgentExceptionResolveInput {
@@ -11776,6 +11782,8 @@ input DecideAgentProposalsInput {
   reasonCode: String
   "The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed."
   previewDigests: [AgentProposalPreviewDigestInput!]
+  "What the decider tells the agent, recorded on each proposal's decision; at most 2000 characters."
+  note: String
 }
 
 "What became of one proposal in a batch decision."

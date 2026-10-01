@@ -1,6 +1,6 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { conversationPath } from "@/lib/conversation-path";
-import { SimulationLine } from "@/components/assistant/proposal-card";
+import { SimulationLine } from "@/components/assistant/decision-outcomes";
 import type { EditorFocus } from "@/components/assistant/proposal-editor";
 import { PlanPreview } from "@/components/assistant/proposal-preview/plan-preview";
 import { canApprove } from "@/components/assistant/proposal-preview/preview-gate";

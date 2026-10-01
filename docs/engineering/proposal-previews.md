@@ -46,9 +46,11 @@ for every tool, including a failing `ToolValidator`. GraphQL serves them as
 SEED-DET-009"), falling back to `Message` without its leading sentence, never the bare "would
 not go through" when the server said why. It offers "Change {label}", which opens the editor
 on that parameter (a nested one such as `shipment.bol` gets an input of its own bound to the
-value inside the JSON field), and "Ask the agent to fix it", which in a conversation sends a
-message naming the reasons and asking for a corrected proposal, and on the Desk and in AI
-Control opens the rejection with the reasons written. Approve stays offered and warned.
+value inside the JSON field), and "Ask the agent to fix it", which in a conversation's
+approval box opens "Tell the agent instead" with the reasons written (the rejection carries
+them as its note, and the follow-up asks the agent for a corrected proposal), and on the
+Desk and in AI Control opens the rejection with the reasons written. Approve stays offered
+and warned.
 
 ## How a tool previews
 
@@ -190,7 +192,17 @@ before anything is written, for `Accepted` and `Modified`:
   `preview_reviewed` (the decision named the digest).
 
 A rejection is never refused over its preview — a person can always say no — and records
-only the digest it was sent, when it is one. A digest mismatch on an approval (of a
+only the digest it was sent, when it is one.
+
+Every decide input takes an optional `note` (at most 2000 characters): what the decider tells
+the agent, such as why they turned the change down. It is stored on the decision
+(`agent_decisions.note`; a plan's note on each step's decision) and served on
+`AgentDecision.note` and on the thread's proposals as `decisionNote`. The conversation's
+follow-up turn reads it fenced in `<untrusted_data>` as "The person declined:" (or "The
+person's note with the decision:" on an approval), capped, and is told it is the person's
+words about the decision, never instructions; after a declined note the agent may propose a
+different change, never the same one again. It is not part of the decision's hashed audit
+form. A digest mismatch on an approval (of a
 proposal or a plan) is the only `ConflictError` the decide path returns; a preview whose
 changes fail validation is a validation error. A batch (`decideAgentProposals`) takes one
 digest per proposal: a mismatch fails that proposal alone, and a proposal without one is

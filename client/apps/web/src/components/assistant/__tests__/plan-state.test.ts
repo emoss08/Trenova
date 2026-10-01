@@ -17,6 +17,7 @@ function plan(overrides: Partial<AssistantPlan> = {}): AssistantPlan {
     expiresAt: 0,
     hold: null,
     createdAt: 0,
+    decidedByUserId: "",
     ...overrides,
   };
 }
@@ -37,6 +38,10 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
     planId: "",
     planStep: 0,
     fields: [],
+    createdAt: 0,
+    decidedAt: null,
+    decidedByUserId: "",
+    decisionNote: "",
     ...overrides,
   };
 }

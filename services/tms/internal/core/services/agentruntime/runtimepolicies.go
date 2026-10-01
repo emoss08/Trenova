@@ -49,8 +49,8 @@ var runtimePolicySpecs = []runtimePolicySpec{
 		scope:     agent.ToolScopeRun,
 		egress:    agent.EgressPersonal,
 		effect:    agent.ToolEffectAsk,
-		rationale: "Shows the person, in their own conversation, the card of a proposal " +
-			"already waiting on them; it decides nothing and changes no record.",
+		rationale: "Opens, in the person's own conversation, the approval box on a " +
+			"proposal already waiting on them; it decides nothing and changes no record.",
 	},
 	{
 		name:      delegateTaskName,

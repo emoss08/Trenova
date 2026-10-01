@@ -22,9 +22,20 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { ArrowRightIcon, InfoIcon, XIcon } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ApprovalDock } from "./approval-dock";
+import {
+  approvalQueue,
+  currentEntry,
+  focusKeys,
+  holdsFocus,
+  type ApprovalEntry,
+} from "./approval-queue";
 import { ArtifactOpenerProvider } from "./artifact-opener";
-import { AskAgentProvider } from "./ask-agent";
 import { Composer } from "./composer";
+import { DeferredDecisionsPill } from "./deferred-decisions-pill";
+import { decisionRequestsFromSteps } from "./decision-requests";
+import { PlanRecord, ProposalRecord } from "./decision-record";
+import { stepsFromSegments } from "./activity";
 import { DecisionFollowUpProvider } from "./decision-follow-up";
 import { useFollowNavigation } from "./follow-navigation";
 import { useApplyDraftEdits } from "./page-draft-edits";
@@ -42,11 +53,7 @@ import {
   modelSwitchNotice,
   type ModelSwitchNotice as ModelSwitchNoticeValue,
 } from "./model-switch";
-import { PlanCard } from "./plan-card";
 import { groupPlans } from "./plan-state";
-import { ProposalBatchBar } from "./proposal-batch";
-import { batchableProposals } from "./proposal-batches";
-import { ProposalCard } from "./proposal-card";
 import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
 import { ReadOnlyThreadNotice } from "./read-only-thread-notice";
 import { StreamingTurn } from "./streaming-turn";
@@ -249,10 +256,53 @@ export function MessageThread({
     standalone,
     messages,
   );
-  // Several waiting changes of one kind, filed on different turns, are one
-  // question to the person; the bar at the foot of the thread answers them
-  // together while each card still answers its own.
-  const batches = useMemo(() => batchableProposals(standalone), [standalone]);
+
+  // What waits on the person is asked at the foot of the thread, in the
+  // composer's place, one decision at a time and the oldest first; the
+  // transcript keeps a line for each. A decision put off for later leaves a
+  // pill above the composer instead, and one the agent asked about is shown
+  // first whatever else waits.
+  const focus = useAssistantStore((state) => state.decisionFocus[thread.id] ?? null);
+  const deferredList = useAssistantStore((state) => state.deferredDecisions);
+  const deferDecisions = useAssistantStore((state) => state.deferDecisions);
+  const resumeDecisions = useAssistantStore((state) => state.resumeDecisions);
+  const focusDecision = useAssistantStore((state) => state.focusDecision);
+  const clearDecisionFocus = useAssistantStore((state) => state.clearDecisionFocus);
+  const queue = useMemo(
+    () => approvalQueue(proposalsQuery.data?.results ?? [], plansQuery.data?.results ?? [], focus),
+    [focus, plansQuery.data, proposalsQuery.data],
+  );
+  const deferred = useMemo(() => new Set(deferredList), [deferredList]);
+  const current = useMemo(() => currentEntry(queue, deferred, focus), [deferred, focus, queue]);
+  const focusHeld = focus !== null && current !== null && holdsFocus(current.entry, focus);
+  useEffect(() => {
+    if (focus !== null && !focusHeld && !proposalsQuery.isPending && !plansQuery.isPending) {
+      clearDecisionFocus(thread.id);
+    }
+  }, [
+    clearDecisionFocus,
+    focus,
+    focusHeld,
+    plansQuery.isPending,
+    proposalsQuery.isPending,
+    thread.id,
+  ]);
+  const deferAll = useCallback(() => {
+    deferDecisions(queue.flatMap((entry) => entry.members));
+    clearDecisionFocus(thread.id);
+  }, [clearDecisionFocus, deferDecisions, queue, thread.id]);
+  const resumeAll = useCallback(
+    () => resumeDecisions(queue.flatMap((entry) => entry.members)),
+    [queue, resumeDecisions],
+  );
+  const decided = useCallback(
+    (entry: ApprovalEntry) => {
+      if (focus !== null && holdsFocus(entry, focus)) {
+        clearDecisionFocus(thread.id);
+      }
+    },
+    [clearDecisionFocus, focus, thread.id],
+  );
 
   const entries = useMemo(() => groupThread(messages), [messages]);
   // A reply of several steps is headed once and timed from its question.
@@ -401,6 +451,10 @@ export function MessageThread({
   );
   const answer = readOnly ? undefined : sendAnswer;
 
+  // While the agent is writing, the composer stays: it holds the stop
+  // control, and what the reply is about to say may change the decision.
+  const showDock = current !== null && !isActive && !history.isLoading;
+
   // The composer floats over the bottom of the thread, so the last message has
   // to be padded clear of it and the jump-to-latest button lifted above it. The
   // textarea grows to eight rows, which is why this is measured, not a constant.
@@ -419,9 +473,9 @@ export function MessageThread({
     observer.observe(element);
 
     return () => observer.disconnect();
-    // The read-only notice and the composer are different elements; the one
-    // on screen is the one measured.
-  }, [readOnly]);
+    // The read-only notice, the approval box and the composer are different
+    // elements; the one on screen is the one measured.
+  }, [readOnly, showDock]);
 
   const threadFull = history.length.state === "full";
   const block = composerBlock({
@@ -521,7 +575,6 @@ export function MessageThread({
                 proposals={proposalsByMessage.get(entry.message.id) ?? []}
                 plans={plansByMessage.get(entry.message.id) ?? []}
                 artifacts={artifactsByMessage.get(entry.message.id) ?? []}
-                threadId={thread.id}
                 latestUserSequence={latestUserSequence}
                 onAnswer={answer}
                 onOpenArtifact={onOpenArtifact}
@@ -541,20 +594,13 @@ export function MessageThread({
     for (const group of loosePlans) {
       list.push({
         key: `plan-${group.plan.id}`,
-        render: () => <PlanCard plan={group.plan} steps={group.steps} threadId={thread.id} />,
+        render: () => <PlanRecord plan={group.plan} steps={group.steps} />,
       });
     }
     for (const proposal of looseProposals) {
       list.push({
         key: `proposal-${proposal.id}`,
-        render: () => <ProposalCard proposal={proposal} threadId={thread.id} />,
-      });
-    }
-
-    for (const batch of batches) {
-      list.push({
-        key: `batch-${batch.toolName}`,
-        render: () => <ProposalBatchBar proposals={batch.proposals} threadId={thread.id} />,
+        render: () => <ProposalRecord proposal={proposal} />,
       });
     }
 
@@ -565,7 +611,6 @@ export function MessageThread({
           <div className="animate-rise">
             <StreamingTurn
               turn={turn}
-              threadId={thread.id}
               onRetry={readOnly ? undefined : retry}
               onDismiss={dismiss}
               onAnswer={answer}
@@ -582,7 +627,6 @@ export function MessageThread({
     answerIds,
     arrivals,
     artifactsByMessage,
-    batches,
     dismiss,
     entries,
     latestUserSequence,
@@ -598,7 +642,6 @@ export function MessageThread({
     readOnly,
     retry,
     send,
-    thread.id,
     timezone,
     turn,
   ]);
@@ -609,6 +652,22 @@ export function MessageThread({
   // a proposal or plan in it stops waiting because somebody decided it
   // elsewhere — the Desk's decisions, AI Control, another tab.
   const followUpDecision = useCallback(() => void rejoin(), [rejoin]);
+
+  // The agent asked the person to decide something now: the approval box
+  // opens on it, put off or not. Only a call seen arriving moves the box; a
+  // reopened thread starts from the oldest decision.
+  const liveSteps = useMemo(() => (turn ? stepsFromSegments(turn.segments) : []), [turn]);
+  const seenRequests = useRef(new Set<string>());
+  useEffect(() => {
+    for (const request of decisionRequestsFromSteps(liveSteps)) {
+      if (seenRequests.current.has(request.callId)) {
+        continue;
+      }
+      seenRequests.current.add(request.callId);
+      const next = { proposalIds: request.proposalIds, planId: request.planId };
+      focusDecision(thread.id, next, focusKeys(next));
+    }
+  }, [focusDecision, liveSteps, thread.id]);
 
   useEffect(() => {
     if (!history.isLoading) {
@@ -643,8 +702,14 @@ export function MessageThread({
     }
   }, [decidedKey, plansQuery.isPending, proposalsQuery.isPending, rejoin]);
 
+  const canTell = !readOnly && block === null;
+  const pill =
+    queue.length > 0 && current === null ? (
+      <DeferredDecisionsPill count={queue.length} onReopen={resumeAll} />
+    ) : null;
+
   const body = (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div data-slot="assistant-thread" className="relative flex min-h-0 flex-1 flex-col">
       {history.isLoading ? (
         <div className={cn("flex flex-1 flex-col gap-4", expanded ? "px-4 py-5" : "px-3 py-4")}>
           <Skeleton className="ml-auto h-10 w-2/5" />
@@ -678,11 +743,24 @@ export function MessageThread({
         />
       )}
 
-      {block === "read-only" ? (
+      {showDock ? (
+        <ApprovalDock
+          ref={composerRef}
+          threadId={thread.id}
+          entry={current.entry}
+          position={current.index + 1}
+          total={queue.length}
+          compact={!expanded}
+          canTell={canTell}
+          onDefer={deferAll}
+          onDecided={decided}
+        />
+      ) : block === "read-only" ? (
         <ReadOnlyThreadNotice
           ref={composerRef}
           reason={thread.cannotContinueReason}
           compact={!expanded}
+          notice={pill}
         />
       ) : (
         <Composer
@@ -704,16 +782,19 @@ export function MessageThread({
                 : t("This agent has been disabled, so the conversation cannot continue.")
           }
           notice={
-            history.length.state !== "open" ? (
-              <ThreadLengthNotice
-                state={history.length.state}
-                total={history.total}
-                limit={history.limit}
-                onStartNew={onStartNew}
-              />
-            ) : switchNotice ? (
-              <ModelSwitchNotice notice={switchNotice} />
-            ) : null
+            <>
+              {pill}
+              {history.length.state !== "open" ? (
+                <ThreadLengthNotice
+                  state={history.length.state}
+                  total={history.total}
+                  limit={history.limit}
+                  onStartNew={onStartNew}
+                />
+              ) : switchNotice ? (
+                <ModelSwitchNotice notice={switchNotice} />
+              ) : null}
+            </>
           }
           placeholder={
             agent
@@ -749,15 +830,13 @@ export function MessageThread({
     <AssistantAgentProvider agent={agent} delegates={agent?.delegates}>
       <ArtifactOpenerProvider onOpen={onOpenArtifact}>
         <DecisionFollowUpProvider value={followUpDecision}>
-          <AskAgentProvider value={answer ?? null}>
-            {agentAccent ? (
-              <AgentGutter agent={agent} working={isActive}>
-                {body}
-              </AgentGutter>
-            ) : (
-              body
-            )}
-          </AskAgentProvider>
+          {agentAccent ? (
+            <AgentGutter agent={agent} working={isActive}>
+              {body}
+            </AgentGutter>
+          ) : (
+            body
+          )}
         </DecisionFollowUpProvider>
       </ArtifactOpenerProvider>
     </AssistantAgentProvider>
