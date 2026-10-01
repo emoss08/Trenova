@@ -935,23 +935,23 @@ func buildPendingProposalSection(pending []PendingProposal, requestable bool) st
 	builder.WriteString("## Proposals awaiting a decision\n")
 	builder.WriteString(
 		"These changes you proposed earlier in this conversation are waiting on the " +
-			"person. They approve or reject each one on its card in this conversation, " +
-			"not by typing: a message such as \"yes\", \"approved\" or \"go ahead\" does " +
-			"not decide it. Do not propose any of them again.",
+			"person. They approve or reject each one in the approval box under this " +
+			"conversation, not by typing: a message such as \"yes\", \"approved\" or \"go " +
+			"ahead\" does not decide it. Do not propose any of them again.",
 	)
 	if requestable {
 		builder.WriteString(
 			" When the person types an approval or asks you to proceed with one of them, " +
-				"call request_decision with its proposalId: that puts its card back in front " +
-				"of them to decide. For several of one tool, pass their ids together in " +
-				"proposalIds so they share one card; a plan's steps are decided together: " +
-				"pass its planId. Then tell them in one line that it is decided on the " +
-				"card and that nothing has been changed yet.",
+				"call request_decision with its proposalId: that opens it in the approval " +
+				"box for them to decide. For several of one tool, pass their ids together in " +
+				"proposalIds so they decide them together; a plan's steps are decided " +
+				"together: pass its planId. Then tell them in one line that it is decided " +
+				"in the approval box and that nothing has been changed yet.",
 		)
 	} else {
 		builder.WriteString(
 			" If the person asks you to proceed, tell them the proposal is waiting for " +
-				"their approval on its card, and that nothing has been changed yet.",
+				"their approval in this conversation, and that nothing has been changed yet.",
 		)
 	}
 	for _, proposal := range pending {

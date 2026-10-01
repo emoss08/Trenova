@@ -14,18 +14,18 @@ import (
 
 const requestDecisionName = "request_decision"
 
-const requestDecisionDescription = "Put a proposal that is waiting on the person back in " +
-	"front of them as its card, so they can approve or reject it there. Call it when the " +
-	"person types an approval or asks you to go ahead with a change listed under Proposals " +
-	"awaiting a decision: a typed \"yes\" does not decide a proposal, only the card does. " +
-	"Pass that proposal's id from the list. For several waiting proposals of one tool, pass " +
-	"them all in proposalIds so they share one card the person approves together; for a " +
+const requestDecisionDescription = "Open a proposal that is waiting on the person in the " +
+	"approval box under the conversation, so they can approve or reject it there. Call it " +
+	"when the person types an approval or asks you to go ahead with a change listed under " +
+	"Proposals awaiting a decision: a typed \"yes\" does not decide a proposal, only the " +
+	"approval box does. Pass that proposal's id from the list. For several waiting proposals " +
+	"of one tool, pass them all in proposalIds so the person decides them together; for a " +
 	"plan's steps, pass its planId. Calling it changes nothing and decides nothing."
 
 const (
-	undecidableRefusal = "There is nowhere to show the card here. Tell the person the " +
-		"proposal is still waiting on its card earlier in this conversation, and that typing " +
-		"does not approve it."
+	undecidableRefusal = "There is no approval box here. Tell the person the proposal is " +
+		"still waiting on their decision in this conversation, and that typing does not " +
+		"approve it."
 	unofferedDecisionRefusal = "request_decision is only for a conversation with a proposal " +
 		"waiting on the person, and this one has none. Answer without it."
 	maxRequestedProposals = 50
@@ -54,11 +54,11 @@ func requestDecisionSpec() serviceports.ToolSpec {
 						toolschema.KeyType: toolschema.TypeString,
 					},
 					toolschema.KeyDescription: "Several waiting proposals of the same tool, " +
-						"shown as one card; instead of proposalId.",
+						"decided together; instead of proposalId.",
 				},
 				paramPlanID: map[string]any{
 					toolschema.KeyType: toolschema.TypeString,
-					toolschema.KeyDescription: "A waiting plan, shown as its card; instead " +
+					toolschema.KeyDescription: "A waiting plan, decided whole; instead " +
 						"of proposalId.",
 				},
 			},
@@ -168,9 +168,9 @@ func (t *Turn) requestProposalDecision(id pulid.ID) toolOutcome {
 	}
 
 	if _, requested := t.decisions[id]; requested {
-		return toolOutcome{content: fmt.Sprintf("The card for proposal %s (%s) is already "+
-			"in front of the person from your earlier call. End your turn with one short "+
-			"line pointing them to it.", id, outcome.ToolName)}
+		return toolOutcome{content: fmt.Sprintf("Proposal %s (%s) is already in the "+
+			"approval box from your earlier call. End your turn with one short line pointing "+
+			"the person to it.", id, outcome.ToolName)}
 	}
 	t.decisions[id] = struct{}{}
 
@@ -182,8 +182,8 @@ func (t *Turn) filedThisTurn(id pulid.ID) (toolOutcome, bool) {
 		action := &t.result.Actions[idx]
 		if action.ProposalID == id && !action.Executed {
 			return toolOutcome{content: fmt.Sprintf("Proposal %s (%s) was filed in this turn, "+
-				"and its card is already in front of the person. End your turn with one "+
-				"short line pointing them to it.", id, action.ToolName)}, true
+				"and it is already in the approval box in front of the person. End your turn "+
+				"with one short line pointing them to it.", id, action.ToolName)}, true
 		}
 	}
 
@@ -204,9 +204,9 @@ func (t *Turn) requestPlanDecision(planID pulid.ID) toolOutcome {
 			"became of it.", planID)
 	}
 	if _, requested := t.decisions[planID]; requested {
-		return toolOutcome{content: fmt.Sprintf("The card for plan %s is already in front of "+
-			"the person from your earlier call. End your turn with one short line pointing "+
-			"them to it.", planID)}
+		return toolOutcome{content: fmt.Sprintf("Plan %s is already in the approval box from "+
+			"your earlier call. End your turn with one short line pointing the person to it.",
+			planID)}
 	}
 	t.decisions[planID] = struct{}{}
 
@@ -237,7 +237,7 @@ func (t *Turn) requestBunchDecision(ids []pulid.ID) toolOutcome {
 			return failedOutcome("Proposal %s is a step of plan %s, which is decided whole; "+
 				"pass that planId instead.", id, outcome.PlanID)
 		case tool != "" && outcome.ToolName != tool:
-			return failedOutcome("proposalIds shares one card for one tool at a time, and "+
+			return failedOutcome("proposalIds decides one tool at a time, and "+
 				"these are %s and %s; call request_decision once for each tool.",
 				tool, outcome.ToolName)
 		}
@@ -251,9 +251,9 @@ func (t *Turn) requestBunchDecision(ids []pulid.ID) toolOutcome {
 		}
 	}
 	if !fresh {
-		return toolOutcome{content: fmt.Sprintf("The card for these %d proposals is already "+
-			"in front of the person from your earlier call. End your turn with one short "+
-			"line pointing them to it.", len(ids))}
+		return toolOutcome{content: fmt.Sprintf("These %d proposals are already in the "+
+			"approval box from your earlier call. End your turn with one short line pointing "+
+			"the person to it.", len(ids))}
 	}
 	for _, id := range ids {
 		t.decisions[id] = struct{}{}
@@ -313,8 +313,8 @@ func decisionRequested(
 	shown, err := observe(serviceports.ToolObservation{Call: *call, Data: request})
 	switch {
 	case err != nil:
-		return failedOutcome("The card for proposal %s could not be shown again: %s. Tell "+
-			"the person the proposal is still waiting on its card earlier in this "+
+		return failedOutcome("Proposal %s could not be opened in the approval box: %s. Tell "+
+			"the person the proposal is still waiting on their decision in this "+
 			"conversation, and that typing does not approve it.", request.ProposalID, err.Error())
 	case shown == nil:
 		return failedOutcome("%s", undecidableRefusal)
@@ -329,10 +329,10 @@ func decisionRequested(
 	}
 
 	return toolOutcome{
-		content: fmt.Sprintf("The card for %s is in front of the person again. "+
-			"They approve or reject it there; a typed \"yes\" does not decide it, and nothing "+
-			"has changed yet. End your turn with one short line pointing them to the card, "+
-			"and do not propose the change again.", subject),
+		content: fmt.Sprintf("The approval box under the conversation now shows %s. "+
+			"The person approves or rejects it there; a typed \"yes\" does not decide it, and "+
+			"nothing has changed yet. End your turn with one short line pointing them to the "+
+			"approval box, and do not propose the change again.", subject),
 		summary: summaryLine(shown.Title),
 	}
 }
@@ -340,8 +340,8 @@ func decisionRequested(
 func UnkeptOutcome(name string) ToolOutcome {
 	if name == requestDecisionName {
 		return ToolOutcome{
-			Content: "The card could not be shown again just now. Tell the person the " +
-				"proposal is still waiting on its card earlier in this conversation, and that " +
+			Content: "The approval box could not be opened just now. Tell the person the " +
+				"proposal is still waiting on their decision in this conversation, and that " +
 				"typing does not approve it.",
 			Failed: true,
 		}

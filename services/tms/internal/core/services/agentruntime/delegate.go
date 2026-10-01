@@ -196,7 +196,7 @@ func DelegateInput(task string, handed *DelegateContext) string {
 			lines = append(lines, "- "+record.EntityType+" "+record.ID)
 		}
 		b.WriteString("\n\n")
-		b.WriteString(fenceUntrusted("Records the task is about:",
+		b.WriteString(FenceUntrusted("Records the task is about:",
 			strings.Join(lines, "\n")))
 	}
 	for _, result := range handed.Results {
@@ -665,7 +665,7 @@ func delegateNote(report serviceports.AssistantDelegateFinishedEvent) string {
 	default:
 		return "[" + name + " did this as the same person. Tell the person what it did, " +
 			"naming what it made. Everything under awaiting is a proposal waiting for their " +
-			"approval on its card in this conversation and has not run; name each by its " +
+			"approval in this conversation and has not run; name each by its " +
 			"proposalId when you tell them about it. Use the ids under made for your next " +
 			"step; never invent one.]"
 	}

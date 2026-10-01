@@ -243,6 +243,7 @@
   "A note from an administrator, pinned to everyone assigned this home screen": "Una nota de un administrador, fijada para todos los que tengan asignada esta pantalla de inicio",
   "A note is required for manual adjustments": "Los ajustes manuales requieren una nota",
   "A note is required when rejecting an expense so the driver knows why": "Al rechazar un gasto es obligatoria una nota para que el conductor sepa por qué",
+  "A note to the agent can be at most {0} characters": "Una nota para el agente puede tener como máximo {0} caracteres",
   "A notice id and a document id are required to file a notice PDF": "Se requieren un ID de aviso y un ID de documento para archivar el PDF del aviso",
   "A page already filed cannot be moved": "Una página ya archivada no se puede mover",
   "A page can be in only one document": "Una página puede estar en un solo documento",

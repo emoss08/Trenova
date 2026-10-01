@@ -243,6 +243,7 @@
   "A note from an administrator, pinned to everyone assigned this home screen": "管理员的说明，会固定显示给所有分配到此首页的人",
   "A note is required for manual adjustments": "手动调整必须填写备注",
   "A note is required when rejecting an expense so the driver knows why": "拒绝费用时必须填写备注，让司机知道原因",
+  "A note to the agent can be at most {0} characters": "给代理的备注最多 {0} 个字符",
   "A notice id and a document id are required to file a notice PDF": "存档通知 PDF 须同时提供通知 ID 与文档 ID",
   "A page already filed cannot be moved": "已归档的页面无法移动",
   "A page can be in only one document": "一个页面只能属于一份文档",

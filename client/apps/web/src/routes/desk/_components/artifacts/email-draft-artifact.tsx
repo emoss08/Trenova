@@ -1,4 +1,4 @@
-import { ProposalCard } from "@/components/assistant/proposal-card";
+import { ProposalRecord } from "@/components/assistant/decision-record";
 import { previewSendsMessage } from "@/components/assistant/proposal-preview/preview-format";
 import { ProposalPreview } from "@/components/assistant/proposal-preview/proposal-preview";
 import { useProposalPreview } from "@/components/assistant/proposal-preview/use-proposal-preview";
@@ -14,9 +14,10 @@ import { emailDraftFrom } from "./artifact-payloads";
 
 /**
  * An outbound message as a draft a person can read whole: who it goes to,
- * the subject, the body. The decision lives on the proposal it views, so
- * approving, changing and rejecting are the proposal's own card under the
- * draft, and a draft sent from anywhere reads as sent here.
+ * the subject, the body. The decision lives on the proposal it views and is
+ * made in the approval box under the conversation; the proposal's record under
+ * the draft says where it stands, and a draft sent from anywhere reads as
+ * sent here.
  *
  * What the model wrote is not always what would go out: a customer email is
  * addressed from the customer's email profile and rendered from the
@@ -84,7 +85,7 @@ export function EmailDraftArtifact({ artifact }: { artifact: AssistantArtifact }
       {proposalsQuery.isLoading ? (
         <Skeleton className="h-20" />
       ) : proposal ? (
-        <ProposalCard proposal={proposal} threadId={artifact.threadId} showPreview={!rendered} />
+        <ProposalRecord proposal={proposal} defaultOpen showPreview={!rendered} />
       ) : (
         <p className="text-muted-foreground text-xs">
           {t("The proposal behind this draft is no longer in the conversation.")}

@@ -331,6 +331,7 @@ func (s *Service) DecideMany(
 				ProposalID:    id,
 				Decision:      req.Decision,
 				ReasonCode:    req.ReasonCode,
+				Note:          req.Note,
 				TenantInfo:    req.TenantInfo,
 				PreviewDigest: req.PreviewDigests[id],
 			},
@@ -387,6 +388,14 @@ func validateBatch(req *services.DecideAgentProposalsRequest) error {
 	}
 	if strings.TrimSpace(req.ReasonCode) == "" && req.Decision == agent.DecisionRejected {
 		multiErr.Add("reasonCode", errortypes.ErrRequired, "Say why these are rejected")
+	}
+	if err := agent.CheckDecisionNote(agent.NormalizeDecisionNote(req.Note)); err != nil {
+		multiErr.Add(
+			"note",
+			errortypes.ErrInvalid,
+			"A note to the agent can be at most {0} characters",
+			agent.MaxDecisionNoteLength,
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr

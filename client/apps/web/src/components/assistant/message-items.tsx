@@ -39,11 +39,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { stepsFromExchanges } from "./activity";
 import { askRequestsFrom } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
-import { decisionRequestsFrom } from "./decision-requests";
-import { RequestedDecision } from "./requested-decision";
-import { PlanCard } from "./plan-card";
+import { PlanRecord, ProposalRecord } from "./decision-record";
 import type { PlanGroup } from "./plan-state";
-import { ProposalCard } from "./proposal-card";
 import { ReportRunCard } from "./report-run-card";
 import { reportRunsFrom } from "./report-runs";
 import { decisionHeadline, type ThreadEntry, type TurnPlacement } from "./thread-view";
@@ -443,7 +440,6 @@ export function AssistantEntry({
   proposals,
   plans = [],
   artifacts = [],
-  threadId,
   latestUserSequence,
   onAnswer,
   onOpenArtifact,
@@ -468,7 +464,6 @@ export function AssistantEntry({
   /** Absent where the conversation can no longer continue. */
   onAnswer?: (value: string) => void;
   onOpenArtifact?: (id: string) => void;
-  threadId: string;
   /** This step is the answer of its reply, and the person may rate it. */
   ratable?: boolean;
 }) {
@@ -479,7 +474,6 @@ export function AssistantEntry({
   // rather than leaving the reader to ask again for the outcome.
   const reportRuns = reportRunsFrom(tools);
   const asks = askRequestsFrom(tools);
-  const decisions = decisionRequestsFrom(tools);
   const steps = stepsFromExchanges(tools, message.createdAt);
 
   return (
@@ -526,15 +520,16 @@ export function AssistantEntry({
           onAnswer={onAnswer}
         />
       ))}
-      {decisions.map((request) => (
-        <RequestedDecision key={request.callId} request={request} threadId={threadId} />
-      ))}
-      {plans.map((group) => (
-        <PlanCard key={group.plan.id} plan={group.plan} steps={group.steps} threadId={threadId} />
-      ))}
-      {proposals.map((proposal) => (
-        <ProposalCard key={proposal.id} proposal={proposal} threadId={threadId} />
-      ))}
+      {(plans.length > 0 || proposals.length > 0) && (
+        <div className="-mx-1.5 flex flex-col">
+          {plans.map((group) => (
+            <PlanRecord key={group.plan.id} plan={group.plan} steps={group.steps} />
+          ))}
+          {proposals.map((proposal) => (
+            <ProposalRecord key={proposal.id} proposal={proposal} />
+          ))}
+        </div>
+      )}
     </AssistantTurn>
   );
 }

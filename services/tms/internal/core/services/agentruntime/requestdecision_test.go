@@ -154,7 +154,7 @@ func TestRequestDecision_ShowsTheCardAgainAndSaysTypingDecidesNothing(t *testing
 
 	content, failed := toolResult(run.result, requestDecisionName)
 	assert.False(t, failed)
-	assert.Contains(t, content, "in front of the person again")
+	assert.Contains(t, content, "The approval box under the conversation now shows")
 	assert.Contains(t, content, "does not decide it")
 	assert.Empty(t, run.result.Actions, "asking for a decision makes none")
 	assert.Contains(t, run.completion.Requests[0].System, "call request_decision")
@@ -229,7 +229,7 @@ func TestRequestDecision_ShowsOneCardOncePerTurn(t *testing.T) {
 		}
 	}
 	require.Len(t, contents, 2)
-	assert.Contains(t, contents[1], "already in front of the person")
+	assert.Contains(t, contents[1], "already in the approval box")
 }
 
 func TestRequestDecision_SaysWhenTheCardCouldNotBeShown(t *testing.T) {
@@ -243,7 +243,7 @@ func TestRequestDecision_SaysWhenTheCardCouldNotBeShown(t *testing.T) {
 
 	content, failed := toolResult(run.result, requestDecisionName)
 	assert.True(t, failed)
-	assert.Contains(t, content, "could not be shown again: its card could not be saved")
+	assert.Contains(t, content, "could not be opened in the approval box: its card could not be saved")
 	assert.Contains(t, content, "typing does not approve it")
 }
 
@@ -274,9 +274,9 @@ func TestPublishStep_ShowsTheCardADurableTurnAskedFor(t *testing.T) {
 	require.Len(t, observer.seen, 1)
 	assert.Equal(t, serviceports.DecisionRequest{ProposalID: id}, observer.seen[0].Data)
 	assert.False(t, outcome.Failed)
-	assert.Contains(t, outcome.Content, "in front of the person again")
-	assert.Equal(t, "The card could not be shown again just now. Tell the person the "+
-		"proposal is still waiting on its card earlier in this conversation, and that "+
+	assert.Contains(t, outcome.Content, "The approval box under the conversation now shows")
+	assert.Equal(t, "The approval box could not be opened just now. Tell the person the "+
+		"proposal is still waiting on their decision in this conversation, and that "+
 		"typing does not approve it.", UnkeptOutcome(requestDecisionName).Content)
 }
 
@@ -309,7 +309,7 @@ func TestRequestDecision_ShowsAPlanAsOneCard(t *testing.T) {
 	}, observer.seen[0].Data)
 	content, failed := toolResult(run.result, requestDecisionName)
 	assert.False(t, failed)
-	assert.Contains(t, content, "in front of the person again")
+	assert.Contains(t, content, "The approval box under the conversation now shows")
 }
 
 func TestRequestDecision_ShowsSeveralProposalsOfOneToolAsOneCard(t *testing.T) {

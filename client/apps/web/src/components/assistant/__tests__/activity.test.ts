@@ -224,12 +224,12 @@ describe("describeActivity", () => {
     expect(line([step({ name: "ask_user" })]).phrase).toBe("Asked you to choose");
   });
 
-  it("reads a card put back as a decision asked for", () => {
+  it("reads a decision opened in the approval box as a decision asked for", () => {
     const shown = line([step({ name: "request_decision", summary: "Create shipment" })]);
     expect(shown.phrase).toBe("Asked you to decide");
     expect(shown.detail).toBe("Create shipment");
     expect(line([step({ name: "request_decision", status: "failed" })]).phrase).toBe(
-      "Couldn't show the card again",
+      "Couldn't open the approval box",
     );
   });
 

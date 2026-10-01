@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func BatchDecisionRequest(
@@ -38,6 +39,7 @@ func BatchDecisionRequest(
 		ProposalIDs:    proposalIDs,
 		Decision:       input.Decision,
 		ReasonCode:     reason,
+		Note:           stringutils.FromPtr(input.Note),
 		TenantInfo:     tenant,
 		PreviewDigests: digests,
 	}, nil

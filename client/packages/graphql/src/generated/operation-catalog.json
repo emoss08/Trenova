@@ -26636,6 +26636,11 @@
           "defaultValue": null
         },
         {
+          "name": "note",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
           "name": "previewDigest",
           "type": "String",
           "defaultValue": null
@@ -26646,7 +26651,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input AgentPlanDecisionInput {\n  \"\"\"Accepted runs every step in order; Rejected rejects them all.\"\"\"\n  decision: AgentDecisionType!\n  \"\"\"\n  The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded.\n  \"\"\"\n  previewDigest: String\n  reasonCode: String!\n}"
+      "sdl": "input AgentPlanDecisionInput {\n  \"\"\"Accepted runs every step in order; Rejected rejects them all.\"\"\"\n  decision: AgentDecisionType!\n  \"\"\"\n  What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision.\n  \"\"\"\n  note: String\n  \"\"\"\n  The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded.\n  \"\"\"\n  previewDigest: String\n  reasonCode: String!\n}"
     },
     "AgentProposalDecisionInput": {
       "kind": "input",
@@ -26662,6 +26667,11 @@
           "defaultValue": null
         },
         {
+          "name": "note",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
           "name": "previewDigest",
           "type": "String",
           "defaultValue": null
@@ -26672,7 +26682,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input AgentProposalDecisionInput {\n  decision: AgentDecisionType!\n  modifications: JSON\n  \"\"\"\n  The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed.\n  \"\"\"\n  previewDigest: String\n  reasonCode: String!\n}"
+      "sdl": "input AgentProposalDecisionInput {\n  decision: AgentDecisionType!\n  modifications: JSON\n  \"\"\"\n  What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions.\n  \"\"\"\n  note: String\n  \"\"\"\n  The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed.\n  \"\"\"\n  previewDigest: String\n  reasonCode: String!\n}"
     },
     "AgentScorecardInput": {
       "kind": "input",
@@ -28960,6 +28970,11 @@
           "defaultValue": null
         },
         {
+          "name": "note",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
           "name": "previewDigests",
           "type": "[AgentProposalPreviewDigestInput!]",
           "defaultValue": null
@@ -28970,7 +28985,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input DecideAgentProposalsInput {\n  \"\"\"\n  Accepted or Rejected. A change applies to one proposal, from its own card.\n  \"\"\"\n  decision: AgentDecisionType!\n  \"\"\"\n  The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed.\n  \"\"\"\n  previewDigests: [AgentProposalPreviewDigestInput!]\n  reasonCode: String\n}"
+      "sdl": "input DecideAgentProposalsInput {\n  \"\"\"\n  Accepted or Rejected. A change applies to one proposal, from its own card.\n  \"\"\"\n  decision: AgentDecisionType!\n  \"\"\"\n  What the decider tells the agent, recorded on each proposal's decision; at most 2000 characters.\n  \"\"\"\n  note: String\n  \"\"\"\n  The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed.\n  \"\"\"\n  previewDigests: [AgentProposalPreviewDigestInput!]\n  reasonCode: String\n}"
     },
     "DecideLeaveCaseInput": {
       "kind": "input",

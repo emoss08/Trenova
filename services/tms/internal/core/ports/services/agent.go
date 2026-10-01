@@ -136,6 +136,7 @@ type DecideAgentProposalRequest struct {
 	Decision      agent.DecisionType
 	Modifications map[string]any
 	ReasonCode    string
+	Note          string
 	TenantInfo    pagination.TenantInfo
 	// WithinPlan says the decision is one step of a plan being decided as a
 	// whole. The run's workflow is signalled once by the plan, not once per
@@ -160,6 +161,7 @@ type DecideAgentPlanRequest struct {
 	PlanID     pulid.ID
 	Decision   agent.DecisionType
 	ReasonCode string
+	Note       string
 	TenantInfo pagination.TenantInfo
 	// PreviewDigest is the digest of the plan preview the decider was shown.
 	PreviewDigest string
@@ -441,6 +443,7 @@ type DecideAgentProposalsRequest struct {
 	ProposalIDs []pulid.ID
 	Decision    agent.DecisionType
 	ReasonCode  string
+	Note        string
 	TenantInfo  pagination.TenantInfo
 	// PreviewDigests is the digest of the preview the decider was shown for
 	// each proposal. One that no longer matches fails that proposal alone; a

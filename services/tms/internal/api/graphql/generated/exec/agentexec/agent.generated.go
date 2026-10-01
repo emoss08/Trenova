@@ -279,6 +279,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "note",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentDecision)
+					return obj.Note, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "traceId",
 				NonNull:  true,
 				ChildErr: errNoChild6,
@@ -3594,7 +3604,7 @@ func unmarshalInputAgentPlanDecisionInput(ctx context.Context, ec *gqlexec.Exec,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"decision", "reasonCode", "previewDigest"}
+	fieldsInOrder := [...]string{"decision", "reasonCode", "previewDigest", "note"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3622,6 +3632,13 @@ func unmarshalInputAgentPlanDecisionInput(ctx context.Context, ec *gqlexec.Exec,
 				return it, err
 			}
 			it.PreviewDigest = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
 		}
 	}
 	return it, nil
@@ -3638,7 +3655,7 @@ func unmarshalInputAgentProposalDecisionInput(ctx context.Context, ec *gqlexec.E
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"decision", "modifications", "reasonCode", "previewDigest"}
+	fieldsInOrder := [...]string{"decision", "modifications", "reasonCode", "previewDigest", "note"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3673,6 +3690,13 @@ func unmarshalInputAgentProposalDecisionInput(ctx context.Context, ec *gqlexec.E
 				return it, err
 			}
 			it.PreviewDigest = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
 		}
 	}
 	return it, nil

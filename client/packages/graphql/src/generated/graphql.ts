@@ -867,6 +867,8 @@ export type AgentOutputMode =
 export type AgentPlanDecisionInput = {
   /** Accepted runs every step in order; Rejected rejects them all. */
   decision: AgentDecisionType;
+  /** What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision. */
+  note?: string | null | undefined;
   /** The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded. */
   previewDigest?: string | null | undefined;
   reasonCode: string;
@@ -910,6 +912,8 @@ export type AgentPreviewOperation =
 export type AgentProposalDecisionInput = {
   decision: AgentDecisionType;
   modifications?: unknown;
+  /** What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions. */
+  note?: string | null | undefined;
   /** The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed. */
   previewDigest?: string | null | undefined;
   reasonCode: string;
@@ -2478,6 +2482,8 @@ export type DataTableConnectionInput = {
 export type DecideAgentProposalsInput = {
   /** Accepted or Rejected. A change applies to one proposal, from its own card. */
   decision: AgentDecisionType;
+  /** What the decider tells the agent, recorded on each proposal's decision; at most 2000 characters. */
+  note?: string | null | undefined;
   /** The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed. */
   previewDigests?: Array<AgentProposalPreviewDigestInput> | null | undefined;
   reasonCode?: string | null | undefined;

@@ -385,14 +385,20 @@ func (s *Service) ListThreadProposals(
 		return nil, err
 	}
 
-	modifications := s.modificationsFor(ctx, stored, req.TenantInfo)
+	decided := s.decisionsFor(ctx, stored, req.TenantInfo)
 	proposers := s.proposersOf(ctx, req.TenantInfo, runsOf(stored))
 
 	proposals := make([]services.AssistantProposal, 0, len(stored))
 	for _, proposal := range stored {
 		out := toAssistantProposal(proposal, holdFor(verdicts[proposal.RunID]))
 		out.Fields = s.editableFields(proposal)
-		out.Modifications = modifications[proposal.ID]
+		if decision := decided[proposal.ID]; decision != nil {
+			decidedAt := decision.CreatedAt
+			out.Modifications = modificationsOf(decision)
+			out.DecidedAt = &decidedAt
+			out.DecidedByUserID = decision.DecidedByUserID
+			out.DecisionNote = decision.Note
+		}
 		if by, ok := proposers[proposal.RunID]; ok {
 			out.AgentID, out.AgentName = by.id, by.name
 		}
@@ -480,14 +486,15 @@ func (s *Service) editableFields(proposal *agent.AgentProposal) []toolschema.Fie
 	return services.ProposalFields(tool, proposal.ToolParams)
 }
 
-// modificationsFor reads what approvers changed on the decided proposals,
-// keyed by proposal. A read that fails degrades to showing none: the
-// decision is the record and the card still says the proposal was approved.
-func (s *Service) modificationsFor(
+// decisionsFor reads the decision behind each decided proposal, keyed by
+// proposal: what the approver changed, who decided it, when, and what they
+// told the agent. A read that fails degrades to showing none: the
+// proposal's status is the record and the card still says how it ended.
+func (s *Service) decisionsFor(
 	ctx context.Context,
 	stored []*agent.AgentProposal,
 	tenant pagination.TenantInfo,
-) map[pulid.ID]map[string]any {
+) map[pulid.ID]*agent.AgentDecision {
 	if s.decisions == nil {
 		return nil
 	}
@@ -515,17 +522,27 @@ func (s *Service) modificationsFor(
 		return nil
 	}
 
-	out := make(map[pulid.ID]map[string]any, len(decisions))
+	out := make(map[pulid.ID]*agent.AgentDecision, len(decisions))
 	for _, decision := range decisions {
-		if decision == nil || decision.ProposalID == nil ||
-			decision.Decision != agent.DecisionModified ||
-			len(decision.Modifications) == 0 {
+		if decision == nil || decision.ProposalID == nil {
 			continue
 		}
-		out[*decision.ProposalID] = decision.Modifications
+		if current, ok := out[*decision.ProposalID]; ok && current.CreatedAt > decision.CreatedAt {
+			continue
+		}
+		out[*decision.ProposalID] = decision
 	}
 
 	return out
+}
+
+func modificationsOf(decision *agent.AgentDecision) map[string]any {
+	if decision == nil || decision.Decision != agent.DecisionModified ||
+		len(decision.Modifications) == 0 {
+		return nil
+	}
+
+	return decision.Modifications
 }
 
 type chatPlanStore interface {
@@ -655,20 +672,26 @@ func planVerdict(
 }
 
 func toAssistantPlan(plan *agent.AgentPlan, hold *services.ProposalHold) services.AssistantPlan {
+	decidedBy := pulid.Nil
+	if plan.DecidedByUserID != nil {
+		decidedBy = *plan.DecidedByUserID
+	}
+
 	return services.AssistantPlan{
-		ID:             plan.ID,
-		RunID:          plan.RunID,
-		Title:          plan.Title,
-		Summary:        plan.Summary,
-		Status:         plan.Status,
-		StepCount:      plan.StepCount,
-		CompletedSteps: plan.CompletedSteps,
-		FailedStep:     plan.FailedStep,
-		FailureError:   plan.FailureError,
-		DecidedAt:      plan.DecidedAt,
-		ExpiresAt:      plan.ExpiresAt,
-		Hold:           hold,
-		CreatedAt:      plan.CreatedAt,
+		ID:              plan.ID,
+		RunID:           plan.RunID,
+		Title:           plan.Title,
+		Summary:         plan.Summary,
+		Status:          plan.Status,
+		StepCount:       plan.StepCount,
+		CompletedSteps:  plan.CompletedSteps,
+		FailedStep:      plan.FailedStep,
+		FailureError:    plan.FailureError,
+		DecidedAt:       plan.DecidedAt,
+		DecidedByUserID: decidedBy,
+		ExpiresAt:       plan.ExpiresAt,
+		Hold:            hold,
+		CreatedAt:       plan.CreatedAt,
 	}
 }
 
@@ -693,6 +716,7 @@ func toAssistantProposal(
 		PlanStep:        proposal.PlanStep,
 		SimulatedAt:     proposal.SimulatedAt,
 		Simulation:      proposal.Simulation,
+		CreatedAt:       proposal.CreatedAt,
 	}
 	if proposal.PlanID != nil {
 		out.PlanID = *proposal.PlanID
@@ -725,7 +749,7 @@ func (s *Service) proposalOutcomes(
 		return nil
 	}
 
-	modifications := s.modificationsFor(ctx, stored, tenant)
+	decided := s.decisionsFor(ctx, stored, tenant)
 
 	outcomes := make([]services.ProposalOutcome, 0, len(stored))
 	for _, proposal := range stored {
@@ -748,7 +772,7 @@ func (s *Service) proposalOutcomes(
 			ExecutionError:  proposal.ExecutionError,
 			ExecutedAt:      proposal.ExecutedAt,
 			ExecutionResult: proposal.ExecutionResult,
-			Modifications:   modifications[proposal.ID],
+			Modifications:   modificationsOf(decided[proposal.ID]),
 		})
 	}
 

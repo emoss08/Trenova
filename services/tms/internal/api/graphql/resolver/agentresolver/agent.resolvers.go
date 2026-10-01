@@ -183,6 +183,7 @@ func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 		Decision:      input.Decision,
 		Modifications: input.Modifications,
 		ReasonCode:    input.ReasonCode,
+		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
@@ -203,6 +204,7 @@ func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 		PlanID:        planID,
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
+		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
@@ -224,6 +226,7 @@ func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 		Decision:      input.Decision,
 		Modifications: input.Modifications,
 		ReasonCode:    input.ReasonCode,
+		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
@@ -263,6 +266,7 @@ func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gq
 		PlanID:        planID,
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
+		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
