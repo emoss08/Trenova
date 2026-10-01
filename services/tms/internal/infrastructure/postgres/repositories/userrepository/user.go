@@ -298,6 +298,20 @@ func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*te
 	return user, nil
 }
 
+func (ur *repository) FindByIDForLogin(ctx context.Context, userID pulid.ID) (*tenant.User, error) {
+	user := new(tenant.User)
+
+	if err := ur.db.DBForContext(ctx).
+		NewSelect().
+		Model(user).
+		Where(buncolgen.UserColumns.ID.Eq(), userID).
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, "User")
+	}
+
+	return user, nil
+}
+
 func (ur *repository) UpdateLastLoginAt(ctx context.Context, userID pulid.ID) error {
 	log := ur.l.With(
 		zap.String("operation", "UpdateLastLoginAt"),

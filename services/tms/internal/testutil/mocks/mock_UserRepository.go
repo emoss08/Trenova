@@ -177,6 +177,74 @@ func (_c *MockUserRepository_FindByEmail_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// FindByIDForLogin provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) FindByIDForLogin(ctx context.Context, userID pulid.ID) (*tenant.User, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByIDForLogin")
+	}
+
+	var r0 *tenant.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*tenant.User, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *tenant.User); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*tenant.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserRepository_FindByIDForLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByIDForLogin'
+type MockUserRepository_FindByIDForLogin_Call struct {
+	*mock.Call
+}
+
+// FindByIDForLogin is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID pulid.ID
+func (_e *MockUserRepository_Expecter) FindByIDForLogin(ctx any, userID any) *MockUserRepository_FindByIDForLogin_Call {
+	return &MockUserRepository_FindByIDForLogin_Call{Call: _e.mock.On("FindByIDForLogin", ctx, userID)}
+}
+
+func (_c *MockUserRepository_FindByIDForLogin_Call) Run(run func(ctx context.Context, userID pulid.ID)) *MockUserRepository_FindByIDForLogin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_FindByIDForLogin_Call) Return(user *tenant.User, err error) *MockUserRepository_FindByIDForLogin_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *MockUserRepository_FindByIDForLogin_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID) (*tenant.User, error)) *MockUserRepository_FindByIDForLogin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function for the type MockUserRepository
 func (_mock *MockUserRepository) GetByID(ctx context.Context, req repositories.GetUserByIDRequest) (*tenant.User, error) {
 	ret := _mock.Called(ctx, req)

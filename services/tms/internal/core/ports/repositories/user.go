@@ -98,6 +98,7 @@ type UserRepository interface {
 		req *pagination.SelectQueryRequest,
 	) (*pagination.ListResult[*tenant.User], error)
 	FindByEmail(ctx context.Context, emailAddress string) (*tenant.User, error)
+	FindByIDForLogin(ctx context.Context, userID pulid.ID) (*tenant.User, error)
 	UpdateLastLoginAt(ctx context.Context, userID pulid.ID) error
 	GetOrganizations(
 		ctx context.Context,

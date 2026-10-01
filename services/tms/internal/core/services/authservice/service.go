@@ -38,6 +38,7 @@ type Params struct {
 	RBACRepository    repositories.RBACRepository
 	SSOConfigRepo     repositories.SSOConfigRepository
 	SSOStateRepo      repositories.SSOLoginStateRepository
+	SSOIdentityLinks  repositories.SSOIdentityLinkRepository
 	APIKeyRepository  repositories.APIKeyRepository
 	PortalRepo        repositories.PortalAccessRepository
 	UsageRecorder     services.UsageRecorder
@@ -54,6 +55,7 @@ type Service struct {
 	rbacRepo   repositories.RBACRepository
 	ssoRepo    repositories.SSOConfigRepository
 	stateRepo  repositories.SSOLoginStateRepository
+	links      repositories.SSOIdentityLinkRepository
 	akr        repositories.APIKeyRepository
 	portalRepo repositories.PortalAccessRepository
 	usageBuf   services.UsageRecorder
@@ -71,6 +73,7 @@ func New(p Params) services.AuthService {
 		rbacRepo:   p.RBACRepository,
 		ssoRepo:    p.SSOConfigRepo,
 		stateRepo:  p.SSOStateRepo,
+		links:      p.SSOIdentityLinks,
 		akr:        p.APIKeyRepository,
 		portalRepo: p.PortalRepo,
 		usageBuf:   p.UsageRecorder,
@@ -377,22 +380,13 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		}
 	}
 
-	emailAddress := claims.EmailAddress()
-	if emailAddress == "" {
-		return nil, errortypes.NewAuthenticationError(
-			"{0} account did not provide a usable email address", displayName,
-		)
-	}
-
-	if err = validateAllowedDomain(emailAddress, ssoConfig.AllowedDomains); err != nil {
-		return nil, err
-	}
-
-	usr, err := s.ur.FindByEmail(ctx, emailAddress)
+	usr, err := s.resolveSSOUser(ctx, &ssoUserLookup{
+		Config:      ssoConfig,
+		Identity:    identityFromOIDCClaims(idToken.Issuer, claims, ssoConfig.Provider),
+		DisplayName: displayName,
+	})
 	if err != nil {
-		return nil, errortypes.NewAuthenticationError(
-			"No Trenova user exists for this {0} account", displayName,
-		)
+		return nil, err
 	}
 
 	if err = usr.ValidateStatus(); err != nil {
@@ -957,6 +951,7 @@ func (s *Service) enforcePasswordLoginPolicy(
 
 type oidcClaims struct {
 	Email             string   `json:"email"`
+	EmailVerified     oidcBool `json:"email_verified"`
 	PreferredUsername string   `json:"preferred_username"`
 	UPN               string   `json:"upn"`
 	Nonce             string   `json:"nonce"`
@@ -966,15 +961,20 @@ type oidcClaims struct {
 	AMR               []string `json:"amr"`
 }
 
-func (c oidcClaims) EmailAddress() string {
-	switch {
-	case strings.TrimSpace(c.Email) != "":
-		return strings.ToLower(strings.TrimSpace(c.Email))
-	case strings.TrimSpace(c.PreferredUsername) != "":
-		return strings.ToLower(strings.TrimSpace(c.PreferredUsername))
-	default:
-		return strings.ToLower(strings.TrimSpace(c.UPN))
+func (c oidcClaims) EmailAddress(provider tenant.SSOProvider) string {
+	if email := strings.TrimSpace(c.Email); email != "" {
+		return strings.ToLower(email)
 	}
+
+	if provider != tenant.SSOProviderAzureAD {
+		return ""
+	}
+
+	if username := strings.TrimSpace(c.PreferredUsername); username != "" {
+		return strings.ToLower(username)
+	}
+
+	return strings.ToLower(strings.TrimSpace(c.UPN))
 }
 
 func assuranceFromOIDCClaims(claims oidcClaims) (int, int64) {
