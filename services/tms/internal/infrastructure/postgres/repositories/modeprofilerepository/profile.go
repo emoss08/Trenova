@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,84 +78,90 @@ func (r *profileRepository) List(
 	ctx context.Context,
 	req *repositories.ListModeProfilesRequest,
 ) (*pagination.ListResult[*modeprofile.Profile], error) {
-	log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*modeprofile.Profile], error) {
+		log := r.l.With(zap.String("operation", "List"))
 
-	entities := make([]*modeprofile.Profile, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Relation(buncolgen.ProfileRelations.Rules, orderRules).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count mode profiles", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*modeprofile.Profile, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Relation(buncolgen.ProfileRelations.Rules, orderRules).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count mode profiles", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*modeprofile.Profile]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*modeprofile.Profile]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *profileRepository) GetByID(
 	ctx context.Context,
 	req *repositories.GetModeProfileByIDRequest,
 ) (*modeprofile.Profile, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.ModeProfileID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*modeprofile.Profile, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.ModeProfileID.String()),
+		)
 
-	entity := new(modeprofile.Profile)
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ProfileScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.ProfileColumns.ID.Eq(), req.ModeProfileID)
-		})
+		entity := new(modeprofile.Profile)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ProfileScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.ProfileColumns.ID.Eq(), req.ModeProfileID)
+			})
 
-	if req.IncludeRules {
-		q = q.Relation(buncolgen.ProfileRelations.Rules, orderRules)
-	}
+		if req.IncludeRules {
+			q = q.Relation(buncolgen.ProfileRelations.Rules, orderRules)
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		log.Error("failed to get mode profile", zap.Error(err))
-		return nil, err
-	}
+		if err := q.Scan(ctx); err != nil {
+			log.Error("failed to get mode profile", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *profileRepository) GetActiveProfiles(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*modeprofile.Profile, error) {
-	log := r.l.With(zap.String("operation", "GetActiveProfiles"))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*modeprofile.Profile, error) {
+		log := r.l.With(zap.String("operation", "GetActiveProfiles"))
 
-	cols := buncolgen.ProfileColumns
-	entities := make([]*modeprofile.Profile, 0, 8)
+		cols := buncolgen.ProfileColumns
+		entities := make([]*modeprofile.Profile, 0, 8)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Relation(buncolgen.ProfileRelations.Rules, orderRules).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ProfileScopeTenant(sq, tenantInfo).
-				Where(cols.Status.Eq(), modeprofile.ProfileStatusActive)
-		}).
-		Order(cols.Priority.OrderDesc()).
-		Order(cols.SpecificityScore.OrderDesc()).
-		Order(cols.CreatedAt.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to load active mode profiles", zap.Error(err))
-		return nil, err
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Relation(buncolgen.ProfileRelations.Rules, orderRules).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ProfileScopeTenant(sq, tenantInfo).
+					Where(cols.Status.Eq(), modeprofile.ProfileStatusActive)
+			}).
+			Order(cols.Priority.OrderDesc()).
+			Order(cols.SpecificityScore.OrderDesc()).
+			Order(cols.CreatedAt.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to load active mode profiles", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func stampRules(entity *modeprofile.Profile, resetIDs bool) {
@@ -173,109 +180,115 @@ func stampRules(entity *modeprofile.Profile, resetIDs bool) {
 }
 
 func (r *profileRepository) insertRules(ctx context.Context, entity *modeprofile.Profile) error {
-	if len(entity.Rules) == 0 {
-		return nil
-	}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if len(entity.Rules) == 0 {
+			return nil
+		}
 
-	_, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(&entity.Rules).
-		Returning("*").
-		Exec(ctx)
+		_, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&entity.Rules).
+			Returning("*").
+			Exec(ctx)
 
-	return err
+		return err
+	})
 }
 
 func (r *profileRepository) Create(
 	ctx context.Context,
 	entity *modeprofile.Profile,
 ) (*modeprofile.Profile, error) {
-	log := r.l.With(zap.String("operation", "Create"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*modeprofile.Profile, error) {
+		log := r.l.With(zap.String("operation", "Create"))
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		if _, iErr := r.db.DBForContext(c).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(c); iErr != nil {
-			return iErr
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			if _, iErr := r.db.DBForContext(c).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(c); iErr != nil {
+				return iErr
+			}
+
+			stampRules(entity, false)
+
+			return r.insertRules(c, entity)
+		})
+		if err != nil {
+			log.Error("failed to create mode profile", zap.Error(err))
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Mode profile is busy. Retry the request.",
+			)
 		}
 
-		stampRules(entity, false)
+		r.invalidate(ctx, entity)
 
-		return r.insertRules(c, entity)
+		return entity, nil
 	})
-	if err != nil {
-		log.Error("failed to create mode profile", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"Mode profile is busy. Retry the request.",
-		)
-	}
-
-	r.invalidate(ctx, entity)
-
-	return entity, nil
 }
 
 func (r *profileRepository) Update(
 	ctx context.Context,
 	entity *modeprofile.Profile,
 ) (*modeprofile.Profile, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
-
-	ov := entity.Version
-	entity.Version++
-
-	ruleCols := buncolgen.CapabilityRuleColumns
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		results, uErr := r.db.DBForContext(c).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(c)
-		if uErr != nil {
-			return uErr
-		}
-
-		if uErr = dberror.CheckRowsAffected(
-			results, "ModeProfile", entity.ID.String(),
-		); uErr != nil {
-			return uErr
-		}
-
-		if _, dErr := r.db.DBForContext(c).
-			NewDelete().
-			Model((*modeprofile.CapabilityRule)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.CapabilityRuleScopeTenantDelete(dq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(ruleCols.ModeProfileID.Eq(), entity.ID)
-			}).
-			Exec(c); dErr != nil {
-			return dErr
-		}
-
-		stampRules(entity, true)
-
-		return r.insertRules(c, entity)
-	})
-	if err != nil {
-		log.Error("failed to update mode profile", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"Mode profile is busy. Retry the request.",
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*modeprofile.Profile, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
 		)
-	}
 
-	r.invalidate(ctx, entity)
+		ov := entity.Version
+		entity.Version++
 
-	return entity, nil
+		ruleCols := buncolgen.CapabilityRuleColumns
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			results, uErr := r.db.DBForContext(c).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where("version = ?", ov).
+				OmitZero().
+				Returning("*").
+				Exec(c)
+			if uErr != nil {
+				return uErr
+			}
+
+			if uErr = dberror.CheckRowsAffected(
+				results, "ModeProfile", entity.ID.String(),
+			); uErr != nil {
+				return uErr
+			}
+
+			if _, dErr := r.db.DBForContext(c).
+				NewDelete().
+				Model((*modeprofile.CapabilityRule)(nil)).
+				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+					return buncolgen.CapabilityRuleScopeTenantDelete(dq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).Where(ruleCols.ModeProfileID.Eq(), entity.ID)
+				}).
+				Exec(c); dErr != nil {
+				return dErr
+			}
+
+			stampRules(entity, true)
+
+			return r.insertRules(c, entity)
+		})
+		if err != nil {
+			log.Error("failed to update mode profile", zap.Error(err))
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Mode profile is busy. Retry the request.",
+			)
+		}
+
+		r.invalidate(ctx, entity)
+
+		return entity, nil
+	})
 }

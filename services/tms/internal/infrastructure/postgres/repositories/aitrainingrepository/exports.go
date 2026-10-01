@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,92 +54,100 @@ func (r *exportRepository) Create(
 	ctx context.Context,
 	entity *aitraining.TrainingExport,
 ) (*aitraining.TrainingExport, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		if dberror.IsUniqueConstraintViolation(err) {
-			return nil, errortypes.NewBusinessError(
-				"A training export is already running; wait for it to finish or cancel it",
-			).WithInternal(err)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aitraining.TrainingExport, error) {
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			if dberror.IsUniqueConstraintViolation(err) {
+				return nil, errortypes.NewBusinessError(
+					"A training export is already running; wait for it to finish or cancel it",
+				).WithInternal(err)
+			}
+			r.l.Error("failed to create training export", zap.Error(err))
+
+			return nil, fmt.Errorf("create training export: %w", err)
 		}
-		r.l.Error("failed to create training export", zap.Error(err))
 
-		return nil, fmt.Errorf("create training export: %w", err)
-	}
-
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *exportRepository) GetByID(
 	ctx context.Context,
 	id pulid.ID,
 ) (*aitraining.TrainingExport, error) {
-	entity := new(aitraining.TrainingExport)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where(buncolgen.TrainingExportColumns.ID.Eq(), id).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, exportEntity)
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aitraining.TrainingExport, error) {
+		entity := new(aitraining.TrainingExport)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(buncolgen.TrainingExportColumns.ID.Eq(), id).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, exportEntity)
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *exportRepository) List(
 	ctx context.Context,
 	req repositories.ListAITrainingExportsRequest,
 ) ([]*aitraining.TrainingExport, error) {
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultListLimit
-	}
-	limit = min(limit, maxListLimit)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aitraining.TrainingExport, error) {
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultListLimit
+		}
+		limit = min(limit, maxListLimit)
 
-	entities := make([]*aitraining.TrainingExport, 0, limit)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Order(
-			buncolgen.TrainingExportColumns.CreatedAt.OrderDesc(),
-			buncolgen.TrainingExportColumns.ID.OrderDesc(),
-		).
-		Limit(limit).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list training exports", zap.Error(err))
+		entities := make([]*aitraining.TrainingExport, 0, limit)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Order(
+				buncolgen.TrainingExportColumns.CreatedAt.OrderDesc(),
+				buncolgen.TrainingExportColumns.ID.OrderDesc(),
+			).
+			Limit(limit).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list training exports", zap.Error(err))
 
-		return nil, fmt.Errorf("list training exports: %w", err)
-	}
+			return nil, fmt.Errorf("list training exports: %w", err)
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *exportRepository) Update(
 	ctx context.Context,
 	entity *aitraining.TrainingExport,
 ) (*aitraining.TrainingExport, error) {
-	cols := buncolgen.TrainingExportColumns
-	previous := entity.Version
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aitraining.TrainingExport, error) {
+		cols := buncolgen.TrainingExportColumns
+		previous := entity.Version
 
-	res, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		Where(cols.ID.Eq(), entity.ID).
-		Where(cols.Version.Eq(), previous).
-		ExcludeColumn(cols.ID.Bare(), cols.CreatedAt.Bare(), cols.Version.Bare()).
-		Set(cols.Version.Inc(1)).
-		Exec(ctx)
-	if err != nil {
-		r.l.Error("failed to update training export", zap.Error(err))
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			Where(cols.ID.Eq(), entity.ID).
+			Where(cols.Version.Eq(), previous).
+			ExcludeColumn(cols.ID.Bare(), cols.CreatedAt.Bare(), cols.Version.Bare()).
+			Set(cols.Version.Inc(1)).
+			Exec(ctx)
+		if err != nil {
+			r.l.Error("failed to update training export", zap.Error(err))
 
-		return nil, fmt.Errorf("update training export: %w", err)
-	}
-	if err = dberror.CheckRowsAffected(res, exportEntity, entity.ID.String()); err != nil {
-		return nil, err
-	}
-	entity.Version = previous + 1
+			return nil, fmt.Errorf("update training export: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(res, exportEntity, entity.ID.String()); err != nil {
+			return nil, err
+		}
+		entity.Version = previous + 1
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *exportRepository) consentQuery(ctx context.Context) *bun.SelectQuery {
@@ -218,36 +227,38 @@ func (r *exportRepository) ListOrganizationPeople(
 	tenantInfo pagination.TenantInfo,
 	limit int,
 ) ([]string, error) {
-	if limit <= 0 {
-		limit = defaultPeopleLimit
-	}
-	limit = min(limit, maxPeopleLimit)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
+		if limit <= 0 {
+			limit = defaultPeopleLimit
+		}
+		limit = min(limit, maxPeopleLimit)
 
-	users := buncolgen.UserColumns
-	memberships := buncolgen.OrganizationMembershipColumns
-	table := buncolgen.OrganizationMembershipTable
-	names := make([]string, 0, min(limit, defaultPeopleLimit))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*tenant.User)(nil)).
-		Distinct().
-		Column(users.Name.Bare()).
-		Join(
-			"JOIN ? AS ? ON ?",
-			bun.Ident(table.Name),
-			bun.Ident(table.Alias),
-			bun.Safe(memberships.UserID.EqColumn(users.ID)),
-		).
-		Where(memberships.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(memberships.BusinessUnitID.Eq(), tenantInfo.BuID).
-		Order(users.Name.OrderAsc()).
-		Limit(limit).
-		Scan(ctx, &names)
-	if err != nil {
-		r.l.Error("failed to list organization people", zap.Error(err))
+		users := buncolgen.UserColumns
+		memberships := buncolgen.OrganizationMembershipColumns
+		table := buncolgen.OrganizationMembershipTable
+		names := make([]string, 0, min(limit, defaultPeopleLimit))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*tenant.User)(nil)).
+			Distinct().
+			Column(users.Name.Bare()).
+			Join(
+				"JOIN ? AS ? ON ?",
+				bun.Ident(table.Name),
+				bun.Ident(table.Alias),
+				bun.Safe(memberships.UserID.EqColumn(users.ID)),
+			).
+			Where(memberships.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(memberships.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Order(users.Name.OrderAsc()).
+			Limit(limit).
+			Scan(ctx, &names)
+		if err != nil {
+			r.l.Error("failed to list organization people", zap.Error(err))
 
-		return nil, fmt.Errorf("list organization people: %w", err)
-	}
+			return nil, fmt.Errorf("list organization people: %w", err)
+		}
 
-	return names, nil
+		return names, nil
+	})
 }

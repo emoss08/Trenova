@@ -28,26 +28,16 @@ type FieldCheck struct {
 	CaseSensitive bool
 }
 
-type DBGetter func() bun.IDB
-
 type BunUniquenessChecker struct {
-	db       bun.IDB
-	dbGetter DBGetter
+	source dbSource
 }
 
 func NewBunUniquenessChecker(db bun.IDB) *BunUniquenessChecker {
-	return &BunUniquenessChecker{db: db}
+	return &BunUniquenessChecker{source: dbSource{db: db}}
 }
 
-func NewBunUniquenessCheckerLazy(getter DBGetter) *BunUniquenessChecker {
-	return &BunUniquenessChecker{dbGetter: getter}
-}
-
-func (c *BunUniquenessChecker) getDB() bun.IDB {
-	if c.dbGetter != nil {
-		return c.dbGetter()
-	}
-	return c.db
+func NewBunUniquenessCheckerScoped(conn ScopedDB) *BunUniquenessChecker {
+	return &BunUniquenessChecker{source: dbSource{scoped: conn}}
 }
 
 func (c *BunUniquenessChecker) CheckUniqueness(
@@ -62,11 +52,17 @@ func (c *BunUniquenessChecker) CheckUniqueness(
 		return false, errors.New("at least one field is required")
 	}
 
-	db := c.getDB()
-	if db == nil {
-		return false, errors.New("database connection is not initialized")
-	}
+	var exists bool
+	err := c.source.read(ctx, func(ctx context.Context, db bun.IDB) error {
+		var queryErr error
+		exists, queryErr = uniquenessQuery(db, req).Exists(ctx)
+		return queryErr
+	})
 
+	return exists, err
+}
+
+func uniquenessQuery(db bun.IDB, req *UniquenessRequest) *bun.SelectQuery {
 	q := db.NewSelect().
 		TableExpr(req.TableName).
 		ColumnExpr("1")
@@ -117,5 +113,5 @@ func (c *BunUniquenessChecker) CheckUniqueness(
 		q = q.Where(fmt.Sprintf("%s.id != ?", req.TableName), req.ExcludeID)
 	}
 
-	return q.Exists(ctx)
+	return q
 }

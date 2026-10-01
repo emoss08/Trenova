@@ -3,6 +3,8 @@ package ediservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -320,20 +322,22 @@ func (s *Service) lockShipment(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*shipment.Shipment, error) {
-	entity := new(shipment.Shipment)
-	err := s.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where("sp.id = ?", shipmentID).
-		Where("sp.organization_id = ?", tenantInfo.OrgID).
-		Where("sp.business_unit_id = ?", tenantInfo.BuID).
-		For("UPDATE").
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Shipment")
-	}
+	return dbtx.Write(ctx, s.db, func(ctx context.Context) (*shipment.Shipment, error) {
+		entity := new(shipment.Shipment)
+		err := s.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("sp.id = ?", shipmentID).
+			Where("sp.organization_id = ?", tenantInfo.OrgID).
+			Where("sp.business_unit_id = ?", tenantInfo.BuID).
+			For("UPDATE").
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Shipment")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (s *Service) setShipmentTenderStatus(
@@ -342,23 +346,25 @@ func (s *Service) setShipmentTenderStatus(
 	tenantInfo pagination.TenantInfo,
 	status shipment.TenderStatus,
 ) error {
-	db := s.db.DBForContext(ctx)
+	return dbtx.WriteErr(ctx, s.db, func(ctx context.Context) error {
+		db := s.db.DBForContext(ctx)
 
-	results, err := db.
-		NewUpdate().
-		Model((*shipment.Shipment)(nil)).
-		Set("tender_status = ?", status).
-		Set("version = version + 1").
-		Set("updated_at = "+dbdialect.NowEpochFromBun(db)).
-		Where("id = ?", shipmentID).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
+		results, err := db.
+			NewUpdate().
+			Model((*shipment.Shipment)(nil)).
+			Set("tender_status = ?", status).
+			Set("version = version + 1").
+			Set("updated_at = "+dbdialect.NowEpochFromBun(db)).
+			Where("id = ?", shipmentID).
+			Where("organization_id = ?", tenantInfo.OrgID).
+			Where("business_unit_id = ?", tenantInfo.BuID).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 
-	return dberror.CheckRowsAffected(results, "Shipment", shipmentID.String())
+		return dberror.CheckRowsAffected(results, "Shipment", shipmentID.String())
+	})
 }
 
 func (s *Service) createSystemShipmentComment(

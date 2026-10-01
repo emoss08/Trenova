@@ -71,6 +71,8 @@ type txBinding struct {
 	scope dbscope.Scope
 }
 
+type detachedFromTx struct{}
+
 func NewConnection(p ConnectionParams) (*Connection, error) {
 	return newConnection(p, oltpSettings(p.Config))
 }
@@ -226,6 +228,28 @@ func (c *Connection) connect(ctx context.Context) error {
 
 func (c *Connection) ScopedTransactions() bool {
 	return c != nil && c.rls != nil
+}
+
+func (c *Connection) RunDetached(
+	ctx context.Context,
+	readOnly bool,
+	fn func(context.Context) error,
+) error {
+	return c.RunScoped(context.WithValue(ctx, txContextKey{}, detachedFromTx{}), readOnly, fn)
+}
+
+func (c *Connection) RunScoped(
+	ctx context.Context,
+	readOnly bool,
+	fn func(context.Context) error,
+) error {
+	if !c.ScopedTransactions() {
+		return fn(ctx)
+	}
+
+	return c.WithTx(ctx, ports.TxOptions{ReadOnly: readOnly}, func(ctx context.Context, _ bun.Tx) error {
+		return fn(ctx)
+	})
 }
 
 func (c *Connection) rlsMode() string {

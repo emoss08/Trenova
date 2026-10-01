@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -38,82 +39,86 @@ func (r *repository) AllocateControlNumbers(
 	ctx context.Context,
 	req repositories.AllocateEDIControlNumbersRequest,
 ) (map[edi.ControlNumberKind]int64, error) {
-	allocated := make(map[edi.ControlNumberKind]int64, len(req.Kinds))
-	cols := buncolgen.EDIControlNumberSequenceColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[edi.ControlNumberKind]int64, error) {
+		allocated := make(map[edi.ControlNumberKind]int64, len(req.Kinds))
+		cols := buncolgen.EDIControlNumberSequenceColumns
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		for _, kind := range req.Kinds {
-			sequence := &edi.EDIControlNumberSequence{
-				BusinessUnitID: req.TenantInfo.BuID,
-				OrganizationID: req.TenantInfo.OrgID,
-				EDIPartnerID:   req.PartnerID,
-				DocumentTypeID: req.DocumentTypeID,
-				Kind:           kind,
-			}
-			_, err := r.db.DBForContext(c).
-				NewInsert().
-				Model(sequence).
-				On(`CONFLICT ("edi_partner_id", "business_unit_id", "organization_id", "document_type_id", "kind") DO NOTHING`).
-				Exec(c)
-			if err != nil {
-				return err
-			}
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			for _, kind := range req.Kinds {
+				sequence := &edi.EDIControlNumberSequence{
+					BusinessUnitID: req.TenantInfo.BuID,
+					OrganizationID: req.TenantInfo.OrgID,
+					EDIPartnerID:   req.PartnerID,
+					DocumentTypeID: req.DocumentTypeID,
+					Kind:           kind,
+				}
+				_, err := r.db.DBForContext(c).
+					NewInsert().
+					Model(sequence).
+					On(`CONFLICT ("edi_partner_id", "business_unit_id", "organization_id", "document_type_id", "kind") DO NOTHING`).
+					Exec(c)
+				if err != nil {
+					return err
+				}
 
-			if err = r.db.DBForContext(c).
-				NewSelect().
-				Model(sequence).
-				Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
-				Where(cols.Kind.Eq(), kind).
-				For("UPDATE").
-				Scan(c); err != nil {
-				return err
-			}
+				if err = r.db.DBForContext(c).
+					NewSelect().
+					Model(sequence).
+					Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+					Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
+					Where(cols.Kind.Eq(), kind).
+					For("UPDATE").
+					Scan(c); err != nil {
+					return err
+				}
 
-			value := sequence.NextValue
-			next := value + 1
-			if next > sequence.MaxValue {
-				next = sequence.MinValue
+				value := sequence.NextValue
+				next := value + 1
+				if next > sequence.MaxValue {
+					next = sequence.MinValue
+				}
+				sequence.NextValue = next
+				sequence.Version++
+				if _, err = r.db.DBForContext(c).
+					NewUpdate().
+					Model(sequence).
+					WherePK().
+					Column(cols.NextValue.Bare(), cols.Version.Bare(), cols.UpdatedAt.Bare()).
+					Exec(c); err != nil {
+					return err
+				}
+				allocated[kind] = value
 			}
-			sequence.NextValue = next
-			sequence.Version++
-			if _, err = r.db.DBForContext(c).
-				NewUpdate().
-				Model(sequence).
-				WherePK().
-				Column(cols.NextValue.Bare(), cols.Version.Bare(), cols.UpdatedAt.Bare()).
-				Exec(c); err != nil {
-				return err
-			}
-			allocated[kind] = value
-		}
-		return nil
+			return nil
+		})
+		return allocated, err
 	})
-	return allocated, err
 }
 
 func (r *repository) ResetControlNumber(
 	ctx context.Context,
 	req *repositories.ResetEDIControlNumberRequest,
 ) (*edi.EDIControlNumberSequence, error) {
-	cols := buncolgen.EDIControlNumberSequenceColumns
-	sequence := new(edi.EDIControlNumberSequence)
-	err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(sequence).
-		Set("next_value = ?", req.NextValue).
-		Set("version = version + 1").
-		Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-		Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
-		Where(cols.Kind.Eq(), req.Kind).
-		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		Returning("*").
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "EDIControlNumberSequence")
-	}
-	return sequence, nil
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIControlNumberSequence, error) {
+		cols := buncolgen.EDIControlNumberSequenceColumns
+		sequence := new(edi.EDIControlNumberSequence)
+		err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(sequence).
+			Set("next_value = ?", req.NextValue).
+			Set("version = version + 1").
+			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+			Where(cols.DocumentTypeID.Eq(), req.DocumentTypeID).
+			Where(cols.Kind.Eq(), req.Kind).
+			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+			Returning("*").
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "EDIControlNumberSequence")
+		}
+		return sequence, nil
+	})
 }

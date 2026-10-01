@@ -50,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editenderchangerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferchangerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferrepository"
@@ -759,20 +760,22 @@ func (r *Reader) Version(
 	tenant pagination.TenantInfo,
 	target services.ToolTarget,
 ) (int64, error) {
-	entry, ok := lookups[target.Resource]
-	if ok && entry.kinds != nil {
-		entry, ok = entry.kinds[target.ID.Prefix()]
-	}
-	if !ok {
-		return 0, fmt.Errorf("%w: %s", services.ErrRecordVersionUnsupported, target.Resource)
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		entry, ok := lookups[target.Resource]
+		if ok && entry.kinds != nil {
+			entry, ok = entry.kinds[target.ID.Prefix()]
+		}
+		if !ok {
+			return 0, fmt.Errorf("%w: %s", services.ErrRecordVersionUnsupported, target.Resource)
+		}
 
-	record := entry.model()
-	query := r.db.DBForContext(ctx).NewSelect().Model(record)
-	query = entry.scope(query, tenant).Where(entry.idEq, target.ID).Limit(1)
-	if err := query.Scan(ctx); err != nil {
-		return 0, fmt.Errorf("read %s %s version: %w", target.Resource, target.ID, err)
-	}
+		record := entry.model()
+		query := r.db.DBForContext(ctx).NewSelect().Model(record)
+		query = entry.scope(query, tenant).Where(entry.idEq, target.ID).Limit(1)
+		if err := query.Scan(ctx); err != nil {
+			return 0, fmt.Errorf("read %s %s version: %w", target.Resource, target.ID, err)
+		}
 
-	return entry.version(record), nil
+		return entry.version(record), nil
+	})
 }

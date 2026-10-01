@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,13 +42,14 @@ func New(p Params) repositories.DatabaseSessionRepository {
 }
 
 func (r *repository) ListBlocked(ctx context.Context) ([]*system.DatabaseSessionChain, error) {
-	if err := dbdialect.RequireFromBun(r.db.DB(), dbdialect.CapSessionDiagnostic); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*system.DatabaseSessionChain, error) {
+		if err := dbdialect.RequireFromBun(r.db.DBForContext(ctx), dbdialect.CapSessionDiagnostic); err != nil {
+			return nil, err
+		}
 
-	var rows []*system.DatabaseSessionChain
+		var rows []*system.DatabaseSessionChain
 
-	err := r.db.DBForContext(ctx).NewRaw(`
+		err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
 			blocked.pid AS blocked_pid,
 			blocking.pid AS blocking_pid,
@@ -72,87 +74,90 @@ func (r *repository) ListBlocked(ctx context.Context) ([]*system.DatabaseSession
 		WHERE blocked.datname = current_database()
 		ORDER BY blocked.query_start NULLS LAST, blocked.pid, blocking.pid
 	`).Scan(ctx, &rows)
-	if err != nil {
-		return nil, fmt.Errorf("list blocked database sessions: %w", err)
-	}
+		if err != nil {
+			return nil, fmt.Errorf("list blocked database sessions: %w", err)
+		}
 
-	return rows, nil
+		return rows, nil
+	})
 }
 
 func (r *repository) Terminate(
 	ctx context.Context,
 	pid int64,
 ) (*system.TerminateDatabaseSessionResult, error) {
-	if err := dbdialect.RequireFromBun(r.db.DB(), dbdialect.CapSessionDiagnostic); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*system.TerminateDatabaseSessionResult, error) {
+		if err := dbdialect.RequireFromBun(r.db.DBForContext(ctx), dbdialect.CapSessionDiagnostic); err != nil {
+			return nil, err
+		}
 
-	if pid <= 0 {
-		return nil, errortypes.NewValidationError(
-			"pid",
-			errortypes.ErrInvalid,
-			"PID must be greater than zero.",
-		)
-	}
+		if pid <= 0 {
+			return nil, errortypes.NewValidationError(
+				"pid",
+				errortypes.ErrInvalid,
+				"PID must be greater than zero.",
+			)
+		}
 
-	result := &system.TerminateDatabaseSessionResult{
-		PID: pid,
-	}
+		result := &system.TerminateDatabaseSessionResult{
+			PID: pid,
+		}
 
-	err := r.db.WithTx(
-		ctx,
-		ports.TxOptions{ReadOnly: false},
-		//nolint:govet // existing scoped variable reuse is local and behavior-preserving
-		func(txCtx context.Context, tx bun.Tx) error {
-			var currentPID int64
-			if err := tx.NewRaw(`SELECT pg_backend_pid()`).Scan(txCtx, &currentPID); err != nil {
-				return fmt.Errorf("get current backend pid: %w", err)
-			}
-			if currentPID == pid {
-				return errortypes.NewConflictError(
-					"Refusing to terminate the current database session.",
-				)
-			}
-
-			var currentDatabase string
-			if err := tx.NewRaw(`SELECT current_database()`).
-				Scan(txCtx, &currentDatabase); err != nil {
-				return fmt.Errorf("get current database: %w", err)
-			}
-
-			var targetDatabase string
-			err := tx.NewRaw(`SELECT datname FROM pg_stat_activity WHERE pid = ?`, pid).
-				Scan(txCtx, &targetDatabase)
-			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return errortypes.NewNotFoundError("Database session was not found.")
+		err := r.db.WithTx(
+			ctx,
+			ports.TxOptions{ReadOnly: false},
+			//nolint:govet // existing scoped variable reuse is local and behavior-preserving
+			func(txCtx context.Context, tx bun.Tx) error {
+				var currentPID int64
+				if err := tx.NewRaw(`SELECT pg_backend_pid()`).Scan(txCtx, &currentPID); err != nil {
+					return fmt.Errorf("get current backend pid: %w", err)
 				}
-				return fmt.Errorf("load target database session: %w", err)
-			}
+				if currentPID == pid {
+					return errortypes.NewConflictError(
+						"Refusing to terminate the current database session.",
+					)
+				}
 
-			if !strings.EqualFold(targetDatabase, currentDatabase) {
-				return errortypes.NewConflictError(
-					"Database session belongs to a different database.",
-				)
-			}
+				var currentDatabase string
+				if err := tx.NewRaw(`SELECT current_database()`).
+					Scan(txCtx, &currentDatabase); err != nil {
+					return fmt.Errorf("get current database: %w", err)
+				}
 
-			if err := tx.NewRaw(`SELECT pg_terminate_backend(?)`, pid).
-				Scan(txCtx, &result.Terminated); err != nil {
-				return fmt.Errorf("terminate database session: %w", err)
-			}
+				var targetDatabase string
+				err := tx.NewRaw(`SELECT datname FROM pg_stat_activity WHERE pid = ?`, pid).
+					Scan(txCtx, &targetDatabase)
+				if err != nil {
+					if dberror.IsNotFoundError(err) {
+						return errortypes.NewNotFoundError("Database session was not found.")
+					}
+					return fmt.Errorf("load target database session: %w", err)
+				}
 
-			if result.Terminated {
-				result.Message = "Database session terminated."
-				return nil
-			}
+				if !strings.EqualFold(targetDatabase, currentDatabase) {
+					return errortypes.NewConflictError(
+						"Database session belongs to a different database.",
+					)
+				}
 
-			result.Message = "Database session could not be terminated."
-			return errortypes.NewConflictError(result.Message)
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
+				if err := tx.NewRaw(`SELECT pg_terminate_backend(?)`, pid).
+					Scan(txCtx, &result.Terminated); err != nil {
+					return fmt.Errorf("terminate database session: %w", err)
+				}
 
-	return result, nil
+				if result.Terminated {
+					result.Message = "Database session terminated."
+					return nil
+				}
+
+				result.Message = "Database session could not be terminated."
+				return errortypes.NewConflictError(result.Message)
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return result, nil
+	})
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -117,84 +118,86 @@ func (r *repository) shipmentLinks(
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]repositories.MemoryRecordLink, error) {
-	sp := buncolgen.ShipmentColumns
-	sm := buncolgen.ShipmentMoveColumns
-	stp := buncolgen.StopColumns
-	asn := buncolgen.AssignmentColumns
-	casn := buncolgen.CarrierAssignmentColumns
-	dba := r.db.DBForContext(ctx)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+		sp := buncolgen.ShipmentColumns
+		sm := buncolgen.ShipmentMoveColumns
+		stp := buncolgen.StopColumns
+		asn := buncolgen.AssignmentColumns
+		casn := buncolgen.CarrierAssignmentColumns
+		dba := r.db.DBForContext(ctx)
 
-	customers := make([]pairRow, 0, len(ids))
-	if err := dba.NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		ColumnExpr(sp.ID.As("from_id")).
-		ColumnExpr(sp.CustomerID.As("first_id")).
-		ColumnExpr(sp.BillToCustomerID.As("second_id")).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentScopeTenant(sq, tenant).Where(sp.ID.In(), bun.List(ids))
-		}).
-		Scan(ctx, &customers); err != nil {
-		return nil, fmt.Errorf("shipment customers: %w", err)
-	}
+		customers := make([]pairRow, 0, len(ids))
+		if err := dba.NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			ColumnExpr(sp.ID.As("from_id")).
+			ColumnExpr(sp.CustomerID.As("first_id")).
+			ColumnExpr(sp.BillToCustomerID.As("second_id")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ShipmentScopeTenant(sq, tenant).Where(sp.ID.In(), bun.List(ids))
+			}).
+			Scan(ctx, &customers); err != nil {
+			return nil, fmt.Errorf("shipment customers: %w", err)
+		}
 
-	stops := make([]linkRow, 0, len(ids)*2)
-	if err := dba.NewSelect().
-		Model((*shipment.Stop)(nil)).
-		ColumnExpr(sm.ShipmentID.As("from_id")).
-		ColumnExpr(stp.LocationID.As("linked_id")).
-		Join(joinMove(&stp.ShipmentMoveID, &stp.OrganizationID, &stp.BusinessUnitID)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.StopScopeTenant(sq, tenant).Where(sm.ShipmentID.In(), bun.List(ids))
-		}).
-		OrderExpr(sm.Sequence.OrderAsc()).
-		OrderExpr(stp.Sequence.OrderAsc()).
-		Scan(ctx, &stops); err != nil {
-		return nil, fmt.Errorf("shipment stop locations: %w", err)
-	}
+		stops := make([]linkRow, 0, len(ids)*2)
+		if err := dba.NewSelect().
+			Model((*shipment.Stop)(nil)).
+			ColumnExpr(sm.ShipmentID.As("from_id")).
+			ColumnExpr(stp.LocationID.As("linked_id")).
+			Join(joinMove(&stp.ShipmentMoveID, &stp.OrganizationID, &stp.BusinessUnitID)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.StopScopeTenant(sq, tenant).Where(sm.ShipmentID.In(), bun.List(ids))
+			}).
+			OrderExpr(sm.Sequence.OrderAsc()).
+			OrderExpr(stp.Sequence.OrderAsc()).
+			Scan(ctx, &stops); err != nil {
+			return nil, fmt.Errorf("shipment stop locations: %w", err)
+		}
 
-	workers := make([]pairRow, 0, len(ids))
-	if err := dba.NewSelect().
-		Model((*shipment.Assignment)(nil)).
-		ColumnExpr(sm.ShipmentID.As("from_id")).
-		ColumnExpr(asn.PrimaryWorkerID.As("first_id")).
-		ColumnExpr(asn.SecondaryWorkerID.As("second_id")).
-		Join(joinMove(&asn.ShipmentMoveID, &asn.OrganizationID, &asn.BusinessUnitID)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AssignmentScopeTenant(sq, tenant).
-				Where(sm.ShipmentID.In(), bun.List(ids)).
-				Where(asn.Status.NotEq(), shipment.AssignmentStatusCanceled)
-		}).
-		OrderExpr(sm.Sequence.OrderAsc()).
-		Scan(ctx, &workers); err != nil {
-		return nil, fmt.Errorf("shipment assigned workers: %w", err)
-	}
+		workers := make([]pairRow, 0, len(ids))
+		if err := dba.NewSelect().
+			Model((*shipment.Assignment)(nil)).
+			ColumnExpr(sm.ShipmentID.As("from_id")).
+			ColumnExpr(asn.PrimaryWorkerID.As("first_id")).
+			ColumnExpr(asn.SecondaryWorkerID.As("second_id")).
+			Join(joinMove(&asn.ShipmentMoveID, &asn.OrganizationID, &asn.BusinessUnitID)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AssignmentScopeTenant(sq, tenant).
+					Where(sm.ShipmentID.In(), bun.List(ids)).
+					Where(asn.Status.NotEq(), shipment.AssignmentStatusCanceled)
+			}).
+			OrderExpr(sm.Sequence.OrderAsc()).
+			Scan(ctx, &workers); err != nil {
+			return nil, fmt.Errorf("shipment assigned workers: %w", err)
+		}
 
-	carriers := make([]linkRow, 0, len(ids))
-	if err := dba.NewSelect().
-		Model((*shipment.CarrierAssignment)(nil)).
-		ColumnExpr(sm.ShipmentID.As("from_id")).
-		ColumnExpr(casn.CarrierID.As("linked_id")).
-		Join(joinMove(&casn.ShipmentMoveID, &casn.OrganizationID, &casn.BusinessUnitID)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CarrierAssignmentScopeTenant(sq, tenant).
-				Where(sm.ShipmentID.In(), bun.List(ids)).
-				Where(casn.Status.NotEq(), shipment.CarrierAssignmentStatusCanceled)
-		}).
-		OrderExpr(sm.Sequence.OrderAsc()).
-		Scan(ctx, &carriers); err != nil {
-		return nil, fmt.Errorf("shipment carriers: %w", err)
-	}
+		carriers := make([]linkRow, 0, len(ids))
+		if err := dba.NewSelect().
+			Model((*shipment.CarrierAssignment)(nil)).
+			ColumnExpr(sm.ShipmentID.As("from_id")).
+			ColumnExpr(casn.CarrierID.As("linked_id")).
+			Join(joinMove(&casn.ShipmentMoveID, &casn.OrganizationID, &casn.BusinessUnitID)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CarrierAssignmentScopeTenant(sq, tenant).
+					Where(sm.ShipmentID.In(), bun.List(ids)).
+					Where(casn.Status.NotEq(), shipment.CarrierAssignmentStatusCanceled)
+			}).
+			OrderExpr(sm.Sequence.OrderAsc()).
+			Scan(ctx, &carriers); err != nil {
+			return nil, fmt.Errorf("shipment carriers: %w", err)
+		}
 
-	links := make(
-		[]repositories.MemoryRecordLink,
-		0,
-		len(customers)*2+len(stops)+len(workers)*2+len(carriers),
-	)
-	links = appendPairs(links, customers, agent.MemoryRecordCustomer)
-	links = appendLinks(links, stops, agent.MemoryRecordLocation)
-	links = appendPairs(links, workers, agent.MemoryRecordWorker)
+		links := make(
+			[]repositories.MemoryRecordLink,
+			0,
+			len(customers)*2+len(stops)+len(workers)*2+len(carriers),
+		)
+		links = appendPairs(links, customers, agent.MemoryRecordCustomer)
+		links = appendLinks(links, stops, agent.MemoryRecordLocation)
+		links = appendPairs(links, workers, agent.MemoryRecordWorker)
 
-	return appendLinks(links, carriers, agent.MemoryRecordCarrier), nil
+		return appendLinks(links, carriers, agent.MemoryRecordCarrier), nil
+	})
 }
 
 func (r *repository) moveLinks(
@@ -202,25 +205,27 @@ func (r *repository) moveLinks(
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]repositories.MemoryRecordLink, error) {
-	sm := buncolgen.ShipmentMoveColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+		sm := buncolgen.ShipmentMoveColumns
 
-	rows := make([]linkRow, 0, len(ids))
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model((*shipment.ShipmentMove)(nil)).
-		ColumnExpr(sm.ID.As("from_id")).
-		ColumnExpr(sm.ShipmentID.As("linked_id")).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentMoveScopeTenant(sq, tenant).Where(sm.ID.In(), bun.List(ids))
-		}).
-		Scan(ctx, &rows); err != nil {
-		return nil, fmt.Errorf("move shipments: %w", err)
-	}
+		rows := make([]linkRow, 0, len(ids))
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model((*shipment.ShipmentMove)(nil)).
+			ColumnExpr(sm.ID.As("from_id")).
+			ColumnExpr(sm.ShipmentID.As("linked_id")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ShipmentMoveScopeTenant(sq, tenant).Where(sm.ID.In(), bun.List(ids))
+			}).
+			Scan(ctx, &rows); err != nil {
+			return nil, fmt.Errorf("move shipments: %w", err)
+		}
 
-	return appendLinks(
-		make([]repositories.MemoryRecordLink, 0, len(rows)),
-		rows,
-		agent.MemoryRecordShipment,
-	), nil
+		return appendLinks(
+			make([]repositories.MemoryRecordLink, 0, len(rows)),
+			rows,
+			agent.MemoryRecordShipment,
+		), nil
+	})
 }
 
 func (r *repository) invoiceLinks(
@@ -228,25 +233,27 @@ func (r *repository) invoiceLinks(
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]repositories.MemoryRecordLink, error) {
-	inv := buncolgen.InvoiceColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+		inv := buncolgen.InvoiceColumns
 
-	rows := make([]linkRow, 0, len(ids))
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model((*invoice.Invoice)(nil)).
-		ColumnExpr(inv.ID.As("from_id")).
-		ColumnExpr(inv.CustomerID.As("linked_id")).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.InvoiceScopeTenant(sq, tenant).Where(inv.ID.In(), bun.List(ids))
-		}).
-		Scan(ctx, &rows); err != nil {
-		return nil, fmt.Errorf("invoice customers: %w", err)
-	}
+		rows := make([]linkRow, 0, len(ids))
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model((*invoice.Invoice)(nil)).
+			ColumnExpr(inv.ID.As("from_id")).
+			ColumnExpr(inv.CustomerID.As("linked_id")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.InvoiceScopeTenant(sq, tenant).Where(inv.ID.In(), bun.List(ids))
+			}).
+			Scan(ctx, &rows); err != nil {
+			return nil, fmt.Errorf("invoice customers: %w", err)
+		}
 
-	return appendLinks(
-		make([]repositories.MemoryRecordLink, 0, len(rows)),
-		rows,
-		agent.MemoryRecordCustomer,
-	), nil
+		return appendLinks(
+			make([]repositories.MemoryRecordLink, 0, len(rows)),
+			rows,
+			agent.MemoryRecordCustomer,
+		), nil
+	})
 }
 
 func (r *repository) billingQueueLinks(
@@ -254,26 +261,28 @@ func (r *repository) billingQueueLinks(
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]repositories.MemoryRecordLink, error) {
-	bqi := buncolgen.BillingQueueItemColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+		bqi := buncolgen.BillingQueueItemColumns
 
-	rows := make([]linkRow, 0, len(ids))
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model((*billingqueue.BillingQueueItem)(nil)).
-		ColumnExpr(bqi.ID.As("from_id")).
-		ColumnExpr(bqi.BillToCustomerID.As("linked_id")).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.BillingQueueItemScopeTenant(sq, tenant).
-				Where(bqi.ID.In(), bun.List(ids))
-		}).
-		Scan(ctx, &rows); err != nil {
-		return nil, fmt.Errorf("billing queue item customers: %w", err)
-	}
+		rows := make([]linkRow, 0, len(ids))
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model((*billingqueue.BillingQueueItem)(nil)).
+			ColumnExpr(bqi.ID.As("from_id")).
+			ColumnExpr(bqi.BillToCustomerID.As("linked_id")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.BillingQueueItemScopeTenant(sq, tenant).
+					Where(bqi.ID.In(), bun.List(ids))
+			}).
+			Scan(ctx, &rows); err != nil {
+			return nil, fmt.Errorf("billing queue item customers: %w", err)
+		}
 
-	return appendLinks(
-		make([]repositories.MemoryRecordLink, 0, len(rows)),
-		rows,
-		agent.MemoryRecordCustomer,
-	), nil
+		return appendLinks(
+			make([]repositories.MemoryRecordLink, 0, len(rows)),
+			rows,
+			agent.MemoryRecordCustomer,
+		), nil
+	})
 }
 
 func (r *repository) inboundMessageLinks(
@@ -281,31 +290,33 @@ func (r *repository) inboundMessageLinks(
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]repositories.MemoryRecordLink, error) {
-	imsg := buncolgen.InboundMessageColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+		imsg := buncolgen.InboundMessageColumns
 
-	rows := make([]tripleRow, 0, len(ids))
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		ColumnExpr(imsg.ID.As("from_id")).
-		ColumnExpr(imsg.MatchedCustomerID.As("first_id")).
-		ColumnExpr(imsg.MatchedCarrierID.As("second_id")).
-		ColumnExpr(imsg.MatchedShipmentID.As("third_id")).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.InboundMessageScopeTenant(sq, tenant).
-				Where(imsg.ID.In(), bun.List(ids))
-		}).
-		Scan(ctx, &rows); err != nil {
-		return nil, fmt.Errorf("inbound message matches: %w", err)
-	}
+		rows := make([]tripleRow, 0, len(ids))
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model((*inboundmessage.InboundMessage)(nil)).
+			ColumnExpr(imsg.ID.As("from_id")).
+			ColumnExpr(imsg.MatchedCustomerID.As("first_id")).
+			ColumnExpr(imsg.MatchedCarrierID.As("second_id")).
+			ColumnExpr(imsg.MatchedShipmentID.As("third_id")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.InboundMessageScopeTenant(sq, tenant).
+					Where(imsg.ID.In(), bun.List(ids))
+			}).
+			Scan(ctx, &rows); err != nil {
+			return nil, fmt.Errorf("inbound message matches: %w", err)
+		}
 
-	links := make([]repositories.MemoryRecordLink, 0, len(rows)*3)
-	for _, row := range rows {
-		links = appendLink(links, row.FromID, agent.MemoryRecordCustomer, row.First)
-		links = appendLink(links, row.FromID, agent.MemoryRecordCarrier, row.Second)
-		links = appendLink(links, row.FromID, agent.MemoryRecordShipment, row.Third)
-	}
+		links := make([]repositories.MemoryRecordLink, 0, len(rows)*3)
+		for _, row := range rows {
+			links = appendLink(links, row.FromID, agent.MemoryRecordCustomer, row.First)
+			links = appendLink(links, row.FromID, agent.MemoryRecordCarrier, row.Second)
+			links = appendLink(links, row.FromID, agent.MemoryRecordShipment, row.Third)
+		}
 
-	return links, nil
+		return links, nil
+	})
 }
 
 func (r *repository) documentLinks(
@@ -313,35 +324,37 @@ func (r *repository) documentLinks(
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) ([]repositories.MemoryRecordLink, error) {
-	doc := buncolgen.DocumentColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.MemoryRecordLink, error) {
+		doc := buncolgen.DocumentColumns
 
-	rows := make([]ownerRow, 0, len(ids))
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model((*document.Document)(nil)).
-		ColumnExpr(doc.ID.As("from_id")).
-		ColumnExpr(doc.ResourceType.As("resource_type")).
-		ColumnExpr(doc.ResourceID.As("resource_id")).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DocumentScopeTenant(sq, tenant).Where(doc.ID.In(), bun.List(ids))
-		}).
-		Scan(ctx, &rows); err != nil {
-		return nil, fmt.Errorf("document owners: %w", err)
-	}
-
-	links := make([]repositories.MemoryRecordLink, 0, len(rows))
-	for _, row := range rows {
-		owner, ok := agent.MemoryRecordRefOf(row.ResourceType, row.ResourceID)
-		if !ok || owner.Kind == agent.MemoryRecordDocument {
-			continue
+		rows := make([]ownerRow, 0, len(ids))
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model((*document.Document)(nil)).
+			ColumnExpr(doc.ID.As("from_id")).
+			ColumnExpr(doc.ResourceType.As("resource_type")).
+			ColumnExpr(doc.ResourceID.As("resource_id")).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DocumentScopeTenant(sq, tenant).Where(doc.ID.In(), bun.List(ids))
+			}).
+			Scan(ctx, &rows); err != nil {
+			return nil, fmt.Errorf("document owners: %w", err)
 		}
-		links = append(links, repositories.MemoryRecordLink{
-			From: row.FromID,
-			Kind: owner.Kind,
-			ID:   owner.ID,
-		})
-	}
 
-	return links, nil
+		links := make([]repositories.MemoryRecordLink, 0, len(rows))
+		for _, row := range rows {
+			owner, ok := agent.MemoryRecordRefOf(row.ResourceType, row.ResourceID)
+			if !ok || owner.Kind == agent.MemoryRecordDocument {
+				continue
+			}
+			links = append(links, repositories.MemoryRecordLink{
+				From: row.FromID,
+				Kind: owner.Kind,
+				ID:   owner.ID,
+			})
+		}
+
+		return links, nil
+	})
 }
 
 func joinMove(moveID, organizationID, businessUnitID *buncolgen.Column) string {

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -59,19 +60,21 @@ func (s *driftSource) ScopeStart(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (int64, error) {
-	cols := buncolgen.FiscalPeriodColumns
-	var start int64
-	if err := s.db.DBForContext(ctx).
-		NewSelect().
-		Model((*fiscalperiod.FiscalPeriod)(nil)).
-		ColumnExpr("COALESCE(MIN("+cols.StartDate.Qualified()+"), 0)").
-		Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-		Where(cols.Status.In(), bun.List(fiscalperiod.UnclosedStatuses())).
-		Scan(ctx, &start); err != nil {
-		return 0, fmt.Errorf("find the start of the earliest open period: %w", err)
-	}
-	return start, nil
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) (int64, error) {
+		cols := buncolgen.FiscalPeriodColumns
+		var start int64
+		if err := s.db.DBForContext(ctx).
+			NewSelect().
+			Model((*fiscalperiod.FiscalPeriod)(nil)).
+			ColumnExpr("COALESCE(MIN("+cols.StartDate.Qualified()+"), 0)").
+			Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Where(cols.Status.In(), bun.List(fiscalperiod.UnclosedStatuses())).
+			Scan(ctx, &start); err != nil {
+			return 0, fmt.Errorf("find the start of the earliest open period: %w", err)
+		}
+		return start, nil
+	})
 }
 
 func (s *driftSource) newerCreate(dba bun.IDB) *bun.SelectQuery {
@@ -113,71 +116,75 @@ func (s *driftSource) ListRecords(
 	ctx context.Context,
 	req *repositories.ListAccountingDriftRecordsRequest,
 ) ([]*accountingsync.AccountingSyncRecord, error) {
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultDriftBatch
-	}
-	limit = intutils.Clamp(limit, 1, maxDriftBatch)
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]*accountingsync.AccountingSyncRecord, error) {
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultDriftBatch
+		}
+		limit = intutils.Clamp(limit, 1, maxDriftBatch)
 
-	records := buncolgen.AccountingSyncRecordColumns
-	dba := s.db.DBForContext(ctx)
-	entities := make([]*accountingsync.AccountingSyncRecord, 0, limit)
-	query := dba.NewSelect().Model(&entities)
-	query = s.latestSynced(
-		query,
-		dba,
-		req.TenantInfo,
-		req.ConnectionID,
-		accountingsync.DriftObjectTypes(),
-	)
-	query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.
-			Where(records.DocumentDate.IsNull()).
-			WhereOr(records.DocumentDate.Gte(), req.DatedFrom)
+		records := buncolgen.AccountingSyncRecordColumns
+		dba := s.db.DBForContext(ctx)
+		entities := make([]*accountingsync.AccountingSyncRecord, 0, limit)
+		query := dba.NewSelect().Model(&entities)
+		query = s.latestSynced(
+			query,
+			dba,
+			req.TenantInfo,
+			req.ConnectionID,
+			accountingsync.DriftObjectTypes(),
+		)
+		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where(records.DocumentDate.IsNull()).
+				WhereOr(records.DocumentDate.Gte(), req.DatedFrom)
+		})
+		if !req.AfterID.IsNil() {
+			query = query.Where(records.ID.Gt(), req.AfterID)
+		}
+		if err := query.
+			Order(records.ID.OrderAsc()).
+			Limit(limit).
+			Scan(ctx); err != nil {
+			return nil, fmt.Errorf("list records to compare: %w", err)
+		}
+		return entities, nil
 	})
-	if !req.AfterID.IsNil() {
-		query = query.Where(records.ID.Gt(), req.AfterID)
-	}
-	if err := query.
-		Order(records.ID.OrderAsc()).
-		Limit(limit).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("list records to compare: %w", err)
-	}
-	return entities, nil
 }
 
 func (s *driftSource) ListStates(
 	ctx context.Context,
 	req *repositories.ListAccountingDriftStatesRequest,
 ) ([]*repositories.AccountingDriftState, error) {
-	states := make([]*repositories.AccountingDriftState, 0, len(req.ObjectIDs))
-	if len(req.ObjectIDs) == 0 {
-		return states, nil
-	}
-
-	var query *bun.SelectQuery
-	dba := s.db.DBForContext(ctx)
-	switch {
-	case req.ObjectType.IsSalesDocument():
-		query = s.salesStates(dba, req)
-	case req.ObjectType == accountingsync.SyncObjectCustomerPayment:
-		query = s.paymentStates(dba, req)
-	case req.ObjectType == accountingsync.SyncObjectCreditApplication:
-		query = s.applicationStates(dba, req)
-	case req.ObjectType.IsPayable() && !req.ObjectType.IsVendor():
-		if req.ObjectType.IsDriverSettlement() {
-			query = s.driverStates(dba, req)
-		} else {
-			query = s.carrierStates(dba, req)
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]*repositories.AccountingDriftState, error) {
+		states := make([]*repositories.AccountingDriftState, 0, len(req.ObjectIDs))
+		if len(req.ObjectIDs) == 0 {
+			return states, nil
 		}
-	default:
-		return nil, fmt.Errorf("drift does not compare %s", req.ObjectType)
-	}
-	if err := query.Scan(ctx, &states); err != nil {
-		return nil, fmt.Errorf("read %s states: %w", req.ObjectType, err)
-	}
-	return states, nil
+
+		var query *bun.SelectQuery
+		dba := s.db.DBForContext(ctx)
+		switch {
+		case req.ObjectType.IsSalesDocument():
+			query = s.salesStates(dba, req)
+		case req.ObjectType == accountingsync.SyncObjectCustomerPayment:
+			query = s.paymentStates(dba, req)
+		case req.ObjectType == accountingsync.SyncObjectCreditApplication:
+			query = s.applicationStates(dba, req)
+		case req.ObjectType.IsPayable() && !req.ObjectType.IsVendor():
+			if req.ObjectType.IsDriverSettlement() {
+				query = s.driverStates(dba, req)
+			} else {
+				query = s.carrierStates(dba, req)
+			}
+		default:
+			return nil, fmt.Errorf("drift does not compare %s", req.ObjectType)
+		}
+		if err := query.Scan(ctx, &states); err != nil {
+			return nil, fmt.Errorf("read %s states: %w", req.ObjectType, err)
+		}
+		return states, nil
+	})
 }
 
 func (s *driftSource) reflectedMemos(
@@ -421,92 +428,96 @@ func (s *driftSource) ListBalances(
 	ctx context.Context,
 	req *repositories.ListAccountingDriftBalancesRequest,
 ) ([]*repositories.AccountingDriftBalanceLine, error) {
-	customers := req.Customers
-	if customers <= 0 {
-		customers = defaultDriftCustomers
-	}
-	customers = intutils.Clamp(customers, 1, maxDriftCustomers)
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]*repositories.AccountingDriftBalanceLine, error) {
+		customers := req.Customers
+		if customers <= 0 {
+			customers = defaultDriftCustomers
+		}
+		customers = intutils.Clamp(customers, 1, maxDriftCustomers)
 
-	inv := buncolgen.InvoiceColumns
-	cus := buncolgen.CustomerColumns
-	records := buncolgen.AccountingSyncRecordColumns
-	dba := s.db.DBForContext(ctx)
+		inv := buncolgen.InvoiceColumns
+		cus := buncolgen.CustomerColumns
+		records := buncolgen.AccountingSyncRecordColumns
+		dba := s.db.DBForContext(ctx)
 
-	ids := make([]pulid.ID, 0, customers)
-	page := s.balanceDocuments(dba, req).
-		ColumnExpr("DISTINCT " + inv.CustomerID.Qualified())
-	if !req.AfterCustomerID.IsNil() {
-		page = page.Where(inv.CustomerID.Gt(), req.AfterCustomerID)
-	}
-	if err := page.
-		OrderExpr(inv.CustomerID.Qualified()+" ASC").
-		Limit(customers).
-		Scan(ctx, &ids); err != nil {
-		return nil, fmt.Errorf("list customers to balance: %w", err)
-	}
+		ids := make([]pulid.ID, 0, customers)
+		page := s.balanceDocuments(dba, req).
+			ColumnExpr("DISTINCT " + inv.CustomerID.Qualified())
+		if !req.AfterCustomerID.IsNil() {
+			page = page.Where(inv.CustomerID.Gt(), req.AfterCustomerID)
+		}
+		if err := page.
+			OrderExpr(inv.CustomerID.Qualified()+" ASC").
+			Limit(customers).
+			Scan(ctx, &ids); err != nil {
+			return nil, fmt.Errorf("list customers to balance: %w", err)
+		}
 
-	lines := make([]*repositories.AccountingDriftBalanceLine, 0, len(ids))
-	if len(ids) == 0 {
+		lines := make([]*repositories.AccountingDriftBalanceLine, 0, len(ids))
+		if len(ids) == 0 {
+			return lines, nil
+		}
+		if err := s.balanceDocuments(dba, req).
+			ColumnExpr(inv.CustomerID.As("customer_id")).
+			ColumnExpr(cus.Name.As("customer_name")).
+			ColumnExpr(inv.CurrencyCode.As("currency_code")).
+			ColumnExpr(records.ObjectType.As("object_type")).
+			ColumnExpr(inv.ID.As("object_id")).
+			ColumnExpr(inv.Number.As("number")).
+			ColumnExpr(
+				inv.BalanceDueMinor.Qualified()+" + (?) AS open_minor",
+				s.reflectedMemos(dba, req.ConnectionID, &inv.BalanceDueMinor),
+			).
+			ColumnExpr(records.ExternalID.As("external_id")).
+			Join(joinOn(
+				buncolgen.CustomerTable,
+				buncolgen.CustomerTable.Alias,
+				cus.ID.EqColumn(inv.CustomerID),
+				cus.OrganizationID.EqColumn(inv.OrganizationID),
+				cus.BusinessUnitID.EqColumn(inv.BusinessUnitID),
+			)).
+			Where(inv.CustomerID.In(), bun.List(ids)).
+			OrderExpr(inv.CustomerID.Qualified()+" ASC").
+			OrderExpr(inv.ID.Qualified()+" ASC").
+			Scan(ctx, &lines); err != nil {
+			return nil, fmt.Errorf("list balances to compare: %w", err)
+		}
 		return lines, nil
-	}
-	if err := s.balanceDocuments(dba, req).
-		ColumnExpr(inv.CustomerID.As("customer_id")).
-		ColumnExpr(cus.Name.As("customer_name")).
-		ColumnExpr(inv.CurrencyCode.As("currency_code")).
-		ColumnExpr(records.ObjectType.As("object_type")).
-		ColumnExpr(inv.ID.As("object_id")).
-		ColumnExpr(inv.Number.As("number")).
-		ColumnExpr(
-			inv.BalanceDueMinor.Qualified()+" + (?) AS open_minor",
-			s.reflectedMemos(dba, req.ConnectionID, &inv.BalanceDueMinor),
-		).
-		ColumnExpr(records.ExternalID.As("external_id")).
-		Join(joinOn(
-			buncolgen.CustomerTable,
-			buncolgen.CustomerTable.Alias,
-			cus.ID.EqColumn(inv.CustomerID),
-			cus.OrganizationID.EqColumn(inv.OrganizationID),
-			cus.BusinessUnitID.EqColumn(inv.BusinessUnitID),
-		)).
-		Where(inv.CustomerID.In(), bun.List(ids)).
-		OrderExpr(inv.CustomerID.Qualified()+" ASC").
-		OrderExpr(inv.ID.Qualified()+" ASC").
-		Scan(ctx, &lines); err != nil {
-		return nil, fmt.Errorf("list balances to compare: %w", err)
-	}
-	return lines, nil
+	})
 }
 
 func (s *driftSource) ListPendingCustomers(
 	ctx context.Context,
 	req *repositories.ListAccountingDriftPendingCustomersRequest,
 ) ([]pulid.ID, error) {
-	ids := make([]pulid.ID, 0, len(req.CustomerIDs))
-	if len(req.CustomerIDs) == 0 {
-		return ids, nil
-	}
-	dba := s.db.DBForContext(ctx)
-	queries := []*bun.SelectQuery{
-		s.waitingInbound(dba, req),
-		s.unsettledSales(dba, req),
-		s.unsettledPayments(dba, req),
-		s.unsettledApplications(dba, req),
-	}
-	seen := make(map[pulid.ID]struct{}, len(req.CustomerIDs))
-	for _, query := range queries {
-		found := make([]pulid.ID, 0, len(req.CustomerIDs))
-		if err := query.Scan(ctx, &found); err != nil {
-			return nil, fmt.Errorf("list customers with changes still waiting: %w", err)
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]pulid.ID, error) {
+		ids := make([]pulid.ID, 0, len(req.CustomerIDs))
+		if len(req.CustomerIDs) == 0 {
+			return ids, nil
 		}
-		for _, id := range found {
-			if _, dup := seen[id]; dup {
-				continue
+		dba := s.db.DBForContext(ctx)
+		queries := []*bun.SelectQuery{
+			s.waitingInbound(dba, req),
+			s.unsettledSales(dba, req),
+			s.unsettledPayments(dba, req),
+			s.unsettledApplications(dba, req),
+		}
+		seen := make(map[pulid.ID]struct{}, len(req.CustomerIDs))
+		for _, query := range queries {
+			found := make([]pulid.ID, 0, len(req.CustomerIDs))
+			if err := query.Scan(ctx, &found); err != nil {
+				return nil, fmt.Errorf("list customers with changes still waiting: %w", err)
 			}
-			seen[id] = struct{}{}
-			ids = append(ids, id)
+			for _, id := range found {
+				if _, dup := seen[id]; dup {
+					continue
+				}
+				seen[id] = struct{}{}
+				ids = append(ids, id)
+			}
 		}
-	}
-	return ids, nil
+		return ids, nil
+	})
 }
 
 func (s *driftSource) waitingInbound(

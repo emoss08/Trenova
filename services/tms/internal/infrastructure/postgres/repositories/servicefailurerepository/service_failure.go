@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -43,43 +44,45 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListServiceFailuresRequest,
 ) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
-	req.EnsureFilter()
-	if req.Filter.Pagination.Limit <= 0 {
-		req.Filter.Pagination.Limit = 50
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
+		req.EnsureFilter()
+		if req.Filter.Pagination.Limit <= 0 {
+			req.Filter.Pagination.Limit = 50
+		}
 
-	entities := make([]*servicefailure.ServiceFailure, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-			q = querybuilder.ApplyFilters(
-				q,
-				"sf",
-				req.Filter,
-				(*servicefailure.ServiceFailure)(nil),
-			)
-			if req.ShipmentID.IsNotNil() {
-				q = q.Where("sf.shipment_id = ?", req.ShipmentID)
-			}
-			return q.Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset())
-		}).
-		Relation("ReasonCode").
-		Relation("Shipment").
-		Relation("Stop").
-		Relation("Stop.Location").
-		Relation("Stop.Location.State").
-		Order("sf.created_at DESC").
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list service failures: %w", err)
-	}
+		entities := make([]*servicefailure.ServiceFailure, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
+				q = querybuilder.ApplyFilters(
+					q,
+					"sf",
+					req.Filter,
+					(*servicefailure.ServiceFailure)(nil),
+				)
+				if req.ShipmentID.IsNotNil() {
+					q = q.Where("sf.shipment_id = ?", req.ShipmentID)
+				}
+				return q.Limit(req.Filter.Pagination.SafeLimit()).
+					Offset(req.Filter.Pagination.SafeOffset())
+			}).
+			Relation("ReasonCode").
+			Relation("Shipment").
+			Relation("Stop").
+			Relation("Stop.Location").
+			Relation("Stop.Location.State").
+			Order("sf.created_at DESC").
+			ScanAndCount(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list service failures: %w", err)
+		}
 
-	return &pagination.ListResult[*servicefailure.ServiceFailure]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*servicefailure.ServiceFailure]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -126,55 +129,57 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListServiceFailureConnectionRequest,
 ) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*servicefailure.ServiceFailure], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*servicefailure.ServiceFailure)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*servicefailure.ServiceFailure)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count service failures", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*servicefailure.ServiceFailure]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*servicefailure.ServiceFailure) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						ColumnExpr(buncolgen.ServiceFailureTable.All()).
+						Relation("Shipment").
+						Relation("Stop").
+						Relation("Stop.Location").
+						Relation("Stop.Location.State").
+						Relation("ReasonCode")
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count service failures", zap.Error(err))
+			log.Error("failed to scan service failures", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*servicefailure.ServiceFailure]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*servicefailure.ServiceFailure) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					ColumnExpr(buncolgen.ServiceFailureTable.All()).
-					Relation("Shipment").
-					Relation("Stop").
-					Relation("Stop.Location").
-					Relation("Stop.Location.State").
-					Relation("ReasonCode")
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan service failures", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) GetByID(
@@ -235,13 +240,15 @@ func (r *repository) Create(
 	ctx context.Context,
 	entity *servicefailure.ServiceFailure,
 ) (*servicefailure.ServiceFailure, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-		return nil, mapServiceFailureConstraint(err, entity)
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*servicefailure.ServiceFailure, error) {
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+			return nil, mapServiceFailureConstraint(err, entity)
+		}
 
-	return r.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
-		ID:         entity.ID,
-		TenantInfo: serviceFailureTenantInfo(entity),
+		return r.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+			ID:         entity.ID,
+			TenantInfo: serviceFailureTenantInfo(entity),
+		})
 	})
 }
 
@@ -249,41 +256,43 @@ func (r *repository) Update(
 	ctx context.Context,
 	entity *servicefailure.ServiceFailure,
 ) (*servicefailure.ServiceFailure, error) {
-	now := timeutils.NowUnix()
-	result, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model((*servicefailure.ServiceFailure)(nil)).
-		Where("id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Where("version = ?", entity.Version).
-		Set("reason_code_id = ?", entity.ReasonCodeID).
-		Set("status = ?", entity.Status).
-		Set("notes = ?", entity.Notes).
-		Set("internal_notes = ?", entity.InternalNotes).
-		Set("x12_status_code_override = ?", entity.X12StatusCodeOverride).
-		Set("x12_reason_code_override = ?", entity.X12ReasonCodeOverride).
-		Set("x12_exception_code = ?", entity.X12ExceptionCode).
-		Set("reviewed_at = ?", entity.ReviewedAt).
-		Set("reviewed_by_id = ?", entity.ReviewedByID).
-		Set("resolved_at = ?", entity.ResolvedAt).
-		Set("resolved_by_id = ?", entity.ResolvedByID).
-		Set("voided_at = ?", entity.VoidedAt).
-		Set("voided_by_id = ?", entity.VoidedByID).
-		Set("void_reason = ?", entity.VoidReason).
-		Set("version = version + 1").
-		Set("updated_at = ?", now).
-		Exec(ctx)
-	if err != nil {
-		return nil, mapServiceFailureConstraint(err, entity)
-	}
-	if err = dberror.CheckRowsAffected(result, "Service failure", entity.ID.String()); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*servicefailure.ServiceFailure, error) {
+		now := timeutils.NowUnix()
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*servicefailure.ServiceFailure)(nil)).
+			Where("id = ?", entity.ID).
+			Where("organization_id = ?", entity.OrganizationID).
+			Where("business_unit_id = ?", entity.BusinessUnitID).
+			Where("version = ?", entity.Version).
+			Set("reason_code_id = ?", entity.ReasonCodeID).
+			Set("status = ?", entity.Status).
+			Set("notes = ?", entity.Notes).
+			Set("internal_notes = ?", entity.InternalNotes).
+			Set("x12_status_code_override = ?", entity.X12StatusCodeOverride).
+			Set("x12_reason_code_override = ?", entity.X12ReasonCodeOverride).
+			Set("x12_exception_code = ?", entity.X12ExceptionCode).
+			Set("reviewed_at = ?", entity.ReviewedAt).
+			Set("reviewed_by_id = ?", entity.ReviewedByID).
+			Set("resolved_at = ?", entity.ResolvedAt).
+			Set("resolved_by_id = ?", entity.ResolvedByID).
+			Set("voided_at = ?", entity.VoidedAt).
+			Set("voided_by_id = ?", entity.VoidedByID).
+			Set("void_reason = ?", entity.VoidReason).
+			Set("version = version + 1").
+			Set("updated_at = ?", now).
+			Exec(ctx)
+		if err != nil {
+			return nil, mapServiceFailureConstraint(err, entity)
+		}
+		if err = dberror.CheckRowsAffected(result, "Service failure", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return r.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
-		ID:         entity.ID,
-		TenantInfo: serviceFailureTenantInfo(entity),
+		return r.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+			ID:         entity.ID,
+			TenantInfo: serviceFailureTenantInfo(entity),
+		})
 	})
 }
 
@@ -291,33 +300,35 @@ func (r *repository) UpdateDetectionSnapshot(
 	ctx context.Context,
 	entity *servicefailure.ServiceFailure,
 ) (*servicefailure.ServiceFailure, error) {
-	now := timeutils.NowUnix()
-	result, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model((*servicefailure.ServiceFailure)(nil)).
-		Where("id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Where("status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
-		Set("scheduled_cutoff = ?", entity.ScheduledCutoff).
-		Set("actual_arrival = ?", entity.ActualArrival).
-		Set("grace_period_minutes = ?", entity.GracePeriodMinutes).
-		Set("late_minutes = ?", entity.LateMinutes).
-		Set("reason_code_id = ?", entity.ReasonCodeID).
-		Set("notes = ?", entity.Notes).
-		Set("version = version + 1").
-		Set("updated_at = ?", now).
-		Exec(ctx)
-	if err != nil {
-		return nil, mapServiceFailureConstraint(err, entity)
-	}
-	if err = dberror.CheckRowsAffected(result, "Service failure", entity.ID.String()); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*servicefailure.ServiceFailure, error) {
+		now := timeutils.NowUnix()
+		result, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*servicefailure.ServiceFailure)(nil)).
+			Where("id = ?", entity.ID).
+			Where("organization_id = ?", entity.OrganizationID).
+			Where("business_unit_id = ?", entity.BusinessUnitID).
+			Where("status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
+			Set("scheduled_cutoff = ?", entity.ScheduledCutoff).
+			Set("actual_arrival = ?", entity.ActualArrival).
+			Set("grace_period_minutes = ?", entity.GracePeriodMinutes).
+			Set("late_minutes = ?", entity.LateMinutes).
+			Set("reason_code_id = ?", entity.ReasonCodeID).
+			Set("notes = ?", entity.Notes).
+			Set("version = version + 1").
+			Set("updated_at = ?", now).
+			Exec(ctx)
+		if err != nil {
+			return nil, mapServiceFailureConstraint(err, entity)
+		}
+		if err = dberror.CheckRowsAffected(result, "Service failure", entity.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return r.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
-		ID:         entity.ID,
-		TenantInfo: serviceFailureTenantInfo(entity),
+		return r.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+			ID:         entity.ID,
+			TenantInfo: serviceFailureTenantInfo(entity),
+		})
 	})
 }
 
@@ -347,87 +358,95 @@ func (r *repository) ListUnresolvedByShipment(
 	ctx context.Context,
 	req *repositories.ServiceFailuresByShipmentRequest,
 ) ([]*servicefailure.ServiceFailure, error) {
-	entities := make([]*servicefailure.ServiceFailure, 0)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Where("sf.organization_id = ?", req.TenantInfo.OrgID).
-		Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("sf.shipment_id = ?", req.ShipmentID).
-		Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
-		Relation("ReasonCode").
-		Order("sf.created_at DESC").
-		Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list unresolved service failures: %w", err)
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ServiceFailure, error) {
+		entities := make([]*servicefailure.ServiceFailure, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Where("sf.organization_id = ?", req.TenantInfo.OrgID).
+			Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("sf.shipment_id = ?", req.ShipmentID).
+			Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
+			Relation("ReasonCode").
+			Order("sf.created_at DESC").
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list unresolved service failures: %w", err)
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) ListUnresolvedByShipmentIDs(
 	ctx context.Context,
 	req *repositories.ServiceFailuresByShipmentIDsRequest,
 ) ([]*servicefailure.ServiceFailure, error) {
-	entities := make([]*servicefailure.ServiceFailure, 0, len(req.ShipmentIDs))
-	if len(req.ShipmentIDs) == 0 {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*servicefailure.ServiceFailure, error) {
+		entities := make([]*servicefailure.ServiceFailure, 0, len(req.ShipmentIDs))
+		if len(req.ShipmentIDs) == 0 {
+			return entities, nil
+		}
+
+		cols := buncolgen.ServiceFailureColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ServiceFailureScopeTenant(sq, req.TenantInfo).
+					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
+					Where(cols.Status.In(), bun.List(servicefailure.UnresolvedStatuses()))
+			}).
+			Relation(buncolgen.ServiceFailureRelations.ReasonCode).
+			Order(cols.CreatedAt.OrderDesc()).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list unresolved service failures by shipments: %w", err)
+		}
+
 		return entities, nil
-	}
-
-	cols := buncolgen.ServiceFailureColumns
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ServiceFailureScopeTenant(sq, req.TenantInfo).
-				Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
-				Where(cols.Status.In(), bun.List(servicefailure.UnresolvedStatuses()))
-		}).
-		Relation(buncolgen.ServiceFailureRelations.ReasonCode).
-		Order(cols.CreatedAt.OrderDesc()).
-		Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list unresolved service failures by shipments: %w", err)
-	}
-
-	return entities, nil
+	})
 }
 
 func (r *repository) CountUnresolvedByShipment(
 	ctx context.Context,
 	req *repositories.ServiceFailuresByShipmentRequest,
 ) (int, error) {
-	count, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*servicefailure.ServiceFailure)(nil)).
-		Where("sf.organization_id = ?", req.TenantInfo.OrgID).
-		Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("sf.shipment_id = ?", req.ShipmentID).
-		Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
-		Count(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("count unresolved service failures: %w", err)
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		count, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*servicefailure.ServiceFailure)(nil)).
+			Where("sf.organization_id = ?", req.TenantInfo.OrgID).
+			Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("sf.shipment_id = ?", req.ShipmentID).
+			Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
+			Count(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("count unresolved service failures: %w", err)
+		}
 
-	return count, nil
+		return count, nil
+	})
 }
 
 func (r *repository) CountUnresolved(
 	ctx context.Context,
 	req *repositories.CountUnresolvedServiceFailuresRequest,
 ) (int, error) {
-	count, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*servicefailure.ServiceFailure)(nil)).
-		Where("sf.organization_id = ?", req.TenantInfo.OrgID).
-		Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
-		Count(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("count unresolved service failures for tenant: %w", err)
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		count, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*servicefailure.ServiceFailure)(nil)).
+			Where("sf.organization_id = ?", req.TenantInfo.OrgID).
+			Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
+			Count(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("count unresolved service failures for tenant: %w", err)
+		}
 
-	return count, nil
+		return count, nil
+	})
 }
 
 func mapServiceFailureConstraint(err error, entity *servicefailure.ServiceFailure) error {

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -237,49 +238,51 @@ func (r *repository) AccumulateMiles(
 	ctx context.Context,
 	req *repositories.AccumulateMilesRequest,
 ) (*repositories.MileAccumulation, error) {
-	dba := r.db.DBForContext(ctx)
-	args := accumulationArgs(req)
-	out := &repositories.MileAccumulation{
-		RouteRows:  make([]*repositories.MileRow, 0, defaultRouteRowSize),
-		ManualRows: make([]*repositories.MileRow, 0, defaultRouteRowSize),
-		Mismatches: make([]repositories.MoveMismatch, 0),
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.MileAccumulation, error) {
+		dba := r.db.DBForContext(ctx)
+		args := accumulationArgs(req)
+		out := &repositories.MileAccumulation{
+			RouteRows:  make([]*repositories.MileRow, 0, defaultRouteRowSize),
+			ManualRows: make([]*repositories.MileRow, 0, defaultRouteRowSize),
+			Mismatches: make([]repositories.MoveMismatch, 0),
+		}
 
-	if err := dba.NewRaw(routeRowsSQL, args...).Scan(ctx, &out.RouteRows); err != nil {
-		r.l.Error("failed to accumulate route miles", zap.Error(err))
-		return nil, fmt.Errorf("accumulate route miles: %w", err)
-	}
+		if err := dba.NewRaw(routeRowsSQL, args...).Scan(ctx, &out.RouteRows); err != nil {
+			r.l.Error("failed to accumulate route miles", zap.Error(err))
+			return nil, fmt.Errorf("accumulate route miles: %w", err)
+		}
 
-	noTractor := make([]moveMiles, 0)
-	if err := dba.NewRaw(noTractorSQL, args...).Scan(ctx, &noTractor); err != nil {
-		r.l.Error("failed to accumulate no-tractor miles", zap.Error(err))
-		return nil, fmt.Errorf("accumulate no-tractor miles: %w", err)
-	}
-	for i := range noTractor {
-		out.NoTractor.Add(noTractor[i].MoveID, noTractor[i].Miles)
-	}
+		noTractor := make([]moveMiles, 0)
+		if err := dba.NewRaw(noTractorSQL, args...).Scan(ctx, &noTractor); err != nil {
+			r.l.Error("failed to accumulate no-tractor miles", zap.Error(err))
+			return nil, fmt.Errorf("accumulate no-tractor miles: %w", err)
+		}
+		for i := range noTractor {
+			out.NoTractor.Add(noTractor[i].MoveID, noTractor[i].Miles)
+		}
 
-	unattributed := make([]moveMiles, 0)
-	if err := dba.NewRaw(unattributedSQL, args...).Scan(ctx, &unattributed); err != nil {
-		r.l.Error("failed to list unattributed moves", zap.Error(err))
-		return nil, fmt.Errorf("list unattributed moves: %w", err)
-	}
-	for i := range unattributed {
-		out.Unattributed.Add(unattributed[i].MoveID, unattributed[i].Miles)
-	}
+		unattributed := make([]moveMiles, 0)
+		if err := dba.NewRaw(unattributedSQL, args...).Scan(ctx, &unattributed); err != nil {
+			r.l.Error("failed to list unattributed moves", zap.Error(err))
+			return nil, fmt.Errorf("list unattributed moves: %w", err)
+		}
+		for i := range unattributed {
+			out.Unattributed.Add(unattributed[i].MoveID, unattributed[i].Miles)
+		}
 
-	if err := dba.NewRaw(mismatchSQL, args...).Scan(ctx, &out.Mismatches); err != nil {
-		r.l.Error("failed to detect jurisdiction mileage mismatches", zap.Error(err))
-		return nil, fmt.Errorf("detect mileage mismatches: %w", err)
-	}
+		if err := dba.NewRaw(mismatchSQL, args...).Scan(ctx, &out.Mismatches); err != nil {
+			r.l.Error("failed to detect jurisdiction mileage mismatches", zap.Error(err))
+			return nil, fmt.Errorf("detect mileage mismatches: %w", err)
+		}
 
-	manual, err := r.manualRows(ctx, dba, req)
-	if err != nil {
-		return nil, err
-	}
-	out.ManualRows = manual
+		manual, err := r.manualRows(ctx, dba, req)
+		if err != nil {
+			return nil, err
+		}
+		out.ManualRows = manual
 
-	return out, nil
+		return out, nil
+	})
 }
 
 func (r *repository) manualRows(

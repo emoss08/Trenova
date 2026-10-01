@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"golang.org/x/text/currency"
 )
@@ -38,12 +37,10 @@ func NewValidator(p ValidatorParams) *Validator {
 	if p.DB != nil {
 		builder.
 			WithUniquenessChecker(
-				validationframework.NewBunUniquenessCheckerLazy(
-					func() bun.IDB { return p.DB.DB() },
-				),
+				validationframework.NewBunUniquenessCheckerScoped(p.DB),
 			).
 			WithReferenceChecker(
-				validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() }),
+				validationframework.NewBunReferenceCheckerScoped(p.DB),
 			)
 		addGLAccountReferenceChecks(builder)
 	}

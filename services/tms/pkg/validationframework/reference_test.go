@@ -34,7 +34,8 @@ func TestNewBunReferenceChecker(t *testing.T) {
 	checker := NewBunReferenceChecker(nil)
 
 	require.NotNil(t, checker)
-	assert.Nil(t, checker.db)
+	assert.Nil(t, checker.source.db)
+	assert.Nil(t, checker.source.scoped)
 }
 
 func TestReferenceFieldConfig(t *testing.T) {

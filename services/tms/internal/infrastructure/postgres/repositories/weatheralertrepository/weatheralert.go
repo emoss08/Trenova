@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -78,92 +79,100 @@ func New(p Params) repositories.WeatherAlertRepository {
 }
 
 func (r *repository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
-	rows := make([]tenantRow, 0)
-	if err := r.db.DB().
-		NewSelect().
-		TableExpr("organizations AS org").
-		ColumnExpr("org.id AS organization_id").
-		ColumnExpr("org.business_unit_id AS business_unit_id").
-		OrderExpr("org.id ASC").
-		Scan(ctx, &rows); err != nil {
-		return nil, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
+		rows := make([]tenantRow, 0)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			TableExpr("organizations AS org").
+			ColumnExpr("org.id AS organization_id").
+			ColumnExpr("org.business_unit_id AS business_unit_id").
+			OrderExpr("org.id ASC").
+			Scan(ctx, &rows); err != nil {
+			return nil, err
+		}
 
-	tenants := make([]pagination.TenantInfo, 0, len(rows))
-	for _, row := range rows {
-		tenants = append(tenants, pagination.TenantInfo{
-			OrgID: row.OrganizationID,
-			BuID:  row.BusinessUnitID,
-		})
-	}
+		tenants := make([]pagination.TenantInfo, 0, len(rows))
+		for _, row := range rows {
+			tenants = append(tenants, pagination.TenantInfo{
+				OrgID: row.OrganizationID,
+				BuID:  row.BusinessUnitID,
+			})
+		}
 
-	return tenants, nil
+		return tenants, nil
+	})
 }
 
 func (r *repository) GetActiveAlerts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*weatheralert.WeatherAlert, error) {
-	alerts := make([]*weatheralert.WeatherAlert, 0)
-	now := timeutils.NowUnix()
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*weatheralert.WeatherAlert, error) {
+		alerts := make([]*weatheralert.WeatherAlert, 0)
+		now := timeutils.NowUnix()
 
-	if err := r.db.DB().
-		NewSelect().
-		Model(&alerts).
-		ColumnExpr("wa.*").
-		ColumnExpr("wa.geometry").
-		Where("wa.organization_id = ?", tenantInfo.OrgID).
-		Where("wa.business_unit_id = ?", tenantInfo.BuID).
-		Where("wa.expired_at IS NULL").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("wa.expires IS NULL").WhereOr("wa.expires > ?", now)
-		}).
-		OrderExpr("COALESCE(wa.expires, 9223372036854775807) ASC").
-		Scan(ctx); err != nil {
-		return nil, err
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&alerts).
+			ColumnExpr("wa.*").
+			ColumnExpr("wa.geometry").
+			Where("wa.organization_id = ?", tenantInfo.OrgID).
+			Where("wa.business_unit_id = ?", tenantInfo.BuID).
+			Where("wa.expired_at IS NULL").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("wa.expires IS NULL").WhereOr("wa.expires > ?", now)
+			}).
+			OrderExpr("COALESCE(wa.expires, 9223372036854775807) ASC").
+			Scan(ctx); err != nil {
+			return nil, err
+		}
 
-	return alerts, nil
+		return alerts, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetWeatherAlertByIDRequest,
 ) (*weatheralert.WeatherAlert, error) {
-	alert := new(weatheralert.WeatherAlert)
-	err := r.db.DB().
-		NewSelect().
-		Model(alert).
-		ColumnExpr("wa.*").
-		ColumnExpr("wa.geometry").
-		Where("wa.id = ?", req.ID).
-		Where("wa.organization_id = ?", req.TenantInfo.OrgID).
-		Where("wa.business_unit_id = ?", req.TenantInfo.BuID).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Weather Alert")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*weatheralert.WeatherAlert, error) {
+		alert := new(weatheralert.WeatherAlert)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(alert).
+			ColumnExpr("wa.*").
+			ColumnExpr("wa.geometry").
+			Where("wa.id = ?", req.ID).
+			Where("wa.organization_id = ?", req.TenantInfo.OrgID).
+			Where("wa.business_unit_id = ?", req.TenantInfo.BuID).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Weather Alert")
+		}
 
-	return alert, nil
+		return alert, nil
+	})
 }
 
 func (r *repository) GetActivities(
 	ctx context.Context,
 	req repositories.GetWeatherAlertByIDRequest,
 ) ([]*weatheralert.Activity, error) {
-	activities := make([]*weatheralert.Activity, 0)
-	if err := r.db.DB().
-		NewSelect().
-		Model(&activities).
-		Where("waa.weather_alert_id = ?", req.ID).
-		Where("waa.organization_id = ?", req.TenantInfo.OrgID).
-		Where("waa.business_unit_id = ?", req.TenantInfo.BuID).
-		OrderExpr("waa.timestamp DESC").
-		Scan(ctx); err != nil {
-		return nil, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*weatheralert.Activity, error) {
+		activities := make([]*weatheralert.Activity, 0)
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&activities).
+			Where("waa.weather_alert_id = ?", req.ID).
+			Where("waa.organization_id = ?", req.TenantInfo.OrgID).
+			Where("waa.business_unit_id = ?", req.TenantInfo.BuID).
+			OrderExpr("waa.timestamp DESC").
+			Scan(ctx); err != nil {
+			return nil, err
+		}
 
-	return activities, nil
+		return activities, nil
+	})
 }
 
 //nolint:nestif // existing validation flow mirrors business rule nesting
@@ -171,149 +180,153 @@ func (r *repository) UpsertAlert(
 	ctx context.Context,
 	alert *weatheralert.WeatherAlert,
 ) (*repositories.UpsertWeatherAlertResult, error) {
-	result := new(repositories.UpsertWeatherAlertResult)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.UpsertWeatherAlertResult, error) {
+		result := new(repositories.UpsertWeatherAlertResult)
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		existing, err := r.getByNWSID(
-			c,
-			tx,
-			alert.OrganizationID.String(),
-			alert.BusinessUnitID.String(),
-			alert.NWSID,
-		)
-		if err != nil && !dberror.IsNotFoundError(err) {
-			return err
-		}
-
-		if dberror.IsNotFoundError(err) {
-			if alert.ID.IsNil() {
-				alert.ID = pulid.MustNew("walt_")
-			}
-			if alert.FirstSeenAt == 0 {
-				alert.FirstSeenAt = timeutils.NowUnix()
-			}
-			if alert.LastUpdatedAt == 0 {
-				alert.LastUpdatedAt = alert.FirstSeenAt
-			}
-			if alert.CreatedAt == 0 {
-				alert.CreatedAt = alert.FirstSeenAt
-			}
-			if alert.UpdatedAt == 0 {
-				alert.UpdatedAt = alert.LastUpdatedAt
-			}
-			if err = r.insertAlert(c, tx, alert); err != nil {
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			existing, err := r.getByNWSID(
+				c,
+				tx,
+				alert.OrganizationID.String(),
+				alert.BusinessUnitID.String(),
+				alert.NWSID,
+			)
+			if err != nil && !dberror.IsNotFoundError(err) {
 				return err
 			}
 
-			activity := newActivity(alert, weatheralert.ActivityTypeIssued, nil)
+			if dberror.IsNotFoundError(err) {
+				if alert.ID.IsNil() {
+					alert.ID = pulid.MustNew("walt_")
+				}
+				if alert.FirstSeenAt == 0 {
+					alert.FirstSeenAt = timeutils.NowUnix()
+				}
+				if alert.LastUpdatedAt == 0 {
+					alert.LastUpdatedAt = alert.FirstSeenAt
+				}
+				if alert.CreatedAt == 0 {
+					alert.CreatedAt = alert.FirstSeenAt
+				}
+				if alert.UpdatedAt == 0 {
+					alert.UpdatedAt = alert.LastUpdatedAt
+				}
+				if err = r.insertAlert(c, tx, alert); err != nil {
+					return err
+				}
+
+				activity := newActivity(alert, weatheralert.ActivityTypeIssued, nil)
+				if err = r.insertActivity(c, tx, activity); err != nil {
+					return err
+				}
+
+				result.Alert = alert
+				result.Activity = activity
+				result.Created = true
+				result.Changed = true
+				result.ActivityType = weatheralert.ActivityTypeIssued
+				return nil
+			}
+
+			diff, err := buildDiff(existing, alert)
+			if err != nil {
+				return err
+			}
+
+			alert.ID = existing.ID
+			alert.CreatedAt = existing.CreatedAt
+			alert.FirstSeenAt = existing.FirstSeenAt
+			alert.Version = existing.Version + 1
+			if alert.LastUpdatedAt == 0 {
+				alert.LastUpdatedAt = timeutils.NowUnix()
+			}
+			alert.UpdatedAt = alert.LastUpdatedAt
+
+			changed := len(diff) > 0 || stateTransition(existing, alert)
+			if !changed {
+				result.Alert = existing
+				return nil
+			}
+
+			if err = r.updateAlert(c, tx, alert, existing.Version); err != nil {
+				return err
+			}
+
+			activityType := weatheralert.ActivityTypeUpdated
+			if isCancelled(alert) {
+				activityType = weatheralert.ActivityTypeCancelled
+			}
+			activity := newActivity(alert, activityType, map[string]any{"changes": diff})
 			if err = r.insertActivity(c, tx, activity); err != nil {
 				return err
 			}
 
 			result.Alert = alert
 			result.Activity = activity
-			result.Created = true
 			result.Changed = true
-			result.ActivityType = weatheralert.ActivityTypeIssued
+			result.ActivityType = activityType
 			return nil
-		}
-
-		diff, err := buildDiff(existing, alert)
+		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		alert.ID = existing.ID
-		alert.CreatedAt = existing.CreatedAt
-		alert.FirstSeenAt = existing.FirstSeenAt
-		alert.Version = existing.Version + 1
-		if alert.LastUpdatedAt == 0 {
-			alert.LastUpdatedAt = timeutils.NowUnix()
-		}
-		alert.UpdatedAt = alert.LastUpdatedAt
-
-		changed := len(diff) > 0 || stateTransition(existing, alert)
-		if !changed {
-			result.Alert = existing
-			return nil
-		}
-
-		if err = r.updateAlert(c, tx, alert, existing.Version); err != nil {
-			return err
-		}
-
-		activityType := weatheralert.ActivityTypeUpdated
-		if isCancelled(alert) {
-			activityType = weatheralert.ActivityTypeCancelled
-		}
-		activity := newActivity(alert, activityType, map[string]any{"changes": diff})
-		if err = r.insertActivity(c, tx, activity); err != nil {
-			return err
-		}
-
-		result.Alert = alert
-		result.Activity = activity
-		result.Changed = true
-		result.ActivityType = activityType
-		return nil
+		return result, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func (r *repository) ExpireStaleAlerts(
 	ctx context.Context,
 ) (*repositories.ExpireWeatherAlertsResult, error) {
-	now := timeutils.NowUnix()
-	result := &repositories.ExpireWeatherAlertsResult{}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ExpireWeatherAlertsResult, error) {
+		now := timeutils.NowUnix()
+		result := &repositories.ExpireWeatherAlertsResult{}
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		alerts := make([]*weatheralert.WeatherAlert, 0)
-		if err := tx.NewSelect().
-			Model(&alerts).
-			ColumnExpr("wa.*").
-			ColumnExpr("wa.geometry").
-			Where("wa.expired_at IS NULL").
-			Where("wa.expires IS NOT NULL").
-			Where("wa.expires <= ?", now).
-			Scan(c); err != nil {
-			return err
-		}
-
-		for _, alert := range alerts {
-			alert.ExpiredAt = &now
-			alert.LastUpdatedAt = now
-			alert.Version++
-
-			if _, err := tx.NewUpdate().
-				Model(alert).
-				Column("expired_at", "last_updated_at", "version", "updated_at").
-				WherePK().
-				Where("version = ?", alert.Version-1).
-				Exec(c); err != nil {
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			alerts := make([]*weatheralert.WeatherAlert, 0)
+			if err := tx.NewSelect().
+				Model(&alerts).
+				ColumnExpr("wa.*").
+				ColumnExpr("wa.geometry").
+				Where("wa.expired_at IS NULL").
+				Where("wa.expires IS NOT NULL").
+				Where("wa.expires <= ?", now).
+				Scan(c); err != nil {
 				return err
 			}
 
-			if err := r.insertActivity(
-				c,
-				tx,
-				newActivity(alert, weatheralert.ActivityTypeExpired, nil),
-			); err != nil {
-				return err
+			for _, alert := range alerts {
+				alert.ExpiredAt = &now
+				alert.LastUpdatedAt = now
+				alert.Version++
+
+				if _, err := tx.NewUpdate().
+					Model(alert).
+					Column("expired_at", "last_updated_at", "version", "updated_at").
+					WherePK().
+					Where("version = ?", alert.Version-1).
+					Exec(c); err != nil {
+					return err
+				}
+
+				if err := r.insertActivity(
+					c,
+					tx,
+					newActivity(alert, weatheralert.ActivityTypeExpired, nil),
+				); err != nil {
+					return err
+				}
 			}
+
+			result.ExpiredCount = len(alerts)
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
 
-		result.ExpiredCount = len(alerts)
-		return nil
+		return result, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func (r *repository) getByNWSID(

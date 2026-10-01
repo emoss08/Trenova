@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -57,58 +58,60 @@ func (r *repository) scanMoveSummary(
 	now int64,
 	summary *repositories.BoardSummary,
 ) error {
-	asnCols := buncolgen.AssignmentColumns
+	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
+		asnCols := buncolgen.AssignmentColumns
 
-	dayStart := filter.DayStartUnix
-	if dayStart <= 0 {
-		var err error
-		dayStart, err = timeutils.DayStartUnix(now, "")
-		if err != nil {
-			return fmt.Errorf("resolve dispatch board day start: %w", err)
+		dayStart := filter.DayStartUnix
+		if dayStart <= 0 {
+			var err error
+			dayStart, err = timeutils.DayStartUnix(now, "")
+			if err != nil {
+				return fmt.Errorf("resolve dispatch board day start: %w", err)
+			}
 		}
-	}
 
-	casnCols := buncolgen.CarrierAssignmentColumns
-	uncoveredCond := "(" + asnCols.ID.IsNull() + " AND " + casnCols.ID.IsNull() + ")"
-	coveredCond := "(" + asnCols.ID.IsNotNull() + " OR " + casnCols.ID.IsNotNull() + ")"
+		casnCols := buncolgen.CarrierAssignmentColumns
+		uncoveredCond := "(" + asnCols.ID.IsNull() + " AND " + casnCols.ID.IsNull() + ")"
+		coveredCond := "(" + asnCols.ID.IsNotNull() + " OR " + casnCols.ID.IsNotNull() + ")"
 
-	err := r.db.DB().NewSelect().
-		Model((*shipment.ShipmentMove)(nil)).
-		ColumnExpr(buncolgen.CountFilter("uncovered_moves", uncoveredCond)).
-		ColumnExpr(buncolgen.CountFilter("covered_moves", coveredCond)).
-		ColumnExpr(buncolgen.CountFilter("late_moves",
-			uncoveredCond,
-			"COALESCE(orig.window_start, 0) > 0",
-			"orig.window_start < ?",
-		), now).
-		ColumnExpr(buncolgen.CountFilter("at_risk_moves",
-			uncoveredCond,
-			"COALESCE(orig.window_start, 0) > 0",
-			"orig.window_start >= ?",
-			"orig.window_start <= ?",
-		), now, now+atRiskLeadSeconds).
-		ColumnExpr(buncolgen.CountFilter("assigned_today",
-			coveredCond,
-			"COALESCE("+asnCols.CreatedAt.Qualified()+", "+
-				casnCols.CreatedAt.Qualified()+") >= ?",
-		), dayStart).
-		Apply(averageDeadheadColumn()).
-		Join(shipmentJoin).
-		Join(customerJoin).
-		Join(assignmentJoin).
-		Join(carrierAssignmentJoin).
-		Join(vehiclePositionJoin, now-positionFreshnessSeconds).
-		Apply(joinMoveStopEdges).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
-			return applyMoveFilters(sq, filter)
-		}).
-		Scan(ctx, summary)
-	if err != nil {
-		return fmt.Errorf("scan dispatch board move summary: %w", err)
-	}
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model((*shipment.ShipmentMove)(nil)).
+			ColumnExpr(buncolgen.CountFilter("uncovered_moves", uncoveredCond)).
+			ColumnExpr(buncolgen.CountFilter("covered_moves", coveredCond)).
+			ColumnExpr(buncolgen.CountFilter("late_moves",
+				uncoveredCond,
+				"COALESCE(orig.window_start, 0) > 0",
+				"orig.window_start < ?",
+			), now).
+			ColumnExpr(buncolgen.CountFilter("at_risk_moves",
+				uncoveredCond,
+				"COALESCE(orig.window_start, 0) > 0",
+				"orig.window_start >= ?",
+				"orig.window_start <= ?",
+			), now, now+atRiskLeadSeconds).
+			ColumnExpr(buncolgen.CountFilter("assigned_today",
+				coveredCond,
+				"COALESCE("+asnCols.CreatedAt.Qualified()+", "+
+					casnCols.CreatedAt.Qualified()+") >= ?",
+			), dayStart).
+			Apply(averageDeadheadColumn()).
+			Join(shipmentJoin).
+			Join(customerJoin).
+			Join(assignmentJoin).
+			Join(carrierAssignmentJoin).
+			Join(vehiclePositionJoin, now-positionFreshnessSeconds).
+			Apply(joinMoveStopEdges).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
+				return applyMoveFilters(sq, filter)
+			}).
+			Scan(ctx, summary)
+		if err != nil {
+			return fmt.Errorf("scan dispatch board move summary: %w", err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *repository) scanDriverSummary(
@@ -116,33 +119,35 @@ func (r *repository) scanDriverSummary(
 	filter *repositories.DispatchBoardFilter,
 	summary *repositories.BoardSummary,
 ) error {
-	cols := buncolgen.WorkerColumns
+	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
+		cols := buncolgen.WorkerColumns
 
-	counts := new(struct {
-		AvailableDrivers int `bun:"available_drivers"`
-		UnseatedDrivers  int `bun:"unseated_drivers"`
+		counts := new(struct {
+			AvailableDrivers int `bun:"available_drivers"`
+			UnseatedDrivers  int `bun:"unseated_drivers"`
+		})
+
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model((*worker.Worker)(nil)).
+			ColumnExpr("COUNT(*)::int AS available_drivers").
+			ColumnExpr(buncolgen.CountFilter("unseated_drivers",
+				"COALESCE(oa.open_assignments, 0) = 0")).
+			Join(openAssignmentLateral, bun.List(openMoveStatuses)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = buncolgen.WorkerScopeTenant(sq, filter.TenantInfo)
+				sq = applyDriverFilters(sq, filter)
+				return sq.Where(cols.AvailableForDispatch.IsTrue())
+			}).
+			Scan(ctx, counts)
+		if err != nil {
+			return fmt.Errorf("scan dispatch board driver summary: %w", err)
+		}
+
+		summary.AvailableDrivers = counts.AvailableDrivers
+		summary.UnseatedDrivers = counts.UnseatedDrivers
+
+		return nil
 	})
-
-	err := r.db.DB().NewSelect().
-		Model((*worker.Worker)(nil)).
-		ColumnExpr("COUNT(*)::int AS available_drivers").
-		ColumnExpr(buncolgen.CountFilter("unseated_drivers",
-			"COALESCE(oa.open_assignments, 0) = 0")).
-		Join(openAssignmentLateral, bun.List(openMoveStatuses)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.WorkerScopeTenant(sq, filter.TenantInfo)
-			sq = applyDriverFilters(sq, filter)
-			return sq.Where(cols.AvailableForDispatch.IsTrue())
-		}).
-		Scan(ctx, counts)
-	if err != nil {
-		return fmt.Errorf("scan dispatch board driver summary: %w", err)
-	}
-
-	summary.AvailableDrivers = counts.AvailableDrivers
-	summary.UnseatedDrivers = counts.UnseatedDrivers
-
-	return nil
 }
 
 func averageDeadheadColumn() func(*bun.SelectQuery) *bun.SelectQuery {

@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 func NewTestValidator() *Validator {
@@ -21,8 +20,8 @@ func NewTestValidatorWithDB(conn *postgres.Connection) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*glaccount.GLAccount]().
 			WithModelName("GLAccount").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return conn.DB() })).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return conn.DB() })).
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(conn)).
+			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(conn)).
 			WithUniqueField(
 				"accountCode",
 				"account_code",

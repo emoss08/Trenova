@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -64,22 +65,24 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListRateZoneRequest,
 ) (*pagination.ListResult[*ratezone.RateZone], error) {
-	log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
+		log := r.l.With(zap.String("operation", "List"))
 
-	entities := make([]*ratezone.RateZone, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).
-		ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count rate zones", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*ratezone.RateZone, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).
+			ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count rate zones", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*ratezone.RateZone]{Items: entities, Total: total}, nil
+		return &pagination.ListResult[*ratezone.RateZone]{Items: entities, Total: total}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -119,79 +122,83 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListRateZoneConnectionRequest,
 ) (*pagination.CursorListResult[*ratezone.RateZone], error) {
-	log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ratezone.RateZone], error) {
+		log := r.l.With(zap.String("operation", "ListConnection"))
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*ratezone.RateZone)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*ratezone.RateZone)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count rate zones", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ratezone.RateZone]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: totalCount,
+			Query: func(entities *[]*ratezone.RateZone) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return applyRateZoneColumns(sq, req.RateZoneColumns)
+					})
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return r.applyCursorPageFilters(sq, req)
+			},
+		})
 		if err != nil {
-			log.Error("failed to count rate zones", zap.Error(err))
+			log.Error("failed to scan rate zones", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ratezone.RateZone]{
-		Filter:     req.Filter,
-		Cursor:     req.Cursor,
-		TotalCount: totalCount,
-		Query: func(entities *[]*ratezone.RateZone) *bun.SelectQuery {
-			return dba.
-				NewSelect().
-				Model(entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return applyRateZoneColumns(sq, req.RateZoneColumns)
-				})
-		},
-		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-			return r.applyCursorPageFilters(sq, req)
-		},
+		return result, nil
 	})
-	if err != nil {
-		log.Error("failed to scan rate zones", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *repositories.GetRateZoneByIDRequest,
 ) (*ratezone.RateZone, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.RateZoneID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratezone.RateZone, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.RateZoneID.String()),
+		)
 
-	entity := new(ratezone.RateZone)
-	cols := buncolgen.RateZoneColumns
+		entity := new(ratezone.RateZone)
+		cols := buncolgen.RateZoneColumns
 
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateZoneScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.RateZoneID)
-		})
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateZoneScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.RateZoneID)
+			})
 
-	if req.IncludeMembers {
-		q = q.Relation(buncolgen.Rel(buncolgen.RateZoneRelations.Members), orderMembers)
-	}
+		if req.IncludeMembers {
+			q = q.Relation(buncolgen.Rel(buncolgen.RateZoneRelations.Members), orderMembers)
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		log.Error("failed to get rate zone", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "RateZone")
-	}
+		if err := q.Scan(ctx); err != nil {
+			log.Error("failed to get rate zone", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "RateZone")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // ResolveMembership turns a place's match keys into the zones that contain it.
@@ -203,82 +210,88 @@ func (r *repository) ResolveMembership(
 	ctx context.Context,
 	req *repositories.ResolveZoneMembershipRequest,
 ) ([]pulid.ID, error) {
-	if len(req.MatchKeys) == 0 {
-		return nil, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		if len(req.MatchKeys) == 0 {
+			return nil, nil
+		}
 
-	log := r.l.With(zap.String("operation", "ResolveMembership"))
+		log := r.l.With(zap.String("operation", "ResolveMembership"))
 
-	memberCols := buncolgen.RateZoneMemberColumns
-	zoneCols := buncolgen.RateZoneColumns
+		memberCols := buncolgen.RateZoneMemberColumns
+		zoneCols := buncolgen.RateZoneColumns
 
-	zoneIDs := make([]pulid.ID, 0, len(req.MatchKeys))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*ratezone.RateZoneMember)(nil)).
-		ColumnExpr("DISTINCT "+memberCols.RateZoneID.String()).
-		Join(
-			"JOIN "+buncolgen.RateZoneTable.As(buncolgen.RateZoneTable.Alias)+
-				" ON "+zoneCols.ID.Qualified()+" = "+memberCols.RateZoneID.Qualified()+
-				" AND "+zoneCols.OrganizationID.Qualified()+" = "+memberCols.OrganizationID.Qualified()+
-				" AND "+zoneCols.BusinessUnitID.Qualified()+" = "+memberCols.BusinessUnitID.Qualified(),
-		).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateZoneMemberScopeTenant(sq, req.TenantInfo).
-				Where(memberCols.MatchKey.In(), bun.List(req.MatchKeys)).
-				Where(zoneCols.Status.Eq(), domaintypes.StatusActive)
-		}).
-		Scan(ctx, &zoneIDs)
-	if err != nil {
-		log.Error("failed to resolve zone membership", zap.Error(err))
-		return nil, err
-	}
+		zoneIDs := make([]pulid.ID, 0, len(req.MatchKeys))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*ratezone.RateZoneMember)(nil)).
+			ColumnExpr("DISTINCT "+memberCols.RateZoneID.String()).
+			Join(
+				"JOIN "+buncolgen.RateZoneTable.As(buncolgen.RateZoneTable.Alias)+
+					" ON "+zoneCols.ID.Qualified()+" = "+memberCols.RateZoneID.Qualified()+
+					" AND "+zoneCols.OrganizationID.Qualified()+" = "+memberCols.OrganizationID.Qualified()+
+					" AND "+zoneCols.BusinessUnitID.Qualified()+" = "+memberCols.BusinessUnitID.Qualified(),
+			).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateZoneMemberScopeTenant(sq, req.TenantInfo).
+					Where(memberCols.MatchKey.In(), bun.List(req.MatchKeys)).
+					Where(zoneCols.Status.Eq(), domaintypes.StatusActive)
+			}).
+			Scan(ctx, &zoneIDs)
+		if err != nil {
+			log.Error("failed to resolve zone membership", zap.Error(err))
+			return nil, err
+		}
 
-	return zoneIDs, nil
+		return zoneIDs, nil
+	})
 }
 
 func (r *repository) insertMembers(ctx context.Context, entity *ratezone.RateZone) error {
-	if len(entity.Members) == 0 {
-		return nil
-	}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if len(entity.Members) == 0 {
+			return nil
+		}
 
-	_, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(&entity.Members).
-		Returning("*").
-		Exec(ctx)
+		_, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&entity.Members).
+			Returning("*").
+			Exec(ctx)
 
-	return err
+		return err
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *ratezone.RateZone,
 ) (*ratezone.RateZone, error) {
-	log := r.l.With(zap.String("operation", "Create"), zap.String("code", entity.Code))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratezone.RateZone, error) {
+		log := r.l.With(zap.String("operation", "Create"), zap.String("code", entity.Code))
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		if _, iErr := r.db.DBForContext(c).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(c); iErr != nil {
-			return iErr
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			if _, iErr := r.db.DBForContext(c).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(c); iErr != nil {
+				return iErr
+			}
+
+			stampMembers(entity, false)
+
+			return r.insertMembers(c, entity)
+		})
+		if err != nil {
+			log.Error("failed to create rate zone", zap.Error(err))
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Rate zone is busy. Retry the request.",
+			)
 		}
 
-		stampMembers(entity, false)
-
-		return r.insertMembers(c, entity)
+		return entity, nil
 	})
-	if err != nil {
-		log.Error("failed to create rate zone", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"Rate zone is busy. Retry the request.",
-		)
-	}
-
-	return entity, nil
 }
 
 // Update replaces the member set wholesale.
@@ -290,114 +303,120 @@ func (r *repository) Update(
 	ctx context.Context,
 	entity *ratezone.RateZone,
 ) (*ratezone.RateZone, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
-
-	ov := entity.Version
-	entity.Version++
-
-	zoneCols := buncolgen.RateZoneColumns
-	memberCols := buncolgen.RateZoneMemberColumns
-
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		results, uErr := r.db.DBForContext(c).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(zoneCols.Version.Eq(), ov).
-			OmitZero().
-			Returning("*").
-			Exec(c)
-		if uErr != nil {
-			return uErr
-		}
-
-		if uErr = dberror.CheckRowsAffected(results, "RateZone", entity.ID.String()); uErr != nil {
-			return uErr
-		}
-
-		if _, dErr := r.db.DBForContext(c).
-			NewDelete().
-			Model((*ratezone.RateZoneMember)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.RateZoneMemberScopeTenantDelete(dq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(memberCols.RateZoneID.Eq(), entity.ID)
-			}).
-			Exec(c); dErr != nil {
-			return dErr
-		}
-
-		stampMembers(entity, true)
-
-		return r.insertMembers(c, entity)
-	})
-	if err != nil {
-		log.Error("failed to update rate zone", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"Rate zone is busy. Retry the request.",
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratezone.RateZone, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
 		)
-	}
 
-	return entity, nil
+		ov := entity.Version
+		entity.Version++
+
+		zoneCols := buncolgen.RateZoneColumns
+		memberCols := buncolgen.RateZoneMemberColumns
+
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			results, uErr := r.db.DBForContext(c).
+				NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(zoneCols.Version.Eq(), ov).
+				OmitZero().
+				Returning("*").
+				Exec(c)
+			if uErr != nil {
+				return uErr
+			}
+
+			if uErr = dberror.CheckRowsAffected(results, "RateZone", entity.ID.String()); uErr != nil {
+				return uErr
+			}
+
+			if _, dErr := r.db.DBForContext(c).
+				NewDelete().
+				Model((*ratezone.RateZoneMember)(nil)).
+				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+					return buncolgen.RateZoneMemberScopeTenantDelete(dq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).Where(memberCols.RateZoneID.Eq(), entity.ID)
+				}).
+				Exec(c); dErr != nil {
+				return dErr
+			}
+
+			stampMembers(entity, true)
+
+			return r.insertMembers(c, entity)
+		})
+		if err != nil {
+			log.Error("failed to update rate zone", zap.Error(err))
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Rate zone is busy. Retry the request.",
+			)
+		}
+
+		return entity, nil
+	})
 }
 
 func (r *repository) Delete(
 	ctx context.Context,
 	req *repositories.GetRateZoneByIDRequest,
 ) error {
-	log := r.l.With(
-		zap.String("operation", "Delete"),
-		zap.String("id", req.RateZoneID.String()),
-	)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		log := r.l.With(
+			zap.String("operation", "Delete"),
+			zap.String("id", req.RateZoneID.String()),
+		)
 
-	cols := buncolgen.RateZoneColumns
-	results, err := r.db.DBForContext(ctx).
-		NewDelete().
-		Model((*ratezone.RateZone)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.RateZoneScopeTenantDelete(dq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.RateZoneID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to delete rate zone", zap.Error(err))
-		return err
-	}
+		cols := buncolgen.RateZoneColumns
+		results, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*ratezone.RateZone)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return buncolgen.RateZoneScopeTenantDelete(dq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.RateZoneID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to delete rate zone", zap.Error(err))
+			return err
+		}
 
-	return dberror.CheckRowsAffected(results, "RateZone", req.RateZoneID.String())
+		return dberror.CheckRowsAffected(results, "RateZone", req.RateZoneID.String())
+	})
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*ratezone.RateZone], error) {
-	cols := buncolgen.RateZoneColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
+		cols := buncolgen.RateZoneColumns
 
-	return dbhelper.SelectOptions[*ratezone.RateZone](
-		ctx,
-		r.db.DB(),
-		req,
-		&dbhelper.SelectOptionsConfig{
-			ColumnRefs: []buncolgen.Column{
-				cols.ID,
-				cols.Code,
-				cols.Name,
-				cols.Description,
-				cols.Kind,
-				cols.Status,
+		return dbhelper.SelectOptions[*ratezone.RateZone](
+			ctx,
+			r.db.DBForContext(ctx),
+			req,
+			&dbhelper.SelectOptionsConfig{
+				ColumnRefs: []buncolgen.Column{
+					cols.ID,
+					cols.Code,
+					cols.Name,
+					cols.Description,
+					cols.Kind,
+					cols.Status,
+				},
+				OrgColumnRef:     &cols.OrganizationID,
+				BuColumnRef:      &cols.BusinessUnitID,
+				SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
+				EntityName:       "RateZone",
+				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+				},
 			},
-			OrgColumnRef:     &cols.OrganizationID,
-			BuColumnRef:      &cols.BusinessUnitID,
-			SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
-			EntityName:       "RateZone",
-			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-			},
-		},
-	)
+		)
+	})
 }

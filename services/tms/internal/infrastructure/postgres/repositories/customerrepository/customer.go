@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -83,27 +84,29 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListCustomerRequest,
 ) (*pagination.ListResult[*customer.Customer], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*customer.Customer], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*customer.Customer, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count customers", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*customer.Customer, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count customers", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*customer.Customer]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*customer.Customer]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -143,171 +146,181 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListCustomerConnectionRequest,
 ) (*pagination.CursorListResult[*customer.Customer], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*customer.Customer], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*customer.Customer)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*customer.Customer)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count customers", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*customer.Customer]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*customer.Customer) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyCustomerColumns(sq, req.CustomerColumns)
+						}).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return r.addOptions(sq, req.CustomerFilterOptions)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			},
+		)
 		if err != nil {
-			log.Error("failed to count customers", zap.Error(err))
+			log.Error("failed to scan customers", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*customer.Customer]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*customer.Customer) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyCustomerColumns(sq, req.CustomerColumns)
-					}).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.addOptions(sq, req.CustomerFilterOptions)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		},
-	)
-	if err != nil {
-		log.Error("failed to scan customers", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByID"),
-		zap.String("id", req.ID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customer.Customer, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByID"),
+			zap.String("id", req.ID.String()),
+		)
 
-	entity := new(customer.Customer)
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		Relation("State").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("cus.id = ?", req.ID).
-				Where("cus.organization_id = ?", req.TenantInfo.OrgID).
-				Where("cus.business_unit_id = ?", req.TenantInfo.BuID)
-		}).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.addOptions(sq, req.CustomerFilterOptions)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get customer", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "Customer")
-	}
+		entity := new(customer.Customer)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Relation("State").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("cus.id = ?", req.ID).
+					Where("cus.organization_id = ?", req.TenantInfo.OrgID).
+					Where("cus.business_unit_id = ?", req.TenantInfo.BuID)
+			}).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.addOptions(sq, req.CustomerFilterOptions)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get customer", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "Customer")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetBillingProfile(
 	ctx context.Context,
 	req repositories.GetCustomerBillingProfileRequest,
 ) (*customer.CustomerBillingProfile, error) {
-	log := r.l.With(
-		zap.String("operation", "getBillingProfile"),
-		zap.String("customerID", req.CustomerID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customer.CustomerBillingProfile, error) {
+		log := r.l.With(
+			zap.String("operation", "getBillingProfile"),
+			zap.String("customerID", req.CustomerID.String()),
+		)
 
-	entity := new(customer.CustomerBillingProfile)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CustomerBillingProfileScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.CustomerBillingProfileColumns.CustomerID.Eq(), req.CustomerID)
-		}).
-		Relation("DocumentTypes").
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get billing profile", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "Customer billing profile")
-	}
+		entity := new(customer.CustomerBillingProfile)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CustomerBillingProfileScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.CustomerBillingProfileColumns.CustomerID.Eq(), req.CustomerID)
+			}).
+			Relation("DocumentTypes").
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get billing profile", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "Customer billing profile")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
 	req repositories.GetCustomersByIDsRequest,
 ) ([]*customer.Customer, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByIDs"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customer.Customer, error) {
+		log := r.l.With(
+			zap.String("operation", "GetByIDs"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*customer.Customer, 0, len(req.CustomerIDs))
-	err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CustomerScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.CustomerColumns.ID.In(), bun.List(req.CustomerIDs))
-		}).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.addOptions(sq, req.CustomerFilterOptions)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get customers", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "Customer")
-	}
+		entities := make([]*customer.Customer, 0, len(req.CustomerIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.CustomerScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.CustomerColumns.ID.In(), bun.List(req.CustomerIDs))
+			}).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.addOptions(sq, req.CustomerFilterOptions)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get customers", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "Customer")
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.CustomerSelectOptionsRequest,
 ) (*pagination.ListResult[*customer.Customer], error) {
-	return dbhelper.SelectOptions[*customer.Customer](
-		ctx,
-		r.db.DB(),
-		req.SelectQueryRequest,
-		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				"id",
-				"code",
-				"name",
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*customer.Customer], error) {
+		return dbhelper.SelectOptions[*customer.Customer](
+			ctx,
+			r.db.DBForContext(ctx),
+			req.SelectQueryRequest,
+			&dbhelper.SelectOptionsConfig{
+				Columns: []string{
+					"id",
+					"code",
+					"name",
+				},
+				OrgColumn: "cus.organization_id",
+				BuColumn:  "cus.business_unit_id",
+				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Where("cus.status = ?", domaintypes.StatusActive)
+				},
+				EntityName: "Customer",
+				SearchColumns: []string{
+					"cus.code",
+					"cus.name",
+				},
 			},
-			OrgColumn: "cus.organization_id",
-			BuColumn:  "cus.business_unit_id",
-			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("cus.status = ?", domaintypes.StatusActive)
-			},
-			EntityName: "Customer",
-			SearchColumns: []string{
-				"cus.code",
-				"cus.name",
-			},
-		},
-	)
+		)
+	})
 }
 
 func (r *repository) geocodeIfApplicable(entity *customer.Customer) *customer.Customer {
@@ -324,47 +337,49 @@ func (r *repository) Create(
 	ctx context.Context,
 	entity *customer.Customer,
 ) (*customer.Customer, error) {
-	log := r.l.With(
-		zap.String("operation", "Create"),
-		zap.String("code", entity.Code),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customer.Customer, error) {
+		log := r.l.With(
+			zap.String("operation", "Create"),
+			zap.String("code", entity.Code),
+		)
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		entity = r.geocodeIfApplicable(entity)
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			entity = r.geocodeIfApplicable(entity)
 
-		if _, err := r.db.DBForContext(c).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(c); err != nil {
+			if _, err := r.db.DBForContext(c).
+				NewInsert().
+				Model(entity).
+				Returning("*").
+				Exec(c); err != nil {
+				log.Error("failed to create customer", zap.Error(err))
+				return err
+			}
+
+			if !entity.HasBillingProfile() {
+				entity.BillingProfile = customer.NewDefaultBillingProfile(
+					entity.OrganizationID,
+					entity.BusinessUnitID,
+					entity.ID,
+				)
+			}
+
+			if err := r.saveBillingProfile(c, tx, entity); err != nil {
+				return err
+			}
+
+			if err := r.saveEmailProfile(c, tx, entity); err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
 			log.Error("failed to create customer", zap.Error(err))
-			return err
+			return nil, err
 		}
 
-		if !entity.HasBillingProfile() {
-			entity.BillingProfile = customer.NewDefaultBillingProfile(
-				entity.OrganizationID,
-				entity.BusinessUnitID,
-				entity.ID,
-			)
-		}
-
-		if err := r.saveBillingProfile(c, tx, entity); err != nil {
-			return err
-		}
-
-		if err := r.saveEmailProfile(c, tx, entity); err != nil {
-			return err
-		}
-
-		return nil
+		return entity, nil
 	})
-	if err != nil {
-		log.Error("failed to create customer", zap.Error(err))
-		return nil, err
-	}
-
-	return entity, nil
 }
 
 func (r *repository) syncBillingProfileDocumentTypes(
@@ -534,82 +549,86 @@ func (r *repository) Update(
 	ctx context.Context,
 	entity *customer.Customer,
 ) (*customer.Customer, error) {
-	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customer.Customer, error) {
+		log := r.l.With(
+			zap.String("operation", "Update"),
+			zap.String("id", entity.ID.String()),
+		)
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		ov := entity.Version
-		entity.Version++
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			ov := entity.Version
+			entity.Version++
 
-		entity = r.geocodeIfApplicable(entity)
+			entity = r.geocodeIfApplicable(entity)
 
-		results, err := r.db.DBForContext(c).NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			Returning("*").
-			Exec(c)
+			results, err := r.db.DBForContext(c).NewUpdate().
+				Model(entity).
+				WherePK().
+				Where("version = ?", ov).
+				Returning("*").
+				Exec(c)
+			if err != nil {
+				log.Error("failed to update customer", zap.Error(err))
+				return err
+			}
+
+			if err = dberror.CheckRowsAffected(results, "Customer", entity.ID.String()); err != nil {
+				return err
+			}
+
+			if err = r.saveBillingProfile(c, tx, entity); err != nil {
+				return err
+			}
+
+			if err = r.saveEmailProfile(c, tx, entity); err != nil {
+				return err
+			}
+
+			return nil
+		})
 		if err != nil {
 			log.Error("failed to update customer", zap.Error(err))
-			return err
+			return nil, dberror.MapRetryableTransactionError(
+				err,
+				"Customer is busy. Retry the request.",
+			)
 		}
 
-		if err = dberror.CheckRowsAffected(results, "Customer", entity.ID.String()); err != nil {
-			return err
-		}
-
-		if err = r.saveBillingProfile(c, tx, entity); err != nil {
-			return err
-		}
-
-		if err = r.saveEmailProfile(c, tx, entity); err != nil {
-			return err
-		}
-
-		return nil
+		return entity, nil
 	})
-	if err != nil {
-		log.Error("failed to update customer", zap.Error(err))
-		return nil, dberror.MapRetryableTransactionError(
-			err,
-			"Customer is busy. Retry the request.",
-		)
-	}
-
-	return entity, nil
 }
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateCustomerStatusRequest,
 ) ([]*customer.Customer, error) {
-	log := r.l.With(
-		zap.String("operation", "BulkUpdateStatus"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*customer.Customer, error) {
+		log := r.l.With(
+			zap.String("operation", "BulkUpdateStatus"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*customer.Customer, 0, len(req.CustomerIDs))
-	results, err := r.db.DB().
-		NewUpdate().
-		Model(&entities).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("cus.organization_id = ?", req.TenantInfo.OrgID).
-				Where("cus.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("cus.id IN (?)", bun.List(req.CustomerIDs))
-		}).
-		Set("status = ?", req.Status).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to bulk update customer status", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*customer.Customer, 0, len(req.CustomerIDs))
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(&entities).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.Where("cus.organization_id = ?", req.TenantInfo.OrgID).
+					Where("cus.business_unit_id = ?", req.TenantInfo.BuID).
+					Where("cus.id IN (?)", bun.List(req.CustomerIDs))
+			}).
+			Set("status = ?", req.Status).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to bulk update customer status", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckBulkRowsAffected(results, "Customer", req.CustomerIDs); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckBulkRowsAffected(results, "Customer", req.CustomerIDs); err != nil {
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -52,28 +53,30 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListAPIKeysRequest,
 ) (*pagination.ListResult[*apikey.Key], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*apikey.Key], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*apikey.Key, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).
-		ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count api keys", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*apikey.Key, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).
+			ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count api keys", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*apikey.Key]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*apikey.Key]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -105,51 +108,53 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListAPIKeyConnectionRequest,
 ) (*pagination.CursorListResult[*apikey.Key], error) {
-	log := r.l.With(
-		zap.String("operation", "ListConnection"),
-		zap.Any("request", req),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*apikey.Key], error) {
+		log := r.l.With(
+			zap.String("operation", "ListConnection"),
+			zap.Any("request", req),
+		)
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*apikey.Key)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*apikey.Key)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count api keys", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*apikey.Key]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*apikey.Key) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						ColumnExpr("ak.*").
+						Relation("Permissions")
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count api keys", zap.Error(err))
+			log.Error("failed to scan api keys", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*apikey.Key]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*apikey.Key) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					ColumnExpr("ak.*").
-					Relation("Permissions")
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan api keys", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) GetByID(
@@ -157,46 +162,52 @@ func (r *repository) GetByID(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*apikey.Key, error) {
-	key := new(apikey.Key)
-	err := r.db.DB().
-		NewSelect().
-		Model(key).
-		Relation("Permissions").
-		Where("ak.id = ?", id).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			query := sq.Where("ak.organization_id = ?", tenantInfo.OrgID)
-			if !tenantInfo.BuID.IsNil() {
-				query = query.Where("ak.business_unit_id = ?", tenantInfo.BuID)
-			}
-			return query
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "API Key")
-	}
-	return key, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*apikey.Key, error) {
+		key := new(apikey.Key)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(key).
+			Relation("Permissions").
+			Where("ak.id = ?", id).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				query := sq.Where("ak.organization_id = ?", tenantInfo.OrgID)
+				if !tenantInfo.BuID.IsNil() {
+					query = query.Where("ak.business_unit_id = ?", tenantInfo.BuID)
+				}
+				return query
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "API Key")
+		}
+		return key, nil
+	})
 }
 
 func (r *repository) GetByPrefix(
 	ctx context.Context,
 	prefix string,
 ) (*apikey.Key, error) {
-	key := new(apikey.Key)
-	err := r.db.DB().
-		NewSelect().
-		Model(key).
-		Relation("Permissions").
-		Where("ak.key_prefix = ?", prefix).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "API Key")
-	}
-	return key, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*apikey.Key, error) {
+		key := new(apikey.Key)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(key).
+			Relation("Permissions").
+			Where("ak.key_prefix = ?", prefix).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "API Key")
+		}
+		return key, nil
+	})
 }
 
 func (r *repository) Create(ctx context.Context, key *apikey.Key) error {
-	_, err := r.db.DB().NewInsert().Model(key).Exec(ctx)
-	return err
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		_, err := r.db.DBForContext(ctx).NewInsert().Model(key).Exec(ctx)
+		return err
+	})
 }
 
 func (r *repository) CreateWithPermissions(
@@ -204,23 +215,27 @@ func (r *repository) CreateWithPermissions(
 	key *apikey.Key,
 	permissions []*apikey.Permission,
 ) error {
-	return r.db.DB().RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(key).Exec(c); err != nil {
-			return err
-		}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+			if _, err := tx.NewInsert().Model(key).Exec(c); err != nil {
+				return err
+			}
 
-		return r.replacePermissions(c, tx, key, permissions)
+			return r.replacePermissions(c, tx, key, permissions)
+		})
 	})
 }
 
 func (r *repository) Update(ctx context.Context, key *apikey.Key) error {
-	_, err := r.db.DB().
-		NewUpdate().
-		Model(key).
-		WherePK().
-		ExcludeColumn("created_at").
-		Exec(ctx)
-	return err
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		_, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(key).
+			WherePK().
+			ExcludeColumn("created_at").
+			Exec(ctx)
+		return err
+	})
 }
 
 func (r *repository) UpdateWithPermissions(
@@ -245,8 +260,10 @@ func (r *repository) ReplacePermissions(
 	key *apikey.Key,
 	permissions []*apikey.Permission,
 ) error {
-	return r.db.DB().RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		return r.replacePermissions(c, tx, key, permissions)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+			return r.replacePermissions(c, tx, key, permissions)
+		})
 	})
 }
 
@@ -255,14 +272,16 @@ func (r *repository) CountActiveByCreator(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) (int, error) {
-	return r.db.DB().
-		NewSelect().
-		Model((*apikey.Key)(nil)).
-		Where("ak.organization_id = ?", tenantInfo.OrgID).
-		Where("ak.business_unit_id = ?", tenantInfo.BuID).
-		Where("ak.created_by_id = ?", userID).
-		Where("ak.status = ?", apikey.StatusActive).
-		Count(ctx)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		return r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*apikey.Key)(nil)).
+			Where("ak.organization_id = ?", tenantInfo.OrgID).
+			Where("ak.business_unit_id = ?", tenantInfo.BuID).
+			Where("ak.created_by_id = ?", userID).
+			Where("ak.status = ?", apikey.StatusActive).
+			Count(ctx)
+	})
 }
 
 func (r *repository) UpdateUsage(
@@ -270,15 +289,17 @@ func (r *repository) UpdateUsage(
 	id pulid.ID,
 	metadata repositories.APIKeyUsageMetadata,
 ) error {
-	_, err := r.db.DB().
-		NewUpdate().
-		Model((*apikey.Key)(nil)).
-		Set("last_used_at = ?", metadata.LastUsedAt).
-		Set("last_used_ip = ?", metadata.LastUsedIP).
-		Set("last_used_user_agent = ?", metadata.LastUsedUserAgent).
-		Where("id = ?", id).
-		Exec(ctx)
-	return err
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		_, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*apikey.Key)(nil)).
+			Set("last_used_at = ?", metadata.LastUsedAt).
+			Set("last_used_ip = ?", metadata.LastUsedIP).
+			Set("last_used_user_agent = ?", metadata.LastUsedUserAgent).
+			Where("id = ?", id).
+			Exec(ctx)
+		return err
+	})
 }
 
 func (r *repository) IncrementDailyUsage(
@@ -287,21 +308,23 @@ func (r *repository) IncrementDailyUsage(
 	date time.Time,
 	count int64,
 ) error {
-	usage := &apikey.UsageDaily{
-		APIKeyID:       id,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		UsageDate:      date.Truncate(24 * time.Hour),
-		RequestCount:   count,
-	}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		usage := &apikey.UsageDaily{
+			APIKeyID:       id,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			UsageDate:      date.Truncate(24 * time.Hour),
+			RequestCount:   count,
+		}
 
-	_, err := r.db.DB().
-		NewInsert().
-		Model(usage).
-		On("CONFLICT (api_key_id, usage_date) DO UPDATE").
-		Set("request_count = akud.request_count + ?", count).
-		Exec(ctx)
-	return err
+		_, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(usage).
+			On("CONFLICT (api_key_id, usage_date) DO UPDATE").
+			Set("request_count = akud.request_count + ?", count).
+			Exec(ctx)
+		return err
+	})
 }
 
 func (r *repository) replacePermissions(

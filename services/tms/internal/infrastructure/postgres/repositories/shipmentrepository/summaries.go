@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -24,32 +25,33 @@ func (r *repository) ListSummariesByIDs(
 	ctx context.Context,
 	req *repositories.ListShipmentSummariesRequest,
 ) ([]*repositories.ShipmentSummary, error) {
-	if len(req.ShipmentIDs) == 0 {
-		return nil, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.ShipmentSummary, error) {
+		if len(req.ShipmentIDs) == 0 {
+			return nil, nil
+		}
 
-	sp := buncolgen.ShipmentColumns
+		sp := buncolgen.ShipmentColumns
 
-	summaries := make([]*repositories.ShipmentSummary, 0, len(req.ShipmentIDs))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		ColumnExpr("sp.id AS shipment_id").
-		ColumnExpr("COALESCE(sp.pro_number, '') AS pro_number").
-		ColumnExpr("COALESCE(sp.bol, '') AS bol").
-		ColumnExpr("COALESCE(ord.po_number, '') AS po_number").
-		ColumnExpr("sp.actual_delivery_date AS service_date").
-		ColumnExpr("sp.total_charge_amount AS total_charge_amount").
-		ColumnExpr("COALESCE(origin.city, '') AS origin_city").
-		ColumnExpr("COALESCE(origin.state, '') AS origin_state").
-		ColumnExpr("COALESCE(dest.city, '') AS destination_city").
-		ColumnExpr("COALESCE(dest.state, '') AS destination_state").
-		Join("LEFT JOIN orders AS ord ON ord.id = sp.order_id").
-		Join("AND ord.organization_id = sp.organization_id").
-		Join("AND ord.business_unit_id = sp.business_unit_id").
-		// A shipment with no stop at all still gets a row, with a blank lane,
-		// rather than dropping off the invoice that bills it.
-		Join(`LEFT JOIN LATERAL (
+		summaries := make([]*repositories.ShipmentSummary, 0, len(req.ShipmentIDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			ColumnExpr("sp.id AS shipment_id").
+			ColumnExpr("COALESCE(sp.pro_number, '') AS pro_number").
+			ColumnExpr("COALESCE(sp.bol, '') AS bol").
+			ColumnExpr("COALESCE(ord.po_number, '') AS po_number").
+			ColumnExpr("sp.actual_delivery_date AS service_date").
+			ColumnExpr("sp.total_charge_amount AS total_charge_amount").
+			ColumnExpr("COALESCE(origin.city, '') AS origin_city").
+			ColumnExpr("COALESCE(origin.state, '') AS origin_state").
+			ColumnExpr("COALESCE(dest.city, '') AS destination_city").
+			ColumnExpr("COALESCE(dest.state, '') AS destination_state").
+			Join("LEFT JOIN orders AS ord ON ord.id = sp.order_id").
+			Join("AND ord.organization_id = sp.organization_id").
+			Join("AND ord.business_unit_id = sp.business_unit_id").
+			// A shipment with no stop at all still gets a row, with a blank lane,
+			// rather than dropping off the invoice that bills it.
+			Join(`LEFT JOIN LATERAL (
 			SELECT COALESCE(loc.city, '') AS city, COALESCE(ust.abbreviation, '') AS state
 			FROM stops AS stp
 			JOIN shipment_moves AS smv ON smv.id = stp.shipment_move_id
@@ -60,7 +62,7 @@ func (r *repository) ListSummariesByIDs(
 			ORDER BY smv.sequence ASC, stp.sequence ASC
 			LIMIT 1
 		) AS origin ON TRUE`).
-		Join(`LEFT JOIN LATERAL (
+			Join(`LEFT JOIN LATERAL (
 			SELECT COALESCE(loc.city, '') AS city, COALESCE(ust.abbreviation, '') AS state
 			FROM stops AS stp
 			JOIN shipment_moves AS smv ON smv.id = stp.shipment_move_id
@@ -71,16 +73,17 @@ func (r *repository) ListSummariesByIDs(
 			ORDER BY smv.sequence DESC, stp.sequence DESC
 			LIMIT 1
 		) AS dest ON TRUE`).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
-				Where(sp.ID.In(), bun.List(req.ShipmentIDs))
-		}).
-		OrderExpr("sp.actual_delivery_date ASC NULLS LAST, sp.pro_number ASC").
-		Scan(ctx, &summaries)
-	if err != nil {
-		r.l.Error("failed to list shipment summaries", zap.Error(err))
-		return nil, fmt.Errorf("list shipment summaries: %w", err)
-	}
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+					Where(sp.ID.In(), bun.List(req.ShipmentIDs))
+			}).
+			OrderExpr("sp.actual_delivery_date ASC NULLS LAST, sp.pro_number ASC").
+			Scan(ctx, &summaries)
+		if err != nil {
+			r.l.Error("failed to list shipment summaries", zap.Error(err))
+			return nil, fmt.Errorf("list shipment summaries: %w", err)
+		}
 
-	return summaries, nil
+		return summaries, nil
+	})
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -38,143 +39,153 @@ func (r *repository) ListTransferChanges(
 	ctx context.Context,
 	req *repositories.ListEDITransferChangesRequest,
 ) (*pagination.ListResult[*edi.TransferChange], error) {
-	entities := make([]*edi.TransferChange, 0, req.Filter.Pagination.SafeLimit())
-	cols := buncolgen.TransferChangeColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.TransferChange], error) {
+		entities := make([]*edi.TransferChange, 0, req.Filter.Pagination.SafeLimit())
+		cols := buncolgen.TransferChangeColumns
 
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return ScopeTenant(sq, req.Filter.TenantInfo)
-		})
-	if req.ShipmentLinkID.IsNotNil() {
-		query = query.Where(cols.ShipmentLinkID.Eq(), req.ShipmentLinkID)
-	}
-	total, err := querybuilder.ApplyFiltersWithoutTenantScope(query, "etc", req.Filter, (*edi.TransferChange)(nil)).
-		Order(cols.CreatedAt.OrderDesc()).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
-	}
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return ScopeTenant(sq, req.Filter.TenantInfo)
+			})
+		if req.ShipmentLinkID.IsNotNil() {
+			query = query.Where(cols.ShipmentLinkID.Eq(), req.ShipmentLinkID)
+		}
+		total, err := querybuilder.ApplyFiltersWithoutTenantScope(query, "etc", req.Filter, (*edi.TransferChange)(nil)).
+			Order(cols.CreatedAt.OrderDesc()).
+			Limit(req.Filter.Pagination.SafeLimit()).
+			Offset(req.Filter.Pagination.SafeOffset()).
+			ScanAndCount(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	return &pagination.ListResult[*edi.TransferChange]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*edi.TransferChange]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) GetTransferChangeByID(
 	ctx context.Context,
 	req repositories.GetEDITransferChangeByIDRequest,
 ) (*edi.TransferChange, error) {
-	entity := new(edi.TransferChange)
-	cols := buncolgen.TransferChangeColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
+		entity := new(edi.TransferChange)
+		cols := buncolgen.TransferChangeColumns
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where(cols.ID.Eq(), req.ID).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return ScopeTenant(sq, req.TenantInfo)
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "EDITransferChange")
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(cols.ID.Eq(), req.ID).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return ScopeTenant(sq, req.TenantInfo)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "EDITransferChange")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) CreateTransferChange(
 	ctx context.Context,
 	entity *edi.TransferChange,
 ) (*edi.TransferChange, error) {
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) CreateTransferChangeIdempotent(
 	ctx context.Context,
 	entity *edi.TransferChange,
 ) (*repositories.CreateEDITransferChangeIdempotentResult, error) {
-	cols := buncolgen.TransferChangeColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.CreateEDITransferChangeIdempotentResult, error) {
+		cols := buncolgen.TransferChangeColumns
 
-	results, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		On("CONFLICT (shipment_link_id, business_unit_id, direction, change_type, idempotency_key) DO NOTHING").
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			On("CONFLICT (shipment_link_id, business_unit_id, direction, change_type, idempotency_key) DO NOTHING").
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	rowsAffected, err := results.RowsAffected()
-	if err != nil {
-		return nil, err
-	}
-	if rowsAffected > 0 {
+		rowsAffected, err := results.RowsAffected()
+		if err != nil {
+			return nil, err
+		}
+		if rowsAffected > 0 {
+			return &repositories.CreateEDITransferChangeIdempotentResult{
+				TransferChange: entity,
+				Created:        true,
+			}, nil
+		}
+
+		existing := new(edi.TransferChange)
+		if err = r.db.DBForContext(ctx).
+			NewSelect().
+			Model(existing).
+			Where(cols.ShipmentLinkID.Eq(), entity.ShipmentLinkID).
+			Where(cols.BusinessUnitID.Eq(), entity.BusinessUnitID).
+			Where(cols.Direction.Eq(), entity.Direction).
+			Where(cols.ChangeType.Eq(), entity.ChangeType).
+			Where(cols.IdempotencyKey.Eq(), entity.IdempotencyKey).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "EDITransferChange")
+		}
+
 		return &repositories.CreateEDITransferChangeIdempotentResult{
-			TransferChange: entity,
-			Created:        true,
+			TransferChange: existing,
+			Created:        false,
 		}, nil
-	}
-
-	existing := new(edi.TransferChange)
-	if err = r.db.DBForContext(ctx).
-		NewSelect().
-		Model(existing).
-		Where(cols.ShipmentLinkID.Eq(), entity.ShipmentLinkID).
-		Where(cols.BusinessUnitID.Eq(), entity.BusinessUnitID).
-		Where(cols.Direction.Eq(), entity.Direction).
-		Where(cols.ChangeType.Eq(), entity.ChangeType).
-		Where(cols.IdempotencyKey.Eq(), entity.IdempotencyKey).
-		Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "EDITransferChange")
-	}
-
-	return &repositories.CreateEDITransferChangeIdempotentResult{
-		TransferChange: existing,
-		Created:        false,
-	}, nil
+	})
 }
 
 func (r *repository) UpdateTransferChange(
 	ctx context.Context,
 	entity *edi.TransferChange,
 ) (*edi.TransferChange, error) {
-	ov := entity.Version
-	entity.Version++
-	cols := buncolgen.TransferChangeColumns
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
+		ov := entity.Version
+		entity.Version++
+		cols := buncolgen.TransferChangeColumns
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(cols.Version.Eq(), ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err = dberror.CheckRowsAffected(
-		results,
-		"EDITransferChange",
-		entity.ID.String(),
-	); err != nil {
-		return nil, err
-	}
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(cols.Version.Eq(), ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"EDITransferChange",
+			entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func ScopeTenant(query *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.SelectQuery {

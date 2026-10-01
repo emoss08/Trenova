@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -18,26 +19,28 @@ func (r *repository) GetLookupStamp(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (string, error) {
-	cols := buncolgen.RateMatrixColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (string, error) {
+		cols := buncolgen.RateMatrixColumns
 
-	var stamp string
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*ratematrix.RateMatrix)(nil)).
-		ColumnExpr(
-			"concat_ws(':', count(*), coalesce(max(?), 0), coalesce(max(?), 0))",
-			bun.Ident(cols.Version.Name),
-			bun.Ident(cols.UpdatedAt.Name),
-		).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RateMatrixScopeTenant(sq, tenantInfo)
-		}).
-		Scan(ctx, &stamp)
-	if err != nil {
-		r.l.With(zap.String("operation", "GetLookupStamp")).
-			Error("failed to read rate matrix stamp", zap.Error(err))
-		return "", err
-	}
+		var stamp string
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*ratematrix.RateMatrix)(nil)).
+			ColumnExpr(
+				"concat_ws(':', count(*), coalesce(max(?), 0), coalesce(max(?), 0))",
+				bun.Ident(cols.Version.Name),
+				bun.Ident(cols.UpdatedAt.Name),
+			).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.RateMatrixScopeTenant(sq, tenantInfo)
+			}).
+			Scan(ctx, &stamp)
+		if err != nil {
+			r.l.With(zap.String("operation", "GetLookupStamp")).
+				Error("failed to read rate matrix stamp", zap.Error(err))
+			return "", err
+		}
 
-	return stamp, nil
+		return stamp, nil
+	})
 }

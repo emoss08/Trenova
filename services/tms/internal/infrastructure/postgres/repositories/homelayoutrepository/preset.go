@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/homelayout"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,53 +24,57 @@ func (r *repository) ListPresets(
 	ctx context.Context,
 	req *repositories.ListHomeLayoutPresetsRequest,
 ) ([]*homelayout.Preset, error) {
-	log := r.l.With(zap.String("operation", "ListPresets"))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*homelayout.Preset, error) {
+		log := r.l.With(zap.String("operation", "ListPresets"))
 
-	presets := make([]*homelayout.Preset, 0)
-	err := r.db.DB().
-		NewSelect().
-		Model(&presets).
-		Apply(buncolgen.PresetApplyTenant(req.TenantInfo)).
-		Order(
-			buncolgen.PresetColumns.Priority.OrderDesc(),
-			buncolgen.PresetColumns.CreatedAt.OrderDesc(),
-		).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to list home layout presets", zap.Error(err))
-		return nil, err
-	}
+		presets := make([]*homelayout.Preset, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&presets).
+			Apply(buncolgen.PresetApplyTenant(req.TenantInfo)).
+			Order(
+				buncolgen.PresetColumns.Priority.OrderDesc(),
+				buncolgen.PresetColumns.CreatedAt.OrderDesc(),
+			).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to list home layout presets", zap.Error(err))
+			return nil, err
+		}
 
-	return presets, nil
+		return presets, nil
+	})
 }
 
 func (r *repository) GetPreset(
 	ctx context.Context,
 	req *repositories.GetHomeLayoutPresetRequest,
 ) (*homelayout.Preset, error) {
-	log := r.l.With(
-		zap.String("operation", "GetPreset"),
-		zap.String("presetID", req.PresetID.String()),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*homelayout.Preset, error) {
+		log := r.l.With(
+			zap.String("operation", "GetPreset"),
+			zap.String("presetID", req.PresetID.String()),
+		)
 
-	entity := new(homelayout.Preset)
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.PresetScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.PresetColumns.ID.Eq(), req.PresetID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil, errortypes.NewNotFoundError("Home screen preset not found")
+		entity := new(homelayout.Preset)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.PresetScopeTenant(sq, req.TenantInfo).
+					Where(buncolgen.PresetColumns.ID.Eq(), req.PresetID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil, errortypes.NewNotFoundError("Home screen preset not found")
+			}
+			log.Error("failed to get home layout preset", zap.Error(err))
+			return nil, err
 		}
-		log.Error("failed to get home layout preset", zap.Error(err))
-		return nil, err
-	}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // CreatePreset inserts the preset, first demoting the incumbent org default in
@@ -80,38 +85,40 @@ func (r *repository) CreatePreset(
 	ctx context.Context,
 	entity *homelayout.Preset,
 ) (*homelayout.Preset, error) {
-	log := r.l.With(zap.String("operation", "CreatePreset"), zap.String("name", entity.Name))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*homelayout.Preset, error) {
+		log := r.l.With(zap.String("operation", "CreatePreset"), zap.String("name", entity.Name))
 
-	err := r.db.DB().RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if entity.IsOrgDefault {
-			if err := clearOrgDefault(
-				c,
-				tx,
-				entity.OrganizationID,
-				entity.BusinessUnitID,
-				pulid.Nil,
-			); err != nil {
-				log.Error("failed to clear home layout org default", zap.Error(err))
-				return err
+		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+			if entity.IsOrgDefault {
+				if err := clearOrgDefault(
+					c,
+					tx,
+					entity.OrganizationID,
+					entity.BusinessUnitID,
+					pulid.Nil,
+				); err != nil {
+					log.Error("failed to clear home layout org default", zap.Error(err))
+					return err
+				}
 			}
+
+			_, err := tx.NewInsert().Model(entity).Exec(c)
+			return err
+		})
+		if err != nil {
+			if dberror.IsUniqueConstraintViolation(err) {
+				return nil, errortypes.NewValidationError(
+					"name",
+					errortypes.ErrDuplicate,
+					"A home screen preset with this name already exists",
+				)
+			}
+			log.Error("failed to create home layout preset", zap.Error(err))
+			return nil, err
 		}
 
-		_, err := tx.NewInsert().Model(entity).Exec(c)
-		return err
+		return entity, nil
 	})
-	if err != nil {
-		if dberror.IsUniqueConstraintViolation(err) {
-			return nil, errortypes.NewValidationError(
-				"name",
-				errortypes.ErrDuplicate,
-				"A home screen preset with this name already exists",
-			)
-		}
-		log.Error("failed to create home layout preset", zap.Error(err))
-		return nil, err
-	}
-
-	return entity, nil
 }
 
 // UpdatePreset writes every column from the row the service just loaded, inside
@@ -125,83 +132,87 @@ func (r *repository) UpdatePreset(
 	ctx context.Context,
 	entity *homelayout.Preset,
 ) (*homelayout.Preset, error) {
-	log := r.l.With(zap.String("operation", "UpdatePreset"), zap.String("id", entity.ID.String()))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*homelayout.Preset, error) {
+		log := r.l.With(zap.String("operation", "UpdatePreset"), zap.String("id", entity.ID.String()))
 
-	ov := entity.Version
-	entity.Version++
+		ov := entity.Version
+		entity.Version++
 
-	err := r.db.DB().RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if entity.IsOrgDefault {
-			if err := clearOrgDefault(
-				c,
-				tx,
-				entity.OrganizationID,
-				entity.BusinessUnitID,
-				entity.ID,
-			); err != nil {
-				log.Error("failed to clear home layout org default", zap.Error(err))
+		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+			if entity.IsOrgDefault {
+				if err := clearOrgDefault(
+					c,
+					tx,
+					entity.OrganizationID,
+					entity.BusinessUnitID,
+					entity.ID,
+				); err != nil {
+					log.Error("failed to clear home layout org default", zap.Error(err))
+					return err
+				}
+			}
+
+			result, err := tx.NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(buncolgen.PresetColumns.Version.Eq(), ov).
+				Returning("*").
+				Exec(c)
+			if err != nil {
 				return err
 			}
-		}
 
-		result, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(buncolgen.PresetColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(c)
+			return dberror.CheckRowsAffected(result, "HomeLayoutPreset", entity.ID.String())
+		})
 		if err != nil {
-			return err
+			if dberror.IsUniqueConstraintViolation(err) {
+				return nil, errortypes.NewValidationError(
+					"name",
+					errortypes.ErrDuplicate,
+					"A home screen preset with this name already exists",
+				)
+			}
+			log.Error("failed to update home layout preset", zap.Error(err))
+			return nil, err
 		}
 
-		return dberror.CheckRowsAffected(result, "HomeLayoutPreset", entity.ID.String())
+		return entity, nil
 	})
-	if err != nil {
-		if dberror.IsUniqueConstraintViolation(err) {
-			return nil, errortypes.NewValidationError(
-				"name",
-				errortypes.ErrDuplicate,
-				"A home screen preset with this name already exists",
-			)
-		}
-		log.Error("failed to update home layout preset", zap.Error(err))
-		return nil, err
-	}
-
-	return entity, nil
 }
 
 func (r *repository) DeletePreset(
 	ctx context.Context,
 	req *repositories.DeleteHomeLayoutPresetRequest,
 ) error {
-	log := r.l.With(
-		zap.String("operation", "DeletePreset"),
-		zap.String("presetID", req.PresetID.String()),
-	)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		log := r.l.With(
+			zap.String("operation", "DeletePreset"),
+			zap.String("presetID", req.PresetID.String()),
+		)
 
-	result, err := r.db.DB().
-		NewDelete().
-		Model((*homelayout.Preset)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.PresetScopeTenantDelete(dq, req.TenantInfo).
-				Where(buncolgen.PresetColumns.ID.Eq(), req.PresetID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to delete home layout preset", zap.Error(err))
-		return err
-	}
+		result, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*homelayout.Preset)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return buncolgen.PresetScopeTenantDelete(dq, req.TenantInfo).
+					Where(buncolgen.PresetColumns.ID.Eq(), req.PresetID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to delete home layout preset", zap.Error(err))
+			return err
+		}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return errortypes.NewNotFoundError("Home screen preset not found")
-	}
+		rows, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rows == 0 {
+			return errortypes.NewNotFoundError("Home screen preset not found")
+		}
 
-	return nil
+		return nil
+	})
 }
 
 // clearOrgDefault demotes every other org-default preset in the tenant. It
@@ -241,30 +252,32 @@ func (r *repository) ListRoleUserAssignments(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]repositories.HomeRoleUserAssignment, error) {
-	log := r.l.With(zap.String("operation", "ListRoleUserAssignments"))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.HomeRoleUserAssignment, error) {
+		log := r.l.With(zap.String("operation", "ListRoleUserAssignments"))
 
-	now := timeutils.NowUnix()
-	assignments := make([]repositories.HomeRoleUserAssignment, 0)
-	err := r.db.DB().
-		NewSelect().
-		Model((*permission.UserRoleAssignment)(nil)).
-		ColumnExpr(buncolgen.UserRoleAssignmentColumns.RoleID.Qualified()+" AS role_id").
-		ColumnExpr(buncolgen.UserRoleAssignmentColumns.UserID.Qualified()+" AS user_id").
-		ColumnExpr(
-			buncolgen.RoleColumns.CoreResponsibility.Qualified()+" AS core_responsibility",
-		).
-		Join("JOIN roles AS r ON "+buncolgen.RoleColumns.ID.Qualified()+" = "+
-			buncolgen.UserRoleAssignmentColumns.RoleID.Qualified()).
-		Where(buncolgen.UserRoleAssignmentColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where(buncolgen.UserRoleAssignmentColumns.ExpiresAt.IsNull()).
-				WhereOr(buncolgen.UserRoleAssignmentColumns.ExpiresAt.Gt(), now)
-		}).
-		Scan(ctx, &assignments)
-	if err != nil {
-		log.Error("failed to list role user assignments", zap.Error(err))
-		return nil, err
-	}
+		now := timeutils.NowUnix()
+		assignments := make([]repositories.HomeRoleUserAssignment, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*permission.UserRoleAssignment)(nil)).
+			ColumnExpr(buncolgen.UserRoleAssignmentColumns.RoleID.Qualified()+" AS role_id").
+			ColumnExpr(buncolgen.UserRoleAssignmentColumns.UserID.Qualified()+" AS user_id").
+			ColumnExpr(
+				buncolgen.RoleColumns.CoreResponsibility.Qualified()+" AS core_responsibility",
+			).
+			Join("JOIN roles AS r ON "+buncolgen.RoleColumns.ID.Qualified()+" = "+
+				buncolgen.UserRoleAssignmentColumns.RoleID.Qualified()).
+			Where(buncolgen.UserRoleAssignmentColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where(buncolgen.UserRoleAssignmentColumns.ExpiresAt.IsNull()).
+					WhereOr(buncolgen.UserRoleAssignmentColumns.ExpiresAt.Gt(), now)
+			}).
+			Scan(ctx, &assignments)
+		if err != nil {
+			log.Error("failed to list role user assignments", zap.Error(err))
+			return nil, err
+		}
 
-	return assignments, nil
+		return assignments, nil
+	})
 }

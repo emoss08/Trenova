@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -49,49 +50,53 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListRoleAssignmentsRequest,
 ) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
 
-	entities := make([]*permission.UserRoleAssignment, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count role assignments", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*permission.UserRoleAssignment, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count role assignments", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*permission.UserRoleAssignment]{
-		Items: entities,
-		Total: total,
-	}, nil
+		return &pagination.ListResult[*permission.UserRoleAssignment]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetRoleAssignmentByIDRequest,
 ) (*permission.UserRoleAssignment, error) {
-	entity := new(permission.UserRoleAssignment)
-	q := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("ura.organization_id = ?", req.TenantInfo.OrgID).
-				Where("ura.id = ?", req.RoleAssignmentID)
-		})
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.UserRoleAssignment, error) {
+		entity := new(permission.UserRoleAssignment)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("ura.organization_id = ?", req.TenantInfo.OrgID).
+					Where("ura.id = ?", req.RoleAssignmentID)
+			})
 
-	if req.ExpandRoles {
-		q.Relation("Role")
-	}
+		if req.ExpandRoles {
+			q.Relation("Role")
+		}
 
-	if err := q.Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "RoleAssignment")
-	}
+		if err := q.Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "RoleAssignment")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }

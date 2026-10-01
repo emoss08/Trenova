@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -27,8 +27,8 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*commodity.Commodity]().
 			WithModelName("Commodity").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() })).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() })).
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
 			WithUniqueField(
 				"name",
 				"name",
@@ -49,21 +49,23 @@ func createHazardousMaterialCheck(
 	db *postgres.Connection,
 ) validationframework.CustomReferenceCheckFunc {
 	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
-		if refID.IsNil() {
-			return true, nil
-		}
+		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
+			if refID.IsNil() {
+				return true, nil
+			}
 
-		exists, err := db.DB().NewSelect().
-			TableExpr("hazardous_materials").
-			ColumnExpr("1").
-			Where("id = ?", refID).
-			Where("organization_id = ?", orgID).
-			Where("business_unit_id = ?", buID).
-			Exists(ctx)
-		if err != nil {
-			return false, err
-		}
-		return exists, nil
+			exists, err := db.DBForContext(ctx).NewSelect().
+				TableExpr("hazardous_materials").
+				ColumnExpr("1").
+				Where("id = ?", refID).
+				Where("organization_id = ?", orgID).
+				Where("business_unit_id = ?", buID).
+				Exists(ctx)
+			if err != nil {
+				return false, err
+			}
+			return exists, nil
+		})
 	}
 }
 

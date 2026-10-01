@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -209,33 +210,35 @@ func (r *repository) FleetTrend(
 	ctx context.Context,
 	req *repositories.FleetSafetyRequest,
 ) ([]repositories.FleetSafetyTrendRow, error) {
-	since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
-	rows := make([]repositories.FleetSafetyTrendRow, 0, 24)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]repositories.FleetSafetyTrendRow, error) {
+		since := timeutils.AddMonthsUTC(req.Now, -req.WindowMonths)
+		rows := make([]repositories.FleetSafetyTrendRow, 0, 24)
 
-	// Bucketing by UTC month in SQL keeps the trend a single scan. Months are
-	// what a safety meeting talks in, and the day boundary an org's timezone
-	// would move is not worth a second query. The dialect spells the truncation
-	// so the query is not Postgres-only.
-	period := dbdialect.MonthStartEpochFromBun(r.db.DBForContext(ctx), "wsev.occurred_at")
+		// Bucketing by UTC month in SQL keeps the trend a single scan. Months are
+		// what a safety meeting talks in, and the day boundary an org's timezone
+		// would move is not worth a second query. The dialect spells the truncation
+		// so the query is not Postgres-only.
+		period := dbdialect.MonthStartEpochFromBun(r.db.DBForContext(ctx), "wsev.occurred_at")
 
-	if err := r.eventScope(ctx, req, since).
-		ColumnExpr(period+" AS period_start").
-		ColumnExpr("COUNT(*) AS events").
-		ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Accident') AS accidents").
-		ColumnExpr(
-			"COUNT(*) FILTER (WHERE wsev.kind = 'Accident' AND wsev.preventable) AS preventable",
-		).
-		ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Citation') AS citations").
-		ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Inspection') AS inspections").
-		ColumnExpr(outOfServiceCount).
-		ColumnExpr("COALESCE(SUM(wsev.points), 0) AS points").
-		GroupExpr(period).
-		OrderExpr("period_start").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to build fleet safety trend", zap.Error(err))
-		return nil, fmt.Errorf("build fleet safety trend: %w", err)
-	}
-	return rows, nil
+		if err := r.eventScope(ctx, req, since).
+			ColumnExpr(period+" AS period_start").
+			ColumnExpr("COUNT(*) AS events").
+			ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Accident') AS accidents").
+			ColumnExpr(
+				"COUNT(*) FILTER (WHERE wsev.kind = 'Accident' AND wsev.preventable) AS preventable",
+			).
+			ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Citation') AS citations").
+			ColumnExpr("COUNT(*) FILTER (WHERE wsev.kind = 'Inspection') AS inspections").
+			ColumnExpr(outOfServiceCount).
+			ColumnExpr("COALESCE(SUM(wsev.points), 0) AS points").
+			GroupExpr(period).
+			OrderExpr("period_start").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to build fleet safety trend", zap.Error(err))
+			return nil, fmt.Errorf("build fleet safety trend: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 func (r *repository) FleetRanking(

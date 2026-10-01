@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,54 +43,56 @@ func (r *evidenceRepository) Append(
 	ctx context.Context,
 	req *repositories.AppendEvidenceRequest,
 ) (*detention.DetentionEvidence, error) {
-	entry := req.Entry
-	log := r.l.With(
-		zap.String("operation", "Append"),
-		zap.String("occurrenceId", entry.DetentionOccurrenceID.String()),
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionEvidence, error) {
+		entry := req.Entry
+		log := r.l.With(
+			zap.String("operation", "Append"),
+			zap.String("occurrenceId", entry.DetentionOccurrenceID.String()),
+		)
 
-	tenantInfo := pagination.TenantInfo{
-		OrgID: entry.OrganizationID,
-		BuID:  entry.BusinessUnitID,
-	}
-
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		head, sequence, hErr := r.headForUpdate(c, entry.DetentionOccurrenceID, tenantInfo)
-		if hErr != nil {
-			return hErr
+		tenantInfo := pagination.TenantInfo{
+			OrgID: entry.OrganizationID,
+			BuID:  entry.BusinessUnitID,
 		}
 
-		entry.PrevHash = head
-		entry.Sequence = sequence
-		entry.Seal()
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+			head, sequence, hErr := r.headForUpdate(c, entry.DetentionOccurrenceID, tenantInfo)
+			if hErr != nil {
+				return hErr
+			}
 
-		if _, iErr := r.db.DBForContext(c).
-			NewInsert().
-			Model(entry).
-			Returning("*").
-			Exec(c); iErr != nil {
-			return iErr
+			entry.PrevHash = head
+			entry.Sequence = sequence
+			entry.Seal()
+
+			if _, iErr := r.db.DBForContext(c).
+				NewInsert().
+				Model(entry).
+				Returning("*").
+				Exec(c); iErr != nil {
+				return iErr
+			}
+
+			occCols := buncolgen.DetentionOccurrenceColumns
+			_, uErr := r.db.DBForContext(c).
+				NewUpdate().
+				Model((*detention.DetentionOccurrence)(nil)).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return buncolgen.DetentionOccurrenceScopeTenantUpdate(uq, tenantInfo).
+						Where(occCols.ID.Eq(), entry.DetentionOccurrenceID)
+				}).
+				Set(occCols.EvidenceHead.Set(), entry.Hash).
+				Exec(c)
+
+			return uErr
+		})
+		if err != nil {
+			log.Error("failed to append detention evidence", zap.Error(err))
+			return nil, err
 		}
 
-		occCols := buncolgen.DetentionOccurrenceColumns
-		_, uErr := r.db.DBForContext(c).
-			NewUpdate().
-			Model((*detention.DetentionOccurrence)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.DetentionOccurrenceScopeTenantUpdate(uq, tenantInfo).
-					Where(occCols.ID.Eq(), entry.DetentionOccurrenceID)
-			}).
-			Set(occCols.EvidenceHead.Set(), entry.Hash).
-			Exec(c)
-
-		return uErr
+		return entry, nil
 	})
-	if err != nil {
-		log.Error("failed to append detention evidence", zap.Error(err))
-		return nil, err
-	}
-
-	return entry, nil
 }
 
 func (r *evidenceRepository) headForUpdate(
@@ -97,77 +100,83 @@ func (r *evidenceRepository) headForUpdate(
 	occurrenceID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (string, int32, error) {
-	cols := buncolgen.DetentionEvidenceColumns
-	latest := new(detention.DetentionEvidence)
+	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (string, int32, error) {
+		cols := buncolgen.DetentionEvidenceColumns
+		latest := new(detention.DetentionEvidence)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(latest).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionEvidenceScopeTenant(sq, tenantInfo).
-				Where(cols.DetentionOccurrenceID.Eq(), occurrenceID)
-		}).
-		Order(cols.Sequence.OrderDesc()).
-		Limit(1).
-		For("UPDATE").
-		Scan(ctx)
-	if err != nil {
-		if dberror.IsNotFoundError(err) {
-			return detention.GenesisHash, 0, nil
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(latest).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionEvidenceScopeTenant(sq, tenantInfo).
+					Where(cols.DetentionOccurrenceID.Eq(), occurrenceID)
+			}).
+			Order(cols.Sequence.OrderDesc()).
+			Limit(1).
+			For("UPDATE").
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return detention.GenesisHash, 0, nil
+			}
+			return "", 0, err
 		}
-		return "", 0, err
-	}
 
-	return latest.Hash, latest.Sequence + 1, nil
+		return latest.Hash, latest.Sequence + 1, nil
+	})
 }
 
 func (r *evidenceRepository) List(
 	ctx context.Context,
 	req *repositories.ListEvidenceRequest,
 ) ([]*detention.DetentionEvidence, error) {
-	cols := buncolgen.DetentionEvidenceColumns
-	entities := make([]*detention.DetentionEvidence, 0, 16)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionEvidence, error) {
+		cols := buncolgen.DetentionEvidenceColumns
+		entities := make([]*detention.DetentionEvidence, 0, 16)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
-				Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
-		}).
-		Order(cols.Sequence.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list detention evidence", zap.Error(err))
-		return nil, err
-	}
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
+					Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
+			}).
+			Order(cols.Sequence.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list detention evidence", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *evidenceRepository) Head(
 	ctx context.Context,
 	req *repositories.ListEvidenceRequest,
 ) (string, int32, error) {
-	cols := buncolgen.DetentionEvidenceColumns
-	latest := new(detention.DetentionEvidence)
+	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (string, int32, error) {
+		cols := buncolgen.DetentionEvidenceColumns
+		latest := new(detention.DetentionEvidence)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(latest).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
-				Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
-		}).
-		Order(cols.Sequence.OrderDesc()).
-		Limit(1).
-		Scan(ctx)
-	if err != nil {
-		if dberror.IsNotFoundError(err) {
-			return detention.GenesisHash, 0, nil
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(latest).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
+					Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
+			}).
+			Order(cols.Sequence.OrderDesc()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return detention.GenesisHash, 0, nil
+			}
+			return "", 0, err
 		}
-		return "", 0, err
-	}
 
-	return latest.Hash, latest.Sequence + 1, nil
+		return latest.Hash, latest.Sequence + 1, nil
+	})
 }

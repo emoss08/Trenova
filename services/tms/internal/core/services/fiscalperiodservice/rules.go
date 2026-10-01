@@ -24,46 +24,48 @@ func createDateValidationRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.EndDate <= entity.StartDate {
-				multiErr.Add("endDate", errortypes.ErrInvalid, "End date must be after start date")
+			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+				if entity.EndDate <= entity.StartDate {
+					multiErr.Add("endDate", errortypes.ErrInvalid, "End date must be after start date")
+					return nil
+				}
+
+				if entity.FiscalYearID.IsNil() {
+					return nil
+				}
+
+				fy := new(fiscalyear.FiscalYear)
+				err := db.DBForContext(ctx).NewSelect().
+					Model(fy).
+					Column("start_date", "end_date").
+					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.Where("fy.id = ?", entity.FiscalYearID).
+							Where("fy.organization_id = ?", valCtx.OrganizationID).
+							Where("fy.business_unit_id = ?", valCtx.BusinessUnitID)
+					}).
+					Scan(ctx)
+				if err != nil {
+					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				}
+
+				if entity.StartDate < fy.StartDate {
+					multiErr.Add(
+						"startDate",
+						errortypes.ErrInvalid,
+						"Period start date cannot be before fiscal year start date",
+					)
+				}
+
+				if entity.EndDate > fy.EndDate {
+					multiErr.Add(
+						"endDate",
+						errortypes.ErrInvalid,
+						"Period end date cannot be after fiscal year end date",
+					)
+				}
+
 				return nil
-			}
-
-			if entity.FiscalYearID.IsNil() {
-				return nil
-			}
-
-			fy := new(fiscalyear.FiscalYear)
-			err := db.DB().NewSelect().
-				Model(fy).
-				Column("start_date", "end_date").
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("fy.id = ?", entity.FiscalYearID).
-						Where("fy.organization_id = ?", valCtx.OrganizationID).
-						Where("fy.business_unit_id = ?", valCtx.BusinessUnitID)
-				}).
-				Scan(ctx)
-			if err != nil {
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-			}
-
-			if entity.StartDate < fy.StartDate {
-				multiErr.Add(
-					"startDate",
-					errortypes.ErrInvalid,
-					"Period start date cannot be before fiscal year start date",
-				)
-			}
-
-			if entity.EndDate > fy.EndDate {
-				multiErr.Add(
-					"endDate",
-					errortypes.ErrInvalid,
-					"Period end date cannot be after fiscal year end date",
-				)
-			}
-
-			return nil
+			})
 		})
 }
 

@@ -121,3 +121,14 @@ func runErr(
 		},
 	)
 }
+
+func Savepoint(ctx context.Context, conn ports.DBConnection, fn func(context.Context) error) error {
+	tx, ok := conn.DBForContext(ctx).(bun.Tx)
+	if !ok {
+		return fn(ctx)
+	}
+
+	return tx.RunInTx(ctx, nil, func(ctx context.Context, _ bun.Tx) error {
+		return fn(ctx)
+	})
+}

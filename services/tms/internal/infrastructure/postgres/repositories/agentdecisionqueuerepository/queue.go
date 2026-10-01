@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -167,123 +168,129 @@ func (r *repository) ListPending(
 	ctx context.Context,
 	req repositories.ListPendingDecisionsRequest,
 ) (*repositories.PendingDecisionsPage, error) {
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultLimit
-	}
-	if limit > maxLimit {
-		limit = maxLimit
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.PendingDecisionsPage, error) {
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultLimit
+		}
+		if limit > maxLimit {
+			limit = maxLimit
+		}
 
-	inner := pendingUnion(req)
-	q := &unionQuery{}
-	q.write("SELECT kind, id, created_at FROM (")
-	q.write(inner.sql.String(), inner.args...)
-	q.write(") AS q")
-	if req.After != nil {
-		q.write(" WHERE (created_at < ? OR (created_at = ? AND id < ?))",
-			req.After.CreatedAt, req.After.CreatedAt, req.After.ID)
-	}
-	q.write(" ORDER BY created_at DESC, id DESC LIMIT ?", limit+1)
+		inner := pendingUnion(req)
+		q := &unionQuery{}
+		q.write("SELECT kind, id, created_at FROM (")
+		q.write(inner.sql.String(), inner.args...)
+		q.write(") AS q")
+		if req.After != nil {
+			q.write(" WHERE (created_at < ? OR (created_at = ? AND id < ?))",
+				req.After.CreatedAt, req.After.CreatedAt, req.After.ID)
+		}
+		q.write(" ORDER BY created_at DESC, id DESC LIMIT ?", limit+1)
 
-	entries := make([]repositories.PendingDecisionEntry, 0, limit+1)
-	if err := r.db.DBForContext(ctx).NewRaw(q.sql.String(), q.args...).Scan(ctx, &entries); err != nil {
-		r.l.Error("failed to list pending decisions", zap.Error(err))
+		entries := make([]repositories.PendingDecisionEntry, 0, limit+1)
+		if err := r.db.DBForContext(ctx).NewRaw(q.sql.String(), q.args...).Scan(ctx, &entries); err != nil {
+			r.l.Error("failed to list pending decisions", zap.Error(err))
 
-		return nil, fmt.Errorf("list pending decisions: %w", err)
-	}
+			return nil, fmt.Errorf("list pending decisions: %w", err)
+		}
 
-	page := &repositories.PendingDecisionsPage{Entries: entries}
-	if len(entries) > limit {
-		page.Entries = entries[:limit]
-		page.HasNextPage = true
-	}
+		page := &repositories.PendingDecisionsPage{Entries: entries}
+		if len(entries) > limit {
+			page.Entries = entries[:limit]
+			page.HasNextPage = true
+		}
 
-	return page, nil
+		return page, nil
+	})
 }
 
 func (r *repository) CountPending(
 	ctx context.Context,
 	req repositories.ListPendingDecisionsRequest,
 ) (int, error) {
-	inner := pendingUnion(req)
-	q := &unionQuery{}
-	q.write("SELECT COUNT(*) FROM (")
-	q.write(inner.sql.String(), inner.args...)
-	q.write(") AS q")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		inner := pendingUnion(req)
+		q := &unionQuery{}
+		q.write("SELECT COUNT(*) FROM (")
+		q.write(inner.sql.String(), inner.args...)
+		q.write(") AS q")
 
-	var count int
-	if err := r.db.DBForContext(ctx).NewRaw(q.sql.String(), q.args...).Scan(ctx, &count); err != nil {
-		r.l.Error("failed to count pending decisions", zap.Error(err))
+		var count int
+		if err := r.db.DBForContext(ctx).NewRaw(q.sql.String(), q.args...).Scan(ctx, &count); err != nil {
+			r.l.Error("failed to count pending decisions", zap.Error(err))
 
-		return 0, fmt.Errorf("count pending decisions: %w", err)
-	}
+			return 0, fmt.Errorf("count pending decisions: %w", err)
+		}
 
-	return count, nil
+		return count, nil
+	})
 }
 
 func (r *repository) Summary(
 	ctx context.Context,
 	req repositories.PendingDecisionSummaryRequest,
 ) (*repositories.PendingDecisionSummary, error) {
-	listReq := repositories.ListPendingDecisionsRequest{
-		TenantInfo:               req.TenantInfo,
-		ExcludeShadowDefinitions: req.ExcludeShadowDefinitions,
-		Audience:                 req.Audience,
-		Now:                      req.Now,
-	}
-	db := r.db.DBForContext(ctx)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.PendingDecisionSummary, error) {
+		listReq := repositories.ListPendingDecisionsRequest{
+			TenantInfo:               req.TenantInfo,
+			ExcludeShadowDefinitions: req.ExcludeShadowDefinitions,
+			Audience:                 req.Audience,
+			Now:                      req.Now,
+		}
+		db := r.db.DBForContext(ctx)
 
-	var totals struct {
-		Total    int    `bun:"total"`
-		OldestAt *int64 `bun:"oldest_at"`
-	}
-	inner := pendingUnion(listReq)
-	q := &unionQuery{}
-	q.write("SELECT COUNT(*) AS total, MIN(created_at) AS oldest_at FROM (")
-	q.write(inner.sql.String(), inner.args...)
-	q.write(") AS q")
-	if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &totals); err != nil {
-		r.l.Error("failed to summarize pending decisions", zap.Error(err))
+		var totals struct {
+			Total    int    `bun:"total"`
+			OldestAt *int64 `bun:"oldest_at"`
+		}
+		inner := pendingUnion(listReq)
+		q := &unionQuery{}
+		q.write("SELECT COUNT(*) AS total, MIN(created_at) AS oldest_at FROM (")
+		q.write(inner.sql.String(), inner.args...)
+		q.write(") AS q")
+		if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &totals); err != nil {
+			r.l.Error("failed to summarize pending decisions", zap.Error(err))
 
-		return nil, fmt.Errorf("summarize pending decisions: %w", err)
-	}
+			return nil, fmt.Errorf("summarize pending decisions: %w", err)
+		}
 
-	summary := &repositories.PendingDecisionSummary{
-		Total:   totals.Total,
-		ByAgent: []repositories.PendingDecisionAgentCount{},
-		ByTool:  []repositories.PendingDecisionToolCount{},
-	}
-	if totals.Total == 0 {
+		summary := &repositories.PendingDecisionSummary{
+			Total:   totals.Total,
+			ByAgent: []repositories.PendingDecisionAgentCount{},
+			ByTool:  []repositories.PendingDecisionToolCount{},
+		}
+		if totals.Total == 0 {
+			return summary, nil
+		}
+		summary.OldestAt = totals.OldestAt
+
+		byAgent := make([]repositories.PendingDecisionAgentCount, 0, 8)
+		inner = pendingUnion(listReq)
+		q = &unionQuery{}
+		q.write("SELECT agent_definition_id, agent_name, COUNT(*) AS count FROM (")
+		q.write(inner.sql.String(), inner.args...)
+		q.write(") AS q GROUP BY agent_definition_id, agent_name ORDER BY count DESC, agent_name ASC")
+		if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &byAgent); err != nil {
+			r.l.Error("failed to count pending decisions by agent", zap.Error(err))
+
+			return nil, fmt.Errorf("count pending decisions by agent: %w", err)
+		}
+		summary.ByAgent = byAgent
+
+		byTool := make([]repositories.PendingDecisionToolCount, 0, 8)
+		inner = pendingUnion(listReq)
+		q = &unionQuery{}
+		q.write("SELECT tool_name, COUNT(*) AS count FROM (")
+		q.write(inner.sql.String(), inner.args...)
+		q.write(") AS q GROUP BY tool_name ORDER BY count DESC, tool_name ASC")
+		if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &byTool); err != nil {
+			r.l.Error("failed to count pending decisions by tool", zap.Error(err))
+
+			return nil, fmt.Errorf("count pending decisions by tool: %w", err)
+		}
+		summary.ByTool = byTool
+
 		return summary, nil
-	}
-	summary.OldestAt = totals.OldestAt
-
-	byAgent := make([]repositories.PendingDecisionAgentCount, 0, 8)
-	inner = pendingUnion(listReq)
-	q = &unionQuery{}
-	q.write("SELECT agent_definition_id, agent_name, COUNT(*) AS count FROM (")
-	q.write(inner.sql.String(), inner.args...)
-	q.write(") AS q GROUP BY agent_definition_id, agent_name ORDER BY count DESC, agent_name ASC")
-	if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &byAgent); err != nil {
-		r.l.Error("failed to count pending decisions by agent", zap.Error(err))
-
-		return nil, fmt.Errorf("count pending decisions by agent: %w", err)
-	}
-	summary.ByAgent = byAgent
-
-	byTool := make([]repositories.PendingDecisionToolCount, 0, 8)
-	inner = pendingUnion(listReq)
-	q = &unionQuery{}
-	q.write("SELECT tool_name, COUNT(*) AS count FROM (")
-	q.write(inner.sql.String(), inner.args...)
-	q.write(") AS q GROUP BY tool_name ORDER BY count DESC, tool_name ASC")
-	if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &byTool); err != nil {
-		r.l.Error("failed to count pending decisions by tool", zap.Error(err))
-
-		return nil, fmt.Errorf("count pending decisions by tool: %w", err)
-	}
-	summary.ByTool = byTool
-
-	return summary, nil
+	})
 }

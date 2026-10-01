@@ -73,3 +73,21 @@ func TestHelpersOpenATransactionPerCallWhenScoped(t *testing.T) {
 	}, conn.opened)
 	assert.True(t, Required(conn))
 }
+
+func TestSavepointRunsDirectlyOutsideATransaction(t *testing.T) {
+	t.Parallel()
+
+	conn := &fakeConn{DBConnection: outsideTx{}}
+	ran := false
+	require.NoError(t, Savepoint(t.Context(), conn, func(context.Context) error {
+		ran = true
+		return nil
+	}))
+	assert.True(t, ran)
+}
+
+type outsideTx struct {
+	ports.DBConnection
+}
+
+func (outsideTx) DBForContext(context.Context) bun.IDB { return (*bun.DB)(nil) }

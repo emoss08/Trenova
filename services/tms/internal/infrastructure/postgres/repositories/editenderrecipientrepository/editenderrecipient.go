@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -36,75 +37,82 @@ func (r *repository) GetTenderRecipientByID(
 	ctx context.Context,
 	req repositories.GetEDITenderRecipientByIDRequest,
 ) (*edi.TenderRecipient, error) {
-	entity := new(edi.TenderRecipient)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where("etr.id = ?", req.ID).
-		Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-			return applyTenderRecipientTenantScope(query, req.TenantInfo)
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "EDITenderRecipient")
-	}
-	return entity, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
+		entity := new(edi.TenderRecipient)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("etr.id = ?", req.ID).
+			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
+				return applyTenderRecipientTenantScope(query, req.TenantInfo)
+			}).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "EDITenderRecipient")
+		}
+		return entity, nil
+	})
 }
 
 func (r *repository) ListActiveTenderRecipientsForSourceShipment(
 	ctx context.Context,
 	req repositories.ListEDITenderRecipientsForSourceShipmentRequest,
 ) ([]*edi.TenderRecipient, error) {
-	entities := make([]*edi.TenderRecipient, 0)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Where("etr.source_organization_id = ?", req.TenantInfo.OrgID).
-		Where("etr.source_business_unit_id = ?", req.TenantInfo.BuID).
-		Where("etr.source_shipment_id = ?", req.SourceShipmentID).
-		Where("etr.status = ?", edi.TenderRecipientStatusActive).
-		Order("etr.created_at ASC").
-		Scan(ctx)
-	return entities, err
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.TenderRecipient, error) {
+		entities := make([]*edi.TenderRecipient, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Where("etr.source_organization_id = ?", req.TenantInfo.OrgID).
+			Where("etr.source_business_unit_id = ?", req.TenantInfo.BuID).
+			Where("etr.source_shipment_id = ?", req.SourceShipmentID).
+			Where("etr.status = ?", edi.TenderRecipientStatusActive).
+			Order("etr.created_at ASC").
+			Scan(ctx)
+		return entities, err
+	})
 }
 
 func (r *repository) GetActiveExternalRecipientByShipmentReference(
 	ctx context.Context,
 	req repositories.GetActiveExternalEDITenderRecipientByReferenceRequest,
 ) (*edi.TenderRecipient, error) {
-	entity := new(edi.TenderRecipient)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where("etr.source_organization_id = ?", req.TenantInfo.OrgID).
-		Where("etr.source_business_unit_id = ?", req.TenantInfo.BuID).
-		Where("etr.edi_partner_id = ?", req.PartnerID).
-		Where("etr.recipient_kind = ?", edi.TenderRecipientKindExternal).
-		Where("etr.status = ?", edi.TenderRecipientStatusActive).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				WhereOr("etr.source_shipment_id = ?", req.Reference).
-				WhereOr("etr.latest_baseline_payload->>'bol' = ?", req.Reference).
-				WhereOr("etr.latest_baseline_payload->>'shipmentId' = ?", req.Reference)
-		}).
-		Order("etr.created_at DESC").
-		Limit(1).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "EDITenderRecipient")
-	}
-	return entity, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
+		entity := new(edi.TenderRecipient)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("etr.source_organization_id = ?", req.TenantInfo.OrgID).
+			Where("etr.source_business_unit_id = ?", req.TenantInfo.BuID).
+			Where("etr.edi_partner_id = ?", req.PartnerID).
+			Where("etr.recipient_kind = ?", edi.TenderRecipientKindExternal).
+			Where("etr.status = ?", edi.TenderRecipientStatusActive).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					WhereOr("etr.source_shipment_id = ?", req.Reference).
+					WhereOr("etr.latest_baseline_payload->>'bol' = ?", req.Reference).
+					WhereOr("etr.latest_baseline_payload->>'shipmentId' = ?", req.Reference)
+			}).
+			Order("etr.created_at DESC").
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "EDITenderRecipient")
+		}
+		return entity, nil
+	})
 }
 
 func (r *repository) UpsertTenderRecipient(
 	ctx context.Context,
 	req repositories.UpsertEDITenderRecipientRequest,
 ) (*edi.TenderRecipient, error) {
-	entity := req.Recipient
-	_, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		On(`CONFLICT (
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
+		entity := req.Recipient
+		_, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			On(`CONFLICT (
 				source_shipment_id,
 				source_business_unit_id,
 				source_organization_id,
@@ -114,49 +122,52 @@ func (r *repository) UpsertTenderRecipient(
 				COALESCE(edi_partner_id, ''),
 				COALESCE(partner_document_profile_id, '')
 			) DO UPDATE`).
-		Set("latest_baseline_payload = EXCLUDED.latest_baseline_payload").
-		Set("latest_baseline_hash = EXCLUDED.latest_baseline_hash").
-		Set("baseline_recorded_at = EXCLUDED.baseline_recorded_at").
-		Set("baseline_status = EXCLUDED.baseline_status").
-		Set("original_transfer_id = COALESCE(NULLIF(EXCLUDED.original_transfer_id, ''), etr.original_transfer_id)").
-		Set("shipment_link_id = COALESCE(NULLIF(EXCLUDED.shipment_link_id, ''), etr.shipment_link_id)").
-		Set("original_message_id = COALESCE(NULLIF(EXCLUDED.original_message_id, ''), etr.original_message_id)").
-		Set("partner_document_profile_id = COALESCE(NULLIF(EXCLUDED.partner_document_profile_id, ''), etr.partner_document_profile_id)").
-		Set("communication_profile_id = COALESCE(NULLIF(EXCLUDED.communication_profile_id, ''), etr.communication_profile_id)").
-		Set("status = ?", edi.TenderRecipientStatusActive).
-		Set("updated_at = " + r.db.NowEpoch()).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return entity, nil
+			Set("latest_baseline_payload = EXCLUDED.latest_baseline_payload").
+			Set("latest_baseline_hash = EXCLUDED.latest_baseline_hash").
+			Set("baseline_recorded_at = EXCLUDED.baseline_recorded_at").
+			Set("baseline_status = EXCLUDED.baseline_status").
+			Set("original_transfer_id = COALESCE(NULLIF(EXCLUDED.original_transfer_id, ''), etr.original_transfer_id)").
+			Set("shipment_link_id = COALESCE(NULLIF(EXCLUDED.shipment_link_id, ''), etr.shipment_link_id)").
+			Set("original_message_id = COALESCE(NULLIF(EXCLUDED.original_message_id, ''), etr.original_message_id)").
+			Set("partner_document_profile_id = COALESCE(NULLIF(EXCLUDED.partner_document_profile_id, ''), etr.partner_document_profile_id)").
+			Set("communication_profile_id = COALESCE(NULLIF(EXCLUDED.communication_profile_id, ''), etr.communication_profile_id)").
+			Set("status = ?", edi.TenderRecipientStatusActive).
+			Set("updated_at = " + r.db.NowEpoch()).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return entity, nil
+	})
 }
 
 func (r *repository) UpdateTenderRecipient(
 	ctx context.Context,
 	entity *edi.TenderRecipient,
 ) (*edi.TenderRecipient, error) {
-	ov := entity.Version
-	entity.Version++
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err = dberror.CheckRowsAffected(
-		results,
-		"EDITenderRecipient",
-		entity.ID.String(),
-	); err != nil {
-		return nil, err
-	}
-	return entity, nil
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TenderRecipient, error) {
+		ov := entity.Version
+		entity.Version++
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if err = dberror.CheckRowsAffected(
+			results,
+			"EDITenderRecipient",
+			entity.ID.String(),
+		); err != nil {
+			return nil, err
+		}
+		return entity, nil
+	})
 }
 
 func applyTenderRecipientTenantScope(

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -37,47 +38,51 @@ func (r *repository) GetRate(
 	ctx context.Context,
 	req *repositories.GetExchangeRateRequest,
 ) (*exchangerate.ExchangeRate, error) {
-	entity := new(exchangerate.ExchangeRate)
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		Where("er.organization_id = ?", req.TenantInfo.OrgID).
-		Where("er.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("er.provider = ?", req.Provider).
-		Where("er.from_currency = ?", req.FromCurrency).
-		Where("er.to_currency = ?", req.ToCurrency).
-		Where("er.rate_type = ?", req.RateType).
-		Where("er.date = ?", req.Date.Format("2006-01-02")).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "ExchangeRate")
-	}
-	return entity, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*exchangerate.ExchangeRate, error) {
+		entity := new(exchangerate.ExchangeRate)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where("er.organization_id = ?", req.TenantInfo.OrgID).
+			Where("er.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("er.provider = ?", req.Provider).
+			Where("er.from_currency = ?", req.FromCurrency).
+			Where("er.to_currency = ?", req.ToCurrency).
+			Where("er.rate_type = ?", req.RateType).
+			Where("er.date = ?", req.Date.Format("2006-01-02")).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "ExchangeRate")
+		}
+		return entity, nil
+	})
 }
 
 func (r *repository) UpsertRates(
 	ctx context.Context,
 	req *repositories.UpsertExchangeRatesRequest,
 ) error {
-	return r.db.DB().RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-		for idx := range req.Rates {
-			rate := req.Rates[idx]
-			_, err := tx.NewInsert().
-				Model(rate).
-				On("CONFLICT (organization_id, business_unit_id, provider, from_currency, to_currency, rate_type, date) DO UPDATE").
-				Set("bid = EXCLUDED.bid").
-				Set("ask = EXCLUDED.ask").
-				Set("mid = EXCLUDED.mid").
-				Set("selected_rate = EXCLUDED.selected_rate").
-				Set("source_timestamp = EXCLUDED.source_timestamp").
-				Set("fetched_at = EXCLUDED.fetched_at").
-				Set("settlement_eligible = EXCLUDED.settlement_eligible").
-				Exec(txCtx)
-			if err != nil {
-				return err
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+			for idx := range req.Rates {
+				rate := req.Rates[idx]
+				_, err := tx.NewInsert().
+					Model(rate).
+					On("CONFLICT (organization_id, business_unit_id, provider, from_currency, to_currency, rate_type, date) DO UPDATE").
+					Set("bid = EXCLUDED.bid").
+					Set("ask = EXCLUDED.ask").
+					Set("mid = EXCLUDED.mid").
+					Set("selected_rate = EXCLUDED.selected_rate").
+					Set("source_timestamp = EXCLUDED.source_timestamp").
+					Set("fetched_at = EXCLUDED.fetched_at").
+					Set("settlement_eligible = EXCLUDED.settlement_eligible").
+					Exec(txCtx)
+				if err != nil {
+					return err
+				}
 			}
-		}
-		return nil
+			return nil
+		})
 	})
 }
 
@@ -85,36 +90,40 @@ func (r *repository) CreateSettlementQuote(
 	ctx context.Context,
 	req *repositories.CreateSettlementQuoteRequest,
 ) (*exchangerate.SettlementQuote, error) {
-	req.Quote.OrganizationID = req.TenantInfo.OrgID
-	req.Quote.BusinessUnitID = req.TenantInfo.BuID
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*exchangerate.SettlementQuote, error) {
+		req.Quote.OrganizationID = req.TenantInfo.OrgID
+		req.Quote.BusinessUnitID = req.TenantInfo.BuID
 
-	if _, err := r.db.DB().
-		NewInsert().
-		Model(req.Quote).
-		Returning("*").
-		Exec(ctx); err != nil {
-		return nil, err
-	}
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(req.Quote).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return nil, err
+		}
 
-	return req.Quote, nil
+		return req.Quote, nil
+	})
 }
 
 func (r *repository) GetLatestDate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*time.Time, error) {
-	var latestDate time.Time
-	err := r.db.DB().
-		NewSelect().
-		Model((*exchangerate.ExchangeRate)(nil)).
-		ColumnExpr("er.date").
-		Where("er.organization_id = ?", tenantInfo.OrgID).
-		Where("er.business_unit_id = ?", tenantInfo.BuID).
-		Order("er.date DESC").
-		Limit(1).
-		Scan(ctx, &latestDate)
-	if err != nil {
-		return nil, err
-	}
-	return &latestDate, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*time.Time, error) {
+		var latestDate time.Time
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*exchangerate.ExchangeRate)(nil)).
+			ColumnExpr("er.date").
+			Where("er.organization_id = ?", tenantInfo.OrgID).
+			Where("er.business_unit_id = ?", tenantInfo.BuID).
+			Order("er.date DESC").
+			Limit(1).
+			Scan(ctx, &latestDate)
+		if err != nil {
+			return nil, err
+		}
+		return &latestDate, nil
+	})
 }

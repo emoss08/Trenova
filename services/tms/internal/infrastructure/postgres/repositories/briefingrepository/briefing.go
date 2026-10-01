@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -51,16 +52,18 @@ func (r *repository) Upsert(
 	ctx context.Context,
 	entity *briefing.Briefing,
 ) (*briefing.Briefing, error) {
-	if _, err := buildUpsert(r.db.DBForContext(ctx), entity).Exec(ctx); err != nil {
-		r.l.Error("failed to upsert briefing",
-			zap.String("role", string(entity.RoleKey)),
-			zap.String("date", entity.BriefingDate),
-			zap.Error(err))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
+		if _, err := buildUpsert(r.db.DBForContext(ctx), entity).Exec(ctx); err != nil {
+			r.l.Error("failed to upsert briefing",
+				zap.String("role", string(entity.RoleKey)),
+				zap.String("date", entity.BriefingDate),
+				zap.Error(err))
 
-		return nil, fmt.Errorf("upsert briefing: %w", err)
-	}
+			return nil, fmt.Errorf("upsert briefing: %w", err)
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func buildUpsert(db bun.IDB, entity *briefing.Briefing) *bun.InsertQuery {
@@ -90,25 +93,27 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetBriefingByIDRequest,
 ) (*briefing.Briefing, error) {
-	cols := buncolgen.BriefingColumns
-	entity := new(briefing.Briefing)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
+		cols := buncolgen.BriefingColumns
+		entity := new(briefing.Briefing)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.BriefingScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil, errortypes.NewNotFoundError("Briefing not found")
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.BriefingScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil, errortypes.NewNotFoundError("Briefing not found")
+			}
+
+			return nil, fmt.Errorf("get briefing: %w", err)
 		}
 
-		return nil, fmt.Errorf("get briefing: %w", err)
-	}
-
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // GetForDay reads one role's briefing for a day, or nil when it has not
@@ -118,64 +123,68 @@ func (r *repository) GetForDay(
 	ctx context.Context,
 	req repositories.GetBriefingForDayRequest,
 ) (*briefing.Briefing, error) {
-	cols := buncolgen.BriefingColumns
-	entity := new(briefing.Briefing)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
+		cols := buncolgen.BriefingColumns
+		entity := new(briefing.Briefing)
 
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.BriefingScopeTenant(sq, req.TenantInfo).
-				Where(cols.RoleKey.Eq(), req.RoleKey).
-				Where(cols.BriefingDate.Eq(), req.BriefingDate)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = buncolgen.BriefingScopeTenant(sq, req.TenantInfo).
+					Where(cols.RoleKey.Eq(), req.RoleKey).
+					Where(cols.BriefingDate.Eq(), req.BriefingDate)
 
-			return scopeReader(sq, req.UserID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		if dberror.IsNotFoundError(err) {
-			return nil, nil
+				return scopeReader(sq, req.UserID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			if dberror.IsNotFoundError(err) {
+				return nil, nil
+			}
+
+			return nil, fmt.Errorf("get briefing for day: %w", err)
 		}
 
-		return nil, fmt.Errorf("get briefing for day: %w", err)
-	}
-
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req repositories.ListBriefingsRequest,
 ) ([]*briefing.Briefing, error) {
-	cols := buncolgen.BriefingColumns
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultListLimit
-	}
-	if limit > maxListLimit {
-		limit = maxListLimit
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*briefing.Briefing, error) {
+		cols := buncolgen.BriefingColumns
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultListLimit
+		}
+		if limit > maxListLimit {
+			limit = maxListLimit
+		}
 
-	entities := make([]*briefing.Briefing, 0, limit)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.BriefingScopeTenant(sq, req.TenantInfo)
-			if req.RoleKey != "" {
-				sq = sq.Where(cols.RoleKey.Eq(), req.RoleKey)
-			}
+		entities := make([]*briefing.Briefing, 0, limit)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = buncolgen.BriefingScopeTenant(sq, req.TenantInfo)
+				if req.RoleKey != "" {
+					sq = sq.Where(cols.RoleKey.Eq(), req.RoleKey)
+				}
 
-			return scopeReader(sq, req.UserID)
-		}).
-		Order(cols.BriefingDate.OrderDesc()).
-		Limit(limit).
-		Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list briefings: %w", err)
-	}
+				return scopeReader(sq, req.UserID)
+			}).
+			Order(cols.BriefingDate.OrderDesc()).
+			Limit(limit).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list briefings: %w", err)
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) MarkRead(
@@ -201,30 +210,32 @@ func (r *repository) DeleteBefore(
 	ctx context.Context,
 	req repositories.DeleteBriefingsBeforeRequest,
 ) (int, error) {
-	cols := buncolgen.BriefingColumns
-	limit := req.Limit
-	if limit <= 0 || limit > maxDeleteBatch {
-		limit = maxDeleteBatch
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		cols := buncolgen.BriefingColumns
+		limit := req.Limit
+		if limit <= 0 || limit > maxDeleteBatch {
+			limit = maxDeleteBatch
+		}
 
-	res, err := r.db.DBForContext(ctx).
-		NewDelete().
-		Model((*briefing.Briefing)(nil)).
-		Where(
-			cols.ID.In()+" (SELECT "+cols.ID.Qualified()+" FROM "+
-				buncolgen.BriefingTable.Name+" AS "+buncolgen.BriefingTable.Alias+
-				" WHERE "+cols.BriefingDate.Qualified()+" < ? ORDER BY "+
-				cols.BriefingDate.Qualified()+" LIMIT ?)",
-			req.BeforeDate,
-			limit,
-		).
-		Exec(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("delete briefings: %w", err)
-	}
-	affected, _ := res.RowsAffected()
+		res, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*briefing.Briefing)(nil)).
+			Where(
+				cols.ID.In()+" (SELECT "+cols.ID.Qualified()+" FROM "+
+					buncolgen.BriefingTable.Name+" AS "+buncolgen.BriefingTable.Alias+
+					" WHERE "+cols.BriefingDate.Qualified()+" < ? ORDER BY "+
+					cols.BriefingDate.Qualified()+" LIMIT ?)",
+				req.BeforeDate,
+				limit,
+			).
+			Exec(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("delete briefings: %w", err)
+		}
+		affected, _ := res.RowsAffected()
 
-	return int(affected), nil
+		return int(affected), nil
+	})
 }
 
 func (r *repository) stamp(
@@ -233,29 +244,31 @@ func (r *repository) stamp(
 	column buncolgen.Column,
 	at int64,
 ) (*briefing.Briefing, error) {
-	cols := buncolgen.BriefingColumns
-	entity := new(briefing.Briefing)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
+		cols := buncolgen.BriefingColumns
+		entity := new(briefing.Briefing)
 
-	res, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		Set(column.Set(), at).
-		Set(cols.Version.SetExpr("{} + 1")).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.BriefingScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
-		}).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("stamp briefing: %w", err)
-	}
-	if err = dberror.CheckRowsAffected(res, "Briefing", req.ID.String()); err != nil {
-		return nil, err
-	}
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			Set(column.Set(), at).
+			Set(cols.Version.SetExpr("{} + 1")).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.BriefingScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("stamp briefing: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(res, "Briefing", req.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 // scopeReader narrows to the shared briefing or to one person's. A nil

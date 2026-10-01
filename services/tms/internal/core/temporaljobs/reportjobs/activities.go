@@ -355,12 +355,14 @@ func (a *Activities) ExecuteAndRenderActivity(
 		return nil, classifyCompileError(err)
 	}
 
-	if err = reportingcompiler.PreflightCost(ctx, a.reportingDB.DB(), compiled,
-		reportingcompiler.CostLimits{
-			MaxEstimatedCost: a.cfg.GetExplainCostLimit(),
-			MaxEstimatedRows: a.cfg.GetExplainRowLimit(),
-		},
-	); err != nil {
+	if err = a.reportingDB.RunScoped(ctx, true, func(ctx context.Context) error {
+		return reportingcompiler.PreflightCost(ctx, a.reportingDB.DBForContext(ctx), compiled,
+			reportingcompiler.CostLimits{
+				MaxEstimatedCost: a.cfg.GetExplainCostLimit(),
+				MaxEstimatedRows: a.cfg.GetExplainRowLimit(),
+			},
+		)
+	}); err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
 			err.Error(), ErrTypeReportTooExpensive, err,
 		)

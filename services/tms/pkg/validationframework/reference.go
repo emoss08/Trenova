@@ -21,23 +21,15 @@ type ReferenceRequest struct {
 }
 
 type BunReferenceChecker struct {
-	db       bun.IDB
-	dbGetter DBGetter
+	source dbSource
 }
 
 func NewBunReferenceChecker(db bun.IDB) *BunReferenceChecker {
-	return &BunReferenceChecker{db: db}
+	return &BunReferenceChecker{source: dbSource{db: db}}
 }
 
-func NewBunReferenceCheckerLazy(getter DBGetter) *BunReferenceChecker {
-	return &BunReferenceChecker{dbGetter: getter}
-}
-
-func (c *BunReferenceChecker) getDB() bun.IDB {
-	if c.dbGetter != nil {
-		return c.dbGetter()
-	}
-	return c.db
+func NewBunReferenceCheckerScoped(conn ScopedDB) *BunReferenceChecker {
+	return &BunReferenceChecker{source: dbSource{scoped: conn}}
 }
 
 func (c *BunReferenceChecker) CheckReference(
@@ -52,11 +44,17 @@ func (c *BunReferenceChecker) CheckReference(
 		return false, errors.New("reference ID is required")
 	}
 
-	db := c.getDB()
-	if db == nil {
-		return false, errors.New("database connection is not initialized")
-	}
+	var exists bool
+	err := c.source.read(ctx, func(ctx context.Context, db bun.IDB) error {
+		var queryErr error
+		exists, queryErr = referenceQuery(db, req).Exists(ctx)
+		return queryErr
+	})
 
+	return exists, err
+}
+
+func referenceQuery(db bun.IDB, req *ReferenceRequest) *bun.SelectQuery {
 	q := db.NewSelect().
 		TableExpr(req.TableName).
 		ColumnExpr("1").
@@ -76,35 +74,33 @@ func (c *BunReferenceChecker) CheckReference(
 		)
 	}
 
-	return q.Exists(ctx)
+	return q
 }
 
 type CustomReferenceCheckFunc func(ctx context.Context, orgID, buID, refID pulid.ID) (bool, error)
 
 // NewUSStateReferenceCheck builds the shared existence check for the global
-// us_states table (which carries no tenant columns). The DB is resolved
-// lazily through the getter so validators can be constructed before the
-// connection is ready, mirroring NewBunUniquenessCheckerLazy.
-func NewUSStateReferenceCheck(getter DBGetter) CustomReferenceCheckFunc {
+// us_states table (which carries no tenant columns).
+func NewUSStateReferenceCheck(conn ScopedDB) CustomReferenceCheckFunc {
+	source := dbSource{scoped: conn}
+
 	return func(ctx context.Context, _, _ pulid.ID, refID pulid.ID) (bool, error) {
 		if refID.IsNil() {
 			return true, nil
 		}
 
-		db := getter()
-		if db == nil {
-			return false, errors.New("database connection is not initialized")
-		}
+		var exists bool
+		err := source.read(ctx, func(ctx context.Context, db bun.IDB) error {
+			var queryErr error
+			exists, queryErr = db.NewSelect().
+				TableExpr("us_states").
+				ColumnExpr("1").
+				Where("id = ?", refID).
+				Exists(ctx)
+			return queryErr
+		})
 
-		exists, err := db.NewSelect().
-			TableExpr("us_states").
-			ColumnExpr("1").
-			Where("id = ?", refID).
-			Exists(ctx)
-		if err != nil {
-			return false, err
-		}
-		return exists, nil
+		return exists, err
 	}
 }
 

@@ -48,28 +48,30 @@ func createParentAccountActiveRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.ParentID.IsNil() {
+			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+				if entity.ParentID.IsNil() {
+					return nil
+				}
+
+				parent := new(glaccount.GLAccount)
+				err := db.DBForContext(ctx).NewSelect().
+					Model(parent).
+					Column("id", "status").
+					Where("id = ?", entity.ParentID).
+					Where("organization_id = ?", valCtx.OrganizationID).
+					Where("business_unit_id = ?", valCtx.BusinessUnitID).
+					Scan(ctx)
+				if err != nil {
+					multiErr.Add("parentId", errortypes.ErrInvalid, "Parent account not found")
+					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				}
+
+				if parent.Status != domaintypes.StatusActive {
+					multiErr.Add("parentId", errortypes.ErrInvalid, "Parent account must be active")
+				}
+
 				return nil
-			}
-
-			parent := new(glaccount.GLAccount)
-			err := db.DB().NewSelect().
-				Model(parent).
-				Column("id", "status").
-				Where("id = ?", entity.ParentID).
-				Where("organization_id = ?", valCtx.OrganizationID).
-				Where("business_unit_id = ?", valCtx.BusinessUnitID).
-				Scan(ctx)
-			if err != nil {
-				multiErr.Add("parentId", errortypes.ErrInvalid, "Parent account not found")
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-			}
-
-			if parent.Status != domaintypes.StatusActive {
-				multiErr.Add("parentId", errortypes.ErrInvalid, "Parent account must be active")
-			}
-
-			return nil
+			})
 		})
 }
 
@@ -88,55 +90,57 @@ func createCircularReferenceRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.ParentID.IsNil() {
-				return nil
-			}
-
-			if entity.ParentID == entity.ID {
-				multiErr.Add("parentId", errortypes.ErrInvalid, "Account cannot be its own parent")
-				return nil
-			}
-
-			visited := map[pulid.ID]struct{}{entity.ID: {}}
-			currentParentID := entity.ParentID
-
-			for range maxHierarchyDepth {
-				if _, ok := visited[currentParentID]; ok {
-					multiErr.Add(
-						"parentId",
-						errortypes.ErrInvalid,
-						"Circular reference detected in account hierarchy",
-					)
+			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+				if entity.ParentID.IsNil() {
 					return nil
 				}
 
-				visited[currentParentID] = struct{}{}
-
-				var parentID *string
-				err := db.DB().NewSelect().
-					TableExpr("gl_accounts").
-					Column("parent_id").
-					Where("id = ?", currentParentID).
-					Where("organization_id = ?", valCtx.OrganizationID).
-					Where("business_unit_id = ?", valCtx.BusinessUnitID).
-					Scan(ctx, &parentID)
-				if err != nil {
-					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-				}
-
-				if parentID == nil || *parentID == "" {
+				if entity.ParentID == entity.ID {
+					multiErr.Add("parentId", errortypes.ErrInvalid, "Account cannot be its own parent")
 					return nil
 				}
 
-				currentParentID = pulid.ID(*parentID)
-			}
+				visited := map[pulid.ID]struct{}{entity.ID: {}}
+				currentParentID := entity.ParentID
 
-			multiErr.Add(
-				"parentId",
-				errortypes.ErrInvalid,
-				"Account hierarchy is too deep (max 10 levels)",
-			)
-			return nil
+				for range maxHierarchyDepth {
+					if _, ok := visited[currentParentID]; ok {
+						multiErr.Add(
+							"parentId",
+							errortypes.ErrInvalid,
+							"Circular reference detected in account hierarchy",
+						)
+						return nil
+					}
+
+					visited[currentParentID] = struct{}{}
+
+					var parentID *string
+					err := db.DBForContext(ctx).NewSelect().
+						TableExpr("gl_accounts").
+						Column("parent_id").
+						Where("id = ?", currentParentID).
+						Where("organization_id = ?", valCtx.OrganizationID).
+						Where("business_unit_id = ?", valCtx.BusinessUnitID).
+						Scan(ctx, &parentID)
+					if err != nil {
+						return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+					}
+
+					if parentID == nil || *parentID == "" {
+						return nil
+					}
+
+					currentParentID = pulid.ID(*parentID)
+				}
+
+				multiErr.Add(
+					"parentId",
+					errortypes.ErrInvalid,
+					"Account hierarchy is too deep (max 10 levels)",
+				)
+				return nil
+			})
 		})
 }
 
@@ -184,37 +188,39 @@ func createDeactivationProtectionRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.Status == domaintypes.StatusActive {
+			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+				if entity.Status == domaintypes.StatusActive {
+					return nil
+				}
+
+				activeChildCount, err := db.DBForContext(ctx).NewSelect().
+					TableExpr("gl_accounts").
+					Where("parent_id = ?", entity.ID).
+					Where("organization_id = ?", valCtx.OrganizationID).
+					Where("business_unit_id = ?", valCtx.BusinessUnitID).
+					Where("status = ?", domaintypes.StatusActive).
+					Count(ctx)
+				if err != nil {
+					return err
+				}
+
+				if activeChildCount > 0 {
+					multiErr.Add(
+						"status",
+						errortypes.ErrInvalid,
+						"Cannot deactivate account with active child accounts",
+					)
+				}
+
+				if entity.CurrentBalance != 0 {
+					multiErr.Add(
+						"currentBalance",
+						errortypes.ErrInvalid,
+						"Cannot deactivate account with non-zero balance",
+					)
+				}
+
 				return nil
-			}
-
-			activeChildCount, err := db.DB().NewSelect().
-				TableExpr("gl_accounts").
-				Where("parent_id = ?", entity.ID).
-				Where("organization_id = ?", valCtx.OrganizationID).
-				Where("business_unit_id = ?", valCtx.BusinessUnitID).
-				Where("status = ?", domaintypes.StatusActive).
-				Count(ctx)
-			if err != nil {
-				return err
-			}
-
-			if activeChildCount > 0 {
-				multiErr.Add(
-					"status",
-					errortypes.ErrInvalid,
-					"Cannot deactivate account with active child accounts",
-				)
-			}
-
-			if entity.CurrentBalance != 0 {
-				multiErr.Add(
-					"currentBalance",
-					errortypes.ErrInvalid,
-					"Cannot deactivate account with non-zero balance",
-				)
-			}
-
-			return nil
+			})
 		})
 }

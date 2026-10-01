@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -32,8 +33,10 @@ func New(p Params) repositories.PasswordResetTokenRepository {
 }
 
 func (r *repository) Create(ctx context.Context, token *tenant.PasswordResetToken) error {
-	_, err := r.db.DB().NewInsert().Model(token).Exec(ctx)
-	return err
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		_, err := r.db.DBForContext(ctx).NewInsert().Model(token).Exec(ctx)
+		return err
+	})
 }
 
 func (r *repository) FindRedeemableByHash(
@@ -41,18 +44,20 @@ func (r *repository) FindRedeemableByHash(
 	tokenHash string,
 	now int64,
 ) (*tenant.PasswordResetToken, error) {
-	token := new(tenant.PasswordResetToken)
-	if err := r.db.DB().NewSelect().
-		Model(token).
-		Relation("User").
-		Where("prt.token_hash = ?", tokenHash).
-		Where("prt.used_at IS NULL").
-		Where("prt.invalidated_at IS NULL").
-		Where("prt.expires_at > ?", now).
-		Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Password reset token")
-	}
-	return token, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.PasswordResetToken, error) {
+		token := new(tenant.PasswordResetToken)
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model(token).
+			Relation("User").
+			Where("prt.token_hash = ?", tokenHash).
+			Where("prt.used_at IS NULL").
+			Where("prt.invalidated_at IS NULL").
+			Where("prt.expires_at > ?", now).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Password reset token")
+		}
+		return token, nil
+	})
 }
 
 func (r *repository) MarkUsed(
@@ -60,25 +65,29 @@ func (r *repository) MarkUsed(
 	tokenID pulid.ID,
 	now int64,
 ) (bool, error) {
-	// The used_at guard is part of the UPDATE, not a check before it: two tabs opened
-	// from the same email would otherwise both read an unused token and both reset the
-	// password. Whichever statement lands first updates a row; the second updates none.
-	result, err := r.db.DB().NewUpdate().
-		Model((*tenant.PasswordResetToken)(nil)).
-		Set("used_at = ?", now).
-		Where("id = ?", tokenID).
-		Where("used_at IS NULL").
-		Where("invalidated_at IS NULL").
-		Exec(ctx)
-	if err != nil {
-		return false, err
-	}
+	return dbtx.
+		// The used_at guard is part of the UPDATE, not a check before it: two tabs opened
+		// from the same email would otherwise both read an unused token and both reset the
+		// password. Whichever statement lands first updates a row; the second updates none.
+		Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return affected > 0, nil
+			result, err := r.db.DBForContext(ctx).NewUpdate().
+				Model((*tenant.PasswordResetToken)(nil)).
+				Set("used_at = ?", now).
+				Where("id = ?", tokenID).
+				Where("used_at IS NULL").
+				Where("invalidated_at IS NULL").
+				Exec(ctx)
+			if err != nil {
+				return false, err
+			}
+
+			affected, err := result.RowsAffected()
+			if err != nil {
+				return false, err
+			}
+			return affected > 0, nil
+		})
 }
 
 func (r *repository) InvalidateOutstanding(
@@ -86,14 +95,16 @@ func (r *repository) InvalidateOutstanding(
 	userID pulid.ID,
 	now int64,
 ) error {
-	_, err := r.db.DB().NewUpdate().
-		Model((*tenant.PasswordResetToken)(nil)).
-		Set("invalidated_at = ?", now).
-		Where("user_id = ?", userID).
-		Where("used_at IS NULL").
-		Where("invalidated_at IS NULL").
-		Exec(ctx)
-	return err
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		_, err := r.db.DBForContext(ctx).NewUpdate().
+			Model((*tenant.PasswordResetToken)(nil)).
+			Set("invalidated_at = ?", now).
+			Where("user_id = ?", userID).
+			Where("used_at IS NULL").
+			Where("invalidated_at IS NULL").
+			Exec(ctx)
+		return err
+	})
 }
 
 func (r *repository) CountSince(
@@ -101,9 +112,11 @@ func (r *repository) CountSince(
 	userID pulid.ID,
 	since int64,
 ) (int, error) {
-	return r.db.DB().NewSelect().
-		Model((*tenant.PasswordResetToken)(nil)).
-		Where("prt.user_id = ?", userID).
-		Where("prt.created_at >= ?", since).
-		Count(ctx)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		return r.db.DBForContext(ctx).NewSelect().
+			Model((*tenant.PasswordResetToken)(nil)).
+			Where("prt.user_id = ?", userID).
+			Where("prt.created_at >= ?", since).
+			Count(ctx)
+	})
 }

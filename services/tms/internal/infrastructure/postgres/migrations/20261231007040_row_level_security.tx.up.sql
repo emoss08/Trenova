@@ -352,7 +352,13 @@ SELECT trenova_rls.apply_policy('public.user_role_assignments', trenova_rls.stan
 --bun:split
 SELECT trenova_rls.apply_policy(
     'public.resource_permissions',
-    'EXISTS (SELECT 1 FROM public.roles r WHERE r.id = resource_permissions.role_id)'
+    $expr$EXISTS (
+        SELECT 1
+        FROM public.roles r
+        WHERE r.id = resource_permissions.role_id
+            AND r.organization_id = (SELECT trenova_rls.org_id())
+            AND r.business_unit_id = (SELECT trenova_rls.bu_id())
+    )$expr$
 );
 
 --bun:split

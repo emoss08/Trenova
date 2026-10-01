@@ -91,7 +91,8 @@ func (s *sequenceStore) getNextSequenceBatchAttempt(
 	}
 
 	result := new(sequenceResult)
-	err := s.db.DB().NewRaw(`
+	err := s.db.RunDetached(ctx, false, func(ctx context.Context) error {
+		return s.db.DBForContext(ctx).NewRaw(`
 		INSERT INTO sequences (
 			id,
 			sequence_type,
@@ -112,16 +113,17 @@ func (s *sequenceStore) getNextSequenceBatchAttempt(
 			updated_at = EXCLUDED.updated_at
 		RETURNING current_sequence
 	`,
-		seqID,
-		req.Type,
-		req.OrgID,
-		req.BuID,
-		req.Year,
-		req.Month,
-		req.Count,
-		nowUnix,
-		nowUnix,
-	).Scan(ctx, result)
+			seqID,
+			req.Type,
+			req.OrgID,
+			req.BuID,
+			req.Year,
+			req.Month,
+			req.Count,
+			nowUnix,
+			nowUnix,
+		).Scan(ctx, result)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -136,19 +138,17 @@ func (s *sequenceStore) getNextSequenceBatchAttempt(
 }
 
 func (s *sequenceStore) UpdateLastGenerated(ctx context.Context, req *LastGeneratedRequest) error {
-	_, err := s.db.DB().NewUpdate().
-		Table("sequences").
-		Set("last_generated = ?", req.Value).
-		Set("updated_at = ?", timeutils.NowUnix()).
-		Where("sequence_type = ?", req.Type).
-		Where("organization_id = ?", req.OrgID).
-		Where("business_unit_id = ?", req.BuID).
-		Where("year = ?", req.Year).
-		Where("month = ?", req.Month).
-		Exec(ctx)
-	if err != nil {
+	return s.db.RunDetached(ctx, false, func(ctx context.Context) error {
+		_, err := s.db.DBForContext(ctx).NewUpdate().
+			Table("sequences").
+			Set("last_generated = ?", req.Value).
+			Set("updated_at = ?", timeutils.NowUnix()).
+			Where("sequence_type = ?", req.Type).
+			Where("organization_id = ?", req.OrgID).
+			Where("business_unit_id = ?", req.BuID).
+			Where("year = ?", req.Year).
+			Where("month = ?", req.Month).
+			Exec(ctx)
 		return err
-	}
-
-	return nil
+	})
 }

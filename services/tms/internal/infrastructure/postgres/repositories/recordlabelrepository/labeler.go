@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -260,12 +261,14 @@ func (l *Labeler) read(
 	src *source,
 	ids []pulid.ID,
 ) (map[pulid.ID]string, error) {
-	rows := make([]labelRow, 0, len(ids))
-	if err := labelQuery(l.db.DBForContext(ctx), tenant, src, ids).Scan(ctx, &rows); err != nil {
-		return nil, err
-	}
+	return dbtx.Read(ctx, l.db, func(ctx context.Context) (map[pulid.ID]string, error) {
+		rows := make([]labelRow, 0, len(ids))
+		if err := labelQuery(l.db.DBForContext(ctx), tenant, src, ids).Scan(ctx, &rows); err != nil {
+			return nil, err
+		}
 
-	return collect(rows), nil
+		return collect(rows), nil
+	})
 }
 
 func labelQuery(
@@ -290,42 +293,44 @@ func (l *Labeler) moveLabels(
 	tenant pagination.TenantInfo,
 	ids []pulid.ID,
 ) (map[pulid.ID]string, error) {
-	moves := make([]*shipment.ShipmentMove, 0, len(ids))
-	cols := buncolgen.ShipmentMoveColumns
-	if err := l.db.DBForContext(ctx).NewSelect().
-		Model(&moves).
-		Column(cols.ID.String(), cols.ShipmentID.String(), cols.Sequence.String()).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentMoveScopeTenant(q, tenant).
-				Where(cols.ID.In(), bun.List(ids))
-		}).
-		Scan(ctx); err != nil {
-		return nil, err
-	}
-	if len(moves) == 0 {
-		return map[pulid.ID]string{}, nil
-	}
-
-	shipmentIDs := make([]pulid.ID, 0, len(moves))
-	for _, move := range moves {
-		shipmentIDs = append(shipmentIDs, move.ShipmentID)
-	}
-	shipmentSource := sources[permission.ResourceShipment]
-	pros, err := l.read(ctx, tenant, &shipmentSource, distinctIDs(shipmentIDs))
-	if err != nil {
-		return nil, err
-	}
-
-	labels := make(map[pulid.ID]string, len(moves))
-	for _, move := range moves {
-		pro := pros[move.ShipmentID]
-		if pro == "" {
-			continue
+	return dbtx.Write(ctx, l.db, func(ctx context.Context) (map[pulid.ID]string, error) {
+		moves := make([]*shipment.ShipmentMove, 0, len(ids))
+		cols := buncolgen.ShipmentMoveColumns
+		if err := l.db.DBForContext(ctx).NewSelect().
+			Model(&moves).
+			Column(cols.ID.String(), cols.ShipmentID.String(), cols.Sequence.String()).
+			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ShipmentMoveScopeTenant(q, tenant).
+					Where(cols.ID.In(), bun.List(ids))
+			}).
+			Scan(ctx); err != nil {
+			return nil, err
 		}
-		labels[move.ID] = pro + " move " + strconv.FormatInt(move.Sequence+1, 10)
-	}
+		if len(moves) == 0 {
+			return map[pulid.ID]string{}, nil
+		}
 
-	return labels, nil
+		shipmentIDs := make([]pulid.ID, 0, len(moves))
+		for _, move := range moves {
+			shipmentIDs = append(shipmentIDs, move.ShipmentID)
+		}
+		shipmentSource := sources[permission.ResourceShipment]
+		pros, err := l.read(ctx, tenant, &shipmentSource, distinctIDs(shipmentIDs))
+		if err != nil {
+			return nil, err
+		}
+
+		labels := make(map[pulid.ID]string, len(moves))
+		for _, move := range moves {
+			pro := pros[move.ShipmentID]
+			if pro == "" {
+				continue
+			}
+			labels[move.ID] = pro + " move " + strconv.FormatInt(move.Sequence+1, 10)
+		}
+
+		return labels, nil
+	})
 }
 
 func collect(rows []labelRow) map[pulid.ID]string {

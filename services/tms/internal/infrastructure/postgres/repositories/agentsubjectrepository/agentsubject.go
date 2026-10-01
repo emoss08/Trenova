@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -156,32 +157,34 @@ func (r *repository) Exists(
 	ctx context.Context,
 	req repositories.AgentSubjectExistsRequest,
 ) (bool, error) {
-	if req.SubjectID.IsNil() {
-		return false, nil
-	}
-	if req.SubjectType == agent.SubjectOrganization {
-		return req.SubjectID == req.TenantInfo.OrgID, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		if req.SubjectID.IsNil() {
+			return false, nil
+		}
+		if req.SubjectType == agent.SubjectOrganization {
+			return req.SubjectID == req.TenantInfo.OrgID, nil
+		}
 
-	table, ok := subjectTables[req.SubjectType]
-	if !ok {
-		return false, fmt.Errorf("no table holds subject type %q", req.SubjectType)
-	}
+		table, ok := subjectTables[req.SubjectType]
+		if !ok {
+			return false, fmt.Errorf("no table holds subject type %q", req.SubjectType)
+		}
 
-	exists, err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(table.model()).
-		Apply(table.tenant(req.TenantInfo)).
-		Where(table.id.Eq(), req.SubjectID).
-		Exists(ctx)
-	if err != nil {
-		r.l.Error(
-			"failed to check agent subject",
-			zap.String("subjectType", string(req.SubjectType)),
-			zap.Error(err),
-		)
-		return false, err
-	}
+		exists, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(table.model()).
+			Apply(table.tenant(req.TenantInfo)).
+			Where(table.id.Eq(), req.SubjectID).
+			Exists(ctx)
+		if err != nil {
+			r.l.Error(
+				"failed to check agent subject",
+				zap.String("subjectType", string(req.SubjectType)),
+				zap.Error(err),
+			)
+			return false, err
+		}
 
-	return exists, nil
+		return exists, nil
+	})
 }

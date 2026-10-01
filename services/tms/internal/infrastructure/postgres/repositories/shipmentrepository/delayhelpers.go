@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,14 +20,16 @@ func (r *repository) GetDelayedShipments(
 	req *repositories.GetDelayedShipmentsRequest,
 	thresholdMinutes int16,
 ) ([]*shipment.Shipment, error) {
-	return r.getDelayedShipments(
-		ctx,
-		r.db.DBForContext(ctx),
-		req.TenantInfo,
-		thresholdMinutes,
-		timeutils.NowUnix(),
-		req.Limit,
-	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		return r.getDelayedShipments(
+			ctx,
+			r.db.DBForContext(ctx),
+			req.TenantInfo,
+			thresholdMinutes,
+			timeutils.NowUnix(),
+			req.Limit,
+		)
+	})
 }
 
 func (r *repository) DelayShipments(
@@ -34,115 +37,121 @@ func (r *repository) DelayShipments(
 	req *repositories.DelayShipmentsRequest,
 	thresholdMinutes int16,
 ) ([]*shipment.Shipment, error) {
-	currentTime := timeutils.NowUnix()
-	entities := make([]*shipment.Shipment, 0)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		currentTime := timeutils.NowUnix()
+		entities := make([]*shipment.Shipment, 0)
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		var err error
-		entities, err = r.getDelayedShipments(
-			c,
-			tx,
-			req.TenantInfo,
-			thresholdMinutes,
-			currentTime,
-			req.Limit,
-		)
-		if err != nil || len(entities) == 0 {
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			var err error
+			entities, err = r.getDelayedShipments(
+				c,
+				tx,
+				req.TenantInfo,
+				thresholdMinutes,
+				currentTime,
+				req.Limit,
+			)
+			if err != nil || len(entities) == 0 {
+				return err
+			}
+
+			cols := buncolgen.ShipmentColumns
+			shipmentIDs := shipmentIDsFromEntities(entities)
+			_, err = tx.NewUpdate().
+				Model((*shipment.Shipment)(nil)).
+				Set(cols.Status.Set(), shipment.StatusDelayed).
+				Set(cols.UpdatedAt.Set(), currentTime).
+				Where(cols.ID.In(), bun.List(shipmentIDs)).
+				Exec(c)
 			return err
+		})
+		if err != nil {
+			return nil, err
 		}
 
-		cols := buncolgen.ShipmentColumns
-		shipmentIDs := shipmentIDsFromEntities(entities)
-		_, err = tx.NewUpdate().
-			Model((*shipment.Shipment)(nil)).
-			Set(cols.Status.Set(), shipment.StatusDelayed).
-			Set(cols.UpdatedAt.Set(), currentTime).
-			Where(cols.ID.In(), bun.List(shipmentIDs)).
-			Exec(c)
-		return err
+		for _, entity := range entities {
+			entity.Status = shipment.StatusDelayed
+			entity.UpdatedAt = currentTime
+		}
+
+		return entities, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entity := range entities {
-		entity.Status = shipment.StatusDelayed
-		entity.UpdatedAt = currentTime
-	}
-
-	return entities, nil
 }
 
 func (r *repository) AutoDelayShipments(ctx context.Context) ([]*shipment.Shipment, error) {
-	currentTime := timeutils.NowUnix()
-	entities := make([]*shipment.Shipment, 0)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		currentTime := timeutils.NowUnix()
+		entities := make([]*shipment.Shipment, 0)
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		var err error
-		entities, err = r.getAutoDelayedShipments(c, tx, currentTime)
-		if err != nil || len(entities) == 0 {
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			var err error
+			entities, err = r.getAutoDelayedShipments(c, tx, currentTime)
+			if err != nil || len(entities) == 0 {
+				return err
+			}
+
+			cols := buncolgen.ShipmentColumns
+			shipmentIDs := shipmentIDsFromEntities(entities)
+			_, err = tx.NewUpdate().
+				Model((*shipment.Shipment)(nil)).
+				Set(cols.Status.Set(), shipment.StatusDelayed).
+				Set(cols.UpdatedAt.Set(), currentTime).
+				Where(cols.ID.In(), bun.List(shipmentIDs)).
+				Exec(c)
 			return err
+		})
+		if err != nil {
+			return nil, err
 		}
 
-		cols := buncolgen.ShipmentColumns
-		shipmentIDs := shipmentIDsFromEntities(entities)
-		_, err = tx.NewUpdate().
-			Model((*shipment.Shipment)(nil)).
-			Set(cols.Status.Set(), shipment.StatusDelayed).
-			Set(cols.UpdatedAt.Set(), currentTime).
-			Where(cols.ID.In(), bun.List(shipmentIDs)).
-			Exec(c)
-		return err
+		for _, entity := range entities {
+			entity.Status = shipment.StatusDelayed
+			entity.UpdatedAt = currentTime
+		}
+
+		return entities, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entity := range entities {
-		entity.Status = shipment.StatusDelayed
-		entity.UpdatedAt = currentTime
-	}
-
-	return entities, nil
 }
 
 func (r *repository) ListAutoDelayShipmentTenants(
 	ctx context.Context,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
-	if limit <= 0 {
-		limit = 100
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
+		if limit <= 0 {
+			limit = 100
+		}
 
-	type tenantRow struct {
-		OrganizationID pulid.ID `bun:"organization_id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
+		type tenantRow struct {
+			OrganizationID pulid.ID `bun:"organization_id"`
+			BusinessUnitID pulid.ID `bun:"business_unit_id"`
+		}
 
-	rows := make([]tenantRow, 0, limit)
-	cols := buncolgen.ShipmentControlColumns
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		TableExpr(buncolgen.ShipmentControlTable.Name+" AS sc").
-		Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
-		Where(cols.AutoDelayShipments.Eq(), true).
-		Order(cols.OrganizationID.OrderAsc()).
-		Order(cols.BusinessUnitID.OrderAsc()).
-		Limit(limit).
-		Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
+		rows := make([]tenantRow, 0, limit)
+		cols := buncolgen.ShipmentControlColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			TableExpr(buncolgen.ShipmentControlTable.Name+" AS sc").
+			Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
+			Where(cols.AutoDelayShipments.Eq(), true).
+			Order(cols.OrganizationID.OrderAsc()).
+			Order(cols.BusinessUnitID.OrderAsc()).
+			Limit(limit).
+			Scan(ctx, &rows)
+		if err != nil {
+			return nil, err
+		}
 
-	tenants := make([]pagination.TenantInfo, 0, len(rows))
-	for _, row := range rows {
-		tenants = append(tenants, pagination.TenantInfo{
-			OrgID: row.OrganizationID,
-			BuID:  row.BusinessUnitID,
-		})
-	}
+		tenants := make([]pagination.TenantInfo, 0, len(rows))
+		for _, row := range rows {
+			tenants = append(tenants, pagination.TenantInfo{
+				OrgID: row.OrganizationID,
+				BuID:  row.BusinessUnitID,
+			})
+		}
 
-	return tenants, nil
+		return tenants, nil
+	})
 }
 
 func (r *repository) RunAutoDelayShipmentsForTenant(
@@ -150,44 +159,46 @@ func (r *repository) RunAutoDelayShipmentsForTenant(
 	tenantInfo pagination.TenantInfo,
 	limit int,
 ) ([]*shipment.Shipment, error) {
-	currentTime := timeutils.NowUnix()
-	entities := make([]*shipment.Shipment, 0)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
+		currentTime := timeutils.NowUnix()
+		entities := make([]*shipment.Shipment, 0)
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		var err error
-		entities, err = r.getAutoDelayedShipmentsForTenant(
-			c,
-			tx,
-			tenantInfo,
-			currentTime,
-			limit,
-		)
-		if err != nil || len(entities) == 0 {
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+			var err error
+			entities, err = r.getAutoDelayedShipmentsForTenant(
+				c,
+				tx,
+				tenantInfo,
+				currentTime,
+				limit,
+			)
+			if err != nil || len(entities) == 0 {
+				return err
+			}
+
+			cols := buncolgen.ShipmentColumns
+			shipmentIDs := shipmentIDsFromEntities(entities)
+			_, err = tx.NewUpdate().
+				Model((*shipment.Shipment)(nil)).
+				Set(cols.Status.Set(), shipment.StatusDelayed).
+				Set(cols.UpdatedAt.Set(), currentTime).
+				Where(cols.ID.In(), bun.List(shipmentIDs)).
+				Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+				Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+				Exec(c)
 			return err
+		})
+		if err != nil {
+			return nil, err
 		}
 
-		cols := buncolgen.ShipmentColumns
-		shipmentIDs := shipmentIDsFromEntities(entities)
-		_, err = tx.NewUpdate().
-			Model((*shipment.Shipment)(nil)).
-			Set(cols.Status.Set(), shipment.StatusDelayed).
-			Set(cols.UpdatedAt.Set(), currentTime).
-			Where(cols.ID.In(), bun.List(shipmentIDs)).
-			Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-			Exec(c)
-		return err
+		for _, entity := range entities {
+			entity.Status = shipment.StatusDelayed
+			entity.UpdatedAt = currentTime
+		}
+
+		return entities, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entity := range entities {
-		entity.Status = shipment.StatusDelayed
-		entity.UpdatedAt = currentTime
-	}
-
-	return entities, nil
 }
 
 func (r *repository) getDelayedShipments(

@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -104,8 +103,8 @@ func newValidatorBuilder(
 	}
 
 	return builder.
-		WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return db.DB() })).
-		WithReferenceChecker(validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return db.DB() })).
+		WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(db)).
+		WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(db)).
 		WithReferenceCheck(
 			"serviceTypeId",
 			"service_types",

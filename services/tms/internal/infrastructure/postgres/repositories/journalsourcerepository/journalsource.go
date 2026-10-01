@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -65,24 +66,26 @@ func (r *repository) ListByObject(
 	ctx context.Context,
 	req repositories.GetJournalSourceByObjectRequest,
 ) ([]*journalsource.Source, error) {
-	records := make([]*sourceRecord, 0)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&records).
-		Where("js.organization_id = ?", req.TenantInfo.OrgID).
-		Where("js.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("js.source_object_type = ?", req.SourceObjectType).
-		Where("js.source_object_id = ?", req.SourceObjectID).
-		Order("js.created_at ASC").
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	sources := make([]*journalsource.Source, 0, len(records))
-	for _, rec := range records {
-		sources = append(sources, mapSourceRecord(rec))
-	}
-	return sources, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*journalsource.Source, error) {
+		records := make([]*sourceRecord, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&records).
+			Where("js.organization_id = ?", req.TenantInfo.OrgID).
+			Where("js.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("js.source_object_type = ?", req.SourceObjectType).
+			Where("js.source_object_id = ?", req.SourceObjectID).
+			Order("js.created_at ASC").
+			Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
+		sources := make([]*journalsource.Source, 0, len(records))
+		for _, rec := range records {
+			sources = append(sources, mapSourceRecord(rec))
+		}
+		return sources, nil
+	})
 }
 
 func (r *repository) getByObjectQuery(
@@ -90,24 +93,26 @@ func (r *repository) getByObjectQuery(
 	req repositories.GetJournalSourceByObjectRequest,
 	sourceEventType string,
 ) (*journalsource.Source, error) {
-	rec := new(sourceRecord)
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(rec).
-		Where("js.organization_id = ?", req.TenantInfo.OrgID).
-		Where("js.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("js.source_object_type = ?", req.SourceObjectType).
-		Where("js.source_object_id = ?", req.SourceObjectID).
-		Order("js.created_at DESC").
-		Limit(1)
-	if sourceEventType != "" {
-		query = query.Where("js.source_event_type = ?", sourceEventType)
-	}
-	err := query.Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "JournalSource")
-	}
-	return mapSourceRecord(rec), nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalsource.Source, error) {
+		rec := new(sourceRecord)
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(rec).
+			Where("js.organization_id = ?", req.TenantInfo.OrgID).
+			Where("js.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("js.source_object_type = ?", req.SourceObjectType).
+			Where("js.source_object_id = ?", req.SourceObjectID).
+			Order("js.created_at DESC").
+			Limit(1)
+		if sourceEventType != "" {
+			query = query.Where("js.source_event_type = ?", sourceEventType)
+		}
+		err := query.Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "JournalSource")
+		}
+		return mapSourceRecord(rec), nil
+	})
 }
 
 func mapSourceRecord(rec *sourceRecord) *journalsource.Source {

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,45 +45,49 @@ func (r *repository) Create(
 	ctx context.Context,
 	entity *formulatemplate.Review,
 ) (*formulatemplate.Review, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-		r.l.Error("failed to record formula template review",
-			zap.String("templateID", entity.TemplateID.String()),
-			zap.Error(err),
-		)
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*formulatemplate.Review, error) {
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+			r.l.Error("failed to record formula template review",
+				zap.String("templateID", entity.TemplateID.String()),
+				zap.Error(err),
+			)
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) ListByTemplate(
 	ctx context.Context,
 	req *repositories.ListTemplateReviewsRequest,
 ) ([]*formulatemplate.Review, error) {
-	cols := buncolgen.ReviewColumns
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultHistoryLimit
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.Review, error) {
+		cols := buncolgen.ReviewColumns
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultHistoryLimit
+		}
 
-	reviews := make([]*formulatemplate.Review, 0, 8)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&reviews).
-		Relation(buncolgen.Rel(buncolgen.ReviewRelations.Actor)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ReviewScopeTenant(sq, req.TenantInfo).
-				Where(cols.TemplateID.Eq(), req.TemplateID)
-		}).
-		Order(cols.CreatedAt.OrderDesc()).
-		Limit(limit).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list formula template reviews", zap.Error(err))
-		return nil, err
-	}
+		reviews := make([]*formulatemplate.Review, 0, 8)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&reviews).
+			Relation(buncolgen.Rel(buncolgen.ReviewRelations.Actor)).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ReviewScopeTenant(sq, req.TenantInfo).
+					Where(cols.TemplateID.Eq(), req.TemplateID)
+			}).
+			Order(cols.CreatedAt.OrderDesc()).
+			Limit(limit).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list formula template reviews", zap.Error(err))
+			return nil, err
+		}
 
-	return reviews, nil
+		return reviews, nil
+	})
 }
 
 func (r *repository) Latest(
@@ -90,28 +95,30 @@ func (r *repository) Latest(
 	templateID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*formulatemplate.Review, error) {
-	cols := buncolgen.ReviewColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*formulatemplate.Review, error) {
+		cols := buncolgen.ReviewColumns
 
-	review := new(formulatemplate.Review)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(review).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ReviewScopeTenant(sq, tenantInfo).
-				Where(cols.TemplateID.Eq(), templateID)
-		}).
-		Order(cols.CreatedAt.OrderDesc()).
-		Limit(1).
-		Scan(ctx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil //nolint:nilnil // no history yet is an answer, not a failure
+		review := new(formulatemplate.Review)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(review).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ReviewScopeTenant(sq, tenantInfo).
+					Where(cols.TemplateID.Eq(), templateID)
+			}).
+			Order(cols.CreatedAt.OrderDesc()).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil //nolint:nilnil // no history yet is an answer, not a failure
+			}
+			r.l.Error("failed to read latest formula template review", zap.Error(err))
+			return nil, err
 		}
-		r.l.Error("failed to read latest formula template review", zap.Error(err))
-		return nil, err
-	}
 
-	return review, nil
+		return review, nil
+	})
 }
 
 // ListStaleSubmissions crosses tenants on purpose: the sweep runs once for the
@@ -120,26 +127,28 @@ func (r *repository) ListStaleSubmissions(
 	ctx context.Context,
 	req *repositories.ListStaleSubmissionsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
-	cols := buncolgen.FormulaTemplateColumns
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultStaleLimit
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
+		cols := buncolgen.FormulaTemplateColumns
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultStaleLimit
+		}
 
-	templates := make([]*formulatemplate.FormulaTemplate, 0, 8)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&templates).
-		Where(cols.Status.Eq(), formulatemplate.StatusInReview).
-		Where(cols.SubmittedAt.IsNotNull()).
-		Where(cols.SubmittedAt.Lt(), req.SubmittedBefore).
-		Order(cols.SubmittedAt.OrderAsc()).
-		Limit(limit).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list stale formula template submissions", zap.Error(err))
-		return nil, err
-	}
+		templates := make([]*formulatemplate.FormulaTemplate, 0, 8)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&templates).
+			Where(cols.Status.Eq(), formulatemplate.StatusInReview).
+			Where(cols.SubmittedAt.IsNotNull()).
+			Where(cols.SubmittedAt.Lt(), req.SubmittedBefore).
+			Order(cols.SubmittedAt.OrderAsc()).
+			Limit(limit).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list stale formula template submissions", zap.Error(err))
+			return nil, err
+		}
 
-	return templates, nil
+		return templates, nil
+	})
 }

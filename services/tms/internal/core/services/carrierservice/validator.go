@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -27,8 +26,8 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*carrier.Carrier]().
 			WithModelName("Carrier").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() })).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() })).
+			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
 			WithUniqueField(
 				"code",
 				"code",
@@ -56,7 +55,7 @@ func NewValidator(p ValidatorParams) *Validator {
 					}
 					return *c.StateID
 				},
-				validationframework.NewUSStateReferenceCheck(func() bun.IDB { return p.DB.DB() }),
+				validationframework.NewUSStateReferenceCheck(p.DB),
 			).
 			WithCustomReferenceCheck(
 				"remitStateId",
@@ -67,7 +66,7 @@ func NewValidator(p ValidatorParams) *Validator {
 					}
 					return *c.RemitStateID
 				},
-				validationframework.NewUSStateReferenceCheck(func() bun.IDB { return p.DB.DB() }),
+				validationframework.NewUSStateReferenceCheck(p.DB),
 			).
 			Build(),
 	}

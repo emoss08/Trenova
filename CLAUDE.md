@@ -351,6 +351,18 @@ rows to their spans, and the known limits are in
 [docs/engineering/ai-tracing.md](docs/engineering/ai-tracing.md). Read it before adding a span,
 a trace attribute or a link column.
 
+## Row-Level Security
+
+PostgreSQL enforces tenant isolation itself: every tenant table is under a FORCE
+row-level security policy keyed to a signed, transaction-local scope, and the
+application role cannot bypass it. Repository methods run their body in
+`dbtx.Read`/`dbtx.Write` and query through `DBForContext(ctx)`, never `.DB()`; a new
+tenant table ends its migration with `SELECT trenova_rls.reconcile();`; code that must
+see every tenant declares `dbscope.WithSystem(ctx, reason)` and is listed in
+`systemscopelint`. **Read [docs/engineering/row-level-security.md](docs/engineering/row-level-security.md)
+before adding a table, a repository method, a background job, or anything that runs
+before a tenant is known.**
+
 ## Realtime
 
 Live updates are server-sent events from the API, fanned out through sharded Redis

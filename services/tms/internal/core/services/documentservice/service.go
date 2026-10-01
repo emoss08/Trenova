@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -1015,50 +1017,55 @@ func (s *Service) detachUploadSessionsForDocuments(
 	docIDs []pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if len(docIDs) == 0 {
-		return nil
-	}
-
-	db := s.db.DBForContext(ctx)
-	if db == nil {
-		if len(docIDs) == 1 {
-			return s.sessionRepo.ClearDocumentReference(ctx, docIDs[0], tenantInfo)
+	return dbtx.WriteErr(ctx, s.db, func(ctx context.Context) error {
+		if len(docIDs) == 0 {
+			return nil
 		}
-		return s.sessionRepo.ClearDocumentReferences(ctx, docIDs, tenantInfo)
-	}
 
-	documentIDStrings := make([]string, 0, len(docIDs))
-	for _, id := range docIDs {
-		documentIDStrings = append(documentIDStrings, id.String())
-	}
+		db := s.db.DBForContext(ctx)
+		if db == nil {
+			if len(docIDs) == 1 {
+				return s.sessionRepo.ClearDocumentReference(ctx, docIDs[0], tenantInfo)
+			}
+			return s.sessionRepo.ClearDocumentReferences(ctx, docIDs, tenantInfo)
+		}
 
-	if _, err := db.
-		NewUpdate().
-		Table("document_upload_sessions").
-		Set("document_id = NULL").
-		Where("document_id IN (?)", bun.List(documentIDStrings)).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
-		Exec(ctx); err != nil {
-		return err
-	}
+		documentIDStrings := make([]string, 0, len(docIDs))
+		for _, id := range docIDs {
+			documentIDStrings = append(documentIDStrings, id.String())
+		}
 
-	remaining, err := db.
-		NewSelect().
-		Table("document_upload_sessions").
-		Where("document_id IN (?)", bun.List(documentIDStrings)).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
-		Count(ctx)
-	if err != nil {
-		return err
-	}
+		if _, err := db.
+			NewUpdate().
+			Table("document_upload_sessions").
+			Set("document_id = NULL").
+			Where("document_id IN (?)", bun.List(documentIDStrings)).
+			Where("organization_id = ?", tenantInfo.OrgID).
+			Where("business_unit_id = ?", tenantInfo.BuID).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	if remaining > 0 {
-		return fmt.Errorf("document upload session references remain after detach: %d", remaining)
-	}
+		remaining, err := db.
+			NewSelect().
+			Table("document_upload_sessions").
+			Where("document_id IN (?)", bun.List(documentIDStrings)).
+			Where("organization_id = ?", tenantInfo.OrgID).
+			Where("business_unit_id = ?", tenantInfo.BuID).
+			Count(ctx)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		if remaining > 0 {
+			return fmt.Errorf(
+				"document upload session references remain after detach: %d",
+				remaining,
+			)
+		}
+
+		return nil
+	})
 }
 
 func (s *Service) GetPreviewURL(

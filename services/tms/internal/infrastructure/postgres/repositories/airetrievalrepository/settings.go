@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -53,45 +54,49 @@ func (r *repository) GetSettings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*airetrieval.Settings, error) {
-	if err := validateTenant(tenantInfo); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*airetrieval.Settings, error) {
+		if err := validateTenant(tenantInfo); err != nil {
+			return nil, err
+		}
 
-	entity, found, err := r.findSettings(ctx, r.db.DBForContext(ctx), tenantInfo, false)
-	switch {
-	case err != nil:
-		return nil, err
-	case !found:
-		return airetrieval.DefaultSettings(tenantInfo.OrgID, tenantInfo.BuID), nil
-	default:
-		return entity, nil
-	}
+		entity, found, err := r.findSettings(ctx, r.db.DBForContext(ctx), tenantInfo, false)
+		switch {
+		case err != nil:
+			return nil, err
+		case !found:
+			return airetrieval.DefaultSettings(tenantInfo.OrgID, tenantInfo.BuID), nil
+		default:
+			return entity, nil
+		}
+	})
 }
 
 func (r *repository) UpdateSettings(
 	ctx context.Context,
 	entity *airetrieval.Settings,
 ) (*airetrieval.Settings, error) {
-	if entity == nil {
-		return nil, invalid("settings are required")
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*airetrieval.Settings, error) {
+		if entity == nil {
+			return nil, invalid("settings are required")
+		}
 
-	tenantInfo := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-	if err := validateTenant(tenantInfo); err != nil {
-		return nil, err
-	}
+		tenantInfo := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
+		if err := validateTenant(tenantInfo); err != nil {
+			return nil, err
+		}
 
-	dba := r.db.DBForContext(ctx)
-	existing, found, err := r.findSettings(ctx, dba, tenantInfo, false)
-	if err != nil {
-		return nil, err
-	}
+		dba := r.db.DBForContext(ctx)
+		existing, found, err := r.findSettings(ctx, dba, tenantInfo, false)
+		if err != nil {
+			return nil, err
+		}
 
-	if !found {
-		return r.insertSettings(ctx, dba, entity)
-	}
+		if !found {
+			return r.insertSettings(ctx, dba, entity)
+		}
 
-	return r.updateSettings(ctx, dba, entity, existing)
+		return r.updateSettings(ctx, dba, entity, existing)
+	})
 }
 
 func (r *repository) insertSettings(
@@ -170,51 +175,53 @@ func (r *repository) SetPaused(
 	ctx context.Context,
 	req *repositories.SetAIRetrievalPausedRequest,
 ) (*airetrieval.Settings, error) {
-	if req == nil {
-		return nil, invalid("pausing indexing needs a request")
-	}
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return nil, err
-	}
-	if req.Paused && !req.Reason.IsValid() {
-		return nil, invalid("pausing indexing needs a reason")
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*airetrieval.Settings, error) {
+		if req == nil {
+			return nil, invalid("pausing indexing needs a request")
+		}
+		if err := validateTenant(req.TenantInfo); err != nil {
+			return nil, err
+		}
+		if req.Paused && !req.Reason.IsValid() {
+			return nil, invalid("pausing indexing needs a reason")
+		}
 
-	now := req.Now
-	if now == 0 {
-		now = timeutils.NowUnix()
-	}
+		now := req.Now
+		if now == 0 {
+			now = timeutils.NowUnix()
+		}
 
-	var updated *airetrieval.Settings
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
+		var updated *airetrieval.Settings
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+			current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
+			if err != nil {
+				return err
+			}
+			if !found {
+				current = airetrieval.DefaultSettings(req.TenantInfo.OrgID, req.TenantInfo.BuID)
+			}
+
+			if current.ID.IsNil() && !req.Paused {
+				updated = current
+				return nil
+			}
+
+			applyPause(current, req, now)
+
+			if current.ID.IsNil() {
+				updated, err = r.insertSettings(ctx, tx, current)
+				return err
+			}
+
+			updated, err = r.writePause(ctx, tx, current)
+			return err
+		})
 		if err != nil {
-			return err
-		}
-		if !found {
-			current = airetrieval.DefaultSettings(req.TenantInfo.OrgID, req.TenantInfo.BuID)
+			return nil, err
 		}
 
-		if current.ID.IsNil() && !req.Paused {
-			updated = current
-			return nil
-		}
-
-		applyPause(current, req, now)
-
-		if current.ID.IsNil() {
-			updated, err = r.insertSettings(ctx, tx, current)
-			return err
-		}
-
-		updated, err = r.writePause(ctx, tx, current)
-		return err
+		return updated, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return updated, nil
 }
 
 func applyPause(
@@ -270,118 +277,122 @@ func (r *repository) SwapModel(
 	ctx context.Context,
 	req repositories.SwapAIRetrievalModelRequest,
 ) (*repositories.SwapAIRetrievalModelResult, error) {
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return nil, err
-	}
-	if err := validateModelKey(req.PendingModelKey); err != nil {
-		return nil, err
-	}
-
-	var result *repositories.SwapAIRetrievalModelResult
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
-		switch {
-		case err != nil:
-			return err
-		case !found || !current.HasPendingModel():
-			return airetrieval.ErrNoPendingModel
-		case current.PendingModelKey != req.PendingModelKey:
-			return fmt.Errorf(
-				"%w: %s is pending, not %s",
-				airetrieval.ErrPendingModelMoved,
-				current.PendingModelKey,
-				req.PendingModelKey,
-			)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.SwapAIRetrievalModelResult, error) {
+		if err := validateTenant(req.TenantInfo); err != nil {
+			return nil, err
+		}
+		if err := validateModelKey(req.PendingModelKey); err != nil {
+			return nil, err
 		}
 
-		retired := current.ActiveModelKey
-		current.ActiveModelKey = current.PendingModelKey
-		current.Dimensions = current.PendingDimensions
-		current.PendingModelKey = ""
-		current.PendingDimensions = 0
-		current.Version++
-		current.UpdatedAt = timeutils.NowUnix()
+		var result *repositories.SwapAIRetrievalModelResult
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+			current, found, err := r.findSettings(ctx, tx, req.TenantInfo, true)
+			switch {
+			case err != nil:
+				return err
+			case !found || !current.HasPendingModel():
+				return airetrieval.ErrNoPendingModel
+			case current.PendingModelKey != req.PendingModelKey:
+				return fmt.Errorf(
+					"%w: %s is pending, not %s",
+					airetrieval.ErrPendingModelMoved,
+					current.PendingModelKey,
+					req.PendingModelKey,
+				)
+			}
 
-		cols := buncolgen.SettingsColumns
-		if _, err = tx.NewUpdate().
-			Model(current).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.SettingsScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), current.ID)
-			}).
-			Set(cols.ActiveModelKey.Set(), current.ActiveModelKey).
-			Set(cols.Dimensions.Set(), current.Dimensions).
-			Set(cols.PendingModelKey.SetNull()).
-			Set(cols.PendingDimensions.SetNull()).
-			Set(cols.UpdatedAt.Set(), current.UpdatedAt).
-			Set(cols.Version.Set(), current.Version).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("swap retrieval embedding model: %w", err)
+			retired := current.ActiveModelKey
+			current.ActiveModelKey = current.PendingModelKey
+			current.Dimensions = current.PendingDimensions
+			current.PendingModelKey = ""
+			current.PendingDimensions = 0
+			current.Version++
+			current.UpdatedAt = timeutils.NowUnix()
+
+			cols := buncolgen.SettingsColumns
+			if _, err = tx.NewUpdate().
+				Model(current).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return buncolgen.SettingsScopeTenantUpdate(uq, req.TenantInfo).
+						Where(cols.ID.Eq(), current.ID)
+				}).
+				Set(cols.ActiveModelKey.Set(), current.ActiveModelKey).
+				Set(cols.Dimensions.Set(), current.Dimensions).
+				Set(cols.PendingModelKey.SetNull()).
+				Set(cols.PendingDimensions.SetNull()).
+				Set(cols.UpdatedAt.Set(), current.UpdatedAt).
+				Set(cols.Version.Set(), current.Version).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("swap retrieval embedding model: %w", err)
+			}
+
+			result = &repositories.SwapAIRetrievalModelResult{
+				Settings:        current,
+				RetiredModelKey: retired,
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
 
-		result = &repositories.SwapAIRetrievalModelResult{
-			Settings:        current,
-			RetiredModelKey: retired,
-		}
-
-		return nil
+		return result, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 func (r *repository) PurgeModel(
 	ctx context.Context,
 	req repositories.PurgeAIRetrievalModelRequest,
 ) (repositories.PurgeAIRetrievalModelResult, error) {
-	var result repositories.PurgeAIRetrievalModelResult
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (repositories.PurgeAIRetrievalModelResult, error) {
+		var result repositories.PurgeAIRetrievalModelResult
 
-	if err := validateTenant(req.TenantInfo); err != nil {
-		return result, err
-	}
-	if err := validateModelKey(req.ModelKey); err != nil {
-		return result, err
-	}
+		if err := validateTenant(req.TenantInfo); err != nil {
+			return result, err
+		}
+		if err := validateModelKey(req.ModelKey); err != nil {
+			return result, err
+		}
 
-	batch := req.BatchSize
-	if batch <= 0 {
-		batch = defaultPurgeBatch
-	}
-	batch = intutils.Clamp(batch, 1, maxPurgeBatch)
+		batch := req.BatchSize
+		if batch <= 0 {
+			batch = defaultPurgeBatch
+		}
+		batch = intutils.Clamp(batch, 1, maxPurgeBatch)
 
-	vectorReady, err := r.vectorReady(ctx)
-	if err != nil {
-		return result, err
-	}
+		vectorReady, err := r.vectorReady(ctx)
+		if err != nil {
+			return result, err
+		}
 
-	err = r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		current, found, txErr := r.findSettings(ctx, tx, req.TenantInfo, true)
-		if txErr != nil {
+		err = r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+			current, found, txErr := r.findSettings(ctx, tx, req.TenantInfo, true)
+			if txErr != nil {
+				return txErr
+			}
+			if found &&
+				(current.ActiveModelKey == req.ModelKey || current.PendingModelKey == req.ModelKey) {
+				return fmt.Errorf("%w: %s", airetrieval.ErrModelInUse, req.ModelKey)
+			}
+
+			if result.IndexEntries, txErr = purgeIndexEntries(ctx, tx, req, batch); txErr != nil {
+				return txErr
+			}
+			if !vectorReady {
+				return nil
+			}
+
+			result.Embeddings, txErr = purgeEmbeddings(ctx, tx, req, batch)
 			return txErr
-		}
-		if found &&
-			(current.ActiveModelKey == req.ModelKey || current.PendingModelKey == req.ModelKey) {
-			return fmt.Errorf("%w: %s", airetrieval.ErrModelInUse, req.ModelKey)
-		}
-
-		if result.IndexEntries, txErr = purgeIndexEntries(ctx, tx, req, batch); txErr != nil {
-			return txErr
-		}
-		if !vectorReady {
-			return nil
+		})
+		if err != nil {
+			return repositories.PurgeAIRetrievalModelResult{}, err
 		}
 
-		result.Embeddings, txErr = purgeEmbeddings(ctx, tx, req, batch)
-		return txErr
+		return result, nil
 	})
-	if err != nil {
-		return repositories.PurgeAIRetrievalModelResult{}, err
-	}
-
-	return result, nil
 }
 
 func purgeIndexEntries(

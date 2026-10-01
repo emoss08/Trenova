@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -90,105 +91,107 @@ func (r *repository) ListBoardMoves(
 	ctx context.Context,
 	filter *repositories.DispatchBoardFilter,
 ) ([]*repositories.BoardMove, error) {
-	moveCols := buncolgen.ShipmentMoveColumns
-	shipCols := buncolgen.ShipmentColumns
-	asnCols := buncolgen.AssignmentColumns
-	casnCols := buncolgen.CarrierAssignmentColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.BoardMove, error) {
+		moveCols := buncolgen.ShipmentMoveColumns
+		shipCols := buncolgen.ShipmentColumns
+		asnCols := buncolgen.AssignmentColumns
+		casnCols := buncolgen.CarrierAssignmentColumns
 
-	entities := make([]*repositories.BoardMove, 0, boardLimit(filter.Limit))
+		entities := make([]*repositories.BoardMove, 0, boardLimit(filter.Limit))
 
-	q := r.db.DB().NewSelect().
-		Model((*shipment.ShipmentMove)(nil)).
-		ColumnExpr(moveCols.ID.As("move_id")).
-		ColumnExpr(moveCols.ShipmentID.As("shipment_id")).
-		ColumnExpr(moveCols.Status.As("move_status")).
-		ColumnExpr(moveCols.Sequence.As("sequence")).
-		ColumnExpr(moveCols.Loaded.As("loaded")).
-		ColumnExpr(moveCols.Distance.As("distance")).
-		ColumnExpr(shipCols.ProNumber.As("pro_number")).
-		ColumnExpr(shipCols.BOL.As("bol")).
-		ColumnExpr(shipCols.Status.As("shipment_status")).
-		ColumnExpr(shipCols.CustomerID.As("customer_id")).
-		ColumnExpr(shipCols.ServiceTypeID.As("service_type_id")).
-		ColumnExpr(shipCols.TractorTypeID.As("tractor_type_id")).
-		ColumnExpr(shipCols.TrailerTypeID.As("trailer_type_id")).
-		ColumnExpr(shipCols.TemperatureMin.As("temperature_min")).
-		ColumnExpr(shipCols.TemperatureMax.As("temperature_max")).
-		ColumnExpr(shipCols.TotalChargeAmount.Expr("{}::float8 AS revenue")).
-		ColumnExpr(buncolgen.CustomerColumns.Name.As("customer_name")).
-		ColumnExpr(buncolgen.ServiceTypeColumns.Code.As("service_type_code")).
-		ColumnExpr(asnCols.ID.As("assignment_id")).
-		ColumnExpr(asnCols.PrimaryWorkerID.As("assigned_worker_id")).
-		ColumnExpr(asnCols.TractorID.As("assigned_tractor_id")).
-		ColumnExpr(asnCols.TrailerID.As("assigned_trailer_id")).
-		ColumnExpr(asnCols.AckStatus.As("assignment_ack_status")).
-		ColumnExpr(buncolgen.Expr(
-			"CASE WHEN {0} IS NULL THEN '' ELSE CONCAT({1}, ' ', {2}) END AS assigned_worker_name",
-			asnWorkerID, asnWorkerFirstName, asnWorkerLastName,
-		)).
-		ColumnExpr(asnTractorCode.Expr("COALESCE({}, '') AS assigned_tractor_code")).
-		ColumnExpr(asnTrailerCode.Expr("COALESCE({}, '') AS assigned_trailer_code")).
-		ColumnExpr("COALESCE(mc.move_count, 0) AS move_count").
-		ColumnExpr("COALESCE(hz.has_hazmat, FALSE) AS has_hazmat").
-		ColumnExpr("COALESCE(hd.has_active_hold, FALSE) AS has_active_hold").
-		ColumnExpr("COALESCE(prev.trailer_id, '') AS previous_trailer_id").
-		ColumnExpr("COALESCE(orig.stop_id, '') AS origin_stop_id").
-		ColumnExpr("COALESCE(orig.location_id, '') AS origin_location_id").
-		ColumnExpr("COALESCE(orig.name, '') AS origin_name").
-		ColumnExpr("COALESCE(orig.city, '') AS origin_city").
-		ColumnExpr("COALESCE(orig.state_abbr, '') AS origin_state").
-		ColumnExpr("orig.latitude AS origin_latitude").
-		ColumnExpr("orig.longitude AS origin_longitude").
-		ColumnExpr("COALESCE(orig.window_start, 0) AS origin_window_start").
-		ColumnExpr("orig.window_end AS origin_window_end").
-		ColumnExpr("orig.actual_arrival AS origin_actual_arrive").
-		ColumnExpr("COALESCE(dest.stop_id, '') AS destination_stop_id").
-		ColumnExpr("COALESCE(dest.location_id, '') AS destination_location_id").
-		ColumnExpr("COALESCE(dest.name, '') AS destination_name").
-		ColumnExpr("COALESCE(dest.city, '') AS destination_city").
-		ColumnExpr("COALESCE(dest.state_abbr, '') AS destination_state").
-		ColumnExpr("dest.latitude AS destination_latitude").
-		ColumnExpr("dest.longitude AS destination_longitude").
-		ColumnExpr("COALESCE(dest.window_start, 0) AS destination_window_start").
-		ColumnExpr("dest.window_end AS destination_window_end").
-		ColumnExpr(moveCols.CoverageType.As("coverage_type")).
-		ColumnExpr(casnCols.ID.As("carrier_assignment_id")).
-		ColumnExpr(casnCols.CarrierID.As("assigned_carrier_id")).
-		ColumnExpr(casnCols.TotalCost.Expr("{}::float8 AS carrier_total_cost")).
-		ColumnExpr(buncolgen.CarrierColumns.Name.Expr(
-			"COALESCE({}, '') AS assigned_carrier_name")).
-		Join(shipmentJoin).
-		Join(customerJoin).
-		Join(serviceTypeJoin).
-		Join(assignmentJoin).
-		Join(assignedWorkerJoin).
-		Join(assignedTractorJoin).
-		Join(assignedTrailerJoin).
-		Join(carrierAssignmentJoin).
-		Join(assignedCarrierJoin)
+		q := r.db.DBForContext(ctx).NewSelect().
+			Model((*shipment.ShipmentMove)(nil)).
+			ColumnExpr(moveCols.ID.As("move_id")).
+			ColumnExpr(moveCols.ShipmentID.As("shipment_id")).
+			ColumnExpr(moveCols.Status.As("move_status")).
+			ColumnExpr(moveCols.Sequence.As("sequence")).
+			ColumnExpr(moveCols.Loaded.As("loaded")).
+			ColumnExpr(moveCols.Distance.As("distance")).
+			ColumnExpr(shipCols.ProNumber.As("pro_number")).
+			ColumnExpr(shipCols.BOL.As("bol")).
+			ColumnExpr(shipCols.Status.As("shipment_status")).
+			ColumnExpr(shipCols.CustomerID.As("customer_id")).
+			ColumnExpr(shipCols.ServiceTypeID.As("service_type_id")).
+			ColumnExpr(shipCols.TractorTypeID.As("tractor_type_id")).
+			ColumnExpr(shipCols.TrailerTypeID.As("trailer_type_id")).
+			ColumnExpr(shipCols.TemperatureMin.As("temperature_min")).
+			ColumnExpr(shipCols.TemperatureMax.As("temperature_max")).
+			ColumnExpr(shipCols.TotalChargeAmount.Expr("{}::float8 AS revenue")).
+			ColumnExpr(buncolgen.CustomerColumns.Name.As("customer_name")).
+			ColumnExpr(buncolgen.ServiceTypeColumns.Code.As("service_type_code")).
+			ColumnExpr(asnCols.ID.As("assignment_id")).
+			ColumnExpr(asnCols.PrimaryWorkerID.As("assigned_worker_id")).
+			ColumnExpr(asnCols.TractorID.As("assigned_tractor_id")).
+			ColumnExpr(asnCols.TrailerID.As("assigned_trailer_id")).
+			ColumnExpr(asnCols.AckStatus.As("assignment_ack_status")).
+			ColumnExpr(buncolgen.Expr(
+				"CASE WHEN {0} IS NULL THEN '' ELSE CONCAT({1}, ' ', {2}) END AS assigned_worker_name",
+				asnWorkerID, asnWorkerFirstName, asnWorkerLastName,
+			)).
+			ColumnExpr(asnTractorCode.Expr("COALESCE({}, '') AS assigned_tractor_code")).
+			ColumnExpr(asnTrailerCode.Expr("COALESCE({}, '') AS assigned_trailer_code")).
+			ColumnExpr("COALESCE(mc.move_count, 0) AS move_count").
+			ColumnExpr("COALESCE(hz.has_hazmat, FALSE) AS has_hazmat").
+			ColumnExpr("COALESCE(hd.has_active_hold, FALSE) AS has_active_hold").
+			ColumnExpr("COALESCE(prev.trailer_id, '') AS previous_trailer_id").
+			ColumnExpr("COALESCE(orig.stop_id, '') AS origin_stop_id").
+			ColumnExpr("COALESCE(orig.location_id, '') AS origin_location_id").
+			ColumnExpr("COALESCE(orig.name, '') AS origin_name").
+			ColumnExpr("COALESCE(orig.city, '') AS origin_city").
+			ColumnExpr("COALESCE(orig.state_abbr, '') AS origin_state").
+			ColumnExpr("orig.latitude AS origin_latitude").
+			ColumnExpr("orig.longitude AS origin_longitude").
+			ColumnExpr("COALESCE(orig.window_start, 0) AS origin_window_start").
+			ColumnExpr("orig.window_end AS origin_window_end").
+			ColumnExpr("orig.actual_arrival AS origin_actual_arrive").
+			ColumnExpr("COALESCE(dest.stop_id, '') AS destination_stop_id").
+			ColumnExpr("COALESCE(dest.location_id, '') AS destination_location_id").
+			ColumnExpr("COALESCE(dest.name, '') AS destination_name").
+			ColumnExpr("COALESCE(dest.city, '') AS destination_city").
+			ColumnExpr("COALESCE(dest.state_abbr, '') AS destination_state").
+			ColumnExpr("dest.latitude AS destination_latitude").
+			ColumnExpr("dest.longitude AS destination_longitude").
+			ColumnExpr("COALESCE(dest.window_start, 0) AS destination_window_start").
+			ColumnExpr("dest.window_end AS destination_window_end").
+			ColumnExpr(moveCols.CoverageType.As("coverage_type")).
+			ColumnExpr(casnCols.ID.As("carrier_assignment_id")).
+			ColumnExpr(casnCols.CarrierID.As("assigned_carrier_id")).
+			ColumnExpr(casnCols.TotalCost.Expr("{}::float8 AS carrier_total_cost")).
+			ColumnExpr(buncolgen.CarrierColumns.Name.Expr(
+				"COALESCE({}, '') AS assigned_carrier_name")).
+			Join(shipmentJoin).
+			Join(customerJoin).
+			Join(serviceTypeJoin).
+			Join(assignmentJoin).
+			Join(assignedWorkerJoin).
+			Join(assignedTractorJoin).
+			Join(assignedTrailerJoin).
+			Join(carrierAssignmentJoin).
+			Join(assignedCarrierJoin)
 
-	q = joinMoveStopEdges(q)
-	q = joinMoveAggregates(q)
+		q = joinMoveStopEdges(q)
+		q = joinMoveAggregates(q)
 
-	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
-		sq = applyMoveFilters(sq, filter)
-		if !filter.IncludeCovered {
-			sq = sq.Where(asnCols.ID.IsNull()).
-				Where(casnCols.ID.IsNull())
+		q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
+			sq = applyMoveFilters(sq, filter)
+			if !filter.IncludeCovered {
+				sq = sq.Where(asnCols.ID.IsNull()).
+					Where(casnCols.ID.IsNull())
+			}
+			return sq
+		}).
+			OrderExpr("COALESCE(orig.window_start, 0) ASC").
+			Order(moveCols.Sequence.OrderAsc()).
+			Order(moveCols.ID.OrderAsc()).
+			Limit(boardLimit(filter.Limit))
+
+		if err := q.Scan(ctx, &entities); err != nil {
+			return nil, fmt.Errorf("list dispatch board moves: %w", err)
 		}
-		return sq
-	}).
-		OrderExpr("COALESCE(orig.window_start, 0) ASC").
-		Order(moveCols.Sequence.OrderAsc()).
-		Order(moveCols.ID.OrderAsc()).
-		Limit(boardLimit(filter.Limit))
 
-	if err := q.Scan(ctx, &entities); err != nil {
-		return nil, fmt.Errorf("list dispatch board moves: %w", err)
-	}
-
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func joinMoveStopEdges(q *bun.SelectQuery) *bun.SelectQuery {

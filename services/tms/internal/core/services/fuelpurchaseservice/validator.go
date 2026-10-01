@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -35,7 +34,7 @@ type Validator struct {
 
 func NewValidator(p ValidatorParams) *Validator {
 	return newValidator(
-		validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() }),
+		validationframework.NewBunReferenceCheckerScoped(p.DB),
 		p.Repo,
 	)
 }

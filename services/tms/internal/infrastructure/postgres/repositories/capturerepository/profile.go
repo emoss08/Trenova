@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,124 +32,134 @@ func (r *profileRepository) List(
 	ctx context.Context,
 	req *repositories.ListCaptureProfilesRequest,
 ) (*pagination.ListResult[*capture.CaptureProfile], error) {
-	entities := make([]*capture.CaptureProfile, 0, req.Filter.Pagination.SafeLimit())
-	cols := buncolgen.CaptureProfileColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*capture.CaptureProfile], error) {
+		entities := make([]*capture.CaptureProfile, 0, req.Filter.Pagination.SafeLimit())
+		cols := buncolgen.CaptureProfileColumns
 
-	query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
-	if req.Status != "" {
-		query = query.Where(cols.Status.Eq(), req.Status)
-	}
+		query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
+		if req.Status != "" {
+			query = query.Where(cols.Status.Eq(), req.Status)
+		}
 
-	total, err := querybuilder.ApplyFilters(
-		query,
-		buncolgen.CaptureProfileTable.Alias,
-		req.Filter,
-		(*capture.CaptureProfile)(nil),
-	).
-		Order(cols.IsDefault.OrderDesc(), cols.Name.OrderAsc()).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
-	}
+		total, err := querybuilder.ApplyFilters(
+			query,
+			buncolgen.CaptureProfileTable.Alias,
+			req.Filter,
+			(*capture.CaptureProfile)(nil),
+		).
+			Order(cols.IsDefault.OrderDesc(), cols.Name.OrderAsc()).
+			Limit(req.Filter.Pagination.SafeLimit()).
+			Offset(req.Filter.Pagination.SafeOffset()).
+			ScanAndCount(ctx)
+		if err != nil {
+			return nil, err
+		}
 
-	return &pagination.ListResult[*capture.CaptureProfile]{Items: entities, Total: total}, nil
+		return &pagination.ListResult[*capture.CaptureProfile]{Items: entities, Total: total}, nil
+	})
 }
 
 func (r *profileRepository) GetByID(
 	ctx context.Context,
 	req repositories.GetCaptureProfileByIDRequest,
 ) (*capture.CaptureProfile, error) {
-	entity := new(capture.CaptureProfile)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
+		entity := new(capture.CaptureProfile)
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Where(buncolgen.CaptureProfileColumns.ID.Eq(), req.ID).
-		Apply(buncolgen.CaptureProfileApplyTenant(req.TenantInfo)).
-		Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Capture profile")
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Where(buncolgen.CaptureProfileColumns.ID.Eq(), req.ID).
+			Apply(buncolgen.CaptureProfileApplyTenant(req.TenantInfo)).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Capture profile")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *profileRepository) GetDefault(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*capture.CaptureProfile, error) {
-	entity := new(capture.CaptureProfile)
-	cols := buncolgen.CaptureProfileColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
+		entity := new(capture.CaptureProfile)
+		cols := buncolgen.CaptureProfileColumns
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Apply(buncolgen.CaptureProfileApplyTenant(tenantInfo)).
-		Where(cols.IsDefault.IsTrue()).
-		Where(cols.Status.Eq(), capture.ProfileActive).
-		Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Capture profile")
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Apply(buncolgen.CaptureProfileApplyTenant(tenantInfo)).
+			Where(cols.IsDefault.IsTrue()).
+			Where(cols.Status.Eq(), capture.ProfileActive).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Capture profile")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *profileRepository) Create(
 	ctx context.Context,
 	entity *capture.CaptureProfile,
 ) (*capture.CaptureProfile, error) {
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-		if entity.IsDefault {
-			if err := r.clearDefault(txCtx, tx, entity); err != nil {
-				return err
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+			if entity.IsDefault {
+				if err := r.clearDefault(txCtx, tx, entity); err != nil {
+					return err
+				}
 			}
+
+			_, err := tx.NewInsert().Model(entity).Returning("*").Exec(txCtx)
+
+			return err
+		})
+		if err != nil {
+			return nil, err
 		}
 
-		_, err := tx.NewInsert().Model(entity).Returning("*").Exec(txCtx)
-
-		return err
+		return entity, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return entity, nil
 }
 
 func (r *profileRepository) Update(
 	ctx context.Context,
 	entity *capture.CaptureProfile,
 ) (*capture.CaptureProfile, error) {
-	ov := entity.Version
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
+		ov := entity.Version
 
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-		if entity.IsDefault {
-			if err := r.clearDefault(txCtx, tx, entity); err != nil {
+		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+			if entity.IsDefault {
+				if err := r.clearDefault(txCtx, tx, entity); err != nil {
+					return err
+				}
+			}
+
+			entity.Version = ov + 1
+			results, err := tx.NewUpdate().
+				Model(entity).
+				WherePK().
+				Where(buncolgen.CaptureProfileColumns.Version.Eq(), ov).
+				Returning("*").
+				Exec(txCtx)
+			if err != nil {
 				return err
 			}
-		}
 
-		entity.Version = ov + 1
-		results, err := tx.NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(buncolgen.CaptureProfileColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(txCtx)
+			return dberror.CheckRowsAffected(results, "Capture profile", entity.ID.String())
+		})
 		if err != nil {
-			return err
+			entity.Version = ov
+
+			return nil, err
 		}
 
-		return dberror.CheckRowsAffected(results, "Capture profile", entity.ID.String())
+		return entity, nil
 	})
-	if err != nil {
-		entity.Version = ov
-
-		return nil, err
-	}
-
-	return entity, nil
 }
 
 // clearDefault unsets the flag on every other profile in the tenant. The
@@ -185,17 +196,19 @@ func (r *profileRepository) Delete(
 	ctx context.Context,
 	req repositories.DeleteCaptureProfileRequest,
 ) error {
-	results, err := r.db.DBForContext(ctx).
-		NewDelete().
-		Model((*capture.CaptureProfile)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.CaptureProfileScopeTenantDelete(dq, req.TenantInfo).
-				Where(buncolgen.CaptureProfileColumns.ID.Eq(), req.ID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		results, err := r.db.DBForContext(ctx).
+			NewDelete().
+			Model((*capture.CaptureProfile)(nil)).
+			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+				return buncolgen.CaptureProfileScopeTenantDelete(dq, req.TenantInfo).
+					Where(buncolgen.CaptureProfileColumns.ID.Eq(), req.ID)
+			}).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 
-	return dberror.CheckRowsAffected(results, "Capture profile", req.ID.String())
+		return dberror.CheckRowsAffected(results, "Capture profile", req.ID.String())
+	})
 }

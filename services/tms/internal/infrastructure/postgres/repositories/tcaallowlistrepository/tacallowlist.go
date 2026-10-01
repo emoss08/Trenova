@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -35,23 +36,25 @@ func (r *repository) List(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*tablechangealert.TCAAllowlistedTable, error) {
-	log := r.l.With(zap.String("operation", "List"))
-	cols := buncolgen.TCAAllowlistedTableColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tablechangealert.TCAAllowlistedTable, error) {
+		log := r.l.With(zap.String("operation", "List"))
+		cols := buncolgen.TCAAllowlistedTableColumns
 
-	entities := make([]*tablechangealert.TCAAllowlistedTable, 0)
-	err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(buncolgen.TCAAllowlistedTableApplyTenant(tenantInfo)).
-		Where(cols.Enabled.Eq(), true).
-		Order(cols.DisplayName.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to list tca allowlisted tables", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*tablechangealert.TCAAllowlistedTable, 0)
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(buncolgen.TCAAllowlistedTableApplyTenant(tenantInfo)).
+			Where(cols.Enabled.Eq(), true).
+			Order(cols.DisplayName.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to list tca allowlisted tables", zap.Error(err))
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) IsTableAllowed(
@@ -59,23 +62,25 @@ func (r *repository) IsTableAllowed(
 	tableName string,
 	tenantInfo pagination.TenantInfo,
 ) (bool, error) {
-	log := r.l.With(
-		zap.String("operation", "IsTableAllowed"),
-		zap.String("tableName", tableName),
-	)
-	cols := buncolgen.TCAAllowlistedTableColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		log := r.l.With(
+			zap.String("operation", "IsTableAllowed"),
+			zap.String("tableName", tableName),
+		)
+		cols := buncolgen.TCAAllowlistedTableColumns
 
-	exists, err := r.db.DB().
-		NewSelect().
-		Model((*tablechangealert.TCAAllowlistedTable)(nil)).
-		Apply(buncolgen.TCAAllowlistedTableApplyTenant(tenantInfo)).
-		Where(cols.TableName.Eq(), tableName).
-		Where(cols.Enabled.Eq(), true).
-		Exists(ctx)
-	if err != nil {
-		log.Error("failed to check if table is allowed", zap.Error(err))
-		return false, err
-	}
+		exists, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*tablechangealert.TCAAllowlistedTable)(nil)).
+			Apply(buncolgen.TCAAllowlistedTableApplyTenant(tenantInfo)).
+			Where(cols.TableName.Eq(), tableName).
+			Where(cols.Enabled.Eq(), true).
+			Exists(ctx)
+		if err != nil {
+			log.Error("failed to check if table is allowed", zap.Error(err))
+			return false, err
+		}
 
-	return exists, nil
+		return exists, nil
+	})
 }

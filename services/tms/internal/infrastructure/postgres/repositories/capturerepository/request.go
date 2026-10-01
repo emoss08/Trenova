@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
@@ -43,116 +44,126 @@ func (r *requestRepository) Create(
 	ctx context.Context,
 	entity *capture.CaptureRequest,
 ) (*capture.CaptureRequest, error) {
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *requestRepository) Update(
 	ctx context.Context,
 	entity *capture.CaptureRequest,
 ) (*capture.CaptureRequest, error) {
-	ov := entity.Version
-	entity.Version++
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(buncolgen.CaptureRequestColumns.Version.Eq(), ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		entity.Version = ov
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where(buncolgen.CaptureRequestColumns.Version.Eq(), ov).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			entity.Version = ov
 
-		return nil, err
-	}
-	if err = dberror.CheckRowsAffected(results, "Capture request", entity.ID.String()); err != nil {
-		entity.Version = ov
+			return nil, err
+		}
+		if err = dberror.CheckRowsAffected(results, "Capture request", entity.ID.String()); err != nil {
+			entity.Version = ov
 
-		return nil, err
-	}
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *requestRepository) GetByID(
 	ctx context.Context,
 	req repositories.GetCaptureRequestByIDRequest,
 ) (*capture.CaptureRequest, error) {
-	entity := new(capture.CaptureRequest)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
+		entity := new(capture.CaptureRequest)
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Relation(buncolgen.CaptureRequestRelations.CaptureProfile).
-		Where(buncolgen.CaptureRequestColumns.ID.Eq(), req.ID).
-		Apply(buncolgen.CaptureRequestApplyTenant(req.TenantInfo)).
-		Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Capture request")
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Relation(buncolgen.CaptureRequestRelations.CaptureProfile).
+			Where(buncolgen.CaptureRequestColumns.ID.Eq(), req.ID).
+			Apply(buncolgen.CaptureRequestApplyTenant(req.TenantInfo)).
+			Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Capture request")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *requestRepository) ListOpen(
 	ctx context.Context,
 	req repositories.ListOpenCaptureRequestsRequest,
 ) ([]*capture.CaptureRequest, error) {
-	entities := make([]*capture.CaptureRequest, 0)
-	cols := buncolgen.CaptureRequestColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
+		entities := make([]*capture.CaptureRequest, 0)
+		cols := buncolgen.CaptureRequestColumns
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Relation(buncolgen.CaptureRequestRelations.CaptureProfile).
-		Apply(buncolgen.CaptureRequestApplyTenant(req.TenantInfo)).
-		Where(cols.DeviceID.Eq(), req.DeviceID).
-		Where(cols.Status.In(), bun.List(openRequestStatuses)).
-		Order(cols.CreatedAt.OrderAsc()).
-		Scan(ctx); err != nil {
-		return nil, err
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Relation(buncolgen.CaptureRequestRelations.CaptureProfile).
+			Apply(buncolgen.CaptureRequestApplyTenant(req.TenantInfo)).
+			Where(cols.DeviceID.Eq(), req.DeviceID).
+			Where(cols.Status.In(), bun.List(openRequestStatuses)).
+			Order(cols.CreatedAt.OrderAsc()).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *requestRepository) ListForTarget(
 	ctx context.Context,
 	req repositories.ListCaptureRequestsForTargetRequest,
 ) ([]*capture.CaptureRequest, error) {
-	limit := req.Limit
-	if limit <= 0 || limit > maxRequestsForTarget {
-		limit = maxRequestsForTarget
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
+		limit := req.Limit
+		if limit <= 0 || limit > maxRequestsForTarget {
+			limit = maxRequestsForTarget
+		}
 
-	entities := make([]*capture.CaptureRequest, 0)
-	cols := buncolgen.CaptureRequestColumns
+		entities := make([]*capture.CaptureRequest, 0)
+		cols := buncolgen.CaptureRequestColumns
 
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Apply(buncolgen.CaptureRequestApplyTenant(req.TenantInfo)).
-		Where(cols.TargetType.Eq(), req.TargetType).
-		Where(cols.TargetID.Eq(), req.TargetID)
-	if req.UserID.IsNotNil() {
-		query = query.Where(cols.UserID.Eq(), req.UserID)
-	}
+		query := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(buncolgen.CaptureRequestApplyTenant(req.TenantInfo)).
+			Where(cols.TargetType.Eq(), req.TargetType).
+			Where(cols.TargetID.Eq(), req.TargetID)
+		if req.UserID.IsNotNil() {
+			query = query.Where(cols.UserID.Eq(), req.UserID)
+		}
 
-	if err := query.
-		Order(cols.CreatedAt.OrderDesc()).
-		Limit(limit).
-		Scan(ctx); err != nil {
-		return nil, err
-	}
+		if err := query.
+			Order(cols.CreatedAt.OrderDesc()).
+			Limit(limit).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *requestRepository) ListExpired(
@@ -160,19 +171,21 @@ func (r *requestRepository) ListExpired(
 	now int64,
 	limit int,
 ) ([]*capture.CaptureRequest, error) {
-	entities := make([]*capture.CaptureRequest, 0)
-	cols := buncolgen.CaptureRequestColumns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
+		entities := make([]*capture.CaptureRequest, 0)
+		cols := buncolgen.CaptureRequestColumns
 
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Where(cols.Status.In(), bun.List(waitingRequestStatuses)).
-		Where(cols.ExpiresAt.Lte(), now).
-		Order(cols.ExpiresAt.OrderAsc()).
-		Limit(limit).
-		Scan(ctx); err != nil {
-		return nil, err
-	}
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Where(cols.Status.In(), bun.List(waitingRequestStatuses)).
+			Where(cols.ExpiresAt.Lte(), now).
+			Order(cols.ExpiresAt.OrderAsc()).
+			Limit(limit).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }

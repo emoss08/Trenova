@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
@@ -59,48 +60,52 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListAgentExceptionRequest,
 ) (*pagination.ListResult[*agent.AgentException], error) {
-	log := r.l.With(zap.String("operation", "List"))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*agent.AgentException], error) {
+		log := r.l.With(zap.String("operation", "List"))
 
-	entities := make([]*agent.AgentException, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count agent exceptions", zap.Error(err))
-		return nil, err
-	}
+		entities := make([]*agent.AgentException, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count agent exceptions", zap.Error(err))
+			return nil, err
+		}
 
-	return &pagination.ListResult[*agent.AgentException]{Items: entities, Total: total}, nil
+		return &pagination.ListResult[*agent.AgentException]{Items: entities, Total: total}, nil
+	})
 }
 
 func (r *repository) ListByIDs(
 	ctx context.Context,
 	req repositories.ListAgentExceptionsByIDsRequest,
 ) ([]*agent.AgentException, error) {
-	if len(req.IDs) == 0 {
-		return []*agent.AgentException{}, nil
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentException, error) {
+		if len(req.IDs) == 0 {
+			return []*agent.AgentException{}, nil
+		}
 
-	cols := buncolgen.AgentExceptionColumns
-	entities := make([]*agent.AgentException, 0, len(req.IDs))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentExceptionScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.In(), bun.List(req.IDs))
-		}).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to list agent exceptions by ids", zap.Error(err))
+		cols := buncolgen.AgentExceptionColumns
+		entities := make([]*agent.AgentException, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentExceptionScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.In(), bun.List(req.IDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list agent exceptions by ids", zap.Error(err))
 
-		return nil, fmt.Errorf("list agent exceptions by ids: %w", err)
-	}
+			return nil, fmt.Errorf("list agent exceptions by ids: %w", err)
+		}
 
-	return entities, nil
+		return entities, nil
+	})
 }
 
 func (r *repository) applyTotalCountFilters(
@@ -142,117 +147,125 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListAgentExceptionConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentException], error) {
-	log := r.l.With(zap.String("operation", "ListConnection"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentException], error) {
+		log := r.l.With(zap.String("operation", "ListConnection"))
 
-	dba := r.db.DBForContext(ctx)
-	var totalCount *int
-	if req.Cursor.IncludeTotalCount {
-		total, err := dba.
-			NewSelect().
-			Model((*agent.AgentException)(nil)).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.applyTotalCountFilters(sq, req)
-			}).
-			Count(ctx)
+		dba := r.db.DBForContext(ctx)
+		var totalCount *int
+		if req.Cursor.IncludeTotalCount {
+			total, err := dba.
+				NewSelect().
+				Model((*agent.AgentException)(nil)).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.applyTotalCountFilters(sq, req)
+				}).
+				Count(ctx)
+			if err != nil {
+				log.Error("failed to count agent exceptions", zap.Error(err))
+				return nil, err
+			}
+			totalCount = &total
+		}
+
+		result, err := dbhelper.CursorList(
+			ctx,
+			dbhelper.CursorListParams[*agent.AgentException]{
+				Filter:     req.Filter,
+				Cursor:     req.Cursor,
+				TotalCount: totalCount,
+				Query: func(entities *[]*agent.AgentException) *bun.SelectQuery {
+					return dba.
+						NewSelect().
+						Model(entities).
+						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+							return applyAgentExceptionColumns(sq, req.Columns)
+						})
+				},
+				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+					return r.applyCursorPageFilters(sq, req)
+				},
+			})
 		if err != nil {
-			log.Error("failed to count agent exceptions", zap.Error(err))
+			log.Error("failed to scan agent exceptions", zap.Error(err))
 			return nil, err
 		}
-		totalCount = &total
-	}
 
-	result, err := dbhelper.CursorList(
-		ctx,
-		dbhelper.CursorListParams[*agent.AgentException]{
-			Filter:     req.Filter,
-			Cursor:     req.Cursor,
-			TotalCount: totalCount,
-			Query: func(entities *[]*agent.AgentException) *bun.SelectQuery {
-				return dba.
-					NewSelect().
-					Model(entities).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyAgentExceptionColumns(sq, req.Columns)
-					})
-			},
-			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-				return r.applyCursorPageFilters(sq, req)
-			},
-		})
-	if err != nil {
-		log.Error("failed to scan agent exceptions", zap.Error(err))
-		return nil, err
-	}
-
-	return result, nil
+		return result, nil
+	})
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetAgentExceptionByIDRequest,
 ) (*agent.AgentException, error) {
-	log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentException, error) {
+		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
 
-	entity := new(agent.AgentException)
-	cols := buncolgen.AgentExceptionColumns
-	err := r.db.DB().
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentExceptionScopeTenant(sq, *req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get agent exception", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "AgentException")
-	}
+		entity := new(agent.AgentException)
+		cols := buncolgen.AgentExceptionColumns
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentExceptionScopeTenant(sq, *req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Scan(ctx)
+		if err != nil {
+			log.Error("failed to get agent exception", zap.Error(err))
+			return nil, dberror.HandleNotFoundError(err, "AgentException")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) Create(
 	ctx context.Context,
 	entity *agent.AgentException,
 ) (*agent.AgentException, error) {
-	log := r.l.With(zap.String("operation", "Create"))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentException, error) {
+		log := r.l.With(zap.String("operation", "Create"))
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to create agent exception", zap.Error(err))
-		return nil, err
-	}
+		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			log.Error("failed to create agent exception", zap.Error(err))
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) UpdateResolution(
 	ctx context.Context,
 	req repositories.UpdateAgentExceptionResolutionRequest,
 ) (*agent.AgentException, error) {
-	log := r.l.With(zap.String("operation", "UpdateResolution"), zap.String("id", req.ID.String()))
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentException, error) {
+		log := r.l.With(zap.String("operation", "UpdateResolution"), zap.String("id", req.ID.String()))
 
-	entity := new(agent.AgentException)
-	cols := buncolgen.AgentExceptionColumns
-	results, err := r.db.DB().
-		NewUpdate().
-		Model(entity).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.AgentExceptionScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.ID)
-		}).
-		Set(cols.ResolutionState.Set(), req.ResolutionState).
-		Set(cols.ResolutionNotes.Set(), req.ResolutionNotes).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to update agent exception resolution", zap.Error(err))
-		return nil, err
-	}
+		entity := new(agent.AgentException)
+		cols := buncolgen.AgentExceptionColumns
+		results, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.AgentExceptionScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID)
+			}).
+			Set(cols.ResolutionState.Set(), req.ResolutionState).
+			Set(cols.ResolutionNotes.Set(), req.ResolutionNotes).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Returning("*").
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to update agent exception resolution", zap.Error(err))
+			return nil, err
+		}
 
-	if err = dberror.CheckRowsAffected(results, "AgentException", req.ID.String()); err != nil {
-		return nil, err
-	}
+		if err = dberror.CheckRowsAffected(results, "AgentException", req.ID.String()); err != nil {
+			return nil, err
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
