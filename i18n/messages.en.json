@@ -19353,6 +19353,15 @@
       "apps/web/components"
     ]
   },
+  "Approve carrier settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approve charge": {
     "sites": 1,
     "scope": [
@@ -19372,6 +19381,15 @@
     ]
   },
   "Approve detention charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approve driver settlements": {
     "sites": 1,
     "scope": [
       "ts"
@@ -107397,6 +107415,15 @@
       "domain/carrierintel"
     ]
   },
+  "No Blocked, DeadLettered or Retrying record last failed as {0}; get_accounting_sync_status shows what is waiting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "No Clearinghouse query has been run for this worker.": {
     "sites": 1,
     "scope": [
@@ -112867,6 +112894,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "Not accepted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Not answered": {
     "sites": 1,
     "scope": [
@@ -113344,6 +113380,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Not permitted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Not picked up": {
@@ -123090,6 +123135,15 @@
       "apps/web/components"
     ]
   },
+  "Out of budget": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Out of date · as of {0}": {
     "sites": 1,
     "scope": [
@@ -131749,6 +131803,15 @@
       "routes/worker"
     ]
   },
+  "Post carrier settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Post customer payments": {
     "sites": 1,
     "scope": [
@@ -131756,6 +131819,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Post driver settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Post fuel purchases and IFTA gallons automatically from Comdata fleet card transactions.": {
@@ -167031,6 +167103,15 @@
       "packages/shared/components",
       "routes/agent-control",
       "routes/shipment"
+    ]
+  },
+  "Skipped (repeat)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Skipped by": {
@@ -216822,6 +216903,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "retry_accounting_sync runs from an approval only on the records a person approved, and this proposal names none; propose it again so the records its error categories resolve to are listed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "rev {0}": {

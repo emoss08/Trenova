@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
@@ -193,4 +194,50 @@ func TestAuthorize_TheRefusalNamesWhoseAccessFellShort(t *testing.T) {
 	)
 	assert.NotContains(t, unattended.content, "person")
 	assert.Equal(t, "lacks update access to worker", unattended.reason)
+}
+
+func TestRun_EachToolMessageKeepsTheVerdictTheStreamCarried(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("get_shipment", map[string]any{"id": "shp_1"}, nil)
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		callsTurn(
+			serviceports.ToolCall{ID: "unheld", Name: "search_worker"},
+			serviceports.ToolCall{
+				ID:        "read",
+				Name:      "get_shipment",
+				Arguments: map[string]any{"id": "shp_1"},
+			},
+		),
+		textTurn("Found it."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool, queryTool("search_worker", nil, nil)},
+	}, &stubActionRegistry{}, nil)
+	req := &serviceports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Input:      "Look it up.",
+	}
+	events := recordEvents(req)
+
+	result, err := rt.Run(t.Context(), req)
+	require.NoError(t, err)
+
+	streamed := finishedVerdicts(events)
+	kept := make(map[string]string, len(streamed))
+	failed := make(map[string]bool, len(streamed))
+	for _, message := range result.Messages {
+		if message.Role != conversation.RoleTool {
+			continue
+		}
+		kept[message.ToolCallID] = message.ToolVerdict
+		failed[message.ToolCallID] = message.ToolFailed
+	}
+
+	assert.Equal(t, streamed, kept)
+	assert.Equal(t, aitrace.OutcomeDenied, kept["unheld"])
+	assert.True(t, failed["unheld"])
+	assert.Equal(t, aitrace.OutcomeRan, kept["read"])
+	assert.False(t, failed["read"])
 }

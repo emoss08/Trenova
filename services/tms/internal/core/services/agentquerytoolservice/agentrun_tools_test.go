@@ -546,3 +546,29 @@ func TestGetAgentRun_TheIDNamesWhereItComesFrom(t *testing.T) {
 	assert.Equal(t, agent.ExternalReadMarked, tool.Policy().ReadsExternal)
 	assert.Equal(t, agent.TaintSourceRunRecord, tool.Policy().Source)
 }
+
+func TestAgentRunEventView_CarriesTheVerdictOfAToolThatDidNotRun(t *testing.T) {
+	t.Parallel()
+
+	view := agentRunEventViewFrom(&agent.AgentRunEvent{
+		Sequence: 4,
+		Kind:     serviceports.AssistantEventToolFinished,
+		CallID:   "call_1",
+		Payload: map[string]any{
+			"name":    "update_worker",
+			"failed":  true,
+			"verdict": "denied",
+			"content": `Tool "update_worker" is not permitted`,
+		},
+	})
+
+	assert.Equal(t, "update_worker", view.Tool)
+	assert.True(t, view.Failed)
+	assert.Equal(t, "denied", view.Verdict)
+
+	ran := agentRunEventViewFrom(&agent.AgentRunEvent{
+		Kind:    serviceports.AssistantEventToolStarted,
+		Payload: map[string]any{"name": "get_shipment"},
+	})
+	assert.Empty(t, ran.Verdict, "a started call has no verdict yet")
+}

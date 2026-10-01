@@ -1,5 +1,5 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import type { AssistantMessage, DelegateReport, ToolEffect } from "@/types/assistant";
+import type { AssistantMessage, DelegateReport, ToolEffect, ToolVerdict } from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
 import { describeToolCall, isWebTool, parseToolResult, WEB_READ_TOOL } from "./tool-presentation";
 import { REQUEST_DECISION_TOOL } from "./decision-requests";
@@ -26,6 +26,8 @@ export type ToolStep = {
   summary: string;
   /** How long the call took, in seconds, when that is known. */
   durationSeconds: number | null;
+  /** How the runtime judged the call; absent from an older server or a result saved before it was kept. */
+  verdict?: ToolVerdict;
   /**
    * On a delegate_task call: the other agent's work on the task, as the
    * stream delivered it or as the thread saved it. The hand-off is drawn
@@ -76,6 +78,51 @@ export function toolEffect(name: string, effect?: ToolEffect | null): ToolEffect
   return LOOKUP_PREFIXES.some((prefix) => name.startsWith(prefix)) ? "lookup" : "change";
 }
 
+/**
+ * Why the runtime turned a call away before it could run. Each is a stop the
+ * reader can act on — ask for access, rephrase, start a new turn — rather
+ * than a fault, so each is said in its own words instead of "failed". A
+ * call that ran and broke, or whose verdict this client does not know,
+ * stays failed.
+ */
+export type ToolRefusal = "denied" | "invalid" | "over_budget" | "duplicate";
+
+export function toolRefusal(step: Pick<ToolStep, "status" | "verdict">): ToolRefusal | null {
+  if (step.status !== "failed") {
+    return null;
+  }
+  switch (step.verdict) {
+    case "denied":
+    case "invalid":
+    case "over_budget":
+    case "duplicate":
+      return step.verdict;
+    default:
+      return null;
+  }
+}
+
+export function refusalLabel(refusal: ToolRefusal, t: TranslateFn): string {
+  switch (refusal) {
+    case "denied":
+      return t("Not permitted");
+    case "invalid":
+      return t("Not accepted");
+    case "over_budget":
+      return t("Out of budget");
+    case "duplicate":
+      return t("Skipped (repeat)");
+  }
+}
+
+/**
+ * A refusal the reader should act on reads in the warning tone; a repeat the
+ * runtime skipped harmed nothing and stays quiet.
+ */
+export function refusalTone(refusal: ToolRefusal): "warning" | "neutral" {
+  return refusal === "duplicate" ? "neutral" : "warning";
+}
+
 /** How a saved call ended: a proposal is recorded rather than run. */
 function savedStatus(result: AssistantMessage | null): ToolActivityStatus {
   if (result === null) return "done";
@@ -101,6 +148,7 @@ export function stepsFromExchanges(tools: readonly ToolExchange[], askedAt: numb
       effect: toolEffect(name, call.effect ?? result?.effect),
       summary: result?.summary ?? "",
       durationSeconds: timed ? Math.max(0, result.createdAt - askedAt) : null,
+      verdict: result?.toolVerdict,
       ...(name === DELEGATE_TOOL
         ? {
             delegate: {
@@ -130,6 +178,7 @@ export function segmentStep(segment: Extract<TurnSegment, { kind: "tool" }>): To
     effect: toolEffect(segment.name, segment.effect),
     summary: segment.summary ?? "",
     durationSeconds: timed ? (segment.finishedAt! - segment.startedAt!) / 1000 : null,
+    verdict: segment.verdict,
     ...(segment.delegate || segment.name === DELEGATE_TOOL
       ? {
           delegate: {
@@ -247,6 +296,8 @@ export type ActivityLine = {
   /** Said in the danger tone after the detail: how many of the steps failed. */
   failure: string;
   state: "running" | "done" | "failed" | "proposed";
+  /** Set on a failed line whose calls the runtime turned away, and why. */
+  refusal?: ToolRefusal;
 };
 
 /** How far a list of names is spelled out before the rest become a count. */
@@ -677,9 +728,34 @@ function delegateLine(step: ToolStep, t: TranslateFn): ActivityLine {
   };
 }
 
+/**
+ * A group every call of which was turned away for the same reason reads as
+ * that reason, naming what was attempted; a group where anything ran, or
+ * whose calls were stopped for different reasons, is described as usual.
+ */
+function refusedLine(group: ActivityGroup, t: TranslateFn): ActivityLine | null {
+  const first = group.steps[0];
+  const refusal = toolRefusal(first);
+  if (refusal === null || group.steps.some((step) => toolRefusal(step) !== refusal)) {
+    return null;
+  }
+
+  return {
+    phrase: refusalLabel(refusal, t),
+    detail: titleOf(first),
+    failure: "",
+    state: "failed",
+    refusal,
+  };
+}
+
 /** One line for a group: what happened, by what kind of thing happened. */
 export function describeActivity(group: ActivityGroup, t: TranslateFn): ActivityLine {
   const step = group.steps[0];
+  const refused = refusedLine(group, t);
+  if (refused !== null) {
+    return refused;
+  }
   if (group.steps.every((entry) => isWebTool(entry.name))) {
     return webLine(group, t);
   }

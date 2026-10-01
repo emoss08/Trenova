@@ -9,6 +9,7 @@ import type {
   SendMessageResult,
   RetryKind,
   ToolEffect,
+  ToolVerdict,
 } from "@/types/assistant";
 
 /**
@@ -39,6 +40,8 @@ export type ToolSegment = {
   effect?: ToolEffect;
   /** The server's one-line account of the result, once it has finished. */
   summary?: string;
+  /** How the runtime judged the call once it finished; absent from an older server. */
+  verdict?: ToolVerdict;
   /** When this reader saw the call start and finish, in epoch milliseconds. */
   startedAt?: number;
   finishedAt?: number;
@@ -199,6 +202,7 @@ function finishTool(segments: TurnSegment[], data: ToolFinishedData): TurnSegmen
           content: data.content,
           effect: data.effect ?? segment.effect,
           summary: data.summary || undefined,
+          verdict: data.verdict,
         }
       : segment,
   );

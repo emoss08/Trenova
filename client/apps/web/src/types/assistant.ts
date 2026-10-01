@@ -284,6 +284,28 @@ export const toolEffectSchema = z.enum([
 
 const optionalToolEffect = toolEffectSchema.optional().catch(undefined);
 
+/**
+ * How the runtime judged a tool call: it ran, was proposed or simulated, or
+ * was turned away before it could run — not permitted, arguments not
+ * accepted, a repeat, past the turn's budget — or it failed. A verdict this
+ * client has not heard of reads as absent, which draws the plain failed state.
+ */
+export const toolVerdictSchema = z.enum([
+  "ran",
+  "proposed",
+  "simulated",
+  "denied",
+  "invalid",
+  "duplicate",
+  "over_budget",
+  "failed",
+  "unknown",
+]);
+
+export type ToolVerdict = z.infer<typeof toolVerdictSchema>;
+
+const optionalToolVerdict = toolVerdictSchema.optional().catch(undefined);
+
 export const toolCatalogEntrySchema = z.object({
   name: z.string(),
   description: z.string(),
@@ -592,6 +614,8 @@ export const assistantMessageSchema = z.object({
   toolCallId: z.string().optional().default(""),
   toolName: z.string().optional().default(""),
   toolFailed: z.boolean().default(false),
+  /** On a tool result: how the runtime judged the call; absent from a result saved before it was kept. */
+  toolVerdict: optionalToolVerdict,
   /** On a tool result: what the call did. */
   effect: optionalToolEffect,
   /**
@@ -1051,6 +1075,7 @@ export const assistantToolFinishedEventSchema = z.object({
   content: z.string().optional().default(""),
   effect: optionalToolEffect,
   summary: z.string().optional(),
+  verdict: optionalToolVerdict,
   ...delegateScopeShape,
 });
 

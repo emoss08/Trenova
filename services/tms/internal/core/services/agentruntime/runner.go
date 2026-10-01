@@ -517,6 +517,7 @@ func (s *Service) recordToolResult(
 		ToolCallID:     call.ID,
 		ToolName:       call.Name,
 		ToolFailed:     outcome.failed,
+		ToolVerdict:    outcome.verdict,
 		ToolEffect:     effect,
 		ToolSummary:    summary,
 		FoundTools:     outcome.found,

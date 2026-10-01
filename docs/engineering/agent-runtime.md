@@ -896,7 +896,14 @@ outcome carries a one-line `reason` and a `verdict` (`ran`, `proposed`,
 `denied`, …). A call the loop turns away before any step is claimed (a tool the
 agent does not hold or that does not exist, arguments that did not parse, a spent
 budget, a repeat, a question nobody can answer) carries its verdict on the
-`tool_finished` event instead. A proposal carries the same trace and span, its
+`tool_finished` event instead. The tool message the turn saves keeps the same
+verdict (`assistant_messages.tool_verdict`, `toolVerdict` on the thread), and the
+chat draws a refusal in its own words rather than as a failure: `denied` reads
+"Not permitted", `invalid` "Not accepted", `over_budget` "Out of budget" and
+`duplicate` "Skipped (repeat)", while `failed`, an unknown verdict, and a result
+saved before the verdict was kept read as failed. A refusal is still a failed
+result to everything that counts failures. `get_agent_run` lists each step's
+verdict too. A proposal carries the same trace and span, its
 `step_key`, when an automatic write ran and at what version it left the record,
 and who it ran as.
 The whole table of link columns, and who writes each, is in
@@ -1060,9 +1067,6 @@ expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them).
   "began, outcome unknown" rather than replaying.
 - **Background runs discard their transcript** beyond the summary and the event
   log.
-- **Permission denials are not distinct events.** A refusal arrives as a failed
-  tool result carrying its verdict; the chat does not yet show a denial apart
-  from a failure.
 - **Search attributes are not set.** Organization, feature, thread and
   definition are carried in workflow ids, summaries and fairness keys; typed
   search attributes need registering on the server first.
