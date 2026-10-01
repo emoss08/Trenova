@@ -121,6 +121,17 @@ type ListVehicleInspectionsRequest struct {
 	Limit      int
 }
 
+type ListOpenStopReviewsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+	Limit      int
+}
+
+type StopReview struct {
+	Event      *telematics.TelematicsEvent
+	ShipmentID pulid.ID
+}
+
 type TrailerTelematicsMapping struct {
 	TrailerID  pulid.ID
 	ExternalID string
@@ -223,6 +234,14 @@ type TelematicsRepository interface {
 		ctx context.Context,
 		event *telematics.TelematicsEvent,
 	) (bool, error)
+	RecordStopOutcome(
+		ctx context.Context,
+		event *telematics.TelematicsEvent,
+	) error
+	ListOpenStopReviews(
+		ctx context.Context,
+		req *ListOpenStopReviewsRequest,
+	) ([]*StopReview, error)
 	GetFeedState(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

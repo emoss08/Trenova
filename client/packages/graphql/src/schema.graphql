@@ -24542,6 +24542,7 @@ enum WatchtowerSourceKind {
   Insight
   MoveCoverage
   ServiceFailure
+  TelematicsStopVisit
   WeatherAlert
   WorkerCredential
 }

@@ -6974,6 +6974,7 @@ export type WatchtowerSourceKind =
   | 'Insight'
   | 'MoveCoverage'
   | 'ServiceFailure'
+  | 'TelematicsStopVisit'
   | 'WeatherAlert'
   | 'WorkerCredential';
 

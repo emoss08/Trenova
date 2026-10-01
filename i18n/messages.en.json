@@ -6354,6 +6354,24 @@
       "service/agentplanservice"
     ]
   },
+  "A stop outcome for review must name its move": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/telematics"
+    ]
+  },
+  "A stop outcome for review must say why": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/telematics"
+    ]
+  },
   "A stop was reached late, or missed, and a service failure was opened on the shipment.": {
     "sites": 1,
     "scope": [
@@ -8374,15 +8392,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Accept a document as proof, such as a proof of delivery for billing": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/permission"
     ]
   },
   "Accept confident": {
@@ -143335,15 +143344,6 @@
       "domain/worker"
     ]
   },
-  "Refuse a document so it no longer counts toward billing requirements": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/permission"
-    ]
-  },
   "Refused": {
     "sites": 2,
     "scope": [
@@ -171037,6 +171037,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Stop outcome reason cannot be longer than 500 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/telematics"
+    ]
+  },
   "Stop pay": {
     "sites": 1,
     "scope": [
@@ -171180,6 +171189,24 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Stop visit is required with a stop outcome": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/telematics"
+    ]
+  },
+  "Stop visit not recorded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/watchtower"
     ]
   },
   "Stop {0}": {

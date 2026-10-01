@@ -1,5 +1,5 @@
 {
-  "version": "sha256:4f580a5831276816fb334fffb46c1d08501f7557e14854d18b8a7a6ef95a847f",
+  "version": "sha256:ca5bb6087936fa9f964329282d7599d45a1e344b8aad47972e87d500f3eefe87",
   "modules": [
     {
       "id": "home",
@@ -8299,8 +8299,8 @@
         "Desk",
         "Watchtower"
       ],
-      "description": "Watchtower is a live feed of things across the operation that are worth a look: failed agent runs, service failures, expiring credentials, quarantined EDI, inbound mail waiting on a person, and similar events.",
-      "summary": "Watchtower is a live feed of things across the operation that are worth a look: failed agent runs, service failures, expiring credentials, quarantined EDI, inbound mail waiting on a person, and similar events. Each item shows its severity, what kind of event it is, a short summary and how long ago it happened, and new items since your last visit are marked. From an item you can open the record, ask an agent about it, or hand it to the agents that watch that kind of event.",
+      "description": "Watchtower is a live feed of things across the operation that are worth a look: failed agent runs, service failures, expiring credentials, quarantined EDI, inbound mail waiting on a person, telematics arrivals and departures that could not be recorded on their stop, and similar events.",
+      "summary": "Watchtower is a live feed of things across the operation that are worth a look: failed agent runs, service failures, expiring credentials, quarantined EDI, inbound mail waiting on a person, telematics arrivals and departures that could not be recorded on their stop, and similar events. Each item shows its severity, what kind of event it is, a short summary and how long ago it happened, and new items since your last visit are marked. From an item you can open the record, ask an agent about it, or hand it to the agents that watch that kind of event.",
       "requires": [
         {
           "resource": "assistant",

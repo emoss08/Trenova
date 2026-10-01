@@ -472,6 +472,7 @@ func outsideMark(item *watchtower.Item) (agent.SourcedRef, bool) {
 		watchtower.SourceDetentionOccurrence,
 		watchtower.SourceWorkerCredential,
 		watchtower.SourceMoveCoverage,
+		watchtower.SourceTelematicsStopVisit,
 		watchtower.SourceAgentQualityRegression:
 	}
 	if source == "" {
@@ -508,6 +509,7 @@ func (w *watchtowerRunIDs) add(item *watchtower.Item) {
 		watchtower.SourceInboundMessage,
 		watchtower.SourceWorkerCredential,
 		watchtower.SourceMoveCoverage,
+		watchtower.SourceTelematicsStopVisit,
 		watchtower.SourceAgentQualityRegression:
 	}
 }

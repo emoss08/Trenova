@@ -7,8 +7,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -150,9 +150,19 @@ func (s *Service) dispatchEventSideEffects(
 ) {
 	switch event.Kind {
 	case services.ProviderEventKindGeofenceEntry, services.ProviderEventKindStopArrival:
-		s.applyStopEvent(ctx, tenantInfo, record, repositories.StopActualActionArrive)
+		s.applyStopEvent(ctx, &stopEvent{
+			tenantInfo:   tenantInfo,
+			record:       record,
+			visit:        shipment.VisitArrival,
+			providerStop: event.Kind == services.ProviderEventKindStopArrival,
+		})
 	case services.ProviderEventKindGeofenceExit, services.ProviderEventKindStopDeparture:
-		s.applyStopEvent(ctx, tenantInfo, record, repositories.StopActualActionDepart)
+		s.applyStopEvent(ctx, &stopEvent{
+			tenantInfo:   tenantInfo,
+			record:       record,
+			visit:        shipment.VisitDeparture,
+			providerStop: event.Kind == services.ProviderEventKindStopDeparture,
+		})
 	case services.ProviderEventKindFormSubmission:
 		if err := s.handleFormEvent(ctx, tenantInfo, providerType, event.Form); err != nil {
 			s.l.Warn("failed to ingest telematics form event",

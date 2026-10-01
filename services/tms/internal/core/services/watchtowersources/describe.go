@@ -13,11 +13,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -52,7 +55,8 @@ const (
 	// being a problem; one already expired is a driver who cannot roll.
 	credentialWarningDays = int64(7)
 	// A move this close to its start has run out of room to plan around.
-	coverageCriticalHours = int64(4)
+	coverageCriticalHours   = int64(4)
+	maxStopVisitTitleLength = 200
 )
 
 func panelPath(base string, id string) string {
@@ -637,4 +641,52 @@ func inboundMessageSummary(entity *inboundmessage.InboundMessage) string {
 	}
 
 	return strings.Join(parts, " · ")
+}
+
+func TelematicsStopVisitSourceID(event *telematics.TelematicsEvent) string {
+	target := "unlocated"
+	switch {
+	case event.StopID.IsNotNil():
+		target = event.StopID.String()
+	case event.LocationID.IsNotNil():
+		target = event.LocationID.String()
+	}
+
+	return event.ShipmentMoveID.String() + ":" + target + ":" + string(event.StopVisit)
+}
+
+func DescribeTelematicsStopVisit(review *repositories.StopReview) services.WatchtowerItemInput {
+	event := review.Event
+
+	visit := "Arrival"
+	if event.StopVisit == shipment.VisitDeparture {
+		visit = "Departure"
+	}
+	title := visit + " not recorded"
+	if place := strings.TrimSpace(event.AddressName); place != "" {
+		title = visit + " at " + place + " not recorded"
+	}
+
+	path := pathDispatchConsole
+	if review.ShipmentID.IsNotNil() {
+		if recordPath, ok := productguide.RecordPath("shipment", review.ShipmentID.String()); ok {
+			path = recordPath
+		}
+	}
+
+	return services.WatchtowerItemInput{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: event.OrganizationID,
+			BuID:  event.BusinessUnitID,
+		},
+		SourceKind:  watchtower.SourceTelematicsStopVisit,
+		SourceID:    TelematicsStopVisitSourceID(event),
+		Severity:    watchtower.SeverityWarning,
+		Title:       stringutils.TruncateRunes(title, maxStopVisitTitleLength),
+		Summary:     event.StopOutcomeReason,
+		SubjectType: agent.SubjectShipmentMove,
+		SubjectID:   event.ShipmentMoveID,
+		Path:        path,
+		OccurredAt:  event.OccurredAt,
+	}
 }

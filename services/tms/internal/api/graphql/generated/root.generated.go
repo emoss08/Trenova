@@ -26575,6 +26575,7 @@ enum WatchtowerSourceKind {
   InboundMessage
   WorkerCredential
   MoveCoverage
+  TelematicsStopVisit
   AgentQualityRegression
   AccountingSync
 }

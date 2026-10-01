@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
@@ -462,6 +463,115 @@ func (r *repository) InsertEvent(
 			return false, fmt.Errorf("insert telematics event rows affected: %w", err)
 		}
 		return rows > 0, nil
+	})
+}
+
+func (r *repository) RecordStopOutcome(
+	ctx context.Context,
+	event *telematics.TelematicsEvent,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		cols := buncolgen.TelematicsEventColumns
+		result, err := r.db.DBForContext(ctx).NewUpdate().
+			Model(event).
+			Column(
+				cols.StopOutcome.Bare(),
+				cols.StopVisit.Bare(),
+				cols.ShipmentMoveID.Bare(),
+				cols.StopID.Bare(),
+				cols.StopOutcomeReason.Bare(),
+			).
+			WherePK().
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("record telematics stop outcome: %w", err)
+		}
+		return dberror.CheckRowsAffected(result, "Telematics event", event.ID.String())
+	})
+}
+
+func (r *repository) ListOpenStopReviews(
+	ctx context.Context,
+	req *repositories.ListOpenStopReviewsRequest,
+) ([]*repositories.StopReview, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.StopReview, error) {
+		cols := buncolgen.TelematicsEventColumns
+		moveCols := buncolgen.ShipmentMoveColumns
+		stopCols := buncolgen.StopColumns
+
+		rows := make([]struct {
+			telematics.TelematicsEvent `bun:",extend"`
+
+			ShipmentID pulid.ID `bun:"move_shipment_id"`
+		}, 0)
+		q := r.db.DBForContext(ctx).NewSelect().
+			Model(&rows).
+			ColumnExpr(buncolgen.TelematicsEventTable.All()).
+			ColumnExpr(moveCols.ShipmentID.As("move_shipment_id")).
+			Join(
+				"JOIN "+buncolgen.ShipmentMoveTable.As(buncolgen.ShipmentMoveTable.Alias)+" ON "+
+					moveCols.ID.EqColumn(cols.ShipmentMoveID)+" AND "+
+					moveCols.OrganizationID.EqColumn(cols.OrganizationID)+" AND "+
+					moveCols.BusinessUnitID.EqColumn(cols.BusinessUnitID),
+			).
+			Join(
+				"LEFT JOIN "+buncolgen.StopTable.As(buncolgen.StopTable.Alias)+" ON "+
+					stopCols.ID.EqColumn(cols.StopID)+" AND "+
+					stopCols.OrganizationID.EqColumn(cols.OrganizationID)+" AND "+
+					stopCols.BusinessUnitID.EqColumn(cols.BusinessUnitID),
+			).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = buncolgen.TelematicsEventScopeTenant(sq, req.TenantInfo).
+					Where(cols.StopOutcome.In(), bun.List([]telematics.StopOutcome{
+						telematics.StopOutcomeUnmatched,
+						telematics.StopOutcomeRefused,
+					})).
+					Where(moveCols.Status.NotIn(), bun.List([]shipment.MoveStatus{
+						shipment.MoveStatusCompleted,
+						shipment.MoveStatusCanceled,
+					}))
+				if req.Since > 0 {
+					sq = sq.Where(cols.OccurredAt.Gt(), req.Since)
+				}
+				return sq.WhereGroup(" AND ", func(open *bun.SelectQuery) *bun.SelectQuery {
+					return open.
+						Where(cols.StopID.IsNull()).
+						WhereGroup(" OR ", func(pending *bun.SelectQuery) *bun.SelectQuery {
+							return pending.
+								Where(stopCols.Status.Ne(), shipment.StopStatusCanceled).
+								WhereGroup(" AND ", func(missing *bun.SelectQuery) *bun.SelectQuery {
+									return missing.
+										WhereGroup(" AND ", func(arrival *bun.SelectQuery) *bun.SelectQuery {
+											return arrival.
+												Where(cols.StopVisit.Eq(), shipment.VisitArrival).
+												Where(stopCols.ActualArrival.IsNull())
+										}).
+										WhereGroup(" OR ", func(departure *bun.SelectQuery) *bun.SelectQuery {
+											return departure.
+												Where(cols.StopVisit.Eq(), shipment.VisitDeparture).
+												Where(stopCols.ActualDeparture.IsNull())
+										})
+								})
+						})
+				})
+			}).
+			Order(cols.OccurredAt.OrderDesc())
+		if req.Limit > 0 {
+			q = q.Limit(req.Limit)
+		}
+		if err := q.Scan(ctx); err != nil {
+			return nil, fmt.Errorf("list open telematics stop reviews: %w", err)
+		}
+
+		reviews := make([]*repositories.StopReview, 0, len(rows))
+		for i := range rows {
+			event := rows[i].TelematicsEvent
+			reviews = append(reviews, &repositories.StopReview{
+				Event:      &event,
+				ShipmentID: rows[i].ShipmentID,
+			})
+		}
+		return reviews, nil
 	})
 }
 

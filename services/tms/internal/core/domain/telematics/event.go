@@ -1,6 +1,7 @@
 package telematics
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,6 +25,12 @@ type TelematicsEvent struct {
 	AddressName    string         `json:"addressName"    bun:"address_name,type:TEXT,nullzero"`
 	Payload        map[string]any `json:"payload"        bun:"payload,type:JSONB,nullzero"`
 	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull"`
+
+	StopOutcome       StopOutcome        `json:"stopOutcome"       bun:"stop_outcome,type:VARCHAR(20),nullzero"`
+	StopVisit         shipment.VisitKind `json:"stopVisit"         bun:"stop_visit,type:VARCHAR(20),nullzero"`
+	ShipmentMoveID    pulid.ID           `json:"shipmentMoveId"    bun:"shipment_move_id,type:VARCHAR(100),nullzero"`
+	StopID            pulid.ID           `json:"stopId"            bun:"stop_id,type:VARCHAR(100),nullzero"`
+	StopOutcomeReason string             `json:"stopOutcomeReason" bun:"stop_outcome_reason,type:TEXT,nullzero"`
 }
 
 func NewEventID() pulid.ID {
@@ -53,6 +60,28 @@ func (e *TelematicsEvent) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&e.OccurredAt,
 			validation.Required.Error("Occurred at is required"),
 			validation.Min(int64(1)).Error("Occurred at must be a valid timestamp"),
+		),
+		validation.Field(&e.StopOutcome,
+			validation.When(e.StopOutcome != "",
+				domainvalidation.ValidEnum[StopOutcome]("Stop outcome is invalid"),
+			),
+		),
+		validation.Field(&e.StopVisit,
+			validation.When(e.StopOutcome != "",
+				validation.Required.Error("Stop visit is required with a stop outcome"),
+			),
+		),
+		validation.Field(&e.ShipmentMoveID,
+			validation.When(e.StopOutcome.NeedsReview(),
+				validation.Required.Error("A stop outcome for review must name its move"),
+			),
+		),
+		validation.Field(&e.StopOutcomeReason,
+			validation.When(e.StopOutcome.NeedsReview(),
+				validation.Required.Error("A stop outcome for review must say why"),
+			),
+			validation.RuneLength(0, MaxStopOutcomeReasonLength).
+				Error("Stop outcome reason cannot be longer than 500 characters"),
 		),
 	))
 }
