@@ -5,7 +5,9 @@ The TMS GraphQL server keeps gqlgen for everything except the executor. The sche
 interfaces, the HTTP handler, and every handler extension are gqlgen's. The code that walks a
 selection set and calls resolvers is Trenova's own: a small runtime,
 `services/tms/internal/api/graphql/gqlexec`, plus one generated package per schema file.
-Both are produced by `task gqlgen`, which runs `internal/api/graphql/gqlexec/gen`.
+Resolvers are split the same way, one package per schema file, and each package depends
+only on the services its own code uses. Both are produced by `task gqlgen`, which runs
+`internal/api/graphql/gqlexec/gen`.
 
 ## Why
 
@@ -20,24 +22,23 @@ object's switch. `gqlexec` implements the algorithm once and describes each fiel
 table entry. Only the code that has to be typed is still generated: argument and input
 decoding, scalar and enum marshalling, and resolver calls.
 
-| `go build ./cmd/cli`, 4 cores, empty build cache | gqlgen executor | gqlexec |
-| --- | --- | --- |
-| Cold build | 354 s | 276 s |
-| Rebuild after editing a domain struct | 253 s | 166 s |
-| Rebuild after editing a service | 75 s | 74 s |
-| Rebuild after editing a resolver | 76 s | 75 s |
-| Peak RAM of the executor's compile | 7.1 GB | 0.3 GB |
-| Generated executor | 545,000 lines, 1 package | 235,000 lines, 120 packages |
+| `go build ./cmd/cli`, 4 cores, empty build cache | gqlgen | gqlexec, one resolver package | gqlexec, resolver packages |
+| --- | --- | --- | --- |
+| Cold build | 354 s | 276 s | 274 s |
+| Rebuild after editing a domain struct | 253 s | 166 s | 152 s |
+| Rebuild after editing a service | 75 s | 74 s | 36 s |
+| Rebuild after editing a resolver | 76 s | 75 s | 29 s |
+| Largest single compile (peak RAM) | executor, 7.1 GB | resolver, 5.4 GB | test mocks, 2.3 GB |
+| Generated executor | 545,000 lines, 1 package | 235,000 lines, 120 packages | same |
 
 The runtime is also cheaper. On one pass over the parity workload below, it used 11% less
 time, 20% less memory and 17% fewer allocations than gqlgen's executor.
 
-The largest remaining compile is the hand-written `resolver` package: about 40 s and 5.3 GB
-on its own. Splitting it by schema file was tried and measured. Every resolver package
-reached every service through the shared `Resolver` struct, so a service edit recompiled
-all of them, and each one instantiated the same generic code. Cold builds and service edits
-got slower, so the split was not kept. A split only pays off once each package depends on
-just the services it uses.
+With the executor fixed, the hand-written `resolver` package became the largest compile:
+about 40 s and 5.4 GB on its own. A first split by schema file made things worse. Every
+package reached every service through one shared struct, so a service edit recompiled all
+116 of them (162 s). The kept design gives each package a generated `Deps` struct holding
+only the services that package names; see [Resolvers](#resolvers).
 
 ## Layout
 
@@ -54,7 +55,15 @@ internal/api/graphql/
 │   ├── root.generated.go    # ResolverRoot, *Resolver interfaces, Config, NewExecutableSchema
 │   └── exec/<file>exec/     # one executor package per schema file
 ├── gqlmodel/models_gen.go   # gqlgen model plugin, unchanged
-└── resolver/                # hand-written resolvers, gqlgen's follow-schema layout, unchanged
+└── resolver/
+    ├── services.go          # Params (fx), Services: every dependency a resolver may use
+    ├── resolver.generated.go  # Resolver root: builds each package's Deps, wires ResolverRoot
+    ├── base/                # Core (logger, permissions, tracing) and shared helpers
+    ├── <file>resolver/      # one package per schema file
+    │   ├── <file>.resolvers.go       # hand-written resolver methods (stubs generated)
+    │   └── resolvers.generated.go    # Deps and the resolver types
+    ├── mappers/             # mappergen output
+    └── telematicsmapping/   # mapping shared by more than one resolver package
 ```
 
 A schema file's executor package holds:
@@ -82,11 +91,61 @@ shards.
    `@goField`, initialisms and enum mappings therefore behave exactly as they did under
    gqlgen.
 3. Writes the executor shards and `generated/root.generated.go`.
-4. Runs gqlgen's resolver plugin, so resolver stubs and signature updates work as before.
+4. Writes resolver stubs into `resolver/<file>resolver/<file>.resolvers.go`, keeping
+   existing method bodies, and regenerates each package's `Deps` from the `Services`
+   fields that package's code names. It then writes the resolver root.
 5. Builds the result.
 
 If any step before the build fails, the previous executor, models and resolver files are put
 back exactly as they were.
+
+## Resolvers
+
+`resolver/services.go` is hand-written. `Params` is the fx parameter struct, `Services`
+embeds `*base.Core` and holds every service a resolver may use, and `newServices` fills it.
+To give resolvers a new service, add it to all three.
+
+Each resolver package gets a generated `Deps`:
+
+```go
+type Deps struct {
+	*base.Core
+	ShipmentService services.ShipmentService
+	// ...only the Services fields this package's code names
+}
+
+type QueryResolver struct{ *Deps }
+```
+
+The generator finds a package's dependencies by name. Any `x.Name` selector or `Name:` key in
+the package that matches a `Services` field adds it, so writing `r.ShipmentService` in a
+resolver method and running `task gqlgen` is all it takes. The list can include a field the
+package does not really use; that only widens the package's imports.
+
+Rules that keep the split paying off:
+
+- Code shared by several resolver packages goes in `base` only when it needs nothing but
+  `Core`. Everything in `base` recompiles all resolver packages when it changes. Mapping
+  shared by a few packages gets its own small package, like `telematicsmapping`.
+- Resolver packages never import each other.
+- A resolver method may not have the same name as a `Services` field the package uses: the
+  method would hide the field. The generator refuses this and names both; rename the field.
+
+In tests, build the package's `Deps` directly:
+
+```go
+r := &QueryResolver{&Deps{
+	Core:            &base.Core{L: zap.NewNop(), PermissionEngine: engine},
+	ShipmentService: shipments,
+}}
+```
+
+Tests in the root package use `FromServices(&Services{...})`.
+
+The 50 or so service packages reachable from shared packages (`gqlmodel`, `loaders`,
+middleware, `ports/services`) still recompile every resolver package when edited. Domain
+edits also still reach most of them; that cascade comes from the domain package graph, not
+from GraphQL.
 
 ## How a request runs
 

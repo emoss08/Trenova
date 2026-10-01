@@ -1,0 +1,70 @@
+{{ reserveImport $.ExecImport }}
+{{- range $d := $.Domains }}
+{{ reserveImport $d.ImportPath }}
+{{- end }}
+
+type Resolver struct {
+	*Services
+	{{- range $e := $.Entries }}
+	{{- if $e.Composite }}
+	{{ $e.Field }} *{{ $e.Field }}Resolver
+	{{- else }}
+	{{ $e.Field }} *{{ lookupImport (index $e.Parts 0).Domain.ImportPath }}.{{ $e.Type }}
+	{{- end }}
+	{{- end }}
+}
+
+func New(p Params) *Resolver {
+	return FromServices(newServices(&p))
+}
+
+func FromServices(s *Services) *Resolver {
+	{{- range $d := $.Domains }}
+	{{ $d.Shard }}Deps := &{{ lookupImport $d.ImportPath }}.Deps{
+		Core: s.Core,
+		{{- range $f := $d.DepsFields }}
+		{{ $f.Name }}: s.{{ $f.Name }},
+		{{- end }}
+	}
+	{{- end }}
+
+	return &Resolver{
+		Services: s,
+		{{- range $e := $.Entries }}
+		{{- if $e.Composite }}
+		{{ $e.Field }}: &{{ $e.Field }}Resolver{
+			{{- range $p := $e.Parts }}
+			{{ $p.Alias }}: &{{ $p.Alias }}{Deps: {{ $p.Domain.Shard }}Deps},
+			{{- end }}
+		},
+		{{- else }}
+		{{ $e.Field }}: &{{ lookupImport (index $e.Parts 0).Domain.ImportPath }}.{{ $e.Type }}{Deps: {{ (index $e.Parts 0).Domain.Shard }}Deps},
+		{{- end }}
+		{{- end }}
+	}
+}
+
+{{- range $e := $.Entries }}
+
+func (r *Resolver) {{ $e.Accessor }}() {{ lookupImport $.ExecImport }}.{{ $e.Iface }} {
+	return r.{{ $e.Field }}
+}
+{{- if $e.Composite }}
+
+type {{ $e.Field }}Resolver struct {
+	{{- range $p := $e.Parts }}
+	*{{ $p.Alias }}
+	{{- end }}
+}
+{{- end }}
+{{- end }}
+
+type (
+	{{- range $e := $.Entries }}
+	{{- if $e.Composite }}
+	{{- range $p := $e.Parts }}
+	{{ $p.Alias }} = {{ lookupImport $p.Domain.ImportPath }}.{{ $e.Type }}
+	{{- end }}
+	{{- end }}
+	{{- end }}
+)

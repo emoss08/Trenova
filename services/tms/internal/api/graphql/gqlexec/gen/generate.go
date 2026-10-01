@@ -16,7 +16,6 @@ import (
 	"github.com/99designs/gqlgen/codegen/templates"
 	"github.com/99designs/gqlgen/plugin"
 	"github.com/99designs/gqlgen/plugin/modelgen"
-	"github.com/99designs/gqlgen/plugin/resolvergen"
 )
 
 const (
@@ -62,7 +61,7 @@ func run(ctx context.Context, configPath string) error {
 }
 
 func generate(cfg *config.Config) error {
-	data, resolvers, err := buildData(cfg)
+	data, err := buildData(cfg)
 	if err != nil {
 		return err
 	}
@@ -78,58 +77,45 @@ func generate(cfg *config.Config) error {
 		return err
 	}
 
-	if err = resolvers.GenerateCode(data); err != nil {
-		return fmt.Errorf("%s: %w", resolvers.Name(), err)
-	}
-	return nil
+	return writeResolvers(cfg, buildResolverLayout(data))
 }
 
-type codeGenerator interface {
-	plugin.Plugin
-	plugin.CodeGenerator
-}
-
-func buildData(cfg *config.Config) (*codegen.Data, codeGenerator, error) {
+func buildData(cfg *config.Config) (*codegen.Data, error) {
 	if cfg.Model.IsDefined() {
 		if err := os.Remove(cfg.Model.Filename); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, nil, fmt.Errorf("remove models: %w", err)
+			return nil, fmt.Errorf("remove models: %w", err)
 		}
 	}
 
-	resolvers, isGenerator := resolvergen.New().(codeGenerator)
-	if !isGenerator {
-		return nil, nil, errors.New("resolvergen does not generate code")
-	}
-	plugins := make([]plugin.Plugin, 0, 2)
+	plugins := make([]plugin.Plugin, 0, 1)
 	if cfg.Model.IsDefined() {
 		plugins = append(plugins, modelgen.New())
 	}
-	plugins = append(plugins, resolvers)
 
 	if err := cfg.LoadSchema(); err != nil {
-		return nil, nil, fmt.Errorf("load schema: %w", err)
+		return nil, fmt.Errorf("load schema: %w", err)
 	}
 
 	codegen.ClearInlineArgsMetadata()
 	if err := codegen.ExpandInlineArguments(cfg.Schema); err != nil {
-		return nil, nil, fmt.Errorf("expand inline arguments: %w", err)
+		return nil, fmt.Errorf("expand inline arguments: %w", err)
 	}
 
 	if err := cfg.Init(); err != nil {
-		return nil, nil, fmt.Errorf("init config: %w", err)
+		return nil, fmt.Errorf("init config: %w", err)
 	}
 
 	for _, p := range plugins {
 		if mut, ok := p.(plugin.SchemaMutator); ok {
 			if err := mut.MutateSchema(cfg.Schema); err != nil {
-				return nil, nil, fmt.Errorf("%s: %w", p.Name(), err)
+				return nil, fmt.Errorf("%s: %w", p.Name(), err)
 			}
 		}
 	}
 	for _, p := range plugins {
 		if mut, ok := p.(plugin.ConfigMutator); ok {
 			if err := mut.MutateConfig(cfg); err != nil {
-				return nil, nil, fmt.Errorf("%s: %w", p.Name(), err)
+				return nil, fmt.Errorf("%s: %w", p.Name(), err)
 			}
 		}
 	}
@@ -142,10 +128,10 @@ func buildData(cfg *config.Config) (*codegen.Data, codeGenerator, error) {
 	}
 	data, err := codegen.BuildData(cfg, dataPlugins...)
 	if err != nil {
-		return nil, nil, fmt.Errorf("bind schema to go types: %w", err)
+		return nil, fmt.Errorf("bind schema to go types: %w", err)
 	}
 
-	return data, resolvers, nil
+	return data, nil
 }
 
 func checkConfig(cfg *config.Config) error {
@@ -158,6 +144,9 @@ func checkConfig(cfg *config.Config) error {
 	}
 	if cfg.Federation.IsDefined() {
 		problems = append(problems, "federation is not supported")
+	}
+	if !cfg.Resolver.IsDefined() || cfg.Resolver.Layout != config.LayoutFollowSchema {
+		problems = append(problems, "resolver.layout must be follow-schema")
 	}
 	return unsupported(problems)
 }

@@ -5,7 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -32,24 +32,30 @@ func (v Verdict) String() string {
 
 const (
 	maxCallDepth         = 6
-	resolverFileGlob     = "*.resolvers.go"
-	queryReceiver        = "queryResolver"
-	mutationReceiver     = "mutationResolver"
-	permissionEngineName = "permissionEngine"
+	resolverFileSuffix   = ".resolvers.go"
+	queryReceiver        = "QueryResolver"
+	mutationReceiver     = "MutationResolver"
+	permissionEngineName = "PermissionEngine"
 	permissionEngineCall = "Check"
 )
 
 var (
 	permissionHelpers = map[string]struct{}{
-		"requirePermission":           {},
-		"hasPermission":               {},
-		"requireTeamScope":            {},
-		"requirePTOTeamScope":         {},
-		"requireTimesheetWorkerScope": {},
+		"RequirePermission":           {},
+		"HasPermission":               {},
+		"RequireTeamScope":            {},
+		"RequirePTOTeamScope":         {},
+		"RequireTimesheetWorkerScope": {},
 	}
 	authHelpers = map[string]struct{}{
-		"requireAuth":        {},
-		"requireAuthContext": {},
+		"RequireAuth":        {},
+		"RequireAuthContext": {},
+	}
+	skippedDirs = map[string]struct{}{
+		"mappergen":    {},
+		"mappers":      {},
+		"resolvertest": {},
+		"testdata":     {},
 	}
 )
 
@@ -77,20 +83,10 @@ func Analyze(dir string) ([]RootResolver, error) {
 
 	a := &analyzer{methods: indexMethods(files)}
 
-	pattern := filepath.Join(dir, resolverFileGlob)
-	resolverFiles, err := filepath.Glob(pattern)
-	if err != nil {
-		return nil, fmt.Errorf("glob %s: %w", pattern, err)
-	}
-	isResolverFile := make(map[string]struct{}, len(resolverFiles))
-	for _, path := range resolverFiles {
-		isResolverFile[filepath.Base(path)] = struct{}{}
-	}
-
 	var roots []RootResolver
 	for path, file := range files {
 		base := filepath.Base(path)
-		if _, ok := isResolverFile[base]; !ok {
+		if !strings.HasSuffix(base, resolverFileSuffix) {
 			continue
 		}
 		for _, decl := range file.Decls {
@@ -122,24 +118,30 @@ func Analyze(dir string) ([]RootResolver, error) {
 }
 
 func parseDir(fset *token.FileSet, dir string) (map[string]*ast.File, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, fmt.Errorf("read %s: %w", dir, err)
-	}
-
-	files := make(map[string]*ast.File, len(entries))
-	for _, entry := range entries {
-		name := entry.Name()
-		if entry.IsDir() || !strings.HasSuffix(name, ".go") ||
-			strings.HasSuffix(name, "_test.go") {
-			continue
+	files := make(map[string]*ast.File)
+	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-		path := filepath.Join(dir, name)
+		name := entry.Name()
+		if entry.IsDir() {
+			if _, skip := skippedDirs[name]; skip && path != dir {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			return nil
+		}
 		file, parseErr := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
 		if parseErr != nil {
-			return nil, fmt.Errorf("parse %s: %w", path, parseErr)
+			return fmt.Errorf("parse %s: %w", path, parseErr)
 		}
 		files[path] = file
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("walk %s: %w", dir, err)
 	}
 
 	return files, nil
