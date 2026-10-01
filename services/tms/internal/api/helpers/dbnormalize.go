@@ -14,22 +14,25 @@ func NormalizeDatabaseError(ctx context.Context, classifier *ChainClassifier, er
 	}
 
 	if dberror.IsRowLevelSecurityViolation(err) {
-		tenantboundary.Report(ctx, tenantboundary.Violation{Source: tenantboundary.SourceDatabasePolicy})
+		tenantboundary.Report(
+			ctx,
+			tenantboundary.Violation{Source: tenantboundary.SourceDatabasePolicy},
+		)
 		return errortypes.NewAuthorizationError("insufficient permissions").WithInternal(err)
 	}
 
-	if dberror.IsUniqueConstraintViolation(err) {
-		switch classifier.Classify(err) {
-		case ProblemTypeDatabase, ProblemTypeInternal:
-			conflict := errortypes.NewConflictError(
-				"Another record already uses these values. Refresh and try again.",
-			).
-				WithInternal(dberror.DriverError(err))
-			conflict.Code = errortypes.ErrDuplicate
-			return conflict
-		default:
-		}
+	if dberror.IsUniqueConstraintViolation(err) && unclassifiedDatabaseFailure(classifier, err) {
+		conflict := errortypes.NewConflictError(
+			"Another record already uses these values. Refresh and try again.",
+		).WithInternal(dberror.DriverError(err))
+		conflict.Code = errortypes.ErrDuplicate
+		return conflict
 	}
 
 	return err
+}
+
+func unclassifiedDatabaseFailure(classifier *ChainClassifier, err error) bool {
+	problemType := classifier.Classify(err)
+	return problemType == ProblemTypeDatabase || problemType == ProblemTypeInternal
 }
