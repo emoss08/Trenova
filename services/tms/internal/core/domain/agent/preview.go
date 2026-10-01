@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -405,12 +406,28 @@ func (p *ProposalPreview) ComputeDigest(params map[string]any) (string, error) {
 func stableFields(fields []PreviewFieldChange) []PreviewFieldChange {
 	stable := make([]PreviewFieldChange, 0, len(fields))
 	for i := range fields {
-		if !fields[i].Volatile {
-			stable = append(stable, fields[i])
+		if fields[i].Volatile {
+			continue
 		}
+		field := fields[i]
+		if field.Type == assistantartifact.DisplayDate {
+			field.Before = digestDay(field.Before)
+			field.After = digestDay(field.After)
+			field.ProposedBefore = digestDay(field.ProposedBefore)
+		}
+		stable = append(stable, field)
 	}
 
 	return stable
+}
+
+func digestDay(value any) any {
+	instant, ok := timeutils.ParseInstant(value)
+	if !ok {
+		return value
+	}
+
+	return timeutils.FormatDateKeyUTC(instant)
 }
 
 // PlanPreviewDigest covers every step's digest in plan order.
