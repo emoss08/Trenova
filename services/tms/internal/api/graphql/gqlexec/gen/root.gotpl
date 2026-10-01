@@ -1,0 +1,94 @@
+{{ reserveImport "context" }}
+{{ reserveImport "sync" }}
+{{ reserveImport "github.com/vektah/gqlparser/v2" "gqlparser" }}
+{{ reserveImport "github.com/vektah/gqlparser/v2/ast" }}
+{{ reserveImport "github.com/99designs/gqlgen/graphql" }}
+{{ reserveImport $.Runtime }}
+{{- range $s := $.Shards }}
+{{ reserveImport $s.ImportPath }}
+{{- end }}
+
+type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
+
+type ResolverRoot interface {
+{{- range $object := $.Data.Objects }}
+	{{- if $object.HasResolvers }}
+	{{ ucFirst $object.Name }}() {{ ucFirst $object.Name }}Resolver
+	{{- end }}
+{{- end }}
+{{- range $object := $.Data.Inputs }}
+	{{- if $object.HasResolvers }}
+	{{ ucFirst $object.Name }}() {{ ucFirst $object.Name }}Resolver
+	{{- end }}
+{{- end }}
+}
+
+type DirectiveRoot struct{}
+
+type ComplexityRoot struct{}
+
+{{- range $object := $.Data.Objects }}
+{{- if $object.HasResolvers }}
+
+type {{ ucFirst $object.Name }}Resolver interface {
+	{{- range $field := $object.Fields }}
+	{{- if $field.IsResolver }}
+	{{ $field.GoFieldName }}{{ $field.ShortResolverDeclaration }}
+	{{- end }}
+	{{- end }}
+}
+{{- end }}
+{{- end }}
+
+{{- range $object := $.Data.Inputs }}
+{{- if $object.HasResolvers }}
+
+type {{ $object.Name }}Resolver interface {
+	{{- range $field := $object.Fields }}
+	{{- if $field.IsResolver }}
+	{{ $field.GoFieldName }}{{ $field.ShortResolverDeclaration }}
+	{{- end }}
+	{{- end }}
+}
+{{- end }}
+{{- end }}
+
+var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
+	return gqlexec.Compile([]*gqlexec.Shard{
+		{{- range $s := $.Shards }}
+		{{ lookupImport $s.ImportPath }}.Shard,
+		{{- end }}
+	})
+})
+
+func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
+	reg, err := registry()
+	if err != nil {
+		panic(err)
+	}
+
+	var resolvers map[string]func() any
+	if r := cfg.Resolvers; r != nil {
+		resolvers = map[string]func() any{
+			{{- range $root := $.Roots }}
+			{{ quote $root }}: func() any { return r.{{ $root }}() },
+			{{- end }}
+		}
+	}
+
+	return gqlexec.NewSchema(gqlexec.SchemaConfig{
+		Registry:    reg,
+		Parsed:      parsedSchema,
+		Override:    cfg.Schema,
+		Resolvers:   resolvers,
+		WorkerLimit: {{ $.WorkerLimit }},
+	})
+}
+
+var sources = []*ast.Source{
+{{- range $source := $.Data.AugmentedSources }}
+	{Name: {{ $source.RelativePath | quote }}, Input: {{ $source.Source | rawQuote }}, BuiltIn: {{ $source.BuiltIn }}},
+{{- end }}
+}
+
+var parsedSchema = gqlparser.MustLoadSchema(sources...)

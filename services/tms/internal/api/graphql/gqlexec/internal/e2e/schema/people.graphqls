@@ -1,0 +1,28 @@
+directive @goField(
+  forceResolver: Boolean
+  name: String
+  omittable: Boolean
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+type Driver implements Node {
+  id: ID!
+  name: String!
+  rating: Float!
+  truck: Truck
+}
+
+union SearchResult = Truck | Driver
+
+input PageInput {
+  first: Int = 10
+  after: String
+}
+
+extend type Query {
+  drivers(page: PageInput): [Driver!]!
+  mixed: [Truck]
+}
+
+extend type Mutation {
+  touch(ids: [ID!]!): [String!]!
+}
