@@ -457,7 +457,7 @@ type settleRunParams struct {
 	Failed bool
 }
 
-// settleRun files a run's proposals and summary.
+// settleRun files a run's proposals, summary and transcript.
 func (a *Activities) settleRun(
 	ctx context.Context,
 	p settleRunParams,
@@ -494,6 +494,7 @@ func (a *Activities) settleRun(
 
 	run.ModelIdentifier = p.Outcome.Model
 	run.Summary = stringutils.Ellipsize(strings.TrimSpace(p.Outcome.Reply), maxSummaryChars)
+	run.Transcript = conversation.RunTranscriptOf(p.Outcome.Messages)
 	run.RecordTaint(p.Outcome.Taint, timeutils.NowUnix())
 	if fingerprint := p.Outcome.ServedFingerprint(); fingerprint != nil {
 		run.Fingerprint = fingerprint

@@ -50,6 +50,8 @@ type AgentRun struct {
 	TaintedAt         *int64       `json:"taintedAt"         bun:"tainted_at,type:BIGINT,nullzero"`
 	Fingerprint       *Fingerprint `json:"fingerprint"       bun:"fingerprint,type:JSONB,nullzero"`
 
+	Transcript *RunTranscript `json:"-" bun:"transcript,type:JSONB,nullzero"`
+
 	// TraceID is the run's trace. TurnID is the conversation turn a run was
 	// opened for. ParentOwnerKind, ParentOwnerID and DelegateCallID are set on
 	// a delegate's run: the run or turn that handed it the task, and the call

@@ -1202,6 +1202,7 @@ var AgentRunColumns = struct {
 	Taint             Column // "taint" → qualified: "ar.taint"
 	TaintedAt         Column // "tainted_at" → qualified: "ar.tainted_at"
 	Fingerprint       Column // "fingerprint" → qualified: "ar.fingerprint"
+	Transcript        Column // "transcript" → qualified: "ar.transcript"
 	TraceID           Column // "trace_id" → qualified: "ar.trace_id"
 	TurnID            Column // "turn_id" → qualified: "ar.turn_id"
 	ParentOwnerKind   Column // "parent_owner_kind" → qualified: "ar.parent_owner_kind"
@@ -1232,6 +1233,7 @@ var AgentRunColumns = struct {
 	Taint:             NewColumn("taint", "ar"),
 	TaintedAt:         NewColumn("tainted_at", "ar"),
 	Fingerprint:       NewColumn("fingerprint", "ar"),
+	Transcript:        NewColumn("transcript", "ar"),
 	TraceID:           NewColumn("trace_id", "ar"),
 	TurnID:            NewColumn("turn_id", "ar"),
 	ParentOwnerKind:   NewColumn("parent_owner_kind", "ar"),
@@ -1302,6 +1304,7 @@ var AgentRunInsertableColumns = []string{
 	"taint",
 	"tainted_at",
 	"fingerprint",
+	"transcript",
 	"trace_id",
 	"turn_id",
 	"parent_owner_kind",

@@ -3651,6 +3651,10 @@ func init() {
 				FieldMapKey: "delegateCallId",
 			},
 			{
+				Name:    "transcript",
+				Special: "transcript",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},

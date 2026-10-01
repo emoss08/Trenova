@@ -753,3 +753,12 @@ func (r *QueryResolver) AgentControl(ctx context.Context) (*tenant.AgentControl,
 
 	return r.AgentControlService.Get(ctx, base.TenantInfo(authCtx))
 }
+
+func (r *AgentRunResolver) Transcript(ctx context.Context, obj *agent.AgentRun) (*agent.RunTranscript, error) {
+	_, err := r.RequirePermission(ctx, permission.ResourceAgentRun, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return runTranscript(ctx, obj)
+}

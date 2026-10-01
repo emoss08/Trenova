@@ -42,9 +42,37 @@ query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boole
   }
 }
 
+fragment AgentRunTranscriptFields on AgentRunTranscript {
+  omittedMessages
+  omittedAt
+  messages {
+    role
+    kind
+    content
+    reasoning
+    toolCalls {
+      id
+      name
+      arguments
+    }
+    toolCallId
+    toolName
+    toolFailed
+    toolVerdict
+    toolSummary
+    agentDefinitionId
+    delegateCallId
+    omitted
+    createdAt
+  }
+}
+
 query AgentRunDetail($id: ID!) {
   agentRun(id: $id) {
     ...AgentRunTableRowFields
     inputContextHash
+    transcript {
+      ...AgentRunTranscriptFields
+    }
   }
 }

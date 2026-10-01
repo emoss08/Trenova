@@ -140,6 +140,7 @@ virtuals:
     - definition
     - handedBy
     - traceUrl
+    - transcript
   AgentDecision:
     - traceUrl
   AgentEvalCase:

@@ -1,6 +1,6 @@
 {
   "operationCount": 959,
-  "fragmentCount": 273,
+  "fragmentCount": 274,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -1595,7 +1595,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/runs.graphql",
-      "hash": "sha256:fe618bd81377c44ff0ac1138eebf30ddca3d60a29672d6b85d8ca6d09fb9eafc",
+      "hash": "sha256:50f295b7b16d885dffc63d488bb379bab474422bcb3f3c62082a9048e47aa8d2",
       "rootFields": [
         "agentRun"
       ],
@@ -1607,10 +1607,11 @@
         }
       ],
       "fragments": [
-        "AgentRunTableRowFields"
+        "AgentRunTableRowFields",
+        "AgentRunTranscriptFields"
       ],
       "usages": [],
-      "sdl": "query AgentRunDetail($id: ID!) {\n  agentRun(id: $id) {\n    ...AgentRunTableRowFields\n    inputContextHash\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  parentOwnerKind\n  delegateCallId\n  handedBy {\n    id\n    name\n  }\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentRunDetail($id: ID!) {\n  agentRun(id: $id) {\n    ...AgentRunTableRowFields\n    inputContextHash\n    transcript {\n      ...AgentRunTranscriptFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  parentOwnerKind\n  delegateCallId\n  handedBy {\n    id\n    name\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment AgentRunTranscriptFields on AgentRunTranscript {\n  omittedMessages\n  omittedAt\n  messages {\n    role\n    kind\n    content\n    reasoning\n    toolCalls {\n      id\n      name\n      arguments\n    }\n    toolCallId\n    toolName\n    toolFailed\n    toolVerdict\n    toolSummary\n    agentDefinitionId\n    delegateCallId\n    omitted\n    createdAt\n  }\n}"
     },
     {
       "name": "AgentRunTable",
@@ -22618,6 +22619,18 @@
       ],
       "usages": [],
       "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  parentOwnerKind\n  delegateCallId\n  handedBy {\n    id\n    name\n  }\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentRunTranscriptFields",
+      "typeCondition": "AgentRunTranscript",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/runs.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentRunDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentRunTranscriptFields on AgentRunTranscript {\n  omittedMessages\n  omittedAt\n  messages {\n    role\n    kind\n    content\n    reasoning\n    toolCalls {\n      id\n      name\n      arguments\n    }\n    toolCallId\n    toolName\n    toolFailed\n    toolVerdict\n    toolSummary\n    agentDefinitionId\n    delegateCallId\n    omitted\n    createdAt\n  }\n}"
     },
     {
       "name": "AgentSafetyHeaderFields",

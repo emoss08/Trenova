@@ -886,6 +886,29 @@ activity that files it, last, so a retry of the filing does not write it twice.
 Read a trajectory through the `agentRunEvents` GraphQL connection, gated on
 reading an agent run.
 
+A background run also keeps its **transcript**: what its model said and thought,
+the tools it called with their arguments, and what each returned with its
+verdict, in `agent_runs.transcript` (JSONB). `settleRun` writes it from
+`RunResult.Messages` on both paths that file a run (the activity and the
+workflow's `FinishRunActivity`), beside the 2,000-character summary, and a
+retried filing writes the same transcript again. It is bounded so the row stays
+small, the same way the event log bounds a payload: a message whose encoded form
+is over 64 KiB keeps only who said it, what it called and how the call was
+judged, marked `omitted`, rather than a clipped body; and past 256 KiB in all
+the middle of the run is left out (`sliceutils.KeepEnds` keeps the opening and
+the end), with `omittedMessages` and `omittedAt` saying how many and where. A
+run that produced no messages, or was filed before transcripts were kept, has
+none. The column is left out of every run read (`GetByID`, lists, the AI audit
+projector's source read) except `ListTranscriptsByIDs`, so filing, listing and
+updating a run never carry it, and it is hidden from the run's JSON so a
+realtime invalidation never ships it. Read it through `AgentRun.transcript`,
+which checks the run read permission itself and loads through a per-request
+dataloader; AI Control's run panel shows it behind a Transcript disclosure, with
+the conversation's own tool rows. The transcript lives on the run row and goes
+with it: no sweep prunes runs or their events today, and the row is deleted
+only with its organization, by the existing cascade, so nothing has to keep the
+transcript and the event log in step.
+
 An event's `occurred_at` is the instant the workflow emitted it
 (`StreamItem.At`, stamped with `workflow.Now`), not when the filing activity
 wrote the account, so a day-long run's events keep their real spacing.
@@ -1065,8 +1088,6 @@ expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them).
 
 - **Resume is at-most-once.** A crash in the execute→settle window reports
   "began, outcome unknown" rather than replaying.
-- **Background runs discard their transcript** beyond the summary and the event
-  log.
 - **Search attributes are not set.** Organization, feature, thread and
   definition are carried in workflow ids, summaries and fairness keys; typed
   search attributes need registering on the server first.

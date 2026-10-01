@@ -46,6 +46,9 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentRunConnection", Implementors: []string{"AgentRunConnection"}},
 		{Name: "AgentRunEdge", Implementors: []string{"AgentRunEdge"}},
 		{Name: "AgentRunTaint", Implementors: []string{"AgentRunTaint"}},
+		{Name: "AgentRunTranscript", Implementors: []string{"AgentRunTranscript"}},
+		{Name: "AgentRunTranscriptMessage", Implementors: []string{"AgentRunTranscriptMessage"}},
+		{Name: "AgentRunTranscriptToolCall", Implementors: []string{"AgentRunTranscriptToolCall"}},
 		{Name: "AgentTaintMark", Implementors: []string{"AgentTaintMark"}},
 		{Name: "AgentTaintRef", Implementors: []string{"AgentTaintRef"}},
 	},
@@ -2366,6 +2369,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:       "transcript",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentRunTranscript",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentRun)
+					return gqlexec.Resolver[resolverAgentRun](ec, "AgentRun").Transcript(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentRunTranscript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRunTranscript),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -2463,6 +2478,213 @@ var Shard = &gqlexec.Shard{
 					return obj.Marks, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentTaintMark2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintMarkᚄ),
+			},
+		}},
+		{Object: "AgentRunTranscript", Fields: []*gqlexec.Field{
+			{
+				Name:      "messages",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentRunTranscriptMessage",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.RunTranscript)
+					return obj.Messages, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentRunTranscriptMessage2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTranscriptMessageᚄ),
+			},
+			{
+				Name:     "omittedMessages",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.RunTranscript)
+					return obj.OmittedMessages, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "omittedAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.RunTranscript)
+					return obj.OmittedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "AgentRunTranscriptMessage", Fields: []*gqlexec.Field{
+			{
+				Name:     "role",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.Role, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "content",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.Content, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "reasoning",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.Reasoning, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "toolCalls",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentRunTranscriptToolCall",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.ToolCalls, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentRunTranscriptToolCall2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTranscriptToolCallᚄ),
+			},
+			{
+				Name:     "toolCallId",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.ToolCallID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "toolName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.ToolName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "toolFailed",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.ToolFailed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "toolVerdict",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.ToolVerdict, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "toolSummary",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.ToolSummary, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "agentDefinitionId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.AgentDefinitionID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "delegateCallId",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.DelegateCallID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "omitted",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.Omitted, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptMessage)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "AgentRunTranscriptToolCall", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptToolCall)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptToolCall)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "arguments",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.TranscriptToolCall)
+					return obj.Arguments, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
 		}},
 		{Object: "AgentTaintMark", Fields: []*gqlexec.Field{
@@ -2948,6 +3170,7 @@ type resolverAgentProposalField interface {
 type resolverAgentRun interface {
 	TraceURL(ctx context.Context, obj *agent.AgentRun) (*string, error)
 	ParentOwnerKind(ctx context.Context, obj *agent.AgentRun) (*gqlmodel.AgentRunEventOwnerKind, error)
+	Transcript(ctx context.Context, obj *agent.AgentRun) (*agent.RunTranscript, error)
 }
 
 type resolverMutation interface {
@@ -4344,6 +4567,30 @@ func marshalNAgentRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
+func marshalNAgentRunTranscriptMessage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTranscriptMessage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.TranscriptMessage) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AgentRunTranscriptMessage", &v)
+}
+
+func marshalNAgentRunTranscriptMessage2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTranscriptMessageᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.TranscriptMessage) graphql.Marshaler {
+	return gqlexec.List[agent.TranscriptMessage]{
+		Elem:        marshalNAgentRunTranscriptMessage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTranscriptMessage,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentRunTranscriptToolCall2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTranscriptToolCall(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.TranscriptToolCall) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AgentRunTranscriptToolCall", &v)
+}
+
+func marshalNAgentRunTranscriptToolCall2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTranscriptToolCallᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.TranscriptToolCall) graphql.Marshaler {
+	return gqlexec.List[agent.TranscriptToolCall]{
+		Elem:        marshalNAgentRunTranscriptToolCall2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTranscriptToolCall,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNAgentRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRunTrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.RunTrigger) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -4588,6 +4835,13 @@ func marshalOAgentRunTaint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentRunTaint", v)
+}
+
+func marshalOAgentRunTranscript2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRunTranscript(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.RunTranscript) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentRunTranscript", v)
 }
 
 func marshalOAgentTaintRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordRef(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.RecordRef) graphql.Marshaler {

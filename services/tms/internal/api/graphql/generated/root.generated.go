@@ -686,6 +686,7 @@ type AgentQualityControlResolver interface {
 type AgentRunResolver interface {
 	TraceURL(ctx context.Context, obj *agent.AgentRun) (*string, error)
 	ParentOwnerKind(ctx context.Context, obj *agent.AgentRun) (*gqlmodel.AgentRunEventOwnerKind, error)
+	Transcript(ctx context.Context, obj *agent.AgentRun) (*agent.RunTranscript, error)
 	Definition(ctx context.Context, obj *agent.AgentRun) (*agentdefinition.Definition, error)
 	HandedBy(ctx context.Context, obj *agent.AgentRun) (*agentdefinition.Definition, error)
 }
@@ -5077,9 +5078,59 @@ type AgentRun {
   parentOwnerId: ID!
   "The delegate_task call that handed the run its task. Empty for a run nothing handed a task."
   delegateCallId: String!
+  "What the run's model said and the tools it called, bounded, read with the same permission as the run. Absent for a run filed before transcripts were kept or one that produced no messages."
+  transcript: AgentRunTranscript @goField(forceResolver: true)
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"""
+What a finished run's model said and the tools it called, in order. A message
+over 64 KiB keeps only who said it and what it called, and past 256 KiB the
+middle of the run is left out and counted, so the record stays bounded.
+"""
+type AgentRunTranscript {
+  messages: [AgentRunTranscriptMessage!]!
+  "How many messages from the middle of the run were left out to keep the transcript bounded."
+  omittedMessages: Int!
+  "Where the left-out messages fell: the index in messages of the first message after them."
+  omittedAt: Int!
+}
+
+"One message of a run's transcript: the model's words and calls, or a tool's result."
+type AgentRunTranscriptMessage {
+  "Assistant for the model, Tool for a tool's result."
+  role: String!
+  "Delegated for a step another agent took on a task the run handed it; Message otherwise."
+  kind: String!
+  content: String!
+  "What the model thought before it answered, when the provider let it through."
+  reasoning: String!
+  toolCalls: [AgentRunTranscriptToolCall!]!
+  "On a tool result: the call it answers."
+  toolCallId: String!
+  toolName: String!
+  toolFailed: Boolean!
+  "On a tool result: how the runtime judged the call, such as ran, proposed, denied, invalid, duplicate, over_budget or failed. Empty when it was not recorded."
+  toolVerdict: String!
+  "On a tool result: the server's one-line account of it, in English."
+  toolSummary: String!
+  "On a delegated step: the agent that took it. Empty otherwise."
+  agentDefinitionId: ID!
+  "On a delegated step: the delegate_task call it answers. Empty otherwise."
+  delegateCallId: String!
+  "The message was too large to keep whole: its words, reasoning and call arguments were left out."
+  omitted: Boolean!
+  createdAt: Timestamp!
+}
+
+"A tool call the model asked for in a run's transcript."
+type AgentRunTranscriptToolCall {
+  id: String!
+  name: String!
+  "The arguments as the model sent them; absent when the message was too large to keep whole."
+  arguments: JSON
 }
 
 type AgentProposal {

@@ -13586,12 +13586,13 @@
     ]
   },
   "Agent run": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/config",
+      "routes/agent-control"
     ]
   },
   "Agent run failed": {
@@ -65891,7 +65892,7 @@
     ]
   },
   "Error": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -102585,7 +102586,7 @@
     ]
   },
   "Model": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -125550,6 +125551,15 @@
     ],
     "areas": [
       "service/proposalpreviewservice"
+    ]
+  },
+  "Part of this step was too large to keep, so only what was called is shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Part of {0}; the rest stays as proposed unless you change it below.": {
@@ -152476,7 +152486,7 @@
     ]
   },
   "Run": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -169898,7 +169908,7 @@
     ]
   },
   "Started by": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -170357,7 +170367,7 @@
     ]
   },
   "Status": {
-    "sites": 265,
+    "sites": 266,
     "scope": [
       "go",
       "ts"
@@ -172525,7 +172535,7 @@
     ]
   },
   "Summary": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -174085,12 +174095,13 @@
     ]
   },
   "Task": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Task handed off": {
@@ -174120,6 +174131,15 @@
       "domain/aicorrection",
       "domain/aitraining",
       "domain/extractioneval"
+    ]
+  },
+  "Task · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Tax": {
@@ -184387,6 +184407,15 @@
       "routes/agent-control"
     ]
   },
+  "The run kept no messages.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The run was abandoned without completing and has been marked failed": {
     "sites": 1,
     "scope": [
@@ -185751,6 +185780,15 @@
     ]
   },
   "The training exports that included this organization could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The transcript could not be loaded. Try again shortly.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -190125,6 +190163,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "This run kept no transcript. Runs filed before transcripts were kept, and runs that said nothing, have only their summary.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "This run no longer exists.": {
@@ -194555,6 +194602,15 @@
     "areas": [
       "domain/fuelpurchase",
       "routes/edi"
+    ]
+  },
+  "Transcript": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Transfer": {
@@ -218890,6 +218946,15 @@
     ]
   },
   "{0, plural, one {# mention rule} other {# mention rules}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# message from the middle of the run was left out to keep the record bounded} other {# messages from the middle of the run were left out to keep the record bounded}}": {
     "sites": 1,
     "scope": [
       "ts"
