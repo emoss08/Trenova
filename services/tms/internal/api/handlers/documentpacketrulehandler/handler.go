@@ -81,9 +81,7 @@ func (h *Handler) list(c *gin.Context) {
 func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	entity := new(documentpacketrule.DocumentPacketRule)
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -105,10 +103,9 @@ func (h *Handler) update(c *gin.Context) {
 	}
 
 	entity := new(documentpacketrule.DocumentPacketRule)
-	authctx.AddContextToRequest(authCtx, entity)
 	entity.ID = ruleID
 
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

@@ -130,9 +130,7 @@ func (h *Handler) createSubscription(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
 
 	entity := new(tablechangealert.TCASubscription)
-	authctx.AddContextToRequest(auth, entity)
-
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, auth, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -156,10 +154,9 @@ func (h *Handler) updateSubscription(c *gin.Context) {
 	}
 
 	entity := new(tablechangealert.TCASubscription)
-	authctx.AddContextToRequest(auth, entity)
 	entity.ID = id
 
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, auth, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

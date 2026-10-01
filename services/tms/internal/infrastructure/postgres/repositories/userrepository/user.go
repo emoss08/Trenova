@@ -600,7 +600,7 @@ func (ur *repository) Update(ctx context.Context, entity *tenant.User) (*tenant.
 	ov := entity.Version
 	entity.Version++
 
-	_, err := ur.db.DB().
+	result, err := ur.db.DB().
 		NewUpdate().
 		Model(entity).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -614,6 +614,10 @@ func (ur *repository) Update(ctx context.Context, entity *tenant.User) (*tenant.
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to update user", zap.Error(err))
+		return nil, err
+	}
+
+	if err = dberror.CheckRowsAffected(result, "User", entity.ID.String()); err != nil {
 		return nil, err
 	}
 

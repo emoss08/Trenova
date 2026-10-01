@@ -498,8 +498,7 @@ func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity := new(shipment.Shipment)
-	authctx.AddContextToRequest(authCtx, entity)
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -572,9 +571,7 @@ func (h *Handler) update(c *gin.Context) {
 
 	entity := new(shipment.Shipment)
 	entity.ID = shipmentID
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -606,12 +603,11 @@ func (h *Handler) calculateTotals(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity := new(shipment.Shipment)
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	authctx.AddContextToRequest(authCtx, entity)
 	totals, err := h.service.CalculateTotals(c.Request.Context(), entity, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -634,12 +630,11 @@ func (h *Handler) calculateDistance(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	entity := new(shipment.Shipment)
-	if err := c.ShouldBindJSON(entity); err != nil {
+	if err := authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	authctx.AddContextToRequest(authCtx, entity)
 	resp, err := h.service.CalculateDistance(c.Request.Context(), entity)
 	if err != nil {
 		h.eh.HandleError(c, err)

@@ -120,9 +120,7 @@ func (h *Handler) createComment(c *gin.Context) {
 
 	entity := new(shipment.ShipmentComment)
 	entity.ShipmentID = shipmentID
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -172,9 +170,7 @@ func (h *Handler) updateComment(c *gin.Context) {
 	entity := new(shipment.ShipmentComment)
 	entity.ID = commentID
 	entity.ShipmentID = shipmentID
-	authctx.AddContextToRequest(authCtx, entity)
-
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

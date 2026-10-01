@@ -845,7 +845,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	if err = c.ShouldBindJSON(existing); err != nil {
+	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -884,10 +884,8 @@ func (h *Handler) update(c *gin.Context) {
 
 	entity := new(tenant.User)
 	entity.ID = userID
-	entity.CurrentOrganizationID = authCtx.OrganizationID
-	entity.BusinessUnitID = authCtx.BusinessUnitID
 
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
