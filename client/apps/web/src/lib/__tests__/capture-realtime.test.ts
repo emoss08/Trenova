@@ -1,5 +1,9 @@
 import { capture } from "@/lib/queries/capture";
-import { RESOURCE_QUERY_KEY_MAP, queryKeyPrefix } from "@trenova/shared/hooks/realtime-patching";
+import {
+  RESOURCE_QUERY_KEY_MAP,
+  invalidationFor,
+  queryKeyPrefix,
+} from "@trenova/shared/hooks/realtime-patching";
 import { describe, expect, it } from "vitest";
 
 /*
@@ -29,6 +33,37 @@ describe("capture invalidation", () => {
   it("capture_batch leaves devices and profiles alone", () => {
     expect(batch(capture.myDevices(null).queryKey)).toBe(false);
     expect(batch(capture.profiles(null, "").queryKey)).toBe(false);
+  });
+
+  it("a page arriving refetches the queue and that batch on screen, nothing else", () => {
+    const event = {
+      organizationId: "org_1",
+      businessUnitId: "bu_1",
+      resource: "capture_batch",
+      action: "page.received",
+      recordId: "cbat_1",
+    };
+    const { roots, activeOnly } = invalidationFor(event);
+    expect(activeOnly).toBe(true);
+    const reaches = (key: readonly unknown[]) =>
+      roots.map(queryKeyPrefix).some((root) => root.every((part, i) => key[i] === part));
+    expect(reaches(capture.batches({ statuses: ["Ready"] }).queryKey)).toBe(true);
+    expect(reaches(capture.batchCount({ statuses: ["Ready"] }).queryKey)).toBe(true);
+    expect(reaches(capture.batch("cbat_1").queryKey)).toBe(true);
+    expect(reaches(capture.batch("cbat_2").queryKey)).toBe(false);
+    expect(reaches(capture.requests("shipment", "shp_1").queryKey)).toBe(false);
+  });
+
+  it("any other batch change reaches everything capture_batch names", () => {
+    const { roots, activeOnly } = invalidationFor({
+      organizationId: "org_1",
+      businessUnitId: "bu_1",
+      resource: "capture_batch",
+      action: "updated",
+      recordId: "cbat_1",
+    });
+    expect(activeOnly).toBe(false);
+    expect(roots).toBe(RESOURCE_QUERY_KEY_MAP.capture_batch);
   });
 
   it("capture_device reaches both device lists", () => {

@@ -126,6 +126,11 @@ export const RECORD_LINKS = {
     path: "/edi/messages",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  capture_batch: {
+    label: "Stack",
+    path: "/intake",
+    params: { view: "all", batch: "{id}" },
+  },
   report: {
     label: "Report",
     path: "/reports/explore/{id}",

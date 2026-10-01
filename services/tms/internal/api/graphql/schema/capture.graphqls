@@ -300,7 +300,7 @@ type CapturePage {
   failureMessage: String!
   "Where to fetch the page to show it, under the API's base URL."
   contentPath: String!
-  "Where to fetch a small image of the page, under the API's base URL."
+  "Where to fetch a small image of the page, under the API's base URL; empty until the page has been read."
   thumbnailPath: String!
   createdAt: Timestamp!
 }
@@ -335,6 +335,8 @@ type CaptureItem {
   "The document it became."
   documentId: ID
   filedById: ID
+  "The person who filed it, when the reader may see them."
+  filedBy: User
   filedAt: Timestamp
   failureMessage: String!
   version: Int!

@@ -1,3 +1,5 @@
+import { recordPath } from "@/config/record-links";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { usePermission } from "@/hooks/use-permission";
 import {
   captureBatchStatusAttrs,
@@ -5,7 +7,7 @@ import {
   captureRetention,
   captureSourceLabel,
 } from "@/lib/capture";
-import type { CaptureBatchDetail, CapturePage } from "@/lib/graphql/capture";
+import type { CaptureBatchDetail } from "@/lib/graphql/capture";
 import { queries } from "@/lib/queries";
 import {
   DndContext,
@@ -24,6 +26,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBox, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import {
+  createDropdownMenuHandle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -36,26 +39,30 @@ import { formatUnixDate, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { ArrowLeftIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeftIcon, LinkIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { ConfirmDiscardDialog } from "./confirm-discard-dialog";
-import { DocumentCard, type DiscardEffect } from "./document-card";
+import { isFileable } from "./destination";
+import { DocumentCard, documentCardId, type DiscardEffect } from "./document-card";
 import { FiledDocuments } from "./filed-documents";
 import { LoosePages } from "./loose-pages";
 import {
-  LOOSE,
   dropPosition,
   leaveOut,
   mergeWithNext,
   movePage,
   newDocumentFrom,
   pageNumber,
+  pageOrder,
+  pagePlace,
   rotate,
   splitAfter,
 } from "./page-layout";
+import { PageMenu, type PageMenuActions } from "./page-menu";
 import { PagePreviewDialog } from "./page-preview-dialog";
-import type { PageMoveTarget } from "./page-thumbnail";
+import type { PageMenuPayload } from "./page-thumbnail";
 import { useBatchEditor } from "./use-batch-editor";
+import { useStackShortcuts } from "./use-stack-shortcuts";
 
 /** One stack, opened: its documents to check, file or rearrange. */
 export function BatchWorkspace({
@@ -130,6 +137,13 @@ function DocumentSketch() {
   );
 }
 
+/** A stack not yet split: every page it has is on its way to being read. */
+const ARRIVING_STATUSES: readonly CaptureBatchDetail["status"][] = [
+  "Receiving",
+  "Sealed",
+  "Processing",
+];
+
 function discardEffectFor(batch: CaptureBatchDetail): DiscardEffect {
   const open = batch.items.filter((item) => item.status === "Proposed" || item.status === "Failed");
   if (open.length > 1) {
@@ -154,7 +168,10 @@ function OpenBatch({
   const { allowed: canUpdate } = usePermission(Resource.CaptureBatch, Operation.Update);
   const { allowed: canDelete } = usePermission(Resource.CaptureBatch, Operation.Delete);
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [pageMenu] = useState(() => createDropdownMenuHandle<PageMenuPayload>());
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const { copy } = useCopyToClipboard();
 
   const canEdit = canUpdate && batch.isEditable;
   const pages = useMemo(() => new Map(batch.pages.map((page) => [page.id, page])), [batch.pages]);
@@ -162,6 +179,7 @@ function OpenBatch({
   const statusAttrs = captureBatchStatusAttrs(t)[batch.status];
   const retention = captureRetention(batch.retainUntil, now);
   const settled = batch.items.filter((item) => item.status === "Filed" || item.status === "Filing");
+  const arriving = batch.items.length === 0 && ARRIVING_STATUSES.includes(batch.status);
   const discardEffect = discardEffectFor(batch);
 
   const sensors = useSensors(
@@ -169,17 +187,20 @@ function OpenBatch({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const moveTargets: PageMoveTarget[] = layout.groups.map((group, index) => ({
-    key: group.key,
-    label: t("Document {0}", index + 1),
-  }));
-
-  const pageActions = {
-    preview: (page: CapturePage) => setPreviewId(page.id),
-    rotate: (pageId: string, turns: number) => editor.update((l) => rotate(l, pageId, turns)),
-    moveTo: (pageId: string, target: string) =>
-      editor.update((l) => movePage(l, pageId, target, Number.MAX_SAFE_INTEGER)),
-  };
+  const update = editor.update;
+  const preview = useCallback((pageId: string) => setPreviewId(pageId), []);
+  const pageActions = useMemo<PageMenuActions>(
+    () => ({
+      preview,
+      rotate: (pageId, turns) => update((l) => rotate(l, pageId, turns)),
+      splitAfter: (groupKey, pageId) => update((l) => splitAfter(l, groupKey, pageId)),
+      leaveOut: (pageId) => update((l) => leaveOut(l, pageId)),
+      newDocument: (pageId) => update((l) => newDocumentFrom(l, pageId)),
+      moveTo: (pageId, target) =>
+        update((l) => movePage(l, pageId, target, Number.MAX_SAFE_INTEGER)),
+    }),
+    [preview, update],
+  );
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (over === null || active.id === over.id) {
@@ -193,10 +214,49 @@ function OpenBatch({
     });
   };
 
+  const activeGroup =
+    layout.groups.find((group) => group.key === activeKey) ?? layout.groups[0] ?? null;
+  useStackShortcuts(
+    {
+      move: (step) => {
+        const at = activeGroup === null ? -1 : layout.groups.indexOf(activeGroup);
+        const next = layout.groups[Math.min(Math.max(at + step, 0), layout.groups.length - 1)];
+        if (next !== undefined) {
+          setActiveKey(next.key);
+          document.getElementById(documentCardId(next.key))?.scrollIntoView({ block: "nearest" });
+        }
+      },
+      fileCurrent: () => {
+        if (canEdit && activeGroup !== null && isFileable(editor.destinationFor(activeGroup))) {
+          editor.fileOne(activeGroup);
+        }
+      },
+      turnCurrent: () => {
+        if (canEdit && activeGroup !== null) {
+          update((l) => activeGroup.pageIds.reduce((turned, id) => rotate(turned, id, 1), l));
+        }
+      },
+      save: () => {
+        if (editor.dirty && !editor.saving) {
+          editor.save();
+        }
+      },
+    },
+    previewId === null && !confirmDiscard,
+  );
+
   const previewPage = previewId === null ? null : (pages.get(previewId) ?? null);
+  const previewOrder = useMemo(() => pageOrder(layout), [layout]);
+  const previewPosition = previewId === null ? -1 : previewOrder.indexOf(previewId);
+  const stepPreview = (step: 1 | -1) => {
+    const next = previewOrder[previewPosition + step];
+    if (next !== undefined) {
+      setPreviewId(next);
+    }
+  };
   const fileCount = editor.readyToFile.length;
   const fileBlocker =
-    !canEdit || editor.dirty || fileCount > 0
+    !canEdit || fileCount > 0
       ? null
       : layout.groups.length === 0
         ? t("Nothing to file: every page is set aside")
@@ -239,52 +299,65 @@ function OpenBatch({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {editor.dirty ? (
+            {editor.dirty && (
               <>
-                <Button type="button" size="sm" variant="outline" onClick={editor.discardChanges}>
+                <Button type="button" size="sm" variant="ghost" onClick={editor.discardChanges}>
                   {t("Undo changes")}
                 </Button>
                 <Button
                   type="button"
                   size="sm"
+                  variant="outline"
                   onClick={editor.save}
                   isLoading={editor.saving}
                   loadingText={t("Saving")}
+                  aria-keyshortcuts="S"
                 >
                   {t("Save split")}
                 </Button>
               </>
-            ) : (
-              canEdit && (
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={editor.fileAll}
-                  disabled={fileCount === 0}
-                  isLoading={editor.filingAll}
-                  loadingText={t("Filing")}
-                >
-                  {fileCount === 0
-                    ? t("File documents")
-                    : t("{0, plural, one {File # document} other {File # documents}}", fileCount)}
-                </Button>
-              )
             )}
-            {canDelete && batch.isEditable && (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="outline"
-                      aria-label={t("Stack actions")}
-                    >
-                      <MoreHorizontalIcon className="size-4" />
-                    </Button>
+            {canEdit && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={editor.fileAll}
+                disabled={fileCount === 0 || editor.saving}
+                isLoading={editor.filingAll}
+                loadingText={t("Filing")}
+              >
+                {fileCount === 0
+                  ? t("File documents")
+                  : t("{0, plural, one {File # document} other {File # documents}}", fileCount)}
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    aria-label={t("Stack actions")}
+                  >
+                    <MoreHorizontalIcon className="size-4" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuItem
+                  title={t("Copy link")}
+                  description={t("Opens this stack in Intake for anyone who can see it")}
+                  descriptionClassProps="whitespace-normal"
+                  startContent={<LinkIcon className="size-3.5" />}
+                  onClick={() =>
+                    void copy(
+                      new URL(recordPath("capture_batch", batch.id), window.location.origin).href,
+                      { withToast: true },
+                    )
                   }
                 />
-                <DropdownMenuContent align="end" className="w-64">
+                {canDelete && batch.isEditable && (
                   <DropdownMenuItem
                     title={t("Discard the stack")}
                     description={t("Deletes every page not already filed")}
@@ -293,9 +366,9 @@ function OpenBatch({
                     color="danger"
                     onClick={() => setConfirmDiscard(true)}
                   />
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -334,7 +407,9 @@ function OpenBatch({
           {editor.dirty && (
             <Alert variant="info" size="sm">
               <AlertDescription>
-                {t("You changed how the pages divide. Save the split to file these documents.")}
+                {t(
+                  "You changed how the pages divide. Filing saves the change first, or save it now and keep working.",
+                )}
               </AlertDescription>
             </Alert>
           )}
@@ -354,12 +429,8 @@ function OpenBatch({
                   destination={editor.destinationFor(group)}
                   onDestinationChange={(destination) => editor.setDestination(group, destination)}
                   failure={item ? editor.failures[item.id] : undefined}
-                  moveTargets={[...moveTargets, { key: LOOSE, label: t("Set aside") }]}
-                  pageActions={{
-                    ...pageActions,
-                    splitAfter: (pageId) => editor.update((l) => splitAfter(l, group.key, pageId)),
-                    leaveOut: (pageId) => editor.update((l) => leaveOut(l, pageId)),
-                  }}
+                  menu={pageMenu}
+                  onPreview={preview}
                   canEdit={canEdit}
                   canFile={canEdit}
                   canDiscard={canDelete && batch.isEditable}
@@ -369,12 +440,10 @@ function OpenBatch({
                       ? () => editor.update((l) => mergeWithNext(l, group.key))
                       : undefined
                   }
-                  onFile={() => {
-                    if (item !== undefined) {
-                      editor.fileOne({ item, destination: editor.destinationFor(group) });
-                    }
-                  }}
-                  filing={item !== undefined && editor.filingOne === item.id}
+                  onFile={() => editor.fileOne(group)}
+                  filing={editor.filingOne === group.key}
+                  active={activeGroup?.key === group.key}
+                  onActivate={() => setActiveKey(group.key)}
                   discardEffect={discardEffect}
                   onDiscard={() =>
                     item === undefined ? Promise.resolve() : editor.discardItem(item)
@@ -393,21 +462,25 @@ function OpenBatch({
               />
             )}
 
-            {(batch.isEditable || layout.loose.length > 0) && (
+            {(batch.isEditable || arriving || layout.loose.length > 0) && (
               <LoosePages
+                arriving={arriving}
                 pageIds={layout.loose}
                 pages={pages}
                 rotations={layout.rotations}
                 sequence={layout.sequence}
-                moveTargets={moveTargets}
+                menu={pageMenu}
+                onPreview={preview}
                 canEdit={canEdit}
-                pageActions={{
-                  ...pageActions,
-                  newDocument: (pageId) => editor.update((l) => newDocumentFrom(l, pageId)),
-                }}
               />
             )}
           </DndContext>
+          <PageMenu
+            handle={pageMenu}
+            groups={layout.groups}
+            canEdit={canEdit}
+            actions={pageActions}
+          />
 
           <FiledDocuments items={settled} />
         </div>
@@ -417,6 +490,16 @@ function OpenBatch({
         page={previewPage}
         number={previewPage === null ? 0 : pageNumber(layout, previewPage)}
         rotation={previewPage ? (layout.rotations[previewPage.id] ?? 0) : 0}
+        place={previewId === null ? null : pagePlace(layout, previewId)}
+        position={previewPosition + 1}
+        total={previewOrder.length}
+        onPrevious={() => stepPreview(-1)}
+        onNext={() => stepPreview(1)}
+        onRotate={
+          canEdit && previewId !== null
+            ? (turns) => update((l) => rotate(l, previewId, turns))
+            : undefined
+        }
         onOpenChange={(open) => {
           if (!open) {
             setPreviewId(null);

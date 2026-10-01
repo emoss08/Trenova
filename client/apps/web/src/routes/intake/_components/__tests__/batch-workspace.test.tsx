@@ -10,18 +10,31 @@ import { BatchWorkspace } from "../batch-workspace";
 const capture = vi.hoisted(() => ({
   fetchCaptureBatch: vi.fn(),
   discardCaptureBatch: vi.fn(),
+  editCaptureItems: vi.fn(),
+  fileCaptureItem: vi.fn(),
 }));
 
 vi.mock("@/lib/graphql/capture", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/capture")>()),
   fetchCaptureBatch: capture.fetchCaptureBatch,
   discardCaptureBatch: capture.discardCaptureBatch,
+  editCaptureItems: capture.editCaptureItems,
+  fileCaptureItem: capture.fileCaptureItem,
 }));
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
+vi.mock("@/components/autocomplete-fields", () => ({
+  ControlledCaptureRecordAutocompleteField: ({ label, value }: { label: string; value: string }) => (
+    <output aria-label={label}>{value}</output>
+  ),
+  ControlledDocumentTypeAutocompleteField: ({ label }: { label: string }) => (
+    <output aria-label={label} />
+  ),
+}));
 vi.mock("@/components/elements/pdf-viewer", () => ({
   PdfViewer: () => <div data-testid="pdf" />,
+  PdfPage: ({ rotate }: { rotate: number }) => <div data-testid="pdf" data-rotate={rotate} />,
 }));
 
 // Pages as CapturePageFields sends them. `sequence` is the page's place in
@@ -71,6 +84,7 @@ function item(id: string, position: number, pageIds: string[]): CaptureItem {
     version: 1,
     suggestedRecord: null,
     filedRecord: null,
+    filedBy: null,
   } as unknown as CaptureItem;
 }
 
@@ -208,6 +222,128 @@ describe("BatchWorkspace", () => {
       await user.keyboard("{Escape}");
       await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     }
+  });
+
+  it("offers each page only what it can do, from the one menu the stack shares", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await user.click(await screen.findByRole("button", { name: "Page 1 actions" }));
+    expect(
+      await screen.findByRole("menuitem", { name: /Start a new document after this page/ }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("menuitem", { name: /Set aside/ })).toHaveLength(1);
+    await user.click(screen.getByRole("menuitem", { name: /Move to/ }));
+    expect(await screen.findByRole("menuitem", { name: "Document 2" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Document 1" })).not.toBeInTheDocument();
+    await user.keyboard("{Escape}{Escape}");
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Page 2 actions" }));
+    expect(await screen.findByRole("menuitem", { name: /Preview/ })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: /Start a new document after this page/ }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: /Set aside/ }));
+
+    await user.click(await screen.findByRole("button", { name: "Page 2 actions" }));
+    expect(
+      await screen.findByRole("menuitem", { name: /Make it a document of its own/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Set aside/ })).not.toBeInTheDocument();
+  });
+
+  it("shows the pages of a stack still arriving as received, not set aside", async () => {
+    capture.fetchCaptureBatch.mockResolvedValue(
+      batch({ status: "Receiving", isEditable: false, items: [], itemCount: 0, openItemCount: 0 }),
+    );
+    renderWorkspace();
+
+    expect(await screen.findByText("Pages received")).toBeInTheDocument();
+    expect(screen.queryByText("Set aside")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Page 3\./ })).toBeInTheDocument();
+  });
+
+  it("steps through the stack in the preview and turns the page there", async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await user.click(await screen.findByRole("button", { name: "Page 1 actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: /Preview/ }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("1 of 3")).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Previous page" })).toBeDisabled();
+
+    await user.click(within(dialog).getByRole("button", { name: "Next page" }));
+    expect(within(dialog).getByRole("heading", { name: "Page 2" })).toBeInTheDocument();
+    await user.keyboard("{ArrowRight}");
+    expect(within(dialog).getByRole("heading", { name: "Page 3" })).toBeInTheDocument();
+    expect(within(dialog).getByText(/Document 2, page 1 of 1/)).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Rotate right" }));
+    expect(within(dialog).getByTestId("pdf")).toHaveAttribute("data-rotate", "90");
+    expect(within(dialog).getByText(/Turned 90° clockwise/)).toBeInTheDocument();
+  });
+
+  it("files a changed split by saving it first", async () => {
+    const user = userEvent.setup();
+    const routed = {
+      ...item("cpi_02", 2, ["pg_c"]),
+      suggestedType: "shipment",
+      suggestedId: "shp_01",
+    };
+    const saved = batch({
+      version: 5,
+      items: [item("cpi_03", 1, ["pg_a"]), item("cpi_04", 2, ["pg_b"]), { ...routed, position: 3 }],
+    });
+    capture.editCaptureItems.mockResolvedValue(saved);
+    capture.fileCaptureItem.mockResolvedValue({ ...saved.items[0], status: "Filing" });
+    capture.fetchCaptureBatch
+      .mockResolvedValueOnce(batch({ items: [routed, item("cpi_01", 1, ["pg_a", "pg_b"])] }))
+      .mockResolvedValue(saved);
+    renderWorkspace();
+
+    await user.click(await screen.findByRole("button", { name: "Page 1 actions" }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: /Start a new document after this page/ }),
+    );
+    expect(await screen.findByRole("button", { name: "Save split" })).toBeInTheDocument();
+    expect(screen.queryByText("Save the split before filing")).not.toBeInTheDocument();
+
+    const documents = screen.getAllByRole("region", { name: /^Document \d$/ });
+    expect(documents).toHaveLength(3);
+    await user.click(within(documents[2]!).getByRole("button", { name: "File" }));
+
+    await waitFor(() => expect(capture.fileCaptureItem).toHaveBeenCalled());
+    expect(capture.editCaptureItems).toHaveBeenCalledWith(
+      "cpb_01stack",
+      expect.objectContaining({
+        version: 4,
+        items: [{ pageIds: ["pg_a"] }, { pageIds: ["pg_b"] }, { pageIds: ["pg_c"] }],
+      }),
+    );
+    expect(capture.fileCaptureItem).toHaveBeenCalledWith(
+      "cpi_02",
+      expect.objectContaining({ targetType: "shipment", targetId: "shp_01" }),
+    );
+    expect(capture.editCaptureItems.mock.invocationCallOrder[0]).toBeLessThan(
+      capture.fileCaptureItem.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("moves between documents with J and K", async () => {
+    const user = userEvent.setup();
+    const { container } = renderWorkspace();
+
+    await screen.findByRole("region", { name: "Document 1" });
+    const active = () => container.querySelector("[data-active]")?.getAttribute("id");
+    expect(active()).toBe("capture-document-cpi_01");
+    await user.keyboard("j");
+    expect(active()).toBe("capture-document-cpi_02");
+    await user.keyboard("j");
+    expect(active()).toBe("capture-document-cpi_02");
+    await user.keyboard("k");
+    expect(active()).toBe("capture-document-cpi_01");
   });
 
   it("says a stack that no longer exists is gone and leads back to the queue", async () => {

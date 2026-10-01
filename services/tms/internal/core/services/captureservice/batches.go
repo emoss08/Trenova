@@ -324,7 +324,11 @@ func (s *Service) PutPage(
 		return nil, err
 	}
 
-	s.publishBatch(ctx, batch, batchActionReceived)
+	s.inspectOnArrival(tenantInfo, page)
+	announceCtx := context.WithoutCancel(ctx)
+	s.received.announce(batch.ID, func() {
+		s.publishBatch(announceCtx, batch, batchActionReceived)
+	})
 
 	return page, nil
 }
@@ -617,6 +621,7 @@ func (s *Service) SealBatch(
 	}
 
 	s.completeRequest(ctx, sealed)
+	s.received.forget(sealed.ID)
 	s.publishBatch(ctx, sealed, batchActionUpdated)
 	if sealed.Status == capture.BatchSealed {
 		s.startProcessing(ctx, sealed)

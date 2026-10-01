@@ -64,9 +64,14 @@ export function FiledDocuments({ items }: { items: CaptureItem[] }) {
               {t("{0, plural, one {# page} other {# pages}}", item.pageCount)}
             </span>
             <RecordLink item={item} />
-            {item.filedAt !== null && (
+            {(item.filedAt !== null || item.filedBy) && (
               <span className="text-foreground-subtle ml-auto text-xs">
-                {formatUnixDateTime(item.filedAt)}
+                {[
+                  item.filedBy?.name,
+                  item.filedAt === null ? null : formatUnixDateTime(item.filedAt),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </span>
             )}
           </li>

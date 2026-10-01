@@ -13,6 +13,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
@@ -61,9 +62,11 @@ type world struct {
 	denied      map[string]bool
 	ownScope    bool
 	inspections map[string]*services.CapturePageInspection
+	inspected   int
 	sessions    map[pulid.ID]*documentupload.DocumentUploadSession
 	uploaded    map[pulid.ID][]byte
 	published   []string
+	audited     []string
 	notified    []*notification.Notification
 }
 
@@ -118,6 +121,7 @@ func (w *world) service() *Service {
 		qrCodes:       captureqr.New(),
 		notifications: &fakeNotifier{w},
 		realtime:      &fakeRealtime{w},
+		audit:         &fakeAudit{w: w},
 	}
 }
 
@@ -694,6 +698,26 @@ func (f *fakePages) Update(_ context.Context, e *capture.CapturePage) (*capture.
 	return e, nil
 }
 
+func (f *fakePages) RecordInspection(_ context.Context, e *capture.CapturePage) (bool, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	stored, ok := f.w.pages[e.ID]
+	if !ok || stored.Status != capture.PageReceived {
+		return false, nil
+	}
+	updated := clone(stored)
+	updated.Status = e.Status
+	updated.WidthPx = e.WidthPx
+	updated.HeightPx = e.HeightPx
+	updated.ThumbnailPath = e.ThumbnailPath
+	updated.BlankScore = e.BlankScore
+	updated.Markers = e.Markers
+	updated.FailureMessage = e.FailureMessage
+	f.w.pages[e.ID] = updated
+
+	return true, nil
+}
+
 func (f *fakePages) GetByID(_ context.Context, req repositories.GetCapturePageByIDRequest) (*capture.CapturePage, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
@@ -993,6 +1017,7 @@ type fakeInspector struct{ w *world }
 func (f *fakeInspector) Inspect(_ context.Context, pdf []byte) (*services.CapturePageInspection, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
+	f.w.inspected++
 	if inspection, ok := f.w.inspections[string(pdf)]; ok {
 		return inspection, nil
 	}
@@ -1068,4 +1093,24 @@ func (f fakeOrganizations) GetByID(
 	}
 
 	return &tenant.Organization{ID: f.w.tenant.OrgID, Name: "Acme Freight"}, nil
+}
+
+// fakeAudit records each action as "<operation>:<comment>".
+type fakeAudit struct {
+	services.AuditService
+	w *world
+}
+
+func (f *fakeAudit) LogAction(params *services.LogActionParams, opts ...services.LogOption) error {
+	entry := &audit.Entry{}
+	for _, opt := range opts {
+		if err := opt(entry); err != nil {
+			return err
+		}
+	}
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	f.w.audited = append(f.w.audited, string(params.Operation)+":"+entry.Comment)
+
+	return nil
 }

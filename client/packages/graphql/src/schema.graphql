@@ -5560,6 +5560,8 @@ type CaptureItem {
   documentId: ID
   failureMessage: String!
   filedAt: Timestamp
+  """The person who filed it, when the reader may see them."""
+  filedBy: User
   filedById: ID
   filedDocumentTypeId: ID
   filedId: ID
@@ -5636,7 +5638,9 @@ type CapturePage {
   rotation: Int!
   sequence: Int!
   status: CapturePageStatus!
-  """Where to fetch a small image of the page, under the API's base URL."""
+  """
+  Where to fetch a small image of the page, under the API's base URL; empty until the page has been read.
+  """
   thumbnailPath: String!
   """
   Whether the page looked like a cover sheet this organization did not issue, or one that expired.

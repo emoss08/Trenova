@@ -1126,6 +1126,9 @@ select:disabled {
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  /* A long batch lays out and paints only the pages in view. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 150px;
 }
 
 .tile-open,

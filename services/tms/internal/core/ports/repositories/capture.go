@@ -282,6 +282,12 @@ type CapturePageRepository interface {
 		req GetCapturePageBySequenceRequest,
 	) (*capture.CapturePage, error)
 	ListByBatch(ctx context.Context, req ListCapturePagesRequest) ([]*capture.CapturePage, error)
+	// RecordInspection writes what reading a page found (its status,
+	// thumbnail, size, blank score, markers and failure) only while the page
+	// still waits to be read, and reports whether it did. Pages are read as
+	// they arrive and again when their batch is sealed; whichever finishes
+	// second finds the page already read and changes nothing.
+	RecordInspection(ctx context.Context, entity *capture.CapturePage) (bool, error)
 }
 
 type ListCaptureItemsRequest struct {

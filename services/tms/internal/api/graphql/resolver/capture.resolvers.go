@@ -92,6 +92,14 @@ func (r *captureItemResolver) FiledRecord(ctx context.Context, obj *capture.Capt
 	return r.captureRecord(ctx, obj.FiledType, obj.FiledID)
 }
 
+func (r *captureItemResolver) FiledBy(ctx context.Context, obj *capture.CaptureItem) (*tenant.User, error) {
+	if obj.FiledByID == nil {
+		return nil, nil
+	}
+
+	return loadUser(ctx, *obj.FiledByID)
+}
+
 func (r *capturePageResolver) PatchCode(ctx context.Context, obj *capture.CapturePage) (string, error) {
 	return obj.Markers.PatchCode, nil
 }
@@ -109,6 +117,10 @@ func (r *capturePageResolver) ContentPath(ctx context.Context, obj *capture.Capt
 }
 
 func (r *capturePageResolver) ThumbnailPath(ctx context.Context, obj *capture.CapturePage) (string, error) {
+	if obj.ThumbnailPath == "" {
+		return "", nil
+	}
+
 	return capturehandler.PageContentPath(obj.ID, captureservice.PageContentThumbnail), nil
 }
 

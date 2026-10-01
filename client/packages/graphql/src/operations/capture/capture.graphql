@@ -162,6 +162,10 @@ fragment CaptureItemFields on CaptureItem {
   filedAt
   failureMessage
   version
+  filedBy {
+    id
+    name
+  }
   suggestedRecord {
     ...CaptureRecordRefFields
   }

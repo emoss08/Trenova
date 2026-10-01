@@ -19,23 +19,30 @@ Keywords: file scans, assign documents, batch scan, process scanned paperwork
 2. Select a stack. Each document shows its pages, what Trenova suggested and why, and where it will be filed.
 3. For each document, check **File onto**, the record and the **Document type**, and change any that are wrong.
 4. Select **File** on one document, or the button at the top to file every document that has a record chosen. A document that cannot be filed says why on its card; the rest are filed.
+5. To work from the keyboard, press J and K to move between documents, F to file the one you are on, R to turn its pages and S to save the split.
 
 ### Split, join or reorder pages
 Keywords: separate documents, merge pages, wrong split, rotate page, remove page
 1. Open the stack in [Intake](/intake).
 2. Drag a page to another document or to **Set aside**, or open a page's menu and choose **Start a new document after this page**, **Move to**, **Rotate right**, **Rotate left** or **Set aside**.
 3. Select **Join with next** on a document to make it and the one after it one document.
-4. Select **Save split**, or **Undo changes** to go back. Documents are filed as saved, so save before filing.
+4. Select **Save split**, or **Undo changes** to go back. Filing a changed stack saves the split first, so the documents are filed as you see them.
+
+### Look at a page closely
+Keywords: preview page, zoom, read a scan, check a page
+1. Open the stack in [Intake](/intake) and double-click a page, or open its menu and choose **Preview**.
+2. Use **Previous page** and **Next page**, or the arrow keys, to go through the stack, and **Zoom in** or **Zoom out** to read small print.
+3. Select **Rotate left** or **Rotate right** to turn the page; the turn is part of the split until you save or file.
 
 ### Bring back a page that was set aside
 Keywords: missing page, blank page removed, separator page
 1. Open the stack in [Intake](/intake) and find the page under **Set aside**.
-2. Drag it into a document, or open its menu and choose **Make it a document of its own**, then **Save split**.
+2. Drag it into a document, or open its menu and choose **Make it a document of its own**.
 
 ### Discard a stack
 Keywords: delete scan, throw away pages, duplicate scan
 1. Open the stack in [Intake](/intake).
-2. Open the menu beside the filing button and choose **Discard the stack**, then **Discard stack**. Documents already filed stay on their records; every other page is deleted.
+2. Open **Stack actions** beside the filing button and choose **Discard the stack**, then **Discard stack**. Documents already filed stay on their records; every other page is deleted.
 
 ### Find a stack
 Keywords: search scans, find print job, expiring scans

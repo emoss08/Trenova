@@ -269,4 +269,68 @@ export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className 
   );
 }
 
+/**
+ * The first page of a PDF alone, fitted to its container's width, turned and
+ * zoomed as asked. For a one-page file (a captured page) the full viewer's
+ * modes and page controls have nothing to do.
+ */
+export function PdfPage({
+  file,
+  rotate = 0,
+  zoom = 1,
+  className,
+}: {
+  file: string;
+  /** Degrees clockwise: 0, 90, 180 or 270. */
+  rotate?: number;
+  /** Multiplies the fitted width; 1 fits the container. */
+  zoom?: number;
+  className?: string;
+}) {
+  const t = useT();
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [width, setWidth] = React.useState(0);
+
+  React.useEffect(() => {
+    const node = containerRef.current;
+    if (node === null) {
+      return;
+    }
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry !== undefined) {
+        setWidth(Math.max(0, entry.contentRect.width - 32));
+      }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className={cn("overflow-auto", className)}>
+      <Document
+        file={file}
+        loading={<div className="ui-shimmer mx-auto h-[70vh] w-full max-w-xl rounded-md" />}
+        error={
+          <p className="text-foreground-subtle p-6 text-center text-sm">
+            {t("This page could not be shown.")}
+          </p>
+        }
+      >
+        {width > 0 && (
+          <div className="flex justify-center p-4">
+            <Page
+              pageNumber={1}
+              rotate={rotate}
+              width={width * zoom}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+              loading={<div className="ui-shimmer h-[70vh] w-full rounded-md" />}
+            />
+          </div>
+        )}
+      </Document>
+    </div>
+  );
+}
+
 export type { PdfViewerProps, ViewMode };

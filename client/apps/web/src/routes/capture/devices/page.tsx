@@ -86,17 +86,20 @@ export function CaptureDevicesPage() {
         description: t(
           "The computers you paired with Trenova Capture to scan and print into Trenova",
         ),
-        actions: (
-          <Button
-            size="sm"
-            variant="outline"
-            nativeButton={false}
-            render={<Link to="/capture/pair" />}
-          >
-            <KeyRoundIcon className="size-3.5" aria-hidden />
-            {t("Enter a pairing code")}
-          </Button>
-        ),
+        // With nothing paired the empty list offers this itself, so it is
+        // not said twice.
+        actions:
+          devices.length > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              nativeButton={false}
+              render={<Link to="/capture/pair" />}
+            >
+              <KeyRoundIcon className="size-3.5" aria-hidden />
+              {t("Enter a pairing code")}
+            </Button>
+          ) : undefined,
       }}
     >
       <AccessNotice />
