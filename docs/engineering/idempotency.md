@@ -35,12 +35,17 @@ IdempotencyMiddleware ── Claim(scoped key, fingerprint) ──▶ Redis  ide
 
 The header value is the client's own string: 1 to 255 printable ASCII characters with
 no spaces. A UUID per logical write is the expected value. The server never stores it
-as sent. It stores `sha256(organization, business unit, principal type, principal id,
-key)`, so two callers who pick the same string, or one caller in two organizations,
+as sent. It stores `HMAC-SHA-256(organization, business unit, principal type, principal
+id, key)`, so two callers who pick the same string, or one caller in two organizations,
 never collide. A leaked key also cannot be used to read someone else's response.
 
+The HMAC key is derived from `security.session.secret` (`idempotency.NewHasher`), so
+nobody can compute a scoped key without the server's secret. Rotating that secret
+changes every scoped key: a retry sent across a rotation is treated as a new request,
+including by the shipment backstop below.
+
 A key names one request. That request is identified by a fingerprint:
-`sha256(method, path and query, body)`. Sending the same key with a different body is
+`HMAC-SHA-256(method, path and query, body)`. Sending the same key with a different body is
 refused rather than replayed, because the caller has clearly mixed up two writes. To
 compute the fingerprint the middleware reads the whole body, so a keyed request is
 capped at `maxRequestBytes` (4 MiB by default). The handler then reads the same bytes
@@ -66,7 +71,9 @@ is released:
 A response is kept only up to `maxResponseBytes` (1 MiB). Above that, the key still
 blocks a second write, but a repeat answers 409 ("already completed with status N")
 instead of a replay. Only `Content-Type`, the status and the body are kept; the
-replay adds `Idempotent-Replayed: true`, which CORS exposes to the browser.
+replay adds `Idempotent-Replayed: true`, which CORS exposes to the browser. A keyed
+response that a handler wrote without a `Content-Type`, and its replay, are sent as
+`application/octet-stream`, so the browser is never left to sniff one.
 
 The Redis record is a hash, and every write goes through a Lua script. Claim is
 SET-if-absent, so two concurrent first requests cannot both win. Complete and Release

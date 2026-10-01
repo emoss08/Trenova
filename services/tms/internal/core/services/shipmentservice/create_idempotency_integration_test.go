@@ -28,7 +28,7 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 		sc.CheckForDuplicateBOLs = false
 	})
 	actor := internaltestutil.NewSessionActor(data.User.ID, tenantInfo.OrgID, tenantInfo.BuID)
-	key := idempotency.ScopedKey(idempotency.Scope{
+	key := idempotency.NewHasher("test-secret").ScopedKey(idempotency.Scope{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		PrincipalType:  "user",
@@ -96,7 +96,7 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 		CustomerID:        created.CustomerID,
 		FormulaTemplateID: created.FormulaTemplateID,
 		ProNumber:         "PRO-OTHER-IDEMPOTENT",
-		IdempotencyKey: idempotency.ScopedKey(idempotency.Scope{
+		IdempotencyKey: idempotency.NewHasher("test-secret").ScopedKey(idempotency.Scope{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			PrincipalType:  "user",

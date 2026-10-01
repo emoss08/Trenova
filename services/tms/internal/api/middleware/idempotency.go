@@ -24,6 +24,8 @@ const (
 	idempotencyGraphQLPath       = "/graphql"
 	idempotencyLockMargin        = 5 * time.Second
 	idempotencyProcessingRetryIn = "1"
+	idempotencyContentTypeHeader = "Content-Type"
+	idempotencyOpaqueContentType = "application/octet-stream"
 )
 
 var idempotencyRetryableCodes = map[string]struct{}{
@@ -51,14 +53,17 @@ type IdempotencyMiddleware struct {
 	storeTimeout     time.Duration
 	maxRequestBytes  int64
 	maxResponseBytes int
+	hasher           idempotency.Hasher
 }
 
 func NewIdempotencyMiddleware(p IdempotencyParams) *IdempotencyMiddleware {
 	cfg := config.IdempotencyConfig{}
 	var requestTimeout time.Duration
+	var secret string
 	if p.Config != nil {
 		cfg = p.Config.Security.Idempotency
 		requestTimeout = p.Config.Server.RequestTimeout
+		secret = p.Config.Security.Session.Secret
 	}
 
 	logger := p.Logger
@@ -76,6 +81,7 @@ func NewIdempotencyMiddleware(p IdempotencyParams) *IdempotencyMiddleware {
 		storeTimeout:     cfg.GetStoreTimeout(),
 		maxRequestBytes:  cfg.GetMaxRequestBytes(),
 		maxResponseBytes: cfg.GetMaxResponseBytes(),
+		hasher:           idempotency.NewHasher(secret),
 	}
 }
 
@@ -109,13 +115,13 @@ func (m *IdempotencyMiddleware) Handle() gin.HandlerFunc {
 			return
 		}
 
-		scopedKey := idempotency.ScopedKey(idempotency.Scope{
+		scopedKey := m.hasher.ScopedKey(idempotency.Scope{
 			OrganizationID: authCtx.OrganizationID,
 			BusinessUnitID: authCtx.BusinessUnitID,
 			PrincipalType:  authCtx.PrincipalType,
 			PrincipalID:    authCtx.PrincipalID,
 		}, clientKey)
-		fingerprint := idempotency.Fingerprint(
+		fingerprint := m.hasher.Fingerprint(
 			c.Request.Method,
 			c.Request.URL.RequestURI(),
 			body,
@@ -222,7 +228,7 @@ func (m *IdempotencyMiddleware) answerExisting(
 			c.Status(existing.Status)
 			c.Writer.WriteHeaderNow()
 		} else {
-			c.Data(existing.Status, existing.ContentType, existing.Body)
+			c.Data(existing.Status, replayContentType(existing.ContentType), existing.Body)
 		}
 		c.Abort()
 	}
@@ -312,6 +318,13 @@ func (m *IdempotencyMiddleware) detachedContext(
 	return context.WithTimeout(context.WithoutCancel(c.Request.Context()), m.storeTimeout)
 }
 
+func replayContentType(stored string) string {
+	if stored == "" {
+		return idempotencyOpaqueContentType
+	}
+	return stored
+}
+
 func isIdempotentCandidate(method string) bool {
 	switch method {
 	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
@@ -359,12 +372,20 @@ type idempotencyCaptureWriter struct {
 
 func (w *idempotencyCaptureWriter) Write(data []byte) (int, error) {
 	w.capture(data)
-	return w.ResponseWriter.Write(data)
+	rw := w.ResponseWriter
+	if rw.Header().Get(idempotencyContentTypeHeader) == "" {
+		rw.Header().Set(idempotencyContentTypeHeader, idempotencyOpaqueContentType)
+	}
+	return rw.Write(data)
 }
 
 func (w *idempotencyCaptureWriter) WriteString(data string) (int, error) {
 	w.capture([]byte(data))
-	return w.ResponseWriter.WriteString(data)
+	rw := w.ResponseWriter
+	if rw.Header().Get(idempotencyContentTypeHeader) == "" {
+		rw.Header().Set(idempotencyContentTypeHeader, idempotencyOpaqueContentType)
+	}
+	return rw.WriteString(data)
 }
 
 func (w *idempotencyCaptureWriter) capture(data []byte) {

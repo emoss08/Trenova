@@ -419,15 +419,30 @@ func TestIdempotencyLockOutlastsTheRequestTimeout(t *testing.T) {
 }
 
 func TestIdempotencyScopesKeysToThePrincipal(t *testing.T) {
-	scope := idempotency.Scope{
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		PrincipalType:  authctx.PrincipalTypeUser,
-		PrincipalID:    pulid.MustNew("usr_"),
+	var keys []string
+	for range 2 {
+		h := newIdempotencyHarness(t, idempotencyHarnessOptions{})
+		h.do(http.MethodPost, "/api/v1/shipments/", "key-1", `{}`)
+		require.Len(t, h.keys, 1)
+		keys = append(keys, h.keys[0])
 	}
-	other := scope
-	other.PrincipalID = pulid.MustNew("usr_")
 
-	assert.NotEqual(t, idempotency.ScopedKey(scope, "k"), idempotency.ScopedKey(other, "k"))
-	assert.Equal(t, idempotency.ScopedKey(scope, "k"), idempotency.ScopedKey(scope, "k"))
+	assert.NotEqual(t, keys[0], keys[1])
+}
+
+func TestIdempotencyNeverLeavesAResponseToContentSniffing(t *testing.T) {
+	h := newIdempotencyHarness(t, idempotencyHarnessOptions{
+		handler: func(c *gin.Context, _ int) {
+			c.Status(http.StatusCreated)
+			_, _ = c.Writer.Write([]byte("<p>created</p>"))
+		},
+	})
+
+	first := h.do(http.MethodPost, "/api/v1/shipments/", "key-1", `{}`)
+	second := h.do(http.MethodPost, "/api/v1/shipments/", "key-1", `{}`)
+
+	assert.Equal(t, idempotencyOpaqueContentType, first.Header().Get("Content-Type"))
+	assert.Equal(t, idempotencyOpaqueContentType, second.Header().Get("Content-Type"))
+	assert.Equal(t, "true", second.Header().Get(idempotency.HeaderReplayed))
+	assert.Equal(t, "<p>created</p>", second.Body.String())
 }

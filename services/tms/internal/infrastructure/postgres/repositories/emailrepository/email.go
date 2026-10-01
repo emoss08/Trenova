@@ -385,11 +385,7 @@ func (r *repository) CreateMessageOnce(
 	ctx context.Context,
 	entity *email.Message,
 ) (*email.Message, bool, error) {
-	type outcome struct {
-		message *email.Message
-		created bool
-	}
-	result, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (outcome, error) {
+	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*email.Message, bool, error) {
 		res, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).
@@ -397,14 +393,14 @@ func (r *repository) CreateMessageOnce(
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
-			return outcome{}, err
+			return nil, false, err
 		}
 		rows, err := res.RowsAffected()
 		if err != nil {
-			return outcome{}, err
+			return nil, false, err
 		}
 		if rows > 0 {
-			return outcome{message: entity, created: true}, nil
+			return entity, true, nil
 		}
 
 		existing := new(email.Message)
@@ -415,14 +411,10 @@ func (r *repository) CreateMessageOnce(
 			Where("em.idempotency_key = ?", entity.IdempotencyKey).
 			Scan(ctx)
 		if err != nil {
-			return outcome{}, dberror.HandleNotFoundError(err, "EmailMessage")
+			return nil, false, dberror.HandleNotFoundError(err, "EmailMessage")
 		}
-		return outcome{message: existing}, nil
+		return existing, false, nil
 	})
-	if err != nil {
-		return nil, false, err
-	}
-	return result.message, result.created, nil
 }
 
 func (r *repository) UpdateMessage(
