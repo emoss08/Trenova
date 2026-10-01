@@ -255,6 +255,16 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("database.statementTimeout", "10s")
 	l.viper.SetDefault("database.lockTimeout", "5s")
 	l.viper.SetDefault("database.idleInTransactionSessionTimeout", "30s")
+	l.viper.SetDefault("database.rls.mode", RLSModeOff)
+	l.viper.SetDefault("database.rls.scopeKeyId", "")
+	l.viper.SetDefault("database.rls.scopeKey", "")
+	l.viper.SetDefault("database.rls.scopeTtl", "15m")
+	l.viper.SetDefault("database.system.user", "")
+	l.viper.SetDefault("database.system.password", "")
+	l.viper.SetDefault("database.system.maxOpenConns", 8)
+	l.viper.SetDefault("database.system.maxIdleConns", 2)
+	l.viper.SetDefault("database.migrator.user", "")
+	l.viper.SetDefault("database.migrator.password", "")
 
 	// Session defaults
 	l.viper.SetDefault("security.session.name", "trv-session-id")
@@ -453,6 +463,7 @@ func (l *Loader) validateConfig(config *Config) error {
 
 	validators := []func(*Config) error{
 		validateDatabasePool,
+		validateRLSConfig,
 		validateServerTimeouts,
 		validateTrustedProxies,
 		validateHostPrefixCookie,

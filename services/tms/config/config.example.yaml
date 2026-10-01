@@ -124,6 +124,28 @@ database:
   statementTimeout: 10s # Per-statement database deadline
   lockTimeout: 5s # Maximum time a statement may wait for a lock
   idleInTransactionSessionTimeout: 30s # Maximum time a transaction may sit idle
+  # Row-level security binds every transaction to the signed tenant scope of the
+  # request or job that opened it, so PostgreSQL itself refuses rows of any other
+  # organization. "observe" signs scopes and logs access that would be refused;
+  # "enforce" refuses it. See docs/engineering/row-level-security.md.
+  rls:
+    mode: "off" # off | observe | enforce
+    scopeKeyId: "" # Identifier of the signing key, e.g. k20261001 (trenova db rls generate-key)
+    scopeKey: "" # Base64 of at least 32 random bytes; keep it in a secret store
+    scopeTtl: 15m # How long a signed scope stays valid after it is issued
+  # The system role serves only code that declares dbscope.WithSystem (sign-in
+  # lookups, share links, webhooks, cross-tenant sweeps). Required when rls.mode
+  # is enforce; it must differ from database.user.
+  system:
+    user: "" # Login role that is a member of trenova_rls_bypass
+    password: ""
+    maxOpenConns: 8
+    maxIdleConns: 2
+  # Migrations and seeds run as this role when set. It owns the tables, so it
+  # must never be the role the application connects as.
+  migrator:
+    user: ""
+    password: ""
   # Only read when driver is "sqlite".
   sqlite:
     path: trenova.db # Database file path

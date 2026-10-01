@@ -5,6 +5,21 @@ import "errors"
 var InsecureDefaultValues = []string{"change", "secret", "example"}
 
 var (
+	ErrRLSRequiresPostgres  = errors.New("database.rls requires the postgres driver")
+	ErrRLSScopeKeyIDInvalid = errors.New(
+		"database.rls.scopeKeyId must be 1-32 characters of letters, digits, '_' or '-'",
+	)
+	ErrRLSScopeKeyRequired   = errors.New("database.rls.scopeKey is required when row-level security is on")
+	ErrRLSScopeKeyInvalid    = errors.New("database.rls.scopeKey must be base64 encoding at least 32 random bytes")
+	ErrRLSSystemRoleRequired = errors.New(
+		"database.rls.mode=enforce requires database.system.user and database.system.password",
+	)
+	ErrRLSSystemRoleMustDiffer = errors.New(
+		"database.system.user must be a different role from database.user",
+	)
+	ErrRLSMigratorRoleMustDiffer = errors.New(
+		"database.migrator.user must be a different role from database.user when row-level security is enforced",
+	)
 	ErrDatabasePasswordNotSet       = errors.New("database password not set in environment")
 	ErrDatabasePasswordFileNotSet   = errors.New("database password file not set in environment")
 	ErrDatabasePasswordSecretNotSet = errors.New("database password secret not set specified")

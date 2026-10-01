@@ -628,6 +628,9 @@ type DatabaseConfig struct {
 	LockTimeout      time.Duration `mapstructure:"lockTimeout"`
 	IdleTxTimeout    time.Duration `mapstructure:"idleInTransactionSessionTimeout"`
 	SQLite           SQLiteConfig  `mapstructure:"sqlite"`
+	RLS              RLSConfig     `mapstructure:"rls"`
+	System           DatabaseRole  `mapstructure:"system"`
+	Migrator         DatabaseRole  `mapstructure:"migrator"`
 }
 
 type SQLiteConfig struct {
