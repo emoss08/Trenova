@@ -135,6 +135,45 @@ not listed, with a justification, in its `allowlist_test.go`. Prefer resolving
 the tenant first (a share token, a webhook's account) and continuing under
 `WithTenant`, so the system scope covers one lookup, not the request.
 
+## Getting the scope right
+
+A missing scope fails closed: the statement is refused. A scope that is present
+but names the wrong tenant fails *open* for any question of the form "is there a
+row that forbids this?", because the row is simply invisible. Sign-in checks SSO
+enforcement under the organization being signed into, not the user's current
+one, for exactly this reason. When code asks whether something exists in order to
+deny, make sure the scope is the tenant the question is about.
+
+- **One lookup, then the tenant.** Public links, webhooks, AS2, capture device
+  tokens and password resets resolve their token under the system scope and then
+  continue under the token's tenant. Keep the system scope to that one lookup.
+- **Sweeps.** A Temporal sweep lists work across tenants under the system scope
+  (inside the listing repository method) and binds each item's tenant before
+  working on it: `dbscope.WithTenant(ctx, tenantInfo.DBTenant())`.
+  `pagination.TenantInfo` implements `dbscope.TenantScoped`, so an activity that
+  takes one is bound by the interceptor.
+- **Two organizations, one transaction.** An internal EDI approval or transfer
+  change writes both organizations atomically. Those transactions run under the
+  system scope, with the tenant filters still written in Go; a read of the other
+  organization alone binds that organization's tenant instead.
+- **Business-unit-wide reads.** Organization pickers, the organization loader and
+  organization uniqueness checks span the business unit; they run under the system
+  scope and filter by business unit themselves. The `organizations` policy only
+  shows the scope's own organization, ones the user belongs to and EDI
+  counterparties.
+- **Transactions across scopes.** A transaction is reused only by a context with
+  the same scope (any two system scopes count as the same). Switching tenant
+  inside a transaction opens a second transaction on another connection, so do not
+  do it for writes that must commit together.
+
+## Verifying a deployment
+
+`trenova db rls status` lists tables without forced RLS. Before enforcing, run in
+`observe` against a copy of production, exercise sign-in, the main pages, the
+public links and webhooks, and let the workers run their schedules; every
+unscoped access is logged once per call site with its two calling frames. Then
+switch to `enforce` and watch for `Refused database access` errors.
+
 ## Rolling out
 
 1. `trenova db rls generate-key`; store the key; set `database.rls` with

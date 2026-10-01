@@ -223,6 +223,14 @@ func (c *Connection) connect(ctx context.Context) error {
 		zap.String("row_level_security", c.rlsMode()),
 	)
 
+	if c.cfg.App.IsProduction() && dialect.IsPostgres() && !c.rls.enforced() {
+		c.logger.Warn(
+			ctx,
+			"Row-level security is not enforced; tenant isolation rests on application filters alone",
+			zap.String("row_level_security", c.rlsMode()),
+		)
+	}
+
 	return nil
 }
 
