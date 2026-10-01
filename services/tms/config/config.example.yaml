@@ -107,7 +107,7 @@ monitoring:
 database:
   # PostgreSQL is the reference database for Trenova and the only supported
   # production target. "sqlite" is a development-only convenience for
-  # contributors without a Postgres/PostGIS toolchain; see docs/databases.md
+  # contributors without a Postgres/PostGIS toolchain; see https://github.com/emoss08/trenova-documentation/blob/main/docs/databases.md
   # for the feature gaps it implies.
   driver: postgres # postgres | sqlite
   host: localhost # Database host

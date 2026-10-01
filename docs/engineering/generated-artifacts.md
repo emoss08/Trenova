@@ -6,7 +6,7 @@ run, but it does not say why the generator refused, and several of these generat
 code that compiles and passes every test.
 
 This page is the list of things that have actually broken, and how to check each one before
-pushing. It complements the [GraphQL Developer Guide](graphql-developer-guide.md), which
+pushing. It complements the [GraphQL Developer Guide](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/graphql-developer-guide.md), which
 covers how to build a resource; this covers what breaks afterwards.
 
 ## Run the whole gate locally
@@ -150,13 +150,13 @@ A tool description, a product guide page or an eval request is also embedded, by
 hash, in `agentevalgate/evals/embeddings/nomic-embed-text.json`. Once that fixture is
 recorded, editing any of them makes it stale, and the hybrid ranking gate names the one-line
 command that re-records it from a local Ollama (see "Ranking" in
-[ai-retrieval.md](ai-retrieval.md)).
+[ai-retrieval.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-retrieval.md)).
 
 A tool description edit can also move `find_tools` ranking below its floors
 (`agentevalgate/evals/toolselection.floors.json`); the failure lists the requests that no
 longer find their tool. Fix the description rather than the floor. The flag goes after the
 package. The job also runs the prompt-injection red-team suite; see
-[agent-evals.md](agent-evals.md) for what it proves and its known gaps.
+[agent-evals.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/agent-evals.md) for what it proves and its known gaps.
 
 ## gqlgen
 
