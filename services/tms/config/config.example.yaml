@@ -85,8 +85,10 @@ server:
       - Accept
       - X-CSRF-Token
       - Last-Event-ID # Lets an event stream resume where it left off
+      - Idempotency-Key # Lets a retried write return the first result instead of repeating it
     exposeHeaders: # Headers exposed to the client
       - X-Request-Id
+      - Idempotent-Replayed # Set on a response replayed for a repeated Idempotency-Key
     credentials: true # Allow credentials
     maxAge: 86400 # Preflight cache duration in seconds
 
@@ -273,6 +275,13 @@ security:
       pointsPerMinute: 6000000 # Sustained refill rate; a large table page costs ~20k, the worst ~200k
       burst: 3000000 # Must be at least the single-operation complexity limit (750000)
       cleanupInterval: 5m # Idle users are dropped from the budget table after this
+  idempotency:
+    disabled: false # Turn off Idempotency-Key replay (shipment create still dedupes on its own index)
+    recordTTL: 24h # How long a completed response is kept for replay
+    lockTTL: 2m # How long a key stays claimed while its first request runs; never shorter than server.requestTimeout + 5s
+    storeTimeout: 500ms # Redis deadline per claim/complete; on failure the request is served without replay
+    maxRequestBytes: 4194304 # Largest body a keyed request may carry (it is hashed to detect a reused key)
+    maxResponseBytes: 1048576 # Largest response kept for replay; larger ones answer a repeat with 409
   csrf:
     tokenName: csrf_token # Name for CSRF token in session
     headerName: X-CSRF-Token # Header name for CSRF token

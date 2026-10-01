@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -2187,5 +2188,20 @@ func (_mock *MockShipmentRepository) FindByExternalReference(ctx context.Context
 	if ret.Get(0) != nil {
 		r0 = ret.Get(0).(*repositories.DuplicateBOLResult)
 	}
+	return r0, ret.Error(1)
+}
+
+// FindIDByIdempotencyKey provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) FindIDByIdempotencyKey(ctx context.Context, req *repositories.IdempotencyKeyLookupRequest) (pulid.ID, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindIDByIdempotencyKey")
+	}
+
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.IdempotencyKeyLookupRequest) (pulid.ID, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	r0, _ := ret.Get(0).(pulid.ID)
 	return r0, ret.Error(1)
 }

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:738ff51b164c43f4f79e2279e8689e34b66ed47d0d67ac150822e32f84cd5092",
+  "version": "sha256:00a29a06d8d996c39ffc3567e9e4c1365c88c8a95c96852b1bca09e649d72a15",
   "modules": [
     {
       "id": "home",
@@ -2906,7 +2906,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to API keys. Creating a key needs create access to API keys, and editing, rotating or revoking one needs update access. Requests made with a key are limited to the permissions granted to that key.",
+      "notes": "Viewing the page needs read access to API keys. Creating a key needs create access to API keys, and editing, rotating or revoking one needs update access. Requests made with a key are limited to the permissions granted to that key.\n\nA system that retries writes can send an `Idempotency-Key` header (a unique string, such as a UUID, per write). Repeating a request with the same key within 24 hours returns the first response, marked `Idempotent-Replayed: true`, instead of applying the write again. A shipment created with a key is never created twice for that key.",
       "related": [
         "/admin/integrations",
         "/admin/graphql-explorer",

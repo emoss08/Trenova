@@ -73,6 +73,22 @@ describe("requestGraphQL", () => {
     });
   });
 
+  it("sends an Idempotency-Key header only when the caller gives one", async () => {
+    setCsrfToken("graphql-token");
+
+    await requestGraphQL({
+      document: "mutation CreateThing { createThing }",
+      idempotencyKey: "key-123",
+    });
+    await requestGraphQL({ document: "mutation CreateThing { createThing }" });
+
+    const keyed = new Headers((fetchMock.mock.calls[0] as [string, RequestInit])[1].headers);
+    const plain = new Headers((fetchMock.mock.calls[1] as [string, RequestInit])[1].headers);
+    expect(keyed.get("Idempotency-Key")).toBe("key-123");
+    expect(keyed.get("X-CSRF-Token")).toBe("graphql-token");
+    expect(plain.has("Idempotency-Key")).toBe(false);
+  });
+
   it("labels the request URL with the operation name derived from the document", async () => {
     setCsrfToken("graphql-token");
 

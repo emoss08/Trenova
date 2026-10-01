@@ -13,6 +13,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { ShipmentForm } from "@/routes/shipment/_components/shipment-form";
 import { apiService } from "@/services/api";
 import type {
@@ -224,9 +225,12 @@ export function DocumentShipmentDraftReviewDialog({
     }
   }, [draft, form, open]);
 
+  const withIdempotencyKey = useIdempotencyKey();
   const createShipment = useMutation({
     mutationFn: async (values: ShipmentCreateInput) => {
-      const shipment = await apiService.shipmentService.create(values);
+      const shipment = await withIdempotencyKey(values, (idempotencyKey) =>
+        apiService.shipmentService.create(values, { idempotencyKey }),
+      );
       const shipmentId = shipment.id;
       if (!shipmentId) {
         throw new Error("Shipment was created without an ID");

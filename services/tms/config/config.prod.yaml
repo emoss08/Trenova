@@ -36,6 +36,10 @@ server:
       - Accept
       - X-CSRF-Token
       - Last-Event-ID
+      - Idempotency-Key
+    exposeHeaders:
+      - X-Request-Id
+      - Idempotent-Replayed
     credentials: true
     maxAge: 86400
 

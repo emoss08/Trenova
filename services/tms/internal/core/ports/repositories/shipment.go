@@ -432,6 +432,11 @@ type ExternalReferenceCheckRequest struct {
 	ShipmentID        pulid.ID
 }
 
+type IdempotencyKeyLookupRequest struct {
+	TenantInfo     pagination.TenantInfo
+	IdempotencyKey string
+}
+
 type DuplicateBOLResult struct {
 	ID        pulid.ID `bun:"id"`
 	ProNumber string   `bun:"pro_number"`
@@ -599,6 +604,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *ExternalReferenceCheckRequest,
 	) (*DuplicateBOLResult, error)
+	FindIDByIdempotencyKey(
+		ctx context.Context,
+		req *IdempotencyKeyLookupRequest,
+	) (pulid.ID, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,
 		req *DuplicateBOLCheckRequest,

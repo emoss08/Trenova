@@ -1308,6 +1308,7 @@ var ShipmentColumns = struct {
 	ProNumber                 Column // "pro_number" → qualified: "sp.pro_number"
 	BOL                       Column // "bol" → qualified: "sp.bol"
 	ExternalReference         Column // "external_reference" → qualified: "sp.external_reference"
+	IdempotencyKey            Column // "idempotency_key" → qualified: "sp.idempotency_key"
 	CancelReason              Column // "cancel_reason" → qualified: "sp.cancel_reason"
 	OtherChargeAmount         Column // "other_charge_amount" → qualified: "sp.other_charge_amount"
 	FreightChargeAmount       Column // "freight_charge_amount" → qualified: "sp.freight_charge_amount"
@@ -1369,6 +1370,7 @@ var ShipmentColumns = struct {
 	ProNumber:                 NewColumn("pro_number", "sp"),
 	BOL:                       NewColumn("bol", "sp"),
 	ExternalReference:         NewColumn("external_reference", "sp"),
+	IdempotencyKey:            NewColumn("idempotency_key", "sp"),
 	CancelReason:              NewColumn("cancel_reason", "sp"),
 	OtherChargeAmount:         NewColumn("other_charge_amount", "sp"),
 	FreightChargeAmount:       NewColumn("freight_charge_amount", "sp"),
@@ -1499,6 +1501,7 @@ var ShipmentInsertableColumns = []string{
 	"pro_number",
 	"bol",
 	"external_reference",
+	"idempotency_key",
 	"cancel_reason",
 	"other_charge_amount",
 	"freight_charge_amount",

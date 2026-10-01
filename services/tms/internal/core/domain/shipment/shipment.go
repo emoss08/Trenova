@@ -95,6 +95,7 @@ type Shipment struct {
 	ProNumber                 string                `json:"proNumber"                  bun:"pro_number,type:VARCHAR(100),notnull"`
 	BOL                       string                `json:"bol"                        bun:"bol,type:VARCHAR(100),nullzero"`
 	ExternalReference         string                `json:"externalReference"          bun:"external_reference,type:VARCHAR(100),nullzero"`
+	IdempotencyKey            string                `json:"-"                          bun:"idempotency_key,type:VARCHAR(64),nullzero"`
 	CancelReason              string                `json:"cancelReason"               bun:"cancel_reason,type:VARCHAR(100),nullzero"`
 	OtherChargeAmount         decimal.NullDecimal   `json:"otherChargeAmount"          bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	FreightChargeAmount       decimal.NullDecimal   `json:"freightChargeAmount"        bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`

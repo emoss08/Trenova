@@ -286,6 +286,10 @@ func (s *service) Create(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
+	if existing, found, err := s.findIdempotentCreate(ctx, entity); err != nil || found {
+		return existing, err
+	}
+
 	prepared, err := s.prepareCreate(ctx, entity, auditActor.UserID)
 	if err != nil {
 		return nil, err
@@ -303,6 +307,12 @@ func (s *service) Create(
 		return txErr
 	})
 	if err != nil {
+		if isIdempotencyKeyConflict(err) {
+			existing, found, findErr := s.findIdempotentCreate(ctx, entity)
+			if findErr != nil || found {
+				return existing, findErr
+			}
+		}
 		if mapped := externalReferenceConflict(err, entity); mapped != nil {
 			return nil, mapped
 		}

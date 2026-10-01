@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/idempotency"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -75,6 +76,8 @@ func (r *MutationResolver) CreateShipment(ctx context.Context, input gqlmodel.Sh
 			)
 		}
 	}
+
+	entity.IdempotencyKey, _ = idempotency.KeyFrom(ctx)
 
 	created, err := r.ShipmentService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
 	if err != nil {

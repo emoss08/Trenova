@@ -154,6 +154,7 @@ type RouterParams struct {
 	AuthMiddleware                  *middleware.AuthMiddleware
 	ControlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
 	RateLimiter                     *middleware.RateLimiter
+	IdempotencyMiddleware           *middleware.IdempotencyMiddleware
 	PermissionMiddleware            *middleware.PermissionMiddleware
 	TenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
 	ErrorHandler                    *helpers.ErrorHandler
@@ -291,6 +292,7 @@ type Router struct {
 	authMiddleware                  *middleware.AuthMiddleware
 	controlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
 	rateLimiter                     *middleware.RateLimiter
+	idempotencyMiddleware           *middleware.IdempotencyMiddleware
 	permissionMiddleware            *middleware.PermissionMiddleware
 	tenantBoundaryMiddleware        *middleware.TenantBoundaryMiddleware
 	cfg                             *config.Config
@@ -432,6 +434,7 @@ func NewRouter(p RouterParams) *Router {
 		authMiddleware:                  p.AuthMiddleware,
 		controlPlaneAccessMiddleware:    p.ControlPlaneAccessMiddleware,
 		rateLimiter:                     p.RateLimiter,
+		idempotencyMiddleware:           p.IdempotencyMiddleware,
 		permissionMiddleware:            p.PermissionMiddleware,
 		tenantBoundaryMiddleware:        p.TenantBoundaryMiddleware,
 		errorHandler:                    p.ErrorHandler,
@@ -789,6 +792,7 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	// let it resolve one.
 	protected.Use(middleware.NewPasswordChangeMiddleware(r.errorHandler).RequireCurrentPassword())
 	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
+	protected.Use(r.idempotencyMiddleware.Handle())
 	return protected
 }
 

@@ -530,6 +530,7 @@ func (r *repository) Update(
 					sp.CreatedAt.Bare(),
 					sp.BillingTransferStatus.Bare(),
 					sp.TransferredToBillingAt.Bare(),
+					sp.IdempotencyKey.Bare(),
 				).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 					return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
@@ -933,6 +934,36 @@ func (r *repository) FindByExternalReference(
 			return found, nil
 		},
 	)
+}
+
+func (r *repository) FindIDByIdempotencyKey(
+	ctx context.Context,
+	req *repositories.IdempotencyKeyLookupRequest,
+) (pulid.ID, error) {
+	if req.IdempotencyKey == "" {
+		return pulid.Nil, nil
+	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
+		sp := buncolgen.ShipmentColumns
+		var id pulid.ID
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*shipment.Shipment)(nil)).
+			Column(sp.ID.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+					Where(sp.IdempotencyKey.Eq(), req.IdempotencyKey)
+			}).
+			Limit(1).
+			Scan(ctx, &id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return pulid.Nil, nil
+		}
+		if err != nil {
+			return pulid.Nil, err
+		}
+		return id, nil
+	})
 }
 
 func (r *repository) CheckForDuplicateBOLs(

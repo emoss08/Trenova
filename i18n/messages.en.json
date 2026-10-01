@@ -5314,6 +5314,15 @@
       "service/reporting"
     ]
   },
+  "A request with this Idempotency-Key is still being processed; retry once it finishes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
+    ]
+  },
   "A required course is past due, expired, failed or never assigned.": {
     "sites": 1,
     "scope": [
@@ -83848,6 +83857,24 @@
       "domain/email",
       "domain/invoiceadjustment",
       "service/invoiceadjustmentservice"
+    ]
+  },
+  "Idempotency-Key cannot be used on a request body larger than {0} bytes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
+    ]
+  },
+  "Idempotency-Key must be 1 to {0} printable characters without spaces": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
     ]
   },
   "Identification Code": {
@@ -184092,6 +184119,15 @@
       "go/other"
     ]
   },
+  "The request body could not be read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
+    ]
+  },
   "The request the agent composed. Required: this is the substance of the message.": {
     "sites": 1,
     "scope": [
@@ -184108,6 +184144,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The request with this Idempotency-Key already completed with status {0}, and its response was too large to keep for replay": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
     ]
   },
   "The requesting driver is required": {
@@ -187008,6 +187053,15 @@
     ],
     "areas": [
       "service/carriersettlementservice"
+    ]
+  },
+  "This Idempotency-Key was already used for a different request; send a new key for a new request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/middleware"
     ]
   },
   "This Trenova server has no web address configured (app.webBaseUrl), so {0} cannot send people back after they sign in. Ask the server's administrator to set it.": {
