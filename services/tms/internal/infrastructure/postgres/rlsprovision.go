@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/uptrace/bun"
 )
 
@@ -104,7 +105,7 @@ func RetireRLSScopeKey(ctx context.Context, db bun.IDB, keyID string) (bool, err
 
 	res, err := db.NewRaw(
 		`UPDATE trenova_rls.scope_keys
-		SET retired_at = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint
+		SET retired_at = `+dbdialect.NowEpochFromBun(db)+`
 		WHERE key_id = ? AND retired_at IS NULL`,
 		keyID,
 	).Exec(ctx)
