@@ -445,8 +445,8 @@ func newListInvoicesTool(
 		name:         "list_invoices",
 		entityPlural: "invoices",
 		summary: "List invoices narrowed by status, whether they are paid, whether they " +
-			"are disputed, the amount, or the invoice and due dates. This answers " +
-			"receivables questions — what is unpaid, what is overdue, what is in dispute.",
+			"are disputed, the amount, or the invoice and due dates. It answers what is " +
+			"unpaid, overdue or in dispute.",
 		resource: permission.ResourceInvoice,
 		config:   querybuilder.GetFieldConfiguration((*invoice.Invoice)(nil)),
 		fields: []listField{
@@ -476,7 +476,7 @@ func newListInvoicesTool(
 			{
 				Name: "id",
 				Kind: filterText,
-				Note: "the invoice's own id; in with several ids to read them together",
+				Note: "in with several ids reads them together",
 			},
 			{Name: "number", Kind: filterText, Sortable: true},
 			{Name: "billToName", Kind: filterText, Note: "who the invoice is billed to"},

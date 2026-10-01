@@ -1564,7 +1564,7 @@
     },
     {
       "name": "approve_billing_queue_items",
-      "description": "Propose approving several billing queue items you have reviewed and found clean, in one proposal the person approves together; use it instead of approve_billing_queue_item whenever more than one item is ready. Each item is approved exactly as approve_billing_queue_item would: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; a person always decides and may untick items. An item the queue would refuse is reported, not approved, and the rest still go. Say in reviewNotes what you checked. Up to 50 items.",
+      "description": "Propose approving several billing queue items you have reviewed and found clean, in one proposal the person approves together. Use it instead of approve_billing_queue_item whenever more than one item is ready. Each item is approved exactly as approve_billing_queue_item would: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; a person always decides and may untick items. An item the queue would refuse is reported, not approved, and the rest still go. Say in reviewNotes what you checked. Up to 50 items.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13674,7 +13674,7 @@
     },
     {
       "name": "list_billing_queue_items",
-      "description": "List billing queue items, the shipments waiting on a biller. Open one with get_billing_queue_item before proposing a decision; Posted items appear only when status is Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview await a biller; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; id (text): the item's own id; in with several ids to read them together; createdAt (date): when it was queued; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List billing queue items, the shipments waiting on a biller. Open one with get_billing_queue_item before deciding it; Posted items need status Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview await a biller; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; id (text): in with several ids reads them together; createdAt (date): when it was queued; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -17773,7 +17773,7 @@
     },
     {
       "name": "list_invoices",
-      "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. This answers receivables questions — what is unpaid, what is overdue, what is in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; id (text): the invoice's own id; in with several ids to read them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; id (text): in with several ids reads them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22743,7 +22743,7 @@
     },
     {
       "name": "post_invoices",
-      "description": "Propose posting several draft invoices in one proposal the person approves together; use it instead of post_invoice whenever more than one invoice is ready, rather than one proposal per invoice. Each invoice is posted exactly as post_invoice would: booked to the ledger, its shipments marked invoiced, its billing queue item settled and queued for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides and may untick invoices. An invoice posting would refuse is reported, not posted, and the rest still go. Up to 50 invoices.",
+      "description": "Propose posting several draft invoices in one proposal the person approves together. Use it instead of post_invoice whenever more than one invoice is ready, rather than one proposal per invoice. Each invoice is posted exactly as post_invoice would: booked to the ledger, its shipments marked invoiced, its billing queue item settled and queued for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides and may untick invoices. An invoice posting would refuse is reported, not posted, and the rest still go. Up to 50 invoices.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -29153,7 +29153,7 @@
     },
     {
       "name": "send_invoices",
-      "description": "Propose emailing several invoices to their customers in one proposal the person approves together; use it instead of send_invoice whenever more than one invoice goes out. Each invoice goes exactly as send_invoice would send it: the recipients, subject, wording and attachments come from the organization and each customer's billing profile, and nothing is chosen by you. The person approving sees every email, may untick invoices, and is who sends them. An invoice that cannot go is reported, not sent, and the rest still go. Up to 50 invoices.",
+      "description": "Propose emailing several invoices to their customers in one proposal the person approves together. Use it instead of send_invoice whenever more than one invoice goes out. Each invoice goes exactly as send_invoice would send it: the recipients, subject, wording and attachments come from the organization and each customer's billing profile, and nothing is chosen by you. The person approving sees every email, may untick invoices, and is who sends them. An invoice that cannot go is reported, not sent, and the rest still go. Up to 50 invoices.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

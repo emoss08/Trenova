@@ -442,10 +442,11 @@ type fakeConnector struct {
 }
 
 var testInstanceApp = services.AccountingApp{
-	Source:       accountingsync.AppSourceInstance,
-	Environment:  accountingsync.AppEnvironmentSandbox,
-	ClientID:     "instance-client",
-	ClientSecret: "instance-secret",
+	Source:               accountingsync.AppSourceInstance,
+	Environment:          accountingsync.AppEnvironmentSandbox,
+	ClientID:             "instance-client",
+	ClientSecret:         "instance-secret",
+	WebhookVerifierToken: instanceVerifier,
 }
 
 const instanceVerifier = "instance-verifier"

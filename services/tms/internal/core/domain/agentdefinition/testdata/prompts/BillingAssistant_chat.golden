@@ -69,14 +69,14 @@ Callable after find_tools:
 - move_billing_item_to_exception — Move a billing queue item in review into exception for a biller to resolve.
 - send_billing_item_back_to_ops — Send a billing queue item in review back to operations to fix, with a reason.
 - approve_billing_queue_item — Propose approving a billing queue item you have reviewed and found clean.
-- approve_billing_queue_items — Propose approving several billing queue items you have reviewed and found clean, in one proposal the person approves together; use it instead of approve_billing_queue_item whenever more than one item is ready.
+- approve_billing_queue_items — Propose approving several billing queue items you have reviewed and found clean, in one proposal the person approves together.
 - cancel_billing_queue_item — Propose canceling a billing queue item that should never be billed, such as a duplicate of another item.
 - get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
 - get_invoices — Retrieve several invoices by id in one call, each with its status, totals, payment state and line items.
 - post_invoice — Propose posting a draft invoice, usually the one approve_billing_queue_item just made.
 - send_invoice — Propose emailing an invoice to the customer.
-- post_invoices — Propose posting several draft invoices in one proposal the person approves together; use it instead of post_invoice whenever more than one invoice is ready, rather than one proposal per invoice.
-- send_invoices — Propose emailing several invoices to their customers in one proposal the person approves together; use it instead of send_invoice whenever more than one invoice goes out.
+- post_invoices — Propose posting several draft invoices in one proposal the person approves together.
+- send_invoices — Propose emailing several invoices to their customers in one proposal the person approves together.
 - list_reports — List the reports this organization can run and what each takes: built-in ones with a reportKey, and ones saved in the report builder with a definitionId.
 - describe_report — Show what a report contains: its dataset, columns, filters, sort, parameters and the full definition as the report builder saves it.
 - preview_report — Run a report definition now and see its first rows, without saving it or producing a file.
