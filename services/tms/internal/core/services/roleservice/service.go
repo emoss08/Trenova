@@ -138,7 +138,7 @@ func (s *Service) CreateRole(ctx context.Context, req CreateRoleRequest) error {
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		actorID:        req.ActorID,
 		organizationID: req.OrganizationID,
 		businessUnitID: req.BusinessUnitID,
@@ -199,7 +199,7 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		actorID:        req.ActorID,
 		organizationID: req.OrganizationID,
 		businessUnitID: existingRole.BusinessUnitID,
@@ -283,7 +283,7 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		actorID:        req.ActorID,
 		organizationID: req.OrganizationID,
 		resourceID:     req.Assignment.RoleID.String(),
@@ -291,8 +291,8 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 		after:          req.Assignment,
 		comment:        "Role assigned",
 		metadata: map[string]any{
-			"assignmentId": req.Assignment.ID.String(),
-			"userId":       req.Assignment.UserID.String(),
+			metadataAssignmentID: req.Assignment.ID.String(),
+			metadataUserID:       req.Assignment.UserID.String(),
 		},
 	})
 
@@ -392,7 +392,7 @@ func (s *Service) UpsertRoleHierarchyEdge(
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		actorID:        req.ActorID,
 		organizationID: req.OrganizationID,
 		businessUnitID: req.BusinessUnitID,
@@ -423,7 +423,7 @@ func (s *Service) DeleteRoleHierarchyEdge(
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		organizationID: orgID,
 		resourceID:     edgeID.String(),
 		operation:      permission.OpUpdate,
@@ -475,7 +475,7 @@ func (s *Service) SaveRoleConstraint(ctx context.Context, req *SaveConstraintReq
 	for _, roleID := range req.RoleIDs {
 		roleIDs = append(roleIDs, roleID.String())
 	}
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		actorID:        req.ActorID,
 		organizationID: req.OrganizationID,
 		businessUnitID: req.BusinessUnitID,
@@ -540,7 +540,7 @@ func (s *Service) DeleteRoleConstraint(
 	if err := s.rbacRepo.DeleteRoleConstraint(ctx, orgID, constraintID); err != nil {
 		return err
 	}
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		organizationID: orgID,
 		resourceID:     constraintID.String(),
 		operation:      permission.OpUpdate,
@@ -582,7 +582,7 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		actorID:        req.ActorID,
 		organizationID: req.OrganizationID,
 		resourceID:     deleted.RoleID.String(),
@@ -590,8 +590,8 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
 		before:         deleted,
 		comment:        "Role unassigned",
 		metadata: map[string]any{
-			"assignmentId": req.AssignmentID.String(),
-			"userId":       deleted.UserID.String(),
+			metadataAssignmentID: req.AssignmentID.String(),
+			metadataUserID:       deleted.UserID.String(),
 		},
 	})
 
@@ -757,7 +757,7 @@ func (s *Service) CreateResourcePermission(
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		actorID:        actorID,
 		organizationID: orgID,
 		businessUnitID: role.BusinessUnitID,
@@ -813,7 +813,7 @@ func (s *Service) UpdateResourcePermission(
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		actorID:        actorID,
 		organizationID: orgID,
 		businessUnitID: role.BusinessUnitID,
@@ -863,7 +863,7 @@ func (s *Service) DeleteResourcePermission(
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		organizationID: orgID,
 		businessUnitID: role.BusinessUnitID,
 		resourceID:     role.ID.String(),
@@ -916,14 +916,14 @@ func (s *Service) InitializeOrganizationRoles(
 		return err
 	}
 
-	s.recordChange(ctx, roleChange{
+	s.recordChange(ctx, &roleChange{
 		actorID:        creatorID,
 		organizationID: orgID,
 		resourceID:     adminRole.ID.String(),
 		operation:      permission.OpAssign,
 		after:          assignment,
 		comment:        "Organization administrator role created and assigned to the organization's creator",
-		metadata:       map[string]any{"userId": creatorID.String()},
+		metadata:       map[string]any{metadataUserID: creatorID.String()},
 	})
 
 	log.Info("initialized organization roles", zap.String("adminRoleID", adminRole.ID.String()))

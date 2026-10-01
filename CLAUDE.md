@@ -363,6 +363,17 @@ see every tenant declares `dbscope.WithSystem(ctx, reason)` and is listed in
 before adding a table, a repository method, a background job, or anything that runs
 before a tenant is known.**
 
+## Security Audit Trail
+
+Sign-ins, SSO callbacks, sign-outs and password resets write `auth_events` through
+`services.AuthEventRecorder`; API key, role, permission, IAM and membership changes write
+critical `audit_entries` through `services.SecurityAuditor`; document downloads and views
+and refused cross-tenant requests (`tenantboundary.Report`) are recorded too, each with the
+request ID, client IP and user agent. Both tables are append-only and only the retention
+sweep may delete from them. **Read [docs/engineering/security-audit.md](docs/engineering/security-audit.md)
+before adding a mutation that changes who can do what, a new way to read a document, a
+new cross-tenant refusal, or anything that deletes audit rows.**
+
 ## Realtime
 
 Live updates are server-sent events from the API, fanned out through sharded Redis

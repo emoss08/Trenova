@@ -9,6 +9,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+const (
+	metadataMappingID   = "mappingId"
+	metadataTokenID     = "tokenId"
+	metadataTokenPrefix = "tokenPrefix"
+)
+
 type iamChange struct {
 	tenantInfo pagination.TenantInfo
 	resource   permission.Resource
@@ -20,7 +26,7 @@ type iamChange struct {
 	metadata   map[string]any
 }
 
-func (s *service) recordChange(ctx context.Context, change iamChange) {
+func (s *service) recordChange(ctx context.Context, change *iamChange) {
 	if s.auditor == nil {
 		return
 	}
@@ -30,7 +36,7 @@ func (s *service) recordChange(ctx context.Context, change iamChange) {
 		actor = services.UserActor(change.tenantInfo).AuditActor()
 	}
 
-	s.auditor.RecordChange(ctx, services.SecurityChange{
+	s.auditor.RecordChange(ctx, &services.SecurityChange{
 		Resource:       change.resource,
 		ResourceID:     change.resourceID.String(),
 		Operation:      change.operation,

@@ -66,7 +66,7 @@ func (m *TenantBoundaryMiddleware) report(c *gin.Context, violations []tenantbou
 			continue
 		}
 
-		m.auditor.RecordChange(c.Request.Context(), services.SecurityChange{
+		m.auditor.RecordChange(c.Request.Context(), &services.SecurityChange{
 			Resource:       permission.ResourceOrganization,
 			ResourceID:     violationTarget(violation, authCtx),
 			Operation:      operationForMethod(c.Request.Method),

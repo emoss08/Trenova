@@ -9,6 +9,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+const (
+	metadataUserID       = "userId"
+	metadataAssignmentID = "assignmentId"
+)
+
 type roleChange struct {
 	actorID        pulid.ID
 	organizationID pulid.ID
@@ -21,7 +26,7 @@ type roleChange struct {
 	metadata       map[string]any
 }
 
-func (s *Service) recordChange(ctx context.Context, change roleChange) {
+func (s *Service) recordChange(ctx context.Context, change *roleChange) {
 	if s.auditor == nil {
 		return
 	}
@@ -35,7 +40,7 @@ func (s *Service) recordChange(ctx context.Context, change roleChange) {
 		}).AuditActor()
 	}
 
-	s.auditor.RecordChange(ctx, services.SecurityChange{
+	s.auditor.RecordChange(ctx, &services.SecurityChange{
 		Resource:       permission.ResourceRole,
 		ResourceID:     change.resourceID,
 		Operation:      change.operation,

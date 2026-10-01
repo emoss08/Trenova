@@ -78,7 +78,7 @@ func (s *service) CreateIdentityProvider(
 		return nil, err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceIdentityProvider,
 		resourceID: created.ID,
@@ -116,7 +116,7 @@ func (s *service) UpdateIdentityProvider(
 		return nil, err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceIdentityProvider,
 		resourceID: id,
@@ -143,7 +143,7 @@ func (s *service) DeleteIdentityProvider(
 		return err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceIdentityProvider,
 		resourceID: id,
@@ -310,7 +310,7 @@ func (s *service) CreateSCIMDirectory(
 		return nil, err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceSCIMDirectory,
 		resourceID: created.ID,
@@ -345,7 +345,7 @@ func (s *service) UpdateSCIMDirectory(
 		return nil, err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceSCIMDirectory,
 		resourceID: id,
@@ -374,7 +374,7 @@ func (s *service) DeleteSCIMDirectory(
 		return err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceSCIMDirectory,
 		resourceID: id,
@@ -433,7 +433,7 @@ func (s *service) CreateSCIMToken(
 		return nil, err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: pagination.TenantInfo{OrgID: orgID},
 		resource:   permission.ResourceSCIMDirectory,
 		resourceID: directoryID,
@@ -441,8 +441,8 @@ func (s *service) CreateSCIMToken(
 		after:      saved,
 		comment:    "SCIM token created",
 		metadata: map[string]any{
-			"tokenId":     saved.ID.String(),
-			"tokenPrefix": saved.Prefix,
+			metadataTokenID:     saved.ID.String(),
+			metadataTokenPrefix: saved.Prefix,
 		},
 	})
 	return &services.SCIMTokenCreateResponse{
@@ -460,7 +460,7 @@ func (s *service) RevokeSCIMToken(
 		return nil, err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: pagination.TenantInfo{OrgID: orgID},
 		resource:   permission.ResourceSCIMDirectory,
 		resourceID: revoked.DirectoryID,
@@ -468,8 +468,8 @@ func (s *service) RevokeSCIMToken(
 		after:      revoked,
 		comment:    "SCIM token revoked",
 		metadata: map[string]any{
-			"tokenId":     revoked.ID.String(),
-			"tokenPrefix": revoked.Prefix,
+			metadataTokenID:     revoked.ID.String(),
+			metadataTokenPrefix: revoked.Prefix,
 		},
 	})
 	return revoked, nil
@@ -531,14 +531,14 @@ func (s *service) CreateSCIMGroupRoleMapping(
 		return nil, err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceSCIMDirectory,
 		resourceID: directoryID,
 		operation:  permission.OpUpdate,
 		after:      created,
 		comment:    "SCIM group mapped to a role",
-		metadata:   map[string]any{"mappingId": created.ID.String()},
+		metadata:   map[string]any{metadataMappingID: created.ID.String()},
 	})
 	return created, nil
 }
@@ -558,14 +558,14 @@ func (s *service) UpdateSCIMGroupRoleMapping(
 		return nil, err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceSCIMDirectory,
 		resourceID: updated.DirectoryID,
 		operation:  permission.OpUpdate,
 		after:      updated,
 		comment:    "SCIM group role mapping updated",
-		metadata:   map[string]any{"mappingId": id.String()},
+		metadata:   map[string]any{metadataMappingID: id.String()},
 	})
 	return updated, nil
 }
@@ -579,13 +579,13 @@ func (s *service) DeleteSCIMGroupRoleMapping(
 		return err
 	}
 
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceSCIMDirectory,
 		resourceID: id,
 		operation:  permission.OpUpdate,
 		comment:    "SCIM group role mapping deleted",
-		metadata:   map[string]any{"mappingId": id.String()},
+		metadata:   map[string]any{metadataMappingID: id.String()},
 	})
 	return nil
 }
@@ -622,7 +622,7 @@ func (s *service) CreateAccessPolicy(
 		return nil, err
 	}
 	s.invalidateAccessPolicyCache(ctx, tenantInfo)
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceAccessPolicy,
 		resourceID: created.ID,
@@ -651,7 +651,7 @@ func (s *service) UpdateAccessPolicy(
 		return nil, err
 	}
 	s.invalidateAccessPolicyCache(ctx, tenantInfo)
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceAccessPolicy,
 		resourceID: id,
@@ -678,7 +678,7 @@ func (s *service) DeleteAccessPolicy(
 		return err
 	}
 	s.invalidateAccessPolicyCache(ctx, tenantInfo)
-	s.recordChange(ctx, iamChange{
+	s.recordChange(ctx, &iamChange{
 		tenantInfo: tenantInfo,
 		resource:   permission.ResourceAccessPolicy,
 		resourceID: id,

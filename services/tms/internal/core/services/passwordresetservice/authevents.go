@@ -63,5 +63,5 @@ func (s *Service) recordResetEvent(ctx context.Context, event *resetEvent, err e
 		rec.RiskOutcome = iam.RiskOutcomeDeny
 	}
 
-	s.authEvents.Record(ctx, rec)
+	s.authEvents.Record(ctx, &rec)
 }

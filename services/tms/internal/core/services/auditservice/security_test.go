@@ -55,7 +55,7 @@ func TestSecurityAuditorRecordsACriticalEntryWithTheRequest(t *testing.T) {
 	actor := services.UserActor(tenant).AuditActor()
 	ctx := requestmeta.With(t.Context(), requestmeta.New("req-7", "192.0.2.10", "admin-browser"))
 
-	auditor.RecordChange(ctx, services.SecurityChange{
+	auditor.RecordChange(ctx, &services.SecurityChange{
 		Resource:       permission.ResourceAPIKey,
 		ResourceID:     "key_1",
 		Operation:      permission.OpUpdate,
@@ -90,7 +90,7 @@ func TestSecurityAuditorAcceptsListStates(t *testing.T) {
 	capture := &capturingAuditService{}
 	auditor := newSecurityAuditor(capture)
 
-	auditor.RecordChange(t.Context(), services.SecurityChange{
+	auditor.RecordChange(t.Context(), &services.SecurityChange{
 		Resource:  permission.ResourceUser,
 		Operation: permission.OpUpdate,
 		Before:    []string{"org_a"},
@@ -109,7 +109,7 @@ func TestSecurityAuditorSurvivesAnUnserializableStateAndAFailedWrite(t *testing.
 	auditor := newSecurityAuditor(capture)
 
 	assert.NotPanics(t, func() {
-		auditor.RecordChange(context.WithoutCancel(t.Context()), services.SecurityChange{
+		auditor.RecordChange(context.WithoutCancel(t.Context()), &services.SecurityChange{
 			Resource:  permission.ResourceRole,
 			Operation: permission.OpDelete,
 			Before:    make(chan int),
@@ -139,7 +139,7 @@ func TestSecurityAuditorFillsTheTenantAndActorFromTheRequestScope(t *testing.T) 
 		UserID:         tenant.UserID,
 	})
 
-	auditor.RecordChange(ctx, services.SecurityChange{
+	auditor.RecordChange(ctx, &services.SecurityChange{
 		Resource:   permission.ResourceRole,
 		ResourceID: "role_1",
 		Operation:  permission.OpDelete,
@@ -158,7 +158,7 @@ func TestSecurityAuditorFallsBackToTheSystemActor(t *testing.T) {
 	capture := &capturingAuditService{}
 	auditor := newSecurityAuditor(capture)
 
-	auditor.RecordChange(t.Context(), services.SecurityChange{
+	auditor.RecordChange(t.Context(), &services.SecurityChange{
 		Resource:       permission.ResourceRole,
 		Operation:      permission.OpCreate,
 		OrganizationID: pulid.MustNew("org_"),

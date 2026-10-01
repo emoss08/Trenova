@@ -28,22 +28,26 @@ func Scan(root string, dirs ...string) ([]Site, error) {
 	sites := make([]Site, 0)
 
 	for _, dir := range dirs {
-		err := filepath.WalkDir(filepath.Join(root, dir), func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		err := filepath.WalkDir(
+			filepath.Join(root, dir),
+			func(path string, d fs.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+				if d.IsDir() || !strings.HasSuffix(path, ".go") ||
+					strings.HasSuffix(path, "_test.go") {
+					return nil
+				}
+
+				found, scanErr := scanFile(root, path)
+				if scanErr != nil {
+					return scanErr
+				}
+				sites = append(sites, found...)
+
 				return nil
-			}
-
-			found, scanErr := scanFile(root, path)
-			if scanErr != nil {
-				return scanErr
-			}
-			sites = append(sites, found...)
-
-			return nil
-		})
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -174,19 +178,14 @@ func packageConstants(dir string) (map[string]string, error) {
 		return consts, nil
 	}
 
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, dir, func(info fs.FileInfo) bool {
-		return !strings.HasSuffix(info.Name(), "_test.go")
-	}, 0)
+	files, err := parseSources(token.NewFileSet(), dir)
 	if err != nil {
-		return nil, fmt.Errorf("parse %s: %w", dir, err)
+		return nil, err
 	}
 
 	consts := make(map[string]string)
-	for _, pkg := range pkgs {
-		for _, file := range pkg.Files {
-			collectConstants(file, consts)
-		}
+	for _, file := range files {
+		collectConstants(file, consts)
 	}
 	constCache[dir] = consts
 
@@ -206,7 +205,8 @@ func collectConstants(file *ast.File, consts map[string]string) {
 			}
 			for i, name := range value.Names {
 				if i < len(value.Values) {
-					if lit, isLit := value.Values[i].(*ast.BasicLit); isLit && lit.Kind == token.STRING {
+					if lit, isLit := value.Values[i].(*ast.BasicLit); isLit &&
+						lit.Kind == token.STRING {
 						if unquoted, err := strconv.Unquote(lit.Value); err == nil {
 							consts[name.Name] = strings.TrimSpace(unquoted)
 						}

@@ -54,7 +54,7 @@ func TestRecordBindsTheEventTenantAndRequest(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 	cancel()
 
-	srv.Record(ctx, services.AuthEventRecord{
+	srv.Record(ctx, &services.AuthEventRecord{
 		Provider:       services.AuthEventProviderPassword,
 		Outcome:        iam.AuthEventOutcomeSuccess,
 		UserID:         userID,
@@ -87,7 +87,7 @@ func TestRecordWithoutATenantLeavesTheScopeToTheRepository(t *testing.T) {
 	repo := &fakeRepository{}
 	srv := newTestService(repo)
 
-	srv.Record(t.Context(), services.AuthEventRecord{
+	srv.Record(t.Context(), &services.AuthEventRecord{
 		Provider:       services.AuthEventProviderPassword,
 		Outcome:        "bogus",
 		OrganizationID: pulid.MustNew("org_"),
@@ -111,7 +111,7 @@ func TestRecordDropsAnUnparseableClientIP(t *testing.T) {
 	srv := newTestService(repo)
 
 	ctx := requestmeta.With(t.Context(), requestmeta.New("req", "not-an-ip", "agent"))
-	srv.Record(ctx, services.AuthEventRecord{Outcome: iam.AuthEventOutcomeDenied})
+	srv.Record(ctx, &services.AuthEventRecord{Outcome: iam.AuthEventOutcomeDenied})
 
 	require.Len(t, repo.events, 1)
 	assert.Empty(t, repo.events[0].IPAddress)
@@ -125,7 +125,7 @@ func TestRecordSwallowsRepositoryFailures(t *testing.T) {
 	srv := newTestService(repo)
 
 	assert.NotPanics(t, func() {
-		srv.Record(t.Context(), services.AuthEventRecord{Outcome: iam.AuthEventOutcomeFailed})
+		srv.Record(t.Context(), &services.AuthEventRecord{Outcome: iam.AuthEventOutcomeFailed})
 	})
 	assert.Len(t, repo.events, 1)
 }

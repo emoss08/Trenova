@@ -20,7 +20,7 @@ type membershipChange struct {
 	after          []*tenant.OrganizationMembership
 }
 
-func (s *Service) recordMembershipChange(ctx context.Context, change membershipChange) {
+func (s *Service) recordMembershipChange(ctx context.Context, change *membershipChange) {
 	if s.auditor == nil {
 		return
 	}
@@ -28,7 +28,7 @@ func (s *Service) recordMembershipChange(ctx context.Context, change membershipC
 	before := membershipOrganizationIDs(change.before)
 	after := membershipOrganizationIDs(change.after)
 
-	s.auditor.RecordChange(ctx, services.SecurityChange{
+	s.auditor.RecordChange(ctx, &services.SecurityChange{
 		Resource:   permission.ResourceUser,
 		ResourceID: change.userID.String(),
 		Operation:  permission.OpUpdate,

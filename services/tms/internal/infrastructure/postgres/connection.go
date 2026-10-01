@@ -255,9 +255,13 @@ func (c *Connection) RunScoped(
 		return fn(ctx)
 	}
 
-	return c.WithTx(ctx, ports.TxOptions{ReadOnly: readOnly}, func(ctx context.Context, _ bun.Tx) error {
-		return fn(ctx)
-	})
+	return c.WithTx(
+		ctx,
+		ports.TxOptions{ReadOnly: readOnly},
+		func(ctx context.Context, _ bun.Tx) error {
+			return fn(ctx)
+		},
+	)
 }
 
 func (c *Connection) rlsMode() string {

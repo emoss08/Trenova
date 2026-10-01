@@ -38,7 +38,7 @@ func NewSecurityAuditor(p SecurityAuditorParams) services.SecurityAuditor {
 	}
 }
 
-func (a *SecurityAuditor) RecordChange(ctx context.Context, change services.SecurityChange) {
+func (a *SecurityAuditor) RecordChange(ctx context.Context, change *services.SecurityChange) {
 	change = withRequestTenant(ctx, change)
 
 	params := &services.LogActionParams{
@@ -91,13 +91,17 @@ func (a *SecurityAuditor) RecordChange(ctx context.Context, change services.Secu
 	)
 }
 
-func withRequestTenant(ctx context.Context, change services.SecurityChange) services.SecurityChange {
+func withRequestTenant(
+	ctx context.Context,
+	source *services.SecurityChange,
+) *services.SecurityChange {
+	change := *source
 	tenant, ok := dbscope.From(ctx).Tenant()
 	if !ok {
 		if change.Actor.PrincipalType == "" {
 			change.Actor = services.SystemAuditActor()
 		}
-		return change
+		return &change
 	}
 
 	if change.OrganizationID.IsNil() || change.BusinessUnitID.IsNil() {
@@ -117,7 +121,7 @@ func withRequestTenant(ctx context.Context, change services.SecurityChange) serv
 		}
 	}
 
-	return change
+	return &change
 }
 
 func (a *SecurityAuditor) stateOf(value any, label string) map[string]any {
@@ -127,7 +131,11 @@ func (a *SecurityAuditor) stateOf(value any, label string) map[string]any {
 
 	state, err := jsonutils.ToJSONDocument(value)
 	if err != nil {
-		a.l.Warn("security change state could not be serialized", zap.String("state", label), zap.Error(err))
+		a.l.Warn(
+			"security change state could not be serialized",
+			zap.String("state", label),
+			zap.Error(err),
+		)
 		return nil
 	}
 

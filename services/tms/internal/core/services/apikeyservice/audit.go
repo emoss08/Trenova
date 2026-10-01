@@ -20,7 +20,7 @@ type keyChange struct {
 	comment    string
 }
 
-func (s *Service) recordChange(ctx context.Context, change keyChange) {
+func (s *Service) recordChange(ctx context.Context, change *keyChange) {
 	if s.auditor == nil {
 		return
 	}
@@ -30,7 +30,7 @@ func (s *Service) recordChange(ctx context.Context, change keyChange) {
 		actor.UserID = change.actorID
 	}
 
-	s.auditor.RecordChange(ctx, services.SecurityChange{
+	s.auditor.RecordChange(ctx, &services.SecurityChange{
 		Resource:       permission.ResourceAPIKey,
 		ResourceID:     change.key.ID.String(),
 		Operation:      change.operation,

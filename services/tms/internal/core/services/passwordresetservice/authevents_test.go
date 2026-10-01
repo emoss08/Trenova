@@ -16,8 +16,8 @@ type recordingAuthEvents struct {
 	records []serviceports.AuthEventRecord
 }
 
-func (r *recordingAuthEvents) Record(_ context.Context, rec serviceports.AuthEventRecord) {
-	r.records = append(r.records, rec)
+func (r *recordingAuthEvents) Record(_ context.Context, rec *serviceports.AuthEventRecord) {
+	r.records = append(r.records, *rec)
 }
 
 func TestRequestResetRecordsEachOutcome(t *testing.T) {

@@ -29,5 +29,5 @@ type AuthEventRecord struct {
 }
 
 type AuthEventRecorder interface {
-	Record(ctx context.Context, rec AuthEventRecord)
+	Record(ctx context.Context, rec *AuthEventRecord)
 }

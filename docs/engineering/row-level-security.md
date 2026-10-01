@@ -118,7 +118,10 @@ func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing,
 tenant, two parties, owned through a parent) calls
 `trenova_rls.apply_policy('public.t', '<read expr>', '<write expr>')` with
 expressions that consult `trenova_rls.org_id()` / `bu_id()` / `user_id()`. A table
-with no tenant data is added to `trenova_rls.global_tables` with its reason.
+with no tenant data is added to `trenova_rls.global_tables` with its reason. A table
+the application may only read and append to (an audit log) is added to
+`trenova_rls.append_only_tables`, and `reconcile()` keeps `UPDATE` and `DELETE`
+revoked from `trenova_tenant`; see [security-audit.md](security-audit.md).
 `schemalint` fails on a table with neither, on a tenant policy that does not read
 the scope, on a view that is not `security_invoker`, and on a new
 `SECURITY DEFINER` function.

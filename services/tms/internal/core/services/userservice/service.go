@@ -664,7 +664,7 @@ func (s *Service) ReplaceOrganizationMemberships(
 		return nil, err
 	}
 
-	s.recordMembershipChange(ctx, membershipChange{
+	s.recordMembershipChange(ctx, &membershipChange{
 		actorID:        actorID,
 		userID:         userID,
 		organizationID: organizationID,

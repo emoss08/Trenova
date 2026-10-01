@@ -21,5 +21,5 @@ type SecurityChange struct {
 }
 
 type SecurityAuditor interface {
-	RecordChange(ctx context.Context, change SecurityChange)
+	RecordChange(ctx context.Context, change *SecurityChange)
 }

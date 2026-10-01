@@ -34,36 +34,40 @@ func (r *repository) ListSCIMGroupRoleMappings(
 	ctx context.Context,
 	req *repositories.ListSCIMGroupRoleMappingsRequest,
 ) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
-		log := r.l.With(
-			zap.String("operation", "ListSCIMGroupRoleMappings"),
-			zap.Any("request", req),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
+			log := r.l.With(
+				zap.String("operation", "ListSCIMGroupRoleMappings"),
+				zap.Any("request", req),
+			)
 
-		entities := make([]*iam.SCIMGroupRoleMapping, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.SCIMGroupRoleMappingColumns
-		rel := buncolgen.SCIMGroupRoleMappingRelations
+			entities := make([]*iam.SCIMGroupRoleMapping, 0, req.Filter.Pagination.SafeLimit())
+			cols := buncolgen.SCIMGroupRoleMappingColumns
+			rel := buncolgen.SCIMGroupRoleMappingRelations
 
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(rel.Role).
-			Where(cols.DirectoryID.Eq(), req.DirectoryID).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.filterSCIMGroupRoleMappings(sq, req)
-			}).
-			Order(cols.DisplayName.OrderAsc()).
-			ScanAndCount(ctx)
-		if err != nil {
-			log.Error("failed to scan and count scim group role mappings", zap.Error(err))
-			return nil, err
-		}
+			total, err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Relation(rel.Role).
+				Where(cols.DirectoryID.Eq(), req.DirectoryID).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return r.filterSCIMGroupRoleMappings(sq, req)
+				}).
+				Order(cols.DisplayName.OrderAsc()).
+				ScanAndCount(ctx)
+			if err != nil {
+				log.Error("failed to scan and count scim group role mappings", zap.Error(err))
+				return nil, err
+			}
 
-		return &pagination.ListResult[*iam.SCIMGroupRoleMapping]{
-			Items: entities,
-			Total: total,
-		}, nil
-	})
+			return &pagination.ListResult[*iam.SCIMGroupRoleMapping]{
+				Items: entities,
+				Total: total,
+			}, nil
+		},
+	)
 }
 
 func (r *repository) applyGroupRoleMappingCursorFilters(
@@ -100,53 +104,57 @@ func (r *repository) ListSCIMGroupRoleMappingsConnection(
 	ctx context.Context,
 	req *repositories.ListSCIMGroupRoleMappingConnectionRequest,
 ) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
-		log := r.l.With(
-			zap.String("operation", "ListSCIMGroupRoleMappingsConnection"),
-			zap.Any("request", req),
-		)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
+			log := r.l.With(
+				zap.String("operation", "ListSCIMGroupRoleMappingsConnection"),
+				zap.Any("request", req),
+			)
 
-		dba := r.db.DBForContext(ctx)
-		var totalCount *int
-		if req.Cursor.IncludeTotalCount {
-			total, err := dba.
-				NewSelect().
-				Model((*iam.SCIMGroupRoleMapping)(nil)).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.applyGroupRoleMappingCountFilters(sq, req)
-				}).
-				Count(ctx)
+			dba := r.db.DBForContext(ctx)
+			var totalCount *int
+			if req.Cursor.IncludeTotalCount {
+				total, err := dba.
+					NewSelect().
+					Model((*iam.SCIMGroupRoleMapping)(nil)).
+					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return r.applyGroupRoleMappingCountFilters(sq, req)
+					}).
+					Count(ctx)
+				if err != nil {
+					log.Error("failed to count scim group role mappings", zap.Error(err))
+					return nil, err
+				}
+				totalCount = &total
+			}
+
+			result, err := dbhelper.CursorList(
+				ctx,
+				dbhelper.CursorListParams[*iam.SCIMGroupRoleMapping]{
+					Filter:     req.Filter,
+					Cursor:     req.Cursor,
+					TotalCount: totalCount,
+					Query: func(entities *[]*iam.SCIMGroupRoleMapping) *bun.SelectQuery {
+						return dba.
+							NewSelect().
+							Model(entities).
+							ColumnExpr(buncolgen.SCIMGroupRoleMappingTable.All()).
+							Relation(buncolgen.SCIMGroupRoleMappingRelations.Role)
+					},
+					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+						return r.applyGroupRoleMappingCursorFilters(sq, req)
+					},
+				})
 			if err != nil {
-				log.Error("failed to count scim group role mappings", zap.Error(err))
+				log.Error("failed to scan scim group role mappings", zap.Error(err))
 				return nil, err
 			}
-			totalCount = &total
-		}
 
-		result, err := dbhelper.CursorList(
-			ctx,
-			dbhelper.CursorListParams[*iam.SCIMGroupRoleMapping]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*iam.SCIMGroupRoleMapping) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr(buncolgen.SCIMGroupRoleMappingTable.All()).
-						Relation(buncolgen.SCIMGroupRoleMappingRelations.Role)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyGroupRoleMappingCursorFilters(sq, req)
-				},
-			})
-		if err != nil {
-			log.Error("failed to scan scim group role mappings", zap.Error(err))
-			return nil, err
-		}
-
-		return result, nil
-	})
+			return result, nil
+		},
+	)
 }
 
 func (r *repository) CreateSCIMGroupRoleMapping(

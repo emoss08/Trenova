@@ -13,14 +13,14 @@ import (
 
 const (
 	authErrorUnknownAccount     = "unknown_account"
-	authErrorInvalidCredentials = "invalid_credentials"
+	authErrorRejectedLogin      = "invalid_credentials"
 	authErrorAccountUnavailable = "account_unavailable"
 	authErrorOrganizationAccess = "organization_access_denied"
 	authErrorSSORequired        = "sso_required"
 	authErrorSSOState           = "sso_state_invalid"
 	authErrorSSOConfig          = "sso_configuration_unavailable"
 	authErrorSSOExchange        = "sso_code_exchange_failed"
-	authErrorSSOIDToken         = "sso_id_token_invalid"
+	authErrorSSOAssertion       = "sso_id_token_invalid"
 	authErrorSSONonce           = "sso_nonce_mismatch"
 	authErrorSSOTenant          = "sso_tenant_mismatch"
 	authErrorSSOIdentity        = "sso_identity_unresolved"
@@ -93,7 +93,7 @@ func (s *Service) recordAuthAttempt(ctx context.Context, attempt *authAttempt, e
 		}
 	}
 
-	s.authEvents.Record(ctx, rec)
+	s.authEvents.Record(ctx, &rec)
 }
 
 func authOutcome(err error) iam.AuthEventOutcome {

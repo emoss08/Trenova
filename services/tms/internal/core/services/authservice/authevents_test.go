@@ -21,10 +21,10 @@ type recordingAuthEvents struct {
 	records []services.AuthEventRecord
 }
 
-func (r *recordingAuthEvents) Record(_ context.Context, rec services.AuthEventRecord) {
+func (r *recordingAuthEvents) Record(_ context.Context, rec *services.AuthEventRecord) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.records = append(r.records, rec)
+	r.records = append(r.records, *rec)
 }
 
 func (r *recordingAuthEvents) only(t *testing.T) services.AuthEventRecord {
@@ -95,7 +95,7 @@ func TestLoginRecordsAWrongPasswordAgainstTheAccount(t *testing.T) {
 
 	rec := deps.authEvents.only(t)
 	assert.Equal(t, iam.AuthEventOutcomeFailed, rec.Outcome)
-	assert.Equal(t, authErrorInvalidCredentials, rec.ErrorCode)
+	assert.Equal(t, authErrorRejectedLogin, rec.ErrorCode)
 	assert.Equal(t, usr.ID, rec.UserID)
 	assert.Equal(t, usr.CurrentOrganizationID, rec.OrganizationID)
 }

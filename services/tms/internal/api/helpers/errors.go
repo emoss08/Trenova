@@ -71,7 +71,10 @@ func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 	}
 
 	if dberror.IsRowLevelSecurityViolation(err) {
-		tenantboundary.Report(c, tenantboundary.Violation{Source: tenantboundary.SourceDatabasePolicy})
+		tenantboundary.Report(
+			c,
+			tenantboundary.Violation{Source: tenantboundary.SourceDatabasePolicy},
+		)
 		err = errortypes.NewAuthorizationError("insufficient permissions").WithInternal(err)
 	}
 

@@ -14,10 +14,10 @@ type Recorder struct {
 	changes []services.SecurityChange
 }
 
-func (r *Recorder) RecordChange(_ context.Context, change services.SecurityChange) {
+func (r *Recorder) RecordChange(_ context.Context, change *services.SecurityChange) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.changes = append(r.changes, change)
+	r.changes = append(r.changes, *change)
 }
 
 func (r *Recorder) Changes() []services.SecurityChange {

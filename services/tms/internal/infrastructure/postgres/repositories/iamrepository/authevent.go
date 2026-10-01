@@ -27,7 +27,10 @@ func NewAuthEventRepository(p Params) repositories.AuthEventRepository {
 
 func (r *authEventRepository) Create(ctx context.Context, event *iam.AuthEvent) error {
 	if event.OrganizationID.IsNil() {
-		ctx = dbscope.WithSystem(ctx, "record an authentication attempt that matched no organization")
+		ctx = dbscope.WithSystem(
+			ctx,
+			"record an authentication attempt that matched no organization",
+		)
 	}
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(event).Exec(ctx); err != nil {
@@ -40,7 +43,10 @@ func (r *authEventRepository) Create(ctx context.Context, event *iam.AuthEvent) 
 }
 
 func (r *authEventRepository) DeleteBefore(ctx context.Context, before int64) (int64, error) {
-	ctx = dbscope.WithSystem(ctx, "delete authentication events past the retention period for every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"delete authentication events past the retention period for every organization",
+	)
 	return postgres.DeleteUnderAuditRetention(ctx, r.db, func(tx bun.Tx) *bun.DeleteQuery {
 		return tx.NewDelete().
 			Model((*iam.AuthEvent)(nil)).

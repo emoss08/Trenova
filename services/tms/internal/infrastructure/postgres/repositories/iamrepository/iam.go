@@ -126,7 +126,11 @@ func (r *repository) UpdateIdentityProvider(
 		if err != nil {
 			return nil, err
 		}
-		if err = dberror.CheckRowsAffected(res, "Identity provider", entity.ID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			res,
+			"Identity provider",
+			entity.ID.String(),
+		); err != nil {
 			return nil, err
 		}
 		return entity, nil
@@ -156,25 +160,29 @@ func (r *repository) ListSCIMDirectories(
 	ctx context.Context,
 	req *repositories.ListSCIMDirectoryRequest,
 ) (*pagination.ListResult[*iam.SCIMDirectory], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*iam.SCIMDirectory], error) {
-		entities := make([]*iam.SCIMDirectory, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.SCIMDirectoryColumns
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*iam.SCIMDirectory], error) {
+			entities := make([]*iam.SCIMDirectory, 0, req.Filter.Pagination.SafeLimit())
+			cols := buncolgen.SCIMDirectoryColumns
 
-		total, err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.SCIMDirectoryApplyTenant(req.Filter.TenantInfo)(sq)
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(req.Filter.Pagination.SafeLimit()).
-			Offset(req.Filter.Pagination.SafeOffset()).
-			ScanAndCount(ctx)
+			total, err := r.db.DBForContext(ctx).NewSelect().
+				Model(&entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return buncolgen.SCIMDirectoryApplyTenant(req.Filter.TenantInfo)(sq)
+				}).
+				Order(cols.CreatedAt.OrderDesc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset()).
+				ScanAndCount(ctx)
 
-		return &pagination.ListResult[*iam.SCIMDirectory]{
-			Items: entities,
-			Total: total,
-		}, err
-	})
+			return &pagination.ListResult[*iam.SCIMDirectory]{
+				Items: entities,
+				Total: total,
+			}, err
+		},
+	)
 }
 
 func (r *repository) GetSCIMDirectory(
@@ -284,7 +292,11 @@ func (r *repository) RevokeSCIMToken(
 	orgID, tokenID pulid.ID,
 ) (*iam.SCIMToken, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.SCIMToken, error) {
-		entity := &iam.SCIMToken{ID: tokenID, OrganizationID: orgID, Status: iam.SCIMTokenStatusRevoked}
+		entity := &iam.SCIMToken{
+			ID:             tokenID,
+			OrganizationID: orgID,
+			Status:         iam.SCIMTokenStatusRevoked,
+		}
 		res, err := r.db.DBForContext(ctx).NewUpdate().
 			Model(entity).
 			Column("status").

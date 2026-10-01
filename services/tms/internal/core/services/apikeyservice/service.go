@@ -135,7 +135,7 @@ func (s *Service) CreateAPIKey(
 	key.Permissions = perms
 
 	resp := s.mapAPIKeyResponse(key)
-	s.recordChange(ctx, keyChange{
+	s.recordChange(ctx, &keyChange{
 		tenantInfo: tenantInfo,
 		actorID:    userID,
 		key:        key,
@@ -200,7 +200,7 @@ func (s *Service) UpdateAPIKey(
 	key.Permissions = perms
 
 	resp := s.mapAPIKeyResponse(key)
-	s.recordChange(ctx, keyChange{
+	s.recordChange(ctx, &keyChange{
 		tenantInfo: tenantInfo,
 		actorID:    tenantInfo.UserID,
 		key:        key,
@@ -243,7 +243,7 @@ func (s *Service) RotateAPIKey(
 	}
 
 	resp := s.mapAPIKeyResponse(key)
-	s.recordChange(ctx, keyChange{
+	s.recordChange(ctx, &keyChange{
 		tenantInfo: tenantInfo,
 		actorID:    tenantInfo.UserID,
 		key:        key,
@@ -278,7 +278,7 @@ func (s *Service) RevokeAPIKey(
 	}
 
 	resp := s.mapAPIKeyResponse(key)
-	s.recordChange(ctx, keyChange{
+	s.recordChange(ctx, &keyChange{
 		tenantInfo: tenantInfo,
 		actorID:    userID,
 		key:        key,

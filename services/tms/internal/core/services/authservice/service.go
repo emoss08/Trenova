@@ -134,7 +134,7 @@ func (s *Service) Login(
 			attempt.fail(authErrorAccountUnavailable)
 			return nil, err
 		}
-		attempt.fail(authErrorInvalidCredentials)
+		attempt.fail(authErrorRejectedLogin)
 		return nil, errInvalidCredentials
 	}
 
@@ -149,7 +149,12 @@ func (s *Service) Login(
 		attempt.forOrganization(targetOrg.ID, targetOrg.BusinessUnitID)
 	}
 
-	if err = s.enforcePasswordLoginPolicy(scoped, req.OrganizationSlug, usr, targetOrg); err != nil {
+	if err = s.enforcePasswordLoginPolicy(
+		scoped,
+		req.OrganizationSlug,
+		usr,
+		targetOrg,
+	); err != nil {
 		return nil, err
 	}
 
@@ -348,7 +353,12 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		attempt.fail(authErrorSSOState)
 		return nil, errortypes.NewAuthenticationError("SSO login session is invalid or expired")
 	}
-	scoped := organizationScope(ctx, loginState.OrganizationID, loginState.BusinessUnitID, pulid.Nil)
+	scoped := organizationScope(
+		ctx,
+		loginState.OrganizationID,
+		loginState.BusinessUnitID,
+		pulid.Nil,
+	)
 
 	ssoConfig, err := s.resolveSSOConfigForCallback(scoped, loginState)
 	if err != nil {
@@ -383,7 +393,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 
 	rawIDToken, ok := oauthToken.Extra("id_token").(string)
 	if !ok || rawIDToken == "" {
-		attempt.fail(authErrorSSOIDToken)
+		attempt.fail(authErrorSSOAssertion)
 		return nil, errortypes.NewAuthenticationError(
 			"{0} login did not return an ID token", displayName,
 		)
@@ -394,13 +404,13 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	})
 	idToken, err := verifier.Verify(scoped, rawIDToken)
 	if err != nil {
-		attempt.fail(authErrorSSOIDToken)
+		attempt.fail(authErrorSSOAssertion)
 		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)
 	}
 
 	var claims oidcClaims
 	if err = idToken.Claims(&claims); err != nil {
-		attempt.fail(authErrorSSOIDToken)
+		attempt.fail(authErrorSSOAssertion)
 		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)
 	}
 
@@ -435,7 +445,11 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	if err = s.ensureUserHasOrganizationAccess(scoped, usr.ID, loginState.OrganizationID); err != nil {
+	if err = s.ensureUserHasOrganizationAccess(
+		scoped,
+		usr.ID,
+		loginState.OrganizationID,
+	); err != nil {
 		attempt.fail(authErrorOrganizationAccess)
 		return nil, err
 	}

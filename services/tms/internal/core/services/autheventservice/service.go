@@ -46,7 +46,7 @@ func New(p Params) services.AuthEventRecorder {
 	}
 }
 
-func (s *Service) Record(ctx context.Context, rec services.AuthEventRecord) {
+func (s *Service) Record(ctx context.Context, rec *services.AuthEventRecord) {
 	event := newAuthEvent(ctx, rec)
 
 	writeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), writeTimeout)
@@ -87,7 +87,7 @@ func (s *Service) recordMetric(success bool) {
 	s.metrics.Audit.RecordSecurityEvent(securityEventKind, success)
 }
 
-func newAuthEvent(ctx context.Context, rec services.AuthEventRecord) *iam.AuthEvent {
+func newAuthEvent(ctx context.Context, rec *services.AuthEventRecord) *iam.AuthEvent {
 	event := &iam.AuthEvent{
 		UserID:           rec.UserID,
 		Provider:         stringutils.TruncateRunes(rec.Provider, maxProviderLen),
