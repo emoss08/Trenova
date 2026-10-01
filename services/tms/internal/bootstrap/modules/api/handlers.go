@@ -42,7 +42,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/docshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
@@ -158,7 +157,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	usstatehandler.New,
 	equipmentmanufacturerhandler.New,
 	customfieldhandler.New,
-	docshandler.New,
 	databasesessionhandler.New,
 	documenthandler.New,
 	reporthandler.New,

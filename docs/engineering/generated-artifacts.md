@@ -11,7 +11,7 @@ covers how to build a resource; this covers what breaks afterwards.
 
 ## Run the whole gate locally
 
-`Codegen Checks` in `.github/workflows/test-tms.yml` is seven independent steps. All paths
+`Codegen Checks` in `.github/workflows/test-tms.yml` is six independent regeneration steps, plus the GraphQL schema-diff step. All paths
 are relative to `services/tms`:
 
 ```bash
@@ -23,17 +23,12 @@ go generate ./internal/api/graphql/projection/...                  # internal/ap
 go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
 go generate ./internal/core/services/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
 go generate ./internal/api/writecoverage/...                       # ../../docs/engineering/agent-write-coverage.md
-
-task docs-generate                                                 # swag + cmd/openapi-postprocess; then: git diff --quiet -- docs
 ```
 
-The OpenAPI step parses only the API's own packages and the few third-party packages whose
-types the spec names (`gin.H`, `decimal.NullDecimal`), through `--packagePrefix`. Parsing
-every dependency took CI half an hour. An annotation that names a type from any other module
-fails with `cannot find type definition`: add that module to the prefix in `Taskfile.yml`
-(`SWAG_INIT`) and `.github/workflows/test-tms.yml`, which runs the same command.
+The REST API reference (OpenAPI) is no longer generated in this repository; it is produced
+outside it, so there is no spec to regenerate here.
 
-A clean `git status` after all seven means the job will pass.
+A clean `git status` after all six means the job will pass.
 
 ## GraphQL projections: the one that fails on correct code
 

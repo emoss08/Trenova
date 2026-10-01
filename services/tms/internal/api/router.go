@@ -45,7 +45,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/docshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
@@ -157,7 +156,6 @@ type RouterParams struct {
 	RateLimiter                     *middleware.RateLimiter
 	PermissionMiddleware            *middleware.PermissionMiddleware
 	ErrorHandler                    *helpers.ErrorHandler
-	DocsHandler                     *docshandler.Handler
 	OrganizationHandler             *organizationhandler.Handler
 	DataRetentionHandler            *dataretentionhandler.Handler
 	IAMHandler                      *iamhandler.Handler
@@ -295,7 +293,6 @@ type Router struct {
 	permissionMiddleware            *middleware.PermissionMiddleware
 	cfg                             *config.Config
 	errorHandler                    *helpers.ErrorHandler
-	docsHandler                     *docshandler.Handler
 	organizationHandler             *organizationhandler.Handler
 	dataRetentionHandler            *dataretentionhandler.Handler
 	iamHandler                      *iamhandler.Handler
@@ -435,7 +432,6 @@ func NewRouter(p RouterParams) *Router {
 		rateLimiter:                     p.RateLimiter,
 		permissionMiddleware:            p.PermissionMiddleware,
 		errorHandler:                    p.ErrorHandler,
-		docsHandler:                     p.DocsHandler,
 		organizationHandler:             p.OrganizationHandler,
 		dataRetentionHandler:            p.DataRetentionHandler,
 		iamHandler:                      p.IAMHandler,
@@ -639,7 +635,6 @@ func (r *Router) setupGraphQLRoutes(rg *gin.RouterGroup) {
 func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	rg := r.publicGroup(parent)
 
-	r.docsHandler.RegisterRoutes(rg)
 	r.authHandler.RegisterRoutes(rg)
 	r.driverPortalHandler.RegisterRoutes(rg)
 	r.versionHandler.RegisterPublicRoutes(rg)

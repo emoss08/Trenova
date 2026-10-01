@@ -279,7 +279,7 @@ Several generators in this repo fail on code that compiles and passes every test
 CI failure names the command without saying why the generator refused. **Before changing a
 GraphQL schema, removing a database column, or editing user-facing text, read
 [docs/engineering/generated-artifacts.md](docs/engineering/generated-artifacts.md).** It
-lists the five `Codegen Checks` steps with the exact commands to run them locally, and the
+lists the `Codegen Checks` steps with the exact commands to run them locally, and the
 traps that have actually broken `master` — most often `projection.yml`, which requires every
 GraphQL field to resolve to a column, an inferred relation, or a declared override, so
 retiring a column while keeping its deprecated field breaks the build until the field is
