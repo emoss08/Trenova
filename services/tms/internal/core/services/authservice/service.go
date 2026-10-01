@@ -43,6 +43,7 @@ type Params struct {
 	PortalRepo        repositories.PortalAccessRepository
 	UsageRecorder     services.UsageRecorder
 	TurnStopper       services.AssistantTurnStopper
+	AuthEvents        services.AuthEventRecorder
 	Encryption        *encryptionservice.Service
 	Config            *config.Config
 	Logger            *zap.Logger
@@ -60,6 +61,7 @@ type Service struct {
 	portalRepo repositories.PortalAccessRepository
 	usageBuf   services.UsageRecorder
 	turns      services.AssistantTurnStopper
+	authEvents services.AuthEventRecorder
 	enc        *encryptionservice.Service
 	cfg        *config.Config
 	l          *zap.Logger
@@ -78,6 +80,7 @@ func New(p Params) services.AuthService {
 		portalRepo: p.PortalRepo,
 		usageBuf:   p.UsageRecorder,
 		turns:      p.TurnStopper,
+		authEvents: p.AuthEvents,
 		enc:        p.Encryption,
 		cfg:        p.Config,
 		l:          p.Logger.Named("service.auth"),
@@ -111,37 +114,48 @@ type loginSessionContext struct {
 func (s *Service) Login(
 	ctx context.Context,
 	req services.LoginRequest,
-) (*services.LoginResponse, error) {
-	if err := req.Validate(); err != nil {
+) (resp *services.LoginResponse, err error) {
+	if err = req.Validate(); err != nil {
 		return nil, err
 	}
+
+	attempt := newAuthAttempt(services.AuthEventProviderPassword)
+	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
 
 	usr, err := s.ur.FindByEmail(ctx, req.EmailAddress)
 	if err != nil {
+		attempt.fail(authErrorUnknownAccount)
 		return nil, errInvalidCredentials
 	}
+	attempt.forUser(usr)
 
 	if err = usr.VerifyCredentials(req.Password); err != nil {
 		if errortypes.IsAuthorizationError(err) {
+			attempt.fail(authErrorAccountUnavailable)
 			return nil, err
 		}
+		attempt.fail(authErrorInvalidCredentials)
 		return nil, errInvalidCredentials
 	}
 
-	ctx = userScope(ctx, usr)
+	scoped := userScope(ctx, usr)
 
-	targetOrg, err := s.resolveRequestedOrganization(ctx, req.OrganizationSlug, usr)
+	targetOrg, err := s.resolveRequestedOrganization(scoped, req.OrganizationSlug, usr)
 	if err != nil {
+		attempt.fail(authErrorOrganizationAccess)
 		return nil, err
 	}
+	if targetOrg != nil {
+		attempt.forOrganization(targetOrg.ID, targetOrg.BusinessUnitID)
+	}
 
-	if err = s.enforcePasswordLoginPolicy(ctx, req.OrganizationSlug, usr, targetOrg); err != nil {
+	if err = s.enforcePasswordLoginPolicy(scoped, req.OrganizationSlug, usr, targetOrg); err != nil {
 		return nil, err
 	}
 
 	if targetOrg != nil && targetOrg.ID != usr.CurrentOrganizationID {
 		if err = s.ur.UpdateCurrentOrganization(
-			organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, usr.ID),
+			organizationScope(scoped, targetOrg.ID, targetOrg.BusinessUnitID, usr.ID),
 			usr.ID,
 			targetOrg.ID,
 			targetOrg.BusinessUnitID,
@@ -153,8 +167,8 @@ func (s *Service) Login(
 		usr.BusinessUnitID = targetOrg.BusinessUnitID
 	}
 
-	return s.createLoginResponse(userScope(ctx, usr), usr, loginSessionContext{
-		AuthProvider:          "password",
+	return s.createLoginResponse(userScope(scoped, usr), usr, loginSessionContext{
+		AuthProvider:          services.AuthEventProviderPassword,
 		AuthenticatorAAL:      1,
 		FederationFAL:         1,
 		LastReauthenticatedAt: timeutils.NowUnix(),
@@ -306,15 +320,22 @@ func (s *Service) resolveSSOConfig(
 func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	ctx context.Context,
 	req services.SSOCallbackRequest,
-) (*services.SSOCallbackResponse, error) {
+) (resp *services.SSOCallbackResponse, err error) {
 	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
 		return nil, errortypes.NewBusinessError("SSO is not configured")
 	}
 
+	attempt := newAuthAttempt(ssoAuthEventProvider(""))
+	attempt.fal = 2
+	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
+
 	loginState, err := s.stateRepo.Get(ctx, req.State)
 	if err != nil {
+		attempt.fail(authErrorSSOState)
 		return nil, errortypes.NewAuthenticationError("SSO login session is invalid or expired")
 	}
+	attempt.provider = ssoAuthEventProvider(loginState.Provider)
+	attempt.forOrganization(loginState.OrganizationID, loginState.BusinessUnitID)
 	defer func() {
 		if delErr := s.stateRepo.Delete(ctx, req.State); delErr != nil {
 			s.l.Warn("failed to delete sso login state", zap.Error(delErr))
@@ -324,17 +345,20 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	displayName := providerDisplayName(loginState.Provider)
 
 	if loginState.OrganizationID.IsNil() || loginState.BusinessUnitID.IsNil() {
+		attempt.fail(authErrorSSOState)
 		return nil, errortypes.NewAuthenticationError("SSO login session is invalid or expired")
 	}
-	ctx = organizationScope(ctx, loginState.OrganizationID, loginState.BusinessUnitID, pulid.Nil)
+	scoped := organizationScope(ctx, loginState.OrganizationID, loginState.BusinessUnitID, pulid.Nil)
 
-	ssoConfig, err := s.resolveSSOConfigForCallback(ctx, loginState)
+	ssoConfig, err := s.resolveSSOConfigForCallback(scoped, loginState)
 	if err != nil {
+		attempt.fail(authErrorSSOConfig)
 		return nil, err
 	}
 
-	provider, err := oidc.NewProvider(ctx, ssoConfig.OIDCIssuerURL)
+	provider, err := oidc.NewProvider(scoped, ssoConfig.OIDCIssuerURL)
 	if err != nil {
+		attempt.fail(authErrorSSOConfig)
 		return nil, errortypes.NewBusinessError("Failed to initialize {0} identity provider", displayName).
 			WithInternal(err)
 	}
@@ -348,16 +372,18 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	}
 
 	oauthToken, err := oauthCfg.Exchange(
-		ctx,
+		scoped,
 		req.Code,
 		oauth2.VerifierOption(loginState.CodeVerifier),
 	)
 	if err != nil {
+		attempt.fail(authErrorSSOExchange)
 		return nil, errortypes.NewAuthenticationError("{0} login failed", displayName)
 	}
 
 	rawIDToken, ok := oauthToken.Extra("id_token").(string)
 	if !ok || rawIDToken == "" {
+		attempt.fail(authErrorSSOIDToken)
 		return nil, errortypes.NewAuthenticationError(
 			"{0} login did not return an ID token", displayName,
 		)
@@ -366,49 +392,57 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	verifier := provider.Verifier(&oidc.Config{
 		ClientID: ssoConfig.OIDCClientID,
 	})
-	idToken, err := verifier.Verify(ctx, rawIDToken)
+	idToken, err := verifier.Verify(scoped, rawIDToken)
 	if err != nil {
+		attempt.fail(authErrorSSOIDToken)
 		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)
 	}
 
 	var claims oidcClaims
 	if err = idToken.Claims(&claims); err != nil {
+		attempt.fail(authErrorSSOIDToken)
 		return nil, errortypes.NewAuthenticationError("{0} identity token is invalid", displayName)
 	}
 
 	if claims.Nonce != loginState.Nonce {
+		attempt.fail(authErrorSSONonce)
 		return nil, errortypes.NewAuthenticationError("{0} login nonce mismatch", displayName)
 	}
 
 	if ssoConfig.Provider == tenant.SSOProviderAzureAD {
 		expectedTenantID := strings.TrimSpace(microsoftTenantIDFromIssuer(ssoConfig.OIDCIssuerURL))
 		if expectedTenantID != "" && !strings.EqualFold(expectedTenantID, claims.TenantID) {
+			attempt.fail(authErrorSSOTenant)
 			return nil, errortypes.NewAuthenticationError(
 				"Microsoft tenant does not match this organization's configuration",
 			)
 		}
 	}
 
-	usr, err := s.resolveSSOUser(ctx, &ssoUserLookup{
+	usr, err := s.resolveSSOUser(scoped, &ssoUserLookup{
 		Config:      ssoConfig,
 		Identity:    identityFromOIDCClaims(idToken.Issuer, &claims, ssoConfig.Provider),
 		DisplayName: displayName,
 	})
 	if err != nil {
+		attempt.fail(authErrorSSOIdentity)
 		return nil, err
 	}
+	attempt.userID = usr.ID
 
 	if err = usr.ValidateStatus(); err != nil {
+		attempt.fail(authErrorAccountUnavailable)
 		return nil, err
 	}
 
-	if err = s.ensureUserHasOrganizationAccess(ctx, usr.ID, loginState.OrganizationID); err != nil {
+	if err = s.ensureUserHasOrganizationAccess(scoped, usr.ID, loginState.OrganizationID); err != nil {
+		attempt.fail(authErrorOrganizationAccess)
 		return nil, err
 	}
 
 	if loginState.OrganizationID != usr.CurrentOrganizationID {
 		if err = s.ur.UpdateCurrentOrganization(
-			ctx,
+			scoped,
 			usr.ID,
 			loginState.OrganizationID,
 			ssoConfig.BusinessUnitID,
@@ -420,7 +454,8 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	}
 
 	aal, mfaAt := assuranceFromOIDCClaims(claims)
-	loginResp, err := s.createLoginResponse(userScope(ctx, usr), usr, loginSessionContext{
+	attempt.aal = aal
+	loginResp, err := s.createLoginResponse(userScope(scoped, usr), usr, loginSessionContext{
 		AuthProvider:          string(loginState.Provider),
 		ExternalSubject:       claims.Subject,
 		AuthenticatorAAL:      aal,
@@ -659,10 +694,18 @@ func (s *Service) Logout(ctx context.Context, sessionID pulid.ID) error {
 		sess = nil
 	}
 
+	attempt := newAuthAttempt(services.AuthEventProviderLogout)
+	if sess != nil {
+		attempt.userID = sess.UserID
+		attempt.forOrganization(sess.OrganizationID, sess.BusinessUnitID)
+	}
+
 	if err = s.sr.Delete(ctx, sessionID); err != nil {
+		s.recordAuthAttempt(ctx, attempt, err)
 		return err
 	}
 
+	s.recordAuthAttempt(ctx, attempt, nil)
 	s.stopTurns(ctx, sess)
 
 	return nil
@@ -1065,6 +1108,13 @@ func validateAllowedDomain(emailAddress string, allowedDomains []string) error {
 	return errortypes.NewAuthenticationError(
 		"SSO account email domain is not allowed for this organization",
 	)
+}
+
+func ssoAuthEventProvider(p tenant.SSOProvider) string {
+	if p == "" {
+		return "sso"
+	}
+	return "sso." + string(p)
 }
 
 func providerDisplayName(p tenant.SSOProvider) string {

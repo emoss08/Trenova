@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -260,4 +261,27 @@ func TestBuildBulkLogEntries(t *testing.T) {
 	}
 
 	_ = services.BulkLogEntry{}
+}
+
+func TestWithRequest(t *testing.T) {
+	t.Parallel()
+
+	ctx := requestmeta.With(t.Context(), requestmeta.New("req-9", "198.51.100.1", "browser"))
+
+	entry := &audit.Entry{}
+	require.NoError(t, WithRequest(ctx)(entry))
+	assert.Equal(t, "198.51.100.1", entry.IPAddress)
+	assert.Equal(t, "browser", entry.UserAgent)
+	assert.Equal(t, "req-9", entry.CorrelationID)
+	assert.Equal(t, "req-9", entry.Metadata["requestId"])
+
+	explicit := &audit.Entry{IPAddress: "192.0.2.1", CorrelationID: "corr"}
+	require.NoError(t, WithRequest(ctx)(explicit))
+	assert.Equal(t, "192.0.2.1", explicit.IPAddress)
+	assert.Equal(t, "corr", explicit.CorrelationID)
+
+	bare := &audit.Entry{}
+	require.NoError(t, WithRequest(t.Context())(bare))
+	assert.Empty(t, bare.IPAddress)
+	assert.Nil(t, bare.Metadata)
 }

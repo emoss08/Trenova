@@ -6,3 +6,5 @@ const (
 	CategorySystem = Category("System")
 	CategoryUser   = Category("User")
 )
+
+const CriticalRetentionDays = 365

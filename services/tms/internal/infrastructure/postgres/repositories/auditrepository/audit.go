@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -324,25 +325,35 @@ func (r *repository) DeleteAuditEntries(
 	req repositories.DeleteAuditEntriesRequest,
 ) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "delete audit entries past an organization's retention during the retention sweep")
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		log := r.l.With(zap.String("operation", "DeleteAuditEntries"))
+	log := r.l.With(zap.String("operation", "DeleteAuditEntries"))
+	cols := buncolgen.EntryColumns
 
-		result, err := r.db.DBForContext(ctx).NewDelete().Model((*audit.Entry)(nil)).
-			Where("ae.organization_id = ?", req.OrgID).
-			Where("ae.business_unit_id = ?", req.BuID).
-			Where("ae.timestamp < ?", req.Before).
+	var totalDeleted int64
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
+		if err := postgres.EnableAuditRetention(ctx, tx); err != nil {
+			return err
+		}
+
+		result, err := tx.NewDelete().Model((*audit.Entry)(nil)).
+			Where(cols.OrganizationID.Eq(), req.OrgID).
+			Where(cols.BusinessUnitID.Eq(), req.BuID).
+			Where(cols.Timestamp.Lt(), req.Before).
+			WhereGroup(" AND ", func(q *bun.DeleteQuery) *bun.DeleteQuery {
+				return q.Where(cols.Critical.IsFalse()).
+					WhereOr(cols.Timestamp.Lt(), req.CriticalBefore)
+			}).
 			Exec(ctx)
 		if err != nil {
-			log.Error("failed to delete audit entries", zap.Error(err))
-			return 0, err
+			return err
 		}
 
-		totalDeleted, err := result.RowsAffected()
-		if err != nil {
-			log.Error("failed to get rows affected", zap.Error(err))
-			return 0, err
-		}
-
-		return totalDeleted, nil
+		totalDeleted, err = result.RowsAffected()
+		return err
 	})
+	if err != nil {
+		log.Error("failed to delete audit entries", zap.Error(err))
+		return 0, err
+	}
+
+	return totalDeleted, nil
 }

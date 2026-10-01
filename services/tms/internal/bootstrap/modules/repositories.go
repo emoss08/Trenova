@@ -245,6 +245,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	tenantprovisioningrepository.New,
 	organizationrepository.New,
 	iamrepository.New,
+	iamrepository.NewAuthEventRepository,
 	ssoconfigrepository.New,
 	ssoidentitylinkrepository.New,
 	userrepository.New,

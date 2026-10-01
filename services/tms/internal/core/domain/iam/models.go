@@ -176,8 +176,8 @@ type AuthEvent struct {
 	IdentityProviderID pulid.ID         `json:"identityProviderId" bun:"identity_provider_id,type:VARCHAR(100)"`
 	Provider           string           `json:"provider"           bun:"provider,type:VARCHAR(120),notnull"`
 	Outcome            AuthEventOutcome `json:"outcome"            bun:"outcome,type:iam_auth_event_outcome_enum,notnull"`
-	IPAddress          string           `json:"ipAddress"          bun:"ip_address,type:INET"`
-	UserAgent          string           `json:"userAgent"          bun:"user_agent,type:TEXT"`
+	IPAddress          string           `json:"ipAddress"          bun:"ip_address,type:INET,nullzero"`
+	UserAgent          string           `json:"userAgent"          bun:"user_agent,type:TEXT,nullzero"`
 	AuthenticatorAAL   int              `json:"authenticatorAal"   bun:"authenticator_aal,notnull,default:1"`
 	FederationFAL      int              `json:"federationFal"      bun:"federation_fal,notnull,default:1"`
 	MFAState           string           `json:"mfaState"           bun:"mfa_state,type:VARCHAR(80)"`

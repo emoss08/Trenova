@@ -28,6 +28,7 @@ type testDeps struct {
 	userRepo    *mocks.MockUserRepository
 	sessionRepo *mocks.MockSessionRepository
 	portalRepo  *mocks.MockPortalAccessRepository
+	authEvents  *recordingAuthEvents
 	svc         *Service
 }
 
@@ -36,14 +37,16 @@ func setupTest(t *testing.T) *testDeps {
 	ur := mocks.NewMockUserRepository(t)
 	sr := mocks.NewMockSessionRepository(t)
 	pr := mocks.NewMockPortalAccessRepository(t)
+	events := &recordingAuthEvents{}
 	svc := &Service{
 		ur:         ur,
 		sr:         sr,
 		portalRepo: pr,
 		rbacRepo:   &rbactest.Repository{},
+		authEvents: events,
 		l:          zap.NewNop(),
 	}
-	return &testDeps{userRepo: ur, sessionRepo: sr, portalRepo: pr, svc: svc}
+	return &testDeps{userRepo: ur, sessionRepo: sr, portalRepo: pr, authEvents: events, svc: svc}
 }
 
 func newTestUser(t *testing.T) *tenant.User {

@@ -7,8 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -46,6 +48,7 @@ type Params struct {
 	EmailService     serviceports.EmailService
 	Templates        serviceports.DocumentTemplateResolver
 	AuditService     serviceports.AuditService
+	AuthEvents       serviceports.AuthEventRecorder
 	Config           *config.Config
 	Logger           *zap.Logger
 }
@@ -58,6 +61,7 @@ type Service struct {
 	emailService serviceports.EmailService
 	templates    serviceports.DocumentTemplateResolver
 	audit        serviceports.AuditService
+	authEvents   serviceports.AuthEventRecorder
 	cfg          *config.Config
 	l            *zap.Logger
 }
@@ -71,6 +75,7 @@ func New(p Params) *Service {
 		emailService: p.EmailService,
 		templates:    p.Templates,
 		audit:        p.AuditService,
+		authEvents:   p.AuthEvents,
 		cfg:          p.Config,
 		l:            p.Logger.Named("service.password-reset"),
 	}
@@ -86,11 +91,14 @@ func New(p Params) *Service {
 // Nothing about the account changes here. The password on file keeps working until
 // somebody who can read that mailbox redeems the token, which is what stops a stranger
 // from locking a user out by typing their address.
-func (s *Service) RequestReset(ctx context.Context, emailAddress string) error {
+func (s *Service) RequestReset(ctx context.Context, emailAddress string) (err error) {
 	address := strings.TrimSpace(emailAddress)
 	if address == "" {
 		return nil
 	}
+
+	event := resetEvent{provider: serviceports.AuthEventProviderPasswordResetRequest}
+	defer func() { s.recordResetEvent(ctx, &event, err) }()
 
 	log := s.l.With(zap.String("operation", "RequestReset"))
 
@@ -99,32 +107,36 @@ func (s *Service) RequestReset(ctx context.Context, emailAddress string) error {
 		// Not found is the common case and is not an error worth surfacing; a real
 		// failure is logged but still answered identically.
 		log.Debug("password reset requested for an unknown address")
+		event.deny(iam.AuthEventOutcomeFailed, resetErrorUnknownAccount)
 		return nil
 	}
+	event.user = user
 
 	if !user.IsActive() || user.IsLocked {
 		log.Info("password reset requested for an inactive or locked account",
 			zap.String("userId", user.ID.String()))
+		event.deny(iam.AuthEventOutcomeDenied, resetErrorAccountUnavailable)
 		return nil
 	}
 
-	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+	scoped := dbscope.WithTenant(ctx, dbscope.Tenant{
 		OrganizationID: user.CurrentOrganizationID,
 		BusinessUnitID: user.BusinessUnitID,
 		UserID:         user.ID,
 	})
 
-	allowed, err := s.withinRequestAllowance(ctx, user)
+	allowed, err := s.withinRequestAllowance(scoped, user)
 	if err != nil {
 		return err
 	}
 	if !allowed {
+		event.deny(iam.AuthEventOutcomeDenied, resetErrorRateLimited)
 		return nil
 	}
 
 	// Only the newest link may work: somebody who asks twice because the first email
 	// was slow should not be left with two live credentials in their mailbox.
-	if err = s.issueToken(ctx, user); err != nil {
+	if err = s.issueToken(scoped, user); err != nil {
 		log.Error("failed to issue a reset link", zap.Error(err))
 		return err
 	}
@@ -190,7 +202,11 @@ func (s *Service) RequestResetForUser(ctx context.Context, req AdminResetRequest
 			OrganizationID: req.Actor.OrgID,
 			BusinessUnitID: req.Actor.BuID,
 			Critical:       true,
-		}, auditservice.WithComment("Password reset link sent by an administrator")); auditErr != nil {
+		},
+			auditservice.WithComment("Password reset link sent by an administrator"),
+			auditservice.WithCategory(audit.CategoryUser),
+			auditservice.WithRequest(ctx),
+		); auditErr != nil {
 			// The link is already out; failing the request now would tell the admin it
 			// did not happen when it did.
 			log.Error("failed to audit the administrator reset", zap.Error(auditErr))
@@ -252,18 +268,22 @@ func (s *Service) withinRequestAllowance(
 }
 
 // ResetPassword redeems a link and sets the new password.
-func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword string) error {
+func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword string) (err error) {
 	if strings.TrimSpace(rawToken) == "" {
 		return errInvalidToken
 	}
 
-	if err := validatePasswordStrength(newPassword); err != nil {
+	if err = validatePasswordStrength(newPassword); err != nil {
 		return err
 	}
+
+	event := resetEvent{provider: serviceports.AuthEventProviderPasswordResetConfirm}
+	defer func() { s.recordResetEvent(ctx, &event, err) }()
 
 	now := timeutils.NowUnix()
 	token, err := s.tokens.FindRedeemableByHash(ctx, tokenutils.Hash(rawToken), now)
 	if err != nil {
+		event.deny(iam.AuthEventOutcomeFailed, resetErrorInvalidToken)
 		return errInvalidToken
 	}
 
@@ -272,14 +292,19 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 	user := token.User
 	if user == nil {
 		s.l.Error("reset token has no user", zap.String("tokenId", token.ID.String()))
+		event.deny(iam.AuthEventOutcomeFailed, resetErrorInvalidToken)
 		return errInvalidToken
 	}
+	event.user = user
+	event.organizationID = token.OrganizationID
+	event.businessUnitID = token.BusinessUnitID
 
 	if !user.IsActive() {
+		event.deny(iam.AuthEventOutcomeDenied, resetErrorAccountUnavailable)
 		return errInvalidToken
 	}
 
-	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+	scoped := dbscope.WithTenant(ctx, dbscope.Tenant{
 		OrganizationID: token.OrganizationID,
 		BusinessUnitID: token.BusinessUnitID,
 		UserID:         user.ID,
@@ -287,11 +312,12 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 
 	// Redeem before writing the password. Two tabs opened from the same email both
 	// reach here; the guard lives in the UPDATE, so exactly one of them proceeds.
-	redeemed, err := s.tokens.MarkUsed(ctx, token.ID, now)
+	redeemed, err := s.tokens.MarkUsed(scoped, token.ID, now)
 	if err != nil {
 		return err
 	}
 	if !redeemed {
+		event.deny(iam.AuthEventOutcomeFailed, resetErrorInvalidToken)
 		return errInvalidToken
 	}
 
@@ -301,7 +327,7 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		return err
 	}
 
-	if err = s.ur.UpdatePassword(ctx, repositories.UpdateUserPasswordRequest{
+	if err = s.ur.UpdatePassword(scoped, repositories.UpdateUserPasswordRequest{
 		UserID:         user.ID,
 		OrganizationID: token.OrganizationID,
 		BusinessUnitID: token.BusinessUnitID,
@@ -314,7 +340,7 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		return err
 	}
 
-	if err = s.tokens.InvalidateOutstanding(ctx, user.ID, now); err != nil {
+	if err = s.tokens.InvalidateOutstanding(scoped, user.ID, now); err != nil {
 		// The redeemed token is already spent; a stale sibling left live is worth
 		// logging but not worth failing a completed reset over.
 		s.l.Error("failed to retire sibling reset tokens", zap.Error(err))
@@ -323,7 +349,7 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 	// Whoever was holding a session on this account is not necessarily the person who
 	// just proved they own the mailbox. A reset that leaves those sessions alive does
 	// not actually take the account back.
-	if err = s.sessions.DeleteAllForUser(ctx, user.ID); err != nil {
+	if err = s.sessions.DeleteAllForUser(scoped, user.ID); err != nil {
 		s.l.Error("failed to end existing sessions after a password reset",
 			zap.String("userId", user.ID.String()), zap.Error(err))
 	}

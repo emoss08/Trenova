@@ -50,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/authservice"
+	"github.com/emoss08/trenova/internal/core/services/autheventservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptbatchservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
@@ -260,6 +261,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	trailerservice.New,
 	workerservice.New,
 	auditservice.New,
+	auditservice.NewSecurityAuditor,
+	autheventservice.New,
 	datatransformer.New,
 	workflowstarter.New,
 	workflowstarter.NewSignalStarter,

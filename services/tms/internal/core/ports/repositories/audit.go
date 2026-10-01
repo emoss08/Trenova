@@ -44,9 +44,10 @@ type GetRecentEntriesRequest struct {
 }
 
 type DeleteAuditEntriesRequest struct {
-	OrgID  pulid.ID
-	BuID   pulid.ID
-	Before int64
+	OrgID          pulid.ID
+	BuID           pulid.ID
+	Before         int64
+	CriticalBefore int64
 }
 
 type AuditRepository interface {

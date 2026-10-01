@@ -127,3 +127,5 @@ func (v PolicyEffect) IsValid() bool {
 		return false
 	}
 }
+
+const AuthEventRetentionDays = 365

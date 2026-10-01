@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -282,6 +283,19 @@ func (m *mockAuditDLQRepository) DeleteRecovered(
 	return args.Get(0).(int64), args.Error(1)
 }
 
+type mockAuthEventRepository struct {
+	mock.Mock
+}
+
+func (m *mockAuthEventRepository) Create(ctx context.Context, event *iam.AuthEvent) error {
+	return m.Called(ctx, event).Error(0)
+}
+
+func (m *mockAuthEventRepository) DeleteBefore(ctx context.Context, before int64) (int64, error) {
+	args := m.Called(ctx, before)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 func TestProcessAuditBatchActivity_Success(t *testing.T) {
 	testSuite := &testsuite.WorkflowTestSuite{}
 	env := testSuite.NewTestActivityEnvironment()
@@ -445,11 +459,18 @@ func TestDeleteAuditEntriesActivity_NoRetentionConfig(t *testing.T) {
 	mockBufferRepo := new(mockAuditBufferRepository)
 	mockDLQRepo := new(mockAuditDLQRepository)
 
+	authEventRepo := new(mockAuthEventRepository)
+	authEventRepo.On("DeleteBefore", mock.Anything, mock.MatchedBy(func(before int64) bool {
+		want := time.Now().AddDate(0, 0, -iam.AuthEventRetentionDays).Unix()
+		return before <= want+60 && before >= want-60
+	})).Return(int64(4), nil)
+
 	activities := &Activities{
 		ar:   mockAuditRepo,
 		abr:  mockBufferRepo,
 		adlq: mockDLQRepo,
 		dr:   mockDataRetentionRepo,
+		aer:  authEventRepo,
 	}
 
 	mockDataRetentionRepo.On("List", mock.Anything).Return(
@@ -467,6 +488,7 @@ func TestDeleteAuditEntriesActivity_NoRetentionConfig(t *testing.T) {
 	require.NoError(t, result.Get(&response))
 
 	assert.Equal(t, 0, response.TotalDeleted)
+	assert.Equal(t, 4, response.AuthEventsDeleted)
 	assert.Contains(t, response.Result, "No data retention entities configured")
 
 	mockDataRetentionRepo.AssertExpectations(t)
@@ -482,11 +504,18 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 	mockBufferRepo := new(mockAuditBufferRepository)
 	mockDLQRepo := new(mockAuditDLQRepository)
 
+	authEventRepo := new(mockAuthEventRepository)
+	authEventRepo.On("DeleteBefore", mock.Anything, mock.MatchedBy(func(before int64) bool {
+		want := time.Now().AddDate(0, 0, -iam.AuthEventRetentionDays).Unix()
+		return before <= want+60 && before >= want-60
+	})).Return(int64(4), nil)
+
 	activities := &Activities{
 		ar:   mockAuditRepo,
 		abr:  mockBufferRepo,
 		adlq: mockDLQRepo,
 		dr:   mockDataRetentionRepo,
+		aer:  authEventRepo,
 	}
 
 	orgID := pulid.MustNew("org_")
@@ -506,8 +535,10 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 	expectedTimestamp := time.Now().AddDate(0, 0, -30).Unix()
 	mockAuditRepo.On("DeleteAuditEntries", mock.Anything, mock.MatchedBy(
 		func(req repositories.DeleteAuditEntriesRequest) bool {
+			criticalFloor := time.Now().AddDate(0, 0, -audit.CriticalRetentionDays).Unix()
 			return req.OrgID == orgID && req.BuID == buID &&
-				req.Before <= expectedTimestamp+60 && req.Before >= expectedTimestamp-60
+				req.Before <= expectedTimestamp+60 && req.Before >= expectedTimestamp-60 &&
+				req.CriticalBefore <= criticalFloor+60 && req.CriticalBefore >= criticalFloor-60
 		},
 	)).Return(int64(100), nil)
 
@@ -520,6 +551,7 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 	require.NoError(t, result.Get(&response))
 
 	assert.Equal(t, 100, response.TotalDeleted)
+	assert.Equal(t, 4, response.AuthEventsDeleted)
 
 	mockDataRetentionRepo.AssertExpectations(t)
 	mockAuditRepo.AssertExpectations(t)
