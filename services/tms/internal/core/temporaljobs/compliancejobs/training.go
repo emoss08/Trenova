@@ -70,7 +70,8 @@ func (a *Activities) TrainingReminderSweepActivity(
 // abandon the rest of the sweep.
 func (a *Activities) refreshTrainingRollups(ctx context.Context, state *trainingSweepState) {
 	for workerID, tenantInfo := range state.touchedWorkers {
-		if _, err := a.training.RefreshRollup(ctx, tenantInfo, workerID); err != nil {
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+		if _, err := a.training.RefreshRollup(tenantCtx, tenantInfo, workerID); err != nil {
 			a.logger.Warn("failed to refresh training rollup after sweep",
 				zap.String("workerId", workerID.String()),
 				zap.Error(err))

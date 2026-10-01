@@ -167,7 +167,8 @@ func (a *Activities) CredentialExpirySweepActivity(
 
 	for workerID, tenantInfo := range state.touchedWorkers {
 		state.result.WorkersChecked++
-		if _, err := a.credentials.RefreshCompliance(ctx, tenantInfo, workerID); err != nil {
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+		if _, err := a.credentials.RefreshCompliance(tenantCtx, tenantInfo, workerID); err != nil {
 			a.logger.Warn("failed to refresh compliance after sweep",
 				zap.String("workerId", workerID.String()),
 				zap.Error(err))
@@ -205,8 +206,9 @@ func (s *sweepState) recordDueDriver(
 func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 	for workerID, driver := range state.dueDrivers {
 		state.result.DriversRaised++
+		tenantCtx := dbscope.WithTenant(ctx, driver.tenantInfo.DBTenant())
 		if a.watchtower != nil {
-			a.watchtower.Upsert(ctx, watchtowersources.DescribeExpiringCredentials(
+			a.watchtower.Upsert(tenantCtx, watchtowersources.DescribeExpiringCredentials(
 				watchtowersources.ExpiringCredentials{
 					TenantInfo: driver.tenantInfo,
 					WorkerID:   workerID,
@@ -216,7 +218,7 @@ func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 				},
 			))
 		}
-		services.PublishAgentEvent(ctx, a.publisher, services.AgentEvent{
+		services.PublishAgentEvent(tenantCtx, a.publisher, services.AgentEvent{
 			Kind:       agent.EventWorkerCredentialExpiring,
 			SubjectID:  workerID,
 			TenantInfo: driver.tenantInfo,

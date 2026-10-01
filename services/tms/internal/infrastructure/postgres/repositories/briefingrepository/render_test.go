@@ -24,3 +24,13 @@ func TestUpsertBumpsTheStoredRowsVersion(t *testing.T) {
 	assert.NotContains(t, sql, "version = version + 1", sql)
 	assert.Contains(t, sql, "COALESCE(user_id, '')) DO UPDATE", sql)
 }
+
+func TestDeleteBeforeSelectsTheOldestBatchByID(t *testing.T) {
+	t.Parallel()
+
+	sql := buildDeleteBefore(bun.NewDB(nil, pgdialect.New()), "2026-01-01", 500).String()
+
+	assert.Contains(t, sql, "abrf.id IN (SELECT abrf.id FROM", sql)
+	assert.Contains(t, sql, "abrf.briefing_date < '2026-01-01' ORDER BY abrf.briefing_date LIMIT 500)", sql)
+	assert.NotContains(t, sql, "IN (?)", sql)
+}

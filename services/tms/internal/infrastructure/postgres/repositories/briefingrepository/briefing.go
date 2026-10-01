@@ -213,24 +213,12 @@ func (r *repository) DeleteBefore(
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "delete briefings past retention across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.BriefingColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxDeleteBatch {
 			limit = maxDeleteBatch
 		}
 
-		res, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*briefing.Briefing)(nil)).
-			Where(
-				cols.ID.In()+" (SELECT "+cols.ID.Qualified()+" FROM "+
-					buncolgen.BriefingTable.Name+" AS "+buncolgen.BriefingTable.Alias+
-					" WHERE "+cols.BriefingDate.Qualified()+" < ? ORDER BY "+
-					cols.BriefingDate.Qualified()+" LIMIT ?)",
-				req.BeforeDate,
-				limit,
-			).
-			Exec(ctx)
+		res, err := buildDeleteBefore(r.db.DBForContext(ctx), req.BeforeDate, limit).Exec(ctx)
 		if err != nil {
 			return 0, fmt.Errorf("delete briefings: %w", err)
 		}
@@ -238,6 +226,20 @@ func (r *repository) DeleteBefore(
 
 		return int(affected), nil
 	})
+}
+
+func buildDeleteBefore(db bun.IDB, beforeDate string, limit int) *bun.DeleteQuery {
+	cols := buncolgen.BriefingColumns
+	return db.NewDelete().
+		Model((*briefing.Briefing)(nil)).
+		Where(
+			cols.ID.Qualified()+" IN (SELECT "+cols.ID.Qualified()+" FROM "+
+				buncolgen.BriefingTable.Name+" AS "+buncolgen.BriefingTable.Alias+
+				" WHERE "+cols.BriefingDate.Qualified()+" < ? ORDER BY "+
+				cols.BriefingDate.Qualified()+" LIMIT ?)",
+			beforeDate,
+			limit,
+		)
 }
 
 func (r *repository) stamp(

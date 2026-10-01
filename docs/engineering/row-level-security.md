@@ -154,7 +154,13 @@ deny, make sure the scope is the tenant the question is about.
   (inside the listing repository method) and binds each item's tenant before
   working on it: `dbscope.WithTenant(ctx, tenantInfo.DBTenant())`.
   `pagination.TenantInfo` implements `dbscope.TenantScoped`, so an activity that
-  takes one is bound by the interceptor.
+  takes one is bound by the interceptor. The same applies to a second pass over
+  what the sweep collected (a map of workers to refresh, drivers to raise,
+  digests to send): bind each entry's tenant before calling into a service.
+- **Projectors and publishers.** Code that writes on behalf of a record it was
+  handed (the watchtower projector, the agent event publisher, the AI audit
+  projector's per-tenant pass) binds that record's tenant itself, so a caller
+  that holds only a system scope or none cannot make it fail or write elsewhere.
 - **Two organizations, one transaction.** An internal EDI approval or transfer
   change writes both organizations atomically. Those transactions run under the
   system scope, with the tenant filters still written in Go; a read of the other

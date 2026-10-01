@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -49,6 +50,7 @@ func (p *Publisher) Publish(ctx context.Context, event services.AgentEvent) {
 		log.Warn("agent event is missing its subject or tenant; nothing will run")
 		return
 	}
+	ctx = dbscope.WithTenant(ctx, event.TenantInfo.DBTenant())
 
 	definitions, err := p.definitions.ListEnabledByTrigger(
 		ctx,

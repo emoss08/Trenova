@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -108,6 +109,7 @@ func (p *Projector) upsert(
 		return nil, multiErr
 	}
 
+	ctx = dbscope.WithTenant(ctx, input.TenantInfo.DBTenant())
 	saved, inserted, err := p.repo.Upsert(ctx, item)
 	if err != nil {
 		return nil, err
@@ -132,6 +134,7 @@ func (p *Projector) Resolve(
 	kind watchtower.SourceKind,
 	sourceID string,
 ) {
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 	item, err := p.repo.Resolve(ctx, repositories.ResolveWatchtowerItemRequest{
 		TenantInfo: tenant,
 		SourceKind: kind,

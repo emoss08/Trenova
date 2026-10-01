@@ -288,7 +288,8 @@ func (a *Activities) flushDigests(ctx context.Context, state *digestState) {
 		if len(bucket.items) == 0 {
 			continue
 		}
-		sent, err := a.sendDigest(ctx, state, workerID, bucket)
+		tenantCtx := dbscope.WithTenant(ctx, bucket.tenantInfo.DBTenant())
+		sent, err := a.sendDigest(tenantCtx, state, workerID, bucket)
 		switch {
 		case err != nil:
 			state.result.Failed++
