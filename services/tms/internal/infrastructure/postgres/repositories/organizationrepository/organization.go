@@ -49,7 +49,8 @@ func (r *repository) GetByID(
 	)
 
 	cachedOrg, err := r.cache.GetByID(ctx, req.TenantInfo.OrgID)
-	if err == nil && cachedOrg.ID.IsNotNil() {
+	if err == nil && cachedOrg.ID.IsNotNil() &&
+		cachedOrg.BusinessUnitID == req.TenantInfo.BuID {
 		log.Debug("organization found in cache", zap.String("orgID", cachedOrg.ID.String()))
 
 		needsRefresh := (req.IncludeState && cachedOrg.State == nil) ||
@@ -218,6 +219,7 @@ func (r *repository) Update(
 		NewUpdate().
 		Model(org).
 		WherePK().
+		Where(buncolgen.OrganizationColumns.BusinessUnitID.Eq(), org.BusinessUnitID).
 		Where("version = ?", ov).
 		OmitZero().
 		Value(
