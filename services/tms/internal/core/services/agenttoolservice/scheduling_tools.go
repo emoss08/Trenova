@@ -361,7 +361,7 @@ func newEndWorkerShiftAssignmentTool(
 	schedules scheduleKeeper,
 	scope teamScope,
 ) serviceports.AgentTool {
-	return newReportingReceivableTool(scheduleSpec(
+	spec := scheduleSpec(
 		"end_worker_shift_assignment",
 		"End a worker's shift pattern after a day, leaving them on no pattern from the "+
 			"day after. Use assign_worker_shift instead to move them onto another pattern.",
@@ -377,7 +377,12 @@ func newEndWorkerShiftAssignmentTool(
 		func(params map[string]any) (serviceports.ToolTarget, bool) {
 			return targetOf(params, paramShiftAssignmentID, permission.ResourceWorkerSchedule)
 		},
-	), receivablePlan[*assignmentEnd, *schedulingservice.AssignmentChange]{
+	)
+	spec.searchTerms = []string{"shift pattern", "end shift", "remove from shift pattern"}
+
+	return newReportingReceivableTool(spec, receivablePlan[
+		*assignmentEnd, *schedulingservice.AssignmentChange,
+	]{
 		request: func(params *serviceports.ToolExecuteParams) (*assignmentEnd, error) {
 			id, err := requirePulid(params.Params, paramShiftAssignmentID)
 			if err != nil {
@@ -468,7 +473,7 @@ func newSetWorkerAvailabilityPreferenceTool(
 	schedules scheduleKeeper,
 	scope teamScope,
 ) serviceports.AgentTool {
-	return newReportingReceivableTool(scheduleSpec(
+	spec := scheduleSpec(
 		"set_worker_availability_preference",
 		"Record whether a worker prefers, is available for or cannot work one weekday, "+
 			"as they told the office. The rota shows it beside their pattern; it does not "+
@@ -486,7 +491,12 @@ func newSetWorkerAvailabilityPreferenceTool(
 		},
 		[]string{paramWorkerID, paramDayOfWeek, paramPreference},
 		targetScheduledWorker,
-	), receivablePlan[*schedulingservice.SetPreferenceRequest, *schedulingservice.PreferenceChange]{
+	)
+	spec.searchTerms = []string{"availability", "unavailable", "prefers", "weekday preference"}
+
+	return newReportingReceivableTool(spec, receivablePlan[
+		*schedulingservice.SetPreferenceRequest, *schedulingservice.PreferenceChange,
+	]{
 		request: preferenceRequest,
 		plan: func(
 			ctx context.Context,
@@ -579,8 +589,9 @@ func renderPreference(
 
 func newProposeShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name:     "propose_shift_swap",
-		artifact: workerRecordEntity,
+		name:        "propose_shift_swap",
+		searchTerms: []string{"trade shifts", "shift trade", "swap shifts"},
+		artifact:    workerRecordEntity,
 		description: "Raise a shift swap for a worker who asked the office: they give up a " +
 			"day, handed to another worker or traded for one of theirs. It waits for the " +
 			"other worker to accept and the office to approve.",
@@ -713,12 +724,14 @@ type swapDecisionSpec struct {
 	egress      agent.EgressClass
 	maxTier     agent.AutonomyTier
 	personOnly  bool
+	searchTerms []string
 }
 
 func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
 		name:        spec.name,
 		description: spec.description,
+		searchTerms: spec.searchTerms,
 		artifact:    workerRecordEntity,
 		resource:    permission.ResourceShiftSwap,
 		operation:   spec.operation,
@@ -819,7 +832,8 @@ func newApproveShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 
 func newRejectShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 	return newSwapDecisionTool(schedules, &swapDecisionSpec{
-		name: "reject_shift_swap",
+		name:        "reject_shift_swap",
+		searchTerms: []string{"deny swap", "decline swap"},
 		description: "Reject a shift swap, with the reason the workers read, when the " +
 			"office cannot let the day change hands.",
 		rationale: "Refuses a request the workers read in their portal; a person approves " +

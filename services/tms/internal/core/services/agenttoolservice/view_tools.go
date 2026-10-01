@@ -58,6 +58,10 @@ func newSaveTableViewTool(
 
 func (t *saveTableViewTool) Name() string { return "save_table_view" }
 
+func (t *saveTableViewTool) SearchTerms() []string {
+	return []string{"save view", "saved view", "pick again later"}
+}
+
 func (t *saveTableViewTool) Description() string {
 	return "Save a described view of a table so it appears in that table's view picker and " +
 		"can be opened again without describing it. Use it when somebody says they want to " +

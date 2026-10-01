@@ -82,6 +82,8 @@ type recurringKind[E any] struct {
 	apply       func(entity *E, fields *recurringFields, given map[string]bool)
 	facts       func(entity *E) recurringFacts
 	sensitive   string
+	createTerms []string
+	updateTerms []string
 }
 
 type recurringPayTool[E any] struct {
@@ -102,6 +104,14 @@ func (t *recurringPayTool[E]) Name() string {
 	}
 
 	return t.kind.createName
+}
+
+func (t *recurringPayTool[E]) SearchTerms() []string {
+	if t.update {
+		return t.kind.updateTerms
+	}
+
+	return t.kind.createTerms
 }
 
 func (t *recurringPayTool[E]) Description() string {
@@ -464,6 +474,7 @@ func deductionKind() recurringKind[driverpay.RecurringDeduction] {
 		frequencies: deductionFrequencies.AsStrings(),
 		escrow:      true,
 		sensitive:   "amountMinor",
+		updateTerms: []string{"lease deduction", "raise deduction", "pause deduction"},
 		create: func(
 			tenant pagination.TenantInfo,
 			fields *recurringFields,
@@ -537,6 +548,8 @@ func earningKind() recurringKind[driverpay.RecurringEarning] {
 		statuses:    earningStatuses.AsStrings(),
 		frequencies: earningFrequencies.AsStrings(),
 		sensitive:   "amountMinor",
+		createTerms: []string{"bonus", "recurring bonus"},
+		updateTerms: []string{"pause bonus", "stop bonus", "edit bonus"},
 		create: func(
 			tenant pagination.TenantInfo,
 			fields *recurringFields,

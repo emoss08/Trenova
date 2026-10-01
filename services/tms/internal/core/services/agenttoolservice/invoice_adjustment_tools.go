@@ -319,7 +319,8 @@ type submissionPlan struct {
 
 func newSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name: "submit_invoice_adjustment",
+		name:        "submit_invoice_adjustment",
+		searchTerms: []string{"credit and rebill", "rebill"},
 		description: "Propose crediting, rebilling, reversing or writing off posted invoices. " +
 			"Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to " +
 			"submit a saved draft as it stands. Each executes at once or waits for approval as " +
@@ -776,7 +777,8 @@ func newApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.A
 
 func newRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.AgentTool {
 	return newDecisionTool(adjustments, false, &receivableSpec{
-		name: "reject_invoice_adjustment",
+		name:        "reject_invoice_adjustment",
+		searchTerms: []string{"deny adjustment", "decline adjustment"},
 		description: "Propose rejecting an invoice adjustment that waits for approval, with the " +
 			"reason the submitter will read. Nothing is credited and the invoice is left as it " +
 			"is. A person always decides.",

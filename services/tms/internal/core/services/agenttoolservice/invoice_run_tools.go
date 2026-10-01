@@ -204,6 +204,11 @@ func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) serviceports.Agent
 
 	return newReceivableTool(&receivableSpec{
 		name: "adjust_invoice_run_membership",
+		searchTerms: []string{
+			"exclude shipment",
+			"remove from invoice run",
+			"drop from invoice run",
+		},
 		description: "Take shipments off an invoice run that is still a proposal, put them back, " +
 			"or move them to another of the same customer's invoices on it. An excluded shipment " +
 			"stays approved and rolls into the next period. Every exclusion needs a reason the " +

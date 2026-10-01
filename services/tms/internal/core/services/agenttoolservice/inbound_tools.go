@@ -275,6 +275,10 @@ func newMarkInboundMessageTool(inbox inboundMessageDesk) serviceports.AgentTool 
 
 func (t *markInboundMessageTool) Name() string { return "mark_inbound_message" }
 
+func (t *markInboundMessageTool) SearchTerms() []string {
+	return []string{"spam", "mark handled", "actioned", "ignored"}
+}
+
 func (t *markInboundMessageTool) Description() string {
 	return "Settle a message that arrived on a monitored address as Actioned or Ignored. " +
 		"Actioned when what it asked for has been done — the load created, the document " +

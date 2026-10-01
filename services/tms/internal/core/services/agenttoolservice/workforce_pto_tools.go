@@ -229,6 +229,11 @@ func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 		permission.ResourceWorkerPTO,
 		permission.OpUpdate,
 	), properties, "ptoId"), "ptoId", permission.ResourceWorkerPTO)
+	spec.searchTerms = []string{
+		"edit time off request",
+		"edit vacation request",
+		"change pto request",
+	}
 	spec.egress = agent.EgressDriverVisible
 
 	return newReportingReceivableTool(spec, receivablePlan[
@@ -341,6 +346,7 @@ func newAdjustWorkerPTOBalanceTool(ledger ptoBalanceAdjuster) serviceports.Agent
 		paramEffectiveOn: dayProperty("The day it takes effect. Defaults to today."),
 		fieldNote:        stringProperty("Why, kept on the ledger. Required.", wfShortChars),
 	}, paramWorkerID, paramPTOType, paramAmountDays, fieldNote))
+	spec.searchTerms = []string{"balance adjustment", "pto balance"}
 	spec.egress = agent.EgressMoney
 	spec.reversible = false
 

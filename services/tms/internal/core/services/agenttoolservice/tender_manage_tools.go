@@ -52,6 +52,10 @@ func newCancelTenderTool(tenders tenderManager) serviceports.AgentTool {
 
 func (t *cancelTenderTool) Name() string { return "cancel_tender" }
 
+func (t *cancelTenderTool) SearchTerms() []string {
+	return []string{"withdraw tender", "covered another way"}
+}
+
 func (t *cancelTenderTool) Description() string {
 	return "Withdraw a live tender: every offer a carrier still holds is withdrawn and its " +
 		"answer link stops working, and the carriers not yet asked are skipped. Use it when " +
@@ -187,6 +191,10 @@ func newRecordTenderResponseTool(tenders tenderManager) serviceports.AgentTool {
 }
 
 func (t *recordTenderResponseTool) Name() string { return "record_tender_response" }
+
+func (t *recordTenderResponseTool) SearchTerms() []string {
+	return []string{"accepted by phone", "carrier answer", "tender answer"}
+}
 
 func (t *recordTenderResponseTool) Description() string {
 	return "Record a carrier's answer to a tender offer that reached you by phone or email " +

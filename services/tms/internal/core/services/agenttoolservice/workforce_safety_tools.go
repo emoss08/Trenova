@@ -910,6 +910,7 @@ func newDeleteWorkerRecognitionTool(events safetyKeeper) serviceports.AgentTool 
 		paramRecognitionID: idProperty("The recognition, from list_worker_safety_events. " +
 			"Never guess one."),
 	}, paramRecognitionID), paramRecognitionID, permission.ResourceWorkerRecognition)
+	spec.searchTerms = []string{"kudos", "remove recognition"}
 	spec.maxTier = agent.TierPropose
 	spec.reversible = false
 
@@ -1144,6 +1145,7 @@ func newUpdateSafetyViolationTool(events safetyKeeper) serviceports.AgentTool {
 		permission.ResourceWorkerSafetyEvent,
 		permission.OpUpdate,
 	), properties, paramViolationID), paramViolationID, permission.ResourceWorkerSafetyEvent)
+	spec.searchTerms = []string{"fix violation", "basic", "severity weight"}
 
 	return newReportingReceivableTool(spec,
 		receivablePlan[*violationEdit, *workersafetyservice.ViolationChange]{
@@ -1207,6 +1209,7 @@ func newDeleteSafetyViolationTool(events safetyKeeper) serviceports.AgentTool {
 		permission.OpDelete,
 	), map[string]any{paramViolationID: violationIDProperty()}, paramViolationID),
 		paramViolationID, permission.ResourceWorkerSafetyEvent)
+	spec.searchTerms = []string{"remove violation", "csa"}
 	spec.maxTier = agent.TierPropose
 	spec.reversible = false
 

@@ -455,7 +455,8 @@ type createInvoicesRequest struct {
 
 func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name: "create_invoice",
+		name:        "create_invoice",
+		searchTerms: []string{"invoice delivered", "bill completed"},
 		description: "Propose drafting invoices for completed freight: an order's billable " +
 			"shipments as one grouped invoice, or shipments on their own. A split-billed " +
 			"shipment makes one draft per payer. Drafts are posted with post_invoice. A " +
@@ -747,7 +748,8 @@ func memoLine(fields map[string]any) (*serviceports.CreateMemoLineInput, error) 
 
 func newVoidInvoiceTool(invoices invoiceVoider) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name: "void_invoice",
+		name:        "void_invoice",
+		searchTerms: []string{"kill invoice", "cancel invoice"},
 		description: "Propose voiding an invoice. A draft is voided in place; a posted one " +
 			"through a full-reversal adjustment that credits it, which may wait for an " +
 			"approver. Its freight is rebilled or canceled as you say. Unapply payments and " +

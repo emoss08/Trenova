@@ -385,6 +385,10 @@ func newUpdateReportTool(reports reportDefinitionWriter) serviceports.AgentTool 
 
 func (t *updateReportTool) Name() string { return "update_report" }
 
+func (t *updateReportTool) SearchTerms() []string {
+	return []string{"rename report", "share report", "visibility", "edit report"}
+}
+
 func (t *updateReportTool) Description() string {
 	return "Change a saved report the person owns: its definition, name, description, " +
 		"category, tags, visibility or default format. Only what you send changes; " +

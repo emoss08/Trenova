@@ -366,8 +366,9 @@ func (e *orderEdit) entity(ctx context.Context, orders orderKeeper) (*order.Orde
 
 func newUpdateOrderTool(orders orderKeeper) serviceports.AgentTool {
 	base := newReportingReceivableTool(&receivableSpec{
-		name:     "update_order",
-		artifact: orderRecordEntity,
+		name:        "update_order",
+		searchTerms: []string{"purchase order", "po", "fix bol", "edit order"},
+		artifact:    orderRecordEntity,
 		description: "Change an order's customer, owner, PO number, BOL, currency, quoted " +
 			"amount or base amount. Send only what changes. Its status and total follow its " +
 			"shipments and charges and cannot be set here.",

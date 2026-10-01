@@ -578,6 +578,7 @@ func newCloseWorkerTrainingTool(training trainingKeeper) serviceports.AgentTool 
 		fieldReason: stringProperty("Why. Required to waive; what the record will "+
 			"say.", wfShortChars),
 	}, paramTrainingID, paramTrainingClose), paramTrainingID, permission.ResourceWorkerTraining)
+	spec.searchTerms = []string{"retired course", "close without completion"}
 	spec.maxTier = agent.TierPropose
 
 	return newReportingReceivableTool(spec, receivablePlan[

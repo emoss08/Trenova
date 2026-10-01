@@ -65,8 +65,9 @@ func submitDecision(text *lifecycleText) *settlementDecision {
 		reversible: true,
 		rationale: "Moves a draft into the approval queue inside Trenova; nothing is paid and " +
 			"a reviewer sends it back to draft.",
-		fields:   []string{fieldStatus, fieldSubmittedAt},
-		volatile: []string{fieldSubmittedAt},
+		fields:      []string{fieldStatus, fieldSubmittedAt},
+		volatile:    []string{fieldSubmittedAt},
+		searchTerms: []string{"send for approval", "ready for approval"},
 	}
 }
 
@@ -86,8 +87,9 @@ func approveDecision(text *lifecycleText) *settlementDecision {
 		maxTier:    agent.TierPropose,
 		rationale: "Commits the organization to what the " + text.payee + " is paid; only " +
 			"a person approves, and hands-off approval is the settlement control's rule.",
-		fields:   []string{fieldStatus, fieldApprovedAt},
-		volatile: []string{fieldApprovedAt},
+		fields:      []string{fieldStatus, fieldApprovedAt},
+		volatile:    []string{fieldApprovedAt},
+		searchTerms: []string{"approve payout", "approve pay period"},
 	}
 }
 
@@ -110,9 +112,10 @@ func rejectDecision(text *lifecycleText) *settlementDecision {
 			paramSettlementReason: settlementReasonProperty("What is wrong and what would " +
 				"fix it, in a sentence payroll can act on."),
 		},
-		required: []string{paramSettlementReason},
-		fill:     fillSettlementReason,
-		fields:   []string{fieldStatus, fieldNotes},
+		required:    []string{paramSettlementReason},
+		fill:        fillSettlementReason,
+		fields:      []string{fieldStatus, fieldNotes},
+		searchTerms: []string{"return to draft"},
 	}
 }
 
@@ -203,6 +206,7 @@ func recalculateDecision(text *lifecycleText) *settlementDecision {
 		fields: []string{
 			fieldHasExceptions, "shipmentCount", "payProfileName", "classification",
 		},
+		searchTerms: []string{"rerun totals", "recompute", "refresh totals"},
 	}
 }
 
@@ -252,9 +256,10 @@ func removeAdjustmentDecision(text *lifecycleText) *settlementDecision {
 					text.getTool + " lists. Never guess one.",
 			},
 		},
-		required: []string{paramLineID},
-		fill:     fillAdjustmentLine,
-		fields:   []string{fieldHasExceptions},
+		required:    []string{paramLineID},
+		fill:        fillAdjustmentLine,
+		fields:      []string{fieldHasExceptions},
+		searchTerms: []string{"delete adjustment", "undo adjustment", "drop adjustment line"},
 	}
 }
 

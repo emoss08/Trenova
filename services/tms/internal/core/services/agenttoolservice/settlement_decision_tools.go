@@ -86,6 +86,7 @@ type settlementDecision struct {
 	fields           []string
 	volatile         []string
 	refs             map[string]permission.Resource
+	searchTerms      []string
 }
 
 type settlementDecisionTool[E any] struct {
@@ -97,6 +98,8 @@ type settlementDecisionTool[E any] struct {
 func (t *settlementDecisionTool[E]) Name() string { return t.decision.name }
 
 func (t *settlementDecisionTool[E]) Description() string { return t.decision.description }
+
+func (t *settlementDecisionTool[E]) SearchTerms() []string { return t.decision.searchTerms }
 
 func (t *settlementDecisionTool[E]) ParamSchema() map[string]any {
 	properties := map[string]any{

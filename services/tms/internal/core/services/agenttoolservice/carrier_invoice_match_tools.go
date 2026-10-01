@@ -54,6 +54,7 @@ type matchDecision struct {
 	noteRequired bool
 	noteText     string
 	rationale    string
+	searchTerms  []string
 }
 
 type carrierInvoiceMatchTool struct {
@@ -70,6 +71,8 @@ var (
 func (t *carrierInvoiceMatchTool) Name() string { return t.decision.name }
 
 func (t *carrierInvoiceMatchTool) Description() string { return t.decision.description }
+
+func (t *carrierInvoiceMatchTool) SearchTerms() []string { return t.decision.searchTerms }
 
 func (t *carrierInvoiceMatchTool) ParamSchema() map[string]any {
 	required := []string{paramMatchID}
@@ -295,6 +298,7 @@ func provideAcceptCarrierInvoiceMatchTool(
 		noteText:   "Anything accounts payable should know about the acceptance.",
 		rationale: "Clears a carrier's invoice for payment; only a person approves what the " +
 			"organization pays.",
+		searchTerms: []string{"clear invoice", "invoice matches"},
 	}}
 }
 

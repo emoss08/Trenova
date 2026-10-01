@@ -57,6 +57,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "clear invoice",
+        "invoice matches"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_invoice_match",
@@ -795,6 +799,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "escrow debit",
+        "manual escrow adjustment"
+      ],
       "policy": {
         "kind": "action",
         "resource": "escrow_account",
@@ -889,6 +897,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "exclude shipment",
+        "remove from invoice run",
+        "drop from invoice run"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice_run",
@@ -958,6 +971,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "balance adjustment",
+        "pto balance"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_pto",
@@ -1277,6 +1294,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "carrier intelligence fix",
+        "intelligence corrections"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_intelligence",
@@ -1418,6 +1439,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "unapplied cash",
+        "unapplied payment"
+      ],
       "policy": {
         "kind": "action",
         "resource": "customer_payment",
@@ -1628,6 +1653,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "approve payout",
+        "approve pay period"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -1762,6 +1791,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "approve payout",
+        "approve pay period"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -2129,7 +2162,9 @@
         "homepage",
         "home screen",
         "landing page",
-        "widgets"
+        "widgets",
+        "reorder",
+        "rearrange"
       ],
       "prerequisites": [
         "get_my_home_layout"
@@ -2205,6 +2240,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "late fees",
+        "finance charge"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -2248,6 +2287,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "biller",
+        "reviewer"
+      ],
       "policy": {
         "kind": "action",
         "resource": "billing_queue",
@@ -2884,6 +2927,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "scanned card",
+        "card scan"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_credential",
@@ -3194,6 +3241,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "drop carrier",
+        "uncover move",
+        "remove outside carrier"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment_move",
@@ -3239,6 +3291,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "draw again",
+        "redo draw",
+        "cancel selection"
+      ],
       "policy": {
         "kind": "action",
         "resource": "dot_random_pool",
@@ -3322,6 +3379,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "recall tender",
+        "withdraw edi tender"
+      ],
       "policy": {
         "kind": "action",
         "resource": "edi",
@@ -3627,6 +3688,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "withdraw tender",
+        "covered another way"
+      ],
       "policy": {
         "kind": "action",
         "resource": "tender",
@@ -3672,6 +3737,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "drop checklist",
+        "no longer applies"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_checklist",
@@ -3716,6 +3785,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "cancel vacation",
+        "cancel time off",
+        "cancel approved vacation"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_pto",
@@ -4110,6 +4184,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "returned from leave",
+        "leave ended",
+        "close fmla"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_leave",
@@ -4203,6 +4282,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "retired course",
+        "close without completion"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_training",
@@ -5781,6 +5864,10 @@
         "required": null,
         "type": "object"
       },
+      "searchTerms": [
+        "invoice delivered",
+        "bill completed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -6187,6 +6274,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "bonus",
+        "recurring bonus"
+      ],
       "policy": {
         "kind": "action",
         "resource": "recurring_earning",
@@ -7560,6 +7651,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "previous employer",
+        "duplicate employer",
+        "remove employer"
+      ],
       "policy": {
         "kind": "action",
         "resource": "qualification",
@@ -7717,6 +7813,9 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "remove leave day"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_leave",
@@ -7876,6 +7975,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "remove violation",
+        "csa"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_safety_event",
@@ -8002,6 +8105,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "duplicate injury",
+        "remove injury case"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_injury",
@@ -8041,6 +8148,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "kudos",
+        "remove recognition"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_recognition",
@@ -9288,6 +9399,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "fix comment",
+        "reword comment",
+        "typo"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment_comment",
@@ -9430,6 +9546,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "shift pattern",
+        "end shift",
+        "remove from shift pattern"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_schedule",
@@ -10339,6 +10460,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "rate con",
+        "create rate con",
+        "carrier confirmation"
+      ],
       "policy": {
         "kind": "action",
         "resource": "rate_confirmation",
@@ -10382,6 +10508,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "next occurrence",
+        "generate early",
+        "next slot",
+        "spin up"
+      ],
       "policy": {
         "kind": "action",
         "resource": "recurring_shipment",
@@ -12654,6 +12786,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "park item",
+        "park until"
+      ],
       "policy": {
         "kind": "action",
         "resource": "billing_queue",
@@ -21632,6 +21768,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "spam",
+        "mark handled",
+        "actioned",
+        "ignored"
+      ],
       "policy": {
         "kind": "action",
         "resource": "inbound_message",
@@ -22558,6 +22700,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "stop dispatching",
+        "dispatch block",
+        "no loads",
+        "hold until renewed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_dispatch_hold",
@@ -23557,6 +23705,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "trade shifts",
+        "shift trade",
+        "swap shifts"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shift_swap",
@@ -23976,6 +24129,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "rerun totals",
+        "recompute",
+        "refresh totals"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -24014,6 +24172,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "rerun totals",
+        "recompute",
+        "refresh totals"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -24818,6 +24981,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "signed rate con",
+        "faxed",
+        "carrier signed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "rate_confirmation",
@@ -25090,6 +25258,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "accepted by phone",
+        "carrier answer",
+        "tender answer"
+      ],
       "policy": {
         "kind": "action",
         "resource": "tender",
@@ -25637,6 +25810,9 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "return to draft"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -25682,6 +25858,9 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "return to draft"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -25727,6 +25906,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "deny adjustment",
+        "decline adjustment"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -25814,6 +25997,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "deny swap",
+        "decline swap"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shift_swap",
@@ -26114,6 +26301,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "delete adjustment",
+        "undo adjustment",
+        "drop adjustment line"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -26157,6 +26349,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "delete adjustment",
+        "undo adjustment",
+        "drop adjustment line"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -26254,6 +26451,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "drop charge",
+        "delete charge",
+        "remove accessorial"
+      ],
       "policy": {
         "kind": "action",
         "resource": "order",
@@ -26707,6 +26909,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "fmla certification",
+        "certification clock"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_leave",
@@ -27102,6 +27308,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "carrier finding",
+        "insurance lapse",
+        "finding resolved"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_intelligence",
@@ -27247,6 +27458,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "close service failure",
+        "close out failure"
+      ],
       "policy": {
         "kind": "action",
         "resource": "service_failure",
@@ -27949,6 +28164,9 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "mark reviewed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "service_failure",
@@ -28666,6 +28884,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "save view",
+        "saved view",
+        "pick again later"
+      ],
       "policy": {
         "kind": "action",
         "resource": "table_configuration",
@@ -29704,6 +29927,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "split charge",
+        "payer split",
+        "allocate charge"
+      ],
       "policy": {
         "kind": "action",
         "resource": "order",
@@ -30042,6 +30270,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "availability",
+        "unavailable",
+        "prefers",
+        "weekday preference"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_schedule",
@@ -30108,6 +30342,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "loop in teammate",
+        "teammate",
+        "colleague"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -30393,7 +30632,10 @@
       "searchTerms": [
         "pay dispute",
         "settlement dispute",
-        "driver complaint"
+        "driver complaint",
+        "under review",
+        "mark under review",
+        "investigate dispute"
       ],
       "policy": {
         "kind": "action",
@@ -30482,6 +30724,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "send for approval",
+        "ready for approval"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -30520,6 +30766,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "send for approval",
+        "ready for approval"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -30651,6 +30901,10 @@
         "required": [],
         "type": "object"
       },
+      "searchTerms": [
+        "credit and rebill",
+        "rebill"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -31140,6 +31394,9 @@
         },
         "type": "object"
       },
+      "searchTerms": [
+        "send to billing"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment",
@@ -32262,6 +32519,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "previous employer answered",
+        "employer response",
+        "dq file"
+      ],
       "policy": {
         "kind": "action",
         "resource": "qualification",
@@ -32309,6 +32571,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "target balance",
+        "escrow interest",
+        "amended lease"
+      ],
       "policy": {
         "kind": "action",
         "resource": "escrow_account",
@@ -32712,6 +32979,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "leave dates",
+        "fix leave case"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_leave",
@@ -32966,6 +33237,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "in transit",
+        "mark delivered",
+        "departed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment_move",
@@ -33036,6 +33312,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "purchase order",
+        "po",
+        "fix bol",
+        "edit order"
+      ],
       "policy": {
         "kind": "action",
         "resource": "order",
@@ -33126,6 +33408,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "charge amount",
+        "correct charge",
+        "edit accessorial"
+      ],
       "policy": {
         "kind": "action",
         "resource": "order",
@@ -33209,6 +33496,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "lease deduction",
+        "raise deduction",
+        "pause deduction"
+      ],
       "policy": {
         "kind": "action",
         "resource": "recurring_deduction",
@@ -33291,6 +33583,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "pause bonus",
+        "stop bonus",
+        "edit bonus"
+      ],
       "policy": {
         "kind": "action",
         "resource": "recurring_earning",
@@ -33760,6 +34057,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "rename report",
+        "share report",
+        "visibility",
+        "edit report"
+      ],
       "policy": {
         "kind": "action",
         "resource": "report",
@@ -33922,6 +34225,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "fix violation",
+        "basic",
+        "severity weight"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_safety_event",
@@ -33994,6 +34302,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "change reason code",
+        "edit service failure"
+      ],
       "policy": {
         "kind": "action",
         "resource": "service_failure",
@@ -34073,6 +34385,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "edit shipment",
+        "pieces",
+        "correct weight"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment",
@@ -34761,6 +35078,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "out of service",
+        "maintenance",
+        "available"
+      ],
       "policy": {
         "kind": "action",
         "resource": "trailer",
@@ -34886,6 +35208,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "fix credential",
+        "correct license",
+        "fix license"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_credential",
@@ -35129,6 +35456,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "edit time off request",
+        "edit vacation request",
+        "change pto request"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_pto",
@@ -35570,6 +35902,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "kill invoice",
+        "cancel invoice"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -35619,7 +35955,10 @@
         "payroll",
         "payroll export",
         "payroll run",
-        "timesheets"
+        "timesheets",
+        "undo payroll run",
+        "redo payroll",
+        "rerun payroll"
       ],
       "policy": {
         "kind": "action",

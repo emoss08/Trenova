@@ -85,6 +85,10 @@ func newTransferToBillingTool(
 
 func (t *transferToBillingTool) Name() string { return "transfer_to_billing" }
 
+func (t *transferToBillingTool) SearchTerms() []string {
+	return []string{"send to billing"}
+}
+
 func (t *transferToBillingTool) Description() string {
 	return "Transfer delivered shipments to the billing queue, as the transfer-to-billing " +
 		"dialog does: each becomes a queue item a biller reviews. When the person means every " +

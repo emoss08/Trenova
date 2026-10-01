@@ -402,6 +402,7 @@ func newCancelWorkerChecklistTool(checklists checklistKeeper) serviceports.Agent
 			"guess one."),
 		fieldReason: stringProperty("Why it no longer applies.", wfShortChars),
 	}, paramChecklistID, fieldReason), paramChecklistID, permission.ResourceWorkerChecklist)
+	spec.searchTerms = []string{"drop checklist", "no longer applies"}
 	spec.maxTier = agent.TierPropose
 
 	return newReportingReceivableTool(spec, receivablePlan[

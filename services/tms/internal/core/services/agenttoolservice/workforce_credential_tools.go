@@ -291,6 +291,7 @@ func newUpdateWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 		permission.ResourceWorkerCredential,
 		permission.OpUpdate,
 	), properties, paramCredentialID), paramCredentialID, permission.ResourceWorkerCredential)
+	spec.searchTerms = []string{"fix credential", "correct license", "fix license"}
 
 	return newReportingReceivableTool(spec, receivablePlan[
 		*credentialEdit, *workercredentialservice.CredentialChange,
@@ -361,6 +362,7 @@ func newAttachWorkerCredentialDocumentTool(credentials credentialKeeper) service
 		wfParamDocument:   wfDocumentProperty(),
 	}, paramCredentialID, wfParamDocument), paramCredentialID,
 		permission.ResourceWorkerCredential)
+	spec.searchTerms = []string{"scanned card", "card scan"}
 
 	return newReportingReceivableTool(spec, receivablePlan[
 		*workercredentialservice.AttachDocumentRequest, *workercredentialservice.CredentialChange,

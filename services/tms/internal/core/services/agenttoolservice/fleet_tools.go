@@ -133,6 +133,10 @@ func newUpdateTrailerStatusTool(trailers trailerStatusUpdater) serviceports.Agen
 
 func (t *updateTrailerStatusTool) Name() string { return "update_trailer_status" }
 
+func (t *updateTrailerStatusTool) SearchTerms() []string {
+	return []string{"out of service", "maintenance", "available"}
+}
+
 func (t *updateTrailerStatusTool) Description() string {
 	return "Change the status of one or more trailers, which is what makes a trailer " +
 		"available to dispatch or takes it off the board. " + equipmentStatusNote +
