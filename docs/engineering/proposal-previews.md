@@ -402,9 +402,10 @@ unstable digest shows itself.
 
 ## Known limits
 
-- **Coverage follows the tools.** A tool shows as much as its `Preview` says; one without
-  shows its parameters. The contract test that fails for an action tool with no previewer
-  lands with the tool previewers.
+- **Coverage follows the tools.** A tool shows as much as its `Preview` says.
+  `TestEveryActionToolPreviewsWhatItWouldDo` (`agenttoolpolicy/preview_contract_test.go`)
+  holds every registered action tool to a previewer, with no exemptions, so a new action
+  tool without one fails CI.
 - **Labels cover the records previews name most.** A record of a resource the labeler has
   no table for is shown without a name; people (`user`) are never labelled, since a user
   is not scoped to one tenant.

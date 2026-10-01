@@ -496,6 +496,7 @@ type AssistantToolFinishedEvent struct {
 	Content  string           `json:"content"`
 	Effect   agent.ToolEffect `json:"effect,omitempty"`
 	Summary  string           `json:"summary,omitempty"`
+	Verdict  string           `json:"verdict,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's call, on a task
 	// this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`

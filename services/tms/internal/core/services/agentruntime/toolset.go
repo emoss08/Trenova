@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
@@ -414,9 +415,9 @@ func (s *Service) unheldStrongMatches(set *toolSet, need string) []string {
 // was not offered, and find_tools could not have loaded the tool anyway. This
 // says which of the two it is — not enabled, or no such tool — and hands over
 // the nearest tools the agent does hold, loaded, so the next call can work.
-func (s *Service) unheldRefusal(set *toolSet, name string) string {
+func (s *Service) unheldRefusal(set *toolSet, name string, exists bool) string {
 	var b strings.Builder
-	if _, _, exists := s.toolGate(name); exists {
+	if exists {
 		fmt.Fprintf(&b, "%q is not enabled for this agent, so it was not run. An "+
 			"administrator can add it to the agent in AI Control.", name)
 	} else {
@@ -443,6 +444,16 @@ func (s *Service) unheldRefusal(set *toolSet, name string) string {
 	}
 
 	return b.String()
+}
+
+func (s *Service) unheldOutcome(set *toolSet, name string) toolOutcome {
+	if _, _, exists := s.toolGate(name); exists {
+		return refusedOutcome(aitrace.OutcomeDenied, "the agent does not hold the tool",
+			"%s", s.unheldRefusal(set, name, true))
+	}
+
+	return refusedOutcome(aitrace.OutcomeInvalid, "no such tool is registered",
+		"%s", s.unheldRefusal(set, name, false))
 }
 
 // heldTools is every tool the agent holds: its core and selected tools, and

@@ -864,8 +864,12 @@ wrote the account, so a day-long run's events keep their real spacing.
 Each claimed step also carries the trace and span of its `execute_tool` span, the
 definition and version that made the call and, for a delegate, the call id; its
 outcome carries a one-line `reason` and a `verdict` (`ran`, `proposed`,
-`denied`, …). A proposal carries the same trace and span, its `step_key`, when an
-automatic write ran and at what version it left the record, and who it ran as.
+`denied`, …). A call the loop turns away before any step is claimed (a tool the
+agent does not hold or that does not exist, arguments that did not parse, a spent
+budget, a repeat, a question nobody can answer) carries its verdict on the
+`tool_finished` event instead. A proposal carries the same trace and span, its
+`step_key`, when an automatic write ran and at what version it left the record,
+and who it ran as.
 The whole table of link columns, and who writes each, is in
 [ai-tracing.md](ai-tracing.md#link-columns).
 
@@ -1031,7 +1035,8 @@ expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them).
 - **Background runs discard their transcript** beyond the summary and the event
   log.
 - **Permission denials are not distinct events.** A refusal arrives as a failed
-  tool result and is recorded as one.
+  tool result carrying its verdict; the chat does not yet show a denial apart
+  from a failure.
 - **Search attributes are not set.** Organization, feature, thread and
   definition are carried in workflow ids, summaries and fairness keys; typed
   search attributes need registering on the server first.

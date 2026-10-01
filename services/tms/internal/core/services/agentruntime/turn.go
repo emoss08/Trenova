@@ -147,8 +147,9 @@ type ToolOutcome struct {
 	// DelegateReport is the bounded account of a delegate_task call.
 	DelegateReport *conversation.DelegateReport `json:"delegateReport,omitempty"`
 	// Taint is the outside content the call read.
-	Taint []agent.TaintMark `json:"taint,omitempty"`
-	Found []string          `json:"found,omitempty"`
+	Taint   []agent.TaintMark `json:"taint,omitempty"`
+	Found   []string          `json:"found,omitempty"`
+	Verdict string            `json:"verdict,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -165,6 +166,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		DelegateReport: o.delegateReport,
 		Taint:          o.taint,
 		Found:          o.found,
+		Verdict:        o.verdict,
 		Data:           o.data,
 	}
 }
@@ -179,6 +181,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		delegateReport: o.DelegateReport,
 		taint:          o.Taint,
 		found:          o.Found,
+		verdict:        o.Verdict,
 		data:           o.Data,
 	}
 }

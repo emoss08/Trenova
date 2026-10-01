@@ -470,14 +470,31 @@ func (s *Service) authorize(
 		return refusedOutcome(
 			aitrace.OutcomeDenied,
 			fmt.Sprintf("lacks %s access to %s", operation, resource.String()),
-			"Tool %q is not permitted: the person you are working for does not have %s access to %s.",
+			"Tool %q is not permitted: %s.",
 			toolName,
-			operation,
-			resource.String(),
+			deniedAccess(actor, operation, resource),
 		), true
 	}
 
 	return toolOutcome{}, false
+}
+
+func deniedAccess(
+	actor *serviceports.RequestActor,
+	operation permission.Operation,
+	resource permission.Resource,
+) string {
+	if actor.IsAgent() {
+		return fmt.Sprintf(
+			"this agent's unattended access does not include %s on %s",
+			operation, resource.String(),
+		)
+	}
+
+	return fmt.Sprintf(
+		"the person you are working for does not have %s access to %s",
+		operation, resource.String(),
+	)
 }
 
 func (s *Service) runQueryTool(
