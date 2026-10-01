@@ -45,6 +45,12 @@ Keywords: invoice matching, variance tolerance, EDI 210, auto accept
    review. It requires auto-match.
 5. Select **Save changes**.
 
+### Hold carrier pay until the invoice is matched
+Keywords: pay on invoice, hold settlement, three-way match, unmatched invoice, freight audit hold
+1. Open [Carrier settlement control](/admin/carrier-settlement-control).
+2. In **Invoice matching**, turn on **Hold pay until the invoice is matched**.
+3. Select **Save changes**.
+
 ### Set the posting accounts
 Keywords: AP account, purchased transportation account
 1. Open [Carrier settlement control](/admin/carrier-settlement-control).
@@ -56,4 +62,7 @@ Keywords: AP account, purchased transportation account
 The page is only available to organizations with brokerage features turned on. Opening it needs
 read access to carrier settlement control; saving needs update access. A blank posting account falls
 back to the defaults on [Accounting controls](/admin/accounting-control). Invoices outside the
-tolerance still land in the review workspace.
+tolerance still land in the review workspace. With **Hold pay until the invoice is matched** on, a load's carrier cost stays out of
+settlements until its carrier invoice match is resolved and is picked up by the next settlement after
+that; a settlement that already holds cost for an unmatched load cannot be approved until the match
+is resolved or the settlement is recalculated.

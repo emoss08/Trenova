@@ -20,6 +20,12 @@ type GetEDICarrierInvoiceByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetEDICarrierInvoiceByNumberRequest struct {
+	TenantInfo    pagination.TenantInfo
+	PartnerID     pulid.ID
+	InvoiceNumber string
+}
+
 type EDICarrierInvoiceRepository interface {
 	ListCarrierInvoices(
 		ctx context.Context,
@@ -28,6 +34,10 @@ type EDICarrierInvoiceRepository interface {
 	GetCarrierInvoiceByID(
 		ctx context.Context,
 		req GetEDICarrierInvoiceByIDRequest,
+	) (*edi.CarrierInvoice, error)
+	GetCarrierInvoiceByNumber(
+		ctx context.Context,
+		req *GetEDICarrierInvoiceByNumberRequest,
 	) (*edi.CarrierInvoice, error)
 	CreateCarrierInvoice(
 		ctx context.Context,

@@ -3,6 +3,8 @@ package carriersettlementresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/shared/typeutils"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
@@ -162,6 +164,7 @@ func carrierSettlementControlFromInput(
 		VarianceToleranceMinor:                  int64(input.VarianceToleranceMinor),
 		AutoMatchInboundInvoices:                input.AutoMatchInboundInvoices,
 		AutoAcceptWithinTolerance:               input.AutoAcceptWithinTolerance,
+		HoldUntilInvoiceMatched:                 typeutils.ValueOrZero(input.HoldUntilInvoiceMatched),
 		DefaultAPAccountID:                      apAccountID,
 		DefaultPurchasedTransportationAccountID: expenseAccountID,
 	}, nil

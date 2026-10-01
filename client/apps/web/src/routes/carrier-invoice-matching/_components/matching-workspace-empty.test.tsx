@@ -42,6 +42,7 @@ beforeEach(() => {
     varianceToleranceMinor: 500,
     autoMatchInboundInvoices: true,
     autoAcceptWithinTolerance: false,
+    holdUntilInvoiceMatched: false,
   });
 });
 

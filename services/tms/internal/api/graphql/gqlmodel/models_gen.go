@@ -8446,18 +8446,20 @@ type UpdateBenefitPlanInput struct {
 }
 
 type UpdateCarrierSettlementControlInput struct {
-	Version                                 int                       `json:"version"`
-	PayTrigger                              tenant.PayTrigger         `json:"payTrigger"`
-	PayPeriodFrequency                      tenant.PayPeriodFrequency `json:"payPeriodFrequency"`
-	PeriodEndDayOfWeek                      int                       `json:"periodEndDayOfWeek"`
-	PayDelayDays                            int                       `json:"payDelayDays"`
-	AutoGenerateBatches                     bool                      `json:"autoGenerateBatches"`
-	AutoPostOnApprove                       bool                      `json:"autoPostOnApprove"`
-	VarianceToleranceMinor                  int                       `json:"varianceToleranceMinor"`
-	AutoMatchInboundInvoices                bool                      `json:"autoMatchInboundInvoices"`
-	AutoAcceptWithinTolerance               bool                      `json:"autoAcceptWithinTolerance"`
-	DefaultApAccountID                      *string                   `json:"defaultApAccountId,omitempty"`
-	DefaultPurchasedTransportationAccountID *string                   `json:"defaultPurchasedTransportationAccountId,omitempty"`
+	Version                   int                       `json:"version"`
+	PayTrigger                tenant.PayTrigger         `json:"payTrigger"`
+	PayPeriodFrequency        tenant.PayPeriodFrequency `json:"payPeriodFrequency"`
+	PeriodEndDayOfWeek        int                       `json:"periodEndDayOfWeek"`
+	PayDelayDays              int                       `json:"payDelayDays"`
+	AutoGenerateBatches       bool                      `json:"autoGenerateBatches"`
+	AutoPostOnApprove         bool                      `json:"autoPostOnApprove"`
+	VarianceToleranceMinor    int                       `json:"varianceToleranceMinor"`
+	AutoMatchInboundInvoices  bool                      `json:"autoMatchInboundInvoices"`
+	AutoAcceptWithinTolerance bool                      `json:"autoAcceptWithinTolerance"`
+	// Omitted leaves the current setting as it is.
+	HoldUntilInvoiceMatched                 *bool   `json:"holdUntilInvoiceMatched,omitempty"`
+	DefaultApAccountID                      *string `json:"defaultApAccountId,omitempty"`
+	DefaultPurchasedTransportationAccountID *string `json:"defaultPurchasedTransportationAccountId,omitempty"`
 }
 
 type UpdateDOTRandomDrawEntryInput struct {

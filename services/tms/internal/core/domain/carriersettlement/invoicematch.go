@@ -3,6 +3,8 @@ package carriersettlement
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/edi"
+
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -36,6 +38,9 @@ type InvoiceMatch struct {
 	Status                 InvoiceMatchStatus `json:"status"                 bun:"status,type:VARCHAR(50),notnull,default:'Suggested'"`
 	MatchedVia             MatchVia           `json:"matchedVia"             bun:"matched_via,type:VARCHAR(50),notnull,default:'Manual'"`
 	InvoiceNumber          string             `json:"invoiceNumber"          bun:"invoice_number,type:VARCHAR(100),nullzero"`
+	InvoiceNumberKey       string             `json:"-"                      bun:"invoice_number_key,type:VARCHAR(100),nullzero"`
+	DuplicateOfMatchID     *pulid.ID          `json:"duplicateOfMatchId"     bun:"duplicate_of_match_id,type:VARCHAR(100),nullzero"`
+	PossibleDuplicateOfID  *pulid.ID          `json:"possibleDuplicateOfId"  bun:"possible_duplicate_of_id,type:VARCHAR(100),nullzero"`
 	InvoiceTotalMinor      int64              `json:"invoiceTotalMinor"      bun:"invoice_total_minor,type:BIGINT,notnull,default:0"`
 	ExpectedTotalMinor     int64              `json:"expectedTotalMinor"     bun:"expected_total_minor,type:BIGINT,notnull,default:0"`
 	VarianceMinor          int64              `json:"varianceMinor"          bun:"variance_minor,type:BIGINT,notnull,default:0"`
@@ -106,6 +111,7 @@ func (m *InvoiceMatch) GetTableName() string { return "carrier_invoice_matches" 
 
 func (m *InvoiceMatch) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
+	m.InvoiceNumberKey = edi.InvoiceNumberKey(m.InvoiceNumber)
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if m.ID.IsNil() {
@@ -116,4 +122,12 @@ func (m *InvoiceMatch) BeforeAppendModel(_ context.Context, query bun.Query) err
 		m.UpdatedAt = now
 	}
 	return nil
+}
+
+func (m *InvoiceMatch) IsDuplicate() bool {
+	return m.DuplicateOfMatchID != nil && m.DuplicateOfMatchID.IsNotNil()
+}
+
+func (m *InvoiceMatch) IsPossibleDuplicate() bool {
+	return m.PossibleDuplicateOfID != nil && m.PossibleDuplicateOfID.IsNotNil()
 }

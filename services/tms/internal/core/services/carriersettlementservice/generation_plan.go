@@ -70,8 +70,9 @@ func (s *Service) PlanBatch(ctx context.Context, req *BatchPlanRequest) (*BatchP
 	carrierIDs, err := s.costEventRepo.ListCarrierIDsWithPendingEvents(
 		ctx,
 		repositories.ListCarriersWithPendingEventsRequest{
-			TenantInfo: batchReq.TenantInfo,
-			PeriodEnd:  plan.Bounds.PeriodEnd,
+			TenantInfo:              batchReq.TenantInfo,
+			PeriodEnd:               plan.Bounds.PeriodEnd,
+			HoldUntilInvoiceMatched: control.HoldUntilInvoiceMatched,
 		},
 	)
 	if err != nil {

@@ -3869,6 +3869,15 @@
       "template/notification.dash.load_unassigned"
     ]
   },
+  "A load's carrier cost stays out of settlements until its carrier invoice match is resolved, and a settlement with unmatched loads cannot be approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-settlement-control"
+    ]
+  },
   "A local date and time such as 2026-10-01T08:00 is required": {
     "sites": 2,
     "scope": [
@@ -17719,6 +17728,24 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Another live match already holds invoice {0} from this carrier. Reject one of them; this match cannot be accepted while the other stands.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
+  "Another live match already holds this invoice number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
     ]
   },
   "Another mailbox already listens on this address": {
@@ -60304,7 +60331,7 @@
     ]
   },
   "Duplicate": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -60315,6 +60342,7 @@
       "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
+      "routes/carrier-invoice-matching",
       "routes/formula-template",
       "routes/reports",
       "routes/shipment",
@@ -60418,6 +60446,15 @@
     ],
     "areas": [
       "domain/fuelpurchase"
+    ]
+  },
+  "Duplicate invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
     ]
   },
   "Duplicate journal source event": {
@@ -81710,6 +81747,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Hold pay until the invoice is matched": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-settlement-control"
+    ]
+  },
   "Hold placed": {
     "sites": 1,
     "scope": [
@@ -88986,6 +89032,15 @@
     ],
     "areas": [
       "template/notification.invoice_shared"
+    ]
+  },
+  "Invoice {0} from this carrier is already matched; reject that match first if this one replaces it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
     ]
   },
   "Invoice {0} from {1}": {
@@ -131716,6 +131771,15 @@
       "domain/worker"
     ]
   },
+  "Possible duplicate": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
   "Post": {
     "sites": 1,
     "scope": [
@@ -145422,6 +145486,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Repeat": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
     ]
   },
   "Repeat every": {
@@ -181430,6 +181503,15 @@
       "domain/permission"
     ]
   },
+  "The load already had an invoice match when this one was made": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
   "The load is back in the unassigned lane.": {
     "sites": 1,
     "scope": [
@@ -182538,6 +182620,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "The partner sent this invoice number before; the earlier copy counts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
     ]
   },
   "The partner's AS2 identifier that we address outbound messages to.": {
@@ -186847,6 +186938,15 @@
       "service/carriersettlementservice"
     ]
   },
+  "This EDI invoice repeats one the partner already sent; match the original instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
+    ]
+  },
   "This Trenova server has no web address configured (app.webBaseUrl), so {0} cannot send people back after they sign in. Ask the server's administrator to set it.": {
     "sites": 2,
     "scope": [
@@ -189004,6 +189104,15 @@
       "go/other"
     ]
   },
+  "This load already had a carrier invoice match when this one was made. Check that the carrier is not billing the same freight twice before accepting it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-invoice-matching"
+    ]
+  },
   "This load has been canceled": {
     "sites": 1,
     "scope": [
@@ -189022,6 +189131,15 @@
       "service/shipmentmoveservice"
     ]
   },
+  "This load's carrier cost was already adjusted for invoice {0}; accepting this variance too would pay the difference twice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
+    ]
+  },
   "This looks like a repeating lane": {
     "sites": 1,
     "scope": [
@@ -189029,6 +189147,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This match repeats invoice {0}, which another match already holds; reject one of them before accepting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
     ]
   },
   "This matrix has no axes, so nothing can ever look a rate up in it.": {
@@ -222621,6 +222748,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} load(s) on this settlement are still waiting on a resolved carrier invoice match; resolve the matches or recalculate the settlement before approving": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
     ]
   },
   "{0} location": {

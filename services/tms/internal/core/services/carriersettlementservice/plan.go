@@ -339,6 +339,14 @@ func (s *Service) planApprove(
 	if plan.Refusal = PlanApprove(plan.After, req.TenantInfo.UserID, now); plan.Refused() {
 		return nil
 	}
+	hold, err := s.approvalHoldGuard(ctx, req.TenantInfo, plan.After.ID)
+	if err != nil {
+		return err
+	}
+	if hold.refused() {
+		plan.Refusal = hold.refusal
+		return nil
+	}
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
 	if err != nil {
 		return err

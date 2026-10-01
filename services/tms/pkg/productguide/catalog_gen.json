@@ -1,5 +1,5 @@
 {
-  "version": "sha256:ca5bb6087936fa9f964329282d7599d45a1e344b8aad47972e87d500f3eefe87",
+  "version": "sha256:738ff51b164c43f4f79e2279e8689e34b66ed47d0d67ac150822e32f84cd5092",
   "modules": [
     {
       "id": "home",
@@ -3294,6 +3294,21 @@
           ]
         },
         {
+          "title": "Hold carrier pay until the invoice is matched",
+          "keywords": [
+            "pay on invoice",
+            "hold settlement",
+            "three-way match",
+            "unmatched invoice",
+            "freight audit hold"
+          ],
+          "steps": [
+            "Open [Carrier settlement control](/admin/carrier-settlement-control).",
+            "In **Invoice matching**, turn on **Hold pay until the invoice is matched**.",
+            "Select **Save changes**."
+          ]
+        },
+        {
           "title": "Set the posting accounts",
           "keywords": [
             "AP account",
@@ -3306,7 +3321,7 @@
           ]
         }
       ],
-      "notes": "The page is only available to organizations with brokerage features turned on. Opening it needs read access to carrier settlement control; saving needs update access. A blank posting account falls back to the defaults on [Accounting controls](/admin/accounting-control). Invoices outside the tolerance still land in the review workspace.",
+      "notes": "The page is only available to organizations with brokerage features turned on. Opening it needs read access to carrier settlement control; saving needs update access. A blank posting account falls back to the defaults on [Accounting controls](/admin/accounting-control). Invoices outside the tolerance still land in the review workspace. With **Hold pay until the invoice is matched** on, a load's carrier cost stays out of settlements until its carrier invoice match is resolved and is picked up by the next settlement after that; a settlement that already holds cost for an unmatched load cannot be approved until the match is resolved or the settlement is recalculated.",
       "related": [
         "/carrier-settlements/workspace",
         "/carrier-settlements/batches",
@@ -7877,7 +7892,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to carrier invoice matches, and the page is only available when the organization has the Brokerage capability.\n\nA match marked **Auto-matched** was created by the inbound EDI 210 auto-match sweep; **Auto-accepted** means it resolved on its own because the variance was within tolerance.",
+      "notes": "Needs read access to carrier invoice matches, and the page is only available when the organization has the Brokerage capability.\n\nA match marked **Auto-matched** was created by the inbound EDI 210 auto-match sweep; **Auto-accepted** means it resolved on its own because the variance was within tolerance.\n\nThe same invoice is never recorded or matched twice. An EDI 210 the partner sends again under an invoice number already on file is not recorded a second time, and the inbound file says so (noting a different total if it has one); an older repeat shows **Repeat** in the invoice list and cannot be matched. A carrier's invoice number can hold only one open or resolved match: a match that repeats one shows **Duplicate** and cannot be accepted until one of the two is rejected. A second invoice matched to a load that already has one shows **Possible duplicate**; it is never accepted automatically, and it cannot be accepted with a variance once the load's cost has already been adjusted for another invoice.",
       "related": [
         "/carrier-settlements/workspace",
         "/carrier-settlements/cost-events",

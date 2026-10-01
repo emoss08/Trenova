@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
@@ -51,6 +52,8 @@ type CarrierInvoice struct {
 	CustomerID           pulid.ID                           `json:"customerId"           bun:"customer_id,type:VARCHAR(100),nullzero"`
 	CarrierID            pulid.ID                           `json:"carrierId"            bun:"carrier_id,type:VARCHAR(100),nullzero"`
 	InvoiceNumber        string                             `json:"invoiceNumber"        bun:"invoice_number,type:VARCHAR(100),notnull"`
+	InvoiceNumberKey     string                             `json:"-"                    bun:"invoice_number_key,type:VARCHAR(100),notnull"`
+	DuplicateOfID        pulid.ID                           `json:"duplicateOfId"        bun:"duplicate_of_id,type:VARCHAR(100),nullzero"`
 	InvoiceDate          *int64                             `json:"invoiceDate"          bun:"invoice_date,type:BIGINT,nullzero"`
 	DeliveryDate         *int64                             `json:"deliveryDate"         bun:"delivery_date,type:BIGINT,nullzero"`
 	ShipmentReference    string                             `json:"shipmentReference"    bun:"shipment_reference,type:VARCHAR(100),nullzero"`
@@ -124,6 +127,7 @@ func (i *CarrierInvoice) BeforeAppendModel(_ context.Context, query bun.Query) e
 	if i.ReconciliationStatus == "" {
 		i.ReconciliationStatus = CarrierInvoiceReconciliationStatusUnmatched
 	}
+	i.InvoiceNumberKey = InvoiceNumberKey(i.InvoiceNumber)
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if i.ID.IsNil() {
@@ -205,3 +209,7 @@ const (
 	maxBillToNameLength       = 200
 	invoiceCurrencyCodeLength = 3
 )
+
+func InvoiceNumberKey(invoiceNumber string) string {
+	return stringutils.CollapseUpper(invoiceNumber)
+}

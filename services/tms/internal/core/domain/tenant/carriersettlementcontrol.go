@@ -32,6 +32,7 @@ type CarrierSettlementControl struct {
 	VarianceToleranceMinor                  int64              `json:"varianceToleranceMinor"                  bun:"variance_tolerance_minor,type:BIGINT,notnull,default:0"`
 	AutoMatchInboundInvoices                bool               `json:"autoMatchInboundInvoices"                bun:"auto_match_inbound_invoices,type:BOOLEAN,notnull,default:false"`
 	AutoAcceptWithinTolerance               bool               `json:"autoAcceptWithinTolerance"               bun:"auto_accept_within_tolerance,type:BOOLEAN,notnull,default:false"`
+	HoldUntilInvoiceMatched                 bool               `json:"holdUntilInvoiceMatched"                 bun:"hold_until_invoice_matched,type:BOOLEAN,notnull,default:false"`
 	DefaultAPAccountID                      *pulid.ID          `json:"defaultApAccountId"                      bun:"default_ap_account_id,type:VARCHAR(100),nullzero"`
 	DefaultPurchasedTransportationAccountID *pulid.ID          `json:"defaultPurchasedTransportationAccountId" bun:"default_purchased_transportation_account_id,type:VARCHAR(100),nullzero"`
 

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -195,6 +196,10 @@ func TestRecordInboundFreightInvoice_AcceptedOfferStampsCarrierAndShipment(t *te
 			t.Parallel()
 
 			invoiceRepo := mocks.NewMockEDICarrierInvoiceRepository(t)
+			invoiceRepo.EXPECT().
+				GetCarrierInvoiceByNumber(mock.Anything, mock.Anything).
+				Return(nil, errortypes.NewNotFoundError("CarrierInvoice not found")).
+				Maybe()
 			service := &Service{l: zap.NewNop(), carrierInvoiceRepo: invoiceRepo}
 			offer := acceptedTenderOfferForTest()
 			offer.RateMethod = testCase.rateMethod

@@ -87,6 +87,10 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 		eventRepo:     mocks.NewMockShipmentEventRepository(t),
 		invoiceRepo:   mocks.NewMockEDICarrierInvoiceRepository(t),
 	}
+	fixture.invoiceRepo.EXPECT().
+		GetCarrierInvoiceByNumber(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("CarrierInvoice not found")).
+		Maybe()
 	params := ediservice.Params{
 		Logger:              zap.NewNop(),
 		ShipmentCommentRepo: fixture.commentRepo,

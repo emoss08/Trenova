@@ -404,6 +404,24 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
+				Name:     "duplicateOfMatchId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.InvoiceMatch)
+					return obj.DuplicateOfMatchID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "possibleDuplicateOfId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlement.InvoiceMatch)
+					return obj.PossibleDuplicateOfID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
 				Name:     "status",
 				NonNull:  true,
 				ChildErr: errNoChild6,
@@ -1561,6 +1579,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "holdUntilInvoiceMatched",
+				NonNull:  true,
+				ChildErr: errNoChild14,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tenant.CarrierSettlementControl)
+					return obj.HoldUntilInvoiceMatched, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "defaultApAccountId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
@@ -2094,6 +2122,15 @@ var Shard = &gqlexec.Shard{
 					return obj.ReconciliationNotes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "duplicateOfId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edi.CarrierInvoice)
+					return obj.DuplicateOfID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
 				Name:     "version",
@@ -3381,7 +3418,7 @@ func unmarshalInputUpdateCarrierSettlementControlInput(ctx context.Context, ec *
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"version", "payTrigger", "payPeriodFrequency", "periodEndDayOfWeek", "payDelayDays", "autoGenerateBatches", "autoPostOnApprove", "varianceToleranceMinor", "autoMatchInboundInvoices", "autoAcceptWithinTolerance", "defaultApAccountId", "defaultPurchasedTransportationAccountId"}
+	fieldsInOrder := [...]string{"version", "payTrigger", "payPeriodFrequency", "periodEndDayOfWeek", "payDelayDays", "autoGenerateBatches", "autoPostOnApprove", "varianceToleranceMinor", "autoMatchInboundInvoices", "autoAcceptWithinTolerance", "holdUntilInvoiceMatched", "defaultApAccountId", "defaultPurchasedTransportationAccountId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3458,6 +3495,13 @@ func unmarshalInputUpdateCarrierSettlementControlInput(ctx context.Context, ec *
 				return it, err
 			}
 			it.AutoAcceptWithinTolerance = data
+		case "holdUntilInvoiceMatched":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("holdUntilInvoiceMatched"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.HoldUntilInvoiceMatched = data
 		case "defaultApAccountId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultApAccountId"))
 			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
@@ -3556,6 +3600,14 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 func unmarshalNUpdateCarrierSettlementControlInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateCarrierSettlementControlInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateCarrierSettlementControlInput, error) {
 	res, err := unmarshalInputUpdateCarrierSettlementControlInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOCarrierInvoiceMatchStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriersettlementᚐInvoiceMatchStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*carriersettlement.InvoiceMatchStatus, error) {

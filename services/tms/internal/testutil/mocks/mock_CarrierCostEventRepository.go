@@ -87,6 +87,11 @@ func (_mock *MockCarrierCostEventRepository) ListCarrierIDsWithPendingEvents(ctx
 	return r0, ret.Error(1)
 }
 
+func (_mock *MockCarrierCostEventRepository) CountAwaitingInvoiceMatch(ctx context.Context, tenantInfo pagination.TenantInfo, settlementID pulid.ID) (int, error) {
+	ret := _mock.Called(ctx, tenantInfo, settlementID)
+	return ret.Int(0), ret.Error(1)
+}
+
 func (_mock *MockCarrierCostEventRepository) ListByShipment(ctx context.Context, tenantInfo pagination.TenantInfo, shipmentID pulid.ID) ([]*carriersettlement.CostEvent, error) {
 	ret := _mock.Called(ctx, tenantInfo, shipmentID)
 	var r0 []*carriersettlement.CostEvent

@@ -6991,6 +6991,10 @@ type CarrierInvoiceMatch {
   createdAt: Timestamp!
   currencyCode: String!
   documentAiExtractionId: ID
+  """
+  Set when another live match already holds this invoice number; this one cannot be accepted while that one stands.
+  """
+  duplicateOfMatchId: ID
   ediCarrierInvoiceId: ID
   expectedTotalMinor: Int!
   id: ID!
@@ -6998,6 +7002,10 @@ type CarrierInvoiceMatch {
   invoiceTotalMinor: Int!
   matchedVia: CarrierInvoiceMatchVia!
   organizationId: ID!
+  """
+  Set when the load already had an invoice match when this one was made; it is never accepted automatically.
+  """
+  possibleDuplicateOfId: ID
   resolutionNote: String!
   resolvedAt: Timestamp
   resolvedById: ID
@@ -7264,6 +7272,10 @@ type CarrierSettlementControl {
   createdAt: Timestamp!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
+  """
+  When on, a load's carrier cost stays out of settlements until a carrier invoice match for its assignment is resolved, and a settlement holding unmatched cost cannot be approved.
+  """
+  holdUntilInvoiceMatched: Boolean!
   id: ID!
   organizationId: ID!
   payDelayDays: Int!
@@ -10470,6 +10482,10 @@ type EdiCarrierInvoice {
   createdAt: Timestamp!
   currencyCode: String!
   deliveryDate: Timestamp
+  """
+  Set when the partner sent this invoice number before; the earlier copy is the one that counts.
+  """
+  duplicateOfId: ID
   expectedAmount: Decimal
   id: ID!
   invoiceDate: Timestamp
@@ -23893,6 +23909,8 @@ input UpdateCarrierSettlementControlInput {
   autoPostOnApprove: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
+  """Omitted leaves the current setting as it is."""
+  holdUntilInvoiceMatched: Boolean
   payDelayDays: Int!
   payPeriodFrequency: PayPeriodFrequency!
   payTrigger: SettlementPayTrigger!

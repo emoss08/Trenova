@@ -217,6 +217,13 @@ func (r *MutationResolver) UpdateCarrierSettlementControl(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
+	if input.HoldUntilInvoiceMatched == nil {
+		current, currentErr := r.CarrierSettlementService.GetControl(ctx, base.TenantInfo(authCtx))
+		if currentErr != nil {
+			return nil, currentErr
+		}
+		entity.HoldUntilInvoiceMatched = current.HoldUntilInvoiceMatched
+	}
 	return r.CarrierSettlementService.UpdateControl(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 

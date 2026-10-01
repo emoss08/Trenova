@@ -43,3 +43,5 @@ Keywords: auto-match, auto-accept, variance tolerance
 Needs read access to carrier invoice matches, and the page is only available when the organization has the Brokerage capability.
 
 A match marked **Auto-matched** was created by the inbound EDI 210 auto-match sweep; **Auto-accepted** means it resolved on its own because the variance was within tolerance.
+
+The same invoice is never recorded or matched twice. An EDI 210 the partner sends again under an invoice number already on file is not recorded a second time, and the inbound file says so (noting a different total if it has one); an older repeat shows **Repeat** in the invoice list and cannot be matched. A carrier's invoice number can hold only one open or resolved match: a match that repeats one shows **Duplicate** and cannot be accepted until one of the two is rejected. A second invoice matched to a load that already has one shows **Possible duplicate**; it is never accepted automatically, and it cannot be accepted with a variance once the load's cost has already been adjusted for another invoice.

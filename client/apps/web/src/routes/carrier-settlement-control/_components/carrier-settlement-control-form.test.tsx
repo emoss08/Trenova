@@ -35,6 +35,7 @@ function controlData(overrides: Record<string, unknown> = {}) {
     varianceToleranceMinor: 500,
     autoMatchInboundInvoices: false,
     autoAcceptWithinTolerance: false,
+    holdUntilInvoiceMatched: false,
     defaultApAccountId: null,
     defaultPurchasedTransportationAccountId: null,
     version: 3,

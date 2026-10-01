@@ -6512,6 +6512,8 @@ export type UpdateCarrierSettlementControlInput = {
   autoPostOnApprove: boolean;
   defaultApAccountId?: string | number | null | undefined;
   defaultPurchasedTransportationAccountId?: string | number | null | undefined;
+  /** Omitted leaves the current setting as it is. */
+  holdUntilInvoiceMatched?: boolean | null | undefined;
   payDelayDays: number;
   payPeriodFrequency: PayPeriodFrequency;
   payTrigger: SettlementPayTrigger;
@@ -9330,7 +9332,7 @@ export type CarrierCostEventTableQuery = { carrierCostEvents: { totalCount?: num
 export type CarrierSettlementControlQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CarrierSettlementControlQuery = { carrierSettlementControl: { id: string, organizationId: string, businessUnitId: string, payTrigger: SettlementPayTrigger, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, autoGenerateBatches: boolean, autoPostOnApprove: boolean, varianceToleranceMinor: number, autoMatchInboundInvoices: boolean, autoAcceptWithinTolerance: boolean, defaultApAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, version: number } };
+export type CarrierSettlementControlQuery = { carrierSettlementControl: { id: string, organizationId: string, businessUnitId: string, payTrigger: SettlementPayTrigger, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, autoGenerateBatches: boolean, autoPostOnApprove: boolean, varianceToleranceMinor: number, autoMatchInboundInvoices: boolean, autoAcceptWithinTolerance: boolean, holdUntilInvoiceMatched: boolean, defaultApAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, version: number } };
 
 export type CurrentCarrierSettlementPeriodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -9361,7 +9363,7 @@ export type CarrierInvoiceMatchesQueryVariables = Exact<{
 }>;
 
 
-export type CarrierInvoiceMatchesQuery = { carrierInvoiceMatches: { totalCount: number, items: Array<{ id: string, ediCarrierInvoiceId: string | null, documentAiExtractionId: string | null, carrierId: string, carrierAssignmentId: string, carrierSettlementId: string | null, adjustmentCostEventId: string | null, status: CarrierInvoiceMatchStatus, matchedVia: CarrierInvoiceMatchVia, invoiceNumber: string, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, currencyCode: string, resolutionNote: string, resolvedById: string | null, resolvedAt: number | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null, carrierAssignment: { id: string, shipmentMoveId: string, status: CarrierAssignmentStatus, rateMethod: CarrierRateMethod, baseRate: string, baseAmount: string, fuelSurcharge: string, accessorialTotal: string, totalCost: string, currencyCode: string, proNumber: string | null, accessorials: Array<{ id: string, description: string, amount: string }> | null } | null }> } };
+export type CarrierInvoiceMatchesQuery = { carrierInvoiceMatches: { totalCount: number, items: Array<{ id: string, ediCarrierInvoiceId: string | null, documentAiExtractionId: string | null, carrierId: string, carrierAssignmentId: string, carrierSettlementId: string | null, adjustmentCostEventId: string | null, duplicateOfMatchId: string | null, possibleDuplicateOfId: string | null, status: CarrierInvoiceMatchStatus, matchedVia: CarrierInvoiceMatchVia, invoiceNumber: string, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, currencyCode: string, resolutionNote: string, resolvedById: string | null, resolvedAt: number | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null, carrierAssignment: { id: string, shipmentMoveId: string, status: CarrierAssignmentStatus, rateMethod: CarrierRateMethod, baseRate: string, baseAmount: string, fuelSurcharge: string, accessorialTotal: string, totalCost: string, currencyCode: string, proNumber: string | null, accessorials: Array<{ id: string, description: string, amount: string }> | null } | null }> } };
 
 export type EdiCarrierInvoicesQueryVariables = Exact<{
   reconciliationStatus?: string | null | undefined;
@@ -9370,7 +9372,7 @@ export type EdiCarrierInvoicesQueryVariables = Exact<{
 }>;
 
 
-export type EdiCarrierInvoicesQuery = { ediCarrierInvoices: { totalCount: number, items: Array<{ id: string, carrierId: string | null, shipmentId: string | null, invoiceNumber: string, invoiceDate: number | null, deliveryDate: number | null, shipmentReference: string, bol: string, proNumber: string, billToName: string, currencyCode: string, totalAmount: string | null, expectedAmount: string | null, varianceAmount: string | null, reconciliationStatus: string, reconciliationNotes: string, version: number, createdAt: number, updatedAt: number }> } };
+export type EdiCarrierInvoicesQuery = { ediCarrierInvoices: { totalCount: number, items: Array<{ id: string, carrierId: string | null, shipmentId: string | null, invoiceNumber: string, invoiceDate: number | null, deliveryDate: number | null, shipmentReference: string, bol: string, proNumber: string, billToName: string, currencyCode: string, totalAmount: string | null, expectedAmount: string | null, varianceAmount: string | null, reconciliationStatus: string, reconciliationNotes: string, duplicateOfId: string | null, version: number, createdAt: number, updatedAt: number }> } };
 
 export type SuggestCarrierForEdiInvoiceQueryVariables = Exact<{
   invoiceId: string | number;
@@ -24357,12 +24359,12 @@ export const CarrierSettlementDetailDocument = {"__meta__":{"kind":"query","name
 export const CarrierSettlementBatchTableDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementBatchTable","hash":"sha256:073382253e84d646f0909341ebf8fa4421b0830503743352686b6e3e2faee5bc"}} as unknown as TypedDocumentString<CarrierSettlementBatchTableQuery, CarrierSettlementBatchTableQueryVariables>;
 export const CarrierSettlementBatchDetailDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementBatchDetail","hash":"sha256:53418bc43e1ee89c98fab0ea098fa24ddc5bbf657ce45db363ecbfaa732027e3"}} as unknown as TypedDocumentString<CarrierSettlementBatchDetailQuery, CarrierSettlementBatchDetailQueryVariables>;
 export const CarrierCostEventTableDocument = {"__meta__":{"kind":"query","name":"CarrierCostEventTable","hash":"sha256:ffd7c0de29c14f3794189521a424fa9089bb2f909037045050944c849466a344"}} as unknown as TypedDocumentString<CarrierCostEventTableQuery, CarrierCostEventTableQueryVariables>;
-export const CarrierSettlementControlDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementControl","hash":"sha256:163a29bd917af8c9a666cbe4fb7b3719add8334156a43b084a0cda9ae286e360"}} as unknown as TypedDocumentString<CarrierSettlementControlQuery, CarrierSettlementControlQueryVariables>;
+export const CarrierSettlementControlDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementControl","hash":"sha256:b45035e3fa5596946d7503517107440c08403a0173755229aec3e192b02a5e30"}} as unknown as TypedDocumentString<CarrierSettlementControlQuery, CarrierSettlementControlQueryVariables>;
 export const CurrentCarrierSettlementPeriodDocument = {"__meta__":{"kind":"query","name":"CurrentCarrierSettlementPeriod","hash":"sha256:189c9afc2c1a0801d13970c56e448bb681693ed1ce58627a9bf2b0d9f73c3b30"}} as unknown as TypedDocumentString<CurrentCarrierSettlementPeriodQuery, CurrentCarrierSettlementPeriodQueryVariables>;
 export const CarrierSettlementWorkspaceSummaryDocument = {"__meta__":{"kind":"query","name":"CarrierSettlementWorkspaceSummary","hash":"sha256:15c008d3edf287354dea1cad9aa58b18d7a4d32e3fb5847253a9566c5b5e8027"}} as unknown as TypedDocumentString<CarrierSettlementWorkspaceSummaryQuery, CarrierSettlementWorkspaceSummaryQueryVariables>;
 export const CarrierLedgerEntriesDocument = {"__meta__":{"kind":"query","name":"CarrierLedgerEntries","hash":"sha256:49627fbc33be15958d7c8171a3fbb43dac4071a3cde7bf612425a460768179b2"}} as unknown as TypedDocumentString<CarrierLedgerEntriesQuery, CarrierLedgerEntriesQueryVariables>;
-export const CarrierInvoiceMatchesDocument = {"__meta__":{"kind":"query","name":"CarrierInvoiceMatches","hash":"sha256:342bebfd33438b8caa7ec38fa67c34c7bef06005a70f0da7fcfd47edbb73f190"}} as unknown as TypedDocumentString<CarrierInvoiceMatchesQuery, CarrierInvoiceMatchesQueryVariables>;
-export const EdiCarrierInvoicesDocument = {"__meta__":{"kind":"query","name":"EdiCarrierInvoices","hash":"sha256:b44bbc0b1942001aace1ccb57d8ac692a610dab639177488d6232457787622ce"}} as unknown as TypedDocumentString<EdiCarrierInvoicesQuery, EdiCarrierInvoicesQueryVariables>;
+export const CarrierInvoiceMatchesDocument = {"__meta__":{"kind":"query","name":"CarrierInvoiceMatches","hash":"sha256:b43fdede49d3695455d862d8046e4371491d51c0850a0dc0cf7411f285bd192e"}} as unknown as TypedDocumentString<CarrierInvoiceMatchesQuery, CarrierInvoiceMatchesQueryVariables>;
+export const EdiCarrierInvoicesDocument = {"__meta__":{"kind":"query","name":"EdiCarrierInvoices","hash":"sha256:be378602c7ba95ca87be27a588aee2e4cb6a7cc23d324dcdf53217640721c113"}} as unknown as TypedDocumentString<EdiCarrierInvoicesQuery, EdiCarrierInvoicesQueryVariables>;
 export const SuggestCarrierForEdiInvoiceDocument = {"__meta__":{"kind":"query","name":"SuggestCarrierForEdiInvoice","hash":"sha256:b5aa64a822ffc92d294a71816236a2a3be0bcb0db952715b5d46d530e648c382"}} as unknown as TypedDocumentString<SuggestCarrierForEdiInvoiceQuery, SuggestCarrierForEdiInvoiceQueryVariables>;
 export const ExportCarrierSettlementBatchCsvDocument = {"__meta__":{"kind":"query","name":"ExportCarrierSettlementBatchCsv","hash":"sha256:add91144201a316a09dd8e91a464313bed62d216d536227cb36f80898d00533b"}} as unknown as TypedDocumentString<ExportCarrierSettlementBatchCsvQuery, ExportCarrierSettlementBatchCsvQueryVariables>;
 export const GenerateCarrierSettlementBatchDocument = {"__meta__":{"kind":"mutation","name":"GenerateCarrierSettlementBatch","hash":"sha256:5d4b52fe4c6841d6cf84a1fca15826838cc8790d5f7d01cbaef718546d527a93"}} as unknown as TypedDocumentString<GenerateCarrierSettlementBatchMutation, GenerateCarrierSettlementBatchMutationVariables>;

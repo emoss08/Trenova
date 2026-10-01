@@ -56,6 +56,7 @@ export const carrierSettlementControlFormSchema = z.object({
   varianceTolerance: z.number().min(0, "Variance tolerance cannot be negative"),
   autoMatchInboundInvoices: z.boolean(),
   autoAcceptWithinTolerance: z.boolean(),
+  holdUntilInvoiceMatched: z.boolean(),
   defaultApAccountId: z.string().optional().nullable(),
   defaultPurchasedTransportationAccountId: z.string().optional().nullable(),
 });

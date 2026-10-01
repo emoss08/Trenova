@@ -147,15 +147,17 @@ type ListCarrierCostEventConnectionRequest struct {
 }
 
 type ListPendingCostEventsRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
-	CarrierID    pulid.ID              `json:"carrierId"`
-	PeriodEnd    int64                 `json:"periodEnd"`
-	ReleasedFrom pulid.ID              `json:"releasedFrom"`
+	TenantInfo              pagination.TenantInfo `json:"tenantInfo"`
+	CarrierID               pulid.ID              `json:"carrierId"`
+	PeriodEnd               int64                 `json:"periodEnd"`
+	ReleasedFrom            pulid.ID              `json:"releasedFrom"`
+	HoldUntilInvoiceMatched bool                  `json:"holdUntilInvoiceMatched"`
 }
 
 type ListCarriersWithPendingEventsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	PeriodEnd  int64                 `json:"periodEnd"`
+	TenantInfo              pagination.TenantInfo `json:"tenantInfo"`
+	PeriodEnd               int64                 `json:"periodEnd"`
+	HoldUntilInvoiceMatched bool                  `json:"holdUntilInvoiceMatched"`
 }
 
 type CarrierCostEventSummary struct {
@@ -190,6 +192,11 @@ type CarrierCostEventRepository interface {
 		ctx context.Context,
 		req ListCarriersWithPendingEventsRequest,
 	) ([]pulid.ID, error)
+	CountAwaitingInvoiceMatch(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		settlementID pulid.ID,
+	) (int, error)
 	ListByShipment(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
