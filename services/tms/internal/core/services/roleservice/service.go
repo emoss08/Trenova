@@ -32,6 +32,7 @@ type Params struct {
 	PermissionEngine services.PermissionEngine
 	Validator        *Validator
 	Registry         *permission.Registry
+	Auditor          services.SecurityAuditor
 }
 
 type Service struct {
@@ -42,6 +43,7 @@ type Service struct {
 	permEngine services.PermissionEngine
 	validator  *Validator
 	registry   *permission.Registry
+	auditor    services.SecurityAuditor
 }
 
 //nolint:gocritic // dependencies injection
@@ -54,6 +56,7 @@ func New(p Params) *Service {
 		permEngine: p.PermissionEngine,
 		validator:  p.Validator,
 		registry:   p.Registry,
+		auditor:    p.Auditor,
 	}
 }
 
@@ -135,6 +138,16 @@ func (s *Service) CreateRole(ctx context.Context, req CreateRoleRequest) error {
 		return err
 	}
 
+	s.recordChange(ctx, roleChange{
+		actorID:        req.ActorID,
+		organizationID: req.OrganizationID,
+		businessUnitID: req.BusinessUnitID,
+		resourceID:     req.Role.ID.String(),
+		operation:      permission.OpCreate,
+		after:          req.Role,
+		comment:        "Role created",
+	})
+
 	return nil
 }
 
@@ -185,6 +198,17 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
 		log.Error("failed to update role", zap.Error(err))
 		return err
 	}
+
+	s.recordChange(ctx, roleChange{
+		actorID:        req.ActorID,
+		organizationID: req.OrganizationID,
+		businessUnitID: existingRole.BusinessUnitID,
+		resourceID:     req.Role.ID.String(),
+		operation:      permission.OpUpdate,
+		before:         existingRole,
+		after:          req.Role,
+		comment:        "Role updated",
+	})
 
 	if err = s.permCache.InvalidateByRole(ctx, req.Role.ID, s.roleRepo); err != nil {
 		log.Warn("failed to invalidate permission cache", zap.Error(err))
@@ -258,6 +282,19 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 		log.Error("failed to create assignment", zap.Error(err))
 		return err
 	}
+
+	s.recordChange(ctx, roleChange{
+		actorID:        req.ActorID,
+		organizationID: req.OrganizationID,
+		resourceID:     req.Assignment.RoleID.String(),
+		operation:      permission.OpAssign,
+		after:          req.Assignment,
+		comment:        "Role assigned",
+		metadata: map[string]any{
+			"assignmentId": req.Assignment.ID.String(),
+			"userId":       req.Assignment.UserID.String(),
+		},
+	})
 
 	if err := s.permEngine.InvalidateUser(
 		ctx,
@@ -355,6 +392,19 @@ func (s *Service) UpsertRoleHierarchyEdge(
 		return err
 	}
 
+	s.recordChange(ctx, roleChange{
+		actorID:        req.ActorID,
+		organizationID: req.OrganizationID,
+		businessUnitID: req.BusinessUnitID,
+		resourceID:     req.SeniorRoleID.String(),
+		operation:      permission.OpUpdate,
+		comment:        "Role now inherits another role",
+		metadata: map[string]any{
+			"seniorRoleId": req.SeniorRoleID.String(),
+			"juniorRoleId": req.JuniorRoleID.String(),
+		},
+	})
+
 	if err := s.permCache.InvalidateByRole(ctx, req.SeniorRoleID, s.roleRepo); err != nil {
 		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
 	}
@@ -366,10 +416,22 @@ func (s *Service) DeleteRoleHierarchyEdge(
 	orgID pulid.ID,
 	edgeID pulid.ID,
 ) error {
-	return s.rbacRepo.DeleteRoleHierarchyEdge(ctx, repositories.DeleteRoleHierarchyEdgeRequest{
+	if err := s.rbacRepo.DeleteRoleHierarchyEdge(ctx, repositories.DeleteRoleHierarchyEdgeRequest{
 		OrganizationID: orgID,
 		EdgeID:         edgeID,
+	}); err != nil {
+		return err
+	}
+
+	s.recordChange(ctx, roleChange{
+		organizationID: orgID,
+		resourceID:     edgeID.String(),
+		operation:      permission.OpUpdate,
+		comment:        "Role inheritance removed",
+		metadata:       map[string]any{"edgeId": edgeID.String()},
 	})
+
+	return nil
 }
 
 func (s *Service) ListRoleConstraints(
@@ -408,6 +470,24 @@ func (s *Service) SaveRoleConstraint(ctx context.Context, req *SaveConstraintReq
 	}); err != nil {
 		return err
 	}
+
+	roleIDs := make([]string, 0, len(req.RoleIDs))
+	for _, roleID := range req.RoleIDs {
+		roleIDs = append(roleIDs, roleID.String())
+	}
+	s.recordChange(ctx, roleChange{
+		actorID:        req.ActorID,
+		organizationID: req.OrganizationID,
+		businessUnitID: req.BusinessUnitID,
+		resourceID:     req.Constraint.ID.String(),
+		operation:      permission.OpUpdate,
+		after:          req.Constraint,
+		comment:        "Separation of duty constraint saved",
+		metadata: map[string]any{
+			"constraintId": req.Constraint.ID.String(),
+			"roleIds":      roleIDs,
+		},
+	})
 
 	if err := s.permCache.InvalidateOrganization(ctx, req.OrganizationID); err != nil {
 		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
@@ -460,6 +540,13 @@ func (s *Service) DeleteRoleConstraint(
 	if err := s.rbacRepo.DeleteRoleConstraint(ctx, orgID, constraintID); err != nil {
 		return err
 	}
+	s.recordChange(ctx, roleChange{
+		organizationID: orgID,
+		resourceID:     constraintID.String(),
+		operation:      permission.OpUpdate,
+		comment:        "Separation of duty constraint removed",
+		metadata:       map[string]any{"constraintId": constraintID.String()},
+	})
 	if err := s.permCache.InvalidateOrganization(ctx, orgID); err != nil {
 		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
 	}
@@ -494,6 +581,19 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
 		log.Error("failed to delete assignment", zap.Error(err))
 		return err
 	}
+
+	s.recordChange(ctx, roleChange{
+		actorID:        req.ActorID,
+		organizationID: req.OrganizationID,
+		resourceID:     deleted.RoleID.String(),
+		operation:      permission.OpUnassign,
+		before:         deleted,
+		comment:        "Role unassigned",
+		metadata: map[string]any{
+			"assignmentId": req.AssignmentID.String(),
+			"userId":       deleted.UserID.String(),
+		},
+	})
 
 	if err = s.permEngine.InvalidateUser(ctx, deleted.UserID, req.OrganizationID); err != nil {
 		log.Warn("failed to invalidate permission cache", zap.Error(err))
@@ -657,6 +757,17 @@ func (s *Service) CreateResourcePermission(
 		return err
 	}
 
+	s.recordChange(ctx, roleChange{
+		actorID:        actorID,
+		organizationID: orgID,
+		businessUnitID: role.BusinessUnitID,
+		resourceID:     role.ID.String(),
+		operation:      permission.OpUpdate,
+		after:          rp,
+		comment:        "Permission granted to role",
+		metadata:       map[string]any{"resource": rp.Resource},
+	})
+
 	if err = s.permCache.InvalidateByRole(ctx, rp.RoleID, s.roleRepo); err != nil {
 		log.Warn("failed to invalidate permission cache", zap.Error(err))
 	}
@@ -688,6 +799,8 @@ func (s *Service) UpdateResourcePermission(
 		return ErrCannotModifySystemRole
 	}
 
+	previous := findResourcePermission(role.Permissions, rp.ID)
+
 	tempRole := &permission.Role{
 		Permissions: []*permission.ResourcePermission{rp},
 	}
@@ -699,6 +812,18 @@ func (s *Service) UpdateResourcePermission(
 		log.Error("failed to update resource permission", zap.Error(err))
 		return err
 	}
+
+	s.recordChange(ctx, roleChange{
+		actorID:        actorID,
+		organizationID: orgID,
+		businessUnitID: role.BusinessUnitID,
+		resourceID:     role.ID.String(),
+		operation:      permission.OpUpdate,
+		before:         previous,
+		after:          rp,
+		comment:        "Role permission changed",
+		metadata:       map[string]any{"resource": rp.Resource},
+	})
 
 	if err = s.permCache.InvalidateByRole(ctx, rp.RoleID, s.roleRepo); err != nil {
 		log.Warn("failed to invalidate permission cache", zap.Error(err))
@@ -737,6 +862,16 @@ func (s *Service) DeleteResourcePermission(
 		log.Error("failed to delete resource permission", zap.Error(err))
 		return err
 	}
+
+	s.recordChange(ctx, roleChange{
+		organizationID: orgID,
+		businessUnitID: role.BusinessUnitID,
+		resourceID:     role.ID.String(),
+		operation:      permission.OpUpdate,
+		before:         findResourcePermission(role.Permissions, permID),
+		comment:        "Permission removed from role",
+		metadata:       map[string]any{"permissionId": permID.String()},
+	})
 
 	if err = s.permCache.InvalidateByRole(ctx, roleID, s.roleRepo); err != nil {
 		log.Warn("failed to invalidate permission cache", zap.Error(err))
@@ -780,6 +915,16 @@ func (s *Service) InitializeOrganizationRoles(
 		log.Error("failed to assign admin role to creator", zap.Error(err))
 		return err
 	}
+
+	s.recordChange(ctx, roleChange{
+		actorID:        creatorID,
+		organizationID: orgID,
+		resourceID:     adminRole.ID.String(),
+		operation:      permission.OpAssign,
+		after:          assignment,
+		comment:        "Organization administrator role created and assigned to the organization's creator",
+		metadata:       map[string]any{"userId": creatorID.String()},
+	})
 
 	log.Info("initialized organization roles", zap.String("adminRoleID", adminRole.ID.String()))
 	return nil

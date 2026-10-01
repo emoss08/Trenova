@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.uber.org/fx"
@@ -37,6 +39,8 @@ func NewSecurityAuditor(p SecurityAuditorParams) services.SecurityAuditor {
 }
 
 func (a *SecurityAuditor) RecordChange(ctx context.Context, change services.SecurityChange) {
+	change = withRequestTenant(ctx, change)
+
 	params := &services.LogActionParams{
 		Resource:       change.Resource,
 		ResourceID:     change.ResourceID,
@@ -85,6 +89,35 @@ func (a *SecurityAuditor) RecordChange(ctx context.Context, change services.Secu
 		zap.String("ipAddress", meta.ClientIP),
 		zap.String("userAgent", meta.UserAgent),
 	)
+}
+
+func withRequestTenant(ctx context.Context, change services.SecurityChange) services.SecurityChange {
+	tenant, ok := dbscope.From(ctx).Tenant()
+	if !ok {
+		if change.Actor.PrincipalType == "" {
+			change.Actor = services.SystemAuditActor()
+		}
+		return change
+	}
+
+	if change.OrganizationID.IsNil() || change.BusinessUnitID.IsNil() {
+		change.OrganizationID = tenant.OrganizationID
+		change.BusinessUnitID = tenant.BusinessUnitID
+	}
+
+	if change.Actor.PrincipalType == "" {
+		if tenant.UserID.IsNotNil() {
+			change.Actor = services.UserActor(pagination.TenantInfo{
+				OrgID:  tenant.OrganizationID,
+				BuID:   tenant.BusinessUnitID,
+				UserID: tenant.UserID,
+			}).AuditActor()
+		} else {
+			change.Actor = services.SystemAuditActor()
+		}
+	}
+
+	return change
 }
 
 func (a *SecurityAuditor) stateOf(value any, label string) map[string]any {

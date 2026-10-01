@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,6 +34,7 @@ type testServiceDeps struct {
 	rbacRepo   *rbactest.Repository
 	permCache  *mocks.MockPermissionCacheRepository
 	permEngine *mocks.MockPermissionEngine
+	audit      *securityaudittest.Recorder
 	svc        *Service
 }
 
@@ -44,6 +46,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 	permCache := mocks.NewMockPermissionCacheRepository(t)
 	permEngine := mocks.NewMockPermissionEngine(t)
 	logger := zap.NewNop()
+	recorder := &securityaudittest.Recorder{}
 
 	svc := &Service{
 		l:          logger.Named("test.role"),
@@ -53,6 +56,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 		permEngine: permEngine,
 		validator:  newStubValidator(),
 		registry:   permission.NewRegistry(),
+		auditor:    recorder,
 	}
 
 	return &testServiceDeps{
@@ -60,6 +64,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 		rbacRepo:   rbacRepo,
 		permCache:  permCache,
 		permEngine: permEngine,
+		audit:      recorder,
 		svc:        svc,
 	}
 }

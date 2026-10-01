@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -124,4 +125,47 @@ func pulidTenant() pagination.TenantInfo {
 		BuID:   pulid.MustNew("bu_"),
 		UserID: pulid.MustNew("usr_"),
 	}
+}
+
+func TestSecurityAuditorFillsTheTenantAndActorFromTheRequestScope(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturingAuditService{}
+	auditor := newSecurityAuditor(capture)
+	tenant := pulidTenant()
+	ctx := dbscope.WithTenant(t.Context(), dbscope.Tenant{
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		UserID:         tenant.UserID,
+	})
+
+	auditor.RecordChange(ctx, services.SecurityChange{
+		Resource:   permission.ResourceRole,
+		ResourceID: "role_1",
+		Operation:  permission.OpDelete,
+	})
+
+	require.NotNil(t, capture.params)
+	assert.Equal(t, tenant.OrgID, capture.params.OrganizationID)
+	assert.Equal(t, tenant.BuID, capture.params.BusinessUnitID)
+	assert.Equal(t, tenant.UserID, capture.params.UserID)
+	assert.Equal(t, services.PrincipalTypeUser, capture.params.PrincipalType)
+}
+
+func TestSecurityAuditorFallsBackToTheSystemActor(t *testing.T) {
+	t.Parallel()
+
+	capture := &capturingAuditService{}
+	auditor := newSecurityAuditor(capture)
+
+	auditor.RecordChange(t.Context(), services.SecurityChange{
+		Resource:       permission.ResourceRole,
+		Operation:      permission.OpCreate,
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	})
+
+	require.NotNil(t, capture.params)
+	assert.Equal(t, services.PrincipalTypeSystem, capture.params.PrincipalType)
+	assert.Equal(t, services.SystemPrincipalID, capture.params.PrincipalID)
 }
