@@ -1614,7 +1614,7 @@
     },
     {
       "name": "approve_carrier_settlement",
-      "description": "Propose approving a carrier settlement that is pending approval, which commits the organization to paying the carrier what it comes to. A person always decides. Propose it only when get_carrier_settlement shows no open exception or dispute you cannot explain.",
+      "description": "Propose approving a carrier settlement that is pending approval, which commits the organization to paying the carrier what it comes to. A person always decides. Propose it only when get_carrier_settlement shows no open exception or dispute you cannot explain. For more than one, propose approve_carrier_settlements once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -1648,6 +1648,59 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Commits the organization to what the carrier is paid; only a person approves, and hands-off approval is the settlement control's rule."
+      }
+    },
+    {
+      "name": "approve_carrier_settlements",
+      "description": "Propose approving several pending carrier settlements in one proposal the person approves together. Use it instead of approve_carrier_settlement whenever more than one is ready. Each is approved exactly as approve_carrier_settlement would, committing the organization to paying the carrier what it comes to; a person always decides and may untick settlements. Propose only those get_carrier_settlement shows with no open exception or dispute you cannot explain. A settlement approving would refuse is reported, not approved, and the rest still go. Takes 1 to 50 settlements.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "settlementIds": {
+            "description": "The carrier settlements, by id from list_carrier_settlements or get_carrier_settlement or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "carrier_settlement"
+          }
+        },
+        "required": [
+          "settlementIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "every",
+        "several",
+        "many",
+        "together",
+        "bulk",
+        "once"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_settlement",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "carrier_settlement",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Commits the organization to what several carriers are paid at once; only a person approves, settlement by settlement exactly as approve_carrier_settlement, and may untick any of them."
       }
     },
     {
@@ -1695,7 +1748,7 @@
     },
     {
       "name": "approve_driver_settlement",
-      "description": "Propose approving a driver settlement that is pending approval, which commits the organization to paying the driver what it comes to. A person always decides. Propose it only when get_driver_settlement shows no open exception or dispute you cannot explain.",
+      "description": "Propose approving a driver settlement that is pending approval, which commits the organization to paying the driver what it comes to. A person always decides. Propose it only when get_driver_settlement shows no open exception or dispute you cannot explain. For more than one, propose approve_driver_settlements once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -1730,6 +1783,60 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Commits the organization to what the driver is paid; only a person approves, and hands-off approval is the settlement control's rule."
+      }
+    },
+    {
+      "name": "approve_driver_settlements",
+      "description": "Propose approving several pending driver settlements in one proposal the person approves together. Use it instead of approve_driver_settlement whenever more than one is ready. Each is approved exactly as approve_driver_settlement would, committing the organization to paying the driver what it comes to; a person always decides and may untick settlements. Propose only those get_driver_settlement shows with no open exception or dispute you cannot explain. A settlement approving would refuse is reported, not approved, and the rest still go. Takes 1 to 50 settlements.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "settlementIds": {
+            "description": "The driver settlements, by id from list_driver_settlements or get_driver_settlement or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "driver_settlement"
+          }
+        },
+        "required": [
+          "settlementIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "every",
+        "several",
+        "many",
+        "together",
+        "bulk",
+        "once"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "driver_settlement",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "driver_visible",
+          "money"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "driver_settlement",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Commits the organization to what several drivers are paid at once; only a person approves, settlement by settlement exactly as approve_driver_settlement, and may untick any of them."
       }
     },
     {
@@ -22524,7 +22631,7 @@
     },
     {
       "name": "post_carrier_settlement",
-      "description": "Propose posting an approved carrier settlement to the general ledger. Posting books purchased transportation against accounts payable, records the bill on the carrier's ledger and queues it for the accounting system. It cannot be undone except by voiding, so a person always decides.",
+      "description": "Propose posting an approved carrier settlement to the general ledger. Posting books purchased transportation against accounts payable, records the bill on the carrier's ledger and queues it for the accounting system. It cannot be undone except by voiding, so a person always decides. For more than one, propose post_carrier_settlements once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22558,6 +22665,59 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts."
+      }
+    },
+    {
+      "name": "post_carrier_settlements",
+      "description": "Propose posting several approved carrier settlements to the general ledger in one proposal the person approves together. Use it instead of post_carrier_settlement whenever more than one is ready. Each is posted exactly as post_carrier_settlement would: purchased transportation booked against accounts payable, the bill recorded on the carrier's ledger and queued for the accounting system. It cannot be undone except by voiding, so a person always decides and may untick settlements. A settlement posting would refuse is reported, not posted, and the rest still go. Takes 1 to 50 settlements.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "settlementIds": {
+            "description": "The carrier settlements, by id from list_carrier_settlements or get_carrier_settlement or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "carrier_settlement"
+          }
+        },
+        "required": [
+          "settlementIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "every",
+        "several",
+        "many",
+        "together",
+        "bulk",
+        "once"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_settlement",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "carrier_settlement",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_carrier_settlement, and may untick any of them."
       }
     },
     {
@@ -22666,7 +22826,7 @@
     },
     {
       "name": "post_driver_settlement",
-      "description": "Propose posting an approved driver settlement to the general ledger. Posting books the driver pay expense and settlements payable, queues it for the accounting system and tells the driver in the driver portal. It cannot be undone except by voiding, so a person always decides.",
+      "description": "Propose posting an approved driver settlement to the general ledger. Posting books the driver pay expense and settlements payable, queues it for the accounting system and tells the driver in the driver portal. It cannot be undone except by voiding, so a person always decides. For more than one, propose post_driver_settlements once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22701,6 +22861,60 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts."
+      }
+    },
+    {
+      "name": "post_driver_settlements",
+      "description": "Propose posting several approved driver settlements to the general ledger in one proposal the person approves together. Use it instead of post_driver_settlement whenever more than one is ready. Each is posted exactly as post_driver_settlement would: the driver pay expense and settlements payable booked, queued for the accounting system and the driver told in the driver portal. It cannot be undone except by voiding, so a person always decides and may untick settlements. A settlement posting would refuse is reported, not posted, and the rest still go. Takes 1 to 50 settlements.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "settlementIds": {
+            "description": "The driver settlements, by id from list_driver_settlements or get_driver_settlement or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "driver_settlement"
+          }
+        },
+        "required": [
+          "settlementIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "every",
+        "several",
+        "many",
+        "together",
+        "bulk",
+        "once"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "driver_settlement",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "driver_visible",
+          "money"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "driver_settlement",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_driver_settlement, and may untick any of them."
       }
     },
     {

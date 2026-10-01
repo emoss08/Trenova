@@ -1,7 +1,7 @@
 package agenttoolservice
 
 func settlementToolProviders() []any {
-	return append(settlementDecisionProviders(),
+	return append(append(settlementDecisionProviders(), settlementBulkProviders()...),
 		provideHoldDriverPayEventTool,
 		provideReleaseDriverPayEventTool,
 		provideAttachPayEventsTool,

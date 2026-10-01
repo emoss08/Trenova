@@ -93,7 +93,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 42 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 4 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
 
 ## Totals
 
@@ -101,8 +101,8 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 375 |
-| Exempt | 581 |
+| Covered by a tool | 376 |
+| Exempt | 580 |
 | — Security | 72 |
 | — Configuration | 259 |
 | — User preference | 27 |
@@ -111,11 +111,11 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Counterparty | 33 |
 | — Read-only | 47 |
 | — Attestation | 42 |
-| — Duplicate | 4 |
+| — Duplicate | 3 |
 | **Pending** | **0** |
 | Total | 956 |
 
-Of the 375 writes an agent should be able to make, 375 have a tool (100%).
+Of the 376 writes an agent should be able to make, 376 have a tool (100%).
 
 ## Pending
 
@@ -183,7 +183,7 @@ The writes no tool performs yet, and what the tool would do.
 | documenttemplate | 12 | 0 | 12 | 0 |
 | documenttype | 3 | 0 | 3 | 0 |
 | driverportal | 31 | 3 | 28 | 0 |
-| driversettlement | 34 | 28 | 6 | 0 |
+| driversettlement | 34 | 29 | 5 | 0 |
 | edi | 56 | 15 | 41 | 0 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
@@ -622,12 +622,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation acceptCarrierInvoiceMatch` | Tool: `accept_carrier_invoice_match` |
 | `mutation acceptCarrierInvoiceMatchWithVariance` | Tool: `accept_carrier_invoice_match_with_variance` |
 | `mutation addCarrierSettlementAdjustment` | Tool: `add_carrier_settlement_adjustment` |
-| `mutation approveCarrierSettlement` | Tool: `approve_carrier_settlement` |
+| `mutation approveCarrierSettlement` | Tool: `approve_carrier_settlement`, `approve_carrier_settlements` |
 | `mutation createCarrierInvoiceMatch` | Tool: `create_carrier_invoice_match` |
 | `mutation generateCarrierSettlementBatch` | Tool: `generate_carrier_settlement_batch` |
 | `mutation linkEdiCarrierInvoiceToCarrier` | Tool: `link_edi_carrier_invoice_to_carrier` |
 | `mutation markCarrierSettlementPaid` | Tool: `record_carrier_settlement_payment` |
-| `mutation postCarrierSettlement` | Tool: `post_carrier_settlement` |
+| `mutation postCarrierSettlement` | Tool: `post_carrier_settlement`, `post_carrier_settlements` |
 | `mutation recalculateCarrierSettlement` | Tool: `recalculate_carrier_settlement` |
 | `mutation rejectCarrierInvoiceMatch` | Tool: `reject_carrier_invoice_match` |
 | `mutation rejectCarrierSettlement` | Tool: `reject_carrier_settlement` |
@@ -895,7 +895,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation approveDriverSettlement` | Tool: `approve_driver_settlement` |
 | `mutation assignPayProfileToWorker` | Tool: `assign_pay_profile` |
 | `mutation attachPayEventsToSettlement` | Tool: `attach_pay_events_to_settlement` |
-| `mutation bulkDriverSettlementAction` | Exempt, duplicate: Runs submit, approve, post or mark paid on several settlements at once; each has its own tool, and an approver decides a batch of those proposals together. |
+| `mutation bulkDriverSettlementAction` | Tool: `approve_driver_settlements`, `post_driver_settlements`, `record_driver_settlement_payment`, `submit_driver_settlement` |
 | `mutation closeEscrowAccount` | Tool: `close_escrow_account` |
 | `mutation createPayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
 | `mutation createPayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |

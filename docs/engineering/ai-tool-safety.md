@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 547.
+Tools listed: 551.
 
 ## The model
 
@@ -55,9 +55,9 @@ and Confidential fields never reach a model at all.
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 7 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 219 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
-| Seen by a driver | Changes something a driver can see. | Ask first | Yes | 22 |
+| Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 33 |
-| Money | Moves or commits money. | Automatic | Yes | 93 |
+| Money | Moves or commits money. | Automatic | Yes | 97 |
 
 ## Reads only
 
@@ -576,8 +576,10 @@ Moves or commits money.
 | Approve billing queue item (`approve_billing_queue_item`) | Money | Propose | — | — | Approving creates the invoice a customer is billed on, so only a person approves; the agent proposes it with what it checked. |
 | Approve billing queue items (`approve_billing_queue_items`) | Money | Propose | — | — | Approving creates the invoices customers are billed on, so only a person approves, item by item exactly as approve_billing_queue_item, and may untick any of them. |
 | Approve carrier settlement (`approve_carrier_settlement`) | Money | Propose | — | — | Commits the organization to what the carrier is paid; only a person approves, and hands-off approval is the settlement control's rule. |
+| Approve carrier settlements (`approve_carrier_settlements`) | Money | Propose | — | — | Commits the organization to what several carriers are paid at once; only a person approves, settlement by settlement exactly as approve_carrier_settlement, and may untick any of them. |
 | Approve detention (`approve_detention`) | Money | Propose | — | — | Releases a held detention charge onto the customer's invoice; only a person approves it. |
 | Approve driver settlement (`approve_driver_settlement`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Commits the organization to what the driver is paid; only a person approves, and hands-off approval is the settlement control's rule. |
+| Approve driver settlements (`approve_driver_settlements`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Commits the organization to what several drivers are paid at once; only a person approves, settlement by settlement exactly as approve_driver_settlement, and may untick any of them. |
 | Approve invoice adjustment (`approve_invoice_adjustment`) | Money | Propose | — | — | Executes a credit, rebill or write-off an approver was asked to sign off; approving is a person's decision. |
 | Approve rate agreement (`approve_rate_agreement`) | Money | Propose | — | — | Turns on an agreement that prices what customers are charged or carriers are paid; only a person approves one. |
 | Archive rate agreement (`archive_rate_agreement`) | Money | Propose | — | — | Ends an agreement for good, which changes what customers are charged when it was active; only a person archives one. |
@@ -609,8 +611,10 @@ Moves or commits money.
 | Open fiscal period (`open_fiscal_period`) | Money | Propose | — | — | Changes which dates the ledger takes postings for; only a person opens a period. |
 | Pay driver now (`pay_driver_now`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Approves, posts and records a payment to a driver in one step; only a person pays someone. |
 | Post carrier settlement (`post_carrier_settlement`) | Money | Propose | — | — | Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts. |
+| Post carrier settlements (`post_carrier_settlements`) | Money | Propose | — | — | Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_carrier_settlement, and may untick any of them. |
 | Post customer payment (`post_customer_payment`) | Money | Automatic | — | — | Records a customer payment and applies it to invoices. |
 | Post driver settlement (`post_driver_settlement`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts. |
+| Post driver settlements (`post_driver_settlements`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_driver_settlement, and may untick any of them. |
 | Post invoice (`post_invoice`) | Money | Propose | — | — | Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting. |
 | Post invoices (`post_invoices`) | Money | Propose | — | — | Books several receivables to the ledger at once and queues each for the accounting system and the customer's EDI; only a person posts, invoice by invoice exactly as post_invoice, and may untick any of them. |
 | Post journal reversal (`post_journal_reversal`) | Money | Propose | — | — | Books the reversing entry to the general ledger; only a person posts a reversal. |

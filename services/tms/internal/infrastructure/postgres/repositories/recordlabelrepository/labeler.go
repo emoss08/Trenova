@@ -14,9 +14,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/holdreason"
@@ -181,6 +183,18 @@ var sources = map[permission.Resource]source{
 		scope: buncolgen.BillingQueueItemScopeTenant,
 		id:    buncolgen.BillingQueueItemColumns.ID,
 		label: buncolgen.BillingQueueItemColumns.Number.Qualified(),
+	},
+	permission.ResourceDriverSettlement: {
+		model: func() any { return (*driversettlement.Settlement)(nil) },
+		scope: buncolgen.SettlementScopeTenant,
+		id:    buncolgen.SettlementColumns.ID,
+		label: buncolgen.SettlementColumns.SettlementNumber.Qualified(),
+	},
+	permission.ResourceCarrierSettlement: {
+		model: func() any { return (*carriersettlement.CarrierSettlement)(nil) },
+		scope: buncolgen.CarrierSettlementScopeTenant,
+		id:    buncolgen.CarrierSettlementColumns.ID,
+		label: buncolgen.CarrierSettlementColumns.SettlementNumber.Qualified(),
 	},
 	permission.ResourceBankReceipt: {
 		model: func() any { return (*bankreceipt.BankReceipt)(nil) },

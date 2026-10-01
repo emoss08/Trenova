@@ -526,7 +526,7 @@ writes:
   "mutation addCarrierSettlementAdjustment":
     tools: [add_carrier_settlement_adjustment]
   "mutation approveCarrierSettlement":
-    tools: [approve_carrier_settlement]
+    tools: [approve_carrier_settlement, approve_carrier_settlements]
   "mutation createCarrierInvoiceMatch":
     tools: [create_carrier_invoice_match]
   "mutation generateCarrierSettlementBatch":
@@ -536,7 +536,7 @@ writes:
   "mutation markCarrierSettlementPaid":
     tools: [record_carrier_settlement_payment]
   "mutation postCarrierSettlement":
-    tools: [post_carrier_settlement]
+    tools: [post_carrier_settlement, post_carrier_settlements]
   "mutation recalculateCarrierSettlement":
     tools: [recalculate_carrier_settlement]
   "mutation rejectCarrierInvoiceMatch":
@@ -962,8 +962,7 @@ writes:
   "mutation attachPayEventsToSettlement":
     tools: [attach_pay_events_to_settlement]
   "mutation bulkDriverSettlementAction":
-    exempt: duplicate
-    reason: "Runs submit, approve, post or mark paid on several settlements at once; each has its own tool, and an approver decides a batch of those proposals together."
+    tools: [approve_driver_settlements, post_driver_settlements, record_driver_settlement_payment, submit_driver_settlement]
   "mutation closeEscrowAccount":
     tools: [close_escrow_account]
   "mutation createPayCode":

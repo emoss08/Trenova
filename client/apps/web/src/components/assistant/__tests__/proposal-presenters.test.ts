@@ -500,6 +500,37 @@ describe("presentProposal for monitoring tools", () => {
   });
 });
 
+describe("presentProposal for settlement bulk tools", () => {
+  it("counts the settlements an approval or posting covers and keeps the ids off the card", () => {
+    const approve = presentProposal(
+      proposal({
+        toolName: "approve_driver_settlements",
+        arguments: {
+          settlementIds: ["dstl_01M3034Q2N7JD99RA1D8DGH1ZF", "dstl_01M3034Q2N7JD99RA1D8DGH1ZG"],
+        },
+      }),
+    );
+    expect(approve.title).toBe("Approve driver settlements");
+    expect(approve.summary).toBe(
+      "Approve 2 driver settlements, committing to pay each driver what it comes to.",
+    );
+    expect(approve.highlights).toEqual([]);
+    expect(approve.reversible).toBe(false);
+
+    const post = presentProposal(
+      proposal({
+        toolName: "post_carrier_settlements",
+        arguments: { settlementIds: ["carstl_01M3034Q2N7JD99RA1D8DGH1ZF"] },
+      }),
+    );
+    expect(post.title).toBe("Post carrier settlements");
+    expect(post.summary).toBe(
+      "Post 1 approved carrier settlement to the ledger and queue it for the accounting system.",
+    );
+    expect(post.highlights).toEqual([]);
+  });
+});
+
 describe("shortRef", () => {
   it("shortens a PULID and leaves a human reference alone", () => {
     expect(shortRef("shp_01M2PRNXAMQNKK9HK9V5B817QE")).toBe("…B817QE");

@@ -60,6 +60,7 @@ type settlementFacts struct {
 
 type settlementLedger[E any] struct {
 	resource  permission.Resource
+	artifact  string
 	noun      string
 	sources   string
 	sensitive []string

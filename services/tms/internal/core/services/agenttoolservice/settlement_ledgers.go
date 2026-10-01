@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	nounDriverSettlement  = "driver settlement"
-	nounCarrierSettlement = "carrier settlement"
-	driverSettlementReads = "list_driver_settlements or get_driver_settlement"
-	carrierSettlementRead = "list_carrier_settlements or get_carrier_settlement"
+	nounDriverSettlement    = "driver settlement"
+	nounCarrierSettlement   = "carrier settlement"
+	driverSettlementReads   = "list_driver_settlements or get_driver_settlement"
+	carrierSettlementRead   = "list_carrier_settlements or get_carrier_settlement"
+	carrierSettlementEntity = "carrier_settlement"
 )
 
 const (
@@ -36,6 +37,7 @@ var (
 func driverSettlementLedger() settlementLedger[driversettlement.Settlement] {
 	return settlementLedger[driversettlement.Settlement]{
 		resource: permission.ResourceDriverSettlement,
+		artifact: driverSettlementEntity,
 		noun:     nounDriverSettlement,
 		sources:  driverSettlementReads,
 		sensitive: []string{
@@ -150,6 +152,7 @@ func voidEffects(entity *driversettlement.Settlement) string {
 func carrierSettlementLedger() settlementLedger[carriersettlement.CarrierSettlement] {
 	return settlementLedger[carriersettlement.CarrierSettlement]{
 		resource:  permission.ResourceCarrierSettlement,
+		artifact:  carrierSettlementEntity,
 		noun:      nounCarrierSettlement,
 		sources:   carrierSettlementRead,
 		sensitive: []string{"grossCostMinor", "adjustmentsMinor", "netPayableMinor"},

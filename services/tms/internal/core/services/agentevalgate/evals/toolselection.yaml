@@ -277,9 +277,17 @@ cases:
   - request: when was this carrier settlement paid
     expect: [get_carrier_settlement, list_carrier_settlements]
   - request: approve Ana's driver settlement
-    expect: [approve_driver_settlement]
+    expect: [approve_driver_settlement, approve_driver_settlements]
   - request: post the approved carrier settlement to the ledger
-    expect: [post_carrier_settlement]
+    expect: [post_carrier_settlement, post_carrier_settlements]
+  - request: approve all of this week's pending driver settlements
+    expect: [approve_driver_settlements]
+  - request: post these approved driver settlements to the ledger together
+    expect: [post_driver_settlements]
+  - request: approve the pending carrier settlements in one go
+    expect: [approve_carrier_settlements]
+  - request: post every approved carrier settlement for the period at once
+    expect: [post_carrier_settlements]
   - request: record that the driver settlement was paid by check
     expect: [record_driver_settlement_payment]
   - request: void the carrier settlement

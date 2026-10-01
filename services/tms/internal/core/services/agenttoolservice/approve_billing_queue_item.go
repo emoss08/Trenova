@@ -197,7 +197,7 @@ func (t *approveBillingQueueItemTool) ExecuteWithResult(
 	made, err := t.invoices.PreviewApprovalInvoice(ctx, draftReq)
 	if err != nil || made == nil || made.Invoice == nil || made.Invoice.ID.IsNil() {
 		//nolint:nilerr // the approval is made; not finding its invoice only costs the pointer
-		return &agent.ToolExecutionResult{Action: "approved", Kind: "billing queue item"}, nil
+		return &agent.ToolExecutionResult{Action: pastApproved, Kind: "billing queue item"}, nil
 	}
 
 	return &agent.ToolExecutionResult{

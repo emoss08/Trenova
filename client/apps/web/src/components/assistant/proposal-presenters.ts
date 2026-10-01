@@ -600,6 +600,50 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
+  approve_driver_settlements: (args) => {
+    const count = list(args.settlementIds).length;
+
+    return {
+      title: "Approve driver settlements",
+      summary: `Approve ${plural(count, "driver settlement", "driver settlements")}, committing to pay each driver what it comes to.`,
+      covered: ["settlementIds"],
+      reversible: false,
+    };
+  },
+
+  post_driver_settlements: (args) => {
+    const count = list(args.settlementIds).length;
+
+    return {
+      title: "Post driver settlements",
+      summary: `Post ${plural(count, "approved driver settlement", "approved driver settlements")} to the ledger, queue ${count === 1 ? "it" : "each"} for the accounting system and tell ${count === 1 ? "the driver" : "each driver"}.`,
+      covered: ["settlementIds"],
+      reversible: false,
+    };
+  },
+
+  approve_carrier_settlements: (args) => {
+    const count = list(args.settlementIds).length;
+
+    return {
+      title: "Approve carrier settlements",
+      summary: `Approve ${plural(count, "carrier settlement", "carrier settlements")}, committing to pay each carrier what it comes to.`,
+      covered: ["settlementIds"],
+      reversible: false,
+    };
+  },
+
+  post_carrier_settlements: (args) => {
+    const count = list(args.settlementIds).length;
+
+    return {
+      title: "Post carrier settlements",
+      summary: `Post ${plural(count, "approved carrier settlement", "approved carrier settlements")} to the ledger and queue ${count === 1 ? "it" : "each"} for the accounting system.`,
+      covered: ["settlementIds"],
+      reversible: false,
+    };
+  },
+
   transition_item_to_in_review: (args) => ({
     title: "Send to review",
     summary: "Move this billing item into review so a biller picks it up.",

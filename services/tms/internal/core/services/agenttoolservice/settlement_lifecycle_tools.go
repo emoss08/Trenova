@@ -41,6 +41,7 @@ type lifecycleText struct {
 	paidEgress  []agent.EgressClass
 	paidMeaning string
 	postMeaning string
+	postEach    string
 	adjustment  func() (map[string]any, []string)
 	fillAdjust  func(map[string]any, *settlementshared.ActionRequest) error
 }
@@ -75,7 +76,8 @@ func approveDecision(text *lifecycleText) *settlementDecision {
 		description: "Propose approving a " + text.noun + " that is pending approval, " +
 			"which commits the organization to paying the " + text.payee + " what it comes to. " +
 			"A person always decides. Propose it only when " + text.getTool + " shows no " +
-			"open exception or dispute you cannot explain.",
+			"open exception or dispute you cannot explain. For more than one, propose " +
+			bulkName(text.name(verbApprove)) + " once with all of them instead.",
 		action:     settlementshared.ActionApprove,
 		operation:  permission.OpApprove,
 		personOnly: true,
@@ -119,7 +121,8 @@ func postDecision(text *lifecycleText) *settlementDecision {
 		name: text.name("post"),
 		description: "Propose posting an approved " + text.noun + " to the general " +
 			"ledger. " + text.postMeaning + " It cannot be undone except by voiding, so a " +
-			"person always decides.",
+			"person always decides. For more than one, propose " +
+			bulkName(text.name("post")) + " once with all of them instead.",
 		action:     settlementshared.ActionPost,
 		operation:  permission.OpApprove,
 		personOnly: true,
@@ -383,6 +386,8 @@ func driverLifecycle() *lifecycleText {
 		},
 		postMeaning: "Posting books the driver pay expense and settlements payable, queues " +
 			"it for the accounting system and tells the driver in the driver portal.",
+		postEach: "the driver pay expense and settlements payable booked, queued for the " +
+			"accounting system and the driver told in the driver portal",
 		paidMeaning: "The driver is told in the driver portal.",
 		adjustment:  driverAdjustmentSchema,
 		fillAdjust:  fillDriverAdjustment,
@@ -399,6 +404,8 @@ func carrierLifecycle() *lifecycleText {
 		paidEgress: []agent.EgressClass{agent.EgressMoney},
 		postMeaning: "Posting books purchased transportation against accounts payable, " +
 			"records the bill on the carrier's ledger and queues it for the accounting system.",
+		postEach: "purchased transportation booked against accounts payable, the bill " +
+			"recorded on the carrier's ledger and queued for the accounting system",
 		paidMeaning: "Recording it books the payment against accounts payable and cash.",
 		adjustment:  carrierAdjustmentSchema,
 		fillAdjust:  fillCarrierAdjustment,

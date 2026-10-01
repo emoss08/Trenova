@@ -82,9 +82,9 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"remove_driver_settlement_adjustment",
 		"recalculate_driver_settlement",
 		"submit_driver_settlement",
-		"approve_driver_settlement",
+		"approve_driver_settlements",
 		"reject_driver_settlement",
-		"post_driver_settlement",
+		"post_driver_settlements",
 		"record_driver_settlement_payment",
 		"void_driver_settlement",
 		"pay_driver_now",
@@ -95,9 +95,9 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"remove_carrier_settlement_adjustment",
 		"recalculate_carrier_settlement",
 		"submit_carrier_settlement",
-		"approve_carrier_settlement",
+		"approve_carrier_settlements",
 		"reject_carrier_settlement",
-		"post_carrier_settlement",
+		"post_carrier_settlements",
 		"record_carrier_settlement_payment",
 		"void_carrier_settlement",
 		"list_carrier_invoice_matches",
@@ -135,6 +135,18 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"post_invoice",
 	} {
 		require.NotContainsf(t, tools, tool, "the settlements clerk must not hold %s", tool)
+	}
+
+	for _, single := range []string{
+		"approve_driver_settlement",
+		"post_driver_settlement",
+		"approve_carrier_settlement",
+		"post_carrier_settlement",
+	} {
+		require.NotContainsf(t, tools, single,
+			"the settlements clerk approves and posts through %ss, which takes one or many",
+			single)
+		require.Containsf(t, tools, single+"s", "the settlements clerk needs %ss", single)
 	}
 }
 

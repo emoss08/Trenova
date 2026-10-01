@@ -45,6 +45,8 @@ func TestLabelSources_CoverTheRecordsPreviewsNameMost(t *testing.T) {
 		permission.ResourceCarrier,
 		permission.ResourceInvoice,
 		permission.ResourceDocument,
+		permission.ResourceDriverSettlement,
+		permission.ResourceCarrierSettlement,
 	} {
 		_, ok := sources[resource]
 		assert.True(t, ok, resource)

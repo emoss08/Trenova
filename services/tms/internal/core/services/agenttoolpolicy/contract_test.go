@@ -308,6 +308,14 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 			agent.EgressDriverVisible,
 			agent.EgressMoney,
 		},
+		"approve_driver_settlements": {
+			agent.EgressDriverVisible,
+			agent.EgressMoney,
+		},
+		"post_driver_settlements": {
+			agent.EgressDriverVisible,
+			agent.EgressMoney,
+		},
 		"record_driver_settlement_payment": {
 			agent.EgressDriverVisible,
 			agent.EgressMoney,
@@ -318,6 +326,8 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		},
 		"approve_carrier_settlement":           {agent.EgressMoney},
 		"post_carrier_settlement":              {agent.EgressMoney},
+		"approve_carrier_settlements":          {agent.EgressMoney},
+		"post_carrier_settlements":             {agent.EgressMoney},
 		"record_carrier_settlement_payment":    {agent.EgressMoney},
 		"void_driver_settlement":               {agent.EgressMoney},
 		"void_carrier_settlement":              {agent.EgressMoney},
