@@ -1,13 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { MemoryRouter } from "react-router";
@@ -22,7 +14,7 @@ import type { AssistantPlan, AssistantProposal, ProposalField } from "@/types/as
 import { ApprovalDock } from "../approval-dock";
 import { approvalQueue, type ApprovalEntry } from "../approval-queue";
 import { DecisionFollowUpProvider } from "../decision-follow-up";
-import { planPreview, preview, reason, warning } from "./preview-fixtures";
+import { field, money, planPreview, preview, reason, record, warning } from "./preview-fixtures";
 
 const fetchProposalPreview =
   vi.fn<(request: ProposalPreviewRequest, options?: unknown) => Promise<ProposalPreview>>();
@@ -167,6 +159,17 @@ function renderDock({
 const dock = () => screen.getByRole("region");
 const approve = () => screen.getByRole("button", { name: /^approve/i });
 const reject = () => screen.getByRole("button", { name: /^reject/i });
+const details = () => screen.getByRole("button", { name: "Details" });
+const header = () => {
+  const element = dock().querySelector("header");
+  if (element === null) {
+    throw new Error("the box has no header");
+  }
+  return element;
+};
+
+/** The preview fixture's own sentence, which the box leads with once it is in. */
+const PREVIEW_SUMMARY = "Would change S-1001.";
 
 /** Lets a mutation the keys may have started reach the server mock. */
 const settle = () => act(() => new Promise<void>((resolve) => setTimeout(resolve, 20)));
@@ -199,7 +202,7 @@ describe("ApprovalDock for one proposal", () => {
     fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
     const { followUp, onDecided } = renderDock();
 
-    await screen.findByRole("link", { name: "S-1001" });
+    await screen.findByText(PREVIEW_SUMMARY);
     await user.click(approve());
 
     await waitFor(() =>
@@ -217,7 +220,7 @@ describe("ApprovalDock for one proposal", () => {
   it("approves on ⌘/Ctrl+Enter and never on Enter alone", async () => {
     fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
     renderDock();
-    await screen.findByRole("link", { name: "S-1001" });
+    await screen.findByText(PREVIEW_SUMMARY);
 
     fireEvent.keyDown(dock(), { key: "Enter" });
     fireEvent.keyDown(dock(), { key: "Enter", shiftKey: true });
@@ -269,7 +272,7 @@ describe("ApprovalDock for one proposal", () => {
     decideMyProposal.mockRejectedValueOnce(conflict()).mockResolvedValue({});
     renderDock();
 
-    await screen.findByRole("link", { name: "S-1001" });
+    await screen.findByText(PREVIEW_SUMMARY);
     await user.click(approve());
 
     expect(
@@ -288,6 +291,129 @@ describe("ApprovalDock for one proposal", () => {
     );
   });
 
+  // The box is a prompt, not the preview: the action, the record and what it
+  // comes to on one line, the tool's own sentence under it, and every record
+  // it changes behind Details.
+  it("leads with the action, its record and amount, and folds the changes", async () => {
+    const user = userEvent.setup();
+    fetchProposalPreview.mockResolvedValue(
+      preview({
+        tool: "post_invoice",
+        summary: "Would post INV2610000001 to Acme for $1,350.00; 1 shipment invoiced.",
+        changes: [
+          record({
+            resource: "invoice",
+            record: { entityType: "invoice", id: "inv_1" },
+            entityId: "inv_1",
+            label: "INV2610000001",
+            fields: [field({ before: "Draft", after: "Posted" })],
+            money: money(),
+          }),
+          record(),
+        ],
+      }),
+    );
+    renderDock({
+      entry: entryOf([
+        proposal({
+          toolName: "post_invoice",
+          arguments: { invoiceId: "inv_1" },
+          rationale: "Asked to post invoice in reply to: post the Acme invoice",
+        }),
+      ]),
+    });
+
+    expect(
+      await screen.findByText(
+        "Would post INV2610000001 to Acme for $1,350.00; 1 shipment invoiced.",
+      ),
+    ).toBeInTheDocument();
+    expect(header()).toHaveTextContent("Post invoice INV2610000001");
+    expect(within(header()).getByText("$1,350.00")).toBeInTheDocument();
+    expect(within(header()).getByText("Permanent")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Post invoice" })).toBeInTheDocument();
+    expect(screen.queryByText("Run post invoice with the values below.")).toBeNull();
+    expect(screen.queryByRole("link", { name: "S-1001" })).toBeNull();
+    expect(screen.queryByText(/Asked to post invoice/)).toBeNull();
+    expect(details()).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(details());
+
+    expect(details()).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "INV2610000001" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "S-1001" })).toBeInTheDocument();
+    expect(screen.getByText("Difference")).toBeInTheDocument();
+    expect(screen.getByText(/Asked to post invoice/)).toBeInTheDocument();
+  });
+
+  it("names no record when the write covers several of one kind", async () => {
+    fetchProposalPreview.mockResolvedValue(
+      preview({
+        changes: [
+          record(),
+          record({
+            entityId: "shp_2",
+            record: { entityType: "shipment", id: "shp_2" },
+            label: "S-1002",
+          }),
+        ],
+      }),
+    );
+    renderDock();
+
+    await screen.findByText(PREVIEW_SUMMARY);
+    expect(header()).toHaveTextContent(/^Change a shipment/);
+    expect(header()).not.toHaveTextContent("S-1001");
+  });
+
+  // A tool the client has no words for would read "Run … with the values
+  // below" about values that are folded away; the box waits for the tool's
+  // own sentence instead.
+  it("never says the generic sentence while the preview loads", () => {
+    fetchProposalPreview.mockReturnValue(new Promise(() => {}));
+    renderDock({ entry: entryOf([proposal({ toolName: "post_invoice", arguments: {} })]) });
+
+    expect(screen.queryByText(/with the values below/)).toBeNull();
+    expect(screen.getByRole("region", { name: "Post invoice" })).toBeInTheDocument();
+  });
+
+  it("says the client's sentence when the preview cannot be read", async () => {
+    fetchProposalPreview.mockRejectedValue(new Error("preview down"));
+    renderDock({ entry: entryOf([proposal({ toolName: "post_invoice", arguments: {} })]) });
+
+    expect(
+      await screen.findByText(
+        "What this would change could not be loaded. Approving now is recorded as approved without a preview.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Run post invoice with the values below.")).toBeInTheDocument();
+    expect(approve()).toBeEnabled();
+  });
+
+  it("keeps a record that moved in view with the changes folded", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ stale: true }));
+    renderDock();
+
+    expect(await screen.findByText("Changed since it was proposed")).toBeInTheDocument();
+    expect(details()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("shows the keys inside the buttons on the Desk and names them for assistive tech", async () => {
+    fetchProposalPreview.mockResolvedValue(preview());
+    renderDock();
+    await screen.findByText(PREVIEW_SUMMARY);
+
+    expect(within(dock()).getByText("Esc")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("button", { name: "Tell the agent" })).toHaveAttribute(
+      "aria-keyshortcuts",
+      "Escape",
+    );
+    expect(screen.getByRole("button", { name: "Decide later" })).toHaveAttribute(
+      "aria-keyshortcuts",
+      "Alt+L",
+    );
+  });
+
   it("says how many wait and which this is", () => {
     fetchProposalPreview.mockReturnValue(new Promise(() => {}));
     renderDock({ position: 1, total: 3 });
@@ -296,14 +422,14 @@ describe("ApprovalDock for one proposal", () => {
   });
 });
 
-describe("telling the agent instead", () => {
+describe("telling the agent", () => {
   it("rejects with the words typed, and the decision's own follow-up answers them", async () => {
     const user = userEvent.setup();
     fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
     const { followUp } = renderDock();
-    await screen.findByRole("link", { name: "S-1001" });
+    await screen.findByText(PREVIEW_SUMMARY);
 
-    await user.click(screen.getByRole("button", { name: "Tell the agent instead" }));
+    await user.click(screen.getByRole("button", { name: "Tell the agent" }));
     const box = screen.getByLabelText(/What should the agent do instead/);
     expect(box).toHaveFocus();
     await user.type(box, "Mark it delayed tomorrow, not today.");
@@ -351,7 +477,7 @@ describe("telling the agent instead", () => {
     fetchProposalPreview.mockReturnValue(new Promise(() => {}));
     renderDock();
 
-    await user.click(screen.getByRole("button", { name: "Tell the agent instead" }));
+    await user.click(screen.getByRole("button", { name: "Tell the agent" }));
     const box = screen.getByLabelText(/What should the agent do instead/);
     await user.type(box, "   ");
     fireEvent.keyDown(box, { key: "Enter" });
@@ -364,7 +490,7 @@ describe("telling the agent instead", () => {
     fetchProposalPreview.mockReturnValue(new Promise(() => {}));
     renderDock({ canTell: false });
 
-    expect(screen.queryByRole("button", { name: "Tell the agent instead" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Tell the agent" })).toBeNull();
     fireEvent.keyDown(dock(), { key: "Escape" });
     expect(screen.queryByLabelText(/What should the agent do instead/)).toBeNull();
   });
@@ -430,7 +556,11 @@ describe("ApprovalDock for a plan", () => {
     const { followUp } = renderDock({ entry: planEntry() });
 
     await waitFor(() => expect(approve()).toBeEnabled());
-    expect(screen.getByText("2 changes, in order")).toBeInTheDocument();
+    expect(within(header()).getByText("2 changes")).toBeInTheDocument();
+    expect(screen.getByText("Both open moves get a driver.")).toBeInTheDocument();
+    expect(screen.queryByText("Uses the record step 1 changes")).toBeNull();
+
+    await user.click(details());
     expect(screen.getByText("Uses the record step 1 changes")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Approve all 2" }));
 
@@ -445,12 +575,46 @@ describe("ApprovalDock for a plan", () => {
     expect(decideMyProposal).not.toHaveBeenCalled();
   });
 
+  // A step the server would refuse is said above the answers, by its step,
+  // with the plan's way forward, while the steps themselves stay folded.
+  it("keeps a step that would not go through in view with the steps folded", async () => {
+    const user = userEvent.setup();
+    fetchPlanPreview.mockResolvedValue(
+      planPreview({
+        steps: [
+          { proposalId: "aprop_1", step: 1, preview: preview({ proposalId: "aprop_1" }) },
+          {
+            proposalId: "aprop_2",
+            step: 2,
+            preview: preview({
+              proposalId: "aprop_2",
+              warnings: [warning({ reasons: [reason()] })],
+            }),
+          },
+        ],
+      }),
+    );
+    renderDock({ entry: planEntry() });
+
+    expect(await screen.findByText("Step 2")).toBeInTheDocument();
+    expect(screen.getByText("BOL is already in use by shipment SEED-DET-009")).toBeInTheDocument();
+    expect(screen.queryByText("Step 1")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Ask the agent to fix it" }));
+    expect(screen.getByLabelText(/What should the agent do instead/)).toHaveValue(
+      'The plan "Dispatch coverage: 2 changes" would not go through as it stands: BOL: BOL is already in use by shipment SEED-DET-009. Fix it and propose it again; ask me for anything you need.',
+    );
+
+    await user.click(details());
+    expect(screen.getAllByText("BOL is already in use by shipment SEED-DET-009")).toHaveLength(1);
+  });
+
   it("tells the agent why the whole plan was turned down", async () => {
     const user = userEvent.setup();
     fetchPlanPreview.mockResolvedValue(planPreview({ digest: "sha256:plan" }));
     renderDock({ entry: planEntry() });
 
-    await user.click(screen.getByRole("button", { name: "Tell the agent instead" }));
+    await user.click(screen.getByRole("button", { name: "Tell the agent" }));
     await user.type(screen.getByLabelText(/What should the agent do instead/), "Swap the drivers");
     fireEvent.keyDown(dock(), { key: "Enter", ctrlKey: true });
 
@@ -490,8 +654,11 @@ describe("ApprovalDock for several changes of one kind", () => {
     ]);
     const { followUp } = renderDock({ entry: batch(2) });
 
-    await waitFor(() => expect(approve()).toBeEnabled());
+    await user.click(details());
     await waitFor(() => expect(screen.getAllByRole("link", { name: "S-1001" })).toHaveLength(2));
+    await waitFor(() => expect(approve()).toBeEnabled());
+    await user.click(details());
+    expect(screen.queryByRole("link", { name: "S-1001" })).toBeNull();
     await user.click(screen.getByRole("button", { name: "Approve all 2" }));
 
     await waitFor(() =>
@@ -506,6 +673,30 @@ describe("ApprovalDock for several changes of one kind", () => {
       }),
     );
     await waitFor(() => expect(followUp).toHaveBeenCalledTimes(1));
+  });
+
+  // The changes live behind Details: nothing is read until it opens, and an
+  // approval made without opening it is recorded as unreviewed, never as a
+  // review of previews the person did not see.
+  it("reads no preview and sends no digest while the details stay folded", async () => {
+    const user = userEvent.setup();
+    decideMyProposals.mockResolvedValue([]);
+    renderDock({ entry: batch(2) });
+
+    expect(within(header()).getByText("2 changes")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "2 of them are not open; approving records them as approved without reviewing what they change.",
+      ),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Approve all 2" }));
+
+    await waitFor(() => expect(decideMyProposals).toHaveBeenCalledTimes(1));
+    expect(fetchProposalPreview).not.toHaveBeenCalled();
+    expect(decideMyProposals.mock.calls[0][1]).toMatchObject({
+      decision: "Accepted",
+      previewDigests: [],
+    });
   });
 
   // Past a few, each opens on demand; only what was open on screen sends a
@@ -525,7 +716,9 @@ describe("ApprovalDock for several changes of one kind", () => {
       ),
     ).toBeInTheDocument();
 
-    const rows = screen.getAllByRole("button", { expanded: false });
+    await user.click(details());
+    expect(fetchProposalPreview).not.toHaveBeenCalled();
+    const rows = within(screen.getByRole("list")).getAllByRole("button", { expanded: false });
     await user.click(rows[2]);
     await screen.findByRole("link", { name: "S-1001" });
     await user.click(screen.getByRole("button", { name: "Approve all 6" }));
@@ -543,7 +736,7 @@ describe("ApprovalDock for several changes of one kind", () => {
     decideMyProposals.mockResolvedValue([]);
     renderDock({ entry: batch(2) });
 
-    await user.click(screen.getByRole("button", { name: "Tell the agent instead" }));
+    await user.click(screen.getByRole("button", { name: "Tell the agent" }));
     await user.type(
       screen.getByLabelText(/What should the agent do instead/),
       "These customers are on credit hold",
@@ -603,8 +796,11 @@ describe("ApprovalDock for a write over a set of records", () => {
       ]),
     });
 
-    await screen.findAllByRole("link", { name: "S-1001" });
+    await screen.findByText(PREVIEW_SUMMARY);
+    expect(within(header()).getByText("2 of 2 shipments")).toBeInTheDocument();
+    await user.click(details());
     await user.click(screen.getByRole("checkbox", { name: "PRO-1002" }));
+    expect(within(header()).getByText("1 of 2 shipments")).toBeInTheDocument();
     const kept = screen.getByRole("button", { name: /Approve the kept records/ });
     await waitFor(() => expect(kept).toBeEnabled());
     await user.click(kept);
@@ -624,12 +820,13 @@ describe("ApprovalDock in the floating panel", () => {
   it("offers the same answers and keys as on the Desk, without the key hints", async () => {
     fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
     renderDock({ compact: true });
-    await screen.findByRole("link", { name: "S-1001" });
+    await screen.findByText(PREVIEW_SUMMARY);
 
-    for (const name of [/^approve$/i, /^reject$/i, /tell the agent instead/i, /decide later/i]) {
+    for (const name of [/^approve$/i, /^reject$/i, /^tell the agent$/i, /decide later/i]) {
       expect(screen.getByRole("button", { name })).toBeInTheDocument();
     }
     expect(within(dock()).queryByText("Esc")).toBeNull();
+    expect(approve()).toHaveAttribute("aria-keyshortcuts", "Meta+Enter Control+Enter");
 
     fireEvent.keyDown(dock(), { key: "Enter", metaKey: true });
     await waitFor(() =>

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -221,4 +222,38 @@ func TestBoundPreviewValue(t *testing.T) {
 	encoded, cut := BoundPreviewValue(list)
 	assert.True(t, cut)
 	assert.IsType(t, "", encoded)
+}
+
+func TestComputeDigest_ADateIsTheDayItFallsOn(t *testing.T) {
+	t.Parallel()
+
+	base := samplePreview()
+	withDate := func(at any) *ProposalPreview {
+		preview := *base
+		preview.Changes = append(append([]RecordChange(nil), base.Changes...), RecordChange{
+			Resource:  permission.ResourceJournalEntry,
+			Label:     "Journal entry for INV-1",
+			Operation: PreviewOperationCreate,
+			Fields: []PreviewFieldChange{{
+				Path:  "accountingDate",
+				Label: "Accounting date",
+				Type:  assistantartifact.DisplayDate,
+				After: at,
+			}},
+		})
+
+		return &preview
+	}
+	params := map[string]any{"invoiceId": "inv_1"}
+
+	morning, err := withDate(int64(1790866560)).ComputeDigest(params)
+	require.NoError(t, err)
+	minuteLater, err := withDate(float64(1790866620)).ComputeDigest(params)
+	require.NoError(t, err)
+	nextDay, err := withDate(int64(1790866560 + 86400)).ComputeDigest(params)
+	require.NoError(t, err)
+
+	assert.Equal(t, morning, minuteLater,
+		"a date stamped with the clock on each read is the same day, so the approval stands")
+	assert.NotEqual(t, morning, nextDay, "a different day is a different write")
 }

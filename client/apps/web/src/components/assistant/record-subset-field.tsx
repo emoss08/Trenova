@@ -10,12 +10,15 @@ import { CircleAlertIcon, SearchIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import {
   SUBSET_FILTER_THRESHOLD,
+  countKept,
   filterSubsetChoices,
   keptSubsetIds,
   proposedSubsetIds,
   subsetChoices,
   subsetCountLabel,
+  subsetBase,
   subsetDraft,
+  subsetUniverse,
   type SubsetChoice,
 } from "./record-subset";
 
@@ -55,19 +58,10 @@ export function RecordSubsetField({
 
   const proposedIds = useMemo(() => proposedSubsetIds(proposed), [proposed]);
   const choices = useMemo(() => subsetChoices(field, proposedIds), [field, proposedIds]);
-  const base = useMemo(
-    () => (proposedIds.length > 0 ? proposedIds : choices.map((choice) => choice.id)),
-    [choices, proposedIds],
-  );
-  const everyID = useMemo(() => new Set(base.map((id) => id.trim())), [base]);
+  const base = useMemo(() => subsetBase(proposedIds, choices), [choices, proposedIds]);
+  const everyID = useMemo(() => subsetUniverse(base), [base]);
   const kept = useMemo(() => keptSubsetIds(value), [value]);
-  const keptCount = useMemo(() => {
-    let count = 0;
-    for (const id of everyID) {
-      if (kept.has(id)) count++;
-    }
-    return count;
-  }, [everyID, kept]);
+  const keptCount = useMemo(() => countKept(everyID, kept), [everyID, kept]);
 
   const visible = useMemo(() => filterSubsetChoices(choices, filter), [choices, filter]);
   const filterable = choices.length > SUBSET_FILTER_THRESHOLD;

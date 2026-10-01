@@ -1,12 +1,22 @@
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@trenova/shared/components/ui/collapsible";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatAltShortcut, formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
+import type { Tone } from "@/components/kpi/tone";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { decideMyPlan, decideMyProposal, decideMyProposals } from "@/lib/graphql/agent-decisions";
+import type { ProposalPreview as ProposalPreviewData } from "@/lib/graphql/agent-preview";
 import {
   invalidateProposalViews,
   markPlanDecided,
@@ -15,16 +25,10 @@ import {
 import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  CheckIcon,
   ChevronRightIcon,
   ClockIcon,
-  ListChecksIcon,
-  MessageSquareTextIcon,
-  PenLineIcon,
   PencilIcon,
-  SendHorizontalIcon,
   TriangleAlertIcon,
-  XIcon,
   type LucideIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
@@ -36,14 +40,18 @@ import { Highlights, StepList, previewsByStep } from "./decision-outcomes";
 import { FloatingSlot } from "./floating-slot";
 import { ProposalEditor, type EditorFocus, type ProposalEditorRequest } from "./proposal-editor";
 import { changedValues, draftFromArguments, validateDraft } from "./proposal-edits";
+import { previewFigure, previewSubject } from "./proposal-preview/preview-format";
 import { batchPreviewDigests, canApprove, gateDigest } from "./proposal-preview/preview-gate";
 import {
   askAgentMessage,
   askAgentPlanMessage,
   editableParam,
+  previewNeedsAttention,
 } from "./proposal-preview/preview-warnings";
 import {
+  PreviewAttention,
   PreviewLoadState,
+  PreviewSkeleton,
   ProposalPreview,
   StaleNotice,
   type WouldFailActions,
@@ -54,8 +62,8 @@ import {
   usePlanPreview,
   useProposalPreview,
 } from "./proposal-preview/use-proposal-preview";
-import { presentProposal } from "./proposal-presenters";
-import { previewOutcomes } from "./record-subset";
+import { hasPresenter, presentProposal, type ProposalView } from "./proposal-presenters";
+import { previewOutcomes, subsetCountLabel, subsetTally } from "./record-subset";
 import { RecordSubsetField } from "./record-subset-field";
 
 /** The most a note to the agent may hold; the server refuses more. */
@@ -152,14 +160,29 @@ function useDockNote(): DockNote {
 
 /** What one kind of decision hands the box to draw and act on. */
 type DockFrameProps = {
-  icon: LucideIcon;
   title: string;
+  /** The record the decision is about, after the title. */
+  subject?: string;
+  /** The amount it comes to, when it moves money. */
+  figure?: string | null;
+  /** How many records or changes it covers. */
+  count?: string;
+  severity?: ProposalView["severity"];
   position: number;
   total: number;
   compact: boolean;
   permanent: boolean;
   byline?: ReactNode;
-  children: ReactNode;
+  /** The decision in a sentence, under the title. */
+  summary: ReactNode;
+  /** What the person has to see before answering; never folded away. */
+  attention?: ReactNode;
+  /** Every record it changes and why, behind "Details". */
+  details: ReactNode;
+  /** Keeps the details mounted while folded, for rows that report what they read. */
+  keepDetailsMounted?: boolean;
+  /** Dialogs the box opens; drawn in the box so its keys stay with it. */
+  overlay?: ReactNode;
   approveLabel: string;
   rejectLabel: string;
   canApprove: boolean;
@@ -175,19 +198,41 @@ type DockFrameProps = {
   onDefer: () => void;
 };
 
+const SEVERITY_BADGE: Record<
+  Tone,
+  "danger" | "warning" | "info" | "success" | "brand" | "neutral"
+> = {
+  danger: "danger",
+  warning: "warning",
+  info: "info",
+  success: "success",
+  brand: "brand",
+  muted: "neutral",
+};
+
 /**
  * The box's chrome and its keys, the same for a proposal, a plan or several
- * changes decided together.
+ * changes decided together. It reads like a permission prompt: one line for
+ * what would happen and what it comes to, one sentence for the rest, the
+ * answers in one row, and every record it touches folded behind "Details".
+ * What would stop the write or has moved under it stays in view.
  */
 function DockFrame({
-  icon: Icon,
   title,
+  subject = "",
+  figure = null,
+  count,
+  severity = null,
   position,
   total,
   compact,
   permanent,
   byline,
-  children,
+  summary,
+  attention,
+  details,
+  keepDetailsMounted = false,
+  overlay,
   approveLabel,
   rejectLabel,
   canApprove: approvable,
@@ -205,6 +250,7 @@ function DockFrame({
   const titleId = useId();
   const noteId = useId();
   const sectionRef = useRef<HTMLElement>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const busy = pending !== null;
   const trimmed = note.note.trim();
   const canSend = trimmed !== "" && !busy;
@@ -283,38 +329,75 @@ function DockFrame({
       onKeyDown={onKeyDown}
       className="ui-lift bg-card ring-foreground/10 flex min-w-0 flex-col overflow-hidden rounded-lg ring-1 outline-none"
     >
-      <header className="flex h-10 shrink-0 items-center gap-2.5 px-3">
-        <span className="bg-sunken text-foreground-muted flex size-6 shrink-0 items-center justify-center rounded-md">
-          <Icon aria-hidden className="size-3.5" />
-        </span>
-        <h3 id={titleId} className="min-w-0 flex-1 truncate text-sm font-semibold">
-          {title}
-        </h3>
-        {permanent && (
-          <span className="text-warning flex shrink-0 items-center gap-1 text-xs">
-            <TriangleAlertIcon aria-hidden className="size-3" />
-            {t("Permanent")}
-          </span>
-        )}
-        {total > 1 && (
-          <span className="text-foreground-muted shrink-0 text-xs tabular-nums">
-            {t("{0} of {1}", position, total)}
-          </span>
-        )}
-      </header>
-
-      <div
-        className={cn(
-          "scrollbar-overlay flex min-w-0 flex-col gap-2.5 overflow-y-auto px-3 pb-3",
-          compact ? "max-h-[min(45vh,22rem)]" : "max-h-[min(50vh,32rem)]",
-        )}
+      <Collapsible
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        className="flex min-w-0 flex-col"
       >
-        {byline}
-        {children}
-      </div>
+        <div className="flex min-w-0 flex-col gap-1 px-3 pt-2.5">
+          <header className="flex min-w-0 items-center gap-2">
+            <h3 className="min-w-0 flex-1 truncate text-sm">
+              <span id={titleId} className="font-semibold">
+                {title}
+              </span>
+              {subject !== "" && <span className="text-foreground-muted"> {subject}</span>}
+            </h3>
+            {figure !== null && (
+              <span className="shrink-0 font-mono text-sm tabular-nums">{figure}</span>
+            )}
+            {severity && (
+              <Badge variant={SEVERITY_BADGE[severity.tone]} className="shrink-0">
+                {severity.label}
+              </Badge>
+            )}
+            {permanent && (
+              <Badge variant="warning" className="shrink-0">
+                <TriangleAlertIcon aria-hidden />
+                {t("Permanent")}
+              </Badge>
+            )}
+            {count !== undefined && (
+              <span className="text-foreground-muted shrink-0 text-xs tabular-nums">{count}</span>
+            )}
+            {total > 1 && (
+              <span className="text-foreground-muted shrink-0 text-xs tabular-nums">
+                {t("{0} of {1}", position, total)}
+              </span>
+            )}
+          </header>
+          {byline}
+          <div className="text-foreground-muted line-clamp-2 text-xs leading-snug">{summary}</div>
+          <CollapsibleTrigger
+            render={
+              <Button
+                size="xxs"
+                variant="ghost"
+                className="text-foreground-muted -ml-2 self-start"
+              />
+            }
+          >
+            <ChevronRightIcon
+              aria-hidden
+              className={cn("size-3 transition-transform duration-200", detailsOpen && "rotate-90")}
+            />
+            {t("Details")}
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent
+          keepMounted={keepDetailsMounted}
+          className={cn(
+            "scrollbar-overlay min-w-0 overflow-y-auto px-3 pt-1",
+            compact ? "max-h-[min(40vh,20rem)]" : "max-h-[min(45vh,28rem)]",
+          )}
+        >
+          <div className="flex min-w-0 flex-col gap-2.5 pb-1">{details}</div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      <div className="flex min-w-0 flex-col gap-2 px-3 pt-2 empty:hidden">{attention}</div>
 
       {note.telling && (
-        <div className="border-border-subtle flex flex-col gap-1.5 border-t px-3 pt-2.5">
+        <div className="flex flex-col gap-1.5 px-3 pt-2">
           <label htmlFor={noteId} className="text-foreground-muted text-xs">
             {t("What should the agent do instead? It reads this and answers here.")}
           </label>
@@ -343,18 +426,29 @@ function DockFrame({
         </div>
       )}
 
-      <footer className="border-border-subtle flex flex-wrap items-center gap-2 border-t px-3 py-2.5">
+      <footer className="mt-2 flex flex-wrap items-center gap-1.5 px-3 pb-2.5">
         {note.telling ? (
           <>
-            <Button size="sm" onClick={sendNote} disabled={!canSend} isLoading={pending === "tell"}>
-              <SendHorizontalIcon className="size-3.5" />
+            <Button
+              size="sm"
+              onClick={sendNote}
+              disabled={!canSend}
+              isLoading={pending === "tell"}
+              aria-keyshortcuts="Enter"
+            >
               {t("Send to the agent")}
+              <KeyHint compact={compact}>↵</KeyHint>
             </Button>
-            <ShortcutHint compact={compact}>{formatShortcut("↵")}</ShortcutHint>
-            <Button size="sm" variant="ghost" onClick={closeNote} disabled={busy}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={closeNote}
+              disabled={busy}
+              aria-keyshortcuts="Escape"
+            >
               {t("Cancel")}
+              <KeyHint compact={compact}>Esc</KeyHint>
             </Button>
-            <ShortcutHint compact={compact}>Esc</ShortcutHint>
           </>
         ) : (
           <>
@@ -363,11 +457,11 @@ function DockFrame({
               onClick={approve}
               disabled={busy || !approvable}
               isLoading={pending === "approve"}
+              aria-keyshortcuts="Meta+Enter Control+Enter"
             >
-              <CheckIcon className="size-3.5" />
               {approveLabel}
+              <KeyHint compact={compact}>{formatShortcut("↵")}</KeyHint>
             </Button>
-            <ShortcutHint compact={compact}>{formatShortcut("↵")}</ShortcutHint>
             <Button
               size="sm"
               variant="outline"
@@ -375,50 +469,102 @@ function DockFrame({
               disabled={busy}
               isLoading={pending === "reject"}
             >
-              <XIcon className="size-3.5" />
               {rejectLabel}
             </Button>
-            {onModify && (
+            {canTell && (
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={onModify}
-                disabled={busy || modifyDisabled}
+                onClick={() => note.open()}
+                disabled={busy}
+                aria-keyshortcuts="Escape"
               >
-                <PencilIcon className="size-3.5" />
-                {t("Modify")}
+                {t("Tell the agent")}
+                <KeyHint compact={compact}>Esc</KeyHint>
               </Button>
-            )}
-            {canTell && (
-              <>
-                <Button size="sm" variant="ghost" onClick={() => note.open()} disabled={busy}>
-                  <MessageSquareTextIcon className="size-3.5" />
-                  {t("Tell the agent instead")}
-                </Button>
-                <ShortcutHint compact={compact}>Esc</ShortcutHint>
-              </>
             )}
           </>
         )}
-        <span className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="ghost" onClick={onDefer} disabled={busy}>
-            <ClockIcon className="size-3.5" />
-            {t("Decide later")}
-          </Button>
-          <ShortcutHint compact={compact}>{formatAltShortcut("L")}</ShortcutHint>
+        <span className="ml-auto flex items-center gap-0.5">
+          {onModify && !note.telling && (
+            <IconAction
+              icon={PencilIcon}
+              label={t("Modify")}
+              onClick={onModify}
+              disabled={busy || modifyDisabled}
+            />
+          )}
+          <IconAction
+            icon={ClockIcon}
+            label={t("Decide later")}
+            shortcut={formatAltShortcut("L")}
+            keyshortcuts="Alt+L"
+            onClick={onDefer}
+            disabled={busy}
+          />
         </span>
       </footer>
+      {overlay}
     </section>
   );
 }
 
-/** The key a button answers to, beside it; left out where the box is narrow. */
-function ShortcutHint({ compact, children }: { compact: boolean; children: ReactNode }) {
+/**
+ * The key a button answers to, inside it and quieter than its words; left
+ * out where the box is narrow. The button names the key for assistive tech
+ * through `aria-keyshortcuts`, so the hint is not read twice.
+ */
+function KeyHint({ compact, children }: { compact: boolean; children: ReactNode }) {
   if (compact) {
     return null;
   }
 
-  return <Kbd className="-ml-1">{children}</Kbd>;
+  return (
+    <kbd aria-hidden className="text-2xs -mr-0.5 font-sans opacity-60">
+      {children}
+    </kbd>
+  );
+}
+
+/** A secondary answer as an icon, named by its tooltip and its label. */
+function IconAction({
+  icon: Icon,
+  label,
+  shortcut,
+  keyshortcuts,
+  onClick,
+  disabled,
+}: {
+  icon: LucideIcon;
+  label: string;
+  shortcut?: string;
+  keyshortcuts?: string;
+  onClick: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            aria-label={label}
+            aria-keyshortcuts={keyshortcuts}
+            onClick={onClick}
+            disabled={disabled}
+            className="text-foreground-muted"
+          />
+        }
+      >
+        <Icon className="size-3.5" />
+      </TooltipTrigger>
+      <TooltipContent className="flex items-center gap-1.5">
+        {label}
+        {shortcut !== undefined && <Kbd>{shortcut}</Kbd>}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 /** What every kind of decision does once the server has recorded it. */
@@ -582,15 +728,83 @@ function ProposalDock({
       : undefined,
   };
 
+  const shown = shownQuery.data;
+  const refused = narrowed && draft.refused;
+  const tally = subsetField
+    ? subsetTally(subsetField, proposal.arguments?.[subsetField.name], subsetDraft)
+    : null;
+
   return (
     <DockFrame
-      icon={PenLineIcon}
       title={view.title}
+      subject={shown ? previewSubject(shown) : ""}
+      figure={shown ? previewFigure(shown) : null}
+      count={
+        subsetField && tally
+          ? subsetCountLabel(subsetField.resource, tally.kept, tally.total, t)
+          : undefined
+      }
+      severity={view.severity}
       position={position}
       total={total}
       compact={compact}
       permanent={!view.reversible}
       byline={<ProposedBy agentId={proposal.agentId} agentName={proposal.agentName} />}
+      summary={
+        <DockSummary
+          preview={shown}
+          loading={shown === undefined && !shownQuery.isError}
+          fallback={view.summary}
+          worded={hasPresenter(proposal.toolName)}
+        />
+      }
+      attention={
+        refused ? (
+          <Alert size="sm" variant="destructive">
+            <AlertDescription>
+              {t(
+                "The records you kept would not go through as they are. Keep others, or reject it.",
+              )}
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <PreviewLoadState query={shownQuery} changed={approval.changed} loading={null}>
+            {(preview) => <PreviewAttention preview={preview} wouldFail={wouldFail} />}
+          </PreviewLoadState>
+        )
+      }
+      details={
+        <>
+          {!refused &&
+            (shown ? (
+              <ProposalPreview
+                preview={shown}
+                density="compact"
+                attention={false}
+                wouldFail={wouldFail}
+              />
+            ) : shownQuery.isError ? (
+              <Highlights highlights={view.highlights} />
+            ) : (
+              <PreviewSkeleton density="compact" />
+            ))}
+          {subsetField && (
+            <SubsetSection
+              field={subsetField}
+              proposed={proposal.arguments?.[subsetField.name]}
+              value={subsetDraft}
+              outcomes={outcomes}
+              onChange={setSubsetDraft}
+            />
+          )}
+          {proposal.rationale !== "" && (
+            <p className="text-foreground-muted text-xs leading-relaxed whitespace-pre-wrap">
+              {proposal.rationale}
+            </p>
+          )}
+        </>
+      }
+      overlay={<ProposalEditor request={editor} onClose={() => setEditor(null)} />}
       approveLabel={narrowed ? t("Approve the kept records") : t("Approve")}
       rejectLabel={t("Reject")}
       canApprove={approvable}
@@ -603,54 +817,36 @@ function ProposalDock({
       canTell={canTell}
       note={note}
       onDefer={onDefer}
-    >
-      {view.severity && (
-        <span className="text-foreground-muted text-xs">
-          {t("Severity")}{" "}
-          <span className={view.severity.tone === "danger" ? "text-danger" : "text-foreground"}>
-            {view.severity.label}
-          </span>
-        </span>
-      )}
-      <p className="text-sm leading-snug">{view.summary}</p>
-
-      {narrowed && draft.refused ? (
-        <Alert size="sm" variant="destructive">
-          <AlertDescription>
-            {t("The records you kept would not go through as they are. Keep others, or reject it.")}
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <PreviewLoadState
-          query={shownQuery}
-          changed={approval.changed}
-          density="compact"
-          fallback={<Highlights highlights={view.highlights} />}
-        >
-          {(preview) => (
-            <ProposalPreview preview={preview} density="compact" wouldFail={wouldFail} />
-          )}
-        </PreviewLoadState>
-      )}
-
-      {subsetField && (
-        <SubsetSection
-          field={subsetField}
-          proposed={proposal.arguments?.[subsetField.name]}
-          value={subsetDraft}
-          outcomes={outcomes}
-          onChange={setSubsetDraft}
-        />
-      )}
-
-      {proposal.rationale !== "" && (
-        <p className="text-foreground-muted text-xs leading-relaxed whitespace-pre-wrap">
-          {proposal.rationale}
-        </p>
-      )}
-      <ProposalEditor request={editor} onClose={() => setEditor(null)} />
-    </DockFrame>
+    />
   );
+}
+
+/**
+ * The decision in a sentence: the preview's own, which the tool writes from
+ * the world as it is now, or the client's wording while it loads. A tool the
+ * client has no words for waits for the preview rather than saying "Run …
+ * with the values below" about values that are folded away.
+ */
+function DockSummary({
+  preview,
+  loading,
+  fallback,
+  worded,
+}: {
+  preview: ProposalPreviewData | undefined;
+  loading: boolean;
+  fallback: string;
+  worded: boolean;
+}) {
+  const stated = preview?.summary.trim() ?? "";
+  if (stated !== "") {
+    return stated;
+  }
+  if (loading && !worded) {
+    return <Skeleton className="my-0.5 h-3 w-2/3" />;
+  }
+
+  return fallback;
 }
 
 function SubsetSection({
@@ -746,13 +942,50 @@ function PlanDock({
 
   return (
     <DockFrame
-      icon={ListChecksIcon}
       title={plan.title}
+      count={t("{0, plural, one {# change} other {# changes}}", plan.stepCount)}
       position={position}
       total={total}
       compact={compact}
       permanent={steps.some((step) => !presentProposal(step).reversible)}
       byline={<ProposedBy agentId={plan.agentId} agentName={plan.agentName} />}
+      summary={
+        plan.summary !== ""
+          ? plan.summary
+          : t("{0, plural, one {# change, in order} other {# changes, in order}}", plan.stepCount)
+      }
+      attention={
+        <PreviewLoadState query={previewQuery} changed={approval.changed} loading={null}>
+          {(preview) => (
+            <>
+              {preview.stale && !preview.steps.some((step) => step.preview.stale) && (
+                <StaleNotice missing={false} />
+              )}
+              {preview.steps
+                .filter((step) => previewNeedsAttention(step.preview, { inPlan: true }))
+                .map((step) => (
+                  <div key={step.proposalId} className="flex min-w-0 flex-col gap-1.5">
+                    <span className="text-foreground-muted text-xs">
+                      {t("Step {0}", step.step)}
+                    </span>
+                    <PreviewAttention preview={step.preview} inPlan wouldFail={wouldFail} />
+                  </div>
+                ))}
+            </>
+          )}
+        </PreviewLoadState>
+      }
+      details={
+        steps.length > 0 && (
+          <StepList
+            steps={steps}
+            settled={false}
+            previews={previews}
+            attention={false}
+            wouldFail={wouldFail}
+          />
+        )
+      }
       approveLabel={t("Approve all {0}", plan.stepCount)}
       rejectLabel={t("Reject all")}
       canApprove={canApprove(approval.gate)}
@@ -763,26 +996,7 @@ function PlanDock({
       canTell={canTell}
       note={note}
       onDefer={onDefer}
-    >
-      <span className="text-foreground-muted text-xs">
-        {t("{0, plural, one {# change, in order} other {# changes, in order}}", plan.stepCount)}
-      </span>
-      {plan.summary !== "" && (
-        <p className="text-foreground-muted text-xs leading-relaxed whitespace-pre-wrap">
-          {plan.summary}
-        </p>
-      )}
-      {steps.length > 0 && (
-        <StepList steps={steps} settled={false} previews={previews} wouldFail={wouldFail} />
-      )}
-      <PreviewLoadState query={previewQuery} changed={approval.changed} density="compact">
-        {(preview) =>
-          preview.stale && !preview.steps.some((step) => step.preview.stale) ? (
-            <StaleNotice missing={false} />
-          ) : null
-        }
-      </PreviewLoadState>
-    </DockFrame>
+    />
   );
 }
 
@@ -806,9 +1020,11 @@ function BatchDock({
   const afterDecision = useAfterDecision(threadId, entry, onDecided);
 
   // A few changes are read open; past that each opens on demand. Only the
-  // previews actually open on screen send a digest: one the person never
+  // previews actually open on screen send a digest: the rows live behind
+  // "Details" and read nothing until it is opened, so one the person never
   // opened goes without one and is recorded as approved unreviewed, which
-  // is the truth.
+  // is the truth. A preview once on screen keeps its digest when Details
+  // folds again.
   const [open, setOpen] = useState<ReadonlySet<string>>(
     () => new Set(proposals.length <= BATCH_OPEN_LIMIT ? ids : []),
   );
@@ -837,6 +1053,16 @@ function BatchDock({
       } else {
         next.delete(id);
       }
+      return next;
+    });
+  }, []);
+  const leave = useCallback((id: string) => {
+    setLoading((current) => {
+      if (!current.has(id)) {
+        return current;
+      }
+      const next = new Set(current);
+      next.delete(id);
       return next;
     });
   }, []);
@@ -897,15 +1123,49 @@ function BatchDock({
   const title = first ? presentProposal(first).title : "";
   const stillLoading = ids.some((id) => open.has(id) && loading.has(id));
 
+  const worded = first !== undefined && hasPresenter(first.toolName);
+
   return (
     <DockFrame
-      icon={ListChecksIcon}
       title={title}
+      count={t("{0, plural, one {# change} other {# changes}}", proposals.length)}
       position={position}
       total={total}
       compact={compact}
       permanent={proposals.some((proposal) => !presentProposal(proposal).reversible)}
       byline={first ? <ProposedBy agentId={first.agentId} agentName={first.agentName} /> : null}
+      summary={
+        worded
+          ? proposals.map((proposal) => presentProposal(proposal).summary).join(" · ")
+          : t(
+              "{0, plural, one {# change of one kind, decided together} other {# changes of one kind, decided together}}",
+              proposals.length,
+            )
+      }
+      attention={
+        unreviewed > 0 && (
+          <p className="text-foreground-muted text-xs">
+            {t(
+              "{0, plural, one {# of them is not open; approving records it as approved without reviewing what it changes.} other {# of them are not open; approving records them as approved without reviewing what they change.}}",
+              unreviewed,
+            )}
+          </p>
+        )
+      }
+      details={
+        <ul className="flex flex-col gap-1.5">
+          {proposals.map((proposal) => (
+            <BatchRow
+              key={proposal.id}
+              proposal={proposal}
+              open={open.has(proposal.id)}
+              onToggle={() => toggle(proposal.id)}
+              onReport={report}
+              onLeave={leave}
+            />
+          ))}
+        </ul>
+      }
       approveLabel={t("Approve all {0}", proposals.length)}
       rejectLabel={t("Reject all")}
       canApprove={!stillLoading}
@@ -916,51 +1176,28 @@ function BatchDock({
       canTell={canTell}
       note={note}
       onDefer={onDefer}
-    >
-      <span className="text-foreground-muted text-xs">
-        {t(
-          "{0, plural, one {# change of one kind, decided together} other {# changes of one kind, decided together}}",
-          proposals.length,
-        )}
-      </span>
-      <ul className="flex flex-col gap-1.5">
-        {proposals.map((proposal) => (
-          <BatchRow
-            key={proposal.id}
-            proposal={proposal}
-            open={open.has(proposal.id)}
-            onToggle={() => toggle(proposal.id)}
-            onReport={report}
-          />
-        ))}
-      </ul>
-      {unreviewed > 0 && (
-        <p className="text-foreground-muted text-xs">
-          {t(
-            "{0, plural, one {# of them is not open; approving records it as approved without reviewing what it changes.} other {# of them are not open; approving records them as approved without reviewing what they change.}}",
-            unreviewed,
-          )}
-        </p>
-      )}
-    </DockFrame>
+    />
   );
 }
 
 /**
  * One change of several decided together: its sentence, opening onto what it
  * would do. It reports the digest of the preview it has on screen, which is
- * the only digest the approval sends for it.
+ * the only digest the approval sends for it, and stops counting as loading
+ * once it leaves the screen.
  */
 function BatchRow({
   proposal,
   open,
   onToggle,
   onReport,
+  onLeave,
 }: {
   proposal: AssistantProposal;
   open: boolean;
   onToggle: () => void;
   onReport: (id: string, digest: string | null, loading: boolean) => void;
+  onLeave: (id: string) => void;
 }) {
   const view = presentProposal(proposal);
   const query = useProposalPreview({ scope: "mine", id: proposal.id, enabled: open });
@@ -970,6 +1207,7 @@ function BatchRow({
   useEffect(() => {
     onReport(proposal.id, digest, loading);
   }, [digest, loading, onReport, proposal.id]);
+  useEffect(() => () => onLeave(proposal.id), [onLeave, proposal.id]);
 
   return (
     <li className="flex min-w-0 flex-col gap-1.5">

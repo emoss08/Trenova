@@ -51,7 +51,7 @@ Keywords: filter by agent, filter by change type
 ### Decide a change in your own conversation instead
 Keywords: approval box, approve in chat, tell the agent why
 1. Open the conversation on the [Desk](/desk) (select **Open the conversation**). The change waits in the approval box at the foot of the conversation.
-2. Select **Approve**, **Reject**, or **Tell the agent instead** to turn it down with a note the agent answers. A decision made there leaves this queue, and one made here updates the conversation.
+2. Select **Approve**, **Reject**, or **Tell the agent** to turn it down with a note the agent answers. A decision made there leaves this queue, and one made here updates the conversation.
 
 ## Notes
 Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.

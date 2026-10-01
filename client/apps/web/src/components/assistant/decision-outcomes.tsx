@@ -58,7 +58,7 @@ function formatChange(value: unknown): string {
 
 /**
  * What the person told the agent with the decision, in their own words, so
- * the record of a "Tell the agent instead" says what was said.
+ * the record of a "Tell the agent" says what was said.
  */
 export function DecisionNoteLine({ note }: { note: string }) {
   const t = useT();
@@ -262,11 +262,14 @@ export function StepList({
   steps,
   settled,
   previews,
+  attention = true,
   wouldFail,
 }: {
   steps: AssistantProposal[];
   settled: boolean;
   previews?: ReadonlyMap<string, ProposalPreviewData>;
+  /** Whether each step's preview leads with its own warnings; off where the surface draws them. */
+  attention?: boolean;
   wouldFail?: WouldFailActions;
 }) {
   return (
@@ -277,6 +280,7 @@ export function StepList({
           step={step}
           settled={settled}
           preview={previews?.get(step.id)}
+          attention={attention}
           wouldFail={wouldFail}
         />
       ))}
@@ -288,11 +292,13 @@ function PlanStep({
   step,
   settled,
   preview,
+  attention,
   wouldFail,
 }: {
   step: AssistantProposal;
   settled: boolean;
   preview?: ProposalPreviewData;
+  attention: boolean;
   wouldFail?: WouldFailActions;
 }) {
   const view = presentProposal(step);
@@ -316,7 +322,13 @@ function PlanStep({
         {!settled && preview && (
           <div className="mt-1.5 flex flex-col gap-2">
             <StepDependencyNote preview={preview} />
-            <ProposalPreview preview={preview} density="compact" inPlan wouldFail={wouldFail} />
+            <ProposalPreview
+              preview={preview}
+              density="compact"
+              inPlan
+              attention={attention}
+              wouldFail={wouldFail}
+            />
           </div>
         )}
         {settled && stepState === "failed" && step.executionError !== "" && (

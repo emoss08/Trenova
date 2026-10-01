@@ -760,15 +760,23 @@ spring. Nothing else moves: no shimmer on "Thinking", no spinner on a card.
 
 **A waiting decision takes the composer's place.** While a conversation has a proposal or a
 plan waiting on the person, the approval box stands in the composer's floating slot
-(`FloatingSlot`), on the Desk and in the floating panel alike: a `ui-lift` surface with a
-`ring-1 ring-foreground/10` hairline, the kind's mark in a sunken well, the title in
-semibold, "1 of N" when more wait, the preview, and the answers under a hairline. Approve is
-the ink button; Reject is outline; Modify, "Tell the agent instead" and "Decide later" are
-ghost. The note to the agent is a `Textarea`, so it spends `ui-field`. The keys are shown
-as `Kbd` beside the buttons they mirror (⌘/Ctrl+Enter approves, Esc opens the note, Alt+L
-decides later; Enter alone never approves) and are left out in the narrow panel. Decided
-later, the box folds into a `warning-subtle` pill above the composer that says how many
-wait and reopens it. One decision at a time, the oldest first.
+(`FloatingSlot`), on the Desk and in the floating panel alike. It reads like a permission
+prompt, about 140px tall: a `ui-lift` surface with a `ring-1 ring-foreground/10` hairline;
+one line with the title in semibold, the record it is about in muted text, the amount it
+comes to in `font-mono`, a small `warning` **Permanent** badge, a count for a write over
+several records or a plan, and "1 of N" when more wait; then the preview's own one-sentence
+summary, muted and clamped to two lines (never the client's generic "Run … with the values
+below"). Every record change, money block, record-subset list and the agent's reason sit
+behind one **Details** `Collapsible`, closed by default. What bears on the answer stays in
+view above the buttons, never folded: a would-fail refusal with its ways forward, a warning,
+a record that moved, a preview that could not be read. The answers are one row: Approve is
+the ink button, Reject is outline, "Tell the agent" is ghost, and Modify and "Decide later"
+are ghost icon buttons named by `aria-label` and a tooltip. The note to the agent is a
+`Textarea`, so it spends `ui-field`. The keys sit inside the buttons they mirror as small
+quiet text, `aria-hidden` with the button carrying `aria-keyshortcuts` (⌘/Ctrl+Enter
+approves, Esc opens the note, Alt+L decides later; Enter alone never approves), and are left
+out in the narrow panel. Decided later, the box folds into a `warning-subtle` pill above the
+composer that says how many wait and reopens it. One decision at a time, the oldest first.
 
 **The transcript keeps a line, not a card.** Each proposal or plan is one line in the
 conversation — "Proposed: … · Approved by you 8:52 PM", "Waiting — decide below" — with

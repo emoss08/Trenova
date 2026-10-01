@@ -127,3 +127,49 @@ export function dependencySteps(preview: ProposalPreview): number[] {
 export function previewSendsMessage(preview: ProposalPreview): boolean {
   return preview.changes.some((change) => !change.withheld && change.message !== null);
 }
+
+/**
+ * The one record a write is about, by the name a person knows it by: the
+ * first change's label, when no other change in the preview touches a record
+ * of the same kind. Posting an invoice also marks its shipment billed, and is
+ * still about the invoice; a write over several shipments is about none of
+ * them in particular, so it names none.
+ */
+export function previewSubject(preview: ProposalPreview): string {
+  const [first] = preview.changes;
+  if (first === undefined || first.withheld || first.operation === "Run") {
+    return "";
+  }
+  const label = first.label.trim();
+  if (label === "") {
+    return "";
+  }
+
+  let sameKind = 0;
+  for (const change of preview.changes) {
+    if (change.resource === first.resource) {
+      sameKind++;
+    }
+  }
+
+  return sameKind === 1 ? label : "";
+}
+
+/**
+ * The amount a write comes to, when it moves money: the total after the first
+ * money block a reader may see, as their locale writes it.
+ */
+export function previewFigure(preview: ProposalPreview): string | null {
+  for (const change of preview.changes) {
+    const money = change.money;
+    if (change.withheld || !money || money.withheld) {
+      continue;
+    }
+    const total = formatPreviewAmount(money.totalAfter, money.currency);
+    if (total !== null) {
+      return total;
+    }
+  }
+
+  return null;
+}

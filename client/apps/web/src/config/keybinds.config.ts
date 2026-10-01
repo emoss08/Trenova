@@ -60,7 +60,7 @@ export const keybindGroups: KeybindGroup[] = [
       },
       {
         id: "approval-tell",
-        label: "Tell the agent instead",
+        label: "Tell the agent",
         keys: ["Esc"],
         description: "Open or close the note that turns the change down and tells the agent why",
       },

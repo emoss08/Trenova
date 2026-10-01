@@ -45,6 +45,46 @@ export function subsetChoices(field: ProposalField, proposed: readonly string[])
   return choices;
 }
 
+/**
+ * The ids a subset field's drafts are drawn from: the ids the proposal
+ * carries, or the server's choices when it carries none.
+ */
+export function subsetBase(
+  proposedIds: readonly string[],
+  choices: readonly SubsetChoice[],
+): readonly string[] {
+  return proposedIds.length > 0 ? proposedIds : choices.map((choice) => choice.id);
+}
+
+/** Every record a subset field covers, trimmed and once each. */
+export function subsetUniverse(base: readonly string[]): Set<string> {
+  return new Set(base.map((id) => id.trim()));
+}
+
+/** How many of the covered records a draft keeps. */
+export function countKept(every: ReadonlySet<string>, kept: ReadonlySet<string>): number {
+  let count = 0;
+  for (const id of every) {
+    if (kept.has(id)) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+/** How many records a subset field covers and how many its draft keeps. */
+export function subsetTally(
+  field: ProposalField,
+  proposed: unknown,
+  draft: string,
+): { kept: number; total: number } {
+  const proposedIds = proposedSubsetIds(proposed);
+  const every = subsetUniverse(subsetBase(proposedIds, subsetChoices(field, proposedIds)));
+
+  return { kept: countKept(every, keptSubsetIds(draft)), total: every.size };
+}
+
 /** The ids a draft keeps, read back from the text the form holds. */
 export function keptSubsetIds(draft: string): Set<string> {
   return new Set(

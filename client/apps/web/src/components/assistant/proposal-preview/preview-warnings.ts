@@ -1,4 +1,4 @@
-import type { PreviewReason, PreviewWarning } from "@/lib/graphql/agent-preview";
+import type { PreviewReason, PreviewWarning, ProposalPreview } from "@/lib/graphql/agent-preview";
 import type { ProposalField } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { humanizeToolName } from "../proposal-state";
@@ -256,4 +256,15 @@ export function visibleWarnings(
   { inPlan }: { inPlan: boolean },
 ): PreviewWarning[] {
   return inPlan ? warnings.filter((warning) => warning.code !== "depends_on_step") : [...warnings];
+}
+
+/**
+ * Whether a preview carries something its decider must see before answering:
+ * the record moved since the proposal, or a warning the surface shows.
+ */
+export function previewNeedsAttention(
+  preview: Pick<ProposalPreview, "stale" | "warnings">,
+  { inPlan }: { inPlan: boolean },
+): boolean {
+  return preview.stale || visibleWarnings(preview.warnings, { inPlan }).length > 0;
 }
