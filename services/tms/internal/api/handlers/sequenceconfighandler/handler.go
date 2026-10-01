@@ -102,7 +102,7 @@ func (h *Handler) update(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	doc := new(tenant.SequenceConfigDocument)
-	if err := c.ShouldBindJSON(doc); err != nil {
+	if err := authctx.BindJSON(c, authCtx, doc); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

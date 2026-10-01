@@ -350,7 +350,7 @@ func (h *Handler) preview(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	req := new(previewRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

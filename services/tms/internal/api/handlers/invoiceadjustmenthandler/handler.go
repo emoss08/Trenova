@@ -157,7 +157,7 @@ func (h *Handler) createDraft(c *gin.Context) {
 func (h *Handler) updateDraft(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(services.UpdateDraftInvoiceAdjustmentRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -228,7 +228,7 @@ func (h *Handler) submitDraft(c *gin.Context) {
 func (h *Handler) preview(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(services.InvoiceAdjustmentRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -248,7 +248,7 @@ func (h *Handler) preview(c *gin.Context) {
 func (h *Handler) submit(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(services.InvoiceAdjustmentRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -268,7 +268,7 @@ func (h *Handler) submit(c *gin.Context) {
 func (h *Handler) bulkPreview(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(services.InvoiceAdjustmentBulkRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -288,7 +288,7 @@ func (h *Handler) bulkPreview(c *gin.Context) {
 func (h *Handler) bulkSubmit(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(services.InvoiceAdjustmentBulkRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

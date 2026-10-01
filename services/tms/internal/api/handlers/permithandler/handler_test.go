@@ -147,10 +147,33 @@ func TestPermitHandler_ListPermits_ScopesToTheSessionTenant(t *testing.T) {
 	assert.Equal(t, testutil.TestBuID, gotTenant.BuID)
 }
 
-// The shipment and the tenant come from the path and the session. A payload
-// naming a different shipment or organization must not be able to attach a
-// permit to someone else's load.
-func TestPermitHandler_CreatePermit_IgnoresTenantAndShipmentInTheBody(t *testing.T) {
+func TestPermitHandler_CreatePermit_RefusesAForeignTenantInTheBody(t *testing.T) {
+	t.Parallel()
+
+	handler := setupHandler(t, &serviceStub{
+		createPermitFn: func(entity *permit.Permit) (*permit.Permit, error) {
+			t.Fatal("a permit naming another organization must not reach the service")
+			return nil, nil
+		},
+	})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/shipments/" + pulid.MustNew("shp_").String() + "/permits/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"permitNumber":   "GA-1234",
+			"organizationId": "org_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"businessUnitId": "bu_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	require.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
+}
+
+func TestPermitHandler_CreatePermit_TakesTheShipmentFromThePath(t *testing.T) {
 	t.Parallel()
 
 	shipmentID := pulid.MustNew("shp_")
@@ -168,11 +191,9 @@ func TestPermitHandler_CreatePermit_IgnoresTenantAndShipmentInTheBody(t *testing
 		WithPath("/api/v1/shipments/" + shipmentID.String() + "/permits/").
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{
-			"permitNumber":   "GA-1234",
-			"stateId":        "us_01ARZ3NDEKTSV4RRFFQ69G5FAV",
-			"shipmentId":     "shp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
-			"organizationId": "org_01ARZ3NDEKTSV4RRFFQ69G5FAV",
-			"businessUnitId": "bu_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"permitNumber": "GA-1234",
+			"stateId":      "us_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"shipmentId":   "shp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
 		})
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))

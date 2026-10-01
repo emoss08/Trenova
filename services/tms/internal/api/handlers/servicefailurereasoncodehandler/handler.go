@@ -222,7 +222,7 @@ func (h *Handler) patch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if err = c.ShouldBindJSON(entity); err != nil {
+	if err = authctx.BindJSON(c, authCtx, entity); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

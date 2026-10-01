@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -114,6 +115,10 @@ func (h *Handler) tenantInfo(c *gin.Context) (pagination.TenantInfo, bool) {
 		h.eh.HandleError(c, err)
 		return pagination.TenantInfo{}, false
 	}
+	if orgID != authCtx.OrganizationID {
+		h.eh.HandleError(c, errortypes.NewNotFoundError("Organization not found"))
+		return pagination.TenantInfo{}, false
+	}
 	return pagination.TenantInfo{
 		OrgID:  orgID,
 		BuID:   authCtx.BusinessUnitID,
@@ -157,7 +162,7 @@ func (h *Handler) createIdentityProvider(c *gin.Context) {
 		return
 	}
 	req := new(services.IdentityProviderRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -179,7 +184,7 @@ func (h *Handler) updateIdentityProvider(c *gin.Context) {
 		return
 	}
 	req := new(services.IdentityProviderRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -232,7 +237,7 @@ func (h *Handler) createSCIMDirectory(c *gin.Context) {
 		return
 	}
 	req := new(iam.SCIMDirectory)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -254,7 +259,7 @@ func (h *Handler) updateSCIMDirectory(c *gin.Context) {
 		return
 	}
 	req := new(iam.SCIMDirectory)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -309,7 +314,7 @@ func (h *Handler) createSCIMToken(c *gin.Context) {
 		return
 	}
 	req := new(services.SCIMTokenCreateRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -372,7 +377,7 @@ func (h *Handler) createSCIMGroupRoleMapping(c *gin.Context) {
 		return
 	}
 	req := new(iam.SCIMGroupRoleMapping)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -399,7 +404,7 @@ func (h *Handler) updateSCIMGroupRoleMapping(c *gin.Context) {
 		return
 	}
 	req := new(iam.SCIMGroupRoleMapping)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -477,7 +482,7 @@ func (h *Handler) createAccessPolicy(c *gin.Context) {
 		return
 	}
 	req := new(iam.AccessPolicy)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -499,7 +504,7 @@ func (h *Handler) updateAccessPolicy(c *gin.Context) {
 		return
 	}
 	req := new(iam.AccessPolicy)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authctx.GetAuthContext(c), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

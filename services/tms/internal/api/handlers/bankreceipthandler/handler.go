@@ -164,7 +164,7 @@ func (h *Handler) suggestions(c *gin.Context) {
 func (h *Handler) importReceipt(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
 	req := new(services.ImportBankReceiptRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, auth, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

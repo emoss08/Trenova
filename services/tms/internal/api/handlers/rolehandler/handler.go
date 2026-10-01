@@ -207,7 +207,7 @@ func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	role := new(permission.Role)
-	if err := c.ShouldBindJSON(role); err != nil {
+	if err := authctx.BindJSON(c, authCtx, role); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -249,7 +249,7 @@ func (h *Handler) update(c *gin.Context) {
 	}
 
 	role := new(permission.Role)
-	if err = c.ShouldBindJSON(role); err != nil {
+	if err = authctx.BindJSON(c, authCtx, role); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

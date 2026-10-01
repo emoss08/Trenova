@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const maxTenantDepth = 4
+
 var (
 	pulidType            = reflect.TypeFor[pulid.ID]()
 	organizationIDFields = []string{"OrganizationID", "OrgID", "CurrentOrganizationID"}
@@ -20,22 +22,24 @@ func BindJSON(c *gin.Context, authCtx *AuthContext, req any) error {
 		return c.ShouldBindJSON(req)
 	}
 
-	presetID := idField(elem)
+	presetID := pulidField(elem, "ID")
 
 	if err := c.ShouldBindJSON(req); err != nil {
 		return err
 	}
 
-	if err := ensureTenantMatches(elem, authCtx); err != nil {
-		return err
+	if tenantMismatch(elem, authCtx, 0) {
+		return errortypes.NewAuthorizationError(
+			"The request belongs to a different organization than your session",
+		)
 	}
 
 	if !presetID.IsNil() {
 		setPulidField(elem, "ID", presetID)
 	}
 
-	AddContextToRequest(authCtx, req)
-	setPulidField(elem, "CurrentOrganizationID", authCtx.OrganizationID)
+	stampTenant(elem, authCtx, 0)
+	setPulidField(elem, "UserID", authCtx.UserID)
 
 	return nil
 }
@@ -54,34 +58,85 @@ func structElem(req any) (reflect.Value, bool) {
 	return elem, true
 }
 
-func ensureTenantMatches(elem reflect.Value, authCtx *AuthContext) error {
-	if mismatched(elem, organizationIDFields, authCtx.OrganizationID) ||
-		mismatched(elem, businessUnitIDFields, authCtx.BusinessUnitID) {
-		return errortypes.NewAuthorizationError(
-			"The request belongs to a different organization than your session",
-		)
+func tenantMismatch(elem reflect.Value, authCtx *AuthContext, depth int) bool {
+	if fieldMismatch(elem, organizationIDFields, authCtx.OrganizationID) ||
+		fieldMismatch(elem, businessUnitIDFields, authCtx.BusinessUnitID) {
+		return true
 	}
 
-	return nil
-}
+	if depth >= maxTenantDepth {
+		return false
+	}
 
-func mismatched(elem reflect.Value, names []string, want pulid.ID) bool {
-	for _, name := range names {
-		field := elem.FieldByName(name)
-		if !field.IsValid() || field.Type() != pulidType {
-			continue
+	for _, nested := range nestedStructs(elem) {
+		if tenantMismatch(nested, authCtx, depth+1) {
+			return true
 		}
-
-		got, _ := field.Interface().(pulid.ID)
-
-		return !got.IsNil() && got != want
 	}
 
 	return false
 }
 
-func idField(elem reflect.Value) pulid.ID {
-	field := elem.FieldByName("ID")
+func stampTenant(elem reflect.Value, authCtx *AuthContext, depth int) {
+	for _, name := range organizationIDFields {
+		setPulidField(elem, name, authCtx.OrganizationID)
+	}
+	for _, name := range businessUnitIDFields {
+		setPulidField(elem, name, authCtx.BusinessUnitID)
+	}
+
+	if depth >= maxTenantDepth {
+		return
+	}
+
+	for _, nested := range nestedStructs(elem) {
+		stampTenant(nested, authCtx, depth+1)
+	}
+
+	if tenant := elem.FieldByName("TenantInfo"); tenant.IsValid() && tenant.Kind() == reflect.Struct {
+		setPulidField(tenant, "UserID", authCtx.UserID)
+	}
+}
+
+func nestedStructs(elem reflect.Value) []reflect.Value {
+	nested := make([]reflect.Value, 0)
+	typ := elem.Type()
+
+	for i := range elem.NumField() {
+		if !typ.Field(i).IsExported() {
+			continue
+		}
+
+		field := elem.Field(i)
+		switch field.Kind() {
+		case reflect.Struct:
+			if field.Type() != pulidType {
+				nested = append(nested, field)
+			}
+		case reflect.Pointer:
+			if !field.IsNil() && field.Elem().Kind() == reflect.Struct {
+				nested = append(nested, field.Elem())
+			}
+		default:
+		}
+	}
+
+	return nested
+}
+
+func fieldMismatch(elem reflect.Value, names []string, want pulid.ID) bool {
+	for _, name := range names {
+		got := pulidField(elem, name)
+		if !got.IsNil() && got != want {
+			return true
+		}
+	}
+
+	return false
+}
+
+func pulidField(elem reflect.Value, name string) pulid.ID {
+	field := elem.FieldByName(name)
 	if !field.IsValid() || field.Type() != pulidType {
 		return pulid.Nil
 	}

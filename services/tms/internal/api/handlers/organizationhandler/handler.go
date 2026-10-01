@@ -350,7 +350,7 @@ func (h *Handler) upsertMicrosoftSSOConfig(c *gin.Context) {
 	}
 
 	req := new(services.MicrosoftSSOConfig)
-	if err = c.ShouldBindJSON(req); err != nil {
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -402,7 +402,7 @@ func (h *Handler) upsertOktaSSOConfig(c *gin.Context) {
 	}
 
 	req := new(services.OktaSSOConfig)
-	if err = c.ShouldBindJSON(req); err != nil {
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

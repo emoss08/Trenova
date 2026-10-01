@@ -308,7 +308,7 @@ func (h *Handler) quote(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	body := new(quoteRequest)
-	if err := c.ShouldBindJSON(body); err != nil {
+	if err := authctx.BindJSON(c, authCtx, body); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

@@ -96,7 +96,7 @@ func (r *testCaseRequest) toServiceRequest(
 func (h *Handler) createTestCase(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(testCaseRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -144,7 +144,7 @@ func (h *Handler) updateTestCase(c *gin.Context) {
 		return
 	}
 	req := new(testCaseRequest)
-	if err = c.ShouldBindJSON(req); err != nil {
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

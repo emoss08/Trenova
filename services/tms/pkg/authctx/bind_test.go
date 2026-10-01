@@ -169,3 +169,76 @@ func TestBindJSON_StampsCurrentOrganization(t *testing.T) {
 	assert.Equal(t, ac.OrganizationID, entity.CurrentOrganizationID)
 	assert.Equal(t, ac.BusinessUnitID, entity.BusinessUnitID)
 }
+
+type bindTenantInfo struct {
+	OrgID  pulid.ID `json:"orgId"`
+	BuID   pulid.ID `json:"buId"`
+	UserID pulid.ID `json:"userId"`
+}
+
+type bindNestedPolicy struct {
+	OrganizationID pulid.ID `json:"organizationId"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"`
+}
+
+type bindLine struct {
+	OrganizationID pulid.ID `json:"organizationId"`
+}
+
+type bindRequestWithNesting struct {
+	TenantInfo bindTenantInfo    `json:"tenantInfo"`
+	Policy     *bindNestedPolicy `json:"policy"`
+	Lines      []bindLine        `json:"lines"`
+}
+
+func TestBindJSON_RejectsAForeignTenantInsideTenantInfo(t *testing.T) {
+	t.Parallel()
+
+	ac := bindAuthContext()
+	body := `{"tenantInfo":{"orgId":"` + pulid.MustNew("org_").String() + `"}}`
+
+	err := authctx.BindJSON(bindContext(t, body), ac, new(bindRequestWithNesting))
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+}
+
+func TestBindJSON_RejectsAForeignTenantInANestedEntity(t *testing.T) {
+	t.Parallel()
+
+	ac := bindAuthContext()
+	body := `{"policy":{"businessUnitId":"` + pulid.MustNew("bu_").String() + `"}}`
+
+	err := authctx.BindJSON(bindContext(t, body), ac, new(bindRequestWithNesting))
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+}
+
+func TestBindJSON_StampsTenantInfoAndNestedEntities(t *testing.T) {
+	t.Parallel()
+
+	ac := bindAuthContext()
+	req := new(bindRequestWithNesting)
+
+	require.NoError(t, authctx.BindJSON(bindContext(t, `{"policy":{},"lines":[{}]}`), ac, req))
+
+	assert.Equal(t, ac.OrganizationID, req.TenantInfo.OrgID)
+	assert.Equal(t, ac.BusinessUnitID, req.TenantInfo.BuID)
+	assert.Equal(t, ac.UserID, req.TenantInfo.UserID)
+	require.NotNil(t, req.Policy)
+	assert.Equal(t, ac.OrganizationID, req.Policy.OrganizationID)
+	assert.Equal(t, ac.BusinessUnitID, req.Policy.BusinessUnitID)
+}
+
+func TestBindJSON_LeavesSliceElementsToTheirOwners(t *testing.T) {
+	t.Parallel()
+
+	ac := bindAuthContext()
+	sibling := pulid.MustNew("org_")
+	req := new(bindRequestWithNesting)
+	body := `{"lines":[{"organizationId":"` + sibling.String() + `"}]}`
+
+	require.NoError(t, authctx.BindJSON(bindContext(t, body), ac, req))
+	assert.Equal(t, sibling, req.Lines[0].OrganizationID)
+}

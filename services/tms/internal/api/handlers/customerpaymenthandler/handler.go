@@ -125,7 +125,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) postAndApply(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(serviceports.PostCustomerPaymentRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -156,7 +156,7 @@ func (h *Handler) applyUnapplied(c *gin.Context) {
 		return
 	}
 	req := new(serviceports.ApplyCustomerPaymentRequest)
-	if err = c.ShouldBindJSON(req); err != nil {
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -188,7 +188,7 @@ func (h *Handler) reverse(c *gin.Context) {
 		return
 	}
 	req := new(serviceports.ReverseCustomerPaymentRequest)
-	if err = c.ShouldBindJSON(req); err != nil {
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -212,7 +212,7 @@ func (h *Handler) reverse(c *gin.Context) {
 func (h *Handler) applyCreditMemo(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(serviceports.ApplyCreditMemoRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -244,7 +244,7 @@ func (h *Handler) unapplyCreditMemoApplication(c *gin.Context) {
 		return
 	}
 	req := new(serviceports.UnapplyCreditMemoApplicationRequest)
-	if err = c.ShouldBindJSON(req); err != nil {
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

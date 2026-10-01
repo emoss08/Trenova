@@ -119,7 +119,7 @@ func (h *Handler) get(c *gin.Context) {
 func (h *Handler) createDraft(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(serviceports.CreateManualJournalRequest)
-	if err := c.ShouldBindJSON(req); err != nil {
+	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -150,7 +150,7 @@ func (h *Handler) updateDraft(c *gin.Context) {
 		return
 	}
 	req := new(serviceports.UpdateManualJournalDraftRequest)
-	if err = c.ShouldBindJSON(req); err != nil {
+	if err = authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
