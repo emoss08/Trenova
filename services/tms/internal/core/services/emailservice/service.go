@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -313,14 +314,7 @@ func (s *Service) Send(
 		}
 		return nil, err
 	}
-	if err = s.startSendWorkflow(
-		ctx,
-		msg,
-		req.HTML,
-		req.Text,
-		req.Headers,
-		req.OpenTracking,
-	); err != nil {
+	if err = s.startSendWorkflow(ctx, msg, req); err != nil {
 		if _, updateErr := s.markFailed(ctx, msg, err); updateErr != nil {
 			return nil, updateErr
 		}
@@ -414,7 +408,7 @@ func (s *Service) SendPersisted(
 		},
 	})
 	if err != nil {
-		return s.markFailed(ctx, msg, err)
+		return s.markFailed(ctx, msg, s.describeSenderRejection(ctx, msg, req.FromEmailOrigin, err))
 	}
 
 	msg.Status = email.MessageStatusSent
@@ -550,10 +544,7 @@ func (s *Service) providerAttachments(
 func (s *Service) startSendWorkflow(
 	ctx context.Context,
 	msg *email.Message,
-	html string,
-	text string,
-	headers map[string]string,
-	openTracking bool,
+	req *services.SendEmailRequest,
 ) error {
 	if !s.workflowStarter.Enabled() {
 		return services.ErrWorkflowStarterDisabled
@@ -579,11 +570,12 @@ func (s *Service) startSendWorkflow(
 				BusinessUnitID: msg.BusinessUnitID,
 				Timestamp:      timeutils.NowUnix(),
 			},
-			MessageID:    msg.ID,
-			HTML:         html,
-			Text:         text,
-			Headers:      headers,
-			OpenTracking: openTracking,
+			MessageID:       msg.ID,
+			HTML:            req.HTML,
+			Text:            req.Text,
+			Headers:         req.Headers,
+			OpenTracking:    req.OpenTracking,
+			FromEmailOrigin: req.FromEmailOrigin,
 		},
 	)
 	return err
@@ -792,6 +784,51 @@ func (s *Service) markFailed(
 	}
 	s.syncInvoiceAttempts(ctx, updated)
 	return updated, err
+}
+
+func (s *Service) describeSenderRejection(
+	ctx context.Context,
+	msg *email.Message,
+	origin string,
+	err error,
+) error {
+	var rejected *SenderRejectedError
+	if !errors.As(err, &rejected) {
+		return err
+	}
+	rejected.Address = msg.FromEmail
+	rejected.Origin = strings.TrimSpace(origin)
+	if rejected.Origin == "" {
+		rejected.Origin = s.profileSenderOrigin(ctx, msg)
+	}
+	return rejected
+}
+
+func (s *Service) profileSenderOrigin(ctx context.Context, msg *email.Message) string {
+	profile, err := s.repo.GetProfile(ctx, repositories.GetEmailEntityRequest{
+		ID: msg.ProfileID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: msg.OrganizationID,
+			BuID:  msg.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		if s.l != nil {
+			s.l.Warn(
+				"failed to load email profile to describe a rejected sender",
+				zap.Error(err),
+				zap.String("messageId", msg.ID.String()),
+			)
+		}
+		return ""
+	}
+	if !strings.EqualFold(strings.TrimSpace(profile.SenderEmail), strings.TrimSpace(msg.FromEmail)) {
+		return ""
+	}
+	return fmt.Sprintf(
+		"the sender email of the %q email profile (Organization settings > Email profiles)",
+		profile.Name,
+	)
 }
 
 func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {

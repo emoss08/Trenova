@@ -121,5 +121,8 @@ func (s *ResendSender) Send(
 	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
 		return nil, providerStatusError(ErrRetryableSend, "resend", resp.StatusCode, respBody)
 	}
+	if rejected := resendSenderRejection(resp.StatusCode, respBody); rejected != nil {
+		return nil, rejected
+	}
 	return nil, providerStatusError(ErrNonRetryableSend, "resend", resp.StatusCode, respBody)
 }
