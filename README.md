@@ -49,7 +49,7 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 
 | Layer | Technology |
 | --- | --- |
-| API | Go 1.26, [Gin](https://github.com/gin-gonic/gin), [gqlgen](https://github.com/99designs/gqlgen) GraphQL, OpenAPI |
+| API | Go 1.26, [Gin](https://github.com/gin-gonic/gin), [gqlgen](https://github.com/99designs/gqlgen) GraphQL |
 | Database | PostgreSQL via [pgx](https://github.com/jackc/pgx), SQL-first migrations |
 | Search and cache | Meilisearch, Redis (JSON and Streams) |
 | Change data capture | [GTC](./services/gtc): a Go PostgreSQL logical-replication connector that projects rows into Meilisearch and Redis |
@@ -68,7 +68,7 @@ shared/               Shared Go packages (money, geo, dispatch planner, PC*MILER
 client/apps/web       Web application (React)
 client/apps/dash      Admin dashboard (React)
 deploy/               Dockerfiles, Caddyfile, observability stack
-docs/                 Engineering guides and operations runbooks
+docs/                 Engineering guides referenced by CLAUDE.md, Bun notes, product guide
 ```
 
 ## Quick start (local development)
@@ -109,7 +109,7 @@ On Windows, `setx LOW_RESOURCE true` sets it for every new terminal.
 setting on a 16 GB machine. Run only the client app you are working on
 (`pnpm --filter @trenova/web dev`) rather than `pnpm dev`, which starts both.
 
-Run `task list` to see every available task. Engineering guides live in [`docs/engineering`](./docs/engineering) and operations runbooks in [`docs/operations-guides`](./docs/operations-guides).
+Run `task list` to see every available task. Agent-facing engineering guides live in [`docs/engineering`](./docs/engineering). Operations runbooks, design notes, roadmaps and research live in [trenova-documentation](https://github.com/emoss08/trenova-documentation).
 
 ## Self-hosting
 

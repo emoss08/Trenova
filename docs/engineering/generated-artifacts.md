@@ -6,12 +6,12 @@ run, but it does not say why the generator refused, and several of these generat
 code that compiles and passes every test.
 
 This page is the list of things that have actually broken, and how to check each one before
-pushing. It complements the [GraphQL Developer Guide](graphql-developer-guide.md), which
+pushing. It complements the [GraphQL Developer Guide](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/graphql-developer-guide.md), which
 covers how to build a resource; this covers what breaks afterwards.
 
 ## Run the whole gate locally
 
-`Codegen Checks` in `.github/workflows/test-tms.yml` is seven independent steps. All paths
+`Codegen Checks` in `.github/workflows/test-tms.yml` is six independent regeneration steps, plus the GraphQL schema-diff step. All paths
 are relative to `services/tms`:
 
 ```bash
@@ -24,17 +24,12 @@ go generate ./internal/api/graphql/projection/...                  # internal/ap
 go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
 go generate ./internal/core/services/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
 go generate ./internal/api/writecoverage/...                       # ../../docs/engineering/agent-write-coverage.md
-
-task docs-generate                                                 # swag + cmd/openapi-postprocess; then: git diff --quiet -- docs
 ```
 
-The OpenAPI step parses only the API's own packages and the few third-party packages whose
-types the spec names (`gin.H`, `decimal.NullDecimal`), through `--packagePrefix`. Parsing
-every dependency took CI half an hour. An annotation that names a type from any other module
-fails with `cannot find type definition`: add that module to the prefix in `Taskfile.yml`
-(`SWAG_INIT`) and `.github/workflows/test-tms.yml`, which runs the same command.
+The REST API reference (OpenAPI) is no longer generated in this repository; it is produced
+outside it, so there is no spec to regenerate here.
 
-A clean `git status` after all seven means the job will pass.
+A clean `git status` after all six means the job will pass.
 
 ## GraphQL projections: the one that fails on correct code
 
@@ -151,13 +146,13 @@ A tool description, a product guide page or an eval request is also embedded, by
 hash, in `agentevalgate/evals/embeddings/nomic-embed-text.json`. Once that fixture is
 recorded, editing any of them makes it stale, and the hybrid ranking gate names the one-line
 command that re-records it from a local Ollama (see "Ranking" in
-[ai-retrieval.md](ai-retrieval.md)).
+[ai-retrieval.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-retrieval.md)).
 
 A tool description edit can also move `find_tools` ranking below its floors
 (`agentevalgate/evals/toolselection.floors.json`); the failure lists the requests that no
 longer find their tool. Fix the description rather than the floor. The flag goes after the
 package. The job also runs the prompt-injection red-team suite; see
-[agent-evals.md](agent-evals.md) for what it proves and its known gaps.
+[agent-evals.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/agent-evals.md) for what it proves and its known gaps.
 
 ## GraphQL server code
 

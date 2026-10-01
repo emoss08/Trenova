@@ -4,7 +4,7 @@ The Windows companion that puts paper into Trenova: a tray agent that pairs a co
 person, takes scan requests from the web app, scans through TWAIN or WIA, and uploads every
 page; and a print service behind the "Trenova" printer, which hands what each person prints
 to their agent. The design, and why it is Rust, is in
-[docs/design/document-capture.md](../../docs/design/document-capture.md).
+[docs/design/document-capture.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/design/document-capture.md).
 
 ## Layout
 
