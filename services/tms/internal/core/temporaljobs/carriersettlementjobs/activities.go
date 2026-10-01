@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -59,10 +60,11 @@ func (a *Activities) GenerateCarrierSettlementBatchesActivity(
 			OrgID: control.OrganizationID,
 			BuID:  control.BusinessUnitID,
 		}
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 		bounds := carriersettlementservice.ResolveCurrentPeriod(control, now)
 
 		batch, genErr := a.settlementService.GenerateBatch(
-			ctx,
+			tenantCtx,
 			&carriersettlementservice.GenerateBatchRequest{
 				TenantInfo:  tenantInfo,
 				PeriodStart: bounds.PeriodStart,

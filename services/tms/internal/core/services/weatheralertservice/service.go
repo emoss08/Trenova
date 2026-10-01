@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
@@ -95,9 +96,10 @@ func (s *Service) PollNWSAlerts(ctx context.Context) error {
 	}
 
 	for _, tenantInfo := range tenants {
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 		for _, alert := range alerts {
 			entity := cloneAlertForTenant(alert, tenantInfo)
-			if _, err = s.repo.UpsertAlert(ctx, entity); err != nil {
+			if _, err = s.repo.UpsertAlert(tenantCtx, entity); err != nil {
 				return errortypes.NewBusinessError("failed to upsert weather alert").
 					WithInternal(err)
 			}

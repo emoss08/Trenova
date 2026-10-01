@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -54,7 +55,11 @@ func (a *Activities) KickDueAccountingSyncActivity(ctx context.Context) (*KickDu
 	result := &KickDueResult{Due: len(due)}
 	for _, conn := range due {
 		tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
-		if kickErr := a.dispatcher.Kick(ctx, tenant, conn.ConnectionID); kickErr != nil {
+		if kickErr := a.dispatcher.Kick(
+			dbscope.WithTenant(ctx, tenant.DBTenant()),
+			tenant,
+			conn.ConnectionID,
+		); kickErr != nil {
 			a.l.Warn("failed to wake an accounting sender",
 				zap.String("connectionId", conn.ConnectionID.String()), zap.Error(kickErr))
 			continue
@@ -86,13 +91,11 @@ func (a *Activities) AccountingSafetyNetActivity(
 				continue
 			}
 			result.Connections++
-			found, netErr := a.sync.SafetyNet(ctx, services.AccountingSyncConnectionRef{
-				TenantInfo: pagination.TenantInfo{
-					OrgID: conn.OrganizationID,
-					BuID:  conn.BusinessUnitID,
-				},
-				ConnectionID: conn.ID,
-			})
+			tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
+			found, netErr := a.sync.SafetyNet(
+				dbscope.WithTenant(ctx, tenant.DBTenant()),
+				services.AccountingSyncConnectionRef{TenantInfo: tenant, ConnectionID: conn.ID},
+			)
 			activity.RecordHeartbeat(ctx, result.Connections)
 			if netErr != nil {
 				result.Failed++

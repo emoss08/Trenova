@@ -1,7 +1,6 @@
 package tenantprovisioningrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"

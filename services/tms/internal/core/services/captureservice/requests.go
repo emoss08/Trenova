@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -484,7 +485,11 @@ func (s *Service) ExpireRequests(ctx context.Context) (int, error) {
 
 	count := 0
 	for _, req := range expired {
-		if s.expire(ctx, req, now) {
+		requestCtx := dbscope.WithTenant(ctx, dbscope.Tenant{
+			OrganizationID: req.OrganizationID,
+			BusinessUnitID: req.BusinessUnitID,
+		})
+		if s.expire(requestCtx, req, now) {
 			count++
 		}
 	}

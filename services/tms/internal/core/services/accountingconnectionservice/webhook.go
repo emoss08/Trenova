@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -217,11 +218,21 @@ func (s *Service) pollChanged(
 			continue
 		}
 		tenant := pagination.TenantInfo{OrgID: holder.OrganizationID, BuID: holder.BusinessUnitID}
-		if err := s.poller.PollNow(ctx, tenant, holder.ID); err != nil {
+		if err := s.poller.PollNow(connectionScope(ctx, holder), tenant, holder.ID); err != nil {
 			s.l.Warn("failed to wake the change reader after a webhook",
 				zap.String("connectionId", holder.ID.String()), zap.Error(err))
 		}
 	}
+}
+
+func connectionScope(
+	ctx context.Context,
+	conn *accountingsync.AccountingConnection,
+) context.Context {
+	return dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: conn.OrganizationID,
+		BusinessUnitID: conn.BusinessUnitID,
+	})
 }
 
 func (s *Service) verifiedRealms(
@@ -233,7 +244,7 @@ func (s *Service) verifiedRealms(
 	byApp := make(map[string]bool, len(holders))
 	verified := make([]string, 0, len(holders))
 	for _, holder := range holders {
-		app, err := s.appForConnection(ctx, provider, holder)
+		app, err := s.appForConnection(connectionScope(ctx, holder), provider, holder)
 		if err != nil {
 			continue
 		}

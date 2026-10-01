@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
@@ -81,8 +82,9 @@ func (a *Activities) RefreshExchangeRatesActivity(ctx context.Context) error {
 			OrgID: integ.OrganizationID,
 			BuID:  integ.BusinessUnitID,
 		}
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
-		baseCurrency, currencyErr := a.functionalCurrency(ctx, tenantInfo)
+		baseCurrency, currencyErr := a.functionalCurrency(tenantCtx, tenantInfo)
 		if currencyErr != nil {
 			a.logger.Error("Failed to resolve functional currency for tenant",
 				zap.String("orgID", integ.OrganizationID.String()),
@@ -91,7 +93,7 @@ func (a *Activities) RefreshExchangeRatesActivity(ctx context.Context) error {
 		}
 
 		if refreshErr := a.exchangeRateSvc.RefreshRates(
-			ctx,
+			tenantCtx,
 			tenantInfo,
 			baseCurrency,
 		); refreshErr != nil {

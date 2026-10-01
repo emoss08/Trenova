@@ -128,6 +128,8 @@ func (s *Service) Login(
 		return nil, errInvalidCredentials
 	}
 
+	ctx = userScope(ctx, usr)
+
 	targetOrg, err := s.resolveRequestedOrganization(ctx, req.OrganizationSlug, usr)
 	if err != nil {
 		return nil, err
@@ -139,7 +141,7 @@ func (s *Service) Login(
 
 	if targetOrg != nil && targetOrg.ID != usr.CurrentOrganizationID {
 		if err = s.ur.UpdateCurrentOrganization(
-			ctx,
+			organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, usr.ID),
 			usr.ID,
 			targetOrg.ID,
 			targetOrg.BusinessUnitID,
@@ -151,7 +153,7 @@ func (s *Service) Login(
 		usr.BusinessUnitID = targetOrg.BusinessUnitID
 	}
 
-	return s.createLoginResponse(ctx, usr, loginSessionContext{
+	return s.createLoginResponse(userScope(ctx, usr), usr, loginSessionContext{
 		AuthProvider:          "password",
 		AuthenticatorAAL:      1,
 		FederationFAL:         1,
@@ -229,6 +231,7 @@ func (s *Service) StartSSOLogin(
 	if err != nil {
 		return "", err
 	}
+	ctx = organizationScope(ctx, org.ID, org.BusinessUnitID, pulid.Nil)
 
 	ssoConfig, err := s.resolveSSOConfig(ctx, org.ID, req)
 	if err != nil {
@@ -263,6 +266,7 @@ func (s *Service) StartSSOLogin(
 		Provider:         req.Provider,
 		ProviderID:       ssoConfig.ID,
 		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
 		OrganizationSlug: org.LoginSlug,
 		CodeVerifier:     verifier,
 		Nonce:            nonce,
@@ -318,6 +322,11 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	}()
 
 	displayName := providerDisplayName(loginState.Provider)
+
+	if loginState.OrganizationID.IsNil() || loginState.BusinessUnitID.IsNil() {
+		return nil, errortypes.NewAuthenticationError("SSO login session is invalid or expired")
+	}
+	ctx = organizationScope(ctx, loginState.OrganizationID, loginState.BusinessUnitID, pulid.Nil)
 
 	ssoConfig, err := s.resolveSSOConfigForCallback(ctx, loginState)
 	if err != nil {
@@ -411,7 +420,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	}
 
 	aal, mfaAt := assuranceFromOIDCClaims(claims)
-	loginResp, err := s.createLoginResponse(ctx, usr, loginSessionContext{
+	loginResp, err := s.createLoginResponse(userScope(ctx, usr), usr, loginSessionContext{
 		AuthProvider:          string(loginState.Provider),
 		ExternalSubject:       claims.Subject,
 		AuthenticatorAAL:      aal,
@@ -453,7 +462,10 @@ func (s *Service) enabledTenantSSOConfiguration(
 		return nil, err
 	}
 
-	configs, err := s.ssoRepo.ListEnabledByOrganizationID(ctx, org.ID)
+	configs, err := s.ssoRepo.ListEnabledByOrganizationID(
+		organizationScope(ctx, org.ID, org.BusinessUnitID, pulid.Nil),
+		org.ID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -541,6 +553,7 @@ func (s *Service) ListAuthorizedSessionRoles(
 	if err != nil {
 		return nil, err
 	}
+	ctx = sessionScope(ctx, sess)
 
 	authorizedRoles, err := s.authorizedRoleSummaries(ctx, sess.UserID, sess.OrganizationID)
 	if err != nil {
@@ -563,6 +576,7 @@ func (s *Service) ActivateSessionRoles(
 	if err != nil {
 		return nil, err
 	}
+	ctx = sessionScope(ctx, sess)
 
 	authorizedRoles, err := s.authorizedRoleSummaries(ctx, sess.UserID, sess.OrganizationID)
 	if err != nil {
@@ -661,7 +675,10 @@ func (s *Service) stopTurns(ctx context.Context, sess *session.Session) {
 		return
 	}
 
-	stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), stopTurnsTimeout)
+	stopCtx, cancel := context.WithTimeout(
+		sessionScope(context.WithoutCancel(ctx), sess),
+		stopTurnsTimeout,
+	)
 	defer cancel()
 
 	err := s.turns.StopAllForUser(stopCtx, services.StopUserTurnsRequest{
@@ -922,7 +939,10 @@ func (s *Service) enforcePasswordLoginPolicy(
 	targetOrg *tenant.Organization,
 ) error {
 	if strings.TrimSpace(organizationSlug) == "" && targetOrg == nil {
-		targetOrg = &tenant.Organization{ID: user.CurrentOrganizationID}
+		targetOrg = &tenant.Organization{
+			ID:             user.CurrentOrganizationID,
+			BusinessUnitID: user.BusinessUnitID,
+		}
 	}
 
 	if targetOrg == nil {
@@ -932,6 +952,8 @@ func (s *Service) enforcePasswordLoginPolicy(
 	if s.ssoRepo == nil {
 		return nil
 	}
+
+	ctx = organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, user.ID)
 
 	for _, p := range []tenant.SSOProvider{tenant.SSOProviderAzureAD, tenant.SSOProviderOkta} {
 		cfg, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, targetOrg.ID, p)

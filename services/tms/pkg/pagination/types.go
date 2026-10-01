@@ -1,11 +1,18 @@
 package pagination
 
-import "github.com/emoss08/trenova/shared/pulid"
+import (
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
+)
 
 type TenantInfo struct {
 	OrgID  pulid.ID `json:"orgId"  form:"-"`
 	BuID   pulid.ID `json:"buId"   form:"-"`
 	UserID pulid.ID `json:"userId" form:"-"`
+}
+
+func (t TenantInfo) DBTenant() dbscope.Tenant {
+	return dbscope.Tenant{OrganizationID: t.OrgID, BusinessUnitID: t.BuID, UserID: t.UserID}
 }
 
 type ListResult[T any] struct {
@@ -18,7 +25,7 @@ type ListResult[T any] struct {
 type SelectQueryRequest struct {
 	TenantInfo TenantInfo `form:"-"`
 	Pagination Info
-	Query      string `json:"query"`
+	Query      string `         json:"query"`
 }
 
 type Info struct {

@@ -1,7 +1,6 @@
 package ssoconfigrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"

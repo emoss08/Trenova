@@ -1,7 +1,6 @@
 package customerrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -57,57 +57,63 @@ func (r *repository) ListDueBillingSchedules(
 	ctx context.Context,
 	req *repositories.ListBillingSchedulesRequest,
 ) ([]*repositories.DueBillingSchedule, error) {
-	ctx = dbscope.WithSystem(ctx, "list billing schedules due across every organization")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.DueBillingSchedule, error) {
-		cbp := buncolgen.CustomerBillingProfileColumns
-		cus := buncolgen.CustomerColumns
+	if req.TenantInfo.OrgID.IsNil() {
+		ctx = dbscope.WithSystem(ctx, "list billing schedules due across every organization")
+	}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*repositories.DueBillingSchedule, error) {
+			cbp := buncolgen.CustomerBillingProfileColumns
+			cus := buncolgen.CustomerColumns
 
-		schedules := make([]*repositories.DueBillingSchedule, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customer.CustomerBillingProfile)(nil)).
-			ColumnExpr(cbp.OrganizationID.Qualified()).
-			ColumnExpr(cbp.BusinessUnitID.Qualified()).
-			ColumnExpr(cbp.CustomerID.Qualified()).
-			ColumnExpr(cus.Name.Qualified()+" AS customer_name").
-			ColumnExpr(cus.Code.Qualified()+" AS customer_code").
-			ColumnExpr(cus.Status.Qualified()+" AS customer_status").
-			ColumnExpr(cbp.BillingCycle.Qualified()).
-			ColumnExpr(cbp.BillingCycleAnchorDay.Qualified()).
-			ColumnExpr(cbp.BillingCycleTimezone.Qualified()).
-			ColumnExpr(cbp.InvoiceDelivery.Qualified()).
-			ColumnExpr(cbp.LastBilledPeriodEnd.Qualified()).
-			ColumnExpr(cbp.SplitBy.Qualified()).
-			ColumnExpr(cbp.SectionBy.Qualified()).
-			ColumnExpr(cbp.InvoiceDetail.Qualified()).
-			ColumnExpr(cbp.MinConsolidatedAmount.Qualified()).
-			ColumnExpr(cbp.MaxShipmentsPerInvoice.Qualified()).
-			ColumnExpr(cbp.AutoBill.Qualified()).
-			ColumnExpr(cbp.BillingCurrency.Qualified()).
-			Join("JOIN customers AS cus ON "+cus.ID.Qualified()+" = "+cbp.CustomerID.Qualified()).
-			Join("AND "+cus.OrganizationID.Qualified()+" = "+cbp.OrganizationID.Qualified()).
-			Join("AND "+cus.BusinessUnitID.Qualified()+" = "+cbp.BusinessUnitID.Qualified()).
-			Where(cbp.InvoiceDelivery.Eq(), customer.InvoiceDeliveryConsolidated).
-			Where(cbp.BillingCycle.Ne(), customer.BillingCycleImmediate).
-			OrderExpr(cus.Name.Qualified() + " ASC")
+			schedules := make([]*repositories.DueBillingSchedule, 0)
+			q := r.db.DBForContext(ctx).
+				NewSelect().
+				Model((*customer.CustomerBillingProfile)(nil)).
+				ColumnExpr(cbp.OrganizationID.Qualified()).
+				ColumnExpr(cbp.BusinessUnitID.Qualified()).
+				ColumnExpr(cbp.CustomerID.Qualified()).
+				ColumnExpr(cus.Name.Qualified()+" AS customer_name").
+				ColumnExpr(cus.Code.Qualified()+" AS customer_code").
+				ColumnExpr(cus.Status.Qualified()+" AS customer_status").
+				ColumnExpr(cbp.BillingCycle.Qualified()).
+				ColumnExpr(cbp.BillingCycleAnchorDay.Qualified()).
+				ColumnExpr(cbp.BillingCycleTimezone.Qualified()).
+				ColumnExpr(cbp.InvoiceDelivery.Qualified()).
+				ColumnExpr(cbp.LastBilledPeriodEnd.Qualified()).
+				ColumnExpr(cbp.SplitBy.Qualified()).
+				ColumnExpr(cbp.SectionBy.Qualified()).
+				ColumnExpr(cbp.InvoiceDetail.Qualified()).
+				ColumnExpr(cbp.MinConsolidatedAmount.Qualified()).
+				ColumnExpr(cbp.MaxShipmentsPerInvoice.Qualified()).
+				ColumnExpr(cbp.AutoBill.Qualified()).
+				ColumnExpr(cbp.BillingCurrency.Qualified()).
+				Join("JOIN customers AS cus ON "+cus.ID.Qualified()+" = "+cbp.CustomerID.Qualified()).
+				Join("AND "+cus.OrganizationID.Qualified()+" = "+cbp.OrganizationID.Qualified()).
+				Join("AND "+cus.BusinessUnitID.Qualified()+" = "+cbp.BusinessUnitID.Qualified()).
+				Where(cbp.InvoiceDelivery.Eq(), customer.InvoiceDeliveryConsolidated).
+				Where(cbp.BillingCycle.Ne(), customer.BillingCycleImmediate).
+				OrderExpr(cus.Name.Qualified() + " ASC")
 
-		if !req.TenantInfo.OrgID.IsNil() {
-			q = q.Where(cbp.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(cbp.BusinessUnitID.Eq(), req.TenantInfo.BuID)
-		}
-
-		if err := q.Scan(ctx, &schedules); err != nil {
-			r.l.Error("failed to list due billing schedules", zap.Error(err))
-			return nil, fmt.Errorf("list due billing schedules: %w", err)
-		}
-
-		for _, schedule := range schedules {
-			schedule.TenantInfo = pagination.TenantInfo{
-				OrgID: schedule.OrganizationID,
-				BuID:  schedule.BusinessUnitID,
+			if !req.TenantInfo.OrgID.IsNil() {
+				q = q.Where(cbp.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(cbp.BusinessUnitID.Eq(), req.TenantInfo.BuID)
 			}
-		}
 
-		return schedules, nil
-	})
+			if err := q.Scan(ctx, &schedules); err != nil {
+				r.l.Error("failed to list due billing schedules", zap.Error(err))
+				return nil, fmt.Errorf("list due billing schedules: %w", err)
+			}
+
+			for _, schedule := range schedules {
+				schedule.TenantInfo = pagination.TenantInfo{
+					OrgID: schedule.OrganizationID,
+					BuID:  schedule.BusinessUnitID,
+				}
+			}
+
+			return schedules, nil
+		},
+	)
 }

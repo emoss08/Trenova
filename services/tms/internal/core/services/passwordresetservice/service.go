@@ -15,6 +15,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -106,6 +107,12 @@ func (s *Service) RequestReset(ctx context.Context, emailAddress string) error {
 			zap.String("userId", user.ID.String()))
 		return nil
 	}
+
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: user.CurrentOrganizationID,
+		BusinessUnitID: user.BusinessUnitID,
+		UserID:         user.ID,
+	})
 
 	allowed, err := s.withinRequestAllowance(ctx, user)
 	if err != nil {
@@ -271,6 +278,12 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 	if !user.IsActive() {
 		return errInvalidToken
 	}
+
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: token.OrganizationID,
+		BusinessUnitID: token.BusinessUnitID,
+		UserID:         user.ID,
+	})
 
 	// Redeem before writing the password. Two tabs opened from the same email both
 	// reach here; the guard lives in the UPDATE, so exactly one of them proceeds.

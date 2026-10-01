@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -66,38 +67,42 @@ type PublicStopRow struct {
 func (s *Service) resolveToken(
 	ctx context.Context,
 	rawToken string,
-) (*rateconfirmation.RateConfirmationToken, *rateconfirmation.RateConfirmation, error) {
+) (context.Context, *rateconfirmation.RateConfirmationToken, *rateconfirmation.RateConfirmation, error) {
 	if rawToken == "" {
-		return nil, nil, invalidTokenError()
+		return ctx, nil, nil, invalidTokenError()
 	}
 
 	token, err := s.repo.GetTokenByHash(ctx, tokenutils.Hash(rawToken))
 	if err != nil {
-		return nil, nil, err
+		return ctx, nil, nil, err
 	}
 	if token == nil || !token.IsUsable(timeutils.NowUnix()) {
-		return nil, nil, invalidTokenError()
+		return ctx, nil, nil, invalidTokenError()
 	}
 
 	tenantInfo := pagination.TenantInfo{
 		OrgID: token.OrganizationID,
 		BuID:  token.BusinessUnitID,
 	}
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: token.OrganizationID,
+		BusinessUnitID: token.BusinessUnitID,
+	})
 	entity, err := s.repo.GetByID(ctx, &repositories.GetRateConfirmationByIDRequest{
 		TenantInfo:         tenantInfo,
 		RateConfirmationID: token.RateConfirmationID,
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil, invalidTokenError()
+			return ctx, nil, nil, invalidTokenError()
 		}
-		return nil, nil, err
+		return ctx, nil, nil, err
 	}
 	if entity.Status == rateconfirmation.StatusVoided {
-		return nil, nil, invalidTokenError()
+		return ctx, nil, nil, invalidTokenError()
 	}
 
-	return token, entity, nil
+	return ctx, token, entity, nil
 }
 
 // PreviewByToken renders the agreement for the public page. It NEVER mutates:
@@ -107,7 +112,7 @@ func (s *Service) PreviewByToken(
 	ctx context.Context,
 	rawToken string,
 ) (*PublicRateConfirmationView, error) {
-	token, entity, err := s.resolveToken(ctx, rawToken)
+	ctx, token, entity, err := s.resolveToken(ctx, rawToken)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +166,7 @@ func (s *Service) ConfirmByToken(
 		)
 	}
 
-	token, entity, err := s.resolveToken(ctx, rawToken)
+	ctx, token, entity, err := s.resolveToken(ctx, rawToken)
 	if err != nil {
 		return err
 	}

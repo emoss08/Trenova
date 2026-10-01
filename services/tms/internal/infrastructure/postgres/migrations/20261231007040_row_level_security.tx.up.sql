@@ -181,6 +181,7 @@ COMMENT ON TABLE trenova_rls.global_tables IS 'Tables in public that hold no ten
 INSERT INTO trenova_rls.global_tables("table_name", "reason")
 VALUES
     ('ai_audit_projector_state', 'Projector cursor shared by the audit worker across all tenants'),
+    ('ai_catalog_embeddings', 'Embeddings of the shared tool catalog and product guide; no tenant content'),
     ('ai_retraining_cycles', 'Operator-level retraining cycles built from consenting organizations'),
     ('ai_training_exports', 'Operator-level training exports spanning consenting organizations'),
     ('bun_migration_locks', 'Migration bookkeeping'),

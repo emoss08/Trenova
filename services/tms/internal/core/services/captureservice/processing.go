@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -233,6 +234,7 @@ func (s *Service) inspectPage(
 func (s *Service) inspectOnArrival(tenantInfo pagination.TenantInfo, page *capture.CapturePage) {
 	arrived := *page
 	s.arrivals.submit(func(ctx context.Context) {
+		ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 		s.readPage(ctx, tenantInfo, &arrived)
 		if arrived.Status != capture.PageProcessed {
 			return

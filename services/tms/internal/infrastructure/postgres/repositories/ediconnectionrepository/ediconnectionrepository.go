@@ -2,7 +2,6 @@
 package ediconnectionrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -13,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -360,6 +360,7 @@ func (r *repository) ensureTargetOrganizationInBusinessUnit(
 	targetOrganizationID pulid.ID,
 	businessUnitID pulid.ID,
 ) error {
+	ctx = dbscope.WithSystem(ctx, "confirm that an organization not yet connected belongs to the caller's business unit")
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().

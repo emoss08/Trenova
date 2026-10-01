@@ -12,6 +12,7 @@ import (
 	notificationdomain "github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -296,6 +297,10 @@ func (c *Consumer) processMessage(ctx context.Context, msg redis.XMessage) error
 		)
 		return nil
 	}
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: pulid.ID(orgID),
+		BusinessUnitID: pulid.ID(buID),
+	})
 
 	recordID := extractStringField(event.NewData, event.OldData, "id")
 

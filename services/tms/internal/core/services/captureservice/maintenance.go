@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -170,7 +171,8 @@ func (s *Service) EnforceRetention(ctx context.Context) (expired, purged int, er
 // row itself, which takes its pages and items with it.
 func (s *Service) purgeBatchPages(ctx context.Context, batch *capture.CaptureBatch) error {
 	tenantInfo := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
-	pages, err := s.pages.ListByBatch(ctx, repositories.ListCapturePagesRequest{
+	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+	pages, err := s.pages.ListByBatch(tenantCtx, repositories.ListCapturePagesRequest{
 		BatchID:    batch.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -179,16 +181,16 @@ func (s *Service) purgeBatchPages(ctx context.Context, batch *capture.CaptureBat
 	}
 
 	for _, page := range pages {
-		if err = s.deleteObject(ctx, page.ThumbnailPath); err != nil {
+		if err = s.deleteObject(tenantCtx, page.ThumbnailPath); err != nil {
 			return err
 		}
-		if err = s.deleteObject(ctx, page.StoragePath); err != nil {
+		if err = s.deleteObject(tenantCtx, page.StoragePath); err != nil {
 			return err
 		}
 	}
 
 	return s.batches.Delete(
-		ctx,
+		tenantCtx,
 		repositories.DeleteCaptureBatchRequest{ID: batch.ID, TenantInfo: tenantInfo},
 	)
 }
@@ -227,8 +229,9 @@ func (s *Service) RemindRetention(ctx context.Context) (int, error) {
 	reminded := 0
 	for _, batch := range due {
 		tenantInfo := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 		claimed, claimErr := s.batches.ClaimRetentionReminder(
-			ctx,
+			tenantCtx,
 			repositories.ClaimRetentionReminderRequest{
 				ID:         batch.ID,
 				TenantInfo: tenantInfo,
@@ -245,7 +248,7 @@ func (s *Service) RemindRetention(ctx context.Context) (int, error) {
 			continue
 		}
 
-		if notifyErr := s.remindOwner(ctx, batch, now); notifyErr != nil {
+		if notifyErr := s.remindOwner(tenantCtx, batch, now); notifyErr != nil {
 			s.l.Warn("could not remind a capture batch owner",
 				zap.String("batchId", batch.ID.String()), zap.Error(notifyErr))
 

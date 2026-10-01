@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -593,6 +594,7 @@ func (s *Service) HandleProviderEvent(
 	params HandleProviderEventParams,
 ) error {
 	tenantInfo := params.TenantInfo
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	event := params.Event
 	if event.MessageID.IsNil() {
 		if params.ProviderMessageID != "" {

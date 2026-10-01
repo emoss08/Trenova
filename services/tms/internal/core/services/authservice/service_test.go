@@ -498,14 +498,15 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 		Name:           "Acme Logistics",
 		LoginSlug:      "acme",
 	}, nil)
-	ssoRepo.On("GetEnabledByID", ctx, providerID).Return(ssoConfig, nil)
+	ssoRepo.On("GetEnabledByID", mock.Anything, providerID).Return(ssoConfig, nil)
 	stateRepo.On(
 		"Save",
-		ctx,
+		mock.Anything,
 		mock.MatchedBy(func(state *repositories.SSOLoginState) bool {
 			return state.ProviderID == providerID &&
 				state.Provider == tenant.SSOProviderOkta &&
 				state.OrganizationID == orgID &&
+				state.BusinessUnitID == buID &&
 				state.OrganizationSlug == "acme" &&
 				state.CodeVerifier != "" &&
 				state.Nonce != "" &&

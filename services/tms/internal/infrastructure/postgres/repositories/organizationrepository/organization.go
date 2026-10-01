@@ -1,7 +1,6 @@
 package organizationrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -96,6 +96,7 @@ func (r *repository) GetByIDs(
 	ctx context.Context,
 	req repositories.GetOrganizationsByIDsRequest,
 ) ([]*tenant.Organization, error) {
+	ctx = dbscope.WithSystem(ctx, "load organizations of the caller's business unit, including ones it shares no membership with")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.Organization, error) {
 		log := r.l.With(
 			zap.String("operation", "GetByIDs"),
@@ -136,6 +137,7 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.SelectOrganizationOptionsRequest,
 ) (*pagination.ListResult[*tenant.Organization], error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations of the caller's business unit to pick a counterparty from")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tenant.Organization], error) {
 		entities := make([]*tenant.Organization, 0, req.SelectQueryRequest.Pagination.SafeLimit())
 		query := r.db.DBForContext(ctx).

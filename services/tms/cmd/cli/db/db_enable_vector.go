@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/migrations"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/fatih/color"
@@ -57,6 +58,16 @@ func runEnableVector(_ *cobra.Command, _ []string) error {
 
 	reportVectorSupport("Before", result.Before)
 	reportVectorSupport("After", result.After)
+
+	if cfg.Database.GetDialect().IsPostgres() {
+		added, reconcileErr := postgres.ReconcileRLS(ctx, db)
+		if reconcileErr != nil {
+			return fmt.Errorf("protect the vector tables with row-level security: %w", reconcileErr)
+		}
+		if added > 0 {
+			color.Cyan("→ Applied tenant isolation policies to %d new vector table(s)", added)
+		}
+	}
 	color.Green(
 		"✓ Semantic retrieval vector storage is ready. Running services pick it up within five minutes.",
 	)

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -69,10 +70,11 @@ func (a *Activities) GenerateSettlementBatchesActivity(
 			OrgID: control.OrganizationID,
 			BuID:  control.BusinessUnitID,
 		}
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 		bounds := driversettlementservice.ResolveCurrentPeriod(control, now)
 
 		batch, genErr := a.settlementService.GenerateBatch(
-			ctx,
+			tenantCtx,
 			&driversettlementservice.GenerateBatchRequest{
 				TenantInfo:  tenantInfo,
 				PeriodStart: bounds.PeriodStart,
@@ -113,9 +115,10 @@ func (a *Activities) AccrueEscrowInterestActivity(
 			OrgID: control.OrganizationID,
 			BuID:  control.BusinessUnitID,
 		}
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 		cutoff := now.AddDate(0, -control.EscrowInterestFrequencyMonths, 0).Unix()
 		accounts, listErr := a.escrowRepo.ListDueForInterest(
-			ctx,
+			tenantCtx,
 			repositories.ListEscrowAccountsForInterestRequest{
 				TenantInfo:       tenantInfo,
 				AccrueOnOrBefore: cutoff,
@@ -131,7 +134,7 @@ func (a *Activities) AccrueEscrowInterestActivity(
 
 		for _, account := range accounts {
 			if _, accrueErr := a.payService.AccrueEscrowInterest(
-				ctx,
+				tenantCtx,
 				tenantInfo,
 				account.ID,
 			); accrueErr != nil {

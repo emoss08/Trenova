@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/cronutils"
@@ -79,18 +80,19 @@ func (a *Activities) dispatchSchedule(
 		BuID:   schedule.BusinessUnitID,
 		UserID: schedule.RunAsID,
 	}
+	tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
 
-	definition, err := a.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+	definition, err := a.defRepo.GetByID(tenantCtx, &repositories.GetReportDefinitionRequest{
 		TenantInfo:   tenant,
 		DefinitionID: schedule.DefinitionID,
 	})
 	if err != nil {
 		result.Skipped++
-		a.recordScheduleFailure(ctx, schedule,
+		a.recordScheduleFailure(tenantCtx, schedule,
 			"The scheduled report definition could not be loaded.")
 		// Persist the advanced NextRunAt (and failure streak) — otherwise the
 		// schedule stays due and re-fires on every dispatch tick.
-		if _, updateErr := a.scheduleRepo.Update(ctx, schedule); updateErr != nil {
+		if _, updateErr := a.scheduleRepo.Update(tenantCtx, schedule); updateErr != nil {
 			return updateErr
 		}
 		return err
@@ -98,22 +100,22 @@ func (a *Activities) dispatchSchedule(
 
 	if definition.Status != report.DefinitionStatusActive {
 		result.Skipped++
-		a.recordScheduleFailure(ctx, schedule, fmt.Sprintf(
+		a.recordScheduleFailure(tenantCtx, schedule, fmt.Sprintf(
 			"The scheduled report %q is %s and was skipped.",
 			definition.Name, definition.Status,
 		))
-		_, updateErr := a.scheduleRepo.Update(ctx, schedule)
+		_, updateErr := a.scheduleRepo.Update(tenantCtx, schedule)
 		return updateErr
 	}
 
-	revisions, err := a.defRepo.ListRevisions(ctx, &repositories.ListReportRevisionsRequest{
+	revisions, err := a.defRepo.ListRevisions(tenantCtx, &repositories.ListReportRevisionsRequest{
 		TenantInfo:   tenant,
 		DefinitionID: definition.ID,
 		Limit:        1,
 	})
 	if err != nil || len(revisions) == 0 {
 		result.Skipped++
-		_, updateErr := a.scheduleRepo.Update(ctx, schedule)
+		_, updateErr := a.scheduleRepo.Update(tenantCtx, schedule)
 		if err == nil {
 			err = fmt.Errorf("definition %s has no revisions", definition.ID)
 		}
@@ -123,9 +125,9 @@ func (a *Activities) dispatchSchedule(
 		return err
 	}
 
-	a.dispatchScheduleRuns(ctx, schedule, definition, revisions[0], result)
+	a.dispatchScheduleRuns(tenantCtx, schedule, definition, revisions[0], result)
 
-	_, err = a.scheduleRepo.Update(ctx, schedule)
+	_, err = a.scheduleRepo.Update(tenantCtx, schedule)
 	return err
 }
 
@@ -220,11 +222,12 @@ func (a *Activities) notifyScheduleOwner(
 		BuID:   schedule.BusinessUnitID,
 		UserID: schedule.RunAsID,
 	}
+	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
 	payload := map[string]any{
 		dataKeyScheduleID: schedule.ID.String(),
 	}
-	if def, err := a.defRepo.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+	if def, err := a.defRepo.GetByID(tenantCtx, &repositories.GetReportDefinitionRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: schedule.DefinitionID,
 	}); err == nil {
@@ -233,7 +236,7 @@ func (a *Activities) notifyScheduleOwner(
 	}
 
 	wording, ok := a.renderNotification(
-		ctx,
+		tenantCtx,
 		tenantInfo,
 		documenttemplate.KindNotificationReportScheduleSkipped,
 		schedule.ID,
@@ -243,7 +246,7 @@ func (a *Activities) notifyScheduleOwner(
 		return
 	}
 
-	if _, err := a.notification.Create(ctx, &notification.Notification{
+	if _, err := a.notification.Create(tenantCtx, &notification.Notification{
 		OrganizationID: schedule.OrganizationID,
 		BusinessUnitID: &schedule.BusinessUnitID,
 		TargetUserID:   &schedule.RunAsID,

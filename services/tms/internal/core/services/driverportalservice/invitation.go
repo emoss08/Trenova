@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -349,6 +350,11 @@ func (s *Service) AcceptInvitation(
 		return nil, fmt.Errorf("hash portal password: %w", err)
 	}
 
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: invitation.OrganizationID,
+		BusinessUnitID: invitation.BusinessUnitID,
+		UserID:         user.ID,
+	})
 	created, err := s.portalRepo.ActivatePortalAccess(
 		ctx,
 		&repositories.ActivatePortalAccessRequest{

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -257,7 +258,11 @@ func (a *Activities) KickAccountingChangesActivity(
 			}
 			result.Connections++
 			tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
-			if kickErr := a.poller.PollNow(ctx, tenant, conn.ID); kickErr != nil {
+			if kickErr := a.poller.PollNow(
+				dbscope.WithTenant(ctx, tenant.DBTenant()),
+				tenant,
+				conn.ID,
+			); kickErr != nil {
 				a.l.Warn("failed to wake an accounting change reader",
 					zap.String("connectionId", conn.ID.String()), zap.Error(kickErr))
 				continue

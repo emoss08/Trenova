@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -105,6 +106,10 @@ func (s *Service) receiveAS2Message(
 		}
 		return nil, err
 	}
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: profile.OrganizationID,
+		BusinessUnitID: profile.BusinessUnitID,
+	})
 	secrets, err := s.ediService.ProfileTransportSecrets(profile)
 	if err != nil {
 		return nil, err

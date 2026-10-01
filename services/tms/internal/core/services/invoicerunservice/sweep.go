@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -64,7 +65,11 @@ func (s *Service) SweepDueSchedules(
 	result := &servicesports.InvoiceRunSweepResult{}
 	for _, key := range order {
 		result.SchedulesDue += len(batches[key])
-		s.sweepPeriod(ctx, key, starts[key], batches[key], actor, result)
+		periodCtx := dbscope.WithTenant(ctx, dbscope.Tenant{
+			OrganizationID: key.orgID,
+			BusinessUnitID: key.buID,
+		})
+		s.sweepPeriod(periodCtx, key, starts[key], batches[key], actor, result)
 	}
 
 	return result, nil

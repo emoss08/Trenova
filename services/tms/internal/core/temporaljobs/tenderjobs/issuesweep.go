@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/temporal"
@@ -84,12 +85,13 @@ func (a *Activities) SweepMissingRateConfirmationsActivity(
 		}
 		result.Checked++
 
+		tenantInfo := pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		}
 		if issueErr := a.lifecycle.IssueRateConfirmation(
-			ctx,
-			pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
+			tenantInfo,
 			*entity.AcceptedOfferID,
 		); issueErr != nil {
 			result.Failed++

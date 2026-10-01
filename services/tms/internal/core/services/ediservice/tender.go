@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -121,15 +122,16 @@ func (s *Service) PlanLoadTender(
 			"EDI partner does not have an active internal communication profile",
 		)
 	}
+	targetTenant := pagination.TenantInfo{
+		OrgID: targetPartner.OrganizationID,
+		BuID:  targetPartner.BusinessUnitID,
+	}
 	if _, err = s.profileRepo.GetActiveProfileByPartner(
-		ctx,
+		dbscope.WithTenant(ctx, targetTenant.DBTenant()),
 		repositories.GetActiveEDICommunicationProfileByPartnerRequest{
-			PartnerID: targetPartner.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: targetPartner.OrganizationID,
-				BuID:  targetPartner.BusinessUnitID,
-			},
-			Method: edi.ConnectionMethodInternal,
+			PartnerID:  targetPartner.ID,
+			TenantInfo: targetTenant,
+			Method:     edi.ConnectionMethodInternal,
 		},
 	); err != nil {
 		return nil, errortypes.NewValidationError(

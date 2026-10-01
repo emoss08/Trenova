@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -239,7 +240,11 @@ func (s *Service) RemindPending(
 
 	reminded := 0
 	for _, group := range groupByRun(proposals) {
-		if err = s.remindGroup(ctx, group, req.Now); err != nil {
+		if err = s.remindGroup(
+			dbscope.WithTenant(ctx, group.tenant.DBTenant()),
+			group,
+			req.Now,
+		); err != nil {
 			s.l.Error("failed to remind about pending proposals",
 				zap.String("run", group.runID.String()),
 				zap.Error(err),
@@ -489,7 +494,11 @@ func (s *Service) brand(
 	}
 
 	out.CompanyName = org.Name
-	if dataURI, logoErr := services.ResolveLogoDataURI(ctx, s.inliner, org.LogoURL); logoErr == nil {
+	if dataURI, logoErr := services.ResolveLogoDataURI(
+		ctx,
+		s.inliner,
+		org.LogoURL,
+	); logoErr == nil {
 		out.LogoDataURI = dataURI
 	}
 }

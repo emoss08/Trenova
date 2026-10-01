@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -81,7 +82,8 @@ func (a *Activities) BackfillActivity(
 
 	result := newSweepResult()
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
-	sweep, err := a.watchtower.Backfill(ctx, tenant)
+	tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
+	sweep, err := a.watchtower.Backfill(tenantCtx, tenant)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +142,8 @@ func (a *Activities) sweepAll(
 		activity.RecordHeartbeat(ctx, org.ID.String())
 
 		tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-		swept, sErr := sweep(ctx, tenant)
+		tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
+		swept, sErr := sweep(tenantCtx, tenant)
 		if sErr != nil {
 			a.l.Error("watchtower sweep failed for organization",
 				zap.String("organization", org.ID.String()),

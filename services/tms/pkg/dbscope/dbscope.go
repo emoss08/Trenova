@@ -57,6 +57,10 @@ func (s Scope) Reason() string {
 }
 
 func (s Scope) Matches(other Scope) bool {
+	if s.kind == KindSystem && other.kind == KindSystem {
+		return true
+	}
+
 	return s == other
 }
 

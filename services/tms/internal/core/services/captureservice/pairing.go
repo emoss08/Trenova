@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -361,7 +362,11 @@ func (s *Service) ExchangePairing(ctx context.Context, deviceCode string) (*Toke
 	}
 
 	var pair *TokenPair
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	exchangeCtx := dbscope.WithSystem(
+		ctx,
+		"exchange an approved pairing, which belongs to no organization until now, for its device",
+	)
+	err = s.db.WithTx(exchangeCtx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		device, issued, issueErr := newDeviceFromPairing(pairing, now)
 		if issueErr != nil {
 			return issueErr

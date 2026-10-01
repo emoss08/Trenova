@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -235,6 +236,7 @@ func (a *Activities) sweepCredential(
 		OrgID: cred.OrganizationID,
 		BuID:  cred.BusinessUnitID,
 	}
+	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	state.touchedWorkers[cred.WorkerID] = tenantInfo
 
 	daysLeft := worker.DaysUntil(*cred.ExpiresAt, state.now)
@@ -247,12 +249,12 @@ func (a *Activities) sweepCredential(
 	}
 	state.recordDueDriver(cred, tenantInfo, daysLeft)
 
-	remindDrivers, err := a.driverRemindersEnabled(ctx, tenantInfo, state.remindersByOrg)
+	remindDrivers, err := a.driverRemindersEnabled(tenantCtx, tenantInfo, state.remindersByOrg)
 	if err != nil {
 		return err
 	}
 	if remindDrivers && !cred.Worker.UserID.IsNil() {
-		sent, notifyErr := a.notifyDriver(ctx, tenantInfo, cred, daysLeft)
+		sent, notifyErr := a.notifyDriver(tenantCtx, tenantInfo, cred, daysLeft)
 		if notifyErr != nil {
 			return notifyErr
 		}
@@ -262,7 +264,7 @@ func (a *Activities) sweepCredential(
 	}
 
 	if daysLeft <= 0 {
-		sent, alertErr := a.alertCompliance(ctx, tenantInfo, cred, daysLeft, true)
+		sent, alertErr := a.alertCompliance(tenantCtx, tenantInfo, cred, daysLeft, true)
 		if alertErr != nil {
 			return alertErr
 		}
@@ -273,7 +275,7 @@ func (a *Activities) sweepCredential(
 	}
 
 	if cred.CredentialType.IsRequired && step <= 14 {
-		sent, alertErr := a.alertCompliance(ctx, tenantInfo, cred, daysLeft, false)
+		sent, alertErr := a.alertCompliance(tenantCtx, tenantInfo, cred, daysLeft, false)
 		if alertErr != nil {
 			return alertErr
 		}

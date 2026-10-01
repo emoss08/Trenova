@@ -77,4 +77,5 @@ func TestScope_Matches(t *testing.T) {
 	assert.True(t, From(WithTenant(t.Context(), tenant)).Matches(From(WithTenant(t.Context(), tenant))))
 	assert.False(t, From(WithTenant(t.Context(), tenant)).Matches(From(WithTenant(t.Context(), testTenant()))))
 	assert.False(t, From(WithTenant(t.Context(), tenant)).Matches(From(WithSystem(t.Context(), "x"))))
+	assert.True(t, From(WithSystem(t.Context(), "x")).Matches(From(WithSystem(t.Context(), "y"))))
 }

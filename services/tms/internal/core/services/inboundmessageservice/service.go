@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
@@ -186,6 +187,10 @@ func (s *Service) ReceiveWebhook(
 	if err != nil {
 		return nil, err
 	}
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: mailbox.OrganizationID,
+		BusinessUnitID: mailbox.BusinessUnitID,
+	})
 
 	if err = s.verify(ctx, mailbox, req); err != nil {
 		return nil, err

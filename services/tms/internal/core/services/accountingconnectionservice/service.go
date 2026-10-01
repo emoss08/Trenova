@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -610,7 +611,11 @@ func (s *Service) CheckDue(
 			return sweep, ctx.Err()
 		}
 		tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
-		if _, checkErr := s.CheckHealth(ctx, tenant, conn.ID); checkErr != nil {
+		if _, checkErr := s.CheckHealth(
+			dbscope.WithTenant(ctx, tenant.DBTenant()),
+			tenant,
+			conn.ID,
+		); checkErr != nil {
 			sweep.Failed++
 			s.l.Warn("accounting connection health check failed",
 				zap.String("connectionId", conn.ID.String()), zap.Error(checkErr))

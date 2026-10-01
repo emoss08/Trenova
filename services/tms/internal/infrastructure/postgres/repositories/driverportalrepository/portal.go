@@ -1,7 +1,6 @@
 package driverportalrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 	"strconv"
@@ -16,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -114,7 +114,10 @@ func (r *portalAccessRepository) GetInvitationByTokenHash(
 	ctx context.Context,
 	tokenHash string,
 ) (*worker.PortalInvitation, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve a driver portal invitation link before its tenant is known")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"resolve a driver portal invitation link before its tenant is known",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
 		cols := buncolgen.PortalInvitationColumns
 		rel := buncolgen.PortalInvitationRelations
@@ -267,82 +270,83 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 ) (*tenant.User, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.User, error) {
 		var created *tenant.User
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			invitation, err := r.lockInvitation(txCtx, tx, req.Invitation)
-			if err != nil {
-				return err
-			}
+		err := r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				invitation, err := r.lockInvitation(txCtx, tx, req.Invitation)
+				if err != nil {
+					return err
+				}
 
-			wrk, err := r.lockWorker(txCtx, tx, invitation)
-			if err != nil {
-				return err
-			}
+				wrk, err := r.lockWorker(txCtx, tx, invitation)
+				if err != nil {
+					return err
+				}
 
-			if err = r.ensureEmailAvailable(txCtx, tx, req.User.EmailAddress); err != nil {
-				return err
-			}
+				if err = r.ensureEmailAvailable(txCtx, req.User.EmailAddress); err != nil {
+					return err
+				}
 
-			role, err := r.ensureDriverRole(txCtx, tx, invitation, req)
-			if err != nil {
-				return err
-			}
+				role, err := r.ensureDriverRole(txCtx, tx, invitation, req)
+				if err != nil {
+					return err
+				}
 
-			req.User.Username, err = r.uniqueUsername(txCtx, tx, invitation, req.User.Username)
-			if err != nil {
-				return err
-			}
+				req.User.Username, err = r.uniqueUsername(txCtx, tx, invitation, req.User.Username)
+				if err != nil {
+					return err
+				}
 
-			if _, err = tx.NewInsert().Model(req.User).Exec(txCtx); err != nil {
-				return fmt.Errorf("create portal user: %w", err)
-			}
+				if _, err = tx.NewInsert().Model(req.User).Exec(txCtx); err != nil {
+					return fmt.Errorf("create portal user: %w", err)
+				}
 
-			membership := &tenant.OrganizationMembership{
-				IsDefault:      true,
-				BusinessUnitID: invitation.BusinessUnitID,
-				UserID:         req.User.ID,
-				OrganizationID: invitation.OrganizationID,
-				GrantedByID:    invitation.InvitedByID,
-			}
-			if _, err = tx.NewInsert().Model(membership).Exec(txCtx); err != nil {
-				return fmt.Errorf("create portal user membership: %w", err)
-			}
+				membership := &tenant.OrganizationMembership{
+					IsDefault:      true,
+					BusinessUnitID: invitation.BusinessUnitID,
+					UserID:         req.User.ID,
+					OrganizationID: invitation.OrganizationID,
+					GrantedByID:    invitation.InvitedByID,
+				}
+				if _, err = tx.NewInsert().Model(membership).Exec(txCtx); err != nil {
+					return fmt.Errorf("create portal user membership: %w", err)
+				}
 
-			assignment := &permission.UserRoleAssignment{
-				ID:             pulid.MustNew("ura_"),
-				UserID:         req.User.ID,
-				OrganizationID: invitation.OrganizationID,
-				RoleID:         role.ID,
-				AssignedBy:     invitation.InvitedByID,
-				AssignedAt:     timeutils.NowUnix(),
-			}
-			if _, err = tx.NewInsert().Model(assignment).Exec(txCtx); err != nil {
-				return fmt.Errorf("assign driver role: %w", err)
-			}
+				assignment := &permission.UserRoleAssignment{
+					ID:             pulid.MustNew("ura_"),
+					UserID:         req.User.ID,
+					OrganizationID: invitation.OrganizationID,
+					RoleID:         role.ID,
+					AssignedBy:     invitation.InvitedByID,
+					AssignedAt:     timeutils.NowUnix(),
+				}
+				if _, err = tx.NewInsert().Model(assignment).Exec(txCtx); err != nil {
+					return fmt.Errorf("assign driver role: %w", err)
+				}
 
-			if err = r.linkWorker(txCtx, tx, wrk, req.User.ID); err != nil {
-				return err
-			}
+				if err = r.linkWorker(txCtx, tx, wrk, req.User.ID); err != nil {
+					return err
+				}
 
-			now := timeutils.NowUnix()
-			invitation.Status = worker.PortalInvitationStatusAccepted
-			invitation.AcceptedAt = &now
-			invitation.AcceptedUserID = &req.User.ID
-			if _, err = tx.NewUpdate().
-				Model(invitation).
-				WherePK().
-				Column(
-					buncolgen.PortalInvitationColumns.Status.Bare(),
-					buncolgen.PortalInvitationColumns.AcceptedAt.Bare(),
-					buncolgen.PortalInvitationColumns.AcceptedUserID.Bare(),
-					buncolgen.PortalInvitationColumns.UpdatedAt.Bare(),
-				).
-				Exec(txCtx); err != nil {
-				return fmt.Errorf("mark invitation accepted: %w", err)
-			}
+				now := timeutils.NowUnix()
+				invitation.Status = worker.PortalInvitationStatusAccepted
+				invitation.AcceptedAt = &now
+				invitation.AcceptedUserID = &req.User.ID
+				if _, err = tx.NewUpdate().
+					Model(invitation).
+					WherePK().
+					Column(
+						buncolgen.PortalInvitationColumns.Status.Bare(),
+						buncolgen.PortalInvitationColumns.AcceptedAt.Bare(),
+						buncolgen.PortalInvitationColumns.AcceptedUserID.Bare(),
+						buncolgen.PortalInvitationColumns.UpdatedAt.Bare(),
+					).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("mark invitation accepted: %w", err)
+				}
 
-			created = req.User
-			return nil
-		})
+				created = req.User
+				return nil
+			})
 		if err != nil {
 			return nil, err
 		}
@@ -406,11 +410,14 @@ func (r *portalAccessRepository) lockWorker(
 
 func (r *portalAccessRepository) ensureEmailAvailable(
 	ctx context.Context,
-	tx bun.Tx,
 	email string,
 ) error {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"check that a portal sign-in email is not already used by any account",
+	)
 	cols := buncolgen.UserColumns
-	exists, err := tx.NewSelect().
+	exists, err := r.db.DBForContext(ctx).NewSelect().
 		Model((*tenant.User)(nil)).
 		Where(cols.EmailAddress.Expr("LOWER({}) = LOWER(?)"), email).
 		Exists(ctx)
@@ -521,60 +528,61 @@ func (r *portalAccessRepository) RevokePortalAccess(
 	workerID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			wcols := buncolgen.WorkerColumns
-			wrk := new(worker.Worker)
-			err := tx.NewSelect().
-				Model(wrk).
-				Where(wcols.ID.Eq(), workerID).
-				Where(wcols.OrganizationID.Eq(), tenantInfo.OrgID).
-				Where(wcols.BusinessUnitID.Eq(), tenantInfo.BuID).
-				For("UPDATE").
-				Scan(txCtx)
-			if err != nil {
-				return dberror.HandleNotFoundError(err, "Worker")
-			}
+		return r.db.DBForContext(ctx).
+			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
+				wcols := buncolgen.WorkerColumns
+				wrk := new(worker.Worker)
+				err := tx.NewSelect().
+					Model(wrk).
+					Where(wcols.ID.Eq(), workerID).
+					Where(wcols.OrganizationID.Eq(), tenantInfo.OrgID).
+					Where(wcols.BusinessUnitID.Eq(), tenantInfo.BuID).
+					For("UPDATE").
+					Scan(txCtx)
+				if err != nil {
+					return dberror.HandleNotFoundError(err, "Worker")
+				}
 
-			now := timeutils.NowUnix()
-			icols := buncolgen.PortalInvitationColumns
-			if _, err = tx.NewUpdate().
-				Model((*worker.PortalInvitation)(nil)).
-				Where(icols.WorkerID.Eq(), workerID).
-				Where(icols.OrganizationID.Eq(), tenantInfo.OrgID).
-				Where(icols.BusinessUnitID.Eq(), tenantInfo.BuID).
-				Where(icols.Status.Eq(), worker.PortalInvitationStatusPending).
-				Set(icols.Status.Set(), worker.PortalInvitationStatusRevoked).
-				Set(icols.UpdatedAt.Set(), now).
-				Exec(txCtx); err != nil {
-				return fmt.Errorf("revoke pending invitations: %w", err)
-			}
+				now := timeutils.NowUnix()
+				icols := buncolgen.PortalInvitationColumns
+				if _, err = tx.NewUpdate().
+					Model((*worker.PortalInvitation)(nil)).
+					Where(icols.WorkerID.Eq(), workerID).
+					Where(icols.OrganizationID.Eq(), tenantInfo.OrgID).
+					Where(icols.BusinessUnitID.Eq(), tenantInfo.BuID).
+					Where(icols.Status.Eq(), worker.PortalInvitationStatusPending).
+					Set(icols.Status.Set(), worker.PortalInvitationStatusRevoked).
+					Set(icols.UpdatedAt.Set(), now).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("revoke pending invitations: %w", err)
+				}
 
-			if wrk.UserID.IsNil() {
+				if wrk.UserID.IsNil() {
+					return nil
+				}
+
+				ucols := buncolgen.UserColumns
+				if _, err = tx.NewUpdate().
+					Model((*tenant.User)(nil)).
+					Where(ucols.ID.Eq(), wrk.UserID).
+					Set(ucols.Status.Set(), domaintypes.StatusInactive).
+					Set(ucols.UpdatedAt.Set(), now).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("deactivate portal user: %w", err)
+				}
+
+				if _, err = tx.NewUpdate().
+					Model((*worker.Worker)(nil)).
+					Where(wcols.ID.Eq(), workerID).
+					Where(wcols.OrganizationID.Eq(), tenantInfo.OrgID).
+					Where(wcols.BusinessUnitID.Eq(), tenantInfo.BuID).
+					Set(wcols.UserID.SetNull()).
+					Set(wcols.UpdatedAt.Set(), now).
+					Exec(txCtx); err != nil {
+					return fmt.Errorf("unlink worker portal user: %w", err)
+				}
 				return nil
-			}
-
-			ucols := buncolgen.UserColumns
-			if _, err = tx.NewUpdate().
-				Model((*tenant.User)(nil)).
-				Where(ucols.ID.Eq(), wrk.UserID).
-				Set(ucols.Status.Set(), domaintypes.StatusInactive).
-				Set(ucols.UpdatedAt.Set(), now).
-				Exec(txCtx); err != nil {
-				return fmt.Errorf("deactivate portal user: %w", err)
-			}
-
-			if _, err = tx.NewUpdate().
-				Model((*worker.Worker)(nil)).
-				Where(wcols.ID.Eq(), workerID).
-				Where(wcols.OrganizationID.Eq(), tenantInfo.OrgID).
-				Where(wcols.BusinessUnitID.Eq(), tenantInfo.BuID).
-				Set(wcols.UserID.SetNull()).
-				Set(wcols.UpdatedAt.Set(), now).
-				Exec(txCtx); err != nil {
-				return fmt.Errorf("unlink worker portal user: %w", err)
-			}
-			return nil
-		})
+			})
 	})
 }
 

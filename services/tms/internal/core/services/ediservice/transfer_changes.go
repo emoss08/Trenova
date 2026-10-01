@@ -9,6 +9,7 @@ import (
 	coreports "github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -76,7 +77,11 @@ func (s *Service) reviewTransferChange(
 	var updated *edi.TransferChange
 	now := timeutils.NowUnix()
 	original := *change
-	err = s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	reviewCtx := dbscope.WithSystem(
+		ctx,
+		"apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
+	)
+	err = s.db.WithTx(reviewCtx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if status == edi.TransferChangeStatusApplied {
 			if txErr := s.applyApprovedTransferChange(
 				txCtx,

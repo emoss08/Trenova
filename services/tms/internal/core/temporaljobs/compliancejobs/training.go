@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -50,7 +51,12 @@ func (a *Activities) TrainingReminderSweepActivity(
 	if err := a.walkTraining(ctx, state, a.trainingRepo.ListDue, a.sweepDueTraining); err != nil {
 		return nil, err
 	}
-	if err := a.walkTraining(ctx, state, a.trainingRepo.ListExpiring, a.sweepExpiringTraining); err != nil {
+	if err := a.walkTraining(
+		ctx,
+		state,
+		a.trainingRepo.ListExpiring,
+		a.sweepExpiringTraining,
+	); err != nil {
 		return nil, err
 	}
 
@@ -125,17 +131,18 @@ func (a *Activities) sweepDueTraining(
 		return nil
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: record.OrganizationID, BuID: record.BusinessUnitID}
+	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	daysLeft := worker.DaysUntil(*record.DueAt, state.now)
 	if trainingStep(daysLeft) < 0 {
 		return nil
 	}
 
-	remind, err := a.trainingRemindersEnabled(ctx, tenantInfo, state.remindersByOrg)
+	remind, err := a.trainingRemindersEnabled(tenantCtx, tenantInfo, state.remindersByOrg)
 	if err != nil {
 		return err
 	}
 	if remind && !record.Worker.UserID.IsNil() {
-		sent, notifyErr := a.notifyDriverTraining(ctx, tenantInfo, record, daysLeft, false)
+		sent, notifyErr := a.notifyDriverTraining(tenantCtx, tenantInfo, record, daysLeft, false)
 		if notifyErr != nil {
 			return notifyErr
 		}
@@ -145,7 +152,13 @@ func (a *Activities) sweepDueTraining(
 	}
 
 	if daysLeft < 0 && record.Course.IsRequired {
-		sent, alertErr := a.alertTraining(ctx, tenantInfo, record, daysLeft, eventTrainingOverdue)
+		sent, alertErr := a.alertTraining(
+			tenantCtx,
+			tenantInfo,
+			record,
+			daysLeft,
+			eventTrainingOverdue,
+		)
 		if alertErr != nil {
 			return alertErr
 		}
@@ -165,19 +178,25 @@ func (a *Activities) sweepExpiringTraining(
 		return nil
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: record.OrganizationID, BuID: record.BusinessUnitID}
+	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	daysLeft := worker.DaysUntil(*record.ExpiresAt, state.now)
 
 	if daysLeft < 0 {
-		if _, err := a.training.MarkExpired(ctx, record); err != nil {
+		if _, err := a.training.MarkExpired(tenantCtx, record); err != nil {
 			return err
 		}
 		state.result.Expired++
 		if record.Course.AppliesTo(record.Worker) {
-			if _, err := a.training.AssignRequired(ctx, tenantInfo, record.WorkerID, record.AssignedByID); err != nil {
+			if _, err := a.training.AssignRequired(
+				tenantCtx,
+				tenantInfo,
+				record.WorkerID,
+				record.AssignedByID,
+			); err != nil {
 				return err
 			}
 			sent, alertErr := a.alertTraining(
-				ctx,
+				tenantCtx,
 				tenantInfo,
 				record,
 				daysLeft,
@@ -196,11 +215,11 @@ func (a *Activities) sweepExpiringTraining(
 	if reminderStep(daysLeft) < 0 {
 		return nil
 	}
-	remind, err := a.trainingRemindersEnabled(ctx, tenantInfo, state.remindersByOrg)
+	remind, err := a.trainingRemindersEnabled(tenantCtx, tenantInfo, state.remindersByOrg)
 	if err != nil || !remind || record.Worker.UserID.IsNil() {
 		return err
 	}
-	sent, notifyErr := a.notifyDriverTraining(ctx, tenantInfo, record, daysLeft, true)
+	sent, notifyErr := a.notifyDriverTraining(tenantCtx, tenantInfo, record, daysLeft, true)
 	if notifyErr != nil {
 		return notifyErr
 	}

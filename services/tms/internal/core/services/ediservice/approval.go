@@ -11,6 +11,7 @@ import (
 	coreports "github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -63,7 +64,11 @@ func (s *Service) ApproveTransfer(
 	var original *edi.EDITransfer
 	var updated *edi.EDITransfer
 	var preview *MappingPreview
-	err := s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	approvalCtx := dbscope.WithSystem(
+		ctx,
+		"approve an internal load tender, writing both organizations' shipments in one transaction",
+	)
+	err := s.db.WithTx(approvalCtx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			repositories.GetEDITransferForUpdateRequest{
