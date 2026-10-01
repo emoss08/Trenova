@@ -1,6 +1,7 @@
 package driverportalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 	"strconv"
@@ -113,6 +114,7 @@ func (r *portalAccessRepository) GetInvitationByTokenHash(
 	ctx context.Context,
 	tokenHash string,
 ) (*worker.PortalInvitation, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a driver portal invitation link before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
 		cols := buncolgen.PortalInvitationColumns
 		rel := buncolgen.PortalInvitationRelations

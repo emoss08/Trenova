@@ -1,6 +1,7 @@
 package organizationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"strings"
 
@@ -180,6 +181,7 @@ func (r *repository) GetByLoginSlug(
 	ctx context.Context,
 	loginSlug string,
 ) (*tenant.Organization, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve an organization from its public login slug before any tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
 		org := new(tenant.Organization)
 		if err := r.db.DBForContext(ctx).

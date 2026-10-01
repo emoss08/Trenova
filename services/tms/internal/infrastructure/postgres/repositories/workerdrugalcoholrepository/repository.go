@@ -1,6 +1,7 @@
 package workerdrugalcoholrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"errors"
@@ -1049,6 +1050,7 @@ func (r *repository) ListWorkersWithClearinghouseDue(
 	ctx context.Context,
 	req *repositories.ListWorkersWithClearinghouseDueRequest,
 ) ([]repositories.WorkerTenantRef, error) {
+	ctx = dbscope.WithSystem(ctx, "list workers due a clearinghouse query across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.WorkerTenantRef, error) {
 		workerCols := buncolgen.WorkerColumns
 		profileCols := buncolgen.WorkerProfileColumns

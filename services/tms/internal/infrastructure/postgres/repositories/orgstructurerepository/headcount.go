@@ -47,61 +47,67 @@ func (r *repository) HeadcountByFleet(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]repositories.HeadcountRow, error) {
-	rows := make([]repositories.HeadcountRow, 0, 8)
-	if err := r.rosterCount(ctx, tenantInfo).
-		Join("LEFT JOIN fleet_codes AS fc").
-		JoinOn("fc.id = wrk.fleet_code_id").
-		JoinOn("fc.organization_id = wrk.organization_id").
-		JoinOn("fc.business_unit_id = wrk.business_unit_id").
-		ColumnExpr("COALESCE(wrk.fleet_code_id, '') AS key").
-		ColumnExpr("COALESCE(fc.description, fc.code, 'No terminal') AS label").
-		ColumnExpr("COALESCE(fc.code, '') AS code").
-		ColumnExpr("COALESCE(fc.color, '') AS color").
-		GroupExpr("wrk.fleet_code_id, fc.code, fc.description, fc.color").
-		OrderExpr("workers DESC, label").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to count headcount by fleet", zap.Error(err))
-		return nil, fmt.Errorf("count headcount by fleet: %w", err)
-	}
-	return rows, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.HeadcountRow, error) {
+		rows := make([]repositories.HeadcountRow, 0, 8)
+		if err := r.rosterCount(ctx, tenantInfo).
+			Join("LEFT JOIN fleet_codes AS fc").
+			JoinOn("fc.id = wrk.fleet_code_id").
+			JoinOn("fc.organization_id = wrk.organization_id").
+			JoinOn("fc.business_unit_id = wrk.business_unit_id").
+			ColumnExpr("COALESCE(wrk.fleet_code_id, '') AS key").
+			ColumnExpr("COALESCE(fc.description, fc.code, 'No terminal') AS label").
+			ColumnExpr("COALESCE(fc.code, '') AS code").
+			ColumnExpr("COALESCE(fc.color, '') AS color").
+			GroupExpr("wrk.fleet_code_id, fc.code, fc.description, fc.color").
+			OrderExpr("workers DESC, label").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to count headcount by fleet", zap.Error(err))
+			return nil, fmt.Errorf("count headcount by fleet: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 func (r *repository) HeadcountByPosition(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]repositories.HeadcountRow, error) {
-	rows := make([]repositories.HeadcountRow, 0, 16)
-	if err := r.rosterCount(ctx, tenantInfo).
-		ColumnExpr("COALESCE(wrk.position_id, '') AS key").
-		ColumnExpr("COALESCE(jpos.title, 'No position') AS label").
-		ColumnExpr("COALESCE(jpos.code, '') AS code").
-		ColumnExpr("'' AS color").
-		GroupExpr("wrk.position_id, jpos.title, jpos.code").
-		OrderExpr("workers DESC, label").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to count headcount by position", zap.Error(err))
-		return nil, fmt.Errorf("count headcount by position: %w", err)
-	}
-	return rows, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.HeadcountRow, error) {
+		rows := make([]repositories.HeadcountRow, 0, 16)
+		if err := r.rosterCount(ctx, tenantInfo).
+			ColumnExpr("COALESCE(wrk.position_id, '') AS key").
+			ColumnExpr("COALESCE(jpos.title, 'No position') AS label").
+			ColumnExpr("COALESCE(jpos.code, '') AS code").
+			ColumnExpr("'' AS color").
+			GroupExpr("wrk.position_id, jpos.title, jpos.code").
+			OrderExpr("workers DESC, label").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to count headcount by position", zap.Error(err))
+			return nil, fmt.Errorf("count headcount by position: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 func (r *repository) HeadcountByDepartment(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]repositories.HeadcountRow, error) {
-	rows := make([]repositories.HeadcountRow, 0, 9)
-	if err := r.rosterCount(ctx, tenantInfo).
-		ColumnExpr("COALESCE(jpos.department::text, '') AS key").
-		ColumnExpr("COALESCE(jpos.department::text, 'Unassigned') AS label").
-		ColumnExpr("'' AS code").
-		ColumnExpr("'' AS color").
-		GroupExpr("jpos.department").
-		OrderExpr("workers DESC, label").
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to count headcount by department", zap.Error(err))
-		return nil, fmt.Errorf("count headcount by department: %w", err)
-	}
-	return rows, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.HeadcountRow, error) {
+		rows := make([]repositories.HeadcountRow, 0, 9)
+		if err := r.rosterCount(ctx, tenantInfo).
+			ColumnExpr("COALESCE(jpos.department::text, '') AS key").
+			ColumnExpr("COALESCE(jpos.department::text, 'Unassigned') AS label").
+			ColumnExpr("'' AS code").
+			ColumnExpr("'' AS color").
+			GroupExpr("jpos.department").
+			OrderExpr("workers DESC, label").
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to count headcount by department", zap.Error(err))
+			return nil, fmt.Errorf("count headcount by department: %w", err)
+		}
+		return rows, nil
+	})
 }
 
 // teamScope is the predicate behind "my team": workers who name one of these

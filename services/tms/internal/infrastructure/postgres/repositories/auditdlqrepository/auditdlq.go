@@ -1,6 +1,7 @@
 package auditdlqrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -47,6 +48,7 @@ func (r *repository) Insert(ctx context.Context, entry *audit.DLQEntry) error {
 }
 
 func (r *repository) InsertBatch(ctx context.Context, entries []*audit.DLQEntry) error {
+	ctx = dbscope.WithSystem(ctx, "dead-letter an audit batch that mixes organizations")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(entries) == 0 {
 			return nil
@@ -64,6 +66,7 @@ func (r *repository) InsertBatch(ctx context.Context, entries []*audit.DLQEntry)
 }
 
 func (r *repository) GetPendingEntries(ctx context.Context, limit int) ([]*audit.DLQEntry, error) {
+	ctx = dbscope.WithSystem(ctx, "retry audit entries that failed to flush, which mix organizations")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*audit.DLQEntry, error) {
 		entries := make([]*audit.DLQEntry, 0, limit)
 
@@ -104,6 +107,7 @@ func (r *repository) GetByID(ctx context.Context, id pulid.ID) (*audit.DLQEntry,
 }
 
 func (r *repository) Update(ctx context.Context, entry *audit.DLQEntry) error {
+	ctx = dbscope.WithSystem(ctx, "update a dead-lettered audit entry")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		entry.UpdatedAt = timeutils.NowUnix()
 
@@ -119,6 +123,7 @@ func (r *repository) Update(ctx context.Context, entry *audit.DLQEntry) error {
 }
 
 func (r *repository) MarkAsRecovered(ctx context.Context, ids []pulid.ID) error {
+	ctx = dbscope.WithSystem(ctx, "mark dead-lettered audit entries recovered across organizations")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(ids) == 0 {
 			return nil
@@ -140,6 +145,7 @@ func (r *repository) MarkAsRecovered(ctx context.Context, ids []pulid.ID) error 
 }
 
 func (r *repository) MarkAsFailed(ctx context.Context, id pulid.ID, errMsg string) error {
+	ctx = dbscope.WithSystem(ctx, "mark dead-lettered audit entries failed across organizations")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		now := timeutils.NowUnix()
 		if _, err := r.db.DBForContext(ctx).NewUpdate().
@@ -174,6 +180,7 @@ func (r *repository) DeleteRecovered(ctx context.Context, olderThan int64) (int6
 }
 
 func (r *repository) Count(ctx context.Context) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "count dead-lettered audit entries instance-wide")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		count, err := r.db.DBForContext(ctx).NewSelect().
 			Model((*audit.DLQEntry)(nil)).

@@ -2,6 +2,7 @@
 package inboundmessagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
@@ -93,6 +94,7 @@ func (r *mailboxRepository) GetByTokenHash(
 	ctx context.Context,
 	req repositories.GetMailboxByTokenHashRequest,
 ) (*inboundmessage.Mailbox, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve the inbound mailbox a provider delivered to before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
 		entity := new(inboundmessage.Mailbox)
 		cols := buncolgen.MailboxColumns

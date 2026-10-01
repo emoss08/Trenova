@@ -282,74 +282,82 @@ func (r *repository) MarkAsRead(
 	ctx context.Context,
 	req repositories.NotificationActionRequest,
 ) error {
-	log := r.l.With(zap.String("operation", "MarkAsRead"))
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		log := r.l.With(zap.String("operation", "MarkAsRead"))
 
-	_, err := r.actionQuery(ctx, req).
-		Set(cols.ReadAt.Set(), timeutils.NowUnix()).
-		Where(cols.ReadAt.IsNull()).
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to mark notifications as read", zap.Error(err))
-		return err
-	}
+		_, err := r.actionQuery(ctx, req).
+			Set(cols.ReadAt.Set(), timeutils.NowUnix()).
+			Where(cols.ReadAt.IsNull()).
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to mark notifications as read", zap.Error(err))
+			return err
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *repository) MarkAsUnread(
 	ctx context.Context,
 	req repositories.NotificationActionRequest,
 ) error {
-	log := r.l.With(zap.String("operation", "MarkAsUnread"))
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		log := r.l.With(zap.String("operation", "MarkAsUnread"))
 
-	_, err := r.actionQuery(ctx, req).
-		Set(cols.ReadAt.SetNull()).
-		Where(cols.ReadAt.IsNotNull()).
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to mark notifications as unread", zap.Error(err))
-		return err
-	}
+		_, err := r.actionQuery(ctx, req).
+			Set(cols.ReadAt.SetNull()).
+			Where(cols.ReadAt.IsNotNull()).
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to mark notifications as unread", zap.Error(err))
+			return err
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *repository) Dismiss(
 	ctx context.Context,
 	req repositories.NotificationActionRequest,
 ) error {
-	log := r.l.With(zap.String("operation", "Dismiss"))
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		log := r.l.With(zap.String("operation", "Dismiss"))
 
-	now := timeutils.NowUnix()
-	_, err := r.actionQuery(ctx, req).
-		Set(cols.DismissedAt.Set(), now).
-		Set(cols.ReadAt.SetExpr("COALESCE({}, ?)"), now).
-		Where(cols.DismissedAt.IsNull()).
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to dismiss notifications", zap.Error(err))
-		return err
-	}
+		now := timeutils.NowUnix()
+		_, err := r.actionQuery(ctx, req).
+			Set(cols.DismissedAt.Set(), now).
+			Set(cols.ReadAt.SetExpr("COALESCE({}, ?)"), now).
+			Where(cols.DismissedAt.IsNull()).
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to dismiss notifications", zap.Error(err))
+			return err
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *repository) Restore(
 	ctx context.Context,
 	req repositories.NotificationActionRequest,
 ) error {
-	log := r.l.With(zap.String("operation", "Restore"))
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		log := r.l.With(zap.String("operation", "Restore"))
 
-	_, err := r.actionQuery(ctx, req).
-		Set(cols.DismissedAt.SetNull()).
-		Where(cols.DismissedAt.IsNotNull()).
-		Exec(ctx)
-	if err != nil {
-		log.Error("failed to restore notifications", zap.Error(err))
-		return err
-	}
+		_, err := r.actionQuery(ctx, req).
+			Set(cols.DismissedAt.SetNull()).
+			Where(cols.DismissedAt.IsNotNull()).
+			Exec(ctx)
+		if err != nil {
+			log.Error("failed to restore notifications", zap.Error(err))
+			return err
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *repository) MarkAllAsRead(

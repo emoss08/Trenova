@@ -1,6 +1,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
@@ -31,6 +32,7 @@ func (r *pairingRepository) Create(
 	ctx context.Context,
 	entity *capture.CapturePairing,
 ) (*capture.CapturePairing, error) {
+	ctx = dbscope.WithSystem(ctx, "record a pairing request that belongs to no organization until a person claims it")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
@@ -48,6 +50,7 @@ func (r *pairingRepository) Update(
 	ctx context.Context,
 	entity *capture.CapturePairing,
 ) (*capture.CapturePairing, error) {
+	ctx = dbscope.WithSystem(ctx, "update a pairing that may not belong to an organization yet")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
 		ov := entity.Version
 		entity.Version++
@@ -80,6 +83,7 @@ func (r *pairingRepository) GetByDeviceCodeHash(
 	ctx context.Context,
 	hash string,
 ) (*capture.CapturePairing, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a pairing device code before it is bound to an organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
 		entity := new(capture.CapturePairing)
 
@@ -99,6 +103,7 @@ func (r *pairingRepository) GetOpenByUserCode(
 	ctx context.Context,
 	userCode string,
 ) (*capture.CapturePairing, error) {
+	ctx = dbscope.WithSystem(ctx, "find an unclaimed pairing by the code a person typed; it has no organization yet")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
 		entity := new(capture.CapturePairing)
 		cols := buncolgen.CapturePairingColumns
@@ -117,6 +122,7 @@ func (r *pairingRepository) GetOpenByUserCode(
 }
 
 func (r *pairingRepository) ExpireStale(ctx context.Context, now int64) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "expire abandoned pairings across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.CapturePairingColumns
 

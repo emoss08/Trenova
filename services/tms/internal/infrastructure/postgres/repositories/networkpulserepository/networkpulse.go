@@ -1,6 +1,7 @@
 package networkpulserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -56,6 +57,7 @@ func (r *repository) GetNetworkPulse(
 	since int64,
 	laneLimit int,
 ) (*repositories.NetworkPulseCounts, error) {
+	ctx = dbscope.WithSystem(ctx, "compute the instance-wide network pulse across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.NetworkPulseCounts, error) {
 		counts := &repositories.NetworkPulseCounts{Lanes: []repositories.NetworkPulseLane{}}
 

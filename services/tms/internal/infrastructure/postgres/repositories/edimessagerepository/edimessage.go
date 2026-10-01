@@ -1,6 +1,7 @@
 package edimessagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"errors"
 	"strings"
@@ -331,6 +332,7 @@ func (r *repository) GetOutboundMessageByAS2MessageID(
 	ctx context.Context,
 	as2MessageID string,
 ) (*edi.EDIMessage, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve the outbound message an inbound AS2 receipt names before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		entity := new(edi.EDIMessage)
 		cols := buncolgen.EDIMessageColumns
@@ -594,6 +596,7 @@ func (r *repository) PurgeRawX12Before(
 }
 
 func (r *repository) CountDeadLetteredSince(ctx context.Context, since int64) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "count dead-lettered EDI messages instance-wide for the health check")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.EDIMessageColumns
 		count, err := r.db.DBForContext(ctx).

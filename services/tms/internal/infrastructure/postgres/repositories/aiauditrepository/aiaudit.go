@@ -1,6 +1,7 @@
 package aiauditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"errors"
@@ -61,6 +62,7 @@ func (r *repository) Append(
 	ctx context.Context,
 	req *repositories.AppendAIAuditEventsRequest,
 ) (*repositories.AppendAIAuditEventsResult, error) {
+	ctx = dbscope.WithSystem(ctx, "append projected events to each organization's AI audit chain in one pass")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.AppendAIAuditEventsResult, error) {
 		result := &repositories.AppendAIAuditEventsResult{}
 		if len(req.Events) == 0 {
@@ -262,6 +264,7 @@ func (r *repository) ExistingSourceKeys(
 	tenantInfo pagination.TenantInfo,
 	keys []string,
 ) (map[string]struct{}, error) {
+	ctx = dbscope.WithSystem(ctx, "deduplicate projected AI audit events across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[string]struct{}, error) {
 		return existingSourceKeys(ctx, r.db.DBForContext(ctx), tenantInfo, keys)
 	})

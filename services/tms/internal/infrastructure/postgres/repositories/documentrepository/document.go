@@ -1,6 +1,7 @@
 package documentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -309,6 +310,7 @@ func (r *repository) ListPendingPreviewReconciliationTenants(
 	ctx context.Context,
 	req *repositories.ListPendingPreviewReconciliationRequest,
 ) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with document previews to reconcile")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		limit := req.Limit
 		if limit <= 0 {

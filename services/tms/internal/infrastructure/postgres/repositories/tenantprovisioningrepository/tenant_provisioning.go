@@ -1,6 +1,7 @@
 package tenantprovisioningrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"fmt"
@@ -37,6 +38,7 @@ func (r *repository) UpsertProvisioningSnapshot(
 	ctx context.Context,
 	req *tenant.ProvisioningRequest,
 ) (*tenant.ProvisioningResult, error) {
+	ctx = dbscope.WithSystem(ctx, "provision business units and organizations from the control plane")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.ProvisioningResult, error) {
 		result := &tenant.ProvisioningResult{
 			BusinessUnitID: req.Customer.ID,

@@ -2,6 +2,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
@@ -354,6 +355,7 @@ func (r *batchRepository) ListStale(
 	ctx context.Context,
 	req repositories.ListStaleCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
+	ctx = dbscope.WithSystem(ctx, "list stale capture batches across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		limit := boundedLimit(req.Limit)
 		entities := make([]*capture.CaptureBatch, 0)
@@ -378,6 +380,7 @@ func (r *batchRepository) ListRetentionDue(
 	ctx context.Context,
 	req repositories.ListRetentionDueCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
+	ctx = dbscope.WithSystem(ctx, "list capture batches past retention across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		limit := boundedLimit(req.Limit)
 		entities := make([]*capture.CaptureBatch, 0)
@@ -402,6 +405,7 @@ func (r *batchRepository) ListRetentionReminders(
 	ctx context.Context,
 	req repositories.ListRetentionReminderCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
+	ctx = dbscope.WithSystem(ctx, "list capture batches due a retention reminder across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		limit := boundedLimit(req.Limit)
 		entities := make([]*capture.CaptureBatch, 0)

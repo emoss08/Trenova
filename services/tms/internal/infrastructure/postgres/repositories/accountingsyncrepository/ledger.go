@@ -211,43 +211,45 @@ func (s *ledgerSource) SumLines(
 	ctx context.Context,
 	req *repositories.SumLedgerRequest,
 ) ([]repositories.LedgerAccountBalance, error) {
-	lines := buncolgen.JournalEntryLineColumns
-	entries := buncolgen.JournalEntryColumns
-	query := s.postedLines(ctx, &postedLinesFilter{
-		tenantInfo:     req.TenantInfo,
-		from:           req.From,
-		before:         &req.Before,
-		includeClosing: req.IncludeClosing,
-	}).
-		ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
-		ColumnExpr(buncolgen.Sum(lines.DebitAmount, ledgerDebitLabel)).
-		ColumnExpr(buncolgen.Sum(lines.CreditAmount, ledgerCreditLabel))
-	if len(req.PartyAccountIDs) > 0 {
-		query = query.
-			ColumnExpr(
-				buncolgen.Expr("CASE WHEN {0} IN (?) THEN {1} END AS "+ledgerCustomerLabel,
-					lines.GLAccountID, lines.CustomerID),
-				bun.List(req.PartyAccountIDs),
-			).
-			ColumnExpr(
-				buncolgen.Expr("CASE WHEN {0} IN (?) THEN COALESCE({1}, {2}) END AS "+
-					ledgerSourceEntryLabel, lines.GLAccountID, entries.ReversalOfID, entries.ID),
-				bun.List(req.PartyAccountIDs),
-			).
-			GroupExpr(ledgerAccountLabel + ", " + ledgerCustomerLabel + ", " + ledgerSourceEntryLabel)
-	} else {
-		query = query.GroupExpr(ledgerAccountLabel)
-	}
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]repositories.LedgerAccountBalance, error) {
+		lines := buncolgen.JournalEntryLineColumns
+		entries := buncolgen.JournalEntryColumns
+		query := s.postedLines(ctx, &postedLinesFilter{
+			tenantInfo:     req.TenantInfo,
+			from:           req.From,
+			before:         &req.Before,
+			includeClosing: req.IncludeClosing,
+		}).
+			ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
+			ColumnExpr(buncolgen.Sum(lines.DebitAmount, ledgerDebitLabel)).
+			ColumnExpr(buncolgen.Sum(lines.CreditAmount, ledgerCreditLabel))
+		if len(req.PartyAccountIDs) > 0 {
+			query = query.
+				ColumnExpr(
+					buncolgen.Expr("CASE WHEN {0} IN (?) THEN {1} END AS "+ledgerCustomerLabel,
+						lines.GLAccountID, lines.CustomerID),
+					bun.List(req.PartyAccountIDs),
+				).
+				ColumnExpr(
+					buncolgen.Expr("CASE WHEN {0} IN (?) THEN COALESCE({1}, {2}) END AS "+
+						ledgerSourceEntryLabel, lines.GLAccountID, entries.ReversalOfID, entries.ID),
+					bun.List(req.PartyAccountIDs),
+				).
+				GroupExpr(ledgerAccountLabel + ", " + ledgerCustomerLabel + ", " + ledgerSourceEntryLabel)
+		} else {
+			query = query.GroupExpr(ledgerAccountLabel)
+		}
 
-	rows := make([]ledgerSumRow, 0, 64)
-	if err := query.Scan(ctx, &rows); err != nil {
-		s.l.Error("failed to sum posted journal lines", zap.Error(err))
-		return nil, fmt.Errorf("sum posted journal lines: %w", err)
-	}
-	if len(rows) == 0 {
-		return []repositories.LedgerAccountBalance{}, nil
-	}
-	return s.balancesOf(ctx, req.TenantInfo, rows)
+		rows := make([]ledgerSumRow, 0, 64)
+		if err := query.Scan(ctx, &rows); err != nil {
+			s.l.Error("failed to sum posted journal lines", zap.Error(err))
+			return nil, fmt.Errorf("sum posted journal lines: %w", err)
+		}
+		if len(rows) == 0 {
+			return []repositories.LedgerAccountBalance{}, nil
+		}
+		return s.balancesOf(ctx, req.TenantInfo, rows)
+	})
 }
 
 func (s *ledgerSource) balancesOf(
@@ -327,31 +329,33 @@ func (s *ledgerSource) ListActiveAccounts(
 	ctx context.Context,
 	req *repositories.ListLedgerAccountsRequest,
 ) ([]repositories.LedgerAccount, error) {
-	lines := buncolgen.JournalEntryLineColumns
-	ids := make([]pulid.ID, 0, 64)
-	if err := s.postedLines(ctx, &postedLinesFilter{tenantInfo: req.TenantInfo, from: req.Since}).
-		Distinct().
-		ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
-		Scan(ctx, &ids); err != nil {
-		s.l.Error("failed to list accounts with posted lines", zap.Error(err))
-		return nil, fmt.Errorf("list accounts with posted lines: %w", err)
-	}
-	if len(ids) == 0 {
-		return []repositories.LedgerAccount{}, nil
-	}
+	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]repositories.LedgerAccount, error) {
+		lines := buncolgen.JournalEntryLineColumns
+		ids := make([]pulid.ID, 0, 64)
+		if err := s.postedLines(ctx, &postedLinesFilter{tenantInfo: req.TenantInfo, from: req.Since}).
+			Distinct().
+			ColumnExpr(lines.GLAccountID.As(ledgerAccountLabel)).
+			Scan(ctx, &ids); err != nil {
+			s.l.Error("failed to list accounts with posted lines", zap.Error(err))
+			return nil, fmt.Errorf("list accounts with posted lines: %w", err)
+		}
+		if len(ids) == 0 {
+			return []repositories.LedgerAccount{}, nil
+		}
 
-	accounts, err := s.loadAccounts(ctx, req.TenantInfo, ids)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]repositories.LedgerAccount, 0, len(accounts))
-	for _, account := range accounts {
-		out = append(out, account)
-	}
-	slices.SortFunc(out, func(a, b repositories.LedgerAccount) int {
-		return cmp.Or(cmp.Compare(a.Code, b.Code), cmp.Compare(a.ID, b.ID))
+		accounts, err := s.loadAccounts(ctx, req.TenantInfo, ids)
+		if err != nil {
+			return nil, err
+		}
+		out := make([]repositories.LedgerAccount, 0, len(accounts))
+		for _, account := range accounts {
+			out = append(out, account)
+		}
+		slices.SortFunc(out, func(a, b repositories.LedgerAccount) int {
+			return cmp.Or(cmp.Compare(a.Code, b.Code), cmp.Compare(a.ID, b.ID))
+		})
+		return out, nil
 	})
-	return out, nil
 }
 
 type postedLinesFilter struct {

@@ -1,6 +1,7 @@
 package agentdefinitionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"errors"
 	"fmt"
@@ -301,6 +302,7 @@ func (r *repository) ListScheduledAcrossTenants(
 	ctx context.Context,
 	req repositories.ListScheduledAcrossTenantsRequest,
 ) ([]*agentdefinition.Definition, error) {
+	ctx = dbscope.WithSystem(ctx, "list scheduled agent definitions across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
 		cols := buncolgen.DefinitionColumns
 		limit := req.Limit

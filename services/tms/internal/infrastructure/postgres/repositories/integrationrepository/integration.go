@@ -1,6 +1,7 @@
 package integrationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
@@ -59,6 +60,7 @@ func (r *repository) ListEnabledByType(
 	ctx context.Context,
 	typ integration.Type,
 ) ([]*integration.Integration, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with an integration type enabled")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*integration.Integration, error) {
 		entities := make([]*integration.Integration, 0)
 

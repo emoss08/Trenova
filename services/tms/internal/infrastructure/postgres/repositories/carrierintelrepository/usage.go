@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -245,6 +246,7 @@ func buildUsageRollup(db bun.IDB, dayStart int64) *bun.RawQuery {
 }
 
 func (r *usageRepository) RollupDay(ctx context.Context, dayStart int64) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "roll up carrier intelligence usage across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		result, err := buildUsageRollup(r.db.DBForContext(ctx), timeutils.DayStartUTC(dayStart)).
 			Exec(ctx)
@@ -267,6 +269,7 @@ func (r *usageRepository) DeleteOlderThan(
 	before int64,
 	limit int,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "delete carrier intelligence usage past retention across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.CarrierIntelUsageRecordColumns
 		batch := intutils.Clamp(

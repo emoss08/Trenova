@@ -1,6 +1,7 @@
 package conversationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -449,6 +450,7 @@ func (r *repository) DeleteStaleThreads(
 	ctx context.Context,
 	req repositories.DeleteStaleThreadsRequest,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "delete stale ask threads across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if req.Origin == "" || req.Before <= 0 {
 			return 0, nil

@@ -1,6 +1,7 @@
 package accountingcontrolrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	accountingcontrol "github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -63,6 +64,7 @@ func (r *repository) GetByOrgID(
 func (r *repository) ListAll(
 	ctx context.Context,
 ) ([]*accountingcontrol.AccountingControl, error) {
+	ctx = dbscope.WithSystem(ctx, "list every organization's accounting controls for the fiscal calendar sweep")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
 		log := r.l.With(zap.String("operation", "ListAll"))
 
@@ -82,6 +84,7 @@ func (r *repository) ListAll(
 func (r *repository) ListWithScheduledPeriodClose(
 	ctx context.Context,
 ) ([]*accountingcontrol.AccountingControl, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with scheduled fiscal period close")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
 		log := r.l.With(zap.String("operation", "ListWithScheduledPeriodClose"))
 

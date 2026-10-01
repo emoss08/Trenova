@@ -3,6 +3,7 @@
 package databasesessionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 	"strings"
@@ -42,6 +43,7 @@ func New(p Params) repositories.DatabaseSessionRepository {
 }
 
 func (r *repository) ListBlocked(ctx context.Context) ([]*system.DatabaseSessionChain, error) {
+	ctx = dbscope.WithSystem(ctx, "read pg_stat_activity, which only the system role may see in full")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*system.DatabaseSessionChain, error) {
 		if err := dbdialect.RequireFromBun(r.db.DBForContext(ctx), dbdialect.CapSessionDiagnostic); err != nil {
 			return nil, err
@@ -86,6 +88,7 @@ func (r *repository) Terminate(
 	ctx context.Context,
 	pid int64,
 ) (*system.TerminateDatabaseSessionResult, error) {
+	ctx = dbscope.WithSystem(ctx, "terminate a blocking backend, which only the system role may signal")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*system.TerminateDatabaseSessionResult, error) {
 		if err := dbdialect.RequireFromBun(r.db.DBForContext(ctx), dbdialect.CapSessionDiagnostic); err != nil {
 			return nil, err

@@ -1,6 +1,7 @@
 package workersafetyrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -367,6 +368,7 @@ func (r *repository) ListWorkersWithLapsedPoints(
 	ctx context.Context,
 	req *repositories.ListWorkersWithLapsedPointsRequest,
 ) ([]repositories.WorkerTenantRef, error) {
+	ctx = dbscope.WithSystem(ctx, "list workers with lapsed safety points across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.WorkerTenantRef, error) {
 		ecols := buncolgen.WorkerSafetyEventColumns
 		acols := buncolgen.WorkerDisciplinaryActionColumns

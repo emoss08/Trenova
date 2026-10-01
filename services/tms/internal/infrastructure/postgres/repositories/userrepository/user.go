@@ -2,6 +2,7 @@
 package userrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"time"
 
@@ -286,6 +287,7 @@ func (ur *repository) SelectOptions(
 }
 
 func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*tenant.User, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a sign-in email before any tenant is known")
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		user := new(tenant.User)
 
@@ -310,6 +312,7 @@ func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*te
 }
 
 func (ur *repository) FindByIDForLogin(ctx context.Context, userID pulid.ID) (*tenant.User, error) {
+	ctx = dbscope.WithSystem(ctx, "load the user an identity provider subject is linked to before a session exists")
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		user := new(tenant.User)
 
@@ -765,6 +768,7 @@ func (ur *repository) BulkUpdateStatus(
 }
 
 func (ur *repository) GetSystemUser(ctx context.Context, columns ...string) (*tenant.User, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve the instance system user, which belongs to the default organization, as the actor for any tenant")
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		user := new(tenant.User)
 

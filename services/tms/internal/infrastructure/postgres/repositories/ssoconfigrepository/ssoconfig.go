@@ -1,6 +1,7 @@
 package ssoconfigrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"strings"
 
@@ -65,6 +66,7 @@ func (r *repository) GetEnabledByID(
 	ctx context.Context,
 	providerID pulid.ID,
 ) (*tenant.SSOConfig, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve an SSO provider named in a public URL before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOConfig, error) {
 		provider := new(iam.IdentityProvider)
 		if err := r.db.DBForContext(ctx).

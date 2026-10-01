@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -120,6 +121,7 @@ func (r *controlRepository) ListConfigured(
 	ctx context.Context,
 	req *repositories.ListCarrierIntelTenantsRequest,
 ) ([]*carrierintel.CarrierIntelControl, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with carrier intelligence configured")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelControl, error) {
 		cols := buncolgen.CarrierIntelControlColumns
 		limit := intutils.Clamp(

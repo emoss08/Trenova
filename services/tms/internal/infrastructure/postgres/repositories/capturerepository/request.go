@@ -2,6 +2,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
@@ -171,6 +172,7 @@ func (r *requestRepository) ListExpired(
 	now int64,
 	limit int,
 ) ([]*capture.CaptureRequest, error) {
+	ctx = dbscope.WithSystem(ctx, "list expired capture requests across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
 		entities := make([]*capture.CaptureRequest, 0)
 		cols := buncolgen.CaptureRequestColumns

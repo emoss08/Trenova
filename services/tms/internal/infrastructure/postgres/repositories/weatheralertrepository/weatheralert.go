@@ -2,6 +2,7 @@
 package weatheralertrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"maps"
 
@@ -79,6 +80,7 @@ func New(p Params) repositories.WeatherAlertRepository {
 }
 
 func (r *repository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations for weather alert polling")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		rows := make([]tenantRow, 0)
 		if err := r.db.DBForContext(ctx).
@@ -278,6 +280,7 @@ func (r *repository) UpsertAlert(
 func (r *repository) ExpireStaleAlerts(
 	ctx context.Context,
 ) (*repositories.ExpireWeatherAlertsResult, error) {
+	ctx = dbscope.WithSystem(ctx, "expire stale weather alerts across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.ExpireWeatherAlertsResult, error) {
 		now := timeutils.NowUnix()
 		result := &repositories.ExpireWeatherAlertsResult{}

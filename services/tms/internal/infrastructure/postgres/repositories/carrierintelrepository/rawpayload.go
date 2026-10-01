@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -81,6 +82,7 @@ func (r *rawPayloadRepository) PurgeExpired(
 	before int64,
 	limit int,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "purge expired carrier intelligence payloads across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.CarrierIntelRawPayloadColumns
 		batch := intutils.Clamp(

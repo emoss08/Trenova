@@ -1,6 +1,7 @@
 package settlementcontrolrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"errors"
@@ -102,6 +103,7 @@ func (r *repository) selectControl(
 func (r *repository) ListAutoGenerate(
 	ctx context.Context,
 ) ([]*tenant.SettlementControl, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations that auto-generate settlements")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.SettlementControl, error) {
 		items := make([]*tenant.SettlementControl, 0)
 		err := r.db.DBForContext(ctx).
@@ -117,6 +119,7 @@ func (r *repository) ListAutoGenerate(
 }
 
 func (r *repository) ListAll(ctx context.Context) ([]*tenant.SettlementControl, error) {
+	ctx = dbscope.WithSystem(ctx, "list every organization's settlement controls for escrow interest")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.SettlementControl, error) {
 		items := make([]*tenant.SettlementControl, 0)
 		err := r.db.DBForContext(ctx).

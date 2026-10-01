@@ -1,6 +1,7 @@
 package agentproposalbaselinerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 	"strings"
@@ -98,6 +99,7 @@ func (r *repository) PurgeOrphans(
 	ctx context.Context,
 	req repositories.PurgeOrphanProposalBaselinesRequest,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "purge orphaned proposal baselines across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		limit := req.Limit
 		if limit <= 0 {

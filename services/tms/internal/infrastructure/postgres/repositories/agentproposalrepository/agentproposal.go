@@ -1,6 +1,7 @@
 package agentproposalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -334,6 +335,7 @@ func (r *repository) ExpirePending(
 	ctx context.Context,
 	req repositories.ExpireAgentProposalsRequest,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "expire stale agent proposals across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		log := r.l.With(zap.String("operation", "ExpirePending"), zap.Int64("before", req.Before))
 
@@ -369,6 +371,7 @@ func (r *repository) ListPendingForReminder(
 	ctx context.Context,
 	req repositories.ListPendingProposalsForReminderRequest,
 ) ([]*agent.AgentProposal, error) {
+	ctx = dbscope.WithSystem(ctx, "list pending proposals due a reminder across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		log := r.l.With(
 			zap.String("operation", "ListPendingForReminder"),

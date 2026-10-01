@@ -2,6 +2,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
@@ -141,6 +142,7 @@ func (r *deviceRepository) GetByAccessTokenHash(
 	ctx context.Context,
 	hash string,
 ) (*capture.CaptureDevice, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a capture device access token before its tenant is known")
 	return r.getByTokenColumn(ctx, buncolgen.CaptureDeviceColumns.AccessTokenHash, hash)
 }
 
@@ -148,6 +150,7 @@ func (r *deviceRepository) GetByRefreshTokenHash(
 	ctx context.Context,
 	hash string,
 ) (*capture.CaptureDevice, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a capture device refresh token before its tenant is known")
 	return r.getByTokenColumn(ctx, buncolgen.CaptureDeviceColumns.RefreshTokenHash, hash)
 }
 
@@ -155,6 +158,7 @@ func (r *deviceRepository) GetByPreviousRefreshHash(
 	ctx context.Context,
 	hash string,
 ) (*capture.CaptureDevice, error) {
+	ctx = dbscope.WithSystem(ctx, "detect reuse of a rotated capture device refresh token before its tenant is known")
 	return r.getByTokenColumn(ctx, buncolgen.CaptureDeviceColumns.PreviousRefreshHash, hash)
 }
 

@@ -1,6 +1,7 @@
 package carriersettlementcontrolrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"errors"
@@ -99,6 +100,7 @@ func (r *repository) selectControl(
 func (r *repository) ListAutoGenerate(
 	ctx context.Context,
 ) ([]*tenant.CarrierSettlementControl, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations that auto-generate carrier settlements")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.CarrierSettlementControl, error) {
 		cols := buncolgen.CarrierSettlementControlColumns
 		items := make([]*tenant.CarrierSettlementControl, 0)

@@ -1,6 +1,7 @@
 package documentaiextractionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentaiextraction"
@@ -151,6 +152,7 @@ func (r *repository) ListPollableTenants(
 	ctx context.Context,
 	req *repositories.ListPollableDocumentAIExtractionRequest,
 ) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with pollable document extractions")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		limit := req.Limit
 		if limit <= 0 {

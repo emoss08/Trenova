@@ -1,6 +1,7 @@
 package emailrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -471,6 +472,7 @@ func (r *repository) GetEmailWebhookConfig(
 	ctx context.Context,
 	req repositories.GetEmailWebhookConfigRequest,
 ) (*repositories.EmailWebhookConfig, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve the email provider webhook that was called before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.EmailWebhookConfig, error) {
 		var row struct {
 			OrganizationID       string `bun:"organization_id"`

@@ -1,6 +1,7 @@
 package aiauditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -164,6 +165,7 @@ func (r *exportRepository) ListExpired(
 	before int64,
 	limit int,
 ) ([]*aiaudit.AIAuditExport, error) {
+	ctx = dbscope.WithSystem(ctx, "list expired AI audit exports across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditExport, error) {
 		cols := buncolgen.AIAuditExportColumns
 		rows := make([]*aiaudit.AIAuditExport, 0, limit)
@@ -190,6 +192,7 @@ func (r *exportRepository) ListStale(
 	updatedBefore int64,
 	limit int,
 ) ([]*aiaudit.AIAuditExport, error) {
+	ctx = dbscope.WithSystem(ctx, "list stale AI audit exports across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditExport, error) {
 		cols := buncolgen.AIAuditExportColumns
 		rows := make([]*aiaudit.AIAuditExport, 0, limit)

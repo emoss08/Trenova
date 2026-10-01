@@ -1,6 +1,7 @@
 package agentevalcaserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -315,6 +316,7 @@ func (r *repository) ListCaptureCandidates(
 	ctx context.Context,
 	req repositories.ListEvalCaseCaptureCandidatesRequest,
 ) ([]repositories.EvalCaseCaptureCandidate, error) {
+	ctx = dbscope.WithSystem(ctx, "list evaluation case candidates across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.EvalCaseCaptureCandidate, error) {
 		decision := buncolgen.AgentDecisionColumns
 		proposal := buncolgen.AgentProposalColumns
@@ -371,6 +373,9 @@ func (r *repository) PurgeExpired(
 	ctx context.Context,
 	req repositories.PurgeExpiredEvalCasesRequest,
 ) (int, error) {
+	if req.AllTenants {
+		ctx = dbscope.WithSystem(ctx, "purge expired evaluation cases across every organization")
+	}
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.EvalCaseColumns
 		limit := clamp(req.Limit, defaultBatchLimit, maxBatchLimit)
@@ -407,6 +412,7 @@ func (r *repository) PurgeOrphaned(
 	ctx context.Context,
 	req repositories.PurgeOrphanedEvalCasesRequest,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "purge orphaned evaluation cases across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.EvalCaseColumns
 		thread := buncolgen.ThreadColumns

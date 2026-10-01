@@ -1,6 +1,7 @@
 package rateconfirmationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"errors"
@@ -225,6 +226,7 @@ func (r *repository) GetTokenByHash(
 	ctx context.Context,
 	tokenHash string,
 ) (*rateconfirmation.RateConfirmationToken, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a public rate confirmation link before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateconfirmation.RateConfirmationToken, error) {
 		cols := buncolgen.RateConfirmationTokenColumns
 		entity := new(rateconfirmation.RateConfirmationToken)
@@ -314,6 +316,7 @@ func (r *repository) PurgeDeadSignTokens(
 	ctx context.Context,
 	req repositories.PurgeDeadTokensRequest,
 ) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "purge dead rate confirmation tokens across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		limit := req.Limit
 		if limit <= 0 {

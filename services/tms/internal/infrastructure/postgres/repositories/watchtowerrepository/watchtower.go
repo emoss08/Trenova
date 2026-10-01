@@ -1,6 +1,7 @@
 package watchtowerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -388,6 +389,7 @@ func (r *repository) DeleteResolvedBefore(
 	ctx context.Context,
 	req repositories.DeleteResolvedWatchtowerItemsRequest,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "delete resolved watchtower items past retention across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.ItemColumns
 		limit := req.Limit

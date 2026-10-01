@@ -1,6 +1,7 @@
 package storedmileagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"strings"
 
@@ -209,6 +210,7 @@ func (r *repository) BulkUpsert(
 	ctx context.Context,
 	entities []*storedmileage.StoredMileage,
 ) error {
+	ctx = dbscope.WithSystem(ctx, "store a batch of mileage lookups that can span organizations")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(entities) == 0 {
 			return nil

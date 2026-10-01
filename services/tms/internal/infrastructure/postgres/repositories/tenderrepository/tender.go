@@ -1,6 +1,7 @@
 package tenderrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
@@ -308,6 +309,9 @@ func (r *repository) ListForSweep(
 	ctx context.Context,
 	req repositories.ListTendersForSweepRequest,
 ) ([]*tender.Tender, error) {
+	if req.TenantInfo == nil {
+		ctx = dbscope.WithSystem(ctx, "list stalled tenders across every organization for the tender sweep")
+	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
 		limit := req.Limit
 		if limit <= 0 {
@@ -592,6 +596,7 @@ func (r *repository) GetTokenByHash(
 	ctx context.Context,
 	tokenHash string,
 ) (*tender.TenderOfferToken, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a public tender offer link before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.TenderOfferToken, error) {
 		cols := buncolgen.TenderOfferTokenColumns
 		entity := new(tender.TenderOfferToken)
@@ -683,6 +688,7 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 	ctx context.Context,
 	req repositories.ListAcceptedMissingRateConfirmationRequest,
 ) ([]*tender.Tender, error) {
+	ctx = dbscope.WithSystem(ctx, "list accepted tenders missing a rate confirmation across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
 		limit := req.Limit
 		if limit <= 0 {
@@ -748,6 +754,7 @@ func (r *repository) PurgeDeadOfferTokens(
 	ctx context.Context,
 	req repositories.PurgeDeadTokensRequest,
 ) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "purge dead tender offer tokens across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		limit := req.Limit
 		if limit <= 0 {

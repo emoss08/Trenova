@@ -1,6 +1,7 @@
 package billingtransferrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"errors"
@@ -232,6 +233,7 @@ func (r *repository) ListStale(
 	ctx context.Context,
 	req *repositories.ListStaleBillingTransferRunsRequest,
 ) ([]*billingtransfer.BillingTransferRun, error) {
+	ctx = dbscope.WithSystem(ctx, "list stalled billing transfer runs across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*billingtransfer.BillingTransferRun, error) {
 		cols := buncolgen.BillingTransferRunColumns
 

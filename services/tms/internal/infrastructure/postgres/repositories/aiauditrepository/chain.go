@@ -1,6 +1,7 @@
 package aiauditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"errors"
@@ -48,6 +49,7 @@ func (r *repository) GetChainHead(
 }
 
 func (r *repository) ListChainHeads(ctx context.Context) ([]*aiaudit.AIAuditChainHead, error) {
+	ctx = dbscope.WithSystem(ctx, "list every organization's AI audit chain head")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditChainHead, error) {
 		cols := buncolgen.AIAuditChainHeadColumns
 		heads := make([]*aiaudit.AIAuditChainHead, 0, 16)
@@ -166,6 +168,7 @@ func (r *repository) LastSealBefore(
 	tenantInfo pagination.TenantInfo,
 	sealedBefore int64,
 ) (*aiaudit.AIAuditSeal, error) {
+	ctx = dbscope.WithSystem(ctx, "read an organization's last AI audit seal during the retention sweep")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditSeal, error) {
 		cols := buncolgen.AIAuditSealColumns
 		seal := new(aiaudit.AIAuditSeal)
@@ -194,6 +197,7 @@ func (r *repository) Prune(
 	ctx context.Context,
 	req repositories.PruneAIAuditEventsRequest,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "prune AI audit events past retention behind the projector horizon")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		batch := req.BatchSize
 		if batch <= 0 {
@@ -262,6 +266,7 @@ func (r *repository) Prune(
 func (r *repository) GetWatermarks(
 	ctx context.Context,
 ) (map[aiaudit.Source]*aiaudit.AIAuditProjectorState, error) {
+	ctx = dbscope.WithSystem(ctx, "read the AI audit projector's watermarks")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[aiaudit.Source]*aiaudit.AIAuditProjectorState, error) {
 		states := make([]*aiaudit.AIAuditProjectorState, 0, len(aiaudit.AllSources()))
 		if err := r.db.DBForContext(ctx).NewSelect().Model(&states).Scan(ctx); err != nil {
@@ -281,6 +286,7 @@ func (r *repository) SaveWatermark(
 	ctx context.Context,
 	state *aiaudit.AIAuditProjectorState,
 ) error {
+	ctx = dbscope.WithSystem(ctx, "advance the AI audit projector's watermark")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cols := buncolgen.AIAuditProjectorStateColumns
 

@@ -1,6 +1,7 @@
 package workercredentialrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 	"strings"
@@ -573,6 +574,9 @@ func (r *repository) ListExpiring(
 	ctx context.Context,
 	req *repositories.ListExpiringWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
+	if req.TenantInfo.OrgID.IsNil() {
+		ctx = dbscope.WithSystem(ctx, "list expiring credentials across every organization for the expiry sweep")
+	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredential, error) {
 		now := timeutils.NowUnix()
 		horizon := now + int64(req.HorizonDays)*secondsPerDay

@@ -202,6 +202,7 @@ VALUES
     ('jurisdiction_rules', 'Jurisdiction rules maintained by the platform operator'),
     ('pretrained_models', 'Model catalog shared by every organization'),
     ('seed_created_entities', 'Seeder bookkeeping'),
+    ('seed_history', 'Seeder bookkeeping, created by the seeder rather than a migration'),
     ('spatial_ref_sys', 'PostGIS spatial reference catalog'),
     ('us_states', 'State reference data shared by every organization')
 ON CONFLICT ("table_name") DO UPDATE SET "reason" = EXCLUDED."reason";
@@ -277,7 +278,15 @@ BEGIN
     EXECUTE 'GRANT USAGE ON SCHEMA public TO trenova_tenant, trenova_rls_bypass';
     EXECUTE 'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO trenova_tenant, trenova_rls_bypass';
     EXECUTE 'GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO trenova_tenant, trenova_rls_bypass';
-    EXECUTE 'REVOKE INSERT, UPDATE, DELETE ON public.bun_migrations, public.bun_migration_locks, public.seed_created_entities FROM trenova_tenant';
+    FOR candidate IN
+        SELECT c.oid::regclass AS target
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+            AND c.relname IN ('bun_migrations', 'bun_migration_locks', 'seed_created_entities', 'seed_history')
+    LOOP
+        EXECUTE format('REVOKE INSERT, UPDATE, DELETE ON %s FROM trenova_tenant', candidate.target);
+    END LOOP;
 
     FOR candidate IN
         SELECT c.oid::regclass AS target, bu.attnotnull AS bu_not_null

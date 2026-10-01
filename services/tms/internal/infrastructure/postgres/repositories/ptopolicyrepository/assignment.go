@@ -1,6 +1,7 @@
 package ptopolicyrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -206,6 +207,7 @@ type tenantRow struct {
 func (r *repository) ListTenantsWithOpenAssignments(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with open PTO assignments to accrue")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
 		rows := make([]tenantRow, 0, 16)

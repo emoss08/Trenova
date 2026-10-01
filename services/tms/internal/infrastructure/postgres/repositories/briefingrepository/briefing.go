@@ -1,6 +1,7 @@
 package briefingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -210,6 +211,7 @@ func (r *repository) DeleteBefore(
 	ctx context.Context,
 	req repositories.DeleteBriefingsBeforeRequest,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "delete briefings past retention across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.BriefingColumns
 		limit := req.Limit

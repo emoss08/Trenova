@@ -1,6 +1,7 @@
 package latechargerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -326,6 +327,7 @@ func (r *repository) ListLateChargeTenants(
 	ctx context.Context,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with late charges to assess")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		if limit <= 0 {
 			limit = 1000

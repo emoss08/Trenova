@@ -1,6 +1,7 @@
 package agentplanrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -322,6 +323,7 @@ func (r *repository) ExpirePending(
 	ctx context.Context,
 	req repositories.ExpireAgentPlansRequest,
 ) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "expire stale agent plans across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		cols := buncolgen.AgentPlanColumns
 		results, err := r.db.DBForContext(ctx).

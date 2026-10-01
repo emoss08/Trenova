@@ -2,6 +2,7 @@
 package ediinboundfilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -172,6 +173,7 @@ func (r *repository) PurgeRawContentBefore(
 }
 
 func (r *repository) CountQuarantinedSince(ctx context.Context, since int64) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "count quarantined inbound EDI files instance-wide for the health check")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.EDIInboundFileColumns
 		count, err := r.db.DBForContext(ctx).

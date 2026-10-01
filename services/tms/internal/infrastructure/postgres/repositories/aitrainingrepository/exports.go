@@ -3,6 +3,7 @@ package aitrainingrepository
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/pkg/dbscope"
 
 	"github.com/emoss08/trenova/internal/core/domain/aitraining"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -165,61 +166,67 @@ func (r *exportRepository) ListConsentingOrganizations(
 	ctx context.Context,
 	req repositories.ListConsentingOrganizationsRequest,
 ) ([]repositories.TrainingConsent, error) {
-	cols := buncolgen.AgentControlColumns
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultConsentLimit
-	}
-	limit = min(limit, maxConsentLimit)
+	ctx = dbscope.WithSystem(ctx, "list organizations that consented to training export, across tenants")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.TrainingConsent, error) {
 
-	consents := make([]repositories.TrainingConsent, 0, limit)
-	query := r.consentQuery(ctx).Where(cols.AITrainingConsent.IsTrue())
-	if req.AfterOrganizationID.IsNotNil() {
-		query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where(cols.OrganizationID.Gt(), req.AfterOrganizationID).
-				WhereGroup(" OR ", func(tq *bun.SelectQuery) *bun.SelectQuery {
-					return tq.Where(cols.OrganizationID.Eq(), req.AfterOrganizationID).
-						Where(cols.BusinessUnitID.Gt(), req.AfterBusinessUnitID)
-				})
-		})
-	}
-	err := query.
-		Order(cols.OrganizationID.OrderAsc(), cols.BusinessUnitID.OrderAsc()).
-		Limit(limit).
-		Scan(ctx, &consents)
-	if err != nil {
-		r.l.Error("failed to list consenting organizations", zap.Error(err))
+		cols := buncolgen.AgentControlColumns
+		limit := req.Limit
+		if limit <= 0 {
+			limit = defaultConsentLimit
+		}
+		limit = min(limit, maxConsentLimit)
 
-		return nil, fmt.Errorf("list consenting organizations: %w", err)
-	}
+		consents := make([]repositories.TrainingConsent, 0, limit)
+		query := r.consentQuery(ctx).Where(cols.AITrainingConsent.IsTrue())
+		if req.AfterOrganizationID.IsNotNil() {
+			query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where(cols.OrganizationID.Gt(), req.AfterOrganizationID).
+					WhereGroup(" OR ", func(tq *bun.SelectQuery) *bun.SelectQuery {
+						return tq.Where(cols.OrganizationID.Eq(), req.AfterOrganizationID).
+							Where(cols.BusinessUnitID.Gt(), req.AfterBusinessUnitID)
+					})
+			})
+		}
+		err := query.
+			Order(cols.OrganizationID.OrderAsc(), cols.BusinessUnitID.OrderAsc()).
+			Limit(limit).
+			Scan(ctx, &consents)
+		if err != nil {
+			r.l.Error("failed to list consenting organizations", zap.Error(err))
 
-	return consents, nil
+			return nil, fmt.Errorf("list consenting organizations: %w", err)
+		}
+
+		return consents, nil
+	})
 }
 
 func (r *exportRepository) GetConsent(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (repositories.TrainingConsent, error) {
-	consents := make([]repositories.TrainingConsent, 0, 1)
-	err := r.consentQuery(ctx).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.AgentControlScopeTenant(sq, tenantInfo)
-		}).
-		Limit(1).
-		Scan(ctx, &consents)
-	if err != nil {
-		r.l.Error("failed to read training consent", zap.Error(err))
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (repositories.TrainingConsent, error) {
+		consents := make([]repositories.TrainingConsent, 0, 1)
+		err := r.consentQuery(ctx).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentControlScopeTenant(sq, tenantInfo)
+			}).
+			Limit(1).
+			Scan(ctx, &consents)
+		if err != nil {
+			r.l.Error("failed to read training consent", zap.Error(err))
 
-		return repositories.TrainingConsent{}, fmt.Errorf("read training consent: %w", err)
-	}
-	if len(consents) == 0 {
-		return repositories.TrainingConsent{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-		}, nil
-	}
+			return repositories.TrainingConsent{}, fmt.Errorf("read training consent: %w", err)
+		}
+		if len(consents) == 0 {
+			return repositories.TrainingConsent{
+				OrganizationID: tenantInfo.OrgID,
+				BusinessUnitID: tenantInfo.BuID,
+			}, nil
+		}
 
-	return consents[0], nil
+		return consents[0], nil
+	})
 }
 
 func (r *exportRepository) ListOrganizationPeople(

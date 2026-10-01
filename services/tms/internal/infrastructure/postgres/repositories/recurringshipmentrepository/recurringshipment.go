@@ -1,6 +1,7 @@
 package recurringshipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
@@ -460,6 +461,7 @@ func (r *repository) ListDue(
 	ctx context.Context,
 	req *repositories.ListDueRecurringShipmentsRequest,
 ) ([]*recurringshipment.RecurringShipment, error) {
+	ctx = dbscope.WithSystem(ctx, "list recurring shipments due across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*recurringshipment.RecurringShipment, error) {
 		rsh := buncolgen.RecurringShipmentColumns
 

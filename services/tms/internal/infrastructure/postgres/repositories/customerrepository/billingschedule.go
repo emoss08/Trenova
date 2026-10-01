@@ -1,6 +1,7 @@
 package customerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -56,6 +57,7 @@ func (r *repository) ListDueBillingSchedules(
 	ctx context.Context,
 	req *repositories.ListBillingSchedulesRequest,
 ) ([]*repositories.DueBillingSchedule, error) {
+	ctx = dbscope.WithSystem(ctx, "list billing schedules due across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.DueBillingSchedule, error) {
 		cbp := buncolgen.CustomerBillingProfileColumns
 		cus := buncolgen.CustomerColumns

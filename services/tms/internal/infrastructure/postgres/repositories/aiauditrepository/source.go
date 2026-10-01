@@ -1,6 +1,7 @@
 package aiauditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -57,6 +58,7 @@ func (r *sourceRepository) ListRuns(
 	ctx context.Context,
 	page repositories.AIAuditSourcePage,
 ) ([]*agent.AgentRun, error) {
+	ctx = dbscope.WithSystem(ctx, "project agent runs into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		cols := buncolgen.AgentRunColumns
 		rows := make([]*agent.AgentRun, 0, page.Limit)
@@ -76,6 +78,7 @@ func (r *sourceRepository) ListTurns(
 	ctx context.Context,
 	page repositories.AIAuditSourcePage,
 ) ([]*conversation.AssistantTurn, error) {
+	ctx = dbscope.WithSystem(ctx, "project assistant turns into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
 		cols := buncolgen.AssistantTurnColumns
 		rows := make([]*conversation.AssistantTurn, 0, page.Limit)
@@ -95,6 +98,7 @@ func (r *sourceRepository) ListUsage(
 	ctx context.Context,
 	page repositories.AIAuditSourcePage,
 ) ([]*aiusage.AIUsageRecord, error) {
+	ctx = dbscope.WithSystem(ctx, "project AI usage into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiusage.AIUsageRecord, error) {
 		cols := buncolgen.AIUsageRecordColumns
 		rows := make([]*aiusage.AIUsageRecord, 0, page.Limit)
@@ -114,6 +118,7 @@ func (r *sourceRepository) ListSteps(
 	ctx context.Context,
 	page repositories.AIAuditSourcePage,
 ) ([]*agent.AgentRunStep, error) {
+	ctx = dbscope.WithSystem(ctx, "project agent steps into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
 		cols := buncolgen.AgentRunStepColumns
 		rows := make([]*agent.AgentRunStep, 0, page.Limit)
@@ -133,6 +138,7 @@ func (r *sourceRepository) ListEvents(
 	ctx context.Context,
 	page repositories.AIAuditSourcePage,
 ) ([]*agent.AgentRunEvent, error) {
+	ctx = dbscope.WithSystem(ctx, "project agent events into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
 		cols := buncolgen.AgentRunEventColumns
 		rows := make([]*agent.AgentRunEvent, 0, page.Limit)
@@ -152,6 +158,7 @@ func (r *sourceRepository) ListProposals(
 	ctx context.Context,
 	page repositories.AIAuditSourcePage,
 ) ([]*agent.AgentProposal, error) {
+	ctx = dbscope.WithSystem(ctx, "project proposals into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		cols := buncolgen.AgentProposalColumns
 		rows := make([]*agent.AgentProposal, 0, page.Limit)
@@ -171,6 +178,7 @@ func (r *sourceRepository) ListDecisions(
 	ctx context.Context,
 	page repositories.AIAuditSourcePage,
 ) ([]*agent.AgentDecision, error) {
+	ctx = dbscope.WithSystem(ctx, "project proposal decisions into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
 		cols := buncolgen.AgentDecisionColumns
 		rows := make([]*agent.AgentDecision, 0, page.Limit)
@@ -375,6 +383,7 @@ func (r *sourceRepository) StartedToolSteps(
 	tenantInfo pagination.TenantInfo,
 	ownerIDs []pulid.ID,
 ) ([]*agent.AgentRunStep, error) {
+	ctx = dbscope.WithSystem(ctx, "project started tool steps into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
 		rows := make([]*agent.AgentRunStep, 0, len(ownerIDs))
 		if len(ownerIDs) == 0 {

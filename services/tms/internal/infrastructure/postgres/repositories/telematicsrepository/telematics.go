@@ -1,6 +1,7 @@
 package telematicsrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -721,6 +722,7 @@ func (r *repository) GetWebhookConfigByToken(
 	typ integration.Type,
 	token string,
 ) (*repositories.TelematicsWebhookConfig, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve the telematics webhook a provider called before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.TelematicsWebhookConfig, error) {
 		var row struct {
 			OrganizationID string `bun:"organization_id"`
@@ -770,6 +772,7 @@ func (r *repository) CleanupExpired(
 	violationsOlderThan int64,
 	hosLogsOlderThan int64,
 ) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "clean up expired telematics data across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		total := int64(0)
 

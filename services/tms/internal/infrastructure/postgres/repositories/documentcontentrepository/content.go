@@ -1,6 +1,7 @@
 package documentcontentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 	"strings"
@@ -198,6 +199,7 @@ func (r *repository) ListPendingExtractionTenants(
 	ctx context.Context,
 	req *repositories.ListPendingDocumentExtractionRequest,
 ) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with documents awaiting extraction")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		limit := req.Limit
 		if limit <= 0 {

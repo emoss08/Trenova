@@ -1,6 +1,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -65,6 +66,7 @@ func (r *appCredentialRepository) GetForWebhook(
 	id pulid.ID,
 	integrationType integration.Type,
 ) (*accountingsync.AccountingAppCredential, error) {
+	ctx = dbscope.WithSystem(ctx, "load the accounting app whose webhook was called before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
 		entity := new(accountingsync.AccountingAppCredential)
 		cols := buncolgen.AccountingAppCredentialColumns

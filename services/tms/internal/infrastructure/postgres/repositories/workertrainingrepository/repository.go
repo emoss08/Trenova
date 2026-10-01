@@ -1,6 +1,7 @@
 package workertrainingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 	"strings"
@@ -549,39 +550,49 @@ func (r *repository) ListDue(
 	ctx context.Context,
 	req *repositories.ListTrainingRemindersRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
-	cols := buncolgen.WorkerTrainingRecordColumns
-	grace, horizon := reminderWindow(req)
-	entities := make([]*worker.WorkerTrainingRecord, 0, defaultReminderPageSize)
-	q := r.reminderQuery(ctx, req, &entities).
-		Where(cols.Status.In(), bun.In([]worker.TrainingStatus{
-			worker.TrainingStatusAssigned,
-			worker.TrainingStatusInProgress,
-		})).
-		Where(cols.DueAt.Between(), grace, horizon)
-
-	if err := q.Scan(ctx); err != nil {
-		r.l.Error("failed to list due training", zap.Error(err))
-		return nil, fmt.Errorf("list due training: %w", err)
+	if req.TenantInfo.OrgID.IsNil() {
+		ctx = dbscope.WithSystem(ctx, "list training due across every organization for the reminder sweep")
 	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
+		cols := buncolgen.WorkerTrainingRecordColumns
+		grace, horizon := reminderWindow(req)
+		entities := make([]*worker.WorkerTrainingRecord, 0, defaultReminderPageSize)
+		q := r.reminderQuery(ctx, req, &entities).
+			Where(cols.Status.In(), bun.In([]worker.TrainingStatus{
+				worker.TrainingStatusAssigned,
+				worker.TrainingStatusInProgress,
+			})).
+			Where(cols.DueAt.Between(), grace, horizon)
 
-	return entities, nil
+		if err := q.Scan(ctx); err != nil {
+			r.l.Error("failed to list due training", zap.Error(err))
+			return nil, fmt.Errorf("list due training: %w", err)
+		}
+
+		return entities, nil
+	})
 }
 
 func (r *repository) ListExpiring(
 	ctx context.Context,
 	req *repositories.ListTrainingRemindersRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
-	cols := buncolgen.WorkerTrainingRecordColumns
-	grace, horizon := reminderWindow(req)
-	entities := make([]*worker.WorkerTrainingRecord, 0, defaultReminderPageSize)
-	q := r.reminderQuery(ctx, req, &entities).
-		Where(cols.Status.Eq(), worker.TrainingStatusCompleted).
-		Where(cols.ExpiresAt.Between(), grace, horizon)
-
-	if err := q.Scan(ctx); err != nil {
-		r.l.Error("failed to list expiring training", zap.Error(err))
-		return nil, fmt.Errorf("list expiring training: %w", err)
+	if req.TenantInfo.OrgID.IsNil() {
+		ctx = dbscope.WithSystem(ctx, "list expiring training across every organization for the reminder sweep")
 	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
+		cols := buncolgen.WorkerTrainingRecordColumns
+		grace, horizon := reminderWindow(req)
+		entities := make([]*worker.WorkerTrainingRecord, 0, defaultReminderPageSize)
+		q := r.reminderQuery(ctx, req, &entities).
+			Where(cols.Status.Eq(), worker.TrainingStatusCompleted).
+			Where(cols.ExpiresAt.Between(), grace, horizon)
 
-	return entities, nil
+		if err := q.Scan(ctx); err != nil {
+			r.l.Error("failed to list expiring training", zap.Error(err))
+			return nil, fmt.Errorf("list expiring training: %w", err)
+		}
+
+		return entities, nil
+	})
 }

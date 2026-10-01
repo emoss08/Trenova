@@ -1,6 +1,7 @@
 package reportrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -181,6 +182,7 @@ func (r *scheduleRepository) ListDue(
 	nowUnix int64,
 	limit int,
 ) ([]*report.ReportSchedule, error) {
+	ctx = dbscope.WithSystem(ctx, "list report schedules due across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportSchedule, error) {
 		cols := buncolgen.ReportScheduleColumns
 

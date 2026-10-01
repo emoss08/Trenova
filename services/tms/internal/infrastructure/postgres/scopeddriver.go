@@ -398,8 +398,11 @@ var databaseLayerPrefixes = [...]string{
 	"database/sql.",
 	"github.com/uptrace/bun",
 	"github.com/emoss08/trenova/internal/infrastructure/postgres.",
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx.",
 	"github.com/emoss08/trenova/pkg/dbscope.",
 }
+
+const callerFramesReported = 2
 
 var callerPCs = sync.Pool{
 	New: func() any {
@@ -416,15 +419,22 @@ func callerOutsideDatabaseLayer() string {
 	n := runtime.Callers(3, pcs)
 	frames := runtime.CallersFrames(pcs[:n])
 
-	for {
+	reported := make([]string, 0, callerFramesReported)
+	for len(reported) < callerFramesReported {
 		frame, more := frames.Next()
 		if !inDatabaseLayer(frame.Function) {
-			return fmt.Sprintf("%s:%d", frame.Function, frame.Line)
+			reported = append(reported, fmt.Sprintf("%s:%d", frame.Function, frame.Line))
 		}
 		if !more {
-			return "unknown"
+			break
 		}
 	}
+
+	if len(reported) == 0 {
+		return "unknown"
+	}
+
+	return strings.Join(reported, " <- ")
 }
 
 func inDatabaseLayer(function string) bool {

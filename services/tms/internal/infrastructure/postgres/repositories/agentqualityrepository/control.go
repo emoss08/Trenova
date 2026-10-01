@@ -1,6 +1,7 @@
 package agentqualityrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"errors"
@@ -201,6 +202,7 @@ func (r *controlRepository) ListScheduleTargets(
 	ctx context.Context,
 	req repositories.ListQualityScheduleTargetsRequest,
 ) ([]*repositories.QualityScheduleTarget, error) {
+	ctx = dbscope.WithSystem(ctx, "list agent quality schedules across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*repositories.QualityScheduleTarget, error) {
 		org := buncolgen.OrganizationColumns
 		limit := clampLimit(req.Limit, defaultScheduleTargetCap, maxScheduleTargetCap)

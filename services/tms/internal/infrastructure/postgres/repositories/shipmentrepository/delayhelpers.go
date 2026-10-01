@@ -1,6 +1,7 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -79,6 +80,7 @@ func (r *repository) DelayShipments(
 }
 
 func (r *repository) AutoDelayShipments(ctx context.Context) ([]*shipment.Shipment, error) {
+	ctx = dbscope.WithSystem(ctx, "mark late shipments delayed across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
 		currentTime := timeutils.NowUnix()
 		entities := make([]*shipment.Shipment, 0)
@@ -117,6 +119,7 @@ func (r *repository) ListAutoDelayShipmentTenants(
 	ctx context.Context,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with automatic shipment delay on")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		if limit <= 0 {
 			limit = 100

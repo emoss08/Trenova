@@ -1,6 +1,7 @@
 package auditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
@@ -238,6 +239,7 @@ func (r *repository) ListByResourceID(
 }
 
 func (r *repository) InsertAuditEntries(ctx context.Context, entries []*audit.Entry) error {
+	ctx = dbscope.WithSystem(ctx, "flush buffered audit entries, which mix organizations, in one batch")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(zap.String("operation", "InsertAuditEntries"))
 
@@ -321,6 +323,7 @@ func (r *repository) DeleteAuditEntries(
 	ctx context.Context,
 	req repositories.DeleteAuditEntriesRequest,
 ) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "delete audit entries past an organization's retention during the retention sweep")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		log := r.l.With(zap.String("operation", "DeleteAuditEntries"))
 

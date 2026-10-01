@@ -1,6 +1,7 @@
 package passwordresetrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -44,6 +45,7 @@ func (r *repository) FindRedeemableByHash(
 	tokenHash string,
 	now int64,
 ) (*tenant.PasswordResetToken, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a password reset token before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.PasswordResetToken, error) {
 		token := new(tenant.PasswordResetToken)
 		if err := r.db.DBForContext(ctx).NewSelect().

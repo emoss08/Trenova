@@ -1,6 +1,7 @@
 package invoicerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 	"strings"
@@ -1020,6 +1021,7 @@ func (r *repository) GetDocumentShareToken(
 	ctx context.Context,
 	req repositories.GetInvoiceDocumentShareTokenRequest,
 ) (*invoice.DocumentShareToken, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a public invoice document link before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.DocumentShareToken, error) {
 		entity := new(invoice.DocumentShareToken)
 		err := r.db.DBForContext(ctx).

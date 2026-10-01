@@ -158,7 +158,8 @@ func scanRepositoryFile(
 
 		recvName := fn.Recv.List[0].Names[0].Name
 		fields := conns[receiverTypeName(fn.Recv.List[0].Type)]
-		if len(fields) == 0 || !referencesConnection(fn.Body, recvName, fields) {
+		if len(fields) == 0 || takesTransaction(fn.Type) ||
+			(!referencesConnection(fn.Body, recvName, fields) && !executesQuery(fn.Body)) {
 			continue
 		}
 
@@ -199,6 +200,56 @@ func usesRawPool(body *ast.BlockStmt) bool {
 			return !found
 		}
 		if _, isSel := sel.X.(*ast.SelectorExpr); isSel {
+			found = true
+		}
+		return !found
+	})
+
+	return found
+}
+
+func takesTransaction(ft *ast.FuncType) bool {
+	for _, field := range ft.Params.List {
+		sel, ok := field.Type.(*ast.SelectorExpr)
+		if !ok {
+			continue
+		}
+		pkg, isIdent := sel.X.(*ast.Ident)
+		if isIdent && pkg.Name == "bun" && (sel.Sel.Name == "IDB" || sel.Sel.Name == "Tx") {
+			return true
+		}
+	}
+
+	return false
+}
+
+var queryTerminals = map[string]bool{
+	"Scan": true, "ScanAndCount": true, "Count": true, "Exists": true, "Exec": true,
+	"Rows": true, "QueryContext": true, "QueryRowContext": true, "ExecContext": true,
+}
+
+func executesQuery(body *ast.BlockStmt) bool {
+	found := false
+	ast.Inspect(body, func(n ast.Node) bool {
+		if found {
+			return false
+		}
+		if _, isLit := n.(*ast.FuncLit); isLit {
+			return true
+		}
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok || !queryTerminals[sel.Sel.Name] {
+			return true
+		}
+		if _, onCall := sel.X.(*ast.CallExpr); onCall {
+			found = true
+			return false
+		}
+		if ident, isIdent := sel.X.(*ast.Ident); isIdent && ident.Obj != nil {
 			found = true
 		}
 		return !found

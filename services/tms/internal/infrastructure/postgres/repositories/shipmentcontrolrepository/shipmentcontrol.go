@@ -1,6 +1,7 @@
 package shipmentcontrolrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -64,6 +65,7 @@ func (r *repository) ListDetentionEngineTenants(
 	ctx context.Context,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with the detention engine on")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		rows := make([]tenant.ShipmentControl, 0, 16)
 

@@ -1,6 +1,7 @@
 package datarententionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -37,6 +38,7 @@ func New(p Params) repositories.DataRetentionRepository {
 func (r *repository) List(
 	ctx context.Context,
 ) (*pagination.ListResult[*tenant.DataRetention], error) {
+	ctx = dbscope.WithSystem(ctx, "read every organization's retention settings for retention sweeps")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error) {
 		log := r.l.With(zap.String("operation", "List"))
 

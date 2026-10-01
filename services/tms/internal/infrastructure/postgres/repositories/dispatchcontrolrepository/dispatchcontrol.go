@@ -1,6 +1,7 @@
 package dispatchcontrolrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
@@ -163,6 +164,7 @@ type horizonTenantRow struct {
 func (r *repository) ListHorizonPlanningTenants(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations with horizon planning on")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		cols := buncolgen.DispatchControlColumns
 

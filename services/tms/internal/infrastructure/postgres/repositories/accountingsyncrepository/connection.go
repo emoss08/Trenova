@@ -2,6 +2,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -130,6 +131,7 @@ func (r *connectionRepository) ListHoldingRealm(
 	ctx context.Context,
 	req repositories.ListAccountingConnectionsByRealmRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
+	ctx = dbscope.WithSystem(ctx, "find every connection holding an accounting company, which spans tenants by design")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
 		if len(req.RealmIDs) == 0 {
 			return []*accountingsync.AccountingConnection{}, nil
@@ -157,6 +159,7 @@ func (r *connectionRepository) ListDueForHealthCheck(
 	ctx context.Context,
 	req repositories.ListDueAccountingConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
+	ctx = dbscope.WithSystem(ctx, "list accounting connections due a health check across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
 		limit := req.Limit
 		if limit <= 0 {
@@ -311,6 +314,7 @@ func (r *connectionRepository) MarkWebhookReceived(
 	ctx context.Context,
 	req repositories.MarkAccountingWebhookRequest,
 ) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "stamp every connection holding the accounting company a webhook named")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		if len(req.RealmIDs) == 0 {
 			return 0, nil
@@ -442,6 +446,7 @@ func (r *connectionRepository) ListActive(
 	ctx context.Context,
 	req repositories.ListActiveAccountingConnectionsRequest,
 ) ([]*accountingsync.AccountingConnection, error) {
+	ctx = dbscope.WithSystem(ctx, "list active accounting connections across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
 		limit := req.Limit
 		if limit <= 0 {

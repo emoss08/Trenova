@@ -2,6 +2,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"errors"
 	"fmt"
@@ -794,6 +795,7 @@ func (r *syncRecordRepository) ListDueConnections(
 	ctx context.Context,
 	req repositories.ListDueAccountingSyncConnectionsRequest,
 ) ([]repositories.AccountingSyncDueConnection, error) {
+	ctx = dbscope.WithSystem(ctx, "list accounting connections with sync work due across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AccountingSyncDueConnection, error) {
 		limit := req.Limit
 		if limit <= 0 {
@@ -830,6 +832,7 @@ func (r *syncRecordRepository) PurgeHistory(
 	ctx context.Context,
 	req repositories.PurgeAccountingSyncHistoryRequest,
 ) (*repositories.PurgeAccountingSyncHistoryResult, error) {
+	ctx = dbscope.WithSystem(ctx, "purge accounting sync history past retention across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*repositories.PurgeAccountingSyncHistoryResult, error) {
 		limit := req.Limit
 		if limit <= 0 {

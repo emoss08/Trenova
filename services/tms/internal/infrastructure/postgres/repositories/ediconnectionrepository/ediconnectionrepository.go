@@ -2,6 +2,7 @@
 package ediconnectionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -385,6 +386,7 @@ func (r *repository) AcceptInternalConnection(
 	ctx context.Context,
 	req *repositories.CreateInternalEDIConnectionAcceptanceRequest,
 ) (*edi.EDIConnection, error) {
+	ctx = dbscope.WithSystem(ctx, "create the partner and profile records in both organizations of an internal connection atomically")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if _, err := r.db.DBForContext(txCtx).

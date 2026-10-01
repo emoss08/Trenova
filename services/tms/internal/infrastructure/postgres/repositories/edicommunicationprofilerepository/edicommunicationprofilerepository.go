@@ -2,6 +2,7 @@
 package edicommunicationprofilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"strings"
 
@@ -200,6 +201,7 @@ func (r *repository) GetActiveProfileByPartner(
 func (r *repository) ListInboundPollingProfiles(
 	ctx context.Context,
 ) ([]*edi.EDICommunicationProfile, error) {
+	ctx = dbscope.WithSystem(ctx, "list inbound EDI polling profiles across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
 		entities := make([]*edi.EDICommunicationProfile, 0)
 		cols := buncolgen.EDICommunicationProfileColumns
@@ -252,6 +254,7 @@ func (r *repository) CountStaleInboundPollingProfiles(
 	ctx context.Context,
 	staleBefore int64,
 ) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "count stale inbound polling profiles instance-wide for the health check")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cols := buncolgen.EDICommunicationProfileColumns
 		count, err := r.db.DBForContext(ctx).
@@ -277,6 +280,7 @@ func (r *repository) GetActiveAS2ProfileByIdentifiers(
 	ctx context.Context,
 	req repositories.GetActiveAS2ProfileByIdentifiersRequest,
 ) (*edi.EDICommunicationProfile, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve an inbound AS2 message's identifier pair before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		entity := new(edi.EDICommunicationProfile)
 		cols := buncolgen.EDICommunicationProfileColumns

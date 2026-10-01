@@ -1,6 +1,7 @@
 package apikeyrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"time"
 
@@ -188,6 +189,7 @@ func (r *repository) GetByPrefix(
 	ctx context.Context,
 	prefix string,
 ) (*apikey.Key, error) {
+	ctx = dbscope.WithSystem(ctx, "resolve a bearer API key by prefix before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*apikey.Key, error) {
 		key := new(apikey.Key)
 		err := r.db.DBForContext(ctx).

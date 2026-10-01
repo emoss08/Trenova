@@ -1,6 +1,7 @@
 package aitrainingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"fmt"
 
@@ -158,6 +159,7 @@ func (r *recordRepository) ListWithdrawn(
 	ctx context.Context,
 	req repositories.ListWithdrawnTrainingExamplesRequest,
 ) ([]repositories.WithdrawnTrainingExample, error) {
+	ctx = dbscope.WithSystem(ctx, "find exported examples whose organization has since withdrawn consent")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.WithdrawnTrainingExample, error) {
 		limit := req.Limit
 		if limit <= 0 {

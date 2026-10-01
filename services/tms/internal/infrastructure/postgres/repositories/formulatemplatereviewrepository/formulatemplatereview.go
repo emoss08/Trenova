@@ -1,6 +1,7 @@
 package formulatemplatereviewrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 	"database/sql"
 	"errors"
@@ -127,6 +128,7 @@ func (r *repository) ListStaleSubmissions(
 	ctx context.Context,
 	req *repositories.ListStaleSubmissionsRequest,
 ) ([]*formulatemplate.FormulaTemplate, error) {
+	ctx = dbscope.WithSystem(ctx, "list stale formula template submissions across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
 		cols := buncolgen.FormulaTemplateColumns
 		limit := req.Limit

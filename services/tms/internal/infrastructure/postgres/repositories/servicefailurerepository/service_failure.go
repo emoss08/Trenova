@@ -186,35 +186,39 @@ func (r *repository) GetByID(
 	ctx context.Context,
 	req *repositories.GetServiceFailureByIDRequest,
 ) (*servicefailure.ServiceFailure, error) {
-	entity := new(servicefailure.ServiceFailure)
-	err := r.baseGetQuery(ctx, entity).
-		Where("sf.id = ?", req.ID).
-		Where("sf.organization_id = ?", req.TenantInfo.OrgID).
-		Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Service failure")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicefailure.ServiceFailure, error) {
+		entity := new(servicefailure.ServiceFailure)
+		err := r.baseGetQuery(ctx, entity).
+			Where("sf.id = ?", req.ID).
+			Where("sf.organization_id = ?", req.TenantInfo.OrgID).
+			Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Service failure")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) GetByShipment(
 	ctx context.Context,
 	req *repositories.GetServiceFailureByShipmentRequest,
 ) (*servicefailure.ServiceFailure, error) {
-	entity := new(servicefailure.ServiceFailure)
-	err := r.baseGetQuery(ctx, entity).
-		Where("sf.id = ?", req.ID).
-		Where("sf.shipment_id = ?", req.ShipmentID).
-		Where("sf.organization_id = ?", req.TenantInfo.OrgID).
-		Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Service failure")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicefailure.ServiceFailure, error) {
+		entity := new(servicefailure.ServiceFailure)
+		err := r.baseGetQuery(ctx, entity).
+			Where("sf.id = ?", req.ID).
+			Where("sf.shipment_id = ?", req.ShipmentID).
+			Where("sf.organization_id = ?", req.TenantInfo.OrgID).
+			Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Service failure")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) baseGetQuery(
@@ -336,22 +340,24 @@ func (r *repository) FindUnresolvedByStop(
 	ctx context.Context,
 	req *repositories.ServiceFailureActiveStopRequest,
 ) (*servicefailure.ServiceFailure, error) {
-	entity := new(servicefailure.ServiceFailure)
-	err := r.baseGetQuery(ctx, entity).
-		Where("sf.organization_id = ?", req.TenantInfo.OrgID).
-		Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("sf.shipment_id = ?", req.ShipmentID).
-		Where("sf.shipment_move_id = ?", req.ShipmentMoveID).
-		Where("sf.stop_id = ?", req.StopID).
-		Where("sf.type = ?", req.Type).
-		Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
-		Limit(1).
-		Scan(ctx)
-	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Service failure")
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*servicefailure.ServiceFailure, error) {
+		entity := new(servicefailure.ServiceFailure)
+		err := r.baseGetQuery(ctx, entity).
+			Where("sf.organization_id = ?", req.TenantInfo.OrgID).
+			Where("sf.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("sf.shipment_id = ?", req.ShipmentID).
+			Where("sf.shipment_move_id = ?", req.ShipmentMoveID).
+			Where("sf.stop_id = ?", req.StopID).
+			Where("sf.type = ?", req.Type).
+			Where("sf.status IN (?)", bun.List(servicefailure.UnresolvedStatuses())).
+			Limit(1).
+			Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Service failure")
+		}
 
-	return entity, nil
+		return entity, nil
+	})
 }
 
 func (r *repository) ListUnresolvedByShipment(

@@ -1,6 +1,7 @@
 package reportrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -171,6 +172,7 @@ func (r *runRepository) ListStale(
 	ctx context.Context,
 	req *repositories.ListStaleReportRunsRequest,
 ) ([]*report.ReportRun, error) {
+	ctx = dbscope.WithSystem(ctx, "list stalled report runs across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
 		cols := buncolgen.ReportRunColumns
 
@@ -199,6 +201,7 @@ func (r *runRepository) ListExpired(
 	ctx context.Context,
 	req *repositories.ListExpiredReportRunsRequest,
 ) ([]*report.ReportRun, error) {
+	ctx = dbscope.WithSystem(ctx, "list expired report artifacts across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
 		cols := buncolgen.ReportRunColumns
 

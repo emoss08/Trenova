@@ -73,34 +73,36 @@ func (r *repository) RotaWorkers(
 	ctx context.Context,
 	req *repositories.RotaQuery,
 ) ([]repositories.RotaWorkerRow, error) {
-	rows := make([]repositories.RotaWorkerRow, 0, 32)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.RotaWorkerRow, error) {
+		rows := make([]repositories.RotaWorkerRow, 0, 32)
 
-	if err := r.rosterScope(ctx, req).
-		Join("LEFT JOIN fleet_codes AS fc").
-		JoinOn("fc.id = wrk.fleet_code_id").
-		JoinOn("fc.organization_id = wrk.organization_id").
-		JoinOn("fc.business_unit_id = wrk.business_unit_id").
-		Join("LEFT JOIN worker_shift_assignments AS wsa").
-		JoinOn("wsa.worker_id = wrk.id").
-		JoinOn("wsa.organization_id = wrk.organization_id").
-		JoinOn("wsa.business_unit_id = wrk.business_unit_id").
-		JoinOn("wsa.effective_from <= ?", req.WeekEnd).
-		JoinOn("(wsa.effective_to IS NULL OR wsa.effective_to >= ?)", req.WeekStart).
-		ColumnExpr("wrk.id AS worker_id").
-		ColumnExpr("wrk.first_name AS first_name").
-		ColumnExpr("wrk.last_name AS last_name").
-		ColumnExpr("COALESCE(fc.code, '') AS fleet_code").
-		ColumnExpr("COALESCE(fc.color, '') AS fleet_color").
-		ColumnExpr("COALESCE(wsa.shift_template_id, '') AS shift_template_id").
-		ColumnExpr("COALESCE(wsa.cycle_offset_weeks, 0) AS cycle_offset_weeks").
-		OrderExpr("wrk.last_name, wrk.first_name").
-		Limit(limitOr(req.Limit, defaultRotaPageSize)).
-		Scan(ctx, &rows); err != nil {
-		r.l.Error("failed to read rota workers", zap.Error(err))
-		return nil, fmt.Errorf("read rota workers: %w", err)
-	}
+		if err := r.rosterScope(ctx, req).
+			Join("LEFT JOIN fleet_codes AS fc").
+			JoinOn("fc.id = wrk.fleet_code_id").
+			JoinOn("fc.organization_id = wrk.organization_id").
+			JoinOn("fc.business_unit_id = wrk.business_unit_id").
+			Join("LEFT JOIN worker_shift_assignments AS wsa").
+			JoinOn("wsa.worker_id = wrk.id").
+			JoinOn("wsa.organization_id = wrk.organization_id").
+			JoinOn("wsa.business_unit_id = wrk.business_unit_id").
+			JoinOn("wsa.effective_from <= ?", req.WeekEnd).
+			JoinOn("(wsa.effective_to IS NULL OR wsa.effective_to >= ?)", req.WeekStart).
+			ColumnExpr("wrk.id AS worker_id").
+			ColumnExpr("wrk.first_name AS first_name").
+			ColumnExpr("wrk.last_name AS last_name").
+			ColumnExpr("COALESCE(fc.code, '') AS fleet_code").
+			ColumnExpr("COALESCE(fc.color, '') AS fleet_color").
+			ColumnExpr("COALESCE(wsa.shift_template_id, '') AS shift_template_id").
+			ColumnExpr("COALESCE(wsa.cycle_offset_weeks, 0) AS cycle_offset_weeks").
+			OrderExpr("wrk.last_name, wrk.first_name").
+			Limit(limitOr(req.Limit, defaultRotaPageSize)).
+			Scan(ctx, &rows); err != nil {
+			r.l.Error("failed to read rota workers", zap.Error(err))
+			return nil, fmt.Errorf("read rota workers: %w", err)
+		}
 
-	return rows, nil
+		return rows, nil
+	})
 }
 
 // RotaTimeOffRanges is the approved time off overlapping the week. Ranges

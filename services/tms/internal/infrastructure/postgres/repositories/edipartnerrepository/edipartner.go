@@ -1,6 +1,7 @@
 package edipartnerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -321,6 +322,7 @@ func (r *repository) GetReciprocalInternalPartner(
 	ctx context.Context,
 	req repositories.GetReciprocalInternalPartnerRequest,
 ) (*edi.EDIPartner, error) {
+	ctx = dbscope.WithSystem(ctx, "read the receiving organization's internal partner record for an internal tender")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
 		entity := new(edi.EDIPartner)
 		cols := buncolgen.EDIPartnerColumns
