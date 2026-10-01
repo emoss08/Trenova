@@ -3,10 +3,7 @@ package config
 import (
 	"encoding/base64"
 	"fmt"
-	"net"
-	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -108,19 +105,7 @@ func (c *Config) GetDSNForRole(role DatabaseRole) string {
 		return c.GetDSN(c.Database.Password)
 	}
 
-	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s?sslmode=%s",
-		url.QueryEscape(role.User),
-		url.QueryEscape(role.Password),
-		net.JoinHostPort(c.Database.Host, strconv.Itoa(c.Database.Port)),
-		c.Database.Name,
-		c.Database.SSLMode,
-	)
-
-	dsn += fmt.Sprintf("&application_name=%s", url.QueryEscape(c.App.Name))
-	dsn += "&dial_timeout=10s"
-
-	return dsn
+	return c.postgresDSN(role.User, role.Password)
 }
 
 func (c *Config) GetMigrationDSN() string {
