@@ -15,3 +15,11 @@ export function isMacPlatform(): boolean {
 export function formatShortcut(key: string, mac: boolean = isMacPlatform()): string {
   return mac ? `⌘${key}` : `Ctrl+${key}`;
 }
+
+/**
+ * The label for an Alt (Option) shortcut, spelled the way the person's
+ * platform spells it: "⌥L" on a Mac, "Alt+L" elsewhere.
+ */
+export function formatAltShortcut(key: string, mac: boolean = isMacPlatform()): string {
+  return mac ? `⌥${key}` : `Alt+${key}`;
+}

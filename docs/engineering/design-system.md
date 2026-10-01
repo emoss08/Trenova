@@ -758,15 +758,26 @@ reply never changes its words for no reason. The words change when the work does
 change rises into place; a step joins the list above when it lands, as a check on the confirm
 spring. Nothing else moves: no shimmer on "Thinking", no spinner on a card.
 
-**Decisions and their outcomes are one card that changes.** A proposal or a plan waiting on
-someone is the artifact chrome in miniature — the kind's mark in a sunken well, the title
-in semibold, the state as a phase badge, the buttons under a hairline. Decided, it becomes
-a receipt of what came of it in place: the outcome line rises, the mark settles, and
-"approved" and "done" stay two facts. A write the agent may make on its own (a report saved
-to the person's own list) is recorded at the `AutoExecute` tier and reads "Done on its own",
-never as approved or waiting. The note that starts the turn after a decision is drawn as a
-decision between hairlines, first line only, whatever else the message carries: the lines
-after it are instructions to the agent.
+**A waiting decision takes the composer's place.** While a conversation has a proposal or a
+plan waiting on the person, the approval box stands in the composer's floating slot
+(`FloatingSlot`), on the Desk and in the floating panel alike: a `ui-lift` surface with a
+`ring-1 ring-foreground/10` hairline, the kind's mark in a sunken well, the title in
+semibold, "1 of N" when more wait, the preview, and the answers under a hairline. Approve is
+the ink button; Reject is outline; Modify, "Tell the agent instead" and "Decide later" are
+ghost. The note to the agent is a `Textarea`, so it spends `ui-field`. The keys are shown
+as `Kbd` beside the buttons they mirror (⌘/Ctrl+Enter approves, Esc opens the note, Alt+L
+decides later; Enter alone never approves) and are left out in the narrow panel. Decided
+later, the box folds into a `warning-subtle` pill above the composer that says how many
+wait and reopens it. One decision at a time, the oldest first.
+
+**The transcript keeps a line, not a card.** Each proposal or plan is one line in the
+conversation — "Proposed: … · Approved by you 8:52 PM", "Waiting — decide below" — with
+the outcome's mark, opening onto the preview and what came of it, read-only. "Approved"
+and "done" stay two facts on that line. A write the agent may make on its own (a report
+saved to the person's own list) is recorded at the `AutoExecute` tier and reads "Done on
+its own", never as approved or waiting. The note that starts the turn after a decision is
+drawn as a decision between hairlines, first line only, whatever else the message carries:
+the lines after it are instructions to the agent.
 
 **Decisions are a queue with keys.** A row says who proposed what in one sentence; the
 detail beside it says why and what it would change. `j`/`k` walk the rows, `x` marks one

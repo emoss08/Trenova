@@ -45,9 +45,11 @@ const (
 	maxArtifactTitleRunes = 120
 	minPreviewRows        = 1
 
-	payloadProposalID = "proposalId"
-	payloadToolName   = "toolName"
-	payloadRationale  = "rationale"
+	payloadProposalID  = "proposalId"
+	payloadProposalIDs = "proposalIds"
+	payloadPlanID      = "planId"
+	payloadToolName    = "toolName"
+	payloadRationale   = "rationale"
 )
 
 // draftSpec names how an outbound message proposal reads as a draft: which
@@ -146,6 +148,9 @@ func (r *artifactRecorder) observe(
 	if artifact == nil {
 		return nil, nil
 	}
+	if artifact.Kind == assistantartifact.KindEntityCard && len(observation.Earlier) > 0 {
+		return r.bunch(&observation, artifact)
+	}
 
 	saved, err := r.save(artifact)
 	if err != nil {
@@ -194,7 +199,12 @@ func (r *artifactRecorder) adopt(artifacts []*assistantartifact.Artifact) {
 		return
 	}
 
+	retired := bunchedCalls(artifacts)
 	for _, artifact := range artifacts {
+		if _, gone := retired[artifact.SourceToolCallID]; gone &&
+			artifact.Kind == assistantartifact.KindEntityCard {
+			continue
+		}
 		r.remember(artifact)
 	}
 }
@@ -349,27 +359,135 @@ func (r *artifactRecorder) requestDecision(
 		return nil, errDecisionUnavailable
 	}
 
-	var proposal *agent.AgentProposal
+	artifact, err := requestedArtifact(callID, request, stored)
+	if err != nil {
+		return nil, err
+	}
+
+	saved, err := r.save(artifact)
+	if err != nil {
+		return nil, errDecisionNotShown
+	}
+
+	return shownArtifact(saved), nil
+}
+
+func requestedArtifact(
+	callID string,
+	request services.DecisionRequest,
+	stored []*agent.AgentProposal,
+) (*assistantartifact.Artifact, error) {
+	byID := make(map[pulid.ID]*agent.AgentProposal, len(stored))
 	for _, candidate := range stored {
-		if candidate != nil && candidate.ID == request.ProposalID {
-			proposal = candidate
-			break
+		if candidate != nil {
+			byID[candidate.ID] = candidate
 		}
 	}
+
+	if request.PlanID.IsNotNil() {
+		return planDecisionArtifact(callID, request.PlanID, stored)
+	}
+	if len(request.ProposalIDs) > 1 {
+		return bunchDecisionArtifact(callID, request.ProposalIDs, byID)
+	}
+
+	proposal, err := pendingByID(byID, request.ProposalID)
+	if err != nil {
+		return nil, err
+	}
+
+	return decisionRequestArtifact(callID, proposal), nil
+}
+
+func pendingByID(
+	byID map[pulid.ID]*agent.AgentProposal,
+	id pulid.ID,
+) (*agent.AgentProposal, error) {
+	proposal, ok := byID[id]
 	switch {
-	case proposal == nil:
+	case !ok:
 		return nil, errUnknownProposal
 	case proposal.Status != agent.ProposalStatusPending:
 		return nil, fmt.Errorf("%w: it is %s", errProposalDecided,
 			strings.ToLower(string(proposal.Status)))
 	}
 
-	saved, err := r.save(decisionRequestArtifact(callID, proposal))
-	if err != nil {
-		return nil, errDecisionNotShown
+	return proposal, nil
+}
+
+func planDecisionArtifact(
+	callID string,
+	planID pulid.ID,
+	stored []*agent.AgentProposal,
+) (*assistantartifact.Artifact, error) {
+	steps := make([]*agent.AgentProposal, 0, len(stored))
+	for _, proposal := range stored {
+		if proposal != nil && proposal.PlanID != nil && *proposal.PlanID == planID &&
+			proposal.Status == agent.ProposalStatusPending {
+			steps = append(steps, proposal)
+		}
+	}
+	if len(steps) == 0 {
+		return nil, errUnknownPlan
+	}
+	slices.SortStableFunc(steps, func(a, b *agent.AgentProposal) int {
+		return cmp.Compare(a.PlanStep, b.PlanStep)
+	})
+
+	artifact := decisionRequestArtifact(callID, steps[0])
+	artifact.PlanID = planID
+	artifact.Title = artifactTitle(fmt.Sprintf("Plan: %s", countChanges(len(steps))))
+	artifact.Payload[payloadPlanID] = planID.String()
+	artifact.Payload[payloadProposalIDs] = proposalIDStrings(steps)
+	artifact.Payload[payloadToolName] = agent.PlanToolName
+
+	return artifact, nil
+}
+
+func bunchDecisionArtifact(
+	callID string,
+	ids []pulid.ID,
+	byID map[pulid.ID]*agent.AgentProposal,
+) (*assistantartifact.Artifact, error) {
+	proposals := make([]*agent.AgentProposal, 0, len(ids))
+	for _, id := range ids {
+		proposal, err := pendingByID(byID, id)
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case proposal.PlanID != nil:
+			return nil, errProposalInPlan
+		case len(proposals) > 0 && proposal.ToolName != proposals[0].ToolName:
+			return nil, errMixedTools
+		}
+		proposals = append(proposals, proposal)
 	}
 
-	return shownArtifact(saved), nil
+	artifact := decisionRequestArtifact(callID, proposals[0])
+	artifact.Title = artifactTitle(fmt.Sprintf("%s (%d)",
+		stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(proposals[0].ToolName)),
+		len(proposals)))
+	artifact.Payload[payloadProposalIDs] = proposalIDStrings(proposals)
+
+	return artifact, nil
+}
+
+func proposalIDStrings(proposals []*agent.AgentProposal) []string {
+	ids := make([]string, 0, len(proposals))
+	for _, proposal := range proposals {
+		ids = append(ids, proposal.ID.String())
+	}
+
+	return ids
+}
+
+func countChanges(n int) string {
+	if n == 1 {
+		return "1 change"
+	}
+
+	return fmt.Sprintf("%d changes", n)
 }
 
 func decisionRequestArtifact(
@@ -403,6 +521,11 @@ var (
 	errUnknownProposal     = errors.New("there is no proposal with that id in this conversation")
 	errProposalDecided     = errors.New("that proposal is no longer waiting on the person")
 	errDecisionNotShown    = errors.New("its card could not be saved")
+	errUnknownPlan         = errors.New(
+		"there is no plan with that id waiting in this conversation",
+	)
+	errProposalInPlan = errors.New("one of them is a step of a plan; ask with its planId")
+	errMixedTools     = errors.New("proposals of different tools cannot share one card")
 )
 
 var (
@@ -449,6 +572,8 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return previewArtifact(observation.Call.ID, result)
 	case name == toolRunReport || name == toolGetReportRun:
 		return runArtifact(observation.Call.ID, result)
+	case strings.HasPrefix(name, getToolPrefix) && isRowSet(result):
+		return tableArtifact(observation.Call.ID, name, result)
 	case strings.HasPrefix(name, getToolPrefix):
 		return entityCardArtifact(observation.Call.ID, name, document)
 	case name == toolComposeView:
@@ -466,6 +591,12 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 	default:
 		return nil
 	}
+}
+
+func isRowSet(result map[string]any) bool {
+	_, rows := result["items"].([]any)
+
+	return rows && len(stringsOf(result["columns"])) > 0
 }
 
 // tableArtifact views a list or search result as the table it already is.
@@ -494,7 +625,10 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 		return nil
 	}
 
-	entity := strings.TrimPrefix(strings.TrimPrefix(toolName, listToolPrefix), searchToolPrefix)
+	entity := strings.TrimPrefix(
+		strings.TrimPrefix(strings.TrimPrefix(toolName, listToolPrefix), searchToolPrefix),
+		getToolPrefix,
+	)
 	projection := projectTable(entity, declared, rows)
 	if len(projection.columns) == 0 {
 		return nil
@@ -733,6 +867,9 @@ func runDiffTitle(result map[string]any) string {
 
 // stringsOf reads a JSON array of strings, dropping anything that is not one.
 func stringsOf(value any) []string {
+	if typed, isStrings := value.([]string); isStrings {
+		return slices.DeleteFunc(slices.Clone(typed), func(text string) bool { return text == "" })
+	}
 	raw, ok := value.([]any)
 	if !ok {
 		return nil
@@ -848,9 +985,11 @@ func entityCardArtifact(
 
 	entity := strings.TrimPrefix(toolName, getToolPrefix)
 	payload := map[string]any{
-		"display": assistantartifact.DisplayVersion,
-		"entity":  entity,
-		"fields":  projectRecord(result, document.keyOrder()),
+		"display":       assistantartifact.DisplayVersion,
+		payloadEntity:   entity,
+		payloadFields:   projectRecord(result, document.keyOrder()),
+		payloadTool:     toolName,
+		payloadRecordID: typeutils.StringOfTrimmed(result["id"]),
 	}
 	// Where the record opens, from the same registry the app's own links
 	// use, so the card leads to the record rather than only describing it.

@@ -152,24 +152,30 @@ type AssistantProposal struct {
 	// proposal it is and whose trust a decision on it teaches.
 	AgentID   pulid.ID `json:"agentId,omitempty"`
 	AgentName string   `json:"agentName,omitempty"`
+
+	CreatedAt       int64    `json:"createdAt"`
+	DecidedAt       *int64   `json:"decidedAt"`
+	DecidedByUserID pulid.ID `json:"decidedByUserId"`
+	DecisionNote    string   `json:"decisionNote"`
 }
 
 // AssistantPlan is several of a turn's proposals as one decision, as the
 // client shows it: approve or reject all of them, in order.
 type AssistantPlan struct {
-	ID             pulid.ID         `json:"id"`
-	RunID          pulid.ID         `json:"runId"`
-	Title          string           `json:"title"`
-	Summary        string           `json:"summary"`
-	Status         agent.PlanStatus `json:"status"`
-	StepCount      int              `json:"stepCount"`
-	CompletedSteps int              `json:"completedSteps"`
-	FailedStep     *int             `json:"failedStep"`
-	FailureError   string           `json:"failureError"`
-	DecidedAt      *int64           `json:"decidedAt"`
-	ExpiresAt      int64            `json:"expiresAt"`
-	Hold           *ProposalHold    `json:"hold"`
-	CreatedAt      int64            `json:"createdAt"`
+	ID              pulid.ID         `json:"id"`
+	RunID           pulid.ID         `json:"runId"`
+	Title           string           `json:"title"`
+	Summary         string           `json:"summary"`
+	Status          agent.PlanStatus `json:"status"`
+	StepCount       int              `json:"stepCount"`
+	CompletedSteps  int              `json:"completedSteps"`
+	FailedStep      *int             `json:"failedStep"`
+	FailureError    string           `json:"failureError"`
+	DecidedAt       *int64           `json:"decidedAt"`
+	DecidedByUserID pulid.ID         `json:"decidedByUserId"`
+	ExpiresAt       int64            `json:"expiresAt"`
+	Hold            *ProposalHold    `json:"hold"`
+	CreatedAt       int64            `json:"createdAt"`
 	// AgentID and AgentName are the agent whose proposals the plan groups.
 	AgentID   pulid.ID `json:"agentId,omitempty"`
 	AgentName string   `json:"agentName,omitempty"`

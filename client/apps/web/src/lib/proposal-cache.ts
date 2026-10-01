@@ -1,5 +1,10 @@
 import { queries } from "@/lib/queries";
-import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
+import type {
+  AssistantPlan,
+  AssistantProposal,
+  PlanDecision,
+  ProposalDecision,
+} from "@/types/assistant";
 import type { QueryClient } from "@tanstack/react-query";
 
 /*
@@ -110,5 +115,27 @@ export function markProposalDecided(
       data === undefined
         ? data
         : { ...data, results: applyDecision(data.results, proposalId, decision) },
+  );
+}
+
+/**
+ * Writes a plan's decision into every cached list of plans, so the approval
+ * box moves on the moment the server accepts it rather than when a refetch
+ * comes back. The invalidation still runs and brings the steps' outcomes.
+ */
+export function markPlanDecided(queryClient: QueryClient, planId: string, decision: PlanDecision) {
+  queryClient.setQueriesData<{ results: AssistantPlan[] }>(
+    { queryKey: scopeOf(queries.assistant.plans) },
+    (data) =>
+      data === undefined
+        ? data
+        : {
+            ...data,
+            results: data.results.map((plan) =>
+              plan.id === planId
+                ? { ...plan, status: decision === "Accepted" ? "Approved" : "Rejected" }
+                : plan,
+            ),
+          },
   );
 }

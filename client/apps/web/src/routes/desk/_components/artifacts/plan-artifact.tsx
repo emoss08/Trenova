@@ -1,4 +1,4 @@
-import { PlanCard } from "@/components/assistant/plan-card";
+import { PlanRecord } from "@/components/assistant/decision-record";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import type { AssistantArtifact } from "@/types/assistant";
@@ -8,8 +8,9 @@ import { useMemo } from "react";
 import { planFrom } from "./artifact-payloads";
 
 /**
- * A plan as a checklist. The card is the plan's own, read from the plan and
- * its steps, so a step that ran ticks here the moment it ran.
+ * A plan as a checklist: the plan's own record, read from the plan and its
+ * steps, so a step that ran ticks here the moment it ran. It is decided in
+ * the approval box under the conversation, never here.
  */
 export function PlanArtifact({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
@@ -17,7 +18,8 @@ export function PlanArtifact({ artifact }: { artifact: AssistantArtifact }) {
   const plansQuery = useQuery(queries.assistant.plans(artifact.threadId));
   const proposalsQuery = useQuery(queries.assistant.proposals(artifact.threadId));
 
-  const plan = plansQuery.data?.results.find((candidate) => candidate.id === artifact.planId) ?? null;
+  const plan =
+    plansQuery.data?.results.find((candidate) => candidate.id === artifact.planId) ?? null;
   const steps = useMemo(
     () =>
       (proposalsQuery.data?.results ?? [])
@@ -34,7 +36,7 @@ export function PlanArtifact({ artifact }: { artifact: AssistantArtifact }) {
       {plansQuery.isLoading || proposalsQuery.isLoading ? (
         <Skeleton className="h-32" />
       ) : plan ? (
-        <PlanCard plan={plan} steps={steps} threadId={artifact.threadId} />
+        <PlanRecord plan={plan} steps={steps} defaultOpen />
       ) : (
         <ol className="flex flex-col gap-1.5 text-sm">
           {summary.steps.map((step) => (

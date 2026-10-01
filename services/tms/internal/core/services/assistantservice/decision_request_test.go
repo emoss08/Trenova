@@ -142,3 +142,82 @@ func TestDecisionStatus_FollowsTheProposal(t *testing.T) {
 	assert.Equal(t, assistantartifact.StatusReady, decisionStatus(agent.ProposalStatusExecuted))
 	assert.Equal(t, assistantartifact.StatusFailed, decisionStatus(agent.ProposalStatusRejected))
 }
+
+func requestedMany(request serviceports.DecisionRequest) serviceports.ToolObservation {
+	return serviceports.ToolObservation{
+		Call: serviceports.ToolCall{ID: "call_decide", Name: "request_decision"},
+		Data: request,
+	}
+}
+
+func TestRequestDecision_KeepsOneCardForAWaitingPlan(t *testing.T) {
+	t.Parallel()
+
+	planID := pulid.MustNew("apl_")
+	first, second := waitingProposal(agent.ProposalStatusPending),
+		waitingProposal(agent.ProposalStatusPending)
+	first.PlanID, second.PlanID = &planID, &planID
+	first.PlanStep, second.PlanStep = 2, 1
+	fixture := newDecisionFixture(t, first, second)
+
+	shown, err := fixture.recorder.observe(requestedMany(serviceports.DecisionRequest{
+		PlanID: planID,
+	}))
+	require.NoError(t, err)
+	require.NotNil(t, shown)
+
+	require.Len(t, fixture.artifacts.upserts, 1)
+	kept := fixture.artifacts.upserts[0]
+	assert.Equal(t, assistantartifact.KindDecisionRequest, kept.Kind)
+	assert.Equal(t, planID, kept.PlanID)
+	assert.Equal(t, second.ID, kept.ProposalID, "the card is anchored on the plan's first step")
+	assert.Equal(t, planID.String(), kept.Payload["planId"])
+	assert.Equal(t, []string{second.ID.String(), first.ID.String()}, kept.Payload["proposalIds"])
+	assert.Equal(t, "Plan: 2 changes", kept.Title)
+}
+
+func TestRequestDecision_KeepsOneCardForSeveralProposalsOfOneTool(t *testing.T) {
+	t.Parallel()
+
+	first, second := waitingProposal(agent.ProposalStatusPending),
+		waitingProposal(agent.ProposalStatusPending)
+	fixture := newDecisionFixture(t, first, second)
+
+	_, err := fixture.recorder.observe(requestedMany(serviceports.DecisionRequest{
+		ProposalID:  first.ID,
+		ProposalIDs: []pulid.ID{first.ID, second.ID},
+	}))
+	require.NoError(t, err)
+
+	require.Len(t, fixture.artifacts.upserts, 1)
+	kept := fixture.artifacts.upserts[0]
+	assert.Equal(t, first.ID, kept.ProposalID)
+	assert.Equal(t, []string{first.ID.String(), second.ID.String()}, kept.Payload["proposalIds"])
+	assert.Equal(t, "Create shipment (2)", kept.Title)
+}
+
+func TestRequestDecision_RefusesABunchThatCannotShareACard(t *testing.T) {
+	t.Parallel()
+
+	first, other := waitingProposal(agent.ProposalStatusPending),
+		waitingProposal(agent.ProposalStatusPending)
+	other.ToolName = "post_invoice"
+	decided := waitingProposal(agent.ProposalStatusExecuted)
+	fixture := newDecisionFixture(t, first, other, decided)
+
+	_, err := fixture.recorder.observe(requestedMany(serviceports.DecisionRequest{
+		ProposalID: first.ID, ProposalIDs: []pulid.ID{first.ID, other.ID},
+	}))
+	require.ErrorIs(t, err, errMixedTools)
+
+	_, err = fixture.recorder.observe(requestedMany(serviceports.DecisionRequest{
+		ProposalID: first.ID, ProposalIDs: []pulid.ID{first.ID, decided.ID},
+	}))
+	require.ErrorIs(t, err, errProposalDecided)
+
+	_, err = fixture.recorder.observe(requestedMany(serviceports.DecisionRequest{
+		PlanID: pulid.MustNew("apl_"),
+	}))
+	require.ErrorIs(t, err, errUnknownPlan)
+	assert.Empty(t, fixture.artifacts.upserts)
+}

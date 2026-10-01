@@ -3,6 +3,7 @@ package agentdecisionqueueservice
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -84,6 +85,7 @@ type stubDecider struct {
 	services.AgentDecisionService
 
 	decided []pulid.ID
+	notes   []string
 	digests map[pulid.ID]string
 	fail    map[pulid.ID]error
 	execErr map[pulid.ID]error
@@ -95,6 +97,7 @@ func (d *stubDecider) DecideWithOutcome(
 	_ *services.RequestActor,
 ) (*services.DecisionOutcome, error) {
 	d.decided = append(d.decided, req.ProposalID)
+	d.notes = append(d.notes, req.Note)
 	if d.digests != nil {
 		d.digests[req.ProposalID] = req.PreviewDigest
 	}
@@ -327,6 +330,15 @@ func TestValidateBatch(t *testing.T) {
 			services.DecideAgentProposalsRequest{ProposalIDs: []pulid.ID{id}, Decision: "Maybe"},
 			"invalid",
 		},
+		"note past the bound": {
+			services.DecideAgentProposalsRequest{
+				ProposalIDs: []pulid.ID{id},
+				Decision:    agent.DecisionRejected,
+				ReasonCode:  "rejected_in_conversation",
+				Note:        strings.Repeat("x", agent.MaxDecisionNoteLength+1),
+			},
+			"at most",
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -431,4 +443,29 @@ func TestListPending_IsEmptyUnderOrganizationShadow(t *testing.T) {
 	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{}, nil)
 	require.NoError(t, err)
 	assert.Zero(t, summary.Total)
+}
+
+func TestDecideMany_RecordsTheNoteOnEveryProposal(t *testing.T) {
+	t.Parallel()
+
+	first := proposal("post_invoice")
+	second := proposal("post_invoice")
+	decider := &stubDecider{}
+	svc := newService(
+		&stubProposals{byID: map[pulid.ID]*agent.AgentProposal{first.ID: first, second.ID: second}},
+		decider,
+	)
+
+	_, err := svc.DecideMany(t.Context(), &services.DecideAgentProposalsRequest{
+		ProposalIDs: []pulid.ID{first.ID, second.ID},
+		Decision:    agent.DecisionRejected,
+		ReasonCode:  "rejected_in_conversation",
+		Note:        "These customers are on credit hold.",
+	}, actor())
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{
+		"These customers are on credit hold.",
+		"These customers are on credit hold.",
+	}, decider.notes)
 }

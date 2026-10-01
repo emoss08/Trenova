@@ -1520,7 +1520,7 @@
     },
     {
       "name": "approve_billing_queue_item",
-      "description": "Propose approving a billing queue item you have reviewed and found clean. Clean means charges that match the agreement, the documents the customer requires, and no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft.",
+      "description": "Propose approving a billing queue item you have reviewed and found clean. Clean means charges that match the agreement, the documents the customer requires, and no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft. For more than one item, propose approve_billing_queue_items once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -1560,6 +1560,56 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Approving creates the invoice a customer is billed on, so only a person approves; the agent proposes it with what it checked."
+      }
+    },
+    {
+      "name": "approve_billing_queue_items",
+      "description": "Propose approving several billing queue items you have reviewed and found clean, in one proposal the person approves together. Use it instead of approve_billing_queue_item whenever more than one item is ready. Each item is approved exactly as approve_billing_queue_item would: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; a person always decides and may untick items. An item the queue would refuse is reported, not approved, and the rest still go. Say in reviewNotes what you checked. Up to 50 items.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemIds": {
+            "description": "The billing queue items, by id from list_billing_queue_items or get_billing_queue_item. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "billing_queue"
+          },
+          "reviewNotes": {
+            "description": "What you checked, kept on each item as its review notes.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Approving creates the invoices customers are billed on, so only a person approves, item by item exactly as approve_billing_queue_item, and may untick any of them."
       }
     },
     {
@@ -11422,7 +11472,7 @@
     },
     {
       "name": "get_invoice",
-      "description": "Retrieve one invoice by id, with its line items, totals, payment and dispute state. Each line's id is what an invoice adjustment names. Use list_invoices first when you have a number or are looking for what is unpaid. Amounts and the memo are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "description": "Retrieve one invoice by id, with its line items, totals, payment and dispute state. Each line's id is what an invoice adjustment names. Use list_invoices first when you have a number or are looking for what is unpaid, and get_invoices to check several at once. Amounts and the memo are left out, and named in withheldByAccess, when your data access does not reach them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -11515,6 +11565,49 @@
       "policy": {
         "kind": "query",
         "resource": "invoice_run",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_invoices",
+      "description": "Retrieve several invoices by id in one call, each with its status, totals, payment state and line items. Use it instead of calling get_invoice once per invoice, for example to check a batch of drafts before posting them. Up to 50; an id that is not an invoice of this organization is named in the note. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceIds": {
+            "description": "The invoices' ids, from list_invoices, list_ar_open_items or the page you are on.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -13581,7 +13674,7 @@
     },
     {
       "name": "list_billing_queue_items",
-      "description": "List billing queue items, the shipments waiting on a biller. Open one with get_billing_queue_item before proposing a decision; Posted items appear only when status is Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview await a biller; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; createdAt (date): when it was queued; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List billing queue items, the shipments waiting on a biller. Open one with get_billing_queue_item before deciding it; Posted items need status Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview await a biller; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; id (text): in with several ids reads them together; createdAt (date): when it was queued; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13600,6 +13693,7 @@
                     "exceptionReasonCode",
                     "assignedBillerId",
                     "billToCustomerId",
+                    "id",
                     "number",
                     "shipment.proNumber",
                     "createdAt",
@@ -17679,7 +17773,7 @@
     },
     {
       "name": "list_invoices",
-      "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. This answers receivables questions — what is unpaid, what is overdue, what is in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; id (text): in with several ids reads them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -17697,6 +17791,7 @@
                     "settlementStatus",
                     "disputeStatus",
                     "billType",
+                    "id",
                     "number",
                     "billToName",
                     "shipmentProNumber",
@@ -22610,7 +22705,7 @@
     },
     {
       "name": "post_invoice",
-      "description": "Propose posting a draft invoice, usually the one approve_billing_queue_item just made. Posting books it to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides; propose it once the draft's lines and totals are right.",
+      "description": "Propose posting a draft invoice, usually the one approve_billing_queue_item just made. Posting books it to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides; propose it once the draft's lines and totals are right. For more than one invoice, propose post_invoices once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22644,6 +22739,51 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting."
+      }
+    },
+    {
+      "name": "post_invoices",
+      "description": "Propose posting several draft invoices in one proposal the person approves together. Use it instead of post_invoice whenever more than one invoice is ready, rather than one proposal per invoice. Each invoice is posted exactly as post_invoice would: booked to the ledger, its shipments marked invoiced, its billing queue item settled and queued for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides and may untick invoices. An invoice posting would refuse is reported, not posted, and the rest still go. Up to 50 invoices.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceIds": {
+            "description": "The invoices, by id from list_invoices, get_invoices or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "invoice"
+          }
+        },
+        "required": [
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books several receivables to the ledger at once and queues each for the accounting system and the customer's EDI; only a person posts, invoice by invoice exactly as post_invoice, and may untick any of them."
       }
     },
     {
@@ -26267,7 +26407,7 @@
         "idempotent": false,
         "readsExternal": "never",
         "carriesTaint": false,
-        "rationale": "Shows the person, in their own conversation, the card of a proposal already waiting on them; it decides nothing and changes no record."
+        "rationale": "Opens, in the person's own conversation, the approval box on a proposal already waiting on them; it decides nothing and changes no record."
       }
     },
     {
@@ -28933,7 +29073,7 @@
     },
     {
       "name": "send_invoice",
-      "description": "Propose emailing an invoice to the customer. The recipients, subject, wording and attachments come from the organization and the customer's billing profile; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically.",
+      "description": "Propose emailing an invoice to the customer. The recipients, subject, wording and attachments come from the organization and the customer's billing profile; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically. For more than one invoice, propose send_invoices once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -29009,6 +29149,51 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Transmits the invoice to the customer's EDI trading partner, which cannot be called back; only a person sends it."
+      }
+    },
+    {
+      "name": "send_invoices",
+      "description": "Propose emailing several invoices to their customers in one proposal the person approves together. Use it instead of send_invoice whenever more than one invoice goes out. Each invoice goes exactly as send_invoice would send it: the recipients, subject, wording and attachments come from the organization and each customer's billing profile, and nothing is chosen by you. The person approving sees every email, may untick invoices, and is who sends them. An invoice that cannot go is reported, not sent, and the rest still go. Up to 50 invoices.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceIds": {
+            "description": "The invoices, by id from list_invoices, get_invoices or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "invoice"
+          }
+        },
+        "required": [
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "submit",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Emails several customers their invoices at once; only a person sends them, is named as who sent each, and sees every recipient before approving."
       }
     },
     {

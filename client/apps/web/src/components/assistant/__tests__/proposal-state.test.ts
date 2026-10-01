@@ -27,6 +27,10 @@ function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal
     planId: "",
     planStep: 0,
     fields: [],
+    createdAt: 0,
+    decidedAt: null,
+    decidedByUserId: "",
+    decisionNote: "",
     ...overrides,
   };
 }

@@ -2535,6 +2535,10 @@ type AgentDecision {
   Modifications carry tool-specific parameter overrides captured at decision time.
   """
   modifications: JSON
+  """
+  What the decider told the agent with the decision; empty when they said nothing.
+  """
+  note: String!
   organizationId: ID!
   """
   What the decider was shown of the write, filtered again for the reader. Absent for a rejection and for a decision recorded before previews were kept.
@@ -3199,6 +3203,10 @@ input AgentPlanDecisionInput {
   """Accepted runs every step in order; Rejected rejects them all."""
   decision: AgentDecisionType!
   """
+  What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision.
+  """
+  note: String
+  """
   The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded.
   """
   previewDigest: String
@@ -3516,6 +3524,10 @@ type AgentProposalConnection {
 input AgentProposalDecisionInput {
   decision: AgentDecisionType!
   modifications: JSON
+  """
+  What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions.
+  """
+  note: String
   """
   The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed.
   """
@@ -8677,6 +8689,10 @@ input DecideAgentProposalsInput {
   Accepted or Rejected. A change applies to one proposal, from its own card.
   """
   decision: AgentDecisionType!
+  """
+  What the decider tells the agent, recorded on each proposal's decision; at most 2000 characters.
+  """
+  note: String
   """
   The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed.
   """
@@ -15753,7 +15769,8 @@ type Mutation {
   """
   Decides a plan raised in one of the caller's own conversations, by an agent
   they may still use. Each step's write still runs only if the caller may
-  make it, and the first that fails stops the rest.
+  make it. Steps that each change a different record of one kind all run and
+  each reports its outcome; otherwise the first that fails stops the rest.
   """
   decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
   """
@@ -15761,6 +15778,15 @@ type Mutation {
   approved write still runs only if the caller may make it.
   """
   decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  """
+  Decides several proposals of one tool raised in the caller's own
+  conversations the same way, each as proposed, with the digest of the
+  preview shown for each. The batch is refused before anything runs when one
+  is not the caller's, it mixes tools, includes a plan's step or holds more
+  than 50; once it starts, every proposal is decided in turn, each write still
+  runs only if the caller may make it, and each outcome is reported.
+  """
+  decideMyProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
   deleteCaptureProfile(id: ID!): Boolean!

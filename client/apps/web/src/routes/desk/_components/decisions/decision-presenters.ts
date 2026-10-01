@@ -72,6 +72,10 @@ export function asAssistantProposal(node: PlanStepNode): AssistantProposal {
       choices: field.choices,
     })),
     modifications: (node.modifications as Record<string, unknown> | null) ?? null,
+    createdAt: 0,
+    decidedAt: null,
+    decidedByUserId: "",
+    decisionNote: "",
   };
 }
 

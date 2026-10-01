@@ -482,6 +482,9 @@ func TestTemplates_BillingAgentsHoldTheLifecycleTheyWork(t *testing.T) {
 		"assign_billing_queue_biller",
 		"post_invoice",
 		"send_invoice",
+		"approve_billing_queue_items",
+		"post_invoices",
+		"send_invoices",
 	}
 
 	assistant := agentdefinition.TemplateBillingAssistant.StarterTools()
