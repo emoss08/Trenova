@@ -10,6 +10,8 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
+const invoiceSendHeartbeatInterval = 10 * time.Second
+
 var autoPostInvoiceRetryPolicy = &temporal.RetryPolicy{
 	InitialInterval:    time.Second,
 	BackoffCoefficient: 2.0,

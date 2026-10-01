@@ -196,12 +196,14 @@ type InvoiceSendRequest struct {
 	InvoiceID  pulid.ID
 	TenantInfo pagination.TenantInfo
 	BaseURL    string
+	StartedAt  int64
 }
 
 type AutoSendInvoiceAfterPDFGenerationRequest struct {
 	InvoiceID  pulid.ID
 	TenantInfo pagination.TenantInfo
 	BaseURL    string
+	StartedAt  int64
 }
 
 type InvoiceSendPlan struct {
@@ -213,6 +215,7 @@ type InvoiceSendPlan struct {
 	Errors               []string               `json:"errors"`
 	Recipients           InvoiceSendRecipients  `json:"recipients"`
 	FromEmail            string                 `json:"fromEmail"`
+	FromEmailOrigin      string                 `json:"fromEmailOrigin,omitempty"`
 	Headers              map[string]string      `json:"headers"`
 	OpenTracking         bool                   `json:"openTracking"`
 	Subject              string                 `json:"subject"`

@@ -208,6 +208,7 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
 		BaseURL:    req.BaseURL,
+		StartedAt:  req.StartedAt,
 	}, actor)
 }
 

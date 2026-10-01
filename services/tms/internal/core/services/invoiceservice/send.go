@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -71,6 +73,7 @@ func (s *Service) PlanSend(
 	}
 	fromEmail, fromErr := resolveFromEmail(profile, deliveryProfile.Email)
 	headers := resolveDeliveryHeaders(fromEmail, deliveryProfile.Email)
+	senderNotice := describeInvoiceSender(profile, deliveryProfile.Customer, fromEmail)
 
 	plan := &servicesports.InvoiceSendPlan{
 		EDI:                s.ediPlanFor(ctx, entity, req.TenantInfo),
@@ -84,6 +87,7 @@ func (s *Service) PlanSend(
 		Errors:               make([]string, 0),
 		Recipients:           recipients,
 		FromEmail:            fromEmail,
+		FromEmailOrigin:      senderNotice.Origin,
 		Headers:              headers,
 		OpenTracking:         deliveryProfile.Email != nil && deliveryProfile.Email.ReadReceipt,
 		Subject:              wording.Subject.Value,
@@ -96,6 +100,9 @@ func (s *Service) PlanSend(
 	}
 	plan.Warnings = append(plan.Warnings, templateWarnings("subject", wording.Subject.Unknown)...)
 	plan.Warnings = append(plan.Warnings, templateWarnings("body", wording.Body.Unknown)...)
+	if senderNotice.Warning != "" {
+		plan.Warnings = append(plan.Warnings, senderNotice.Warning)
+	}
 	if fromErr != nil {
 		plan.Errors = append(plan.Errors, fromErr.Error())
 	}
@@ -185,6 +192,8 @@ func (s *Service) PlanSend(
 	return plan, nil
 }
 
+const sendInFlightTimeout = 15 * time.Minute
+
 func (s *Service) Send(
 	ctx context.Context,
 	req *servicesports.InvoiceSendRequest,
@@ -222,6 +231,9 @@ func (s *Service) Send(
 	}
 
 	now := timeutils.NowUnix()
+	if err = refuseSendInFlight(entity, now); err != nil {
+		return nil, err
+	}
 	previous := *entity
 	applySendSnapshot(entity, plan)
 	entity.SentByID = actorUserID(actor, req.TenantInfo)
@@ -295,6 +307,10 @@ func (s *Service) SendFromWorkflow(
 	}
 
 	now := timeutils.NowUnix()
+	startedAt := req.StartedAt
+	if startedAt <= 0 {
+		startedAt = now
+	}
 	previous := *entity
 	applySendSnapshot(entity, plan)
 	if _, err = s.repo.Update(ctx, entity); err != nil {
@@ -333,24 +349,25 @@ func (s *Service) SendFromWorkflow(
 		var sendErr error
 		if linkErr == nil && attachmentErr == nil {
 			message, sendErr = s.emailService.Send(ctx, &servicesports.SendEmailRequest{
-				TenantInfo:   req.TenantInfo,
-				ProfileID:    profile.ID,
-				Purpose:      email.PurposeBilling,
-				To:           plan.Recipients.To,
-				CC:           plan.Recipients.CC,
-				BCC:          plan.Recipients.BCC,
-				FromEmail:    plan.FromEmail,
-				Subject:      partSubject(plan.Subject, part.PartNumber, len(plan.Parts)),
-				HTML:         partHTML,
-				Text:         partBody,
-				Attachments:  emailAttachments,
-				Headers:      plan.Headers,
-				OpenTracking: plan.OpenTracking,
+				TenantInfo:      req.TenantInfo,
+				ProfileID:       profile.ID,
+				Purpose:         email.PurposeBilling,
+				To:              plan.Recipients.To,
+				CC:              plan.Recipients.CC,
+				BCC:             plan.Recipients.BCC,
+				FromEmail:       plan.FromEmail,
+				FromEmailOrigin: plan.FromEmailOrigin,
+				Subject:         partSubject(plan.Subject, part.PartNumber, len(plan.Parts)),
+				HTML:            partHTML,
+				Text:            partBody,
+				Attachments:     emailAttachments,
+				Headers:         plan.Headers,
+				OpenTracking:    plan.OpenTracking,
 				IdempotencyKey: fmt.Sprintf(
 					"invoice-%s-part-%d-%d",
 					entity.ID,
 					part.PartNumber,
-					now,
+					startedAt,
 				),
 			})
 		} else if attachmentErr != nil {
@@ -407,10 +424,10 @@ func (s *Service) SendFromWorkflow(
 		entity.SendStatus = invoice.SendStatusSending
 	} else if len(sendErrors) < len(plan.Parts) {
 		entity.SendStatus = invoice.SendStatusSending
-		entity.LastSendError = strings.Join(sendErrors, "; ")
+		entity.LastSendError = strings.Join(sliceutils.DedupeStrings(sendErrors), "; ")
 	} else {
 		entity.SendStatus = invoice.SendStatusFailed
-		entity.LastSendError = strings.Join(sendErrors, "; ")
+		entity.LastSendError = strings.Join(sliceutils.DedupeStrings(sendErrors), "; ")
 	}
 	entity.LastSendWarning = strings.Join(plan.Warnings, "; ")
 	updated, err := s.repo.Update(ctx, entity)
@@ -513,6 +530,20 @@ func (s *Service) markInvoiceSendFailed(
 // frozen copy would come back through the ad-hoc {number} engine rather than
 // html/template, losing the layout with it. What was actually sent is still
 // recoverable from the email message and the send attempts.
+func refuseSendInFlight(entity *invoice.Invoice, now int64) error {
+	if entity.SendStatus != invoice.SendStatusSending {
+		return nil
+	}
+	if now-entity.UpdatedAt >= int64(sendInFlightTimeout/time.Second) {
+		return nil
+	}
+	return errortypes.NewBusinessError(
+		"Invoice {0} is already being sent. Wait for that send to finish; if it has not finished within {1} minutes, you can send it again.",
+		entity.Number,
+		int(sendInFlightTimeout/time.Minute),
+	)
+}
+
 func applySendSnapshot(entity *invoice.Invoice, plan *servicesports.InvoiceSendPlan) {
 	entity.SendStatus = invoice.SendStatusSending
 	entity.LastSendError = ""

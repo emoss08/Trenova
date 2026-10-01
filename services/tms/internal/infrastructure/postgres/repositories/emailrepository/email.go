@@ -438,6 +438,22 @@ func (r *repository) GetMessageByProviderID(
 	})
 }
 
+func (r *repository) GetMessageByIdempotencyKey(
+	ctx context.Context,
+	req repositories.GetEmailMessageByIdempotencyKeyRequest,
+) (*email.Message, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*email.Message, error) {
+		entity := new(email.Message)
+		err := r.db.DBForContext(ctx).NewSelect().
+			Model(entity).
+			Where("em.organization_id = ?", req.TenantInfo.OrgID).
+			Where("em.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("em.idempotency_key = ?", req.IdempotencyKey).
+			Scan(ctx)
+		return entity, dberror.HandleNotFoundError(err, "EmailMessage")
+	})
+}
+
 func (r *repository) CreateAttachments(
 	ctx context.Context,
 	entities []*email.Attachment,

@@ -166,6 +166,57 @@ func resolveFromEmail(
 	return override, nil
 }
 
+type invoiceSenderNotice struct {
+	Origin  string
+	Warning string
+}
+
+func describeInvoiceSender(
+	profile *email.Profile,
+	cus *customer.Customer,
+	fromEmail string,
+) invoiceSenderNotice {
+	fromEmail = strings.TrimSpace(fromEmail)
+	if profile == nil || fromEmail == "" {
+		return invoiceSenderNotice{}
+	}
+	profileSender := strings.TrimSpace(profile.SenderEmail)
+	if strings.EqualFold(fromEmail, profileSender) {
+		return invoiceSenderNotice{}
+	}
+	customerName := invoiceCustomerLabel(cus)
+	notice := invoiceSenderNotice{
+		Origin: "the From address on the Email profile tab of customer " + customerName,
+	}
+	fromDomain := stringutils.EmailDomain(fromEmail)
+	if fromDomain == "" || fromDomain == stringutils.EmailDomain(profileSender) {
+		return notice
+	}
+	notice.Warning = fmt.Sprintf(
+		"Invoices to %s are sent from %s, the From address on the customer's Email profile tab, "+
+			"instead of the Billing email profile's sender %s. The email provider will refuse "+
+			"the send unless %s is verified with it.",
+		customerName,
+		fromEmail,
+		profileSender,
+		fromDomain,
+	)
+	return notice
+}
+
+func invoiceCustomerLabel(cus *customer.Customer) string {
+	if cus == nil {
+		return "on this invoice"
+	}
+	if name := strings.TrimSpace(cus.Name); name != "" {
+		return name
+	}
+	if code := strings.TrimSpace(cus.Code); code != "" {
+		return code
+	}
+	return "on this invoice"
+}
+
 func resolveDeliveryHeaders(
 	fromEmail string,
 	emailProfile *customer.CustomerEmailProfile,

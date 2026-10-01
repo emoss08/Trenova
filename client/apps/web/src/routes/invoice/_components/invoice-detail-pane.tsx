@@ -885,6 +885,9 @@ function getInvoiceSendDisabledReason(
   if (!invoice.pdfDocumentId) {
     return "Generate the invoice PDF before sending.";
   }
+  if (invoice.sendStatus === "Sending") {
+    return "This invoice is already being sent. Wait for that send to finish.";
+  }
   if (!sendPlan) {
     return "Send plan is unavailable.";
   }

@@ -270,6 +270,9 @@ func (s *Service) Send(
 	if multiErr := s.validator.ValidateSend(ctx, req); multiErr != nil {
 		return nil, multiErr
 	}
+	if existing, err := s.messageForIdempotencyKey(ctx, req); err != nil || existing != nil {
+		return existing, err
+	}
 	profile, err := s.resolveProfile(ctx, req)
 	if err != nil {
 		return nil, err
@@ -321,6 +324,27 @@ func (s *Service) Send(
 		return nil, err
 	}
 	return msg, nil
+}
+
+func (s *Service) messageForIdempotencyKey(
+	ctx context.Context,
+	req *services.SendEmailRequest,
+) (*email.Message, error) {
+	key := strings.TrimSpace(req.IdempotencyKey)
+	if key == "" {
+		return nil, nil
+	}
+	existing, err := s.repo.GetMessageByIdempotencyKey(
+		ctx,
+		repositories.GetEmailMessageByIdempotencyKeyRequest{
+			IdempotencyKey: key,
+			TenantInfo:     req.TenantInfo,
+		},
+	)
+	if errortypes.IsNotFoundError(err) {
+		return nil, nil
+	}
+	return existing, err
 }
 
 func (s *Service) TestSend(

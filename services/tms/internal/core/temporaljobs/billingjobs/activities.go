@@ -139,10 +139,14 @@ func (a *Activities) SendInvoiceEmailActivity(
 		UserID: payload.UserID,
 	}
 
+	stopHeartbeat := temporaltype.HeartbeatEvery(ctx, invoiceSendHeartbeatInterval)
+	defer stopHeartbeat()
+
 	result, err := a.invoiceService.SendFromWorkflow(ctx, &services.InvoiceSendRequest{
 		InvoiceID:  payload.InvoiceID,
 		TenantInfo: tenantInfo,
 		BaseURL:    payload.BaseURL,
+		StartedAt:  payload.Timestamp,
 	}, &services.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,
@@ -289,12 +293,15 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		)
 	}
 
+	stopHeartbeat := temporaltype.HeartbeatEvery(ctx, invoiceSendHeartbeatInterval)
+	defer stopHeartbeat()
 	if _, err = a.invoiceService.AutoSendInvoiceAfterPDFGeneration(
 		ctx,
 		&services.AutoSendInvoiceAfterPDFGenerationRequest{
 			InvoiceID:  payload.InvoiceID,
 			TenantInfo: tenantInfo,
 			BaseURL:    payload.BaseURL,
+			StartedAt:  payload.Timestamp,
 		},
 		&services.RequestActor{
 			PrincipalType:  payload.PrincipalType,

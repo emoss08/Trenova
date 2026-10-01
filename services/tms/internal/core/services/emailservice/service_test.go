@@ -2,6 +2,7 @@ package emailservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -332,4 +334,83 @@ func testEmailEvent(
 		Recipient:       "ops@example.com",
 		Raw:             map[string]any{},
 	}
+}
+
+func TestSendReturnsExistingMessageForRepeatedIdempotencyKey(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	existing := testEmailMessage(tenantInfo)
+	existing.IdempotencyKey = "invoice-inv_1-part-1-1700000000"
+
+	repo := mocks.NewMockEmailRepository(t)
+	repo.EXPECT().
+		GetMessageByIdempotencyKey(mock.Anything, repositories.GetEmailMessageByIdempotencyKeyRequest{
+			IdempotencyKey: existing.IdempotencyKey,
+			TenantInfo:     tenantInfo,
+		}).
+		Return(existing, nil).
+		Once()
+
+	svc := &Service{repo: repo, validator: NewValidator()}
+	msg, err := svc.Send(t.Context(), &services.SendEmailRequest{
+		TenantInfo:     tenantInfo,
+		Purpose:        email.PurposeBilling,
+		To:             []string{"billing@customer.example.com"},
+		Subject:        "Invoice INV-1",
+		Text:           "Attached.",
+		IdempotencyKey: existing.IdempotencyKey,
+	})
+
+	require.NoError(t, err)
+	require.Same(t, existing, msg)
+}
+
+type senderOriginRepo struct {
+	repositories.EmailRepository
+
+	profile *email.Profile
+}
+
+func (r *senderOriginRepo) GetProfile(
+	_ context.Context,
+	_ repositories.GetEmailEntityRequest,
+) (*email.Profile, error) {
+	if r.profile == nil {
+		return nil, errortypes.NewNotFoundError("EmailProfile not found")
+	}
+	return r.profile, nil
+}
+
+func TestDescribeSenderRejectionNamesWhereTheAddressIsSet(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	msg := testEmailMessage(tenantInfo)
+	msg.FromEmail = "mailbox@trenova.app"
+	svc := &Service{
+		repo: &senderOriginRepo{profile: &email.Profile{
+			Name:        "Billing",
+			SenderEmail: "mailbox@trenova.app",
+		}},
+		l: zap.NewNop(),
+	}
+
+	err := svc.describeSenderRejection(t.Context(), msg, "", &SenderRejectedError{
+		Provider:  email.ProviderResend,
+		Rejection: SenderDomainUnverified,
+	})
+	require.ErrorContains(t, err, "from mailbox@trenova.app")
+	require.ErrorContains(t, err, `the sender email of the "Billing" email profile`)
+
+	err = svc.describeSenderRejection(
+		t.Context(),
+		msg,
+		"the From address on the Email profile tab of customer ACME",
+		&SenderRejectedError{Provider: email.ProviderResend, Rejection: SenderDomainUnverified},
+	)
+	require.ErrorContains(t, err, "This address comes from the From address on the Email profile tab of customer ACME.")
+
+	plain := errors.New("network down")
+	require.Same(t, plain, svc.describeSenderRejection(t.Context(), msg, "", plain))
 }

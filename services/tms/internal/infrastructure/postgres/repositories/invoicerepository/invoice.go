@@ -2,6 +2,8 @@ package invoicerepository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -20,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -752,6 +755,14 @@ func (r *repository) CreateEmailAttempt(
 ) (*invoice.EmailAttempt, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.EmailAttempt, error) {
 		err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+			existingID, lookupErr := r.emailAttemptIDForMessage(txCtx, attempt)
+			if lookupErr != nil {
+				return lookupErr
+			}
+			if !existingID.IsNil() {
+				attempt.ID = existingID
+				return nil
+			}
 			if _, insertErr := r.db.DBForContext(txCtx).
 				NewInsert().
 				Model(attempt).
@@ -833,6 +844,33 @@ func (r *repository) ListEmailAttempts(
 			Total: total,
 		}, nil
 	})
+}
+
+func (r *repository) emailAttemptIDForMessage(
+	ctx context.Context,
+	attempt *invoice.EmailAttempt,
+) (pulid.ID, error) {
+	if attempt.EmailMessageID.IsNil() {
+		return pulid.Nil, nil
+	}
+	cols := buncolgen.EmailAttemptColumns
+	existing := new(invoice.EmailAttempt)
+	err := buncolgen.EmailAttemptScopeTenant(
+		r.db.DBForContext(ctx).NewSelect().Model(existing),
+		pagination.TenantInfo{OrgID: attempt.OrganizationID, BuID: attempt.BusinessUnitID},
+	).
+		ColumnExpr(cols.ID.Qualified()).
+		Where(cols.EmailMessageID.Eq(), attempt.EmailMessageID).
+		Where(cols.InvoiceID.Eq(), attempt.InvoiceID).
+		Limit(1).
+		Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return pulid.Nil, nil
+	}
+	if err != nil {
+		return pulid.Nil, fmt.Errorf("find invoice email attempt for message: %w", err)
+	}
+	return existing.ID, nil
 }
 
 func (r *repository) SyncEmailAttemptsForMessage(
@@ -973,13 +1011,13 @@ func invoiceSendStatusFromAttempts(
 	failed := 0
 	sending := 0
 	var sentAt *int64
-	errors := make([]string, 0)
+	failures := make([]string, 0)
 	for _, attempt := range attempts {
 		switch attempt.Status {
 		case invoice.SendStatusFailed:
 			failed++
 			if strings.TrimSpace(attempt.Error) != "" {
-				errors = append(errors, attempt.Error)
+				failures = append(failures, attempt.Error)
 			}
 		case invoice.SendStatusSending:
 			sending++
@@ -990,7 +1028,7 @@ func invoiceSendStatusFromAttempts(
 		}
 	}
 
-	lastError := strings.Join(errors, "; ")
+	lastError := strings.Join(sliceutils.DedupeStrings(failures), "; ")
 	switch {
 	case sending > 0:
 		return invoice.SendStatusSending, sentAt, lastError

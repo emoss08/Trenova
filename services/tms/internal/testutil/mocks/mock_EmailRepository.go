@@ -702,6 +702,74 @@ func (_c *MockEmailRepository_GetMessage_Call) RunAndReturn(run func(context1 co
 	return _c
 }
 
+// GetMessageByIdempotencyKey provides a mock function for the type MockEmailRepository
+func (_mock *MockEmailRepository) GetMessageByIdempotencyKey(context1 context.Context, getEmailMessageByIdempotencyKeyRequest repositories.GetEmailMessageByIdempotencyKeyRequest) (*email.Message, error) {
+	ret := _mock.Called(context1, getEmailMessageByIdempotencyKeyRequest)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMessageByIdempotencyKey")
+	}
+
+	var r0 *email.Message
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEmailMessageByIdempotencyKeyRequest) (*email.Message, error)); ok {
+		return returnFunc(context1, getEmailMessageByIdempotencyKeyRequest)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEmailMessageByIdempotencyKeyRequest) *email.Message); ok {
+		r0 = returnFunc(context1, getEmailMessageByIdempotencyKeyRequest)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*email.Message)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEmailMessageByIdempotencyKeyRequest) error); ok {
+		r1 = returnFunc(context1, getEmailMessageByIdempotencyKeyRequest)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEmailRepository_GetMessageByIdempotencyKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMessageByIdempotencyKey'
+type MockEmailRepository_GetMessageByIdempotencyKey_Call struct {
+	*mock.Call
+}
+
+// GetMessageByIdempotencyKey is a helper method to define mock.On call
+//   - context1 context.Context
+//   - getEmailMessageByIdempotencyKeyRequest repositories.GetEmailMessageByIdempotencyKeyRequest
+func (_e *MockEmailRepository_Expecter) GetMessageByIdempotencyKey(context1 any, getEmailMessageByIdempotencyKeyRequest any) *MockEmailRepository_GetMessageByIdempotencyKey_Call {
+	return &MockEmailRepository_GetMessageByIdempotencyKey_Call{Call: _e.mock.On("GetMessageByIdempotencyKey", context1, getEmailMessageByIdempotencyKeyRequest)}
+}
+
+func (_c *MockEmailRepository_GetMessageByIdempotencyKey_Call) Run(run func(context1 context.Context, getEmailMessageByIdempotencyKeyRequest repositories.GetEmailMessageByIdempotencyKeyRequest)) *MockEmailRepository_GetMessageByIdempotencyKey_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEmailMessageByIdempotencyKeyRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEmailMessageByIdempotencyKeyRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEmailRepository_GetMessageByIdempotencyKey_Call) Return(message *email.Message, err error) *MockEmailRepository_GetMessageByIdempotencyKey_Call {
+	_c.Call.Return(message, err)
+	return _c
+}
+
+func (_c *MockEmailRepository_GetMessageByIdempotencyKey_Call) RunAndReturn(run func(context1 context.Context, getEmailMessageByIdempotencyKeyRequest repositories.GetEmailMessageByIdempotencyKeyRequest) (*email.Message, error)) *MockEmailRepository_GetMessageByIdempotencyKey_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetMessageByProviderID provides a mock function for the type MockEmailRepository
 func (_mock *MockEmailRepository) GetMessageByProviderID(context1 context.Context, getEmailMessageByProviderIDRequest repositories.GetEmailMessageByProviderIDRequest) (*email.Message, error) {
 	ret := _mock.Called(context1, getEmailMessageByProviderIDRequest)

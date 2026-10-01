@@ -42,6 +42,11 @@ type GetEmailMessageByProviderIDRequest struct {
 	TenantInfo        pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetEmailMessageByIdempotencyKeyRequest struct {
+	IdempotencyKey string                `json:"idempotencyKey"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type ListEmailAttachmentsRequest struct {
 	MessageID  pulid.ID              `json:"messageId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -91,6 +96,10 @@ type EmailRepository interface {
 	GetMessageByProviderID(
 		context.Context,
 		GetEmailMessageByProviderIDRequest,
+	) (*email.Message, error)
+	GetMessageByIdempotencyKey(
+		context.Context,
+		GetEmailMessageByIdempotencyKeyRequest,
 	) (*email.Message, error)
 	CreateAttachments(context.Context, []*email.Attachment) ([]*email.Attachment, error)
 	ListAttachments(context.Context, ListEmailAttachmentsRequest) ([]*email.Attachment, error)

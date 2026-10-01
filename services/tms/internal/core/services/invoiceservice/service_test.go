@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -2017,4 +2018,56 @@ func TestCreateInvoiceJournalPostingSkipsWithoutAFiscalPeriodRepository(t *testi
 		)
 		require.NoError(t, err)
 	})
+}
+
+func TestDescribeInvoiceSenderWarnsOnCustomerOverrideFromAnotherDomain(t *testing.T) {
+	t.Parallel()
+
+	profile := &email.Profile{SenderEmail: "mailbox@trenova.app"}
+	cus := &customer.Customer{Name: "ACME Manufacturing", Code: "ACME"}
+
+	notice := describeInvoiceSender(profile, cus, "billing@trenova.example.com")
+
+	require.Equal(
+		t,
+		"the From address on the Email profile tab of customer ACME Manufacturing",
+		notice.Origin,
+	)
+	require.Contains(t, notice.Warning, "sent from billing@trenova.example.com")
+	require.Contains(t, notice.Warning, "sender mailbox@trenova.app")
+	require.Contains(t, notice.Warning, "unless trenova.example.com is verified")
+}
+
+func TestDescribeInvoiceSenderStaysQuietWhenNothingNeedsSaying(t *testing.T) {
+	t.Parallel()
+
+	profile := &email.Profile{SenderEmail: "mailbox@trenova.app"}
+	cus := &customer.Customer{Code: "ACME"}
+
+	require.Empty(t, describeInvoiceSender(profile, cus, "Mailbox@Trenova.app"))
+	require.Empty(t, describeInvoiceSender(nil, cus, "billing@trenova.app"))
+
+	sameDomain := describeInvoiceSender(profile, cus, "ar@trenova.app")
+	require.Equal(t, "the From address on the Email profile tab of customer ACME", sameDomain.Origin)
+	require.Empty(t, sameDomain.Warning)
+}
+
+func TestRefuseSendInFlight(t *testing.T) {
+	t.Parallel()
+
+	now := int64(1_700_000_000)
+	sending := &invoice.Invoice{
+		Number:     "INV-1",
+		SendStatus: invoice.SendStatusSending,
+		UpdatedAt:  now - 60,
+	}
+	require.Error(t, refuseSendInFlight(sending, now))
+
+	stale := *sending
+	stale.UpdatedAt = now - int64(sendInFlightTimeout/time.Second)
+	require.NoError(t, refuseSendInFlight(&stale, now))
+
+	failed := *sending
+	failed.SendStatus = invoice.SendStatusFailed
+	require.NoError(t, refuseSendInFlight(&failed, now))
 }
