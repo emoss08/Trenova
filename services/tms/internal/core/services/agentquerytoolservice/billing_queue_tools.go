@@ -112,6 +112,11 @@ func buildBillingQueueList(
 				Note: "a user id; isnull for unassigned",
 			},
 			{Name: "billToCustomerId", Kind: filterText, Note: "the payer, from list_customers"},
+			{
+				Name: "id",
+				Kind: filterText,
+				Note: "the item's own id; in with several ids to read them together",
+			},
 			{Name: fieldNumber, Kind: filterText, Sortable: true},
 			{Name: "shipment.proNumber", Kind: filterText},
 			{

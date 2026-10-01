@@ -378,6 +378,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				Ordinal:              t.counts.next(call),
 				AfterExternalContent: t.external,
 				Taint:                result.Taint,
+				Earlier:              t.earlier(call.Name),
 			}).internal()
 			if outcome.failed {
 				t.repeats.record(call, outcome.content)
@@ -387,6 +388,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			t.absorbTaint(fx, outcome.taint)
 			result.ToolCallsUsed++
 			s.recordToolResult(t, fx, call, outcome)
+			if !outcome.failed {
+				t.noteShown(&call)
+			}
 		}
 
 		s.logger.Debug("agent tool iteration",
@@ -519,6 +523,7 @@ func (s *Service) observe(
 	observe serviceports.ToolObserver,
 	call serviceports.ToolCall,
 	outcome toolOutcome,
+	earlier []string,
 ) toolOutcome {
 	if request, requested := outcome.data.(serviceports.DecisionRequest); requested &&
 		outcome.publishes {
@@ -532,10 +537,11 @@ func (s *Service) observe(
 	}
 
 	shown, err := observe(serviceports.ToolObservation{
-		Call:   call,
-		Data:   outcome.data,
-		Failed: outcome.failed,
-		Action: outcome.action,
+		Call:    call,
+		Data:    outcome.data,
+		Failed:  outcome.failed,
+		Action:  outcome.action,
+		Earlier: earlier,
 	})
 
 	switch {

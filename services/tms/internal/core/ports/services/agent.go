@@ -473,4 +473,9 @@ type AgentDecisionQueueService interface {
 		req *DecideAgentProposalsRequest,
 		actor *RequestActor,
 	) ([]AgentProposalDecisionResult, error)
+	DecideManyOwn(
+		ctx context.Context,
+		req *DecideAgentProposalsRequest,
+		actor *RequestActor,
+	) ([]AgentProposalDecisionResult, error)
 }

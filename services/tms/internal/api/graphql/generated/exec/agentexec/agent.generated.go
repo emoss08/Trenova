@@ -2570,6 +2570,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentDecision),
 			},
 			{
+				Name:       "decideMyProposals",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AgentProposalDecisionResult",
+				Args:       field_Mutation_decideMyProposals_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideMyProposals(ctx, fc.Args["ids"].([]string), fc.Args["input"].(gqlmodel.DecideAgentProposalsInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentProposalDecisionResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResultᚄ),
+			},
+			{
 				Name:       "decideMyPlan",
 				NonNull:    true,
 				IsResolver: true,
@@ -2931,6 +2944,7 @@ type resolverMutation interface {
 	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
 	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
 	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
+	DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
 	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
 	ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error)
 	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
@@ -3045,6 +3059,27 @@ func field_Mutation_decideMyProposal_args(ctx context.Context, ec *gqlexec.Exec,
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.AgentProposalDecisionInput, error) {
 			return unmarshalNAgentProposalDecisionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_decideMyProposals_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ids",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["ids"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DecideAgentProposalsInput, error) {
+			return unmarshalNDecideAgentProposalsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDecideAgentProposalsInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -3698,6 +3733,10 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalInputDecideAgentProposalsInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DecideAgentProposalsInput, error) {
+	return gqlexec.UnmarshalInput[gqlmodel.DecideAgentProposalsInput](ctx, ec, "DecideAgentProposalsInput", obj)
+}
+
 var (
 	enumUnmarshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource = map[string]agent.TaintSource{
 		"InboundMessage": agent.TaintSourceInboundMessage,
@@ -3810,9 +3849,18 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNDecideAgentProposalsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDecideAgentProposalsInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DecideAgentProposalsInput, error) {
+	res, err := unmarshalInputDecideAgentProposalsInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
 func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
@@ -4150,6 +4198,22 @@ func marshalNAgentProposalConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentProposalConnection", v)
+}
+
+func marshalNAgentProposalDecisionResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResultᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AgentProposalDecisionResult) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.AgentProposalDecisionResult]{
+		Elem:        marshalNAgentProposalDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResult,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentProposalDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AgentProposalDecisionResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentProposalDecisionResult", v)
 }
 
 func marshalNAgentProposalEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AgentProposalEdge) graphql.Marshaler {

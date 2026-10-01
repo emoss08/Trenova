@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx"
 )
@@ -102,6 +103,10 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						services.AccountingDriftRechecker,
 						services.AccountingDriftChecker,
 						services.AccountingSyncDispatcher,
+						proposalrecorder.PlanStore,
+						services.AgentTrustService,
+						services.AgentProposalNotifier,
+						services.AgentActivityPublisher,
 					) {
 					},
 				),

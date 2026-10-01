@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 543.
+Tools listed: 547.
 
 ## The model
 
@@ -51,13 +51,13 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 188 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 189 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 7 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 219 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 22 |
-| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 32 |
-| Money | Moves or commits money. | Automatic | Yes | 91 |
+| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 33 |
+| Money | Moves or commits money. | Automatic | Yes | 93 |
 
 ## Reads only
 
@@ -106,6 +106,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get invoice (`get_invoice`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get invoice adjustment (`get_invoice_adjustment`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get invoice run (`get_invoice_run`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get invoices (`get_invoices`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get journal entry (`get_journal_entry`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get manual journal (`get_manual_journal`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get my home layout (`get_my_home_layout`) | Reads only | Automatic | — | — | Reads the caller's own home page; nothing changes and nothing is sent. |
@@ -545,6 +546,7 @@ Sends to someone outside the organization.
 | Send EDI tender (`send_edi_tender`) | Sent outside the organization | Propose | — | — | Offers a load to another organization, which may accept it and haul it on the terms tendered; a tender is withdrawn, never recalled. A person always decides. |
 | Send invoice (`send_invoice`) | Sent outside the organization | Propose | — | — | Emails the customer their invoice; only a person sends it, to the recipients the customer's billing profile names. |
 | Send invoice EDI (`send_invoice_edi`) | Sent outside the organization | Propose | — | — | Transmits the invoice to the customer's EDI trading partner, which cannot be called back; only a person sends it. |
+| Send invoices (`send_invoices`) | Sent outside the organization | Propose | — | — | Emails several customers their invoices at once; only a person sends them, is named as who sent each, and sees every recipient before approving. |
 | Send rate confirmation (`send_rate_confirmation`) | Sent outside the organization | Propose | — | — | Emails a binding agreement, with a link to sign it, to a carrier outside the organization; the recipients come from the carrier's record, and a sent email cannot be recalled, so a person decides every send. |
 | Tender move to carriers (`tender_move_to_carriers`) | Sent outside the organization | Ask first | — | — | Offers the load to carriers outside the organization. |
 | Tender move to routing guide (`tender_move_to_routing_guide`) | Sent outside the organization | Ask first | — | — | Offers the load to carriers outside the organization. |
@@ -572,6 +574,7 @@ Moves or commits money.
 | Apply customer payment (`apply_customer_payment`) | Money | Propose | — | — | Moves a customer's cash onto their invoices and books the entry that says so; only a person applies cash. |
 | Apply rate increase (`apply_rate_increase`) | Money | Propose | — | — | Changes the rates many agreements charge customers or pay carriers; only a person applies a rate increase. |
 | Approve billing queue item (`approve_billing_queue_item`) | Money | Propose | — | — | Approving creates the invoice a customer is billed on, so only a person approves; the agent proposes it with what it checked. |
+| Approve billing queue items (`approve_billing_queue_items`) | Money | Propose | — | — | Approving creates the invoices customers are billed on, so only a person approves, item by item exactly as approve_billing_queue_item, and may untick any of them. |
 | Approve carrier settlement (`approve_carrier_settlement`) | Money | Propose | — | — | Commits the organization to what the carrier is paid; only a person approves, and hands-off approval is the settlement control's rule. |
 | Approve detention (`approve_detention`) | Money | Propose | — | — | Releases a held detention charge onto the customer's invoice; only a person approves it. |
 | Approve driver settlement (`approve_driver_settlement`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Commits the organization to what the driver is paid; only a person approves, and hands-off approval is the settlement control's rule. |
@@ -609,6 +612,7 @@ Moves or commits money.
 | Post customer payment (`post_customer_payment`) | Money | Automatic | — | — | Records a customer payment and applies it to invoices. |
 | Post driver settlement (`post_driver_settlement`) | Seen by a driver, money | Propose | Each call is classified by what it reaches. | — | Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts. |
 | Post invoice (`post_invoice`) | Money | Propose | — | — | Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting. |
+| Post invoices (`post_invoices`) | Money | Propose | — | — | Books several receivables to the ledger at once and queues each for the accounting system and the customer's EDI; only a person posts, invoice by invoice exactly as post_invoice, and may untick any of them. |
 | Post journal reversal (`post_journal_reversal`) | Money | Propose | — | — | Books the reversing entry to the general ledger; only a person posts a reversal. |
 | Post manual journal (`post_manual_journal`) | Money | Propose | — | — | Books the journal's lines to the general ledger; only a person posts a manual journal. |
 | Reassign billing charge (`reassign_billing_charge`) | Money | Propose | — | — | Moves what each customer is billed for a shipment and opens or cancels their queue items; only a person reassigns a charge. |

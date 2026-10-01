@@ -566,6 +566,40 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
+  post_invoices: (args) => {
+    const count = list(args.invoiceIds).length;
+
+    return {
+      title: "Post invoices",
+      summary: `Post ${count === 1 ? "1 draft invoice" : `${count} draft invoices`} to the ledger and queue each for the accounting system.`,
+      covered: ["invoiceIds"],
+      reversible: false,
+    };
+  },
+
+  send_invoices: (args) => {
+    const count = list(args.invoiceIds).length;
+
+    return {
+      title: "Send invoices",
+      summary: `Email ${count === 1 ? "1 invoice" : `${count} invoices`} to the customers they bill, as their billing profiles say.`,
+      covered: ["invoiceIds"],
+      reversible: false,
+    };
+  },
+
+  approve_billing_queue_items: (args) => {
+    const count = list(args.billingQueueItemIds).length;
+
+    return {
+      title: "Approve billing items",
+      summary: `Approve ${count === 1 ? "1 billing item" : `${count} billing items`}, creating the draft invoice each bills on.`,
+      highlights: facts(fact("Review notes", text(args.reviewNotes))),
+      covered: ["billingQueueItemIds", "reviewNotes"],
+      reversible: false,
+    };
+  },
+
   transition_item_to_in_review: (args) => ({
     title: "Send to review",
     summary: "Move this billing item into review so a biller picks it up.",

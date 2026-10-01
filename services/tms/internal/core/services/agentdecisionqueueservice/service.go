@@ -421,3 +421,29 @@ func decodeCursor(encoded string) (repositories.PendingDecisionCursor, error) {
 
 	return repositories.PendingDecisionCursor{CreatedAt: cursor.CreatedAt, ID: cursor.ID}, nil
 }
+
+func (s *Service) DecideManyOwn(
+	ctx context.Context,
+	req *services.DecideAgentProposalsRequest,
+	actor *services.RequestActor,
+) ([]services.AgentProposalDecisionResult, error) {
+	if err := validateBatch(req); err != nil {
+		return nil, err
+	}
+
+	multiErr := errortypes.NewMultiError()
+	for i, id := range req.ProposalIDs {
+		if err := s.decisions.AssertOwnProposal(ctx, id, req.TenantInfo, actor); err != nil {
+			if !errortypes.IsNotFoundError(err) {
+				return nil, err
+			}
+			multiErr.Add(fmt.Sprintf("proposalIds[%d]", i), errortypes.ErrNotFound,
+				"That proposal was not raised in one of your conversations")
+		}
+	}
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return s.DecideMany(ctx, req, actor)
+}

@@ -1,5 +1,5 @@
 {
-  "operationCount": 958,
+  "operationCount": 959,
   "fragmentCount": 273,
   "operations": [
     {
@@ -7073,6 +7073,31 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideMyProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    previewDigest\n    previewReviewed\n    version\n    createdAt\n  }\n}"
+    },
+    {
+      "name": "DecideMyProposals",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:52169b125c46e08fad645a937cf1562258b648d926be2beed8e0689b9a608205",
+      "rootFields": [
+        "decideMyProposals"
+      ],
+      "variables": [
+        {
+          "name": "ids",
+          "type": "[ID!]!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "DecideAgentProposalsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DecideMyProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {\n  decideMyProposals(ids: $ids, input: $input) {\n    proposalId\n    executed\n    error\n    decision {\n      id\n      decision\n      reasonCode\n      previewDigest\n      previewReviewed\n      createdAt\n    }\n  }\n}"
     },
     {
       "name": "DecideProfileChange",

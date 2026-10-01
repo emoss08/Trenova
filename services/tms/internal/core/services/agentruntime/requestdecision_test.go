@@ -279,3 +279,153 @@ func TestPublishStep_ShowsTheCardADurableTurnAskedFor(t *testing.T) {
 		"proposal is still waiting on its card earlier in this conversation, and that "+
 		"typing does not approve it.", UnkeptOutcome(requestDecisionName).Content)
 }
+
+func planStep(planID pulid.ID) serviceports.ProposalOutcome {
+	step := waitingOutcome(agent.ProposalStatusPending)
+	step.ToolName = "post_invoice"
+	step.PlanID = planID
+
+	return step
+}
+
+func TestRequestDecision_ShowsAPlanAsOneCard(t *testing.T) {
+	t.Parallel()
+
+	planID := pulid.MustNew("apl_")
+	first, second := planStep(planID), planStep(planID)
+	observer := &decisionObserver{title: "Billing: 2 changes"}
+
+	run := runDecision(t, chatRequest(first, second), observer,
+		toolTurn(requestDecisionName, map[string]any{"planId": planID.String()}),
+		textTurn("The plan is above."),
+	)
+
+	require.Len(t, observer.seen, 1)
+	assert.Equal(t, serviceports.DecisionRequest{
+		ProposalID:  first.ProposalID,
+		ProposalIDs: []pulid.ID{first.ProposalID, second.ProposalID},
+		PlanID:      planID,
+		ToolName:    agent.PlanToolName,
+	}, observer.seen[0].Data)
+	content, failed := toolResult(run.result, requestDecisionName)
+	assert.False(t, failed)
+	assert.Contains(t, content, "in front of the person again")
+}
+
+func TestRequestDecision_ShowsSeveralProposalsOfOneToolAsOneCard(t *testing.T) {
+	t.Parallel()
+
+	first := waitingOutcome(agent.ProposalStatusPending)
+	second := waitingOutcome(agent.ProposalStatusPending)
+	observer := &decisionObserver{title: "Create shipment"}
+
+	run := runDecision(t, chatRequest(first, second), observer,
+		toolTurn(requestDecisionName, map[string]any{
+			"proposalIds": []any{first.ProposalID.String(), second.ProposalID.String()},
+		}),
+		textTurn("Both are above."),
+	)
+
+	require.Len(t, observer.seen, 1)
+	assert.Equal(t, serviceports.DecisionRequest{
+		ProposalID:  first.ProposalID,
+		ProposalIDs: []pulid.ID{first.ProposalID, second.ProposalID},
+		ToolName:    "create_shipment",
+	}, observer.seen[0].Data)
+	_, failed := toolResult(run.result, requestDecisionName)
+	assert.False(t, failed)
+}
+
+func TestRequestDecision_RefusesABunchItCannotShowAsOne(t *testing.T) {
+	t.Parallel()
+
+	shipment := waitingOutcome(agent.ProposalStatusPending)
+	other := waitingOutcome(agent.ProposalStatusPending)
+	other.ToolName = "post_invoice"
+	decided := waitingOutcome(agent.ProposalStatusExecuted)
+	planID := pulid.MustNew("apl_")
+	step := planStep(planID)
+
+	cases := []struct {
+		name     string
+		args     map[string]any
+		contains string
+	}{
+		{
+			name: "two tools",
+			args: map[string]any{"proposalIds": []any{
+				shipment.ProposalID.String(), other.ProposalID.String(),
+			}},
+			contains: "one tool at a time",
+		},
+		{
+			name: "one already decided",
+			args: map[string]any{"proposalIds": []any{
+				shipment.ProposalID.String(), decided.ProposalID.String(),
+			}},
+			contains: "no longer waiting",
+		},
+		{
+			name: "a plan's step among them",
+			args: map[string]any{"proposalIds": []any{
+				shipment.ProposalID.String(), step.ProposalID.String(),
+			}},
+			contains: "planId",
+		},
+		{
+			name:     "a plan with nothing waiting",
+			args:     map[string]any{"planId": pulid.MustNew("apl_").String()},
+			contains: "no plan",
+		},
+		{
+			name: "both a plan and proposals",
+			args: map[string]any{
+				"planId":     planID.String(),
+				"proposalId": shipment.ProposalID.String(),
+			},
+			contains: "only one of",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			observer := &decisionObserver{title: "Card"}
+			run := runDecision(t, chatRequest(shipment, other, decided, step), observer,
+				toolTurn(requestDecisionName, tc.args), textTurn("Sorry."))
+
+			content, failed := toolResult(run.result, requestDecisionName)
+			assert.True(t, failed)
+			assert.Contains(t, content, tc.contains)
+			assert.Empty(t, observer.seen)
+		})
+	}
+}
+
+func TestPublishStep_ShowsAPlanADurableTurnAskedFor(t *testing.T) {
+	t.Parallel()
+
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	observer := &decisionObserver{title: "Billing: 2 changes"}
+	planID := pulid.MustNew("apl_")
+	ids := []pulid.ID{pulid.MustNew("aprop_"), pulid.MustNew("aprop_")}
+
+	rt.PublishStep(observer.observe, &serviceports.ToolCall{
+		ID:        "call_plan",
+		Name:      requestDecisionName,
+		Arguments: map[string]any{"planId": planID.String()},
+	})
+	rt.PublishStep(observer.observe, &serviceports.ToolCall{
+		ID:   "call_many",
+		Name: requestDecisionName,
+		Arguments: map[string]any{
+			"proposalIds": []any{ids[0].String(), ids[1].String()},
+		},
+	})
+
+	require.Len(t, observer.seen, 2)
+	assert.Equal(t, serviceports.DecisionRequest{PlanID: planID}, observer.seen[0].Data)
+	assert.Equal(t, serviceports.DecisionRequest{ProposalID: ids[0], ProposalIDs: ids},
+		observer.seen[1].Data)
+}

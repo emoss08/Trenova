@@ -45,6 +45,9 @@ func ToolProviders() []any {
 		provideAssignBillerTool,
 		providePostInvoiceTool,
 		provideSendInvoiceTool,
+		providePostInvoicesTool,
+		provideSendInvoicesTool,
+		provideApproveBillingQueueItemsTool,
 		provideOpenInvoiceDisputeTool,
 		provideResolveInvoiceDisputeTool,
 		provideWithdrawInvoiceDisputeTool,
@@ -359,6 +362,27 @@ func providePostInvoiceTool(invoices *invoiceservice.Service) services.AgentTool
 
 func provideSendInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
 	return newSendInvoiceTool(invoices)
+}
+
+func providePostInvoicesTool(
+	invoices *invoiceservice.Service,
+	numbers repositories.InvoiceRepository,
+) services.AgentTool {
+	return newPostInvoicesTool(invoices, numbers)
+}
+
+func provideSendInvoicesTool(
+	invoices *invoiceservice.Service,
+	numbers repositories.InvoiceRepository,
+) services.AgentTool {
+	return newSendInvoicesTool(invoices, numbers)
+}
+
+func provideApproveBillingQueueItemsTool(
+	billing services.BillingQueueService,
+	invoices *invoiceservice.Service,
+) services.AgentTool {
+	return newApproveBillingQueueItemsTool(billing, invoices)
 }
 
 func provideApproveDetentionTool(detention *detentionservice.Service) services.AgentTool {

@@ -195,6 +195,31 @@ describe("PlanCard", () => {
     expect(screen.getByText("Rate not found")).toBeInTheDocument();
   });
 
+  // Steps that each change a different record all run: one refused invoice
+  // does not hold back the others, and the card says how many went through.
+  it("says how many independent steps went through when one did not", () => {
+    renderCard(
+      plan({
+        status: "Failed",
+        stepCount: 3,
+        completedSteps: 2,
+        failedStep: 1,
+        failureError: "1 of 3 steps did not run",
+      }),
+      [
+        step(1, { status: "ExecutionFailed", executionError: "Fiscal period is closed" }),
+        step(2, { status: "Executed", executedAt: 5 }),
+        step(3, { status: "Executed", executedAt: 6 }),
+      ],
+    );
+
+    expect(
+      screen.getByText("Approved. 2 of 3 done; the others did not go through, and each says why."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Fiscal period is closed")).toBeInTheDocument();
+    expect(screen.queryByText(/the rest were skipped/)).not.toBeInTheDocument();
+  });
+
   it("collapses to the outcome once rejected", () => {
     renderCard(plan({ status: "Rejected" }), [
       step(1, { status: "Rejected" }),

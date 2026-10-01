@@ -3,10 +3,12 @@ import {
   DecideAgentProposalDocument,
   DecideMyPlanDocument,
   DecideMyProposalDocument,
+  DecideMyProposalsDocument,
   ResolveAgentExceptionDocument,
   type AgentExceptionResolveInput,
   type AgentPlanDecisionInput,
   type AgentProposalDecisionInput,
+  type DecideAgentProposalsInput,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
@@ -37,6 +39,22 @@ export async function decideMyProposal(id: string, input: AgentProposalDecisionI
   });
 
   return data.decideMyProposal;
+}
+
+/**
+ * Decides several proposals of one tool raised in the person's own
+ * conversations, each as proposed and each against the digest of the preview
+ * the person was shown. The batch is refused whole when one is not theirs;
+ * once it runs, each proposal reports what became of it.
+ */
+export async function decideMyProposals(ids: string[], input: DecideAgentProposalsInput) {
+  const data = await requestGraphQL({
+    document: DecideMyProposalsDocument,
+    operationName: "DecideMyProposals",
+    variables: { ids, input },
+  });
+
+  return data.decideMyProposals;
 }
 
 /**

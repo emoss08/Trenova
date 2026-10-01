@@ -254,11 +254,7 @@ function StepOutputs({
       ))}
       {threadId !== undefined &&
         outputs.decisions.map((request) => (
-          <RequestedDecision
-            key={request.callId}
-            proposalId={request.proposalId}
-            threadId={threadId}
-          />
+          <RequestedDecision key={request.callId} request={request} threadId={threadId} />
         ))}
     </>
   );

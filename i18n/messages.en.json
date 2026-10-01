@@ -7807,15 +7807,6 @@
       "domain/integration"
     ]
   },
-  "API documentation for Trenova TMS. Protected routes accept either a Bearer token in the Authorization header or an authenticated session cookie.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "API key": {
     "sites": 2,
     "scope": [
@@ -19243,6 +19234,15 @@
       "routes/desk"
     ]
   },
+  "Approve all {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approve all {0} changes?": {
     "sites": 1,
     "scope": [
@@ -19287,6 +19287,15 @@
     "areas": [
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Approve billing items": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Approve charge": {
@@ -19674,6 +19683,15 @@
     ]
   },
   "Approved. {0} of {1} done so far.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approved. {0} of {1} done; the others did not go through, and each says why.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -45673,7 +45691,7 @@
     ]
   },
   "Create new records": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -70037,7 +70055,7 @@
     ]
   },
   "Export records to file": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -84215,7 +84233,7 @@
     ]
   },
   "Import records from file": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -98081,6 +98099,15 @@
       "routes/worker"
     ]
   },
+  "Manage records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Manage roles and permissions for your organization": {
     "sites": 1,
     "scope": [
@@ -102662,7 +102689,7 @@
     ]
   },
   "Modify existing records": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -130098,6 +130125,15 @@
       "apps/web/components"
     ]
   },
+  "Pin records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Pin right": {
     "sites": 2,
     "scope": [
@@ -131621,6 +131657,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Post invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Post it where employees can see it, from February 1 to April 30.": {
@@ -147809,6 +147854,15 @@
       "domain/permission"
     ]
   },
+  "Resolve records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Resolve required mappings before accepting and creating the receiving shipment.": {
     "sites": 1,
     "scope": [
@@ -158231,6 +158285,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Select all {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Select all {0} matching": {
     "sites": 1,
     "scope": [
@@ -160250,6 +160313,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Send invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Send it in before the deadline on the request.": {
@@ -175780,11 +175852,12 @@
     ]
   },
   "That plan was not raised in one of your conversations": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/graphql",
       "service/agentplanservice"
     ]
   },
@@ -175861,11 +175934,13 @@
     ]
   },
   "That proposal was not raised in one of your conversations": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/graphql",
+      "service/agentdecisionqueueservice",
       "service/agentdecisionservice"
     ]
   },
@@ -194577,15 +194652,6 @@
       "service/editransport"
     ]
   },
-  "Trenova TMS API": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Trenova accounts in this balance": {
     "sites": 1,
     "scope": [
@@ -197605,6 +197671,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Unpin records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Unpinned": {
@@ -202105,7 +202180,7 @@
     ]
   },
   "View records": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -217842,6 +217917,24 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# change is waiting} other {# changes are waiting}}: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# change like this is waiting} other {# changes like this are waiting}}: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# change ran without being asked} other {# changes ran without being asked}}": {
     "sites": 1,
     "scope": [
@@ -222738,6 +222831,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} of {1} approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} of {1} chosen": {

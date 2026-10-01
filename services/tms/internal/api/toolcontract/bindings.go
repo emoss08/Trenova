@@ -317,6 +317,8 @@ const (
 		"fixes the status the input leaves open, and names the item it decides on"
 	layoutPart = "changes one part of a layout the input replaces whole, so the input's " +
 		"required fields are the layout the tool reads, not what the model sends"
+	bulkDecision = "approves a set of items by one status decision each; the mutation's " +
+		"input decides one item, so the tool takes their ids instead"
 	pendingBinding = "pending: written before the contract, with parameters named for the " +
 		"model where the input names them differently; binding it is the write waves' work"
 )
@@ -333,6 +335,7 @@ var Unbound = map[string]string{
 	"apply_credit_memo":                    pendingBinding,
 	"apply_customer_payment":               pendingBinding,
 	"approve_billing_queue_item":           statusDecision,
+	"approve_billing_queue_items":          bulkDecision,
 	"arrange_home_layout":                  layoutPart,
 	"assess_late_charges":                  pendingBinding,
 	"assign_move":                          pendingBinding,

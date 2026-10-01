@@ -44,6 +44,8 @@ import {
 } from "./model-switch";
 import { PlanCard } from "./plan-card";
 import { groupPlans } from "./plan-state";
+import { ProposalBatchBar } from "./proposal-batch";
+import { batchableProposals } from "./proposal-batches";
 import { ProposalCard } from "./proposal-card";
 import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
 import { ReadOnlyThreadNotice } from "./read-only-thread-notice";
@@ -247,6 +249,10 @@ export function MessageThread({
     standalone,
     messages,
   );
+  // Several waiting changes of one kind, filed on different turns, are one
+  // question to the person; the bar at the foot of the thread answers them
+  // together while each card still answers its own.
+  const batches = useMemo(() => batchableProposals(standalone), [standalone]);
 
   const entries = useMemo(() => groupThread(messages), [messages]);
   // A reply of several steps is headed once and timed from its question.
@@ -545,6 +551,13 @@ export function MessageThread({
       });
     }
 
+    for (const batch of batches) {
+      list.push({
+        key: `batch-${batch.toolName}`,
+        render: () => <ProposalBatchBar proposals={batch.proposals} threadId={thread.id} />,
+      });
+    }
+
     if (turn) {
       list.push({
         key: "turn-in-progress",
@@ -569,6 +582,7 @@ export function MessageThread({
     answerIds,
     arrivals,
     artifactsByMessage,
+    batches,
     dismiss,
     entries,
     latestUserSequence,
