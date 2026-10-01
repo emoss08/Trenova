@@ -15,21 +15,19 @@ import (
 )
 
 const (
-	// historyLimit bounds how much of a long conversation is replayed. The whole
-	// thread would eventually exceed any context window, and the most recent
-	// turns are the ones that carry the thread of the question. Tool results
-	// count toward it, and the runtime cuts the older ones down before the
-	// replay, so the limit is set by how many turns should stay in view
-	// rather than by how much data those turns fetched.
-	historyLimit = 120
+	// historyLimit bounds how many messages after the conversation's latest
+	// summary are read for a turn. What is replayed is decided by the model's
+	// context window: the runtime fits the summary and the newest whole turns
+	// into it, and compaction keeps the span after the summary short.
+	historyLimit = 400
 	// defaultPageLimit is how much of a thread the client reads at a time;
 	// maxPageLimit is the most it may ask for in one page.
 	defaultPageLimit = 50
 	maxPageLimit     = 200
 	// maxThreadMessages is where a conversation must be continued in a new
-	// one. Every message past the model's history window is history the
-	// client still has to render.
-	maxThreadMessages = 400
+	// one. Compaction keeps what the model reads bounded however long the
+	// thread grows; this bounds what the client still has to render.
+	maxThreadMessages = 2000
 	// maxTitleRunes bounds a title derived from the first message.
 	maxTitleRunes = 60
 )
@@ -192,11 +190,17 @@ func (s *Service) ListMessages(
 	s.runtime.MarkToolEffects(messages)
 	s.nameDelegatedSteps(ctx, req.Thread.TenantInfo, messages)
 
+	summaries, err := s.pageSummaries(ctx, req.Thread, messages)
+	if err != nil {
+		return nil, err
+	}
+
 	return &services.ThreadMessagesPage{
-		Results: messages,
-		HasMore: hasMore,
-		Total:   total,
-		Limit:   maxThreadMessages,
+		Results:   messages,
+		HasMore:   hasMore,
+		Total:     total,
+		Limit:     maxThreadMessages,
+		Summaries: summaries,
 	}, nil
 }
 

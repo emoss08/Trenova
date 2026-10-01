@@ -10,10 +10,13 @@ var Module = fx.Module("completion-router",
 		newService,
 		asCompletionService,
 		asEmbeddingService,
+		asChatContextWindowResolver,
 		NewPromptRenderer,
 	),
 )
 
 func asCompletionService(s *Service) serviceports.CompletionService { return s }
+
+func asChatContextWindowResolver(s *Service) serviceports.ChatContextWindowResolver { return s }
 
 func asEmbeddingService(s *Service) serviceports.EmbeddingService { return s }

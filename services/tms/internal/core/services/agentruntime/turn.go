@@ -420,7 +420,16 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		s.seedFromLedger(ctx, req, repeats)
 	}
 
-	messages := toAdapterMessages(history, req.Proposals)
+	system := definition.BuildSystemPrompt(runtimeContext)
+	fit := fitHistory(historyFitInput{
+		window:       s.contextWindow(ctx, req),
+		promptTokens: promptTokens(system, req.Input, tools.specs),
+		history:      history,
+		messages:     toAdapterMessages(history, req.Proposals),
+		summary:      req.Summary,
+	})
+	history = fit.history
+	messages := fit.messages
 	now := timeutils.NowUnix()
 	input := req.Input
 	if req.Delegation == nil {
@@ -439,7 +448,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		s:         s,
 		req:       req,
 		budget:    budget,
-		system:    definition.BuildSystemPrompt(runtimeContext),
+		system:    system,
 		messages:  messages,
 		tools:     tools,
 		held:      held,
@@ -456,6 +465,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 			}},
 			Taint:       taint,
 			Fingerprint: s.Fingerprint(definition, preferredProvider(req, definition), ""),
+			Context:     fit.usage,
 		},
 		delegates: delegates,
 		opened:    opened,

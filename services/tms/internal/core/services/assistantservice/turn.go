@@ -195,11 +195,17 @@ func (s *Service) prepareTurn(
 	// Another agent's steps on a task this one handed it are the thread's to
 	// show, not the model's to read again: it only ever saw its own call and
 	// the answer that came back.
+	summary, err := s.latestSummary(ctx, thread.ID, req.TenantInfo)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	history, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
-		ThreadID:     thread.ID,
-		TenantInfo:   req.TenantInfo,
-		Limit:        historyLimit,
-		ExcludeKinds: conversation.ModelHiddenKinds(),
+		ThreadID:      thread.ID,
+		TenantInfo:    req.TenantInfo,
+		Limit:         historyLimit,
+		ExcludeKinds:  conversation.ModelHiddenKinds(),
+		AfterSequence: summaryThrough(summary),
 	})
 	if err != nil {
 		return nil, nil, err
@@ -224,6 +230,7 @@ func (s *Service) prepareTurn(
 		Definition:          definition,
 		Actor:               actor,
 		History:             history,
+		Summary:             historySummary(summary),
 		Input:               content,
 		Page:                page,
 		PreferredProviderID: thread.PreferredProviderID,

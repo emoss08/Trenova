@@ -24,6 +24,10 @@ func (r *aIProviderResolver) OutputCostPerMillion(ctx context.Context, obj *aipr
 	return decimalPtrToStringPtr(obj.OutputCostPerMillion), nil
 }
 
+func (r *aIProviderResolver) ResolvedContextWindowTokens(ctx context.Context, obj *aiprovider.Provider) (int, error) {
+	return obj.ResolvedContextWindow(), nil
+}
+
 func (r *queryResolver) AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
 	if err != nil {

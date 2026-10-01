@@ -272,6 +272,7 @@ func (r *repository) Update(
 		Set(cols.InputCostPerMillion.Set(), entity.InputCostPerMillion).
 		Set(cols.OutputCostPerMillion.Set(), entity.OutputCostPerMillion).
 		Set(cols.MaxTokens.Set(), entity.MaxTokens).
+		Set(cols.ContextWindowTokens.Set(), entity.ContextWindowTokens).
 		Set(cols.Tasks.Set(), dbhelper.TextArray(entity.Tasks)).
 		Set(cols.Priority.Set(), entity.Priority).
 		Set(cols.EmbeddingDimensions.Set(), entity.EmbeddingDimensions).

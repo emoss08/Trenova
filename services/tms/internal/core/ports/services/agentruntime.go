@@ -93,6 +93,7 @@ type RunRequest struct {
 	Publishes bool
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
+	Summary *HistorySummary
 	Input   string
 	Emit    AssistantStreamEmitter
 	// PreferredProviderID is the reader's own choice for this turn, which wins
@@ -281,6 +282,7 @@ type RunResult struct {
 	Taint       *agent.RunTaint    `json:",omitempty"`
 	Fingerprint *agent.Fingerprint `json:",omitempty"`
 	Usage       *RunUsage          `json:",omitempty"`
+	Context     *ContextUsage      `json:",omitempty"`
 }
 
 type RunUsage struct {

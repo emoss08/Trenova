@@ -22,6 +22,7 @@ type TurnRequest struct {
 	Definition *agentdefinition.Definition
 	Actor      *serviceports.RequestActor
 	History    []conversation.Message
+	Summary    *serviceports.HistorySummary
 	Input      string
 	Page       *agentdefinition.PageContext
 	// PreferredProviderID is the reader's chosen model for this conversation.
@@ -76,6 +77,7 @@ func (s *Service) admit(
 		Actor:               req.Actor,
 		Context:             runtimeContext,
 		History:             req.History,
+		Summary:             req.Summary,
 		Input:               req.Input,
 		PreferredProviderID: req.PreferredProviderID,
 		// A model the person picked is the model they get; an administrator's
@@ -279,6 +281,11 @@ func withReason(notice string, err error) string {
 // provider's own message: that message is for the administrator and is
 // kept with the usage record in AI Control.
 func failureReason(err error) string {
+	if errors.Is(err, serviceports.ErrContextWindowExceeded) {
+		return "This conversation grew past what the model can read at once. " +
+			"Its earlier part is being summarized; ask again to continue."
+	}
+
 	var failure serviceports.ProviderFailure
 	if errors.As(err, &failure) {
 		if failure.ProviderRetryable() {

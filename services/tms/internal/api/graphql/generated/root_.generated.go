@@ -5147,6 +5147,10 @@ type AIProvider {
   "USD per million output tokens; null means unknown."
   outputCostPerMillion: Decimal
   maxTokens: Int!
+  "Tokens the model reads in one call, prompt and reply together. Null assumes the protocol default; see resolvedContextWindowTokens."
+  contextWindowTokens: Int
+  "The window conversations are fitted to: contextWindowTokens, or the protocol default when it is not set."
+  resolvedContextWindowTokens: Int!
   tasks: [AITask!]!
   priority: Int!
   "Vector size an embedding provider returns: 768, 1024 or 1536. Null for a provider that serves no embeddings."
@@ -27556,6 +27560,10 @@ func (ec *executionContext) childFields_AIProvider(ctx context.Context, field gr
 		return ec.fieldContext_AIProvider_outputCostPerMillion(ctx, field)
 	case "maxTokens":
 		return ec.fieldContext_AIProvider_maxTokens(ctx, field)
+	case "contextWindowTokens":
+		return ec.fieldContext_AIProvider_contextWindowTokens(ctx, field)
+	case "resolvedContextWindowTokens":
+		return ec.fieldContext_AIProvider_resolvedContextWindowTokens(ctx, field)
 	case "tasks":
 		return ec.fieldContext_AIProvider_tasks(ctx, field)
 	case "priority":

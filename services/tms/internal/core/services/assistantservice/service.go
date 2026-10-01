@@ -46,9 +46,10 @@ type Params struct {
 	Permissions serviceports.PermissionEngine
 	// Runs says which agent raised each of a conversation's proposals: its
 	// own, or one it handed a task to.
-	Runs         repositories.AgentRunRepository     `optional:"true"`
-	SystemAgents serviceports.SystemAgentProvisioner `optional:"true"`
-	PageThreads  repositories.PageThreadRepository   `optional:"true"`
+	Runs         repositories.AgentRunRepository      `optional:"true"`
+	SystemAgents serviceports.SystemAgentProvisioner  `optional:"true"`
+	PageThreads  repositories.PageThreadRepository    `optional:"true"`
+	Summaries    repositories.ThreadSummaryRepository `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -87,6 +88,7 @@ type Service struct {
 	runs          repositories.AgentRunRepository
 	systemAgents  serviceports.SystemAgentProvisioner
 	pageThreads   repositories.PageThreadRepository
+	summaries     repositories.ThreadSummaryRepository
 }
 
 func New(p Params) *Service {
@@ -115,5 +117,6 @@ func New(p Params) *Service {
 		runs:          p.Runs,
 		systemAgents:  p.SystemAgents,
 		pageThreads:   p.PageThreads,
+		summaries:     p.Summaries,
 	}
 }

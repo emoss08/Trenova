@@ -183,3 +183,24 @@ type AgentMemoryService interface {
 		actor *RequestActor,
 	) (*agent.Memory, error)
 }
+
+type ConversationMemoryCandidate struct {
+	Kind        agent.MemoryKind
+	Content     string
+	SubjectType agent.MemorySubjectType
+	SubjectID   pulid.ID
+	Reason      string
+}
+
+type SuggestFromConversationRequest struct {
+	TenantInfo        pagination.TenantInfo
+	AgentDefinitionID pulid.ID
+	ThreadID          pulid.ID
+	SummaryID         pulid.ID
+	Taint             *agent.RunTaint
+	Candidates        []ConversationMemoryCandidate
+}
+
+type ConversationMemorySuggester interface {
+	SuggestFromConversation(ctx context.Context, req *SuggestFromConversationRequest) (int, error)
+}

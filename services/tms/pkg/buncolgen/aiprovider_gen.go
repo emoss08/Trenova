@@ -61,6 +61,7 @@ var ProviderColumns = struct {
 	AllowPrivateNetwork  Column // "allow_private_network" → qualified: "aiprv.allow_private_network"
 	StructuredOutputMode Column // "structured_output_mode" → qualified: "aiprv.structured_output_mode"
 	MaxTokens            Column // "max_tokens" → qualified: "aiprv.max_tokens"
+	ContextWindowTokens  Column // "context_window_tokens" → qualified: "aiprv.context_window_tokens"
 	ReasoningEffort      Column // "reasoning_effort" → qualified: "aiprv.reasoning_effort"
 	ExtraBody            Column // "extra_body" → qualified: "aiprv.extra_body"
 	InputCostPerMillion  Column // "input_cost_per_million" → qualified: "aiprv.input_cost_per_million"
@@ -88,6 +89,7 @@ var ProviderColumns = struct {
 	AllowPrivateNetwork:  NewColumn("allow_private_network", "aiprv"),
 	StructuredOutputMode: NewColumn("structured_output_mode", "aiprv"),
 	MaxTokens:            NewColumn("max_tokens", "aiprv"),
+	ContextWindowTokens:  NewColumn("context_window_tokens", "aiprv"),
 	ReasoningEffort:      NewColumn("reasoning_effort", "aiprv"),
 	ExtraBody:            NewColumn("extra_body", "aiprv"),
 	InputCostPerMillion:  NewColumn("input_cost_per_million", "aiprv"),
@@ -120,6 +122,7 @@ var ProviderFieldMap = map[string]string{
 	"allowPrivateNetwork":  "allow_private_network",
 	"structuredOutputMode": "structured_output_mode",
 	"maxTokens":            "max_tokens",
+	"contextWindowTokens":  "context_window_tokens",
 	"reasoningEffort":      "reasoning_effort",
 	"extraBody":            "extra_body",
 	"inputCostPerMillion":  "input_cost_per_million",
@@ -151,6 +154,7 @@ var ProviderInsertableColumns = []string{
 	"allow_private_network",
 	"structured_output_mode",
 	"max_tokens",
+	"context_window_tokens",
 	"reasoning_effort",
 	"extra_body",
 	"input_cost_per_million",
@@ -241,6 +245,7 @@ var ProviderFilter = struct {
 	AllowPrivateNetwork  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowPrivateNetwork" → DB: "allow_private_network"
 	StructuredOutputMode func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "structuredOutputMode" → DB: "structured_output_mode"
 	MaxTokens            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxTokens" → DB: "max_tokens"
+	ContextWindowTokens  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextWindowTokens" → DB: "context_window_tokens"
 	ReasoningEffort      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningEffort" → DB: "reasoning_effort"
 	ExtraBody            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extraBody" → DB: "extra_body"
 	InputCostPerMillion  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputCostPerMillion" → DB: "input_cost_per_million"
@@ -288,6 +293,9 @@ var ProviderFilter = struct {
 	},
 	MaxTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxTokens", op, value)
+	},
+	ContextWindowTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("contextWindowTokens", op, value)
 	},
 	ReasoningEffort: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("reasoningEffort", op, value)

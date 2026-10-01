@@ -139,6 +139,7 @@ type modelFailure struct {
 	NoProvider    bool     `json:"noProvider,omitempty"`
 	SchemaInvalid bool     `json:"schemaInvalid,omitempty"`
 	Refusal       *refusal `json:"refusal,omitempty"`
+	TooLong       bool     `json:"tooLong,omitempty"`
 }
 
 // refusal is a business error as data: the message key the error handler
@@ -155,6 +156,7 @@ func modelFailureOf(err error) modelFailure {
 		TimedOut:      errors.Is(err, context.DeadlineExceeded),
 		NoProvider:    errors.Is(err, serviceports.ErrNoProviderConfigured),
 		SchemaInvalid: errors.Is(err, serviceports.ErrModelSchemaValidation),
+		TooLong:       errors.Is(err, serviceports.ErrContextWindowExceeded),
 	}
 
 	var failure serviceports.ProviderFailure
@@ -194,6 +196,7 @@ type Failure struct {
 	// Refusal is a business error, kept whole so the person is told what
 	// they would have been told had the call run in their request.
 	Refusal *refusal `json:"refusal,omitempty"`
+	TooLong bool     `json:"tooLong,omitempty"`
 }
 
 // FailureOf reads why a run ended from the error workflow code was handed.
@@ -220,6 +223,7 @@ func FailureOf(err error) *Failure {
 			failure.NoProvider = detail.NoProvider
 			failure.SchemaInvalid = detail.SchemaInvalid
 			failure.Refusal = detail.Refusal
+			failure.TooLong = detail.TooLong
 		}
 	}
 
@@ -248,6 +252,8 @@ func (f *Failure) Err() error {
 		return fmt.Errorf("%s: %w", f.Message, serviceports.ErrModelSchemaValidation)
 	case f.Status != 0:
 		return providerFailure{f}
+	case f.TooLong:
+		return fmt.Errorf("%s: %w", f.Message, serviceports.ErrContextWindowExceeded)
 	case f.Resting:
 		return fmt.Errorf("%s: %w", f.Message, serviceports.ErrProvidersResting)
 	case f.TimedOut:
@@ -287,6 +293,10 @@ type providerFailure struct{ f *Failure }
 func (p providerFailure) Error() string           { return p.f.Message }
 func (p providerFailure) ProviderStatus() int     { return p.f.Status }
 func (p providerFailure) ProviderRetryable() bool { return p.f.Retryable }
+
+func (p providerFailure) Is(target error) bool {
+	return p.f.TooLong && target == serviceports.ErrContextWindowExceeded
+}
 
 // retryableStatus reports whether a provider's HTTP status is worth asking
 // again. A 4xx is the request's fault and stays wrong, except a timeout, a

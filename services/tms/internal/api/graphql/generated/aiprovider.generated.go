@@ -21,6 +21,8 @@ import (
 type AIProviderResolver interface {
 	InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+
+	ResolvedContextWindowTokens(ctx context.Context, obj *aiprovider.Provider) (int, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -397,6 +399,52 @@ func (ec *executionContext) _AIProvider_maxTokens(ctx context.Context, field gra
 }
 func (ec *executionContext) fieldContext_AIProvider_maxTokens(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AIProvider", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIProvider_contextWindowTokens(ctx context.Context, field graphql.CollectedField, obj *aiprovider.Provider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIProvider_contextWindowTokens(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ContextWindowTokens, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIProvider_contextWindowTokens(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIProvider", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIProvider_resolvedContextWindowTokens(ctx context.Context, field graphql.CollectedField, obj *aiprovider.Provider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIProvider_resolvedContextWindowTokens(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AIProvider().ResolvedContextWindowTokens(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIProvider_resolvedContextWindowTokens(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIProvider", field, true, true, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _AIProvider_tasks(ctx context.Context, field graphql.CollectedField, obj *aiprovider.Provider) (ret graphql.Marshaler) {
@@ -1111,6 +1159,49 @@ func (ec *executionContext) _AIProvider(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "contextWindowTokens":
+			out.Values[i] = ec._AIProvider_contextWindowTokens(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "resolvedContextWindowTokens":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AIProvider_resolvedContextWindowTokens(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "tasks":
 			out.Values[i] = ec._AIProvider_tasks(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

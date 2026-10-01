@@ -95,6 +95,14 @@ type Service struct {
 }
 
 func New(p Params) services.AgentMemoryService {
+	return newService(p)
+}
+
+func NewConversationSuggester(p Params) services.ConversationMemorySuggester {
+	return newService(p)
+}
+
+func newService(p Params) *Service {
 	ranker := p.Ranker
 	if ranker == nil {
 		ranker = NewRecencyRanker()

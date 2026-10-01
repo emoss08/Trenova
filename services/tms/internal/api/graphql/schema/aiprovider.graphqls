@@ -90,6 +90,10 @@ type AIProvider {
   "USD per million output tokens; null means unknown."
   outputCostPerMillion: Decimal
   maxTokens: Int!
+  "Tokens the model reads in one call, prompt and reply together. Null assumes the protocol default; see resolvedContextWindowTokens."
+  contextWindowTokens: Int
+  "The window conversations are fitted to: contextWindowTokens, or the protocol default when it is not set."
+  resolvedContextWindowTokens: Int!
   tasks: [AITask!]!
   priority: Int!
   "Vector size an embedding provider returns: 768, 1024 or 1536. Null for a provider that serves no embeddings."

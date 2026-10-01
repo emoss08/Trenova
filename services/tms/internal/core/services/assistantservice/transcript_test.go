@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -271,7 +272,7 @@ func TestTranscript_ReadsEveryPageOfALongThread(t *testing.T) {
 	assert.Nil(t, conversations.calls[0].BeforeSequence)
 	require.NotNil(t, conversations.calls[1].BeforeSequence)
 	assert.Equal(t, 6, *conversations.calls[1].BeforeSequence)
-	assert.Contains(t, transcript.Body, "- **Messages:** 405\n")
+	assert.Contains(t, transcript.Body, fmt.Sprintf("- **Messages:** %d\n", transcriptPageSize+5))
 	assert.Less(
 		t, strings.Index(transcript.Body, "## You"), strings.LastIndex(transcript.Body, "## You"),
 	)

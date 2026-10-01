@@ -291,6 +291,10 @@ func (r *repository) ListMessages(
 		query = query.Where(cols.Sequence.Lt(), *req.BeforeSequence)
 	}
 
+	if req.AfterSequence != nil {
+		query = query.Where(cols.Sequence.Gt(), *req.AfterSequence)
+	}
+
 	if len(req.ExcludeKinds) > 0 {
 		query = query.Where(cols.Kind.NotIn(), bun.List(req.ExcludeKinds))
 	}

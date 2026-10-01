@@ -71,6 +71,19 @@ type ollamaToolCallFunc struct {
 
 type ollamaOptions struct {
 	NumPredict int `json:"num_predict,omitempty"`
+	NumCtx     int `json:"num_ctx,omitempty"`
+}
+
+func ollamaOptionsFor(call *Call) *ollamaOptions {
+	options := ollamaOptions{
+		NumPredict: max(call.Request.MaxTokens, 0),
+		NumCtx:     call.Provider.ConfiguredContextWindow(),
+	}
+	if options == (ollamaOptions{}) {
+		return nil
+	}
+
+	return &options
 }
 
 type ollamaResponse struct {
@@ -95,9 +108,7 @@ func (a ollamaAdapter) Stream(
 		Stream:   true,
 		Think:    call.reasoning().Enabled(),
 	}
-	if call.Request.MaxTokens > 0 {
-		body.Options = &ollamaOptions{NumPredict: call.Request.MaxTokens}
-	}
+	body.Options = ollamaOptionsFor(call)
 
 	stream, err := postStream(
 		ctx,
@@ -176,9 +187,7 @@ func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, err
 		Think:  call.reasoning().Enabled(),
 	}
 
-	if call.Request.MaxTokens > 0 {
-		body.Options = &ollamaOptions{NumPredict: call.Request.MaxTokens}
-	}
+	body.Options = ollamaOptionsFor(call)
 
 	if schema := call.Request.OutputSchema; schema != nil &&
 		len(call.Request.Tools) == 0 &&

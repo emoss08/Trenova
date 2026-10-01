@@ -225,6 +225,8 @@ func recordedBy(source agent.MemorySource) string {
 		return "a decision on a proposal"
 	case agent.MemorySourceFeedback:
 		return "people's ratings of an agent's work"
+	case agent.MemorySourceConversation:
+		return "a conversation, approved by an administrator"
 	default:
 		return string(source)
 	}

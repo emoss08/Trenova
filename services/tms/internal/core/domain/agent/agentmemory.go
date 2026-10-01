@@ -84,12 +84,14 @@ const (
 	MemorySourceUser     = MemorySource("User")
 	MemorySourceAgent    = MemorySource("Agent")
 	MemorySourceDecision = MemorySource("Decision")
-	MemorySourceFeedback = MemorySource("Feedback")
+	MemorySourceFeedback     = MemorySource("Feedback")
+	MemorySourceConversation = MemorySource("Conversation")
 )
 
 func (s MemorySource) IsValid() bool {
 	switch s {
-	case MemorySourceUser, MemorySourceAgent, MemorySourceDecision, MemorySourceFeedback:
+	case MemorySourceUser, MemorySourceAgent, MemorySourceDecision, MemorySourceFeedback,
+		MemorySourceConversation:
 		return true
 	default:
 		return false
@@ -102,7 +104,12 @@ func AllMemorySources() []MemorySource {
 		MemorySourceAgent,
 		MemorySourceDecision,
 		MemorySourceFeedback,
+		MemorySourceConversation,
 	}
+}
+
+func (s MemorySource) Suggests() bool {
+	return s == MemorySourceFeedback || s == MemorySourceConversation
 }
 
 type MemoryScope string
@@ -170,6 +177,12 @@ type MemoryEvidence struct {
 	Quotes          []string   `json:"quotes,omitempty"`
 	FirstRatedAt    int64      `json:"firstRatedAt"`
 	LastRatedAt     int64      `json:"lastRatedAt"`
+	ThreadID        pulid.ID   `json:"threadId,omitempty"`
+	SummaryID       pulid.ID   `json:"summaryId,omitempty"`
+}
+
+func (e *MemoryEvidence) FromConversation() bool {
+	return e != nil && e.ThreadID.IsNotNil() && e.SummaryID.IsNotNil()
 }
 
 func (e *MemoryEvidence) Count() int {
@@ -328,8 +341,16 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 	if m.AgentScoped() && (m.AgentDefinitionID == nil || m.AgentDefinitionID.IsNil()) {
 		multiErr.Add("scope", errortypes.ErrInvalid, "A memory kept for one agent needs that agent")
 	}
-	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback {
-		multiErr.Add("status", errortypes.ErrInvalid, "Only feedback can suggest a memory")
+	if m.Source == MemorySourceConversation && !m.Evidence.FromConversation() {
+		multiErr.Add(
+			"evidence",
+			errortypes.ErrRequired,
+			"A memory drawn from a conversation needs the conversation it was drawn from",
+		)
+	}
+	if m.Status.IsSuggestion() && !m.Source.Suggests() {
+		multiErr.Add("status", errortypes.ErrInvalid,
+			"Only feedback or a conversation can suggest a memory")
 	}
 }
 

@@ -24,3 +24,41 @@ func EstimateAll(texts []string) int {
 
 	return total
 }
+
+func EstimateValue(value any) int {
+	return FromRunes(valueRunes(value))
+}
+
+func valueRunes(value any) int {
+	switch typed := value.(type) {
+	case nil:
+		return 4
+	case string:
+		return utf8.RuneCountInString(typed) + 2
+	case map[string]any:
+		runes := 2
+		for key, item := range typed {
+			runes += utf8.RuneCountInString(key) + 4 + valueRunes(item)
+		}
+
+		return runes
+	case []any:
+		runes := 2
+		for _, item := range typed {
+			runes += valueRunes(item) + 1
+		}
+
+		return runes
+	case []string:
+		runes := 2
+		for _, item := range typed {
+			runes += utf8.RuneCountInString(item) + 3
+		}
+
+		return runes
+	case bool:
+		return 5
+	default:
+		return 12
+	}
+}

@@ -69,6 +69,7 @@ type Provider struct {
 
 	StructuredOutputMode StructuredOutputMode `json:"structuredOutputMode" bun:"structured_output_mode,type:VARCHAR(50),notnull"`
 	MaxTokens            int                  `json:"maxTokens"            bun:"max_tokens,type:INTEGER,notnull"`
+	ContextWindowTokens  *int                 `json:"contextWindowTokens" bun:"context_window_tokens,type:INTEGER,nullzero"`
 	// ReasoningEffort asks a model that can think to do so before answering.
 	// Off is the default: the parameter is refused by models without it.
 	ReasoningEffort ReasoningEffort `json:"reasoningEffort"      bun:"reasoning_effort,type:VARCHAR(50),notnull,nullzero,default:'Off'"`
@@ -399,6 +400,7 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 	p.validateEmbedding(multiErr)
 	p.validateEndpoint(multiErr)
 	p.validateExtraBody(multiErr)
+	p.validateContextWindow(multiErr)
 }
 
 func (p *Provider) validateEmbedding(multiErr *errortypes.MultiError) {

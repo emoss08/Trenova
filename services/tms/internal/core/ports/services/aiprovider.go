@@ -31,6 +31,7 @@ type SaveAIProviderRequest struct {
 	InputCostPerMillion  *decimal.Decimal
 	OutputCostPerMillion *decimal.Decimal
 	MaxTokens            int
+	ContextWindowTokens  *int
 	Tasks                []aiprovider.Task
 	Priority             int
 	EmbeddingDimensions  *int

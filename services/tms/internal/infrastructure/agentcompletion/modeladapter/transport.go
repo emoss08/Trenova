@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -24,7 +25,12 @@ type TransportError struct {
 	// RetryAfter is how long the provider asked to be left alone, from a
 	// Retry-After header or a Google RetryInfo detail. Zero when it said
 	// nothing; the caller's own backoff applies then.
-	RetryAfter time.Duration
+	RetryAfter      time.Duration
+	ContextOverflow bool
+}
+
+func (e *TransportError) Is(target error) bool {
+	return e.ContextOverflow && target == serviceports.ErrContextWindowExceeded
 }
 
 func (e *TransportError) Error() string {
@@ -197,8 +203,9 @@ func transportError(resp *http.Response, payload []byte) *TransportError {
 		StatusCode: resp.StatusCode,
 		Retryable: resp.StatusCode == http.StatusTooManyRequests ||
 			resp.StatusCode >= http.StatusInternalServerError,
-		Message:    parseErrorMessage(payload),
-		RetryAfter: retryAfterFrom(resp.Header, payload),
+		Message:         parseErrorMessage(payload),
+		RetryAfter:      retryAfterFrom(resp.Header, payload),
+		ContextOverflow: contextOverflow(resp.StatusCode, payload),
 	}
 }
 

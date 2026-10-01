@@ -531,6 +531,33 @@ type ThreadMessagesPage struct {
 	// Limit is how many messages a thread may hold before it must be
 	// continued in a new one, so the client can say so before the wall.
 	Limit int `json:"limit"`
+	Summaries []ThreadSummaryView `json:"summaries"`
+}
+
+type ThreadSummaryView struct {
+	ID                 pulid.ID                    `json:"id"`
+	FromSequence       int                         `json:"fromSequence"`
+	ThroughSequence    int                         `json:"throughSequence"`
+	Content            string                      `json:"content"`
+	Trigger            conversation.SummaryTrigger `json:"trigger"`
+	Tainted            bool                        `json:"tainted"`
+	MessagesSummarized int                         `json:"messagesSummarized"`
+	MemorySuggestions  int                         `json:"memorySuggestions"`
+	CreatedAt          int64                       `json:"createdAt"`
+}
+
+func ThreadSummaryViewOf(summary *conversation.Summary) ThreadSummaryView {
+	return ThreadSummaryView{
+		ID:                 summary.ID,
+		FromSequence:       summary.FromSequence,
+		ThroughSequence:    summary.ThroughSequence,
+		Content:            summary.Content,
+		Trigger:            summary.Trigger,
+		Tainted:            summary.Tainted,
+		MessagesSummarized: summary.MessagesSummarized,
+		MemorySuggestions:  summary.MemorySuggestions,
+		CreatedAt:          summary.CreatedAt,
+	}
 }
 
 type OpenPageThreadRequest struct {

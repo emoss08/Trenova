@@ -21,6 +21,7 @@ var (
 	// is paused after repeated failures, so nothing was attempted.
 	ErrProvidersResting            = errors.New("every usable AI provider is resting after repeated failures")
 	ErrRequiredProviderUnavailable = errors.New("the required AI provider cannot serve this task")
+	ErrContextWindowExceeded       = errors.New("the request is longer than the model can read")
 )
 
 type ContextSection struct {

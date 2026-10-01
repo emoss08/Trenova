@@ -636,6 +636,268 @@ var MessageFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// Summary — table "assistant_thread_summaries", alias "atsum"
+// ---------------------------------------------------------------------------
+
+// SummaryTable holds the table name, alias, and primary key columns
+// for the "assistant_thread_summaries" table. The alias "atsum" is used in all generated
+// SQL fragments (e.g. "atsum.id = ?").
+var SummaryTable = TableInfo{
+	Name:       "assistant_thread_summaries",
+	Alias:      "atsum",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// SummaryColumns provides type-safe column references for the "assistant_thread_summaries" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(SummaryColumns.ID.String())
+//	// SELECT atsum.id FROM assistant_thread_summaries AS atsum
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(SummaryColumns.ID.Eq(), id)           // WHERE atsum.id = ?
+//	q.Order(SummaryColumns.CreatedAt.OrderDesc())  // ORDER BY atsum.created_at DESC
+var SummaryColumns = struct {
+	ID                 Column // "id" → qualified: "atsum.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "atsum.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "atsum.organization_id"
+	ThreadID           Column // "thread_id" → qualified: "atsum.thread_id"
+	FromSequence       Column // "from_sequence" → qualified: "atsum.from_sequence"
+	ThroughSequence    Column // "through_sequence" → qualified: "atsum.through_sequence"
+	Content            Column // "content" → qualified: "atsum.content"
+	Sections           Column // "sections" → qualified: "atsum.sections"
+	Trigger            Column // "trigger" → qualified: "atsum.trigger"
+	Tainted            Column // "tainted" → qualified: "atsum.tainted"
+	Taint              Column // "taint" → qualified: "atsum.taint"
+	MessagesSummarized Column // "messages_summarized" → qualified: "atsum.messages_summarized"
+	TokensBefore       Column // "tokens_before" → qualified: "atsum.tokens_before"
+	TokensAfter        Column // "tokens_after" → qualified: "atsum.tokens_after"
+	MemorySuggestions  Column // "memory_suggestions" → qualified: "atsum.memory_suggestions"
+	ProviderID         Column // "provider_id" → qualified: "atsum.provider_id"
+	Model              Column // "model" → qualified: "atsum.model"
+	InputTokens        Column // "input_tokens" → qualified: "atsum.input_tokens"
+	OutputTokens       Column // "output_tokens" → qualified: "atsum.output_tokens"
+	CostUSD            Column // "cost_usd" → qualified: "atsum.cost_usd"
+	CreatedAt          Column // "created_at" → qualified: "atsum.created_at"
+}{
+	ID:                 NewColumn("id", "atsum"),
+	BusinessUnitID:     NewColumn("business_unit_id", "atsum"),
+	OrganizationID:     NewColumn("organization_id", "atsum"),
+	ThreadID:           NewColumn("thread_id", "atsum"),
+	FromSequence:       NewColumn("from_sequence", "atsum"),
+	ThroughSequence:    NewColumn("through_sequence", "atsum"),
+	Content:            NewColumn("content", "atsum"),
+	Sections:           NewColumn("sections", "atsum"),
+	Trigger:            NewColumn("trigger", "atsum"),
+	Tainted:            NewColumn("tainted", "atsum"),
+	Taint:              NewColumn("taint", "atsum"),
+	MessagesSummarized: NewColumn("messages_summarized", "atsum"),
+	TokensBefore:       NewColumn("tokens_before", "atsum"),
+	TokensAfter:        NewColumn("tokens_after", "atsum"),
+	MemorySuggestions:  NewColumn("memory_suggestions", "atsum"),
+	ProviderID:         NewColumn("provider_id", "atsum"),
+	Model:              NewColumn("model", "atsum"),
+	InputTokens:        NewColumn("input_tokens", "atsum"),
+	OutputTokens:       NewColumn("output_tokens", "atsum"),
+	CostUSD:            NewColumn("cost_usd", "atsum"),
+	CreatedAt:          NewColumn("created_at", "atsum"),
+}
+
+// SummaryFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Summary.GetStaticFieldMap().
+var SummaryFieldMap = map[string]string{
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"threadId":           "thread_id",
+	"fromSequence":       "from_sequence",
+	"throughSequence":    "through_sequence",
+	"content":            "content",
+	"sections":           "sections",
+	"trigger":            "trigger",
+	"tainted":            "tainted",
+	"taint":              "taint",
+	"messagesSummarized": "messages_summarized",
+	"tokensBefore":       "tokens_before",
+	"tokensAfter":        "tokens_after",
+	"memorySuggestions":  "memory_suggestions",
+	"providerId":         "provider_id",
+	"model":              "model",
+	"inputTokens":        "input_tokens",
+	"outputTokens":       "output_tokens",
+	"costUsd":            "cost_usd",
+	"createdAt":          "created_at",
+}
+
+// SummaryInsertableColumns lists column names suitable for INSERT statements on the "assistant_thread_summaries" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var SummaryInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"thread_id",
+	"from_sequence",
+	"through_sequence",
+	"content",
+	"sections",
+	"trigger",
+	"tainted",
+	"taint",
+	"messages_summarized",
+	"tokens_before",
+	"tokens_after",
+	"memory_suggestions",
+	"provider_id",
+	"model",
+	"input_tokens",
+	"output_tokens",
+	"cost_usd",
+	"created_at",
+}
+
+// SummaryScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE atsum.organization_id = ? AND atsum.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.SummaryScopeTenant(sq, ti).
+//		Where(buncolgen.SummaryColumns.ID.Eq(), id)
+func SummaryScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, SummaryColumns.OrganizationID, SummaryColumns.BusinessUnitID, ti)
+}
+
+// SummaryScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.SummaryScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.SummaryColumns.ID.In(), bun.List(ids))
+//	})
+func SummaryScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, SummaryColumns.OrganizationID, SummaryColumns.BusinessUnitID, ti)
+}
+
+// SummaryScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.SummaryScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.SummaryColumns.ID.Eq(), id)
+//	})
+func SummaryScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, SummaryColumns.OrganizationID, SummaryColumns.BusinessUnitID, ti)
+}
+
+// SummaryApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.SummaryApplyTenant(tenantInfo))
+func SummaryApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(SummaryColumns.OrganizationID, SummaryColumns.BusinessUnitID, ti)
+}
+
+// SummaryFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "assistant_thread_summaries" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	SummaryFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var SummaryFilter = struct {
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ThreadID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
+	FromSequence       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromSequence" → DB: "from_sequence"
+	ThroughSequence    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "throughSequence" → DB: "through_sequence"
+	Content            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
+	Sections           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sections" → DB: "sections"
+	Trigger            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trigger" → DB: "trigger"
+	Tainted            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tainted" → DB: "tainted"
+	Taint              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
+	MessagesSummarized func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "messagesSummarized" → DB: "messages_summarized"
+	TokensBefore       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tokensBefore" → DB: "tokens_before"
+	TokensAfter        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tokensAfter" → DB: "tokens_after"
+	MemorySuggestions  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "memorySuggestions" → DB: "memory_suggestions"
+	ProviderID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
+	Model              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
+	InputTokens        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
+	OutputTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
+	CostUSD            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ThreadID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("threadId", op, value)
+	},
+	FromSequence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fromSequence", op, value)
+	},
+	ThroughSequence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("throughSequence", op, value)
+	},
+	Content: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("content", op, value)
+	},
+	Sections: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sections", op, value)
+	},
+	Trigger: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("trigger", op, value)
+	},
+	Tainted: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tainted", op, value)
+	},
+	Taint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("taint", op, value)
+	},
+	MessagesSummarized: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("messagesSummarized", op, value)
+	},
+	TokensBefore: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tokensBefore", op, value)
+	},
+	TokensAfter: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tokensAfter", op, value)
+	},
+	MemorySuggestions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("memorySuggestions", op, value)
+	},
+	ProviderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerId", op, value)
+	},
+	Model: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("model", op, value)
+	},
+	InputTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("inputTokens", op, value)
+	},
+	OutputTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("outputTokens", op, value)
+	},
+	CostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("costUsd", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Thread — table "assistant_threads", alias "athr"
 // ---------------------------------------------------------------------------
 

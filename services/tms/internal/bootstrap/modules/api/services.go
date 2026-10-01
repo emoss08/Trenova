@@ -365,6 +365,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	agentplanservice.New,
 	agentmemoryservice.NewLabeler,
 	agentmemoryservice.New,
+	agentmemoryservice.NewConversationSuggester,
 	aicorrectionservice.New,
 	extractionevalservice.New,
 	extractionevalservice.AsService,

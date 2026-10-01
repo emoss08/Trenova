@@ -373,6 +373,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	conversationrepository.New,
 	conversationrepository.NewThreadOwners,
 	conversationrepository.NewPageThreads,
+	conversationrepository.NewThreadSummaries,
 	aiproviderrepository.New,
 	assignmentrepository.New,
 	bankreceiptrepository.New,
