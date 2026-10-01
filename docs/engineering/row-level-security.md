@@ -214,5 +214,8 @@ mode, so switch roles and enforcement together.
 6. GTC reads every tenant: give its role `trenova_rls_bypass` (or run it as the
    system role); logical decoding ignores policies but its snapshot does not.
 
-Rolling back is setting `mode: off` (no driver, no per-method transactions) or
-pointing the application back at the owner role.
+Rolling back takes both changes in the same deploy: point `database.user` back at
+the owner role and set `mode` to `off` (no driver, no per-method transactions) or
+`observe`. Neither is enough alone: the tenant-bound role with `mode: off` is
+refused every unscoped statement by PostgreSQL, and the owner role under
+`enforce` is refused at startup.
