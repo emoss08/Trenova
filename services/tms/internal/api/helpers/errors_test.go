@@ -407,3 +407,43 @@ func TestErrorHandler_HandleError_RowLevelSecurityViolationIsForbiddenAndReporte
 	require.Len(t, violations, 1)
 	assert.Equal(t, tenantboundary.SourceDatabasePolicy, violations[0].Source)
 }
+
+func TestErrorHandler_HandleError_UniqueViolationIsADuplicateConflict(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]error{
+		"raw": &pgconn.PgError{Code: pgerrcode.UniqueViolation, ConstraintName: "uq_shipments_bol"},
+		"wrapped in a database error": errortypes.NewDatabaseError("Failed to create shipment").
+			WithInternal(&pgconn.PgError{Code: pgerrcode.UniqueViolation}),
+	}
+
+	for name, err := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			handler := newTestErrorHandler(false)
+			ctx := testutil.NewGinTestContext()
+
+			handler.HandleError(ctx.Context, err)
+
+			assert.Equal(t, http.StatusConflict, ctx.ResponseCode())
+			var problem helpers.ProblemDetail
+			require.NoError(t, ctx.ResponseJSON(&problem))
+			assert.Equal(t, "https://api.test.com/problems/resource-conflict", problem.Type)
+			assert.NotContains(t, problem.Detail, "uq_shipments_bol")
+		})
+	}
+}
+
+func TestErrorHandler_HandleError_ValidationKeepsItsOwnShape(t *testing.T) {
+	t.Parallel()
+
+	handler := newTestErrorHandler(false)
+	ctx := testutil.NewGinTestContext()
+
+	multi := errortypes.NewMultiError()
+	multi.Add("code", errortypes.ErrDuplicate, "Code already exists")
+	handler.HandleError(ctx.Context, multi)
+
+	assert.Equal(t, http.StatusBadRequest, ctx.ResponseCode(), "a validator's duplicate stays a field error, not a conflict")
+}

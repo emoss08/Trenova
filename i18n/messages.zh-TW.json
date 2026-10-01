@@ -1915,6 +1915,7 @@
   "Another lane covers the same geography with a higher priority, so this one can never apply.": "另一條優先順序更高的路線涵蓋相同區域，本路線永遠不會適用。",
   "Another mailbox already listens on this address": "已有其他信箱監聽此地址",
   "Another profile was made the default at the same time; try again": "另一個設定檔同時被設為預設,請再試一次",
+  "Another record already uses these values. Refresh and try again.": "已有其他記錄使用這些值。請重新整理後再試一次。",
   "Another template is already the organization default for this kind. Clear that one first.": "此種類已有另一個範本被設為組織預設。請先取消該設定。",
   "Answer": "答覆",
   "Answer a few questions and the whole table is built for you — the preview updates as you type. Every band stays editable afterward.": "回答幾個問題，整張表格即自動建立 — 預覽會隨您輸入同步更新。所有區間之後仍可編輯。",

@@ -17649,6 +17649,15 @@
       "service/captureservice"
     ]
   },
+  "Another record already uses these values. Refresh and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/helpers"
+    ]
+  },
   "Another template is already the organization default for this kind. Clear that one first.": {
     "sites": 1,
     "scope": [
@@ -175852,11 +175861,12 @@
     ]
   },
   "That plan was not raised in one of your conversations": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/graphql",
       "service/agentplanservice"
     ]
   },
@@ -175933,11 +175943,12 @@
     ]
   },
   "That proposal was not raised in one of your conversations": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/graphql",
       "service/agentdecisionservice"
     ]
   },

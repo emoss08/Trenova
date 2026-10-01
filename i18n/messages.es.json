@@ -1915,6 +1915,7 @@
   "Another lane covers the same geography with a higher priority, so this one can never apply.": "Otra ruta cubre la misma geografía con mayor prioridad, por lo que esta nunca puede aplicarse.",
   "Another mailbox already listens on this address": "Otro buzón ya escucha en esta dirección",
   "Another profile was made the default at the same time; try again": "Otro perfil se hizo predeterminado al mismo tiempo; inténtelo de nuevo",
+  "Another record already uses these values. Refresh and try again.": "Otro registro ya usa estos valores. Actualice e inténtelo de nuevo.",
   "Another template is already the organization default for this kind. Clear that one first.": "Otra plantilla ya es la predeterminada de la organización para esta clase. Borre esa primero.",
   "Answer": "Respuesta",
   "Answer a few questions and the whole table is built for you — the preview updates as you type. Every band stays editable afterward.": "Responda unas preguntas y la tabla completa se construye por usted; la vista previa se actualiza mientras escribe. Todas las bandas siguen siendo editables después.",
