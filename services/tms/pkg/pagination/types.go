@@ -3,9 +3,9 @@ package pagination
 import "github.com/emoss08/trenova/shared/pulid"
 
 type TenantInfo struct {
-	OrgID  pulid.ID `json:"orgId"`
-	BuID   pulid.ID `json:"buId"`
-	UserID pulid.ID `json:"userId"`
+	OrgID  pulid.ID `json:"orgId"  form:"-"`
+	BuID   pulid.ID `json:"buId"   form:"-"`
+	UserID pulid.ID `json:"userId" form:"-"`
 }
 
 type ListResult[T any] struct {
@@ -16,7 +16,7 @@ type ListResult[T any] struct {
 }
 
 type SelectQueryRequest struct {
-	TenantInfo TenantInfo
+	TenantInfo TenantInfo `form:"-"`
 	Pagination Info
 	Query      string `json:"query"`
 }

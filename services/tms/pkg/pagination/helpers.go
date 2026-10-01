@@ -29,6 +29,7 @@ func NewQueryOptions(c *gin.Context, authCtx *authctx.AuthContext) *QueryOptions
 	opts.Query = helpers.QueryString(c, "query", "")
 
 	_ = c.ShouldBindQuery(opts)
+	opts.TenantInfo = FromAuthAsUser(authCtx)
 	normalizePagination(&opts.Pagination)
 
 	return opts
@@ -48,6 +49,7 @@ func NewSelectQueryRequest(c *gin.Context, authCtx *authctx.AuthContext) *Select
 	req.Query = helpers.QueryString(c, "query", "")
 
 	_ = c.ShouldBindQuery(req)
+	req.TenantInfo = FromAuthAsUser(authCtx)
 	normalizePagination(&req.Pagination)
 
 	return req
@@ -116,10 +118,12 @@ func prepareCursorListRequest(
 	opts *QueryOptions,
 	eh *helpers.ErrorHandler,
 ) (CursorInfo, bool) {
+	tenant := opts.TenantInfo
 	if err := c.ShouldBindQuery(opts); err != nil {
 		eh.HandleError(c, err)
 		return CursorInfo{}, false
 	}
+	opts.TenantInfo = tenant
 	normalizePagination(&opts.Pagination)
 
 	if c.Query("offset") != "" {
