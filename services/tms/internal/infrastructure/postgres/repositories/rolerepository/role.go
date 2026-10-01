@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -355,23 +356,34 @@ func (r *repository) CreateAssignment(
 	return nil
 }
 
-func (r *repository) DeleteAssignment(ctx context.Context, id pulid.ID) error {
+func (r *repository) DeleteAssignment(
+	ctx context.Context,
+	req repositories.DeleteRoleAssignmentRequest,
+) (*permission.UserRoleAssignment, error) {
 	log := r.l.With(
 		zap.String("operation", "DeleteAssignment"),
-		zap.String("id", id.String()),
+		zap.String("id", req.AssignmentID.String()),
 	)
 
-	_, err := r.db.DB().
+	cols := buncolgen.UserRoleAssignmentColumns
+	deleted := new(permission.UserRoleAssignment)
+	result, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Model((*permission.UserRoleAssignment)(nil)).
-		Where("id = ?", id).
+		Model(deleted).
+		Where(cols.ID.Eq(), req.AssignmentID).
+		Where(cols.OrganizationID.Eq(), req.OrganizationID).
+		Returning("*").
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to delete role assignment", zap.Error(err))
-		return err
+		return nil, err
 	}
 
-	return nil
+	if err = dberror.CheckFound(result, "Role assignment"); err != nil {
+		return nil, err
+	}
+
+	return deleted, nil
 }
 
 func (r *repository) CreateResourcePermission(
@@ -402,10 +414,11 @@ func (r *repository) UpdateResourcePermission(
 		zap.String("id", rp.ID.String()),
 	)
 
-	_, err := r.db.DB().
+	result, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(rp).
 		WherePK().
+		Where(buncolgen.ResourcePermissionColumns.RoleID.Eq(), rp.RoleID).
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
@@ -414,26 +427,31 @@ func (r *repository) UpdateResourcePermission(
 		return err
 	}
 
-	return nil
+	return dberror.CheckFound(result, "Role permission")
 }
 
-func (r *repository) DeleteResourcePermission(ctx context.Context, id pulid.ID) error {
+func (r *repository) DeleteResourcePermission(
+	ctx context.Context,
+	req repositories.DeleteResourcePermissionRequest,
+) error {
 	log := r.l.With(
 		zap.String("operation", "DeleteResourcePermission"),
-		zap.String("id", id.String()),
+		zap.String("id", req.PermissionID.String()),
 	)
 
-	_, err := r.db.DB().
+	cols := buncolgen.ResourcePermissionColumns
+	result, err := r.db.DBForContext(ctx).
 		NewDelete().
 		Model((*permission.ResourcePermission)(nil)).
-		Where("id = ?", id).
+		Where(cols.ID.Eq(), req.PermissionID).
+		Where(cols.RoleID.Eq(), req.RoleID).
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to delete resource permission", zap.Error(err))
 		return err
 	}
 
-	return nil
+	return dberror.CheckFound(result, "Role permission")
 }
 
 func (r *repository) GetResourcePermissionsByRoleID(

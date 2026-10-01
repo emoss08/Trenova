@@ -486,9 +486,17 @@ func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) err
 		zap.String("assignmentID", req.AssignmentID.String()),
 	)
 
-	if err := s.roleRepo.DeleteAssignment(ctx, req.AssignmentID); err != nil {
+	deleted, err := s.roleRepo.DeleteAssignment(ctx, repositories.DeleteRoleAssignmentRequest{
+		AssignmentID:   req.AssignmentID,
+		OrganizationID: req.OrganizationID,
+	})
+	if err != nil {
 		log.Error("failed to delete assignment", zap.Error(err))
 		return err
+	}
+
+	if err = s.permEngine.InvalidateUser(ctx, deleted.UserID, req.OrganizationID); err != nil {
+		log.Warn("failed to invalidate permission cache", zap.Error(err))
 	}
 
 	return nil
@@ -722,7 +730,10 @@ func (s *Service) DeleteResourcePermission(
 		return ErrCannotModifySystemRole
 	}
 
-	if err = s.roleRepo.DeleteResourcePermission(ctx, permID); err != nil {
+	if err = s.roleRepo.DeleteResourcePermission(ctx, repositories.DeleteResourcePermissionRequest{
+		PermissionID: permID,
+		RoleID:       role.ID,
+	}); err != nil {
 		log.Error("failed to delete resource permission", zap.Error(err))
 		return err
 	}

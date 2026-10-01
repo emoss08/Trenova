@@ -326,7 +326,16 @@ func TestUnassignRole_Success(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	assignmentID := pulid.MustNew("ura_")
 
-	deps.roleRepo.On("DeleteAssignment", ctx, assignmentID).Return(nil)
+	userID := pulid.MustNew("usr_")
+	deps.roleRepo.On("DeleteAssignment", ctx, repositories.DeleteRoleAssignmentRequest{
+		AssignmentID:   assignmentID,
+		OrganizationID: orgID,
+	}).Return(&permission.UserRoleAssignment{
+		ID:             assignmentID,
+		UserID:         userID,
+		OrganizationID: orgID,
+	}, nil)
+	deps.permEngine.On("InvalidateUser", ctx, userID, orgID).Return(nil)
 
 	err := deps.svc.UnassignRole(ctx, UnassignRoleRequest{
 		ActorID:        actorID,
@@ -470,7 +479,10 @@ func TestDeleteResourcePermission_Success(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.roleRepo.On("DeleteResourcePermission", ctx, permID).Return(nil)
+	deps.roleRepo.On("DeleteResourcePermission", ctx, repositories.DeleteResourcePermissionRequest{
+		PermissionID: permID,
+		RoleID:       roleID,
+	}).Return(nil)
 	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
 	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
@@ -933,7 +945,10 @@ func TestUnassignRole_Error(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	assignmentID := pulid.MustNew("ura_")
 
-	deps.roleRepo.On("DeleteAssignment", ctx, assignmentID).Return(errors.New("database error"))
+	deps.roleRepo.On("DeleteAssignment", ctx, repositories.DeleteRoleAssignmentRequest{
+		AssignmentID:   assignmentID,
+		OrganizationID: orgID,
+	}).Return(nil, errors.New("database error"))
 
 	err := deps.svc.UnassignRole(ctx, UnassignRoleRequest{
 		ActorID:        actorID,
@@ -1376,7 +1391,10 @@ func TestDeleteResourcePermission_NotFoundError(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.roleRepo.On("DeleteResourcePermission", ctx, permID).Return(errors.New("not found"))
+	deps.roleRepo.On("DeleteResourcePermission", ctx, repositories.DeleteResourcePermissionRequest{
+		PermissionID: permID,
+		RoleID:       roleID,
+	}).Return(errors.New("not found"))
 
 	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
 

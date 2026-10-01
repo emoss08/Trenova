@@ -1013,7 +1013,8 @@ func TestRoleHandler_UnassignRole_Success(t *testing.T) {
 
 	assignmentID := pulid.MustNew("ura_")
 	repo := mocks.NewMockRoleRepository(t)
-	repo.On("DeleteAssignment", mock.Anything, mock.Anything).Return(nil)
+	repo.On("DeleteAssignment", mock.Anything, mock.Anything).
+		Return(&permission.UserRoleAssignment{UserID: pulid.MustNew("usr_")}, nil)
 
 	deps := setupRoleHandler(t, repo)
 
@@ -1050,7 +1051,8 @@ func TestRoleHandler_UnassignRole_ServiceError(t *testing.T) {
 
 	assignmentID := pulid.MustNew("ura_")
 	repo := mocks.NewMockRoleRepository(t)
-	repo.On("DeleteAssignment", mock.Anything, mock.Anything).Return(errors.New("unassign failed"))
+	repo.On("DeleteAssignment", mock.Anything, mock.Anything).
+		Return(nil, errors.New("unassign failed"))
 
 	deps := setupRoleHandler(t, repo)
 
