@@ -128,3 +128,113 @@ func TestDispatch_RefusesASelectionThatCannotBeResolved(t *testing.T) {
 	assert.Contains(t, refusals[0].Content, "none of the 4 shipments")
 	assert.Contains(t, refusals[0].Content, "was not proposed")
 }
+
+type pinningTool struct {
+	*agentruntimetest.StubActionTool
+
+	pinned map[string]any
+	err    error
+	asked  []map[string]any
+}
+
+func (p *pinningTool) ResolveProposalSelection(
+	_ context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the interface passes params by value
+) (map[string]any, error) {
+	p.asked = append(p.asked, params.Params)
+	if p.err != nil {
+		return nil, p.err
+	}
+
+	return p.pinned, nil
+}
+
+func runPinning(t *testing.T, tool *pinningTool, auto bool) *serviceports.RunResult {
+	t.Helper()
+
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("retry_accounting_sync", map[string]any{"errorCategories": []any{"Transient"}}),
+		textTurn("Done."),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{},
+		&stubActionRegistry{Tools: []serviceports.AgentTool{tool}}, nil)
+	definition := testDefinition("retry_accounting_sync")
+	if auto {
+		definition = autoDefinition("retry_accounting_sync")
+	}
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "Retry what failed in the outage.",
+	})
+	require.NoError(t, err)
+
+	return result
+}
+
+func TestDispatch_PinsAProposedSelectionToTheRecordsItResolvesTo(t *testing.T) {
+	t.Parallel()
+
+	tool := &pinningTool{
+		StubActionTool: &agentruntimetest.StubActionTool{
+			ToolName: "retry_accounting_sync",
+			Tier:     agent.TierPropose,
+		},
+		pinned: map[string]any{
+			"errorCategories": []any{"Transient"},
+			"syncRecordIds":   []any{"acctsr_1", "acctsr_2"},
+		},
+	}
+
+	result := runPinning(t, tool, false)
+
+	require.Len(t, tool.asked, 1)
+	assert.Equal(t, map[string]any{"errorCategories": []any{"Transient"}}, tool.asked[0])
+	require.Len(t, result.Actions, 1)
+	assert.Equal(t, tool.pinned, result.Actions[0].Arguments,
+		"what a person approves is the records the criteria named when it was proposed")
+	assert.Zero(t, tool.Calls)
+}
+
+func TestDispatch_LeavesAnAutomaticWriteToEvaluateItsCriteriaWhenItRuns(t *testing.T) {
+	t.Parallel()
+
+	tool := &pinningTool{
+		StubActionTool: &agentruntimetest.StubActionTool{
+			ToolName: "retry_accounting_sync",
+			Tier:     agent.TierAutoExecute,
+		},
+		pinned: map[string]any{"syncRecordIds": []any{"acctsr_1"}},
+	}
+
+	runPinning(t, tool, true)
+
+	assert.Empty(t, tool.asked, "no one approves an automatic write, so nothing is pinned")
+	require.Equal(t, 1, tool.Calls)
+	assert.Equal(t,
+		map[string]any{"errorCategories": []any{"Transient"}},
+		tool.LastParams.Params,
+	)
+}
+
+func TestDispatch_RefusesAProposalWhoseSelectionCannotBePinned(t *testing.T) {
+	t.Parallel()
+
+	tool := &pinningTool{
+		StubActionTool: &agentruntimetest.StubActionTool{
+			ToolName: "retry_accounting_sync",
+			Tier:     agent.TierPropose,
+		},
+		err: errors.New("no record waiting to be retried last failed as Transient"),
+	}
+
+	result := runPinning(t, tool, false)
+
+	assert.Empty(t, result.Actions)
+	refusals := toolMessages(result)
+	require.Len(t, refusals, 1)
+	assert.True(t, refusals[0].ToolFailed)
+	assert.Contains(t, refusals[0].Content, "last failed as Transient")
+	assert.Contains(t, refusals[0].Content, "was not proposed")
+}

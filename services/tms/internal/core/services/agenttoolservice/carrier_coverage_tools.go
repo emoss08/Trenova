@@ -292,6 +292,10 @@ func newCancelCarrierAssignmentTool(carriers carrierCoverage) serviceports.Agent
 
 func (t *cancelCarrierAssignmentTool) Name() string { return "cancel_carrier_assignment" }
 
+func (t *cancelCarrierAssignmentTool) SearchTerms() []string {
+	return []string{"drop carrier", "uncover move", "remove outside carrier"}
+}
+
 func (t *cancelCarrierAssignmentTool) Description() string {
 	return "Take the outside carrier off a move that has not started, leaving it uncovered, " +
 		"and void the carrier's rate confirmation. Use it when the carrier fell off the " +

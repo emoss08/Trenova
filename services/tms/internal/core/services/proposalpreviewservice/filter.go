@@ -30,7 +30,7 @@ func (s *Service) accessFor(viewer *services.PreviewViewer) readerAccess {
 	if a.ceilings == nil && actor != nil {
 		a.ceilings = fieldsensitivity.NewCeilings(
 			s.permissions,
-			actor.UserID,
+			actor.PersonUserID(),
 			actor.OrganizationID,
 		)
 	}

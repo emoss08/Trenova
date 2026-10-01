@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -75,8 +76,8 @@ func (s *Service) ResumeFollowUps(ctx context.Context, req serviceports.ResumeFo
 		return
 	}
 
-	ctx = context.WithoutCancel(ctx)
 	tenant := pagination.TenantInfo{OrgID: req.TenantInfo.OrgID, BuID: req.TenantInfo.BuID}
+	ctx = dbscope.WithValidTenant(context.WithoutCancel(ctx), tenant.DBTenant())
 
 	next, err := s.oldestUnreported(ctx, req.ThreadID, tenant)
 	if err != nil {

@@ -445,6 +445,7 @@ func newDeleteWorkerInjuryTool(injuries injuryKeeper) serviceports.AgentTool {
 		permission.OpDelete,
 	), map[string]any{paramInjuryID: injuryIDProperty()}, paramInjuryID), paramInjuryID,
 		permission.ResourceWorkerInjury)
+	spec.searchTerms = []string{"duplicate injury", "remove injury case"}
 	spec.maxTier = agent.TierPropose
 	spec.reversible = false
 

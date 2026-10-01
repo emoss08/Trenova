@@ -2212,6 +2212,15 @@ models:
   AgentRunTaint:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.RunTaint
+  AgentRunTranscript:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.RunTranscript
+  AgentRunTranscriptMessage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.TranscriptMessage
+  AgentRunTranscriptToolCall:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.TranscriptToolCall
   AgentTaintMark:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.TaintMark

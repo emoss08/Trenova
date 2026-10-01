@@ -6,6 +6,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -24,6 +25,23 @@ func agentRunColumns(ctx context.Context, nodePathPrefix string) []string {
 	)
 
 	return selection.Columns
+}
+
+func runTranscript(ctx context.Context, run *agent.AgentRun) (*agent.RunTranscript, error) {
+	l, ok := loaders.FromContext(ctx)
+	if run.Transcript != nil || !ok {
+		return run.Transcript, nil
+	}
+
+	loaded, err := l.AgentRunTranscriptByID.Load(ctx, run.ID.String())
+	switch {
+	case errortypes.IsNotFoundError(err):
+		return run.Transcript, nil
+	case err != nil:
+		return nil, err
+	default:
+		return loaded.Transcript, nil
+	}
 }
 
 func agentProposalColumns(ctx context.Context, nodePathPrefix string) []string {

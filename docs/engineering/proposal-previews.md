@@ -46,9 +46,11 @@ for every tool, including a failing `ToolValidator`. GraphQL serves them as
 SEED-DET-009"), falling back to `Message` without its leading sentence, never the bare "would
 not go through" when the server said why. It offers "Change {label}", which opens the editor
 on that parameter (a nested one such as `shipment.bol` gets an input of its own bound to the
-value inside the JSON field), and "Ask the agent to fix it", which in a conversation sends a
-message naming the reasons and asking for a corrected proposal, and on the Desk and in AI
-Control opens the rejection with the reasons written. Approve stays offered and warned.
+value inside the JSON field), and "Ask the agent to fix it", which in a conversation's
+approval box opens "Tell the agent instead" with the reasons written (the rejection carries
+them as its note, and the follow-up asks the agent for a corrected proposal), and on the
+Desk and in AI Control opens the rejection with the reasons written. Approve stays offered
+and warned.
 
 ## How a tool previews
 
@@ -190,7 +192,17 @@ before anything is written, for `Accepted` and `Modified`:
   `preview_reviewed` (the decision named the digest).
 
 A rejection is never refused over its preview — a person can always say no — and records
-only the digest it was sent, when it is one. A digest mismatch on an approval (of a
+only the digest it was sent, when it is one.
+
+Every decide input takes an optional `note` (at most 2000 characters): what the decider tells
+the agent, such as why they turned the change down. It is stored on the decision
+(`agent_decisions.note`; a plan's note on each step's decision) and served on
+`AgentDecision.note` and on the thread's proposals as `decisionNote`. The conversation's
+follow-up turn reads it fenced in `<untrusted_data>` as "The person declined:" (or "The
+person's note with the decision:" on an approval), capped, and is told it is the person's
+words about the decision, never instructions; after a declined note the agent may propose a
+different change, never the same one again. It is not part of the decision's hashed audit
+form. A digest mismatch on an approval (of a
 proposal or a plan) is the only `ConflictError` the decide path returns; a preview whose
 changes fail validation is a validation error. A batch (`decideAgentProposals`) takes one
 digest per proposal: a mismatch fails that proposal alone, and a proposal without one is
@@ -205,7 +217,16 @@ digest that no longer matches, and hands each step the preview it was approved o
 (`StepPreview`, `StepPreviewReviewed`, server-only fields). A later step on a record an
 earlier step changed runs against the version that step left
 (`ExpectedTargetVersion`, from `DecisionOutcome.ExecutedTargetVersion`); a record moved by
-anything else still stops the plan.
+anything else still stops the plan. A plan whose steps each target a different record of one
+resource (five `post_invoice` steps) has no step resting on another, so every step runs,
+each settles on its own, and the plan records the steps that completed and, as its failure,
+each step that did not with its reason; a plan with a shared record, several resources or
+an untargeted step keeps the stop at the first failure.
+
+`decideMyProposals` is `decideAgentProposals` for proposals raised in the caller's own
+conversations (`AgentDecisionQueueService.DecideManyOwn`): every id passes
+`AssertOwnProposal` or nothing is decided, and each carries the digest of the preview the
+person had on screen.
 
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it
@@ -255,18 +276,85 @@ array-of-ids parameter as a subset of one permission resource's records with
   own call stays in the thread as it sent it, and the ledger key is taken from it. A
   selection that cannot be resolved is refused to the model with the reason.
 
+  `retry_accounting_sync` takes `errorCategories` as criteria beside its `syncRecordIds`
+  subset, and pins them only when the call is filed for a person: it implements
+  `ToolProposalSelectionResolver`, which the dispatch activity asks once the tier is decided
+  and only when that tier is not Automatic. A proposed call naming categories alone becomes
+  the Blocked, DeadLettered and Retrying records that last failed that way then, at most 50,
+  with the categories kept beside them to say why they were chosen; the categories only
+  narrow those ids when the approval runs, never add to them, so a record that fails after
+  the proposal is left for another retry. The preview says how many other records that
+  failed that way it leaves and is then `Partial`. An approval that names no records (one
+  filed before pinning) is refused and asked to be proposed again. An automatic retry has no
+  approval to keep faith with, so it still reads its categories when it runs, with no cap.
+
   The other record-subset tools keep ids only: `attach_order_shipments` (its records come
   from `search_shipments`, a general search, and the order's own rules decide membership),
   `release_accounting_sync` (a person-only send to the books from a general list; releasing
   "everything awaiting approval" unseen is what the tool exists to prevent),
   `set_carrier_monitoring` (billed per carrier from `list_carriers`, a general list), and
   `retry_edi_message_delivery` and `reprocess_edi_inbound_files` (general lists of messages
-  and files, capped at `ediservice.MaxBulkEDIActionItems`). None of them has a candidates
-  read that decides each record the way the write would.
+  and files, capped at `ediservice.MaxBulkEDIActionItems`), and `post_invoices`,
+  `send_invoices`, `approve_billing_queue_items` and the four settlement approve and post
+  twins (up to 50, each record previewed and run through its single-record tool; see
+  [Bulk twins](#bulk-twins-of-single-record-tools)).
+  None of them has a candidates read that decides each record the way the write would.
 
 A preview still shows at most 20 records, so a subset of more is shown in part; the
 parameter's value is the whole list, and the field's choices list it all. The approval form
 shows each preview record's outcome on its row and the rest by label.
+
+### Bulk twins of single-record tools
+
+Posting five drafts used to be five `get_invoice` calls and five `post_invoice` proposals the
+person approved one by one, and a pay period's settlements one approval and one posting
+proposal each. Seven person-only billing and settlement steps now each have a bulk twin that
+takes up to 50 records as a record subset, so the person approving sees one card, may untick
+records, and approves exactly the set that remains:
+
+| Bulk tool | Parameter | Runs each record as |
+| --- | --- | --- |
+| `approve_billing_queue_items` | `billingQueueItemIds` (billing queue), `reviewNotes` | `approve_billing_queue_item` |
+| `post_invoices` | `invoiceIds` (invoice) | `post_invoice` |
+| `send_invoices` | `invoiceIds` (invoice) | `send_invoice` |
+| `approve_driver_settlements` | `settlementIds` (driver settlement) | `approve_driver_settlement` |
+| `post_driver_settlements` | `settlementIds` (driver settlement) | `post_driver_settlement` |
+| `approve_carrier_settlements` | `settlementIds` (carrier settlement) | `approve_carrier_settlement` |
+| `post_carrier_settlements` | `settlementIds` (carrier settlement) | `post_carrier_settlement` |
+
+Each bulk tool wraps its single-record tool (`agenttoolservice/bulk_records.go`) and copies
+its policy: the same class, permission and Propose floor. The preview runs the single tool's
+own preview for each of the first 20 records and keeps that record's change, with a `What
+happens` field carrying the single preview's sentence, refusals first; a larger set is
+`Partial` and says the rest are checked when it runs. A record the single tool would refuse,
+one already posted, or one not found in the caller's tenant is shown as refused and the rest
+still go; only a set of which nothing would go carries `would_fail`, which is also what
+`Validate` refuses. Execution runs only from a person's approval, as the approver, record by
+record through the single tool (so every single-record guard, including
+`ApprovedFromProposal`, still applies), on the approved ids only, and reports "N of M posted;
+refused: …". A run in which every record was refused fails. The single tools stay, pinned to
+their record, and their descriptions point to the bulk tool when there is more than one
+record.
+
+The settlement twins (`agenttoolservice/settlement_bulk_tools.go`) build their single tool
+from the same lifecycle text and ledger, so each settlement is planned and performed by
+`PlanAction` and `Perform` exactly as the single approve or post would, including the
+journal entry a posting books and, for a driver, the driver-visible egress that classifies
+each call as money. The record-subset choices and a refused settlement in the outcome are
+named by settlement number. The settlements clerk holds the four twins in place of the four
+singles (still 56 tools): a twin takes one settlement as well as fifty, so the clerk loses
+nothing, and the singles stay registered for agents an organization builds.
+
+`get_invoices` reads up to 50 invoices by id in one call (`InvoiceRepository.GetByIDs`,
+tenant-scoped, amounts gated as `get_invoice` gates them) and names ids that are not an
+invoice of the organization. `list_invoices` and `list_billing_queue_items` also filter on
+`id` with `in`.
+
+The billing assistant template holds the three bulk tools and `get_invoices` (56 tools, under
+the 64-tool cap with room for an organization's own). To make room it gave up `list_insights`,
+`get_insight` (the insight analyst's) and `get_report_run` (a run's progress is already on
+screen). A template is copied when an agent is made, so an existing billing agent gains the
+bulk tools only when an administrator adds them in AI control.
 
 ## API
 
@@ -314,9 +402,10 @@ unstable digest shows itself.
 
 ## Known limits
 
-- **Coverage follows the tools.** A tool shows as much as its `Preview` says; one without
-  shows its parameters. The contract test that fails for an action tool with no previewer
-  lands with the tool previewers.
+- **Coverage follows the tools.** A tool shows as much as its `Preview` says.
+  `TestEveryActionToolPreviewsWhatItWouldDo` (`agenttoolpolicy/preview_contract_test.go`)
+  holds every registered action tool to a previewer, with no exemptions, so a new action
+  tool without one fails CI.
 - **Labels cover the records previews name most.** A record of a resource the labeler has
   no table for is shown without a name; people (`user`) are never labelled, since a user
   is not scoped to one tenant.

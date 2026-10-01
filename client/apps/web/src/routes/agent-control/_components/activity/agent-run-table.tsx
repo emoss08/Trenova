@@ -10,6 +10,7 @@ import { RotateCcwIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { getRunColumns } from "./agent-run-columns";
+import { AgentRunPanel } from "./agent-run-panel";
 
 export default function AgentRunTable() {
   const t = useT();
@@ -52,6 +53,8 @@ export default function AgentRunTable() {
       columns={columns}
       contextMenuActions={contextMenuActions}
       enableCreateAction={false}
+      enableReadOnlyPanel
+      TablePanel={AgentRunPanel}
       refetchIntervalMs={30_000}
       initialColumnVisibility={{ modelIdentifier: false, completedAt: false }}
     />

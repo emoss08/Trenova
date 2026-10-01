@@ -36,7 +36,7 @@ Keywords: edit proposal, adjust agent change, modify and approve
 ### Decide several proposals at once
 Keywords: bulk approve, batch reject, approve all
 1. Open [Decisions](/desk/decisions).
-2. Mark proposals with their checkbox (or x). A batch holds one kind of change at a time, and a plan is always decided on its own.
+2. Mark proposals with their checkbox (or x). When the proposal you are reading has others of the same kind waiting, a line above the list says how many and offers to select all of them at once. A batch holds one kind of change at a time, and a plan is always decided on its own.
 3. Select **Approve all** or **Reject all**, enter one **Reason** for all of them (required when rejecting), and confirm. Approved changes run one after another; one that cannot run, or whose preview changed since you read it, is reported on its own.
 
 ### Narrow the queue
@@ -48,9 +48,14 @@ Keywords: filter by agent, filter by change type
 1. Open [Decisions](/desk/decisions) and select the proposal.
 2. Select **Open the conversation** or **Open the run** to see the context the agent was working in.
 
+### Decide a change in your own conversation instead
+Keywords: approval box, approve in chat, tell the agent why
+1. Open the conversation on the [Desk](/desk) (select **Open the conversation**). The change waits in the approval box at the foot of the conversation.
+2. Select **Approve**, **Reject**, or **Tell the agent instead** to turn it down with a note the agent answers. A decision made there leaves this queue, and one made here updates the conversation.
+
 ## Notes
 Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.
 
 An approval records exactly what you were shown. In a batch, a proposal you never opened is recorded as approved without its preview having been reviewed, and the confirmation says how many of those there are. Some changes cannot say exactly what they would do; they show the values they would run with under a warning instead. If what a change would do cannot be loaded at all, you can still approve it, and the decision is recorded as made without a preview.
 
-In a plan, a step that changes a record an earlier step also changes is shown as that earlier step would leave it, with a note naming the step.
+In a plan, a step that changes a record an earlier step also changes is shown as that earlier step would leave it, with a note naming the step. When every step of an approved plan changes a different record of the same kind, such as posting several invoices, each step runs whatever became of the others and the plan says how many went through; otherwise the first step that fails stops the rest.

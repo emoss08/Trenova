@@ -8,41 +8,59 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var withheldFromEveryTemplate = []string{
-	"approve_rate_agreement",
-	"reject_rate_agreement",
-	"assign_pay_profile",
-	"end_pay_assignment",
-	"create_recurring_deduction",
-	"update_recurring_deduction",
-	"create_recurring_earning",
-	"update_recurring_earning",
-	"open_escrow_account",
-	"update_escrow_account",
-	"close_escrow_account",
-	"draft_manual_journal",
-	"revise_manual_journal_draft",
-	"submit_manual_journal",
-	"post_manual_journal",
-	"cancel_manual_journal",
-	"request_journal_reversal",
-	"post_journal_reversal",
-	"cancel_journal_reversal",
-	"open_fiscal_period",
-	"unlock_fiscal_period",
-	"reopen_fiscal_period",
-	"request_accounting_backfill",
-	"change_accounting_backfill",
-	"clear_accounting_mapping",
-	"redate_accounting_sync",
-	"forget_memory",
-	"generate_payroll_export",
-	"void_payroll_export",
-	"review_driver_expense",
-	"save_table_view",
-	"add_home_widget",
-	"remove_home_widget",
-	"arrange_home_layout",
+const (
+	withheldRateReview = "the agent that drafts a rate agreement is never the one that " +
+		"reviews it"
+	withheldPaySetup = "pay setup is kept apart from the settlements that apply it, so the " +
+		"one who processes pay is not the one who sets it"
+	withheldPrivilegedAccounting = "privileged accounting starts from a person's request and " +
+		"belongs to no unattended desk"
+	withheldMemory = "a person retires a memory in AI control; an agent never drops what " +
+		"it was told on its own judgement"
+	withheldPayMovement = "it moves pay, which belongs to the settlements clerk, and that " +
+		"template is at the tool cap"
+	withheldPersonalInterface = "it changes only the caller's own screen, a person's " +
+		"interface state that is no desk's job"
+	withheldCancelShipment = "canceling a shipment is a person's call; uncancel_shipment " +
+		"stays with the dispatch assistant"
+)
+
+var withheldFromEveryTemplate = map[string]string{
+	"approve_rate_agreement":      withheldRateReview,
+	"reject_rate_agreement":       withheldRateReview,
+	"assign_pay_profile":          withheldPaySetup,
+	"end_pay_assignment":          withheldPaySetup,
+	"create_recurring_deduction":  withheldPaySetup,
+	"update_recurring_deduction":  withheldPaySetup,
+	"create_recurring_earning":    withheldPaySetup,
+	"update_recurring_earning":    withheldPaySetup,
+	"open_escrow_account":         withheldPaySetup,
+	"update_escrow_account":       withheldPaySetup,
+	"close_escrow_account":        withheldPaySetup,
+	"draft_manual_journal":        withheldPrivilegedAccounting,
+	"revise_manual_journal_draft": withheldPrivilegedAccounting,
+	"submit_manual_journal":       withheldPrivilegedAccounting,
+	"post_manual_journal":         withheldPrivilegedAccounting,
+	"cancel_manual_journal":       withheldPrivilegedAccounting,
+	"request_journal_reversal":    withheldPrivilegedAccounting,
+	"post_journal_reversal":       withheldPrivilegedAccounting,
+	"cancel_journal_reversal":     withheldPrivilegedAccounting,
+	"open_fiscal_period":          withheldPrivilegedAccounting,
+	"unlock_fiscal_period":        withheldPrivilegedAccounting,
+	"reopen_fiscal_period":        withheldPrivilegedAccounting,
+	"request_accounting_backfill": withheldPrivilegedAccounting,
+	"change_accounting_backfill":  withheldPrivilegedAccounting,
+	"clear_accounting_mapping":    withheldPrivilegedAccounting,
+	"redate_accounting_sync":      withheldPrivilegedAccounting,
+	"forget_memory":               withheldMemory,
+	"generate_payroll_export":     withheldPayMovement,
+	"void_payroll_export":         withheldPayMovement,
+	"review_driver_expense":       withheldPayMovement,
+	"save_table_view":             withheldPersonalInterface,
+	"add_home_widget":             withheldPersonalInterface,
+	"remove_home_widget":          withheldPersonalInterface,
+	"arrange_home_layout":         withheldPersonalInterface,
+	"cancel_shipment":             withheldCancelShipment,
 }
 
 func TestTemplates_TheFocusedClerksTalkToAPersonAndOnlyPropose(t *testing.T) {
@@ -208,8 +226,9 @@ func TestTemplates_WithholdWhatNoAgentShouldHold(t *testing.T) {
 
 	for _, template := range agentdefinition.AllTemplates() {
 		tools := template.StarterTools()
-		for _, tool := range withheldFromEveryTemplate {
-			require.NotContainsf(t, tools, tool, "%s must not hold %s", template.Label(), tool)
+		for tool, why := range withheldFromEveryTemplate {
+			require.NotContainsf(t, tools, tool, "%s must not hold %s: %s",
+				template.Label(), tool, why)
 		}
 	}
 }
@@ -219,6 +238,9 @@ func TestTemplates_TheExistingDesksPickUpTheWritesTheirWorkNeeds(t *testing.T) {
 
 	require.Contains(t,
 		agentdefinition.TemplateDispatchAssistant.StarterTools(), "update_shipment",
+	)
+	require.Contains(t,
+		agentdefinition.TemplateDispatchAssistant.StarterTools(), "uncancel_shipment",
 	)
 	require.Contains(t,
 		agentdefinition.TemplateLoadMonitor.StarterTools(), "record_stop_actual",

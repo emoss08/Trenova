@@ -50,6 +50,43 @@ func (f *AgentRunByIDLoaderFactory) NewForTenant(
 	))
 }
 
+type agentRunTranscriptsByIDsLister interface {
+	ListTranscriptsByIDs(
+		ctx context.Context,
+		req repositories.ListAgentRunsByIDsRequest,
+	) ([]*agent.AgentRun, error)
+}
+
+type AgentRunTranscriptByIDLoaderFactoryParams struct {
+	fx.In
+
+	Runs repositories.AgentRunRepository
+}
+
+type AgentRunTranscriptByIDLoaderFactory struct {
+	runs agentRunTranscriptsByIDsLister
+}
+
+func NewAgentRunTranscriptByIDLoaderFactory(
+	p AgentRunTranscriptByIDLoaderFactoryParams,
+) *AgentRunTranscriptByIDLoaderFactory {
+	return &AgentRunTranscriptByIDLoaderFactory{runs: p.Runs}
+}
+
+func (f *AgentRunTranscriptByIDLoaderFactory) NewForTenant(
+	tenantInfo pagination.TenantInfo,
+) *dataloadgen.Loader[string, *agent.AgentRun] {
+	return newLoader(batchByIDFunc(
+		func(ctx context.Context, ids []pulid.ID) ([]*agent.AgentRun, error) {
+			return f.runs.ListTranscriptsByIDs(ctx, repositories.ListAgentRunsByIDsRequest{
+				IDs:        ids,
+				TenantInfo: tenantInfo,
+			})
+		},
+		"Agent run not found",
+	))
+}
+
 type agentDefinitionsByIDsLister interface {
 	ListByIDs(
 		ctx context.Context,

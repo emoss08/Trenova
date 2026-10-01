@@ -46,6 +46,10 @@ type ListAgentRunsByIDsRequest struct {
 
 type AgentRunRepository interface {
 	ListByIDs(ctx context.Context, req ListAgentRunsByIDsRequest) ([]*agent.AgentRun, error)
+	ListTranscriptsByIDs(
+		ctx context.Context,
+		req ListAgentRunsByIDsRequest,
+	) ([]*agent.AgentRun, error)
 	List(
 		ctx context.Context,
 		req *ListAgentRunRequest,

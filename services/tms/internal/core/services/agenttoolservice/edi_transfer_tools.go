@@ -84,6 +84,7 @@ type transferDecision struct {
 	summary     func(*tenderOutcome, *tenderCall) string
 	plan        func(context.Context, ediTransferDecider, *tenderCall) (*tenderOutcome, error)
 	run         func(context.Context, ediTransferDecider, *tenderCall) error
+	searchTerms []string
 }
 
 type ediTransferDecisionTool struct {
@@ -100,6 +101,8 @@ var (
 func (t *ediTransferDecisionTool) Name() string { return t.decision.name }
 
 func (t *ediTransferDecisionTool) Description() string { return t.decision.description }
+
+func (t *ediTransferDecisionTool) SearchTerms() []string { return t.decision.searchTerms }
 
 func (t *ediTransferDecisionTool) ParamSchema() map[string]any {
 	properties := map[string]any{
@@ -382,7 +385,8 @@ func newDeclineEDILoadTenderTool(decider ediTransferDecider) serviceports.AgentT
 
 func newCancelEDILoadTenderTool(decider ediTransferDecider) serviceports.AgentTool {
 	return &ediTransferDecisionTool{edi: decider, decision: transferDecision{
-		name: "cancel_edi_tender",
+		name:        "cancel_edi_tender",
+		searchTerms: []string{"recall tender", "withdraw edi tender"},
 		description: "Propose withdrawing a load tender this organization sent to another " +
 			"organization over EDI and that it has not yet answered. The shipment's tender is " +
 			"marked canceled and the receiving organization can no longer accept it. Find it " +

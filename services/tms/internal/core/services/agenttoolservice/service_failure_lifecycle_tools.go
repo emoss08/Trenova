@@ -205,8 +205,9 @@ func (e *serviceFailureEdit) request(
 
 func newUpdateServiceFailureTool(failures serviceFailureLifecycle) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name:     "update_service_failure",
-		artifact: serviceFailureRecordEntity,
+		name:        "update_service_failure",
+		searchTerms: []string{"change reason code", "edit service failure"},
+		artifact:    serviceFailureRecordEntity,
 		description: "Change the reason code, notes or EDI 214 code overrides on an open " +
 			"or reviewed service failure. Send only what changes; an empty string clears " +
 			"a note or override. It does not move the failure through its lifecycle: use " +
@@ -357,6 +358,7 @@ type serviceFailureTransitionSpec struct {
 	notesRequired bool
 	fields        []string
 	volatile      string
+	searchTerms   []string
 	preview       func(
 		failures serviceFailureLifecycle,
 		ctx context.Context,
@@ -392,6 +394,7 @@ func newServiceFailureTransitionTool(
 	return newReportingReceivableTool(&receivableSpec{
 		name:        spec.name,
 		description: spec.description,
+		searchTerms: spec.searchTerms,
 		artifact:    serviceFailureRecordEntity,
 		resource:    permission.ResourceServiceFailure,
 		operation:   spec.operation,
@@ -468,7 +471,8 @@ func newServiceFailureTransitionTool(
 
 func newReviewServiceFailureTool(failures serviceFailureLifecycle) serviceports.AgentTool {
 	return newServiceFailureTransitionTool(failures, &serviceFailureTransitionSpec{
-		name: "review_service_failure",
+		name:        "review_service_failure",
+		searchTerms: []string{"mark reviewed"},
 		description: "Mark an open service failure reviewed, with the reason code that " +
 			"explains it, once a person has looked into what happened. A reviewed " +
 			"failure keeps its reason and waits to be resolved. The customer's trading " +

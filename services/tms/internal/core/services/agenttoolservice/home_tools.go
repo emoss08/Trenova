@@ -647,6 +647,10 @@ func newArrangeHomeLayoutTool(layouts *homelayoutservice.Service) serviceports.A
 
 func (t *arrangeHomeLayoutTool) Name() string { return "arrange_home_layout" }
 
+func (t *arrangeHomeLayoutTool) SearchTerms() []string {
+	return append(homelayout.SpokenNames(), "reorder", "rearrange")
+}
+
 func (t *arrangeHomeLayoutTool) Policy() serviceports.ToolPolicy {
 	return serviceports.ToolPolicy{
 		Name:          t.Name(),

@@ -67,7 +67,8 @@ type invoiceSharer interface {
 
 func newAssessLateChargesTool(charges lateChargeAssessor) serviceports.AgentTool {
 	return newReceivableTool(&receivableSpec{
-		name: "assess_late_charges",
+		name:        "assess_late_charges",
+		searchTerms: []string{"late fees", "finance charge"},
 		description: "Propose assessing late charges on overdue invoices as of a date, as one " +
 			"debit memo per customer. Each has a line per invoice and overdue period at the " +
 			"customer's rate, and no period is charged twice. Leave out customerIds to assess " +
@@ -207,7 +208,8 @@ func renderLateCharges(
 
 func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
 	return newReceivableTool(&receivableSpec{
-		name: "share_invoice",
+		name:        "share_invoice",
+		searchTerms: []string{"loop in teammate", "teammate", "colleague"},
 		description: "Propose sharing an invoice with teammates, who get a notification and an " +
 			"email with your note and a link to it. Pick them with " +
 			"list_invoice_share_candidates, which lists only people who may read invoices. " +

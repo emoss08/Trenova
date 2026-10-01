@@ -23,6 +23,17 @@ export type AssistantOpeningQuestion = {
   text: string;
 };
 
+/**
+ * A waiting decision the assistant asked the person to make now: one
+ * proposal, several of one tool, or a plan. The approval box opens on it
+ * whatever else waits, and it is never persisted: a reload starts from the
+ * oldest decision again.
+ */
+export type DecisionFocus = {
+  proposalIds: string[];
+  planId: string;
+};
+
 interface AssistantState {
   /** Whether the floating panel is showing. */
   open: boolean;
@@ -43,6 +54,14 @@ interface AssistantState {
   launcherHidden: boolean;
   /** The panel's size once someone has resized it; the default until then. */
   panelSize: AssistantPanelSize | null;
+  /**
+   * The decisions the person chose to make later, by key ("proposal:…",
+   * "plan:…"). The approval box stays a pill for these until reopened; a
+   * decision that arrives afterwards opens it again.
+   */
+  deferredDecisions: string[];
+  /** The decision each conversation's approval box was asked to show now. */
+  decisionFocus: Record<string, DecisionFocus>;
 
   openWidget: () => void;
   closeWidget: () => void;
@@ -57,11 +76,32 @@ interface AssistantState {
   setDock: (dock: AssistantDock) => void;
   setLauncherHidden: (hidden: boolean) => void;
   setPanelSize: (size: AssistantPanelSize | null) => void;
+  deferDecisions: (keys: readonly string[]) => void;
+  resumeDecisions: (keys: readonly string[]) => void;
+  focusDecision: (threadId: string, focus: DecisionFocus, keys: readonly string[]) => void;
+  clearDecisionFocus: (threadId: string) => void;
 }
 
 const MAX_DISMISSED = 50;
 /** Drafts kept for the most recently typed-in conversations. */
 const MAX_DRAFTS = 20;
+/** Deferred decisions remembered; the oldest are forgotten first. */
+export const MAX_DEFERRED_DECISIONS = 200;
+
+/** Adds keys to the deferred list, newest last, keeping the newest few. */
+export function deferKeys(deferred: readonly string[], keys: readonly string[]): string[] {
+  const adding = new Set(keys);
+  const kept = deferred.filter((key) => !adding.has(key));
+
+  return [...kept, ...adding].slice(-MAX_DEFERRED_DECISIONS);
+}
+
+/** Takes keys off the deferred list. */
+export function resumeKeys(deferred: readonly string[], keys: readonly string[]): string[] {
+  const removing = new Set(keys);
+
+  return deferred.filter((key) => !removing.has(key));
+}
 
 /**
  * Stores a draft, or forgets it when emptied, keeping the newest few. The
@@ -102,6 +142,12 @@ export function mergePersisted(persisted: unknown, current: AssistantState): Ass
     dock: isAssistantDock(saved.dock) ? saved.dock : current.dock,
     launcherHidden: saved.launcherHidden === true,
     panelSize: isPanelSize(saved.panelSize) ? saved.panelSize : null,
+    deferredDecisions: Array.isArray(saved.deferredDecisions)
+      ? saved.deferredDecisions
+          .filter((key): key is string => typeof key === "string")
+          .slice(-MAX_DEFERRED_DECISIONS)
+      : [],
+    decisionFocus: {},
   };
 }
 
@@ -118,6 +164,8 @@ export const useAssistantStore = create<AssistantState>()(
       dock: DEFAULT_ASSISTANT_DOCK,
       launcherHidden: false,
       panelSize: null,
+      deferredDecisions: [],
+      decisionFocus: {},
 
       openWidget: () => set({ open: true }),
       closeWidget: () => set({ open: false }),
@@ -140,6 +188,23 @@ export const useAssistantStore = create<AssistantState>()(
       setDock: (dock) => set({ dock }),
       setLauncherHidden: (hidden) => set({ launcherHidden: hidden }),
       setPanelSize: (size) => set({ panelSize: size }),
+      deferDecisions: (keys) =>
+        set((state) => ({ deferredDecisions: deferKeys(state.deferredDecisions, keys) })),
+      resumeDecisions: (keys) =>
+        set((state) => ({ deferredDecisions: resumeKeys(state.deferredDecisions, keys) })),
+      focusDecision: (threadId, focus, keys) =>
+        set((state) => ({
+          decisionFocus: { ...state.decisionFocus, [threadId]: focus },
+          deferredDecisions: resumeKeys(state.deferredDecisions, keys),
+        })),
+      clearDecisionFocus: (threadId) =>
+        set((state) => {
+          if (!(threadId in state.decisionFocus)) {
+            return state;
+          }
+          const { [threadId]: _cleared, ...rest } = state.decisionFocus;
+          return { decisionFocus: rest };
+        }),
     }),
     {
       name: "trenova-assistant",
@@ -152,6 +217,7 @@ export const useAssistantStore = create<AssistantState>()(
         dock: state.dock,
         launcherHidden: state.launcherHidden,
         panelSize: state.panelSize,
+        deferredDecisions: state.deferredDecisions,
       }),
       merge: (persisted, current) => mergePersisted(persisted, current),
     },

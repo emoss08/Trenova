@@ -117,7 +117,8 @@ func receivableMoneySpec(spec *receivableSpec) *receivableSpec {
 
 func newApplyCustomerPaymentTool(payments receivablesKeeper) serviceports.AgentTool {
 	return newReceivableTool(receivableMoneySpec(&receivableSpec{
-		name: "apply_customer_payment",
+		name:        "apply_customer_payment",
+		searchTerms: []string{"unapplied cash", "unapplied payment"},
 		description: "Propose applying a posted payment's unapplied cash to that customer's open " +
 			"invoices. Name each invoice and the amount it takes, and any short pay to write off; " +
 			"together they cannot exceed what is unapplied. It books a ledger entry, so a person " +

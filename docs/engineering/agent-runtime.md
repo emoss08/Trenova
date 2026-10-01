@@ -62,7 +62,10 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   activity, so the Temporal UI and the SDK's metrics show each tool as itself.
   A tool that fails after its retries is reported to the model as a failed
   call and the turn goes on. `run_report`, `compare_report_runs` and
-  `plan_dispatch` run on the heavy queue whichever queue called them.
+  `plan_dispatch` run on the heavy queue whichever queue called them. Being
+  dynamic, its input is opaque to the tenant interceptor, so the activity binds
+  the run's tenant for row-level security itself and refuses a call that names
+  none (see [row-level-security.md](row-level-security.md)).
 - **Every call is held to its tool's whole schema** in the dispatch activity,
   reads and writes alike, before the tool, a preview or a card sees it. A
   misnamed required parameter is still renamed (`aliasedArguments`) and the
@@ -419,6 +422,12 @@ section warns from 4,000. Recording the same sentence again returns the existing
 row only when it is unexpired, kept for the same readers (organization, or the
 same agent) and, for a clean write, not tainted.
 
+**Forgetting.** `forget_memory` retires a memory by id; it stays readable in AI
+Control and can be restored. It is on no starter template: what a memory says
+is what every later turn is told, an Instruction a person recorded among it, so
+a person retires one in AI Control rather than an agent dropping it on its own
+judgement. An organization adds the tool to an agent it builds.
+
 ### Taint is data
 
 No `GetVersion` gate. Taint enters workflow code only from activity results
@@ -564,11 +573,16 @@ than the history) is told beside the question instead (`outOfViewDecisions`),
 so a delegate_task result saying a card is waiting is not the last word.
 
 The follow-up asks the agent to report only what the note and the proposal's
-card hold.
+card hold. A decision that carries the person's note ("Tell the agent instead"
+in the approval box) adds it, fenced as untrusted data and capped, as "The
+person declined:"; the agent answers it and may propose a different change.
+That turn is the rejection's own follow-up, so the note is never also sent as
+a message and the agent answers once.
 
-### A typed approval puts the card back
+### A typed approval opens the approval box
 
-Typing "approved" decides nothing: a proposal is decided on its card. The
+Typing "approved" decides nothing: a proposal is decided in the approval box
+that stands in the composer's place while it waits. The
 system prompt's "Proposals awaiting a decision" section lists each waiting
 proposal with its id, and a turn a person is reading, with somewhere to show
 things and a proposal still waiting, holds `request_decision {proposalId}`.
@@ -578,10 +592,35 @@ them, still pending; one filed this turn already has its card on screen; one
 card a turn), and the observer, where `publish_artifact` is kept
 (`PublishArtifactActivity` in workflow code), reads the thread's proposals
 again for this tenant and keeps a `decision_request` artifact over the one
-still pending (and its plan, for a step of one). The client draws the
-proposal's own card for the call, in the thread and on the Desk; the
+still pending (and its plan, for a step of one). The client opens the
+approval box on that decision (first, even one the person put off), and the
+Desk's pane keeps the proposal's record with a way back to the box; the
 artifact's status follows the proposal. A delegate never holds it. The tool
 is held only by turns opened after it existed, so it took no gate.
+
+Several waiting proposals of one tool share one card: `request_decision
+{proposalIds}` (2 to 50, standalone, all still pending, one tool) keeps one
+`decision_request` artifact anchored on the first with every id in its payload,
+and the approval box decides them as one entry through `decideMyProposals`,
+each with the digest of the preview it showed. A plan's steps are asked for by `{planId}`: the card is
+the plan's, anchored on its first waiting step. A step of a plan among
+`proposalIds` is refused with the plan's id, and a mix of tools is refused.
+Exactly one of the three parameters is given.
+
+### Reads bunch into one table
+
+Every `get_*` call used to leave its own entity card, so checking five
+invoices put five cards beside the conversation. The loop remembers, per turn,
+the calls of each `get_*` tool that succeeded and hands them to the next call
+of that tool (`DispatchCall.Earlier`, carried to the observer as
+`ToolObservation.Earlier`). A first call still makes its card; a later one
+folds the turn's earlier cards of that tool into one `table_view` artifact
+keyed by the turn's first call of the tool (`payload.bunched`, with the calls
+it covers), adds its own row, and removes the cards it replaced. When the turn
+is saved, a card a table covers is not tied back to its message. A `get_*`
+result that is already rows and columns (`get_invoices`) is a table from the
+start. `Earlier` is activity input, not a workflow decision, so the recorded
+histories replay unchanged.
 
 ### What the reply may claim
 
@@ -638,6 +677,35 @@ before anything is recorded, refuses a digest that no longer matches as a
 conflict, and records the preview with the decision. A plan's later step on a
 record an earlier step changed runs against the version that step left. See
 [proposal-previews.md](proposal-previews.md).
+
+### Who a run acts as
+
+A run nobody is in has two identities, kept apart on purpose.
+
+- **Authorization is the agent's.** The actor `runRequest` builds is
+  `PrincipalTypeAgent`, so the permission engine judges every call against the
+  fixed agent table (`permission.IsAgentAllowed`), never against a role. Approving
+  is refused outright (`guardExecute`), a self-scoped tool is refused because
+  nobody is in the run, and nothing that reads a person's access (field
+  sensitivity ceilings, report authorization, the user context provider, usage
+  attribution) reads the system user's: they read `RequestActor.PersonUserID`
+  or check `IsUser`, and both leave out anyone but a person. The database scope an agent actor binds
+  (`RequestActor.DBTenant`, which the tool activity and the tenant interceptor
+  read) names no user either, so row-level security shows the run nothing the
+  system user's own rows or memberships would.
+- **Attribution is the system user's.** The same actor carries the instance's
+  system user (`UserRepository.GetSystemUser`, the `system` account) as its
+  `UserID`, so a record the run creates or changes names that account in its
+  created-by and updated-by columns instead of nobody, and a service that
+  refused a write it had no user to attribute to (a shipment comment, a hold)
+  takes one the agent table allows. The audit log still
+  records the agent as the principal, and `executed_by_user_id` on a proposal
+  still names only the person who executed it: the AI audit trail reads a
+  proposal with an executor as a person's write.
+
+The system user is resolved once per run, when the run is opened (and when an
+evaluation replays a background run or case). If it cannot be read, the attempt
+fails with a retryable error rather than running unattributed.
 
 ### Starting runs
 
@@ -818,6 +886,29 @@ activity that files it, last, so a retry of the filing does not write it twice.
 Read a trajectory through the `agentRunEvents` GraphQL connection, gated on
 reading an agent run.
 
+A background run also keeps its **transcript**: what its model said and thought,
+the tools it called with their arguments, and what each returned with its
+verdict, in `agent_runs.transcript` (JSONB). `settleRun` writes it from
+`RunResult.Messages` on both paths that file a run (the activity and the
+workflow's `FinishRunActivity`), beside the 2,000-character summary, and a
+retried filing writes the same transcript again. It is bounded so the row stays
+small, the same way the event log bounds a payload: a message whose encoded form
+is over 64 KiB keeps only who said it, what it called and how the call was
+judged, marked `omitted`, rather than a clipped body; and past 256 KiB in all
+the middle of the run is left out (`sliceutils.KeepEnds` keeps the opening and
+the end), with `omittedMessages` and `omittedAt` saying how many and where. A
+run that produced no messages, or was filed before transcripts were kept, has
+none. The column is left out of every run read (`GetByID`, lists, the AI audit
+projector's source read) except `ListTranscriptsByIDs`, so filing, listing and
+updating a run never carry it, and it is hidden from the run's JSON so a
+realtime invalidation never ships it. Read it through `AgentRun.transcript`,
+which checks the run read permission itself and loads through a per-request
+dataloader; AI Control's run panel shows it behind a Transcript disclosure, with
+the conversation's own tool rows. The transcript lives on the run row and goes
+with it: no sweep prunes runs or their events today, and the row is deleted
+only with its organization, by the existing cascade, so nothing has to keep the
+transcript and the event log in step.
+
 An event's `occurred_at` is the instant the workflow emitted it
 (`StreamItem.At`, stamped with `workflow.Now`), not when the filing activity
 wrote the account, so a day-long run's events keep their real spacing.
@@ -825,8 +916,19 @@ wrote the account, so a day-long run's events keep their real spacing.
 Each claimed step also carries the trace and span of its `execute_tool` span, the
 definition and version that made the call and, for a delegate, the call id; its
 outcome carries a one-line `reason` and a `verdict` (`ran`, `proposed`,
-`denied`, …). A proposal carries the same trace and span, its `step_key`, when an
-automatic write ran and at what version it left the record, and who it ran as.
+`denied`, …). A call the loop turns away before any step is claimed (a tool the
+agent does not hold or that does not exist, arguments that did not parse, a spent
+budget, a repeat, a question nobody can answer) carries its verdict on the
+`tool_finished` event instead. The tool message the turn saves keeps the same
+verdict (`assistant_messages.tool_verdict`, `toolVerdict` on the thread), and the
+chat draws a refusal in its own words rather than as a failure: `denied` reads
+"Not permitted", `invalid` "Not accepted", `over_budget` "Out of budget" and
+`duplicate` "Skipped (repeat)", while `failed`, an unknown verdict, and a result
+saved before the verdict was kept read as failed. A refusal is still a failed
+result to everything that counts failures. `get_agent_run` lists each step's
+verdict too. A proposal carries the same trace and span, its
+`step_key`, when an automatic write ran and at what version it left the record,
+and who it ran as.
 The whole table of link columns, and who writes each, is in
 [ai-tracing.md](ai-tracing.md#link-columns).
 
@@ -925,9 +1027,10 @@ by the expiry sweep inside its activity, and a settled step replayed from the le
 never previews again. See [proposal-previews.md](proposal-previews.md).
 
 Resolving a criteria selection to records (`ToolSelectionResolver`, `transfer_to_billing`'s
-`allTransferable`) took no gate: it happens inside the dispatch activity, the ledger key is
-still derived from the model's own arguments, and only the activity's result changes. See
-[proposal-previews.md](proposal-previews.md#record-subsets).
+`allTransferable`; `ToolProposalSelectionResolver`, `retry_accounting_sync`'s
+`errorCategories` when proposed) took no gate: it happens inside the dispatch activity, the
+ledger key is still derived from the model's own arguments, and only the activity's result
+changes. See [proposal-previews.md](proposal-previews.md#record-subsets).
 
 Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an
@@ -965,17 +1068,26 @@ a driver's pay profile, recurring pay and escrow accounts but holds none of the 
 change them, so the one who processes pay is not the one who sets it. None of them runs
 unattended, so the agent permission ceiling does not grow for them.
 
+## Tools no template holds
+
+Every action tool is on a starter template unless it is deliberately withheld, and
+`withheldFromEveryTemplate` (`agentdefinition/focused_templates_test.go`) keeps each withheld
+tool off every template with its reason. An organization can still add any of them to an agent
+it builds in AI control. The privileged accounting writes are explained in
+[agent-accounting-tools.md](agent-accounting-tools.md#who-holds-them), rate agreement review in
+[agent-rates-tools.md](agent-rates-tools.md#who-holds-them), and pay setup, payroll exports and driver
+expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them). The rest:
+
+| Tool | Why no template holds it |
+| --- | --- |
+| `cancel_shipment` | Canceling a shipment is a person's call, by owner decision: it withdraws live tenders from carriers and can tell a partner over EDI. `uncancel_shipment`, which puts a canceled shipment back to New and sends nothing, stays with the dispatch assistant. |
+| `forget_memory` | A person retires a memory in AI Control; see [Forgetting](#memory-in-the-prompt). |
+| `save_table_view`, `add_home_widget`, `remove_home_widget`, `arrange_home_layout` | Each changes only the caller's own screen, a person's interface state that is no desk's job; the report analyst, the one desk near dashboards, builds report dashboards and never the person's home page. |
+
 ## Known limits
 
 - **Resume is at-most-once.** A crash in the execute→settle window reports
   "began, outcome unknown" rather than replaying.
-- **Scheduled runs authorize as `PrincipalTypeAgent`** against the static
-  `permission.IsAgentAllowed` table; "not implicitly a system administrator" is
-  not yet true for unattended runs.
-- **Background runs discard their transcript** beyond the summary and the event
-  log.
-- **Permission denials are not distinct events.** A refusal arrives as a failed
-  tool result and is recorded as one.
 - **Search attributes are not set.** Organization, feature, thread and
   definition are carried in workflow ids, summaries and fairness keys; typed
   search attributes need registering on the server first.

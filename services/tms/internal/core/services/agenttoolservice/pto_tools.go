@@ -186,6 +186,10 @@ func newCancelWorkerPTOTool(pto ptoRejecter) serviceports.AgentTool {
 
 func (t *cancelWorkerPTOTool) Name() string { return "cancel_worker_pto" }
 
+func (t *cancelWorkerPTOTool) SearchTerms() []string {
+	return []string{"cancel vacation", "cancel time off", "cancel approved vacation"}
+}
+
 func (t *cancelWorkerPTOTool) Description() string {
 	return "Cancel a worker's time off, whether it was still awaiting a decision or " +
 		"already approved. Cancelling approved time off returns the days to their " +

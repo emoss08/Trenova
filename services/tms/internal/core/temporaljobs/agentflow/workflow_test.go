@@ -233,6 +233,47 @@ func TestRunCallsAToolAsItsOwnActivity(t *testing.T) {
 	assert.False(t, tool.ToolFailed)
 }
 
+func TestRunToolBindsTheRunsTenantForTheDatabase(t *testing.T) {
+	t.Parallel()
+
+	lookup := &agentruntimetest.StubQueryTool{
+		ToolName: "get_shipment",
+		Result:   map[string]any{"status": "InTransit"},
+	}
+	h := newHarness(t, harnessParams{query: []serviceports.AgentQueryTool{lookup}})
+	h.replies(
+		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
+		textReply("It is in transit."),
+	)
+
+	rc := runContext("get_shipment")
+	result := h.run(t, rc)
+
+	require.Empty(t, result.Err)
+	require.Equal(t, 1, lookup.Calls)
+	assert.Equal(t, rc.Actor.TenantInfo().DBTenant(), lookup.LastTenant,
+		"a dynamic activity's input is opaque to the tenant interceptor, so the tool "+
+			"activity binds the run's tenant itself")
+}
+
+func TestRunToolRefusesACallWithNoTenant(t *testing.T) {
+	t.Parallel()
+
+	lookup := &agentruntimetest.StubQueryTool{ToolName: "get_shipment"}
+	h := newHarness(t, harnessParams{query: []serviceports.AgentQueryTool{lookup}})
+	h.replies(
+		toolReply("get_shipment", map[string]any{"proNumber": "12345"}),
+		textReply("I could not look that up."),
+	)
+
+	rc := runContext("get_shipment")
+	rc.Actor.OrganizationID = pulid.Nil
+	result := h.run(t, rc)
+
+	require.Empty(t, result.Err)
+	assert.Zero(t, lookup.Calls, "a tool never runs without a tenant to scope it")
+}
+
 // A tool that cannot be run at all, even after its retries, is an answer the
 // model can work with. The turn carries on and the model is told it did not
 // happen.

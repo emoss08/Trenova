@@ -252,6 +252,10 @@ func newResolveServiceFailureTool(failures serviceFailureResolver) serviceports.
 
 func (t *resolveServiceFailureTool) Name() string { return "resolve_service_failure" }
 
+func (t *resolveServiceFailureTool) SearchTerms() []string {
+	return []string{"close service failure", "close out failure"}
+}
+
 func (t *resolveServiceFailureTool) Description() string {
 	return "Close an open service failure with the reason it happened and a note on " +
 		"what was done. The reason code comes from list_service_failure_reason_codes " +

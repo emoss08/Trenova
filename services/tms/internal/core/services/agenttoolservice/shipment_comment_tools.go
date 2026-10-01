@@ -476,8 +476,9 @@ func newEditShipmentCommentTool(
 	permissions commentPermissions,
 ) serviceports.AgentTool {
 	base := newReportingReceivableTool(&receivableSpec{
-		name:     "edit_shipment_comment",
-		artifact: shipmentRecordEntity,
+		name:        "edit_shipment_comment",
+		searchTerms: []string{"fix comment", "reword comment", "typo"},
+		artifact:    shipmentRecordEntity,
 		description: "Change the text, visibility, priority or acknowledgment request " +
 			"of a comment on a shipment. Send only what changes. Your own comments and " +
 			"those the person may moderate can be edited; a note widened past the " +

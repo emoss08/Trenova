@@ -350,7 +350,7 @@ func TestCarrierInvoiceDuplicatesMigration_MarksExistingRepeats_Integration(t *t
 	_, thisFile, _, _ := runtime.Caller(0)
 	migration, err := os.ReadFile(filepath.Join(
 		filepath.Dir(thisFile),
-		"../../migrations/20261231007110_carrier_invoice_duplicates.tx.up.sql",
+		"../../migrations/20261231007190_carrier_invoice_duplicates.tx.up.sql",
 	))
 	require.NoError(t, err)
 	for _, statement := range strings.Split(string(migration), "--bun:split") {

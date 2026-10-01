@@ -53,5 +53,7 @@ const (
 	labelCustomer             = "Customer"
 	labelShipment             = "Shipment"
 	verbApprove               = "approve"
+	pastApproved              = "approved"
+	pastPosted                = "posted"
 	verbReject                = "reject"
 )

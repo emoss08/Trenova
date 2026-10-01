@@ -639,16 +639,6 @@ func (r *syncRecordRepository) MappingUsage(
 	})
 }
 
-func retryableStatuses() []accountingsync.SyncStatus {
-	statuses := make([]accountingsync.SyncStatus, 0, 3)
-	for _, status := range accountingsync.AllSyncStatuses() {
-		if status.Retryable() {
-			statuses = append(statuses, status)
-		}
-	}
-	return statuses
-}
-
 func (r *syncRecordRepository) Requeue(
 	ctx context.Context,
 	req *repositories.RequeueAccountingSyncRecordsRequest,
@@ -661,7 +651,7 @@ func (r *syncRecordRepository) Requeue(
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
 				q = buncolgen.AccountingSyncRecordScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ConnectionID.Eq(), req.ConnectionID).
-					Where(cols.Status.In(), bun.List(retryableStatuses()))
+					Where(cols.Status.In(), bun.List(accountingsync.RetryableSyncStatuses()))
 				if len(req.ErrorCategories) > 0 {
 					q = q.Where(cols.ErrorCategory.In(), bun.List(req.ErrorCategories))
 				}

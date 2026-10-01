@@ -5,10 +5,12 @@ import {
   currentActivity,
   describeActivity,
   groupActivity,
+  refusalTone,
   reportSummary,
   stepsFromExchanges,
   summaryCount,
   toolEffect,
+  toolRefusal,
   type ToolStep,
 } from "../activity";
 import type { ToolExchange } from "../thread-view";
@@ -224,12 +226,12 @@ describe("describeActivity", () => {
     expect(line([step({ name: "ask_user" })]).phrase).toBe("Asked you to choose");
   });
 
-  it("reads a card put back as a decision asked for", () => {
+  it("reads a decision opened in the approval box as a decision asked for", () => {
     const shown = line([step({ name: "request_decision", summary: "Create shipment" })]);
     expect(shown.phrase).toBe("Asked you to decide");
     expect(shown.detail).toBe("Create shipment");
     expect(line([step({ name: "request_decision", status: "failed" })]).phrase).toBe(
-      "Couldn't show the card again",
+      "Couldn't open the approval box",
     );
   });
 
@@ -458,5 +460,79 @@ describe("web activity", () => {
     ]);
 
     expect(groups).toHaveLength(2);
+  });
+});
+
+/**
+ * A call the runtime turned away is still failed to everything that counts
+ * failures, but its row says why: a permission it lacked, arguments it could
+ * not accept, a budget it ran out of, a repeat it skipped. Anything else that
+ * failed keeps the failed wording, and an unknown verdict reads as a failure.
+ */
+describe("refusals", () => {
+  it.each([
+    ["denied", "Not permitted", "warning"],
+    ["invalid", "Not accepted", "warning"],
+    ["over_budget", "Out of budget", "warning"],
+    ["duplicate", "Skipped (repeat)", "neutral"],
+  ] as const)("names a %s call as %s", (verdict, phrase, tone) => {
+    const refused = step({
+      name: "update_worker",
+      status: "failed",
+      verdict,
+      content: 'Tool "update_worker" is not permitted.',
+    });
+
+    expect(toolRefusal(refused)).toBe(verdict);
+    expect(refusalTone(verdict)).toBe(tone);
+    expect(line([refused])).toMatchObject({ phrase, state: "failed", refusal: verdict });
+  });
+
+  it("keeps the failed wording for a call that ran and broke", () => {
+    const broken = step({ name: "update_worker", status: "failed", verdict: "failed" });
+
+    expect(toolRefusal(broken)).toBeNull();
+    const described = line([broken]);
+    expect(described.phrase).toBe("The change didn't go through");
+    expect(described.refusal).toBeUndefined();
+  });
+
+  it("ignores a refusal verdict on a call that did not fail", () => {
+    expect(toolRefusal(step({ name: "get_worker", status: "done", verdict: "denied" }))).toBeNull();
+  });
+
+  it("names a folded group by its refusal only when every call shares it", () => {
+    const alike = [
+      step({ name: "get_worker", status: "failed", verdict: "denied" }),
+      step({ name: "get_shipment", status: "failed", verdict: "denied" }),
+    ];
+    expect(line(alike)).toMatchObject({ phrase: "Not permitted", refusal: "denied" });
+
+    const mixed = [
+      step({ name: "get_worker", status: "failed", verdict: "denied" }),
+      step({ name: "get_shipment", status: "done", summary: "S-1001" }),
+    ];
+    expect(line(mixed).refusal).toBeUndefined();
+  });
+
+  it("reads the verdict a saved result kept", () => {
+    const [refused] = stepsFromExchanges(
+      [
+        {
+          call: { id: "c1", name: "update_worker", arguments: {} },
+          result: saved({
+            toolCallId: "c1",
+            toolName: "update_worker",
+            toolFailed: true,
+            toolVerdict: "denied",
+            content: "no",
+          }),
+        },
+      ],
+      0,
+    );
+
+    expect(refused.status).toBe("failed");
+    expect(toolRefusal(refused)).toBe("denied");
   });
 });

@@ -66,6 +66,7 @@ func (r *repository) List(
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
+			Apply(withoutTranscript).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.filterQuery(sq, req)
 			}).ScanAndCount(ctx)
@@ -107,10 +108,14 @@ func (r *repository) applyCursorPageFilters(
 
 func applyAgentRunColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.AgentRunTable.All())
+		return withoutTranscript(q)
 	}
 
 	return q.Column(columns...)
+}
+
+func withoutTranscript(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.ExcludeColumn(buncolgen.AgentRunColumns.Transcript.String())
 }
 
 func (r *repository) ListConnection(
@@ -178,6 +183,7 @@ func (r *repository) ListByIDs(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&runs).
+			Apply(withoutTranscript).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.In(req.IDs))
@@ -187,6 +193,41 @@ func (r *repository) ListByIDs(
 			r.l.Error("failed to list agent runs by ids", zap.Error(err))
 
 			return nil, fmt.Errorf("list agent runs by ids: %w", err)
+		}
+
+		return runs, nil
+	})
+}
+
+func (r *repository) ListTranscriptsByIDs(
+	ctx context.Context,
+	req repositories.ListAgentRunsByIDsRequest,
+) ([]*agent.AgentRun, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
+		if len(req.IDs) == 0 {
+			return []*agent.AgentRun{}, nil
+		}
+
+		cols := buncolgen.AgentRunColumns
+		runs := make([]*agent.AgentRun, 0, len(req.IDs))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&runs).
+			Column(
+				cols.ID.String(),
+				cols.BusinessUnitID.String(),
+				cols.OrganizationID.String(),
+				cols.Transcript.String(),
+			).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo).
+					Where(cols.ID.In(), bun.List(req.IDs))
+			}).
+			Scan(ctx)
+		if err != nil {
+			r.l.Error("failed to list agent run transcripts by ids", zap.Error(err))
+
+			return nil, fmt.Errorf("list agent run transcripts by ids: %w", err)
 		}
 
 		return runs, nil
@@ -205,6 +246,7 @@ func (r *repository) GetByID(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
+			Apply(withoutTranscript).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.AgentRunScopeTenant(sq, *req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)

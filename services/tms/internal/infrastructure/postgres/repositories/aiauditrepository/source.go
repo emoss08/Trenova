@@ -64,7 +64,9 @@ func (r *sourceRepository) ListRuns(
 		rows := make([]*agent.AgentRun, 0, page.Limit)
 
 		if err := keyset(
-			r.db.DBForContext(ctx).NewSelect().Model(&rows),
+			r.db.DBForContext(ctx).NewSelect().
+				Model(&rows).
+				ExcludeColumn(cols.Transcript.String()),
 			&cols.UpdatedAt, &cols.ID, page,
 		).Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read agent runs for the AI audit trail: %w", err)

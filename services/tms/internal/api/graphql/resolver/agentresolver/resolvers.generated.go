@@ -9,15 +9,16 @@ import (
 
 type Deps struct {
 	*base.Core
-	AgentRunService        services.AgentRunService
-	AgentProposalService   services.AgentProposalService
-	AgentPlanService       services.AgentPlanService
-	AgentMemoryService     services.AgentMemoryService
-	AgentEvaluationService services.AgentEvaluationService
-	AgentExceptionService  services.AgentExceptionService
-	AgentDecisionService   services.AgentDecisionService
-	AgentTools             services.AgentToolRegistry
-	AgentControlService    services.AgentControlService
+	AgentRunService           services.AgentRunService
+	AgentProposalService      services.AgentProposalService
+	AgentPlanService          services.AgentPlanService
+	AgentMemoryService        services.AgentMemoryService
+	AgentEvaluationService    services.AgentEvaluationService
+	AgentExceptionService     services.AgentExceptionService
+	AgentDecisionService      services.AgentDecisionService
+	AgentDecisionQueueService services.AgentDecisionQueueService
+	AgentTools                services.AgentToolRegistry
+	AgentControlService       services.AgentControlService
 }
 
 type AgentDecisionResolver struct{ *Deps }

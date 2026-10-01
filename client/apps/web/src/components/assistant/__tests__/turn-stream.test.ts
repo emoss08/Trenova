@@ -115,6 +115,35 @@ describe("reduceTurn", () => {
     expect(state.status).toBe("working");
   });
 
+  // A refused call is still a failed one to everything that counts failures;
+  // the verdict rides along so the row can say why it did not run.
+  it("keeps the verdict a finished call arrived with", () => {
+    const denied = parseAssistantStreamEvent(
+      "tool_finished",
+      '{"callId":"c1","name":"update_worker","failed":true,"content":"no","verdict":"denied"}',
+    );
+    const unheard = parseAssistantStreamEvent(
+      "tool_finished",
+      '{"callId":"c2","name":"get_worker","failed":true,"content":"no","verdict":"vetoed"}',
+    );
+    expect(denied).not.toBeNull();
+    expect(unheard).not.toBeNull();
+
+    const state = run([
+      accepted,
+      { event: "tool_started", data: { callId: "c1", name: "update_worker", arguments: {} } },
+      { event: "tool_started", data: { callId: "c2", name: "get_worker", arguments: {} } },
+      denied!,
+      unheard!,
+    ]);
+
+    const tools = state.segments.filter((segment) => segment.kind === "tool");
+    expect(tools.map((tool) => [tool.status, tool.verdict])).toEqual([
+      ["failed", "denied"],
+      ["failed", undefined],
+    ]);
+  });
+
   // Text that streamed before the output guard declined it must not linger:
   // the refusal replaces it, and the reader is told the answer was withheld.
   it("drops streamed text when a late refusal arrives", () => {

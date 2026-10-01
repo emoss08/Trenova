@@ -160,11 +160,14 @@ func (a *Activities) runSource(
 		return nil, err
 	}
 
-	actor := agentActor(tenant)
+	var actor *serviceports.RequestActor
 	if source.SubjectType == agent.SubjectAssistantThread {
-		if actor, err = a.threadActor(ctx, tenant, source.SubjectID); err != nil {
-			return nil, err
-		}
+		actor, err = a.threadActor(ctx, tenant, source.SubjectID)
+	} else {
+		actor, err = a.unattendedActor(ctx, tenant)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	input, err := a.replayInput(ctx, tenant, source, definition, actor)
@@ -194,7 +197,10 @@ func (a *Activities) caseSource(
 
 	originals := expectedOriginals(evalCase)
 	if !evalCase.IsChat() {
-		actor := agentActor(tenant)
+		actor, actorErr := a.unattendedActor(ctx, tenant)
+		if actorErr != nil {
+			return nil, actorErr
+		}
 		input, inputErr := a.caseBackgroundInput(ctx, tenant, evalCase, definition, actor)
 		if inputErr != nil {
 			return nil, inputErr

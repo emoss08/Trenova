@@ -158,6 +158,22 @@ func TestListBillingQueueItems_IncludesPostedOnlyWhenAsked(t *testing.T) {
 	assert.True(t, queue.captured.IncludePosted)
 }
 
+func TestListBillingQueueItems_FiltersByIDs(t *testing.T) {
+	t.Parallel()
+
+	queue := &fakeBillingQueue{}
+	tool := buildBillingQueueList(queue, newFieldAccess(&fakePermissions{}))
+	ids := []any{pulid.MustNew("bqi_").String(), pulid.MustNew("bqi_").String()}
+
+	_, err := tool.Query(t.Context(), agentParams(map[string]any{
+		"filters": []any{map[string]any{"field": "id", "operator": "in", "values": ids}},
+	}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+	require.Len(t, queue.captured.Filter.FieldFilters, 1)
+	assert.Equal(t, "id", queue.captured.Filter.FieldFilters[0].Field)
+	assert.Equal(t, []any{ids[0], ids[1]}, queue.captured.Filter.FieldFilters[0].Value)
+}
+
 func TestGetBillingQueueItem_SaysWhatBlocksApprovalAndWhatTheShipmentLacks(t *testing.T) {
 	t.Parallel()
 

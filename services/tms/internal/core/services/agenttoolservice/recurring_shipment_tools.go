@@ -649,8 +649,9 @@ func newSetRecurringShipmentStatusTool(series recurringShipmentKeeper) servicepo
 
 func newGenerateRecurringShipmentTool(series recurringShipmentKeeper) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name:     "generate_recurring_shipment",
-		artifact: shipmentRecordEntity,
+		name:        "generate_recurring_shipment",
+		searchTerms: []string{"next occurrence", "generate early", "next slot", "spin up"},
+		artifact:    shipmentRecordEntity,
 		description: "Create the shipment for a recurring shipment's next slot now, or for " +
 			"the slot at occurrenceAt, instead of waiting for the schedule. A slot that " +
 			"already has its shipment is not made twice.",

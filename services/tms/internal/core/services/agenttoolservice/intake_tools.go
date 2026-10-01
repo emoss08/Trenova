@@ -409,6 +409,10 @@ func newUpdateShipmentTool(
 
 func (t *updateShipmentTool) Name() string { return "update_shipment" }
 
+func (t *updateShipmentTool) SearchTerms() []string {
+	return []string{"edit shipment", "pieces", "correct weight"}
+}
+
 func (t *updateShipmentTool) Description() string {
 	return "Change the details of a saved shipment: the customer, service type, shipment " +
 		"type, equipment types, BOL, pieces, weight or temperature range. Send only " +

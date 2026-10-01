@@ -315,6 +315,7 @@ var MessageColumns = struct {
 	ToolCallID        Column // "tool_call_id" → qualified: "amsg.tool_call_id"
 	ToolName          Column // "tool_name" → qualified: "amsg.tool_name"
 	ToolFailed        Column // "tool_failed" → qualified: "amsg.tool_failed"
+	ToolVerdict       Column // "tool_verdict" → qualified: "amsg.tool_verdict"
 	ToolSummary       Column // "tool_summary" → qualified: "amsg.tool_summary"
 	FoundTools        Column // "found_tools" → qualified: "amsg.found_tools"
 	ScopeStage        Column // "scope_stage" → qualified: "amsg.scope_stage"
@@ -348,6 +349,7 @@ var MessageColumns = struct {
 	ToolCallID:        NewColumn("tool_call_id", "amsg"),
 	ToolName:          NewColumn("tool_name", "amsg"),
 	ToolFailed:        NewColumn("tool_failed", "amsg"),
+	ToolVerdict:       NewColumn("tool_verdict", "amsg"),
 	ToolSummary:       NewColumn("tool_summary", "amsg"),
 	FoundTools:        NewColumn("found_tools", "amsg"),
 	ScopeStage:        NewColumn("scope_stage", "amsg"),
@@ -387,6 +389,7 @@ var MessageFieldMap = map[string]string{
 	"toolCallId":     "tool_call_id",
 	"toolName":       "tool_name",
 	"toolFailed":     "tool_failed",
+	"toolVerdict":    "tool_verdict",
 	"summary":        "tool_summary",
 	"foundTools":     "found_tools",
 	"scopeStage":     "scope_stage",
@@ -424,6 +427,7 @@ var MessageInsertableColumns = []string{
 	"tool_call_id",
 	"tool_name",
 	"tool_failed",
+	"tool_verdict",
 	"tool_summary",
 	"found_tools",
 	"scope_stage",
@@ -519,6 +523,7 @@ var MessageFilter = struct {
 	ToolCallID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCallId" → DB: "tool_call_id"
 	ToolName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
 	ToolFailed        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolFailed" → DB: "tool_failed"
+	ToolVerdict       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolVerdict" → DB: "tool_verdict"
 	ToolSummary       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "tool_summary"
 	FoundTools        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "foundTools" → DB: "found_tools"
 	ScopeStage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scopeStage" → DB: "scope_stage"
@@ -581,6 +586,9 @@ var MessageFilter = struct {
 	},
 	ToolFailed: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("toolFailed", op, value)
+	},
+	ToolVerdict: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("toolVerdict", op, value)
 	},
 	ToolSummary: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("summary", op, value)

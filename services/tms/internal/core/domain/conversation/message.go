@@ -63,6 +63,7 @@ type Message struct {
 	ToolCallID  string           `json:"toolCallId" bun:"tool_call_id,type:VARCHAR(200),nullzero"`
 	ToolName    string           `json:"toolName"   bun:"tool_name,type:VARCHAR(200),nullzero"`
 	ToolFailed  bool             `json:"toolFailed" bun:"tool_failed,type:BOOLEAN,notnull,default:false"`
+	ToolVerdict string           `json:"toolVerdict,omitempty" bun:"tool_verdict,type:VARCHAR(50),nullzero"`
 	ToolEffect  agent.ToolEffect `json:"effect,omitempty" bun:"-"`
 	ToolSummary string           `json:"summary,omitempty" bun:"tool_summary,type:TEXT,nullzero"`
 	FoundTools  []string         `json:"foundTools,omitempty" bun:"found_tools,type:JSONB,nullzero"`

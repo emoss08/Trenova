@@ -118,6 +118,12 @@ taint held names it among what held it, whatever else held it too.
 without a decision while that person is in the conversation, unless a person
 set the tool's tier on the agent. An unattended run never has it.
 
+**Unattended runs.** A run nobody is in is authorized as the agent, from the
+fixed table of what any agent may do, and never from a role: it cannot approve,
+and it cannot reach a person's own records. What it writes is attributed to the
+instance's system user, so a record's created-by and updated-by name that
+account rather than nobody; the account lends its name, not its permissions.
+
 **Data access.** A read shows a field only when the reader's data access
 reaches it. An unattended agent reads at its own data access setting, Internal
 unless someone whose role reaches Restricted raises it; a run a person is in

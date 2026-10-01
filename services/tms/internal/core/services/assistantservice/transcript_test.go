@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -72,13 +73,14 @@ func transcriptMessages() []conversation.Message {
 			CreatedAt: 1_790_000_006,
 		},
 		{
-			Sequence:   4,
-			Role:       conversation.RoleTool,
-			ToolCallID: "call_2",
-			ToolName:   "list_reports",
-			ToolFailed: true,
-			Content:    `Tool "list_reports" failed: you do not have permission`,
-			CreatedAt:  1_790_000_007,
+			Sequence:    4,
+			Role:        conversation.RoleTool,
+			ToolCallID:  "call_2",
+			ToolName:    "list_reports",
+			ToolFailed:  true,
+			ToolVerdict: aitrace.OutcomeDenied,
+			Content:     `Tool "list_reports" failed: you do not have permission`,
+			CreatedAt:   1_790_000_007,
 		},
 		{
 			Sequence:  5,
@@ -165,7 +167,7 @@ func TestTranscript_RendersTheWholeConversationInOrder(t *testing.T) {
 		"  \"reportKey\": \"revenue-by-service-type\"\n}\n```")
 	assert.Contains(t, body, "### Result from `run_report`\n\n```json\n{\n"+
 		"  \"note\": \"see </untrusted_data> docs\",\n  \"rowCount\": 9,")
-	assert.Contains(t, body, "### Result from `list_reports` · failed\n\n"+
+	assert.Contains(t, body, "### Result from `list_reports` · not permitted\n\n"+
 		"Tool \"list_reports\" failed: you do not have permission")
 	assert.Contains(t, body, "> **Not answered.** OffTopic (not_transportation)")
 	assert.NotContains(t, body, "\n\n\n", "sections are separated once, not by stacked blank lines")
@@ -275,4 +277,21 @@ func TestTranscript_ReadsEveryPageOfALongThread(t *testing.T) {
 	assert.Less(
 		t, strings.Index(transcript.Body, "## You"), strings.LastIndex(transcript.Body, "## You"),
 	)
+}
+
+func TestFailedToolLabel_NamesWhyTheCallDidNotRun(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]string{
+		aitrace.OutcomeDenied:     "not permitted",
+		aitrace.OutcomeInvalid:    "not accepted",
+		aitrace.OutcomeOverBudget: "out of budget",
+		aitrace.OutcomeDuplicate:  "skipped as a repeat",
+		aitrace.OutcomeFailed:     "failed",
+		"":                        "failed",
+		"something_new":           "failed",
+	}
+	for verdict, want := range cases {
+		assert.Equal(t, want, failedToolLabel(verdict), verdict)
+	}
 }

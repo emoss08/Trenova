@@ -2535,6 +2535,10 @@ type AgentDecision {
   Modifications carry tool-specific parameter overrides captured at decision time.
   """
   modifications: JSON
+  """
+  What the decider told the agent with the decision; empty when they said nothing.
+  """
+  note: String!
   organizationId: ID!
   """
   What the decider was shown of the write, filtered again for the reader. Absent for a rejection and for a decision recorded before previews were kept.
@@ -3199,6 +3203,10 @@ input AgentPlanDecisionInput {
   """Accepted runs every step in order; Rejected rejects them all."""
   decision: AgentDecisionType!
   """
+  What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision.
+  """
+  note: String
+  """
   The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded.
   """
   previewDigest: String
@@ -3516,6 +3524,10 @@ type AgentProposalConnection {
 input AgentProposalDecisionInput {
   decision: AgentDecisionType!
   modifications: JSON
+  """
+  What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions.
+  """
+  note: String
   """
   The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed.
   """
@@ -3877,6 +3889,10 @@ type AgentRun {
   The run's trace in the tracing backend, when one is configured and the run has a trace.
   """
   traceUrl: String
+  """
+  What the run's model said and the tools it called, bounded, read with the same permission as the run. Absent for a run filed before transcripts were kept or one that produced no messages.
+  """
+  transcript: AgentRunTranscript @goField(forceResolver: true)
   trigger: AgentRunTrigger!
   updatedAt: Timestamp!
   version: Int!
@@ -3965,6 +3981,72 @@ The outside content a run read, one mark per place it came from, at most sixteen
 """
 type AgentRunTaint {
   marks: [AgentTaintMark!]!
+}
+
+"""
+What a finished run's model said and the tools it called, in order. A message
+over 64 KiB keeps only who said it and what it called, and past 256 KiB the
+middle of the run is left out and counted, so the record stays bounded.
+"""
+type AgentRunTranscript {
+  messages: [AgentRunTranscriptMessage!]!
+  """
+  Where the left-out messages fell: the index in messages of the first message after them.
+  """
+  omittedAt: Int!
+  """
+  How many messages from the middle of the run were left out to keep the transcript bounded.
+  """
+  omittedMessages: Int!
+}
+
+"""
+One message of a run's transcript: the model's words and calls, or a tool's result.
+"""
+type AgentRunTranscriptMessage {
+  """On a delegated step: the agent that took it. Empty otherwise."""
+  agentDefinitionId: ID!
+  content: String!
+  createdAt: Timestamp!
+  """
+  On a delegated step: the delegate_task call it answers. Empty otherwise.
+  """
+  delegateCallId: String!
+  """
+  Delegated for a step another agent took on a task the run handed it; Message otherwise.
+  """
+  kind: String!
+  """
+  The message was too large to keep whole: its words, reasoning and call arguments were left out.
+  """
+  omitted: Boolean!
+  """
+  What the model thought before it answered, when the provider let it through.
+  """
+  reasoning: String!
+  """Assistant for the model, Tool for a tool's result."""
+  role: String!
+  """On a tool result: the call it answers."""
+  toolCallId: String!
+  toolCalls: [AgentRunTranscriptToolCall!]!
+  toolFailed: Boolean!
+  toolName: String!
+  """On a tool result: the server's one-line account of it, in English."""
+  toolSummary: String!
+  """
+  On a tool result: how the runtime judged the call, such as ran, proposed, denied, invalid, duplicate, over_budget or failed. Empty when it was not recorded.
+  """
+  toolVerdict: String!
+}
+
+"""A tool call the model asked for in a run's transcript."""
+type AgentRunTranscriptToolCall {
+  """
+  The arguments as the model sent them; absent when the message was too large to keep whole.
+  """
+  arguments: JSON
+  id: String!
+  name: String!
 }
 
 enum AgentRunTrigger {
@@ -8689,6 +8771,10 @@ input DecideAgentProposalsInput {
   Accepted or Rejected. A change applies to one proposal, from its own card.
   """
   decision: AgentDecisionType!
+  """
+  What the decider tells the agent, recorded on each proposal's decision; at most 2000 characters.
+  """
+  note: String
   """
   The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed.
   """
@@ -15769,7 +15855,8 @@ type Mutation {
   """
   Decides a plan raised in one of the caller's own conversations, by an agent
   they may still use. Each step's write still runs only if the caller may
-  make it, and the first that fails stops the rest.
+  make it. Steps that each change a different record of one kind all run and
+  each reports its outcome; otherwise the first that fails stops the rest.
   """
   decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
   """
@@ -15777,6 +15864,15 @@ type Mutation {
   approved write still runs only if the caller may make it.
   """
   decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  """
+  Decides several proposals of one tool raised in the caller's own
+  conversations the same way, each as proposed, with the digest of the
+  preview shown for each. The batch is refused before anything runs when one
+  is not the caller's, it mixes tools, includes a plan's step or holds more
+  than 50; once it starts, every proposal is decided in turn, each write still
+  runs only if the caller may make it, and each outcome is reported.
+  """
+  decideMyProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
   deleteCaptureProfile(id: ID!): Boolean!

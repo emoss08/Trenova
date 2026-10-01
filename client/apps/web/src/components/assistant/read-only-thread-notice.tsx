@@ -1,7 +1,6 @@
 import type { CannotContinueReason } from "@/types/assistant";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import {
   CalendarClockIcon,
   CircleSlashIcon,
@@ -9,6 +8,7 @@ import {
   PowerOffIcon,
   type LucideIcon,
 } from "lucide-react";
+import { FloatingSlot } from "./floating-slot";
 
 type Notice = { icon: LucideIcon; text: string };
 
@@ -62,40 +62,28 @@ export function readOnlyThreadNotice(
 export function ReadOnlyThreadNotice({
   reason,
   compact = false,
+  notice,
   ref,
 }: {
   /** Why the conversation cannot continue, as the server served it. */
   reason?: CannotContinueReason;
   compact?: boolean;
+  /** A line above the notice: the decisions put off for later, for one. */
+  notice?: React.ReactNode;
   /** Measured by the thread, as the composer is, so the last message is never hidden. */
   ref?: React.Ref<HTMLDivElement>;
 }) {
   const t = useT();
-  const notice = readOnlyThreadNotice(reason, t);
-  const Icon = notice.icon;
+  const statement = readOnlyThreadNotice(reason, t);
+  const Icon = statement.icon;
 
   return (
-    <div ref={ref} className="pointer-events-none absolute inset-x-0 bottom-0 z-10">
-      <div
-        aria-hidden
-        className={cn(
-          "from-popover pointer-events-none bg-gradient-to-t to-transparent",
-          compact ? "h-6" : "h-10",
-        )}
-      />
-      <div
-        className={cn(
-          "bg-popover pointer-events-auto",
-          compact ? "px-3 pt-0.5 pb-1.5" : "px-4 pt-0.5 pb-2.5",
-        )}
-      >
-        <div className={cn("mx-auto", !compact && "max-w-3xl")}>
-          <Alert size="sm" role="status" data-testid="read-only-thread-notice">
-            <Icon aria-hidden />
-            <AlertDescription>{notice.text}</AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    </div>
+    <FloatingSlot ref={ref} compact={compact}>
+      {notice}
+      <Alert size="sm" role="status" data-testid="read-only-thread-notice">
+        <Icon aria-hidden />
+        <AlertDescription>{statement.text}</AlertDescription>
+      </Alert>
+    </FloatingSlot>
   );
 }

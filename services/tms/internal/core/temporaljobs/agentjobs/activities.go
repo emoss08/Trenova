@@ -217,7 +217,10 @@ func (a *Activities) runRequest(
 	subject *agentdefinition.RuntimeSubject,
 ) (*serviceports.RunRequest, error) {
 	tenant := payload.tenantInfo()
-	actor := agentActor(tenant)
+	actor, err := a.unattendedActor(ctx, tenant)
+	if err != nil {
+		return nil, err
+	}
 
 	input := backgroundInput(payload, subject)
 	runtimeContext, err := a.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
@@ -454,7 +457,7 @@ type settleRunParams struct {
 	Failed bool
 }
 
-// settleRun files a run's proposals and summary.
+// settleRun files a run's proposals, summary and transcript.
 func (a *Activities) settleRun(
 	ctx context.Context,
 	p settleRunParams,
@@ -491,6 +494,7 @@ func (a *Activities) settleRun(
 
 	run.ModelIdentifier = p.Outcome.Model
 	run.Summary = stringutils.Ellipsize(strings.TrimSpace(p.Outcome.Reply), maxSummaryChars)
+	run.Transcript = conversation.RunTranscriptOf(p.Outcome.Messages)
 	run.RecordTaint(p.Outcome.Taint, timeutils.NowUnix())
 	if fingerprint := p.Outcome.ServedFingerprint(); fingerprint != nil {
 		run.Fingerprint = fingerprint
@@ -712,6 +716,22 @@ func (a *Activities) announceRun(ctx context.Context, run *agent.AgentRun) {
 	}
 
 	a.activity.RunChanged(ctx, run, serviceports.SystemAuditActor(), serviceports.ActivityUpdated)
+}
+
+func (a *Activities) unattendedActor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (*serviceports.RequestActor, error) {
+	system, err := a.users.GetSystemUser(ctx, "id")
+	if err != nil {
+		return nil, temporaltype.NewRetryableError("Failed to get system user", err).
+			ToTemporalError()
+	}
+
+	actor := agentActor(tenant)
+	actor.UserID = system.ID
+
+	return actor, nil
 }
 
 func agentActor(tenant pagination.TenantInfo) *serviceports.RequestActor {

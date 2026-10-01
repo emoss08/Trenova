@@ -391,6 +391,7 @@ func newUpdateEmploymentVerificationTool(dqf verificationKeeper) serviceports.Ag
 		permission.ResourceQualification,
 		permission.OpUpdate,
 	), properties, paramVerificationID), paramVerificationID, permission.ResourceQualification)
+	spec.searchTerms = []string{"previous employer answered", "employer response", "dq file"}
 
 	return newReportingReceivableTool(spec, receivablePlan[
 		*workerdqfservice.UpdateVerificationRequest, *workerdqfservice.VerificationChange,
@@ -561,6 +562,7 @@ func newDeleteEmploymentVerificationTool(dqf verificationKeeper) serviceports.Ag
 		permission.OpDelete,
 	), map[string]any{paramVerificationID: verificationIDProperty()}, paramVerificationID),
 		paramVerificationID, permission.ResourceQualification)
+	spec.searchTerms = []string{"previous employer", "duplicate employer", "remove employer"}
 	spec.maxTier = agent.TierPropose
 	spec.reversible = false
 

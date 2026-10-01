@@ -159,7 +159,10 @@ func newStartSettlementDisputeReviewTool(reviewer driverPayReviewer) serviceport
 		permission.ResourceSettlementDispute)
 	spec.egress = agent.EgressDriverVisible
 	spec.reversible = false
-	spec.searchTerms = []string{"pay dispute", "settlement dispute", "driver complaint"}
+	spec.searchTerms = []string{
+		"pay dispute", "settlement dispute", "driver complaint", "under review",
+		"mark under review", "investigate dispute",
+	}
 
 	return newReportingReceivableTool(spec, receivablePlan[
 		*disputeStart, *driversettlementservice.DisputeChange,

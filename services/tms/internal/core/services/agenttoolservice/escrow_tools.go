@@ -318,6 +318,10 @@ func (t *updateEscrowAccountTool) Description() string {
 		"contributions and adjust_escrow_account. A person always decides."
 }
 
+func (t *updateEscrowAccountTool) SearchTerms() []string {
+	return []string{"target balance", "escrow interest", "amended lease"}
+}
+
 func (t *updateEscrowAccountTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
 		paramEscrowAccountID:    escrowAccountProperty(),
@@ -470,6 +474,10 @@ func (t *adjustEscrowAccountTool) Description() string {
 		"is for. Use it for a deposit the driver made directly or money drawn to cover a " +
 		"lease obligation. A positive amount adds, a negative one draws; the balance cannot " +
 		"go below zero. A person always decides."
+}
+
+func (t *adjustEscrowAccountTool) SearchTerms() []string {
+	return []string{"escrow debit", "manual escrow adjustment"}
 }
 
 func (t *adjustEscrowAccountTool) ParamSchema() map[string]any {

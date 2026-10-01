@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -294,7 +295,8 @@ func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentNa
 		}
 		fmt.Fprintf(b, "### Result from `%s`", name)
 		if m.ToolFailed {
-			b.WriteString(" · failed")
+			b.WriteString(" · ")
+			b.WriteString(failedToolLabel(m.ToolVerdict))
 		}
 		b.WriteString("\n\n")
 		if fenced {
@@ -311,6 +313,21 @@ func writeTranscriptMessage(b *strings.Builder, m *conversation.Message, agentNa
 // writeTranscriptDelegation writes what another agent did on a task the
 // conversation's agent handed it, quoted under the call that handed it over:
 // the task, then each of its steps, in the order they happened.
+func failedToolLabel(verdict string) string {
+	switch verdict {
+	case aitrace.OutcomeDenied:
+		return "not permitted"
+	case aitrace.OutcomeInvalid:
+		return "not accepted"
+	case aitrace.OutcomeOverBudget:
+		return "out of budget"
+	case aitrace.OutcomeDuplicate:
+		return "skipped as a repeat"
+	default:
+		return "failed"
+	}
+}
+
 func writeTranscriptDelegation(
 	b *strings.Builder,
 	steps []conversation.Message,

@@ -11,6 +11,7 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { cn } from "@trenova/shared/lib/utils";
 import type { ToolEffect } from "@/types/assistant";
 import {
+  BanIcon,
   BlocksIcon,
   BookOpenIcon,
   CheckIcon,
@@ -20,11 +21,14 @@ import {
   CompassIcon,
   FileTextIcon,
   ForwardIcon,
+  GaugeIcon,
   GitCompareArrowsIcon,
   GlobeIcon,
+  LockIcon,
   MessageCircleQuestionIcon,
   PenLineIcon,
   PresentationIcon,
+  Repeat2Icon,
   ScrollTextIcon,
   SearchIcon,
   TableIcon,
@@ -36,8 +40,12 @@ import {
   describeActivity,
   groupActivity,
   isActionEffect,
+  refusalLabel,
+  refusalTone,
+  toolRefusal,
   type ActivityGroup,
   type ActivityLine,
+  type ToolRefusal,
   type ToolStep,
 } from "./activity";
 import {
@@ -79,6 +87,22 @@ const NAMED_ICONS: Readonly<Record<string, LucideIcon>> = {
   [WEB_SEARCH_TOOL]: GlobeIcon,
   [WEB_READ_TOOL]: GlobeIcon,
 };
+
+const REFUSAL_ICONS: Record<ToolRefusal, LucideIcon> = {
+  denied: LockIcon,
+  invalid: BanIcon,
+  over_budget: GaugeIcon,
+  duplicate: Repeat2Icon,
+};
+
+const REFUSAL_TEXT: Record<ReturnType<typeof refusalTone>, string> = {
+  warning: "text-warning",
+  neutral: "text-foreground-muted",
+};
+
+function refusalText(refusal: ToolRefusal): string {
+  return REFUSAL_TEXT[refusalTone(refusal)];
+}
 
 function iconFor(group: ActivityGroup): LucideIcon {
   const first = group.steps[0];
@@ -174,11 +198,13 @@ function ActivityRow({ group, live }: { group: ActivityGroup; live: boolean }) {
               key={line.phrase}
               className={cn(
                 "min-w-0 shrink truncate",
-                line.state === "failed"
-                  ? "text-danger"
-                  : action
-                    ? "text-foreground"
-                    : "text-foreground-muted",
+                line.refusal
+                  ? refusalText(line.refusal)
+                  : line.state === "failed"
+                    ? "text-danger"
+                    : action
+                      ? "text-foreground"
+                      : "text-foreground-muted",
                 grew && "animate-rise",
               )}
             >
@@ -240,6 +266,7 @@ function ActivityMark({
   live: boolean;
 }) {
   const Icon = iconFor(group);
+  const Refused = line.refusal ? REFUSAL_ICONS[line.refusal] : null;
 
   return (
     <span
@@ -251,6 +278,8 @@ function ActivityMark({
     >
       {line.state === "running" ? (
         <WorkingDot working still />
+      ) : Refused && line.refusal ? (
+        <Refused className={cn("size-3", refusalText(line.refusal), live && "animate-confirm")} />
       ) : line.state === "failed" ? (
         <CircleAlertIcon className={cn("text-danger size-3", live && "animate-confirm")} />
       ) : live ? (
@@ -271,6 +300,8 @@ function StepRow({ step }: { step: ToolStep }) {
   const description = describeToolCall(step.name, step.arguments);
   const failed = step.status === "failed";
   const running = step.status === "running";
+  const refusal = toolRefusal(step);
+  const Refused = refusal ? REFUSAL_ICONS[refusal] : null;
 
   return (
     <li className="min-w-0">
@@ -282,15 +313,27 @@ function StepRow({ step }: { step: ToolStep }) {
         >
           {running ? (
             <WorkingDot working still className="mx-0.75" />
+          ) : Refused && refusal ? (
+            <Refused aria-hidden className={cn("size-3 shrink-0", refusalText(refusal))} />
           ) : failed ? (
             <CircleAlertIcon aria-hidden className="text-danger size-3 shrink-0" />
           ) : (
             <span aria-hidden className="bg-border-strong mx-1.25 size-1 shrink-0 rounded-full" />
           )}
           <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
-            <span className={cn("shrink-0", failed ? "text-danger" : "text-foreground-muted")}>
+            <span
+              className={cn(
+                "shrink-0",
+                refusal ? refusalText(refusal) : failed ? "text-danger" : "text-foreground-muted",
+              )}
+            >
               {description.title}
             </span>
+            {refusal && (
+              <span className={cn("shrink-0", refusalText(refusal))}>
+                {refusalLabel(refusal, t)}
+              </span>
+            )}
             {description.subject !== "" && (
               <span className="text-foreground-subtle min-w-0 truncate">{description.subject}</span>
             )}
@@ -351,7 +394,7 @@ function StepDetails({ step }: { step: ToolStep }) {
         {pages.length > 0 ? (
           <WebSourceList sources={pages} />
         ) : (
-          <ResultBody status={step.status} result={result} />
+          <ResultBody status={step.status} result={result} refusal={toolRefusal(step)} />
         )}
       </section>
 
@@ -438,9 +481,11 @@ function ReadableValueText({ label, value }: { label: string; value: ReadableVal
 function ResultBody({
   status,
   result,
+  refusal,
 }: {
   status: ToolStep["status"];
   result: ParsedToolResult | null;
+  refusal: ToolRefusal | null;
 }) {
   const t = useT();
 
@@ -452,13 +497,17 @@ function ResultBody({
   }
 
   switch (result.kind) {
-    case "error":
+    case "error": {
+      const Mark = refusal ? REFUSAL_ICONS[refusal] : CircleAlertIcon;
       return (
-        <p className="text-danger flex items-start gap-1.5">
-          <CircleAlertIcon aria-hidden className="mt-0.5 size-3 shrink-0" />
+        <p
+          className={cn("flex items-start gap-1.5", refusal ? refusalText(refusal) : "text-danger")}
+        >
+          <Mark aria-hidden className="mt-0.5 size-3 shrink-0" />
           <span className="min-w-0 break-words">{result.message}</span>
         </p>
       );
+    }
     case "json":
       return <ReadableResultBody value={result.value} />;
     default:

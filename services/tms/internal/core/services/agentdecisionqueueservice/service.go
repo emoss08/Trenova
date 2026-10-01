@@ -331,6 +331,7 @@ func (s *Service) DecideMany(
 				ProposalID:    id,
 				Decision:      req.Decision,
 				ReasonCode:    req.ReasonCode,
+				Note:          req.Note,
 				TenantInfo:    req.TenantInfo,
 				PreviewDigest: req.PreviewDigests[id],
 			},
@@ -388,6 +389,14 @@ func validateBatch(req *services.DecideAgentProposalsRequest) error {
 	if strings.TrimSpace(req.ReasonCode) == "" && req.Decision == agent.DecisionRejected {
 		multiErr.Add("reasonCode", errortypes.ErrRequired, "Say why these are rejected")
 	}
+	if err := agent.CheckDecisionNote(agent.NormalizeDecisionNote(req.Note)); err != nil {
+		multiErr.Add(
+			"note",
+			errortypes.ErrInvalid,
+			"A note to the agent can be at most {0} characters",
+			agent.MaxDecisionNoteLength,
+		)
+	}
 	if multiErr.HasErrors() {
 		return multiErr
 	}
@@ -420,4 +429,30 @@ func decodeCursor(encoded string) (repositories.PendingDecisionCursor, error) {
 	}
 
 	return repositories.PendingDecisionCursor{CreatedAt: cursor.CreatedAt, ID: cursor.ID}, nil
+}
+
+func (s *Service) DecideManyOwn(
+	ctx context.Context,
+	req *services.DecideAgentProposalsRequest,
+	actor *services.RequestActor,
+) ([]services.AgentProposalDecisionResult, error) {
+	if err := validateBatch(req); err != nil {
+		return nil, err
+	}
+
+	multiErr := errortypes.NewMultiError()
+	for i, id := range req.ProposalIDs {
+		if err := s.decisions.AssertOwnProposal(ctx, id, req.TenantInfo, actor); err != nil {
+			if !errortypes.IsNotFoundError(err) {
+				return nil, err
+			}
+			multiErr.Add(fmt.Sprintf("proposalIds[%d]", i), errortypes.ErrNotFound,
+				"That proposal was not raised in one of your conversations")
+		}
+	}
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return s.DecideMany(ctx, req, actor)
 }

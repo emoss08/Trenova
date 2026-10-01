@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -250,7 +251,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			// run on the empty map that stood in for them, and a list tool given
 			// no filters lists everything.
 			if call.ArgumentsError != "" {
-				outcome := failedOutcome(
+				outcome := refusedOutcome(
+					aitrace.OutcomeInvalid,
+					"its arguments were not valid JSON",
 					"Tool %q was not run: its arguments were not valid JSON (%s). "+
 						"This usually means the reply hit its output limit partway through "+
 						"the call. Send it again with complete arguments.",
@@ -270,7 +273,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			// the calls past the line are answered, so the model knows, but not
 			// run.
 			if result.ToolCallsUsed >= budget {
-				outcome := failedOutcome(
+				outcome := refusedOutcome(
+					aitrace.OutcomeOverBudget,
+					"the turn's tool budget is spent",
 					"Tool %q was not run: this turn's tool budget of %d is spent. "+
 						"Answer with what you have.",
 					call.Name, budget,
@@ -286,7 +291,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 					// Past the cap the search is charged, so a model that
 					// only ever searches still runs out of turn.
 					result.ToolCallsUsed++
-					outcome = failedOutcome(
+					outcome = refusedOutcome(
+						aitrace.OutcomeOverBudget,
+						"the turn's tool searches are spent",
 						"You have searched for tools %d times this turn. Use what is "+
 							"loaded, or tell the person what you could not find.",
 						maxFindCalls,
@@ -305,11 +312,14 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				outcome := toolOutcome{content: resolveAsk(t.localNow(fx), call.Arguments)}
 				switch {
 				case !tools.offers(askUserName) && t.req.Delegation != nil:
-					outcome = failedOutcome("%s", delegatedAskRefusal)
+					outcome = refusedOutcome(aitrace.OutcomeDenied,
+						"a delegated task cannot ask the person", "%s", delegatedAskRefusal)
 				case !tools.offers(askUserName):
-					outcome = failedOutcome("%s", unattendedAskRefusal)
+					outcome = refusedOutcome(aitrace.OutcomeDenied,
+						"nobody is in the conversation to ask", "%s", unattendedAskRefusal)
 				case question != "" && repeated:
-					outcome = failedOutcome("%s", repeatedAskRefusal)
+					outcome = refusedOutcome(aitrace.OutcomeDuplicate,
+						"the same question was already asked", "%s", repeatedAskRefusal)
 				default:
 					asked = true
 					if question != "" {
@@ -322,7 +332,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			}
 
 			if call.Name == requestDecisionName {
-				outcome := failedOutcome("%s", unofferedDecisionRefusal)
+				outcome := refusedOutcome(aitrace.OutcomeDenied,
+					"the turn is not offered the approval box", "%s", unofferedDecisionRefusal)
 				if tools.offers(requestDecisionName) {
 					outcome = t.requestDecision(call.Arguments)
 				}
@@ -334,7 +345,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			if call.Name == publishArtifactName {
 				outcome := publishOutcome(call.Arguments)
 				if !tools.offers(publishArtifactName) {
-					outcome = failedOutcome("%s", unpublishableRefusal)
+					outcome = refusedOutcome(aitrace.OutcomeDenied,
+						"the turn is not offered documents", "%s", unpublishableRefusal)
 				}
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
@@ -354,7 +366,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			}
 
 			if !t.holds(call.Name) {
-				outcome := failedOutcome("%s", s.unheldRefusal(tools, call.Name))
+				outcome := s.unheldOutcome(tools, call.Name)
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
 				continue
@@ -365,7 +377,12 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			s.load(tools, call.Name)
 
 			if previous, repeated := t.repeats.seen(call); repeated {
-				outcome := failedOutcome("%s", repeatRefusal(call.Name, previous))
+				outcome := refusedOutcome(
+					aitrace.OutcomeDuplicate,
+					"the same call already failed this turn",
+					"%s",
+					repeatRefusal(call.Name, previous),
+				)
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
 				continue
@@ -378,6 +395,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				Ordinal:              t.counts.next(call),
 				AfterExternalContent: t.external,
 				Taint:                result.Taint,
+				Earlier:              t.earlier(call.Name),
 			}).internal()
 			if outcome.failed {
 				t.repeats.record(call, outcome.content)
@@ -387,6 +405,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			t.absorbTaint(fx, outcome.taint)
 			result.ToolCallsUsed++
 			s.recordToolResult(t, fx, call, outcome)
+			if !outcome.failed {
+				t.noteShown(&call)
+			}
 		}
 
 		s.logger.Debug("agent tool iteration",
@@ -486,6 +507,7 @@ func (s *Service) recordToolResult(
 			Content:  outcome.content,
 			Effect:   effect,
 			Summary:  summary,
+			Verdict:  outcome.verdict,
 		},
 	})
 
@@ -495,6 +517,7 @@ func (s *Service) recordToolResult(
 		ToolCallID:     call.ID,
 		ToolName:       call.Name,
 		ToolFailed:     outcome.failed,
+		ToolVerdict:    outcome.verdict,
 		ToolEffect:     effect,
 		ToolSummary:    summary,
 		FoundTools:     outcome.found,
@@ -519,6 +542,7 @@ func (s *Service) observe(
 	observe serviceports.ToolObserver,
 	call serviceports.ToolCall,
 	outcome toolOutcome,
+	earlier []string,
 ) toolOutcome {
 	if request, requested := outcome.data.(serviceports.DecisionRequest); requested &&
 		outcome.publishes {
@@ -532,10 +556,11 @@ func (s *Service) observe(
 	}
 
 	shown, err := observe(serviceports.ToolObservation{
-		Call:   call,
-		Data:   outcome.data,
-		Failed: outcome.failed,
-		Action: outcome.action,
+		Call:    call,
+		Data:    outcome.data,
+		Failed:  outcome.failed,
+		Action:  outcome.action,
+		Earlier: earlier,
 	})
 
 	switch {

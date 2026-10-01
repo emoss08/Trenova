@@ -559,6 +559,10 @@ func newPlaceWorkerDispatchHoldTool(workers workerHolder) serviceports.AgentTool
 
 func (t *placeWorkerDispatchHoldTool) Name() string { return "place_worker_dispatch_hold" }
 
+func (t *placeWorkerDispatchHoldTool) SearchTerms() []string {
+	return []string{"stop dispatching", "dispatch block", "no loads", "hold until renewed"}
+}
+
 func (t *placeWorkerDispatchHoldTool) Description() string {
 	return "Stop a driver being given new freight, because a credential that governs " +
 		"driving has expired or will expire before a renewal could land. Say which " +
@@ -727,6 +731,10 @@ func (t *acknowledgeCarrierIntelEventTool) Name() string {
 }
 
 func (t *resolveCarrierIntelEventTool) Name() string { return "resolve_carrier_intel_event" }
+
+func (t *resolveCarrierIntelEventTool) SearchTerms() []string {
+	return []string{"carrier finding", "insurance lapse", "finding resolved"}
+}
 
 func (t *carrierIntelEventTool) Policy() serviceports.ToolPolicy {
 	rationale := "Acknowledges a carrier finding inside Trenova."

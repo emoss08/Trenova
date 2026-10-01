@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"go.uber.org/zap"
@@ -35,12 +36,14 @@ func (s *Service) Purge(
 		if retention.AgentEvalCaseRetentionPeriod <= 0 {
 			continue
 		}
+		tenant := pagination.TenantInfo{
+			OrgID: retention.OrganizationID,
+			BuID:  retention.BusinessUnitID,
+		}
+		tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
 		purged, purgeErr := drain(limit, func() (int, error) {
-			return s.cases.PurgeExpired(ctx, repositories.PurgeExpiredEvalCasesRequest{
-				TenantInfo: pagination.TenantInfo{
-					OrgID: retention.OrganizationID,
-					BuID:  retention.BusinessUnitID,
-				},
+			return s.cases.PurgeExpired(tenantCtx, repositories.PurgeExpiredEvalCasesRequest{
+				TenantInfo:    tenant,
 				CreatedBefore: now - int64(retention.AgentEvalCaseRetentionPeriod)*secondsPerDay,
 				Now:           now,
 				Limit:         limit,

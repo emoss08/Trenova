@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -116,6 +117,7 @@ type StubQueryTool struct {
 	Err        error
 	Calls      int
 	LastParams serviceports.QueryToolParams
+	LastTenant dbscope.Tenant
 	Resource   permission.Resource
 	// Reads and Source declare the tool as one that reads outside content.
 	Reads   agent.ExternalRead
@@ -172,11 +174,12 @@ func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *StubQueryTool) Query(
-	_ context.Context,
+	ctx context.Context,
 	params *serviceports.QueryToolParams,
 ) (any, error) {
 	t.Calls++
 	t.LastParams = *params
+	t.LastTenant, _ = dbscope.TenantFrom(ctx)
 
 	return t.Result, t.Err
 }

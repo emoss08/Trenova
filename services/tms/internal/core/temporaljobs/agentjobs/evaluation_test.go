@@ -513,3 +513,29 @@ func TestObserveReplay_TracesWhichCallsWouldHaveRunUnasked(t *testing.T) {
 	assert.False(t, observed.trace[2].AutoRun, "a proposal waits for a person")
 	assert.Len(t, observed.calls, 3)
 }
+
+func TestOpenReplay_ABackgroundCaseReplaysAsTheAgentAttributedToTheSystemUser(t *testing.T) {
+	t.Parallel()
+
+	w := newReplayWorld(t)
+	evalCase := chatCase(w)
+	evalCase.Trigger = agent.RunTriggerEvent
+	evalCase.SourceThreadID = nil
+	evalCase.History = nil
+	caseEvaluation(w, evalCase)
+	system := pulid.MustNew("usr_")
+	w.users.On("GetSystemUser", mock.Anything, []string{"id"}).
+		Return(&tenant.User{ID: system}, nil).
+		Once()
+
+	opened, err := w.activities.openReplay(t.Context(), w.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+
+	actor := opened.request.Actor
+	assert.Equal(t, serviceports.PrincipalTypeAgent, actor.PrincipalType)
+	assert.Equal(t, serviceports.AgentPrincipalID, actor.PrincipalID)
+	assert.Equal(t, system, actor.UserID)
+	require.Len(t, w.contexts.requests, 1)
+	assert.Equal(t, serviceports.PrincipalTypeAgent, w.contexts.requests[0].Actor.PrincipalType)
+}

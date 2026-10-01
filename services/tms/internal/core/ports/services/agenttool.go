@@ -66,6 +66,10 @@ type ToolSelectionResolver interface {
 	ResolveSelection(ctx context.Context, params ToolExecuteParams) (map[string]any, error)
 }
 
+type ToolProposalSelectionResolver interface {
+	ResolveProposalSelection(ctx context.Context, params ToolExecuteParams) (map[string]any, error)
+}
+
 // ToolResultReporter is a write whose caller needs to know what it made. A
 // saved report's id is what the next call takes; told only that the write
 // ran, a model reaches for the one id it holds, the proposal's, and passes

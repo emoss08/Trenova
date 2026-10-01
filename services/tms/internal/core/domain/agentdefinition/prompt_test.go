@@ -484,6 +484,27 @@ func TestBuildSystemPrompt_ListsTheWaitingProposalIdsForRequestDecision(t *testi
 	assert.NotContains(t, prompt, "tell them the proposal is waiting for their approval")
 }
 
+func TestBuildSystemPrompt_NamesThePlanAWaitingStepBelongsTo(t *testing.T) {
+	t.Parallel()
+
+	d := &agentdefinition.Definition{Name: "Billing", Instructions: "Bill."}
+	d.ApplyDefaults()
+
+	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{
+		PendingProposals: []agentdefinition.PendingProposal{{
+			ProposalID: pulid.ID("aprop_01JSTEP000000000000000000"),
+			PlanID:     pulid.ID("apl_01JPLAN0000000000000000000"),
+			ToolName:   "post_invoice",
+		}},
+		DecisionRequests: true,
+	})
+
+	assert.Contains(t, prompt, "- post_invoice (proposalId aprop_01JSTEP000000000000000000, "+
+		"a step of planId apl_01JPLAN0000000000000000000)")
+	assert.Contains(t, prompt, "pass their ids together in proposalIds")
+	assert.Contains(t, prompt, "a plan's steps are decided together: pass its planId")
+}
+
 // A model handed eight of forty tools and a bare list of names told the
 // person the system could not do what a ninth tool did. The disclosed
 // section now says what each unloaded tool is for, in one sentence, and

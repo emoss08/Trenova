@@ -2,6 +2,8 @@ package agenttoolservice
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -27,6 +29,7 @@ type fakeSyncOperator struct {
 	summary *serviceports.AccountingSyncSummary
 	records map[pulid.ID]*accountingsync.AccountingSyncRecord
 
+	listed     []*serviceports.ListAccountingSyncRecordsRequest
 	retried    *serviceports.RetryAccountingSyncRequest
 	skipped    *serviceports.SkipAccountingSyncRequest
 	redated    *serviceports.RedateAccountingSyncRequest
@@ -61,6 +64,37 @@ func (f *fakeSyncOperator) GetRecord(
 	return &out, nil
 }
 
+func (f *fakeSyncOperator) ListRecords(
+	_ context.Context,
+	req *serviceports.ListAccountingSyncRecordsRequest,
+) (*pagination.CursorListResult[*accountingsync.AccountingSyncRecord], error) {
+	f.listed = append(f.listed, req)
+	matching := make([]*accountingsync.AccountingSyncRecord, 0, len(f.records))
+	for _, record := range f.records {
+		if len(req.Statuses) > 0 && !slices.Contains(req.Statuses, record.Status) {
+			continue
+		}
+		if len(req.ErrorCategories) > 0 &&
+			!slices.Contains(req.ErrorCategories, record.ErrorCategory) {
+			continue
+		}
+		out := *record
+		matching = append(matching, &out)
+	}
+	slices.SortFunc(matching, func(a, b *accountingsync.AccountingSyncRecord) int {
+		return strings.Compare(a.ID.String(), b.ID.String())
+	})
+	total := len(matching)
+	page := &pagination.CursorListResult[*accountingsync.AccountingSyncRecord]{
+		Items:       matching[:min(len(matching), req.Cursor.Limit)],
+		HasNextPage: len(matching) > req.Cursor.Limit,
+	}
+	if req.Cursor.IncludeTotalCount {
+		page.TotalCount = &total
+	}
+	return page, nil
+}
+
 func (f *fakeSyncOperator) Retry(
 	_ context.Context,
 	req *serviceports.RetryAccountingSyncRequest,
@@ -71,12 +105,16 @@ func (f *fakeSyncOperator) Retry(
 	f.retried = req
 	for _, id := range req.IDs {
 		record := *f.records[id]
+		if len(req.ErrorCategories) > 0 &&
+			!slices.Contains(req.ErrorCategories, record.ErrorCategory) {
+			continue
+		}
 		if err := record.Retry(timeutils.NowUnix()); err != nil {
 			return 0, err
 		}
 		f.savedRecords = append(f.savedRecords, &record)
 	}
-	return int64(len(req.IDs)), nil
+	return int64(len(f.savedRecords)), nil
 }
 
 func (f *fakeSyncOperator) Skip(

@@ -175,6 +175,7 @@ func newVoidPayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
 			"Never guess one."),
 		fieldReason: stringProperty("Why the run is voided, kept on it.", maxPayrollNoteChars),
 	}, paramPayrollExportID, fieldReason), paramPayrollExportID, permission.ResourceTimesheet)
+	spec.searchTerms = append(spec.searchTerms, "undo payroll run", "redo payroll", "rerun payroll")
 
 	return newReceivableTool(spec, receivablePlan[
 		*timesheetservice.VoidExportRequest, *timesheetservice.ExportChange,

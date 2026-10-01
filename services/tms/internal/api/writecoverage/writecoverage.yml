@@ -32,10 +32,13 @@ writes:
     tools: [apply_accounting_inbound_change]
   "mutation changeAccountingBackfill":
     tools: [change_accounting_backfill]
-  "mutation checkAccountingDrift":
-    tools: [check_accounting_drift]
   "mutation checkAccountingConnection":
     tools: [check_accounting_connection]
+  "mutation checkAccountingDrift":
+    tools: [check_accounting_drift]
+  "mutation chooseAccountingCompany":
+    exempt: security
+    reason: "Finishes the OAuth sign-in by choosing the company the authorization is for; a person holds the grant, never an agent."
   "mutation chooseAccountingSyncMode":
     exempt: configuration
     reason: "Chooses what the organization's accounting connection sends during setup; an administrator owns the connection and it is fixed once sync is enabled."
@@ -44,9 +47,6 @@ writes:
   "mutation completeAccountingAuthorization":
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
-  "mutation chooseAccountingCompany":
-    exempt: security
-    reason: "Finishes the OAuth sign-in by choosing the company the authorization is for; a person holds the grant, never an agent."
   "mutation completeAccountingSetup":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -137,6 +137,9 @@ writes:
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
   "mutation decideMyProposal":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+  "mutation decideMyProposals":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
   "mutation dismissAgentMemorySuggestion":
@@ -376,7 +379,7 @@ writes:
   "mutation assignBillingQueueBiller":
     tools: [assign_billing_queue_biller]
   "mutation updateBillingQueueStatus":
-    tools: [approve_billing_queue_item, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review]
+    tools: [approve_billing_queue_item, approve_billing_queue_items, cancel_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops, transition_item_to_in_review]
 
   # billingtransfer
   "mutation cancelBillingTransferRun":
@@ -523,7 +526,7 @@ writes:
   "mutation addCarrierSettlementAdjustment":
     tools: [add_carrier_settlement_adjustment]
   "mutation approveCarrierSettlement":
-    tools: [approve_carrier_settlement]
+    tools: [approve_carrier_settlement, approve_carrier_settlements]
   "mutation createCarrierInvoiceMatch":
     tools: [create_carrier_invoice_match]
   "mutation generateCarrierSettlementBatch":
@@ -533,7 +536,7 @@ writes:
   "mutation markCarrierSettlementPaid":
     tools: [record_carrier_settlement_payment]
   "mutation postCarrierSettlement":
-    tools: [post_carrier_settlement]
+    tools: [post_carrier_settlement, post_carrier_settlements]
   "mutation recalculateCarrierSettlement":
     tools: [recalculate_carrier_settlement]
   "mutation rejectCarrierInvoiceMatch":
@@ -965,8 +968,7 @@ writes:
   "mutation attachPayEventsToSettlement":
     tools: [attach_pay_events_to_settlement]
   "mutation bulkDriverSettlementAction":
-    exempt: duplicate
-    reason: "Runs submit, approve, post or mark paid on several settlements at once; each has its own tool, and an approver decides a batch of those proposals together."
+    tools: [approve_driver_settlements, post_driver_settlements, record_driver_settlement_payment, submit_driver_settlement]
   "mutation closeEscrowAccount":
     tools: [close_escrow_account]
   "mutation createPayCode":
@@ -1265,12 +1267,12 @@ writes:
   "mutation updateExtractionEvalCase":
     exempt: agent-administration
     reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
-  "mutation updateExtractionShadowSettings":
-    exempt: agent-administration
-    reason: "Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against."
   "mutation updateExtractionRollout":
     exempt: agent-administration
     reason: "Choosing which AI provider serves real document extractions, how much of them, and when its guards stop it is oversight of the agents; an agent must not promote or protect the model it is measured against."
+  "mutation updateExtractionShadowSettings":
+    exempt: agent-administration
+    reason: "Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against."
 
   # fiscalperiod
   "DELETE /api/v1/fiscal-periods/:fiscalPeriodID/":
@@ -1679,12 +1681,12 @@ writes:
   "POST /api/v1/billing/invoices/:invoiceID/generate-pdf/":
     tools: [generate_invoice_pdf]
   "POST /api/v1/billing/invoices/:invoiceID/post/":
-    tools: [post_invoice]
+    tools: [post_invoice, post_invoices]
   "POST /api/v1/billing/invoices/:invoiceID/preview/":
     exempt: read-only
     reason: "Renders an invoice for review and saves nothing."
   "POST /api/v1/billing/invoices/:invoiceID/send/":
-    tools: [send_invoice]
+    tools: [send_invoice, send_invoices]
   "mutation createInvoiceFromOrder":
     tools: [create_invoice]
   "mutation createInvoiceFromShipments":

@@ -621,8 +621,9 @@ func newApplyCarrierIntelSuggestionsTool(
 	permissions permissionChecker,
 ) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name:     "apply_carrier_intel_suggestions",
-		artifact: carrierRecordEntity,
+		name:        "apply_carrier_intel_suggestions",
+		searchTerms: []string{"carrier intelligence fix", "intelligence corrections"},
+		artifact:    carrierRecordEntity,
 		description: "Correct a carrier's profile where its intelligence result disagrees: " +
 			"name, DBA, MC number, safety rating, address, phone, email or insurance. Name the fields and policies to apply, or leave " +
 			"both out to apply every suggestion there is now.",

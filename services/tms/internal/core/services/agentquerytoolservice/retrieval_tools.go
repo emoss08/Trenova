@@ -64,12 +64,10 @@ func searchedBy(semantics serviceports.RetrievalSemantics) string {
 }
 
 func retrievalAttribution(params *serviceports.QueryToolParams) serviceports.AIUsageAttribution {
-	attribution := serviceports.AIUsageAttribution{AgentDefinitionID: params.AgentDefinitionID}
-	if params.Actor != nil {
-		attribution.UserID = params.Actor.UserID
+	return serviceports.AIUsageAttribution{
+		AgentDefinitionID: params.AgentDefinitionID,
+		UserID:            params.Actor.PersonUserID(),
 	}
-
-	return attribution
 }
 
 func searchQuery(params *serviceports.QueryToolParams) (string, error) {

@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -53,6 +54,24 @@ func (a *RequestActor) UserIDOrNil() pulid.ID {
 	return a.UserID
 }
 
+func (a *RequestActor) PersonUserID() pulid.ID {
+	if a == nil {
+		return pulid.Nil
+	}
+
+	switch a.PrincipalType {
+	case PrincipalTypeUser:
+		return a.UserID
+	case "":
+		if a.APIKeyID.IsNil() {
+			return a.UserID
+		}
+	case PrincipalTypeAPIKey, PrincipalTypeSystem, PrincipalTypeAgent:
+	}
+
+	return pulid.Nil
+}
+
 // TenantInfo is the actor's tenant scope. Deriving it here rather than at each
 // call site keeps a caller from scoping a query to a tenant the actor does not
 // belong to.
@@ -66,6 +85,15 @@ func (a *RequestActor) TenantInfo() pagination.TenantInfo {
 		BuID:   a.BusinessUnitID,
 		UserID: a.UserID,
 	}
+}
+
+func (a *RequestActor) DBTenant() dbscope.Tenant {
+	tenant := a.TenantInfo().DBTenant()
+	if a.IsAgent() {
+		tenant.UserID = pulid.Nil
+	}
+
+	return tenant
 }
 
 func (a *RequestActor) AuditActorOrSystem() AuditActor {

@@ -18,6 +18,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -99,7 +100,7 @@ func (s *Service) FollowUp(ctx context.Context, req serviceports.DecisionFollowU
 
 	// The follow-up outlives the request that decided: a person closing the
 	// tab after clicking approve still gets the report when they come back.
-	ctx = context.WithoutCancel(ctx)
+	ctx = dbscope.WithValidTenant(context.WithoutCancel(ctx), req.TenantInfo.DBTenant())
 
 	thread, err := s.threadFor(ctx, req)
 	if err != nil {

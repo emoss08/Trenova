@@ -110,12 +110,26 @@ it never writes one.
 
 | Template | Runs | Holds |
 | --- | --- | --- |
-| Books keeper | unattended, on accounting sync events and the weekly reconciliation, starting in shadow | `confirm_accounting_mapping_proposals`, `reject_accounting_mapping_proposal`, `release_accounting_sync`, and for period end `list_fiscal_periods`, `get_fiscal_close_blockers`, `lock_fiscal_period`, `close_fiscal_period` |
+| Books keeper | unattended, on accounting sync events and the weekly reconciliation, starting in shadow | `confirm_accounting_mapping_proposals`, `reject_accounting_mapping_proposal`, `release_accounting_sync`, `pause_accounting_sync`, `resume_accounting_sync`, `create_accounting_reference_record`, `refresh_accounting_reference_data`, and for period end `list_fiscal_periods`, `get_fiscal_close_blockers`, `lock_fiscal_period`, `close_fiscal_period` |
 | Cash application agent | unattended, on bank receipt exceptions | `triage_bank_receipt_work_item`, to put an item it leaves for a person under review |
 
 The agent permission ceiling (`permission/agent.go`) gains lock and close on fiscal periods
 for the books keeper; both tools stop at a proposal and run as the approver. Mapping review and
 releasing sync use grants the books keeper already had.
+
+The books keeper also holds the four sync and mapping writes that were on no template. Its
+Ask first ceiling holds each to a proposal a person approves, whatever its own policy allows:
+
+| Tool | Default → most | Why the books keeper holds it |
+| --- | --- | --- |
+| `pause_accounting_sync` | Automatic → Automatic | It wakes when the connection degrades; pausing holds what waits, loses nothing, and its prompt proposes it only while the connection is failing, with the reason. |
+| `resume_accounting_sync` | Ask first → Ask first | Everything held goes out at once, so it proposes resuming only once `get_accounting_sync_status` shows the connection answering and the reason for the pause is over. |
+| `create_accounting_reference_record` | Propose → Ask first | A missing item, customer or vendor is the commonest mapping gap; it proposes creating one only when `get_accounting_mapping`'s search finds no match. Accounts, terms and payment methods stay the bookkeeper's. |
+| `refresh_accounting_reference_data` | Automatic → Automatic | It rereads the books after a person says they added or renamed something there, and writes nothing to them. |
+
+Pause and resume act on the whole connection, not one document, which is why neither runs on
+the books keeper's own say: an organization that raises its ceiling past Ask first lets an
+outage pause sending unattended, and resuming still waits for a person.
 
 The manual journal and reversal tools, `open_fiscal_period`, `unlock_fiscal_period`,
 `reopen_fiscal_period`, `change_accounting_backfill`, `request_accounting_backfill`,

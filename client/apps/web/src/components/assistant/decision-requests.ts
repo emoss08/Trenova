@@ -1,53 +1,76 @@
 import type { ToolStep } from "./activity";
-import type { ToolExchange } from "./thread-view";
 
-/** A waiting proposal the assistant put back in front of the person. */
+/**
+ * A waiting decision the assistant asked the person to make now: one
+ * proposal, several of one tool decided together, or a plan.
+ */
 export type DecisionRequestRef = {
   callId: string;
-  proposalId: string;
+  proposalIds: string[];
+  planId: string;
 };
 
 export const REQUEST_DECISION_TOOL = "request_decision";
 
-function proposalIdOf(args: Record<string, unknown> | null | undefined): string {
-  const value = args?.proposalId;
+function textOf(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
 /**
- * The cards a saved turn asked the person to decide. The runtime answers
- * request_decision itself and only succeeds for a proposal of this
- * conversation that is still waiting, so a call that failed shows nothing.
+ * What a request_decision call, or the artifact it kept, asks the person to
+ * decide: a plan by its id, several proposals, or one.
  */
-export function decisionRequestsFrom(tools: readonly ToolExchange[]): DecisionRequestRef[] {
+export function decisionRequestOf(
+  args: Record<string, unknown> | null | undefined,
+): Omit<DecisionRequestRef, "callId"> | null {
+  const planId = textOf(args?.planId);
+  if (planId !== "") {
+    return { proposalIds: [], planId };
+  }
+
+  const many = Array.isArray(args?.proposalIds)
+    ? [...new Set(args.proposalIds.map(textOf).filter((id) => id !== ""))]
+    : [];
+  if (many.length > 0) {
+    return { proposalIds: many, planId: "" };
+  }
+
+  const one = textOf(args?.proposalId);
+  return one === "" ? null : { proposalIds: [one], planId: "" };
+}
+
+function keyOf(request: Omit<DecisionRequestRef, "callId">): string {
+  return request.planId !== "" ? `plan:${request.planId}` : request.proposalIds.join(",");
+}
+
+function collect(
+  calls: readonly { callId: string; args: Record<string, unknown> | null | undefined }[],
+): DecisionRequestRef[] {
   const requests: DecisionRequestRef[] = [];
   const seen = new Set<string>();
 
-  for (const exchange of tools) {
-    if (exchange.call.name !== REQUEST_DECISION_TOOL) continue;
-    const result = exchange.result;
-    if (result === null || result.toolFailed) continue;
-    const proposalId = proposalIdOf(exchange.call.arguments);
-    if (proposalId === "" || seen.has(proposalId)) continue;
-    seen.add(proposalId);
-    requests.push({ callId: exchange.call.id, proposalId });
+  for (const { callId, args } of calls) {
+    const request = decisionRequestOf(args);
+    if (request === null) continue;
+    const key = keyOf(request);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    requests.push({ callId, ...request });
   }
 
   return requests;
 }
 
-/** The same cards, read out of a turn that is still streaming. */
+/**
+ * The decisions a live turn asked the person to make now, read from its
+ * finished request_decision calls. The runtime answers the call itself and
+ * succeeds only for what is still waiting, so a call that failed asks for
+ * nothing; each moves the approval box to its decision.
+ */
 export function decisionRequestsFromSteps(steps: readonly ToolStep[]): DecisionRequestRef[] {
-  const requests: DecisionRequestRef[] = [];
-  const seen = new Set<string>();
-
-  for (const step of steps) {
-    if (step.name !== REQUEST_DECISION_TOOL || step.status !== "done") continue;
-    const proposalId = proposalIdOf(step.arguments);
-    if (proposalId === "" || seen.has(proposalId)) continue;
-    seen.add(proposalId);
-    requests.push({ callId: step.id, proposalId });
-  }
-
-  return requests;
+  return collect(
+    steps
+      .filter((step) => step.name === REQUEST_DECISION_TOOL && step.status === "done")
+      .map((step) => ({ callId: step.id, args: step.arguments })),
+  );
 }

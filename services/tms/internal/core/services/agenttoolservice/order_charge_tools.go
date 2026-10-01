@@ -500,7 +500,7 @@ func (r *chargeRef) allocationRequest(
 }
 
 func newUpdateOrderChargeTool(charges orderChargeKeeper) serviceports.AgentTool {
-	return newReportingReceivableTool(chargeSpec(
+	spec := chargeSpec(
 		"update_order_charge",
 		"Change an order charge's description, amount or payer split. Send only what "+
 			"changes. An invoiced charge cannot be changed; adjust its invoice instead.",
@@ -516,7 +516,10 @@ func newUpdateOrderChargeTool(charges orderChargeKeeper) serviceports.AgentTool 
 				"list bills it all to the order's customer."),
 		},
 		paramOrderID, paramChargeID,
-	), receivablePlan[*chargeRef, *orderservice.ChargePlan]{
+	)
+	spec.searchTerms = []string{"charge amount", "correct charge", "edit accessorial"}
+
+	return newReportingReceivableTool(spec, receivablePlan[*chargeRef, *orderservice.ChargePlan]{
 		request: func(params *serviceports.ToolExecuteParams) (*chargeRef, error) {
 			ref, err := readChargeRef(params)
 			if err != nil {
@@ -564,7 +567,7 @@ func newUpdateOrderChargeTool(charges orderChargeKeeper) serviceports.AgentTool 
 }
 
 func newSetOrderChargeAllocationsTool(charges orderChargeKeeper) serviceports.AgentTool {
-	return newReportingReceivableTool(chargeSpec(
+	spec := chargeSpec(
 		"set_order_charge_allocations",
 		"Replace how one order charge is split among payers without touching the charge "+
 			"itself. Percents must add up to 100 and amounts to the charge; an empty list "+
@@ -577,7 +580,10 @@ func newSetOrderChargeAllocationsTool(charges orderChargeKeeper) serviceports.Ag
 			paramAllocations: allocationsProperty("The whole new payer split."),
 		},
 		paramOrderID, paramChargeID, paramAllocations,
-	), receivablePlan[*chargeRef, *orderservice.ChargePlan]{
+	)
+	spec.searchTerms = []string{"split charge", "payer split", "allocate charge"}
+
+	return newReportingReceivableTool(spec, receivablePlan[*chargeRef, *orderservice.ChargePlan]{
 		request: func(params *serviceports.ToolExecuteParams) (*chargeRef, error) {
 			ref, err := readChargeRef(params)
 			if err != nil {
@@ -629,7 +635,7 @@ func newSetOrderChargeAllocationsTool(charges orderChargeKeeper) serviceports.Ag
 }
 
 func newRemoveOrderChargeTool(charges orderChargeKeeper) serviceports.AgentTool {
-	return newReportingReceivableTool(chargeSpec(
+	spec := chargeSpec(
 		"remove_order_charge",
 		"Take a charge off an order before it is invoiced. An invoiced charge stays; "+
 			"credit its invoice instead.",
@@ -640,7 +646,10 @@ func newRemoveOrderChargeTool(charges orderChargeKeeper) serviceports.AgentTool 
 			paramChargeID: chargeIDProperty(),
 		},
 		paramOrderID, paramChargeID,
-	), receivablePlan[*chargeRef, *orderservice.ChargePlan]{
+	)
+	spec.searchTerms = []string{"drop charge", "delete charge", "remove accessorial"}
+
+	return newReportingReceivableTool(spec, receivablePlan[*chargeRef, *orderservice.ChargePlan]{
 		request: readChargeRef,
 		plan: func(
 			ctx context.Context,

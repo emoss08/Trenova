@@ -52,6 +52,7 @@ func carriedMessages(ctx context.Context, t *testing.T, db *bun.DB) []conversati
 	var messages []conversation.Message
 	require.NoError(t, db.NewSelect().
 		Model(&messages).
+		ExcludeColumn("tool_verdict").
 		Order("thread_id", "sequence").
 		Scan(ctx))
 

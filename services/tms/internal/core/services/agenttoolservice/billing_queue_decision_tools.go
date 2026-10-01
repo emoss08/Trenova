@@ -80,6 +80,7 @@ type queueDecision struct {
 	properties       map[string]any
 	required         []string
 	fill             func(params map[string]any, req *serviceports.UpdateBillingQueueStatusRequest) error
+	searchTerms      []string
 }
 
 type billingQueueDecisionTool struct {
@@ -96,6 +97,8 @@ var (
 func (t *billingQueueDecisionTool) Name() string { return t.decision.name }
 
 func (t *billingQueueDecisionTool) Description() string { return t.decision.description }
+
+func (t *billingQueueDecisionTool) SearchTerms() []string { return t.decision.searchTerms }
 
 func (t *billingQueueDecisionTool) ParamSchema() map[string]any {
 	properties := map[string]any{
@@ -422,7 +425,8 @@ func newMoveToExceptionTool(billing billingQueueDecider) serviceports.AgentTool 
 
 func newHoldBillingQueueItemTool(billing billingQueueDecider) serviceports.AgentTool {
 	return &billingQueueDecisionTool{billing: billing, decision: queueDecision{
-		name: "hold_billing_queue_item",
+		name:        "hold_billing_queue_item",
+		searchTerms: []string{"park item", "park until"},
 		description: "Put a billing queue item on hold, with a note saying what it waits on. " +
 			"Use it when an item waiting for or in review cannot be billed yet but nothing is " +
 			"wrong with it: a document on its way, a customer's confirmation. A held item is taken " +
@@ -486,6 +490,10 @@ func newAssignBillerTool(billing billingQueueDecider) serviceports.AgentTool {
 }
 
 func (t *assignBillerTool) Name() string { return "assign_billing_queue_biller" }
+
+func (t *assignBillerTool) SearchTerms() []string {
+	return []string{"biller", "reviewer"}
+}
 
 func (t *assignBillerTool) Description() string {
 	return "Assign the biller who reviews a billing queue item. An item still waiting for " +

@@ -171,7 +171,7 @@ record and are attestation; bulk PTO decisions duplicate the single-request tool
 | --- | --- |
 | Workforce coordinator (chat, Propose, Restricted data access) | `list_time_off`, `request_worker_pto`, `update_worker_pto`, `approve_worker_pto`, `reject_worker_pto`, `cancel_worker_pto`, `adjust_worker_pto_balance`, `list_worker_leave_cases`, `open_leave_case`, `update_leave_case`, `request_leave_certification`, `record_leave_day`, `update_leave_day`, `delete_leave_day`, `close_leave_case`, `list_worker_injuries`, `record_worker_injury`, `update_worker_injury`, `delete_worker_injury`, `list_performance_reviews`, `start_performance_review`, `draft_performance_review`, `delete_performance_review`, `give_worker_recognition`, `delete_worker_recognition`, `list_worker_safety_events`, `update_worker_safety_event`, `delete_worker_safety_event`, `update_safety_violation`, `delete_safety_violation`, `list_dot_tests`, `cancel_dot_test`, `list_dot_random_draws`, `get_dot_random_draw`, `run_dot_random_draw`, `finalize_dot_random_draw`, `cancel_dot_random_draw`, `list_worker_checklists`, `start_worker_checklist`, `update_worker_checklist_item`, `cancel_worker_checklist`, `list_worker_training`, `attach_worker_training_document`, `close_worker_training`, `list_worker_credentials`, `archive_worker_credential`, `list_employment_verifications`, `delete_employment_verification`, `list_shipment_permits`, `record_shipment_permit`, `update_shipment_permit` |
 | Compliance assistant (chat, Ask first) | `list_worker_credentials`, `record_worker_credential`, `update_worker_credential`, `attach_worker_credential_document`, `list_worker_training`, `list_training_courses`, `assign_worker_training`, `assign_required_worker_training`, `record_training_completion`, `list_employment_verifications`, `record_employment_verification`, `update_employment_verification`, `log_employment_verification_request`, `list_worker_checklists`, `update_worker_checklist_item`, `list_worker_safety_events`, `open_worker_safety_event`, `record_safety_violation`, `change_worker_safety_event_status`, `list_dot_tests`, `get_dot_random_draw`, `schedule_dot_test`, `update_dot_random_selection`, `list_worker_leave_cases` |
-| Settlements clerk (chat, Ask first) | `start_settlement_dispute_review`, `resolve_settlement_dispute` |
+| Settlements clerk (chat, Ask first) | `start_settlement_dispute_review`, `resolve_settlement_dispute`, `approve_driver_settlements`, `post_driver_settlements`, `approve_carrier_settlements`, `post_carrier_settlements` |
 
 The workforce coordinator is the HR and safety desk the shipped templates lacked. It holds 55
 of its 56 tools: every workforce write the compliance assistant does not, with `search_worker`,
@@ -184,11 +184,33 @@ it. Its prompt names the compliance assistant as
 the holder of credential, training, test and safety event recording, and payroll and the
 settlements clerk as the holders of pay.
 
+The settlements clerk approves and posts settlements through the bulk twins
+`approve_driver_settlements`, `post_driver_settlements`, `approve_carrier_settlements` and
+`post_carrier_settlements`, one proposal for every settlement that is ready, from one to 50.
+Each twin copies its single tool's policy (person-only, Propose at most, money, and for a
+driver settlement driver-visible, classified as money per call), runs each settlement exactly
+as the single tool would, lists the settlements it would refuse first, and reports "N of M
+approved" or "posted" with each refusal; the person approving may untick any of them. The
+clerk holds the twins in place of `approve_driver_settlement`, `post_driver_settlement`,
+`approve_carrier_settlement` and `post_carrier_settlement`, which stay registered for agents
+an organization builds; see
+[proposal-previews.md](proposal-previews.md#bulk-twins-of-single-record-tools).
+
+The nine pay setup tools stay on no template: `assign_pay_profile`,
+`end_pay_assignment`, `create_recurring_deduction`, `update_recurring_deduction`,
+`create_recurring_earning`, `update_recurring_earning`, `open_escrow_account`,
+`update_escrow_account` and `close_escrow_account`. A pay rate, a standing deduction or
+earning and escrow terms are set apart from the settlements that apply them, so the one who
+processes pay is not the one who sets it: the settlements clerk reads a driver's pay profile,
+recurring pay and escrow accounts and changes none of them, and the workforce coordinator never
+touches pay.
+
 `generate_payroll_export`, `void_payroll_export` and `review_driver_expense` stay on no
 template. Each moves pay, which the workforce coordinator never touches, and the settlements
 clerk, where they would belong, holds all 56 of its tools. An organization adds them to an
-agent it builds in AI control. No template is unattended, so the agent permission ceiling
-(`permission/agent.go`) is unchanged.
+agent it builds in AI control, as it adds the pay setup tools. A template test
+(`withheldFromEveryTemplate`) keeps all twelve off every template. No template is unattended,
+so the agent permission ceiling (`permission/agent.go`) is unchanged.
 
 ## Known limits
 

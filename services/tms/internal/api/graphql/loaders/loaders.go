@@ -67,6 +67,7 @@ type FactoryParams struct {
 	FiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
 	AgentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	AgentRunByID                              *AgentRunByIDLoaderFactory
+	AgentRunTranscriptByID                    *AgentRunTranscriptByIDLoaderFactory
 	AgentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
 	ThreadAgentByID                           *ThreadAgentByIDLoaderFactory
 	UsableAgentByID                           *UsableAgentByIDLoaderFactory
@@ -126,6 +127,7 @@ type Factory struct {
 	fiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
 	agentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	agentRunByID                              *AgentRunByIDLoaderFactory
+	agentRunTranscriptByID                    *AgentRunTranscriptByIDLoaderFactory
 	agentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
 	threadAgentByID                           *ThreadAgentByIDLoaderFactory
 	usableAgentByID                           *UsableAgentByIDLoaderFactory
@@ -185,6 +187,7 @@ type Loaders struct {
 	FiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
 	AgentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
 	AgentRunByID                              *dataloadgen.Loader[string, *agent.AgentRun]
+	AgentRunTranscriptByID                    *dataloadgen.Loader[string, *agent.AgentRun]
 	AgentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
 	ThreadAgentByID                           *dataloadgen.Loader[string, *conversation.Thread]
 	UsableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
@@ -248,6 +251,7 @@ func NewFactory(p FactoryParams) *Factory {
 		fiscalPeriodsByFiscalYearID:               p.FiscalPeriodsByFiscalYearID,
 		agentDecisionsByProposalID:                p.AgentDecisionsByProposalID,
 		agentRunByID:                              p.AgentRunByID,
+		agentRunTranscriptByID:                    p.AgentRunTranscriptByID,
 		agentDefinitionByID:                       p.AgentDefinitionByID,
 		threadAgentByID:                           p.ThreadAgentByID,
 		usableAgentByID:                           p.UsableAgentByID,
@@ -340,7 +344,10 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		AgentDecisionsByProposalID: f.agentDecisionsByProposalID.NewForTenant(
 			tenantInfo,
 		),
-		AgentRunByID:         f.agentRunByID.NewForTenant(tenantInfo),
+		AgentRunByID: f.agentRunByID.NewForTenant(tenantInfo),
+		AgentRunTranscriptByID: f.agentRunTranscriptByID.NewForTenant(
+			tenantInfo,
+		),
 		AgentDefinitionByID:  f.agentDefinitionByID.NewForTenant(tenantInfo),
 		ThreadAgentByID:      f.threadAgentByID.NewForTenant(tenantInfo),
 		UsableAgentByID:      f.usableAgentByID.NewForTenant(tenantInfo),

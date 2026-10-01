@@ -82,9 +82,9 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"remove_driver_settlement_adjustment",
 		"recalculate_driver_settlement",
 		"submit_driver_settlement",
-		"approve_driver_settlement",
+		"approve_driver_settlements",
 		"reject_driver_settlement",
-		"post_driver_settlement",
+		"post_driver_settlements",
 		"record_driver_settlement_payment",
 		"void_driver_settlement",
 		"pay_driver_now",
@@ -95,9 +95,9 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"remove_carrier_settlement_adjustment",
 		"recalculate_carrier_settlement",
 		"submit_carrier_settlement",
-		"approve_carrier_settlement",
+		"approve_carrier_settlements",
 		"reject_carrier_settlement",
-		"post_carrier_settlement",
+		"post_carrier_settlements",
 		"record_carrier_settlement_payment",
 		"void_carrier_settlement",
 		"list_carrier_invoice_matches",
@@ -135,6 +135,18 @@ func TestTemplates_TheSettlementsClerkRunsThePayPeriod(t *testing.T) {
 		"post_invoice",
 	} {
 		require.NotContainsf(t, tools, tool, "the settlements clerk must not hold %s", tool)
+	}
+
+	for _, single := range []string{
+		"approve_driver_settlement",
+		"post_driver_settlement",
+		"approve_carrier_settlement",
+		"post_carrier_settlement",
+	} {
+		require.NotContainsf(t, tools, single,
+			"the settlements clerk approves and posts through %ss, which takes one or many",
+			single)
+		require.Containsf(t, tools, single+"s", "the settlements clerk needs %ss", single)
 	}
 }
 
@@ -258,8 +270,10 @@ func TestTemplates_EveryTemplateImpliesAnIcon(t *testing.T) {
 The books keeper keeps the accounting system in step with what Trenova posts
 and, once a period has ended, gets it ready to close. It confirms or turns down
 the mappings Trenova proposed, proposes releasing what a review policy held,
-and proposes locking and closing a period whose blockers are clear. Drafting
-and posting journals, reversing entries, reopening a period and changing a
+and proposes locking and closing a period whose blockers are clear. It
+proposes pausing sending while the connection fails and resuming once it
+answers, creating an item, customer or vendor the books lack, and refreshing
+what it read of the books. Drafting and posting journals, reversing entries, reopening a period and changing a
 backfill are started by a person, so no unattended desk holds them.
 */
 func TestTemplates_TheBooksKeeperKeepsTheBooksInStepAndReadyToClose(t *testing.T) {
@@ -274,6 +288,10 @@ func TestTemplates_TheBooksKeeperKeepsTheBooksInStepAndReadyToClose(t *testing.T
 		"get_fiscal_close_blockers",
 		"lock_fiscal_period",
 		"close_fiscal_period",
+		"pause_accounting_sync",
+		"resume_accounting_sync",
+		"create_accounting_reference_record",
+		"refresh_accounting_reference_data",
 	} {
 		require.Containsf(t, tools, tool, "the books keeper needs %s", tool)
 	}

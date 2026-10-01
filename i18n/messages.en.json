@@ -4275,6 +4275,16 @@
       "service/driversettlementservice"
     ]
   },
+  "A note to the agent can be at most {0} characters": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent",
+      "service/agentdecisionqueueservice"
+    ]
+  },
   "A notice id and a document id are required to file a notice PDF": {
     "sites": 1,
     "scope": [
@@ -13666,12 +13676,13 @@
     ]
   },
   "Agent run": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/config",
+      "routes/agent-control"
     ]
   },
   "Agent run failed": {
@@ -19186,6 +19197,15 @@
       "routes/detention-policy"
     ]
   },
+  "Approval box": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Approval cover": {
     "sites": 4,
     "scope": [
@@ -19314,12 +19334,13 @@
     ]
   },
   "Approve": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/config",
       "apps/web/lib",
       "routes/agent-control",
       "routes/billing-queue",
@@ -19413,14 +19434,22 @@
     ]
   },
   "Approve all": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Approve all {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Approve all {0} changes?": {
@@ -19469,6 +19498,24 @@
       "routes/desk"
     ]
   },
+  "Approve billing items": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approve carrier settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approve charge": {
     "sites": 1,
     "scope": [
@@ -19497,6 +19544,15 @@
     ]
   },
   "Approve document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approve driver settlements": {
     "sites": 1,
     "scope": [
       "ts"
@@ -19640,6 +19696,24 @@
       "routes/formula-template"
     ]
   },
+  "Approve the change the approval box shows; Enter alone never approves": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Approve the kept records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approve this PTO request": {
     "sites": 1,
     "scope": [
@@ -19715,7 +19789,7 @@
     ]
   },
   "Approved": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -19773,6 +19847,24 @@
       "packages/shared/components"
     ]
   },
+  "Approved by you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approved by you {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approved days this year": {
     "sites": 1,
     "scope": [
@@ -19801,7 +19893,7 @@
     ]
   },
   "Approved {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -19864,6 +19956,15 @@
     ]
   },
   "Approved. {0} of {1} done so far.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approved. {0} of {1} done; the others did not go through, and each says why.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -29755,7 +29856,7 @@
     ]
   },
   "Cancel": {
-    "sites": 274,
+    "sites": 275,
     "scope": [
       "ts"
     ],
@@ -44639,6 +44740,15 @@
       "apps/web/components"
     ]
   },
+  "Couldn't open the approval box": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Couldn't pull USDOT {0}": {
     "sites": 1,
     "scope": [
@@ -44673,15 +44783,6 @@
     ],
     "areas": [
       "packages/shared/hooks"
-    ]
-  },
-  "Couldn't show the card again": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Count": {
@@ -50455,6 +50556,25 @@
       "template/agent.proposal_reminder.email"
     ]
   },
+  "Decide in the approval box": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Decide later": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/config"
+    ]
+  },
   "Decide the case before closing it": {
     "sites": 1,
     "scope": [
@@ -55088,12 +55208,11 @@
     ]
   },
   "Did not run": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -58394,7 +58513,7 @@
     ]
   },
   "Done": {
-    "sites": 21,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -58410,6 +58529,15 @@
       "routes/invoice-adjustment-batch",
       "routes/rate-agreement",
       "routes/shipment"
+    ]
+  },
+  "Done on its own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Done on its own {0}. No approval was needed.": {
@@ -66010,7 +66138,7 @@
     ]
   },
   "Error": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -66092,7 +66220,7 @@
     ]
   },
   "Esc": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -69550,12 +69678,11 @@
     ]
   },
   "Expired": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/lib",
       "packages/shared/components",
       "packages/shared/lib",
@@ -69563,6 +69690,15 @@
       "routes/carrier",
       "routes/formula-template",
       "routes/worker"
+    ]
+  },
+  "Expired without a decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Expired without a decision.": {
@@ -102732,7 +102868,7 @@
     ]
   },
   "Model": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -105672,12 +105808,11 @@
     ]
   },
   "Needs approval": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control",
       "routes/shipment"
     ]
@@ -107561,6 +107696,15 @@
     ],
     "areas": [
       "domain/carrierintel"
+    ]
+  },
+  "No Blocked, DeadLettered or Retrying record last failed as {0}; get_accounting_sync_status shows what is waiting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "No Clearinghouse query has been run for this worker.": {
@@ -113033,6 +113177,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "Not accepted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Not answered": {
     "sites": 1,
     "scope": [
@@ -113510,6 +113663,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Not permitted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Not picked up": {
@@ -120361,6 +120523,15 @@
       "apps/web/config"
     ]
   },
+  "Open or close the note that turns the change down and tells the agent why": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Open organization settings": {
     "sites": 1,
     "scope": [
@@ -121012,6 +121183,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Opening the approval box…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Opening the desk": {
@@ -123248,6 +123428,15 @@
     ]
   },
   "Out of balance by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Out of budget": {
     "sites": 1,
     "scope": [
       "ts"
@@ -125662,6 +125851,15 @@
     ],
     "areas": [
       "service/proposalpreviewservice"
+    ]
+  },
+  "Part of this step was too large to keep, so only what was called is shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Part of {0}; the rest stays as proposed unless you change it below.": {
@@ -129086,7 +129284,7 @@
     ]
   },
   "Permanent": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -131924,6 +132122,15 @@
       "routes/worker"
     ]
   },
+  "Post carrier settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Post customer payments": {
     "sites": 1,
     "scope": [
@@ -131931,6 +132138,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Post driver settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Post fuel purchases and IFTA gallons automatically from Comdata fleet card transactions.": {
@@ -131976,6 +132192,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Post invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Post it where employees can see it, from February 1 to April 30.": {
@@ -135013,6 +135238,15 @@
       "routes/formula-template"
     ]
   },
+  "Proposed: {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Proposes only": {
     "sites": 2,
     "scope": [
@@ -136390,6 +136624,15 @@
       "routes/org-structure"
     ]
   },
+  "Put the waiting decisions off and bring back the message box": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Put them back": {
     "sites": 1,
     "scope": [
@@ -137371,6 +137614,15 @@
     ]
   },
   "Ran a report": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Ran on its own · did not go through": {
     "sites": 1,
     "scope": [
       "ts"
@@ -143876,7 +144128,7 @@
     ]
   },
   "Reject all": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -144121,6 +144373,33 @@
     ],
     "areas": [
       "service/invoiceadjustmentservice"
+    ]
+  },
+  "Rejected by you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Rejected by you {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Rejected {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Rejected. Nothing was changed.": {
@@ -150203,7 +150482,7 @@
     ]
   },
   "Review": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -152552,7 +152831,7 @@
     ]
   },
   "Run": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -153092,7 +153371,7 @@
     ]
   },
   "Running": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -153128,6 +153407,15 @@
     ],
     "areas": [
       "service/briefingservice"
+    ]
+  },
+  "Running on its own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Running on its own. No approval is needed.": {
@@ -158640,6 +158928,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Select all {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Select all {0} matching": {
     "sites": 1,
     "scope": [
@@ -160661,6 +160958,15 @@
       "routes/worker"
     ]
   },
+  "Send invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Send it in before the deadline on the request.": {
     "sites": 1,
     "scope": [
@@ -161006,6 +161312,15 @@
     ]
   },
   "Send to review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Send to the agent": {
     "sites": 1,
     "scope": [
       "ts"
@@ -166283,15 +166598,6 @@
       "routes/formula-template"
     ]
   },
-  "Showing the card again…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Showing the first {0}": {
     "sites": 1,
     "scope": [
@@ -166890,12 +167196,11 @@
     ]
   },
   "Simulated": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -167163,6 +167468,15 @@
       "packages/shared/components",
       "routes/agent-control",
       "routes/shipment"
+    ]
+  },
+  "Skipped (repeat)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Skipped by": {
@@ -169949,7 +170263,7 @@
     ]
   },
   "Started by": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -170408,7 +170722,7 @@
     ]
   },
   "Status": {
-    "sites": 265,
+    "sites": 266,
     "scope": [
       "go",
       "ts"
@@ -172612,7 +172926,7 @@
     ]
   },
   "Summary": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -174172,12 +174486,13 @@
     ]
   },
   "Task": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Task handed off": {
@@ -174207,6 +174522,15 @@
       "domain/aicorrection",
       "domain/aitraining",
       "domain/extractioneval"
+    ]
+  },
+  "Task · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Tax": {
@@ -174565,6 +174889,25 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Tell the agent instead": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/config"
+    ]
+  },
+  "Tell the agent what to change, or why not…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Tell the customer their load is running late.": {
@@ -176326,12 +176669,13 @@
     ]
   },
   "That proposal was not raised in one of your conversations": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "api/graphql",
+      "service/agentdecisionqueueservice",
       "service/agentdecisionservice"
     ]
   },
@@ -183831,6 +184175,15 @@
       "routes/insights"
     ]
   },
+  "The records you kept would not go through as they are. Keep others, or reject it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The recurring series created this shipment for you — you can discard this manual entry.": {
     "sites": 1,
     "scope": [
@@ -184482,6 +184835,15 @@
     ]
   },
   "The run could not finish": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The run kept no messages.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -185854,6 +186216,15 @@
     ]
   },
   "The training exports that included this organization could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The transcript could not be loaded. Try again shortly.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -190320,6 +190691,15 @@
       "routes/desk"
     ]
   },
+  "This run kept no transcript. Runs filed before transcripts were kept, and runs that said nothing, have only their summary.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This run no longer exists.": {
     "sites": 1,
     "scope": [
@@ -194748,6 +195128,15 @@
     "areas": [
       "domain/fuelpurchase",
       "routes/edi"
+    ]
+  },
+  "Transcript": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Transfer": {
@@ -204048,6 +204437,15 @@
       "routes/desk"
     ]
   },
+  "Waiting on your decision. Nothing has changed yet.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Waiting period": {
     "sites": 1,
     "scope": [
@@ -204119,6 +204517,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Waiting — decide below": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Waiting...": {
@@ -205999,6 +206406,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "What should the agent do instead? It reads this and answers here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What sort of area this is, which is how somebody else reads it later": {
@@ -211751,6 +212167,15 @@
       "routes/agent-control"
     ]
   },
+  "You told the agent: “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "You're all caught up": {
     "sites": 2,
     "scope": [
@@ -213531,6 +213956,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "did not run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "differ in the books": {
@@ -217098,6 +217532,15 @@
       "routes/worker"
     ]
   },
+  "retry_accounting_sync runs from an approval only on the records a person approved, and this proposal names none; propose it again so the records its error categories resolve to are listed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "rev {0}": {
     "sites": 2,
     "scope": [
@@ -218515,6 +218958,24 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# change like this is waiting} other {# changes like this are waiting}}: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# change of one kind, decided together} other {# changes of one kind, decided together}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# change ran without being asked} other {# changes ran without being asked}}": {
     "sites": 1,
     "scope": [
@@ -218534,7 +218995,7 @@
     ]
   },
   "{0, plural, one {# change, in order} other {# changes, in order}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -218699,6 +219160,15 @@
     ],
     "areas": [
       "routes/late-charges"
+    ]
+  },
+  "{0, plural, one {# decision waiting} other {# decisions waiting}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}}": {
@@ -219055,6 +219525,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# message from the middle of the run was left out to keep the record bounded} other {# messages from the middle of the run were left out to keep the record bounded}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# message is waiting on you} other {# messages are waiting on you}}": {
     "sites": 1,
     "scope": [
@@ -219197,6 +219676,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "{0, plural, one {# of them is not open; approving records it as approved without reviewing what it changes.} other {# of them are not open; approving records them as approved without reviewing what they change.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# of them you have not opened; it is recorded as approved without reviewing what it changes.} other {# of them you have not opened; they are recorded as approved without reviewing what they change.}}": {
@@ -223408,11 +223896,12 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/accounting-mapping",
       "routes/admin",
       "routes/agent-control",
@@ -223438,6 +223927,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} of {1} characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} of {1} chosen": {
@@ -223667,11 +224165,12 @@
     ]
   },
   "{0} of {1} went through": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -225750,6 +226249,15 @@
     ]
   },
   "{0}/{1} rules satisfied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0}: untick any to leave out": {
     "sites": 1,
     "scope": [
       "ts"

@@ -57,6 +57,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "clear invoice",
+        "invoice matches"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_invoice_match",
@@ -795,6 +799,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "escrow debit",
+        "manual escrow adjustment"
+      ],
       "policy": {
         "kind": "action",
         "resource": "escrow_account",
@@ -889,6 +897,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "exclude shipment",
+        "remove from invoice run",
+        "drop from invoice run"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice_run",
@@ -958,6 +971,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "balance adjustment",
+        "pto balance"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_pto",
@@ -1277,6 +1294,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "carrier intelligence fix",
+        "intelligence corrections"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_intelligence",
@@ -1418,6 +1439,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "unapplied cash",
+        "unapplied payment"
+      ],
       "policy": {
         "kind": "action",
         "resource": "customer_payment",
@@ -1520,7 +1545,7 @@
     },
     {
       "name": "approve_billing_queue_item",
-      "description": "Propose approving a billing queue item you have reviewed and found clean. Clean means charges that match the agreement, the documents the customer requires, and no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft.",
+      "description": "Propose approving a billing queue item you have reviewed and found clean. Clean means charges that match the agreement, the documents the customer requires, and no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft. For more than one item, propose approve_billing_queue_items once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -1563,8 +1588,58 @@
       }
     },
     {
+      "name": "approve_billing_queue_items",
+      "description": "Propose approving several billing queue items you have reviewed and found clean, in one proposal the person approves together. Use it instead of approve_billing_queue_item whenever more than one item is ready. Each item is approved exactly as approve_billing_queue_item would: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; a person always decides and may untick items. An item the queue would refuse is reported, not approved, and the rest still go. Say in reviewNotes what you checked. Up to 50 items.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemIds": {
+            "description": "The billing queue items, by id from list_billing_queue_items or get_billing_queue_item. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "billing_queue"
+          },
+          "reviewNotes": {
+            "description": "What you checked, kept on each item as its review notes.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Approving creates the invoices customers are billed on, so only a person approves, item by item exactly as approve_billing_queue_item, and may untick any of them."
+      }
+    },
+    {
       "name": "approve_carrier_settlement",
-      "description": "Propose approving a carrier settlement that is pending approval, which commits the organization to paying the carrier what it comes to. A person always decides. Propose it only when get_carrier_settlement shows no open exception or dispute you cannot explain.",
+      "description": "Propose approving a carrier settlement that is pending approval, which commits the organization to paying the carrier what it comes to. A person always decides. Propose it only when get_carrier_settlement shows no open exception or dispute you cannot explain. For more than one, propose approve_carrier_settlements once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -1578,6 +1653,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "approve payout",
+        "approve pay period"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -1598,6 +1677,59 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Commits the organization to what the carrier is paid; only a person approves, and hands-off approval is the settlement control's rule."
+      }
+    },
+    {
+      "name": "approve_carrier_settlements",
+      "description": "Propose approving several pending carrier settlements in one proposal the person approves together. Use it instead of approve_carrier_settlement whenever more than one is ready. Each is approved exactly as approve_carrier_settlement would, committing the organization to paying the carrier what it comes to; a person always decides and may untick settlements. Propose only those get_carrier_settlement shows with no open exception or dispute you cannot explain. A settlement approving would refuse is reported, not approved, and the rest still go. Takes 1 to 50 settlements.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "settlementIds": {
+            "description": "The carrier settlements, by id from list_carrier_settlements or get_carrier_settlement or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "carrier_settlement"
+          }
+        },
+        "required": [
+          "settlementIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "every",
+        "several",
+        "many",
+        "together",
+        "bulk",
+        "once"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_settlement",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "carrier_settlement",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Commits the organization to what several carriers are paid at once; only a person approves, settlement by settlement exactly as approve_carrier_settlement, and may untick any of them."
       }
     },
     {
@@ -1645,7 +1777,7 @@
     },
     {
       "name": "approve_driver_settlement",
-      "description": "Propose approving a driver settlement that is pending approval, which commits the organization to paying the driver what it comes to. A person always decides. Propose it only when get_driver_settlement shows no open exception or dispute you cannot explain.",
+      "description": "Propose approving a driver settlement that is pending approval, which commits the organization to paying the driver what it comes to. A person always decides. Propose it only when get_driver_settlement shows no open exception or dispute you cannot explain. For more than one, propose approve_driver_settlements once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -1659,6 +1791,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "approve payout",
+        "approve pay period"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -1680,6 +1816,60 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Commits the organization to what the driver is paid; only a person approves, and hands-off approval is the settlement control's rule."
+      }
+    },
+    {
+      "name": "approve_driver_settlements",
+      "description": "Propose approving several pending driver settlements in one proposal the person approves together. Use it instead of approve_driver_settlement whenever more than one is ready. Each is approved exactly as approve_driver_settlement would, committing the organization to paying the driver what it comes to; a person always decides and may untick settlements. Propose only those get_driver_settlement shows with no open exception or dispute you cannot explain. A settlement approving would refuse is reported, not approved, and the rest still go. Takes 1 to 50 settlements.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "settlementIds": {
+            "description": "The driver settlements, by id from list_driver_settlements or get_driver_settlement or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "driver_settlement"
+          }
+        },
+        "required": [
+          "settlementIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "every",
+        "several",
+        "many",
+        "together",
+        "bulk",
+        "once"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "driver_settlement",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "driver_visible",
+          "money"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "driver_settlement",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Commits the organization to what several drivers are paid at once; only a person approves, settlement by settlement exactly as approve_driver_settlement, and may untick any of them."
       }
     },
     {
@@ -1972,7 +2162,9 @@
         "homepage",
         "home screen",
         "landing page",
-        "widgets"
+        "widgets",
+        "reorder",
+        "rearrange"
       ],
       "prerequisites": [
         "get_my_home_layout"
@@ -2048,6 +2240,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "late fees",
+        "finance charge"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -2091,6 +2287,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "biller",
+        "reviewer"
+      ],
       "policy": {
         "kind": "action",
         "resource": "billing_queue",
@@ -2727,6 +2927,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "scanned card",
+        "card scan"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_credential",
@@ -3037,6 +3241,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "drop carrier",
+        "uncover move",
+        "remove outside carrier"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment_move",
@@ -3082,6 +3291,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "draw again",
+        "redo draw",
+        "cancel selection"
+      ],
       "policy": {
         "kind": "action",
         "resource": "dot_random_pool",
@@ -3165,6 +3379,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "recall tender",
+        "withdraw edi tender"
+      ],
       "policy": {
         "kind": "action",
         "resource": "edi",
@@ -3470,6 +3688,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "withdraw tender",
+        "covered another way"
+      ],
       "policy": {
         "kind": "action",
         "resource": "tender",
@@ -3515,6 +3737,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "drop checklist",
+        "no longer applies"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_checklist",
@@ -3559,6 +3785,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "cancel vacation",
+        "cancel time off",
+        "cancel approved vacation"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_pto",
@@ -3953,6 +4184,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "returned from leave",
+        "leave ended",
+        "close fmla"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_leave",
@@ -4046,6 +4282,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "retired course",
+        "close without completion"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_training",
@@ -5624,6 +5864,10 @@
         "required": null,
         "type": "object"
       },
+      "searchTerms": [
+        "invoice delivered",
+        "bill completed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -6030,6 +6274,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "bonus",
+        "recurring bonus"
+      ],
       "policy": {
         "kind": "action",
         "resource": "recurring_earning",
@@ -7408,6 +7656,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "previous employer",
+        "duplicate employer",
+        "remove employer"
+      ],
       "policy": {
         "kind": "action",
         "resource": "qualification",
@@ -7565,6 +7818,9 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "remove leave day"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_leave",
@@ -7724,6 +7980,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "remove violation",
+        "csa"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_safety_event",
@@ -7850,6 +8110,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "duplicate injury",
+        "remove injury case"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_injury",
@@ -7889,6 +8153,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "kudos",
+        "remove recognition"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_recognition",
@@ -9136,6 +9404,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "fix comment",
+        "reword comment",
+        "typo"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment_comment",
@@ -9278,6 +9551,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "shift pattern",
+        "end shift",
+        "remove from shift pattern"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_schedule",
@@ -10187,6 +10465,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "rate con",
+        "create rate con",
+        "carrier confirmation"
+      ],
       "policy": {
         "kind": "action",
         "resource": "rate_confirmation",
@@ -10230,6 +10513,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "next occurrence",
+        "generate early",
+        "next slot",
+        "spin up"
+      ],
       "policy": {
         "kind": "action",
         "resource": "recurring_shipment",
@@ -11427,7 +11716,7 @@
     },
     {
       "name": "get_invoice",
-      "description": "Retrieve one invoice by id, with its line items, totals, payment and dispute state. Each line's id is what an invoice adjustment names. Use list_invoices first when you have a number or are looking for what is unpaid. Amounts and the memo are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "description": "Retrieve one invoice by id, with its line items, totals, payment and dispute state. Each line's id is what an invoice adjustment names. Use list_invoices first when you have a number or are looking for what is unpaid, and get_invoices to check several at once. Amounts and the memo are left out, and named in withheldByAccess, when your data access does not reach them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -11520,6 +11809,49 @@
       "policy": {
         "kind": "query",
         "resource": "invoice_run",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_invoices",
+      "description": "Retrieve several invoices by id in one call, each with its status, totals, payment state and line items. Use it instead of calling get_invoice once per invoice, for example to check a batch of drafts before posting them. Up to 50; an id that is not an invoice of this organization is named in the note. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceIds": {
+            "description": "The invoices' ids, from list_invoices, list_ar_open_items or the page you are on.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "invoice",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -12459,6 +12791,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "park item",
+        "park until"
+      ],
       "policy": {
         "kind": "action",
         "resource": "billing_queue",
@@ -13586,7 +13922,7 @@
     },
     {
       "name": "list_billing_queue_items",
-      "description": "List billing queue items, the shipments waiting on a biller. Open one with get_billing_queue_item before proposing a decision; Posted items appear only when status is Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview await a biller; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; createdAt (date): when it was queued; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List billing queue items, the shipments waiting on a biller. Open one with get_billing_queue_item before deciding it; Posted items need status Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview await a biller; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; id (text): in with several ids reads them together; createdAt (date): when it was queued; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -13605,6 +13941,7 @@
                     "exceptionReasonCode",
                     "assignedBillerId",
                     "billToCustomerId",
+                    "id",
                     "number",
                     "shipment.proNumber",
                     "createdAt",
@@ -17684,7 +18021,7 @@
     },
     {
       "name": "list_invoices",
-      "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. This answers receivables questions — what is unpaid, what is overdue, what is in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; id (text): in with several ids reads them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -17702,6 +18039,7 @@
                     "settlementStatus",
                     "disputeStatus",
                     "billType",
+                    "id",
                     "number",
                     "billToName",
                     "shipmentProNumber",
@@ -21436,6 +21774,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "spam",
+        "mark handled",
+        "actioned",
+        "ignored"
+      ],
       "policy": {
         "kind": "action",
         "resource": "inbound_message",
@@ -22362,6 +22706,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "stop dispatching",
+        "dispatch block",
+        "no loads",
+        "hold until renewed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_dispatch_hold",
@@ -22435,7 +22785,7 @@
     },
     {
       "name": "post_carrier_settlement",
-      "description": "Propose posting an approved carrier settlement to the general ledger. Posting books purchased transportation against accounts payable, records the bill on the carrier's ledger and queues it for the accounting system. It cannot be undone except by voiding, so a person always decides.",
+      "description": "Propose posting an approved carrier settlement to the general ledger. Posting books purchased transportation against accounts payable, records the bill on the carrier's ledger and queues it for the accounting system. It cannot be undone except by voiding, so a person always decides. For more than one, propose post_carrier_settlements once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22469,6 +22819,59 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Books the settlement's payable to the ledger and queues it for the accounting system; only a person posts."
+      }
+    },
+    {
+      "name": "post_carrier_settlements",
+      "description": "Propose posting several approved carrier settlements to the general ledger in one proposal the person approves together. Use it instead of post_carrier_settlement whenever more than one is ready. Each is posted exactly as post_carrier_settlement would: purchased transportation booked against accounts payable, the bill recorded on the carrier's ledger and queued for the accounting system. It cannot be undone except by voiding, so a person always decides and may untick settlements. A settlement posting would refuse is reported, not posted, and the rest still go. Takes 1 to 50 settlements.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "settlementIds": {
+            "description": "The carrier settlements, by id from list_carrier_settlements or get_carrier_settlement or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "carrier_settlement"
+          }
+        },
+        "required": [
+          "settlementIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "every",
+        "several",
+        "many",
+        "together",
+        "bulk",
+        "once"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "carrier_settlement",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "carrier_settlement",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_carrier_settlement, and may untick any of them."
       }
     },
     {
@@ -22577,7 +22980,7 @@
     },
     {
       "name": "post_driver_settlement",
-      "description": "Propose posting an approved driver settlement to the general ledger. Posting books the driver pay expense and settlements payable, queues it for the accounting system and tells the driver in the driver portal. It cannot be undone except by voiding, so a person always decides.",
+      "description": "Propose posting an approved driver settlement to the general ledger. Posting books the driver pay expense and settlements payable, queues it for the accounting system and tells the driver in the driver portal. It cannot be undone except by voiding, so a person always decides. For more than one, propose post_driver_settlements once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22615,8 +23018,62 @@
       }
     },
     {
+      "name": "post_driver_settlements",
+      "description": "Propose posting several approved driver settlements to the general ledger in one proposal the person approves together. Use it instead of post_driver_settlement whenever more than one is ready. Each is posted exactly as post_driver_settlement would: the driver pay expense and settlements payable booked, queued for the accounting system and the driver told in the driver portal. It cannot be undone except by voiding, so a person always decides and may untick settlements. A settlement posting would refuse is reported, not posted, and the rest still go. Takes 1 to 50 settlements.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "settlementIds": {
+            "description": "The driver settlements, by id from list_driver_settlements or get_driver_settlement or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "driver_settlement"
+          }
+        },
+        "required": [
+          "settlementIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "every",
+        "several",
+        "many",
+        "together",
+        "bulk",
+        "once"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "driver_settlement",
+        "operation": "approve",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "driver_visible",
+          "money"
+        ],
+        "classifiesEachCall": true,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "driver_settlement",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books several settlements' payables to the ledger at once and queues each for the accounting system; only a person posts, settlement by settlement exactly as post_driver_settlement, and may untick any of them."
+      }
+    },
+    {
       "name": "post_invoice",
-      "description": "Propose posting a draft invoice, usually the one approve_billing_queue_item just made. Posting books it to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides; propose it once the draft's lines and totals are right.",
+      "description": "Propose posting a draft invoice, usually the one approve_billing_queue_item just made. Posting books it to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides; propose it once the draft's lines and totals are right. For more than one invoice, propose post_invoices once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22650,6 +23107,51 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting."
+      }
+    },
+    {
+      "name": "post_invoices",
+      "description": "Propose posting several draft invoices in one proposal the person approves together. Use it instead of post_invoice whenever more than one invoice is ready, rather than one proposal per invoice. Each invoice is posted exactly as post_invoice would: booked to the ledger, its shipments marked invoiced, its billing queue item settled and queued for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides and may untick invoices. An invoice posting would refuse is reported, not posted, and the rest still go. Up to 50 invoices.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceIds": {
+            "description": "The invoices, by id from list_invoices, get_invoices or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "invoice"
+          }
+        },
+        "required": [
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books several receivables to the ledger at once and queues each for the accounting system and the customer's EDI; only a person posts, invoice by invoice exactly as post_invoice, and may untick any of them."
       }
     },
     {
@@ -23209,6 +23711,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "trade shifts",
+        "shift trade",
+        "swap shifts"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shift_swap",
@@ -23628,6 +24135,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "rerun totals",
+        "recompute",
+        "refresh totals"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -23666,6 +24178,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "rerun totals",
+        "recompute",
+        "refresh totals"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -24470,6 +24987,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "signed rate con",
+        "faxed",
+        "carrier signed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "rate_confirmation",
@@ -24742,6 +25264,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "accepted by phone",
+        "carrier answer",
+        "tender answer"
+      ],
       "policy": {
         "kind": "action",
         "resource": "tender",
@@ -25289,6 +25816,9 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "return to draft"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -25334,6 +25864,9 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "return to draft"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -25379,6 +25912,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "deny adjustment",
+        "decline adjustment"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -25466,6 +26003,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "deny swap",
+        "decline swap"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shift_swap",
@@ -25766,6 +26307,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "delete adjustment",
+        "undo adjustment",
+        "drop adjustment line"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -25809,6 +26355,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "delete adjustment",
+        "undo adjustment",
+        "drop adjustment line"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -25906,6 +26457,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "drop charge",
+        "delete charge",
+        "remove accessorial"
+      ],
       "policy": {
         "kind": "action",
         "resource": "order",
@@ -26273,7 +26829,7 @@
         "idempotent": false,
         "readsExternal": "never",
         "carriesTaint": false,
-        "rationale": "Shows the person, in their own conversation, the card of a proposal already waiting on them; it decides nothing and changes no record."
+        "rationale": "Opens, in the person's own conversation, the approval box on a proposal already waiting on them; it decides nothing and changes no record."
       }
     },
     {
@@ -26359,6 +26915,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "fmla certification",
+        "certification clock"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_leave",
@@ -26754,6 +27314,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "carrier finding",
+        "insurance lapse",
+        "finding resolved"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_intelligence",
@@ -26899,6 +27464,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "close service failure",
+        "close out failure"
+      ],
       "policy": {
         "kind": "action",
         "resource": "service_failure",
@@ -27233,7 +27802,7 @@
     },
     {
       "name": "retry_accounting_sync",
-      "description": "Send documents that did not reach the accounting system again. Name the records by syncRecordIds, or retry every record that last failed for the given errorCategories, such as Transient and RateLimited after an outage. Only Blocked, DeadLettered and Retrying records are retried; a document waiting for a person to release it stays waiting. Retry only once the cause in the record's resolution is fixed or the failure was temporary: a record whose cause still stands is refused again. The accounting system recognizes a repeat, so nothing is entered twice.",
+      "description": "Send documents that did not reach the accounting system again. Name the records by syncRecordIds, or retry every record that last failed for the given errorCategories, such as Transient and RateLimited after an outage. Run on its own, the categories are read when it runs; proposed, they become the records they name then, at most 50, which the person approving may untick, and only those are retried. Only Blocked, DeadLettered and Retrying records are retried; a document waiting for a person to release it stays waiting. Retry only once the cause in the record's resolution is fixed or the failure was temporary: a record whose cause still stands is refused again. The accounting system recognizes a repeat, so nothing is entered twice.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -27266,7 +27835,8 @@
               "type": "string"
             },
             "maxItems": 50,
-            "type": "array"
+            "type": "array",
+            "x-subsetOf": "accounting_sync"
           },
           "system": {
             "description": "The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
@@ -27600,6 +28170,9 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "mark reviewed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "service_failure",
@@ -28317,6 +28890,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "save view",
+        "saved view",
+        "pick again later"
+      ],
       "policy": {
         "kind": "action",
         "resource": "table_configuration",
@@ -28939,7 +29517,7 @@
     },
     {
       "name": "send_invoice",
-      "description": "Propose emailing an invoice to the customer. The recipients, subject, wording and attachments come from the organization and the customer's billing profile; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically.",
+      "description": "Propose emailing an invoice to the customer. The recipients, subject, wording and attachments come from the organization and the customer's billing profile; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically. For more than one invoice, propose send_invoices once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -29015,6 +29593,51 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Transmits the invoice to the customer's EDI trading partner, which cannot be called back; only a person sends it."
+      }
+    },
+    {
+      "name": "send_invoices",
+      "description": "Propose emailing several invoices to their customers in one proposal the person approves together. Use it instead of send_invoice whenever more than one invoice goes out. Each invoice goes exactly as send_invoice would send it: the recipients, subject, wording and attachments come from the organization and each customer's billing profile, and nothing is chosen by you. The person approving sees every email, may untick invoices, and is who sends them. An invoice that cannot go is reported, not sent, and the rest still go. Up to 50 invoices.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceIds": {
+            "description": "The invoices, by id from list_invoices, get_invoices or the proposals that made them. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "invoice"
+          }
+        },
+        "required": [
+          "invoiceIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "submit",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Emails several customers their invoices at once; only a person sends them, is named as who sent each, and sees every recipient before approving."
       }
     },
     {
@@ -29310,6 +29933,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "split charge",
+        "payer split",
+        "allocate charge"
+      ],
       "policy": {
         "kind": "action",
         "resource": "order",
@@ -29648,6 +30276,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "availability",
+        "unavailable",
+        "prefers",
+        "weekday preference"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_schedule",
@@ -29714,6 +30348,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "loop in teammate",
+        "teammate",
+        "colleague"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -29999,7 +30638,10 @@
       "searchTerms": [
         "pay dispute",
         "settlement dispute",
-        "driver complaint"
+        "driver complaint",
+        "under review",
+        "mark under review",
+        "investigate dispute"
       ],
       "policy": {
         "kind": "action",
@@ -30088,6 +30730,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "send for approval",
+        "ready for approval"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -30126,6 +30772,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "send for approval",
+        "ready for approval"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -30257,6 +30907,10 @@
         "required": [],
         "type": "object"
       },
+      "searchTerms": [
+        "credit and rebill",
+        "rebill"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -30746,6 +31400,9 @@
         },
         "type": "object"
       },
+      "searchTerms": [
+        "send to billing"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment",
@@ -31868,6 +32525,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "previous employer answered",
+        "employer response",
+        "dq file"
+      ],
       "policy": {
         "kind": "action",
         "resource": "qualification",
@@ -31915,6 +32577,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "target balance",
+        "escrow interest",
+        "amended lease"
+      ],
       "policy": {
         "kind": "action",
         "resource": "escrow_account",
@@ -32318,6 +32985,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "leave dates",
+        "fix leave case"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_leave",
@@ -32572,6 +33243,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "in transit",
+        "mark delivered",
+        "departed"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment_move",
@@ -32642,6 +33318,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "purchase order",
+        "po",
+        "fix bol",
+        "edit order"
+      ],
       "policy": {
         "kind": "action",
         "resource": "order",
@@ -32732,6 +33414,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "charge amount",
+        "correct charge",
+        "edit accessorial"
+      ],
       "policy": {
         "kind": "action",
         "resource": "order",
@@ -32815,6 +33502,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "lease deduction",
+        "raise deduction",
+        "pause deduction"
+      ],
       "policy": {
         "kind": "action",
         "resource": "recurring_deduction",
@@ -32897,6 +33589,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "pause bonus",
+        "stop bonus",
+        "edit bonus"
+      ],
       "policy": {
         "kind": "action",
         "resource": "recurring_earning",
@@ -33366,6 +34063,12 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "rename report",
+        "share report",
+        "visibility",
+        "edit report"
+      ],
       "policy": {
         "kind": "action",
         "resource": "report",
@@ -33528,6 +34231,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "fix violation",
+        "basic",
+        "severity weight"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_safety_event",
@@ -33600,6 +34308,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "change reason code",
+        "edit service failure"
+      ],
       "policy": {
         "kind": "action",
         "resource": "service_failure",
@@ -33679,6 +34391,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "edit shipment",
+        "pieces",
+        "correct weight"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment",
@@ -34367,6 +35084,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "out of service",
+        "maintenance",
+        "available"
+      ],
       "policy": {
         "kind": "action",
         "resource": "trailer",
@@ -34492,6 +35214,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "fix credential",
+        "correct license",
+        "fix license"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_credential",
@@ -34735,6 +35462,11 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "edit time off request",
+        "edit vacation request",
+        "change pto request"
+      ],
       "policy": {
         "kind": "action",
         "resource": "worker_pto",
@@ -35176,6 +35908,10 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "kill invoice",
+        "cancel invoice"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice",
@@ -35225,7 +35961,10 @@
         "payroll",
         "payroll export",
         "payroll run",
-        "timesheets"
+        "timesheets",
+        "undo payroll run",
+        "redo payroll",
+        "rerun payroll"
       ],
       "policy": {
         "kind": "action",

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -318,7 +319,11 @@ func (s *Service) CaptureCandidates(
 			ProposalID: candidate.ProposalID,
 			TenantInfo: candidate.TenantInfo(),
 		}
-		captured, captureErr := s.CreateFromProposal(ctx, request, nil)
+		captured, captureErr := s.CreateFromProposal(
+			dbscope.WithTenant(ctx, request.TenantInfo.DBTenant()),
+			request,
+			nil,
+		)
 		switch {
 		case captureErr != nil:
 			result.Failed++

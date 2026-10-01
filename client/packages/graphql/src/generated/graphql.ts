@@ -867,6 +867,8 @@ export type AgentOutputMode =
 export type AgentPlanDecisionInput = {
   /** Accepted runs every step in order; Rejected rejects them all. */
   decision: AgentDecisionType;
+  /** What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision. */
+  note?: string | null | undefined;
   /** The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded. */
   previewDigest?: string | null | undefined;
   reasonCode: string;
@@ -910,6 +912,8 @@ export type AgentPreviewOperation =
 export type AgentProposalDecisionInput = {
   decision: AgentDecisionType;
   modifications?: unknown;
+  /** What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions. */
+  note?: string | null | undefined;
   /** The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed. */
   previewDigest?: string | null | undefined;
   reasonCode: string;
@@ -2478,6 +2482,8 @@ export type DataTableConnectionInput = {
 export type DecideAgentProposalsInput = {
   /** Accepted or Rejected. A change applies to one proposal, from its own card. */
   decision: AgentDecisionType;
+  /** What the decider tells the agent, recorded on each proposal's decision; at most 2000 characters. */
+  note?: string | null | undefined;
   /** The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed. */
   previewDigests?: Array<AgentProposalPreviewDigestInput> | null | undefined;
   reasonCode?: string | null | undefined;
@@ -7900,6 +7906,14 @@ export type SuggestedAgentAudienceQueryVariables = Exact<{
 
 export type SuggestedAgentAudienceQuery = { suggestedAgentAudience: { agentId: string, accessMode: AgentAccessMode, sensitiveTools: Array<string>, roles: Array<{ coverage: AgentAudienceCoverage, missingResources: Array<string>, granted: boolean, role: { ' $fragmentRefs'?: { 'AgentAccessRoleFieldsFragment': AgentAccessRoleFieldsFragment } } }> } };
 
+export type DecideMyProposalsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+  input: DecideAgentProposalsInput;
+}>;
+
+
+export type DecideMyProposalsMutation = { decideMyProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, createdAt: number } | null }> };
+
 export type AiAuditEventRowFieldsFragment = { id: string, seq: number, occurredAt: number, recordedAt: number, kind: AiAuditEventKind, outcome: AiAuditEventOutcome, purpose: AiAuditPurpose, principalType: AiAuditPrincipalType, principalId: string | null, onBehalfOfUserId: string | null, onBehalfOfUserName: string | null, decidedByUserId: string | null, decidedByUserName: string | null, agentDefinitionId: string | null, agentDefinitionVersion: number | null, agentName: string | null, ownerKind: AgentRunEventOwnerKind | null, ownerId: string | null, runId: string | null, turnId: string | null, threadId: string | null, proposalId: string | null, toolName: string | null, tier: string | null, heldBy: Array<string>, model: string | null, providerKind: string | null, inputTokens: number, outputTokens: number, costUsd: string | null, latencyMs: number | null, entityType: string | null, entityId: string | null, reason: string | null, resultSummary: string | null, tainted: boolean, externalContent: boolean, simulated: boolean, reconstructed: boolean, traceId: string | null, traceUrl: string | null } & { ' $fragmentName'?: 'AiAuditEventRowFieldsFragment' };
 
 export type AiAuditEventDetailFieldsFragment = (
@@ -8461,13 +8475,15 @@ export type AgentRunTableQueryVariables = Exact<{
 
 export type AgentRunTableQuery = { agentRuns: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type AgentRunTranscriptFieldsFragment = { omittedMessages: number, omittedAt: number, messages: Array<{ role: string, kind: string, content: string, reasoning: string, toolCallId: string, toolName: string, toolFailed: boolean, toolVerdict: string, toolSummary: string, agentDefinitionId: string, delegateCallId: string, omitted: boolean, createdAt: number, toolCalls: Array<{ id: string, name: string, arguments: unknown }> }> } & { ' $fragmentName'?: 'AgentRunTranscriptFieldsFragment' };
+
 export type AgentRunDetailQueryVariables = Exact<{
   id: string | number;
 }>;
 
 
 export type AgentRunDetailQuery = { agentRun: (
-    { inputContextHash: string }
+    { inputContextHash: string, transcript: { ' $fragmentRefs'?: { 'AgentRunTranscriptFieldsFragment': AgentRunTranscriptFieldsFragment } } | null }
     & { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } }
   ) | null };
 
@@ -16606,6 +16622,32 @@ export const AgentRunTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AgentRunTableRowFields"}) as unknown as TypedDocumentString<AgentRunTableRowFieldsFragment, unknown>;
+export const AgentRunTranscriptFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentRunTranscriptFields on AgentRunTranscript {
+  omittedMessages
+  omittedAt
+  messages {
+    role
+    kind
+    content
+    reasoning
+    toolCalls {
+      id
+      name
+      arguments
+    }
+    toolCallId
+    toolName
+    toolFailed
+    toolVerdict
+    toolSummary
+    agentDefinitionId
+    delegateCallId
+    omitted
+    createdAt
+  }
+}
+    `, {"fragmentName":"AgentRunTranscriptFields"}) as unknown as TypedDocumentString<AgentRunTranscriptFieldsFragment, unknown>;
 export const AgentSafetyHeaderFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentSafetyHeaderFields on AgentSafety {
   agentId
@@ -24189,6 +24231,7 @@ export const RoleAgentAccessDocument = {"__meta__":{"kind":"query","name":"RoleA
 export const SetRoleAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetRoleAgentAccess","hash":"sha256:dd0999e8751bca239fb25ebad5054c71404e98c83deea9439010bd3b5d3b410b"}} as unknown as TypedDocumentString<SetRoleAgentAccessMutation, SetRoleAgentAccessMutationVariables>;
 export const AgentAccessPreviewDocument = {"__meta__":{"kind":"query","name":"AgentAccessPreview","hash":"sha256:fff0b7d3ee09999aa9a00d4313e756288a2f222e014f1234beb35d3c0619da65"}} as unknown as TypedDocumentString<AgentAccessPreviewQuery, AgentAccessPreviewQueryVariables>;
 export const SuggestedAgentAudienceDocument = {"__meta__":{"kind":"query","name":"SuggestedAgentAudience","hash":"sha256:79bdbda787008c4d10159a18a778009b985209e55670b365e0bc0675e361a021"}} as unknown as TypedDocumentString<SuggestedAgentAudienceQuery, SuggestedAgentAudienceQueryVariables>;
+export const DecideMyProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposals","hash":"sha256:52169b125c46e08fad645a937cf1562258b648d926be2beed8e0689b9a608205"}} as unknown as TypedDocumentString<DecideMyProposalsMutation, DecideMyProposalsMutationVariables>;
 export const AiAuditEventTableDocument = {"__meta__":{"kind":"query","name":"AIAuditEventTable","hash":"sha256:4df8553a5f6877364cf0f4bf0bf7fd0745b577dd89671d7f6ce85bda0bd5684e"}} as unknown as TypedDocumentString<AiAuditEventTableQuery, AiAuditEventTableQueryVariables>;
 export const AiAuditEventDetailDocument = {"__meta__":{"kind":"query","name":"AIAuditEventDetail","hash":"sha256:ed73402380199934972ba4aa4c9baba8179b23d14cb6e7463f76a9c34c8c89da"}} as unknown as TypedDocumentString<AiAuditEventDetailQuery, AiAuditEventDetailQueryVariables>;
 export const AiAuditChainStatusDocument = {"__meta__":{"kind":"query","name":"AIAuditChainStatus","hash":"sha256:189c7a9b735b0b8ec6b15f9d4a9ce6bc3cd25c26cd30f99b7dda9538c48b6820"}} as unknown as TypedDocumentString<AiAuditChainStatusQuery, AiAuditChainStatusQueryVariables>;
@@ -24255,7 +24298,7 @@ export const AiRetrievalFailedEntryTableDocument = {"__meta__":{"kind":"query","
 export const UpdateAiRetrievalSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateAIRetrievalSettings","hash":"sha256:f7dbeff8284e4d9a3415e034e3323fed148e823f8a4cd1686ac3177dea576c4c"}} as unknown as TypedDocumentString<UpdateAiRetrievalSettingsMutation, UpdateAiRetrievalSettingsMutationVariables>;
 export const ReindexAiRetrievalSourceDocument = {"__meta__":{"kind":"mutation","name":"ReindexAIRetrievalSource","hash":"sha256:e12a16a86ab028021de08057a122aca1c4003046b2ebfd026f416b7232e9979c"}} as unknown as TypedDocumentString<ReindexAiRetrievalSourceMutation, ReindexAiRetrievalSourceMutationVariables>;
 export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:cb0c75efc8b293a1beed186c94dbd21763979412b273229f4abfdcaa6dab3224"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
-export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:fe618bd81377c44ff0ac1138eebf30ddca3d60a29672d6b85d8ca6d09fb9eafc"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
+export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:50f295b7b16d885dffc63d488bb379bab474422bcb3f3c62082a9048e47aa8d2"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
 export const AgentToolRuleTableDocument = {"__meta__":{"kind":"query","name":"AgentToolRuleTable","hash":"sha256:408a5464ca8da78c9b4d995f96b6215368d54ed469ba804e9dac583ad637166b"}} as unknown as TypedDocumentString<AgentToolRuleTableQuery, AgentToolRuleTableQueryVariables>;
 export const AgentToolSafetyTableDocument = {"__meta__":{"kind":"query","name":"AgentToolSafetyTable","hash":"sha256:c321454ad00068bb8fa10e406c16cd524b650c40172887bba015721e6194334e"}} as unknown as TypedDocumentString<AgentToolSafetyTableQuery, AgentToolSafetyTableQueryVariables>;
 export const AgentSafetySummaryDocument = {"__meta__":{"kind":"query","name":"AgentSafetySummary","hash":"sha256:f4e64ef49ec0933e10409b183413a900d0c5d7de2c4f1f7239c6a998dbc341b2"}} as unknown as TypedDocumentString<AgentSafetySummaryQuery, AgentSafetySummaryQueryVariables>;

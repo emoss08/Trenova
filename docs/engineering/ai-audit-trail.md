@@ -42,10 +42,27 @@ source row and moment, so projecting the same row twice writes nothing the secon
 | `agent_runs` | `RunStarted` when started, `RunEnded` (`Completed` / `Failed`) when finished, with the masked error and summary and the taint | `run:{id}:started`, `run:{id}:ended` |
 | `assistant_turns` | `RunStarted`, `RunEnded` (`Completed` / `Refused` / `Stopped` / `Failed`). The principal is the turn's user and the agent comes from the thread | `turn:{id}:started`, `turn:{id}:ended` |
 | `ai_usage_records` | `ModelCall`: provider, model, tokens, cost, latency, attempt, failover and the masked error. The owner comes from the row's owner columns. Older rows fall back to `run_id`, then to the turn that was running in the thread at that moment, and are marked `reconstructed`. Evaluation calls get the purpose `Evaluation` | `usage:{id}` |
-| `agent_run_steps` (tool steps) | Settled: `ToolCall` with outcome `Ran` / `Proposed` / `Simulated` / `Failed` / `Denied`, plus tier, what held it, egress, tier source, proposal, record versions and redacted arguments. Still `Started` when its run or turn ended: `ToolCall` with outcome `Unknown` | `step:{owner}:{step_key}` |
-| `agent_run_events` | `tool_finished` failed with no step for that call: `ToolRefused`. `delegate_started` / `delegate_finished`: `DelegationStarted` / `DelegationEnded` (`Completed` / `Exhausted` / `Refused` / `Declined` / `Stopped` / `Failed`) | `event:{id}` |
+| `agent_run_steps` (tool steps) | Settled: `ToolCall` with outcome `Ran` / `Proposed` / `Simulated` / `Failed` / `Denied` / `Refused`, plus tier, what held it, egress, tier source, proposal, record versions and redacted arguments. Still `Started` when its run or turn ended: `ToolCall` with outcome `Unknown` | `step:{owner}:{step_key}` |
+| `agent_run_events` | `tool_finished` failed with no step for that call: `ToolRefused`, outcome from the event's verdict (`Refused` when it has none). `delegate_started` / `delegate_finished`: `DelegationStarted` / `DelegationEnded` (`Completed` / `Exhausted` / `Refused` / `Declined` / `Stopped` / `Failed`) | `event:{id}` |
 | `agent_proposals` | `ProposalFiled`. `ProposalExecuted` / `ProposalExecutionFailed` / `ProposalSimulated`, with the principal set to the executing user, or the agent for auto-execution. `ProposalExpired`, with the principal set to the system | `proposal:{id}:filed`, `…:executed`, `…:expired` |
 | `agent_decisions` (proposal decisions) | `ProposalDecided` (`Accepted` / `Modified` / `Rejected`): who decided, the redacted modifications, and what they were shown: `result_summary` is "Reviewed preview sha256:…" when the decision named the digest of the preview it recorded, "Preview not reviewed; sha256:…" when it recorded one it did not name, and empty for a decision before previews; `version_before` is the target's version the preview was read at | `decision:{id}` |
+
+A call that did not run takes its outcome from the verdict the runtime recorded
+for it, on the step or on the event:
+
+| Verdict | Outcome |
+|---------|---------|
+| `denied` (no permission, a tool the agent does not hold, a self-scoped tool with nobody in the run, a question nobody can answer) | `Denied` |
+| `invalid` (arguments that do not fit, no such tool), `duplicate` (the same proposal already waiting, the same failed call again), `over_budget` (a daily cap, the turn's tool budget) | `Refused` |
+| `failed` (the tool or a check it needed failed) | `Failed` |
+
+A row with no verdict, from before verdicts were kept, derives as it did: a failed
+step with a reason is `Denied`, any other failed step `Failed`, and a refused event
+`Refused`. An argument contract refusal is `Refused` rather than an outcome of its
+own: a new outcome would need the `ck_ai_audit_events_outcome` check widened on
+both Postgres and the SQLite mirror, and `Refused` already means "turned away
+before it ran". Only the outcome value changes, never the canonical form, so no
+`hash_version` changes.
 
 The preview's digest and version ride fields the canonical form already hashes, so recording
 them changed no `hash_version`. The recorded preview itself is not read by the projector

@@ -118,7 +118,8 @@ func (t *postInvoiceTool) Description() string {
 		"made. Posting books it to the ledger, marks its shipments invoiced, settles its " +
 		"billing queue item and queues it for the accounting system and, where the customer " +
 		"takes it, an EDI 210. It cannot be undone except by voiding, so a person always " +
-		"decides; propose it once the draft's lines and totals are right."
+		"decides; propose it once the draft's lines and totals are right. For more than one " +
+		"invoice, propose post_invoices once with all of them instead."
 }
 
 func (t *postInvoiceTool) ParamSchema() map[string]any {
@@ -214,7 +215,8 @@ func (t *sendInvoiceTool) Description() string {
 	return "Propose emailing an invoice to the customer. The recipients, subject, wording " +
 		"and attachments come from the organization and the customer's billing profile; " +
 		"nothing is chosen by you. A person always decides. Propose it after post_invoice when the " +
-		"customer is not sent invoices automatically."
+		"customer is not sent invoices automatically. For more than one invoice, propose " +
+		"send_invoices once with all of them instead."
 }
 
 func (t *sendInvoiceTool) ParamSchema() map[string]any {

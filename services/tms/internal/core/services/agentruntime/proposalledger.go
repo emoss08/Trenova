@@ -124,9 +124,9 @@ func proposalOutcomeText(toolName string, outcome serviceports.ProposalOutcome) 
 	case agent.ProposalStatusPending:
 		return fmt.Sprintf(
 			"Recorded a proposal to run %q. It is still waiting for the person's decision "+
-				"on its card in this conversation and has not run. Do not propose it again; "+
-				"if asked, say it is waiting for their approval on the card, which they give "+
-				"with the button rather than by replying.",
+				"in the approval box under this conversation and has not run. Do not propose "+
+				"it again; if asked, say it is waiting for their approval there, which they "+
+				"give with the button rather than by replying.",
 			toolName,
 		)
 	case agent.ProposalStatusAccepted, agent.ProposalStatusModified:
@@ -260,8 +260,9 @@ func pendingDuplicate(
 func duplicateProposalText(toolName string) string {
 	return fmt.Sprintf(
 		"An identical proposal to run %q is already waiting for the person's decision "+
-			"on its card in this conversation, so it was not recorded again. Tell the person "+
-			"it is waiting for their approval there; replying \"yes\" does not approve it.",
+			"in the approval box under this conversation, so it was not recorded again. Tell "+
+			"the person it is waiting for their approval there; replying \"yes\" does not "+
+			"approve it.",
 		toolName,
 	)
 }

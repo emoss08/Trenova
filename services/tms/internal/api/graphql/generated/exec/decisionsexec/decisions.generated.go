@@ -431,7 +431,7 @@ func unmarshalInputDecideAgentProposalsInput(ctx context.Context, ec *gqlexec.Ex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"decision", "reasonCode", "previewDigests"}
+	fieldsInOrder := [...]string{"decision", "reasonCode", "previewDigests", "note"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -459,6 +459,13 @@ func unmarshalInputDecideAgentProposalsInput(ctx context.Context, ec *gqlexec.Ex
 				return it, err
 			}
 			it.PreviewDigests = data
+		case "note":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Note = data
 		}
 	}
 	return it, nil

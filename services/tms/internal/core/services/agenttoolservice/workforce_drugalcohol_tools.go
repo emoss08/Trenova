@@ -547,6 +547,7 @@ func newCancelDOTRandomDrawTool(draws drugAlcoholKeeper) serviceports.AgentTool 
 		paramDrawID: drawIDProperty(),
 		fieldReason: wfNoteProperty("Why the round is cancelled."),
 	}, paramDrawID, fieldReason), paramDrawID, permission.ResourceDOTRandomPool)
+	spec.searchTerms = []string{"draw again", "redo draw", "cancel selection"}
 	spec.maxTier = agent.TierPropose
 	spec.reversible = false
 	spec.artifact = ""

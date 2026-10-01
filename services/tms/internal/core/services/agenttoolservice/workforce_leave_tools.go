@@ -376,6 +376,7 @@ func newUpdateLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 		permission.ResourceWorkerLeave,
 		permission.OpUpdate,
 	), properties, paramLeaveCaseID), paramLeaveCaseID, permission.ResourceWorkerLeave)
+	spec.searchTerms = []string{"leave dates", "fix leave case"}
 	render := renderLeaveCaseChange("Would correct the leave case.", nil, leaveCaseFields...)
 
 	return newReportingReceivableTool(spec, receivablePlan[
@@ -425,6 +426,7 @@ func newCloseLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 		permission.OpApprove,
 	), map[string]any{paramLeaveCaseID: leaveCaseIDProperty()}, paramLeaveCaseID),
 		paramLeaveCaseID, permission.ResourceWorkerLeave))
+	spec.searchTerms = []string{"returned from leave", "leave ended", "close fmla"}
 	render := renderLeaveCaseChange("Would close the leave case.",
 		[]string{wfFieldClosedAt}, fieldStatus, wfFieldClosedAt, "endsAt")
 
@@ -473,6 +475,7 @@ func newRequestLeaveCertificationTool(cases leaveKeeper) serviceports.AgentTool 
 		paramLeaveCaseID:      leaveCaseIDProperty(),
 		paramCertificationDue: dayProperty("When it is due, when not the usual window."),
 	}, paramLeaveCaseID), paramLeaveCaseID, permission.ResourceWorkerLeave)
+	spec.searchTerms = []string{"fmla certification", "certification clock"}
 	render := renderLeaveCaseChange("Would record that certification was requested.",
 		[]string{wfFieldCertRequestedAt}, "certificationStatus",
 		wfFieldCertRequestedAt, "certificationDueAt")
@@ -746,6 +749,7 @@ func newDeleteLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		permission.OpUpdate,
 	), map[string]any{paramLeaveEntryID: leaveDayIDProperty()}, paramLeaveEntryID),
 		paramLeaveEntryID, permission.ResourceWorkerLeave)
+	spec.searchTerms = []string{"remove leave day"}
 	spec.maxTier = agent.TierPropose
 	spec.reversible = false
 

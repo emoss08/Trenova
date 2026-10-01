@@ -2555,6 +2555,10 @@ func init() {
 				FieldMapKey: "reasonCode",
 			},
 			{
+				Name:        "note",
+				FieldMapKey: "note",
+			},
+			{
 				Name:        "traceId",
 				FieldMapKey: "traceId",
 			},
@@ -3645,6 +3649,10 @@ func init() {
 			{
 				Name:        "delegateCallId",
 				FieldMapKey: "delegateCallId",
+			},
+			{
+				Name:    "transcript",
+				Special: "transcript",
 			},
 			{
 				Name:        "version",

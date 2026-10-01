@@ -83,6 +83,10 @@ func newGenerateRateConfirmationTool(rateCons rateConfirmations) serviceports.Ag
 
 func (t *generateRateConfirmationTool) Name() string { return "generate_rate_confirmation" }
 
+func (t *generateRateConfirmationTool) SearchTerms() []string {
+	return []string{"rate con", "create rate con", "carrier confirmation"}
+}
+
 func (t *generateRateConfirmationTool) Description() string {
 	return "Generate the rate confirmation for a move covered by an outside carrier. It is " +
 		"a new revision of the agreement, with the carrier's pay and the stops as they stand, " +
@@ -394,6 +398,10 @@ func newRecordRateConfirmationConfirmedTool(rateCons rateConfirmations) servicep
 
 func (t *recordRateConfirmationConfirmedTool) Name() string {
 	return "record_rate_confirmation_confirmed"
+}
+
+func (t *recordRateConfirmationConfirmedTool) SearchTerms() []string {
+	return []string{"signed rate con", "faxed", "carrier signed"}
 }
 
 func (t *recordRateConfirmationConfirmedTool) Description() string {

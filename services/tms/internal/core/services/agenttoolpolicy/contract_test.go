@@ -159,6 +159,9 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"cancel_billing_queue_item":      {agent.EgressMoney},
 		"post_invoice":                   {agent.EgressMoney},
 		"send_invoice":                   {agent.EgressExternalRecipient},
+		"post_invoices":                  {agent.EgressMoney},
+		"send_invoices":                  {agent.EgressExternalRecipient},
+		"approve_billing_queue_items":    {agent.EgressMoney},
 		"open_invoice_dispute":           {agent.EgressInternal},
 		"resolve_invoice_dispute":        {agent.EgressInternal},
 		"withdraw_invoice_dispute":       {agent.EgressInternal},
@@ -305,6 +308,14 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 			agent.EgressDriverVisible,
 			agent.EgressMoney,
 		},
+		"approve_driver_settlements": {
+			agent.EgressDriverVisible,
+			agent.EgressMoney,
+		},
+		"post_driver_settlements": {
+			agent.EgressDriverVisible,
+			agent.EgressMoney,
+		},
 		"record_driver_settlement_payment": {
 			agent.EgressDriverVisible,
 			agent.EgressMoney,
@@ -315,6 +326,8 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		},
 		"approve_carrier_settlement":           {agent.EgressMoney},
 		"post_carrier_settlement":              {agent.EgressMoney},
+		"approve_carrier_settlements":          {agent.EgressMoney},
+		"post_carrier_settlements":             {agent.EgressMoney},
 		"record_carrier_settlement_payment":    {agent.EgressMoney},
 		"void_driver_settlement":               {agent.EgressMoney},
 		"void_carrier_settlement":              {agent.EgressMoney},

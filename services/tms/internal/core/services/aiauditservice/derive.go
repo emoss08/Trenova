@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -28,6 +29,7 @@ const (
 	payloadKeyStatus       = "status"
 	payloadKeyReason       = "reason"
 	payloadKeyReply        = "reply"
+	payloadKeyVerdict      = "verdict"
 )
 
 // deriver turns source rows into trail rows. It reads nothing itself: what
@@ -419,6 +421,10 @@ func stepOutcome(step *agent.AgentRunStep, outcome *serviceports.RunStepOutcome)
 		}
 	}
 
+	if refused, ok := verdictOutcome(outcome.Verdict); ok {
+		return refused
+	}
+
 	failed := outcome.Failed || step.Status == string(serviceports.RunStepFailed)
 	switch {
 	case failed && outcome.Reason != "":
@@ -427,6 +433,19 @@ func stepOutcome(step *agent.AgentRunStep, outcome *serviceports.RunStepOutcome)
 		return aiaudit.OutcomeFailed
 	default:
 		return aiaudit.OutcomeRan
+	}
+}
+
+func verdictOutcome(verdict string) (aiaudit.Outcome, bool) {
+	switch verdict {
+	case aitrace.OutcomeDenied:
+		return aiaudit.OutcomeDenied, true
+	case aitrace.OutcomeInvalid, aitrace.OutcomeDuplicate, aitrace.OutcomeOverBudget:
+		return aiaudit.OutcomeRefused, true
+	case aitrace.OutcomeFailed:
+		return aiaudit.OutcomeFailed, true
+	default:
+		return "", false
 	}
 }
 
@@ -560,6 +579,9 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 		}
 		event.Kind = aiaudit.KindToolRefused
 		event.Outcome = aiaudit.OutcomeRefused
+		if outcome, ok := verdictOutcome(typeutils.StringOf(payload[payloadKeyVerdict])); ok {
+			event.Outcome = outcome
+		}
 		event.ToolName = typeutils.StringOf(payload[payloadKeyName])
 		event.Reason = d.redactor.Text(
 			typeutils.StringOf(payload[payloadKeyContent]),

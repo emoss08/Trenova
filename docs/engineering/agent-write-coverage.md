@@ -89,33 +89,33 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 259 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 27 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 50 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 51 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 4 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
 
 ## Totals
 
-957 writes: 498 GraphQL mutations and 459 REST writes, after merging 68 REST routes into the mutation they duplicate.
+958 writes: 499 GraphQL mutations and 459 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 375 |
+| Covered by a tool | 376 |
 | Exempt | 582 |
 | — Security | 72 |
 | — Configuration | 259 |
 | — User preference | 27 |
 | — Infrastructure | 46 |
-| — Agent administration | 50 |
+| — Agent administration | 51 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
 | — Attestation | 44 |
-| — Duplicate | 4 |
+| — Duplicate | 3 |
 | **Pending** | **0** |
-| Total | 957 |
+| Total | 958 |
 
-Of the 375 writes an agent should be able to make, 375 have a tool (100%).
+Of the 376 writes an agent should be able to make, 376 have a tool (100%).
 
 ## Pending
 
@@ -133,7 +133,7 @@ The writes no tool performs yet, and what the tool would do.
 | accountingsync | 31 | 20 | 11 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
-| agent | 12 | 2 | 10 | 0 |
+| agent | 13 | 2 | 11 | 0 |
 | agentdefinition | 6 | 0 | 6 | 0 |
 | agentextension | 2 | 0 | 2 | 0 |
 | agentquality | 6 | 0 | 6 | 0 |
@@ -183,7 +183,7 @@ The writes no tool performs yet, and what the tool would do.
 | documenttemplate | 12 | 0 | 12 | 0 |
 | documenttype | 3 | 0 | 3 | 0 |
 | driverportal | 31 | 3 | 28 | 0 |
-| driversettlement | 34 | 28 | 6 | 0 |
+| driversettlement | 34 | 29 | 5 | 0 |
 | edi | 56 | 15 | 41 | 0 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
@@ -378,6 +378,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation decideAgentProposal`<br>twin `POST /api/v1/agent-proposals/:proposalID/resolve/` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyPlan` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyProposal` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
+| `mutation decideMyProposals` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation dismissAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and forget_memory. |
 | `mutation replayAgentRun` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `mutation resolveAgentException`<br>twin `POST /api/v1/agent-exceptions/:exceptionID/resolve/` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
@@ -532,7 +533,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation assignBillingQueueBiller`<br>twin `PUT /api/v1/billing-queue/:itemID/assign/` | Tool: `assign_billing_queue_biller` |
-| `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `approve_billing_queue_item`, `cancel_billing_queue_item`, `hold_billing_queue_item`, `move_billing_item_to_exception`, `send_billing_item_back_to_ops`, `transition_item_to_in_review` |
+| `mutation updateBillingQueueStatus`<br>twin `PUT /api/v1/billing-queue/:itemID/status/` | Tool: `approve_billing_queue_item`, `approve_billing_queue_items`, `cancel_billing_queue_item`, `hold_billing_queue_item`, `move_billing_item_to_exception`, `send_billing_item_back_to_ops`, `transition_item_to_in_review` |
 | `DELETE /api/v1/billing-queue/filter-presets/:presetId/`<br>billingqueuehandler.deleteFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
 | `POST /api/v1/billing-queue/:itemID/reassign-charge/`<br>billingqueuehandler.reassignCharge | Tool: `reassign_billing_charge` |
 | `POST /api/v1/billing-queue/filter-presets/`<br>billingqueuehandler.createFilterPreset | Exempt, user-preference: A saved filter on the billing queue screen. |
@@ -621,12 +622,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation acceptCarrierInvoiceMatch` | Tool: `accept_carrier_invoice_match` |
 | `mutation acceptCarrierInvoiceMatchWithVariance` | Tool: `accept_carrier_invoice_match_with_variance` |
 | `mutation addCarrierSettlementAdjustment` | Tool: `add_carrier_settlement_adjustment` |
-| `mutation approveCarrierSettlement` | Tool: `approve_carrier_settlement` |
+| `mutation approveCarrierSettlement` | Tool: `approve_carrier_settlement`, `approve_carrier_settlements` |
 | `mutation createCarrierInvoiceMatch` | Tool: `create_carrier_invoice_match` |
 | `mutation generateCarrierSettlementBatch` | Tool: `generate_carrier_settlement_batch` |
 | `mutation linkEdiCarrierInvoiceToCarrier` | Tool: `link_edi_carrier_invoice_to_carrier` |
 | `mutation markCarrierSettlementPaid` | Tool: `record_carrier_settlement_payment` |
-| `mutation postCarrierSettlement` | Tool: `post_carrier_settlement` |
+| `mutation postCarrierSettlement` | Tool: `post_carrier_settlement`, `post_carrier_settlements` |
 | `mutation recalculateCarrierSettlement` | Tool: `recalculate_carrier_settlement` |
 | `mutation rejectCarrierInvoiceMatch` | Tool: `reject_carrier_invoice_match` |
 | `mutation rejectCarrierSettlement` | Tool: `reject_carrier_settlement` |
@@ -896,7 +897,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation approveDriverSettlement` | Tool: `approve_driver_settlement` |
 | `mutation assignPayProfileToWorker` | Tool: `assign_pay_profile` |
 | `mutation attachPayEventsToSettlement` | Tool: `attach_pay_events_to_settlement` |
-| `mutation bulkDriverSettlementAction` | Exempt, duplicate: Runs submit, approve, post or mark paid on several settlements at once; each has its own tool, and an approver decides a batch of those proposals together. |
+| `mutation bulkDriverSettlementAction` | Tool: `approve_driver_settlements`, `post_driver_settlements`, `record_driver_settlement_payment`, `submit_driver_settlement` |
 | `mutation closeEscrowAccount` | Tool: `close_escrow_account` |
 | `mutation createPayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
 | `mutation createPayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
@@ -1293,9 +1294,9 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Tool: `void_invoice` |
 | `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Tool: `update_invoice_draft` |
 | `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Tool: `generate_invoice_pdf` |
-| `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `post_invoice` |
+| `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `post_invoice`, `post_invoices` |
 | `POST /api/v1/billing/invoices/:invoiceID/preview/`<br>invoicehandler.preview | Exempt, read-only: Renders an invoice for review and saves nothing. |
-| `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `send_invoice` |
+| `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `send_invoice`, `send_invoices` |
 
 ### invoiceadjustment
 

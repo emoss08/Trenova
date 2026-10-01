@@ -79,3 +79,16 @@ func TestScope_Matches(t *testing.T) {
 	assert.False(t, From(WithTenant(t.Context(), tenant)).Matches(From(WithSystem(t.Context(), "x"))))
 	assert.True(t, From(WithSystem(t.Context(), "x")).Matches(From(WithSystem(t.Context(), "y"))))
 }
+
+func TestWithValidTenant_BindsOnlyACompleteTenant(t *testing.T) {
+	t.Parallel()
+
+	tenant := testTenant()
+	got, ok := TenantFrom(WithValidTenant(t.Context(), tenant))
+	assert.True(t, ok)
+	assert.Equal(t, tenant, got)
+
+	system := WithSystem(t.Context(), "test")
+	kept := WithValidTenant(system, Tenant{OrganizationID: tenant.OrganizationID})
+	assert.True(t, IsSystem(kept), "an incomplete tenant leaves the caller's scope alone")
+}

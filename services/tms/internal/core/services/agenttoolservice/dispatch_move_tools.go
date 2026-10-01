@@ -209,6 +209,10 @@ func newUpdateMoveStatusTool(moves serviceports.ShipmentMoveService) serviceport
 
 func (t *updateMoveStatusTool) Name() string { return "update_move_status" }
 
+func (t *updateMoveStatusTool) SearchTerms() []string {
+	return []string{"in transit", "mark delivered", "departed"}
+}
+
 func (t *updateMoveStatusTool) Description() string {
 	return "Set the status of one or more moves directly: InTransit when a load is rolling, " +
 		"Completed when it has been delivered, Canceled when the move will not run. Prefer " +

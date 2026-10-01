@@ -502,6 +502,7 @@ type agentRunEventView struct {
 	CallID     string `json:"callId,omitempty"`
 	Failed     bool   `json:"failed,omitempty"`
 	Proposed   bool   `json:"proposed,omitempty"`
+	Verdict    string `json:"verdict,omitempty"`
 	Text       string `json:"text,omitempty"`
 	Truncated  bool   `json:"truncated,omitempty"`
 	OccurredAt int64  `json:"occurredAt"`
@@ -705,6 +706,7 @@ func agentRunEventViewFrom(event *agent.AgentRunEvent) agentRunEventView {
 	view.Tool, _ = payload["name"].(string)
 	view.Failed, _ = payload["failed"].(bool)
 	view.Proposed, _ = payload["proposed"].(bool)
+	view.Verdict, _ = payload["verdict"].(string)
 	view.Text = stringutils.Ellipsize(eventText(event.Kind, payload), agentRunTextRunes)
 
 	return view

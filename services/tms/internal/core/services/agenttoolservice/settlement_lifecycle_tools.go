@@ -41,6 +41,7 @@ type lifecycleText struct {
 	paidEgress  []agent.EgressClass
 	paidMeaning string
 	postMeaning string
+	postEach    string
 	adjustment  func() (map[string]any, []string)
 	fillAdjust  func(map[string]any, *settlementshared.ActionRequest) error
 }
@@ -64,8 +65,9 @@ func submitDecision(text *lifecycleText) *settlementDecision {
 		reversible: true,
 		rationale: "Moves a draft into the approval queue inside Trenova; nothing is paid and " +
 			"a reviewer sends it back to draft.",
-		fields:   []string{fieldStatus, fieldSubmittedAt},
-		volatile: []string{fieldSubmittedAt},
+		fields:      []string{fieldStatus, fieldSubmittedAt},
+		volatile:    []string{fieldSubmittedAt},
+		searchTerms: []string{"send for approval", "ready for approval"},
 	}
 }
 
@@ -75,7 +77,8 @@ func approveDecision(text *lifecycleText) *settlementDecision {
 		description: "Propose approving a " + text.noun + " that is pending approval, " +
 			"which commits the organization to paying the " + text.payee + " what it comes to. " +
 			"A person always decides. Propose it only when " + text.getTool + " shows no " +
-			"open exception or dispute you cannot explain.",
+			"open exception or dispute you cannot explain. For more than one, propose " +
+			bulkName(text.name(verbApprove)) + " once with all of them instead.",
 		action:     settlementshared.ActionApprove,
 		operation:  permission.OpApprove,
 		personOnly: true,
@@ -84,8 +87,9 @@ func approveDecision(text *lifecycleText) *settlementDecision {
 		maxTier:    agent.TierPropose,
 		rationale: "Commits the organization to what the " + text.payee + " is paid; only " +
 			"a person approves, and hands-off approval is the settlement control's rule.",
-		fields:   []string{fieldStatus, fieldApprovedAt},
-		volatile: []string{fieldApprovedAt},
+		fields:      []string{fieldStatus, fieldApprovedAt},
+		volatile:    []string{fieldApprovedAt},
+		searchTerms: []string{"approve payout", "approve pay period"},
 	}
 }
 
@@ -108,9 +112,10 @@ func rejectDecision(text *lifecycleText) *settlementDecision {
 			paramSettlementReason: settlementReasonProperty("What is wrong and what would " +
 				"fix it, in a sentence payroll can act on."),
 		},
-		required: []string{paramSettlementReason},
-		fill:     fillSettlementReason,
-		fields:   []string{fieldStatus, fieldNotes},
+		required:    []string{paramSettlementReason},
+		fill:        fillSettlementReason,
+		fields:      []string{fieldStatus, fieldNotes},
+		searchTerms: []string{"return to draft"},
 	}
 }
 
@@ -119,7 +124,8 @@ func postDecision(text *lifecycleText) *settlementDecision {
 		name: text.name("post"),
 		description: "Propose posting an approved " + text.noun + " to the general " +
 			"ledger. " + text.postMeaning + " It cannot be undone except by voiding, so a " +
-			"person always decides.",
+			"person always decides. For more than one, propose " +
+			bulkName(text.name("post")) + " once with all of them instead.",
 		action:     settlementshared.ActionPost,
 		operation:  permission.OpApprove,
 		personOnly: true,
@@ -200,6 +206,7 @@ func recalculateDecision(text *lifecycleText) *settlementDecision {
 		fields: []string{
 			fieldHasExceptions, "shipmentCount", "payProfileName", "classification",
 		},
+		searchTerms: []string{"rerun totals", "recompute", "refresh totals"},
 	}
 }
 
@@ -249,9 +256,10 @@ func removeAdjustmentDecision(text *lifecycleText) *settlementDecision {
 					text.getTool + " lists. Never guess one.",
 			},
 		},
-		required: []string{paramLineID},
-		fill:     fillAdjustmentLine,
-		fields:   []string{fieldHasExceptions},
+		required:    []string{paramLineID},
+		fill:        fillAdjustmentLine,
+		fields:      []string{fieldHasExceptions},
+		searchTerms: []string{"delete adjustment", "undo adjustment", "drop adjustment line"},
 	}
 }
 
@@ -383,6 +391,8 @@ func driverLifecycle() *lifecycleText {
 		},
 		postMeaning: "Posting books the driver pay expense and settlements payable, queues " +
 			"it for the accounting system and tells the driver in the driver portal.",
+		postEach: "the driver pay expense and settlements payable booked, queued for the " +
+			"accounting system and the driver told in the driver portal",
 		paidMeaning: "The driver is told in the driver portal.",
 		adjustment:  driverAdjustmentSchema,
 		fillAdjust:  fillDriverAdjustment,
@@ -399,6 +409,8 @@ func carrierLifecycle() *lifecycleText {
 		paidEgress: []agent.EgressClass{agent.EgressMoney},
 		postMeaning: "Posting books purchased transportation against accounts payable, " +
 			"records the bill on the carrier's ledger and queues it for the accounting system.",
+		postEach: "purchased transportation booked against accounts payable, the bill " +
+			"recorded on the carrier's ledger and queued for the accounting system",
 		paidMeaning: "Recording it books the payment against accounts payable and cash.",
 		adjustment:  carrierAdjustmentSchema,
 		fillAdjust:  fillCarrierAdjustment,

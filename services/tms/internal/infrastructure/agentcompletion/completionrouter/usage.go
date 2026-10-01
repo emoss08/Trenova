@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/llmtokens"
@@ -112,7 +113,10 @@ func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 	}
 
 	providerName := attempt.provider.Name
-	detached, cancel := context.WithTimeout(context.WithoutCancel(ctx), recordTimeout)
+	detached, cancel := context.WithTimeout(
+		dbscope.WithValidTenant(context.WithoutCancel(ctx), attempt.tenant.DBTenant()),
+		recordTimeout,
+	)
 	go func() {
 		defer cancel()
 		if err := s.usage.Create(detached, row); err != nil {

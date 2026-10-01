@@ -5,6 +5,7 @@ import (
 	"errors"
 	"maps"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -44,6 +45,7 @@ type Turn struct {
 	counts    *ordinals
 	questions map[string]struct{}
 	decisions map[pulid.ID]struct{}
+	shown     map[string][]string
 	// callIDs is every tool call id the conversation holds, so a provider
 	// that reuses one is given a fresh id rather than a clash.
 	callIDs map[string]struct{}
@@ -129,7 +131,8 @@ type DispatchCall struct {
 	Taint *agent.RunTaint `json:"taint,omitempty"`
 	// AfterExternalContent says the turn has read content from outside the
 	// organization, so a write is proposed rather than run.
-	AfterExternalContent bool `json:"afterExternalContent,omitempty"`
+	AfterExternalContent bool     `json:"afterExternalContent,omitempty"`
+	Earlier              []string `json:"earlier,omitempty"`
 }
 
 // ToolOutcome is what one tool call came to.
@@ -144,8 +147,9 @@ type ToolOutcome struct {
 	// DelegateReport is the bounded account of a delegate_task call.
 	DelegateReport *conversation.DelegateReport `json:"delegateReport,omitempty"`
 	// Taint is the outside content the call read.
-	Taint []agent.TaintMark `json:"taint,omitempty"`
-	Found []string          `json:"found,omitempty"`
+	Taint   []agent.TaintMark `json:"taint,omitempty"`
+	Found   []string          `json:"found,omitempty"`
+	Verdict string            `json:"verdict,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -162,6 +166,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		DelegateReport: o.delegateReport,
 		Taint:          o.taint,
 		Found:          o.found,
+		Verdict:        o.verdict,
 		Data:           o.data,
 	}
 }
@@ -176,6 +181,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		delegateReport: o.DelegateReport,
 		taint:          o.Taint,
 		found:          o.Found,
+		verdict:        o.Verdict,
 		data:           o.Data,
 	}
 }
@@ -493,7 +499,7 @@ func turnAttribution(req *serviceports.RunRequest) serviceports.AIUsageAttributi
 	definition := req.Definition
 	version := definition.Version
 	attribution := serviceports.AIUsageAttribution{
-		UserID:            req.Actor.UserID,
+		UserID:            req.Actor.PersonUserID(),
 		AgentDefinitionID: definition.ID,
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
@@ -657,11 +663,11 @@ func (fx *localEffects) Find(t *Turn, arguments map[string]any) FindAnswer {
 func (fx *localEffects) Emit(event serviceports.StreamEvent) { fx.emit(event) }
 
 func (fx *localEffects) Observe(
-	_ *Turn,
+	t *Turn,
 	call *serviceports.ToolCall,
 	outcome ToolOutcome,
 ) ToolOutcome {
-	return fx.s.observe(fx.observer, *call, outcome.internal()).exported()
+	return fx.s.observe(fx.observer, *call, outcome.internal(), t.earlier(call.Name)).exported()
 }
 
 func (*localEffects) NewCallID() string { return NewCallID() }
@@ -684,7 +690,15 @@ func (s *Service) ObserveCall(
 	call *serviceports.ToolCall,
 	outcome ToolOutcome,
 ) ToolOutcome {
-	return s.observe(observe, *call, outcome.internal()).exported()
+	return s.observe(observe, *call, outcome.internal(), nil).exported()
+}
+
+func (s *Service) ObserveDispatch(
+	observe serviceports.ToolObserver,
+	call *DispatchCall,
+	outcome *ToolOutcome,
+) ToolOutcome {
+	return s.observe(observe, call.Call, outcome.internal(), call.Earlier).exported()
 }
 
 // PublishStep keeps a document a publish call asked for, and says what the
@@ -696,10 +710,10 @@ func (s *Service) PublishStep(
 	call *serviceports.ToolCall,
 ) ToolOutcome {
 	if call.Name == requestDecisionName {
-		return s.observe(observe, *call, decisionStepOutcome(call.Arguments)).exported()
+		return s.observe(observe, *call, decisionStepOutcome(call.Arguments), nil).exported()
 	}
 
-	return s.observe(observe, *call, publishOutcome(call.Arguments)).exported()
+	return s.observe(observe, *call, publishOutcome(call.Arguments), nil).exported()
 }
 
 func deltaEvent(text string) serviceports.StreamEvent {
@@ -776,4 +790,24 @@ func (s *Service) FindFor(
 	}
 
 	return FoundTools{Content: answer.Content, Loaded: loaded, Found: answer.Found}
+}
+
+const getToolPrefix = "get_"
+
+func (t *Turn) earlier(name string) []string {
+	if !strings.HasPrefix(name, getToolPrefix) {
+		return nil
+	}
+
+	return slices.Clone(t.shown[name])
+}
+
+func (t *Turn) noteShown(call *serviceports.ToolCall) {
+	if !strings.HasPrefix(call.Name, getToolPrefix) || call.ID == "" {
+		return
+	}
+	if t.shown == nil {
+		t.shown = make(map[string][]string, 1)
+	}
+	t.shown[call.Name] = append(t.shown[call.Name], call.ID)
 }
