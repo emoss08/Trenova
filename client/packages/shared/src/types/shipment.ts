@@ -71,6 +71,24 @@ export const shipmentServiceFailureBillingContextSchema = z.object({
   serviceFailureIds: z.array(z.string()),
 });
 
+export const shipmentBillingDocumentStandingSchema = z.enum([
+  "rejected",
+  "expired",
+  "pending_review",
+  "inactive",
+]);
+
+export type ShipmentBillingDocumentStanding = z.infer<typeof shipmentBillingDocumentStandingSchema>;
+
+export const shipmentBillingIneligibleDocumentSchema = z.object({
+  documentId: z.string(),
+  standing: shipmentBillingDocumentStandingSchema,
+});
+
+export type ShipmentBillingIneligibleDocument = z.infer<
+  typeof shipmentBillingIneligibleDocumentSchema
+>;
+
 export const shipmentBillingRequirementSchema = z.object({
   documentTypeId: z.string(),
   documentTypeCode: z.string(),
@@ -78,6 +96,7 @@ export const shipmentBillingRequirementSchema = z.object({
   satisfied: z.boolean(),
   documentCount: z.number(),
   documentIds: z.array(z.string()),
+  ineligibleDocuments: z.array(shipmentBillingIneligibleDocumentSchema).default([]),
 });
 
 export const shipmentBillingPayerReadinessSchema = z.object({

@@ -5169,6 +5169,33 @@
       "domain/edi"
     ]
   },
+  "A rejected document must record when it was rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
+  "A rejected document must record why it was rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
+  "A rejected document no longer counts toward the shipment's billing requirements. Upload a replacement or approve it later to restore it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A rejected reversal must record when it was rejected": {
     "sites": 1,
     "scope": [
@@ -8349,6 +8376,15 @@
       "routes/admin"
     ]
   },
+  "Accept a document as proof, such as a proof of delivery for billing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Accept confident": {
     "sites": 1,
     "scope": [
@@ -8356,6 +8392,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Accept it as proof for billing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Accept load": {
@@ -16471,6 +16516,15 @@
       "domain/edi"
     ]
   },
+  "An archived document cannot be reviewed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
   "An archived plan cannot be enrolled in, and archiving is refused while anybody is still enrolled.": {
     "sites": 1,
     "scope": [
@@ -19088,6 +19142,15 @@
       "routes/org-structure"
     ]
   },
+  "Approval failed: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).": {
     "sites": 1,
     "scope": [
@@ -19197,7 +19260,7 @@
     ]
   },
   "Approve": {
-    "sites": 28,
+    "sites": 29,
     "scope": [
       "ts"
     ],
@@ -19371,6 +19434,15 @@
     ]
   },
   "Approve detention charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Approve document": {
     "sites": 1,
     "scope": [
       "ts"
@@ -19589,13 +19661,14 @@
     ]
   },
   "Approved": {
-    "sites": 28,
+    "sites": 29,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/web/components",
       "apps/web/lib",
       "domain/worker",
       "packages/shared/components",
@@ -24474,11 +24547,12 @@
     ]
   },
   "Awaiting review": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/carrier-monitoring"
     ]
   },
@@ -29627,7 +29701,7 @@
     ]
   },
   "Cancel": {
-    "sites": 273,
+    "sites": 274,
     "scope": [
       "ts"
     ],
@@ -50501,6 +50575,15 @@
       "domain/formulatemplate"
     ]
   },
+  "Decision must be approve or reject": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/documentservice"
+    ]
+  },
   "Decision timeout cannot exceed 30 days": {
     "sites": 1,
     "scope": [
@@ -57163,6 +57246,15 @@
       "apps/web/components"
     ]
   },
+  "Document approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Document attached": {
     "sites": 1,
     "scope": [
@@ -57410,7 +57502,7 @@
     ]
   },
   "Document is required": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go"
     ],
@@ -57422,7 +57514,8 @@
       "domain/extractionshadow",
       "domain/invoice",
       "domain/invoiceadjustment",
-      "domain/shipmentimportchat"
+      "domain/shipmentimportchat",
+      "service/documentservice"
     ]
   },
   "Document kind": {
@@ -57652,6 +57745,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Document rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Document request is required": {
@@ -117686,6 +117788,15 @@
       "service/aifeedbackservice"
     ]
   },
+  "Only a person can review a document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/documentservice"
+    ]
+  },
   "Only a person has a home page to change": {
     "sites": 1,
     "scope": [
@@ -119035,6 +119146,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Only the current version of a document can be reviewed. Review the latest version instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
     ]
   },
   "Only the dashboard owner can delete this dashboard": {
@@ -139683,7 +139803,7 @@
     ]
   },
   "Reason": {
-    "sites": 56,
+    "sites": 57,
     "scope": [
       "ts"
     ],
@@ -143215,6 +143335,15 @@
       "domain/worker"
     ]
   },
+  "Refuse a document so it no longer counts toward billing requirements": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Refused": {
     "sites": 2,
     "scope": [
@@ -143541,7 +143670,7 @@
     ]
   },
   "Reject": {
-    "sites": 29,
+    "sites": 31,
     "scope": [
       "ts"
     ],
@@ -143637,6 +143766,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Reject document": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Reject expense": {
@@ -143804,7 +143942,7 @@
     ]
   },
   "Rejected": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -143842,6 +143980,15 @@
   },
   "Rejected. Nothing was changed.": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Rejected: {0}": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -143900,6 +144047,15 @@
       "routes/invoice",
       "routes/invoice-approval",
       "routes/journal-reversal"
+    ]
+  },
+  "Rejection reason cannot be longer than 1000 characters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
     ]
   },
   "Rejection reason is required": {
@@ -155073,6 +155229,15 @@
     "areas": [
       "domain/driverpay",
       "packages/shared/types"
+    ]
+  },
+  "Say why the document is rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
     ]
   },
   "Say why the event is being amended": {
@@ -170798,6 +170963,15 @@
     ],
     "areas": [
       "domain/detention"
+    ]
+  },
+  "Stop it counting toward billing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Stop monitoring": {
@@ -187765,6 +187939,15 @@
       "service/agenttoolservice"
     ]
   },
+  "This document is already approved.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
   "This document is already attached to a shipment.": {
     "sites": 1,
     "scope": [
@@ -187792,6 +187975,15 @@
       "go/other"
     ]
   },
+  "This document is already rejected.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
+    ]
+  },
   "This document is available for classification, search, and extracted-text review, but it does not produce a shipment draft.": {
     "sites": 1,
     "scope": [
@@ -187817,6 +188009,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This document is past its expiration date. Upload a current version instead.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/document"
     ]
   },
   "This driver": {
@@ -198851,6 +199052,42 @@
       "domain/document"
     ]
   },
+  "Uploaded copy has expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Uploaded copy is archived": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Uploaded copy is awaiting review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Uploaded copy was rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Uploaded document records and intelligence output": {
     "sites": 1,
     "scope": [
@@ -205284,6 +205521,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "What is wrong with it, such as an illegible signature or the wrong load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What it did": {

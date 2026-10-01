@@ -5,8 +5,18 @@ import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { Document } from "@trenova/shared/types/document";
-import { BrainCircuitIcon, DownloadIcon, EyeIcon, HistoryIcon, Trash2Icon } from "lucide-react";
+import {
+  BanIcon,
+  BrainCircuitIcon,
+  CircleCheckIcon,
+  DownloadIcon,
+  EyeIcon,
+  HistoryIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
+import { canApproveDocument, canRejectDocument } from "@/lib/document-review";
+import { DocumentReviewBadge } from "./document-review-badge";
 import { DocumentThumbnail } from "./document-thumbnail";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
@@ -17,7 +27,10 @@ interface DocumentCardProps {
   onDelete?: (document: Document) => void;
   onInspect?: (document: Document) => void;
   onVersions?: (document: Document) => void;
+  onApprove?: (document: Document) => void;
+  onReject?: (document: Document) => void;
   isDeleting?: boolean;
+  isReviewing?: boolean;
   className?: string;
   isSelected?: boolean;
   onSelect?: (documentId: string) => void;
@@ -39,7 +52,10 @@ export function DocumentCard({
   onDelete,
   onInspect,
   onVersions,
+  onApprove,
+  onReject,
   isDeleting = false,
+  isReviewing = false,
   className,
   isSelected = false,
   onSelect,
@@ -108,6 +124,7 @@ export function DocumentCard({
           {documentTypeName && <> • {documentTypeName}</>}
         </p>
         <div className="mt-1 flex flex-wrap gap-1">
+          <DocumentReviewBadge document={document} />
           {document.detectedKind && document.detectedKind !== "Other" && (
             <Badge variant="info" className="h-5 px-1.5 py-0 text-2xs">
               {document.detectedKind}
@@ -187,6 +204,28 @@ export function DocumentCard({
             aria-label={t("View document versions")}
           >
             <HistoryIcon className="size-4" />
+          </Button>
+        )}
+        {onApprove && canApproveDocument(document) && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onApprove(document)}
+            disabled={isReviewing}
+            aria-label={t("Approve document")}
+          >
+            <CircleCheckIcon className="size-4" />
+          </Button>
+        )}
+        {onReject && canRejectDocument(document) && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onReject(document)}
+            disabled={isReviewing}
+            aria-label={t("Reject document")}
+          >
+            <BanIcon className="size-4" />
           </Button>
         )}
         {onDelete && (

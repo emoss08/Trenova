@@ -6524,6 +6524,13 @@ type ShipmentAxleWeight struct {
 	Compliant  bool    `json:"compliant"`
 }
 
+// A document attached to a shipment that does not count toward its billing requirement.
+type ShipmentBillingIneligibleDocument struct {
+	DocumentID string `json:"documentId"`
+	// Why it does not count: rejected, expired, pending_review or inactive.
+	Standing string `json:"standing"`
+}
+
 // One payer's standing on a shipment.
 type ShipmentBillingPayerReadiness struct {
 	PayerID                  string `json:"payerId"`
@@ -6570,6 +6577,8 @@ type ShipmentBillingRequirement struct {
 	Satisfied        bool     `json:"satisfied"`
 	DocumentCount    int      `json:"documentCount"`
 	DocumentIds      []string `json:"documentIds"`
+	// Documents of this type that are attached but do not satisfy it: rejected, expired, awaiting review or archived.
+	IneligibleDocuments []*ShipmentBillingIneligibleDocument `json:"ineligibleDocuments"`
 }
 
 // What one payer owes on a shipment once every allocation is applied.

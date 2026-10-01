@@ -742,6 +742,15 @@ type ShipmentBillingRequirement {
   satisfied: Boolean!
   documentCount: Int!
   documentIds: [String!]!
+  "Documents of this type that are attached but do not satisfy it: rejected, expired, awaiting review or archived."
+  ineligibleDocuments: [ShipmentBillingIneligibleDocument!]!
+}
+
+"A document attached to a shipment that does not count toward its billing requirement."
+type ShipmentBillingIneligibleDocument {
+  documentId: String!
+  "Why it does not count: rejected, expired, pending_review or inactive."
+  standing: String!
 }
 
 "One payer's standing on a shipment."

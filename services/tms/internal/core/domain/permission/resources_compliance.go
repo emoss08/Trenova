@@ -20,11 +20,13 @@ func (r *Registry) registerComplianceResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceDocument.String(),
-		DisplayName:        "Document",
-		Description:        "Uploaded document records and intelligence output",
-		Category:           "Compliance",
-		Operations:         standardOpsWithDelete,
+		Resource:    ResourceDocument.String(),
+		DisplayName: "Document",
+		Description: "Uploaded document records and intelligence output",
+		Category:    "Compliance",
+		Operations: operations(
+			OpRead, OpCreate, OpUpdate, OpExport, OpImport, OpDelete, OpApprove, OpReject,
+		),
 		DefaultSensitivity: SensitivityInternal,
 	})
 

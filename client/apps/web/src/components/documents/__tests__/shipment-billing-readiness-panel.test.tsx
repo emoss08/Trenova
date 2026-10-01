@@ -45,3 +45,36 @@ describe("ShipmentBillingReadinessPanel status hint", () => {
     expect(screen.getByText("Ready to invoice")).toBeInTheDocument();
   });
 });
+
+describe("ShipmentBillingReadinessPanel requirements", () => {
+  it("says an attached proof of delivery was rejected rather than missing", () => {
+    const pod = {
+      documentTypeId: "dt_pod",
+      documentTypeCode: "POD",
+      documentTypeName: "Proof of Delivery",
+      satisfied: false,
+      documentCount: 0,
+      documentIds: [],
+      ineligibleDocuments: [{ documentId: "doc_1", standing: "rejected" as const }],
+    };
+
+    render(
+      <ShipmentBillingReadinessPanel
+        readiness={{
+          ...readiness,
+          shipmentStatus: "Completed",
+          canMarkReadyToInvoice: false,
+          requirements: [pod],
+          missingRequirements: [pod],
+        }}
+        shipment={{ id: "shp_1", status: "Completed" } as Shipment}
+        onUploadRequired={vi.fn()}
+        onMarkReadyToInvoice={vi.fn()}
+        isMarkingReady={false}
+      />,
+    );
+
+    expect(screen.getByText("Proof of Delivery")).toBeInTheDocument();
+    expect(screen.getByText("Uploaded copy was rejected")).toBeInTheDocument();
+  });
+});

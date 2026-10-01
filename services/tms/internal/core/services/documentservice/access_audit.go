@@ -62,11 +62,11 @@ func (s *Service) recordAccess(
 		auditservice.WithCategory(audit.CategoryUser),
 		auditservice.WithRequest(ctx),
 		auditservice.WithMetadata(map[string]any{
-			"access":       string(access),
-			"channel":      string(channel),
-			"fileName":     doc.OriginalName,
-			"resourceType": doc.ResourceType,
-			"resourceId":   doc.ResourceID,
+			"access":             string(access),
+			"channel":            string(channel),
+			"fileName":           doc.OriginalName,
+			metadataResourceType: doc.ResourceType,
+			metadataResourceID:   doc.ResourceID,
 		}),
 	)
 	if err != nil {

@@ -14,6 +14,7 @@ import {
   ExternalLinkIcon,
   UploadIcon,
 } from "lucide-react";
+import { UnmetRequirementNote } from "./unmet-requirement-note";
 import { ShipmentBillingPayerRows } from "@/routes/shipment/_components/shipment-billing-payer-rows";
 import { ShipmentBillingQueueBadge } from "@/routes/shipment/_components/shipment-billing-queue-status";
 
@@ -87,6 +88,7 @@ function RequirementRow({
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{requirement.documentTypeName}</p>
           <p className="text-2xs text-muted-foreground">{requirement.documentTypeCode}</p>
+          <UnmetRequirementNote requirement={requirement} />
         </div>
       </div>
 

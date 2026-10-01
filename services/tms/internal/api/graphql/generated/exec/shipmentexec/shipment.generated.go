@@ -48,6 +48,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentAtRisk", Implementors: []string{"ShipmentAtRisk"}},
 		{Name: "ShipmentAutoRateResponse", Implementors: []string{"ShipmentAutoRateResponse"}},
 		{Name: "ShipmentAxleWeight", Implementors: []string{"ShipmentAxleWeight"}},
+		{Name: "ShipmentBillingIneligibleDocument", Implementors: []string{"ShipmentBillingIneligibleDocument"}},
 		{Name: "ShipmentBillingPayerReadiness", Implementors: []string{"ShipmentBillingPayerReadiness"}},
 		{Name: "ShipmentBillingReadiness", Implementors: []string{"ShipmentBillingReadiness"}},
 		{Name: "ShipmentBillingReadinessPolicy", Implementors: []string{"ShipmentBillingReadinessPolicy"}},
@@ -3216,6 +3217,28 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "ShipmentBillingIneligibleDocument", Fields: []*gqlexec.Field{
+			{
+				Name:     "documentId",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentBillingIneligibleDocument)
+					return obj.DocumentID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "standing",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentBillingIneligibleDocument)
+					return obj.Standing, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "ShipmentBillingPayerReadiness", Fields: []*gqlexec.Field{
 			{
 				Name:     "payerId",
@@ -3559,6 +3582,17 @@ var Shard = &gqlexec.Shard{
 					return obj.DocumentIds, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:      "ineligibleDocuments",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ShipmentBillingIneligibleDocument",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentBillingRequirement)
+					return obj.IneligibleDocuments, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNShipmentBillingIneligibleDocument2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingIneligibleDocumentᚄ),
 			},
 		}},
 		{Object: "ShipmentBillingSplitSummary", Fields: []*gqlexec.Field{
@@ -13180,6 +13214,22 @@ func marshalNShipmentAxleWeight2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ShipmentAxleWeight", v)
+}
+
+func marshalNShipmentBillingIneligibleDocument2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingIneligibleDocumentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentBillingIneligibleDocument) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ShipmentBillingIneligibleDocument]{
+		Elem:        marshalNShipmentBillingIneligibleDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingIneligibleDocument,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNShipmentBillingIneligibleDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingIneligibleDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentBillingIneligibleDocument) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ShipmentBillingIneligibleDocument", v)
 }
 
 func marshalNShipmentBillingPayerReadiness2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentBillingPayerReadinessᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentBillingPayerReadiness) graphql.Marshaler {

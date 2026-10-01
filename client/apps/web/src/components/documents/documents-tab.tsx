@@ -4,12 +4,14 @@ import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-cont
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { usePermission } from "@/hooks/use-permission";
 import { usePendingActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { Document, DocumentPacketSummary } from "@trenova/shared/types/document";
 import type { DocumentType } from "@trenova/shared/types/document-type";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import type {
   ShipmentBillingReadiness,
   ShipmentBillingRequirement,
@@ -38,6 +40,7 @@ import {
 import { formatFileSize, type RejectedFile } from "./document-upload-zone";
 import { getFileCategory } from "./document-utils";
 import { PacketCompletenessPanel } from "./packet-completeness-panel";
+import { RejectDocumentDialog } from "./reject-document-dialog";
 import { ShipmentBillingReadinessPanel } from "./shipment-billing-readiness-panel";
 import { UploadPanel } from "./upload-panel";
 
@@ -101,6 +104,12 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [inspectedDocument, setInspectedDocument] = useState<Document | null>(null);
   const [versionDocument, setVersionDocument] = useState<Document | null>(null);
+  const [rejectingDocument, setRejectingDocument] = useState<Document | null>(null);
+  const { allowed: canApproveDocuments } = usePermission(
+    Resource.Document,
+    Operation.Approve,
+  );
+  const { allowed: canRejectDocuments } = usePermission(Resource.Document, Operation.Reject);
   const [replacementLineageId, setReplacementLineageId] = useState<string | undefined>(undefined);
 
   const [isUploadOpen, setIsUploadOpen] = useQueryState(
@@ -307,26 +316,58 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     },
   });
 
+  const invalidateDocumentState = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: ["documents", resourceType, resourceId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["document-versions", versionDocumentID],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["document-packet-summary", resourceType, resourceId],
+    });
+    if (isShipment) {
+      void queryClient.invalidateQueries({
+        queryKey: billingReadinessQuery.queryKey,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: shipmentDetailsQuery.queryKey,
+      });
+    }
+  }, [
+    billingReadinessQuery.queryKey,
+    isShipment,
+    queryClient,
+    resourceId,
+    resourceType,
+    shipmentDetailsQuery.queryKey,
+    versionDocumentID,
+  ]);
+
+  const {
+    mutate: approveDocument,
+    isPending: isApprovingDocument,
+    variables: approvingDocumentId,
+  } = useMutation({
+    mutationFn: (documentId: string) => apiService.documentService.approve(documentId),
+    onSuccess: () => {
+      invalidateDocumentState();
+      toast.success(t("Document approved"));
+    },
+    onError: (error) => {
+      toast.error(t("Approval failed: {0}", error.message));
+    },
+  });
+
+  const handleApproveDocument = useCallback(
+    (document: Document) => approveDocument(document.id),
+    [approveDocument],
+  );
+
   const restoreVersionMutation = useMutation({
     mutationFn: (documentId: string) => apiService.documentService.restoreVersion(documentId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ["documents", resourceType, resourceId],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["document-versions", versionDocumentID],
-      });
-      void queryClient.invalidateQueries({
-        queryKey: ["document-packet-summary", resourceType, resourceId],
-      });
-      if (isShipment) {
-        void queryClient.invalidateQueries({
-          queryKey: billingReadinessQuery.queryKey,
-        });
-        void queryClient.invalidateQueries({
-          queryKey: shipmentDetailsQuery.queryKey,
-        });
-      }
+      invalidateDocumentState();
       toast.success(t("Document version restored"));
     },
     onError: (error) => {
@@ -555,7 +596,10 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         onDelete={handleDelete}
         onInspect={handleInspect}
         onVersions={handleOpenVersions}
+        onApprove={canApproveDocuments ? handleApproveDocument : undefined}
+        onReject={canRejectDocuments ? setRejectingDocument : undefined}
         deletingId={deletingId}
+        reviewingId={isApprovingDocument ? approvingDocumentId : undefined}
         isLoading={isLoading}
         selectedIds={selectedIds}
         onSelectDocument={handleSelectDocument}
@@ -611,6 +655,16 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         document={inspectedDocument}
         resourceType={resourceType}
         resourceId={resourceId}
+      />
+      <RejectDocumentDialog
+        open={!!rejectingDocument}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setRejectingDocument(null);
+          }
+        }}
+        document={rejectingDocument}
+        onRejected={invalidateDocumentState}
       />
       <DocumentVersionDialog
         open={!!versionDocument}

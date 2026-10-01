@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
@@ -96,7 +97,7 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	// Every scenario in this suite uploads at least one document, and each
 	// upload projects it into search.
 	searchProjection.On("Upsert", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	searchProjection.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	searchProjection.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	docRepo := documentrepository.New(documentrepository.Params{
 		DB:     conn,
@@ -628,4 +629,63 @@ func TestService_GetPacketSummary_Integration(t *testing.T) {
 	refreshedSecondVersion := fetchDocument(t, h, currentV2.ID)
 	assert.False(t, refreshedFirstVersion.IsCurrentVersion)
 	assert.True(t, refreshedSecondVersion.IsCurrentVersion)
+}
+
+func TestService_ReviewLifecycle_Integration(t *testing.T) {
+	h := setupDocumentServiceHarness(t)
+
+	resourceID := pulid.MustNew("sh_").String()
+	docType := createDocumentType(t, h, "POD", "Proof of Delivery", documenttype.CategoryShipment)
+	uploaded := uploadDocument(t, h, "pod.pdf", resourceID, "shipment", docType.ID.String(), "")
+	actor := services.RequestActor{
+		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalID:    h.tenantInfo.UserID,
+		UserID:         h.tenantInfo.UserID,
+		OrganizationID: h.tenantInfo.OrgID,
+		BusinessUnitID: h.tenantInfo.BuID,
+	}
+
+	rejected, err := h.service.Review(h.ctx, &documentservice.ReviewRequest{
+		DocumentID: uploaded.ID,
+		TenantInfo: h.tenantInfo,
+		Decision:   document.ReviewDecisionReject,
+		Reason:     "Signature is illegible",
+		Actor:      actor,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, document.StatusRejected, rejected.Status)
+
+	stored := fetchDocument(t, h, uploaded.ID)
+	assert.Equal(t, document.StatusRejected, stored.Status)
+	assert.Equal(t, "Signature is illegible", stored.RejectionReason)
+	assert.Equal(t, h.tenantInfo.UserID, stored.RejectedByID)
+	require.NotNil(t, stored.RejectedAt)
+	assert.Equal(t, document.StandingRejected, stored.StandingAt(timeutils.NowUnix()))
+
+	_, err = h.service.Review(h.ctx, &documentservice.ReviewRequest{
+		DocumentID: uploaded.ID,
+		TenantInfo: h.tenantInfo,
+		Decision:   document.ReviewDecisionReject,
+		Reason:     "Again",
+		Actor:      actor,
+	})
+	var business *errortypes.BusinessError
+	require.ErrorAs(t, err, &business)
+
+	approved, err := h.service.Review(h.ctx, &documentservice.ReviewRequest{
+		DocumentID: uploaded.ID,
+		TenantInfo: h.tenantInfo,
+		Decision:   document.ReviewDecisionApprove,
+		Actor:      actor,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, document.StatusActive, approved.Status)
+
+	stored = fetchDocument(t, h, uploaded.ID)
+	assert.Equal(t, document.StatusActive, stored.Status)
+	assert.Equal(t, h.tenantInfo.UserID, stored.ApprovedByID)
+	require.NotNil(t, stored.ApprovedAt)
+	assert.Nil(t, stored.RejectedAt)
+	assert.Empty(t, stored.RejectionReason)
+	assert.True(t, stored.RejectedByID.IsNil())
 }

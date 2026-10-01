@@ -174,6 +174,16 @@ export class DocumentService {
     return safeParse(documentSchema, response, "Document");
   }
 
+  public async approve(documentId: string): Promise<Document> {
+    const response = await api.post<Document>(`/documents/${documentId}/approve/`);
+    return safeParse(documentSchema, response, "Document");
+  }
+
+  public async reject(documentId: string, reason: string): Promise<Document> {
+    const response = await api.post<Document>(`/documents/${documentId}/reject/`, { reason });
+    return safeParse(documentSchema, response, "Document");
+  }
+
   public async attachToShipment(documentId: string, shipmentId: string): Promise<Document> {
     const response = await api.post<Document>(`/documents/${documentId}/attach-to-shipment/`, {
       shipmentId,

@@ -92,17 +92,17 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 50 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 42 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 4 |
 
 ## Totals
 
-955 writes: 498 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
+957 writes: 498 GraphQL mutations and 459 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 375 |
-| Exempt | 580 |
+| Exempt | 582 |
 | — Security | 72 |
 | — Configuration | 259 |
 | — User preference | 27 |
@@ -110,10 +110,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Agent administration | 50 |
 | — Counterparty | 33 |
 | — Read-only | 47 |
-| — Attestation | 42 |
+| — Attestation | 44 |
 | — Duplicate | 4 |
 | **Pending** | **0** |
-| Total | 955 |
+| Total | 957 |
 
 Of the 375 writes an agent should be able to make, 375 have a tool (100%).
 
@@ -175,7 +175,7 @@ The writes no tool performs yet, and what the tool would do.
 | distancecontrol | 2 | 0 | 2 | 0 |
 | distanceoverride | 4 | 0 | 4 | 0 |
 | distanceprofile | 5 | 0 | 5 | 0 |
-| document | 13 | 4 | 9 | 0 |
+| document | 15 | 4 | 11 | 0 |
 | documentcontrol | 1 | 0 | 1 | 0 |
 | documentoperations | 3 | 0 | 3 | 0 |
 | documentpacketrule | 3 | 0 | 3 | 0 |
@@ -775,8 +775,10 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `DELETE /api/v1/documents/:documentID/`<br>documenthandler.delete | Tool: `delete_documents` |
+| `POST /api/v1/documents/:documentID/approve/`<br>documenthandler.approve | Exempt, attestation: Accepting a document as proof, such as a proof of delivery that lets a shipment bill, is the reviewer's sign-off on the evidence; agents may never approve. |
 | `POST /api/v1/documents/:documentID/attach-to-shipment/`<br>documenthandler.attachToShipment | Tool: `attach_document_to_shipment` |
 | `POST /api/v1/documents/:documentID/import-assistant/thread/`<br>documenthandler.openImportAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/documents/:documentID/reject/`<br>documenthandler.reject | Exempt, attestation: Refusing a document as proof takes it out of the shipment's billing requirements and is the reviewer's judgement of the evidence, recorded with their reason; an agent can point out a doubtful document but does not decide it. |
 | `POST /api/v1/documents/:documentID/restore/`<br>documenthandler.restoreVersion | Tool: `restore_document_version` |
 | `POST /api/v1/documents/:documentID/shipment-draft/reextract/`<br>documenthandler.reextractDocumentContent | Exempt, infrastructure: A repair a person asks for when the page's machine reading of a document went wrong: it runs extraction again, replaces the draft they are reviewing and archives their import assistant conversation. The extraction pipeline, not a decision, produces what replaces it. |
 | `POST /api/v1/documents/bulk-delete/`<br>documenthandler.bulkDelete | Tool: `delete_documents` |
