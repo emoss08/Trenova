@@ -499,7 +499,7 @@ func turnAttribution(req *serviceports.RunRequest) serviceports.AIUsageAttributi
 	definition := req.Definition
 	version := definition.Version
 	attribution := serviceports.AIUsageAttribution{
-		UserID:            req.Actor.UserID,
+		UserID:            req.Actor.PersonUserID(),
 		AgentDefinitionID: definition.ID,
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,

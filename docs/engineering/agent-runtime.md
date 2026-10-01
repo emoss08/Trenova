@@ -678,6 +678,35 @@ conflict, and records the preview with the decision. A plan's later step on a
 record an earlier step changed runs against the version that step left. See
 [proposal-previews.md](proposal-previews.md).
 
+### Who a run acts as
+
+A run nobody is in has two identities, kept apart on purpose.
+
+- **Authorization is the agent's.** The actor `runRequest` builds is
+  `PrincipalTypeAgent`, so the permission engine judges every call against the
+  fixed agent table (`permission.IsAgentAllowed`), never against a role. Approving
+  is refused outright (`guardExecute`), a self-scoped tool is refused because
+  nobody is in the run, and nothing that reads a person's access (field
+  sensitivity ceilings, report authorization, the user context provider, usage
+  attribution) reads the system user's: they read `RequestActor.PersonUserID`
+  or check `IsUser`, and both leave out anyone but a person. The database scope an agent actor binds
+  (`RequestActor.DBTenant`, which the tool activity and the tenant interceptor
+  read) names no user either, so row-level security shows the run nothing the
+  system user's own rows or memberships would.
+- **Attribution is the system user's.** The same actor carries the instance's
+  system user (`UserRepository.GetSystemUser`, the `system` account) as its
+  `UserID`, so a record the run creates or changes names that account in its
+  created-by and updated-by columns instead of nobody, and a service that
+  refused a write it had no user to attribute to (a shipment comment, a hold)
+  takes one the agent table allows. The audit log still
+  records the agent as the principal, and `executed_by_user_id` on a proposal
+  still names only the person who executed it: the AI audit trail reads a
+  proposal with an executor as a person's write.
+
+The system user is resolved once per run, when the run is opened (and when an
+evaluation replays a background run or case). If it cannot be read, the attempt
+fails with a retryable error rather than running unattributed.
+
 ### Starting runs
 
 - **Events.** A run is keyed by its subject:
@@ -1029,9 +1058,6 @@ expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them).
 
 - **Resume is at-most-once.** A crash in the execute→settle window reports
   "began, outcome unknown" rather than replaying.
-- **Scheduled runs authorize as `PrincipalTypeAgent`** against the static
-  `permission.IsAgentAllowed` table; "not implicitly a system administrator" is
-  not yet true for unattended runs.
 - **Background runs discard their transcript** beyond the summary and the event
   log.
 - **Permission denials are not distinct events.** A refusal arrives as a failed

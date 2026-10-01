@@ -156,7 +156,7 @@ func (c catalogAccess) entity(
 	}
 
 	detail, err := c.permissions.GetResourcePermissions(
-		ctx, params.Actor.UserID, params.OrganizationID, entity.Resource.String(),
+		ctx, params.Actor.PersonUserID(), params.OrganizationID, entity.Resource.String(),
 	)
 	if err != nil {
 		return nil, false, fmt.Errorf("resolve permissions for %q: %w", entity.Key, err)

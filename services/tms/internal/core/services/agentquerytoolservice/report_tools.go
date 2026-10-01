@@ -790,7 +790,7 @@ func reportingRequestFor(params *serviceports.QueryToolParams) reporting.Request
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
 			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
+			UserID: params.Actor.PersonUserID(),
 		},
 		Principal: serviceports.PrincipalInfo{
 			Type:     params.Actor.PrincipalType,

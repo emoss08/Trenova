@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -109,32 +110,8 @@ func (b *ContextBuilder) Build(
 		}
 	}
 
-	if definition.HasContextProvider(agentdefinition.ContextUser) && req.Actor.UserID.IsNotNil() {
-		user, err := b.users.GetByID(ctx, repositories.GetUserByIDRequest{
-			TenantInfo:   tenant,
-			LookupUserID: req.Actor.UserID,
-		})
-		if err != nil {
-			b.logger.Warn("agent context: user lookup failed",
-				zap.String("user", req.Actor.UserID.String()),
-				zap.Error(err),
-			)
-		} else {
-			roles := make([]string, 0, len(user.Assignments))
-			for _, assignment := range user.Assignments {
-				if assignment != nil && assignment.Role != nil && assignment.Role.Name != "" {
-					roles = append(roles, assignment.Role.Name)
-				}
-			}
-			rc.User = &agentdefinition.RuntimeUser{
-				Name:  user.Name,
-				Email: user.EmailAddress,
-				Roles: roles,
-			}
-			if rc.Timezone == "" {
-				rc.Timezone = user.Timezone
-			}
-		}
+	if definition.HasContextProvider(agentdefinition.ContextUser) {
+		b.describeUser(ctx, &rc, req.Actor.PersonUserID(), tenant)
 	}
 
 	// Memory is read for every agent that asks for it, scoped to the
@@ -290,4 +267,43 @@ func (b *ContextBuilder) memoryQuery(
 	}
 
 	return query
+}
+
+func (b *ContextBuilder) describeUser(
+	ctx context.Context,
+	rc *agentdefinition.RuntimeContext,
+	person pulid.ID,
+	tenant pagination.TenantInfo,
+) {
+	if person.IsNil() {
+		return
+	}
+
+	user, err := b.users.GetByID(ctx, repositories.GetUserByIDRequest{
+		TenantInfo:   tenant,
+		LookupUserID: person,
+	})
+	if err != nil {
+		b.logger.Warn("agent context: user lookup failed",
+			zap.String("user", person.String()),
+			zap.Error(err),
+		)
+
+		return
+	}
+
+	roles := make([]string, 0, len(user.Assignments))
+	for _, assignment := range user.Assignments {
+		if assignment != nil && assignment.Role != nil && assignment.Role.Name != "" {
+			roles = append(roles, assignment.Role.Name)
+		}
+	}
+	rc.User = &agentdefinition.RuntimeUser{
+		Name:  user.Name,
+		Email: user.EmailAddress,
+		Roles: roles,
+	}
+	if rc.Timezone == "" {
+		rc.Timezone = user.Timezone
+	}
 }

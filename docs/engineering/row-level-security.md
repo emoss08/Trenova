@@ -135,6 +135,9 @@ agent tool activity (`agentflow.runTool`) decodes its input and binds the run's 
 before it dispatches, and refuses a call that names none. Work that outlives its request on
 a detached context (a usage row written in the background, a decision follow-up) binds its
 own tenant with `dbscope.WithValidTenant` rather than trusting the caller's scope.
+A `RequestActor` is itself `TenantScoped`: an agent principal's scope names no user, even
+though an unattended run's actor carries the system user as its `UserID` for attribution,
+so `trenova_rls.user_id()` never widens a run to the system user's own rows.
 
 **Seeing every tenant** is `ctx = dbscope.WithSystem(ctx, reason)` in the one
 method that needs it, before the `dbtx` call, with a constant reason. The

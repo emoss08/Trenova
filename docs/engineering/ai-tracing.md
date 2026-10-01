@@ -275,7 +275,10 @@ recorded from the code before this change and replay against it.
 - **The tier source costs a trust read.** Telling a tier a person chose from
   one trust earned reads the trust ledger for every call on a tool the agent
   names a tier for.
-- **Unattended writes name no person.** `executed_by_user_id` is empty for an
-  automatic write of a background run.
+- **An unattended write names no person as its executor.** `executed_by_user_id`
+  is empty for an automatic write of a background run, which the AI audit trail
+  reads as the agent's. The record written names the instance's system user as
+  created-by or updated-by; see
+  [agent-runtime.md](agent-runtime.md#who-a-run-acts-as).
 - **An evaluation run by a quality suite** starts in the suite's trace; its
   spans re-parent to the evaluation's anchor and link to the suite's activity.

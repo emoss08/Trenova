@@ -230,7 +230,7 @@ func (a *Activities) runTool(
 		)
 	}
 
-	tenant := in.Run.Actor.TenantInfo().DBTenant()
+	tenant := in.Run.Actor.DBTenant()
 	if !tenant.Valid() {
 		return nil, temporal.NewNonRetryableApplicationError(
 			fmt.Sprintf("tool %q was sent a call with no tenant", name),

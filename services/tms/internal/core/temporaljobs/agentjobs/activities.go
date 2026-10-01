@@ -217,7 +217,10 @@ func (a *Activities) runRequest(
 	subject *agentdefinition.RuntimeSubject,
 ) (*serviceports.RunRequest, error) {
 	tenant := payload.tenantInfo()
-	actor := agentActor(tenant)
+	actor, err := a.unattendedActor(ctx, tenant)
+	if err != nil {
+		return nil, err
+	}
 
 	input := backgroundInput(payload, subject)
 	runtimeContext, err := a.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
@@ -712,6 +715,22 @@ func (a *Activities) announceRun(ctx context.Context, run *agent.AgentRun) {
 	}
 
 	a.activity.RunChanged(ctx, run, serviceports.SystemAuditActor(), serviceports.ActivityUpdated)
+}
+
+func (a *Activities) unattendedActor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (*serviceports.RequestActor, error) {
+	system, err := a.users.GetSystemUser(ctx, "id")
+	if err != nil {
+		return nil, temporaltype.NewRetryableError("Failed to get system user", err).
+			ToTemporalError()
+	}
+
+	actor := agentActor(tenant)
+	actor.UserID = system.ID
+
+	return actor, nil
 }
 
 func agentActor(tenant pagination.TenantInfo) *serviceports.RequestActor {

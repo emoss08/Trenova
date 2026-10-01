@@ -47,8 +47,11 @@ type reportDefinitionWriter interface {
 }
 
 func reportingRequestFrom(params serviceports.ToolExecuteParams) reporting.Request {
+	tenant := tenantFrom(params)
+	tenant.UserID = params.Actor.PersonUserID()
+
 	return reporting.Request{
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenant,
 		Principal: serviceports.PrincipalInfo{
 			Type:     params.Actor.PrincipalType,
 			ID:       params.Actor.PrincipalID,
