@@ -1,8 +1,20 @@
 import type { PreviewScope } from "@/lib/graphql/agent-preview";
 import { queries } from "@/lib/queries";
+import { modificationsKey } from "@/lib/queries/agent-preview";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { keepPreviousData, useQuery, type QueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { approvalGate, isPreviewConflict, type ApprovalGate } from "./preview-gate";
+import {
+  approvalGate,
+  isPreviewConflict,
+  isPreviewRefusal,
+  type ApprovalGate,
+} from "./preview-gate";
+
+/** How long changing a value settles before the draft is previewed. */
+export const PREVIEW_DEBOUNCE_MS = 400;
+
+const LOADING: ApprovalGate = { state: "loading" };
 
 /**
  * How long a preview is trusted before a remount reads it again. Short: it is
@@ -109,4 +121,47 @@ export function useApprovalGate(query: ApprovableQuery): {
   const acknowledge = useCallback(() => setChanged(false), []);
 
   return { gate: approvalGate(query), changed, acknowledge, handleDecisionError };
+}
+
+/**
+ * The preview of a draft of changed values, and whether it may be approved.
+ *
+ * A valid draft is previewed once changing it settles; an invalid one (null)
+ * is not sent at all. What is on screen is the preview of the values in the
+ * draft only once the debounce has caught up and the read for them has
+ * landed: until then the gate is loading, so nothing is approved against a
+ * preview of other values. A preview the server refuses as invalid says the
+ * values would not go through.
+ */
+export function useDraftPreview({
+  target,
+  modifications,
+}: {
+  target: { scope: PreviewScope; proposalId: string } | undefined;
+  modifications: Record<string, unknown> | null;
+}) {
+  const settled = useDebounce(modifications, PREVIEW_DEBOUNCE_MS);
+  const previewQuery = useProposalPreview({
+    scope: target?.scope ?? "mine",
+    id: target?.proposalId ?? "",
+    modifications: settled,
+    enabled: target !== undefined && settled !== null,
+    keepPrevious: true,
+  });
+  const approval = useApprovalGate(previewQuery);
+
+  const current =
+    modifications !== null &&
+    settled !== null &&
+    modificationsKey(settled) === modificationsKey(modifications) &&
+    !previewQuery.isPlaceholderData;
+  const refused = current && isPreviewRefusal(previewQuery.error);
+
+  return {
+    previewQuery,
+    approval,
+    gate: current ? approval.gate : LOADING,
+    current,
+    refused,
+  };
 }

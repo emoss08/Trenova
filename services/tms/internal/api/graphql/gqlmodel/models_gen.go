@@ -515,6 +515,8 @@ type AgentPlanDecisionInput struct {
 	ReasonCode string             `json:"reasonCode"`
 	// The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded.
 	PreviewDigest *string `json:"previewDigest,omitempty"`
+	// What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision.
+	Note *string `json:"note,omitempty"`
 }
 
 type AgentPlanEdge struct {
@@ -534,6 +536,8 @@ type AgentProposalDecisionInput struct {
 	ReasonCode    string             `json:"reasonCode"`
 	// The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed.
 	PreviewDigest *string `json:"previewDigest,omitempty"`
+	// What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions.
+	Note *string `json:"note,omitempty"`
 }
 
 // What became of one proposal in a batch decision.
@@ -1956,6 +1960,8 @@ type DecideAgentProposalsInput struct {
 	ReasonCode *string            `json:"reasonCode,omitempty"`
 	// The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed.
 	PreviewDigests []*AgentProposalPreviewDigestInput `json:"previewDigests,omitempty"`
+	// What the decider tells the agent, recorded on each proposal's decision; at most 2000 characters.
+	Note *string `json:"note,omitempty"`
 }
 
 type DecideLeaveCaseInput struct {

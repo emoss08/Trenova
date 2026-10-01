@@ -611,7 +611,7 @@ function askLine(step: ToolStep, t: TranslateFn): ActivityLine {
 function decisionLine(step: ToolStep, t: TranslateFn): ActivityLine {
   if (step.status === "failed") {
     return {
-      phrase: t("Couldn't show the card again"),
+      phrase: t("Couldn't open the approval box"),
       detail: failureMessage(step),
       failure: "",
       state: "failed",
@@ -619,7 +619,7 @@ function decisionLine(step: ToolStep, t: TranslateFn): ActivityLine {
   }
 
   return {
-    phrase: step.status === "running" ? t("Showing the card again…") : t("Asked you to decide"),
+    phrase: step.status === "running" ? t("Opening the approval box…") : t("Asked you to decide"),
     detail: step.summary,
     failure: "",
     state: step.status === "running" ? "running" : "done",

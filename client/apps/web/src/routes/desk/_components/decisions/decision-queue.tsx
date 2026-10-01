@@ -32,10 +32,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { BatchBar } from "./batch-bar";
+import { rowsLike } from "./batch-selection";
 import { DecisionDetail } from "./decision-detail";
 import { asAssistantProposal, presentDecision, type DecisionRowView } from "./decision-presenters";
 import { DecisionRow } from "./decision-row";
 import { DecisionsToolbar } from "./decisions-toolbar";
+import { LikeRowsHint } from "./like-rows-hint";
 import { useDecisionKeys, type QueueAsk } from "./use-decision-keys";
 import {
   decideAgentProposals,
@@ -124,6 +126,11 @@ export function DecisionQueue() {
   }, [byId, ids, queryClient, selection.focusedId]);
 
   const selectedRows = rows.filter((row) => selection.selectedIds.includes(row.id));
+  const likeFocused = useMemo(
+    () => rowsLike(rows, selection.focusedId),
+    [rows, selection.focusedId],
+  );
+  const focusedRow = rows.find((row) => row.id === selection.focusedId) ?? null;
   const selectedTools = new Set(selectedRows.map((row) => row.toolName));
   const mixedTools = selectedTools.size > 1;
 
@@ -357,6 +364,16 @@ export function DecisionQueue() {
       <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
         <ResizablePanel defaultSize="44%" minSize="320px">
           <div className="relative flex h-full min-h-0 flex-col">
+            {canDecide &&
+              selectedRows.length === 0 &&
+              likeFocused.length > 0 &&
+              focusedRow !== null && (
+                <LikeRowsHint
+                  count={likeFocused.length}
+                  title={focusedRow.title}
+                  onSelect={() => select(likeFocused)}
+                />
+              )}
             {queue.isLoading ? (
               <div className="flex flex-col gap-2 p-3">
                 <Skeleton className="h-14" />

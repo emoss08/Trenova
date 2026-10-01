@@ -264,6 +264,7 @@ func (s *Service) DecideWithOutcome(
 		Decision:             req.Decision,
 		Modifications:        req.Modifications,
 		ReasonCode:           reasonCodeFor(req.Decision, req.ReasonCode),
+		Note:                 agent.NormalizeDecisionNote(req.Note),
 		Preview:              shown.preview,
 		PreviewDigest:        shown.digest,
 		PreviewReviewed:      shown.reviewed,

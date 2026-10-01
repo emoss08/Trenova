@@ -183,6 +183,7 @@ func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 		Decision:      input.Decision,
 		Modifications: input.Modifications,
 		ReasonCode:    input.ReasonCode,
+		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
@@ -203,6 +204,7 @@ func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 		PlanID:        planID,
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
+		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
@@ -224,9 +226,29 @@ func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 		Decision:      input.Decision,
 		Modifications: input.Modifications,
 		ReasonCode:    input.ReasonCode,
+		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := base.BatchDecisionRequest(ids, &input, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := r.AgentDecisionQueueService.DecideManyOwn(ctx, req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return base.BatchDecisionResults(results), nil
 }
 
 func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error) {
@@ -244,6 +266,7 @@ func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gq
 		PlanID:        planID,
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
+		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))

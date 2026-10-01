@@ -1431,6 +1431,7 @@ type MutationResolver interface {
 	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
 	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
 	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
+	DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
 	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
 	ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error)
 	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
@@ -5216,6 +5217,8 @@ type AgentDecision {
   "Modifications carry tool-specific parameter overrides captured at decision time."
   modifications: JSON
   reasonCode: String!
+  "What the decider told the agent with the decision; empty when they said nothing."
+  note: String!
   "The trace the decision was made in. Empty for a decision recorded before traces were kept."
   traceId: String!
   "The decision's trace in the tracing backend, when one is configured and the decision has a trace."
@@ -5507,6 +5510,8 @@ input AgentProposalDecisionInput {
   reasonCode: String!
   "The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed."
   previewDigest: String
+  "What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions."
+  note: String
 }
 
 input AgentPlanDecisionInput {
@@ -5515,6 +5520,8 @@ input AgentPlanDecisionInput {
   reasonCode: String!
   "The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded."
   previewDigest: String
+  "What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision."
+  note: String
 }
 
 input AgentExceptionResolveInput {
@@ -5563,9 +5570,19 @@ extend type Mutation {
   """
   decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   """
+  Decides several proposals of one tool raised in the caller's own
+  conversations the same way, each as proposed, with the digest of the
+  preview shown for each. The batch is refused before anything runs when one
+  is not the caller's, it mixes tools, includes a plan's step or holds more
+  than 50; once it starts, every proposal is decided in turn, each write still
+  runs only if the caller may make it, and each outcome is reported.
+  """
+  decideMyProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
+  """
   Decides a plan raised in one of the caller's own conversations, by an agent
   they may still use. Each step's write still runs only if the caller may
-  make it, and the first that fails stops the rest.
+  make it. Steps that each change a different record of one kind all run and
+  each reports its outcome; otherwise the first that fails stops the rest.
   """
   decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
   "Replays a recorded run against its agent as it is now; every write is simulated."
@@ -11765,6 +11782,8 @@ input DecideAgentProposalsInput {
   reasonCode: String
   "The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed."
   previewDigests: [AgentProposalPreviewDigestInput!]
+  "What the decider tells the agent, recorded on each proposal's decision; at most 2000 characters."
+  note: String
 }
 
 "What became of one proposal in a batch decision."

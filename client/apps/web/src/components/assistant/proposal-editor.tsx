@@ -19,12 +19,10 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import type { PreviewScope } from "@/lib/graphql/agent-preview";
-import { modificationsKey } from "@/lib/queries/agent-preview";
 import type { ProposalField } from "@/types/assistant";
 import { CircleAlertIcon, LockIcon } from "lucide-react";
 import { humanizeKey } from "./readable-values";
@@ -38,19 +36,11 @@ import {
   writeNested,
   type ProposalDraft,
 } from "./proposal-edits";
-import {
-  canApprove,
-  gateDigest,
-  isPreviewRefusal,
-  type ApprovalGate,
-} from "./proposal-preview/preview-gate";
+import { canApprove, gateDigest } from "./proposal-preview/preview-gate";
 import { PreviewLoadState, ProposalPreview } from "./proposal-preview/proposal-preview";
-import { useApprovalGate, useProposalPreview } from "./proposal-preview/use-proposal-preview";
+import { useDraftPreview, useProposalPreview } from "./proposal-preview/use-proposal-preview";
 import { previewOutcomes } from "./record-subset";
 import { RecordSubsetField } from "./record-subset-field";
-
-/** How long typing settles before the draft is previewed. */
-export const PREVIEW_DEBOUNCE_MS = 400;
 
 /**
  * The value the editor opens on: a parameter path (status, shipment.bol)
@@ -111,7 +101,6 @@ export function ProposalEditor({
   );
 }
 
-const LOADING: ApprovalGate = { state: "loading" };
 const NO_OUTCOMES: ReadonlyMap<string, string> = new Map();
 
 // Mounted only while open, so each request starts from the proposed values
@@ -139,17 +128,14 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
   // A valid draft is previewed once typing settles; an invalid one is not
   // sent at all. The preview of an unchanged draft is the proposal as
   // proposed, which the card beside the editor has usually read already.
-  const draftModifications = valid ? changes : null;
-  const settledModifications = useDebounce(draftModifications, PREVIEW_DEBOUNCE_MS);
   const target = request.preview;
-  const previewQuery = useProposalPreview({
-    scope: target?.scope ?? "mine",
-    id: target?.proposalId ?? "",
-    modifications: settledModifications,
-    enabled: target !== undefined && settledModifications !== null,
-    keepPrevious: true,
-  });
-  const approval = useApprovalGate(previewQuery);
+  const {
+    previewQuery,
+    approval,
+    gate,
+    current: previewCurrent,
+    refused,
+  } = useDraftPreview({ target, modifications: valid ? changes : null });
 
   // A record-subset field lists every record proposed, each with what the
   // preview says happens to it. The preview as proposed names the records a
@@ -165,16 +151,6 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
     () => (hasSubset ? previewOutcomes([proposedPreview.data, previewQuery.data], t) : NO_OUTCOMES),
     [hasSubset, previewQuery.data, proposedPreview.data, t],
   );
-
-  // What is on screen is the preview of the values in the form only once the
-  // debounce has caught up and the read for them has landed.
-  const previewCurrent =
-    draftModifications !== null &&
-    settledModifications !== null &&
-    modificationsKey(settledModifications) === modificationsKey(draftModifications) &&
-    !previewQuery.isPlaceholderData;
-  const refused = previewCurrent && isPreviewRefusal(previewQuery.error);
-  const gate = previewCurrent ? approval.gate : LOADING;
 
   const reasonMissing = request.withReason?.required === true && reason.trim() === "";
   const previewAllows = target === undefined || (canApprove(gate) && !refused);

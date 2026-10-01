@@ -93,51 +93,17 @@ func (r *MutationResolver) DecideAgentProposals(ctx context.Context, ids []strin
 		return nil, err
 	}
 
-	proposalIDs := make([]pulid.ID, 0, len(ids))
-	for _, id := range ids {
-		parsed, parseErr := pulid.MustParse(id)
-		if parseErr != nil {
-			return nil, parseErr
-		}
-		proposalIDs = append(proposalIDs, parsed)
-	}
-
-	reason := ""
-	if input.ReasonCode != nil {
-		reason = *input.ReasonCode
-	}
-
-	digests, err := previewDigestsByProposal(input.PreviewDigests)
+	req, err := base.BatchDecisionRequest(ids, &input, base.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	results, err := r.AgentDecisionQueueService.DecideMany(ctx, &services.DecideAgentProposalsRequest{
-		ProposalIDs:    proposalIDs,
-		Decision:       input.Decision,
-		ReasonCode:     reason,
-		TenantInfo:     base.TenantInfo(authCtx),
-		PreviewDigests: digests,
-	}, actorutil.FromAuthContext(authCtx))
+	results, err := r.AgentDecisionQueueService.DecideMany(ctx, req, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]*gqlmodel.AgentProposalDecisionResult, 0, len(results))
-	for i := range results {
-		result := &gqlmodel.AgentProposalDecisionResult{
-			ProposalID: results[i].ProposalID.String(),
-			Decision:   results[i].Decision,
-			Executed:   results[i].Executed,
-		}
-		if results[i].Error != "" {
-			message := results[i].Error
-			result.Error = &message
-		}
-		out = append(out, result)
-	}
-
-	return out, nil
+	return base.BatchDecisionResults(results), nil
 }
 
 func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error) {

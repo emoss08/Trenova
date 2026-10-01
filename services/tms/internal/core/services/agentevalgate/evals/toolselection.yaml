@@ -70,6 +70,24 @@ cases:
     expect: [reject_worker_pto]
   - request: which invoices are overdue
     expect: [list_invoices]
+  - request: post these five draft invoices
+    expect: [post_invoices]
+  - request: post all of the approved draft invoices at once
+    expect: [post_invoices]
+  - request: post draft invoice 1042
+    expect: [post_invoice, post_invoices]
+  - request: email these invoices to their customers
+    expect: [send_invoices]
+  - request: send invoice 7001 to the customer
+    expect: [send_invoice, send_invoices]
+  - request: approve all of the clean billing queue items
+    expect: [approve_billing_queue_items]
+  - request: approve billing queue item 5001
+    expect: [approve_billing_queue_item, approve_billing_queue_items]
+  - request: check invoices 1041, 1042 and 1043 before posting them
+    expect: [get_invoices, list_invoices]
+  - request: show me each of these draft invoices with their totals
+    expect: [get_invoices, list_invoices]
   - request: look up the customer's billing details
     expect: [get_customer, list_customers]
   - request: waive the detention charge

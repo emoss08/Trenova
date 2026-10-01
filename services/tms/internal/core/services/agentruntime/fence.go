@@ -14,10 +14,10 @@ const (
 )
 
 func FenceToolResult(toolName, payload string) string {
-	return fenceUntrusted("Result from "+toolName+":", truncateToolResult(payload))
+	return FenceUntrusted("Result from "+toolName+":", truncateToolResult(payload))
 }
 
-func fenceUntrusted(header, payload string) string {
+func FenceUntrusted(header, payload string) string {
 	var builder strings.Builder
 	builder.WriteString(header)
 	builder.WriteString("\n")

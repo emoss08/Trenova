@@ -150,3 +150,19 @@ query SuggestedAgentAudience($agentId: ID!) {
     }
   }
 }
+
+mutation DecideMyProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {
+  decideMyProposals(ids: $ids, input: $input) {
+    proposalId
+    executed
+    error
+    decision {
+      id
+      decision
+      reasonCode
+      previewDigest
+      previewReviewed
+      createdAt
+    }
+  }
+}

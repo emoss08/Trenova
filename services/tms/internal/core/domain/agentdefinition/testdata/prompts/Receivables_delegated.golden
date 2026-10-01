@@ -49,17 +49,16 @@ Loaded now:
 - flag_for_manual_review
 - find_in_trenova
 - list_customers
+- list_invoices
 - get_shipment
 - get_document_summary
 - reverse_customer_payment
 - list_credit_memo_applications
 - unapply_credit_memo
 - withdraw_invoice_dispute
-- assess_late_charges
 
 Callable after find_tools:
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
-- list_invoices — List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates.
 - get_invoice — Retrieve one invoice by id, with its line items, totals, payment and dispute state.
 - search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - get_ar_aging — Summarize accounts receivable aging: which customers owe money and how overdue it is, in current, 1-30, 31-60, 61-90 and over-90-day buckets.
@@ -74,6 +73,7 @@ Callable after find_tools:
 - resolve_invoice_dispute — Propose closing an open invoice dispute with its outcome.
 - list_invoice_adjustments — List the invoice adjustments on one invoice, drafts included, or those waiting for an approver.
 - get_invoice_adjustment — Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.
+- assess_late_charges — Propose assessing late charges on overdue invoices as of a date, as one debit memo per customer.
 - send_invoice — Propose emailing an invoice to the customer.
 - list_invoice_share_candidates — List the teammates an invoice can be shared with: only people whose role lets them read invoices.
 - share_invoice — Propose sharing an invoice with teammates, who get a notification and an email with your note and a link to it.

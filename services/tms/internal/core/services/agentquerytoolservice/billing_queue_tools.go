@@ -93,8 +93,7 @@ func buildBillingQueueList(
 		name:         "list_billing_queue_items",
 		entityPlural: "billing queue items",
 		summary: "List billing queue items, the shipments waiting on a biller. Open one with " +
-			"get_billing_queue_item before proposing a decision; Posted items appear only " +
-			"when status is Posted.",
+			"get_billing_queue_item before deciding it; Posted items need status Posted.",
 		resource: permission.ResourceBillingQueue,
 		config:   querybuilder.GetFieldConfiguration((*billingqueue.BillingQueueItem)(nil)),
 		fields: []listField{
@@ -112,6 +111,11 @@ func buildBillingQueueList(
 				Note: "a user id; isnull for unassigned",
 			},
 			{Name: "billToCustomerId", Kind: filterText, Note: "the payer, from list_customers"},
+			{
+				Name: "id",
+				Kind: filterText,
+				Note: "in with several ids reads them together",
+			},
 			{Name: fieldNumber, Kind: filterText, Sortable: true},
 			{Name: "shipment.proNumber", Kind: filterText},
 			{

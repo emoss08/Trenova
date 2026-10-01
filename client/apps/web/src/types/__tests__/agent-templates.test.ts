@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest";
  */
 function serverTemplates(): string[] {
   return goEnumValues({
-    file: "services/tms/internal/core/domain/agentdefinition/enums.go",
+    file: "services/tms/internal/core/domain/agentdefinition/templates.go",
     typeName: "Template",
   });
 }

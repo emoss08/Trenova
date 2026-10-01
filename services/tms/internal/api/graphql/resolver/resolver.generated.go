@@ -372,16 +372,17 @@ func FromServices(s *Services) *Resolver {
 		AccountTypeService: s.AccountTypeService,
 	}
 	agentDeps := &agentresolver.Deps{
-		Core:                   s.Core,
-		AgentRunService:        s.AgentRunService,
-		AgentProposalService:   s.AgentProposalService,
-		AgentPlanService:       s.AgentPlanService,
-		AgentMemoryService:     s.AgentMemoryService,
-		AgentEvaluationService: s.AgentEvaluationService,
-		AgentExceptionService:  s.AgentExceptionService,
-		AgentDecisionService:   s.AgentDecisionService,
-		AgentTools:             s.AgentTools,
-		AgentControlService:    s.AgentControlService,
+		Core:                      s.Core,
+		AgentRunService:           s.AgentRunService,
+		AgentProposalService:      s.AgentProposalService,
+		AgentPlanService:          s.AgentPlanService,
+		AgentMemoryService:        s.AgentMemoryService,
+		AgentEvaluationService:    s.AgentEvaluationService,
+		AgentExceptionService:     s.AgentExceptionService,
+		AgentDecisionService:      s.AgentDecisionService,
+		AgentDecisionQueueService: s.AgentDecisionQueueService,
+		AgentTools:                s.AgentTools,
+		AgentControlService:       s.AgentControlService,
 	}
 	agentdefinitionDeps := &agentdefinitionresolver.Deps{
 		Core:                   s.Core,

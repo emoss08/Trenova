@@ -929,6 +929,20 @@ export const assistantProposalSchema = z.object({
    */
   agentId: z.string().nullish(),
   agentName: z.string().nullish(),
+  /** When the agent proposed it, in Unix seconds; 0 from a server that does not say. */
+  createdAt: z
+    .number()
+    .nullish()
+    .transform((value) => value ?? 0),
+  /** When a person decided it, in Unix seconds; absent while it waits. */
+  decidedAt: z.number().nullish(),
+  /** Who decided it; empty while it waits. */
+  decidedByUserId: optionalIdSchema,
+  /** What the person told the agent with the decision; empty when they said nothing. */
+  decisionNote: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
 });
 
 export const assistantProposalListSchema = z.object({
@@ -951,6 +965,8 @@ export const assistantPlanSchema = z.object({
   failedStep: z.number().int().nullish(),
   failureError: z.string().optional().default(""),
   decidedAt: z.number().nullish(),
+  /** Who decided the plan; empty while it waits. */
+  decidedByUserId: optionalIdSchema,
   /** When a pending plan stops being decidable. */
   expiresAt: z.number().nullish().default(0),
   hold: proposalHoldSchema.nullish(),

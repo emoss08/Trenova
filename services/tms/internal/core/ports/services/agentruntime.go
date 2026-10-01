@@ -222,7 +222,8 @@ type ToolObservation struct {
 	Data   any
 	Failed bool
 	// Action is the write the call proposed or made, when it was a write.
-	Action *PendingAction
+	Action  *PendingAction
+	Earlier []string
 }
 
 // KeepsDocuments reports whether a run may publish a document: somewhere
@@ -232,8 +233,10 @@ func (r *RunRequest) KeepsDocuments() bool {
 }
 
 type DecisionRequest struct {
-	ProposalID pulid.ID
-	ToolName   string
+	ProposalID  pulid.ID
+	ProposalIDs []pulid.ID
+	PlanID      pulid.ID
+	ToolName    string
 }
 
 // ShownArtifact is what the person now sees for a tool call, so the model can

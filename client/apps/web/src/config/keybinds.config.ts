@@ -49,6 +49,30 @@ export const keybindGroups: KeybindGroup[] = [
     ],
   },
   {
+    id: "approval-box",
+    label: "Approval box",
+    keybinds: [
+      {
+        id: "approval-approve",
+        label: "Approve",
+        keys: ["Ctrl", "Enter"],
+        description: "Approve the change the approval box shows; Enter alone never approves",
+      },
+      {
+        id: "approval-tell",
+        label: "Tell the agent instead",
+        keys: ["Esc"],
+        description: "Open or close the note that turns the change down and tells the agent why",
+      },
+      {
+        id: "approval-later",
+        label: "Decide later",
+        keys: ["Alt", "L"],
+        description: "Put the waiting decisions off and bring back the message box",
+      },
+    ],
+  },
+  {
     id: "command-palette",
     label: "Command palette",
     keybinds: [

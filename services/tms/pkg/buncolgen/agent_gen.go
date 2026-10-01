@@ -58,6 +58,7 @@ var AgentDecisionColumns = struct {
 	Decision             Column // "decision" → qualified: "ad.decision"
 	Modifications        Column // "modifications" → qualified: "ad.modifications"
 	ReasonCode           Column // "reason_code" → qualified: "ad.reason_code"
+	Note                 Column // "note" → qualified: "ad.note"
 	TraceID              Column // "trace_id" → qualified: "ad.trace_id"
 	Preview              Column // "preview" → qualified: "ad.preview"
 	PreviewDigest        Column // "preview_digest" → qualified: "ad.preview_digest"
@@ -76,6 +77,7 @@ var AgentDecisionColumns = struct {
 	Decision:             NewColumn("decision", "ad"),
 	Modifications:        NewColumn("modifications", "ad"),
 	ReasonCode:           NewColumn("reason_code", "ad"),
+	Note:                 NewColumn("note", "ad"),
 	TraceID:              NewColumn("trace_id", "ad"),
 	Preview:              NewColumn("preview", "ad"),
 	PreviewDigest:        NewColumn("preview_digest", "ad"),
@@ -100,6 +102,7 @@ var AgentDecisionFieldMap = map[string]string{
 	"decision":             "decision",
 	"modifications":        "modifications",
 	"reasonCode":           "reason_code",
+	"note":                 "note",
 	"traceId":              "trace_id",
 	"preview":              "preview",
 	"previewDigest":        "preview_digest",
@@ -122,6 +125,7 @@ var AgentDecisionInsertableColumns = []string{
 	"decision",
 	"modifications",
 	"reason_code",
+	"note",
 	"trace_id",
 	"preview",
 	"preview_digest",
@@ -206,6 +210,7 @@ var AgentDecisionFilter = struct {
 	Decision             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decision" → DB: "decision"
 	Modifications        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modifications" → DB: "modifications"
 	ReasonCode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasonCode" → DB: "reason_code"
+	Note                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "note" → DB: "note"
 	TraceID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
 	Preview              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preview" → DB: "preview"
 	PreviewDigest        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewDigest" → DB: "preview_digest"
@@ -241,6 +246,9 @@ var AgentDecisionFilter = struct {
 	},
 	ReasonCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("reasonCode", op, value)
+	},
+	Note: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("note", op, value)
 	},
 	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("traceId", op, value)
