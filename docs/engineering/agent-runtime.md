@@ -62,7 +62,10 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   activity, so the Temporal UI and the SDK's metrics show each tool as itself.
   A tool that fails after its retries is reported to the model as a failed
   call and the turn goes on. `run_report`, `compare_report_runs` and
-  `plan_dispatch` run on the heavy queue whichever queue called them.
+  `plan_dispatch` run on the heavy queue whichever queue called them. Being
+  dynamic, its input is opaque to the tenant interceptor, so the activity binds
+  the run's tenant for row-level security itself and refuses a call that names
+  none (see [row-level-security.md](row-level-security.md)).
 - **Every call is held to its tool's whole schema** in the dispatch activity,
   reads and writes alike, before the tool, a preview or a card sees it. A
   misnamed required parameter is still renamed (`aliasedArguments`) and the

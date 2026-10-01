@@ -129,7 +129,12 @@ the scope, on a view that is not `security_invoker`, and on a new
 **A request or job** gets its scope from the session, API key or capture device
 (HTTP and GraphQL) or from its input (Temporal: a `TenantInfo`, an
 organization/business unit pair, or a type implementing `dbscope.TenantScoped`).
-Code that starts work any other way binds `dbscope.WithTenant` itself.
+Code that starts work any other way binds `dbscope.WithTenant` itself. A dynamic
+activity is one such way: the interceptor sees only its opaque encoded arguments, so the
+agent tool activity (`agentflow.runTool`) decodes its input and binds the run's tenant
+before it dispatches, and refuses a call that names none. Work that outlives its request on
+a detached context (a usage row written in the background, a decision follow-up) binds its
+own tenant with `dbscope.WithValidTenant` rather than trusting the caller's scope.
 
 **Seeing every tenant** is `ctx = dbscope.WithSystem(ctx, reason)` in the one
 method that needs it, before the `dbtx` call, with a constant reason. The

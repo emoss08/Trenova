@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.opentelemetry.io/otel/trace"
 	"go.temporal.io/sdk/activity"
@@ -228,6 +229,15 @@ func (a *Activities) runTool(
 			ErrTypeBadToolInput, nil,
 		)
 	}
+
+	tenant := in.Run.Actor.TenantInfo().DBTenant()
+	if !tenant.Valid() {
+		return nil, temporal.NewNonRetryableApplicationError(
+			fmt.Sprintf("tool %q was sent a call with no tenant", name),
+			ErrTypeBadToolInput, nil,
+		)
+	}
+	ctx = dbscope.WithTenant(ctx, tenant)
 
 	req := in.Run.request()
 	req.Steps = a.steps

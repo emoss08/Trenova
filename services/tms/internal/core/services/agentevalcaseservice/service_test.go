@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,6 +28,8 @@ type fakeCases struct {
 	candidates []repositories.EvalCaseCaptureCandidate
 	purges     []repositories.PurgeExpiredEvalCasesRequest
 	creates    int
+	createdIn  []dbscope.Tenant
+	purgedIn   []dbscope.Tenant
 }
 
 func newFakeCases() *fakeCases {
@@ -34,10 +37,12 @@ func newFakeCases() *fakeCases {
 }
 
 func (f *fakeCases) Create(
-	_ context.Context,
+	ctx context.Context,
 	entity *agentquality.EvalCase,
 ) (*agentquality.EvalCase, error) {
 	f.creates++
+	scope, _ := dbscope.TenantFrom(ctx)
+	f.createdIn = append(f.createdIn, scope)
 	entity.ID = pulid.MustNew("aec_")
 	stored := *entity
 	f.byID[entity.ID] = &stored
@@ -115,10 +120,12 @@ func (f *fakeCases) ListCaptureCandidates(
 }
 
 func (f *fakeCases) PurgeExpired(
-	_ context.Context,
+	ctx context.Context,
 	req repositories.PurgeExpiredEvalCasesRequest,
 ) (int, error) {
 	f.purges = append(f.purges, req)
+	scope, _ := dbscope.TenantFrom(ctx)
+	f.purgedIn = append(f.purgedIn, scope)
 
 	return 0, nil
 }
@@ -701,6 +708,10 @@ func TestCaptureCandidates_CountsWhatHappened(t *testing.T) {
 	assert.Equal(t, 2, result.Scanned)
 	assert.Equal(t, 1, result.Captured)
 	assert.Equal(t, 1, result.Failed)
+	require.Len(t, w.cases.createdIn, 1)
+	assert.Equal(t, w.tenant.OrgID, w.cases.createdIn[0].OrganizationID,
+		"the sweep lists every tenant, so each capture binds its own tenant")
+	assert.Equal(t, w.tenant.BuID, w.cases.createdIn[0].BusinessUnitID)
 
 	again, err := w.service.CaptureCandidates(
 		t.Context(),
@@ -733,6 +744,9 @@ func TestPurge_AppliesEachOrganizationsRetention(t *testing.T) {
 	assert.Equal(t, w.tenant.OrgID, scoped.TenantInfo.OrgID)
 	assert.Equal(t, int64(1_700_000_000-365*86400), scoped.CreatedBefore)
 	assert.False(t, scoped.AllTenants)
+	assert.Equal(t, w.tenant.OrgID, w.cases.purgedIn[0].OrganizationID,
+		"an organization's own retention runs under that organization's scope")
+	assert.Equal(t, w.tenant.BuID, w.cases.purgedIn[0].BusinessUnitID)
 	assert.True(t, w.cases.purges[1].AllTenants, "explicit expiry applies everywhere")
 	assert.Zero(t, w.cases.purges[1].CreatedBefore)
 }

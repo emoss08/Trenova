@@ -76,6 +76,14 @@ func WithTenant(ctx context.Context, tenant Tenant) context.Context {
 	return context.WithValue(ctx, scopeKey{}, TenantScope(tenant))
 }
 
+func WithValidTenant(ctx context.Context, tenant Tenant) context.Context {
+	if !tenant.Valid() {
+		return ctx
+	}
+
+	return WithTenant(ctx, tenant)
+}
+
 func WithSystem(ctx context.Context, reason string) context.Context {
 	return context.WithValue(
 		ctx,
