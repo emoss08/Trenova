@@ -971,6 +971,24 @@ func newIntegrationShipmentService(
 	*seedtest.TestData,
 ) {
 	t.Helper()
+	return newIntegrationShipmentServiceWith(t, ctx, db, nil)
+}
+
+func newIntegrationShipmentServiceWith(
+	t *testing.T,
+	ctx context.Context,
+	db *bun.DB,
+	override func(*Params),
+) (
+	portservices.ShipmentService,
+	repositories.ShipmentRepository,
+	repositories.ShipmentControlRepository,
+	repositories.AccessorialChargeRepository,
+	pagination.TenantInfo,
+	*testutil.ShipmentIntegrationFixture,
+	*seedtest.TestData,
+) {
+	t.Helper()
 
 	conn := postgres.NewTestConnection(db)
 	moveRepo := shipmentmoverepository.New(shipmentmoverepository.Params{
@@ -1060,7 +1078,7 @@ func newIntegrationShipmentService(
 	realtime := &mocks.NoopRealtimeService{}
 	commercial := newTestCommercialCalculator(t, formulaSvc, accessorialRepo)
 
-	svc := New(Params{
+	params := Params{
 		Logger:          zap.NewNop(),
 		DB:              conn,
 		Repo:            shipmentRepo,
@@ -1075,7 +1093,11 @@ func newIntegrationShipmentService(
 		Coordinator:     newStateCoordinator(),
 		Commercial:      commercial,
 		Realtime:        realtime,
-	})
+	}
+	if override != nil {
+		override(&params)
+	}
+	svc := New(params)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenantInfo := pagination.TenantInfo{

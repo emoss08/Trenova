@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -152,4 +153,27 @@ func (noopRealtimeService) PublishResourceInvalidation(
 	*services.PublishResourceInvalidationRequest,
 ) error {
 	return nil
+}
+
+func TestServiceRecordDefersObserversUntilTheTransactionCommits(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingShipmentEventObserver{}
+	repo := &fakeShipmentEventRepository{}
+	svc := &service{
+		l:         testLogger(),
+		repo:      repo,
+		realtime:  noopRealtimeService{},
+		observers: []services.ShipmentEventObserver{observer},
+	}
+	txCtx, hooks := ports.WithAfterCommitHooks(t.Context())
+
+	err := svc.Record(txCtx, validRecordShipmentEventParams(t))
+
+	require.NoError(t, err)
+	require.Len(t, repo.inserted, 1)
+	require.Empty(t, observer.events, "nothing reads the event before it is committed")
+
+	hooks.Run(t.Context())
+	require.Len(t, observer.events, 1)
 }

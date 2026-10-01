@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/ports"
+
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -61,6 +63,18 @@ func (s *service) Record(
 		return err
 	}
 
+	ports.AfterCommit(ctx, func(committed context.Context) {
+		s.announce(committed, entity, params.Actor)
+	})
+
+	return nil
+}
+
+func (s *service) announce(
+	ctx context.Context,
+	entity *shipmentevent.Event,
+	actor services.AuditActor,
+) {
 	s.notifyObservers(ctx, entity)
 
 	if pubErr := realtimeinvalidation.Publish(
@@ -69,10 +83,10 @@ func (s *service) Record(
 		&realtimeinvalidation.PublishParams{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
-			ActorUserID:    params.Actor.UserID,
-			ActorType:      params.Actor.PrincipalType,
-			ActorID:        params.Actor.PrincipalID,
-			ActorAPIKeyID:  params.Actor.APIKeyID,
+			ActorUserID:    actor.UserID,
+			ActorType:      actor.PrincipalType,
+			ActorID:        actor.PrincipalID,
+			ActorAPIKeyID:  actor.APIKeyID,
 			Resource:       realtimeResource,
 			Action:         "created",
 			RecordID:       entity.ID,
@@ -81,8 +95,6 @@ func (s *service) Record(
 	); pubErr != nil {
 		s.l.Warn("failed to publish shipment event invalidation", zap.Error(pubErr))
 	}
-
-	return nil
 }
 
 func (s *service) notifyObservers(ctx context.Context, event *shipmentevent.Event) {

@@ -295,65 +295,100 @@ func (s *service) Create(
 		entity.ID = pulid.MustNew("shp_")
 	}
 
-	createdEntity, err := s.repo.Create(ctx, entity)
+	var createdEntity *shipment.Shipment
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		created, txErr := s.persistCreate(txCtx, entity, prepared, actor)
+		createdEntity = created
+		return txErr
+	})
 	if err != nil {
 		log.Error("failed to create shipment", zap.Error(err))
 		return nil, err
 	}
 
+	ports.AfterCommit(ctx, func(committed context.Context) {
+		s.announceCreated(committed, createdEntity, auditActor)
+	})
+
+	return createdEntity, nil
+}
+
+func (s *service) persistCreate(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	prepared *createPreparation,
+	actor *services.RequestActor,
+) (*shipment.Shipment, error) {
+	auditActor := actor.AuditActor()
+	created, err := s.repo.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = s.commercial.CommitContractRating(
-		ctx, createdEntity, prepared.rating, auditActor.UserID,
+		ctx, created, prepared.rating, auditActor.UserID,
 	); err != nil {
 		return nil, err
 	}
 
-	if createdEntity.RateQuoteID != nil {
-		createdEntity, err = s.repo.Update(ctx, createdEntity)
-		if err != nil {
-			log.Error("failed to link shipment to its rate quote", zap.Error(err))
-			return nil, err
+	if created.RateQuoteID != nil {
+		if created, err = s.repo.Update(ctx, created); err != nil {
+			return nil, fmt.Errorf("link shipment to its rate quote: %w", err)
 		}
 	}
 
-	s.recordCapabilityDeviations(ctx, createdEntity, prepared.advisories)
-	s.syncPermits(ctx, createdEntity, actor)
+	if err = s.recordCapabilityDeviations(ctx, created, prepared.advisories); err != nil {
+		return nil, err
+	}
+	if err = s.syncPermits(ctx, created, actor); err != nil {
+		return nil, err
+	}
 
-	if err = s.logShipmentAction(
-		createdEntity,
+	if err = s.eventService.Record(ctx, shipmenteventservice.BuildShipmentCreated(
+		tenantRefForShipment(created),
+		created,
+		auditActor,
+	)); err != nil {
+		return nil, fmt.Errorf("record shipment created event: %w", err)
+	}
+
+	return created, nil
+}
+
+func (s *service) announceCreated(
+	ctx context.Context,
+	created *shipment.Shipment,
+	auditActor services.AuditActor,
+) {
+	if err := s.logShipmentAction(
+		created,
 		auditActor,
 		permission.OpCreate,
 		nil,
-		createdEntity,
+		created,
 		auditservice.WithComment("Shipment created"),
 	); err != nil {
-		log.Error("failed to log audit action", zap.Error(err))
+		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
-	if err = s.publishShipmentInvalidation(
+	if err := s.publishShipmentInvalidation(
 		ctx,
-		createdEntity,
+		created,
 		auditActor,
 		"created",
-		createdEntity,
+		created,
 	); err != nil {
-		log.Warn("failed to publish realtime invalidation", zap.Error(err))
+		s.l.Warn("failed to publish realtime invalidation", zap.Error(err))
 	}
 
-	s.recordShipmentEvent(ctx, shipmenteventservice.BuildShipmentCreated(
-		tenantRefForShipment(createdEntity),
-		createdEntity,
-		auditActor,
-	))
 	services.PublishAgentEvent(ctx, s.agentEvents, services.AgentEvent{
 		Kind:      agent.EventShipmentCreated,
-		SubjectID: createdEntity.ID,
+		SubjectID: created.ID,
 		TenantInfo: pagination.TenantInfo{
-			OrgID: createdEntity.OrganizationID,
-			BuID:  createdEntity.BusinessUnitID,
+			OrgID: created.OrganizationID,
+			BuID:  created.BusinessUnitID,
 		},
 	})
-
-	return createdEntity, nil
 }
 
 func (s *service) Update( //nolint:cyclop // legacy workflow
@@ -475,8 +510,15 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	s.recordCapabilityDeviations(ctx, updatedEntity, advisories)
-	s.syncPermits(ctx, updatedEntity, actor)
+	if err = s.recordCapabilityDeviations(ctx, updatedEntity, advisories); err != nil {
+		log.Error("failed to record capability deviations", zap.Error(err))
+	}
+	if err = s.syncPermits(ctx, updatedEntity, actor); err != nil {
+		log.Error("failed to sync permit requirements; dispatch may not be blocked",
+			zap.String("shipmentId", updatedEntity.ID.String()),
+			zap.Error(err),
+		)
+	}
 
 	if err = s.advanceContinuityForCompletedMoves(ctx, original, updatedEntity); err != nil {
 		return nil, err

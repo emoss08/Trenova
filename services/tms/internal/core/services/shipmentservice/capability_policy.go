@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"go.uber.org/zap"
-
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -56,24 +54,23 @@ func (s *service) recordCapabilityDeviations(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	advisories []*errortypes.AdvisoryError,
-) {
+) error {
 	if s.modeProfileService == nil || entity == nil {
-		return
+		return nil
 	}
 
-	policy, resolveErr := resolveProfileForShipment(ctx, s.modeProfileService, entity)
-	if errors.Is(resolveErr, services.ErrNoModeProfileConfigured) {
-		return
+	policy, err := resolveProfileForShipment(ctx, s.modeProfileService, entity)
+	if errors.Is(err, services.ErrNoModeProfileConfigured) {
+		return nil
 	}
-	if resolveErr != nil {
-		s.l.Error("failed to resolve mode profile for deviations", zap.Error(resolveErr))
-		return
+	if err != nil {
+		return fmt.Errorf("resolve mode profile for deviations: %w", err)
 	}
 	if policy == nil {
-		return
+		return nil
 	}
 
-	if err := s.modeProfileService.RecordDeviations(ctx, &services.RecordDeviationsRequest{
+	if err = s.modeProfileService.RecordDeviations(ctx, &services.RecordDeviationsRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -83,34 +80,24 @@ func (s *service) recordCapabilityDeviations(
 		Policy:       policy,
 		Advisories:   advisories,
 	}); err != nil {
-		s.l.Error("failed to record capability deviations", zap.Error(err))
+		return fmt.Errorf("record capability deviations: %w", err)
 	}
+	return nil
 }
 
-// syncPermits persists the permit derivation and reconciles the dispatch hold
-// after the shipment row is written. It runs post-persist because a hold
-// references the shipment, and because validation advisories cannot stop a
-// dispatch — only a hold can.
-//
-// A failure here is logged and swallowed rather than returned: the shipment is
-// already committed by this point, so surfacing an error would report a failed
-// save that actually succeeded. The log is at Error because the consequence is
-// an oversize load left dispatchable.
 func (s *service) syncPermits(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	actor *services.RequestActor,
-) {
+) error {
 	if s.permitService == nil || entity == nil {
-		return
+		return nil
 	}
 
 	if _, err := s.permitService.Sync(ctx, entity, actor); err != nil {
-		s.l.Error("failed to sync permit requirements; dispatch may not be blocked",
-			zap.String("shipmentId", entity.ID.String()),
-			zap.Error(err),
-		)
+		return fmt.Errorf("sync permit requirements: %w", err)
 	}
+	return nil
 }
 
 func emit(
