@@ -49,7 +49,7 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 
 | Layer | Technology |
 | --- | --- |
-| API | Go 1.26, [Gin](https://github.com/gin-gonic/gin), [gqlgen](https://github.com/99designs/gqlgen) GraphQL, OpenAPI |
+| API | Go 1.26, [Gin](https://github.com/gin-gonic/gin), [gqlgen](https://github.com/99designs/gqlgen) GraphQL |
 | Database | PostgreSQL via [pgx](https://github.com/jackc/pgx), SQL-first migrations |
 | Search and cache | Meilisearch, Redis (JSON and Streams) |
 | Change data capture | [GTC](./services/gtc): a Go PostgreSQL logical-replication connector that projects rows into Meilisearch and Redis |
