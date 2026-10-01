@@ -1,0 +1,203 @@
+package tenantresolver
+
+import (
+	"testing"
+
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
+
+	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+)
+
+func TestQueryResolver_Organization_DelegatesToService(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	expected := &tenant.Organization{
+		ID:             orgID,
+		BusinessUnitID: buID,
+		Name:           "Acme Logistics",
+	}
+	organizationService := mocks.NewMockOrganizationService(t)
+	organizationService.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetOrganizationByIDRequest) bool {
+			return req.TenantInfo.OrgID == orgID &&
+				req.TenantInfo.BuID == buID &&
+				req.TenantInfo.UserID == userID &&
+				req.IncludeState &&
+				!req.IncludeBU
+		})).
+		Return(expected, nil).
+		Once()
+	permissionEngine := &resolvertest.RecordingPermissionEngine{}
+	resolver := &QueryResolver{&Deps{
+		Core:                &base.Core{PermissionEngine: permissionEngine},
+		OrganizationService: organizationService,
+	}}
+	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{
+		PrincipalType:  authctx.PrincipalTypeUser,
+		PrincipalID:    userID,
+		UserID:         userID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+	})
+
+	result, err := resolver.Organization(ctx, orgID.String(), nil, nil)
+	require.NoError(t, err)
+
+	assert.Same(t, expected, result)
+	require.NotNil(t, permissionEngine.Request)
+	assert.Equal(t, permission.ResourceOrganization.String(), permissionEngine.Request.Resource)
+	assert.Equal(t, permission.OpRead, permissionEngine.Request.Operation)
+}
+
+func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	stateID := pulid.MustNew("us_")
+	loginSlug := "acme-logistics"
+	logoURL := "organization/logo/acme.png"
+	bucketName := "acme-bucket"
+	addressLine2 := "Suite 200"
+	taxID := "12-3456789"
+	brokerageEnabled := false
+	assetOperationsEnabled := true
+	expected := &tenant.Organization{
+		ID:             orgID,
+		BusinessUnitID: buID,
+		StateID:        stateID,
+		Name:           "Acme Logistics",
+		Version:        3,
+	}
+	organizationService := mocks.NewMockOrganizationService(t)
+	organizationService.EXPECT().
+		Update(mock.Anything, mock.MatchedBy(func(entity *tenant.Organization) bool {
+			return entity.ID == orgID &&
+				entity.BusinessUnitID == buID &&
+				entity.StateID == stateID &&
+				entity.Version == 3 &&
+				entity.Name == "Acme Logistics" &&
+				entity.LoginSlug == loginSlug &&
+				entity.ScacCode == "ACME" &&
+				entity.DOTNumber == "1234567" &&
+				entity.LogoURL == logoURL &&
+				entity.BucketName == bucketName &&
+				entity.AddressLine1 == "123 Main St" &&
+				entity.AddressLine2 == addressLine2 &&
+				entity.City == "Chicago" &&
+				entity.PostalCode == "60601" &&
+				entity.Timezone == "America/Chicago" &&
+				entity.TaxID == taxID &&
+				!entity.BrokerageEnabled &&
+				entity.AssetOperationsEnabled
+		})).
+		Return(expected, nil).
+		Once()
+	permissionEngine := &resolvertest.RecordingPermissionEngine{}
+	resolver := &MutationResolver{&Deps{
+		Core:                &base.Core{PermissionEngine: permissionEngine},
+		OrganizationService: organizationService,
+	}}
+	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{
+		PrincipalType:  authctx.PrincipalTypeUser,
+		PrincipalID:    userID,
+		UserID:         userID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+	})
+
+	result, err := resolver.UpdateOrganization(ctx, orgID.String(), gqlmodel.OrganizationInput{
+		Version:      3,
+		Name:         "Acme Logistics",
+		LoginSlug:    &loginSlug,
+		SCACCode:     "ACME",
+		DOTNumber:    "1234567",
+		LogoURL:      &logoURL,
+		BucketName:   &bucketName,
+		AddressLine1: "123 Main St",
+		AddressLine2: &addressLine2,
+		City:         "Chicago",
+		StateID:      stateID.String(),
+		PostalCode:   "60601",
+		Timezone:     "America/Chicago",
+		TaxID:        &taxID,
+
+		BrokerageEnabled:       &brokerageEnabled,
+		AssetOperationsEnabled: &assetOperationsEnabled,
+	})
+	require.NoError(t, err)
+
+	assert.Same(t, expected, result)
+	require.NotNil(t, permissionEngine.Request)
+	assert.Equal(t, permission.ResourceOrganization.String(), permissionEngine.Request.Resource)
+	assert.Equal(t, permission.OpUpdate, permissionEngine.Request.Operation)
+}
+
+func TestMutationResolver_UpdateOrganization_PreservesOmittedCapabilityFlags(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	stateID := pulid.MustNew("us_")
+	stored := &tenant.Organization{
+		ID:                     orgID,
+		BusinessUnitID:         buID,
+		BrokerageEnabled:       false,
+		AssetOperationsEnabled: true,
+	}
+	organizationService := mocks.NewMockOrganizationService(t)
+	organizationService.EXPECT().
+		GetByID(mock.Anything, repositories.GetOrganizationByIDRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		}).
+		Return(stored, nil).
+		Once()
+	organizationService.EXPECT().
+		Update(mock.Anything, mock.MatchedBy(func(entity *tenant.Organization) bool {
+			return !entity.BrokerageEnabled && entity.AssetOperationsEnabled
+		})).
+		Return(stored, nil).
+		Once()
+	resolver := &MutationResolver{&Deps{
+		Core:                &base.Core{PermissionEngine: &resolvertest.RecordingPermissionEngine{}},
+		OrganizationService: organizationService,
+	}}
+	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{
+		PrincipalType:  authctx.PrincipalTypeUser,
+		PrincipalID:    userID,
+		UserID:         userID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+	})
+
+	result, err := resolver.UpdateOrganization(ctx, orgID.String(), gqlmodel.OrganizationInput{
+		Version:      1,
+		Name:         "Acme Logistics",
+		SCACCode:     "ACME",
+		DOTNumber:    "1234567",
+		AddressLine1: "123 Main St",
+		City:         "Chicago",
+		StateID:      stateID.String(),
+		PostalCode:   "60601",
+		Timezone:     "America/Chicago",
+	})
+	require.NoError(t, err)
+	assert.Same(t, stored, result)
+}

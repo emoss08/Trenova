@@ -1,0 +1,54 @@
+schema:
+  - schema/*.graphqls
+
+exec:
+  layout: follow-schema
+  dir: generated
+  package: generated
+  filename_template: "{name}.generated.go"
+  worker_limit: 4
+
+model:
+  filename: gqlmodel/models_gen.go
+  package: gqlmodel
+
+resolver:
+  layout: follow-schema
+  dir: resolver
+  package: resolver
+  filename_template: "{name}.resolvers.go"
+  omit_template_comment: true
+
+omit_complexity: true
+omit_gqlgen_version_in_file_notice: true
+skip_mod_tidy: true
+
+models:
+  Node:
+    model:
+      - github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model.Node
+  SearchResult:
+    model:
+      - github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model.SearchResult
+  Status:
+    model:
+      - github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model.Status
+  Owner:
+    model:
+      - github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model.Owner
+  Truck:
+    model:
+      - github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model.Truck
+    fields:
+      loadCount:
+        resolver: true
+      failing:
+        resolver: true
+      nullableFailing:
+        resolver: true
+  Driver:
+    model:
+      - github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model.Driver
+    fields:
+      truck:
+        resolver: true
