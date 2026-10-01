@@ -5,7 +5,7 @@ anonymized dataset for fine-tuning a document-extraction model. Trenova operator
 customer can start one, and nothing in a customer's API reaches the files. A customer sees only
 their consent switch and a list of the exports that included their data.
 
-Read [ai-corrections.md](ai-corrections.md) first: that doc covers what a correction is and how
+Read [ai-corrections.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-corrections.md) first: that doc covers what a correction is and how
 consent is recorded.
 
 ## Running one

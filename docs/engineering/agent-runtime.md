@@ -897,7 +897,7 @@ code only carries the two results between them.
 Hybrid tool ranking took no gate. The turn's query vector rides on `ToolSetState.Query`, and
 the tools a `find_tools` call found ride on `FindToolsResult.Found` into the saved message;
 both are optional data, and a history without them replays by keyword. See "Ranking" in
-[ai-retrieval.md](ai-retrieval.md).
+[ai-retrieval.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-retrieval.md).
 
 Tracing and provenance took no gate. No span is started in workflow code; the
 root is emitted by the activity that files the run or turn. What rides through
@@ -953,7 +953,7 @@ each of them.
 The tools that take a delivered shipment to a sent invoice (transfer, the billing queue
 decisions, posting and sending), their tiers, and why approving, canceling, posting and
 sending always stop at a proposal a person approves, are described in
-[agent-billing-tools.md](agent-billing-tools.md). An agent principal may move a billing
+[agent-billing-tools.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/agent-billing-tools.md). An agent principal may move a billing
 queue item into review, onto hold, into exception or back to operations; the queue refuses
 it every other status.
 

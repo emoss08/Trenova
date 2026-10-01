@@ -4,7 +4,7 @@ name: Agent Evals
 # either. The deterministic job needs no model and no secret: it proves the
 # harness contains a model that has been compromised. The live job asks a real
 # model and measures how often it declines the injected instruction at all.
-# See docs/engineering/agent-evals.md.
+# See https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/agent-evals.md.
 
 on:
   push:
