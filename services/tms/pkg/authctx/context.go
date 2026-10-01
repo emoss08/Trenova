@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 )
@@ -110,6 +111,15 @@ func SetAuthContext(c *gin.Context, userID, buID, orgID pulid.ID) {
 	SetUserID(c, userID)
 	SetBusinessUnitID(c, buID)
 	SetOrganizationID(c, orgID)
+	bindDBScope(c, userID, buID, orgID)
+}
+
+func bindDBScope(c *gin.Context, userID, buID, orgID pulid.ID) {
+	tenant := dbscope.Tenant{OrganizationID: orgID, BusinessUnitID: buID, UserID: userID}
+	c.Set(dbscope.GinContextKey, dbscope.TenantScope(tenant))
+	if c.Request != nil {
+		c.Request = c.Request.WithContext(dbscope.WithTenant(c.Request.Context(), tenant))
+	}
 }
 
 type SessionAuthContextParams struct {
@@ -166,6 +176,7 @@ func SetAPIKeyContext(
 	c.Set(string(APIKeyID), principalID)
 	SetBusinessUnitID(c, buID)
 	SetOrganizationID(c, orgID)
+	bindDBScope(c, pulid.Nil, buID, orgID)
 }
 
 // SetCaptureDeviceContext marks the request as coming from a paired Trenova
@@ -179,6 +190,7 @@ func SetCaptureDeviceContext(c *gin.Context, deviceID, userID, buID, orgID pulid
 	SetUserID(c, userID)
 	SetBusinessUnitID(c, buID)
 	SetOrganizationID(c, orgID)
+	bindDBScope(c, userID, buID, orgID)
 }
 
 type AuthContext struct {

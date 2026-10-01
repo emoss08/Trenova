@@ -58,10 +58,16 @@ func (s Scope) Matches(other Scope) bool {
 	return s == other
 }
 
+const GinContextKey = "trenova.dbscope"
+
 type scopeKey struct{}
 
+func TenantScope(tenant Tenant) Scope {
+	return Scope{kind: KindTenant, tenant: tenant}
+}
+
 func WithTenant(ctx context.Context, tenant Tenant) context.Context {
-	return context.WithValue(ctx, scopeKey{}, Scope{kind: KindTenant, tenant: tenant})
+	return context.WithValue(ctx, scopeKey{}, TenantScope(tenant))
 }
 
 func WithSystem(ctx context.Context, reason string) context.Context {
@@ -77,7 +83,11 @@ func From(ctx context.Context) Scope {
 		return Scope{}
 	}
 
-	scope, _ := ctx.Value(scopeKey{}).(Scope)
+	if scope, ok := ctx.Value(scopeKey{}).(Scope); ok {
+		return scope
+	}
+
+	scope, _ := ctx.Value(GinContextKey).(Scope)
 
 	return scope
 }

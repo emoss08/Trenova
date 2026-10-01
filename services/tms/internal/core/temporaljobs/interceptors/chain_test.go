@@ -28,7 +28,9 @@ func TestBuildWorkerInterceptorChain_BothDisabled(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	assert.Empty(t, chain)
+	require.Len(t, chain, 1)
+	_, isTenantScope := chain[0].(*TenantScopeInterceptor)
+	assert.True(t, isTenantScope)
 }
 
 func TestBuildWorkerInterceptorChain_LoggingOnly(t *testing.T) {
@@ -49,8 +51,8 @@ func TestBuildWorkerInterceptorChain_LoggingOnly(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 1)
-	_, ok := chain[0].(*LoggingInterceptor)
+	require.Len(t, chain, 2)
+	_, ok := chain[1].(*LoggingInterceptor)
 	assert.True(t, ok)
 }
 
@@ -74,8 +76,8 @@ func TestBuildWorkerInterceptorChain_MetricsOnly(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 1)
-	_, ok := chain[0].(*MetricsInterceptor)
+	require.Len(t, chain, 2)
+	_, ok := chain[1].(*MetricsInterceptor)
 	assert.True(t, ok)
 }
 
@@ -100,10 +102,10 @@ func TestBuildWorkerInterceptorChain_BothEnabled(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 2)
-	_, ok := chain[0].(*MetricsInterceptor)
+	require.Len(t, chain, 3)
+	_, ok := chain[1].(*MetricsInterceptor)
 	assert.True(t, ok)
-	_, ok = chain[1].(*LoggingInterceptor)
+	_, ok = chain[2].(*LoggingInterceptor)
 	assert.True(t, ok)
 }
 
@@ -127,7 +129,9 @@ func TestBuildWorkerInterceptorChain_MetricsDisabledViaHandler(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	assert.Empty(t, chain)
+	require.Len(t, chain, 1)
+	_, isTenantScope := chain[0].(*TenantScopeInterceptor)
+	assert.True(t, isTenantScope)
 }
 
 func TestBuildWorkerInterceptorChain_DefaultLogLevel(t *testing.T) {
@@ -148,8 +152,8 @@ func TestBuildWorkerInterceptorChain_DefaultLogLevel(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 1)
-	loggingInt, ok := chain[0].(*LoggingInterceptor)
+	require.Len(t, chain, 2)
+	loggingInt, ok := chain[1].(*LoggingInterceptor)
 	require.True(t, ok)
 	assert.Equal(t, "info", loggingInt.logLevel)
 }
@@ -238,12 +242,12 @@ func TestBuildWorkerInterceptorChain_OrderMetricsThenLogging(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 2)
+	require.Len(t, chain, 3)
 
-	_, firstIsMetrics := chain[0].(*MetricsInterceptor)
+	_, firstIsMetrics := chain[1].(*MetricsInterceptor)
 	assert.True(t, firstIsMetrics)
 
-	_, secondIsLogging := chain[1].(*LoggingInterceptor)
+	_, secondIsLogging := chain[2].(*LoggingInterceptor)
 	assert.True(t, secondIsLogging)
 }
 
@@ -265,7 +269,7 @@ func TestBuildWorkerInterceptorChain_NilNilMetricsHandler(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 1)
-	_, ok := chain[0].(*LoggingInterceptor)
+	require.Len(t, chain, 2)
+	_, ok := chain[1].(*LoggingInterceptor)
 	assert.True(t, ok)
 }
