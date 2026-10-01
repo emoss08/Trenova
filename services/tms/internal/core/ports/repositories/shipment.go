@@ -43,11 +43,12 @@ type GetShipmentByIDRequest struct {
 }
 
 type CancelShipmentRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"-"`
-	ShipmentID   pulid.ID              `json:"shipmentId"`
-	CanceledByID pulid.ID              `json:"-"`
-	CanceledAt   int64                 `json:"-"`
-	CancelReason string                `json:"cancelReason"`
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	ShipmentID      pulid.ID              `json:"shipmentId"`
+	CanceledByID    pulid.ID              `json:"-"`
+	CanceledAt      int64                 `json:"-"`
+	CancelReason    string                `json:"cancelReason"`
+	ExpectedVersion int64                 `json:"-"`
 }
 
 func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
@@ -73,9 +74,23 @@ func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
 	return nil
 }
 
+type MoveStatusRestore struct {
+	MoveID pulid.ID
+	Status shipment.MoveStatus
+}
+
+type StopStatusRestore struct {
+	StopID pulid.ID
+	Status shipment.StopStatus
+}
+
 type UncancelShipmentRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	ShipmentID pulid.ID              `json:"shipmentId"`
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	ShipmentID      pulid.ID              `json:"shipmentId"`
+	ExpectedVersion int64                 `json:"-"`
+	RestoredStatus  shipment.Status       `json:"-"`
+	MoveStatuses    []MoveStatusRestore   `json:"-"`
+	StopStatuses    []StopStatusRestore   `json:"-"`
 }
 
 func (r *UncancelShipmentRequest) Validate() *errortypes.MultiError {

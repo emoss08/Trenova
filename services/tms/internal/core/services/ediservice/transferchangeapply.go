@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
@@ -52,12 +53,16 @@ func (s *Service) applyApprovedTransferChange(
 	var updated *shipment.Shipment
 	switch change.ChangeType {
 	case edi.TransferChangeTypeShipmentCancel214:
+		if err = shipmentstate.ValidateCancel(applyCtx.opposite); err != nil {
+			return err
+		}
 		updated, err = s.shipmentRepo.Cancel(ctx, &repositories.CancelShipmentRequest{
-			TenantInfo:   applyCtx.oppositeInfo,
-			ShipmentID:   applyCtx.oppositeID,
-			CanceledByID: actor.UserID,
-			CanceledAt:   appliedAt,
-			CancelReason: transferChangePayloadString(change.Payload, "cancellationReason"),
+			TenantInfo:      applyCtx.oppositeInfo,
+			ShipmentID:      applyCtx.oppositeID,
+			CanceledByID:    actor.UserID,
+			CanceledAt:      appliedAt,
+			CancelReason:    transferChangePayloadString(change.Payload, "cancellationReason"),
+			ExpectedVersion: applyCtx.opposite.Version,
 		})
 	case edi.TransferChangeTypeShipmentStatus214:
 		updated, err = s.shipmentRepo.UpdateStatus(

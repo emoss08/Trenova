@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -32,8 +33,6 @@ func (s *service) PreviewCancel(
 	return &services.ShipmentCancelPreview{Before: original, After: &after}, nil
 }
 
-// planCancel reads the shipment a cancellation is for, refuses one already
-// canceled, and stamps the request with who cancels it and when.
 func (s *service) planCancel(
 	ctx context.Context,
 	req *repositories.CancelShipmentRequest,
@@ -58,12 +57,13 @@ func (s *service) planCancel(
 		return nil, err
 	}
 
-	if original.IsCanceled() {
-		return nil, errortypes.NewBusinessError("shipment is already canceled")
+	if err = shipmentstate.ValidateCancel(original); err != nil {
+		return nil, err
 	}
 
 	req.CanceledByID = actor.AuditActor().UserID
 	req.CanceledAt = timeutils.NowUnix()
+	req.ExpectedVersion = original.Version
 
 	return original, nil
 }

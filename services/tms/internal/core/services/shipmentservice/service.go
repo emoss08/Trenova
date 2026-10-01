@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -26,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -46,6 +48,7 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
+	DB                   ports.DBConnection
 	Repo                 repositories.ShipmentRepository
 	OrderRepo            repositories.OrderRepository
 	CacheRepo            repositories.ShipmentCacheRepository
@@ -83,6 +86,7 @@ type Params struct {
 
 type service struct {
 	l                    *zap.Logger
+	db                   ports.DBConnection
 	repo                 repositories.ShipmentRepository
 	orderRepo            repositories.OrderRepository
 	cacheRepo            repositories.ShipmentCacheRepository
@@ -122,6 +126,7 @@ type service struct {
 func New(p Params) *service { //nolint:gocritic // stable API shape
 	return &service{
 		l:                    p.Logger.Named("service.shipment"),
+		db:                   p.DB,
 		repo:                 p.Repo,
 		orderRepo:            p.OrderRepo,
 		cacheRepo:            p.CacheRepo,
@@ -981,19 +986,29 @@ func (s *service) Cancel(
 		zap.String("shipmentID", req.ShipmentID.String()),
 	)
 
-	updatedEntity, err := s.repo.Cancel(ctx, req)
+	var updatedEntity *shipment.Shipment
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		canceled, txErr := s.repo.Cancel(txCtx, req)
+		if txErr != nil {
+			return txErr
+		}
+
+		if s.continuityRepo != nil {
+			if txErr = s.continuityRepo.RollbackCurrentByShipment(txCtx,
+				repositories.RollbackEquipmentContinuityByShipmentRequest{
+					TenantInfo: req.TenantInfo,
+					ShipmentID: req.ShipmentID,
+				}); txErr != nil {
+				return txErr
+			}
+		}
+
+		updatedEntity = canceled
+		return nil
+	})
 	if err != nil {
 		log.Error("failed to cancel shipment", zap.Error(err))
 		return nil, err
-	}
-	if s.continuityRepo != nil {
-		if err = s.continuityRepo.RollbackCurrentByShipment(ctx,
-			repositories.RollbackEquipmentContinuityByShipmentRequest{
-				TenantInfo: req.TenantInfo,
-				ShipmentID: req.ShipmentID,
-			}); err != nil {
-			return nil, err
-		}
 	}
 
 	if err = s.logShipmentAction(
@@ -1037,7 +1052,7 @@ func (s *service) Uncancel(
 	req *repositories.UncancelShipmentRequest,
 	actor *services.RequestActor,
 ) (*shipment.Shipment, error) {
-	original, err := s.planUncancel(ctx, req)
+	original, _, err := s.planUncancel(ctx, req)
 	if err != nil {
 		return nil, err
 	}

@@ -1062,6 +1062,7 @@ func newIntegrationShipmentService(
 
 	svc := New(Params{
 		Logger:          zap.NewNop(),
+		DB:              conn,
 		Repo:            shipmentRepo,
 		UserRepo:        mocks.NewMockUserRepository(t),
 		ControlRepo:     controlRepo,

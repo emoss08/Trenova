@@ -201,6 +201,7 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 
 	svc := New(Params{
 		Logger:               logger,
+		DB:                   conn,
 		Repo:                 shipmentRepo,
 		OrderRepo:            orderRepo,
 		UserRepo:             userRepo,

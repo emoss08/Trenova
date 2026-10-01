@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,6 +38,7 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 		})
 	svc := &service{
 		l:            zap.NewNop(),
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		validator:    NewTestValidator(t),
 		eventService: noopShipmentEventService{},

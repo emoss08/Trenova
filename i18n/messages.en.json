@@ -6029,6 +6029,15 @@
       "domain/pagedraft"
     ]
   },
+  "A shipment in the billing queue cannot be canceled. Send it back to operations from the billing queue first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentstate"
+    ]
+  },
   "A shipment invoice must name the shipment it bills": {
     "sites": 1,
     "scope": [
@@ -6063,6 +6072,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "A shipment with status {0} cannot be canceled.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentstate"
     ]
   },
   "A short classification code for the reversal reason.": {
@@ -17161,6 +17179,15 @@
     ],
     "areas": [
       "service/orderservice"
+    ]
+  },
+  "An invoiced shipment cannot be canceled. Credit or void its invoice first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/shipmentstate"
     ]
   },
   "An item about an agent's own work stays on the feed for a person to clear": {
@@ -164788,12 +164815,13 @@
     ]
   },
   "Shipment not found": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "domain/shipmentstate",
       "routes/billing-queue",
       "service/shipmentservice"
     ]
@@ -216722,7 +216750,7 @@
       "go"
     ],
     "areas": [
-      "service/shipmentservice"
+      "domain/shipmentstate"
     ]
   },
   "shipment is not canceled": {

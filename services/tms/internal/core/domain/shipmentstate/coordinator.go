@@ -204,6 +204,10 @@ func (c *Coordinator) resolveStopStatus(
 		return shipment.StopStatusCompleted
 	}
 
+	return stopStatusFromActuals(stop)
+}
+
+func stopStatusFromActuals(stop *shipment.Stop) shipment.StopStatus {
 	switch {
 	case stop.ActualArrival != nil && stop.ActualDeparture != nil:
 		return shipment.StopStatusCompleted

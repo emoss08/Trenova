@@ -49,17 +49,17 @@ func TestCancel_UpdatesShipmentAndComponents(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`UPDATE .*shipments.*RETURNING .*`).
+	mock.ExpectQuery(`UPDATE .*shipments.*sp\.version = 1.*sp\.status NOT IN \('Canceled', 'Invoiced'\).*RETURNING .*`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "organization_id", "business_unit_id", "status", "cancel_reason", "canceled_at", "canceled_by_id", "version",
 		}).AddRow(shipmentID, orgID, buID, shipment.StatusCanceled, "customer request", 1700000000, userID, 2))
 	mock.ExpectQuery(`SELECT "sm"\."id" FROM "shipment_moves" AS "sm" WHERE \(sm\.shipment_id = .*\)`).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(moveID))
-	mock.ExpectExec(`UPDATE .*shipment_moves.*`).
+	mock.ExpectExec(`UPDATE .*shipment_moves.*status NOT IN \('Completed', 'Canceled'\)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(`UPDATE .*assignments.*`).
+	mock.ExpectExec(`UPDATE .*assignments.*archived_at IS NULL.*status NOT IN \('Completed', 'Canceled'\)`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(`UPDATE .*stops.*`).
+	mock.ExpectExec(`UPDATE .*stops.*status NOT IN \('Completed', 'Canceled'\)`).
 		WillReturnResult(sqlmock.NewResult(0, 2))
 	mock.ExpectCommit()
 
@@ -70,8 +70,9 @@ func TestCancel_UpdatesShipmentAndComponents(t *testing.T) {
 		},
 		ShipmentID:   shipmentID,
 		CanceledByID: userID,
-		CanceledAt:   1700000000,
-		CancelReason: "customer request",
+		CanceledAt:      1700000000,
+		CancelReason:    "customer request",
+		ExpectedVersion: 1,
 	})
 
 	require.NoError(t, err)
@@ -87,20 +88,21 @@ func TestUncancel_UpdatesShipmentAndComponents(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	moveID := pulid.MustNew("sm_")
+	stopID := pulid.MustNew("stp_")
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`UPDATE .*shipments.*RETURNING .*`).
+	mock.ExpectQuery(`UPDATE .*shipments.*status = 'InTransit'.*sp\.version = 2.*sp\.status = 'Canceled'.*RETURNING .*`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "organization_id", "business_unit_id", "status", "cancel_reason", "canceled_at", "canceled_by_id", "version",
-		}).AddRow(shipmentID, orgID, buID, shipment.StatusNew, "", nil, "", 3))
+		}).AddRow(shipmentID, orgID, buID, shipment.StatusInTransit, "", nil, "", 3))
 	mock.ExpectQuery(`SELECT "sm"\."id" FROM "shipment_moves" AS "sm" WHERE \(sm\.shipment_id = .*\)`).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(moveID))
-	mock.ExpectExec(`UPDATE .*shipment_moves.*`).
+	mock.ExpectExec(`UPDATE .*shipment_moves.*status = 'InTransit'.*status = 'Canceled'`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(`UPDATE .*assignments.*`).
+	mock.ExpectExec(`UPDATE .*assignments.*status = 'New'.*archived_at IS NULL.*status = 'Canceled'`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
-	mock.ExpectExec(`UPDATE .*stops.*`).
-		WillReturnResult(sqlmock.NewResult(0, 2))
+	mock.ExpectExec(`UPDATE .*stops.*status = 'New'.*status = 'Canceled'`).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
 	entity, err := repo.Uncancel(t.Context(), &repositories.UncancelShipmentRequest{
@@ -108,11 +110,19 @@ func TestUncancel_UpdatesShipmentAndComponents(t *testing.T) {
 			OrgID: orgID,
 			BuID:  buID,
 		},
-		ShipmentID: shipmentID,
+		ShipmentID:      shipmentID,
+		ExpectedVersion: 2,
+		RestoredStatus:  shipment.StatusInTransit,
+		MoveStatuses: []repositories.MoveStatusRestore{
+			{MoveID: moveID, Status: shipment.MoveStatusInTransit},
+		},
+		StopStatuses: []repositories.StopStatusRestore{
+			{StopID: stopID, Status: shipment.StopStatusNew},
+		},
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, shipment.StatusNew, entity.Status)
+	assert.Equal(t, shipment.StatusInTransit, entity.Status)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 

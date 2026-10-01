@@ -15,47 +15,69 @@ func (s *service) PreviewUncancel(
 	ctx context.Context,
 	req *repositories.UncancelShipmentRequest,
 ) (*services.ShipmentChangePreview, error) {
-	original, err := s.planUncancel(ctx, req)
+	if req == nil {
+		return nil, uncancelRequestRequired()
+	}
+
+	request := *req
+	original, restored, err := s.planUncancel(ctx, &request)
 	if err != nil {
 		return nil, err
 	}
 
-	after := *original
-	after.ApplyUncancel()
-
-	return &services.ShipmentChangePreview{Before: original, After: &after}, nil
+	return &services.ShipmentChangePreview{Before: original, After: restored}, nil
 }
 
 func (s *service) planUncancel(
 	ctx context.Context,
 	req *repositories.UncancelShipmentRequest,
-) (*shipment.Shipment, error) {
+) (original, restored *shipment.Shipment, err error) {
 	if req == nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("request", errortypes.ErrRequired, "Uncancel request is required")
-		return nil, multiErr
+		return nil, nil, uncancelRequestRequired()
 	}
 
 	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
+		return nil, nil, multiErr
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID: req.ShipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: req.TenantInfo.OrgID,
-			BuID:  req.TenantInfo.BuID,
-		},
+	tenantInfo := pagination.TenantInfo{
+		OrgID: req.TenantInfo.OrgID,
+		BuID:  req.TenantInfo.BuID,
+	}
+
+	original, err = s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:              req.ShipmentID,
+		TenantInfo:      tenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if !original.IsCanceled() {
-		return nil, errortypes.NewBusinessError("shipment is not canceled")
+		return nil, nil, errortypes.NewBusinessError("shipment is not canceled")
 	}
 
-	return original, nil
+	control, err := s.getShipmentControl(ctx, tenantInfo)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	restored = original.CloneMoveGraph()
+	s.coordinator.PrepareForUncancel(restored, delayThresholdMinutes(control))
+
+	req.ExpectedVersion = original.Version
+	req.RestoredStatus = restored.Status
+	req.MoveStatuses, req.StopStatuses = uncancelRestores(original, restored)
+
+	return original, restored, nil
+}
+
+func uncancelRequestRequired() error {
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add("request", errortypes.ErrRequired, "Uncancel request is required")
+
+	return multiErr
 }
 
 func (s *service) PreviewTransferOwnership(
@@ -182,4 +204,40 @@ func (s *service) guardDuplicate(req *repositories.BulkDuplicateShipmentRequest)
 	}
 
 	return nil
+}
+
+func uncancelRestores(
+	original, restored *shipment.Shipment,
+) ([]repositories.MoveStatusRestore, []repositories.StopStatusRestore) {
+	moves := make([]repositories.MoveStatusRestore, 0, len(restored.Moves))
+	stops := make([]repositories.StopStatusRestore, 0)
+
+	for moveIndex, move := range restored.Moves {
+		if move == nil || moveIndex >= len(original.Moves) || original.Moves[moveIndex] == nil {
+			continue
+		}
+
+		before := original.Moves[moveIndex]
+		if before.IsCanceled() && !move.IsCanceled() {
+			moves = append(moves, repositories.MoveStatusRestore{
+				MoveID: move.ID,
+				Status: move.Status,
+			})
+		}
+
+		for stopIndex, stop := range move.Stops {
+			if stop == nil || stopIndex >= len(before.Stops) || before.Stops[stopIndex] == nil {
+				continue
+			}
+
+			if before.Stops[stopIndex].IsCanceled() && !stop.IsCanceled() {
+				stops = append(stops, repositories.StopStatusRestore{
+					StopID: stop.ID,
+					Status: stop.Status,
+				})
+			}
+		}
+	}
+
+	return moves, stops
 }

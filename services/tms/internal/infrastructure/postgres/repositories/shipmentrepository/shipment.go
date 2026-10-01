@@ -776,7 +776,12 @@ func (r *repository) Cancel(
 				Set(sp.Version.Inc(1)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 					return buncolgen.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
-						Where(sp.ID.Eq(), req.ShipmentID)
+						Where(sp.ID.Eq(), req.ShipmentID).
+						Where(sp.Version.Eq(), req.ExpectedVersion).
+						Where(sp.Status.NotIn(), bun.List([]shipment.Status{
+							shipment.StatusCanceled,
+							shipment.StatusInvoiced,
+						}))
 				}).
 				Returning("*").
 				Exec(c)
@@ -815,14 +820,16 @@ func (r *repository) Uncancel(
 		err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			results, err := tx.NewUpdate().
 				Model(entity).
-				Set(sp.Status.Set(), shipment.StatusNew).
+				Set(sp.Status.Set(), restoredShipmentStatus(req)).
 				Set(sp.CanceledAt.Set(), nil).
 				Set(sp.CanceledByID.Set(), pulid.Nil).
 				Set(sp.CancelReason.Set(), "").
 				Set(sp.Version.Inc(1)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 					return buncolgen.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
-						Where(sp.ID.Eq(), req.ShipmentID)
+						Where(sp.ID.Eq(), req.ShipmentID).
+						Where(sp.Version.Eq(), req.ExpectedVersion).
+						Where(sp.Status.Eq(), shipment.StatusCanceled)
 				}).
 				Returning("*").
 				Exec(c)
@@ -838,7 +845,7 @@ func (r *repository) Uncancel(
 				return err
 			}
 
-			return r.uncancelShipmentComponents(c, tx, req.ShipmentID)
+			return r.uncancelShipmentComponents(c, tx, req)
 		})
 		if err != nil {
 			return nil, dberror.MapRetryableTransactionError(
