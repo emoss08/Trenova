@@ -184,11 +184,21 @@ it. Its prompt names the compliance assistant as
 the holder of credential, training, test and safety event recording, and payroll and the
 settlements clerk as the holders of pay.
 
+The nine pay setup tools stay on no template: `assign_pay_profile`,
+`end_pay_assignment`, `create_recurring_deduction`, `update_recurring_deduction`,
+`create_recurring_earning`, `update_recurring_earning`, `open_escrow_account`,
+`update_escrow_account` and `close_escrow_account`. A pay rate, a standing deduction or
+earning and escrow terms are set apart from the settlements that apply them, so the one who
+processes pay is not the one who sets it: the settlements clerk reads a driver's pay profile,
+recurring pay and escrow accounts and changes none of them, and the workforce coordinator never
+touches pay.
+
 `generate_payroll_export`, `void_payroll_export` and `review_driver_expense` stay on no
 template. Each moves pay, which the workforce coordinator never touches, and the settlements
 clerk, where they would belong, holds all 56 of its tools. An organization adds them to an
-agent it builds in AI control. No template is unattended, so the agent permission ceiling
-(`permission/agent.go`) is unchanged.
+agent it builds in AI control, as it adds the pay setup tools. A template test
+(`withheldFromEveryTemplate`) keeps all twelve off every template. No template is unattended,
+so the agent permission ceiling (`permission/agent.go`) is unchanged.
 
 ## Known limits
 

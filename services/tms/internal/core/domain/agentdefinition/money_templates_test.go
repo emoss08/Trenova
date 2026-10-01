@@ -258,8 +258,10 @@ func TestTemplates_EveryTemplateImpliesAnIcon(t *testing.T) {
 The books keeper keeps the accounting system in step with what Trenova posts
 and, once a period has ended, gets it ready to close. It confirms or turns down
 the mappings Trenova proposed, proposes releasing what a review policy held,
-and proposes locking and closing a period whose blockers are clear. Drafting
-and posting journals, reversing entries, reopening a period and changing a
+and proposes locking and closing a period whose blockers are clear. It
+proposes pausing sending while the connection fails and resuming once it
+answers, creating an item, customer or vendor the books lack, and refreshing
+what it read of the books. Drafting and posting journals, reversing entries, reopening a period and changing a
 backfill are started by a person, so no unattended desk holds them.
 */
 func TestTemplates_TheBooksKeeperKeepsTheBooksInStepAndReadyToClose(t *testing.T) {
@@ -274,6 +276,10 @@ func TestTemplates_TheBooksKeeperKeepsTheBooksInStepAndReadyToClose(t *testing.T
 		"get_fiscal_close_blockers",
 		"lock_fiscal_period",
 		"close_fiscal_period",
+		"pause_accounting_sync",
+		"resume_accounting_sync",
+		"create_accounting_reference_record",
+		"refresh_accounting_reference_data",
 	} {
 		require.Containsf(t, tools, tool, "the books keeper needs %s", tool)
 	}

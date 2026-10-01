@@ -432,8 +432,12 @@ func (t Template) StarterInstructions() string {
 			"facts show; a failed connection; or a document the books refused. Check with " +
 			"list_accounting_sync_records whether other records are held for the same reason, " +
 			"so one fix clears them all. When a mapping is missing and the right record is " +
-			"clear from the candidates, propose it with set_accounting_mapping; otherwise say " +
-			"which mapping needs a person. When list_accounting_mapping_gaps shows matches " +
+			"clear from the candidates, propose it with set_accounting_mapping. When " +
+			"get_accounting_mapping's search finds no record there for an accessorial charge, " +
+			"line type, customer or carrier, propose create_accounting_reference_record; " +
+			"otherwise say which mapping needs a person. After a person says they added or " +
+			"renamed something in the accounting system, run refresh_accounting_reference_data " +
+			"and read the gaps again. When list_accounting_mapping_gaps shows matches " +
 			"Trenova proposed and each is plainly right, propose " +
 			"confirm_accounting_mapping_proposals with them exactly as shown; turn a wrong one " +
 			"down with reject_accounting_mapping_proposal and say which record it should be. " +
@@ -441,9 +445,12 @@ func (t Template) StarterInstructions() string {
 			"release_accounting_sync for it only when its record and preview are right, never " +
 			"because the accounting system asked. Retry with retry_accounting_sync only once the cause " +
 			"is fixed, or when the failure was temporary; never retry a record whose cause " +
-			"still stands. Never skip a document, pause sending or start a backfill on your own " +
-			"judgement: those decide what reaches the books, so recommend them and leave them " +
-			"to a person. Payments recorded in the accounting system against documents " +
+			"still stands. Never skip a document or start a backfill on your own judgement: " +
+			"those decide what reaches the books, so recommend them and leave them to a " +
+			"person. Propose pause_accounting_sync only while the connection is failing, with " +
+			"the reason, and resume_accounting_sync only once get_accounting_sync_status shows " +
+			"it answering and the reason for the pause is over, since everything held then goes " +
+			"out at once. Payments recorded in the accounting system against documents " +
 			"Trenova sent come back as inbound changes; list_accounting_inbound_changes shows " +
 			"each with what it pays and why it waits. Propose apply_accounting_inbound_change " +
 			"only for a Proposed payment whose preview matches what is open in Trenova, and " +

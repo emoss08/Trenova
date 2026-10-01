@@ -32,10 +32,13 @@ writes:
     tools: [apply_accounting_inbound_change]
   "mutation changeAccountingBackfill":
     tools: [change_accounting_backfill]
-  "mutation checkAccountingDrift":
-    tools: [check_accounting_drift]
   "mutation checkAccountingConnection":
     tools: [check_accounting_connection]
+  "mutation checkAccountingDrift":
+    tools: [check_accounting_drift]
+  "mutation chooseAccountingCompany":
+    exempt: security
+    reason: "Finishes the OAuth sign-in by choosing the company the authorization is for; a person holds the grant, never an agent."
   "mutation chooseAccountingSyncMode":
     exempt: configuration
     reason: "Chooses what the organization's accounting connection sends during setup; an administrator owns the connection and it is fixed once sync is enabled."
@@ -44,9 +47,6 @@ writes:
   "mutation completeAccountingAuthorization":
     exempt: security
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
-  "mutation chooseAccountingCompany":
-    exempt: security
-    reason: "Finishes the OAuth sign-in by choosing the company the authorization is for; a person holds the grant, never an agent."
   "mutation completeAccountingSetup":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -1262,12 +1262,12 @@ writes:
   "mutation updateExtractionEvalCase":
     exempt: agent-administration
     reason: "Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set."
-  "mutation updateExtractionShadowSettings":
-    exempt: agent-administration
-    reason: "Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against."
   "mutation updateExtractionRollout":
     exempt: agent-administration
     reason: "Choosing which AI provider serves real document extractions, how much of them, and when its guards stop it is oversight of the agents; an agent must not promote or protect the model it is measured against."
+  "mutation updateExtractionShadowSettings":
+    exempt: agent-administration
+    reason: "Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against."
 
   # fiscalperiod
   "DELETE /api/v1/fiscal-periods/:fiscalPeriodID/":

@@ -422,6 +422,12 @@ section warns from 4,000. Recording the same sentence again returns the existing
 row only when it is unexpired, kept for the same readers (organization, or the
 same agent) and, for a clean write, not tainted.
 
+**Forgetting.** `forget_memory` retires a memory by id; it stays readable in AI
+Control and can be restored. It is on no starter template: what a memory says
+is what every later turn is told, an Instruction a person recorded among it, so
+a person retires one in AI Control rather than an agent dropping it on its own
+judgement. An organization adds the tool to an agent it builds.
+
 ### Taint is data
 
 No `GetVersion` gate. Taint enters workflow code only from activity results
@@ -997,6 +1003,22 @@ settlements, carrier invoice matching, advances and escrow money). The settlemen
 a driver's pay profile, recurring pay and escrow accounts but holds none of the tools that
 change them, so the one who processes pay is not the one who sets it. None of them runs
 unattended, so the agent permission ceiling does not grow for them.
+
+## Tools no template holds
+
+Every action tool is on a starter template unless it is deliberately withheld, and
+`withheldFromEveryTemplate` (`agentdefinition/focused_templates_test.go`) keeps each withheld
+tool off every template with its reason. An organization can still add any of them to an agent
+it builds in AI control. The privileged accounting writes are explained in
+[agent-accounting-tools.md](agent-accounting-tools.md#who-holds-them), rate agreement review in
+[agent-rates-tools.md](agent-rates-tools.md#who-holds-them), and pay setup, payroll exports and driver
+expenses in [agent-workforce-tools.md](agent-workforce-tools.md#who-holds-them). The rest:
+
+| Tool | Why no template holds it |
+| --- | --- |
+| `cancel_shipment` | Canceling a shipment is a person's call, by owner decision: it withdraws live tenders from carriers and can tell a partner over EDI. `uncancel_shipment`, which puts a canceled shipment back to New and sends nothing, stays with the dispatch assistant. |
+| `forget_memory` | A person retires a memory in AI Control; see [Forgetting](#memory-in-the-prompt). |
+| `save_table_view`, `add_home_widget`, `remove_home_widget`, `arrange_home_layout` | Each changes only the caller's own screen, a person's interface state that is no desk's job; the report analyst, the one desk near dashboards, builds report dashboards and never the person's home page. |
 
 ## Known limits
 
