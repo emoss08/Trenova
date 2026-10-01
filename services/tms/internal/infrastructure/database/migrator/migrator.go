@@ -31,10 +31,14 @@ func NewMigrator(config *common.DatabaseConfig) (*Migrator, error) {
 
 	return &Migrator{
 		db:       config.DB,
-		migrator: migrate.NewMigrator(config.DB, migrations),
+		migrator: NewBunMigrator(config.DB, migrations),
 		config:   config,
 		reporter: common.NewConsoleProgressReporter(),
 	}, nil
+}
+
+func NewBunMigrator(db *bun.DB, migrations *migrate.Migrations) *migrate.Migrator {
+	return migrate.NewMigrator(db, migrations, migrate.WithMarkAppliedOnSuccess(true))
 }
 
 func (m *Migrator) SetProgressReporter(reporter common.ProgressReporter) {

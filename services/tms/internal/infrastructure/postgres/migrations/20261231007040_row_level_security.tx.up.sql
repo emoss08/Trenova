@@ -178,23 +178,6 @@ GRANT SELECT ON trenova_rls.global_tables TO trenova_tenant, trenova_rls_bypass;
 COMMENT ON TABLE trenova_rls.global_tables IS 'Tables in public that hold no tenant data and are therefore exempt from row-level security; every other table must carry a tenant policy';
 
 --bun:split
-CREATE TABLE IF NOT EXISTS trenova_rls.append_only_tables(
-    "table_name" name NOT NULL,
-    "reason" text NOT NULL,
-    CONSTRAINT "pk_append_only_tables" PRIMARY KEY ("table_name"),
-    CONSTRAINT "ck_append_only_tables_reason" CHECK (length(btrim("reason")) > 0)
-);
-
---bun:split
-REVOKE ALL ON trenova_rls.append_only_tables FROM PUBLIC;
-
---bun:split
-GRANT SELECT ON trenova_rls.append_only_tables TO trenova_tenant, trenova_rls_bypass;
-
---bun:split
-COMMENT ON TABLE trenova_rls.append_only_tables IS 'Tables in public the application role may only read and append to; reconcile revokes UPDATE and DELETE on them from trenova_tenant';
-
---bun:split
 INSERT INTO trenova_rls.global_tables("table_name", "reason")
 VALUES
     ('ai_audit_projector_state', 'Projector cursor shared by the audit worker across all tenants'),
@@ -304,16 +287,6 @@ BEGIN
             AND c.relname IN ('bun_migrations', 'bun_migration_locks', 'seed_created_entities', 'seed_history')
     LOOP
         EXECUTE format('REVOKE INSERT, UPDATE, DELETE ON %s FROM trenova_tenant', candidate.target);
-    END LOOP;
-
-    FOR candidate IN
-        SELECT c.oid::regclass AS target
-        FROM pg_class c
-        JOIN pg_namespace n ON n.oid = c.relnamespace
-        JOIN trenova_rls.append_only_tables a ON a.table_name = c.relname
-        WHERE n.nspname = 'public'
-    LOOP
-        EXECUTE format('REVOKE UPDATE, DELETE ON %s FROM trenova_tenant', candidate.target);
     END LOOP;
 
     FOR candidate IN
