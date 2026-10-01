@@ -240,7 +240,8 @@ services:
 
     samsara-sim:
         build:
-            context: ./services/samsara-sim
+            context: .
+            dockerfile: services/samsara-sim/Dockerfile
         container_name: samsara-sim
         profiles:
             - samsara-sim
