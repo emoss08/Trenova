@@ -19,6 +19,7 @@ entities:
     fields:
       proNumber: { label: "PRO Number" }
       bol: { label: "BOL" }
+      externalReference: { label: "Customer Reference" }
       totalChargeAmount: { label: "Total Charge", format: money }
       freightChargeAmount: { label: "Freight Charge", format: money }
       otherChargeAmount: { label: "Accessorial Charges", format: money }
