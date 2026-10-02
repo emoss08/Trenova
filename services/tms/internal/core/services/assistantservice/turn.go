@@ -154,56 +154,12 @@ func (s *Service) prepareTurn(
 		return nil, nil, err
 	}
 
-	attachments, runtimeAttachments, err := s.resolveAttachments(
-		ctx, thread, req.AttachmentDocumentIDs, actor, req.TenantInfo,
-	)
-	if err != nil {
+	checks := s.checkTurn(ctx, thread, req, actor, page)
+	if err = checks.err(); err != nil {
 		return nil, nil, err
 	}
-
-	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
-		ID:         thread.AgentDefinitionID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if !definition.Enabled {
-		return nil, nil, errortypes.NewBusinessError(
-			"Agent {0} is disabled and cannot be used", definition.Name,
-		)
-	}
-	if err = assertChatAgent(definition); err != nil {
-		return nil, nil, err
-	}
-	if err = s.assertMayUseAgent(ctx, actor, definition); err != nil {
-		return nil, nil, err
-	}
-	if err = s.assertPageTurn(ctx, thread, page, actor); err != nil {
-		return nil, nil, err
-	}
-
-	if err = s.assertWithinBudget(ctx, definition); err != nil {
-		return nil, nil, err
-	}
-
-	if err = s.assertRoom(ctx, thread, req.TenantInfo); err != nil {
-		return nil, nil, err
-	}
-
-	// Another agent's steps on a task this one handed it are the thread's to
-	// show, not the model's to read again: it only ever saw its own call and
-	// the answer that came back.
-	history, err := s.conversations.ListMessages(ctx, repositories.ListMessagesRequest{
-		ThreadID:     thread.ID,
-		TenantInfo:   req.TenantInfo,
-		Limit:        historyLimit,
-		ExcludeKinds: conversation.ModelHiddenKinds(),
-	})
-	if err != nil {
-		return nil, nil, err
-	}
+	definition, history := checks.definition, checks.history
+	attachments, runtimeAttachments := checks.attachments, checks.runtimeAttachments
 
 	if followUp {
 		content, err = s.decisionNote(ctx, decisionNoteParams{
@@ -228,8 +184,8 @@ func (s *Service) prepareTurn(
 		Page:                page,
 		PreferredProviderID: thread.PreferredProviderID,
 		ThreadID:            thread.ID,
-		Proposals:           s.proposalOutcomes(ctx, thread, req.TenantInfo),
-		Subject:             s.describeSubject(ctx, thread, actor, req.TenantInfo),
+		Proposals:           checks.proposals,
+		Subject:             checks.subject,
 		Attachments:         runtimeAttachments,
 		Mentions:            mentions,
 		Taint:               thread.Taint,

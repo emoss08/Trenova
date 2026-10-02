@@ -483,7 +483,10 @@ workflow and waits for its result; `POST /ask/` opens the hidden thread and
 starts a turn on it.
 
 1. **Prepare** reads the thread, history, files and mentions, checks budget and
-   room, and runs the scope guard. The guard's classifier runs beside the
+   room, and runs the scope guard. After the thread, every check and read runs
+   side by side (`checkTurn`); none writes, and a question failing several is
+   told about the first in the old order (files, agent, page, budget, room,
+   history), never about a cancellation. The guard's classifier runs beside the
    context build (memories, retrieval embedding), which writes nothing, so a
    refusal discards it; the classifier fails open after 3s. A refusal the
    person can act on is non-retryable and its message reaches the reader as
